@@ -17,6 +17,9 @@ import {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+import { MobileNav } from "./mobile-nav";
+import { ProfileButton } from "./profile-button";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 
 interface MainNavProps {
   items?: MainNavItem[];
@@ -28,27 +31,55 @@ export function MainNav({ items, children }: MainNavProps) {
   const [showMobileMenu, setShowMobileMenu] = React.useState<boolean>(false);
 
   return (
-    <div className="flex gap-6 md:gap-10">
-      <Link href="/" className="hidden items-center space-x-2 md:flex">
-        <Icons.logo width="26" height="23" viewBox="0 0 197 225" />
-        <span className="hidden font-bold font-heading text-xl sm:inline-block">
-          {siteConfig.name}
-        </span>
-      </Link>
-
-      {items?.length ? (
-        <NavigationMenu>
-          <NavigationMenuList className={"gap-4 font-semibold text-sm"}>
-            {items?.map((item) => (
-              <NavigationMenuItem>
-                <NavigationMenuLink className={""} href={item.href}>
-                  {item.title}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-      ) : null}
+    <div className="flex h-20 items-center justify-between py-6 container">
+      <div className="flex md:gap-10 ">
+        <Link href="/" className="hidden items-center space-x-2 md:flex">
+          <Icons.logo width="26" height="23" viewBox="0 0 197 225" />
+          <span className="hidden font-bold font-heading text-xl sm:inline-block">
+            {siteConfig.name}
+          </span>
+        </Link>
+        <SignedIn>
+          {items?.length ? (
+            <NavigationMenu>
+              <NavigationMenuList
+                className={"hidden gap-4 font-semibold text-sm md:flex"}
+              >
+                {items?.map((item) => (
+                  <NavigationMenuItem>
+                    <NavigationMenuLink
+                      className={
+                        "px-2 py-2 transition-colors hover:bg-foreground/10 rounded-md"
+                      }
+                      href={item.href}
+                    >
+                      {item.title}
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          ) : null}
+        </SignedIn>
+        <MobileNav items={items ? items : []} />
+      </div>
+      <SignedIn>
+        <div className="hidden md:block">
+          <ProfileButton />
+        </div>
+      </SignedIn>
+      <SignedOut>
+        <SignInButton
+          className={
+            "hidden md:flex px-2 py-2 transition-colors hover:bg-foreground/10 rounded-md font-semibold  items-center gap-1 cursor-pointer"
+          }
+        >
+          <div>
+            Sign In
+            <Icons.signIn className="w-5 h-5" />
+          </div>
+        </SignInButton>
+      </SignedOut>
     </div>
   );
 }

@@ -14,6 +14,6 @@
     ogImage: string
   }
 
-  export type MarketingConfig = {
+  export type NavConfig = {
     mainNav: MainNavItem[]
   }
