@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import { MainNavItem, PersonInfo } from "@/types";
+import { MainNavItem, UserInfo } from "@/types";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Icons } from "@/components/icons";
@@ -21,24 +21,20 @@ import {
   SignedOut,
 } from "@clerk/nextjs";
 import { Dialog, DialogTrigger } from "./ui/dialog";
-import { SettingsModal } from "./settings-modal";
 
 interface MobileNavProps {
-  personInfo: PersonInfo;
+  userInfo: UserInfo;
   items: MainNavItem[];
   children?: React.ReactNode;
 }
 
-export function MobileNav({ items, children, personInfo }: MobileNavProps) {
-  const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
-  const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
+export function MobileNav({ items, children, userInfo }: MobileNavProps) {
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <Sheet className="md:hidden" open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger className="md:hidden rounded-md w-12 h-12 hover:bg-foreground/10 relative flex justify-center text-primary-foreground dark:text-foreground items-center transition-colors">
+      <Sheet className="md:hidden">
+        <SheetTrigger className="relative flex items-center justify-center w-12 h-12 transition-colors rounded-md md:hidden hover:bg-foreground/10 text-primary-foreground dark:text-foreground">
           <Icons.menu className="w-8 h-8" />
         </SheetTrigger>
-        <SheetContent className="w-1/2" position="left">
+        <SheetContent side="left" className="w-1/2" >
           <SheetHeader>
             <SheetTitle>
               <Link
@@ -51,7 +47,7 @@ export function MobileNav({ items, children, personInfo }: MobileNavProps) {
             </SheetTitle>
           </SheetHeader>
           <SignedIn>
-            <nav className="grid grid-flow-row auto-rows-max text-sm mt-2">
+            <nav className="grid grid-flow-row mt-2 text-sm auto-rows-max">
               {items.map((item, index) => (
                 <Link
                   key={index}
@@ -65,20 +61,10 @@ export function MobileNav({ items, children, personInfo }: MobileNavProps) {
                 </Link>
               ))}
               <div className="mt-6">
-                <ProfileSlate personInfo={personInfo} />
+                <ProfileSlate userInfo={userInfo} />
 
                 <div className="mt-2">
-                  <button
-                    onClick={() => {
-                      setSheetOpen(false);
-                      setDialogOpen(true);
-                    }}
-                    className={
-                      "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-card-foreground/10 transition-colors"
-                    }
-                  >
-                    Settings
-                  </button>
+                  
                   <SignOutButton
                     className={
                       "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-card-foreground/10 transition-colors"
@@ -102,7 +88,5 @@ export function MobileNav({ items, children, personInfo }: MobileNavProps) {
           {children}
         </SheetContent>
       </Sheet>
-      <SettingsModal />
-    </Dialog>
   );
 }

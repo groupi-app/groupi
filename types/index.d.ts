@@ -18,7 +18,9 @@
     mainNav: MainNavItem[]
   }
 
-  export type PersonInfo = {
-    displayName: any
+  export type UserInfo = {
+    firstName: string | null | undefined
+    lastName: string | null | undefined
     username: string | null | undefined
+    avatar:string | undefined
   }

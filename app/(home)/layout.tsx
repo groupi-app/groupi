@@ -1,6 +1,5 @@
 import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
-import { getPerson } from "@/lib/person";
 import { currentUser } from "@clerk/nextjs";
 
 interface MainLayoutProps {
@@ -9,16 +8,17 @@ interface MainLayoutProps {
 
 export default async function MainLayout({ children }: MainLayoutProps) {
   const user = await currentUser();
-  const person = user !== null ? await getPerson(user.id) : null;
-  const personInfo = {
-    displayName: person?.displayName,
+  const userInfo = {
+    firstName: user?.firstName,
+    lastName:user?.lastName,
     username: user?.username,
+    avatar: user?.profileImageUrl
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="z-40 bg-primary text-primary-foreground dark:bg-background dark:text-foreground w-full">
-        <MainNav personInfo={personInfo} items={navConfig.mainNav} />
+    <div className="flex flex-col min-h-screen">
+      <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
+        <MainNav userInfo={userInfo} items={navConfig.mainNav} />
       </header>
       <main>{children}</main>
     </div>
