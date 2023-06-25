@@ -7,41 +7,51 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PersonInfo } from "@/types";
 import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { SettingsModal } from "./settings-modal";
+import { Dialog, DialogTrigger } from "./ui/dialog";
 
-interface ProfileButtonProps {}
+interface ProfileButtonProps {
+  personInfo: PersonInfo;
+}
 
-export function ProfileButton({}: ProfileButtonProps) {
+export function ProfileButton({ personInfo }: ProfileButtonProps) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Avatar>
-          <AvatarFallback className="text-foreground">JP</AvatarFallback>
-          <AvatarImage src=" " />
-        </Avatar>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="font-medium" align="end">
-        <DropdownMenuLabel className="flex flex-col items-start">
-          <span className="font-bold text-base leading-5">Jenna</span>
-          <span className="font-normal">addylinear</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <Link href="my-profile">
-          <DropdownMenuItem className="cursor-pointer">
-            My Profile
+    <Dialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Avatar>
+            <AvatarFallback className="text-foreground">
+              {typeof personInfo.displayName === "string"
+                ? personInfo.displayName.at(0)
+                : ""}
+            </AvatarFallback>
+            <AvatarImage src=" " />
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="font-medium" align="end">
+          <DropdownMenuLabel className="flex flex-col items-start">
+            <span className="font-bold text-base leading-5">
+              {personInfo.displayName}
+            </span>
+            <span className="font-normal">{personInfo.username}</span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DialogTrigger className="w-full">
+            <DropdownMenuItem className="cursor-pointer">
+              Settings
+            </DropdownMenuItem>
+          </DialogTrigger>
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <SignOutButton>Sign Out</SignOutButton>
           </DropdownMenuItem>
-        </Link>
-        <Link href="settings">
-          <DropdownMenuItem className="cursor-pointer">
-            Settings
-          </DropdownMenuItem>
-        </Link>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <SignOutButton>Sign Out</SignOutButton>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <SettingsModal />
+    </Dialog>
   );
 }

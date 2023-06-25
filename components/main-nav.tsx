@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
-import { MainNavItem } from "@/types";
+import { MainNavItem, PersonInfo } from "@/types";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Icons } from "@/components/icons";
@@ -23,10 +23,11 @@ import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 
 interface MainNavProps {
   items?: MainNavItem[];
+  personInfo: PersonInfo;
   children?: React.ReactNode;
 }
 
-export function MainNav({ items, children }: MainNavProps) {
+export function MainNav({ items, children, personInfo }: MainNavProps) {
   const segment = useSelectedLayoutSegment();
   const [showMobileMenu, setShowMobileMenu] = React.useState<boolean>(false);
 
@@ -61,11 +62,11 @@ export function MainNav({ items, children }: MainNavProps) {
             </NavigationMenu>
           ) : null}
         </SignedIn>
-        <MobileNav items={items ? items : []} />
+        <MobileNav personInfo={personInfo} items={items ? items : []} />
       </div>
       <SignedIn>
         <div className="hidden md:block">
-          <ProfileButton />
+          <ProfileButton personInfo={personInfo} />
         </div>
       </SignedIn>
       <SignedOut>

@@ -17,3 +17,8 @@
   export type NavConfig = {
     mainNav: MainNavItem[]
   }
+
+  export type PersonInfo = {
+    displayName: any
+    username: string | null | undefined
+  }
