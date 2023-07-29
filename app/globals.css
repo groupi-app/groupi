@@ -52,8 +52,8 @@
     --border: 216 34% 17%;
     --input: 216 34% 17%;
  
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
+    --primary: 285 100% 34%;
+    --primary-foreground: 210 40% 98%;
  
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
@@ -78,4 +78,51 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+.cl-card, .cl-formFieldInput {
+  @apply bg-card dark:border-[1px] dark:border-border text-card-foreground;
+}
+.cl-headerTitle, .cl-headerSubtitle, .cl-profileSectionTitleText, .cl-profileSectionContent p, .cl-profileSectionContent div button div span,.cl-form p, .cl-formFieldLabel, .cl-breadcrumbsItem, .cl-breadcrumbsItemDivider, .cl-page p{
+  @apply text-card-foreground;
+}
+
+.cl-profileSectionPrimaryButton {
+  @apply text-primary dark:text-card-foreground hover:bg-primary/10 dark:hover:bg-primary/30;
+}
+
+.cl-profileSectionContent__profile {
+  @apply hover:bg-card-foreground/5 rounded-md transition-all;
+}
+
+.cl-profileSectionContent svg{
+  @apply text-card-foreground;
+}
+
+.cl-navbarButton {
+  @apply text-card-foreground hover:bg-card-foreground/5 rounded-md transition-all;
+}
+
+.cl-accordionTriggerButton {
+  @apply hover:bg-card-foreground/5 rounded-md transition-all
+}
+
+.cl-navbar {
+  @apply border-r border-border
+}
+
+.cl-card > div:last-child {
+  @apply hidden;
+}
+
+.cl-page > div > div > button{
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-primary/10 dark:hover:bg-primary/30;
+}
+
+.cl-formButtonPrimary {
+  @apply capitalize inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.cl-formButtonReset {
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-primary/10 dark:hover:bg-primary/30;
 }

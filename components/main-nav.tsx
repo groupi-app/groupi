@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { MobileNav } from "./mobile-nav";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { profileButtonPopoverStyles } from "@/config/nav";
 
 interface MainNavProps {
   items?: MainNavItem[];
@@ -66,22 +67,7 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
       </div>
       <SignedIn>
         <div className="hidden md:block">
-          <UserButton appearance={{
-            elements: {
-              card: 'bg-card dark:border-[1px] dark:border-border',
-              userPreviewMainIdentifier: "text-card-foreground font-sans",
-              userPreviewSecondaryIdentifier: "text-card-foreground font-sans",
-              userButtonPopoverActionButton__signOut: "hover:bg-card-foreground/10 rounded-md",
-              userButtonPopoverActionButtonText__signOut: "text-card-foreground font-sans",
-              userButtonPopoverActionButtonIcon__signOut: "text-card-foreground font-sans",
-              userButtonPopoverActionButton__manageAccount: "hover:bg-card-foreground/10 rounded-md",
-              userButtonPopoverActionButtonText__manageAccount: "text-card-foreground font-sans",
-              userButtonPopoverActionButtonIcon__manageAccount: "text-card-foreground font-sans",
-              userButtonPopoverActions:"px-4",
-              userButtonPopoverFooter: "hidden"
-            }
-          }} />
-          
+          <UserButton appearance={profileButtonPopoverStyles} />
         </div>
       </SignedIn>
       <SignedOut>
