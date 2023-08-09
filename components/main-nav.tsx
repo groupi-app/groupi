@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/navigation-menu";
 import { MobileNav } from "./mobile-nav";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { profileButtonPopoverStyles } from "@/config/nav";
+import { profileButtonPopoverStyles } from "@/config/clerk";
+import { ProfileDropdown } from "./profile-dropdown";
 
 interface MainNavProps {
   items?: MainNavItem[];
@@ -51,7 +52,7 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
                   <NavigationMenuItem key={i}>
                     <NavigationMenuLink
                       className={
-                        "px-2 py-2 transition-colors hover:bg-foreground/10 rounded-md"
+                        "px-2 py-2 transition-colors dark:hover:bg-accent rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10"
                       }
                       href={item.href}
                     >
@@ -67,13 +68,13 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
       </div>
       <SignedIn>
         <div className="hidden md:block">
-          <UserButton appearance={profileButtonPopoverStyles} />
+          <ProfileDropdown userInfo={userInfo} />
         </div>
       </SignedIn>
       <SignedOut>
         <SignInButton
           className={
-            "hidden md:flex px-2 py-2 transition-colors hover:bg-foreground/10 rounded-md font-semibold  items-center gap-1 cursor-pointer"
+            "hidden md:flex px-2 py-2 transition-colors hover:bg-accent rounded-md font-semibold  items-center gap-1 cursor-pointer"
           }
         >
           <div>

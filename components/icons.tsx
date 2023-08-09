@@ -2,7 +2,10 @@ import {
   LucideProps,
   X,
   Menu,
+  MoreHorizontal,
   LogIn as SignIn,
+  LogOut as SignOut,
+  User2 as Account,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -12,6 +15,9 @@ export const Icons = {
   menu: Menu,
   close: X,
   signIn: SignIn,
+  signOut: SignOut,
+  account: Account,
+  more: MoreHorizontal,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path

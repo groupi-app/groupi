@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -37,13 +38,15 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
       <SheetContent side="left" className="w-1/2">
         <SheetHeader>
           <SheetTitle>
-            <Link
-              className="flex items-center gap-1 text-primary dark:text-foreground"
-              href="/"
-            >
-              <Icons.logo width="26" height="23" viewBox="0 0 197 225" />
-              <span>{siteConfig.name}</span>
-            </Link>
+            <SheetClose asChild>
+              <Link
+                className="flex items-center gap-1 text-primary dark:text-foreground"
+                href="/"
+              >
+                <Icons.logo width="26" height="23" viewBox="0 0 197 225" />
+                <span>{siteConfig.name}</span>
+              </Link>
+            </SheetClose>
           </SheetTitle>
         </SheetHeader>
         <SignedIn>
@@ -53,7 +56,7 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                 key={index}
                 href={item.disabled ? "#" : item.href}
                 className={cn(
-                  "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-card-foreground/5 transition-colors",
+                  "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground",
                   item.disabled && "cursor-not-allowed opacity-60"
                 )}
               >
@@ -63,26 +66,38 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
             <div className="mt-6">
               <ProfileSlate userInfo={userInfo} />
 
-              <div className="mt-2">
-                <SignOutButton
-                  className={
-                    "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-card-foreground/5 transition-colors"
-                  }
-                >
-                  Sign Out
-                </SignOutButton>
+              <div className="flex flex-col mt-2">
+                <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
+                  <SheetClose>
+                    <div className="flex items-center gap-2">
+                      <Icons.account className="w-4 h-4" />
+                      <span>My Account</span>
+                    </div>
+                  </SheetClose>
+                </div>
+                <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
+                  <SheetClose>
+                    <SignOutButton>
+                      <div className="flex items-center gap-2">
+                        <Icons.signOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </div>
+                    </SignOutButton>
+                  </SheetClose>
+                </div>
               </div>
             </div>
           </nav>
         </SignedIn>
         <SignedOut>
-          <SignInButton
-            className={
-              "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-card-foreground/5 transition-colors mt-4"
-            }
-          >
-            Sign In
-          </SignInButton>
+          <SheetClose>
+            <SignInButton>
+              <div className="flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4">
+                <Icons.signIn className="w-4 h-4" />
+                <span>Sign In</span>
+              </div>
+            </SignInButton>
+          </SheetClose>
         </SignedOut>
         {children}
       </SheetContent>

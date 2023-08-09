@@ -1,0 +1,66 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserInfo } from "@/types";
+import { Icons } from "./icons";
+import { SignOutButton } from "@clerk/nextjs";
+
+interface ProfileDropdownProps {
+  userInfo: UserInfo;
+}
+
+export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
+  const initials =
+    userInfo.firstName?.toString()[0] + "" + userInfo.lastName?.toString()[0];
+
+  let fullName = "";
+  if (userInfo.firstName && userInfo.lastName) {
+    fullName = userInfo.firstName + " " + userInfo.lastName;
+  } else if (userInfo.firstName && !userInfo.lastName) {
+    fullName = userInfo.firstName;
+  } else if (!userInfo.firstName && userInfo.lastName) {
+    fullName = userInfo.lastName;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="rounded-full">
+        <Avatar>
+          <AvatarImage src={userInfo.avatar} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          <div className="flex flex-col">
+            {fullName != "" && (
+              <span className="text-base text-card-foreground">{fullName}</span>
+            )}
+            <span className="">{userInfo.username}</span>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="cursor-pointer">
+          <div className="flex items-center gap-2">
+            <Icons.account className="w-4 h-4" />
+            <span>My Account</span>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
+          <SignOutButton>
+            <div className="flex items-center gap-2">
+              <Icons.signOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </div>
+          </SignOutButton>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

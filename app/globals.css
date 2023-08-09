@@ -58,8 +58,11 @@
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
  
-    --accent: 216 34% 17%;
+    --accent: 216 34% 16%;
     --accent-foreground: 210 40% 98%;
+
+    --accent2: var(--accent);
+    --accent-foreground2: var(--accent-foreground);
  
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
@@ -92,19 +95,19 @@
 }
 
 .cl-profileSectionContent__profile {
-  @apply hover:bg-card-foreground/5 rounded-md transition-all;
+  @apply hover:bg-accent rounded-md transition-all;
 }
 
 .cl-profileSectionContent svg{
-  @apply text-card-foreground;
+  @apply text-primary dark:text-card-foreground;
 }
 
 .cl-navbarButton {
-  @apply text-card-foreground hover:bg-card-foreground/5 rounded-md transition-all;
+  @apply text-card-foreground hover:bg-accent rounded-md transition-all;
 }
 
 .cl-accordionTriggerButton {
-  @apply hover:bg-card-foreground/5 rounded-md transition-all
+  @apply hover:bg-accent2 rounded-md transition-all
 }
 
 .cl-navbar {
@@ -116,7 +119,7 @@
 }
 
 .cl-page > div > div > button{
-  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-primary/10 dark:hover:bg-primary/30;
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent dark:hover:bg-primary/30;
 }
 
 .cl-formButtonPrimary {
@@ -124,5 +127,33 @@
 }
 
 .cl-formButtonReset {
-  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-primary/10 dark:hover:bg-primary/30;
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent dark:hover:bg-primary/30;
+}
+
+.cl-socialButtons {
+  @apply border border-border rounded-md hover:bg-accent transition-all;
+}
+
+.cl-socialButtons span, .cl-socialButtons svg {
+  @apply text-card-foreground;
+}
+
+.cl-footer span {
+  @apply text-card-foreground;
+}
+
+.cl-footerActionLink {
+  @apply text-primary hover:text-primary/90;
+}
+
+.cl-dividerText {
+  @apply text-card-foreground;
+}
+
+.cl-dividerLine {
+  @apply bg-border;
+}
+
+.cl-userPreviewSecondaryIdentifier{
+  @apply text-muted-foreground;
 }
