@@ -42,7 +42,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
             {fullName != "" && (
               <span className="text-base text-card-foreground">{fullName}</span>
             )}
-            <span className="">{userInfo.username}</span>
+            <span>{userInfo.username}</span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

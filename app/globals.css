@@ -59,7 +59,7 @@
  
     --primary: 285 100% 34%;
     --primary-foreground: 210 40% 98%;
- 
+
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
  
@@ -124,7 +124,7 @@
 }
 
 .cl-page > div > div > button{
-  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent dark:hover:bg-primary/30;
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent2 dark:hover:bg-primary/30;
 }
 
 .cl-main p{
@@ -148,11 +148,11 @@
 }
 
 .cl-formButtonReset {
-  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent dark:hover:bg-primary/30;
+  @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent2 dark:hover:bg-primary/30;
 }
 
-.cl-socialButtons {
-  @apply border border-border rounded-md hover:bg-accent transition-all;
+.cl-socialButtons > button{
+  @apply border border-border2 rounded-md hover:bg-accent2 transition-all;
 }
 
 .cl-socialButtons span, .cl-socialButtons svg {

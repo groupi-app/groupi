@@ -74,7 +74,7 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
       <SignedOut>
         <SignInButton
           className={
-            "hidden md:flex px-2 py-2 transition-colors hover:bg-accent rounded-md font-semibold  items-center gap-1 cursor-pointer"
+            "hidden md:flex px-2 py-2 transition-colors hover:bg-primary-foreground/10 dark:hover:bg-accent rounded-md font-semibold  items-center gap-1 cursor-pointer"
           }
         >
           <div>
