@@ -69,10 +69,15 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
               <div className="flex flex-col mt-2">
                 <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
                   <SheetClose>
-                    <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        window.Clerk.openUserProfile();
+                      }}
+                      className="flex items-center gap-2"
+                    >
                       <Icons.account className="w-4 h-4" />
                       <span>My Account</span>
-                    </div>
+                    </button>
                   </SheetClose>
                 </div>
                 <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">

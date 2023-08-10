@@ -1,4 +1,3 @@
-import { signInStyles } from "@/config/clerk";
 import { SignIn } from "@clerk/nextjs";
 
 export default function Page() {

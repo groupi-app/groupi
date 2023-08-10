@@ -17,6 +17,7 @@
     --card-foreground: 222.2 47.4% 11.2%;
  
     --border: 214.3 31.8% 91.4%;
+    --border2: var(--border);
     --input: 214.3 31.8% 91.4%;
  
     --primary: 285 100% 34%;
@@ -27,6 +28,9 @@
  
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+
+    --accent2: var(--accent);
+    --accent-foreground2: var(--accent-foreground);
  
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
@@ -50,6 +54,7 @@
     --card-foreground: 213 31% 91%;
  
     --border: 216 34% 17%;
+    --border2: var(--border);
     --input: 216 34% 17%;
  
     --primary: 285 100% 34%;
@@ -122,6 +127,22 @@
   @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent dark:hover:bg-primary/30;
 }
 
+.cl-main p{
+  @apply text-card-foreground;
+}
+
+.cl-alternativeMethods > button {
+  @apply border border-border2 rounded-md hover:bg-accent2 transition-all;
+}
+
+.cl-main > button {
+  @apply border border-border2 rounded-md hover:bg-accent2 transition-all;
+}
+
+.cl-main button span, .cl-main button svg, .cl-main button div span {
+  @apply text-card-foreground;
+}
+
 .cl-formButtonPrimary {
   @apply capitalize inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90;
 }
@@ -137,6 +158,16 @@
 .cl-socialButtons span, .cl-socialButtons svg {
   @apply text-card-foreground;
 }
+
+.cl-alternativeMethodsBlockButton {
+  @apply border border-border rounded-md hover:bg-accent transition-all;
+}
+
+.cl-alternativeMethodsBlockButtonText, .cl-alternativeMethodsBlockButton svg {
+  @apply text-card-foreground;
+}
+
+
 
 .cl-footer span {
   @apply text-card-foreground;
@@ -156,4 +187,17 @@
 
 .cl-userPreviewSecondaryIdentifier{
   @apply text-muted-foreground;
+}
+
+.cl-navbarMobileMenuButton {
+  @apply text-card-foreground hover:bg-accent2 hover:text-accent-foreground rounded-md transition-all;
+}
+.cl-navbar {
+  @apply bg-card dark:border dark:border-border text-card-foreground;
+}
+.cl-navbarButton {
+  @apply text-card-foreground hover:bg-accent2 rounded-md transition-all;
+}
+.cl-headerBackIcon, .cl-headerBackLink {
+  @apply text-primary;
 }

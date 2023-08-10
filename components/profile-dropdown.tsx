@@ -47,10 +47,15 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              window.Clerk.openUserProfile();
+            }}
+            className="flex items-center gap-2"
+          >
             <Icons.account className="w-4 h-4" />
             <span>My Account</span>
-          </div>
+          </button>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer">
           <SignOutButton>
