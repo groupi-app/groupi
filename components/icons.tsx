@@ -6,6 +6,8 @@ import {
   LogIn as SignIn,
   LogOut as SignOut,
   User2 as Account,
+  Trash as Delete,
+  Pencil as Edit,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -17,6 +19,8 @@ export const Icons = {
   signIn: SignIn,
   signOut: SignOut,
   account: Account,
+  delete: Delete,
+  edit: Edit,
   more: MoreHorizontal,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
