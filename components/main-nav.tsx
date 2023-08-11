@@ -30,9 +30,6 @@ interface MainNavProps {
 }
 
 export function MainNav({ items, children, userInfo }: MainNavProps) {
-  const segment = useSelectedLayoutSegment();
-  const [showMobileMenu, setShowMobileMenu] = React.useState<boolean>(false);
-
   return (
     <div className="container flex items-center justify-between h-20 py-6">
       <div className="flex md:gap-10 ">
