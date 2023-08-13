@@ -2,25 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSelectedLayoutSegment } from "next/navigation";
-import { Suspense } from "react";
-
 import { MainNavItem, UserInfo } from "@/types";
 import { siteConfig } from "@/config/site";
-import { cn } from "@/lib/utils";
 import { Icons } from "@/components/icons";
-
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { MobileNav } from "./mobile-nav";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { profileButtonPopoverStyles } from "@/config/clerk";
 import { ProfileDropdown } from "./profile-dropdown";
 
 interface MainNavProps {
@@ -69,16 +61,18 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
         </div>
       </SignedIn>
       <SignedOut>
-        <SignInButton
+        <div
           className={
-            "hidden md:flex px-2 py-2 transition-colors hover:bg-primary-foreground/10 dark:hover:bg-accent rounded-md font-semibold  items-center gap-1 cursor-pointer"
+            "hidden md:block px-2 py-2 transition-colors hover:bg-primary-foreground/10 dark:hover:bg-accent rounded-md font-semibold cursor-pointer"
           }
         >
-          <div>
-            Sign In
-            <Icons.signIn className="w-5 h-5" />
-          </div>
-        </SignInButton>
+          <SignInButton>
+            <div className="flex items-center gap-1">
+              Sign In
+              <Icons.signIn className="w-5 h-5" />
+            </div>
+          </SignInButton>
+        </div>
       </SignedOut>
     </div>
   );

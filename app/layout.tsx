@@ -1,4 +1,4 @@
-import "./globals.css";
+import "@/styles/globals.css";
 import { Inter as FontSans } from "next/font/google";
 import localFont from "next/font/local";
 
@@ -38,11 +38,11 @@ export const metadata = {
   ],
   authors: [
     {
-      name: "shadcn",
-      url: "https://shadcn.com",
+      name: "Thomas Surette",
+      url: "https://tsurette.com",
     },
   ],
-  creator: "shadcn",
+  creator: "Thomas Surette",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" },
@@ -60,7 +60,7 @@ export const metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: [`${siteConfig.url}/og.jpg`],
-    creator: "@shadcn",
+    creator: "@tomsurette",
   },
   icons: {
     icon: "/favicon.ico",

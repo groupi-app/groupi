@@ -1,83 +1,83 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
- 
+
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
- 
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
- 
+
     --border: 214.3 31.8% 91.4%;
     --border2: var(--border);
     --input: 214.3 31.8% 91.4%;
- 
+
     --primary: 285 100% 34%;
     --primary-foreground: 210 40% 98%;
- 
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --accent2: var(--accent);
     --accent-foreground2: var(--accent-foreground);
- 
+
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
- 
+
     --ring: 215 20.2% 65.1%;
- 
+
     --radius: 0.5rem;
   }
- 
+
   .dark {
     --background: 224 71% 4%;
     --foreground: 213 31% 91%;
- 
+
     --muted: 223 47% 11%;
     --muted-foreground: 215.4 16.3% 56.9%;
- 
+
     --popover: 224 71% 4%;
     --popover-foreground: 215 20.2% 65.1%;
- 
+
     --card: 224 71% 4%;
     --card-foreground: 213 31% 91%;
- 
+
     --border: 216 34% 17%;
     --border2: var(--border);
     --input: 216 34% 17%;
- 
+
     --primary: 285 100% 34%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
- 
+
     --accent: 216 34% 16%;
     --accent-foreground: 210 40% 98%;
 
     --accent2: var(--accent);
     --accent-foreground2: var(--accent-foreground);
- 
+
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
- 
+
     --ring: 216 34% 17%;
- 
+
     --radius: 0.5rem;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -88,7 +88,6 @@
   }
 }
 
-
 .line-clamp {
   display: -webkit-box;
   -webkit-line-clamp: 7;
@@ -96,11 +95,20 @@
   overflow: hidden;
 }
 
-
-.cl-card, .cl-formFieldInput {
+.cl-card,
+.cl-formFieldInput {
   @apply bg-card dark:border-[1px] dark:border-border text-card-foreground;
 }
-.cl-headerTitle, .cl-headerSubtitle, .cl-profileSectionTitleText, .cl-profileSectionContent p, .cl-profileSectionContent div button div span,.cl-form p, .cl-formFieldLabel, .cl-breadcrumbsItem, .cl-breadcrumbsItemDivider, .cl-page p{
+.cl-headerTitle,
+.cl-headerSubtitle,
+.cl-profileSectionTitleText,
+.cl-profileSectionContent p,
+.cl-profileSectionContent div button div span,
+.cl-form p,
+.cl-formFieldLabel,
+.cl-breadcrumbsItem,
+.cl-breadcrumbsItemDivider,
+.cl-page p {
   @apply text-card-foreground;
 }
 
@@ -112,7 +120,7 @@
   @apply hover:bg-accent rounded-md transition-all;
 }
 
-.cl-profileSectionContent svg{
+.cl-profileSectionContent svg {
   @apply text-primary dark:text-card-foreground;
 }
 
@@ -121,22 +129,22 @@
 }
 
 .cl-accordionTriggerButton {
-  @apply hover:bg-accent2 rounded-md transition-all
+  @apply hover:bg-accent2 rounded-md transition-all;
 }
 
 .cl-navbar {
-  @apply border-r border-border
+  @apply border-r border-border;
 }
 
 .cl-card > div:last-child {
   @apply hidden;
 }
 
-.cl-page > div > div > button{
+.cl-page > div > div > button {
   @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent2 dark:hover:bg-primary/30;
 }
 
-.cl-main p{
+.cl-main p {
   @apply text-card-foreground;
 }
 
@@ -148,7 +156,9 @@
   @apply border border-border2 rounded-md hover:bg-accent2 transition-all;
 }
 
-.cl-main button span, .cl-main button svg, .cl-main button div span {
+.cl-main button span,
+.cl-main button svg,
+.cl-main button div span {
   @apply text-card-foreground;
 }
 
@@ -160,11 +170,12 @@
   @apply capitalize text-sm text-primary dark:text-card-foreground hover:bg-accent2 dark:hover:bg-primary/30;
 }
 
-.cl-socialButtons > button{
+.cl-socialButtons > button {
   @apply border border-border2 rounded-md hover:bg-accent2 transition-all;
 }
 
-.cl-socialButtons span, .cl-socialButtons svg {
+.cl-socialButtons span,
+.cl-socialButtons svg {
   @apply text-card-foreground;
 }
 
@@ -172,11 +183,10 @@
   @apply border border-border rounded-md hover:bg-accent transition-all;
 }
 
-.cl-alternativeMethodsBlockButtonText, .cl-alternativeMethodsBlockButton svg {
+.cl-alternativeMethodsBlockButtonText,
+.cl-alternativeMethodsBlockButton svg {
   @apply text-card-foreground;
 }
-
-
 
 .cl-footer span {
   @apply text-card-foreground;
@@ -194,7 +204,7 @@
   @apply bg-border;
 }
 
-.cl-userPreviewSecondaryIdentifier{
+.cl-userPreviewSecondaryIdentifier {
   @apply text-muted-foreground;
 }
 
@@ -207,6 +217,7 @@
 .cl-navbarButton {
   @apply text-card-foreground hover:bg-accent2 rounded-md transition-all;
 }
-.cl-headerBackIcon, .cl-headerBackLink {
+.cl-headerBackIcon,
+.cl-headerBackLink {
   @apply text-primary;
 }

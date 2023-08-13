@@ -1,14 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
 
-export function ConfirmCard({ open }) {
+export function ConfirmCard({ open }: { open: boolean }) {
   return (
     <Card
       className={`transition-all w-full bottom-0 flex items-center shadow-md justify-between ${

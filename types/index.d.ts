@@ -1,4 +1,10 @@
 
+declare global {
+  interface Window {
+    Clerk: any;
+  }
+}
+
   export type NavItem = {
     title: string
     href: string
