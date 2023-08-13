@@ -1,11 +1,6 @@
-import { IncomingHttpHeaders } from "http";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
-import { Webhook, WebhookRequiredHeaders } from "svix";
-
-const webhookSecret = process.env.WEBHOOK_SECRET || "";
-
-type EventType = "user.created" | "user.updated" | "user.deleted" | "*";
+import { db } from '@/lib/db';
+import { NextResponse } from 'next/server'
+import { Webhook } from 'svix'
 
 type Event = {
     data: Record<string, string | number>,
@@ -13,44 +8,45 @@ type Event = {
     type: EventType,
 }
 
-async function handler(req: Request){
+type EventType = "user.created" | "user.updated" | "user.deleted" | "*";
 
-    const payload = await req.json();
-    const headersList = headers();
-    const heads = {
-        "svix-id": headersList.get("svix-id"),
-        "svix-timestamp": headersList.get("svix-timestamp"),
-        "svix-signature": headersList.get("svix-signature"),
-    }
-    const wh = new Webhook(webhookSecret);
-    let evt: Event | null = null;
+export async function POST(req: Request) {
+  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET as string;
 
-    try {
-        evt = wh.verify(JSON.stringify(payload), heads as IncomingHttpHeaders & WebhookRequiredHeaders) as Event;
-    }
-    catch (e) {
-        console.error((e as Error).message);
-        return NextResponse.json({}, { status: 400 });
-    }
+  const svix_id = req.headers.get("svix-id") ?? "";
+  const svix_timestamp = req.headers.get("svix-timestamp") ?? "";
+  const svix_signature = req.headers.get("svix-signature") ?? "";
 
-    const eventType: EventType = evt.type;
-    if(eventType === "user.created") {
-        const { id, ...attributes } = evt.data;
-        console.log("User created", id, attributes);
-    }
-    else if(eventType === "user.updated") {
-
-    }
-    else if(eventType === "user.deleted") {
-    
-    }
-    else {
-
-    }
+  const body = await req.text(); // This gets the raw body as a string
 
 
+  const sivx = new Webhook(WEBHOOK_SECRET);
+
+  let payload: Event | null = null;
+  try {
+    payload = sivx.verify(body, {
+      "svix-id": svix_id,
+      "svix-timestamp": svix_timestamp,
+      "svix-signature": svix_signature,
+    }) as Event;
+
+  } catch (err) {
+    console.error('Error verifying webhook:', err);
+    return NextResponse.json({}, { status: 400});
+  }
+
+  const eventType:EventType = payload.type;
+
+  if (eventType === "user.created") {
+    const userId = payload.data.id as string;
+    const person = await db.person.create({
+        data:{
+            id: userId
+        }
+    });
+    return NextResponse.json({ message: 'Created person' + person })
+  }
+
+
+  return NextResponse.json({ message: 'webhook test' })
 }
-
-export const GET = handler;
-export const POST = handler;
-export const PUT = handler;
