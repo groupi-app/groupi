@@ -54,7 +54,7 @@ export function PostCard({ userInfo }: PostCardProps) {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-card-foreground">
+                <p className="text-sm text-card-foreground line-clamp">
                   Here is some contentHere is some contentHere is some
                   contentHere is some contentHere is some contentHere is some
                   contentHere is some contentHere is some contentHere is some
@@ -77,7 +77,7 @@ export function PostCard({ userInfo }: PostCardProps) {
         <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-1 right-1 flex items-center justify-center">
           <Icons.more />
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end">
           <DropdownMenuItem>
             <div className="flex items-center gap-1">
               <Icons.edit className="w-4 h-4" />
@@ -98,10 +98,28 @@ export function PostCard({ userInfo }: PostCardProps) {
 
 PostCard.Skeleton = function PostCardSkeleton() {
   return (
-    <div className="p-4">
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-2/5" />
-        <Skeleton className="h-4 w-4/5" />
+    <div className="rounded-md border border-border w-full relative shadow-md max-w-2xl">
+      <div className="w-full hover:bg-accent transition-all pt-4 px-5 pb-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Skeleton className="w-10 h-10 rounded-full" />
+            <div className="flex flex-col space-y-1">
+              <Skeleton className="w-36 h-4" />
+              <Skeleton className="w-16 h-3" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <Skeleton className="w-full h-4" />
+            <Skeleton className="w-full h-4" />
+            <Skeleton className="w-full h-4" />
+            <Skeleton className="w-full h-4" />
+            <Skeleton className="w-3/4 h-4" />
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <Skeleton className="w-16 h-4" />
+            <Skeleton className="w-16 h-4" />
+          </div>
+        </div>
       </div>
     </div>
   );

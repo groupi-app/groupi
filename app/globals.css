@@ -88,6 +88,15 @@
   }
 }
 
+
+.line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 7;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
 .cl-card, .cl-formFieldInput {
   @apply bg-card dark:border-[1px] dark:border-border text-card-foreground;
 }
