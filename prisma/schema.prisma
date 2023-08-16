@@ -12,23 +12,89 @@ datasource db {
 }
 
 model Person {
-  id          String       @id @default(cuid())
+  id          String       @id
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now())
   memberships Membership[]
-}
-
-model Membership {
-  id       String @id @default(cuid())
-  person   Person @relation(fields: [personId], references: [id])
-  personId String @unique
-  eventId  String @unique
-  event    Event  @relation(fields: [eventId], references: [id])
+  posts       Post[]
+  replies     Reply[]
 }
 
 model Event {
-  id          String       @id @default(cuid())
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now())
-  memberships Membership[]
+  id                 String              @id @default(cuid())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now())
+  title              String
+  description        String
+  location           String
+  chosenDateTime     DateTime
+  potentialDateTimes PotentialDateTime[]
+  posts              Post[]
+  memberships        Membership[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  person         Person         @relation(fields: [personId], references: [id])
+  personId       String         @unique
+  eventId        String         @unique
+  event          Event          @relation(fields: [eventId], references: [id])
+  role           Role
+  rsvpStatus     Status
+  availabilities Availability[]
+}
+
+model PotentialDateTime {
+  id             String         @id @default(cuid())
+  eventId        String         @unique
+  event          Event          @relation(fields: [eventId], references: [id])
+  time           DateTime       @default(now())
+  availabilities Availability[]
+}
+
+model Availability {
+  membership          Membership        @relation(fields: [membershipId], references: [id])
+  membershipId        String            @unique
+  potentialDateTime   PotentialDateTime @relation(fields: [potentialDateTimeId], references: [id])
+  potentialDateTimeId String            @unique
+
+  status Status
+
+  @@id([membershipId, potentialDateTimeId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  author    Person   @relation(fields: [authorId], references: [id])
+  authorId  String   @unique
+  eventId   String   @unique
+  event     Event    @relation(fields: [eventId], references: [id])
+  replies   Reply[]
+  title     String
+  text      String
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  author    Person   @relation(fields: [authorId], references: [id])
+  authorId  String   @unique
+  postId    String   @unique
+  post      Post     @relation(fields: [postId], references: [id])
+  text      String
+}
+
+enum Status {
+  YES
+  MAYBE
+  NO
+}
+
+enum Role {
+  ORGANIZER
+  MODERATOR
+  ATTENDEE
 }
