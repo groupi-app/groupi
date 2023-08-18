@@ -4,6 +4,8 @@ import MemberList from "@/components/member-list";
 import PostFeed from "@/components/post-feed";
 import { UserInfo } from "@/types";
 import { Post } from "@/types";
+import MemberIcon from "@/components/member-icon";
+import Link from "next/link";
 
 export default async function Page({
   params,
@@ -53,6 +55,7 @@ export default async function Page({
         <MemberList />
         <PostFeed posts={testPosts} />
       </div>
+      <PostFeed posts={testPosts} />
     </div>
   );
 }
