@@ -15,11 +15,15 @@ import {
   Heading2,
   Save,
   Send as Submit,
+  Shield,
   LogIn as SignIn,
   LogOut as SignOut,
   User2 as Account,
   Trash as Delete,
   Pencil as Edit,
+  MapPin as Location,
+  Calendar as Date,
+  UserX as Kick,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +50,10 @@ export const Icons = {
   list: List,
   listOrdered: ListOrdered,
   heading: Heading2,
+  location: Location,
+  date: Date,
+  shield: Shield,
+  kick: Kick,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
