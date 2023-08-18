@@ -30,3 +30,12 @@ declare global {
     username: string | null | undefined
     avatar:string | undefined
   }
+
+  export type Post = {
+    id:string;
+    title:string;
+    body:string;
+    author: UserInfo;
+    createdAt:string;
+    replies: string;
+}

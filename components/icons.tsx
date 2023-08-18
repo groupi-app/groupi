@@ -3,11 +3,15 @@ import {
   X,
   Menu,
   MoreHorizontal,
+  Shield,
   LogIn as SignIn,
   LogOut as SignOut,
   User2 as Account,
   Trash as Delete,
   Pencil as Edit,
+  MapPin as Location,
+  Calendar as Date,
+  UserX as Kick,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -21,7 +25,11 @@ export const Icons = {
   account: Account,
   delete: Delete,
   edit: Edit,
+  location: Location,
+  date: Date,
   more: MoreHorizontal,
+  shield: Shield,
+  kick: Kick,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
