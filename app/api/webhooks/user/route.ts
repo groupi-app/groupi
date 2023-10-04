@@ -47,6 +47,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Created person' + person })
   }
 
+  if (eventType === "user.deleted") {
+    const userId = payload.data.id as string;
+    const person = await db.person.delete({
+      where:{
+        id: userId
+      }
+    });
+
+    return NextResponse.json({ message: 'Deleted person' + person })
+  }
+
 
   return NextResponse.json({ message: 'webhook test' })
 }
