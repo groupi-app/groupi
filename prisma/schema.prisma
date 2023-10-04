@@ -16,6 +16,7 @@ model Person {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now())
   memberships Membership[]
+  events      Event[]
   posts       Post[]
   replies     Reply[]
 }
@@ -24,6 +25,8 @@ model Event {
   id                 String              @id @default(cuid())
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @default(now())
+  owner              Person              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId            String              @unique
   title              String
   description        String
   location           String
@@ -35,10 +38,10 @@ model Event {
 
 model Membership {
   id             String         @id @default(cuid())
-  person         Person         @relation(fields: [personId], references: [id])
+  person         Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId       String         @unique
   eventId        String         @unique
-  event          Event          @relation(fields: [eventId], references: [id])
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   role           Role
   rsvpStatus     Status
   availabilities Availability[]
@@ -47,15 +50,15 @@ model Membership {
 model PotentialDateTime {
   id             String         @id @default(cuid())
   eventId        String         @unique
-  event          Event          @relation(fields: [eventId], references: [id])
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   time           DateTime       @default(now())
   availabilities Availability[]
 }
 
 model Availability {
-  membership          Membership        @relation(fields: [membershipId], references: [id])
+  membership          Membership        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   membershipId        String            @unique
-  potentialDateTime   PotentialDateTime @relation(fields: [potentialDateTimeId], references: [id])
+  potentialDateTime   PotentialDateTime @relation(fields: [potentialDateTimeId], references: [id], onDelete: Cascade)
   potentialDateTimeId String            @unique
 
   status Status
@@ -67,10 +70,10 @@ model Post {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  author    Person   @relation(fields: [authorId], references: [id])
+  author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String   @unique
   eventId   String   @unique
-  event     Event    @relation(fields: [eventId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   replies   Reply[]
   title     String
   text      String
@@ -80,10 +83,10 @@ model Reply {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  author    Person   @relation(fields: [authorId], references: [id])
+  author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String   @unique
   postId    String   @unique
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   text      String
 }
 
