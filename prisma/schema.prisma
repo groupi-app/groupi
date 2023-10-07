@@ -76,7 +76,7 @@ model Post {
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   replies   Reply[]
   title     String
-  text      String
+  content   Json
 }
 
 model Reply {
