@@ -53,6 +53,7 @@ export default async function Page({
         <MemberList />
         <PostFeed posts={testPosts} />
       </div>
+      <PostFeed posts={testPosts} />
     </div>
   );
 }
