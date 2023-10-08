@@ -73,13 +73,13 @@ export function PostCard({ post }: PostCardProps) {
           <Icons.more />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer">
             <div className="flex items-center gap-1">
               <Icons.edit className="w-4 h-4" />
               <span>Edit</span>
             </div>
           </DropdownMenuItem>
-          <DropdownMenuItem className="focus:bg-destructive focus:text-destructive-foreground">
+          <DropdownMenuItem className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
             <div className="flex items-center gap-1">
               <Icons.delete className="w-4 h-4" />
               <span>Delete</span>
