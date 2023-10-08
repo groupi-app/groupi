@@ -22,7 +22,7 @@ export default function MemberIcon() {
     <Tooltip>
       <DropdownMenu>
         <TooltipTrigger asChild>
-          <DropdownMenuTrigger className="rounded-full">
+          <DropdownMenuTrigger className="rounded-full border-2 border-background z-10">
             <Avatar>
               <AvatarImage src={userInfo.avatar} />
               <AvatarFallback>{"JD"}</AvatarFallback>

@@ -1,10 +1,9 @@
 import EventHeader from "@/components/event-header";
-import MemberIcon from "@/components/member-icon";
-import { PostCard } from "@/components/post-card";
+import MemberList from "@/components/member-list";
+
 import PostFeed from "@/components/post-feed";
 import { UserInfo } from "@/types";
 import { Post } from "@/types";
-import Link from "next/link";
 
 export default async function Page({
   params,
@@ -50,33 +49,10 @@ export default async function Page({
         eventDate={eventInfo.date}
         eventDescription={eventInfo.description}
       />
-      <div className="max-w-2xl mx-auto">
-        <h2 className="text-xl font-heading">Attendees</h2>
-        <div className="flex items-center py-2 gap-2 flex-wrap">
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-          <MemberIcon />
-        </div>
-        <Link href={"/event/id/attendees"}>
-          <span className="text-primary hover:underline">View All</span>
-        </Link>
+      <div className="max-w-2xl mx-auto flex flex-col gap-4">
+        <MemberList />
+        <PostFeed posts={testPosts} />
       </div>
-      <PostFeed posts={testPosts} />
     </div>
   );
 }
