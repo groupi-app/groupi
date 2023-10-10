@@ -3,6 +3,8 @@ import {
   X,
   Menu,
   MoreHorizontal,
+  Loader2,
+  ChevronLeft,
   LogIn as SignIn,
   LogOut as SignOut,
   User2 as Account,
@@ -14,6 +16,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  spinner: Loader2,
   menu: Menu,
   close: X,
   signIn: SignIn,
@@ -21,6 +24,7 @@ export const Icons = {
   account: Account,
   delete: Delete,
   edit: Edit,
+  back: ChevronLeft,
   more: MoreHorizontal,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

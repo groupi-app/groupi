@@ -98,7 +98,7 @@ export function PostCard({ userInfo }: PostCardProps) {
 PostCard.Skeleton = function PostCardSkeleton() {
   return (
     <div className="rounded-md border border-border w-full relative shadow-md max-w-2xl">
-      <div className="w-full hover:bg-accent transition-all pt-4 px-5 pb-2">
+      <div className="w-full transition-all pt-4 px-5 pb-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-1">
             <Skeleton className="w-10 h-10 rounded-full" />
