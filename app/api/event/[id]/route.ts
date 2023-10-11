@@ -33,6 +33,8 @@ export async function DELETE(
 ) {
     const id = context.params.id
 
+    //ToDo: More error handling?
+    
     try {
         const result = await db.event.delete({
             where: {
@@ -52,3 +54,5 @@ export async function DELETE(
         }
     }
 }
+
+//ToDo: Finish PATCH implementation

@@ -6,6 +6,9 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
+        //ToDo: Validations for request
+        //ToDo: More error handling?
+
         const result = await db.event.create({
             data: {
                 createdAt: body.createdAt,
