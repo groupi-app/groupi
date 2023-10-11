@@ -49,13 +49,12 @@ export async function POST(req: Request) {
 
   if (eventType === "user.deleted") {
     const userId = payload.data.id as string;
-    const person = await db.person.delete({
-      where:{
+    const person = await db.person.deleteMany({
+      where: {
         id: userId
       }
     });
-
-    return NextResponse.json({ message: 'Deleted person' + person })
+    return NextResponse.json({ message: `Deleted ${person.count} ${person.count === 1 ? 'person' : 'people'}` })
   }
 
 
