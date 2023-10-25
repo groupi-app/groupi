@@ -21,20 +21,19 @@ export async function GET(
     });
 
     if (!result) {
-        return NextResponse.json({ message: "Event not found" }, { status: 404 });
+        return NextResponse.json({ message: `Event with id: ${id}, not found` }, { status: 404 });
     }
     
     return NextResponse.json(result, { status: 200 });
 }
 
+// ToDo: permissions
 export async function DELETE(
     request: Request,
     context: { params: { id: string } }
 ) {
     const id = context.params.id
 
-    //ToDo: More error handling?
-    
     try {
         const result = await db.event.delete({
             where: {
@@ -48,11 +47,63 @@ export async function DELETE(
         if (e instanceof Prisma.PrismaClientKnownRequestError) {
             if (e.code === "P2025") {
                 return NextResponse.json(
-                    { message: `Event with id '${id}' not found` }, 
+                    { message: `Event with id: ${id}, not found` }, 
                     { status: 404 });
             }
         }
     }
 }
 
-//ToDo: Finish PATCH implementation
+// ToDo: permissions
+export async function PATCH(
+    request: Request,
+    context: { params: { id: string } }
+) {
+    const body = await request.json();
+    const id = context.params.id;
+    let result = null;
+
+    // ToDo: Validations
+
+    if (body.ownerId) {
+        result = await db.event.update({
+            where: {
+                id: id
+            },
+            data: {
+                updatedAt: body.updatedAt,
+                owner: {
+                    connect: {
+                        id: body.ownerId
+                    }
+                },
+                title: body.title,
+                description: body.description,
+                location: body.location,
+                chosenDateTime: body.chosenDateTime,
+                potentialDateTimes: body.potentialDateTimes,
+                posts: body.posts,
+                memberships: body.memberships
+            }
+        });
+    }
+    else {
+        result = await db.event.update({
+            where: {
+                id: id
+            },
+            data: {
+                updatedAt: body.updatedAt,
+                title: body.title,
+                description: body.description,
+                location: body.location,
+                chosenDateTime: body.chosenDateTime,
+                potentialDateTimes: body.potentialDateTimes,
+                posts: body.posts,
+                memberships: body.memberships
+            }
+        });
+    }
+
+    return NextResponse.json(result, { status: 200 });
+}
