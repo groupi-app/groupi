@@ -1,16 +1,19 @@
-import { notFound, redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs";
-import { NewPost } from "@/components/new-post";
+import { Editor } from "@/components/editor";
 
-interface EditorPageProps {
-  params: { postId: string };
-}
-
-export default async function EditorPage({ params }: EditorPageProps) {
+export default async function EditorPage({
+  params,
+}: {
+  params: { eventId: string };
+}) {
   const user = await currentUser();
-
   const userId = user ? user.id : "";
 
-  return <NewPost authorId={userId} />;
+  const { eventId } = params;
+
+  return (
+    <div className="container pt-6">
+      <Editor authorId={userId} eventId={eventId} />
+    </div>
+  );
 }
