@@ -6,6 +6,9 @@ import { Toolbar } from "./toolbar";
 import Heading from "@tiptap/extension-heading";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
+import CharacterCount from "@tiptap/extension-character-count";
+
+const limit = 1000;
 
 const isActuallyEmpty = (html: string) => {
   const emptyElementPattern = /^<(\w+)(\s[^>]*)?>\s*<\/\1>$/;
@@ -66,7 +69,9 @@ export function Tiptap({
       }
     },
   });
-
+  if (!editor) {
+    return null;
+  }
   return (
     <div className="flex flex-col justify-stretch gap-3">
       <Toolbar editor={editor} />

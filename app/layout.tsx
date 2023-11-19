@@ -80,7 +80,7 @@ export default async function RootLayout({
     firstName: user?.firstName,
     lastName: user?.lastName,
     username: user?.username,
-    avatar: user?.profileImageUrl,
+    avatar: user?.imageUrl,
   };
 
   return (

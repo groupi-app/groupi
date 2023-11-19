@@ -7,6 +7,9 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { Icons } from "@/components/icons";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
 import { Tiptap } from "./tiptap";
 import { useRouter } from "next/navigation";
-import { Icons } from "./icons";
 
 interface PostData {
   title: string;
@@ -31,9 +33,20 @@ export function Editor({
   eventId: string;
   postData?: PostData;
 }) {
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const { toast } = useToast();
+
   const formSchema = z.object({
-    title: z.string().trim().min(1, "Title is required"),
-    content: z.string().trim().min(1, "Content is required"),
+    title: z
+      .string()
+      .trim()
+      .min(1, "Title is required")
+      .max(100, "Your title is too long!"),
+    content: z
+      .string()
+      .trim()
+      .min(1, "Post body is required")
+      .max(2000, "Your post is too long!"),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,20 +59,49 @@ export function Editor({
   });
   const router = useRouter();
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await fetch("/api/post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        authorId: authorId,
-        title: values.title,
-        content: values.content,
-        eventId: eventId,
-      }),
-    });
-    console.log(res);
-    router.push(`/event/${eventId}`);
+    setIsSaving(true);
+
+    if (!postData) {
+      const res = await fetch("/api/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          authorId: authorId,
+          title: values.title,
+          content: values.content,
+          eventId: eventId,
+        }),
+      });
+      if (res.ok) {
+        toast({
+          title: "Post Created",
+          description: "Your post has been successfully created.",
+        });
+      }
+      setIsSaving(false);
+      router.push(`/event/${eventId}`);
+    } else {
+      const res = await fetch(`/api/post/${postData.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: values.title,
+          content: values.content,
+        }),
+      });
+      if (res.ok) {
+        toast({
+          title: "Post Updated",
+          description: "Your post has been successfully updated.",
+        });
+      }
+      setIsSaving(false);
+      router.push(`/post/${postData.id}`);
+    }
   }
 
   return (
@@ -108,7 +150,11 @@ export function Editor({
               className="w-full md:w-max flex items-center gap-1"
               type="submit"
             >
-              <Icons.save className="w-4 h-4" />
+              {isSaving ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icons.save className="w-4 h-4" />
+              )}
               <span>Save</span>{" "}
             </Button>
           ) : (
@@ -116,7 +162,11 @@ export function Editor({
               className="w-full md:w-max flex items-center gap-1"
               type="submit"
             >
-              <Icons.submit className="w-4 h-4" />
+              {isSaving ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icons.submit className="w-4 h-4" />
+              )}
               <span>Submit</span>
             </Button>
           )}
