@@ -76,7 +76,7 @@ model Post {
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   replies   Reply[]
   title     String   @db.VarChar(100)
-  content   String   @db.VarChar(2000)
+  content   String   @db.VarChar(3000)
 }
 
 model Reply {

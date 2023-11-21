@@ -29,7 +29,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
       <Link href={`/event/${post.eventId}`}>
         <Button variant={"ghost"} className="flex items-center gap-1 pl-2 mb-4">
           <Icons.back />
-          <span>Back</span>
+          <span>{post.event.title}</span>
         </Button>
       </Link>
       <div>

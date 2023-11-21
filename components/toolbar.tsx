@@ -89,3 +89,34 @@ export function Toolbar({ editor }: ToolbarProps) {
     </div>
   );
 }
+
+Toolbar.Skeleton = function ToolbarSkeleton() {
+  return (
+    <div className="flex items-center gap-2 rounded-md flex-wrap mb-2">
+      <Toggle size="sm">
+        <Icons.heading />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.bold />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.italic />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.underline />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.strikethrough />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.code />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.list />
+      </Toggle>
+      <Toggle size="sm">
+        <Icons.listOrdered />
+      </Toggle>
+    </div>
+  );
+};

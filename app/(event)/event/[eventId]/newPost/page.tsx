@@ -3,6 +3,7 @@ import { Editor } from "@/components/editor";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import Link from "next/link";
+import { db } from "@/lib/db";
 
 export default async function Page({
   params,
@@ -13,16 +14,14 @@ export default async function Page({
   const userId = user ? user.id : "";
 
   const { eventId } = params;
+  const event = await db.event.findUnique({
+    where: {
+      id: eventId,
+    },
+  });
 
   return (
     <div className="container pt-6">
-      <Link href={`/event/${eventId}`}>
-        <Button variant={"ghost"} className="flex items-center gap-1 pl-2 mb-4">
-          <Icons.back />
-          <span>Back</span>
-        </Button>
-      </Link>
-
       <Editor authorId={userId} eventId={eventId} />
     </div>
   );

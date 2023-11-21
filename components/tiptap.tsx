@@ -26,10 +26,12 @@ export function Tiptap({
   content,
   placeholder,
   onChange,
+  onChangeCapture,
 }: {
   content: string;
   placeholder: string;
   onChange: (richText: string) => void;
+  onChangeCapture: (richText: string) => void;
 }) {
   const editor = useEditor({
     extensions: [
@@ -64,8 +66,10 @@ export function Tiptap({
     onUpdate({ editor }) {
       if (!isActuallyEmpty(editor.getHTML())) {
         onChange(editor.getHTML());
+        onChangeCapture(editor.getHTML());
       } else {
         onChange("");
+        onChangeCapture("");
       }
     },
   });

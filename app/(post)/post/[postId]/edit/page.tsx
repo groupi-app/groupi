@@ -1,7 +1,8 @@
 import { currentUser } from "@clerk/nextjs";
 import { Editor } from "@/components/editor";
 import { db } from "@/lib/db";
-import { title } from "process";
+
+import { notFound } from "next/navigation";
 
 export default async function Page({ params }: { params: { postId: string } }) {
   const { postId } = params;
@@ -20,6 +21,10 @@ export default async function Page({ params }: { params: { postId: string } }) {
   const id = post?.id || "";
   const authorId = post?.authorId || "";
   const eventId = post?.eventId || "";
+
+  if (authorId !== userId) {
+    notFound();
+  }
 
   return (
     <div className="container pt-6">
