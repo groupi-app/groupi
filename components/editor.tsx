@@ -243,8 +243,8 @@ export function Editor({
           <DialogHeader>
             <DialogTitle>Discard Changes?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to exit the editor? Any changes you've made
-              will not be saved.
+              Are you sure you want to exit the editor? Any changes you&apos;ve
+              made will not be saved.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
