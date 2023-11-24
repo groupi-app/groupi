@@ -248,12 +248,16 @@ export function Editor({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost">Cancel</Button>
-            </DialogClose>
-            <Link href={backUrl}>
-              <Button variant="destructive">Discard</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <DialogClose className="flex-grow" asChild>
+                <Button variant="ghost">Cancel</Button>
+              </DialogClose>
+              <Link className="flex-grow" href={backUrl}>
+                <Button className="w-full" variant="destructive">
+                  Discard
+                </Button>
+              </Link>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
