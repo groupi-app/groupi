@@ -11,13 +11,20 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Icons } from "./icons";
+import { UserInfo } from "@/types";
 
-export default function MemberIcon() {
-  const fullName = "John Doe";
-  const userInfo = {
-    username: "johndoe",
-    avatar: "https://i.pravatar.cc/150?img=68",
-  };
+export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
+  const initials =
+    userInfo.firstName?.toString()[0] + "" + userInfo.lastName?.toString()[0];
+
+  let fullName = "";
+  if (userInfo.firstName && userInfo.lastName) {
+    fullName = userInfo.firstName + " " + userInfo.lastName;
+  } else if (userInfo.firstName && !userInfo.lastName) {
+    fullName = userInfo.firstName;
+  } else if (!userInfo.firstName && userInfo.lastName) {
+    fullName = userInfo.lastName;
+  }
   return (
     <Tooltip>
       <DropdownMenu>
@@ -25,7 +32,7 @@ export default function MemberIcon() {
           <DropdownMenuTrigger className="rounded-full border-2 border-background z-10">
             <Avatar>
               <AvatarImage src={userInfo.avatar} />
-              <AvatarFallback>{"JD"}</AvatarFallback>
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
         </TooltipTrigger>

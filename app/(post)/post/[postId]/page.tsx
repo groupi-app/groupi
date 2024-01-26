@@ -2,6 +2,7 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -36,9 +37,11 @@ export default async function Page({ params }: { params: { postId: string } }) {
         <div className="flex flex-col gap-1 mb-8">
           <h1 className="text-5xl font-heading">{post.title}</h1>
           <div className="flex items-center gap-2">
-            <img
+            <Image
               src={authorUser.imageUrl}
               alt={fullName}
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full"
             />
             <span className="text-muted-foreground">{fullName}</span>

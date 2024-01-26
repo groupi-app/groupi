@@ -2,6 +2,13 @@ import MemberIcon from "@/components/member-icon";
 import Link from "next/link";
 
 export default function MemberList() {
+  const mockUserInfo = {
+    firstName: "John",
+    lastName: "Doe",
+    username: "johndoe",
+    avatar: "https://i.pravatar.cc/150?img=68",
+  };
+
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -11,29 +18,28 @@ export default function MemberList() {
         </div>
       </div>
       <div className="flex items-center p-2 -space-x-2 flex-wrap h-[54px] overflow-hidden">
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
-        <MemberIcon />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
+        <MemberIcon userInfo={mockUserInfo} />
       </div>
       <Link href={"/event/id/attendees"}>
         <span className="text-primary hover:underline">View All</span>

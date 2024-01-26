@@ -1,18 +1,19 @@
 import { PostCard } from "@/components/post-card";
-import { Post } from "@/types";
+import { PostWithReplies } from "@/types";
 
-interface PostFeedProps {
-  posts: Post[];
-}
-
-export default function PostFeed({ posts }: PostFeedProps) {
+export default function PostFeed({ posts }: { posts: PostWithReplies[] }) {
   return (
     <div>
       <h2 className="text-xl font-heading">Posts</h2>
       <div className="w-full flex flex-col items-center gap-3 py-2">
-        {posts.map((post) => (
-          <PostCard post={post} />
-        ))}
+        {posts
+          .sort(
+            (a, b) =>
+              a.updatedAt.getMilliseconds() - b.updatedAt.getMilliseconds()
+          )
+          .map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
       </div>
     </div>
   );

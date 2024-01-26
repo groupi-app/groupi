@@ -1,4 +1,6 @@
 
+import { Post } from "@prisma/client";
+
 declare global {
   interface Window {
     Clerk: any;
@@ -31,11 +33,9 @@ declare global {
     avatar:string | undefined
   }
 
-  export type Post = {
-    id:string;
-    title:string;
-    body:string;
-    author: UserInfo;
-    createdAt:string;
-    replies: string;
-}
+  interface PostWithReplies extends Post {
+    authorInfo?: UserInfo
+    replies: {
+      id: string;
+    }[];
+  }

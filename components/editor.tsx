@@ -107,6 +107,7 @@ export function Editor({
         body: JSON.stringify({
           title: values.title,
           content: values.content,
+          updatedAt: new Date().toISOString(),
         }),
       });
       if (res.ok) {

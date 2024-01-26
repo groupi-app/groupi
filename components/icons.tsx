@@ -14,6 +14,7 @@ import {
   ListOrdered,
   Heading2,
   Save,
+  Plus,
   Send as Submit,
   Shield,
   LogIn as SignIn,
@@ -30,6 +31,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  plus: Plus,
   spinner: Loader2,
   menu: Menu,
   close: X,
