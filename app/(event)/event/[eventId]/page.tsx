@@ -13,12 +13,6 @@ export default async function Page({
   params: { eventId: string };
 }) {
   const { eventId } = params;
-  const userInfo: UserInfo = {
-    firstName: "John",
-    lastName: "Doe",
-    username: "johndoe",
-    avatar: "https://i.pravatar.cc/150?img=68",
-  };
 
   const eventInfo = {
     title: "Telly's Birthday Party",
