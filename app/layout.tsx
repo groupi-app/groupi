@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -80,7 +81,7 @@ export default async function RootLayout({
     firstName: user?.firstName,
     lastName: user?.lastName,
     username: user?.username,
-    avatar: user?.profileImageUrl,
+    avatar: user?.imageUrl,
   };
 
   return (
@@ -94,15 +95,17 @@ export default async function RootLayout({
           )}
         >
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <div className="flex flex-col min-h-screen">
-              <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
-                <MainNav userInfo={userInfo} items={navConfig.mainNav} />
-              </header>
-              <main>{children}</main>
-            </div>
-            <Analytics />
-            <Toaster />
-            <TailwindIndicator />
+            <TooltipProvider>
+              <div className="flex flex-col min-h-screen">
+                <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
+                  <MainNav userInfo={userInfo} items={navConfig.mainNav} />
+                </header>
+                <main>{children}</main>
+              </div>
+              <Analytics />
+              <Toaster />
+              <TailwindIndicator />
+            </TooltipProvider>
           </ThemeProvider>
         </body>
       </html>

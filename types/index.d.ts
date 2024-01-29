@@ -1,4 +1,6 @@
 
+import { Post } from "@prisma/client";
+
 declare global {
   interface Window {
     Clerk: any;
@@ -29,4 +31,11 @@ declare global {
     lastName: string | null | undefined
     username: string | null | undefined
     avatar:string | undefined
+  }
+
+  interface PostWithReplies extends Post {
+    authorInfo?: UserInfo
+    replies: {
+      id: string;
+    }[];
   }

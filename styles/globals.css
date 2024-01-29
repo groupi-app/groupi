@@ -26,8 +26,8 @@
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 260 40% 96.1%;
+    --accent-foreground: 273.2 47.4% 11.2%;
 
     --accent2: var(--accent);
     --accent-foreground2: var(--accent-foreground);
@@ -41,16 +41,16 @@
   }
 
   .dark {
-    --background: 224 71% 4%;
+    --background: 264 71% 6%;
     --foreground: 213 31% 91%;
 
     --muted: 223 47% 11%;
     --muted-foreground: 215.4 16.3% 56.9%;
 
-    --popover: 224 71% 4%;
+    --popover: 264 71% 6%;
     --popover-foreground: 215 20.2% 65.1%;
 
-    --card: 224 71% 4%;
+    --card: 264 71% 6%;
     --card-foreground: 213 31% 91%;
 
     --border: 216 34% 17%;
@@ -63,8 +63,8 @@
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
 
-    --accent: 216 34% 16%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 273 34% 16%;
+    --accent-foreground: 260 40% 98%;
 
     --accent2: var(--accent);
     --accent-foreground2: var(--accent-foreground);
@@ -220,4 +220,12 @@
 .cl-headerBackIcon,
 .cl-headerBackLink {
   @apply text-primary;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
