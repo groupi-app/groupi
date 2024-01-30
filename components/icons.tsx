@@ -5,6 +5,7 @@ import {
   MoreHorizontal,
   Loader2,
   ChevronLeft,
+  ArrowRight,
   Bold,
   Strikethrough,
   Italic,
@@ -15,8 +16,9 @@ import {
   Heading2,
   Save,
   Plus,
-  Send as Submit,
   Shield,
+  MessageCircle as Reply,
+  Send as Submit,
   LogIn as SignIn,
   LogOut as SignOut,
   User2 as Account,
@@ -31,6 +33,8 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  arrowRight: ArrowRight,
+  reply: Reply,
   plus: Plus,
   spinner: Loader2,
   menu: Menu,

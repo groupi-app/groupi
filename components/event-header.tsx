@@ -1,9 +1,10 @@
 import { Icons } from "@/components/icons";
+import { Button } from "./ui/button";
 
 interface EventHeaderProps {
   eventTitle: string;
   eventLocation: string;
-  eventDate: string;
+  eventDate: string | null;
   eventDescription: string;
 }
 
@@ -23,7 +24,18 @@ export default function EventHeader({
         </div>
         <div className="flex items-center gap-1 text-muted-foreground">
           <Icons.date className="w-6 h-6" />
-          <span>{eventDate}</span>
+          {eventDate !== null ? (
+            <span>{eventDate}</span>
+          ) : (
+            <Button
+              className="flex items-center gap-1"
+              variant={"ghost"}
+              size={"sm"}
+            >
+              <span>Set Availability</span>
+              <Icons.arrowRight className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
       <p>{eventDescription}</p>

@@ -222,6 +222,27 @@
   @apply text-primary;
 }
 
+.cl-identityPreview {
+  @apply border-border;
+}
+
+.cl-identityPreviewText {
+  @apply text-card-foreground;
+}
+
+.cl-formFieldHintText {
+  @apply text-muted-foreground;
+}
+
+.cl-otpCodeFieldInput {
+  @apply text-card-foreground border-border;
+}
+
+.cl-formResendCodeLink,
+.cl-identityPreviewEditButtonIcon {
+  @apply text-primary;
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   color: hsl(var(--muted-foreground));
   content: attr(data-placeholder);

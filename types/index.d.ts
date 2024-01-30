@@ -1,5 +1,5 @@
 
-import { Post } from "@prisma/client";
+import { Event, Post, Reply } from "@prisma/client";
 
 declare global {
   interface Window {
@@ -33,9 +33,8 @@ declare global {
     avatar:string | undefined
   }
 
-  interface PostWithReplies extends Post {
+  interface PostWithAuthorInfo extends Post {
     authorInfo?: UserInfo
-    replies: {
-      id: string;
-    }[];
+    event?: Event
+    replies: Reply[]
   }

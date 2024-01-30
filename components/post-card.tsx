@@ -8,21 +8,30 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { PostWithReplies } from "@/types";
-import {
-  Dialog,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { PostWithAuthorInfo } from "@/types";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { DeletePostDialog } from "./deletePostDialog";
 import { formatDate } from "@/lib/utils";
+import React from "react";
+import { PostCardContent } from "./post-card-content";
 
 interface PostCardProps {
-  post: PostWithReplies;
+  post: PostWithAuthorInfo;
+  isMod: boolean;
+  userId: string;
 }
 
-export function PostCard({ post }: PostCardProps) {
-  const { id, title, content, authorInfo, createdAt, updatedAt, replies } =
-    post;
+export function PostCard({ post, isMod, userId }: PostCardProps) {
+  const {
+    id,
+    title,
+    content,
+    authorInfo,
+    createdAt,
+    updatedAt,
+    replies,
+    authorId,
+  } = post;
   if (!authorInfo) return null;
   const initials =
     authorInfo.firstName?.toString()[0] +
@@ -43,9 +52,9 @@ export function PostCard({ post }: PostCardProps) {
       <DropdownMenu>
         <div className="rounded-xl border border-border w-full relative shadow-md z-10">
           <Link href={`/post/${id}`} className="w-full z-10">
-            <div className="w-full rounded-xl hover:bg-accent transition-all pt-4 px-5 pb-2">
+            <div className="w-full rounded-xl bg-card hover:bg-accent transition-colors group pt-4 px-5 pb-2">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center gap-2 w-full mb-2">
                   <div>
                     <Avatar>
                       <AvatarImage src={authorInfo.avatar} />
@@ -67,9 +76,9 @@ export function PostCard({ post }: PostCardProps) {
                     )}
                   </div>
                 </div>
-                <div dangerouslySetInnerHTML={{ __html: content }} />
+                <PostCardContent content={content} />
                 <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                     <span className="text-muted-foreground text-sm">
                       Created {formatDate(createdAt)} ago
                     </span>
@@ -77,38 +86,45 @@ export function PostCard({ post }: PostCardProps) {
                       Updated {formatDate(updatedAt)} ago
                     </span>
                   </div>
-                  <span className="text-muted-foreground text-sm">
-                    {replies.length} replies
-                  </span>
+                  <div className="text-muted-foreground flex items-center gap-1">
+                    <Icons.reply className="w-5 h-5" />
+                    <span className="text-sm">{replies.length} replies</span>
+                  </div>
                 </div>
               </div>
             </div>
           </Link>
-          <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-1 right-1 flex items-center justify-center">
-            <Icons.more />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href={`/post/${id}/edit`}>
-                <div className="flex items-center gap-1">
-                  <Icons.edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </div>
-              </Link>
-            </DropdownMenuItem>
+          {(isMod || userId === authorId) && (
+            <>
+              <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-1 right-1 flex items-center justify-center">
+                <Icons.more />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {userId === authorId && (
+                  <DropdownMenuItem className="cursor-pointer" asChild>
+                    <Link href={`/post/${id}/edit`}>
+                      <div className="flex items-center gap-1">
+                        <Icons.edit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
-            <DropdownMenuItem
-              asChild
-              className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
-            >
-              <DialogTrigger asChild>
-                <div className="flex items-center gap-1">
-                  <Icons.delete className="w-4 h-4" />
-                  <span>Delete</span>
-                </div>
-              </DialogTrigger>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                >
+                  <DialogTrigger asChild>
+                    <div className="flex items-center gap-1">
+                      <Icons.delete className="w-4 h-4" />
+                      <span>Delete</span>
+                    </div>
+                  </DialogTrigger>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </>
+          )}
         </div>
       </DropdownMenu>
       <DeletePostDialog id={id} />

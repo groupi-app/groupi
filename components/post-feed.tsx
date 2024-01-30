@@ -1,7 +1,16 @@
 import { PostCard } from "@/components/post-card";
-import { PostWithReplies } from "@/types";
+import { PostWithAuthorInfo } from "@/types";
+import { Person } from "@prisma/client";
 
-export default function PostFeed({ posts }: { posts: PostWithReplies[] }) {
+export default function PostFeed({
+  posts,
+  isMod,
+  userId,
+}: {
+  posts: PostWithAuthorInfo[];
+  isMod: boolean;
+  userId: string;
+}) {
   return (
     <div>
       <h2 className="text-xl font-heading">Posts</h2>
@@ -12,7 +21,7 @@ export default function PostFeed({ posts }: { posts: PostWithReplies[] }) {
               a.updatedAt.getMilliseconds() - b.updatedAt.getMilliseconds()
           )
           .map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard userId={userId} isMod={isMod} key={post.id} post={post} />
           ))}
       </div>
     </div>

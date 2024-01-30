@@ -1,48 +1,62 @@
+"use client";
+import { useRef, useState, useEffect } from "react";
 import MemberIcon from "@/components/member-icon";
 import Link from "next/link";
+import { Button } from "./ui/button";
+import { UserInfo } from "@/types";
+import { usePathname } from "next/navigation";
 
-export default function MemberList() {
-  const mockUserInfo = {
-    firstName: "John",
-    lastName: "Doe",
-    username: "johndoe",
-    avatar: "https://i.pravatar.cc/150?img=68",
-  };
+export default function MemberList({ members }: { members: UserInfo[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visibleIcons, setVisibleIcons] = useState(0);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    function checkOverflow() {
+      if (ref.current) {
+        const { scrollWidth, clientWidth } = ref.current;
+        const iconWidth = 40; // Replace with your icon width
+        const iconsCount = Math.floor(clientWidth / iconWidth);
+        setVisibleIcons(iconsCount);
+      }
+    }
+
+    checkOverflow();
+
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, []);
 
   return (
     <div>
       <div className="flex items-center gap-2">
         <h2 className="text-xl font-heading">Attendees</h2>
         <div className="rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center">
-          <span>12</span>
+          <span>{members.length}</span>
         </div>
       </div>
-      <div className="flex items-center p-2 -space-x-2 flex-wrap h-[54px] overflow-hidden">
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
-        <MemberIcon userInfo={mockUserInfo} />
+      <div
+        ref={ref}
+        className="flex items-center p-2 -space-x-2 h-[54px] overflow-hidden"
+      >
+        {members.map((user, i) =>
+          i < visibleIcons - 1 ? (
+            <MemberIcon key={i} userInfo={user} />
+          ) : (
+            i === visibleIcons - 1 && (
+              <Link href={`${pathname}/members`}>
+                <Button className="rounded-full z-30" key={i}>
+                  +{members.length - visibleIcons + 1}
+                </Button>
+              </Link>
+            )
+          )
+        )}
       </div>
-      <Link href={"/event/id/attendees"}>
-        <span className="text-primary hover:underline">View All</span>
+      <Link href={`${pathname}/members`}>
+        <span className="rounded-full z-30 text-primary hover:underline">
+          View All
+        </span>
       </Link>
     </div>
   );

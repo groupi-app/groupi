@@ -26,12 +26,12 @@ async function deletePost({
     router.refresh();
     toast({
       title: "Post deleted",
-      description: "Your post has been deleted.",
+      description: "The post has been deleted.",
     });
   } else {
     toast({
       title: "Uh oh!",
-      description: "Your post could not be deleted.",
+      description: "The post could not be deleted.",
       variant: "destructive",
     });
   }
@@ -54,15 +54,17 @@ export function DeletePostDialog({ id }: { id: string }) {
           <DialogClose className="flex-grow" asChild>
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
-          <Button
-            onClick={() => {
-              deletePost({ id, router, toast });
-            }}
-            className="w-full"
-            variant="destructive"
-          >
-            Delete
-          </Button>
+          <DialogClose className="flex-grow" asChild>
+            <Button
+              onClick={() => {
+                deletePost({ id, router, toast });
+              }}
+              className="w-full"
+              variant="destructive"
+            >
+              Delete
+            </Button>
+          </DialogClose>
         </div>
       </DialogFooter>
     </DialogContent>

@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
   const eventId = post?.eventId || "";
 
   if (authorId !== userId) {
-    notFound();
+    throw new Error("You are not the author of this post");
   }
 
   return (

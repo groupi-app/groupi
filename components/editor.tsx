@@ -98,6 +98,7 @@ export function Editor({
       }
       setIsSaving(false);
       router.push(`/event/${eventId}`);
+      router.refresh();
     } else {
       const res = await fetch(`/api/post/${postData.id}`, {
         method: "PATCH",
@@ -118,11 +119,11 @@ export function Editor({
       }
       setIsSaving(false);
       router.push(`/post/${postData.id}`);
+      router.refresh();
     }
   }
 
   const contentEditedOnChange = (c: string) => {
-    console.log(c, content);
     if (c !== content) {
       setContentEdited(true);
     } else {
@@ -172,7 +173,6 @@ export function Editor({
                       value={field.value}
                       onChange={field.onChange}
                       onChangeCapture={(e) => {
-                        console.log(e.currentTarget.value, title);
                         if (e.currentTarget.value !== title) {
                           setTitleEdited(true);
                         } else {

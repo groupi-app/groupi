@@ -19,3 +19,12 @@ export async function POST(request:Request) {
 
     return NextResponse.json({message: "Post Created"}, {status: 200});
 }
+
+export async function GET(request:Request) {
+    const posts = await db.post.findMany({
+        include: {
+            replies: true,
+        }
+    });
+    return NextResponse.json(posts, {status: 200});
+}

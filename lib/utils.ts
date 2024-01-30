@@ -6,8 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: Date) {
-  console.log("ms", (date.getTime()), Date.now());
-
     var seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   
     var interval = seconds / 31536000;

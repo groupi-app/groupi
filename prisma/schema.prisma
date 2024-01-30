@@ -30,7 +30,7 @@ model Event {
   title              String
   description        String
   location           String
-  chosenDateTime     DateTime
+  chosenDateTime     DateTime?
   potentialDateTimes PotentialDateTime[]
   posts              Post[]
   memberships        Membership[]
