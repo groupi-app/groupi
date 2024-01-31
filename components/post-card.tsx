@@ -11,7 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PostWithAuthorInfo } from "@/types";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { DeletePostDialog } from "./deletePostDialog";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getFullName } from "@/lib/utils";
 import React from "react";
 import { PostCardContent } from "./post-card-content";
 
@@ -38,14 +38,7 @@ export function PostCard({ post, isMod, userId }: PostCardProps) {
     "" +
     authorInfo.lastName?.toString()[0];
 
-  let fullName = "";
-  if (authorInfo.firstName && authorInfo.lastName) {
-    fullName = authorInfo.firstName + " " + authorInfo.lastName;
-  } else if (authorInfo.firstName && !authorInfo.lastName) {
-    fullName = authorInfo.firstName;
-  } else if (!authorInfo.firstName && authorInfo.lastName) {
-    fullName = authorInfo.lastName;
-  }
+  const fullName = getFullName(authorInfo.firstName, authorInfo.lastName);
 
   return (
     <Dialog>
@@ -82,9 +75,11 @@ export function PostCard({ post, isMod, userId }: PostCardProps) {
                     <span className="text-muted-foreground text-sm">
                       Created {formatDate(createdAt)} ago
                     </span>
-                    <span className="text-muted-foreground text-sm">
-                      Updated {formatDate(updatedAt)} ago
-                    </span>
+                    {updatedAt.toISOString() !== createdAt.toISOString() && (
+                      <span className="text-muted-foreground text-sm">
+                        Updated {formatDate(updatedAt)} ago
+                      </span>
+                    )}
                   </div>
                   <div className="text-muted-foreground flex items-center gap-1">
                     <Icons.reply className="w-5 h-5" />

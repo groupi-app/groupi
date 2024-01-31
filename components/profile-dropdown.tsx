@@ -10,6 +10,7 @@ import {
 import { UserInfo } from "@/types";
 import { Icons } from "./icons";
 import { SignOutButton } from "@clerk/nextjs";
+import { getFullName } from "@/lib/utils";
 
 interface ProfileDropdownProps {
   userInfo: UserInfo;
@@ -19,14 +20,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
   const initials =
     userInfo.firstName?.toString()[0] + "" + userInfo.lastName?.toString()[0];
 
-  let fullName = "";
-  if (userInfo.firstName && userInfo.lastName) {
-    fullName = userInfo.firstName + " " + userInfo.lastName;
-  } else if (userInfo.firstName && !userInfo.lastName) {
-    fullName = userInfo.firstName;
-  } else if (!userInfo.firstName && userInfo.lastName) {
-    fullName = userInfo.lastName;
-  }
+  const fullName = getFullName(userInfo.firstName, userInfo.lastName);
 
   return (
     <DropdownMenu>

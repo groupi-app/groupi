@@ -1,5 +1,5 @@
 
-import { Event, Post, Reply } from "@prisma/client";
+import { $Enums, Event, Post, Reply } from "@prisma/client";
 
 declare global {
   interface Window {
@@ -31,6 +31,7 @@ declare global {
     lastName: string | null | undefined
     username: string | null | undefined
     avatar:string | undefined
+    role?: $Enums.Role | undefined
   }
 
   interface PostWithAuthorInfo extends Post {

@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { db } from "@/lib/db";
+import { getFullName } from "@/lib/utils";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,14 +44,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
   const isMod = role === "MODERATOR" || role === "ORGANIZER";
 
   const authorUser = await clerkClient.users.getUser(post.author.id);
-  let fullName = "";
-  if (authorUser.firstName && authorUser.lastName) {
-    fullName = authorUser.firstName + " " + authorUser.lastName;
-  } else if (authorUser.firstName && !authorUser.lastName) {
-    fullName = authorUser.firstName;
-  } else if (!authorUser.firstName && authorUser.lastName) {
-    fullName = authorUser.lastName;
-  }
+  const fullName = getFullName(authorUser.firstName, authorUser.lastName);
 
   return (
     <Dialog>

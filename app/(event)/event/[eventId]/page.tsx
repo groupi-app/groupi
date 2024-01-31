@@ -53,11 +53,15 @@ export default async function Page({
   });
 
   const members: UserInfo[] = membershipUsers.map((user) => {
+    const role = event.memberships.find(
+      (membership) => membership.personId === user.id
+    )?.role;
     return {
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
       avatar: user.imageUrl,
+      role: role,
     };
   });
 
