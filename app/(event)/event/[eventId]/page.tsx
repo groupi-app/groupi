@@ -7,6 +7,12 @@ import { PostWithAuthorInfo } from "@/types";
 import { clerkClient, auth } from "@clerk/nextjs";
 import { NewPostButton } from "@/components/new-post-button";
 import { notFound } from "next/navigation";
+import {
+  QueryClient,
+  HydrationBoundary,
+  dehydrate,
+} from "@tanstack/react-query";
+import { fetchPosts } from "@/lib/actions/posts";
 
 export default async function Page({
   params,
@@ -36,17 +42,16 @@ export default async function Page({
     throw new Error();
   }
 
-  const role = event.memberships.find(
-    (member) => member.personId === userId
-  )?.role;
-  if (!role) {
-    throw new Error("You are not a member of this event");
-  }
-  const isMod = role === "MODERATOR" || role === "ORGANIZER";
-
   if (!event.memberships.some((membership) => membership.personId === userId)) {
     throw new Error("You are not a member of this event");
   }
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["posts", eventId],
+    queryFn: () => fetchPosts(eventId),
+  });
 
   const membershipUsers = await clerkClient.users.getUserList({
     userId: event.memberships.map((membership) => membership.personId),
@@ -104,7 +109,9 @@ export default async function Page({
       />
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <MemberList members={members} />
-        <PostFeed userId={userId} isMod={isMod} posts={posts} />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <PostFeed eventId={eventId} />
+        </HydrationBoundary>
       </div>
       <NewPostButton />
     </div>
