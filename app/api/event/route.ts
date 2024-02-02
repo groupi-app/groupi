@@ -18,8 +18,6 @@ export async function POST(request: Request) {
             location: body.location,
             chosenDateTime: body.chosenDateTime,
             potentialDateTimes: body.potentialDateTimes,
-            posts: body.posts,
-            memberships: body.memberships
         }
     });
 

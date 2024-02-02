@@ -61,49 +61,28 @@ export async function PATCH(
 ) {
     const body = await request.json();
     const id = context.params.id;
-    let result = null;
 
     // ToDo: Validations
-
-    if (body.ownerId) {
-        result = await db.event.update({
+    try {
+    const result = await db.event.update({
             where: {
                 id: id
             },
             data: {
-                updatedAt: body.updatedAt,
-                owner: {
-                    connect: {
-                        id: body.ownerId
-                    }
-                },
+                updatedAt: new Date(),
                 title: body.title,
                 description: body.description,
                 location: body.location,
-                chosenDateTime: body.chosenDateTime,
-                potentialDateTimes: body.potentialDateTimes,
-                posts: body.posts,
-                memberships: body.memberships
             }
         });
-    }
-    else {
-        result = await db.event.update({
-            where: {
-                id: id
-            },
-            data: {
-                updatedAt: body.updatedAt,
-                title: body.title,
-                description: body.description,
-                location: body.location,
-                chosenDateTime: body.chosenDateTime,
-                potentialDateTimes: body.potentialDateTimes,
-                posts: body.posts,
-                memberships: body.memberships
-            }
-        });
-    }
-
     return NextResponse.json(result, { status: 200 });
+    } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            if (e.code === "P2025") {
+                return NextResponse.json(
+                    { message: `Event with id: ${id}, not found` }, 
+                    { status: 404 });
+            }
+        }
+    }
 }
