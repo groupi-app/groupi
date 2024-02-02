@@ -55,9 +55,9 @@
   },
   "devDependencies": {
     "@clerk/nextjs": "^4.29.5",
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^5.9.1",
     "@radix-ui/react-navigation-menu": "^1.1.3",
     "next-themes": "^0.2.1",
-    "prisma": "^5.0.0"
+    "prisma": "^5.9.1"
   }
 }
