@@ -9,21 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context";
 import { useToast } from "./ui/use-toast";
 
-async function deletePost({
-  id,
-  router,
-  toast,
-}: {
-  id: string;
-  router: AppRouterInstance;
-  toast: any;
-}) {
+async function deletePost({ id, toast }: { id: string; toast: any }) {
   const res = await fetch(`/api/post/${id}`, { method: "DELETE" });
   if (res.ok) {
-    router.refresh();
     toast({
       title: "Post deleted",
       description: "The post has been deleted.",
@@ -57,7 +47,7 @@ export function DeletePostDialog({ id }: { id: string }) {
           <DialogClose className="flex-grow" asChild>
             <Button
               onClick={() => {
-                deletePost({ id, router, toast });
+                deletePost({ id, toast });
               }}
               className="w-full"
               variant="destructive"
