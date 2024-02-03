@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
 import { Tiptap } from "./tiptap";
 import { useRouter } from "next/navigation";
-import { createPost, updatePost } from "@/lib/actions/posts";
+import { createPost, updatePost } from "@/lib/actions/event-data";
 
 interface PostData {
   title: string;

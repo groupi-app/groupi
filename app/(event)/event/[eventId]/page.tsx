@@ -12,7 +12,8 @@ import {
   HydrationBoundary,
   dehydrate,
 } from "@tanstack/react-query";
-import { fetchPosts } from "@/lib/actions/posts";
+import { fetchEventData } from "@/lib/actions/event-data";
+import { cache } from "react";
 
 export default async function Page({
   params,
@@ -49,8 +50,8 @@ export default async function Page({
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["posts", eventId],
-    queryFn: () => fetchPosts(eventId),
+    queryKey: ["eventData"],
+    queryFn: async () => fetchEventData(eventId),
   });
 
   const membershipUsers = await clerkClient.users.getUserList({
@@ -91,25 +92,12 @@ export default async function Page({
 
   return (
     <div className="container pt-6 pb-24 space-y-5">
-      <EventHeader
-        eventTitle={event.title}
-        eventLocation={event.location}
-        eventDate={
-          event.chosenDateTime
-            ? event.chosenDateTime.toLocaleString([], {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : null
-        }
-        eventDescription={event.description}
-      />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <EventHeader eventId={eventId} />
+      </HydrationBoundary>
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <MemberList members={members} />
         <HydrationBoundary state={dehydrate(queryClient)}>
+          <MemberList eventId={eventId} />
           <PostFeed eventId={eventId} />
         </HydrationBoundary>
       </div>

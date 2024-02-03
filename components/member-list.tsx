@@ -5,8 +5,13 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { UserInfo } from "@/types";
 import { usePathname } from "next/navigation";
+import { useEventMembers } from "@/data/event-hooks";
 
-export default function MemberList({ members }: { members: UserInfo[] }) {
+export default function MemberList({ eventId }: { eventId: string }) {
+  const { data: memberData } = useEventMembers(eventId);
+
+  const { members }: { members: UserInfo[] } = memberData;
+
   const ref = useRef<HTMLDivElement>(null);
   const [visibleIcons, setVisibleIcons] = useState(0);
   const pathname = usePathname();
