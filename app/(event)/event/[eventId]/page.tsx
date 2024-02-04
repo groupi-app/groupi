@@ -17,14 +17,7 @@ export default async function Page({
 }) {
   const { eventId } = params;
 
-  const queryClient = new QueryClient();
-
-  await queryClient.prefetchQuery({
-    queryKey: ["eventData"],
-    queryFn: async () => fetchEventData(eventId),
-  });
-
-  const data: EventData | undefined = queryClient.getQueryData(["eventData"]);
+  const data = await fetchEventData(eventId);
 
   if (!data) {
     notFound();
@@ -33,6 +26,13 @@ export default async function Page({
   if (data.error) {
     throw new Error(data.error);
   }
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["eventData"],
+    queryFn: async () => data,
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -11,14 +11,7 @@ import { notFound } from "next/navigation";
 export default async function Page({ params }: { params: { postId: string } }) {
   const { postId } = params;
 
-  const queryClient = new QueryClient();
-
-  await queryClient.prefetchQuery({
-    queryKey: ["postData"],
-    queryFn: async () => fetchPostData(postId),
-  });
-
-  const data: PostData | undefined = queryClient.getQueryData(["postData"]);
+  const data = await fetchPostData(postId);
 
   if (!data) {
     notFound();
@@ -31,6 +24,13 @@ export default async function Page({ params }: { params: { postId: string } }) {
   if (!data.success) {
     throw new Error("An error occurred");
   }
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["postData"],
+    queryFn: async () => data,
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -4,6 +4,7 @@ import { EventHeaderProps } from "@/components/event-header";
 import { db } from "@/lib/db";
 import { PostWithAuthorInfo, UserInfo } from "@/types";
 import { auth, clerkClient } from "@clerk/nextjs";
+import { cache } from "react";
 
 export interface EventData {
     success?: {
@@ -16,7 +17,7 @@ export interface EventData {
     error?: string
 }
 
-export async function fetchEventData(eventId: string): Promise<EventData> {
+export const fetchEventData = cache(async(eventId: string): Promise<EventData> => {
     const event = await db.event.findUnique({
         where: {
             id: eventId
@@ -89,4 +90,4 @@ export async function fetchEventData(eventId: string): Promise<EventData> {
     }
     
     return {success: {posts, isMod, userId, members, headerData}}
-}
+});

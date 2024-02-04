@@ -5,6 +5,7 @@ import { db } from "../db";
 import { auth, clerkClient } from "@clerk/nextjs";
 import { Post } from "@prisma/client";
 import { UserInfo } from "@/types";
+import { cache } from "react";
 
 export interface PostData {
     success?: {
@@ -18,7 +19,7 @@ export interface PostData {
     error?: string
 }
 
-export async function fetchPostData(postId: string): Promise<PostData> {
+export const fetchPostData = cache(async(postId: string): Promise<PostData> => {
     const post = await db.post.findUnique({
         where: {
             id: postId
@@ -68,7 +69,7 @@ export async function fetchPostData(postId: string): Promise<PostData> {
             authorInfo
         }
     }
-}
+});
 
 export async function createPost({title, content, eventId, authorId}: {title: string, content: string, eventId: string, authorId: string}) {
     try {
