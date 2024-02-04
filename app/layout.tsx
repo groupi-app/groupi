@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import Providers from "@/lib/providers";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -85,7 +86,7 @@ export default async function RootLayout({
   };
 
   return (
-    <ClerkProvider>
+    <Providers>
       <html lang="en">
         <body
           className={cn(
@@ -102,13 +103,13 @@ export default async function RootLayout({
                 </header>
                 <main>{children}</main>
               </div>
-              <Analytics />
-              <Toaster />
-              <TailwindIndicator />
             </TooltipProvider>
           </ThemeProvider>
+          <Analytics />
+          <Toaster />
+          <TailwindIndicator />
         </body>
       </html>
-    </ClerkProvider>
+    </Providers>
   );
 }

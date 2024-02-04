@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/use-toast";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
 import { Tiptap } from "./tiptap";
 import { useRouter } from "next/navigation";
+import { createPost, updatePost } from "@/lib/actions/post";
 
 interface PostData {
   title: string;
@@ -78,19 +79,13 @@ export function Editor({
     setIsSaving(true);
 
     if (!postData) {
-      const res = await fetch("/api/post", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          authorId: authorId,
-          title: values.title,
-          content: values.content,
-          eventId: eventId,
-        }),
+      const res = await createPost({
+        authorId,
+        title: values.title,
+        content: values.content,
+        eventId,
       });
-      if (res.ok) {
+      if (res.success) {
         toast({
           title: "Post Created",
           description: "Your post has been successfully created.",
@@ -98,20 +93,13 @@ export function Editor({
       }
       setIsSaving(false);
       router.push(`/event/${eventId}`);
-      router.refresh();
     } else {
-      const res = await fetch(`/api/post/${postData.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: values.title,
-          content: values.content,
-          updatedAt: new Date().toISOString(),
-        }),
+      const res = await updatePost({
+        id: postData.id,
+        title: values.title,
+        content: values.content,
       });
-      if (res.ok) {
+      if (res.success) {
         toast({
           title: "Post Updated",
           description: "Your post has been successfully updated.",
@@ -119,7 +107,6 @@ export function Editor({
       }
       setIsSaving(false);
       router.push(`/post/${postData.id}`);
-      router.refresh();
     }
   }
 
