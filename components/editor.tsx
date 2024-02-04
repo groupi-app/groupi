@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/use-toast";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
 import { Tiptap } from "./tiptap";
 import { useRouter } from "next/navigation";
-import { createPost, updatePost } from "@/lib/actions/event-data";
+import { createPost, updatePost } from "@/lib/actions/post";
 
 interface PostData {
   title: string;

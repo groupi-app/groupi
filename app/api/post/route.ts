@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from '@/lib/db';
 import { Post } from "@prisma/client";
-import { createPost } from "@/lib/actions/event-data";
+import { createPost } from "@/lib/actions/post";
 import { auth } from "@clerk/nextjs";
 
 export async function POST(request:Request) {

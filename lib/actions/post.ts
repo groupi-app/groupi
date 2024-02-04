@@ -2,6 +2,73 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
+import { auth, clerkClient } from "@clerk/nextjs";
+import { Post } from "@prisma/client";
+import { UserInfo } from "@/types";
+
+export interface PostData {
+    success?: {
+        post: Post,
+        eventTitle: string,
+        userId: string,
+        isMod: boolean,
+        userRole: string,
+        authorInfo: UserInfo
+    }
+    error?: string
+}
+
+export async function fetchPostData(postId: string): Promise<PostData> {
+    const post = await db.post.findUnique({
+        where: {
+            id: postId
+        },
+        include: {
+            replies: true,
+            event: {
+                include: {
+                    memberships: true
+                }
+            }
+        }
+    });
+
+    if (!post) return {error: "Post not found"}
+
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return {error: "User not found"}
+
+    if (!post.event.memberships.find((membership) => (membership.personId === userId))) return {error: "You are not a member of this event"}
+
+    const userRole = post.event.memberships.find((membership) => (membership.personId === userId ))?.role;
+
+    if(!userRole) return {error: "Role not found"}
+
+    const isMod = ["MODERATOR", "ORGANIZER"].includes(userRole);
+
+    const authorUser = await clerkClient.users.getUser(post.authorId);
+
+    const authorInfo: UserInfo = {
+        firstName: authorUser.firstName,
+        lastName: authorUser.lastName,
+        username: authorUser.username,
+        avatar: authorUser.imageUrl
+    }
+
+    const eventTitle = post.event.title;
+
+    return {
+        success: {
+            post,
+            eventTitle,
+            userId,
+            isMod,
+            userRole,
+            authorInfo
+        }
+    }
+}
 
 export async function createPost({title, content, eventId, authorId}: {title: string, content: string, eventId: string, authorId: string}) {
     try {

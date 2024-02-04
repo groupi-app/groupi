@@ -37,6 +37,8 @@ export async function fetchEventData(eventId: string): Promise<EventData> {
 
     if (!userId) return {error: "User not found"}
 
+    if (!event.memberships.find((membership) => (membership.personId === userId))) return {error: "You are not a member of this event"}
+
     const userRole = event.memberships.find((membership) => (membership.personId === userId ))?.role;
 
     if(!userRole) return {error: "Role not found"}

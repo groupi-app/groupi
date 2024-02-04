@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { deletePost } from "@/lib/actions/event-data";
-import { revalidatePath } from "next/cache";
+import { deletePost } from "@/lib/actions/post";
 
 async function removePost({ id, toast }: { id: string; toast: any }) {
   const res = await deletePost({ id });

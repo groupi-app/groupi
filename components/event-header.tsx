@@ -13,7 +13,6 @@ export interface EventHeaderProps {
 
 export default function EventHeader({ eventId }: { eventId: string }) {
   const { data: headerData } = useEventHeader(eventId);
-  console.log(headerData);
   const {
     eventTitle,
     eventLocation,
