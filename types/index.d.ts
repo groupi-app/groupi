@@ -39,3 +39,8 @@ declare global {
     event?: Event
     replies: Reply[]
   }
+
+  export type ActionResponse<T> = {
+    success?: T
+    error?: string
+  }

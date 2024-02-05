@@ -1,22 +1,24 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useLayoutEffect } from "react";
 import MemberIcon from "@/components/member-icon";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { UserInfo } from "@/types";
 import { usePathname } from "next/navigation";
 import { useEventMembers } from "@/data/event-hooks";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
-export default function MemberList({ eventId }: { eventId: string }) {
+export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
 
   const { members }: { members: UserInfo[] } = memberData;
 
   const ref = useRef<HTMLDivElement>(null);
-  const [visibleIcons, setVisibleIcons] = useState(0);
+
+  const [visibleIcons, setVisibleIcons] = useState(100);
   const pathname = usePathname();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     function checkOverflow() {
       if (ref.current) {
         const { scrollWidth, clientWidth } = ref.current;
@@ -32,6 +34,21 @@ export default function MemberList({ eventId }: { eventId: string }) {
     return () => window.removeEventListener("resize", checkOverflow);
   }, []);
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, x: 15 },
+    show: { opacity: 1, x: 0 },
+  };
+
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -40,24 +57,40 @@ export default function MemberList({ eventId }: { eventId: string }) {
           <span>{members.length}</span>
         </div>
       </div>
-      <div
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
         ref={ref}
         className="flex items-center p-2 -space-x-2 h-[54px] overflow-hidden"
       >
-        {members.map((user, i) =>
-          i < visibleIcons - 1 ? (
-            <MemberIcon key={i} userInfo={user} />
-          ) : (
-            i === visibleIcons - 1 && (
-              <Link href={`${pathname}/members`}>
-                <Button className="rounded-full z-30" key={i}>
-                  +{members.length - visibleIcons + 1}
-                </Button>
-              </Link>
-            )
-          )
-        )}
-      </div>
+        <LayoutGroup>
+          <AnimatePresence>
+            {members.map((user, i) =>
+              i < visibleIcons - 1 ? (
+                <motion.div
+                  variants={item}
+                  className="flex items-center rounded-full border-2 border-background z-10"
+                  layout
+                  key={i}
+                >
+                  <MemberIcon userInfo={user} />
+                </motion.div>
+              ) : (
+                i === visibleIcons - 1 && (
+                  <motion.div variants={item} layout key={i}>
+                    <Link href={`${pathname}/members`}>
+                      <Button className="rounded-full z-30" key={i}>
+                        +{members.length - visibleIcons + 1}
+                      </Button>
+                    </Link>
+                  </motion.div>
+                )
+              )
+            )}
+          </AnimatePresence>
+        </LayoutGroup>
+      </motion.div>
       <Link href={`${pathname}/members`}>
         <span className="rounded-full z-30 text-primary hover:underline">
           View All

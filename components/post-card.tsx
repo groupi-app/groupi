@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Icons } from "./icons";
 import {
   DropdownMenu,
@@ -7,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PostWithAuthorInfo } from "@/types";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";

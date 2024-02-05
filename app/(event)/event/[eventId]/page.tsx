@@ -1,13 +1,13 @@
-import EventHeader from "@/components/event-header";
-import MemberList from "@/components/member-list";
-import PostFeed from "@/components/post-feed";
+import { EventHeader } from "@/components/event-header";
+import { MemberList } from "@/components/member-list";
+import { PostFeed } from "@/components/post-feed";
 import { NewPostButton } from "@/components/new-post-button";
 import {
   QueryClient,
   HydrationBoundary,
   dehydrate,
 } from "@tanstack/react-query";
-import { EventData, fetchEventData } from "@/lib/actions/event-data";
+import { fetchEventData } from "@/lib/actions/event-data";
 import { notFound } from "next/navigation";
 
 export default async function Page({

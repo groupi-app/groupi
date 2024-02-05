@@ -5,7 +5,7 @@ import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import { ClerkProvider, currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs";
 import { Analytics } from "@/components/analytics";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
