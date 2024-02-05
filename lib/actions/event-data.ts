@@ -2,22 +2,19 @@
 
 import { EventHeaderProps } from "@/components/event-header";
 import { db } from "@/lib/db";
-import { PostWithAuthorInfo, UserInfo } from "@/types";
+import { ActionResponse, PostWithAuthorInfo, UserInfo } from "@/types";
 import { auth, clerkClient } from "@clerk/nextjs";
 import { cache } from "react";
 
 export interface EventData {
-    success?: {
-        posts: PostWithAuthorInfo[],
-        isMod: boolean,
-        userId: string,
-        members: UserInfo[],
-        headerData: EventHeaderProps
-    }
-    error?: string
+    posts: PostWithAuthorInfo[],
+    isMod: boolean,
+    userId: string,
+    members: UserInfo[],
+    headerData: EventHeaderProps
 }
 
-export const fetchEventData = cache(async(eventId: string): Promise<EventData> => {
+export const fetchEventData = cache(async(eventId: string): Promise<ActionResponse<EventData>> => {
     const event = await db.event.findUnique({
         where: {
             id: eventId

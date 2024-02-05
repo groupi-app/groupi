@@ -1,5 +1,3 @@
-"use client";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +22,7 @@ export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
     <Tooltip>
       <DropdownMenu>
         <TooltipTrigger asChild>
-          <DropdownMenuTrigger className="rounded-full border-2 border-background z-10">
+          <DropdownMenuTrigger className="rounded-full">
             <Avatar>
               <AvatarImage src={userInfo.avatar} />
               <AvatarFallback>{initials}</AvatarFallback>

@@ -11,7 +11,7 @@ export interface EventHeaderProps {
   eventDescription: string;
 }
 
-export default function EventHeader({ eventId }: { eventId: string }) {
+export function EventHeader({ eventId }: { eventId: string }) {
   const { data: headerData } = useEventHeader(eventId);
   const {
     eventTitle,
