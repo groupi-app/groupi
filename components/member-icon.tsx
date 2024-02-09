@@ -15,7 +15,7 @@ import { Member } from "@/types";
 import { formatRoleBadge, formatRoleName, getFullName } from "@/lib/utils";
 import { $Enums } from "@prisma/client";
 import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
-import { KickMemberDialog } from "./kick-member-dialog";
+
 import {
   MemberAction,
   MemberActionDialog,
