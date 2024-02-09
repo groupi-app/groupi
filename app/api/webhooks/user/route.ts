@@ -1,62 +1,125 @@
-import { db } from '@/lib/db';
-import { NextResponse } from 'next/server'
-import { Webhook } from 'svix'
+import { db } from "@/lib/db";
+import { UserJSON, DeletedObjectJSON } from "@clerk/types";
+import { NextResponse } from "next/server";
+import { Webhook } from "svix";
+import { WebhookEvent } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 
 type Event = {
-    data: Record<string, string | number>,
-    object: "event",
-    type: EventType,
-}
+  data: Record<string, string | number>;
+  object: "event";
+  type: EventType;
+};
 
 type EventType = "user.created" | "user.updated" | "user.deleted" | "*";
 
 export async function POST(req: Request) {
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET as string;
+  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
-  const svix_id = req.headers.get("svix-id") ?? "";
-  const svix_timestamp = req.headers.get("svix-timestamp") ?? "";
-  const svix_signature = req.headers.get("svix-signature") ?? "";
+  if (!WEBHOOK_SECRET) {
+    throw new Error(
+      "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local"
+    );
+  }
 
-  const body = await req.text(); // This gets the raw body as a string
+  const headerPayload = headers();
+  const svix_id = headerPayload.get("svix-id");
+  const svix_timestamp = headerPayload.get("svix-timestamp");
+  const svix_signature = headerPayload.get("svix-signature");
 
+  if (!svix_id || !svix_timestamp || !svix_signature) {
+    return NextResponse.json("Error occured -- no svix headers", {
+      status: 400,
+    });
+  }
 
-  const sivx = new Webhook(WEBHOOK_SECRET);
+  const payload = await req.json();
+  const body = JSON.stringify(payload);
 
-  let payload: Event | null = null;
+  const wh = new Webhook(WEBHOOK_SECRET);
+
+  let evt: WebhookEvent;
+
   try {
-    payload = sivx.verify(body, {
+    evt = wh.verify(body, {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
-    }) as Event;
-
+    }) as WebhookEvent;
   } catch (err) {
-    console.error('Error verifying webhook:', err);
-    return NextResponse.json({}, { status: 400});
+    console.error("Error verifying webhook:", err);
+    return NextResponse.json({}, { status: 400 });
   }
 
-  const eventType:EventType = payload.type;
+  const eventType = evt.type as EventType;
 
   if (eventType === "user.created") {
-    const userId = payload.data.id as string;
+    const userData = payload.data as UserJSON;
+    const { id, first_name, last_name, username, image_url } = userData;
+
+    if (!username) {
+      return NextResponse.json(
+        { message: "username is required" },
+        { status: 400 }
+      );
+    }
+
     const person = await db.person.create({
-        data:{
-            id: userId
-        }
+      data: {
+        id,
+        firstName: first_name ?? undefined,
+        lastName: last_name ?? undefined,
+        username,
+        imageUrl: image_url,
+      },
     });
-    return NextResponse.json({ message: 'Created person' + person })
+    return NextResponse.json(
+      { message: "Created person", person },
+      { status: 201 }
+    );
+  }
+
+  if (eventType === "user.updated") {
+    const userData = payload.data as UserJSON;
+    const { id, first_name, last_name, username, image_url } = userData;
+
+    if (!username) {
+      return NextResponse.json(
+        { message: "username is required" },
+        { status: 400 }
+      );
+    }
+
+    const person = await db.person.update({
+      where: {
+        id,
+      },
+      data: {
+        firstName: first_name ?? undefined,
+        lastName: last_name ?? undefined,
+        username,
+        imageUrl: image_url,
+      },
+    });
+    return NextResponse.json(
+      { message: "Updated person", person },
+      { status: 200 }
+    );
   }
 
   if (eventType === "user.deleted") {
     const userId = payload.data.id as string;
     const person = await db.person.deleteMany({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     });
-    return NextResponse.json({ message: `Deleted ${person.count} ${person.count === 1 ? 'person' : 'people'}` })
+    return NextResponse.json({
+      message: `Deleted ${person.count} ${
+        person.count === 1 ? "person" : "people"
+      }`,
+    });
   }
 
-
-  return NextResponse.json({ message: 'webhook test' })
+  return NextResponse.json({ message: "webhook test" });
 }

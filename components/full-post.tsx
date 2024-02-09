@@ -12,15 +12,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePostData } from "@/data/post-hooks";
 import { getFullName } from "@/lib/utils";
+import { ExtendedPost } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 
 export function FullPost({ postId }: { postId: string }) {
   const { data: postData } = usePostData(postId);
 
-  const { post, authorInfo, eventTitle, isMod, userId } = postData;
+  const {
+    post,
+    isMod,
+    userId,
+  }: { post: ExtendedPost; isMod: boolean; userId: string } = postData;
 
-  const fullName = getFullName(authorInfo.firstName, authorInfo.lastName);
+  const { event, author } = post;
+
+  const fullName = getFullName(author.firstName, author.lastName);
 
   return (
     <Dialog>
@@ -33,7 +40,7 @@ export function FullPost({ postId }: { postId: string }) {
                 className="flex items-center gap-1 pl-2"
               >
                 <Icons.back />
-                <span>{eventTitle}</span>
+                <span>{post.event.title}</span>
               </Button>
             </Link>
             {(isMod || userId === post.authorId) && (
@@ -73,7 +80,7 @@ export function FullPost({ postId }: { postId: string }) {
               <h1 className="text-5xl font-heading">{post.title}</h1>
               <div className="flex items-center gap-2">
                 <Image
-                  src={authorInfo.avatar}
+                  src={author.imageUrl}
                   alt={fullName}
                   width={32}
                   height={32}

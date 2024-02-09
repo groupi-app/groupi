@@ -3,6 +3,7 @@
 import { Icons } from "@/components/icons";
 import { Button } from "./ui/button";
 import { useEventHeader } from "@/data/event-hooks";
+import { Event } from "@prisma/client";
 
 export interface EventHeaderProps {
   eventTitle: string;
@@ -13,16 +14,11 @@ export interface EventHeaderProps {
 
 export function EventHeader({ eventId }: { eventId: string }) {
   const { data: headerData } = useEventHeader(eventId);
-  const {
-    eventTitle,
-    eventLocation,
-    eventDate,
-    eventDescription,
-  }: EventHeaderProps = headerData;
+  const { title, location, chosenDateTime, description }: Event = headerData;
 
   const eventDateStr =
-    eventDate != null
-      ? eventDate.toLocaleString([], {
+    chosenDateTime != null
+      ? chosenDateTime.toLocaleString([], {
           year: "numeric",
           month: "numeric",
           day: "numeric",
@@ -33,11 +29,11 @@ export function EventHeader({ eventId }: { eventId: string }) {
 
   return (
     <header className="flex flex-col mb-5 max-w-2xl mx-auto gap-3">
-      <h1 className="text-4xl font-heading">{eventTitle}</h1>
+      <h1 className="text-4xl font-heading">{title}</h1>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1 text-muted-foreground">
           <Icons.location className="w-6 h-6" />
-          <span>{eventLocation}</span>
+          <span>{location}</span>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground">
           <Icons.date className="w-6 h-6" />
@@ -55,7 +51,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
           )}
         </div>
       </div>
-      <p>{eventDescription}</p>
+      <p>{description}</p>
     </header>
   );
 }

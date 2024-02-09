@@ -1,5 +1,4 @@
-
-import { $Enums, Event, Post, Reply } from "@prisma/client";
+import { $Enums, Event, Person, Post, Reply, Prisma } from "@prisma/client";
 
 declare global {
   interface Window {
@@ -7,40 +6,51 @@ declare global {
   }
 }
 
-  export type NavItem = {
-    title: string
-    href: string
-    disabled?: boolean
-  }
-  
-  export type MainNavItem = NavItem
-  
-  export type SiteConfig = {
-    name: string
-    description: string
-    url: string
-    ogImage: string
-  }
+export type NavItem = {
+  title: string;
+  href: string;
+  disabled?: boolean;
+};
 
-  export type NavConfig = {
-    mainNav: MainNavItem[]
-  }
+export type MainNavItem = NavItem;
 
-  export type UserInfo = {
-    firstName: string | null | undefined
-    lastName: string | null | undefined
-    username: string | null | undefined
-    avatar:string | undefined
-    role?: $Enums.Role | undefined
-  }
+export type SiteConfig = {
+  name: string;
+  description: string;
+  url: string;
+  ogImage: string;
+};
 
-  interface PostWithAuthorInfo extends Post {
-    authorInfo?: UserInfo
-    event?: Event
-    replies: Reply[]
-  }
+export type NavConfig = {
+  mainNav: MainNavItem[];
+};
 
-  export type ActionResponse<T> = {
-    success?: T
-    error?: string
-  }
+export type UserInfo = {
+  firstName: string | null | undefined;
+  lastName: string | null | undefined;
+  username: string | null | undefined;
+  avatar: string | undefined;
+  role?: $Enums.Role | undefined;
+};
+
+const extendedPost = Prisma.validator<Prisma.PostDefaultArgs>()({
+  include: {
+    replies: true,
+    author: true,
+  },
+});
+
+export type ExtendedPost = Prisma.PostGetPayload<typeof extendedPost>;
+
+const member = Prisma.validator<Prisma.MembershipDefaultArgs>()({
+  include: {
+    person: true,
+  },
+});
+
+export type Member = Prisma.MembershipGetPayload<typeof member>;
+
+export type ActionResponse<T> = {
+  success?: T;
+  error?: string;
+};

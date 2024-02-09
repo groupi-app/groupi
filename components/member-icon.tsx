@@ -9,14 +9,16 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Icons } from "./icons";
-import { UserInfo } from "@/types";
+import { Member, UserInfo } from "@/types";
 import { formatRoleBadge, formatRoleName, getFullName } from "@/lib/utils";
 
-export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
-  const initials =
-    userInfo.firstName?.toString()[0] + "" + userInfo.lastName?.toString()[0];
+export default function MemberIcon({ member }: { member: Member }) {
+  const { firstName, lastName, username, imageUrl } = member.person;
+  const role = member.role;
 
-  const fullName = getFullName(userInfo.firstName, userInfo.lastName);
+  const initials = firstName?.toString()[0] + "" + lastName?.toString()[0];
+
+  const fullName = getFullName(firstName, lastName);
 
   return (
     <Tooltip>
@@ -24,7 +26,7 @@ export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger className="rounded-full">
             <Avatar>
-              <AvatarImage src={userInfo.avatar} />
+              <AvatarImage src={imageUrl} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -33,17 +35,17 @@ export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span className="text-base text-card-foreground">{fullName}</span>
-              <span className="text-muted-foreground">{userInfo.username}</span>
+              <span className="text-muted-foreground">{username}</span>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>
             <div className="flex items-center gap-1">
               <div className="text-card-foreground">
-                {formatRoleBadge(userInfo.role)}
+                {formatRoleBadge(role)}
               </div>
               <span className="text-card-foreground">
-                {formatRoleName(userInfo.role)}
+                {formatRoleName(role)}
               </span>
             </div>
           </DropdownMenuLabel>
@@ -62,7 +64,7 @@ export default function MemberIcon({ userInfo }: { userInfo: UserInfo }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
         <TooltipContent>
-          <span>{fullName != null ? fullName : userInfo.username}</span>
+          <span>{fullName != null ? fullName : username}</span>
         </TooltipContent>
       </DropdownMenu>
     </Tooltip>

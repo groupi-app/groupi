@@ -2,7 +2,7 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
-import { PostWithAuthorInfo } from "@/types";
+import { ExtendedPost } from "@/types";
 import { motion, LayoutGroup } from "framer-motion";
 
 export function PostFeed({ eventId }: { eventId: string }) {
@@ -12,7 +12,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
     posts,
     isMod,
     userId,
-  }: { posts: PostWithAuthorInfo[]; isMod: boolean; userId: string } = postData;
+  }: { posts: ExtendedPost[]; isMod: boolean; userId: string } = postData;
 
   const container = {
     hidden: { opacity: 0 },
