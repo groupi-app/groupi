@@ -1,0 +1,94 @@
+"use server";
+
+import { $Enums, Membership } from "@prisma/client";
+import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs";
+
+export async function updateMembershipRole({
+  membership,
+  role,
+}: {
+  membership: Membership;
+  role: $Enums.Role;
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    const currentUserMembership = await db.membership.findFirst({
+      where: {
+        personId: userId,
+        eventId: membership.eventId,
+      },
+    });
+
+    if (!currentUserMembership)
+      return { error: "You are not a member of this event" };
+
+    if (currentUserMembership.role !== "ORGANIZER") {
+      return { error: "Only organizers can update roles" };
+    }
+
+    if (membership.role === "ORGANIZER") {
+      return { error: "Organizer role cannot be updated" };
+    }
+
+    await db.membership.update({
+      where: {
+        id: membership.id,
+      },
+      data: {
+        role: role,
+      },
+    });
+    revalidatePath("/");
+    return { success: "Role Updated" };
+  } catch (error) {
+    return { error: error };
+  }
+}
+
+export async function deleteMembership(membership: Membership) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    const currentUserMembership = await db.membership.findFirst({
+      where: {
+        personId: userId,
+        eventId: membership.eventId,
+      },
+    });
+
+    if (!currentUserMembership)
+      return { error: "You are not a member of this event" };
+
+    if (currentUserMembership.role === "ATTENDEE") {
+      return { error: "Only moderators and organizers can kick members" };
+    }
+
+    if (membership.role === "ORGANIZER") {
+      return { error: "Cannot kick organizer" };
+    }
+
+    if (
+      membership.role === "MODERATOR" &&
+      currentUserMembership.role === "MODERATOR"
+    ) {
+      return { error: "Only the organizer can kick a moderator" };
+    }
+
+    await db.membership.delete({
+      where: {
+        id: membership.id,
+      },
+    });
+    revalidatePath("/");
+    return { success: "Membership Deleted" };
+  } catch (error) {
+    return { error: error };
+  }
+}

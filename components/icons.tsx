@@ -17,6 +17,7 @@ import {
   Save,
   Plus,
   Shield,
+  ShieldOff,
   Crown,
   MessageCircle as Reply,
   Send as Submit,
@@ -60,6 +61,7 @@ export const Icons = {
   location: Location,
   date: Date,
   shield: Shield,
+  shieldOff: ShieldOff,
   crown: Crown,
   kick: Kick,
   logo: ({ ...props }: LucideProps) => (

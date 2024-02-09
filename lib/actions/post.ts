@@ -3,71 +3,60 @@
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { auth } from "@clerk/nextjs";
-import { Post } from "@prisma/client";
-import { cache } from "react";
+import { ExtendedPost } from "@/types";
 
 export interface PostData {
   success?: {
-    post: Post;
-    eventTitle: string;
+    post: ExtendedPost;
     userId: string;
-    isMod: boolean;
     userRole: string;
   };
   error?: string;
 }
 
-export const fetchPostData = cache(
-  async (postId: string): Promise<PostData> => {
-    const post = await db.post.findUnique({
-      where: {
-        id: postId,
-      },
-      include: {
-        replies: true,
-        author: true,
-        event: {
-          include: {
-            memberships: true,
-          },
+export const fetchPostData = async (postId: string): Promise<PostData> => {
+  const post = await db.post.findUnique({
+    where: {
+      id: postId,
+    },
+    include: {
+      replies: true,
+      author: true,
+      event: {
+        include: {
+          memberships: true,
         },
       },
-    });
+    },
+  });
 
-    if (!post) return { error: "Post not found" };
+  if (!post) return { error: "Post not found" };
 
-    const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = auth();
 
-    if (!userId) return { error: "User not found" };
+  if (!userId) return { error: "User not found" };
 
-    if (
-      !post.event.memberships.find(
-        (membership) => membership.personId === userId
-      )
-    )
-      return { error: "You are not a member of this event" };
+  if (
+    !post.event.memberships.find((membership) => membership.personId === userId)
+  )
+    return { error: "You are not a member of this event" };
 
-    const userRole = post.event.memberships.find(
-      (membership) => membership.personId === userId
-    )?.role;
+  const userRole = post.event.memberships.find(
+    (membership) => membership.personId === userId
+  )?.role;
 
-    if (!userRole) return { error: "Role not found" };
+  if (!userRole) return { error: "Role not found" };
 
-    const isMod = ["MODERATOR", "ORGANIZER"].includes(userRole);
+  const eventTitle = post.event.title;
 
-    const eventTitle = post.event.title;
-
-    return {
-      success: {
-        post,
-        eventTitle,
-        userId,
-        isMod,
-        userRole,
-      },
-    };
-  }
-);
+  return {
+    success: {
+      post,
+      userId,
+      userRole,
+    },
+  };
+};
 
 export async function createPost({
   title,

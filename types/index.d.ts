@@ -33,14 +33,26 @@ export type UserInfo = {
   role?: $Enums.Role | undefined;
 };
 
-const extendedPost = Prisma.validator<Prisma.PostDefaultArgs>()({
+const replyAuthorPost = Prisma.validator<Prisma.PostDefaultArgs>()({
   include: {
     replies: true,
     author: true,
   },
 });
 
-export type ExtendedPost = Prisma.PostGetPayload<typeof extendedPost>;
+export type ReplyAuthorPost = Prisma.PostGetPayload<typeof replyAuthorPost>;
+
+const replyAuthorEventPost = Prisma.validator<Prisma.PostDefaultArgs>()({
+  include: {
+    replies: true,
+    author: true,
+    event: true,
+  },
+});
+
+export type ReplyAuthorEventPost = Prisma.PostGetPayload<
+  typeof replyAuthorEventPost
+>;
 
 const member = Prisma.validator<Prisma.MembershipDefaultArgs>()({
   include: {

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePostData } from "@/data/post-hooks";
 import { getFullName } from "@/lib/utils";
-import { ExtendedPost } from "@/types";
+import { ReplyAuthorEventPost } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,7 +23,7 @@ export function FullPost({ postId }: { postId: string }) {
     post,
     isMod,
     userId,
-  }: { post: ExtendedPost; isMod: boolean; userId: string } = postData;
+  }: { post: ReplyAuthorEventPost; isMod: boolean; userId: string } = postData;
 
   const { event, author } = post;
 
@@ -40,7 +40,7 @@ export function FullPost({ postId }: { postId: string }) {
                 className="flex items-center gap-1 pl-2"
               >
                 <Icons.back />
-                <span>{post.event.title}</span>
+                <span>{event.title}</span>
               </Button>
             </Link>
             {(isMod || userId === post.authorId) && (

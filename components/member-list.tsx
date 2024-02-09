@@ -7,11 +7,16 @@ import { Member } from "@/types";
 import { usePathname } from "next/navigation";
 import { useEventMembers } from "@/data/event-hooks";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { $Enums } from "@prisma/client";
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
 
-  const { members }: { members: Member[] } = memberData;
+  const {
+    members,
+    userRole,
+    userId,
+  }: { members: Member[]; userRole: $Enums.Role; userId: string } = memberData;
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -74,7 +79,11 @@ export function MemberList({ eventId }: { eventId: string }) {
                   layout
                   key={i}
                 >
-                  <MemberIcon member={member} />
+                  <MemberIcon
+                    userId={userId}
+                    userRole={userRole}
+                    member={member}
+                  />
                 </motion.div>
               ) : (
                 i === visibleIcons - 1 && (

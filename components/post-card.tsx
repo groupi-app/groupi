@@ -14,14 +14,15 @@ import { DeletePostDialog } from "./deletePostDialog";
 import { formatDate, getFullName } from "@/lib/utils";
 import React from "react";
 import { PostCardContent } from "./post-card-content";
+import { $Enums } from "@prisma/client";
 
 interface PostCardProps {
   post: ExtendedPost;
-  isMod: boolean;
+  userRole: $Enums.Role;
   userId: string;
 }
 
-export function PostCard({ post, isMod, userId }: PostCardProps) {
+export function PostCard({ post, userRole, userId }: PostCardProps) {
   const {
     id,
     title,
@@ -37,6 +38,9 @@ export function PostCard({ post, isMod, userId }: PostCardProps) {
     author.firstName?.toString()[0] + "" + author.lastName?.toString()[0];
 
   const fullName = getFullName(author.firstName, author.lastName);
+
+  const canDelete =
+    userId === authorId || userRole === "MODERATOR" || userRole === "ORGANIZER";
 
   return (
     <Dialog>
@@ -87,7 +91,7 @@ export function PostCard({ post, isMod, userId }: PostCardProps) {
               </div>
             </div>
           </Link>
-          {(isMod || userId === authorId) && (
+          {canDelete && (
             <>
               <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-1 right-1 flex items-center justify-center">
                 <Icons.more />

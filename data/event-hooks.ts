@@ -21,7 +21,7 @@ export function useEventPosts(eventId: string) {
     if (data.success) {
       return {
         posts: data.success.event.posts,
-        isMod: data.success.isMod,
+        userRole: data.success.userRole,
         userId: data.success.userId,
       };
     }
@@ -34,7 +34,11 @@ export function useEventMembers(eventId: string) {
       throw new Error(data.error);
     }
     if (data.success) {
-      return { members: data.success.event.memberships };
+      return {
+        members: data.success.event.memberships,
+        userRole: data.success.userRole,
+        userId: data.success.userId,
+      };
     }
   });
 }

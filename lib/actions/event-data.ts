@@ -1,14 +1,14 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { ActionResponse, ExtendedPost, Member } from "@/types";
+import { ActionResponse, Member, ReplyAuthorPost } from "@/types";
 import { auth } from "@clerk/nextjs";
-import { Event } from "@prisma/client";
+import { $Enums, Event } from "@prisma/client";
 import { cache } from "react";
 
 export interface EventData {
-  event: Event & { posts: ExtendedPost[]; memberships: Member[] };
-  isMod: boolean;
+  event: Event & { posts: ReplyAuthorPost[]; memberships: Member[] };
+  userRole: $Enums.Role;
   userId: string;
 }
 
@@ -48,8 +48,6 @@ export const fetchEventData = cache(
 
     if (!userRole) return { error: "Role not found" };
 
-    const isMod = ["MODERATOR", "ORGANIZER"].includes(userRole);
-
-    return { success: { event, isMod, userId } };
+    return { success: { event, userRole, userId } };
   }
 );
