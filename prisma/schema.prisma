@@ -19,6 +19,10 @@ model Person {
   events      Event[]
   posts       Post[]
   replies     Reply[]
+  firstName   String
+  lastName    String
+  username    String       @unique
+  imageUrl    String
 }
 
 model Event {

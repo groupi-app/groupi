@@ -28,7 +28,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["postData"],
+    queryKey: ["postData", postId],
     queryFn: async () => data,
   });
 

@@ -2,7 +2,8 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
-import { PostWithAuthorInfo } from "@/types";
+import { ReplyAuthorPost } from "@/types";
+import { $Enums } from "@prisma/client";
 import { motion, LayoutGroup } from "framer-motion";
 
 export function PostFeed({ eventId }: { eventId: string }) {
@@ -10,9 +11,10 @@ export function PostFeed({ eventId }: { eventId: string }) {
 
   const {
     posts,
-    isMod,
+    userRole,
     userId,
-  }: { posts: PostWithAuthorInfo[]; isMod: boolean; userId: string } = postData;
+  }: { posts: ReplyAuthorPost[]; userRole: $Enums.Role; userId: string } =
+    postData;
 
   const container = {
     hidden: { opacity: 0 },
@@ -48,7 +50,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
                 key={post.id}
                 className="w-full"
               >
-                <PostCard userId={userId} isMod={isMod} post={post} />
+                <PostCard userId={userId} userRole={userRole} post={post} />
               </motion.div>
             ))}
         </LayoutGroup>

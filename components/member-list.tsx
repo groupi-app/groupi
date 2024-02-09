@@ -3,15 +3,20 @@ import { useRef, useState, useLayoutEffect } from "react";
 import MemberIcon from "@/components/member-icon";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { UserInfo } from "@/types";
+import { Member } from "@/types";
 import { usePathname } from "next/navigation";
 import { useEventMembers } from "@/data/event-hooks";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { $Enums } from "@prisma/client";
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
 
-  const { members }: { members: UserInfo[] } = memberData;
+  const {
+    members,
+    userRole,
+    userId,
+  }: { members: Member[]; userRole: $Enums.Role; userId: string } = memberData;
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -66,7 +71,7 @@ export function MemberList({ eventId }: { eventId: string }) {
       >
         <LayoutGroup>
           <AnimatePresence>
-            {members.map((user, i) =>
+            {members.map((member, i) =>
               i < visibleIcons - 1 ? (
                 <motion.div
                   variants={item}
@@ -74,7 +79,11 @@ export function MemberList({ eventId }: { eventId: string }) {
                   layout
                   key={i}
                 >
-                  <MemberIcon userInfo={user} />
+                  <MemberIcon
+                    userId={userId}
+                    userRole={userRole}
+                    member={member}
+                  />
                 </motion.div>
               ) : (
                 i === visibleIcons - 1 && (

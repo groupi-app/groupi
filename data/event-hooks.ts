@@ -2,11 +2,14 @@ import { EventData, fetchEventData } from "@/lib/actions/event-data";
 import { useQuery } from "@tanstack/react-query";
 import { ActionResponse } from "@/types";
 
-export function useEventDataQuery(eventId: string, select: (data: ActionResponse<EventData>) => any) {
+export function useEventDataQuery(
+  eventId: string,
+  select: (data: ActionResponse<EventData>) => any
+) {
   return useQuery({
     queryFn: async () => fetchEventData(eventId),
     queryKey: ["eventData"],
-    select
+    select,
   });
 }
 
@@ -16,7 +19,11 @@ export function useEventPosts(eventId: string) {
       throw new Error(data.error);
     }
     if (data.success) {
-      return {posts: data.success.posts, isMod: data.success.isMod, userId: data.success.userId}
+      return {
+        posts: data.success.event.posts,
+        userRole: data.success.userRole,
+        userId: data.success.userId,
+      };
     }
   });
 }
@@ -27,7 +34,11 @@ export function useEventMembers(eventId: string) {
       throw new Error(data.error);
     }
     if (data.success) {
-      return {members: data.success.members}
+      return {
+        members: data.success.event.memberships,
+        userRole: data.success.userRole,
+        userId: data.success.userId,
+      };
     }
   });
 }
@@ -38,7 +49,7 @@ export function useEventHeader(eventId: string) {
       throw new Error(data.error);
     }
     if (data.success) {
-      return {...data.success.headerData}
+      return { ...data.success.event };
     }
   });
 }
