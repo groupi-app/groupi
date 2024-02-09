@@ -2,7 +2,7 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
-import { ExtendedPost } from "@/types";
+import { ReplyAuthorPost } from "@/types";
 import { $Enums } from "@prisma/client";
 import { motion, LayoutGroup } from "framer-motion";
 
@@ -13,7 +13,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
     posts,
     userRole,
     userId,
-  }: { posts: ExtendedPost[]; userRole: $Enums.Role; userId: string } =
+  }: { posts: ReplyAuthorPost[]; userRole: $Enums.Role; userId: string } =
     postData;
 
   const container = {

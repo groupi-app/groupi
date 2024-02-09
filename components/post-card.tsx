@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ExtendedPost } from "@/types";
+import { ReplyAuthorPost } from "@/types";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { DeletePostDialog } from "./deletePostDialog";
 import { formatDate, getFullName } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { PostCardContent } from "./post-card-content";
 import { $Enums } from "@prisma/client";
 
 interface PostCardProps {
-  post: ExtendedPost;
+  post: ReplyAuthorPost;
   userRole: $Enums.Role;
   userId: string;
 }

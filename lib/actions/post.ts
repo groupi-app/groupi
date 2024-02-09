@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { auth } from "@clerk/nextjs";
-import { ExtendedPost } from "@/types";
+import { ReplyAuthorEventPost } from "@/types";
 
 export interface PostData {
   success?: {
-    post: ExtendedPost;
+    post: ReplyAuthorEventPost;
     userId: string;
     userRole: string;
   };
