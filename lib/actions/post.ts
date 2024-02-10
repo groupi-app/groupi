@@ -70,6 +70,12 @@ export async function createPost({
   authorId: string;
 }) {
   try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    if (userId !== authorId) return { error: "User not authorized" };
+
     const res = await db.post.create({
       data: {
         title: title,
@@ -95,6 +101,20 @@ export async function updatePost({
   content: string;
 }) {
   try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    const post = await db.post.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!post) return { error: "Post not found" };
+
+    if (userId !== post.authorId) return { error: "User not authorized" };
+
     const res = await db.post.update({
       where: {
         id: id,
@@ -114,6 +134,35 @@ export async function updatePost({
 
 export async function deletePost({ id }: { id: string }) {
   try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    const post = await db.post.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        event: {
+          include: {
+            memberships: true,
+          },
+        },
+      },
+    });
+
+    if (!post) return { error: "Post not found" };
+
+    const currentUserMembership = post.event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!currentUserMembership)
+      return { error: "You are not a member of this event" };
+
+    if (userId !== post.authorId && currentUserMembership.role === "ATTENDEE")
+      return { error: "User not authorized" };
+
     const res = await db.post.delete({
       where: {
         id: id,
