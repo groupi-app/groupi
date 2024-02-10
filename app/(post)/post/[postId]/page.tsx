@@ -1,5 +1,7 @@
 import { FullPost } from "@/components/full-post";
+import QueryProvider from "@/components/providers/query-provider";
 import { PostData, fetchPostData } from "@/lib/actions/post";
+import { getPostQuery } from "@/lib/query-definitions";
 import {
   HydrationBoundary,
   QueryClient,
@@ -25,16 +27,20 @@ export default async function Page({ params }: { params: { postId: string } }) {
     throw new Error("An error occurred");
   }
 
+  const queryDefinition = getPostQuery(postId);
+
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["postData", postId],
+    queryKey: [queryDefinition.queryKey],
     queryFn: async () => data,
   });
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <FullPost postId={postId} />
-    </HydrationBoundary>
+    <QueryProvider queryDefinition={queryDefinition}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <FullPost postId={postId} />
+      </HydrationBoundary>
+    </QueryProvider>
   );
 }

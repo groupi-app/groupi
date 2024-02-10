@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { auth } from "@clerk/nextjs";
 import { ReplyAuthorEventPost } from "@/types";
+import { pusherServer } from "../pusher-server";
+import { toPusherKey } from "../utils";
+import { getEventQuery, getPostQuery } from "../query-definitions";
 
 export interface PostData {
   success?: {
@@ -85,6 +88,14 @@ export async function createPost({
       },
     });
     revalidatePath("/");
+
+    const queryDefinition = getEventQuery(eventId);
+    pusherServer.trigger(
+      toPusherKey(queryDefinition.pusherChannel),
+      queryDefinition.pusherEvent,
+      { message: "Data updated" }
+    );
+
     return { success: "Post Created" };
   } catch (error) {
     return { error: error };
@@ -126,6 +137,21 @@ export async function updatePost({
       },
     });
     revalidatePath("/");
+
+    const eventQueryDefinition = getEventQuery(post.eventId);
+    const postQueryDefinition = getPostQuery(id);
+
+    pusherServer.trigger(
+      toPusherKey(eventQueryDefinition.pusherChannel),
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+    pusherServer.trigger(
+      toPusherKey(postQueryDefinition.pusherChannel),
+      postQueryDefinition.pusherEvent,
+      { message: "Post data updated" }
+    );
+
     return { success: "Post Updated" };
   } catch (error) {
     return { error: error };
@@ -169,7 +195,22 @@ export async function deletePost({ id }: { id: string }) {
       },
     });
     revalidatePath("/");
-    return { success: "Post Deleted" };
+
+    const eventQueryDefinition = getEventQuery(post.eventId);
+    const postQueryDefinition = getPostQuery(id);
+
+    pusherServer.trigger(
+      toPusherKey(eventQueryDefinition.pusherChannel),
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+    pusherServer.trigger(
+      toPusherKey(postQueryDefinition.pusherChannel),
+      postQueryDefinition.pusherEvent,
+      { message: "Post data updated" }
+    );
+
+    return { success: { message: "Post Deleted", post: res } };
   } catch (error) {
     return { error: error };
   }

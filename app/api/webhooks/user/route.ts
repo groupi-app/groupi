@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
+import { env } from "@/env.mjs";
 
 type Event = {
   data: Record<string, string | number>;
@@ -14,13 +15,7 @@ type Event = {
 type EventType = "user.created" | "user.updated" | "user.deleted" | "*";
 
 export async function POST(req: Request) {
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
-
-  if (!WEBHOOK_SECRET) {
-    throw new Error(
-      "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local"
-    );
-  }
+  const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 
   const headerPayload = headers();
   const svix_id = headerPayload.get("svix-id");
