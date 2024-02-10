@@ -1,14 +1,16 @@
 import { EventData, fetchEventData } from "@/lib/actions/event-data";
 import { useQuery } from "@tanstack/react-query";
 import { ActionResponse } from "@/types";
+import { getEventQuery } from "@/lib/query-definitions";
 
 export function useEventDataQuery(
   eventId: string,
   select: (data: ActionResponse<EventData>) => any
 ) {
+  const queryDefinition = getEventQuery(eventId);
   return useQuery({
     queryFn: async () => fetchEventData(eventId),
-    queryKey: ["eventData"],
+    queryKey: [queryDefinition.queryKey],
     select,
   });
 }

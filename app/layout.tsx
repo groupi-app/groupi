@@ -5,15 +5,14 @@ import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import { currentUser } from "@clerk/nextjs";
+import { ClerkProvider, currentUser } from "@clerk/nextjs";
 import { Analytics } from "@/components/analytics";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Providers from "@/lib/providers";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -86,7 +85,7 @@ export default async function RootLayout({
   };
 
   return (
-    <Providers>
+    <ClerkProvider>
       <html lang="en">
         <body
           className={cn(
@@ -110,6 +109,6 @@ export default async function RootLayout({
           <TailwindIndicator />
         </body>
       </html>
-    </Providers>
+    </ClerkProvider>
   );
 }

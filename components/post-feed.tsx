@@ -2,9 +2,11 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
+import { pusherClient } from "@/lib/pusher-client";
 import { ReplyAuthorPost } from "@/types";
 import { $Enums } from "@prisma/client";
 import { motion, LayoutGroup } from "framer-motion";
+import { useEffect } from "react";
 
 export function PostFeed({ eventId }: { eventId: string }) {
   const { data: postData } = useEventPosts(eventId);

@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-query";
 import { fetchEventData } from "@/lib/actions/event-data";
 import { notFound } from "next/navigation";
+import QueryProvider from "@/components/providers/query-provider";
+import { getEventQuery } from "@/lib/query-definitions";
 
 export default async function Page({
   params,
@@ -27,23 +29,27 @@ export default async function Page({
     throw new Error(data.error);
   }
 
+  const queryDefinition = getEventQuery(eventId);
+
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["eventData"],
+    queryKey: [queryDefinition.queryKey],
     queryFn: async () => data,
   });
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="container pt-6 pb-24 space-y-5">
-        <EventHeader eventId={eventId} />
-        <div className="max-w-2xl mx-auto flex flex-col gap-4">
-          <MemberList eventId={eventId} />
-          <PostFeed eventId={eventId} />
+    <QueryProvider queryDefinition={queryDefinition}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className="container pt-6 pb-24 space-y-5">
+          <EventHeader eventId={eventId} />
+          <div className="max-w-2xl mx-auto flex flex-col gap-4">
+            <MemberList eventId={eventId} />
+            <PostFeed eventId={eventId} />
+          </div>
+          <NewPostButton />
         </div>
-        <NewPostButton />
-      </div>
-    </HydrationBoundary>
+      </HydrationBoundary>
+    </QueryProvider>
   );
 }
