@@ -8,8 +8,8 @@ export const getEventQuery: (eventId: string) => QueryDefinition = (
   eventId: string
 ) => {
   return {
-    queryKey: `eventData:${eventId}`,
-    pusherChannel: `event:${eventId}`,
+    queryKey: `eventData__${eventId}`,
+    pusherChannel: `event__${eventId}`,
     pusherEvent: "update_event_data",
   };
 };
@@ -18,8 +18,8 @@ export const getPostQuery: (postId: string) => QueryDefinition = (
   postId: string
 ) => {
   return {
-    queryKey: `postData:${postId}`,
-    pusherChannel: `post:${postId}`,
+    queryKey: `postData__${postId}`,
+    pusherChannel: `post__${postId}`,
     pusherEvent: "update_post_data",
   };
 };

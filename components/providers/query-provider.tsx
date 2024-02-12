@@ -3,7 +3,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { pusherClient } from "../../lib/pusher-client";
-import { toPusherKey } from "../../lib/utils";
 import { QueryDefinition } from "@/lib/query-definitions";
 
 interface QueryProviderProps {
@@ -32,10 +31,10 @@ export default function QueryProvider({
   }
 
   useEffect(() => {
-    pusherClient.subscribe(toPusherKey(pusherChannel));
+    pusherClient.subscribe(pusherChannel);
     pusherClient.bind(pusherEvent, invalidateQueries);
     return () => {
-      pusherClient.unsubscribe(toPusherKey(pusherChannel));
+      pusherClient.unsubscribe(pusherChannel);
       pusherClient.unbind(pusherEvent, invalidateQueries);
     };
   }, []);

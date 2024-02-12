@@ -80,7 +80,3 @@ export function formatRoleBadge(role: $Enums.Role | undefined) {
       return React.createElement("<span>Unknown</span>");
   }
 }
-
-export function toPusherKey(key: string) {
-  return key.replace(/:/g, "__");
-}

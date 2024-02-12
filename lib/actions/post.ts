@@ -5,7 +5,6 @@ import { db } from "../db";
 import { auth } from "@clerk/nextjs";
 import { ReplyAuthorEventPost } from "@/types";
 import { pusherServer } from "../pusher-server";
-import { toPusherKey } from "../utils";
 import { getEventQuery, getPostQuery } from "../query-definitions";
 
 export interface PostData {
@@ -91,7 +90,7 @@ export async function createPost({
 
     const queryDefinition = getEventQuery(eventId);
     pusherServer.trigger(
-      toPusherKey(queryDefinition.pusherChannel),
+      queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
       { message: "Data updated" }
     );
@@ -142,12 +141,12 @@ export async function updatePost({
     const postQueryDefinition = getPostQuery(id);
 
     pusherServer.trigger(
-      toPusherKey(eventQueryDefinition.pusherChannel),
+      eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
       { message: "Event data updated" }
     );
     pusherServer.trigger(
-      toPusherKey(postQueryDefinition.pusherChannel),
+      postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
       { message: "Post data updated" }
     );
@@ -200,12 +199,12 @@ export async function deletePost({ id }: { id: string }) {
     const postQueryDefinition = getPostQuery(id);
 
     pusherServer.trigger(
-      toPusherKey(eventQueryDefinition.pusherChannel),
+      eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
       { message: "Event data updated" }
     );
     pusherServer.trigger(
-      toPusherKey(postQueryDefinition.pusherChannel),
+      postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
       { message: "Post data updated" }
     );

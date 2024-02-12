@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
 import { pusherServer } from "../pusher-server";
-import { toPusherKey } from "../utils";
 import { getEventQuery } from "../query-definitions";
 
 export async function updateMembershipRole({
@@ -49,7 +48,7 @@ export async function updateMembershipRole({
     revalidatePath("/");
     const queryDefinition = getEventQuery(membership.eventId);
     pusherServer.trigger(
-      toPusherKey(queryDefinition.pusherChannel),
+      queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
       { message: "Data updated" }
     );
@@ -98,7 +97,7 @@ export async function deleteMembership(membership: Membership) {
     revalidatePath("/");
     const queryDefinition = getEventQuery(membership.eventId);
     pusherServer.trigger(
-      toPusherKey(queryDefinition.pusherChannel),
+      queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
       { message: "Data updated" }
     );
