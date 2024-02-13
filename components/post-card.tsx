@@ -7,22 +7,25 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ReplyAuthorPost } from "@/types";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { DeletePostDialog } from "./deletePostDialog";
 import { formatDate, getFullName } from "@/lib/utils";
 import React from "react";
 import { PostCardContent } from "./post-card-content";
-import { $Enums } from "@prisma/client";
+import { $Enums, Membership } from "@prisma/client";
+import MemberIcon from "./member-icon";
+import { Member } from "@/types";
+import { Avatar } from "@radix-ui/react-avatar";
 
 interface PostCardProps {
   post: ReplyAuthorPost;
   userRole: $Enums.Role;
   userId: string;
+  member: Member | undefined;
 }
 
-export function PostCard({ post, userRole, userId }: PostCardProps) {
+export function PostCard({ post, userRole, userId, member }: PostCardProps) {
   const {
     id,
     title,
@@ -46,30 +49,35 @@ export function PostCard({ post, userRole, userId }: PostCardProps) {
     <Dialog>
       <DropdownMenu>
         <div className="rounded-xl border border-border w-full relative shadow-md z-10">
+          <div className="absolute top-4 left-3">
+            {member ? (
+              <MemberIcon
+                key={0}
+                member={member}
+                userId={userId}
+                userRole={userRole}
+                className="border-transparent"
+              />
+            ) : (
+              <div className="rounded-full w-10 h-10 bg-primary" />
+            )}{" "}
+          </div>
           <Link href={`/post/${id}`} className="w-full z-10">
             <div className="w-full rounded-xl bg-card hover:bg-accent transition-colors group pt-4 px-5 pb-2">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 w-full mb-2">
-                  <div>
-                    <Avatar>
-                      <AvatarImage src={author.imageUrl} />
-                      <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="flex flex-col -space-y-1 w-full pr-16">
-                    <span className="sm:text-xl font-heading text-card-foreground truncate overflow-hidden w-full">
-                      {title}
+                <div className="ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16">
+                  <span className="sm:text-xl font-heading text-card-foreground truncate overflow-hidden w-full">
+                    {title}
+                  </span>
+                  {fullName != "" ? (
+                    <span className="text-sm text-muted-foreground">
+                      {fullName}
                     </span>
-                    {fullName != "" ? (
-                      <span className="text-sm text-muted-foreground">
-                        {fullName}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        {author.username}
-                      </span>
-                    )}
-                  </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {author.username}
+                    </span>
+                  )}
                 </div>
                 <PostCardContent content={content} />
                 <div className="flex items-center justify-between mt-2">
@@ -93,7 +101,7 @@ export function PostCard({ post, userRole, userId }: PostCardProps) {
           </Link>
           {canDelete && (
             <>
-              <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-1 right-1 flex items-center justify-center">
+              <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center">
                 <Icons.more />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -131,7 +139,7 @@ export function PostCard({ post, userRole, userId }: PostCardProps) {
 
 PostCard.Skeleton = function PostCardSkeleton() {
   return (
-    <div className="rounded-md border border-border w-full relative shadow-md max-w-2xl">
+    <div className="rounded-xl border border-border w-full relative shadow-md max-w-2xl">
       <div className="w-full transition-all pt-4 px-5 pb-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-1">

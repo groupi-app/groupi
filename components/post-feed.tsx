@@ -2,11 +2,10 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
-import { pusherClient } from "@/lib/pusher-client";
 import { ReplyAuthorPost } from "@/types";
 import { $Enums } from "@prisma/client";
+import { Member } from "@/types";
 import { motion, LayoutGroup } from "framer-motion";
-import { useEffect } from "react";
 
 export function PostFeed({ eventId }: { eventId: string }) {
   const { data: postData } = useEventPosts(eventId);
@@ -15,8 +14,13 @@ export function PostFeed({ eventId }: { eventId: string }) {
     posts,
     userRole,
     userId,
-  }: { posts: ReplyAuthorPost[]; userRole: $Enums.Role; userId: string } =
-    postData;
+    members,
+  }: {
+    posts: ReplyAuthorPost[];
+    userRole: $Enums.Role;
+    userId: string;
+    members: Member[];
+  } = postData;
 
   const container = {
     hidden: { opacity: 0 },
@@ -52,7 +56,12 @@ export function PostFeed({ eventId }: { eventId: string }) {
                 key={post.id}
                 className="w-full"
               >
-                <PostCard userId={userId} userRole={userRole} post={post} />
+                <PostCard
+                  userId={userId}
+                  userRole={userRole}
+                  post={post}
+                  member={members.find((m) => m.personId === post.authorId)}
+                />
               </motion.div>
             ))}
         </LayoutGroup>

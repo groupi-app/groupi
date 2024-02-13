@@ -26,7 +26,11 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
       author: true,
       event: {
         include: {
-          memberships: true,
+          memberships: {
+            include: {
+              person: true,
+            },
+          },
         },
       },
     },

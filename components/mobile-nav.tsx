@@ -30,7 +30,7 @@ interface MobileNavProps {
 export function MobileNav({ items, children, userInfo }: MobileNavProps) {
   return (
     <div className="md:hidden">
-      <Sheet>
+      <Sheet modal={false}>
         <SheetTrigger className="relative flex items-center justify-center w-12 h-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground">
           <Icons.menu className="w-8 h-8" />
         </SheetTrigger>

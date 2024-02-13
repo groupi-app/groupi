@@ -46,7 +46,15 @@ const replyAuthorEventPost = Prisma.validator<Prisma.PostDefaultArgs>()({
   include: {
     replies: true,
     author: true,
-    event: true,
+    event: {
+      include: {
+        memberships: {
+          include: {
+            person: true,
+          },
+        },
+      },
+    },
   },
 });
 

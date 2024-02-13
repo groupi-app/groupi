@@ -13,8 +13,8 @@ import {
 import { usePostData } from "@/data/post-hooks";
 import { getFullName } from "@/lib/utils";
 import { ReplyAuthorEventPost } from "@/types";
-import Image from "next/image";
 import Link from "next/link";
+import MemberIcon from "./member-icon";
 
 export function FullPost({ postId }: { postId: string }) {
   const { data: postData } = usePostData(postId);
@@ -26,6 +26,18 @@ export function FullPost({ postId }: { postId: string }) {
   }: { post: ReplyAuthorEventPost; isMod: boolean; userId: string } = postData;
 
   const { event, author } = post;
+
+  const userRole = post.event.memberships.find(
+    (m) => m.personId === userId
+  )?.role;
+
+  if (!userRole) {
+    throw new Error("User is not a member of this event");
+  }
+
+  const member = post.event.memberships.find(
+    (m) => m.personId === post.authorId
+  );
 
   const fullName = getFullName(author.firstName, author.lastName);
 
@@ -77,17 +89,21 @@ export function FullPost({ postId }: { postId: string }) {
           </div>
           <div>
             <div className="flex flex-col gap-1 mb-8">
-              <h1 className="text-5xl font-heading font-medium">
+              <h1 className="text-5xl font-heading font-medium mb-1">
                 {post.title}
               </h1>
               <div className="flex items-center gap-2">
-                <Image
-                  src={author.imageUrl}
-                  alt={fullName}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full"
-                />
+                {member ? (
+                  <MemberIcon
+                    key={0}
+                    userId={userId}
+                    userRole={userRole}
+                    member={member}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-primary" />
+                )}
+
                 <span className="text-muted-foreground">{fullName}</span>
               </div>
             </div>

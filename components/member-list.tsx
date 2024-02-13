@@ -49,11 +49,6 @@ export function MemberList({ eventId }: { eventId: string }) {
     },
   };
 
-  const item = {
-    hidden: { opacity: 0, x: 15 },
-    show: { opacity: 1, x: 0 },
-  };
-
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -73,18 +68,12 @@ export function MemberList({ eventId }: { eventId: string }) {
           <AnimatePresence>
             {members.map((member, i) => {
               return i < visibleIcons - 1 ? (
-                <motion.div
-                  variants={item}
-                  className="flex items-center rounded-full border-2 border-background z-10"
-                  layout
+                <MemberIcon
+                  userId={userId}
+                  userRole={userRole}
+                  member={member}
                   key={i}
-                >
-                  <MemberIcon
-                    userId={userId}
-                    userRole={userRole}
-                    member={member}
-                  />
-                </motion.div>
+                />
               ) : (
                 i === visibleIcons - 1 && (
                   <motion.div variants={item} layout key={i}>

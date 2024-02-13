@@ -12,9 +12,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Icons } from "./icons";
 import { Member } from "@/types";
-import { formatRoleBadge, formatRoleName, getFullName } from "@/lib/utils";
+import { cn, formatRoleBadge, formatRoleName, getFullName } from "@/lib/utils";
 import { $Enums } from "@prisma/client";
 import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
+import { motion } from "framer-motion";
 
 import {
   MemberAction,
@@ -22,14 +23,23 @@ import {
 } from "@/components/member-action-dialog";
 import { useState } from "react";
 
+const item = {
+  hidden: { opacity: 0, x: 15 },
+  show: { opacity: 1, x: 0 },
+};
+
 export default function MemberIcon({
   member,
   userRole,
   userId,
+  key,
+  className,
 }: {
   member: Member;
   userRole: $Enums.Role;
   userId: string;
+  key: number;
+  className?: string;
 }) {
   const { firstName, lastName, username, imageUrl } = member.person;
   const role = member.role;
@@ -52,99 +62,109 @@ export default function MemberIcon({
   );
 
   return (
-    <Dialog>
-      <Tooltip>
-        <DropdownMenu>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger className="rounded-full">
-              <Avatar>
-                <AvatarImage src={imageUrl} />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span className="text-base text-card-foreground">
-                  {fullName}
-                </span>
-                <span className="text-muted-foreground">{username}</span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              <div className="flex items-center gap-1">
-                <div className="text-card-foreground">
-                  {formatRoleBadge(role)}
+    <motion.div
+      variants={item}
+      className={cn(
+        "flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-10",
+        className
+      )}
+      layout
+      key={key}
+    >
+      <Dialog>
+        <Tooltip>
+          <DropdownMenu>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger className="rounded-full">
+                <Avatar>
+                  <AvatarImage src={imageUrl} />
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span className="text-base text-card-foreground">
+                    {fullName}
+                  </span>
+                  <span className="text-muted-foreground">{username}</span>
                 </div>
-                <span className="text-card-foreground">
-                  {formatRoleName(role)}
-                </span>
-              </div>
-            </DropdownMenuLabel>
-            {(canKick || canPromote) && <DropdownMenuSeparator />}
-
-            {canPromote && (
-              <>
-                {member.role === "ATTENDEE" && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setDialogAction(MemberAction.PROMOTE);
-                    }}
-                    asChild
-                    className="cursor-pointer"
-                  >
-                    <DialogTrigger asChild>
-                      <div className="flex items-center gap-1">
-                        <Icons.shield className="w-4 h-4" />
-                        <span>Promote</span>
-                      </div>
-                    </DialogTrigger>
-                  </DropdownMenuItem>
-                )}
-
-                {member.role === "MODERATOR" && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setDialogAction(MemberAction.DEMOTE);
-                    }}
-                    asChild
-                    className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
-                  >
-                    <DialogTrigger asChild>
-                      <div className="flex items-center gap-1">
-                        <Icons.shieldOff className="w-4 h-4" />
-                        <span>Demote</span>
-                      </div>
-                    </DialogTrigger>
-                  </DropdownMenuItem>
-                )}
-              </>
-            )}
-            {canKick && (
-              <DropdownMenuItem
-                onClick={() => {
-                  setDialogAction(MemberAction.KICK);
-                }}
-                asChild
-                className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
-              >
-                <DialogTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <Icons.kick className="w-4 h-4" />
-                    <span>Kick</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>
+                <div className="flex items-center gap-1">
+                  <div className="text-card-foreground">
+                    {formatRoleBadge(role)}
                   </div>
-                </DialogTrigger>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-          <MemberActionDialog action={dialogAction} member={member} />
-          <TooltipContent>
-            <span>{fullName != null ? fullName : username}</span>
-          </TooltipContent>
-        </DropdownMenu>
-      </Tooltip>
-    </Dialog>
+                  <span className="text-card-foreground">
+                    {formatRoleName(role)}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              {(canKick || canPromote) && <DropdownMenuSeparator />}
+
+              {canPromote && (
+                <>
+                  {member.role === "ATTENDEE" && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setDialogAction(MemberAction.PROMOTE);
+                      }}
+                      asChild
+                      className="cursor-pointer"
+                    >
+                      <DialogTrigger asChild>
+                        <div className="flex items-center gap-1">
+                          <Icons.shield className="w-4 h-4" />
+                          <span>Promote</span>
+                        </div>
+                      </DialogTrigger>
+                    </DropdownMenuItem>
+                  )}
+
+                  {member.role === "MODERATOR" && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setDialogAction(MemberAction.DEMOTE);
+                      }}
+                      asChild
+                      className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                    >
+                      <DialogTrigger asChild>
+                        <div className="flex items-center gap-1">
+                          <Icons.shieldOff className="w-4 h-4" />
+                          <span>Demote</span>
+                        </div>
+                      </DialogTrigger>
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {canKick && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setDialogAction(MemberAction.KICK);
+                  }}
+                  asChild
+                  className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                >
+                  <DialogTrigger asChild>
+                    <div className="flex items-center gap-1">
+                      <Icons.kick className="w-4 h-4" />
+                      <span>Kick</span>
+                    </div>
+                  </DialogTrigger>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+            <MemberActionDialog action={dialogAction} member={member} />
+            <TooltipContent>
+              <span>{fullName != null ? fullName : username}</span>
+            </TooltipContent>
+          </DropdownMenu>
+        </Tooltip>
+      </Dialog>
+    </motion.div>
   );
 }

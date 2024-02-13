@@ -25,6 +25,7 @@ export function useEventPosts(eventId: string) {
         posts: data.success.event.posts,
         userRole: data.success.userRole,
         userId: data.success.userId,
+        members: data.success.event.memberships,
       };
     }
   });

@@ -11,6 +11,9 @@ import { fetchEventData } from "@/lib/actions/event-data";
 import { notFound } from "next/navigation";
 import QueryProvider from "@/components/providers/query-provider";
 import { getEventQuery } from "@/lib/query-definitions";
+import { EventHeaderSkeleton } from "@/components/skeletons/event-header-skeleton";
+import { PostFeedSkeleton } from "@/components/skeletons/post-feed-skeleton";
+import { MemberListSkeleton } from "@/components/skeletons/member-list-skeleton";
 
 export default async function Page({
   params,
