@@ -57,7 +57,7 @@ export function MemberList({ eventId }: { eventId: string }) {
   return (
     <div>
       <div className="flex items-center gap-2">
-        <h2 className="text-xl font-heading">Attendees</h2>
+        <h2 className="text-xl font-heading font-medium">Attendees</h2>
         <div className="rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center">
           <span>{members.length}</span>
         </div>
@@ -71,8 +71,8 @@ export function MemberList({ eventId }: { eventId: string }) {
       >
         <LayoutGroup>
           <AnimatePresence>
-            {members.map((member, i) =>
-              i < visibleIcons - 1 ? (
+            {members.map((member, i) => {
+              return i < visibleIcons - 1 ? (
                 <motion.div
                   variants={item}
                   className="flex items-center rounded-full border-2 border-background z-10"
@@ -95,8 +95,8 @@ export function MemberList({ eventId }: { eventId: string }) {
                     </Link>
                   </motion.div>
                 )
-              )
-            )}
+              );
+            })}
           </AnimatePresence>
         </LayoutGroup>
       </motion.div>

@@ -5,7 +5,7 @@ import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import { ClerkProvider, currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs";
 import { Analytics } from "@/components/analytics";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ClerkProvider from "@/components/providers/my-clerk-provider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -85,16 +86,16 @@ export default async function RootLayout({
   };
 
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable,
-            fontHeading.variable
-          )}
-        >
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <html lang="en">
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+          fontHeading.variable
+        )}
+      >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ClerkProvider>
             <TooltipProvider>
               <div className="flex flex-col min-h-screen">
                 <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
@@ -103,12 +104,12 @@ export default async function RootLayout({
                 <main>{children}</main>
               </div>
             </TooltipProvider>
-          </ThemeProvider>
-          <Analytics />
-          <Toaster />
-          <TailwindIndicator />
-        </body>
-      </html>
-    </ClerkProvider>
+          </ClerkProvider>
+        </ThemeProvider>
+        <Analytics />
+        <Toaster />
+        <TailwindIndicator />
+      </body>
+    </html>
   );
 }

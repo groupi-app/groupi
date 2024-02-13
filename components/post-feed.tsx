@@ -35,7 +35,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
 
   return (
     <div>
-      <h2 className="text-xl font-heading">Posts</h2>
+      <h2 className="text-xl font-heading font-medium">Posts</h2>
       <motion.div
         variants={container}
         initial="hidden"

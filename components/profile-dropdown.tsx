@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -11,6 +13,8 @@ import { UserInfo } from "@/types";
 import { Icons } from "./icons";
 import { SignOutButton } from "@clerk/nextjs";
 import { getFullName } from "@/lib/utils";
+import { useState } from "react";
+import { set } from "zod";
 
 interface ProfileDropdownProps {
   userInfo: UserInfo;
@@ -23,7 +27,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
   const fullName = getFullName(userInfo.firstName, userInfo.lastName);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="rounded-full">
         <Avatar>
           <AvatarImage src={userInfo.avatar} />
@@ -40,25 +44,25 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem asChild className="cursor-pointer">
           <button
             onClick={() => {
               window.Clerk.openUserProfile();
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full"
           >
             <Icons.account className="w-4 h-4" />
             <span>My Account</span>
           </button>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer">
-          <SignOutButton>
+        <SignOutButton>
+          <DropdownMenuItem className="cursor-pointer">
             <div className="flex items-center gap-2">
               <Icons.signOut className="w-4 h-4" />
               <span>Sign Out</span>
             </div>
-          </SignOutButton>
-        </DropdownMenuItem>
+          </DropdownMenuItem>
+        </SignOutButton>
       </DropdownMenuContent>
     </DropdownMenu>
   );

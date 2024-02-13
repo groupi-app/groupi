@@ -57,7 +57,7 @@ export function PostCard({ post, userRole, userId }: PostCardProps) {
                     </Avatar>
                   </div>
                   <div className="flex flex-col -space-y-1 w-full pr-16">
-                    <span className="sm:text-lg text-card-foreground truncate overflow-hidden w-full">
+                    <span className="sm:text-xl font-heading text-card-foreground truncate overflow-hidden w-full">
                       {title}
                     </span>
                     {fullName != "" ? (

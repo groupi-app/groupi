@@ -155,7 +155,7 @@ export function Editor({
                 <FormItem>
                   <FormControl>
                     <Input
-                      className="text-4xl md:text-5xl font-heading border-none py-10 mb-2"
+                      className="text-4xl md:text-5xl font-heading font-medium border-none py-10 mb-2"
                       placeholder="Post Title"
                       value={field.value}
                       onChange={field.onChange}

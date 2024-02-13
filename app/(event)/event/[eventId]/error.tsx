@@ -11,7 +11,7 @@ export default function Page({
   const router = useRouter();
   return (
     <div className="container mt-24">
-      <h1 className="font-heading text-3xl mb-1">Uh Oh!</h1>
+      <h1 className="font-heading font-medium text-3xl mb-1">Uh Oh!</h1>
       <p className="mb-4">{error ? error.message : "Something went wrong!"}</p>
       <Button
         onClick={() => {

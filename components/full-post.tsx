@@ -77,7 +77,9 @@ export function FullPost({ postId }: { postId: string }) {
           </div>
           <div>
             <div className="flex flex-col gap-1 mb-8">
-              <h1 className="text-5xl font-heading">{post.title}</h1>
+              <h1 className="text-5xl font-heading font-medium">
+                {post.title}
+              </h1>
               <div className="flex items-center gap-2">
                 <Image
                   src={author.imageUrl}
