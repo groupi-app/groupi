@@ -15,6 +15,7 @@ import { getFullName } from "@/lib/utils";
 import { ReplyAuthorEventPost } from "@/types";
 import Link from "next/link";
 import MemberIcon from "./member-icon";
+import { $Enums } from "@prisma/client";
 
 export function FullPost({ postId }: { postId: string }) {
   const { data: postData } = usePostData(postId);
@@ -23,13 +24,15 @@ export function FullPost({ postId }: { postId: string }) {
     post,
     isMod,
     userId,
-  }: { post: ReplyAuthorEventPost; isMod: boolean; userId: string } = postData;
+    userRole,
+  }: {
+    post: ReplyAuthorEventPost;
+    isMod: boolean;
+    userId: string;
+    userRole: $Enums.Role;
+  } = postData;
 
   const { event, author } = post;
-
-  const userRole = post.event.memberships.find(
-    (m) => m.personId === userId
-  )?.role;
 
   if (!userRole) {
     throw new Error("User is not a member of this event");
@@ -44,7 +47,7 @@ export function FullPost({ postId }: { postId: string }) {
   return (
     <Dialog>
       <DropdownMenu>
-        <div className="container pt-6">
+        <div className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <Link href={`/event/${post.eventId}`}>
               <Button
@@ -99,12 +102,38 @@ export function FullPost({ postId }: { postId: string }) {
                     userId={userId}
                     userRole={userRole}
                     member={member}
+                    align="start"
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-primary" />
                 )}
 
                 <span className="text-muted-foreground">{fullName}</span>
+              </div>
+              <div className="text-muted-foreground text-sm flex flex-col gap-1">
+                <span>
+                  Created{" "}
+                  {post.createdAt.toLocaleString([], {
+                    year: "numeric",
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+                {post.updatedAt.toISOString() !==
+                  post.createdAt.toISOString() && (
+                  <span>
+                    Edited{" "}
+                    {post.updatedAt.toLocaleString([], {
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
               </div>
             </div>
             <div dangerouslySetInnerHTML={{ __html: post.content }} />

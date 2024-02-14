@@ -57,6 +57,7 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                 userId={userId}
                 userRole={userRole}
                 className="border-transparent"
+                align="start"
               />
             ) : (
               <div className="rounded-full w-10 h-10 bg-primary" />
@@ -83,11 +84,11 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                     <span className="text-muted-foreground text-sm">
-                      Created {formatDate(createdAt)} ago
+                      Created {formatDate(createdAt)}
                     </span>
                     {updatedAt.toISOString() !== createdAt.toISOString() && (
                       <span className="text-muted-foreground text-sm">
-                        Updated {formatDate(updatedAt)} ago
+                        Updated {formatDate(updatedAt)}
                       </span>
                     )}
                   </div>

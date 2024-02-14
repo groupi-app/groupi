@@ -46,7 +46,7 @@ export default async function Page({
       <HydrationBoundary state={dehydrate(queryClient)}>
         <div className="container pt-6 pb-24 space-y-5">
           <EventHeader eventId={eventId} />
-          <div className="max-w-2xl mx-auto flex flex-col gap-4">
+          <div className="max-w-4xl mx-auto flex flex-col gap-4">
             <MemberList eventId={eventId} />
             <PostFeed eventId={eventId} />
           </div>

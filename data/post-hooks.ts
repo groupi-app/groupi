@@ -24,3 +24,19 @@ export function usePostData(postId: string) {
     }
   });
 }
+
+export function usePostReplies(postId: string) {
+  return usePostDataQuery(postId, (data: PostData) => {
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    if (data.success) {
+      return {
+        replies: data.success.post.replies,
+        members: data.success.post.event.memberships,
+        userId: data.success.userId,
+        userRole: data.success.userRole,
+      };
+    }
+  });
+}

@@ -22,7 +22,11 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
       id: postId,
     },
     include: {
-      replies: true,
+      replies: {
+        include: {
+          author: true,
+        },
+      },
       author: true,
       event: {
         include: {

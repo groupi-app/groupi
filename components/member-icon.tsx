@@ -34,12 +34,14 @@ export default function MemberIcon({
   userId,
   key,
   className,
+  align,
 }: {
   member: Member;
   userRole: $Enums.Role;
   userId: string;
   key: number;
   className?: string;
+  align?: "start" | "center" | "end";
 }) {
   const { firstName, lastName, username, imageUrl } = member.person;
   const role = member.role;
@@ -82,7 +84,7 @@ export default function MemberIcon({
                 </Avatar>
               </DropdownMenuTrigger>
             </TooltipTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align={align}>
               <DropdownMenuLabel>
                 <div className="flex flex-col">
                   <span className="text-base text-card-foreground">

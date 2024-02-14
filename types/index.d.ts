@@ -44,7 +44,11 @@ export type ReplyAuthorPost = Prisma.PostGetPayload<typeof replyAuthorPost>;
 
 const replyAuthorEventPost = Prisma.validator<Prisma.PostDefaultArgs>()({
   include: {
-    replies: true,
+    replies: {
+      include: {
+        author: true,
+      },
+    },
     author: true,
     event: {
       include: {
@@ -74,3 +78,11 @@ export type ActionResponse<T> = {
   success?: T;
   error?: string;
 };
+
+const authorReply = Prisma.validator<Prisma.ReplyDefaultArgs>()({
+  include: {
+    author: true,
+  },
+});
+
+export type AuthorReply = Prisma.ReplyGetPayload<typeof authorReply>;

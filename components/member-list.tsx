@@ -49,6 +49,11 @@ export function MemberList({ eventId }: { eventId: string }) {
     },
   };
 
+  const item = {
+    hidden: { opacity: 0, x: 15 },
+    show: { opacity: 1, x: 0 },
+  };
+
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -73,6 +78,7 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userRole={userRole}
                   member={member}
                   key={i}
+                  align={i === 0 ? "start" : "center"}
                 />
               ) : (
                 i === visibleIcons - 1 && (
