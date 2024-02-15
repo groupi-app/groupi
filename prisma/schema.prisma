@@ -19,8 +19,9 @@ model Person {
   events      Event[]
   posts       Post[]
   replies     Reply[]
-  firstName   String?
-  lastName    String?
+  invites     Invite[]
+  firstName   String
+  lastName    String
   username    String       @unique
   imageUrl    String
 }
@@ -35,6 +36,7 @@ model Event {
   description        String              @default("")
   location           String              @default("")
   chosenDateTime     DateTime?
+  invites            Invite[]
   potentialDateTimes PotentialDateTime[]
   posts              Post[]
   memberships        Membership[]
@@ -46,8 +48,8 @@ model Membership {
   personId       String
   eventId        String
   event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  role           Role
-  rsvpStatus     Status
+  role           Role           @default(ATTENDEE)
+  rsvpStatus     Status         @default(PENDING)
   availabilities Availability[]
 }
 
@@ -99,10 +101,22 @@ enum Status {
   YES
   MAYBE
   NO
+  PENDING
 }
 
 enum Role {
   ORGANIZER
   MODERATOR
   ATTENDEE
+}
+
+model Invite {
+  id            String    @id @default(cuid())
+  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId       String
+  createdBy     Person    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById   String
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime? @default(now())
+  usesRemaining Int?
 }
