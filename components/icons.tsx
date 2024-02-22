@@ -22,6 +22,9 @@ import {
   ShieldOff,
   Crown,
   Check,
+  Link,
+  QrCode,
+  Infinity as Infinite,
   MessageCircle as Reply,
   Send as Submit,
   LogIn as SignIn,
@@ -39,6 +42,9 @@ export type Icon = LucideIcon;
 
 export const Icons = {
   check: Check,
+  infinity: Infinite,
+  qr: QrCode,
+  link: Link,
   arrowRight: ArrowRight,
   reply: Reply,
   plus: Plus,

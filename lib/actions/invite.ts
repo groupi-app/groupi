@@ -7,13 +7,13 @@ import { $Enums, Invite } from "@prisma/client";
 export async function createInvite({
   eventId,
   createdById,
-  usesRemaining,
+  uses,
   expiresAt,
 }: {
   eventId: string;
   createdById: string;
-  usesRemaining: number;
-  expiresAt: Date;
+  uses: number | null;
+  expiresAt: Date | null;
 }) {
   try {
     await db.invite.create({
@@ -21,7 +21,8 @@ export async function createInvite({
         eventId: eventId,
         createdById: createdById,
         expiresAt: expiresAt,
-        usesRemaining: usesRemaining,
+        usesRemaining: uses,
+        maxUses: uses,
       },
     });
     revalidatePath("/");

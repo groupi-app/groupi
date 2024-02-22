@@ -119,4 +119,5 @@ model Invite {
   createdAt     DateTime  @default(now())
   expiresAt     DateTime? @default(now())
   usesRemaining Int?
+  maxUses       Int?
 }
