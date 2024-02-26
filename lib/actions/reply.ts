@@ -50,6 +50,15 @@ export async function createReply({
       },
     });
 
+    await db.post.update({
+      where: {
+        id: postId,
+      },
+      data: {
+        updatedAt: new Date().toISOString(),
+      },
+    });
+
     revalidatePath("/");
 
     const eventQueryDefinition = getEventQuery(post.eventId);
@@ -67,6 +76,121 @@ export async function createReply({
     );
 
     return { success: reply };
+  } catch (error) {
+    return { error: error };
+  }
+}
+
+export async function updateReply({
+  replyId,
+  text,
+}: {
+  replyId: string;
+  text: string;
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+    if (!userId) return { error: "User not found" };
+
+    const reply = await db.reply.findUnique({
+      where: {
+        id: replyId,
+      },
+      include: {
+        post: true,
+      },
+    });
+    if (!reply) return { error: "Reply not found" };
+
+    if (reply.authorId !== userId) return { error: "User not authorized" };
+
+    const res = await db.reply.update({
+      where: {
+        id: replyId,
+      },
+      data: {
+        text: text,
+      },
+    });
+
+    revalidatePath("/");
+
+    const eventQueryDefinition = getEventQuery(reply.post.eventId);
+    const postQueryDefinition = getPostQuery(reply.post.id);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+    pusherServer.trigger(
+      postQueryDefinition.pusherChannel,
+      postQueryDefinition.pusherEvent,
+      { message: "Post data updated" }
+    );
+
+    return { success: "Reply updated" };
+  } catch (error) {
+    return { error: error };
+  }
+}
+
+export async function deleteReply({ id }: { id: string }) {
+  try {
+    const reply = await db.reply.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        post: {
+          include: {
+            event: {
+              include: {
+                memberships: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!reply) return { error: "Reply not found" };
+
+    const { userId }: { userId: string | null } = auth();
+    if (!userId) return { error: "User not found" };
+
+    const currentUserMembership = reply.post.event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!currentUserMembership)
+      return { error: "You are not a member of this event" };
+
+    if (reply.authorId !== userId && currentUserMembership.role === "ATTENDEE")
+      return { error: "User not authorized" };
+
+    await db.reply.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    revalidatePath("/");
+
+    const eventQueryDefinition = getEventQuery(reply.post.eventId);
+    const postQueryDefinition = getPostQuery(reply.post.id);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+    pusherServer.trigger(
+      postQueryDefinition.pusherChannel,
+      postQueryDefinition.pusherEvent,
+      { message: "Post data updated" }
+    );
+
+    return { success: "Reply deleted" };
   } catch (error) {
     return { error: error };
   }

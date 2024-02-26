@@ -136,7 +136,10 @@ export function FullPost({ postId }: { postId: string }) {
                 )}
               </div>
             </div>
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div
+              className="whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
           </div>
         </div>
       </DropdownMenu>

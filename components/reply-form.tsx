@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -76,18 +75,11 @@ export default function ReplyForm({
               <FormItem className="w-full">
                 <FormControl>
                   <Textarea
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        form.handleSubmit(onSubmit)();
-                      }
-                    }}
                     className="resize-none"
                     placeholder="Type a reply..."
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>shift+enter for newline</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

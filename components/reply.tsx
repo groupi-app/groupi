@@ -15,7 +15,21 @@ import { Dialog, DialogTrigger } from "./ui/dialog";
 import { useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Form } from "./ui/form";
+import { Form, FormControl, FormField, FormItem } from "./ui/form";
+import { DeleteReplyDialog } from "./deleteReplyDialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { z } from "zod";
+import { useToast } from "./ui/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updateReply } from "@/lib/actions/reply";
+
+const formSchema = z.object({
+  reply: z
+    .string()
+    .min(1, "Reply must be at least 1 character")
+    .max(350, "Reply must be 350 characters or less"),
+});
 
 export default function Reply({
   reply,
@@ -29,9 +43,38 @@ export default function Reply({
   userRole: $Enums.Role;
 }) {
   const [editMode, setEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+    defaultValues: {
+      reply: reply.text,
+    },
+  });
   const isMe = userId === reply.authorId;
   const canDelete =
     isMe || userRole === "MODERATOR" || userRole === "ORGANIZER";
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+    console.log(values.reply);
+    const res = await updateReply({ replyId: reply.id, text: values.reply });
+    if (res.success) {
+      toast({
+        title: "Reply updated",
+        description: "Your reply has been successfully updated",
+      });
+    } else {
+      toast({
+        title: "Failed to update reply",
+        description: "The reply was unable to be updated.",
+      });
+    }
+    setIsSaving(false);
+    setEditMode(false);
+  }
+
   return (
     <Dialog>
       <DropdownMenu>
@@ -55,16 +98,22 @@ export default function Reply({
 
           <div
             className={cn(
-              "rounded-lg xl:max-w-3xl lg:max-w-2xl max-w-xl p-4 min-w-0 break-words relative ",
+              "rounded-lg max-w-xl p-4 min-w-0 break-words relative",
               canDelete ? "pr-12" : "",
               isMe
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground"
+                : "bg-muted text-foreground",
+              editMode ? "w-full" : ""
             )}
           >
             {canDelete && (
               <>
-                <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-3 right-2 flex items-center justify-center">
+                <DropdownMenuTrigger
+                  className={cn(
+                    "absolute z-20 w-8 h-8 transition-all rounded-md hover:bg-muted top-3 right-2 flex items-center justify-center",
+                    isMe ? "hover:bg-accent/10" : "hover:bg-muted-foreground/10"
+                  )}
+                >
                   <Icons.more />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -96,20 +145,66 @@ export default function Reply({
               </>
             )}
             {editMode ? (
-              <div className="relative">
-                <Textarea
-                  className="bg-background/10 pr-6  resize-none "
-                  defaultValue={reply.text}
-                />
-                <Button
-                  className="w-6 h-6 p-1 absolute top-1 right-1"
-                  variant="ghost"
-                >
-                  <Icons.check />
-                </Button>
-              </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <FormField
+                    control={form.control}
+                    name="reply"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div className="relative">
+                            <Textarea
+                              className="bg-background/10 pr-6 "
+                              onChangeCapture={(e) => {
+                                console.log(
+                                  e.currentTarget.value.includes("\n")
+                                );
+                              }}
+                              {...field}
+                            />
+                            <div className="flex flex-col items-center absolute top-1 right-1">
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Button
+                                    className="w-6 h-6 p-1"
+                                    variant="ghost"
+                                    type="submit"
+                                  >
+                                    {isSaving ? (
+                                      <Icons.spinner className="animate-spin" />
+                                    ) : (
+                                      <Icons.check />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Save</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Button
+                                    className="w-6 h-6 p-1"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditMode(false);
+                                      form.reset();
+                                    }}
+                                  >
+                                    <Icons.close />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Cancel</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
             ) : (
-              <p>{reply.text}</p>
+              <p className="whitespace-pre-wrap">{reply.text}</p>
             )}
 
             <div className="text-xs text-primary-foreground/60">
@@ -118,6 +213,7 @@ export default function Reply({
           </div>
         </div>
       </DropdownMenu>
+      <DeleteReplyDialog id={reply.id} />
     </Dialog>
   );
 }

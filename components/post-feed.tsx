@@ -40,32 +40,36 @@ export function PostFeed({ eventId }: { eventId: string }) {
   return (
     <div>
       <h2 className="text-xl font-heading font-medium">Posts</h2>
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="w-full flex flex-col items-center gap-3 py-2"
-      >
-        <LayoutGroup>
-          {posts
-            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-            .map((post) => (
-              <motion.div
-                layout
-                variants={item}
-                key={post.id}
-                className="w-full"
-              >
-                <PostCard
-                  userId={userId}
-                  userRole={userRole}
-                  post={post}
-                  member={members.find((m) => m.personId === post.authorId)}
-                />
-              </motion.div>
-            ))}
-        </LayoutGroup>
-      </motion.div>
+      {posts.length > 0 ? (
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="w-full flex flex-col items-center gap-3 py-2"
+        >
+          <LayoutGroup>
+            {posts
+              .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+              .map((post) => (
+                <motion.div
+                  layout
+                  variants={item}
+                  key={post.id}
+                  className="w-full"
+                >
+                  <PostCard
+                    userId={userId}
+                    userRole={userRole}
+                    post={post}
+                    member={members.find((m) => m.personId === post.authorId)}
+                  />
+                </motion.div>
+              ))}
+          </LayoutGroup>
+        </motion.div>
+      ) : (
+        <h1 className="font-heading text-lg mt-4">No posts yet!</h1>
+      )}
     </div>
   );
 }

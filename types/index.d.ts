@@ -35,7 +35,11 @@ export type UserInfo = {
 
 const replyAuthorPost = Prisma.validator<Prisma.PostDefaultArgs>()({
   include: {
-    replies: true,
+    replies: {
+      include: {
+        author: true,
+      },
+    },
     author: true,
   },
 });

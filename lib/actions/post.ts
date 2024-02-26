@@ -140,7 +140,7 @@ export async function updatePost({
       data: {
         title: title,
         content: content,
-        updatedAt: new Date().toISOString(),
+        editedAt: new Date().toISOString(),
       },
     });
     revalidatePath("/");

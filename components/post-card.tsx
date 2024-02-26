@@ -17,6 +17,7 @@ import { $Enums, Membership } from "@prisma/client";
 import MemberIcon from "./member-icon";
 import { Member } from "@/types";
 import { Avatar } from "@radix-ui/react-avatar";
+import RepliesIcons from "./replies-icons";
 
 interface PostCardProps {
   post: ReplyAuthorPost;
@@ -26,16 +27,8 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, userRole, userId, member }: PostCardProps) {
-  const {
-    id,
-    title,
-    content,
-    author,
-    createdAt,
-    updatedAt,
-    replies,
-    authorId,
-  } = post;
+  const { id, title, content, author, createdAt, editedAt, replies, authorId } =
+    post;
   if (!author) return null;
   const initials =
     author.firstName?.toString()[0] + "" + author.lastName?.toString()[0];
@@ -86,14 +79,14 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                     <span className="text-muted-foreground text-sm">
                       Created {formatDate(createdAt)}
                     </span>
-                    {updatedAt.toISOString() !== createdAt.toISOString() && (
+                    {editedAt.toISOString() !== createdAt.toISOString() && (
                       <span className="text-muted-foreground text-sm">
-                        Updated {formatDate(updatedAt)}
+                        Edited {formatDate(editedAt)}
                       </span>
                     )}
                   </div>
                   <div className="text-muted-foreground flex items-center gap-1">
-                    <Icons.reply className="w-5 h-5" />
+                    <RepliesIcons replies={replies} />
                     <span className="text-sm">{replies.length} replies</span>
                   </div>
                 </div>
