@@ -1,5 +1,6 @@
 import { FullPost } from "@/components/full-post";
 import QueryProvider from "@/components/providers/query-provider";
+import Replies from "@/components/replies";
 import { PostData, fetchPostData } from "@/lib/actions/post";
 import { getPostQuery } from "@/lib/query-definitions";
 import {
@@ -39,7 +40,10 @@ export default async function Page({ params }: { params: { postId: string } }) {
   return (
     <QueryProvider queryDefinition={queryDefinition}>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <FullPost postId={postId} />
+        <div className="container max-w-4xl">
+          <FullPost postId={postId} />
+          <Replies postId={postId} />
+        </div>
       </HydrationBoundary>
     </QueryProvider>
   );

@@ -78,6 +78,7 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userRole={userRole}
                   member={member}
                   key={i}
+                  align={i === 0 ? "start" : "center"}
                 />
               ) : (
                 i === visibleIcons - 1 && (

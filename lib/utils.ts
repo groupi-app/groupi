@@ -14,25 +14,28 @@ export function formatDate(date: Date) {
   var interval = seconds / 31536000;
 
   if (interval > 1) {
-    return Math.floor(interval) + "y";
+    return Math.floor(interval) + "y ago";
   }
   interval = seconds / 2592000;
   if (interval > 1) {
-    return Math.floor(interval) + "mon";
+    return Math.floor(interval) + "mon ago";
   }
   interval = seconds / 86400;
   if (interval > 1) {
-    return Math.floor(interval) + "d";
+    return Math.floor(interval) + "d ago";
   }
   interval = seconds / 3600;
   if (interval > 1) {
-    return Math.floor(interval) + "h";
+    return Math.floor(interval) + "h ago";
   }
   interval = seconds / 60;
   if (interval > 1) {
-    return Math.floor(interval) + "min";
+    return Math.floor(interval) + "min ago";
   }
-  return Math.floor(seconds) + " seconds";
+  if (seconds < 10) {
+    return "just now";
+  }
+  return Math.floor(seconds) + " seconds ago";
 }
 
 export function getFullName(

@@ -1,0 +1,219 @@
+"use client";
+
+import { cn, formatDate } from "@/lib/utils";
+import { $Enums, Reply } from "@prisma/client";
+import { Member } from "@/types";
+import MemberIcon from "./member-icon";
+import {
+  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenu,
+} from "./ui/dropdown-menu";
+import { Icons } from "./icons";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { useState } from "react";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { Form, FormControl, FormField, FormItem } from "./ui/form";
+import { DeleteReplyDialog } from "./deleteReplyDialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { z } from "zod";
+import { useToast } from "./ui/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updateReply } from "@/lib/actions/reply";
+
+const formSchema = z.object({
+  reply: z
+    .string()
+    .min(1, "Reply must be at least 1 character")
+    .max(350, "Reply must be 350 characters or less"),
+});
+
+export default function Reply({
+  reply,
+  member,
+  userId,
+  userRole,
+}: {
+  reply: Reply;
+  member: Member | undefined;
+  userId: string;
+  userRole: $Enums.Role;
+}) {
+  const [editMode, setEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+    defaultValues: {
+      reply: reply.text,
+    },
+  });
+  const isMe = userId === reply.authorId;
+  const canDelete =
+    isMe || userRole === "MODERATOR" || userRole === "ORGANIZER";
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+    console.log(values.reply);
+    const res = await updateReply({ replyId: reply.id, text: values.reply });
+    if (res.success) {
+      toast({
+        title: "Reply updated",
+        description: "Your reply has been successfully updated",
+      });
+    } else {
+      toast({
+        title: "Failed to update reply",
+        description: "The reply was unable to be updated.",
+      });
+    }
+    setIsSaving(false);
+    setEditMode(false);
+  }
+
+  return (
+    <Dialog>
+      <DropdownMenu>
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            isMe ? "flex-row-reverse -mr-4" : "-ml-4"
+          )}
+        >
+          {member ? (
+            <MemberIcon
+              key={0}
+              userId={userId}
+              userRole={userRole}
+              member={member}
+              align={isMe ? "end" : "start"}
+            />
+          ) : (
+            <div className="rounded-full w-10 h-10 bg-primary" />
+          )}
+
+          <div
+            className={cn(
+              "rounded-lg max-w-xl p-4 min-w-0 break-words relative",
+              canDelete ? "pr-12" : "",
+              isMe
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground",
+              editMode ? "w-full" : ""
+            )}
+          >
+            {canDelete && (
+              <>
+                <DropdownMenuTrigger
+                  className={cn(
+                    "absolute z-20 w-8 h-8 transition-all rounded-md hover:bg-muted top-3 right-2 flex items-center justify-center",
+                    isMe ? "hover:bg-accent/10" : "hover:bg-muted-foreground/10"
+                  )}
+                >
+                  <Icons.more />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {isMe && (
+                    <DropdownMenuItem
+                      onClick={() => setEditMode(true)}
+                      className="cursor-pointer"
+                      asChild
+                    >
+                      <div className="flex items-center gap-1">
+                        <Icons.edit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                  >
+                    <DialogTrigger asChild>
+                      <div className="flex items-center gap-1">
+                        <Icons.delete className="w-4 h-4" />
+                        <span>Delete</span>
+                      </div>
+                    </DialogTrigger>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </>
+            )}
+            {editMode ? (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <FormField
+                    control={form.control}
+                    name="reply"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div className="relative">
+                            <Textarea
+                              className="bg-background/10 pr-6 "
+                              onChangeCapture={(e) => {
+                                console.log(
+                                  e.currentTarget.value.includes("\n")
+                                );
+                              }}
+                              {...field}
+                            />
+                            <div className="flex flex-col items-center absolute top-1 right-1">
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Button
+                                    className="w-6 h-6 p-1"
+                                    variant="ghost"
+                                    type="submit"
+                                  >
+                                    {isSaving ? (
+                                      <Icons.spinner className="animate-spin" />
+                                    ) : (
+                                      <Icons.check />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Save</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Button
+                                    className="w-6 h-6 p-1"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditMode(false);
+                                      form.reset();
+                                    }}
+                                  >
+                                    <Icons.close />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Cancel</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            ) : (
+              <p className="whitespace-pre-wrap">{reply.text}</p>
+            )}
+
+            <div className="text-xs text-primary-foreground/60">
+              {formatDate(reply.createdAt)}
+            </div>
+          </div>
+        </div>
+      </DropdownMenu>
+      <DeleteReplyDialog id={reply.id} />
+    </Dialog>
+  );
+}

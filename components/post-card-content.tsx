@@ -7,7 +7,7 @@ export function PostCardContent({ content }: { content: string }) {
   return (
     <>
       <div
-        className="max-h-[120px] overflow-hidden"
+        className="max-h-[120px] overflow-hidden whitespace-pre-wrap"
         ref={ref}
         dangerouslySetInnerHTML={{
           __html: content,

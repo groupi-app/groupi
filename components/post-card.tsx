@@ -17,6 +17,7 @@ import { $Enums, Membership } from "@prisma/client";
 import MemberIcon from "./member-icon";
 import { Member } from "@/types";
 import { Avatar } from "@radix-ui/react-avatar";
+import RepliesIcons from "./replies-icons";
 
 interface PostCardProps {
   post: ReplyAuthorPost;
@@ -26,16 +27,8 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, userRole, userId, member }: PostCardProps) {
-  const {
-    id,
-    title,
-    content,
-    author,
-    createdAt,
-    updatedAt,
-    replies,
-    authorId,
-  } = post;
+  const { id, title, content, author, createdAt, editedAt, replies, authorId } =
+    post;
   if (!author) return null;
   const initials =
     author.firstName?.toString()[0] + "" + author.lastName?.toString()[0];
@@ -57,6 +50,7 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                 userId={userId}
                 userRole={userRole}
                 className="border-transparent"
+                align="start"
               />
             ) : (
               <div className="rounded-full w-10 h-10 bg-primary" />
@@ -83,16 +77,16 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
                     <span className="text-muted-foreground text-sm">
-                      Created {formatDate(createdAt)} ago
+                      Created {formatDate(createdAt)}
                     </span>
-                    {updatedAt.toISOString() !== createdAt.toISOString() && (
+                    {editedAt.toISOString() !== createdAt.toISOString() && (
                       <span className="text-muted-foreground text-sm">
-                        Updated {formatDate(updatedAt)} ago
+                        Edited {formatDate(editedAt)}
                       </span>
                     )}
                   </div>
                   <div className="text-muted-foreground flex items-center gap-1">
-                    <Icons.reply className="w-5 h-5" />
+                    <RepliesIcons replies={replies} />
                     <span className="text-sm">{replies.length} replies</span>
                   </div>
                 </div>

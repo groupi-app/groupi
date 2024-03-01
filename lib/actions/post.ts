@@ -22,7 +22,11 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
       id: postId,
     },
     include: {
-      replies: true,
+      replies: {
+        include: {
+          author: true,
+        },
+      },
       author: true,
       event: {
         include: {
@@ -136,7 +140,7 @@ export async function updatePost({
       data: {
         title: title,
         content: content,
-        updatedAt: new Date().toISOString(),
+        editedAt: new Date().toISOString(),
       },
     });
     revalidatePath("/");

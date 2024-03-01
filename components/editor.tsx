@@ -101,8 +101,8 @@ export function Editor({
       });
       if (res.success) {
         toast({
-          title: "Post Updated",
-          description: "Your post has been successfully updated.",
+          title: "Post Edited",
+          description: "Your post has been successfully edited.",
         });
       }
       setIsSaving(false);

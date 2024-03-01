@@ -21,7 +21,11 @@ export const fetchEventData = cache(
       include: {
         posts: {
           include: {
-            replies: true,
+            replies: {
+              include: {
+                author: true,
+              },
+            },
             author: true,
           },
         },

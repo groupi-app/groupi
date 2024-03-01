@@ -19,6 +19,7 @@ import {
   Shield,
   ShieldOff,
   Crown,
+  Check,
   MessageCircle as Reply,
   Send as Submit,
   LogIn as SignIn,
@@ -35,6 +36,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  check: Check,
   arrowRight: ArrowRight,
   reply: Reply,
   plus: Plus,

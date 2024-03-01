@@ -14,13 +14,13 @@ datasource db {
 model Person {
   id          String       @id
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   memberships Membership[]
   events      Event[]
   posts       Post[]
   replies     Reply[]
-  firstName   String
-  lastName    String
+  firstName   String?
+  lastName    String?
   username    String       @unique
   imageUrl    String
 }
@@ -28,7 +28,7 @@ model Person {
 model Event {
   id                 String              @id @default(cuid())
   createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   owner              Person              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId            String
   title              String
@@ -73,7 +73,8 @@ model Availability {
 model Post {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  editedAt  DateTime @default(now())
   author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String
   eventId   String
@@ -86,12 +87,12 @@ model Post {
 model Reply {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  text      String
+  text      String   @db.VarChar(350)
 }
 
 enum Status {
