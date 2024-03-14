@@ -58,7 +58,6 @@ export default function Reply({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    console.log(values.reply);
     const res = await updateReply({ replyId: reply.id, text: values.reply });
     if (res.success) {
       toast({
@@ -156,11 +155,6 @@ export default function Reply({
                           <div className="relative">
                             <Textarea
                               className="bg-background/10 pr-6 "
-                              onChangeCapture={(e) => {
-                                console.log(
-                                  e.currentTarget.value.includes("\n")
-                                );
-                              }}
                               {...field}
                             />
                             <div className="flex flex-col items-center absolute top-1 right-1">
@@ -187,7 +181,7 @@ export default function Reply({
                                     variant="ghost"
                                     onClick={() => {
                                       setEditMode(false);
-                                      form.reset();
+                                      form.reset({ reply: reply.text });
                                     }}
                                   >
                                     <Icons.close />
