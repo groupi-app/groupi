@@ -6,9 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Person {
@@ -80,8 +80,8 @@ model Post {
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   replies   Reply[]
-  title     String   @db.VarChar(100)
-  content   String   @db.VarChar(3000)
+  title     String
+  content   String
 }
 
 model Reply {
@@ -92,7 +92,7 @@ model Reply {
   authorId  String
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  text      String   @db.VarChar(350)
+  text      String
 }
 
 enum Status {

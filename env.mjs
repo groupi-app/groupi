@@ -4,6 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
+    DIRECT_URL: z.string().url(),
     CLERK_SECRET_KEY: z.string().min(1),
     WEBHOOK_SECRET: z.string().min(1).startsWith("whsec_"),
     PUSHER_APP_ID: z.string().min(1),
@@ -21,6 +22,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DIRECT_URL: process.env.DIRECT_URL,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     WEBHOOK_SECRET: process.env.WEBHOOK_SECRET,
     PUSHER_APP_ID: process.env.PUSHER_APP_ID,
