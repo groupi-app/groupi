@@ -5,7 +5,7 @@ import { env } from "@/env.mjs";
 export default function Page() {
   return (
     <>
-      <div className="container max-w-4xl">
+      <div className="container max-w-4xl mt-10">
         <h1 className="text-4xl font-heading mb-4">New Event</h1>
         <NewEventInfo />
       </div>
