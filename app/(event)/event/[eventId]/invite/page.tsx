@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
@@ -8,8 +10,55 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export default async function Page() {
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export default async function Page({
+  params,
+}: {
+  params: { eventId: string };
+}) {
+  const formSchema = z.object({
+    // expiresAt
+    expiresAt: z.string(),
+    // maxUses
+    maxUses: z.string(),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      expiresAt: "",
+      maxUses: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    return;
+  }
+
   return (
     <div className="container max-w-5xl pt-12">
       <h1 className="font-heading font-medium text-4xl">Invites</h1>
@@ -93,6 +142,39 @@ export default async function Page() {
           </div>
         </div>
       </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="expiresAt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Expires in</FormLabel>
+                <FormControl>
+                  {/* <Input placeholder="5 days" {...field} /> */}
+                  <Select
+                    onValueChange={(value) => {
+                      console.log(value);
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Expires in" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={String(30 * 60 * 1000)}>
+                        30 minutes
+                      </SelectItem>
+                      <SelectItem value={new Date(0, 0, 0, 1).toISOString()}>
+                        60 minutes
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
     </div>
   );
 }
