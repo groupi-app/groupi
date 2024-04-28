@@ -7,7 +7,7 @@ import {
   HydrationBoundary,
   dehydrate,
 } from "@tanstack/react-query";
-import { fetchEventData } from "@/lib/actions/event-data";
+import { fetchEventData } from "@/lib/actions/event";
 import { notFound } from "next/navigation";
 import QueryProvider from "@/components/providers/query-provider";
 import { getEventQuery } from "@/lib/query-definitions";

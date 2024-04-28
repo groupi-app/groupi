@@ -83,3 +83,12 @@ export function formatRoleBadge(role: $Enums.Role | undefined) {
       return React.createElement("<span>Unknown</span>");
   }
 }
+
+export function merge(a: any, b: any, predicate = (a: any, b: any) => a === b) {
+  const c = [...a]; // copy to avoid side effects
+  // add all items from B to copy C if they're not already present
+  b.forEach((bItem: any) =>
+    c.some((cItem) => predicate(bItem, cItem)) ? null : c.push(bItem)
+  );
+  return c;
+}

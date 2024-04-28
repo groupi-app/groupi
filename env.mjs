@@ -9,6 +9,7 @@ export const env = createEnv({
     WEBHOOK_SECRET: z.string().min(1).startsWith("whsec_"),
     PUSHER_APP_ID: z.string().min(1),
     PUSHER_APP_SECRET: z.string().min(1),
+    GOOGLE_API_KEY: z.string().min(1),
     
   },
   client: {
@@ -27,6 +28,7 @@ export const env = createEnv({
     WEBHOOK_SECRET: process.env.WEBHOOK_SECRET,
     PUSHER_APP_ID: process.env.PUSHER_APP_ID,
     PUSHER_APP_SECRET: process.env.PUSHER_APP_SECRET,
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,

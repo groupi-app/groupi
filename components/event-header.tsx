@@ -31,10 +31,12 @@ export function EventHeader({ eventId }: { eventId: string }) {
     <header className="flex flex-col my-5 max-w-4xl mx-auto gap-3">
       <h1 className="text-5xl font-heading font-medium">{title}</h1>
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Icons.location className="w-6 h-6" />
-          <span>{location}</span>
-        </div>
+        {location && (
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Icons.location className="w-6 h-6" />
+            <span>{location}</span>
+          </div>
+        )}
         <div className="flex items-center gap-1 text-muted-foreground">
           <Icons.date className="w-6 h-6" />
           {eventDateStr != null ? (
@@ -51,7 +53,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
           )}
         </div>
       </div>
-      <p>{description}</p>
+      {description && <p>{description}</p>}
     </header>
   );
 }

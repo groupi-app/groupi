@@ -32,8 +32,8 @@ model Event {
   owner              Person              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId            String
   title              String
-  description        String
-  location           String
+  description        String              @default("")
+  location           String              @default("")
   chosenDateTime     DateTime?
   potentialDateTimes PotentialDateTime[]
   posts              Post[]
@@ -55,13 +55,13 @@ model PotentialDateTime {
   id             String         @id @default(cuid())
   eventId        String
   event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  time           DateTime       @default(now())
+  dateTime       DateTime       @default(now())
   availabilities Availability[]
 }
 
 model Availability {
   membership          Membership        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  membershipId        String            @unique
+  membershipId        String
   potentialDateTime   PotentialDateTime @relation(fields: [potentialDateTimeId], references: [id], onDelete: Cascade)
   potentialDateTimeId String
 
