@@ -35,6 +35,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 export default async function Page({
   params,
 }: {
@@ -50,13 +59,13 @@ export default async function Page({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      expiresAt: "",
-      maxUses: "",
+      expiresAt: -1,
+      maxUses: -1,
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    return;
+    console.log("%d uses expiring at %d", values.maxUses, values.expiresAt);
   }
 
   return (
@@ -142,39 +151,124 @@ export default async function Page({
           </div>
         </div>
       </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="expiresAt"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Expires in</FormLabel>
-                <FormControl>
-                  {/* <Input placeholder="5 days" {...field} /> */}
-                  <Select
-                    onValueChange={(value) => {
-                      console.log(value);
-                    }}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Expires in" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={String(30 * 60 * 1000)}>
-                        30 minutes
-                      </SelectItem>
-                      <SelectItem value={new Date(0, 0, 0, 1).toISOString()}>
-                        60 minutes
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
+
+      {/* Create invite dialog */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Create invite</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[230px]">
+          <DialogHeader>
+            <DialogTitle>Create invite</DialogTitle>
+          </DialogHeader>
+
+          {/* Create invite form */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              {/* Expires in */}
+              <FormField
+                control={form.control}
+                name="expiresAt"
+                render={({ field }) => (
+                  
+                  <FormItem>
+                    <FormLabel>Expires in</FormLabel>
+                    <FormControl>
+                      {/* <Input placeholder="5 days" {...field} /> */}
+                      <Select
+                        onValueChange={(value) => {
+                          console.log(value);
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Never" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* value is time in ms */}
+                          <SelectItem value={String(30 * 60 * 1000)}>
+                            30 minutes
+                          </SelectItem>
+                          <SelectItem value={String(60 * 60 * 1000)}>
+                            1 hour
+                          </SelectItem>
+                          <SelectItem value={String(6 * 60 * 60 * 1000)}>
+                            6 hours
+                          </SelectItem>
+                          <SelectItem value={String(12 * 60 * 60 * 1000)}>
+                            12 hours
+                          </SelectItem>
+                          <SelectItem value={String(24 * 60 * 60 * 1000)}>
+                            1 day
+                          </SelectItem>
+                          <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>
+                            7 days
+                          </SelectItem>
+                          <SelectItem value={String(-1)}>
+                            Never
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {/* Max uses */}
+              <FormField
+                control={form.control}
+                name="expiresAt"
+                render={({ field }) => (
+                  
+                  <FormItem>
+                    <FormLabel>Max uses</FormLabel>
+                    <FormControl>
+                      {/* <Input placeholder="5 days" {...field} /> */}
+                      <Select
+                        onValueChange={(value) => {
+                          console.log(value);
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Never" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* value is time in ms */}
+                          <SelectItem value={String(1)}>
+                            1
+                          </SelectItem>
+                          <SelectItem value={String(5)}>
+                            5
+                          </SelectItem>
+                          <SelectItem value={String(10)}>
+                            10
+                          </SelectItem>
+                          <SelectItem value={String(20)}>
+                            25
+                          </SelectItem>
+                          <SelectItem value={String(50)}>
+                            50
+                          </SelectItem>
+                          <SelectItem value={String(100)}>
+                            100
+                          </SelectItem>
+                          <SelectItem value={String(-1)}>
+                            ∞
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit">Create invite</Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+
     </div>
   );
 }
