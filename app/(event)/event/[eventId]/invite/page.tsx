@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,22 +51,22 @@ export default async function Page({
   params: { eventId: string };
 }) {
   const formSchema = z.object({
-    // expiresAt
-    expiresAt: z.string(),
-    // maxUses
-    maxUses: z.string(),
+    expiresIn: z.number().nullable(),
+    maxUses: z.number().nullable(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      expiresAt: -1,
-      maxUses: -1,
+      expiresIn: null,
+      maxUses: null,
     },
   });
 
+  const { toast } = useToast();
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("%d uses expiring at %d", values.maxUses, values.expiresAt);
+    toast({title: "Invite Created", description: `Your invite has been successfully created. It has ${values.maxUses} uses and will expire in ${values.expiresIn} ms.`})
   }
 
   return (
@@ -153,14 +154,14 @@ export default async function Page({
       </div>
 
       {/* Create invite dialog */}
-      <Dialog>
+      {/* <Dialog>
         <DialogTrigger asChild>
           <Button>Create invite</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[230px]">
           <DialogHeader>
             <DialogTitle>Create invite</DialogTitle>
-          </DialogHeader>
+          </DialogHeader> */}
 
           {/* Create invite form */}
           <Form {...form}>
@@ -169,7 +170,7 @@ export default async function Page({
               {/* Expires in */}
               <FormField
                 control={form.control}
-                name="expiresAt"
+                name="expiresIn"
                 render={({ field }) => (
                   
                   <FormItem>
@@ -178,11 +179,11 @@ export default async function Page({
                       {/* <Input placeholder="5 days" {...field} /> */}
                       <Select
                         onValueChange={(value) => {
-                          console.log(value);
+                          field.onChange(value === "never" ? null : Number(value));
                         }}
                       >
                         <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Never" />
+                          <SelectValue placeholder="Never" {...field} />
                         </SelectTrigger>
                         <SelectContent>
                           {/* value is time in ms */}
@@ -204,7 +205,7 @@ export default async function Page({
                           <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>
                             7 days
                           </SelectItem>
-                          <SelectItem value={String(-1)}>
+                          <SelectItem value={String("never")}>
                             Never
                           </SelectItem>
                         </SelectContent>
@@ -217,7 +218,7 @@ export default async function Page({
               {/* Max uses */}
               <FormField
                 control={form.control}
-                name="expiresAt"
+                name="maxUses"
                 render={({ field }) => (
                   
                   <FormItem>
@@ -226,35 +227,23 @@ export default async function Page({
                       {/* <Input placeholder="5 days" {...field} /> */}
                       <Select
                         onValueChange={(value) => {
-                          console.log(value);
+                          field.onChange(value === "never" ? null : Number(value));
                         }}
                       >
                         <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Never" />
+                          <SelectValue placeholder="∞" {...field} />
                         </SelectTrigger>
                         <SelectContent>
                           {/* value is time in ms */}
                           <SelectItem value={String(1)}>
                             1
                           </SelectItem>
-                          <SelectItem value={String(5)}>
-                            5
-                          </SelectItem>
-                          <SelectItem value={String(10)}>
-                            10
-                          </SelectItem>
-                          <SelectItem value={String(20)}>
-                            25
-                          </SelectItem>
-                          <SelectItem value={String(50)}>
-                            50
-                          </SelectItem>
-                          <SelectItem value={String(100)}>
-                            100
-                          </SelectItem>
-                          <SelectItem value={String(-1)}>
-                            ∞
-                          </SelectItem>
+                          <SelectItem value={String(5)}>5</SelectItem>
+                          <SelectItem value={String(10)}>10</SelectItem>
+                          <SelectItem value={String(25)}>25</SelectItem>
+                          <SelectItem value={String(50)}>50</SelectItem>
+                          <SelectItem value={String(100)}>100</SelectItem>
+                          <SelectItem value={String("inf")}>∞</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -265,8 +254,8 @@ export default async function Page({
               <Button type="submit">Create invite</Button>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
+        {/* </DialogContent>
+      </Dialog> */}
 
 
     </div>
