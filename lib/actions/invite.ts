@@ -7,12 +7,12 @@ import { $Enums, Invite } from "@prisma/client";
 export async function createInvite({
   eventId,
   createdById,
-  uses,
+  maxUses: uses,
   expiresAt,
 }: {
   eventId: string;
   createdById: string;
-  uses: number | null;
+  maxUses: number | null;
   expiresAt: Date | null;
 }) {
   try {
