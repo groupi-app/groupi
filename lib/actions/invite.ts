@@ -29,15 +29,15 @@ export async function createInvite({
     return { success: "Invite Created" };
   } catch (error) {
     return { error: error };
-  };
+  }
 }
 
 export async function deleteInvite(id: string) {
   try {
-    await db.invite.delete({where: {id: id}});
+    await db.invite.delete({ where: { id: id } });
   } catch (error) {
-    return {error: error};
-  };
+    return { error: error };
+  }
 }
 
 export async function useInvite({
@@ -71,24 +71,41 @@ export async function useInvite({
     }
 
     // check if invite is out of uses
-    if (invite.usesRemaining !== null && invite.usesRemaining >= 1) {
+    if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
       return { error: "Invite is out of uses" };
     }
 
-    // decrement remaining uses
-    db.invite.update({
-      where: { id: inviteId },
-      data: { usesRemaining: { decrement: 1 } },
-    });
-
-    // create membership
-    db.membership.create({
-      data: {
+    // check if membership exists
+    const currentMembership = await db.membership.findMany({
+      where: {
         personId: personId,
         eventId: invite.eventId,
       },
     });
+
+    // if membership does not already exist
+    if (!currentMembership) {
+      // create membership
+      await db.membership.create({
+        data: {
+          personId: personId,
+          eventId: invite.eventId,
+        },
+      });
+
+      // decrement remaining uses
+      await db.invite.update({
+        where: { id: inviteId },
+        data: { usesRemaining: { decrement: 1 } },
+      });
+    }
+
+    return { success: "Invite successfully used" };
   } catch (error) {
-    return { error: error };
-  };
+    if (error instanceof Error) {
+      return { error: error.message };
+    } else {
+      return { error: "Unknown error" };
+    }
+  }
 }
