@@ -19,14 +19,8 @@ model Person {
   events      Event[]
   posts       Post[]
   replies     Reply[]
-  <<<<<<< HEAD
-  invites     Invite[]
   firstName   String
   lastName    String
-  =======
-  firstName   String?
-  lastName    String?
-  >>>>>>> c03b45b (Basic invites working)
   username    String       @unique
   imageUrl    String
 }
