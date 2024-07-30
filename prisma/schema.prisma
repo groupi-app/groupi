@@ -19,9 +19,14 @@ model Person {
   events      Event[]
   posts       Post[]
   replies     Reply[]
+  <<<<<<< HEAD
   invites     Invite[]
   firstName   String
   lastName    String
+  =======
+  firstName   String?
+  lastName    String?
+  >>>>>>> c03b45b (Basic invites working)
   username    String       @unique
   imageUrl    String
 }
@@ -51,6 +56,7 @@ model Membership {
   role           Role           @default(ATTENDEE)
   rsvpStatus     Status         @default(PENDING)
   availabilities Availability[]
+  invites        Invite[]
 }
 
 model PotentialDateTime {
@@ -111,13 +117,14 @@ enum Role {
 }
 
 model Invite {
-  id            String    @id @default(cuid())
-  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id            String     @id @default(cuid())
+  event         Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId       String
-  createdBy     Person    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy     Membership @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById   String
-  createdAt     DateTime  @default(now())
-  expiresAt     DateTime? @default(now())
+  createdAt     DateTime   @default(now())
+  expiresAt     DateTime?  @default(now())
   usesRemaining Int?
   maxUses       Int?
+  name          String?
 }

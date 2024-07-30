@@ -51,16 +51,17 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
           <SignedIn>
             <nav className="grid grid-flow-row mt-2 text-sm auto-rows-max">
               {items.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.disabled ? "#" : item.href}
-                  className={cn(
-                    "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground",
-                    item.disabled && "cursor-not-allowed opacity-60"
-                  )}
-                >
-                  {item.title}
-                </Link>
+                <SheetClose key={index} asChild>
+                  <Link
+                    href={item.disabled ? "#" : item.href}
+                    className={cn(
+                      "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground",
+                      item.disabled && "cursor-not-allowed opacity-60"
+                    )}
+                  >
+                    {item.title}
+                  </Link>
+                </SheetClose>
               ))}
               <div className="mt-6">
                 <ProfileSlate userInfo={userInfo} />

@@ -5,11 +5,13 @@ import { db } from "../db";
 import { $Enums, Invite } from "@prisma/client";
 
 export async function createInvite({
+  name,
   eventId,
   createdById,
   maxUses: uses,
   expiresAt,
 }: {
+  name?: string;
   eventId: string;
   createdById: string;
   maxUses: number | null;
@@ -18,6 +20,7 @@ export async function createInvite({
   try {
     await db.invite.create({
       data: {
+        name: name,
         eventId: eventId,
         createdById: createdById,
         expiresAt: expiresAt,
@@ -28,19 +31,34 @@ export async function createInvite({
     revalidatePath("/");
     return { success: "Invite Created" };
   } catch (error) {
-    return { error: error };
+    console.log(error);
+    return { error: "Unable to create invite." };
   }
 }
 
 export async function deleteInvite(id: string) {
   try {
     await db.invite.delete({ where: { id: id } });
+    revalidatePath("/");
+    return { success: "Invite Deleted" };
   } catch (error) {
-    return { error: error };
+    console.log(error);
+    return { error: "Unable to delete invite." };
   }
 }
 
-export async function useInvite({
+export async function deleteInvites(ids: string[]) {
+  try {
+    await db.invite.deleteMany({ where: { id: { in: ids } } });
+    revalidatePath("/");
+    return { success: "Invites Deleted" };
+  } catch (error) {
+    console.log(error);
+    return { error: "Unable to delete invites." };
+  }
+}
+
+export async function acceptInvite({
   inviteId,
   personId,
 }: {
@@ -76,7 +94,7 @@ export async function useInvite({
     }
 
     // check if membership exists
-    const currentMembership = await db.membership.findMany({
+    const currentMembership = await db.membership.findFirst({
       where: {
         personId: personId,
         eventId: invite.eventId,
@@ -84,28 +102,29 @@ export async function useInvite({
     });
 
     // if membership does not already exist
-    if (!currentMembership) {
-      // create membership
-      await db.membership.create({
-        data: {
-          personId: personId,
-          eventId: invite.eventId,
-        },
-      });
-
-      // decrement remaining uses
-      await db.invite.update({
-        where: { id: inviteId },
-        data: { usesRemaining: { decrement: 1 } },
-      });
+    if (currentMembership) {
+      return { error: "Membership already exists" };
     }
+
+    // create membership
+    const mem = await db.membership.create({
+      data: {
+        personId: personId,
+        eventId: invite.eventId,
+      },
+    });
+
+    console.log(mem);
+
+    // decrement remaining uses
+    await db.invite.update({
+      where: { id: inviteId },
+      data: { usesRemaining: { decrement: 1 } },
+    });
 
     return { success: "Invite successfully used" };
   } catch (error) {
-    if (error instanceof Error) {
-      return { error: error.message };
-    } else {
-      return { error: "Unknown error" };
-    }
+    console.log(error);
+    return { error: "Unable to use invite." };
   }
 }

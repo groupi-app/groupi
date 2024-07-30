@@ -38,6 +38,36 @@ export function formatDate(date: Date) {
   return Math.floor(seconds) + " seconds ago";
 }
 
+export function timeUntil(date: Date) {
+  var seconds = Math.floor((date.getTime() - Date.now()) / 1000);
+
+  var interval = seconds / 31536000;
+
+  if (interval > 1) {
+    return Math.floor(interval) + "y";
+  }
+  interval = seconds / 2592000;
+  if (interval > 1) {
+    return Math.floor(interval) + "mon";
+  }
+  interval = seconds / 86400;
+  if (interval > 1) {
+    return Math.floor(interval) + "d";
+  }
+  interval = seconds / 3600;
+  if (interval > 1) {
+    return Math.floor(interval) + "h";
+  }
+  interval = seconds / 60;
+  if (interval > 1) {
+    return Math.floor(interval) + "min";
+  }
+  if (seconds < 0) {
+    return "Expired";
+  }
+  return Math.floor(seconds) + "s";
+}
+
 export function getFullName(
   firstName: string | null | undefined,
   lastName: string | null | undefined

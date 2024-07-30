@@ -4,6 +4,8 @@ import { currentUser } from "@clerk/nextjs";
 import { db } from "@/lib/db";
 import { AcceptInviteButton } from "@/components/invite-accept";
 
+import { redirect } from "next/navigation";
+
 import {
   Card,
   CardContent,
@@ -30,65 +32,102 @@ export default async function Page({
   const user = await currentUser();
   const userId = user ? user.id : "";
 
-  async function getEventDetails(inviteId: string) {
-    // get event ID associated with this invite
-    const res = await db.invite.findUnique({
-      where: {
-        id: inviteId,
-      },
-      include: {
-        event: {
-          select: {
-            title: true,
-            id: true,
-          },
-        },
-      },
-    });
-    if (res) {
-      return res.event;
-    } else {
-      return { error: "Invite or event does not exist." };
-    }
+  // async function getEventDetails(inviteId: string) {
+  //   // get event ID associated with this invite
+  //   const res = await db.invite.findUnique({
+  //     where: {
+  //       id: inviteId,
+  //     },
+  //     include: {
+  //       event: {
+  //         select: {
+  //           title: true,
+  //           id: true,
+  //         },
+  //       },
+  //     },
+  //   });
+  //   if (res) {
+  //     return res.event;
+  //   } else {
+  //     return { error: "Invite or event does not exist." };
+  //   }
+  // }
+
+  // async function validateInvite(inviteId: string) {
+  //   const invite = await db.invite.findUnique({
+  //     where: {
+  //       id: inviteId,
+  //     },
+  //   });
+
+  //   // check if invite exists
+  //   if (!invite) {
+  //     return { error: "Invite does not exist" };
+  //   }
+
+  //   // check if invite has expired
+  //   if (
+  //     invite.expiresAt !== null &&
+  //     new Date().getTime() > invite.expiresAt.getTime()
+  //   ) {
+  //     return { error: "Invite has expired" };
+  //   }
+
+  //   // check if invite is out of uses
+  //   if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
+  //     return { error: "Invite is out of uses" };
+  //   }
+  //   return { success: "Invite is valid" };
+  // }
+
+  // const eventDetails = await getEventDetails(params.inviteId);
+
+  // if ("error" in eventDetails) {
+  //   return handleError(eventDetails.error);
+  // }
+
+  // const inviteValidation = await validateInvite(params.inviteId);
+
+  // if ("error" in inviteValidation) {
+  //   return handleError(inviteValidation.error ?? "Unknown validation error.");
+  // }
+
+  const invite = await db.invite.findUnique({
+    where: {
+      id: params.inviteId,
+    },
+    include: {
+      event: true,
+    },
+  });
+
+  if (!invite) {
+    throw new Error("Invite does not exist");
   }
 
-  async function validateInvite(inviteId: string) {
-    const invite = await db.invite.findUnique({
-      where: {
-        id: inviteId,
-      },
-    });
+  const currentMembership = await db.membership.findFirst({
+    where: {
+      personId: userId,
+      eventId: invite.event.id,
+    },
+  });
 
-    // check if invite exists
-    if (!invite) {
-      return { error: "Invite does not exist" };
-    }
-
-    // check if invite has expired
-    if (
-      invite.expiresAt !== null &&
-      new Date().getTime() > invite.expiresAt.getTime()
-    ) {
-      return { error: "Invite has expired" };
-    }
-
-    // check if invite is out of uses
-    if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
-      return { error: "Invite is out of uses" };
-    }
-    return { success: "Invite is valid" };
+  if (currentMembership) {
+    redirect(`/event/${invite.event.id}`);
   }
 
-  const eventDetails = await getEventDetails(params.inviteId);
-
-  if ("error" in eventDetails) {
-    return handleError(eventDetails.error);
+  // check if invite has expired
+  if (
+    invite.expiresAt !== null &&
+    new Date().getTime() > invite.expiresAt.getTime()
+  ) {
+    throw new Error("Invite has expired");
   }
 
-  const inviteValidation = await validateInvite(params.inviteId);
-
-  if ("error" in inviteValidation) {
-    return handleError(inviteValidation.error ?? "Unknown validation error.");
+  // check if invite is out of uses
+  if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
+    throw new Error("Invite is out of uses");
   }
 
   return (
@@ -103,12 +142,12 @@ export default async function Page({
       <Card className="w-[600px]">
         <CardHeader>
           <CardDescription>You have been invited to</CardDescription>
-          <CardTitle>{eventDetails.title}</CardTitle>
+          <CardTitle>{invite.event.title}</CardTitle>
         </CardHeader>
         <CardContent>
           <AcceptInviteButton
             inviteId={params.inviteId}
-            eventId={eventDetails.id}
+            eventId={invite.event.id}
             personId={userId}
           />
         </CardContent>

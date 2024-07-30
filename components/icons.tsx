@@ -7,6 +7,8 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   ArrowRight,
   Bold,
   Strikethrough,
@@ -34,7 +36,9 @@ import {
   Pencil as Edit,
   MapPin as Location,
   Calendar as Date,
+  Timer as Time,
   UserX as Kick,
+  Copy,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +64,8 @@ export const Icons = {
   submit: Submit,
   back: ChevronLeft,
   forward: ChevronRight,
+  up: ChevronUp,
+  down: ChevronDown,
   more: MoreHorizontal,
   bold: Bold,
   italic: Italic,
@@ -71,10 +77,12 @@ export const Icons = {
   heading: Heading2,
   location: Location,
   date: Date,
+  time: Time,
   shield: Shield,
   shieldOff: ShieldOff,
   crown: Crown,
   kick: Kick,
+  copy: Copy,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path

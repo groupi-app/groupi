@@ -90,3 +90,15 @@ const authorReply = Prisma.validator<Prisma.ReplyDefaultArgs>()({
 });
 
 export type AuthorReply = Prisma.ReplyGetPayload<typeof authorReply>;
+
+const createdByInvite = Prisma.validator<Prisma.InviteDefaultArgs>()({
+  include: {
+    createdBy: {
+      include: {
+        person: true,
+      },
+    },
+  },
+});
+
+export type CreatedByInvite = Prisma.InviteGetPayload<typeof createdByInvite>;

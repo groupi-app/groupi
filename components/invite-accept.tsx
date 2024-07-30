@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "./icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useInvite } from "@/lib/actions/invite";
+import { acceptInvite } from "@/lib/actions/invite";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -21,24 +21,26 @@ export function AcceptInviteButton({
   const { toast } = useToast();
   const router = useRouter();
 
-  async function onClick() {
-    const res = await useInvite({
-      inviteId: inviteId,
-      personId: personId,
-    });
-    if ("error" in res) {
-      toast({
-        title: "Error using invite",
-        description: res.error,
-      });
-    } else {
-      router.push(`/event/${eventId}`);
-    }
-  }
-
   return (
     <div>
-      <Button onClick={onClick}>Accept invite</Button>
+      <Button
+        onClick={async () => {
+          const res = await acceptInvite({
+            inviteId: inviteId,
+            personId: personId,
+          });
+          if (res.error) {
+            toast({
+              title: "Error using invite",
+              description: res.error,
+            });
+          } else if (res.success) {
+            router.push(`/event/${eventId}`);
+          }
+        }}
+      >
+        Accept invite
+      </Button>
     </div>
   );
 }
