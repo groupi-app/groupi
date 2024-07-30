@@ -5,6 +5,15 @@ import { db } from "@/lib/db";
 import { InviteCardList } from "@/components/invite-card-list";
 import Link from "next/link";
 import { AddInvite } from "@/components/add-invite";
+import QueryProvider from "@/components/providers/query-provider";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { getInviteQuery } from "@/lib/query-definitions";
+import { getEventInviteData } from "@/lib/actions/invite";
+import { EventInviteData } from "@/types";
 
 export default async function Page({
   params,
@@ -18,58 +27,40 @@ export default async function Page({
     throw new Error("Unauthorized");
   }
 
-  const event = await db.event.findUnique({
-    where: {
-      id: eventId,
-    },
-    include: {
-      invites: {
-        include: {
-          createdBy: {
-            include: {
-              person: true,
-            },
-          },
-        },
-      },
-      memberships: true,
-    },
-  });
+  const data = await getEventInviteData(eventId);
 
-  if (!event) {
+  if (!data) {
     throw new Error("Event not found.");
   }
 
-  const membership = event.memberships.find(
-    (membership) => membership.personId === userId
-  );
-
-  const memberId = membership?.id;
-
-  if (!memberId) {
-    throw new Error("You are not a member of this event.");
+  if (data.error) {
+    throw new Error(data.error);
   }
 
-  if (membership.role === "ATTENDEE") {
-    throw new Error("You do not have permission to view this page");
-  }
+  const event = data.success;
 
-  const { invites } = event;
+  const queryDefinition = getInviteQuery(eventId);
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: [queryDefinition.queryKey],
+    queryFn: async () => data,
+  });
 
   return (
     <div className="container max-w-5xl py-4">
       <Link href={`/event/${eventId}`}>
         <Button variant={"ghost"} className="flex items-center gap-1 pl-2">
           <Icons.back />
-          <span>{event.title}</span>
+          <span>{event?.title}</span>
         </Button>
       </Link>
-
-      <InviteCardList
-        eventId={eventId}
-        createdById={memberId}
-        invites={invites}
-      />
+      <QueryProvider queryDefinition={queryDefinition}>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <InviteCardList eventId={eventId} />
+        </HydrationBoundary>
+      </QueryProvider>
     </div>
   );
 }

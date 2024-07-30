@@ -36,13 +36,7 @@ import { auth } from "@clerk/nextjs";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { useState } from "react";
 
-export function AddInvite({
-  eventId,
-  createdById,
-}: {
-  eventId: string;
-  createdById: string;
-}) {
+export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
     name: z
       .string()
@@ -72,7 +66,6 @@ export function AddInvite({
   const { toast } = useToast();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(createdById);
     setIsLoading(true);
     const expiresAt =
       values.expiresIn === null
@@ -82,7 +75,6 @@ export function AddInvite({
     const res = await createInvite({
       name: values.name,
       eventId: eventId,
-      createdById: createdById,
       expiresAt: expiresAt,
       maxUses: values.maxUses,
     });

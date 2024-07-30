@@ -23,3 +23,13 @@ export const getPostQuery: (postId: string) => QueryDefinition = (
     pusherEvent: "update_post_data",
   };
 };
+
+export const getInviteQuery: (eventId: string) => QueryDefinition = (
+  eventId: string
+) => {
+  return {
+    queryKey: `inviteData__${eventId}`,
+    pusherChannel: `invite__${eventId}`,
+    pusherEvent: "update_invite_data",
+  };
+};

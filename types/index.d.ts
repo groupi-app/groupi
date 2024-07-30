@@ -102,3 +102,19 @@ const createdByInvite = Prisma.validator<Prisma.InviteDefaultArgs>()({
 });
 
 export type CreatedByInvite = Prisma.InviteGetPayload<typeof createdByInvite>;
+
+const eventInviteData = Prisma.validator<Prisma.EventDefaultArgs>()({
+  include: {
+    invites: {
+      include: {
+        createdBy: {
+          include: {
+            person: true,
+          },
+        },
+      },
+    },
+  },
+});
+
+export type EventInviteData = Prisma.EventGetPayload<typeof eventInviteData>;

@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
 import { InviteLinkCard } from "./invite-link-card";
-import { CreatedByInvite } from "@/types";
+import { CreatedByInvite, EventInviteData } from "@/types";
 import { LayoutGroup, motion } from "framer-motion";
 import { Icons } from "./icons";
 import { AddInvite } from "./add-invite";
 import { Button } from "./ui/button";
 import { DeleteInvites } from "./delete-invites";
 import { Checkbox } from "./ui/checkbox";
+import { useInvites } from "@/data/invite-hooks";
 
 const container = {
   hidden: { opacity: 0 },
@@ -24,15 +25,11 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function InviteCardList({
-  invites,
-  eventId,
-  createdById,
-}: {
-  invites: CreatedByInvite[];
-  eventId: string;
-  createdById: string;
-}) {
+export function InviteCardList({ eventId }: { eventId: string }) {
+  const { data: inviteData } = useInvites(eventId);
+
+  const { invites }: { invites: CreatedByInvite[] } = inviteData;
+
   const [showValid, setShowValid] = useState(true);
   const [showExpired, setShowExpired] = useState(false);
   const [selectedInvites, setSelectedInvites] = useState<string[]>([]);
@@ -55,7 +52,7 @@ export function InviteCardList({
       <div className="flex items-center mt-4 gap-4 flex-wrap">
         <h1 className="font-heading font-medium text-4xl">Invites</h1>
         <div className="flex items-center gap-2">
-          <AddInvite eventId={eventId} createdById={createdById} />
+          <AddInvite eventId={eventId} />
           <DeleteInvites
             selectedInvites={selectedInvites}
             setSelectedInvites={setSelectedInvites}
