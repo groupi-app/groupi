@@ -37,3 +37,7 @@ launch.json
 next-env.d.ts
 
 .vscode/*
+
+# docker
+docker-compose.yml
+compose.yml
