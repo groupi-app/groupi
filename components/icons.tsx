@@ -39,6 +39,7 @@ import {
   Timer as Time,
   UserX as Kick,
   Copy,
+  UserPlus as Invite,
   type Icon as LucideIcon,
 } from "lucide-react";
 
@@ -83,6 +84,7 @@ export const Icons = {
   crown: Crown,
   kick: Kick,
   copy: Copy,
+  invite: Invite,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
