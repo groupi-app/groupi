@@ -125,7 +125,7 @@ export function FullPost({ postId }: { postId: string }) {
                   post.createdAt.toISOString() && (
                   <span>
                     Edited{" "}
-                    {post.updatedAt.toLocaleString([], {
+                    {post.editedAt.toLocaleString([], {
                       year: "numeric",
                       month: "numeric",
                       day: "numeric",

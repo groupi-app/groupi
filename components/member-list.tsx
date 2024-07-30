@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { useEventMembers } from "@/data/event-hooks";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { $Enums } from "@prisma/client";
+import { Icons } from "./icons";
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
@@ -61,6 +62,14 @@ export function MemberList({ eventId }: { eventId: string }) {
         <div className="rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center">
           <span>{members.length}</span>
         </div>
+        {(userRole === "ORGANIZER" || userRole === "MODERATOR") && (
+          <Link href={`/event/${eventId}/invite`}>
+            <Button className="flex items-center gap-1" size="sm">
+              <Icons.invite className="w-4 h-4" />
+              <span>Invite</span>
+            </Button>
+          </Link>
+        )}
       </div>
       <motion.div
         variants={container}

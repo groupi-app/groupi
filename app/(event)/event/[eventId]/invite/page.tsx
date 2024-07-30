@@ -1,0 +1,66 @@
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
+import { auth } from "@clerk/nextjs";
+import { db } from "@/lib/db";
+import { InviteCardList } from "@/components/invite-card-list";
+import Link from "next/link";
+import { AddInvite } from "@/components/add-invite";
+import QueryProvider from "@/components/providers/query-provider";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { getInviteQuery } from "@/lib/query-definitions";
+import { getEventInviteData } from "@/lib/actions/invite";
+import { EventInviteData } from "@/types";
+
+export default async function Page({
+  params,
+}: {
+  params: { eventId: string };
+}) {
+  const { eventId } = params;
+  const { userId }: { userId: string | null } = auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const data = await getEventInviteData(eventId);
+
+  if (!data) {
+    throw new Error("Event not found.");
+  }
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  const event = data.success;
+
+  const queryDefinition = getInviteQuery(eventId);
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: [queryDefinition.queryKey],
+    queryFn: async () => data,
+  });
+
+  return (
+    <div className="container max-w-5xl py-4">
+      <Link href={`/event/${eventId}`}>
+        <Button variant={"ghost"} className="flex items-center gap-1 pl-2">
+          <Icons.back />
+          <span>{event?.title}</span>
+        </Button>
+      </Link>
+      <QueryProvider queryDefinition={queryDefinition}>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <InviteCardList eventId={eventId} />
+        </HydrationBoundary>
+      </QueryProvider>
+    </div>
+  );
+}
