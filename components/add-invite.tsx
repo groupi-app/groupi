@@ -46,8 +46,7 @@ export function AddInvite({
   const formSchema = z.object({
     name: z
       .string()
-      .max(64, { message: "Invite name must be less than 65 characters." })
-      .nullable(),
+      .max(64, { message: "Invite name must be less than 65 characters." }),
     expiresIn: z.number().nullable(),
     maxUses: z
       .number()
