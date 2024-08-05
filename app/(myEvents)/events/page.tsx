@@ -1,0 +1,53 @@
+import { EventHeader } from "@/components/event-header";
+import { MemberList } from "@/components/member-list";
+import { PostFeed } from "@/components/post-feed";
+import { NewPostButton } from "@/components/new-post-button";
+import {
+  QueryClient,
+  HydrationBoundary,
+  dehydrate,
+} from "@tanstack/react-query";
+import { fetchEventData } from "@/lib/actions/event";
+import { notFound } from "next/navigation";
+import QueryProvider from "@/components/providers/query-provider";
+import { getEventQuery, getPersonQuery } from "@/lib/query-definitions";
+import { fetchPersonData } from "@/lib/actions/person";
+import { auth } from "@clerk/nextjs";
+import { EventList } from "@/components/event-list";
+
+export default async function Page() {
+  const { userId }: { userId: string | null } = auth();
+
+  if (!userId) {
+    throw new Error("User not found");
+  }
+
+  const data = await fetchPersonData(userId);
+
+  if (!data) {
+    notFound();
+  }
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  const queryDefinition = getPersonQuery(userId);
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: [queryDefinition.queryKey],
+    queryFn: async () => data,
+  });
+
+  return (
+    <QueryProvider queryDefinition={queryDefinition}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className="container pt-6 max-w-4xl">
+          <EventList userId={userId} />
+        </div>
+      </HydrationBoundary>
+    </QueryProvider>
+  );
+}

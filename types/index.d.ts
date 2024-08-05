@@ -118,3 +118,19 @@ const eventInviteData = Prisma.validator<Prisma.EventDefaultArgs>()({
 });
 
 export type EventInviteData = Prisma.EventGetPayload<typeof eventInviteData>;
+
+const personData = Prisma.validator<Prisma.PersonDefaultArgs>()({
+  include: {
+    events: true,
+  },
+});
+
+export type PersonData = Prisma.PersonGetPayload<typeof personData>;
+
+const eventWithOwner = Prisma.validator<Prisma.EventDefaultArgs>()({
+  include: {
+    owner: true,
+  },
+});
+
+export type EventWithOwner = Prisma.EventGetPayload<typeof eventWithOwner>;

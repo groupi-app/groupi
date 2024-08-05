@@ -22,45 +22,51 @@ interface CreateEventProps {
 
 export const fetchEventData = cache(
   async (eventId: string): Promise<ActionResponse<EventData>> => {
-    const event = await db.event.findUnique({
-      where: {
-        id: eventId,
-      },
-      include: {
-        posts: {
-          include: {
-            replies: {
-              include: {
-                author: true,
+    try {
+      const event = await db.event.findUnique({
+        where: {
+          id: eventId,
+        },
+        include: {
+          posts: {
+            include: {
+              replies: {
+                include: {
+                  author: true,
+                },
               },
+              author: true,
             },
-            author: true,
+          },
+          memberships: {
+            include: {
+              person: true,
+            },
           },
         },
-        memberships: {
-          include: {
-            person: true,
-          },
-        },
-      },
-    });
+      });
 
-    if (!event) return { error: "Event not found" };
+      if (!event) return { error: "Event not found" };
 
-    const { userId }: { userId: string | null } = auth();
+      const { userId }: { userId: string | null } = auth();
 
-    if (!userId) return { error: "User not found" };
+      if (!userId) return { error: "User not found" };
 
-    if (!event.memberships.find((membership) => membership.personId === userId))
-      return { error: "You are not a member of this event" };
+      if (
+        !event.memberships.find((membership) => membership.personId === userId)
+      )
+        return { error: "You are not a member of this event" };
 
-    const userRole = event.memberships.find(
-      (membership) => membership.personId === userId
-    )?.role;
+      const userRole = event.memberships.find(
+        (membership) => membership.personId === userId
+      )?.role;
 
-    if (!userRole) return { error: "Role not found" };
+      if (!userRole) return { error: "Role not found" };
 
-    return { success: { event, userRole, userId } };
+      return { success: { event, userRole, userId } };
+    } catch (error) {
+      return { error: "Could not fetch event data" };
+    }
   }
 );
 

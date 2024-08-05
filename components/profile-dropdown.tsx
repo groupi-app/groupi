@@ -12,7 +12,7 @@ import {
 import { UserInfo } from "@/types";
 import { Icons } from "./icons";
 import { SignOutButton } from "@clerk/nextjs";
-import { getFullName } from "@/lib/utils";
+import { getFullName, getInitials } from "@/lib/utils";
 import { useState } from "react";
 import { set } from "zod";
 
@@ -21,8 +21,7 @@ interface ProfileDropdownProps {
 }
 
 export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
-  const initials =
-    userInfo.firstName?.toString()[0] + "" + userInfo.lastName?.toString()[0];
+  const initials = getInitials(userInfo.firstName, userInfo.lastName);
 
   const fullName = getFullName(userInfo.firstName, userInfo.lastName);
 

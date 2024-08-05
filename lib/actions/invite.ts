@@ -6,57 +6,57 @@ import { auth } from "@clerk/nextjs";
 import { ActionResponse, EventInviteData } from "@/types";
 import { getInviteQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
+import { cache } from "react";
 
-export async function getEventInviteData(
-  eventId: string
-): Promise<ActionResponse<EventInviteData>> {
-  try {
-    const event = await db.event.findUnique({
-      where: {
-        id: eventId,
-      },
-      include: {
-        invites: {
-          include: {
-            createdBy: {
-              include: {
-                person: true,
+export const getEventInviteData = cache(
+  async (eventId: string): Promise<ActionResponse<EventInviteData>> => {
+    try {
+      const event = await db.event.findUnique({
+        where: {
+          id: eventId,
+        },
+        include: {
+          invites: {
+            include: {
+              createdBy: {
+                include: {
+                  person: true,
+                },
               },
             },
           },
+          memberships: true,
         },
-        memberships: true,
-      },
-    });
+      });
 
-    if (!event) {
-      return { error: "Event not found." };
+      if (!event) {
+        return { error: "Event not found." };
+      }
+
+      const { userId }: { userId: string | null } = auth();
+
+      if (!userId) {
+        return { error: "User not found." };
+      }
+
+      const membership = event.memberships.find(
+        (membership) => membership.personId === userId
+      );
+
+      if (!membership) {
+        return { error: "You are not a member of this event." };
+      }
+
+      if (membership.role === "ATTENDEE") {
+        return { error: "You do not have permission to view this page" };
+      }
+
+      return { success: event };
+    } catch (error) {
+      return { error: "Unable to get invites." };
     }
-
-    const { userId }: { userId: string | null } = auth();
-
-    if (!userId) {
-      return { error: "User not found." };
-    }
-
-    const membership = event.memberships.find(
-      (membership) => membership.personId === userId
-    );
-
-    if (!membership) {
-      return { error: "You are not a member of this event." };
-    }
-
-    if (membership.role === "ATTENDEE") {
-      return { error: "You do not have permission to view this page" };
-    }
-
-    return { success: event };
-  } catch (error) {
-    console.log(error);
-    return { error: "Unable to get invites." };
   }
-}
+);
 
 export async function createInvite({
   name,
