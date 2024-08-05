@@ -1,11 +1,8 @@
 "use client";
 
 import { usePersonEvents } from "@/data/person-hooks";
-import { getFullName, getInitials } from "@/lib/utils";
 import { EventWithOwner } from "@/types";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Icons } from "./icons";
+
 import {
   Select,
   SelectValue,
@@ -17,6 +14,7 @@ import {
 } from "./ui/select";
 import { useState } from "react";
 import { LayoutGroup, motion } from "framer-motion";
+import { EventCard } from "./event-card";
 
 const container = {
   hidden: { opacity: 0 },
@@ -89,88 +87,7 @@ export function EventList({ userId }: { userId: string }) {
         <LayoutGroup>
           {events.sort(sort).map((event) => (
             <motion.div layout variants={item} key={event.id}>
-              <Link href={`/event/${event.id}`}>
-                <div className="flex flex-col gap-2 border border-border shadow-md p-4 px-6 hover:bg-accent transition-all cursor-pointer rounded-md">
-                  <div className="flex flex-col md:flex-row gap-2 md:gap-8">
-                    <div className="flex flex-col flex-grow gap-2 md:w-1/2">
-                      <h1 className="font-heading text-2xl">{event.title}</h1>
-                      <p className="text-muted-foreground">
-                        {event.description}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={event.owner.imageUrl} />
-                          <AvatarFallback>
-                            {getInitials(
-                              event.owner.firstName,
-                              event.owner.lastName
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-muted-foreground">
-                          {getFullName(
-                            event.owner.firstName,
-                            event.owner.lastName
-                          ) !== ""
-                            ? getFullName(
-                                event.owner.firstName,
-                                event.owner.lastName
-                              )
-                            : event.owner.username}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col md:w-1/2 justify-between gap-2">
-                      <div className="flex flex-col gap-2">
-                        {location && (
-                          <div className="flex items-center gap-1 ">
-                            <Icons.location className="w-6 h-6 text-muted-foreground" />
-                            <span>{event.location}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1 ">
-                          <Icons.date className="w-6 h-6 text-muted-foreground" />
-                          {event.chosenDateTime != null ? (
-                            <span>
-                              {new Date(event.chosenDateTime).toLocaleString(
-                                [],
-                                {
-                                  dateStyle: "short",
-                                  timeStyle: "short",
-                                }
-                              )}
-                            </span>
-                          ) : (
-                            <span>TBD</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        {/* Created at */}
-                        <div className="flex items-center gap-1 ">
-                          <span className="text-muted-foreground">
-                            Created at:{" "}
-                            {new Date(event.createdAt).toLocaleString([], {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </span>
-                        </div>
-                        {/* Last activity at*/}
-                        <div className="flex items-center gap-1 ">
-                          <span className="text-muted-foreground">
-                            Last activity at:{" "}
-                            {new Date(event.updatedAt).toLocaleString([], {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <EventCard event={event} />
             </motion.div>
           ))}
         </LayoutGroup>
