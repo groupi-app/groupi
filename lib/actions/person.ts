@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs";
 import { db } from "../db";
 import { cache } from "react";
 import { ActionResponse, PersonData } from "@/types";
@@ -10,7 +9,9 @@ export const fetchPersonData = cache(
     const person = await db.person.findUnique({
       where: { id: userId },
       include: {
-        events: { include: { owner: true } },
+        memberships: {
+          include: { event: { include: { owner: true, memberships: true } } },
+        },
       },
     });
 

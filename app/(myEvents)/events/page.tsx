@@ -44,7 +44,7 @@ export default async function Page() {
   return (
     <QueryProvider queryDefinition={queryDefinition}>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="container pt-6 max-w-4xl">
+        <div className="container py-6 max-w-4xl">
           <EventList userId={userId} />
         </div>
       </HydrationBoundary>

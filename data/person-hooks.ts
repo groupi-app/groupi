@@ -15,14 +15,14 @@ export function usePersonDataQuery(
   });
 }
 
-export function usePersonEvents(userId: string) {
+export function usePersonMemberships(userId: string) {
   return usePersonDataQuery(userId, (data: ActionResponse<PersonData>) => {
     if (data.error) {
       throw new Error(data.error);
     }
     if (data.success) {
       return {
-        events: data.success.events,
+        memberships: data.success.memberships,
       };
     }
   });

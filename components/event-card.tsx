@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Icons } from "./icons";
-import { getFullName, getInitials } from "@/lib/utils";
-import { EventWithOwner } from "@/types";
+import { formatDate, getFullName, getInitials } from "@/lib/utils";
+import { EventWithOwnerAndMembers } from "@/types";
 
-export function EventCard({ event }: { event: EventWithOwner }) {
+export function EventCard({ event }: { event: EventWithOwnerAndMembers }) {
   const {
     id,
     title,
@@ -14,6 +14,7 @@ export function EventCard({ event }: { event: EventWithOwner }) {
     createdAt,
     updatedAt,
     owner,
+    memberships,
   } = event;
   return (
     <Link href={`/event/${id}`}>
@@ -40,12 +41,12 @@ export function EventCard({ event }: { event: EventWithOwner }) {
             <div className="flex flex-col gap-2">
               {location && (
                 <div className="flex items-center gap-1 ">
-                  <Icons.location className="w-6 h-6 text-muted-foreground" />
+                  <Icons.location className="w-6 h-6 text-primary" />
                   <span>{location}</span>
                 </div>
               )}
               <div className="flex items-center gap-1 ">
-                <Icons.date className="w-6 h-6 text-muted-foreground" />
+                <Icons.date className="w-6 h-6 text-primary" />
                 {chosenDateTime != null ? (
                   <span>
                     {new Date(chosenDateTime).toLocaleString([], {
@@ -57,26 +58,22 @@ export function EventCard({ event }: { event: EventWithOwner }) {
                   <span>TBD</span>
                 )}
               </div>
+              <div className="flex items-center gap-1 ">
+                <Icons.people className="w-6 h-6 text-primary" />
+                <span>{memberships.length}</span>
+              </div>
             </div>
             <div className="flex flex-col">
               {/* Created at */}
               <div className="flex items-center gap-1 ">
                 <span className="text-muted-foreground">
-                  Created at:{" "}
-                  {new Date(createdAt).toLocaleString([], {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
+                  Created {formatDate(new Date(createdAt))}
                 </span>
               </div>
               {/* Last activity at*/}
               <div className="flex items-center gap-1 ">
                 <span className="text-muted-foreground">
-                  Last activity at:{" "}
-                  {new Date(updatedAt).toLocaleString([], {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
+                  Last activity {formatDate(new Date(updatedAt))}
                 </span>
               </div>
             </div>

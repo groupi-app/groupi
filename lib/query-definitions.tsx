@@ -35,11 +35,11 @@ export const getInviteQuery: (eventId: string) => QueryDefinition = (
 };
 
 export const getPersonQuery: (personId: string) => QueryDefinition = (
-  userId: string
+  personId: string
 ) => {
   return {
-    queryKey: `personData__${userId}`,
-    pusherChannel: `person__${userId}`,
+    queryKey: `personData__${personId}`,
+    pusherChannel: `person__${personId}`,
     pusherEvent: "update_person_data",
   };
 };

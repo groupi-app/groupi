@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { auth } from "@clerk/nextjs";
 import { ActionResponse, EventInviteData } from "@/types";
-import { getInviteQuery } from "../query-definitions";
+import { getEventQuery, getInviteQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 import { cache } from "react";
 
@@ -279,10 +279,17 @@ export async function acceptInvite({
       data: { usesRemaining: { decrement: 1 } },
     });
 
-    const queryDefinition = getInviteQuery(invite.eventId);
+    const inviteQueryDefinition = getInviteQuery(invite.eventId);
     pusherServer.trigger(
-      queryDefinition.pusherChannel,
-      queryDefinition.pusherEvent,
+      inviteQueryDefinition.pusherChannel,
+      inviteQueryDefinition.pusherEvent,
+      { message: "Data updated" }
+    );
+
+    const eventQueryDefinition = getEventQuery(invite.eventId);
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
       { message: "Data updated" }
     );
 

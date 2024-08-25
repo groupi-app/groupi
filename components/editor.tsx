@@ -37,11 +37,9 @@ interface PostData {
 }
 
 export function Editor({
-  authorId,
   eventId,
   postData,
 }: {
-  authorId: string;
   eventId: string;
   postData?: PostData;
 }) {
@@ -80,7 +78,6 @@ export function Editor({
 
     if (!postData) {
       const res = await createPost({
-        authorId,
         title: values.title,
         content: values.content,
         eventId,
