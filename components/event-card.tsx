@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Icons } from "./icons";
 import { formatDate, getFullName, getInitials } from "@/lib/utils";
-import { EventWithOwnerAndMembers } from "@/types";
+import { EventWithMembers } from "@/types";
 
-export function EventCard({ event }: { event: EventWithOwnerAndMembers }) {
+export function EventCard({ event }: { event: EventWithMembers }) {
   const {
     id,
     title,
@@ -13,9 +13,12 @@ export function EventCard({ event }: { event: EventWithOwnerAndMembers }) {
     chosenDateTime,
     createdAt,
     updatedAt,
-    owner,
     memberships,
   } = event;
+  const owner = memberships.find((m) => m.role === "ORGANIZER")?.person;
+  if (!owner) {
+    throw new Error("Owner not found");
+  }
   return (
     <Link href={`/event/${id}`}>
       <div className="flex flex-col gap-2 border border-border shadow-md p-4 px-6 hover:bg-accent transition-all cursor-pointer rounded-md">

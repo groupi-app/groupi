@@ -88,7 +88,6 @@ export async function createEvent({
         description,
         location,
         chosenDateTime: dateTime,
-        ownerId: userId,
         memberships: {
           create: {
             personId: userId,

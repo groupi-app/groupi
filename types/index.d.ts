@@ -127,29 +127,33 @@ const personData = Prisma.validator<Prisma.PersonDefaultArgs>()({
 
 export type PersonData = Prisma.PersonGetPayload<typeof personData>;
 
-const membershipEventWithOwnerAndMembers =
+const membershipEventWithMembers =
   Prisma.validator<Prisma.MembershipDefaultArgs>()({
     include: {
       event: {
         include: {
-          owner: true,
-          memberships: true,
+          memberships: {
+            include: {
+              person: true,
+            },
+          },
         },
       },
     },
   });
 
-export type MembershipEventWithOwnerAndMembers = Prisma.MembershipGetPayload<
-  typeof membershipEventWithOwnerAndMembers
+export type MembershipEventWithMembers = Prisma.MembershipGetPayload<
+  typeof membershipEventWithMembers
 >;
 
-const eventWithOwnerAndMembers = Prisma.validator<Prisma.EventDefaultArgs>()({
+const eventWithMembers = Prisma.validator<Prisma.EventDefaultArgs>()({
   include: {
-    owner: true,
-    memberships: true,
+    memberships: {
+      include: {
+        person: true,
+      },
+    },
   },
 });
 
-export type EventWithOwnerAndMembers = Prisma.EventGetPayload<
-  typeof eventWithOwnerAndMembers
->;
+export type EventWithMembers = Prisma.EventGetPayload<typeof eventWithMembers>;

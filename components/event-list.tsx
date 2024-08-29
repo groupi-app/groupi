@@ -1,10 +1,7 @@
 "use client";
 
 import { usePersonMemberships } from "@/data/person-hooks";
-import {
-  EventWithOwnerAndMembers,
-  MembershipEventWithOwnerAndMembers,
-} from "@/types";
+import { EventWithMembers, MembershipEventWithMembers } from "@/types";
 
 import {
   Select,
@@ -38,7 +35,7 @@ const item = {
 export function EventList({ userId }: { userId: string }) {
   const { data: userData } = usePersonMemberships(userId);
   console.log(userData);
-  const { memberships }: { memberships: MembershipEventWithOwnerAndMembers[] } =
+  const { memberships }: { memberships: MembershipEventWithMembers[] } =
     userData;
   const events = memberships.map((membership) => membership.event);
   const [sortBy, setSortBy] = useState<
@@ -46,7 +43,7 @@ export function EventList({ userId }: { userId: string }) {
   >("lastactivity");
   const [filter, setFilter] = useState<"all" | "my">("all");
 
-  const sort = (a: EventWithOwnerAndMembers, b: EventWithOwnerAndMembers) => {
+  const sort = (a: EventWithMembers, b: EventWithMembers) => {
     switch (sortBy) {
       case "title":
         return a.title.localeCompare(b.title);

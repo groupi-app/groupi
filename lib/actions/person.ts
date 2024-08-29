@@ -10,7 +10,9 @@ export const fetchPersonData = cache(
       where: { id: userId },
       include: {
         memberships: {
-          include: { event: { include: { owner: true, memberships: true } } },
+          include: {
+            event: { include: { memberships: { include: { person: true } } } },
+          },
         },
       },
     });
