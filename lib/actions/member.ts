@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
 import { pusherServer } from "../pusher-server";
-import { getEventQuery } from "../query-definitions";
+import { getEventQuery, getPersonQuery } from "../query-definitions";
 
 export async function updateMembershipRole({
   membership,
@@ -95,10 +95,16 @@ export async function deleteMembership(membership: Membership) {
       },
     });
     revalidatePath("/");
-    const queryDefinition = getEventQuery(membership.eventId);
+    const eventQueryDefinition = getEventQuery(membership.eventId);
     pusherServer.trigger(
-      queryDefinition.pusherChannel,
-      queryDefinition.pusherEvent,
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Data updated" }
+    );
+    const personQueryDefinition = getPersonQuery(membership.personId);
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
       { message: "Data updated" }
     );
     return { success: "Membership Deleted" };

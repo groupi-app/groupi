@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ReplyAuthorPost } from "@/types";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { DeletePostDialog } from "./deletePostDialog";
-import { formatDate, getFullName } from "@/lib/utils";
+import { formatDate, getFullName, getInitials } from "@/lib/utils";
 import React from "react";
 import { PostCardContent } from "./post-card-content";
 import { $Enums, Membership } from "@prisma/client";
@@ -30,9 +30,6 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
   const { id, title, content, author, createdAt, editedAt, replies, authorId } =
     post;
   if (!author) return null;
-  const initials =
-    author.firstName?.toString()[0] + "" + author.lastName?.toString()[0];
-
   const fullName = getFullName(author.firstName, author.lastName);
 
   const canDelete =

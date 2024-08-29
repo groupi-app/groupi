@@ -12,7 +12,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Icons } from "./icons";
 import { Member } from "@/types";
-import { cn, formatRoleBadge, formatRoleName, getFullName } from "@/lib/utils";
+import {
+  cn,
+  formatRoleBadge,
+  formatRoleName,
+  getFullName,
+  getInitials,
+} from "@/lib/utils";
 import { $Enums } from "@prisma/client";
 import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
@@ -46,7 +52,7 @@ export default function MemberIcon({
   const { firstName, lastName, username, imageUrl } = member.person;
   const role = member.role;
 
-  const initials = firstName?.toString()[0] + "" + lastName?.toString()[0];
+  const initials = getInitials(firstName, lastName);
 
   const fullName = getFullName(firstName, lastName);
 

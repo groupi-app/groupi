@@ -79,7 +79,14 @@ export function getFullName(
   } else if (!firstName && lastName) {
     return lastName;
   }
-  return "Name not found";
+  return "";
+}
+
+export function getInitials(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined
+): string {
+  return firstName?.toString()[0] + "" + lastName?.toString()[0];
 }
 
 export function formatRoleName(role: $Enums.Role | undefined) {

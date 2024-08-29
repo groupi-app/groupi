@@ -33,12 +33,12 @@ export function EventHeader({ eventId }: { eventId: string }) {
       <div className="flex flex-col gap-2">
         {location && (
           <div className="flex items-center gap-1 text-muted-foreground">
-            <Icons.location className="w-6 h-6" />
+            <Icons.location className="w-6 h-6 text-primary" />
             <span>{location}</span>
           </div>
         )}
         <div className="flex items-center gap-1 text-muted-foreground">
-          <Icons.date className="w-6 h-6" />
+          <Icons.date className="w-6 h-6 text-primary" />
           {eventDateStr != null ? (
             <span>{eventDateStr}</span>
           ) : (

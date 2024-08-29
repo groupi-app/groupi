@@ -5,7 +5,11 @@ import { db } from "../db";
 import { auth } from "@clerk/nextjs";
 import { ReplyAuthorEventPost } from "@/types";
 import { pusherServer } from "../pusher-server";
-import { getEventQuery, getPostQuery } from "../query-definitions";
+import {
+  getEventQuery,
+  getPersonQuery,
+  getPostQuery,
+} from "../query-definitions";
 
 export interface PostData {
   success?: {
@@ -72,36 +76,64 @@ export async function createPost({
   title,
   content,
   eventId,
-  authorId,
 }: {
   title: string;
   content: string;
   eventId: string;
-  authorId: string;
 }) {
   try {
     const { userId }: { userId: string | null } = auth();
 
     if (!userId) return { error: "Current user not found" };
 
-    if (userId !== authorId) return { error: "User not authorized" };
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!event) return { error: "Event not found" };
+
+    if (!event.memberships.find((membership) => membership.personId === userId))
+      return { error: "You are not a member of this event" };
 
     const res = await db.post.create({
       data: {
         title: title,
         content: content,
         eventId: eventId,
-        authorId: authorId,
+        authorId: userId,
       },
     });
+
+    await db.event.update({
+      where: { id: eventId },
+      data: {
+        updatedAt: new Date().toISOString(),
+      },
+    });
+
     revalidatePath("/");
 
-    const queryDefinition = getEventQuery(eventId);
+    const eventQueryDefinition = getEventQuery(eventId);
     pusherServer.trigger(
-      queryDefinition.pusherChannel,
-      queryDefinition.pusherEvent,
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
       { message: "Data updated" }
     );
+
+    event.memberships.forEach((membership) => {
+      console.log(membership.personId);
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    });
 
     return { success: "Post Created" };
   } catch (error) {

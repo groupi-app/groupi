@@ -5,7 +5,6 @@ import { CreatedByInvite, EventInviteData } from "@/types";
 import { LayoutGroup, motion } from "framer-motion";
 import { Icons } from "./icons";
 import { AddInvite } from "./add-invite";
-import { Button } from "./ui/button";
 import { DeleteInvites } from "./delete-invites";
 import { Checkbox } from "./ui/checkbox";
 import { useInvites } from "@/data/invite-hooks";
@@ -99,7 +98,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
         >
           <LayoutGroup>
             {valid.map((invite) => (
-              <motion.div key={invite.id} variants={item}>
+              <motion.div layout key={invite.id} variants={item}>
                 <InviteLinkCard
                   selectedInvites={selectedInvites}
                   setSelectedInvites={setSelectedInvites}

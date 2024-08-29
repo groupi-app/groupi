@@ -28,11 +28,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
 
   return (
     <div className="container pt-6">
-      <Editor
-        authorId={authorId}
-        eventId={eventId}
-        postData={{ title, content, id }}
-      />
+      <Editor eventId={eventId} postData={{ title, content, id }} />
     </div>
   );
 }

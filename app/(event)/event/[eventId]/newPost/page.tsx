@@ -10,7 +10,7 @@ export default async function Page({
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("Unauthorized");
+    throw new Error("User not found.");
   }
 
   const { eventId } = params;
@@ -33,7 +33,7 @@ export default async function Page({
 
   return (
     <div className="container pt-6">
-      <Editor authorId={userId} eventId={eventId} />
+      <Editor eventId={eventId} />
     </div>
   );
 }

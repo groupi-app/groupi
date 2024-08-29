@@ -16,7 +16,6 @@ model Person {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   memberships Membership[]
-  events      Event[]
   posts       Post[]
   replies     Reply[]
   firstName   String
@@ -29,8 +28,6 @@ model Event {
   id                 String              @id @default(cuid())
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
-  owner              Person              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId            String
   title              String
   description        String              @default("")
   location           String              @default("")
