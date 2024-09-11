@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { deleteReply } from "@/lib/actions/reply";
+import { leaveEvent } from "@/lib/actions/event";
 import { useRouter } from "next/navigation";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
-async function removeReply({
+async function exitEvent({
   id,
   toast,
   router,
@@ -22,31 +22,32 @@ async function removeReply({
   toast: any;
   router: AppRouterInstance;
 }) {
-  const res = await deleteReply({ id });
+  const res = await leaveEvent(id);
   if (res.success) {
+    router.push(`/events`);
     toast({
-      title: "Post deleted",
-      description: "The post has been deleted.",
+      title: "Event left",
+      description: "You have left the event.",
     });
   } else {
     toast({
       title: "Uh oh!",
-      description: "The post could not be deleted.",
+      description: "Unable to leave the event.",
       variant: "destructive",
     });
   }
 }
 
-export function DeleteReplyDialog({ id }: { id: string }) {
+export function LeaveEventDialog({ id }: { id: string }) {
   const router = useRouter();
   const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Delete Reply?</DialogTitle>
+        <DialogTitle>Leave Event?</DialogTitle>
         <DialogDescription>
-          Are you sure you want to delete this reply? This action cannot be
-          undone.
+          Are you sure you want to leave this event? If you wish to rejoin, you
+          will need to be re-invited.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
@@ -57,11 +58,11 @@ export function DeleteReplyDialog({ id }: { id: string }) {
           <DialogClose asChild>
             <Button
               onClick={() => {
-                removeReply({ id, toast, router });
+                exitEvent({ id, toast, router });
               }}
               variant="destructive"
             >
-              Delete
+              Leave
             </Button>
           </DialogClose>
         </div>

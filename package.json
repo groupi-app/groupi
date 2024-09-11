@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "postmigrate": "npx @snaplet/seed sync"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed/seed.ts"
   },
   "dependencies": {
     "@clerk/themes": "^1.7.9",
