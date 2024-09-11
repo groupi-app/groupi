@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { deleteReply } from "@/lib/actions/reply";
+import { deleteEvent } from "@/lib/actions/event";
 import { useRouter } from "next/navigation";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
-async function removeReply({
+async function removeEvent({
   id,
   toast,
   router,
@@ -22,43 +22,45 @@ async function removeReply({
   toast: any;
   router: AppRouterInstance;
 }) {
-  const res = await deleteReply({ id });
+  const res = await deleteEvent(id);
   if (res.success) {
+    router.push(`/events`);
     toast({
-      title: "Post deleted",
-      description: "The post has been deleted.",
+      title: "Event deleted",
+      description: "The event has been deleted.",
     });
   } else {
     toast({
       title: "Uh oh!",
-      description: "The post could not be deleted.",
+      description: "The event could not be deleted.",
       variant: "destructive",
     });
   }
 }
 
-export function DeleteReplyDialog({ id }: { id: string }) {
+export function DeleteEventDialog({ id }: { id: string }) {
   const router = useRouter();
   const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Delete Reply?</DialogTitle>
+        <DialogTitle>Delete Event?</DialogTitle>
         <DialogDescription>
-          Are you sure you want to delete this reply? This action cannot be
-          undone.
+          Are you sure you want to delete this event? This action cannot be
+          undone and all event data will be lost.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center justify-end gap-2">
-          <DialogClose asChild>
+        <div className="flex items-center gap-2">
+          <DialogClose className="flex-grow" asChild>
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
-          <DialogClose asChild>
+          <DialogClose className="flex-grow" asChild>
             <Button
               onClick={() => {
-                removeReply({ id, toast, router });
+                removeEvent({ id, toast, router });
               }}
+              className="w-full"
               variant="destructive"
             >
               Delete

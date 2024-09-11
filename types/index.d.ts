@@ -25,6 +25,10 @@ export type NavConfig = {
   mainNav: MainNavItem[];
 };
 
+export type HeaderData = Event & {
+  userRole: "ORGANIZER" | "MODERATOR" | "ATTENDEE";
+};
+
 export type UserInfo = {
   firstName: string | null | undefined;
   lastName: string | null | undefined;

@@ -52,7 +52,7 @@ export function useEventHeader(eventId: string) {
       throw new Error(data.error);
     }
     if (data.success) {
-      return { ...data.success.event };
+      return { ...data.success.event, userRole: data.success.userRole };
     }
   });
 }

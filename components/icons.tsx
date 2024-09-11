@@ -26,6 +26,7 @@ import {
   Check,
   Link,
   QrCode,
+  DoorOpen as Leave,
   Infinity as Infinite,
   MessageCircle as Reply,
   Send as Submit,
@@ -87,6 +88,7 @@ export const Icons = {
   kick: Kick,
   copy: Copy,
   invite: Invite,
+  leave: Leave,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
