@@ -10,8 +10,10 @@ import usePlacesAutocomplete from "use-places-autocomplete";
 import useOnclickOutside from "react-cool-onclickoutside";
 
 export function LocationInput({
+  dataTest,
   field,
 }: {
+  dataTest: string;
   field: ControllerRenderProps<
     {
       title: string;
@@ -47,6 +49,7 @@ export function LocationInput({
     <div ref={ref}>
       <Command>
         <CommandInput
+          data-test={dataTest}
           className="text-foreground text-base"
           disabled={!ready}
           placeholder="123 Main St... or 'My house'"

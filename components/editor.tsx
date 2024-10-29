@@ -152,6 +152,7 @@ export function Editor({
                 <FormItem>
                   <FormControl>
                     <Input
+                      data-test="post-editor-title"
                       className="text-4xl md:text-5xl font-heading font-medium border-none py-10 mb-2"
                       placeholder="Post Title"
                       value={field.value}
@@ -165,12 +166,15 @@ export function Editor({
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage data-test="post-editor-title-error" />
                 </FormItem>
               )}
             />
             {titleEdited && postData && (
-              <span className="text-sm text-muted-foreground -mt-2">
+              <span
+                data-test="post-editor-title-edited"
+                className="text-sm text-muted-foreground -mt-2"
+              >
                 Edited
               </span>
             )}
@@ -187,12 +191,15 @@ export function Editor({
                       onChangeCapture={contentEditedOnChange}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage data-test="post-editor-content-error" />
                 </FormItem>
               )}
             />
             {contentEdited && postData && (
-              <span className="text-sm text-muted-foreground -mt-2">
+              <span
+                data-test="post-editor-content-edited"
+                className="text-sm text-muted-foreground -mt-2"
+              >
                 Edited
               </span>
             )}
@@ -211,6 +218,7 @@ export function Editor({
               </Button>
             ) : (
               <Button
+                data-test="post-editor-submit"
                 className="w-full md:w-max flex items-center gap-1"
                 type="submit"
               >

@@ -120,6 +120,7 @@ export function NewEventSingleDate() {
                 <FormItem>
                   <FormControl>
                     <Input
+                      data-test="new-event-single-time"
                       type="time"
                       className="w-max mx-auto cursor-text"
                       {...field}
@@ -150,7 +151,11 @@ export function NewEventSingleDate() {
                 <Icons.back className="text-sm" />
               </Button>
             </Link>
-            <Button className="flex items-center gap-1" type="submit">
+            <Button
+              data-test="new-event-single-submit"
+              className="flex items-center gap-1"
+              type="submit"
+            >
               {isSaving ? (
                 <Icons.spinner className="h-4 w-4 animate-spin" />
               ) : (

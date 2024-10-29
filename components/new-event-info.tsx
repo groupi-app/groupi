@@ -66,7 +66,11 @@ export default function NewEventInfo() {
                   Title<span className="text-muted-foreground">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Groupi Party!" {...field} />
+                  <Input
+                    data-test="new-event-title"
+                    placeholder="Groupi Party!"
+                    {...field}
+                  />
                 </FormControl>
                 <FormDescription>
                   The title of your event. (required)
@@ -83,6 +87,7 @@ export default function NewEventInfo() {
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
+                    data-test="new-event-description"
                     placeholder="Join us for food and festivities..."
                     {...field}
                   />
@@ -101,7 +106,7 @@ export default function NewEventInfo() {
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <LocationInput field={field} />
+                  <LocationInput dataTest="new-event-location" field={field} />
                 </FormControl>
                 <FormDescription>
                   The location where your event is taking place.
@@ -112,6 +117,7 @@ export default function NewEventInfo() {
           />
           <div className="flex justify-end">
             <Button
+              data-test="new-event-next-button"
               className="flex items-center gap-1"
               variant={"secondary"}
               type="submit"
