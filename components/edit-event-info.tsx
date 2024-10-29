@@ -133,7 +133,7 @@ export default function EditEventInfo({
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <LocationInput field={field} />
+                  <LocationInput dataTest="edit-event-location" field={field} />
                 </FormControl>
                 <FormDescription>
                   The location where your event is taking place.
