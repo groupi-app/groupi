@@ -9,7 +9,8 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate dev",
-    "postmigrate": "npx @snaplet/seed sync"
+    "cypress:open": "cypress open",
+    "seed-clerk": "npx tsx --env-file=.env lib/seed-clerk.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed/seed.ts"
@@ -76,10 +77,12 @@
   },
   "devDependencies": {
     "@clerk/nextjs": "^4.29.5",
-    "@prisma/client": "^5.17.0",
+    "@clerk/testing": "^1.3.3",
+    "@prisma/client": "^5.21.1",
     "@radix-ui/react-navigation-menu": "^1.1.3",
+    "cypress": "^13.14.2",
     "next-themes": "^0.2.1",
-    "prisma": "^5.17.0"
+    "prisma": "^5.21.1"
   },
   "overrides": {
     "@radix-ui/react-dismissable-layer": "^1.0.5",

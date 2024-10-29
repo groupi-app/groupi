@@ -36,7 +36,12 @@ export function EventHeader({ eventId }: { eventId: string }) {
     <Dialog>
       <header className="flex flex-col md:my-5 max-w-4xl mx-auto gap-3">
         <div className="flex justify-between flex-col-reverse gap-3 md:flex-row">
-          <h1 className="text-5xl font-heading font-medium">{title}</h1>
+          <h1
+            data-test="event-title"
+            className="text-5xl font-heading font-medium"
+          >
+            {title}
+          </h1>
           <DropdownMenu>
             <DropdownMenuTrigger className="w-12 h-12 hover:bg-accent transition-all rounded-md flex items-center justify-center">
               <Icons.more className="w-8 h-8" />
@@ -82,13 +87,13 @@ export function EventHeader({ eventId }: { eventId: string }) {
           {location && (
             <div className="flex items-center gap-1 text-muted-foreground">
               <Icons.location className="w-6 h-6 text-primary" />
-              <span>{location}</span>
+              <span data-test="event-location">{location}</span>
             </div>
           )}
           <div className="flex items-center gap-1 text-muted-foreground">
             <Icons.date className="w-6 h-6 text-primary" />
             {eventDateStr != null ? (
-              <span>{eventDateStr}</span>
+              <span data-test="event-datetime">{eventDateStr}</span>
             ) : (
               <Button
                 className="flex items-center gap-1"
@@ -101,7 +106,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
             )}
           </div>
         </div>
-        {description && <p>{description}</p>}
+        {description && <p data-test="event-description">{description}</p>}
       </header>
       {userRole === "ORGANIZER" ? (
         <DeleteEventDialog id={eventId} />

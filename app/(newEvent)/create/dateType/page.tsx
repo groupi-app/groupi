@@ -18,7 +18,11 @@ export default function Page() {
     <div className="container max-w-4xl">
       <h2 className="font-heading text-4xl mt-10">I would like to...</h2>
       <div className="flex my-12 gap-4 justify-center flex-col md:flex-row items-center">
-        <Link className="w-full max-w-md" href="/create/singleDate">
+        <Link
+          data-test="single-date-button"
+          className="w-full max-w-md"
+          href="/create/singleDate"
+        >
           <Button
             size="lg"
             variant="outline"

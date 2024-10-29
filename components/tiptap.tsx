@@ -79,7 +79,7 @@ export function Tiptap({
   return (
     <div className="flex flex-col justify-stretch gap-3">
       <Toolbar editor={editor} />
-      <EditorContent editor={editor} />
+      <EditorContent data-test="tiptap-editor" editor={editor} />
     </div>
   );
 }
