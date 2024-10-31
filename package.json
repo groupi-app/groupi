@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "migrate": "prisma migrate dev",
     "cypress:open": "cypress open",
-    "seed-clerk": "npx tsx --env-file=.env lib/seed-clerk.ts",
+    "seed-clerk": "npx tsx lib/seed-clerk.ts",
     "e2e": "start-server-and-test dev http://localhost:3000 \"cypress open --e2e\"",
     "e2e:headless": "start-server-and-test dev http://localhost:3000 \"cypress run --e2e\""
   },
