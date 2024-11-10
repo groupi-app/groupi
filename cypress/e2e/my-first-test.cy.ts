@@ -1,4 +1,8 @@
 describe("template spec", () => {
+  before(() => {
+    cy.task("seedUsers");
+  });
+
   beforeEach(() => {
     cy.task("refreshUser", "testuser1");
   });
@@ -37,9 +41,19 @@ describe("template spec", () => {
     cy.get("[data-test='event-location']")
       .should("exist")
       .contains("Test Location");
+    const date = new Date();
+    date.setHours(16, 20, 0, 0);
     cy.get("[data-test='event-datetime']")
       .should("exist")
-      .contains("10/29/2024, 04:20 PM");
+      .contains(
+        date.toLocaleString([], {
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
 
     cy.get("[data-test='toast-close']").should("exist").click();
 
@@ -59,7 +73,7 @@ describe("template spec", () => {
       .should("exist")
       .type("A".repeat(101));
     cy.get("[data-test='tiptap-editor']").type("A".repeat(3001), {
-      delay: 0.01,
+      delay: 0,
     });
     cy.get("[data-test='post-editor-submit']").should("exist").click();
 

@@ -1,6 +1,8 @@
 import { clerkSetup } from "@clerk/testing/cypress";
 import { defineConfig } from "cypress";
 import { db } from "./lib/db";
+import { SeedUser, seedUsers as users } from "./data/seed-users";
+import { createClerkClient, User } from "@clerk/nextjs/server";
 
 export default defineConfig({
   e2e: {
@@ -27,6 +29,44 @@ export default defineConfig({
           return await db.person.findFirst({
             where: { username },
           });
+        },
+        seedUsers: async () => {
+          try {
+            const clerkClient = createClerkClient({
+              secretKey: process.env.CLERK_SECRET_KEY,
+            });
+            const existingUsers = await clerkClient.users.getUserList();
+            await Promise.all(
+              existingUsers.map((user: User) =>
+                clerkClient.users.deleteUser(user.id)
+              )
+            );
+            await db.person.deleteMany();
+            users.forEach(async (user) => {
+              const userObj = await clerkClient.users.createUser({
+                firstName: user.firstName,
+                lastName: user.lastName,
+                username: user.username,
+                emailAddress: [user.email],
+              });
+              const firstName = userObj.firstName || "";
+              const lastName = userObj.lastName || "";
+              const username = userObj.username || "";
+              await db.person.create({
+                data: {
+                  id: userObj.id,
+                  firstName,
+                  lastName,
+                  username,
+                  imageUrl: userObj.imageUrl,
+                },
+              });
+            });
+            return true;
+          } catch (error) {
+            console.error("Error seeding users:", error);
+            throw error;
+          }
         },
       });
       return clerkSetup({ config });
