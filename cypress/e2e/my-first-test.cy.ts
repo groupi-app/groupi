@@ -66,8 +66,6 @@ describe("template spec", () => {
           })
         );
 
-      cy.get("[data-test='toast-close']").should("exist").click();
-
       // New Post
       cy.get("[data-test='new-post-button']").should("exist").click();
 
@@ -100,8 +98,6 @@ describe("template spec", () => {
       cy.get("[data-test='tiptap-editor']").clear().type("Test Post Content");
 
       cy.get("[data-test='post-editor-submit']").should("exist").click();
-
-      cy.get("[data-test='toast-close']").should("exist").click();
 
       // Post page
       cy.get("[data-test='post-card']").should("exist").click();
