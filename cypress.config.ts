@@ -37,6 +37,9 @@ export default defineConfig({
               secretKey: process.env.CLERK_SECRET_KEY,
             });
             const existingUsers = await clerkClient.users.getUserList();
+            existingUsers.forEach((user: User) => {
+              console.log(user.id);
+            });
             await Promise.all(
               existingUsers.map((user: User) =>
                 clerkClient.users.deleteUser(user.id)
