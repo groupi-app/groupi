@@ -9,7 +9,6 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       on("task", {
         refreshUser: async (username: string) => {
-          console.log("TESTING: Refreshing user", username);
           await db.event.deleteMany({
             where: {
               memberships: {
@@ -31,15 +30,11 @@ export default defineConfig({
           });
         },
         seedUsers: async () => {
-          console.log(process.env.DATABASE_URL);
           try {
             const clerkClient = createClerkClient({
               secretKey: process.env.CLERK_SECRET_KEY,
             });
             const existingUsers = await clerkClient.users.getUserList();
-            existingUsers.forEach((user: User) => {
-              console.log(user.id);
-            });
             await Promise.all(
               existingUsers.map((user: User) =>
                 clerkClient.users.deleteUser(user.id)

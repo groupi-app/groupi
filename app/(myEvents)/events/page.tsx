@@ -17,7 +17,6 @@ import { EventList } from "@/components/event-list";
 
 export default async function Page() {
   const { userId }: { userId: string | null } = auth();
-  console.log(userId);
   if (!userId) {
     throw new Error("User not found");
   }
