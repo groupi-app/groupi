@@ -23,5 +23,3 @@ jobs:
       run: vercel env pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }} .env
     - run: source .env && npm run build
     - run: npm run e2e:headless
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
