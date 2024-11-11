@@ -30,6 +30,7 @@ describe("template spec", () => {
 
     // Datetime
     cy.get("[data-test='single-date-button']").should("exist").click();
+    cy.wait(10000);
     cy.get("[data-test='new-event-single-time']").should("exist").type("16:20");
     cy.get("[data-test='new-event-single-submit']").should("exist").click();
 
