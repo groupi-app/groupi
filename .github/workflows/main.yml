@@ -21,7 +21,5 @@ jobs:
       run: npm install --global vercel@latest
     - name: Pull Vercel Environment Information
       run: vercel env pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }} .env
-    - name: Load Environment Variables
-      run: source .env
-    - run: npm run build
-    - run: npm run e2e:headless
+    - run: source .env && npm run build
+    - run: source .env && npm run e2e:headless
