@@ -24,4 +24,4 @@ jobs:
     - name: Load Environment Variables
       run: source .env
     - run: npm run build
-    - run: cypress run
+    - run: npm run e2e:headless
