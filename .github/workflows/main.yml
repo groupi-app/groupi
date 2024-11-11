@@ -23,4 +23,4 @@ jobs:
     - run: source .env
     - run: npm install
     - run: npm run build
-    - run: npm run e2e:headless
+    - run: npm run e2e
