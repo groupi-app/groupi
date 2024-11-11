@@ -31,6 +31,7 @@ export default defineConfig({
           });
         },
         seedUsers: async () => {
+          console.log(process.env.DATABASE_URL);
           try {
             const clerkClient = createClerkClient({
               secretKey: process.env.CLERK_SECRET_KEY,
