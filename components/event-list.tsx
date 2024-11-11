@@ -34,7 +34,6 @@ const item = {
 
 export function EventList({ userId }: { userId: string }) {
   const { data: userData } = usePersonMemberships(userId);
-  console.log(userData);
   const { memberships }: { memberships: MembershipEventWithMembers[] } =
     userData;
   const events = memberships.map((membership) => membership.event);

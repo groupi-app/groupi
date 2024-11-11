@@ -51,16 +51,15 @@ export function DeletePostDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center gap-2">
-          <DialogClose className="flex-grow" asChild>
+        <div className="flex items-center justify-end gap-2">
+          <DialogClose asChild>
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
-          <DialogClose className="flex-grow" asChild>
+          <DialogClose asChild>
             <Button
               onClick={() => {
                 removePost({ id, toast, router });
               }}
-              className="w-full"
               variant="destructive"
             >
               Delete

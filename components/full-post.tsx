@@ -49,7 +49,7 @@ export function FullPost({ postId }: { postId: string }) {
       <DropdownMenu>
         <div className="pt-6">
           <div className="flex items-center justify-between mb-4">
-            <Link href={`/event/${post.eventId}`}>
+            <Link data-test="full-post-back" href={`/event/${post.eventId}`}>
               <Button
                 variant={"ghost"}
                 className="flex items-center gap-1 pl-2"
@@ -92,7 +92,10 @@ export function FullPost({ postId }: { postId: string }) {
           </div>
           <div>
             <div className="flex flex-col gap-1 mb-8">
-              <h1 className="text-5xl font-heading font-medium mb-1">
+              <h1
+                data-test="full-post-title"
+                className="text-5xl font-heading font-medium mb-1"
+              >
                 {post.title}
               </h1>
               <div className="flex items-center gap-2">
@@ -137,6 +140,7 @@ export function FullPost({ postId }: { postId: string }) {
               </div>
             </div>
             <div
+              data-test="full-post-content"
               className="whitespace-pre-wrap"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />

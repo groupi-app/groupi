@@ -18,8 +18,10 @@ import { z } from "zod";
 import { LocationInput } from "./location-input";
 import { Button } from "./ui/button";
 import { Icons } from "./icons";
-import { useFormContext } from "./providers/form-context-provider";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { updateEventDetails } from "@/lib/actions/event";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -35,22 +37,52 @@ const formSchema = z.object({
     .optional(),
 });
 
-export default function NewEventInfo() {
+export default function EditEventInfo({
+  eventData,
+}: {
+  eventData: {
+    eventId: string;
+    title: string;
+    description: string;
+    location: string;
+  };
+}) {
+  const { eventId, title, description, location } = eventData;
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const { toast } = useToast();
   const router = useRouter();
-  const { formState, setFormState } = useFormContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: formState.title,
-      description: formState.description,
-      location: formState.location,
+      title: title,
+      description: description,
+      location: location,
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    setFormState(data);
-    router.push("/create/dateType");
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+    const res = await updateEventDetails({
+      id: eventId,
+      title: data.title,
+      description: data.description,
+      location: data.location,
+    });
+    if (res.error) {
+      toast({
+        title: "Error editing event",
+        description: "Failed to edit event details.",
+      });
+    }
+    if (res.success) {
+      toast({
+        title: "Event updated",
+        description: "Event details have been updated.",
+      });
+      router.push(`/event/${eventId}`);
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -66,11 +98,7 @@ export default function NewEventInfo() {
                   Title<span className="text-muted-foreground">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    data-test="new-event-title"
-                    placeholder="Groupi Party!"
-                    {...field}
-                  />
+                  <Input placeholder="Groupi Party!" {...field} />
                 </FormControl>
                 <FormDescription>
                   The title of your event. (required)
@@ -87,7 +115,6 @@ export default function NewEventInfo() {
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
-                    data-test="new-event-description"
                     placeholder="Join us for food and festivities..."
                     {...field}
                   />
@@ -106,7 +133,7 @@ export default function NewEventInfo() {
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <LocationInput dataTest="new-event-location" field={field} />
+                  <LocationInput dataTest="edit-event-location" field={field} />
                 </FormControl>
                 <FormDescription>
                   The location where your event is taking place.
@@ -117,13 +144,15 @@ export default function NewEventInfo() {
           />
           <div className="flex justify-end">
             <Button
-              data-test="new-event-next-button"
-              className="flex items-center gap-1"
-              variant={"secondary"}
+              className="w-full md:w-max flex items-center gap-1"
               type="submit"
             >
-              <span>Next</span>
-              <Icons.forward className="text-sm" />
+              {isSaving ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icons.save className="w-4 h-4" />
+              )}
+              <span>Save</span>
             </Button>
           </div>
         </div>

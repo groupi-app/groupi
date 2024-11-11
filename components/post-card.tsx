@@ -53,7 +53,11 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
               <div className="rounded-full w-10 h-10 bg-primary" />
             )}{" "}
           </div>
-          <Link href={`/post/${id}`} className="w-full z-10">
+          <Link
+            data-test="post-card"
+            href={`/post/${id}`}
+            className="w-full z-10"
+          >
             <div className="w-full rounded-xl bg-card hover:bg-accent transition-colors group pt-4 px-5 pb-2">
               <div className="flex flex-col gap-1">
                 <div className="ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16">
