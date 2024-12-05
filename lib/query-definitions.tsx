@@ -43,3 +43,13 @@ export const getPersonQuery: (personId: string) => QueryDefinition = (
     pusherEvent: "update_person_data",
   };
 };
+
+export const getPDTQuery: (eventId: string) => QueryDefinition = (
+  eventId: string
+) => {
+  return {
+    queryKey: `pdtData__${eventId}`,
+    pusherChannel: `pdt__${eventId}`,
+    pusherEvent: "update_pdt_data",
+  };
+};
