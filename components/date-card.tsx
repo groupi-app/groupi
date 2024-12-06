@@ -19,6 +19,9 @@ import { MemberSlate } from "./member-slate";
 import { Role } from "@prisma/client";
 import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
+import { chooseDateTime } from "@/lib/actions/availability";
+import { useToast } from "./ui/use-toast";
+import { useRouter } from "next/navigation";
 
 export function DateCard({
   pdt,
@@ -38,6 +41,28 @@ export function DateCard({
   const [dialogType, setDialogType] = useState<"overview" | "confirm">(
     "overview"
   );
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  async function selectDate() {
+    setIsLoading(true);
+    const res = await chooseDateTime(pdt.eventId, pdt.id);
+    if (res.error) {
+      toast({
+        title: "Error selecting date",
+        description: "The date could not be selected. Please try again.",
+      });
+    }
+    if (res.success) {
+      toast({
+        title: "Date selected!",
+        description: "The date has been successfully selected.",
+      });
+      router.push(`/event/${pdt.eventId}`);
+    }
+    setIsLoading(false);
+  }
 
   return (
     <Dialog>
@@ -250,7 +275,15 @@ export function DateCard({
                 Cancel
               </Button>
               <DialogClose asChild>
-                <Button>Confirm</Button>
+                <Button
+                  className="flex items-center gap-1"
+                  onClick={selectDate}
+                >
+                  {isLoading && (
+                    <Icons.spinner className="h-4 w-4 animate-spin" />
+                  )}
+                  <span>Confirm</span>
+                </Button>
               </DialogClose>
             </DialogFooter>
           </>

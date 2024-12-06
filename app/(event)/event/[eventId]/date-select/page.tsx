@@ -1,3 +1,4 @@
+import { AvailabilityChart } from "@/components/availability-chart";
 import { DateCardList } from "@/components/date-card-list";
 import { Icons } from "@/components/icons";
 import QueryProvider from "@/components/providers/query-provider";
@@ -60,6 +61,7 @@ export default async function Page({
             </Link>
           </div>
           <div>
+            <AvailabilityChart eventId={eventId} />
             <DateCardList eventId={eventId} />
           </div>
         </div>

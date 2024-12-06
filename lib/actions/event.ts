@@ -5,7 +5,7 @@ import { ActionResponse, Member, ReplyAuthorPost } from "@/types";
 import { auth } from "@clerk/nextjs";
 import { $Enums, Event } from "@prisma/client";
 import { cache } from "react";
-import { getEventQuery } from "../query-definitions";
+import { getEventQuery, getPersonQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 import { revalidatePath } from "next/cache";
 
@@ -208,6 +208,7 @@ export async function updateEventDetails({
         title,
         description,
         location,
+        updatedAt: new Date(),
       },
     });
 
@@ -220,6 +221,15 @@ export async function updateEventDetails({
       eventQueryDefinition.pusherEvent,
       { message: "Event data updated" }
     );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
 
     revalidatePath("/");
 
@@ -261,6 +271,15 @@ export async function deleteEvent(eventId: string) {
         id: eventId,
       },
     });
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
 
     revalidatePath("/");
 

@@ -57,7 +57,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
                       </div>
                     </DropdownMenuItem>
                   </Link>
-                  <Link href={`/event/${eventId}/date`}>
+                  <Link href={`/event/${eventId}/change-date`}>
                     <DropdownMenuItem className="cursor-pointer">
                       <div className="flex items-center gap-1">
                         <Icons.date className="w-4 h-4" />

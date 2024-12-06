@@ -81,8 +81,8 @@ export default function EditEventInfo({
         description: "Event details have been updated.",
       });
       router.push(`/event/${eventId}`);
-      setIsSaving(false);
     }
+    setIsSaving(false);
   }
 
   return (

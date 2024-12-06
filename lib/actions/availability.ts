@@ -5,6 +5,8 @@ import { db } from "../db";
 import { $Enums } from "@prisma/client";
 import { ActionResponse, PotentialDateTimeWithAvailabilities } from "@/types";
 import { revalidatePath } from "next/cache";
+import { getEventQuery, getPersonQuery } from "../query-definitions";
+import { pusherServer } from "../pusher-server";
 
 export interface PDTData {
   potentialDateTimes: PotentialDateTimeWithAvailabilities[];
@@ -178,5 +180,88 @@ export async function updateMembershipAvailabilities(
   } catch (error) {
     console.log(error);
     return { error: "Unable to update availability" };
+  }
+}
+
+export async function chooseDateTime(eventId: string, pdtId: string) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) {
+      console.log("User not found");
+      return { error: "User not found" };
+    }
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        potentialDateTimes: true,
+        memberships: true,
+      },
+    });
+
+    if (!event) {
+      console.log("Event not found");
+      return { error: "Event not found" };
+    }
+
+    const userMembership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!userMembership) {
+      console.log("User not a member of this event");
+      return { error: "User not a member of this event" };
+    }
+
+    if (userMembership.role !== "ORGANIZER") {
+      console.log("User not an organizer");
+      return { error: "User not an organizer" };
+    }
+
+    const dateTime = event.potentialDateTimes.find(
+      (pdt) => pdt.id === pdtId
+    )?.dateTime;
+
+    if (!dateTime) {
+      console.log("Date not found");
+      return { error: "Date not found" };
+    }
+
+    await db.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        chosenDateTime: dateTime,
+        updatedAt: new Date(),
+      },
+    });
+
+    const eventQueryDefinition = getEventQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+    return { error: "Unable to choose date" };
   }
 }
