@@ -1,10 +1,32 @@
+import { HomeHeader } from "@/components/home-header";
+import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="container">
-      <h1 className="text-foreground font-heading text-2xl">Groupi</h1>
-      <Button>Button</Button>
+    <div className="container max-w-3xl py-8 flex flex-col gap-8">
+      <div className="">
+        <HomeHeader />
+      </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-muted-foreground">
+          Welcome to Groupi! The app designed to take the frustration out of
+          making plans.
+        </p>
+        <p>
+          Groupi is currently under active development and will continue to grow
+          and change over time. If you have any feedback, please contact me at
+          theia@tsurette.com (please be nice).
+        </p>
+        <p>Otherwise, I hope you enjoy!</p>
+      </div>
+      <Link href="/create">
+        <Button className="flex items-center gap-1">
+          <Icons.arrowRight className="w-4 h-4" />
+          <span>Get Started!</span>
+        </Button>
+      </Link>
     </div>
   );
 }
