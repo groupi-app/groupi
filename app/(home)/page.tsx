@@ -16,8 +16,13 @@ export default function Home() {
         </p>
         <p>
           Groupi is currently under active development and will continue to grow
-          and change over time. If you have any feedback, please contact me at
-          theia@tsurette.com (please be nice).
+          and change over time. If you have any feedback, please contact{" "}
+          {
+            <Link className="underline font-medium" href="https://tsurette.com">
+              Theia
+            </Link>
+          }{" "}
+          and let her know!
         </p>
         <p>Otherwise, I hope you enjoy!</p>
       </div>

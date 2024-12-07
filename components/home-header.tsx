@@ -44,7 +44,7 @@ export function HomeHeader() {
       [wordPoolCopy[i], wordPoolCopy[j]] = [wordPoolCopy[j], wordPoolCopy[i]];
     }
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < wordPoolCopy.length; i++) {
       sequence.push(wordPoolCopy[i] + ".");
       sequence.push(2000);
     }
