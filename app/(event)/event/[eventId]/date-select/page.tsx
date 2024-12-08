@@ -1,12 +1,10 @@
-import { AvailabilityChart } from "@/components/availability-chart";
 import { DateCardList } from "@/components/date-card-list";
 import { Icons } from "@/components/icons";
 import QueryProvider from "@/components/providers/query-provider";
 import { Button } from "@/components/ui/button";
 import { getEventPotentialDateTimes } from "@/lib/actions/availability";
 import { getPDTQuery } from "@/lib/query-definitions";
-import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { auth } from "@clerk/nextjs";
+
 import {
   dehydrate,
   HydrationBoundary,
@@ -48,7 +46,7 @@ export default async function Page({
   return (
     <QueryProvider queryDefinition={queryDefinition}>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="container max-w-5xl py-4">
+        <div className="container max-w-5xl py-4 flex flex-col">
           <div className="w-max my-2">
             <Link data-test="full-post-back" href={`/event/${eventId}`}>
               <Button
@@ -61,7 +59,9 @@ export default async function Page({
             </Link>
           </div>
           <div>
-            <AvailabilityChart eventId={eventId} />
+            <h1 className="font-heading text-4xl my-4">
+              Choose a date/time for your event.
+            </h1>
             <DateCardList eventId={eventId} />
           </div>
         </div>

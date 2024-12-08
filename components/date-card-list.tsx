@@ -1,6 +1,12 @@
 "use client";
 import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { DateCard } from "./date-card";
+
+import { useState } from "react";
+import { usePDTs } from "@/data/pdt-hooks";
+import { Role } from "@prisma/client";
+import { LayoutGroup, motion } from "framer-motion";
+import { getRanks } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -9,45 +15,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { useState } from "react";
-import { usePDTs } from "@/data/pdt-hooks";
-import { Role } from "@prisma/client";
-import { LayoutGroup, motion } from "framer-motion";
-
-function getRanks(pdts: PotentialDateTimeWithAvailabilities[]) {
-  // Calculate scores for each potential date time
-  const scoreMap = pdts.map((pdt) => {
-    const score = pdt.availabilities.reduce((acc, availability) => {
-      return (
-        acc +
-        (availability.status === "YES"
-          ? 2
-          : availability.status === "MAYBE"
-          ? 1
-          : 0)
-      );
-    }, 0);
-    return { pdt, score };
-  });
-
-  // Sort by score in descending order
-  scoreMap.sort((a, b) => b.score - a.score);
-
-  // Assign ranks with numbers being skipped after ties
-  let rank = 1;
-  let previousScore = scoreMap[0]?.score;
-  return scoreMap.map((item, index) => {
-    if (index > 0 && item.score < previousScore) {
-      rank = index + 1;
-      previousScore = item.score;
-    }
-    return {
-      rank: rank,
-      ...item.pdt,
-    };
-  });
-}
+} from "@/components/ui/select";
 
 const container = {
   hidden: { opacity: 0 },

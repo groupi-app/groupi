@@ -240,6 +240,173 @@ export async function updateEventDetails({
   }
 }
 
+export async function updateEventDateTime({
+  eventId,
+  dateTime,
+}: {
+  eventId: string;
+  dateTime: string;
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "User not found" };
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!event) return { error: "Event not found" };
+
+    const userMembership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!userMembership) return { error: "User not a member of this event" };
+
+    if (userMembership.role !== "ORGANIZER")
+      return { error: "You do not have permission to edit this event" };
+
+    const updatedEvent = await db.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        chosenDateTime: dateTime,
+      },
+    });
+
+    if (!updatedEvent) return { error: "Could not update event" };
+
+    const eventQueryDefinition = getEventQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
+    revalidatePath("/");
+
+    return { success: updatedEvent };
+  } catch (error) {
+    console.log(error);
+    return { error: "Could not update event" };
+  }
+}
+
+export async function updateEventPotentialDateTimes({
+  eventId,
+  potentialDateTimes,
+}: {
+  eventId: string;
+  potentialDateTimes: string[];
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "User not found" };
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+        potentialDateTimes: true,
+      },
+    });
+
+    if (!event) return { error: "Event not found" };
+
+    const userMembership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!userMembership) return { error: "User not a member of this event" };
+
+    if (userMembership.role !== "ORGANIZER")
+      return { error: "You do not have permission to edit this event" };
+
+    const updatedEvent = await db.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        potentialDateTimes: {
+          deleteMany: {},
+          createMany: {
+            data: potentialDateTimes.map((dateTime) => ({
+              dateTime,
+            })),
+          },
+        },
+        chosenDateTime: null,
+      },
+      include: {
+        potentialDateTimes: true,
+      },
+    });
+
+    if (!updatedEvent) return { error: "Could not update event" };
+
+    for (const potentialDateTime of updatedEvent.potentialDateTimes) {
+      const eventRes = await db.availability.create({
+        data: {
+          membershipId: event.memberships[0].id,
+          status: "YES",
+          potentialDateTimeId: potentialDateTime.id,
+        },
+      });
+      if (!eventRes) {
+        await db.event.delete({
+          where: {
+            id: eventId,
+          },
+        });
+        return { error: "Could not update availability" };
+      }
+    }
+
+    const eventQueryDefinition = getEventQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
+    revalidatePath("/");
+    return { success: updatedEvent };
+  } catch (error) {
+    console.log(error);
+    return { error: "Could not update event" };
+  }
+}
+
 export async function deleteEvent(eventId: string) {
   try {
     const { userId }: { userId: string | null } = auth();

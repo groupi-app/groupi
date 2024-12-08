@@ -1,6 +1,4 @@
 import { NewEventMultiDate } from "@/components/new-event-multi-date";
-import { CalendarSkeleton } from "@/components/skeletons/calendar-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Page() {
   return (
