@@ -4,17 +4,29 @@ import { Input } from "./ui/input";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Icons } from "./icons";
-import { useFormContext } from "@/components/providers/form-context-provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 import { z } from "zod";
 import { set, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
-import { createEvent } from "@/lib/actions/event";
+import {
+  createEvent,
+  updateEventPotentialDateTimes,
+} from "@/lib/actions/event";
 import { useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { merge } from "@/lib/utils";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 interface Form1Types {
   dates: Date[];
@@ -38,8 +50,7 @@ const form2Schema = z.object({
     .min(1, { message: "At least one date is required." }),
 });
 
-export function NewEventMultiDate() {
-  const { formState, setFormState } = useFormContext();
+export function EditEventMultiDate({ eventId }: { eventId: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -61,11 +72,6 @@ export function NewEventMultiDate() {
       dateTimes: [],
     },
   });
-
-  if (!formState.title) {
-    router.push("/create");
-    return null;
-  }
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${
@@ -94,25 +100,21 @@ export function NewEventMultiDate() {
   async function onSubmit2(data: z.infer<typeof form2Schema>) {
     setIsSaving(true);
 
-    const { title, description, location } = formState;
-
-    const res = await createEvent({
-      title,
-      description,
-      location,
+    const res = await updateEventPotentialDateTimes({
+      eventId,
       potentialDateTimes: data.dateTimes.map((date) => date.toISOString()),
     });
     if (res.error) {
       toast({
         title: "Error",
-        description: "The event was unable to be created.",
+        description: "The event was unable to be updated.",
       });
       setIsSaving(false);
     }
     if (res.success) {
       toast({
-        title: "Event Created",
-        description: "The event was created successfully.",
+        title: "Date/time poll created",
+        description: "A new date/time poll has been created.",
       });
       setIsSaving(false);
       router.push(`/event/${res.success.id}`);
@@ -239,19 +241,43 @@ export function NewEventMultiDate() {
             <Icons.back className="text-sm" />
           </Button>
         </Link>
-        <Button
-          disabled={form2.watch("dateTimes").length < 1}
-          className="flex items-center gap-1"
-          type="submit"
-          form="form2"
-        >
-          {isSaving ? (
-            <Icons.spinner className="h-4 w-4 animate-spin" />
-          ) : (
-            <></>
-          )}
-          Submit
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              data-test="new-event-single-submit"
+              className="flex items-center gap-1"
+              type="button"
+            >
+              Submit
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Run New Date/Time Poll?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to start a new date/time poll? This will
+                override any existing polls.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="ghost">Cancel</Button>
+              </DialogClose>
+              <Button
+                className="flex items-center gap-1"
+                type="submit"
+                form="form2"
+              >
+                {isSaving ? (
+                  <Icons.spinner className="h-4 w-4 animate-spin" />
+                ) : (
+                  <></>
+                )}
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
                       </div>
                     </DropdownMenuItem>
                   </Link>
-                  <Link href={`/event/${eventId}/date`}>
+                  <Link href={`/event/${eventId}/change-date`}>
                     <DropdownMenuItem className="cursor-pointer">
                       <div className="flex items-center gap-1">
                         <Icons.date className="w-4 h-4" />
@@ -94,15 +94,28 @@ export function EventHeader({ eventId }: { eventId: string }) {
             <Icons.date className="w-6 h-6 text-primary" />
             {eventDateStr != null ? (
               <span data-test="event-datetime">{eventDateStr}</span>
+            ) : userRole === "ORGANIZER" ? (
+              <Link href={`/event/${eventId}/date-select`}>
+                <Button
+                  className="flex items-center gap-1"
+                  variant={"ghost"}
+                  size={"sm"}
+                >
+                  <span>Choose Date/Time</span>
+                  <Icons.arrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
             ) : (
-              <Button
-                className="flex items-center gap-1"
-                variant={"ghost"}
-                size={"sm"}
-              >
-                <span>Set Availability</span>
-                <Icons.arrowRight className="w-4 h-4" />
-              </Button>
+              <Link href={`/event/${eventId}/availability`}>
+                <Button
+                  className="flex items-center gap-1"
+                  variant={"ghost"}
+                  size={"sm"}
+                >
+                  <span>Set Availability</span>
+                  <Icons.arrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
             )}
           </div>
         </div>

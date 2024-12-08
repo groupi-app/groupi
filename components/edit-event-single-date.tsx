@@ -4,23 +4,31 @@ import { Input } from "./ui/input";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Icons } from "./icons";
-import { useFormContext } from "@/components/providers/form-context-provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 import { z } from "zod";
 import { set, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
-import { createEvent } from "@/lib/actions/event";
+import { updateEventDateTime } from "@/lib/actions/event";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 const formSchema = z.object({
   date: z.date(),
   time: z.string().regex(new RegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")),
 });
 
-export function NewEventSingleDate() {
-  const { formState, setFormState } = useFormContext();
+export function EditEventSingleDate({ eventId }: { eventId: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -36,11 +44,6 @@ export function NewEventSingleDate() {
     },
   });
 
-  if (!formState.title) {
-    router.push("/create");
-    return null;
-  }
-
   const getDateTime = () => {
     return new Date(
       `${form.watch("date").toISOString().split("T")[0]}T${form.watch("time")}`
@@ -54,6 +57,7 @@ export function NewEventSingleDate() {
   };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    console.log("TEST");
     setIsSaving(true);
     const date = data.date;
     const localTime = data.time + ":00";
@@ -62,25 +66,18 @@ export function NewEventSingleDate() {
       `${date.toISOString().split("T")[0]}T${localTime}`
     ).toISOString();
 
-    const { title, description, location } = formState;
-
-    const res = await createEvent({
-      title,
-      description,
-      location,
-      dateTime,
-    });
+    const res = await updateEventDateTime({ eventId, dateTime });
     if (res.error) {
       toast({
         title: "Error",
-        description: "The event was unable to be created.",
+        description: "The date/time was unable to be updated.",
       });
       setIsSaving(false);
     }
     if (res.success) {
       toast({
-        title: "Event Created",
-        description: "The event was created successfully.",
+        title: "Date/time Updated",
+        description: "The date/time has been updated.",
       });
       setIsSaving(false);
       router.push(`/event/${res.success.id}`);
@@ -90,7 +87,7 @@ export function NewEventSingleDate() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form id="edit-date-form" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="my-8 flex flex-col gap-4">
           <FormField
             control={form.control}
@@ -145,24 +142,49 @@ export function NewEventSingleDate() {
             </div>
           </div>
           <div className="flex justify-between mt-2">
-            <Link href="/create/date-type">
+            <Link href={`/event/${eventId}/change-date`}>
               <Button className="flex items-center gap-1" variant={"secondary"}>
                 <span>Back</span>
                 <Icons.back className="text-sm" />
               </Button>
             </Link>
-            <Button
-              data-test="new-event-single-submit"
-              className="flex items-center gap-1"
-              type="submit"
-            >
-              {isSaving ? (
-                <Icons.spinner className="h-4 w-4 animate-spin" />
-              ) : (
-                <></>
-              )}
-              Submit
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  data-test="new-event-single-submit"
+                  className="flex items-center gap-1"
+                  type="button"
+                >
+                  Submit
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Update Date/Time</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to update the date/time? This will
+                    override any existing polls.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                  </DialogClose>
+                  <Button
+                    className="flex items-center gap-1"
+                    type="submit"
+                    form="edit-date-form"
+                  >
+                    {isSaving ? (
+                      <Icons.spinner className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <></>
+                    )}
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </form>

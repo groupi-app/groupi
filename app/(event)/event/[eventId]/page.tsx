@@ -8,7 +8,7 @@ import {
   dehydrate,
 } from "@tanstack/react-query";
 import { fetchEventData } from "@/lib/actions/event";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import QueryProvider from "@/components/providers/query-provider";
 import { getEventQuery } from "@/lib/query-definitions";
 
@@ -27,6 +27,21 @@ export default async function Page({
 
   if (data.error) {
     throw new Error(data.error);
+  }
+
+  const userMembership = data.success?.event.memberships.find(
+    (membership) => membership.personId === data.success?.userId
+  );
+
+  if (!userMembership) {
+    throw new Error("You do not have permission to view this page.");
+  }
+
+  if (
+    !data.success?.event.chosenDateTime &&
+    userMembership.availabilities.length === 0
+  ) {
+    redirect(`/event/${eventId}/availability`);
   }
 
   const queryDefinition = getEventQuery(eventId);

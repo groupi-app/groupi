@@ -6,7 +6,34 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+const Select: React.FC<SelectPrimitive.SelectProps> = ({
+  children,
+  open,
+  onOpenChange,
+  ...props
+}) => {
+  const [delayedOpen, setDelayedOpen] = React.useState(false);
+
+  const handleOpenChange = (newOpenState: boolean) => {
+    if (newOpenState) {
+      (onOpenChange ?? setDelayedOpen)(newOpenState);
+    } else {
+      setTimeout(() => {
+        (onOpenChange ?? setDelayedOpen)(newOpenState);
+      }, 50);
+    }
+  };
+
+  return (
+    <SelectPrimitive.Root
+      open={open ?? delayedOpen}
+      onOpenChange={handleOpenChange}
+      {...props}
+    >
+      {children}
+    </SelectPrimitive.Root>
+  );
+};
 
 const SelectGroup = SelectPrimitive.Group;
 

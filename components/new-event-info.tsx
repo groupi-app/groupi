@@ -50,7 +50,7 @@ export default function NewEventInfo() {
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setFormState(data);
-    router.push("/create/dateType");
+    router.push("/create/date-type");
   }
 
   return (

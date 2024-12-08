@@ -3,14 +3,17 @@
 import { db } from "@/lib/db";
 import { ActionResponse, Member, ReplyAuthorPost } from "@/types";
 import { auth } from "@clerk/nextjs";
-import { $Enums, Event } from "@prisma/client";
+import { $Enums, Availability, Event } from "@prisma/client";
 import { cache } from "react";
-import { getEventQuery } from "../query-definitions";
+import { getEventQuery, getPersonQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 import { revalidatePath } from "next/cache";
 
 export interface EventData {
-  event: Event & { posts: ReplyAuthorPost[]; memberships: Member[] };
+  event: Event & {
+    posts: ReplyAuthorPost[];
+    memberships: (Member & { availabilities: Availability[] })[];
+  };
   userRole: $Enums.Role;
   userId: string;
 }
@@ -51,6 +54,7 @@ export const fetchEventData = cache(
           memberships: {
             include: {
               person: true,
+              availabilities: true,
             },
           },
         },
@@ -208,6 +212,7 @@ export async function updateEventDetails({
         title,
         description,
         location,
+        updatedAt: new Date(),
       },
     });
 
@@ -221,8 +226,184 @@ export async function updateEventDetails({
       { message: "Event data updated" }
     );
 
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
     revalidatePath("/");
 
+    return { success: updatedEvent };
+  } catch (error) {
+    console.log(error);
+    return { error: "Could not update event" };
+  }
+}
+
+export async function updateEventDateTime({
+  eventId,
+  dateTime,
+}: {
+  eventId: string;
+  dateTime: string;
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "User not found" };
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!event) return { error: "Event not found" };
+
+    const userMembership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!userMembership) return { error: "User not a member of this event" };
+
+    if (userMembership.role !== "ORGANIZER")
+      return { error: "You do not have permission to edit this event" };
+
+    const updatedEvent = await db.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        chosenDateTime: dateTime,
+      },
+    });
+
+    if (!updatedEvent) return { error: "Could not update event" };
+
+    const eventQueryDefinition = getEventQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
+    revalidatePath("/");
+
+    return { success: updatedEvent };
+  } catch (error) {
+    console.log(error);
+    return { error: "Could not update event" };
+  }
+}
+
+export async function updateEventPotentialDateTimes({
+  eventId,
+  potentialDateTimes,
+}: {
+  eventId: string;
+  potentialDateTimes: string[];
+}) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "User not found" };
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+        potentialDateTimes: true,
+      },
+    });
+
+    if (!event) return { error: "Event not found" };
+
+    const userMembership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!userMembership) return { error: "User not a member of this event" };
+
+    if (userMembership.role !== "ORGANIZER")
+      return { error: "You do not have permission to edit this event" };
+
+    const updatedEvent = await db.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        potentialDateTimes: {
+          deleteMany: {},
+          createMany: {
+            data: potentialDateTimes.map((dateTime) => ({
+              dateTime,
+            })),
+          },
+        },
+        chosenDateTime: null,
+      },
+      include: {
+        potentialDateTimes: true,
+      },
+    });
+
+    if (!updatedEvent) return { error: "Could not update event" };
+
+    for (const potentialDateTime of updatedEvent.potentialDateTimes) {
+      const eventRes = await db.availability.create({
+        data: {
+          membershipId: event.memberships[0].id,
+          status: "YES",
+          potentialDateTimeId: potentialDateTime.id,
+        },
+      });
+      if (!eventRes) {
+        await db.event.delete({
+          where: {
+            id: eventId,
+          },
+        });
+        return { error: "Could not update availability" };
+      }
+    }
+
+    const eventQueryDefinition = getEventQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
+
+    revalidatePath("/");
     return { success: updatedEvent };
   } catch (error) {
     console.log(error);
@@ -261,6 +442,15 @@ export async function deleteEvent(eventId: string) {
         id: eventId,
       },
     });
+
+    for (const membership of event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
 
     revalidatePath("/");
 
