@@ -5,7 +5,11 @@ import { db } from "../db";
 import { $Enums } from "@prisma/client";
 import { ActionResponse, PotentialDateTimeWithAvailabilities } from "@/types";
 import { revalidatePath } from "next/cache";
-import { getEventQuery, getPersonQuery } from "../query-definitions";
+import {
+  getEventQuery,
+  getPDTQuery,
+  getPersonQuery,
+} from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 
 export interface PDTData {
@@ -173,6 +177,14 @@ export async function updateMembershipAvailabilities(
         })),
       });
     }
+
+    const eventQueryDefinition = getPDTQuery(eventId);
+
+    pusherServer.trigger(
+      eventQueryDefinition.pusherChannel,
+      eventQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
 
     revalidatePath("/");
 
