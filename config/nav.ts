@@ -1,11 +1,7 @@
-import { NavConfig } from "@/types"
+import { NavConfig } from "@/types";
 
 export const navConfig: NavConfig = {
   mainNav: [
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-    },
     {
       title: "My Events",
       href: "/events",
@@ -15,4 +11,4 @@ export const navConfig: NavConfig = {
       href: "/create",
     },
   ],
-}
+};

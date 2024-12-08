@@ -14,6 +14,8 @@ import { navConfig } from "@/config/nav";
 import { MainNav } from "@/components/main-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ClerkProvider from "@/components/providers/my-clerk-provider";
+import { ModeToggle } from "@/components/mode-toggle";
+import Link from "next/link";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -101,7 +103,26 @@ export default async function RootLayout({
                 <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
                   <MainNav userInfo={userInfo} items={navConfig.mainNav} />
                 </header>
-                <main>{children}</main>
+                <main className="flex-grow">{children}</main>
+                <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
+                  <div className="container mx-auto py-4 flex gap-8 items-center">
+                    <ModeToggle />
+                    <div className="flex flex-col gap-2">
+                      <p>
+                        Built by{" "}
+                        <Link
+                          className="underline font-medium"
+                          href="https://tsurette.com"
+                        >
+                          Theia
+                        </Link>
+                      </p>
+                      <p className="text-sm">
+                        &copy; {new Date().getFullYear()} {siteConfig.name}
+                      </p>
+                    </div>
+                  </div>
+                </footer>
               </div>
             </TooltipProvider>
           </ClerkProvider>

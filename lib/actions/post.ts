@@ -112,7 +112,7 @@ export async function createPost({
     await db.event.update({
       where: { id: eventId },
       data: {
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       },
     });
 
@@ -125,15 +125,14 @@ export async function createPost({
       { message: "Data updated" }
     );
 
-    event.memberships.forEach((membership) => {
-      console.log(membership.personId);
+    for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
       pusherServer.trigger(
         personQueryDefinition.pusherChannel,
         personQueryDefinition.pusherEvent,
         { message: "Data updated" }
       );
-    });
+    }
 
     return { success: "Post Created" };
   } catch (error) {
