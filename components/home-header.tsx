@@ -52,7 +52,7 @@ export function HomeHeader() {
     return sequence;
   };
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       <span className="text-5xl md:text-6xl font-heading">
         Spend less time planning and more time{" "}
       </span>
