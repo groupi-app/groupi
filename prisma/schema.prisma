@@ -18,8 +18,8 @@ model Person {
   memberships Membership[]
   posts       Post[]
   replies     Reply[]
-  firstName   String
-  lastName    String
+  firstName   String?
+  lastName    String?
   username    String       @unique
   imageUrl    String
 }
