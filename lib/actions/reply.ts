@@ -3,7 +3,11 @@
 import { auth } from "@clerk/nextjs";
 import { db } from "../db";
 import { revalidatePath } from "next/cache";
-import { getEventQuery, getPostQuery } from "../query-definitions";
+import {
+  getEventQuery,
+  getPersonQuery,
+  getPostQuery,
+} from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 
 export async function createReply({
@@ -56,6 +60,11 @@ export async function createReply({
       },
       data: {
         updatedAt: new Date().toISOString(),
+        event: {
+          update: {
+            updatedAt: new Date().toISOString(),
+          },
+        },
       },
     });
 
@@ -74,6 +83,15 @@ export async function createReply({
       postQueryDefinition.pusherEvent,
       { message: "Post data updated" }
     );
+
+    for (const membership of post.event.memberships) {
+      const personQueryDefinition = getPersonQuery(membership.personId);
+      pusherServer.trigger(
+        personQueryDefinition.pusherChannel,
+        personQueryDefinition.pusherEvent,
+        { message: "Data updated" }
+      );
+    }
 
     return { success: reply };
   } catch (error) {

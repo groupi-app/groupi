@@ -74,6 +74,11 @@ export default function Reply({
     setEditMode(false);
   }
 
+  const name =
+    member?.person.firstName ??
+    member?.person.lastName ??
+    member?.person.username;
+
   return (
     <Dialog>
       <DropdownMenu>
@@ -97,14 +102,17 @@ export default function Reply({
 
           <div
             className={cn(
-              "rounded-lg max-w-xl p-4 min-w-0 break-words relative",
+              "rounded-lg max-w-xl px-4 pb-4 min-w-0 break-words relative",
               canDelete ? "pr-12" : "",
               isMe
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-primary-foreground pt-4"
                 : "bg-muted text-foreground",
               editMode ? "w-full" : ""
             )}
           >
+            {!isMe && (
+              <div className="text-xs text-muted-foreground pt-2">{name}</div>
+            )}
             {canDelete && (
               <>
                 <DropdownMenuTrigger
