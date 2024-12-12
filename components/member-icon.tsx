@@ -56,6 +56,8 @@ export default function MemberIcon({
 
   const fullName = getFullName(firstName, lastName);
 
+  console.log(fullName);
+
   const isMe = userId === member.person.id;
 
   const canKick =
@@ -168,7 +170,7 @@ export default function MemberIcon({
             </DropdownMenuContent>
             <MemberActionDialog action={dialogAction} member={member} />
             <TooltipContent>
-              <span>{fullName != null ? fullName : username}</span>
+              <span>{fullName != "" ? fullName : username}</span>
             </TooltipContent>
           </DropdownMenu>
         </Tooltip>

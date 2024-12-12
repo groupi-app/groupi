@@ -62,8 +62,8 @@ export async function POST(req: Request) {
     const person = await db.person.create({
       data: {
         id,
-        firstName: first_name ?? undefined,
-        lastName: last_name ?? undefined,
+        firstName: first_name ?? null,
+        lastName: last_name ?? null,
         username,
         imageUrl: image_url,
       },
@@ -90,8 +90,8 @@ export async function POST(req: Request) {
         id,
       },
       data: {
-        firstName: first_name ?? undefined,
-        lastName: last_name ?? undefined,
+        firstName: first_name ?? null,
+        lastName: last_name ?? null,
         username,
         imageUrl: image_url,
       },
