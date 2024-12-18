@@ -90,7 +90,7 @@ export default function Reply({
         >
           {member ? (
             <MemberIcon
-              key={0}
+              key={member.id}
               userId={userId}
               userRole={userRole}
               member={member}

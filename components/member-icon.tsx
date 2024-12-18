@@ -45,7 +45,7 @@ export default function MemberIcon({
   member: Member;
   userRole: $Enums.Role;
   userId: string;
-  key: number;
+  key: string;
   className?: string;
   align?: "start" | "center" | "end";
 }) {

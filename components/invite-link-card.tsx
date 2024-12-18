@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Tooltip,
   TooltipTrigger,
@@ -10,9 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { CreatedByInvite } from "@/types";
-import MemberIcon from "./member-icon";
 import { deleteInvite } from "@/lib/actions/invite";
-import { revalidatePath } from "next/cache";
 import {
   Dialog,
   DialogClose,
