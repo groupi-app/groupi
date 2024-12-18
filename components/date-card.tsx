@@ -196,7 +196,7 @@ export function DateCard({
                       .filter((a) => a.status === "YES")
                       .map((availability, i) => (
                         <MemberSlate
-                          key={i}
+                          key={availability.membershipId}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
@@ -212,7 +212,7 @@ export function DateCard({
                       .filter((a) => a.status === "MAYBE")
                       .map((availability, i) => (
                         <MemberSlate
-                          key={i}
+                          key={availability.membershipId}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
@@ -228,7 +228,7 @@ export function DateCard({
                       .filter((a) => a.status === "NO")
                       .map((availability, i) => (
                         <MemberSlate
-                          key={i}
+                          key={availability.membershipId}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
