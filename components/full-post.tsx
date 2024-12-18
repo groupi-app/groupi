@@ -101,7 +101,7 @@ export function FullPost({ postId }: { postId: string }) {
               <div className="flex items-center gap-2">
                 {member ? (
                   <MemberIcon
-                    key={0}
+                    key={member.id}
                     userId={userId}
                     userRole={userRole}
                     member={member}
