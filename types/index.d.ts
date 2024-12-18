@@ -190,3 +190,20 @@ export type PotentialDateTimeWithAvailabilities =
   Prisma.PotentialDateTimeGetPayload<
     typeof potentialDateTimeWithAvailabilities
   >;
+
+const membershipWithAvailabilities =
+  Prisma.validator<Prisma.MembershipDefaultArgs>()({
+    include: {
+      person: true,
+      availabilities: {
+        include: {
+          potentialDateTime: true,
+        },
+      },
+      event: true,
+    },
+  });
+
+export type MembershipWithAvailabilities = Prisma.MembershipGetPayload<
+  typeof membershipWithAvailabilities
+>;

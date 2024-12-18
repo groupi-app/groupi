@@ -86,13 +86,13 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userId={userId}
                   userRole={userRole}
                   member={member}
-                  key={i}
+                  key={member.id}
                   align={i === 0 ? "start" : "center"}
                 />
               ) : (
                 i === visibleIcons - 1 && (
                   <motion.div variants={item} layout key={i}>
-                    <Link href={`${pathname}/members`}>
+                    <Link href={`${pathname}/attendees`}>
                       <Button className="rounded-full z-30" key={i}>
                         +{members.length - visibleIcons + 1}
                       </Button>
@@ -104,7 +104,7 @@ export function MemberList({ eventId }: { eventId: string }) {
           </AnimatePresence>
         </LayoutGroup>
       </motion.div>
-      <Link href={`${pathname}/members`}>
+      <Link href={`${pathname}/attendees`}>
         <span className="rounded-full z-30 text-primary hover:underline">
           View All
         </span>
