@@ -1,7 +1,11 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { ActionResponse, Member, ReplyAuthorPost } from "@/types";
+import {
+  ActionResponse,
+  MembershipWithAvailabilities,
+  ReplyAuthorPost,
+} from "@/types";
 import { auth } from "@clerk/nextjs";
 import { $Enums, Availability, Event } from "@prisma/client";
 import { cache } from "react";
@@ -12,7 +16,7 @@ import { revalidatePath } from "next/cache";
 export interface EventData {
   event: Event & {
     posts: ReplyAuthorPost[];
-    memberships: (Member & { availabilities: Availability[] })[];
+    memberships: MembershipWithAvailabilities[];
   };
   userRole: $Enums.Role;
   userId: string;
@@ -54,7 +58,12 @@ export const fetchEventData = cache(
           memberships: {
             include: {
               person: true,
-              availabilities: true,
+              availabilities: {
+                include: {
+                  potentialDateTime: true,
+                },
+              },
+              event: true,
             },
           },
         },

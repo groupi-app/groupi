@@ -42,7 +42,7 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
           <div className="absolute top-4 left-3">
             {member ? (
               <MemberIcon
-                key={0}
+                key={member.id}
                 member={member}
                 userId={userId}
                 userRole={userRole}

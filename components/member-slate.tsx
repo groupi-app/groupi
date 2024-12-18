@@ -12,7 +12,7 @@ export function MemberSlate({
   member: Member;
   userId: string;
   userRole: Role;
-  key: number;
+  key: string;
 }) {
   const fullName = getFullName(member.person.firstName, member.person.lastName);
 
