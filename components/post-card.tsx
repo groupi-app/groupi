@@ -51,7 +51,7 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
               />
             ) : (
               <div className="rounded-full w-10 h-10 bg-primary" />
-            )}{" "}
+            )}
           </div>
           <Link
             data-test="post-card"

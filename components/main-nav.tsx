@@ -14,6 +14,9 @@ import {
 import { MobileNav } from "./mobile-nav";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { ProfileDropdown } from "./profile-dropdown";
+import { Button } from "./ui/button";
+import { NotificationsDesktop } from "./notifications-desktop";
+import { User } from "@clerk/nextjs/dist/types/server";
 
 interface MainNavProps {
   items?: MainNavItem[];
@@ -24,7 +27,7 @@ interface MainNavProps {
 export function MainNav({ items, children, userInfo }: MainNavProps) {
   return (
     <div className="container flex items-center justify-between h-20 py-6">
-      <div className="flex md:gap-10 ">
+      <div className="flex md:gap-10 w-full">
         <Link href="/" className="items-center hidden space-x-2 md:flex">
           <Icons.logo width="26" height="23" viewBox="0 0 197 225" />
           <span className="hidden text-xl font-bold font-heading sm:inline-block">
@@ -56,9 +59,14 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
         <MobileNav userInfo={userInfo} items={items ? items : []} />
       </div>
       <SignedIn>
-        <div className="hidden md:block">
-          <ProfileDropdown userInfo={userInfo} />
-        </div>
+        {userInfo.id && (
+          <div className="hidden md:block">
+            <div className="flex items-center gap-3">
+              <NotificationsDesktop userId={userInfo.id} />
+              <ProfileDropdown userInfo={userInfo} />
+            </div>
+          </div>
+        )}
       </SignedIn>
       <SignedOut>
         <div
@@ -68,7 +76,7 @@ export function MainNav({ items, children, userInfo }: MainNavProps) {
         >
           <SignInButton>
             <div className="flex items-center gap-1">
-              Sign In
+              <span className="whitespace-nowrap">Sign In</span>
               <Icons.signIn className="w-5 h-5" />
             </div>
           </SignInButton>

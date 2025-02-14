@@ -143,7 +143,7 @@ export function AttendeeSlate({
               initial={{ height: 0 }}
               animate={{ height: "auto" }}
               exit={{ height: 0 }}
-              transition={{ duration: 0.33 }}
+              transition={{ duration: 0.25 }}
               className="flex flex-col gap-2 overflow-hidden"
             >
               {member.availabilities.length > 0 ? (
