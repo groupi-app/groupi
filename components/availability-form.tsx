@@ -11,16 +11,38 @@ import { useState } from "react";
 import { updateMembershipAvailabilities } from "@/lib/actions/availability";
 import { useToast } from "./ui/use-toast";
 import { useRouter } from "next/navigation";
+import { $Enums } from "@prisma/client";
 
 export function AvailabilityForm({
   potentialDateTimes,
+  userId,
 }: {
   potentialDateTimes: PotentialDateTimeWithAvailabilities[];
+  userId: string;
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  const answerMap = (
+    status: $Enums.Status | undefined
+  ): "yes" | "maybe" | "no" => {
+    // YES = "yes",
+    // MAYBE = "maybe",
+    // NO = "no",
+    console.log(status);
+    switch (status) {
+      case "YES":
+        return "yes";
+      case "MAYBE":
+        return "maybe";
+      case "NO":
+        return "no";
+      default:
+        return "no";
+    }
+  };
 
   const formSchema = z.object({
     formAnswers: z.array(
@@ -38,7 +60,10 @@ export function AvailabilityForm({
     defaultValues: {
       formAnswers: potentialDateTimes.map((pdt) => ({
         potentialDateTimeId: pdt.id,
-        answer: undefined,
+        answer: answerMap(
+          pdt.availabilities.find((a) => a.membership.personId === userId)
+            ?.status
+        ),
       })),
     },
   });
