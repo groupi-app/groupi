@@ -27,7 +27,12 @@ export function AvailabilityCard({
         <div className="flex flex-col justify-between ">
           <div>
             <h1>
-              {pdt.dateTime.toLocaleDateString([], { dateStyle: "long" })}
+              {pdt.dateTime.toLocaleDateString([], {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </h1>
             <h2 className="text-muted-foreground text-sm">
               {pdt.dateTime.toLocaleTimeString([], { timeStyle: "short" })}

@@ -77,7 +77,12 @@ export function DateCard({
             <h1 className="font-semibold text-2xl">#{pdt.rank}</h1>
             <div className="flex flex-col">
               <h1>
-                {pdt.dateTime.toLocaleDateString([], { dateStyle: "long" })}
+                {pdt.dateTime.toLocaleDateString([], {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </h1>
               <span className="text-sm text-muted-foreground">
                 {pdt.dateTime.toLocaleTimeString([], { timeStyle: "short" })}
@@ -138,7 +143,12 @@ export function DateCard({
           <>
             <DialogHeader className="text-left">
               <h1 className="font-semibold text-2xl">
-                {pdt.dateTime.toLocaleDateString([], { dateStyle: "long" })}
+                {pdt.dateTime.toLocaleDateString([], {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </h1>
               <h2 className="text-muted-foreground text-lg">
                 {pdt.dateTime.toLocaleTimeString([], { timeStyle: "short" })}

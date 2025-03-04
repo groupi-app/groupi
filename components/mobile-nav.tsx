@@ -24,8 +24,8 @@ import {
   SignedIn,
   SignedOut,
 } from "@clerk/nextjs";
-import { User } from "@clerk/nextjs/dist/types/server";
 import { NotificationCount } from "./notification-count";
+import { useNotificationCloseContext } from "./providers/notif-close-provider";
 
 interface MobileNavProps {
   userInfo: UserInfo;
@@ -34,9 +34,10 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ items, children, userInfo }: MobileNavProps) {
+  const { sheetOpen, setSheetOpen } = useNotificationCloseContext();
   return (
     <div className="md:hidden w-full">
-      <Sheet modal={false}>
+      <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex items-center justify-between">
           <Link href="/">
             <Icons.logo width="36" height="36" viewBox="0 0 197 225" />

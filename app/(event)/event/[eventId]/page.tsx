@@ -11,6 +11,7 @@ import { fetchEventData } from "@/lib/actions/event";
 import { notFound, redirect } from "next/navigation";
 import QueryProvider from "@/components/providers/query-provider";
 import { getEventQuery } from "@/lib/query-definitions";
+import { markEventNotifsAsRead } from "@/lib/actions/notification";
 
 export default async function Page({
   params,
@@ -52,6 +53,8 @@ export default async function Page({
     queryKey: [queryDefinition.queryKey],
     queryFn: async () => data,
   });
+
+  await markEventNotifsAsRead(eventId);
 
   return (
     <QueryProvider queryDefinition={queryDefinition}>

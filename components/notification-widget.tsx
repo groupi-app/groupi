@@ -23,6 +23,11 @@ import {
 } from "./ui/dropdown-menu";
 import { useNotifications } from "@/data/notification-hooks";
 import { NotificationSlate } from "./notification-slate";
+import { useToast } from "./ui/use-toast";
+import {
+  deleteAllNotifications,
+  markAllNotificationsAsRead,
+} from "@/lib/actions/notification";
 
 export function NotificationWidget({ userId }: { userId: string }) {
   const [dialogType, setDialogType] = useState<
@@ -30,11 +35,20 @@ export function NotificationWidget({ userId }: { userId: string }) {
   >("mark-all-as-read");
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
+  const { toast } = useToast();
+
   const { data: notificationData } = useNotifications(userId);
 
   const {
     notifications,
   }: { notifications: NotificationWithPersonEventPost[] } = notificationData;
+
+  const filtered = (notification: NotificationWithPersonEventPost) => {
+    if (filter === "unread") {
+      return !notification.read;
+    }
+    return true;
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -97,7 +111,22 @@ export function NotificationWidget({ userId }: { userId: string }) {
                 <DialogClose asChild>
                   <Button variant="ghost">Cancel</Button>
                 </DialogClose>
-                <Button>Confirm</Button>
+                <DialogClose asChild>
+                  <Button
+                    onClick={async () => {
+                      const res = await markAllNotificationsAsRead();
+                      if (res.error) {
+                        toast({
+                          title: "An error occurred",
+                          description:
+                            "There was a problem marking the notifications as read.",
+                        });
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </DialogClose>
               </DialogFooter>
             </DialogContent>
           ) : (
@@ -114,7 +143,23 @@ export function NotificationWidget({ userId }: { userId: string }) {
                 <DialogClose asChild>
                   <Button variant="ghost">Cancel</Button>
                 </DialogClose>
-                <Button variant="destructive">Delete</Button>
+                <DialogClose asChild>
+                  <Button
+                    onClick={async () => {
+                      const res = await deleteAllNotifications();
+                      if (res.error) {
+                        toast({
+                          title: "An error occurred",
+                          description:
+                            "There was a problem deleting notifications.",
+                        });
+                      }
+                    }}
+                    variant="destructive"
+                  >
+                    Delete
+                  </Button>
+                </DialogClose>
               </DialogFooter>
             </DialogContent>
           )}
@@ -149,12 +194,15 @@ export function NotificationWidget({ userId }: { userId: string }) {
       </div>
       <ScrollArea className="h-64 p-1">
         <div className="divide-y">
-          {notifications?.map((notification) => (
-            <NotificationSlate
-              key={notification.id}
-              notification={notification}
-            />
-          ))}
+          {notifications
+            ?.filter(filtered)
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .map((notification) => (
+              <NotificationSlate
+                key={notification.id}
+                notification={notification}
+              />
+            ))}
         </div>
       </ScrollArea>
     </div>

@@ -7,6 +7,7 @@ import { ActionResponse, EventInviteData } from "@/types";
 import { getEventQuery, getInviteQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 import { cache } from "react";
+import { createEventModNotifs } from "./notification";
 
 export const getEventInviteData = cache(
   async (eventId: string): Promise<ActionResponse<EventInviteData>> => {
@@ -292,6 +293,11 @@ export async function acceptInvite({
       eventQueryDefinition.pusherEvent,
       { message: "Data updated" }
     );
+
+    await createEventModNotifs({
+      eventId: invite.eventId,
+      type: "USER_JOINED",
+    });
 
     return { success: "Invite successfully used" };
   } catch (error) {

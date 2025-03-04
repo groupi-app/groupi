@@ -1,7 +1,13 @@
+"use server";
+
 import { db } from "../db";
 import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
 import { auth } from "@clerk/nextjs";
-import { Notification, NotificationType } from "@prisma/client";
+import { Membership, Notification, NotificationType } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { getNotificationQuery } from "../query-definitions";
+import { pusherServer } from "../pusher-server";
+import { BatchEvent } from "pusher";
 
 export const fetchNotificationsForPerson = async (
   id: string
@@ -81,6 +87,16 @@ export const markNotificationAsRead = async (
       };
     }
 
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
     return {
       success: notification,
     };
@@ -117,6 +133,16 @@ export const markAllNotificationsAsRead = async (): Promise<
         error: "Notifications not found",
       };
     }
+
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
 
     return {
       success: notifications.count,
@@ -161,6 +187,16 @@ export const markNotificationAsUnread = async (
       };
     }
 
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
     return {
       success: notification,
     };
@@ -171,8 +207,8 @@ export const markNotificationAsUnread = async (
   }
 };
 
-export const markTypesAsRead = async (
-  types: NotificationType[]
+export const markEventNotifsAsRead = async (
+  eventId: string
 ): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = auth();
@@ -186,8 +222,18 @@ export const markTypesAsRead = async (
     const notifications = await db.notification.updateMany({
       where: {
         personId: userId,
+        eventId,
         type: {
-          in: types,
+          in: [
+            NotificationType.EVENT_EDITED,
+            NotificationType.DATE_CHANGED,
+            NotificationType.DATE_CHOSEN,
+            NotificationType.DATE_RESET,
+            NotificationType.USER_JOINED,
+            NotificationType.USER_LEFT,
+            NotificationType.USER_PROMOTED,
+            NotificationType.USER_DEMOTED,
+          ],
         },
       },
       data: {
@@ -200,6 +246,67 @@ export const markTypesAsRead = async (
         error: "Notifications not found",
       };
     }
+
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
+    return {
+      success: notifications.count,
+    };
+  } catch (e) {
+    return {
+      error: "Notification not found",
+    };
+  }
+};
+
+export const markPostNotifsAsRead = async (
+  postId: string
+): Promise<ActionResponse<number>> => {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) {
+      return {
+        error: "User not found",
+      };
+    }
+
+    const notifications = await db.notification.updateMany({
+      where: {
+        personId: userId,
+        postId,
+        type: {
+          in: [NotificationType.NEW_POST, NotificationType.NEW_REPLY],
+        },
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    if (!notifications) {
+      return {
+        error: "Notifications not found",
+      };
+    }
+
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
 
     return {
       success: notifications.count,
@@ -242,6 +349,16 @@ export const deleteNotification = async (
       };
     }
 
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
     return {
       success: notification,
     };
@@ -276,6 +393,16 @@ export const deleteAllNotifications = async (): Promise<
       };
     }
 
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(userId);
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Event data updated" }
+    );
+
     return {
       success: notifications.count,
     };
@@ -286,10 +413,9 @@ export const deleteAllNotifications = async (): Promise<
   }
 };
 
-export const createNotifications = async (
-  data: Omit<Notification, "id" | "personId">,
-  personIds: string[]
-): Promise<ActionResponse<number>> => {
+export const createNotification = async (
+  notification: Omit<Notification, "id" | "createdAt" | "updatedAt" | "author">
+): Promise<ActionResponse<Notification>> => {
   try {
     const { userId }: { userId: string | null } = auth();
 
@@ -299,16 +425,331 @@ export const createNotifications = async (
       };
     }
 
-    const notification = await db.notification.createMany({
-      data: personIds.map((personId) => ({
-        ...data,
+    let membership: Membership | undefined = undefined;
+
+    if (notification.eventId) {
+      const event = await db.event.findUnique({
+        where: {
+          id: notification.eventId,
+        },
+        include: {
+          memberships: true,
+        },
+      });
+      if (!event) {
+        return {
+          error: "Event not found",
+        };
+      }
+
+      membership = event.memberships.find(
+        (membership) => membership.personId === userId
+      );
+    } else if (notification.postId) {
+      const post = await db.post.findUnique({
+        where: {
+          id: notification.postId,
+        },
+        include: {
+          event: {
+            include: {
+              memberships: true,
+            },
+          },
+        },
+      });
+
+      if (!post) {
+        return {
+          error: "Post not found",
+        };
+      }
+
+      membership = post.event.memberships.find(
+        (membership) => membership.personId === userId
+      );
+    }
+
+    if (!membership) {
+      return {
+        error: "User not in event",
+      };
+    }
+
+    const newNotification = await db.notification.create({
+      data: {
+        ...notification,
         authorId: userId,
+      },
+    });
+
+    revalidatePath("/");
+
+    const personQueryDefinition = getNotificationQuery(
+      newNotification.personId
+    );
+
+    pusherServer.trigger(
+      personQueryDefinition.pusherChannel,
+      personQueryDefinition.pusherEvent,
+      { message: "Data updated" }
+    );
+
+    return { success: newNotification };
+  } catch (e) {
+    return {
+      error: "Notification not found",
+    };
+  }
+};
+
+export const createEventNotifs = async ({
+  eventId,
+  type,
+  postId,
+  datetime,
+}: {
+  eventId: string;
+  type: Exclude<NotificationType, "NEW_REPLY">;
+  postId?: string;
+  datetime?: Date;
+}): Promise<ActionResponse<number>> => {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) {
+      return {
+        error: "User not found",
+      };
+    }
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!event) {
+      return {
+        error: "Event not found",
+      };
+    }
+
+    // make sure user is in the event
+    const membership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!membership) {
+      return {
+        error: "User not in event",
+      };
+    }
+
+    const personIds = event.memberships
+      .filter((membership) => membership.personId !== userId)
+      .map((membership) => membership.personId);
+
+    const notifications = await db.notification.createMany({
+      data: personIds.map((personId) => ({
         personId,
+        eventId,
+        postId,
+        type: type,
+        authorId: userId,
+        datetime,
       })),
     });
 
+    revalidatePath("/");
+
+    const events: BatchEvent[] = [];
+
+    for (const personId of personIds) {
+      const notificationQueryDefinition = getNotificationQuery(personId);
+      events.push({
+        channel: notificationQueryDefinition.pusherChannel,
+        name: notificationQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
+    }
+
+    pusherServer.triggerBatch(events);
+
     return {
-      success: notification.count,
+      success: notifications.count,
+    };
+  } catch (e) {
+    return {
+      error: "Notification not found",
+    };
+  }
+};
+
+export const createEventModNotifs = async ({
+  eventId,
+  type,
+}: {
+  eventId: string;
+  type: Exclude<NotificationType, "NEW_REPLY">;
+}): Promise<ActionResponse<number>> => {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) {
+      return {
+        error: "User not found",
+      };
+    }
+
+    const event = await db.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!event) {
+      return {
+        error: "Event not found",
+      };
+    }
+
+    // make sure user is in the event
+    const membership = event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!membership) {
+      return {
+        error: "User not in event",
+      };
+    }
+
+    const personIds = event.memberships
+      .filter(
+        (membership) =>
+          membership.personId !== userId && membership.role !== "ATTENDEE"
+      )
+      .map((membership) => membership.personId);
+
+    const notifications = await db.notification.createMany({
+      data: personIds.map((personId) => ({
+        personId,
+        eventId,
+        type: type,
+        authorId: userId,
+      })),
+    });
+
+    revalidatePath("/");
+
+    const events: BatchEvent[] = [];
+
+    for (const personId of personIds) {
+      const notificationQueryDefinition = getNotificationQuery(personId);
+      events.push({
+        channel: notificationQueryDefinition.pusherChannel,
+        name: notificationQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
+    }
+
+    pusherServer.triggerBatch(events);
+
+    return {
+      success: notifications.count,
+    };
+  } catch (e) {
+    return {
+      error: "Notification not found",
+    };
+  }
+};
+
+export const createPostNotifs = async ({
+  postId,
+  type,
+}: {
+  postId: string;
+  type: "NEW_REPLY";
+}): Promise<ActionResponse<number>> => {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) {
+      return {
+        error: "User not found",
+      };
+    }
+
+    const post = await db.post.findUnique({
+      where: {
+        id: postId,
+      },
+      include: {
+        replies: true,
+        event: {
+          include: {
+            memberships: true,
+          },
+        },
+      },
+    });
+
+    if (!post) {
+      return {
+        error: "Post not found",
+      };
+    }
+
+    // make sure user is in the event
+    const membership = post.event.memberships.find(
+      (membership) => membership.personId === userId
+    );
+
+    if (!membership) {
+      return {
+        error: "User not in event",
+      };
+    }
+
+    const personIds = Array.from(
+      new Set([...post.replies.map((reply) => reply.authorId), post.authorId])
+    ).filter((personId) => personId !== userId);
+
+    const notifications = await db.notification.createMany({
+      data: personIds.map((personId) => ({
+        personId,
+        postId,
+        type: type,
+        authorId: userId,
+        eventId: post.eventId,
+      })),
+    });
+
+    revalidatePath("/");
+
+    const events: BatchEvent[] = [];
+
+    for (const personId of personIds) {
+      const notificationQueryDefinition = getNotificationQuery(personId);
+      events.push({
+        channel: notificationQueryDefinition.pusherChannel,
+        name: notificationQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
+    }
+
+    pusherServer.triggerBatch(events);
+
+    return {
+      success: notifications.count,
     };
   } catch (e) {
     return {

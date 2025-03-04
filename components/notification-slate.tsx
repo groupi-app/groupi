@@ -9,17 +9,32 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { formatDate } from "@/lib/utils";
-import { Dialog, DialogTrigger } from "./ui/dialog";
+import { Dialog } from "./ui/dialog";
+import {
+  deleteNotification,
+  markNotificationAsRead,
+  markNotificationAsUnread,
+} from "@/lib/actions/notification";
+import { useToast } from "./ui/use-toast";
+import { useNotificationCloseContext } from "./providers/notif-close-provider";
 
 export function NotificationSlate({
   notification,
 }: {
   notification: NotificationWithPersonEventPost;
 }) {
-  const { person, event, post, createdAt, type, read, datetime } = notification;
+  const { person, event, post, createdAt, type, read, datetime, author } =
+    notification;
+  const { toast } = useToast();
+  const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
+  const closeMenus = () => {
+    setPopoverOpen(false);
+    setSheetOpen(false);
+  };
 
   const getNotificationLink = () => {
     switch (type) {
+      case "EVENT_EDITED":
       case "DATE_CHANGED":
       case "DATE_CHOSEN":
       case "DATE_RESET":
@@ -31,53 +46,80 @@ export function NotificationSlate({
       case "NEW_POST":
       case "NEW_REPLY":
         return `/post/${post?.id}`;
+      //default
+      default:
+        return `/event/${event?.id}`;
     }
   };
 
   const getNotificationMessage = () => {
     switch (type) {
+      case "EVENT_EDITED":
+        return {
+          __html: `The details of <strong>${event?.title}</strong> have been updated.`,
+        };
       case "DATE_CHANGED":
+        if (!datetime) throw new Error("Datetime not found");
         return {
           __html: `The date of <strong>${
             event?.title
-          }</strong> has changed to <strong>${datetime?.getDay()} ${datetime?.toLocaleDateString()} at ${datetime?.toLocaleTimeString()}</strong>.`,
+          }</strong> has changed to <strong>${datetime?.toLocaleString([], {
+            weekday: "short",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+          })}</strong>.`,
         };
       case "DATE_CHOSEN":
+        if (!datetime) throw new Error("Datetime not found");
         return {
           __html: `<strong>${
             event?.title
-          }</strong> will be held on <strong>${datetime?.getDay()} ${datetime?.toLocaleDateString()} at ${datetime?.toLocaleTimeString()}</strong>.`,
+          }</strong> will be held on <strong>${datetime?.toLocaleString([], {
+            weekday: "short",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+          })}</strong>.`,
         };
       case "DATE_RESET":
         return {
           __html: `A new poll has started for the date of <strong>${event?.title}</strong>.`,
         };
       case "NEW_POST":
+        if (!author) throw new Error("Author not found");
         return {
           __html: `<strong>${
-            person.firstName ?? person.lastName ?? person.username
+            author.firstName ?? author.lastName ?? author.username
           }</strong> created a new post, <strong>${
             post?.title
           }</strong>, in <strong>${event?.title}</strong>.`,
         };
       case "NEW_REPLY":
+        if (!author) throw new Error("Author not found");
         return {
           __html: `<strong>${
-            person.firstName ?? person.lastName ?? person.username
+            author.firstName ?? author.lastName ?? author.username
           }</strong> replied to a post, <strong>${
             post?.title
           }</strong>, in <strong>${event?.title}</strong>.`,
         };
       case "USER_JOINED":
+        if (!author) throw new Error("Author not found");
         return {
           __html: `<strong>${
-            person.firstName ?? person.lastName ?? person.username
+            author.firstName ?? author.lastName ?? author.username
           }</strong> has joined <strong>${event?.title}</strong>.`,
         };
       case "USER_LEFT":
+        if (!author) throw new Error("Author not found");
         return {
           __html: `<strong>${
-            person.firstName ?? person.lastName ?? person.username
+            author.firstName ?? author.lastName ?? author.username
           }</strong> has left <strong>${event?.title}</strong>.`,
         };
       case "USER_PROMOTED":
@@ -94,8 +136,11 @@ export function NotificationSlate({
   return (
     <div className="relative">
       <Link
+        onClick={() => {
+          closeMenus();
+        }}
         href={getNotificationLink()}
-        className="hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-8 transition-all"
+        className="hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all"
       >
         {!read && <div className="w-2 h-2 rounded-full bg-primary p-1" />}
         <div className="flex flex-col gap-1">
@@ -108,6 +153,7 @@ export function NotificationSlate({
           </span>
         </div>
       </Link>
+
       <Dialog>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -121,14 +167,40 @@ export function NotificationSlate({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="">
             {read ? (
-              <DropdownMenuItem className="cursor-pointer" asChild>
+              <DropdownMenuItem
+                onClick={async () => {
+                  const res = await markNotificationAsUnread(notification.id);
+                  if (res.error) {
+                    toast({
+                      title: "An error occurred",
+                      description:
+                        "There was a problem marking this notification as unread.",
+                    });
+                  }
+                }}
+                className="cursor-pointer"
+                asChild
+              >
                 <div className="flex items-center gap-1">
                   <Icons.unread className="w-4 h-4" />
                   <span>Mark as unread</span>
                 </div>
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem className="cursor-pointer" asChild>
+              <DropdownMenuItem
+                onClick={async () => {
+                  const res = await markNotificationAsRead(notification.id);
+                  if (res.error) {
+                    toast({
+                      title: "An error occurred",
+                      description:
+                        "There was a problem marking this notification as read.",
+                    });
+                  }
+                }}
+                className="cursor-pointer"
+                asChild
+              >
                 <div className="flex items-center gap-1">
                   <Icons.read className="w-4 h-4" />
                   <span>Mark as read</span>
@@ -136,15 +208,23 @@ export function NotificationSlate({
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
+              onClick={async () => {
+                const res = await deleteNotification(notification.id);
+                if (res.error) {
+                  toast({
+                    title: "An error occurred",
+                    description:
+                      "There was a problem deleting this notification.",
+                  });
+                }
+              }}
               asChild
               className="focus:bg-destructive focus:text-destructive-foreground cursor-pointer"
             >
-              <DialogTrigger asChild>
-                <div className="flex items-center gap-1">
-                  <Icons.delete className="w-4 h-4" />
-                  <span>Delete</span>
-                </div>
-              </DialogTrigger>
+              <div className="flex items-center gap-1">
+                <Icons.delete className="w-4 h-4" />
+                <span>Delete</span>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

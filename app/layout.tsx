@@ -100,6 +100,7 @@ export default async function RootLayout({
     await queryClient.prefetchQuery({
       queryKey: [queryDefinition.queryKey],
       queryFn: async () => data,
+      staleTime: 0,
     });
   }
 

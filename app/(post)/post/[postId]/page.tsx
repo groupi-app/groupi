@@ -1,6 +1,10 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { FullPost } from "@/components/full-post";
 import QueryProvider from "@/components/providers/query-provider";
 import Replies from "@/components/replies";
+import { markPostNotifsAsRead } from "@/lib/actions/notification";
 import { PostData, fetchPostData } from "@/lib/actions/post";
 import { getPostQuery } from "@/lib/query-definitions";
 import {
@@ -35,7 +39,10 @@ export default async function Page({ params }: { params: { postId: string } }) {
   await queryClient.prefetchQuery({
     queryKey: [queryDefinition.queryKey],
     queryFn: async () => data,
+    staleTime: 0,
   });
+
+  await markPostNotifsAsRead(postId);
 
   return (
     <QueryProvider queryDefinition={queryDefinition}>

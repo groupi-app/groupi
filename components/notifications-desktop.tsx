@@ -1,12 +1,16 @@
+import { createContext, useContext, useState } from "react";
 import { Icons } from "./icons";
 import { NotificationCount } from "./notification-count";
 import { NotificationWidget } from "./notification-widget";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { useNotificationCloseContext } from "./providers/notif-close-provider";
 
 export function NotificationsDesktop({ userId }: { userId: string }) {
+  const { popoverOpen, setPopoverOpen } = useNotificationCloseContext();
+
   return (
-    <Popover>
+    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" className="rounded-full">
           <NotificationCount userId={userId}>

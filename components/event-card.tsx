@@ -53,8 +53,12 @@ export function EventCard({ event }: { event: EventWithMembers }) {
                 {chosenDateTime != null ? (
                   <span>
                     {new Date(chosenDateTime).toLocaleString([], {
-                      dateStyle: "short",
-                      timeStyle: "short",
+                      weekday: "short",
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
                     })}
                   </span>
                 ) : (

@@ -9,6 +9,8 @@ import {
   getPostQuery,
 } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
+import { BatchEvent } from "pusher";
+import { createPostNotifs } from "./notification";
 
 export async function createReply({
   postId,
@@ -73,25 +75,31 @@ export async function createReply({
     const eventQueryDefinition = getEventQuery(post.eventId);
     const postQueryDefinition = getPostQuery(post.id);
 
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
-    pusherServer.trigger(
-      postQueryDefinition.pusherChannel,
-      postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Event data updated" },
+      },
+      {
+        channel: postQueryDefinition.pusherChannel,
+        name: postQueryDefinition.pusherEvent,
+        data: { message: "Post data updated" },
+      },
+    ];
 
     for (const membership of post.event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
+
+    pusherServer.triggerBatch(events);
+
+    await createPostNotifs({ postId, type: "NEW_REPLY" });
 
     return { success: reply };
   } catch (error) {

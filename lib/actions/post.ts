@@ -11,6 +11,7 @@ import {
   getPostQuery,
 } from "../query-definitions";
 import { BatchEvent } from "pusher";
+import { createEventNotifs } from "./notification";
 
 export interface PostData {
   success?: {
@@ -138,6 +139,8 @@ export async function createPost({
     }
 
     pusherServer.triggerBatch(events);
+
+    await createEventNotifs({ eventId, type: "NEW_POST", postId: res.id });
 
     return { success: "Post Created" };
   } catch (error) {

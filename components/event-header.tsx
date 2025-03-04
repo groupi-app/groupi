@@ -24,6 +24,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
   const eventDateStr =
     chosenDateTime != null
       ? chosenDateTime.toLocaleString([], {
+          weekday: "long",
           year: "numeric",
           month: "numeric",
           day: "numeric",
