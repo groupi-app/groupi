@@ -183,7 +183,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
         <Form {...form2}>
           <form id="form2" onSubmit={form2.handleSubmit(onSubmit2)}>
             <div>
-              <ScrollArea className="h-80 w-64 rounded-md border border-border">
+              <ScrollArea className="h-80 w-72 rounded-md border border-border">
                 <div className="p-4 divide-y">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className=" font-heading leading-none">Options</h2>
@@ -206,8 +206,12 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
                       >
                         <div>
                           {date.toLocaleString([], {
-                            dateStyle: "medium",
-                            timeStyle: "short",
+                            weekday: "short",
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
                           })}
                         </div>
                         <Button
@@ -235,7 +239,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
         </Form>
       </div>
       <div className="flex justify-between">
-        <Link href="/create/date-type">
+        <Link href={`/event/${eventId}/change-date`}>
           <Button className="flex items-center gap-1" variant={"secondary"}>
             <span>Back</span>
             <Icons.back className="text-sm" />

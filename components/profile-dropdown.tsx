@@ -9,12 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserInfo } from "@/types";
 import { Icons } from "./icons";
 import { SignOutButton } from "@clerk/nextjs";
 import { getFullName, getInitials } from "@/lib/utils";
-import { useState } from "react";
-import { set } from "zod";
+import { UserInfo } from "@/types";
 
 interface ProfileDropdownProps {
   userInfo: UserInfo;
@@ -26,11 +24,11 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
   const fullName = getFullName(userInfo.firstName, userInfo.lastName);
 
   return (
-    <div data-test="profile-dropdown">
+    <div className="h-10" data-test="profile-dropdown">
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger className="rounded-full">
           <Avatar>
-            <AvatarImage src={userInfo.avatar} />
+            <AvatarImage src={userInfo.imageUrl} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>

@@ -41,6 +41,9 @@ import {
   Timer as Time,
   UserX as Kick,
   Copy,
+  Bell,
+  MailOpen as Read,
+  Mail as Unread,
   UserPlus as Invite,
   type Icon as LucideIcon,
 } from "lucide-react";
@@ -48,6 +51,9 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  read: Read,
+  unread: Unread,
+  bell: Bell,
   check: Check,
   infinity: Infinite,
   qr: QrCode,

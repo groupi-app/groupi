@@ -143,48 +143,59 @@ export function AttendeeSlate({
               initial={{ height: 0 }}
               animate={{ height: "auto" }}
               exit={{ height: 0 }}
-              transition={{ duration: 0.33 }}
+              transition={{ duration: 0.25 }}
               className="flex flex-col gap-2 overflow-hidden"
             >
               {member.availabilities.length > 0 ? (
-                member.availabilities.map((availability, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "flex items-center gap-8 p-2",
-                      i % 2 == 0 ? "bg-muted" : ""
-                    )}
-                  >
-                    <div className="flex flex-col">
-                      <h1>
-                        {availability.potentialDateTime.dateTime.toLocaleDateString(
-                          [],
-                          { dateStyle: "medium" }
-                        )}
-                      </h1>
-                      <span className="text-sm text-muted-foreground">
-                        {availability.potentialDateTime.dateTime.toLocaleTimeString(
-                          [],
-                          { timeStyle: "short" }
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {availability.status === "YES" && (
-                        <Icons.check className="w-6 h-6 text-green-500" />
+                member.availabilities
+                  .sort(
+                    (a, b) =>
+                      a.potentialDateTime.dateTime.getTime() -
+                      b.potentialDateTime.dateTime.getTime()
+                  )
+                  .map((availability, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex items-center gap-8 p-2",
+                        i % 2 == 0 ? "bg-muted" : ""
                       )}
-                      {availability.status === "MAYBE" && (
-                        <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
-                          ?
+                    >
+                      <div className="flex flex-col">
+                        <h1>
+                          {availability.potentialDateTime.dateTime.toLocaleDateString(
+                            [],
+                            {
+                              weekday: "short",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}
+                        </h1>
+                        <span className="text-sm text-muted-foreground">
+                          {availability.potentialDateTime.dateTime.toLocaleTimeString(
+                            [],
+                            { timeStyle: "short" }
+                          )}
                         </span>
-                      )}
-                      {availability.status === "NO" && (
-                        <Icons.close className="w-6 h-6 text-red-500" />
-                      )}
-                      <span>{availability.status}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {availability.status === "YES" && (
+                          <Icons.check className="w-6 h-6 text-green-500" />
+                        )}
+                        {availability.status === "MAYBE" && (
+                          <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
+                            ?
+                          </span>
+                        )}
+                        {availability.status === "NO" && (
+                          <Icons.close className="w-6 h-6 text-red-500" />
+                        )}
+                        <span>{availability.status}</span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <motion.p
                   initial={{ opacity: 0 }}

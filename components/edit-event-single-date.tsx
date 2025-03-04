@@ -135,8 +135,13 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
             <div className="flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto">
               <h2 className="text-xl font-semibold">
                 {getDateTime().toLocaleString([], {
-                  dateStyle: "medium",
-                  timeStyle: "short",
+                  weekday: "short",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                  hour12: true,
                 })}
               </h2>
             </div>

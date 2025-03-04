@@ -11,6 +11,8 @@ import {
   getPersonQuery,
 } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
+import { BatchEvent } from "pusher";
+import { createEventNotifs } from "./notification";
 
 export interface PDTData {
   potentialDateTimes: PotentialDateTimeWithAvailabilities[];
@@ -252,24 +254,34 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
       },
     });
 
+    revalidatePath("/");
+
     const eventQueryDefinition = getEventQuery(eventId);
 
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Event Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
 
-    revalidatePath("/");
+    pusherServer.triggerBatch(events);
+
+    await createEventNotifs({
+      eventId,
+      type: "DATE_CHOSEN",
+      datetime: dateTime,
+    });
 
     return { success: true };
   } catch (error) {

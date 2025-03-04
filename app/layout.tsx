@@ -5,7 +5,7 @@ import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import { currentUser } from "@clerk/nextjs";
+import { currentUser, SignedIn } from "@clerk/nextjs";
 import { Analytics } from "@/components/analytics";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,6 +16,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ClerkProvider from "@/components/providers/my-clerk-provider";
 import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
+import QueryProvider from "@/components/providers/query-provider";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { getNotificationQuery } from "@/lib/query-definitions";
+import { fetchNotificationsForPerson } from "@/lib/actions/notification";
+import { UserInfo } from "@/types";
+import { User } from "@clerk/nextjs/dist/types/server";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -42,11 +52,11 @@ export const metadata = {
   ],
   authors: [
     {
-      name: "Thomas Surette",
+      name: "Theia Surette",
       url: "https://tsurette.com",
     },
   ],
-  creator: "Thomas Surette",
+  creator: "Theia Surette",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" },
@@ -64,7 +74,7 @@ export const metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: [`${siteConfig.url}/og.jpg`],
-    creator: "@tomsurette",
+    creator: "@theiasurette",
   },
   icons: {
     icon: "/favicon.ico",
@@ -80,12 +90,37 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const user = await currentUser();
-  const userInfo = {
-    firstName: user?.firstName,
-    lastName: user?.lastName,
-    username: user?.username,
-    avatar: user?.imageUrl,
+
+  const queryClient = new QueryClient();
+  let queryDefinition = null;
+  if (user) {
+    const data = await fetchNotificationsForPerson(user.id);
+    queryDefinition = getNotificationQuery(user.id);
+
+    await queryClient.prefetchQuery({
+      queryKey: [queryDefinition.queryKey],
+      queryFn: async () => data,
+      staleTime: 0,
+    });
+  }
+
+  let userInfo: UserInfo = {
+    firstName: "",
+    lastName: "",
+    username: "",
+    imageUrl: "",
+    id: "",
   };
+
+  if (user) {
+    userInfo = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      imageUrl: user.imageUrl,
+      id: user.id,
+    };
+  }
 
   return (
     <html lang="en">
@@ -99,31 +134,15 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ClerkProvider>
             <TooltipProvider>
-              <div className="flex flex-col min-h-screen">
-                <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
-                  <MainNav userInfo={userInfo} items={navConfig.mainNav} />
-                </header>
-                <main className="flex-grow">{children}</main>
-                <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
-                  <div className="container mx-auto py-4 flex gap-8 items-center">
-                    <ModeToggle />
-                    <div className="flex flex-col gap-2">
-                      <p>
-                        Built by{" "}
-                        <Link
-                          className="underline font-medium"
-                          href="https://tsurette.com"
-                        >
-                          Theia
-                        </Link>
-                      </p>
-                      <p className="text-sm">
-                        &copy; {new Date().getFullYear()} {siteConfig.name}
-                      </p>
-                    </div>
-                  </div>
-                </footer>
-              </div>
+              {user !== null && queryDefinition !== null ? (
+                <QueryProvider queryDefinition={queryDefinition}>
+                  <HydrationBoundary state={dehydrate(queryClient)}>
+                    <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
+                  </HydrationBoundary>
+                </QueryProvider>
+              ) : (
+                <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
+              )}
             </TooltipProvider>
           </ClerkProvider>
         </ThemeProvider>
@@ -132,5 +151,41 @@ export default async function RootLayout({
         <TailwindIndicator />
       </body>
     </html>
+  );
+}
+
+function InnerLayout({
+  userInfo,
+  children,
+}: {
+  userInfo: UserInfo;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
+        <MainNav userInfo={userInfo} items={navConfig.mainNav} />
+      </header>
+      <main className="flex-grow">{children}</main>
+      <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
+        <div className="container mx-auto py-4 flex gap-8 items-center">
+          <ModeToggle />
+          <div className="flex flex-col gap-2">
+            <p>
+              Built by{" "}
+              <Link
+                className="underline font-medium"
+                href="https://tsurette.com"
+              >
+                Theia
+              </Link>
+            </p>
+            <p className="text-sm">
+              &copy; {new Date().getFullYear()} {siteConfig.name}
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

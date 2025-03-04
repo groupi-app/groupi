@@ -181,7 +181,7 @@ export function NewEventMultiDate() {
         <Form {...form2}>
           <form id="form2" onSubmit={form2.handleSubmit(onSubmit2)}>
             <div>
-              <ScrollArea className="h-80 w-64 rounded-md border border-border">
+              <ScrollArea className="h-80 w-72 rounded-md border border-border">
                 <div className="p-4 divide-y">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className=" font-heading leading-none">Options</h2>
@@ -204,8 +204,12 @@ export function NewEventMultiDate() {
                       >
                         <div>
                           {date.toLocaleString([], {
-                            dateStyle: "medium",
-                            timeStyle: "short",
+                            weekday: "short",
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
                           })}
                         </div>
                         <Button

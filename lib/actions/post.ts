@@ -10,6 +10,8 @@ import {
   getPersonQuery,
   getPostQuery,
 } from "../query-definitions";
+import { BatchEvent } from "pusher";
+import { createEventNotifs } from "./notification";
 
 export interface PostData {
   success?: {
@@ -119,20 +121,26 @@ export async function createPost({
     revalidatePath("/");
 
     const eventQueryDefinition = getEventQuery(eventId);
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
+
+    pusherServer.triggerBatch(events);
+
+    await createEventNotifs({ eventId, type: "NEW_POST", postId: res.id });
 
     return { success: "Post Created" };
   } catch (error) {

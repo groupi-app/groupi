@@ -12,6 +12,8 @@ import { cache } from "react";
 import { getEventQuery, getPersonQuery } from "../query-definitions";
 import { pusherServer } from "../pusher-server";
 import { revalidatePath } from "next/cache";
+import { BatchEvent } from "pusher";
+import { createEventModNotifs, createEventNotifs } from "./notification";
 
 export interface EventData {
   event: Event & {
@@ -227,24 +229,30 @@ export async function updateEventDetails({
 
     if (!updatedEvent) return { error: "Could not update event" };
 
+    revalidatePath("/");
+
     const eventQueryDefinition = getEventQuery(id);
 
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Event Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
 
-    revalidatePath("/");
+    pusherServer.triggerBatch(events);
+
+    await createEventNotifs({ eventId: id, type: "EVENT_EDITED" });
 
     return { success: updatedEvent };
   } catch (error) {
@@ -297,23 +305,32 @@ export async function updateEventDateTime({
     if (!updatedEvent) return { error: "Could not update event" };
 
     const eventQueryDefinition = getEventQuery(eventId);
-
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
 
+    pusherServer.triggerBatch(events);
+
     revalidatePath("/");
+
+    await createEventNotifs({
+      eventId,
+      type: "DATE_CHANGED",
+      datetime: new Date(dateTime),
+    });
 
     return { success: updatedEvent };
   } catch (error) {
@@ -395,24 +412,30 @@ export async function updateEventPotentialDateTimes({
       }
     }
 
-    const eventQueryDefinition = getEventQuery(eventId);
+    revalidatePath("/");
 
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    const eventQueryDefinition = getEventQuery(eventId);
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
 
-    revalidatePath("/");
+    pusherServer.triggerBatch(events);
+
+    await createEventNotifs({ eventId, type: "DATE_RESET" });
+
     return { success: updatedEvent };
   } catch (error) {
     console.log(error);
@@ -495,6 +518,8 @@ export async function leaveEvent(eventId: string) {
 
     if (userMembership.role === "ORGANIZER")
       return { error: "Organizers cannot leave the event" };
+
+    await createEventModNotifs({ eventId, type: "USER_LEFT" });
 
     await db.membership.delete({
       where: {
