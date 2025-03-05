@@ -9,10 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icons } from "./icons";
-import { SignOutButton } from "@clerk/nextjs";
 import { getFullName, getInitials } from "@/lib/utils";
 import { UserInfo } from "@/types";
+import { SignOutButton } from "@clerk/nextjs";
+import { Icons } from "./icons";
 
 interface ProfileDropdownProps {
   userInfo: UserInfo;

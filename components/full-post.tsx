@@ -13,9 +13,9 @@ import {
 import { usePostData } from "@/data/post-hooks";
 import { getFullName } from "@/lib/utils";
 import { ReplyAuthorEventPost } from "@/types";
+import { $Enums } from "@prisma/client";
 import Link from "next/link";
 import MemberIcon from "./member-icon";
-import { $Enums } from "@prisma/client";
 
 export function FullPost({ postId }: { postId: string }) {
   const { data: postData } = usePostData(postId);

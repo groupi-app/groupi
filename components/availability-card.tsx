@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
+import { cn, getFullName, getInitials } from "@/lib/utils";
 import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { useState } from "react";
-import { cn, getFullName, getInitials } from "@/lib/utils";
+import { Icons } from "./icons";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
 
 export function AvailabilityCard({
   pdt,

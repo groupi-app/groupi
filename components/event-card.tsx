@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Icons } from "./icons";
 import { formatDate, getFullName, getInitials } from "@/lib/utils";
 import { EventWithMembers } from "@/types";
+import Link from "next/link";
+import { Icons } from "./icons";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export function EventCard({ event }: { event: EventWithMembers }) {
   const {

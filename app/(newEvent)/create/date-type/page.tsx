@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Page() {
-  const { formState, setFormState } = useFormContext();
+  const { formState } = useFormContext();
   const router = useRouter();
 
   if (!formState.title) {

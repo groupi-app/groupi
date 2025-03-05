@@ -1,18 +1,18 @@
 "use client";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
 import { useFormContext } from "@/components/providers/form-context-provider";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
+import { Calendar } from "@/components/ui/calendar";
 import { createEvent } from "@/lib/actions/event";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   date: z.date(),
@@ -20,7 +20,7 @@ const formSchema = z.object({
 });
 
 export function NewEventSingleDate() {
-  const { formState, setFormState } = useFormContext();
+  const { formState } = useFormContext();
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -42,9 +42,17 @@ export function NewEventSingleDate() {
   }
 
   const getDateTime = () => {
-    return new Date(
-      `${form.watch("date").toISOString().split("T")[0]}T${form.watch("time")}`
-    );
+    const date = form.watch("date");
+    const time = form.watch("time");
+
+    // Split time into hours and minutes
+    const [hours, minutes] = time.split(":").map(Number);
+
+    // Create new date object and set time components
+    const dateTime = new Date(date);
+    dateTime.setHours(hours, minutes, 0, 0);
+
+    return dateTime;
   };
 
   const getTimezoneString = () => {
@@ -55,12 +63,11 @@ export function NewEventSingleDate() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    const date = data.date;
-    const localTime = data.time + ":00";
+    const [hours, minutes] = data.time.split(":").map(Number);
 
-    const dateTime = new Date(
-      `${date.toISOString().split("T")[0]}T${localTime}`
-    ).toISOString();
+    // Create new date object and set time components
+    const dateTime = new Date(data.date);
+    dateTime.setHours(hours, minutes, 0, 0);
 
     const { title, description, location } = formState;
 
@@ -68,7 +75,7 @@ export function NewEventSingleDate() {
       title,
       description,
       location,
-      dateTime,
+      dateTime: dateTime.toISOString(),
     });
     if (res.error) {
       toast({

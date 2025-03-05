@@ -7,7 +7,7 @@ import { Icons } from "./icons";
 import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 import { z } from "zod";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
 import { updateEventDateTime } from "@/lib/actions/event";

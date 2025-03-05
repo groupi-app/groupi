@@ -1,30 +1,29 @@
+import {
+  deleteNotification,
+  markNotificationAsRead,
+  markNotificationAsUnread,
+} from "@/lib/actions/notification";
+import { formatDate } from "@/lib/utils";
 import { NotificationWithPersonEventPost } from "@/types";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
 import Link from "next/link";
+import { Icons } from "./icons";
+import { useNotificationCloseContext } from "./providers/notif-close-provider";
+import { Button } from "./ui/button";
+import { Dialog } from "./ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { formatDate } from "@/lib/utils";
-import { Dialog } from "./ui/dialog";
-import {
-  deleteNotification,
-  markNotificationAsRead,
-  markNotificationAsUnread,
-} from "@/lib/actions/notification";
 import { useToast } from "./ui/use-toast";
-import { useNotificationCloseContext } from "./providers/notif-close-provider";
 
 export function NotificationSlate({
   notification,
 }: {
   notification: NotificationWithPersonEventPost;
 }) {
-  const { person, event, post, createdAt, type, read, datetime, author } =
-    notification;
+  const { event, post, createdAt, type, read, datetime, author } = notification;
   const { toast } = useToast();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {

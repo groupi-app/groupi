@@ -1,11 +1,11 @@
 import EditEventInfo from "@/components/edit-event-info";
-import Script from "next/script";
+import { Icons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { env } from "@/env.mjs";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/icons";
+import Script from "next/script";
 
 export default async function Page({
   params,

@@ -1,14 +1,14 @@
 import { cn, getFullName } from "@/lib/utils";
 import { MembershipWithAvailabilities } from "@/types";
 import { $Enums } from "@prisma/client";
-import MemberIcon from "./member-icon";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { Dialog, DialogTrigger } from "./ui/dialog";
-import { MemberAction, MemberActionDialog } from "./member-action-dialog";
-import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { Icons } from "./icons";
+import { MemberAction, MemberActionDialog } from "./member-action-dialog";
+import MemberIcon from "./member-icon";
+import { Button } from "./ui/button";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function AttendeeSlate({
   userId,

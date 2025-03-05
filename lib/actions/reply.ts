@@ -1,15 +1,15 @@
 "use server";
 
 import { auth } from "@clerk/nextjs";
-import { db } from "../db";
 import { revalidatePath } from "next/cache";
+import { BatchEvent } from "pusher";
+import { db } from "../db";
+import { pusherServer } from "../pusher-server";
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
 } from "../query-definitions";
-import { pusherServer } from "../pusher-server";
-import { BatchEvent } from "pusher";
 import { createPostNotifs } from "./notification";
 
 export async function createReply({
@@ -130,7 +130,7 @@ export async function updateReply({
 
     if (reply.authorId !== userId) return { error: "User not authorized" };
 
-    const res = await db.reply.update({
+    await db.reply.update({
       where: {
         id: replyId,
       },

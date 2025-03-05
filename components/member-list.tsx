@@ -1,14 +1,14 @@
 "use client";
-import { useRef, useState, useLayoutEffect } from "react";
 import MemberIcon from "@/components/member-icon";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Member } from "@/types";
-import { usePathname } from "next/navigation";
 import { useEventMembers } from "@/data/event-hooks";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { Member } from "@/types";
 import { $Enums } from "@prisma/client";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Icons } from "./icons";
+import { Button } from "./ui/button";
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
@@ -27,7 +27,7 @@ export function MemberList({ eventId }: { eventId: string }) {
   useLayoutEffect(() => {
     function checkOverflow() {
       if (ref.current) {
-        const { scrollWidth, clientWidth } = ref.current;
+        const { clientWidth } = ref.current;
         const iconWidth = 40; // Replace with your icon width
         const iconsCount = Math.floor(clientWidth / iconWidth);
         setVisibleIcons(iconsCount);

@@ -1,16 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { db } from "../db";
-import { auth } from "@clerk/nextjs";
 import { ReplyAuthorEventPost } from "@/types";
+import { auth } from "@clerk/nextjs";
+import { revalidatePath } from "next/cache";
+import { BatchEvent } from "pusher";
+import { db } from "../db";
 import { pusherServer } from "../pusher-server";
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
 } from "../query-definitions";
-import { BatchEvent } from "pusher";
 import { createEventNotifs } from "./notification";
 
 export interface PostData {
@@ -62,8 +62,6 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
   )?.role;
 
   if (!userRole) return { error: "Role not found" };
-
-  const eventTitle = post.event.title;
 
   return {
     success: {
@@ -172,7 +170,7 @@ export async function updatePost({
 
     if (userId !== post.authorId) return { error: "User not authorized" };
 
-    const res = await db.post.update({
+    await db.post.update({
       where: {
         id: id,
       },

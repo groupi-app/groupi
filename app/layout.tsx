@@ -5,27 +5,26 @@ import localFont from "next/font/local";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-import { currentUser, SignedIn } from "@clerk/nextjs";
 import { Analytics } from "@/components/analytics";
+import { MainNav } from "@/components/main-nav";
+import { ModeToggle } from "@/components/mode-toggle";
+import ClerkProvider from "@/components/providers/my-clerk-provider";
+import QueryProvider from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { navConfig } from "@/config/nav";
-import { MainNav } from "@/components/main-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import ClerkProvider from "@/components/providers/my-clerk-provider";
-import { ModeToggle } from "@/components/mode-toggle";
-import Link from "next/link";
-import QueryProvider from "@/components/providers/query-provider";
+import { navConfig } from "@/config/nav";
+import { fetchNotificationsForPerson } from "@/lib/actions/notification";
+import { getNotificationQuery } from "@/lib/query-definitions";
+import { UserInfo } from "@/types";
+import { currentUser } from "@clerk/nextjs";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import { getNotificationQuery } from "@/lib/query-definitions";
-import { fetchNotificationsForPerson } from "@/lib/actions/notification";
-import { UserInfo } from "@/types";
-import { User } from "@clerk/nextjs/dist/types/server";
+import Link from "next/link";
 
 const fontSans = FontSans({
   subsets: ["latin"],

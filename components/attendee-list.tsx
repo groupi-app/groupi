@@ -1,11 +1,11 @@
 "use client";
 import { useEventMembers } from "@/data/event-hooks";
+import { getFullName } from "@/lib/utils";
 import { MembershipWithAvailabilities } from "@/types";
 import { $Enums } from "@prisma/client";
-import { AttendeeSlate } from "./attendee-slate";
-import { useState } from "react";
-import { getFullName } from "@/lib/utils";
 import { LayoutGroup, motion } from "framer-motion";
+import { useState } from "react";
+import { AttendeeSlate } from "./attendee-slate";
 
 import {
   Select,

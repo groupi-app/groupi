@@ -1,9 +1,10 @@
-import { auth } from "@clerk/nextjs";
-import { db } from "@/lib/db";
 import { AcceptInviteButton } from "@/components/invite-accept";
+import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs";
 
 import { redirect } from "next/navigation";
 
+import { Icons } from "@/components/icons";
 import {
   Card,
   CardContent,
@@ -12,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Icons } from "@/components/icons";
 
 export default async function Page({
   params,

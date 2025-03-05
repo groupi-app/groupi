@@ -1,19 +1,16 @@
-import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
-import { auth } from "@clerk/nextjs";
-import { db } from "@/lib/db";
 import { InviteCardList } from "@/components/invite-card-list";
-import Link from "next/link";
-import { AddInvite } from "@/components/add-invite";
 import QueryProvider from "@/components/providers/query-provider";
+import { Button } from "@/components/ui/button";
+import { getEventInviteData } from "@/lib/actions/invite";
+import { getInviteQuery } from "@/lib/query-definitions";
+import { auth } from "@clerk/nextjs";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import { getInviteQuery } from "@/lib/query-definitions";
-import { getEventInviteData } from "@/lib/actions/invite";
-import { EventInviteData } from "@/types";
+import Link from "next/link";
 
 export default async function Page({
   params,

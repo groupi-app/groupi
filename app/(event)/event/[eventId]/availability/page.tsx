@@ -2,7 +2,7 @@ import { AvailabilityForm } from "@/components/availability-form";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { getEventPotentialDateTimes } from "@/lib/actions/availability";
-import { member, PotentialDateTimeWithAvailabilities } from "@/types";
+import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { auth } from "@clerk/nextjs";
 import Link from "next/link";
 

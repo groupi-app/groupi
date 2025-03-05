@@ -1,9 +1,9 @@
 "use server";
 
-import { $Enums, Membership } from "@prisma/client";
 import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
+import { $Enums, Membership } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { pusherServer } from "../pusher-server";
 import { getEventQuery, getPersonQuery } from "../query-definitions";
 import { createNotification } from "./notification";

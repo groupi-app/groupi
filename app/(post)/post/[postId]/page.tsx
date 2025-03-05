@@ -5,7 +5,7 @@ import { FullPost } from "@/components/full-post";
 import QueryProvider from "@/components/providers/query-provider";
 import Replies from "@/components/replies";
 import { markPostNotifsAsRead } from "@/lib/actions/notification";
-import { PostData, fetchPostData } from "@/lib/actions/post";
+import { fetchPostData } from "@/lib/actions/post";
 import { getPostQuery } from "@/lib/query-definitions";
 import {
   HydrationBoundary,

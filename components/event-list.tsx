@@ -3,19 +3,19 @@
 import { usePersonMemberships } from "@/data/person-hooks";
 import { EventWithMembers, MembershipEventWithMembers } from "@/types";
 
-import {
-  Select,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectLabel,
-  SelectGroup,
-} from "./ui/select";
-import { useState } from "react";
 import { LayoutGroup, motion } from "framer-motion";
+import { useState } from "react";
 import { EventCard } from "./event-card";
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 const container = {
   hidden: { opacity: 0 },

@@ -1,5 +1,14 @@
+import { useNotifications } from "@/data/notification-hooks";
+import {
+  deleteAllNotifications,
+  markAllNotificationsAsRead,
+} from "@/lib/actions/notification";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { NotificationWithPersonEventPost } from "@/types";
+import { useState } from "react";
+import { Icons } from "./icons";
+import { NotificationSlate } from "./notification-slate";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -10,24 +19,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Button } from "./ui/button";
-import { useState } from "react";
-import { Icons } from "./icons";
-import { ScrollArea } from "./ui/scroll-area";
-import { NotificationWithPersonEventPost } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useNotifications } from "@/data/notification-hooks";
-import { NotificationSlate } from "./notification-slate";
+import { ScrollArea } from "./ui/scroll-area";
 import { useToast } from "./ui/use-toast";
-import {
-  deleteAllNotifications,
-  markAllNotificationsAsRead,
-} from "@/lib/actions/notification";
 
 export function NotificationWidget({ userId }: { userId: string }) {
   const [dialogType, setDialogType] = useState<

@@ -1,4 +1,4 @@
-import { $Enums, Event, Person, Post, Reply, Prisma } from "@prisma/client";
+import { $Enums, Event, Prisma } from "@prisma/client";
 
 declare global {
   interface Window {

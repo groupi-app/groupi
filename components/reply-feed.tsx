@@ -3,7 +3,6 @@
 import Reply from "@/components/reply";
 import { usePostReplies } from "@/data/post-hooks";
 import { AuthorReply, Member } from "@/types";
-import { auth } from "@clerk/nextjs";
 import { $Enums } from "@prisma/client";
 import { LayoutGroup, motion } from "framer-motion";
 

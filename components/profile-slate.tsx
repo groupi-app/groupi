@@ -1,12 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getFullName, getInitials } from "@/lib/utils";
 import { UserInfo } from "@/types";
-import { Button } from "./ui/button";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Icons } from "./icons";
-import { motion, AnimatePresence } from "framer-motion";
-import { NotificationWidget } from "./notification-widget";
-import { getFullName, getInitials } from "@/lib/utils";
 import { NotificationCount } from "./notification-count";
+import { NotificationWidget } from "./notification-widget";
+import { Button } from "./ui/button";
 
 interface ProfileSlateProps {
   userInfo: UserInfo;

@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Icons } from "./icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Icons } from "./icons";
 
 export function NewPostButton() {
   const pathname = usePathname();

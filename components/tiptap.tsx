@@ -1,14 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import Heading from "@tiptap/extension-heading";
+import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./toolbar";
-import Heading from "@tiptap/extension-heading";
-import Underline from "@tiptap/extension-underline";
-import Placeholder from "@tiptap/extension-placeholder";
-import CharacterCount from "@tiptap/extension-character-count";
-
-const limit = 1000;
 
 const isActuallyEmpty = (html: string) => {
   const emptyElementPattern = /^<(\w+)(\s[^>]*)?>\s*<\/\1>$/;

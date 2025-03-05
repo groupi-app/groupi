@@ -1,13 +1,13 @@
 "use server";
 
-import { db } from "../db";
 import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
 import { auth } from "@clerk/nextjs";
 import { Membership, Notification, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getNotificationQuery } from "../query-definitions";
-import { pusherServer } from "../pusher-server";
 import { BatchEvent } from "pusher";
+import { db } from "../db";
+import { pusherServer } from "../pusher-server";
+import { getNotificationQuery } from "../query-definitions";
 
 export const fetchNotificationsForPerson = async (
   id: string

@@ -1,5 +1,3 @@
-import * as React from "react";
-import Link from "next/link";
 import {
   Sheet,
   SheetClose,
@@ -8,16 +6,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import Link from "next/link";
+import * as React from "react";
 
-import {
-  MainNavItem,
-  NotificationWithPersonEventPost,
-  UserInfo,
-} from "@/types";
+import { Icons } from "@/components/icons";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-import { Icons } from "@/components/icons";
-import { ProfileSlate } from "./profile-slate";
+import { MainNavItem, UserInfo } from "@/types";
 import {
   SignInButton,
   SignOutButton,
@@ -25,6 +20,7 @@ import {
   SignedOut,
 } from "@clerk/nextjs";
 import { NotificationCount } from "./notification-count";
+import { ProfileSlate } from "./profile-slate";
 import { useNotificationCloseContext } from "./providers/notif-close-provider";
 
 interface MobileNavProps {

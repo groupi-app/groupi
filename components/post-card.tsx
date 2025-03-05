@@ -1,22 +1,19 @@
-import Link from "next/link";
-import { Icons } from "./icons";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ReplyAuthorPost } from "@/types";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { formatDate, getFullName } from "@/lib/utils";
+import { Member, ReplyAuthorPost } from "@/types";
+import { $Enums } from "@prisma/client";
+import Link from "next/link";
 import { DeletePostDialog } from "./deletePostDialog";
-import { formatDate, getFullName, getInitials } from "@/lib/utils";
-import React from "react";
-import { PostCardContent } from "./post-card-content";
-import { $Enums, Membership } from "@prisma/client";
+import { Icons } from "./icons";
 import MemberIcon from "./member-icon";
-import { Member } from "@/types";
-import { Avatar } from "@radix-ui/react-avatar";
+import { PostCardContent } from "./post-card-content";
 import RepliesIcons from "./replies-icons";
 
 interface PostCardProps {

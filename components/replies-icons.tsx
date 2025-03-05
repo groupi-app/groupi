@@ -1,6 +1,6 @@
 import { AuthorReply } from "@/types";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Person } from "@prisma/client";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export default function RepliesIcons({ replies }: { replies: AuthorReply[] }) {
   let authors: Person[] = [];

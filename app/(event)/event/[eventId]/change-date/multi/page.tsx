@@ -1,5 +1,4 @@
 import { EditEventMultiDate } from "@/components/edit-event-multi-date";
-import { NewEventMultiDate } from "@/components/new-event-multi-date";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 

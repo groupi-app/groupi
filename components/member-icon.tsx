@@ -1,27 +1,27 @@
 "use client";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "./ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
-import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
-import { Icons } from "./icons";
-import { Member } from "@/types";
-import {
   cn,
   formatRoleBadge,
   formatRoleName,
   getFullName,
   getInitials,
 } from "@/lib/utils";
+import { Member } from "@/types";
 import { $Enums } from "@prisma/client";
 import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
+import { Icons } from "./icons";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 import {
   MemberAction,

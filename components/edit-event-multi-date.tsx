@@ -1,22 +1,15 @@
 "use client";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
-import {
-  createEvent,
-  updateEventPotentialDateTimes,
-} from "@/lib/actions/event";
-import { useState } from "react";
-import { ScrollArea } from "./ui/scroll-area";
+import { updateEventPotentialDateTimes } from "@/lib/actions/event";
 import { merge } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -27,6 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { ScrollArea } from "./ui/scroll-area";
+import { useToast } from "./ui/use-toast";
 
 interface Form1Types {
   dates: Date[];

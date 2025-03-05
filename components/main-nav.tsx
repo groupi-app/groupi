@@ -1,20 +1,20 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { MainNavItem, UserInfo } from "@/types";
-import { siteConfig } from "@/config/site";
 import { Icons } from "@/components/icons";
 import {
   NavigationMenu,
-  NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink,
+  NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import { siteConfig } from "@/config/site";
+import { MainNavItem, UserInfo } from "@/types";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import * as React from "react";
 import { MobileNav } from "./mobile-nav";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { ProfileDropdown } from "./profile-dropdown";
 import { NotificationsDesktop } from "./notifications-desktop";
+import { ProfileDropdown } from "./profile-dropdown";
 import { NotificationCloseContextProvider } from "./providers/notif-close-provider";
 
 interface MainNavProps {
@@ -23,7 +23,7 @@ interface MainNavProps {
   children?: React.ReactNode;
 }
 
-export function MainNav({ items, children, userInfo }: MainNavProps) {
+export function MainNav({ items, userInfo }: MainNavProps) {
   return (
     <div className="container flex items-center justify-between h-20 py-6">
       <NotificationCloseContextProvider>

@@ -58,6 +58,7 @@ describe("template spec", () => {
         .should("exist")
         .contains(
           date.toLocaleString([], {
+            weekday: "long",
             year: "numeric",
             month: "numeric",
             day: "numeric",

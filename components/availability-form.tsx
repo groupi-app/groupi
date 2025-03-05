@@ -1,17 +1,17 @@
 "use client";
+import { updateMembershipAvailabilities } from "@/lib/actions/availability";
 import { PotentialDateTimeWithAvailabilities } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { $Enums } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { AvailabilityCard } from "./availability-card";
 import { Icons } from "./icons";
 import { Button } from "./ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { updateMembershipAvailabilities } from "@/lib/actions/availability";
+import { Form, FormControl, FormField, FormItem } from "./ui/form";
 import { useToast } from "./ui/use-toast";
-import { useRouter } from "next/navigation";
-import { $Enums } from "@prisma/client";
 
 export function AvailabilityForm({
   potentialDateTimes,
@@ -184,7 +184,10 @@ export function AvailabilityForm({
           }
           className="my-2"
         >
-          Submit
+          <div className="flex items-center gap-1">
+            {isLoading && <Icons.spinner className="animate-spin w-5 h-5" />}
+            <span>Submit</span>
+          </div>
         </Button>
       </form>
     </Form>

@@ -1,6 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs";
 import { Editor } from "@/components/editor";
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs";
 
 export default async function Page({
   params,

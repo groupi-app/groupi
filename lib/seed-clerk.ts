@@ -1,4 +1,4 @@
-import { SeedUser, seedUsers as users } from "@/data/seed-users";
+import { seedUsers as users } from "@/data/seed-users";
 import { createClerkClient, User } from "@clerk/nextjs/server";
 import { db } from "./db";
 
