@@ -15,6 +15,10 @@ export default async function Page({
 
   const { userId }: { userId: string | null } = auth();
 
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
   let potentialDateTimes: PotentialDateTimeWithAvailabilities[] = [];
 
   const res = await getEventPotentialDateTimes(eventId);
@@ -73,7 +77,10 @@ export default async function Page({
         <span className="text-sm italic text-muted-foreground">
           Current timezone: {getTimezoneString()}
         </span>
-        <AvailabilityForm potentialDateTimes={potentialDateTimes} />
+        <AvailabilityForm
+          potentialDateTimes={potentialDateTimes}
+          userId={userId}
+        />
       </div>
     </div>
   );

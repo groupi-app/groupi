@@ -50,7 +50,13 @@ const form2Schema = z.object({
     .min(1, { message: "At least one date is required." }),
 });
 
-export function EditEventMultiDate({ eventId }: { eventId: string }) {
+export function EditEventMultiDate({
+  eventId,
+  dates,
+}: {
+  eventId: string;
+  dates: Date[] | undefined;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -69,7 +75,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
   const form2 = useForm<Form2Types>({
     resolver: zodResolver(form2Schema),
     defaultValues: {
-      dateTimes: [],
+      dateTimes: dates ?? [],
     },
   });
 

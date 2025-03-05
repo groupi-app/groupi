@@ -24,7 +24,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { useState } from "react";
 import { useToast } from "./ui/use-toast";
-import { cn, timeUntil } from "@/lib/utils";
+import { cn, getFullName, timeUntil } from "@/lib/utils";
 import { Input } from "./ui/input";
 import QRCode from "react-qr-code";
 import { Checkbox } from "./ui/checkbox";
@@ -180,7 +180,12 @@ export function InviteLinkCard({
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground">Created by:</span>
                 <span className="flex items-center gap-2">
-                  {`${createdBy.person.firstName} ${createdBy.person.lastName} (${createdBy.person.username})`}
+                  {!createdBy.person.firstName && !createdBy.person.lastName
+                    ? createdBy.person.username
+                    : `${getFullName(
+                        createdBy.person.firstName,
+                        createdBy.person.lastName
+                      )} (${createdBy.person.username})`}
                 </span>
               </div>{" "}
               <div className="flex items-center gap-1">

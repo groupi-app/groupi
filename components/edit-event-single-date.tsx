@@ -28,7 +28,13 @@ const formSchema = z.object({
   time: z.string().regex(new RegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")),
 });
 
-export function EditEventSingleDate({ eventId }: { eventId: string }) {
+export function EditEventSingleDate({
+  eventId,
+  datetime,
+}: {
+  eventId: string;
+  datetime: Date | undefined;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -36,11 +42,16 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
-      time: new Date().toLocaleTimeString([], {
-        timeStyle: "short",
-        hour12: false,
-      }),
+      date: datetime ?? new Date(),
+      time: datetime
+        ? datetime.toLocaleTimeString([], {
+            timeStyle: "short",
+            hour12: false,
+          })
+        : new Date().toLocaleTimeString([], {
+            timeStyle: "short",
+            hour12: false,
+          }),
     },
   });
 
@@ -102,6 +113,7 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
                     onSelect={(date) =>
                       date ? form.setValue("date", date) : null
                     }
+                    defaultMonth={field.value}
                     {...field}
                   />
                 </FormControl>
