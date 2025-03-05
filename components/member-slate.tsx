@@ -1,7 +1,7 @@
-import { Member } from "@/types";
-import MemberIcon from "./member-icon";
 import { getFullName } from "@/lib/utils";
+import { Member } from "@/types";
 import { Role } from "@prisma/client";
+import MemberIcon from "./member-icon";
 
 export function MemberSlate({
   member,

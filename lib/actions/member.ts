@@ -1,11 +1,12 @@
 "use server";
 
-import { $Enums, Membership } from "@prisma/client";
 import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
+import { $Enums, Membership } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { pusherServer } from "../pusher-server";
 import { getEventQuery, getPersonQuery } from "../query-definitions";
+import { createNotification } from "./notification";
 
 export async function updateMembershipRole({
   membership,
@@ -52,6 +53,28 @@ export async function updateMembershipRole({
       queryDefinition.pusherEvent,
       { message: "Data updated" }
     );
+
+    if (role === "MODERATOR") {
+      await createNotification({
+        type: "USER_PROMOTED",
+        personId: membership.personId,
+        eventId: membership.eventId,
+        authorId: userId,
+        datetime: null,
+        postId: null,
+        read: false,
+      });
+    } else if (role === "ATTENDEE") {
+      await createNotification({
+        type: "USER_DEMOTED",
+        personId: membership.personId,
+        eventId: membership.eventId,
+        authorId: userId,
+        datetime: null,
+        postId: null,
+        read: false,
+      });
+    }
     return { success: "Role Updated" };
   } catch (error) {
     return { error: error };

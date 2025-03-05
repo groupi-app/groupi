@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { deletePost } from "@/lib/actions/post";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { deletePost } from "@/lib/actions/post";
-import { useRouter } from "next/navigation";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 async function removePost({
   id,

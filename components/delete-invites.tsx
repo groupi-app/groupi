@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { deleteInvites } from "@/lib/actions/invite";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -10,9 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { deleteInvites } from "@/lib/actions/invite";
 import { useToast } from "./ui/use-toast";
-import { set } from "date-fns";
 
 export function DeleteInvites({
   selectedInvites,

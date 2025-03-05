@@ -1,8 +1,8 @@
+import { createClerkClient, User } from "@clerk/nextjs/server";
 import { clerkSetup } from "@clerk/testing/cypress";
 import { defineConfig } from "cypress";
+import { seedUsers as users } from "./data/seed-users";
 import { db } from "./lib/db";
-import { SeedUser, seedUsers as users } from "./data/seed-users";
-import { createClerkClient, User } from "@clerk/nextjs/server";
 
 export default defineConfig({
   e2e: {

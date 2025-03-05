@@ -1,6 +1,6 @@
-import { db } from "../db";
-import { cache } from "react";
 import { ActionResponse, PersonData } from "@/types";
+import { cache } from "react";
+import { db } from "../db";
 
 export const fetchPersonData = cache(
   async (userId: string): Promise<ActionResponse<PersonData>> => {

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 export function useIsOverflowing() {
   const ref = useRef<HTMLDivElement>(null);
@@ -14,8 +14,8 @@ export function useIsOverflowing() {
 
     checkOverflow();
 
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
   }, []);
 
   return [ref, isOverflowing] as const;

@@ -1,13 +1,13 @@
 "use client";
-import { useState } from "react";
-import { InviteLinkCard } from "./invite-link-card";
-import { CreatedByInvite, EventInviteData } from "@/types";
+import { useInvites } from "@/data/invite-hooks";
+import { CreatedByInvite } from "@/types";
 import { LayoutGroup, motion } from "framer-motion";
-import { Icons } from "./icons";
+import { useState } from "react";
 import { AddInvite } from "./add-invite";
 import { DeleteInvites } from "./delete-invites";
+import { Icons } from "./icons";
+import { InviteLinkCard } from "./invite-link-card";
 import { Checkbox } from "./ui/checkbox";
-import { useInvites } from "@/data/invite-hooks";
 
 const container = {
   hidden: { opacity: 0 },

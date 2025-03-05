@@ -1,16 +1,10 @@
+import { env } from "@/env.mjs";
 import { db } from "@/lib/db";
-import { UserJSON, DeletedObjectJSON } from "@clerk/types";
+import { WebhookEvent } from "@clerk/nextjs/server";
+import { UserJSON } from "@clerk/types";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
-import { WebhookEvent } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
-import { env } from "@/env.mjs";
-
-type Event = {
-  data: Record<string, string | number>;
-  object: "event";
-  type: EventType;
-};
 
 type EventType = "user.created" | "user.updated" | "user.deleted" | "*";
 

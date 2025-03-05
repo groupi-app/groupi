@@ -1,16 +1,17 @@
 import { EventHeader } from "@/components/event-header";
 import { MemberList } from "@/components/member-list";
-import { PostFeed } from "@/components/post-feed";
 import { NewPostButton } from "@/components/new-post-button";
+import { PostFeed } from "@/components/post-feed";
+import QueryProvider from "@/components/providers/query-provider";
+import { fetchEventData } from "@/lib/actions/event";
+import { markEventNotifsAsRead } from "@/lib/actions/notification";
+import { getEventQuery } from "@/lib/query-definitions";
 import {
-  QueryClient,
   HydrationBoundary,
+  QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
-import { fetchEventData } from "@/lib/actions/event";
 import { notFound, redirect } from "next/navigation";
-import QueryProvider from "@/components/providers/query-provider";
-import { getEventQuery } from "@/lib/query-definitions";
 
 export default async function Page({
   params,
@@ -52,6 +53,8 @@ export default async function Page({
     queryKey: [queryDefinition.queryKey],
     queryFn: async () => data,
   });
+
+  await markEventNotifsAsRead(eventId);
 
   return (
     <QueryProvider queryDefinition={queryDefinition}>

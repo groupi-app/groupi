@@ -12,16 +12,18 @@ datasource db {
 }
 
 model Person {
-  id          String       @id
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  memberships Membership[]
-  posts       Post[]
-  replies     Reply[]
-  firstName   String?
-  lastName    String?
-  username    String       @unique
-  imageUrl    String
+  id                    String         @id
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  memberships           Membership[]
+  posts                 Post[]
+  replies               Reply[]
+  firstName             String?
+  lastName              String?
+  username              String         @unique
+  imageUrl              String
+  notifications         Notification[] @relation("PersonNotifications")
+  authoredNotifications Notification[] @relation("AuthorNotifications")
 }
 
 model Event {
@@ -36,6 +38,7 @@ model Event {
   potentialDateTimes PotentialDateTime[]
   posts              Post[]
   memberships        Membership[]
+  notifications      Notification[]
 }
 
 model Membership {
@@ -70,17 +73,18 @@ model Availability {
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  editedAt  DateTime @default(now())
-  author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  String
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  replies   Reply[]
-  title     String
-  content   String
+  id            String         @id @default(cuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  editedAt      DateTime       @default(now())
+  author        Person         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String
+  eventId       String
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  replies       Reply[]
+  title         String
+  content       String
+  notifications Notification[]
 }
 
 model Reply {
@@ -118,4 +122,34 @@ model Invite {
   usesRemaining Int?
   maxUses       Int?
   name          String?
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  person    Person           @relation("PersonNotifications", fields: [personId], references: [id], onDelete: Cascade)
+  personId  String
+  author    Person?          @relation("AuthorNotifications", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String?
+  type      NotificationType
+  event     Event?           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String?
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String?
+  read      Boolean          @default(false)
+  datetime  DateTime?
+}
+
+enum NotificationType {
+  EVENT_EDITED // When the details of an event that the receiving user is a member of is edited
+  NEW_POST // When a new post is created in an event that the receiving user is a member of
+  NEW_REPLY // When a new reply is created in a post that the receiving user has interacted with
+  DATE_CHOSEN // When the organizer of an event that the receiving user is a member of chooses a date
+  DATE_CHANGED // When the organizer of an event that the receiving user is a member of changes the chosen date to a new single date
+  DATE_RESET // When the organizer of an event that the receiving user is a member of starts a new poll for the date
+  USER_JOINED // When another user joins an event that the receiving user owns
+  USER_LEFT // When another user leaves an event that the receiving user owns
+  USER_PROMOTED // When the receiving user is promoted to moderator of an event
+  USER_DEMOTED // When the receiving user is demoted from moderator of an event
 }

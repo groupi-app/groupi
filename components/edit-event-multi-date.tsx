@@ -1,22 +1,15 @@
 "use client";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
-import {
-  createEvent,
-  updateEventPotentialDateTimes,
-} from "@/lib/actions/event";
-import { useState } from "react";
-import { ScrollArea } from "./ui/scroll-area";
+import { updateEventPotentialDateTimes } from "@/lib/actions/event";
 import { merge } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -27,6 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { ScrollArea } from "./ui/scroll-area";
+import { useToast } from "./ui/use-toast";
 
 interface Form1Types {
   dates: Date[];
@@ -47,10 +44,16 @@ const form1Schema = z.object({
 const form2Schema = z.object({
   dateTimes: z
     .array(z.date())
-    .min(1, { message: "At least one date is required." }),
+    .min(2, { message: "At least two dates are required." }),
 });
 
-export function EditEventMultiDate({ eventId }: { eventId: string }) {
+export function EditEventMultiDate({
+  eventId,
+  dates,
+}: {
+  eventId: string;
+  dates: Date[] | undefined;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -69,7 +72,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
   const form2 = useForm<Form2Types>({
     resolver: zodResolver(form2Schema),
     defaultValues: {
-      dateTimes: [],
+      dateTimes: dates ?? [],
     },
   });
 
@@ -183,7 +186,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
         <Form {...form2}>
           <form id="form2" onSubmit={form2.handleSubmit(onSubmit2)}>
             <div>
-              <ScrollArea className="h-80 w-64 rounded-md border border-border">
+              <ScrollArea className="h-80 w-72 rounded-md border border-border">
                 <div className="p-4 divide-y">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className=" font-heading leading-none">Options</h2>
@@ -206,8 +209,12 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
                       >
                         <div>
                           {date.toLocaleString([], {
-                            dateStyle: "medium",
-                            timeStyle: "short",
+                            weekday: "short",
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
                           })}
                         </div>
                         <Button
@@ -235,7 +242,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
         </Form>
       </div>
       <div className="flex justify-between">
-        <Link href="/create/date-type">
+        <Link href={`/event/${eventId}/change-date`}>
           <Button className="flex items-center gap-1" variant={"secondary"}>
             <span>Back</span>
             <Icons.back className="text-sm" />
@@ -244,6 +251,7 @@ export function EditEventMultiDate({ eventId }: { eventId: string }) {
         <Dialog>
           <DialogTrigger asChild>
             <Button
+              disabled={form2.watch("dateTimes").length < 2}
               data-test="new-event-single-submit"
               className="flex items-center gap-1"
               type="button"

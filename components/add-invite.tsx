@@ -1,5 +1,10 @@
 "use client";
 
+import { createInvite } from "@/lib/actions/invite";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Icons } from "./icons";
 import { Button } from "./ui/button";
@@ -28,13 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "./ui/use-toast";
-import { createInvite } from "@/lib/actions/invite";
-import { auth } from "@clerk/nextjs";
-import { DialogClose } from "@radix-ui/react-dialog";
-import { useState } from "react";
 
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({

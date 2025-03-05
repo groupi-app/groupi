@@ -2,7 +2,7 @@ import { AvailabilityForm } from "@/components/availability-form";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { getEventPotentialDateTimes } from "@/lib/actions/availability";
-import { member, PotentialDateTimeWithAvailabilities } from "@/types";
+import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { auth } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -14,6 +14,10 @@ export default async function Page({
   const { eventId } = params;
 
   const { userId }: { userId: string | null } = auth();
+
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
 
   let potentialDateTimes: PotentialDateTimeWithAvailabilities[] = [];
 
@@ -73,7 +77,10 @@ export default async function Page({
         <span className="text-sm italic text-muted-foreground">
           Current timezone: {getTimezoneString()}
         </span>
-        <AvailabilityForm potentialDateTimes={potentialDateTimes} />
+        <AvailabilityForm
+          potentialDateTimes={potentialDateTimes}
+          userId={userId}
+        />
       </div>
     </div>
   );

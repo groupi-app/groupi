@@ -2,25 +2,25 @@
 
 import {
   Form,
-  FormItem,
-  FormField,
   FormControl,
-  FormLabel,
   FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { updateEventDetails } from "@/lib/actions/event";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { LocationInput } from "./location-input";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { updateEventDetails } from "@/lib/actions/event";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { LocationInput } from "./location-input";
+import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({

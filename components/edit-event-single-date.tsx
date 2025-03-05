@@ -1,17 +1,14 @@
 "use client";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
 import { updateEventDateTime } from "@/lib/actions/event";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -22,13 +19,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   date: z.date(),
   time: z.string().regex(new RegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")),
 });
 
-export function EditEventSingleDate({ eventId }: { eventId: string }) {
+export function EditEventSingleDate({
+  eventId,
+  datetime,
+}: {
+  eventId: string;
+  datetime: Date | undefined;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -36,18 +42,31 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
-      time: new Date().toLocaleTimeString([], {
-        timeStyle: "short",
-        hour12: false,
-      }),
+      date: datetime ?? new Date(),
+      time: datetime
+        ? datetime.toLocaleTimeString([], {
+            timeStyle: "short",
+            hour12: false,
+          })
+        : new Date().toLocaleTimeString([], {
+            timeStyle: "short",
+            hour12: false,
+          }),
     },
   });
 
   const getDateTime = () => {
-    return new Date(
-      `${form.watch("date").toISOString().split("T")[0]}T${form.watch("time")}`
-    );
+    const date = form.watch("date");
+    const time = form.watch("time");
+
+    // Split time into hours and minutes
+    const [hours, minutes] = time.split(":").map(Number);
+
+    // Create new date object and set time components
+    const dateTime = new Date(date);
+    dateTime.setHours(hours, minutes, 0, 0);
+
+    return dateTime;
   };
 
   const getTimezoneString = () => {
@@ -57,16 +76,17 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
   };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log("TEST");
     setIsSaving(true);
-    const date = data.date;
-    const localTime = data.time + ":00";
+    const [hours, minutes] = data.time.split(":").map(Number);
 
-    const dateTime = new Date(
-      `${date.toISOString().split("T")[0]}T${localTime}`
-    ).toISOString();
+    // Create new date object and set time components
+    const dateTime = new Date(data.date);
+    dateTime.setHours(hours, minutes, 0, 0);
 
-    const res = await updateEventDateTime({ eventId, dateTime });
+    const res = await updateEventDateTime({
+      eventId,
+      dateTime: dateTime.toISOString(),
+    });
     if (res.error) {
       toast({
         title: "Error",
@@ -102,6 +122,7 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
                     onSelect={(date) =>
                       date ? form.setValue("date", date) : null
                     }
+                    defaultMonth={field.value}
                     {...field}
                   />
                 </FormControl>
@@ -135,8 +156,13 @@ export function EditEventSingleDate({ eventId }: { eventId: string }) {
             <div className="flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto">
               <h2 className="text-xl font-semibold">
                 {getDateTime().toLocaleString([], {
-                  dateStyle: "medium",
-                  timeStyle: "short",
+                  weekday: "short",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                  hour12: true,
                 })}
               </h2>
             </div>

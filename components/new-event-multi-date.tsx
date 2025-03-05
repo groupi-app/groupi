@@ -1,20 +1,20 @@
 "use client";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
 import { useFormContext } from "@/components/providers/form-context-provider";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { set, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
+import { Calendar } from "@/components/ui/calendar";
 import { createEvent } from "@/lib/actions/event";
-import { useState } from "react";
-import { ScrollArea } from "./ui/scroll-area";
 import { merge } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { ScrollArea } from "./ui/scroll-area";
+import { useToast } from "./ui/use-toast";
 
 interface Form1Types {
   dates: Date[];
@@ -35,11 +35,11 @@ const form1Schema = z.object({
 const form2Schema = z.object({
   dateTimes: z
     .array(z.date())
-    .min(1, { message: "At least one date is required." }),
+    .min(2, { message: "At least two dates are required." }),
 });
 
 export function NewEventMultiDate() {
-  const { formState, setFormState } = useFormContext();
+  const { formState } = useFormContext();
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -181,7 +181,7 @@ export function NewEventMultiDate() {
         <Form {...form2}>
           <form id="form2" onSubmit={form2.handleSubmit(onSubmit2)}>
             <div>
-              <ScrollArea className="h-80 w-64 rounded-md border border-border">
+              <ScrollArea className="h-80 w-72 rounded-md border border-border">
                 <div className="p-4 divide-y">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className=" font-heading leading-none">Options</h2>
@@ -204,8 +204,12 @@ export function NewEventMultiDate() {
                       >
                         <div>
                           {date.toLocaleString([], {
-                            dateStyle: "medium",
-                            timeStyle: "short",
+                            weekday: "short",
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
                           })}
                         </div>
                         <Button
@@ -240,7 +244,7 @@ export function NewEventMultiDate() {
           </Button>
         </Link>
         <Button
-          disabled={form2.watch("dateTimes").length < 1}
+          disabled={form2.watch("dateTimes").length < 2}
           className="flex items-center gap-1"
           type="submit"
           form="form2"

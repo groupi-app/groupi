@@ -1,9 +1,9 @@
+import { Icons } from "@/components/icons";
+import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { $Enums } from "@prisma/client";
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { Icons } from "@/components/icons";
 import React from "react";
-import { PotentialDateTimeWithAvailabilities } from "@/types";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

@@ -7,21 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { deleteReply } from "@/lib/actions/reply";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { deleteReply } from "@/lib/actions/reply";
-import { useRouter } from "next/navigation";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
-async function removeReply({
-  id,
-  toast,
-  router,
-}: {
-  id: string;
-  toast: any;
-  router: AppRouterInstance;
-}) {
+async function removeReply({ id, toast }: { id: string; toast: any }) {
   const res = await deleteReply({ id });
   if (res.success) {
     toast({
@@ -38,7 +28,6 @@ async function removeReply({
 }
 
 export function DeleteReplyDialog({ id }: { id: string }) {
-  const router = useRouter();
   const { toast } = useToast();
   return (
     <DialogContent>
@@ -57,7 +46,7 @@ export function DeleteReplyDialog({ id }: { id: string }) {
           <DialogClose asChild>
             <Button
               onClick={() => {
-                removeReply({ id, toast, router });
+                removeReply({ id, toast });
               }}
               variant="destructive"
             >

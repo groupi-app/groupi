@@ -1,15 +1,17 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { db } from "../db";
-import { auth } from "@clerk/nextjs";
 import { ReplyAuthorEventPost } from "@/types";
+import { auth } from "@clerk/nextjs";
+import { revalidatePath } from "next/cache";
+import { BatchEvent } from "pusher";
+import { db } from "../db";
 import { pusherServer } from "../pusher-server";
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
 } from "../query-definitions";
+import { createEventNotifs } from "./notification";
 
 export interface PostData {
   success?: {
@@ -60,8 +62,6 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
   )?.role;
 
   if (!userRole) return { error: "Role not found" };
-
-  const eventTitle = post.event.title;
 
   return {
     success: {
@@ -119,20 +119,26 @@ export async function createPost({
     revalidatePath("/");
 
     const eventQueryDefinition = getEventQuery(eventId);
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      },
+    ];
 
     for (const membership of event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
+
+    pusherServer.triggerBatch(events);
+
+    await createEventNotifs({ eventId, type: "NEW_POST", postId: res.id });
 
     return { success: "Post Created" };
   } catch (error) {
@@ -164,7 +170,7 @@ export async function updatePost({
 
     if (userId !== post.authorId) return { error: "User not authorized" };
 
-    const res = await db.post.update({
+    await db.post.update({
       where: {
         id: id,
       },

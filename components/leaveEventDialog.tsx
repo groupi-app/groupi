@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { leaveEvent } from "@/lib/actions/event";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { leaveEvent } from "@/lib/actions/event";
-import { useRouter } from "next/navigation";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 async function exitEvent({
   id,

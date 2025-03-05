@@ -1,15 +1,24 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { CreatedByInvite } from "@/types";
 import { deleteInvite } from "@/lib/actions/invite";
+import { cn, getFullName, timeUntil } from "@/lib/utils";
+import { CreatedByInvite } from "@/types";
+import {
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@radix-ui/react-dialog";
+import { useState } from "react";
+import QRCode from "react-qr-code";
+import { Checkbox } from "./ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -17,18 +26,8 @@ import {
   DialogFooter,
   DialogHeader,
 } from "./ui/dialog";
-import {
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@radix-ui/react-dialog";
-import { useState } from "react";
-import { useToast } from "./ui/use-toast";
-import { cn, timeUntil } from "@/lib/utils";
 import { Input } from "./ui/input";
-import QRCode from "react-qr-code";
-import { Checkbox } from "./ui/checkbox";
-import { set } from "date-fns";
+import { useToast } from "./ui/use-toast";
 
 export function InviteLinkCard({
   invite,
@@ -180,7 +179,12 @@ export function InviteLinkCard({
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground">Created by:</span>
                 <span className="flex items-center gap-2">
-                  {`${createdBy.person.firstName} ${createdBy.person.lastName} (${createdBy.person.username})`}
+                  {!createdBy.person.firstName && !createdBy.person.lastName
+                    ? createdBy.person.username
+                    : `${getFullName(
+                        createdBy.person.firstName,
+                        createdBy.person.lastName
+                      )} (${createdBy.person.username})`}
                 </span>
               </div>{" "}
               <div className="flex items-center gap-1">

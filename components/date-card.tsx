@@ -1,8 +1,15 @@
 "use client";
 
-import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { Icons } from "./icons";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { chooseDateTime } from "@/lib/actions/availability";
 import { cn } from "@/lib/utils";
+import { PotentialDateTimeWithAvailabilities } from "@/types";
+import { Role } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Icons } from "./icons";
+import { MemberSlate } from "./member-slate";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -13,15 +20,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
-import { MemberSlate } from "./member-slate";
-import { Role } from "@prisma/client";
 import { ScrollArea } from "./ui/scroll-area";
-import { Button } from "./ui/button";
-import { chooseDateTime } from "@/lib/actions/availability";
 import { useToast } from "./ui/use-toast";
-import { useRouter } from "next/navigation";
 
 export function DateCard({
   pdt,
@@ -77,7 +77,12 @@ export function DateCard({
             <h1 className="font-semibold text-2xl">#{pdt.rank}</h1>
             <div className="flex flex-col">
               <h1>
-                {pdt.dateTime.toLocaleDateString([], { dateStyle: "long" })}
+                {pdt.dateTime.toLocaleDateString([], {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </h1>
               <span className="text-sm text-muted-foreground">
                 {pdt.dateTime.toLocaleTimeString([], { timeStyle: "short" })}
@@ -138,7 +143,12 @@ export function DateCard({
           <>
             <DialogHeader className="text-left">
               <h1 className="font-semibold text-2xl">
-                {pdt.dateTime.toLocaleDateString([], { dateStyle: "long" })}
+                {pdt.dateTime.toLocaleDateString([], {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </h1>
               <h2 className="text-muted-foreground text-lg">
                 {pdt.dateTime.toLocaleTimeString([], { timeStyle: "short" })}
@@ -194,7 +204,7 @@ export function DateCard({
                   <div className="flex flex-col divide-y">
                     {pdt.availabilities
                       .filter((a) => a.status === "YES")
-                      .map((availability, i) => (
+                      .map((availability) => (
                         <MemberSlate
                           key={availability.membershipId}
                           member={availability.membership}
@@ -210,7 +220,7 @@ export function DateCard({
                   <div className="flex flex-col divide-y">
                     {pdt.availabilities
                       .filter((a) => a.status === "MAYBE")
-                      .map((availability, i) => (
+                      .map((availability) => (
                         <MemberSlate
                           key={availability.membershipId}
                           member={availability.membership}
@@ -226,7 +236,7 @@ export function DateCard({
                   <div className="flex flex-col divide-y">
                     {pdt.availabilities
                       .filter((a) => a.status === "NO")
-                      .map((availability, i) => (
+                      .map((availability) => (
                         <MemberSlate
                           key={availability.membershipId}
                           member={availability.membership}

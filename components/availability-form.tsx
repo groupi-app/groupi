@@ -1,26 +1,48 @@
 "use client";
+import { updateMembershipAvailabilities } from "@/lib/actions/availability";
 import { PotentialDateTimeWithAvailabilities } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { $Enums } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { AvailabilityCard } from "./availability-card";
 import { Icons } from "./icons";
 import { Button } from "./ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { updateMembershipAvailabilities } from "@/lib/actions/availability";
+import { Form, FormControl, FormField, FormItem } from "./ui/form";
 import { useToast } from "./ui/use-toast";
-import { useRouter } from "next/navigation";
 
 export function AvailabilityForm({
   potentialDateTimes,
+  userId,
 }: {
   potentialDateTimes: PotentialDateTimeWithAvailabilities[];
+  userId: string;
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  const answerMap = (
+    status: $Enums.Status | undefined
+  ): "yes" | "maybe" | "no" => {
+    // YES = "yes",
+    // MAYBE = "maybe",
+    // NO = "no",
+    console.log(status);
+    switch (status) {
+      case "YES":
+        return "yes";
+      case "MAYBE":
+        return "maybe";
+      case "NO":
+        return "no";
+      default:
+        return "no";
+    }
+  };
 
   const formSchema = z.object({
     formAnswers: z.array(
@@ -38,7 +60,10 @@ export function AvailabilityForm({
     defaultValues: {
       formAnswers: potentialDateTimes.map((pdt) => ({
         potentialDateTimeId: pdt.id,
-        answer: undefined,
+        answer: answerMap(
+          pdt.availabilities.find((a) => a.membership.personId === userId)
+            ?.status
+        ),
       })),
     },
   });
@@ -159,7 +184,10 @@ export function AvailabilityForm({
           }
           className="my-2"
         >
-          Submit
+          <div className="flex items-center gap-1">
+            {isLoading && <Icons.spinner className="animate-spin w-5 h-5" />}
+            <span>Submit</span>
+          </div>
         </Button>
       </form>
     </Form>

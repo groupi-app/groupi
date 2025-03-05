@@ -2,10 +2,9 @@
 
 import { PostCard } from "@/components/post-card";
 import { useEventPosts } from "@/data/event-hooks";
-import { ReplyAuthorPost } from "@/types";
+import { Member, ReplyAuthorPost } from "@/types";
 import { $Enums } from "@prisma/client";
-import { Member } from "@/types";
-import { motion, LayoutGroup } from "framer-motion";
+import { LayoutGroup, motion } from "framer-motion";
 
 export function PostFeed({ eventId }: { eventId: string }) {
   const { data: postData } = useEventPosts(eventId);

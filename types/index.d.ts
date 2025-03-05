@@ -1,4 +1,4 @@
-import { $Enums, Event, Person, Post, Reply, Prisma } from "@prisma/client";
+import { $Enums, Event, Prisma } from "@prisma/client";
 
 declare global {
   interface Window {
@@ -33,8 +33,9 @@ export type UserInfo = {
   firstName: string | null | undefined;
   lastName: string | null | undefined;
   username: string | null | undefined;
-  avatar: string | undefined;
+  imageUrl: string | undefined;
   role?: $Enums.Role | undefined;
+  id: string;
 };
 
 const replyAuthorPost = Prisma.validator<Prisma.PostDefaultArgs>()({
@@ -206,4 +207,18 @@ const membershipWithAvailabilities =
 
 export type MembershipWithAvailabilities = Prisma.MembershipGetPayload<
   typeof membershipWithAvailabilities
+>;
+
+const notificationWithPersonEventPost =
+  Prisma.validator<Prisma.NotificationDefaultArgs>()({
+    include: {
+      person: true,
+      event: true,
+      post: true,
+      author: true,
+    },
+  });
+
+export type NotificationWithPersonEventPost = Prisma.NotificationGetPayload<
+  typeof notificationWithPersonEventPost
 >;

@@ -1,9 +1,9 @@
 "use client";
 
+import { QueryDefinition } from "@/lib/query-definitions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { pusherClient } from "../../lib/pusher-client";
-import { QueryDefinition } from "@/lib/query-definitions";
 
 interface QueryProviderProps {
   queryDefinition: QueryDefinition;
@@ -20,7 +20,7 @@ export default function QueryProvider({
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: Infinity,
+            staleTime: 0,
           },
         },
       })

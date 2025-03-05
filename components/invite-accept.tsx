@@ -1,11 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Icons } from "./icons";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { acceptInvite } from "@/lib/actions/invite";
 import { useToast } from "@/components/ui/use-toast";
+import { acceptInvite } from "@/lib/actions/invite";
 import { useRouter } from "next/navigation";
 
 export function AcceptInviteButton({

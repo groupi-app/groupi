@@ -1,7 +1,7 @@
 "use-client";
 
-import { type Editor } from "@tiptap/react";
 import { Icons } from "@/components/icons";
+import { type Editor } from "@tiptap/react";
 
 import { Toggle } from "@/components/ui/toggle";
 

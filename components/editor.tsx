@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Icons } from "@/components/icons";
 import {
   Dialog,
   DialogClose,
@@ -17,18 +11,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Link from "next/link";
-import { Icons } from "@/components/icons";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { createPost, updatePost } from "@/lib/actions/post";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "./ui/button";
 import { Tiptap } from "./tiptap";
-import { useRouter } from "next/navigation";
-import { createPost, updatePost } from "@/lib/actions/post";
+import { Button } from "./ui/button";
 
 interface PostData {
   title: string;

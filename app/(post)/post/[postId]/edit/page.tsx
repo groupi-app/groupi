@@ -1,8 +1,6 @@
-import { currentUser } from "@clerk/nextjs";
 import { Editor } from "@/components/editor";
 import { db } from "@/lib/db";
-
-import { notFound } from "next/navigation";
+import { currentUser } from "@clerk/nextjs";
 
 export default async function Page({ params }: { params: { postId: string } }) {
   const { postId } = params;

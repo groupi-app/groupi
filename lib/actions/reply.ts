@@ -1,14 +1,16 @@
 "use server";
 
 import { auth } from "@clerk/nextjs";
-import { db } from "../db";
 import { revalidatePath } from "next/cache";
+import { BatchEvent } from "pusher";
+import { db } from "../db";
+import { pusherServer } from "../pusher-server";
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
 } from "../query-definitions";
-import { pusherServer } from "../pusher-server";
+import { createPostNotifs } from "./notification";
 
 export async function createReply({
   postId,
@@ -73,25 +75,31 @@ export async function createReply({
     const eventQueryDefinition = getEventQuery(post.eventId);
     const postQueryDefinition = getPostQuery(post.id);
 
-    pusherServer.trigger(
-      eventQueryDefinition.pusherChannel,
-      eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
-    pusherServer.trigger(
-      postQueryDefinition.pusherChannel,
-      postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
-    );
+    const events: BatchEvent[] = [
+      {
+        channel: eventQueryDefinition.pusherChannel,
+        name: eventQueryDefinition.pusherEvent,
+        data: { message: "Event data updated" },
+      },
+      {
+        channel: postQueryDefinition.pusherChannel,
+        name: postQueryDefinition.pusherEvent,
+        data: { message: "Post data updated" },
+      },
+    ];
 
     for (const membership of post.event.memberships) {
       const personQueryDefinition = getPersonQuery(membership.personId);
-      pusherServer.trigger(
-        personQueryDefinition.pusherChannel,
-        personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
-      );
+      events.push({
+        channel: personQueryDefinition.pusherChannel,
+        name: personQueryDefinition.pusherEvent,
+        data: { message: "Data updated" },
+      });
     }
+
+    pusherServer.triggerBatch(events);
+
+    await createPostNotifs({ postId, type: "NEW_REPLY" });
 
     return { success: reply };
   } catch (error) {
@@ -122,7 +130,7 @@ export async function updateReply({
 
     if (reply.authorId !== userId) return { error: "User not authorized" };
 
-    const res = await db.reply.update({
+    await db.reply.update({
       where: {
         id: replyId,
       },

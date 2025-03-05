@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { Post } from "@prisma/client";
 import { createPost } from "@/lib/actions/post";
+import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs";
+import { Post } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { title, content, eventId, authorId }: Post = await request.json();
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ message: "Post Created" }, { status: 200 });
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   const posts = await db.post.findMany({
     include: {
       replies: true,

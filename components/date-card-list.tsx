@@ -2,11 +2,6 @@
 import { PotentialDateTimeWithAvailabilities } from "@/types";
 import { DateCard } from "./date-card";
 
-import { useState } from "react";
-import { usePDTs } from "@/data/pdt-hooks";
-import { Role } from "@prisma/client";
-import { LayoutGroup, motion } from "framer-motion";
-import { getRanks } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -16,6 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePDTs } from "@/data/pdt-hooks";
+import { getRanks } from "@/lib/utils";
+import { Role } from "@prisma/client";
+import { LayoutGroup, motion } from "framer-motion";
+import { useState } from "react";
 
 const container = {
   hidden: { opacity: 0 },

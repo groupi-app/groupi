@@ -7,10 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
 import { deleteMembership, updateMembershipRole } from "@/lib/actions/member";
 import { Member } from "@/types";
+import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
 
 export enum MemberAction {
   KICK = "KICK",

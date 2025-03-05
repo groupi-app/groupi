@@ -1,6 +1,6 @@
 import NewEventInfo from "@/components/new-event-info";
-import Script from "next/script";
 import { env } from "@/env.mjs";
+import Script from "next/script";
 
 export default function Page() {
   return (

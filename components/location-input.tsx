@@ -1,13 +1,13 @@
 import {
   Command,
-  CommandInput,
-  CommandList,
   CommandGroup,
+  CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
-import { ControllerRenderProps, set } from "react-hook-form";
-import usePlacesAutocomplete from "use-places-autocomplete";
 import useOnclickOutside from "react-cool-onclickoutside";
+import { ControllerRenderProps } from "react-hook-form";
+import usePlacesAutocomplete from "use-places-autocomplete";
 
 export function LocationInput({
   dataTest,
@@ -27,7 +27,6 @@ export function LocationInput({
 }) {
   const {
     ready,
-    value,
     suggestions: { status, data },
     setValue,
     clearSuggestions,

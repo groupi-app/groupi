@@ -1,20 +1,19 @@
 "use client";
 
 import { Icons } from "@/components/icons";
-import { Button } from "./ui/button";
 import { useEventHeader } from "@/data/event-hooks";
-import { Event } from "@prisma/client";
+import { HeaderData } from "@/types";
+import Link from "next/link";
+import { DeleteEventDialog } from "./deleteEventDialog";
+import { LeaveEventDialog } from "./leaveEventDialog";
+import { Button } from "./ui/button";
+import { Dialog, DialogTrigger } from "./ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
-import { DeleteEventDialog } from "./deleteEventDialog";
-import { LeaveEventDialog } from "./leaveEventDialog";
-import { HeaderData } from "@/types";
-import Link from "next/link";
 
 export function EventHeader({ eventId }: { eventId: string }) {
   const { data: headerData } = useEventHeader(eventId);
@@ -24,6 +23,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
   const eventDateStr =
     chosenDateTime != null
       ? chosenDateTime.toLocaleString([], {
+          weekday: "long",
           year: "numeric",
           month: "numeric",
           day: "numeric",

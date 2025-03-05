@@ -1,5 +1,5 @@
-import ReplyForm from "@/components/reply-form";
 import ReplyFeed from "@/components/reply-feed";
+import ReplyForm from "@/components/reply-form";
 import { auth } from "@clerk/nextjs";
 
 export default function Replies({ postId }: { postId: string }) {
