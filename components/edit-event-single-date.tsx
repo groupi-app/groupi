@@ -1,17 +1,14 @@
 "use client";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Icons } from "./icons";
-import { useRouter } from "next/navigation";
-import { useToast } from "./ui/use-toast";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "./ui/form";
 import { updateEventDateTime } from "@/lib/actions/event";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Icons } from "./icons";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -22,6 +19,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   date: z.date(),
@@ -56,9 +56,17 @@ export function EditEventSingleDate({
   });
 
   const getDateTime = () => {
-    return new Date(
-      `${form.watch("date").toISOString().split("T")[0]}T${form.watch("time")}`
-    );
+    const date = form.watch("date");
+    const time = form.watch("time");
+
+    // Split time into hours and minutes
+    const [hours, minutes] = time.split(":").map(Number);
+
+    // Create new date object and set time components
+    const dateTime = new Date(date);
+    dateTime.setHours(hours, minutes, 0, 0);
+
+    return dateTime;
   };
 
   const getTimezoneString = () => {
@@ -68,16 +76,17 @@ export function EditEventSingleDate({
   };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log("TEST");
     setIsSaving(true);
-    const date = data.date;
-    const localTime = data.time + ":00";
+    const [hours, minutes] = data.time.split(":").map(Number);
 
-    const dateTime = new Date(
-      `${date.toISOString().split("T")[0]}T${localTime}`
-    ).toISOString();
+    // Create new date object and set time components
+    const dateTime = new Date(data.date);
+    dateTime.setHours(hours, minutes, 0, 0);
 
-    const res = await updateEventDateTime({ eventId, dateTime });
+    const res = await updateEventDateTime({
+      eventId,
+      dateTime: dateTime.toISOString(),
+    });
     if (res.error) {
       toast({
         title: "Error",

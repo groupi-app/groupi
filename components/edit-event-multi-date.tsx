@@ -44,7 +44,7 @@ const form1Schema = z.object({
 const form2Schema = z.object({
   dateTimes: z
     .array(z.date())
-    .min(1, { message: "At least one date is required." }),
+    .min(2, { message: "At least two dates are required." }),
 });
 
 export function EditEventMultiDate({
@@ -251,6 +251,7 @@ export function EditEventMultiDate({
         <Dialog>
           <DialogTrigger asChild>
             <Button
+              disabled={form2.watch("dateTimes").length < 2}
               data-test="new-event-single-submit"
               className="flex items-center gap-1"
               type="button"
