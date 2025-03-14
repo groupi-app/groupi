@@ -7,11 +7,13 @@ export function MemberSlate({
   member,
   userId,
   userRole,
+  eventDateTime,
   key,
 }: {
   member: Member;
   userId: string;
   userRole: Role;
+  eventDateTime: Date | null;
   key: string;
 }) {
   const fullName = getFullName(member.person.firstName, member.person.lastName);
@@ -23,6 +25,7 @@ export function MemberSlate({
         member={member}
         userId={userId}
         userRole={userRole}
+        eventDateTime={eventDateTime}
       />
       <div className="flex flex-col items-start">
         {fullName != "" && (

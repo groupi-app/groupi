@@ -23,7 +23,8 @@ export function NotificationSlate({
 }: {
   notification: NotificationWithPersonEventPost;
 }) {
-  const { event, post, createdAt, type, read, datetime, author } = notification;
+  const { event, post, createdAt, type, read, datetime, author, rsvp } =
+    notification;
   const { toast } = useToast();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {
@@ -41,6 +42,7 @@ export function NotificationSlate({
       case "USER_LEFT":
       case "USER_PROMOTED":
       case "USER_DEMOTED":
+      case "USER_RSVP":
         return `/event/${event?.id}`;
       case "NEW_POST":
       case "NEW_REPLY":
@@ -128,6 +130,15 @@ export function NotificationSlate({
       case "USER_DEMOTED":
         return {
           __html: `You are no longer a Moderator of <strong>${event?.title}</strong>.`,
+        };
+      case "USER_RSVP":
+        if (!author) throw new Error("Author not found");
+        return {
+          __html: `<strong>${
+            author.firstName ?? author.lastName ?? author.username
+          }</strong> has RSVP'd <strong>${rsvp}</strong> to <strong>${
+            event?.title
+          }</strong>.`,
         };
     }
   };

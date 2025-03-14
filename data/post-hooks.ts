@@ -40,6 +40,7 @@ export function usePostReplies(postId: string) {
         members: data.success.post.event.memberships,
         userId: data.success.userId,
         userRole: data.success.userRole,
+        eventDateTime: data.success.post.event.chosenDateTime,
       };
     }
   });

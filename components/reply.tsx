@@ -36,11 +36,13 @@ export default function Reply({
   member,
   userId,
   userRole,
+  eventDateTime,
 }: {
   reply: Reply;
   member: Member | undefined;
   userId: string;
   userRole: $Enums.Role;
+  eventDateTime: Date | null;
 }) {
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -94,6 +96,7 @@ export default function Reply({
               userId={userId}
               userRole={userRole}
               member={member}
+              eventDateTime={eventDateTime}
               align={isMe ? "end" : "start"}
             />
           ) : (

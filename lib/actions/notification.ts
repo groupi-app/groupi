@@ -2,7 +2,12 @@
 
 import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
 import { auth } from "@clerk/nextjs";
-import { Membership, Notification, NotificationType } from "@prisma/client";
+import {
+  $Enums,
+  Membership,
+  Notification,
+  NotificationType,
+} from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
 import { db } from "../db";
@@ -233,6 +238,7 @@ export const markEventNotifsAsRead = async (
             NotificationType.USER_LEFT,
             NotificationType.USER_PROMOTED,
             NotificationType.USER_DEMOTED,
+            NotificationType.USER_RSVP,
           ],
         },
       },
@@ -592,9 +598,11 @@ export const createEventNotifs = async ({
 export const createEventModNotifs = async ({
   eventId,
   type,
+  rsvp,
 }: {
   eventId: string;
   type: Exclude<NotificationType, "NEW_REPLY">;
+  rsvp?: $Enums.Status;
 }): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = auth();
@@ -644,6 +652,7 @@ export const createEventModNotifs = async ({
         eventId,
         type: type,
         authorId: userId,
+        rsvp,
       })),
     });
 

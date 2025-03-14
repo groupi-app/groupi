@@ -50,6 +50,7 @@ export function AttendeeSlate({
               member={member}
               userId={userId}
               userRole={userRole}
+              eventDateTime={member.event.chosenDateTime}
             />
             <div>
               <div className="text-lg">{fullName}</div>
@@ -64,7 +65,7 @@ export function AttendeeSlate({
             {member.role === "ATTENDEE" && <Icons.account />}
             <div>{member.role}</div>
           </div>{" "}
-          {dateNotSelected && (
+          {dateNotSelected ? (
             <Button
               className="flex items-center gap-1 w-max"
               onClick={() => setAvailabilitiesOpen(!availabilitiesOpen)}
@@ -77,6 +78,22 @@ export function AttendeeSlate({
                 <Icons.down className="w-4 h-4" />
               )}
             </Button>
+          ) : (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <span>RSVP: </span>
+              {member.rsvpStatus === "YES" && (
+                <Icons.check className="text-green-500" />
+              )}
+              {member.rsvpStatus === "MAYBE" && (
+                <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
+                  ?
+                </span>
+              )}
+              {member.rsvpStatus === "NO" && (
+                <Icons.close className="text-red-500" />
+              )}
+              <span className="text-foreground">{member.rsvpStatus}</span>
+            </div>
           )}
           <div className="flex items-center gap-1">
             {!isMe && canPromote && member.role === "ATTENDEE" && (

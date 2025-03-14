@@ -41,6 +41,7 @@ export default function MemberIcon({
   key,
   className,
   align,
+  eventDateTime,
 }: {
   member: Member;
   userRole: $Enums.Role;
@@ -48,6 +49,7 @@ export default function MemberIcon({
   key: string;
   className?: string;
   align?: "start" | "center" | "end";
+  eventDateTime: Date | null;
 }) {
   const { firstName, lastName, username, imageUrl } = member.person;
   const role = member.role;
@@ -112,6 +114,26 @@ export default function MemberIcon({
                   </span>
                 </div>
               </DropdownMenuLabel>
+              {eventDateTime && (
+                <DropdownMenuLabel>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <span>RSVP: </span>
+                    {member.rsvpStatus === "YES" && (
+                      <Icons.check className="text-green-500" />
+                    )}
+                    {member.rsvpStatus === "MAYBE" && (
+                      <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
+                        ?
+                      </span>
+                    )}
+                    {member.rsvpStatus === "NO" && (
+                      <Icons.close className="text-red-500" />
+                    )}
+                    <span className="text-foreground">{member.rsvpStatus}</span>
+                  </div>
+                </DropdownMenuLabel>
+              )}
+
               {(canKick || canPromote) && <DropdownMenuSeparator />}
 
               {canPromote && (

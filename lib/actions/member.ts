@@ -6,7 +6,7 @@ import { $Enums, Membership } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { pusherServer } from "../pusher-server";
 import { getEventQuery, getPersonQuery } from "../query-definitions";
-import { createNotification } from "./notification";
+import { createEventModNotifs, createNotification } from "./notification";
 
 export async function updateMembershipRole({
   membership,
@@ -131,6 +131,53 @@ export async function deleteMembership(membership: Membership) {
       { message: "Data updated" }
     );
     return { success: "Membership Deleted" };
+  } catch (error) {
+    return { error: error };
+  }
+}
+
+export async function updateRSVP(eventId: string, status: $Enums.Status) {
+  try {
+    const { userId }: { userId: string | null } = auth();
+
+    if (!userId) return { error: "Current user not found" };
+
+    const membership = await db.membership.findFirst({
+      where: {
+        personId: userId,
+        eventId: eventId,
+      },
+    });
+
+    if (!membership) return { error: "You are not a member of this event" };
+
+    if (membership.role === "ORGANIZER") {
+      return { error: "Organizer cannot RSVP" };
+    }
+
+    await db.membership.update({
+      where: {
+        id: membership.id,
+      },
+      data: {
+        rsvpStatus: status,
+      },
+    });
+    revalidatePath("/");
+    const queryDefinition = getEventQuery(eventId);
+    pusherServer.trigger(
+      queryDefinition.pusherChannel,
+      queryDefinition.pusherEvent,
+      { message: "Data updated" }
+    );
+
+    createEventModNotifs({
+      type: "USER_RSVP",
+      eventId: eventId,
+      rsvp: status,
+    });
+
+    return { success: "RSVP Updated" };
   } catch (error) {
     return { error: error };
   }

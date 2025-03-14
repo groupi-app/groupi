@@ -210,6 +210,7 @@ export function DateCard({
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
+                          eventDateTime={null}
                         />
                       ))}
                   </div>
@@ -226,6 +227,7 @@ export function DateCard({
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
+                          eventDateTime={null}
                         />
                       ))}
                   </div>
@@ -242,6 +244,7 @@ export function DateCard({
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
+                          eventDateTime={null}
                         />
                       ))}
                   </div>

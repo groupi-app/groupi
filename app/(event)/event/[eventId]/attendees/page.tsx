@@ -1,3 +1,4 @@
+import { AttendeeCount } from "@/components/attendee-count";
 import { AttendeeList } from "@/components/attendee-list";
 import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
@@ -55,7 +56,13 @@ export default async function Page({
             </Link>
           </div>
           <div className="py-4">
-            <h1 className="font-heading text-4xl">Attendees</h1>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="font-heading text-4xl">Attendees</h1>
+              <h1 className="font-heading text-4xl text-muted-foreground">
+                ({data.success?.event.memberships.length})
+              </h1>
+            </div>
+            <AttendeeCount eventId={eventId} />
             <AttendeeList eventId={eventId} />
           </div>
         </div>

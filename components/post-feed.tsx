@@ -14,11 +14,13 @@ export function PostFeed({ eventId }: { eventId: string }) {
     userRole,
     userId,
     members,
+    eventDateTime,
   }: {
     posts: ReplyAuthorPost[];
     userRole: $Enums.Role;
     userId: string;
     members: Member[];
+    eventDateTime: Date | null;
   } = postData;
 
   const container = {
@@ -61,6 +63,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
                     userRole={userRole}
                     post={post}
                     member={members.find((m) => m.personId === post.authorId)}
+                    eventDateTime={eventDateTime}
                   />
                 </motion.div>
               ))}
