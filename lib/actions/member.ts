@@ -63,6 +63,7 @@ export async function updateMembershipRole({
         datetime: null,
         postId: null,
         read: false,
+        rsvp: null,
       });
     } else if (role === "ATTENDEE") {
       await createNotification({
@@ -73,6 +74,7 @@ export async function updateMembershipRole({
         datetime: null,
         postId: null,
         read: false,
+        rsvp: null,
       });
     }
     return { success: "Role Updated" };
