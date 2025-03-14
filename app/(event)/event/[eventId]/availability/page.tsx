@@ -1,4 +1,5 @@
 import { AvailabilityForm } from "@/components/availability-form";
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { getEventPotentialDateTimes } from "@/lib/actions/availability";
@@ -16,7 +17,7 @@ export default async function Page({
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("User not authenticated");
+    return <ErrorPage message={"User not found"} />;
   }
 
   let potentialDateTimes: PotentialDateTimeWithAvailabilities[] = [];
@@ -24,13 +25,13 @@ export default async function Page({
   const res = await getEventPotentialDateTimes(eventId);
 
   if (res.error) {
-    throw new Error(res.error);
+    return <ErrorPage message={res.error} />;
   } else if (res.success) {
     potentialDateTimes = res.success.potentialDateTimes;
   }
 
   if (!potentialDateTimes || potentialDateTimes.length === 0) {
-    throw new Error("Voting is not enabled for this event");
+    return <ErrorPage message={"Voting is not enabled for this event"} />;
   }
 
   const getTimezoneString = () => {
@@ -44,7 +45,7 @@ export default async function Page({
   );
 
   if (userMembership?.role === "ORGANIZER") {
-    throw new Error("Organizers cannot vote on availabilities");
+    return <ErrorPage message={"Organizers cannot vote on availabilities"} />;
   }
 
   const memberAvailabilities = userMembership?.availabilities;

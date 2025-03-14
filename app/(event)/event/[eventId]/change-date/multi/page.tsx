@@ -1,5 +1,7 @@
 import { EditEventMultiDate } from "@/components/edit-event-multi-date";
+import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs";
 import { notFound } from "next/navigation";
 
 export default async function Page({
@@ -8,15 +10,39 @@ export default async function Page({
   params: { eventId: string };
 }) {
   const { eventId } = params;
-  const res = await db.event.findUnique({
+
+  const { userId }: { userId: string | null } = auth();
+
+  const event = await db.event.findUnique({
     where: { id: eventId },
-    select: { potentialDateTimes: true },
+    include: {
+      memberships: true,
+      potentialDateTimes: true,
+    },
   });
-  if (!res) {
+
+  if (!event) {
     notFound();
   }
-  const dates = res.potentialDateTimes
-    ? res.potentialDateTimes.map((pdt) => pdt.dateTime)
+
+  const userMembership = event.memberships.find(
+    (membership) => membership.personId === userId
+  );
+
+  if (!userMembership) {
+    return <ErrorPage message={"You are not a member of this event."} />;
+  }
+
+  if (userMembership.role !== "ORGANIZER") {
+    return (
+      <ErrorPage
+        message={"You do not have permission to change the date of this event."}
+      />
+    );
+  }
+
+  const dates = event.potentialDateTimes
+    ? event.potentialDateTimes.map((pdt) => pdt.dateTime)
     : undefined;
   return (
     <div className="container max-w-4xl">

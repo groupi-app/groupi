@@ -18,7 +18,9 @@ export function useEventDataQuery(
 export function useEventPosts(eventId: string) {
   return useEventDataQuery(eventId, (data: ActionResponse<EventData>) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return {
@@ -34,7 +36,9 @@ export function useEventPosts(eventId: string) {
 export function useEventMembers(eventId: string) {
   return useEventDataQuery(eventId, (data: ActionResponse<EventData>) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return {
@@ -49,7 +53,9 @@ export function useEventMembers(eventId: string) {
 export function useEventHeader(eventId: string) {
   return useEventDataQuery(eventId, (data: ActionResponse<EventData>) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return { ...data.success.event, userRole: data.success.userRole };

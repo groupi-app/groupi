@@ -1,4 +1,5 @@
 import { DateCardList } from "@/components/date-card-list";
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import QueryProvider from "@/components/providers/query-provider";
 import { Button } from "@/components/ui/button";
@@ -27,11 +28,13 @@ export default async function Page({
   }
 
   if (data.error) {
-    throw new Error(data.error);
+    return <ErrorPage message={data.error} />;
   }
 
   if (data.success?.userRole !== "ORGANIZER") {
-    throw new Error("You do not have permission to view this page.");
+    return (
+      <ErrorPage message={"You do not have permission to view this page."} />
+    );
   }
 
   const queryDefinition = getPDTQuery(eventId);

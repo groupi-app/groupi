@@ -1,6 +1,8 @@
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default async function Page({
@@ -9,14 +11,36 @@ export default async function Page({
   params: { eventId: string };
 }) {
   const { eventId } = params;
+
+  const { userId }: { userId: string | null } = auth();
+
   const event = await db.event.findFirst({
     where: {
       id: eventId,
     },
+    include: {
+      memberships: true,
+    },
   });
 
   if (!event) {
-    throw new Error("Event not found");
+    return <ErrorPage message={"Event not found"} />;
+  }
+
+  const userMembership = event.memberships.find(
+    (membership) => membership.personId === userId
+  );
+
+  if (!userMembership) {
+    return <ErrorPage message={"You are not a member of this event."} />;
+  }
+
+  if (userMembership.role !== "ORGANIZER") {
+    return (
+      <ErrorPage
+        message={"You do not have permission to change the date of this event."}
+      />
+    );
   }
 
   return (

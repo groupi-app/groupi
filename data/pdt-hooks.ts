@@ -21,7 +21,9 @@ export function usePDTDataQuery(
 export function usePDTs(eventId: string) {
   return usePDTDataQuery(eventId, (data: ActionResponse<PDTData>) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return {

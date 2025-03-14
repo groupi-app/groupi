@@ -20,7 +20,9 @@ export function useInvites(eventId: string) {
     eventId,
     (data: ActionResponse<EventInviteData>) => {
       if (data.error) {
-        throw new Error(data.error);
+        return {
+          error: data.error,
+        };
       }
       if (data.success) {
         return {

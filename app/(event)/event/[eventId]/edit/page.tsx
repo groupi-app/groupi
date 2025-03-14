@@ -1,4 +1,5 @@
 import EditEventInfo from "@/components/edit-event-info";
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env.mjs";
@@ -23,13 +24,13 @@ export default async function Page({
   });
 
   if (!event) {
-    throw new Error("Event not found");
+    return <ErrorPage message={"Event not found"} />;
   }
 
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("User not found");
+    return <ErrorPage message={"User not found"} />;
   }
 
   const userMembership = event.memberships.find(
@@ -37,11 +38,13 @@ export default async function Page({
   );
 
   if (!userMembership) {
-    throw new Error("User not a member of this event");
+    return <ErrorPage message={"You are not a member of this event."} />;
   }
 
   if (userMembership.role !== "ORGANIZER") {
-    throw new Error("You do not have permission to edit this event");
+    return (
+      <ErrorPage message={"You do not have permission to edit this event."} />
+    );
   }
 
   return (

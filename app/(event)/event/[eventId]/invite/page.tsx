@@ -1,3 +1,4 @@
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import { InviteCardList } from "@/components/invite-card-list";
 import QueryProvider from "@/components/providers/query-provider";
@@ -21,17 +22,17 @@ export default async function Page({
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("Unauthorized");
+    return <ErrorPage message={"User not found"} />;
   }
 
   const data = await getEventInviteData(eventId);
 
   if (!data) {
-    throw new Error("Event not found.");
+    return <ErrorPage message={"Event not found"} />;
   }
 
   if (data.error) {
-    throw new Error(data.error);
+    return <ErrorPage message={data.error} />;
   }
 
   const event = data.success;

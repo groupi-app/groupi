@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs";
 
 import { redirect } from "next/navigation";
 
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import {
   Card,
@@ -22,7 +23,7 @@ export default async function Page({
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("User not found");
+    return <ErrorPage message={"User not found"} />;
   }
 
   const invite = await db.invite.findUnique({
@@ -39,7 +40,7 @@ export default async function Page({
   });
 
   if (!invite) {
-    throw new Error("Invite does not exist");
+    return <ErrorPage message={"Invite not found"} />;
   }
 
   const currentMembership = invite.event.memberships.find(
@@ -55,20 +56,12 @@ export default async function Page({
     invite.expiresAt !== null &&
     new Date().getTime() > invite.expiresAt.getTime()
   ) {
-    return (
-      <div>
-        <p>Invite has expired</p>
-      </div>
-    );
+    return <ErrorPage message={"Invite has expired"} />;
   }
 
   // check if invite is out of uses
   if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
-    return (
-      <div>
-        <p>Invite has no uses remaining</p>
-      </div>
-    );
+    return <ErrorPage message={"Invite has no uses remaining"} />;
   }
 
   return (

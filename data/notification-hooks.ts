@@ -20,7 +20,9 @@ export function useNotifications(userId: string) {
     userId,
     (data: ActionResponse<NotificationWithPersonEventPost[]>) => {
       if (data.error) {
-        throw new Error(data.error);
+        return {
+          error: data.error,
+        };
       }
       if (data.success) {
         return {

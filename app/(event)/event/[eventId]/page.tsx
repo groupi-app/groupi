@@ -1,3 +1,4 @@
+import ErrorPage from "@/components/error";
 import { EventHeader } from "@/components/event-header";
 import { MemberList } from "@/components/member-list";
 import { NewPostButton } from "@/components/new-post-button";
@@ -27,7 +28,7 @@ export default async function Page({
   }
 
   if (data.error) {
-    throw new Error(data.error);
+    return <ErrorPage message={data.error} />;
   }
 
   const userMembership = data.success?.event.memberships.find(
@@ -35,7 +36,7 @@ export default async function Page({
   );
 
   if (!userMembership) {
-    throw new Error("You do not have permission to view this page.");
+    return <ErrorPage message={"You are not a member of this event."} />;
   }
 
   if (

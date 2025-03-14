@@ -1,5 +1,7 @@
 import { EditEventSingleDate } from "@/components/edit-event-single-date";
+import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs";
 import { notFound } from "next/navigation";
 
 export default async function Page({
@@ -8,14 +10,37 @@ export default async function Page({
   params: { eventId: string };
 }) {
   const { eventId } = params;
-  const res = await db.event.findUnique({
+
+  const { userId }: { userId: string | null } = auth();
+
+  const event = await db.event.findUnique({
     where: { id: eventId },
-    select: { chosenDateTime: true },
+    include: {
+      memberships: true,
+    },
   });
-  if (!res) {
+  if (!event) {
     notFound();
   }
-  const datetime = res.chosenDateTime ?? undefined;
+
+  const userMembership = event.memberships.find(
+    (membership) => membership.personId === userId
+  );
+
+  if (!userMembership) {
+    return <ErrorPage message={"You are not a member of this event."} />;
+  }
+
+  if (userMembership.role !== "ORGANIZER") {
+    return (
+      <ErrorPage
+        message={"You do not have permission to change the date of this event."}
+      />
+    );
+  }
+
+  const datetime = event.chosenDateTime ?? undefined;
+
   return (
     <div className="container max-w-4xl">
       <h1 className="text-4xl font-heading mt-10">Event Date/Time</h1>
