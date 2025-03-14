@@ -15,6 +15,7 @@ import { getFullName } from "@/lib/utils";
 import { ReplyAuthorEventPost } from "@/types";
 import { $Enums } from "@prisma/client";
 import Link from "next/link";
+import ErrorPage from "./error";
 import MemberIcon from "./member-icon";
 
 export function FullPost({ postId }: { postId: string }) {
@@ -35,7 +36,7 @@ export function FullPost({ postId }: { postId: string }) {
   const { event, author } = post;
 
   if (!userRole) {
-    throw new Error("User is not a member of this event");
+    return <ErrorPage message={"You are not a member of this event."} />;
   }
 
   const member = post.event.memberships.find(

@@ -1,4 +1,5 @@
 import { Editor } from "@/components/editor";
+import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs";
 
@@ -10,7 +11,7 @@ export default async function Page({
   const { userId }: { userId: string | null } = auth();
 
   if (!userId) {
-    throw new Error("User not found.");
+    return <ErrorPage message={"User not found"} />;
   }
 
   const { eventId } = params;
@@ -24,11 +25,11 @@ export default async function Page({
   });
 
   if (!event) {
-    throw new Error("Event not found.");
+    return <ErrorPage message={"Event not found"} />;
   }
 
   if (!event.memberships.some((membership) => membership.personId === userId)) {
-    throw new Error("You are not a member of this event.");
+    return <ErrorPage message={"You are not a member of this event."} />;
   }
 
   return (

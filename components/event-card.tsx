@@ -1,6 +1,7 @@
 import { formatDate, getFullName, getInitials } from "@/lib/utils";
 import { EventWithMembers } from "@/types";
 import Link from "next/link";
+import ErrorPage from "./error";
 import { Icons } from "./icons";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
@@ -17,7 +18,7 @@ export function EventCard({ event }: { event: EventWithMembers }) {
   } = event;
   const owner = memberships.find((m) => m.role === "ORGANIZER")?.person;
   if (!owner) {
-    throw new Error("Owner not found");
+    return <ErrorPage message={"Unable to load event."} />;
   }
   return (
     <Link href={`/event/${id}`}>

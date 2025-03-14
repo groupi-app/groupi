@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+import ErrorPage from "@/components/error";
 import { FullPost } from "@/components/full-post";
 import QueryProvider from "@/components/providers/query-provider";
 import Replies from "@/components/replies";
@@ -25,11 +26,11 @@ export default async function Page({ params }: { params: { postId: string } }) {
   }
 
   if (data.error) {
-    throw new Error(data.error);
+    return <ErrorPage message={data.error} />;
   }
 
   if (!data.success) {
-    throw new Error("An error occurred");
+    return <ErrorPage message={"Post not found"} />;
   }
 
   const queryDefinition = getPostQuery(postId);

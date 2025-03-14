@@ -17,7 +17,9 @@ export function usePostDataQuery(
 export function usePostData(postId: string) {
   return usePostDataQuery(postId, (data: PostData) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return data.success;
@@ -28,7 +30,9 @@ export function usePostData(postId: string) {
 export function usePostReplies(postId: string) {
   return usePostDataQuery(postId, (data: PostData) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return {

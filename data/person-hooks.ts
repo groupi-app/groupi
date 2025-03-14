@@ -18,7 +18,9 @@ export function usePersonDataQuery(
 export function usePersonMemberships(userId: string) {
   return usePersonDataQuery(userId, (data: ActionResponse<PersonData>) => {
     if (data.error) {
-      throw new Error(data.error);
+      return {
+        error: data.error,
+      };
     }
     if (data.success) {
       return {

@@ -1,4 +1,5 @@
 import { Editor } from "@/components/editor";
+import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs";
 
@@ -21,7 +22,9 @@ export default async function Page({ params }: { params: { postId: string } }) {
   const eventId = post?.eventId || "";
 
   if (authorId !== userId) {
-    throw new Error("You are not the author of this post");
+    return (
+      <ErrorPage message={"You do not have permission to edit this post."} />
+    );
   }
 
   return (

@@ -1,4 +1,5 @@
 import { AttendeeList } from "@/components/attendee-list";
+import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import QueryProvider from "@/components/providers/query-provider";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export default async function Page({
   }
 
   if (data.error) {
-    throw new Error(data.error);
+    return <ErrorPage message={data.error} />;
   }
 
   const queryDefinition = getEventQuery(eventId);
