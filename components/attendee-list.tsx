@@ -33,17 +33,19 @@ const item = {
 };
 
 export function AttendeeList({ eventId }: { eventId: string }) {
-  const [sortBy, setSortBy] = useState<"name" | "role">("role");
+  const [sortBy, setSortBy] = useState<"name" | "role" | "rsvp">("role");
   const { data: memberData } = useEventMembers(eventId);
 
   const {
     members,
     userRole,
     userId,
+    eventDateTime,
   }: {
     members: MembershipWithAvailabilities[];
     userRole: $Enums.Role;
     userId: string;
+    eventDateTime: Date | null;
   } = memberData;
 
   const sort = (
@@ -65,6 +67,30 @@ export function AttendeeList({ eventId }: { eventId: string }) {
             getFullName(b.person.firstName, b.person.lastName)
           )
         );
+      case "rsvp":
+        // sort by rsvp status descending, then by name ascending if roles are equal
+        // yes > maybe > no > pending
+        // not selectable if eventDateTime is null
+        if (!eventDateTime) return 0;
+        return (
+          (b.rsvpStatus === "YES"
+            ? 3
+            : b.rsvpStatus === "MAYBE"
+            ? 2
+            : b.rsvpStatus === "NO"
+            ? 1
+            : 0) -
+            (a.rsvpStatus === "YES"
+              ? 3
+              : a.rsvpStatus === "MAYBE"
+              ? 2
+              : a.rsvpStatus === "NO"
+              ? 1
+              : 0) ||
+          getFullName(a.person.firstName, a.person.lastName).localeCompare(
+            getFullName(b.person.firstName, b.person.lastName)
+          )
+        );
     }
   };
 
@@ -73,7 +99,9 @@ export function AttendeeList({ eventId }: { eventId: string }) {
       <div className="w-36 mt-4">
         <Select
           value={sortBy}
-          onValueChange={(value) => setSortBy(value as "name" | "role")}
+          onValueChange={(value) =>
+            setSortBy(value as "name" | "role" | "rsvp")
+          }
         >
           <SelectTrigger>
             <SelectValue placeholder="Sort By" />
@@ -83,6 +111,9 @@ export function AttendeeList({ eventId }: { eventId: string }) {
               <SelectLabel>Sort By</SelectLabel>
               <SelectItem value="role">Role</SelectItem>
               <SelectItem value="name">Name</SelectItem>
+              {eventDateTime && (
+                <SelectItem value="rsvp">RSVP Status</SelectItem>
+              )}
             </SelectGroup>
           </SelectContent>
         </Select>

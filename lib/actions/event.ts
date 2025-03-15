@@ -7,7 +7,7 @@ import {
   ReplyAuthorPost,
 } from "@/types";
 import { auth } from "@clerk/nextjs";
-import { $Enums, Event } from "@prisma/client";
+import { Event } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
 import { cache } from "react";
@@ -20,7 +20,7 @@ export interface EventData {
     posts: ReplyAuthorPost[];
     memberships: MembershipWithAvailabilities[];
   };
-  userRole: $Enums.Role;
+  userMembership: MembershipWithAvailabilities;
   userId: string;
 }
 
@@ -82,13 +82,13 @@ export const fetchEventData = cache(
       )
         return { error: "You are not a member of this event" };
 
-      const userRole = event.memberships.find(
+      const userMembership = event.memberships.find(
         (membership) => membership.personId === userId
-      )?.role;
+      );
 
-      if (!userRole) return { error: "Role not found" };
+      if (!userMembership) return { error: "Role not found" };
 
-      return { success: { event, userRole, userId } };
+      return { success: { event, userMembership, userId } };
     } catch (error) {
       return { error: "Could not fetch event data" };
     }
@@ -302,6 +302,18 @@ export async function updateEventDateTime({
       },
     });
 
+    await db.membership.updateMany({
+      where: {
+        eventId,
+        role: {
+          not: "ORGANIZER",
+        },
+      },
+      data: {
+        rsvpStatus: "PENDING",
+      },
+    });
+
     if (!updatedEvent) return { error: "Could not update event" };
 
     const eventQueryDefinition = getEventQuery(eventId);
@@ -397,20 +409,27 @@ export async function updateEventPotentialDateTimes({
     for (const potentialDateTime of updatedEvent.potentialDateTimes) {
       const eventRes = await db.availability.create({
         data: {
-          membershipId: event.memberships[0].id,
+          membershipId: userMembership.id,
           status: "YES",
           potentialDateTimeId: potentialDateTime.id,
         },
       });
       if (!eventRes) {
-        await db.event.delete({
-          where: {
-            id: eventId,
-          },
-        });
         return { error: "Could not update availability" };
       }
     }
+
+    await db.membership.updateMany({
+      where: {
+        eventId,
+        role: {
+          not: "ORGANIZER",
+        },
+      },
+      data: {
+        rsvpStatus: "PENDING",
+      },
+    });
 
     revalidatePath("/");
 

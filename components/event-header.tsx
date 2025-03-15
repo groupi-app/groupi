@@ -5,6 +5,7 @@ import { useEventHeader } from "@/data/event-hooks";
 import { HeaderData } from "@/types";
 import Link from "next/link";
 import { DeleteEventDialog } from "./deleteEventDialog";
+import { EventRSVP } from "./event-rsvp";
 import { LeaveEventDialog } from "./leaveEventDialog";
 import { Button } from "./ui/button";
 import { Dialog, DialogTrigger } from "./ui/dialog";
@@ -17,8 +18,13 @@ import {
 
 export function EventHeader({ eventId }: { eventId: string }) {
   const { data: headerData } = useEventHeader(eventId);
-  const { title, location, chosenDateTime, description, userRole }: HeaderData =
-    headerData;
+  const {
+    title,
+    location,
+    chosenDateTime,
+    description,
+    userMembership,
+  }: HeaderData = headerData;
 
   const eventDateStr =
     chosenDateTime != null
@@ -27,7 +33,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
           year: "numeric",
           month: "numeric",
           day: "numeric",
-          hour: "2-digit",
+          hour: "numeric",
           minute: "2-digit",
         })
       : null;
@@ -47,7 +53,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
               <Icons.more className="w-8 h-8" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {userRole === "ORGANIZER" ? (
+              {userMembership.role === "ORGANIZER" ? (
                 <>
                   <Link href={`/event/${eventId}/edit`}>
                     <DropdownMenuItem className="cursor-pointer">
@@ -94,7 +100,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
             <Icons.date className="w-6 h-6 text-primary" />
             {eventDateStr != null ? (
               <span data-test="event-datetime">{eventDateStr}</span>
-            ) : userRole === "ORGANIZER" ? (
+            ) : userMembership.role === "ORGANIZER" ? (
               <Link href={`/event/${eventId}/date-select`}>
                 <Button
                   className="flex items-center gap-1"
@@ -120,8 +126,13 @@ export function EventHeader({ eventId }: { eventId: string }) {
           </div>
         </div>
         {description && <p data-test="event-description">{description}</p>}
+        <EventRSVP
+          title={title}
+          dateTime={chosenDateTime}
+          userMembership={userMembership}
+        />
       </header>
-      {userRole === "ORGANIZER" ? (
+      {userMembership.role === "ORGANIZER" ? (
         <DeleteEventDialog id={eventId} />
       ) : (
         <LeaveEventDialog id={eventId} />

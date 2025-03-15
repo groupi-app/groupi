@@ -1,6 +1,7 @@
 "use client";
 import MemberIcon from "@/components/member-icon";
 import { useEventMembers } from "@/data/event-hooks";
+import { getFullName } from "@/lib/utils";
 import { Member } from "@/types";
 import { $Enums } from "@prisma/client";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -17,7 +18,13 @@ export function MemberList({ eventId }: { eventId: string }) {
     members,
     userRole,
     userId,
-  }: { members: Member[]; userRole: $Enums.Role; userId: string } = memberData;
+    eventDateTime,
+  }: {
+    members: Member[];
+    userRole: $Enums.Role;
+    userId: string;
+    eventDateTime: Date | null;
+  } = memberData;
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -55,6 +62,16 @@ export function MemberList({ eventId }: { eventId: string }) {
     show: { opacity: 1, x: 0 },
   };
 
+  const sortByRole = (a: Member, b: Member) => {
+    return (
+      (b.role === "ORGANIZER" ? 3 : b.role === "MODERATOR" ? 2 : 1) -
+        (a.role === "ORGANIZER" ? 3 : a.role === "MODERATOR" ? 2 : 1) ||
+      getFullName(a.person.firstName, a.person.lastName).localeCompare(
+        getFullName(b.person.firstName, b.person.lastName)
+      )
+    );
+  };
+
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -80,7 +97,7 @@ export function MemberList({ eventId }: { eventId: string }) {
       >
         <LayoutGroup>
           <AnimatePresence>
-            {members.map((member, i) => {
+            {members.sort(sortByRole).map((member, i) => {
               return i < visibleIcons - 1 ? (
                 <MemberIcon
                   userId={userId}
@@ -88,6 +105,7 @@ export function MemberList({ eventId }: { eventId: string }) {
                   member={member}
                   key={member.id}
                   align={i === 0 ? "start" : "center"}
+                  eventDateTime={eventDateTime}
                 />
               ) : (
                 i === visibleIcons - 1 && (

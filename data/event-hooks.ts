@@ -25,9 +25,10 @@ export function useEventPosts(eventId: string) {
     if (data.success) {
       return {
         posts: data.success.event.posts,
-        userRole: data.success.userRole,
+        userRole: data.success.userMembership.role,
         userId: data.success.userId,
         members: data.success.event.memberships,
+        eventDateTime: data.success.event.chosenDateTime,
       };
     }
   });
@@ -43,8 +44,9 @@ export function useEventMembers(eventId: string) {
     if (data.success) {
       return {
         members: data.success.event.memberships,
-        userRole: data.success.userRole,
+        userRole: data.success.userMembership.role,
         userId: data.success.userId,
+        eventDateTime: data.success.event.chosenDateTime,
       };
     }
   });
@@ -58,7 +60,10 @@ export function useEventHeader(eventId: string) {
       };
     }
     if (data.success) {
-      return { ...data.success.event, userRole: data.success.userRole };
+      return {
+        ...data.success.event,
+        userMembership: data.success.userMembership,
+      };
     }
   });
 }

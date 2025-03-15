@@ -106,6 +106,7 @@ export function FullPost({ postId }: { postId: string }) {
                     userId={userId}
                     userRole={userRole}
                     member={member}
+                    eventDateTime={event.chosenDateTime}
                     align="start"
                   />
                 ) : (

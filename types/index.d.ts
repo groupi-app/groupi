@@ -26,7 +26,7 @@ export type NavConfig = {
 };
 
 export type HeaderData = Event & {
-  userRole: "ORGANIZER" | "MODERATOR" | "ATTENDEE";
+  userMembership: MembershipWithAvailabilities;
 };
 
 export type UserInfo = {

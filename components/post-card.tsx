@@ -21,9 +21,16 @@ interface PostCardProps {
   userRole: $Enums.Role;
   userId: string;
   member: Member | undefined;
+  eventDateTime: Date | null;
 }
 
-export function PostCard({ post, userRole, userId, member }: PostCardProps) {
+export function PostCard({
+  post,
+  userRole,
+  userId,
+  member,
+  eventDateTime,
+}: PostCardProps) {
   const { id, title, content, author, createdAt, editedAt, replies, authorId } =
     post;
   if (!author) return null;
@@ -43,6 +50,7 @@ export function PostCard({ post, userRole, userId, member }: PostCardProps) {
                 member={member}
                 userId={userId}
                 userRole={userRole}
+                eventDateTime={eventDateTime}
                 className="border-transparent"
                 align="start"
               />

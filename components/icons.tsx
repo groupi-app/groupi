@@ -16,6 +16,7 @@ import {
   Pencil as Edit,
   Heading2,
   Infinity as Infinite,
+  Info,
   UserPlus as Invite,
   Italic,
   UserX as Kick,
@@ -50,6 +51,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  info: Info,
   read: Read,
   unread: Unread,
   bell: Bell,

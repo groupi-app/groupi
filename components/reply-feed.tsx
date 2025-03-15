@@ -13,11 +13,13 @@ export default function ReplyFeed({ postId }: { postId: string }) {
     members,
     userId,
     userRole,
+    eventDateTime,
   }: {
     replies: AuthorReply[];
     members: Member[];
     userId: string;
     userRole: $Enums.Role;
+    eventDateTime: Date | null;
   } = replyData;
 
   const container = {
@@ -57,6 +59,7 @@ export default function ReplyFeed({ postId }: { postId: string }) {
                 member={members.find((m) => m.personId === reply.authorId)}
                 userId={userId}
                 userRole={userRole}
+                eventDateTime={eventDateTime}
               />
             </motion.div>
           ))}
