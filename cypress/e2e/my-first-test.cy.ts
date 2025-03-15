@@ -62,7 +62,7 @@ describe("template spec", () => {
             year: "numeric",
             month: "numeric",
             day: "numeric",
-            hour: "2-digit",
+            hour: "numeric",
             minute: "2-digit",
           })
         );
