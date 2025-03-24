@@ -250,7 +250,11 @@ export async function updateEventDetails({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     await createEventNotifs({ eventId: id, type: "EVENT_EDITED" });
 
@@ -334,7 +338,11 @@ export async function updateEventDateTime({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     revalidatePath("/");
 
@@ -451,7 +459,11 @@ export async function updateEventPotentialDateTimes({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     await createEventNotifs({ eventId, type: "DATE_RESET" });
 
