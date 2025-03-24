@@ -275,7 +275,11 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     await createEventNotifs({
       eventId,

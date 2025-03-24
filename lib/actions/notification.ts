@@ -583,7 +583,11 @@ export const createEventNotifs = async ({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     return {
       success: notifications.count,
@@ -669,7 +673,11 @@ export const createEventModNotifs = async ({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     return {
       success: notifications.count,
@@ -755,7 +763,11 @@ export const createPostNotifs = async ({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     return {
       success: notifications.count,

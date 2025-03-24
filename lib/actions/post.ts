@@ -136,7 +136,11 @@ export async function createPost({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     await createEventNotifs({ eventId, type: "NEW_POST", postId: res.id });
 
