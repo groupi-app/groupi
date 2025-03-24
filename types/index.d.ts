@@ -14,6 +14,8 @@ export type NavItem = {
 
 export type MainNavItem = NavItem;
 
+export type SettingsNavItem = NavItem;
+
 export type SiteConfig = {
   name: string;
   description: string;
@@ -23,6 +25,10 @@ export type SiteConfig = {
 
 export type NavConfig = {
   mainNav: MainNavItem[];
+};
+
+export type SettingsNavConfig = {
+  settingsNav: SettingsNavItem[];
 };
 
 export type HeaderData = Event & {
@@ -222,3 +228,15 @@ const notificationWithPersonEventPost =
 export type NotificationWithPersonEventPost = Prisma.NotificationGetPayload<
   typeof notificationWithPersonEventPost
 >;
+
+const settingsData = Prisma.validator<Prisma.PersonSettingsDefaultArgs>()({
+  include: {
+    notificationMethods: {
+      include: {
+        notifications: true,
+      },
+    },
+  },
+});
+
+export type SettingsData = Prisma.PersonSettingsGetPayload<typeof settingsData>;

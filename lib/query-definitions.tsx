@@ -63,3 +63,13 @@ export const getNotificationQuery: (userId: string) => QueryDefinition = (
     pusherEvent: "update_notification_data",
   };
 };
+
+export const getSettingsQuery: (userId: string) => QueryDefinition = (
+  userId: string
+) => {
+  return {
+    queryKey: `settingsData__${userId}`,
+    pusherChannel: `settings__${userId}`,
+    pusherEvent: "update_settings_data",
+  };
+};

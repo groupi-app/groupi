@@ -167,7 +167,7 @@ function InnerLayout({
         <MainNav userInfo={userInfo} items={navConfig.mainNav} />
       </header>
       <main className="grow">{children}</main>
-      <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
+      <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24">
         <div className="container mx-auto py-4 flex gap-8 items-center">
           <ModeToggle />
           <div className="flex flex-col gap-2">

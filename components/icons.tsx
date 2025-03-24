@@ -38,6 +38,7 @@ import {
   Save,
   Shield,
   ShieldOff,
+  PanelLeft as Sidebar,
   LogIn as SignIn,
   LogOut as SignOut,
   Strikethrough,
@@ -51,6 +52,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  sidebar: Sidebar,
   info: Info,
   read: Read,
   unread: Unread,
