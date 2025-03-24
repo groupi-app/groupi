@@ -97,7 +97,11 @@ export async function createReply({
       });
     }
 
-    pusherServer.triggerBatch(events);
+    if (events.length > 0) {
+      await pusherServer.triggerBatch(events);
+    } else {
+      console.log("No events to send");
+    }
 
     await createPostNotifs({ postId, type: "NEW_REPLY" });
 
