@@ -83,7 +83,7 @@ export function EventRSVP({
                 )}
                 <span>{userMembership.rsvpStatus}</span>
               </div>
-              <Icons.arrowRight className="w-4 h-4" />
+              <Icons.arrowRight className="size-4" />
             </Button>
           </DialogTrigger>
         ) : (
@@ -92,14 +92,14 @@ export function EventRSVP({
               <div className="flex items-center justify-between">
                 <div>
                   <AlertTitle className="flex items-center gap-1">
-                    <Icons.info className="w-6 h-6 text-primary" />{" "}
+                    <Icons.info className="size-6 text-primary" />{" "}
                     <span>Your RSVP is Pending!</span>
                   </AlertTitle>
                   <AlertDescription className="text-muted-foreground">
                     Please click here to RSVP to this event.
                   </AlertDescription>
                 </div>
-                <Icons.arrowRight className="w-6 h-6 text-muted-foreground " />
+                <Icons.arrowRight className="size-6 text-muted-foreground " />
               </div>
             </Alert>
           </DialogTrigger>
@@ -187,7 +187,7 @@ export function EventRSVP({
                 {isSaving ? (
                   <Icons.spinner className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Icons.save className="w-4 h-4" />
+                  <Icons.save className="size-4" />
                 )}
                 Save
               </Button>

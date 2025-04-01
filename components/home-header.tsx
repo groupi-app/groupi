@@ -35,7 +35,7 @@ export function HomeHeader() {
     "living",
   ];
   const generateSequence = () => {
-    let sequence = [];
+    let sequence: (number | string)[] = ["doing"];
     let wordPoolCopy = [...wordPool]; // Create a copy of endPool to shuffle
 
     // Shuffle the endPoolCopy array

@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { Analytics } from "@/components/analytics";
 import { MainNav } from "@/components/main-nav";
 import { ModeToggle } from "@/components/mode-toggle";
-import ClerkProvider from "@/components/providers/my-clerk-provider";
 import QueryProvider from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
@@ -18,7 +17,9 @@ import { navConfig } from "@/config/nav";
 import { fetchNotificationsForPerson } from "@/lib/actions/notification";
 import { getNotificationQuery } from "@/lib/query-definitions";
 import { UserInfo } from "@/types";
-import { currentUser } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+
 import {
   dehydrate,
   HydrationBoundary,
@@ -122,16 +123,16 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-          fontHeading.variable
-        )}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ClerkProvider>
+    <ClerkProvider>
+      <html suppressHydrationWarning lang="en">
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            fontSans.variable,
+            fontHeading.variable
+          )}
+        >
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TooltipProvider>
               {user !== null && queryDefinition !== null ? (
                 <QueryProvider queryDefinition={queryDefinition}>
@@ -143,13 +144,13 @@ export default async function RootLayout({
                 <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
               )}
             </TooltipProvider>
-          </ClerkProvider>
-        </ThemeProvider>
-        <Analytics />
-        <Toaster />
-        <TailwindIndicator />
-      </body>
-    </html>
+          </ThemeProvider>
+          <Analytics />
+          <Toaster />
+          <TailwindIndicator />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
 
@@ -165,7 +166,7 @@ function InnerLayout({
       <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
         <MainNav userInfo={userInfo} items={navConfig.mainNav} />
       </header>
-      <main className="flex-grow">{children}</main>
+      <main className="grow">{children}</main>
       <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
         <div className="container mx-auto py-4 flex gap-8 items-center">
           <ModeToggle />

@@ -57,7 +57,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
         </h1>
         <Dialog>
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <Icons.more />
               </Button>
@@ -71,7 +71,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
                     }}
                     className="flex items-center gap-1"
                   >
-                    <Icons.read className="w-4 h-4" />
+                    <Icons.read className="size-4" />
                     <span>Mark all as read</span>
                   </div>
                 </DropdownMenuItem>
@@ -87,7 +87,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
                     }}
                     className="flex items-center gap-1"
                   >
-                    <Icons.delete className="w-4 h-4" />
+                    <Icons.delete className="size-4" />
                     <span>Delete All</span>
                   </div>
                 </DropdownMenuItem>

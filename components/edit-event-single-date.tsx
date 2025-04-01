@@ -99,10 +99,8 @@ export function EditEventSingleDate({
         title: "Date/time Updated",
         description: "The date/time has been updated.",
       });
-      setIsSaving(false);
       router.push(`/event/${res.success.id}`);
     }
-    setIsSaving(false);
   }
 
   return (
@@ -200,6 +198,7 @@ export function EditEventSingleDate({
                     className="flex items-center gap-1"
                     type="submit"
                     form="edit-date-form"
+                    disabled={isSaving}
                   >
                     {isSaving ? (
                       <Icons.spinner className="h-4 w-4 animate-spin" />

@@ -19,7 +19,7 @@ export default function RepliesIcons({ replies }: { replies: AuthorReply[] }) {
   return (
     <div className="flex items-center">
       {authors.map((author, i) => (
-        <Avatar className="w-6 h-6" key={i}>
+        <Avatar className="size-6" key={i}>
           <AvatarImage src={author.imageUrl} alt={author.username} />
           <AvatarFallback>
             {author.firstName?.toString()[0] +

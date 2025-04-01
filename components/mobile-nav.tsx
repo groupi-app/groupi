@@ -13,12 +13,7 @@ import { Icons } from "@/components/icons";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { MainNavItem, UserInfo } from "@/types";
-import {
-  SignInButton,
-  SignOutButton,
-  SignedIn,
-  SignedOut,
-} from "@clerk/nextjs";
+import { SignInButton, SignOutButton } from "@clerk/nextjs";
 import { NotificationCount } from "./notification-count";
 import { ProfileSlate } from "./profile-slate";
 import { useNotificationCloseContext } from "./providers/notif-close-provider";
@@ -38,13 +33,13 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
           <Link href="/">
             <Icons.logo width="36" height="36" viewBox="0 0 197 225" />
           </Link>
-          <SheetTrigger className="relative flex items-center justify-center w-12 h-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground">
+          <SheetTrigger className="relative flex items-center justify-center size-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground">
             {userInfo.id ? (
               <NotificationCount userId={userInfo.id}>
-                <Icons.menu className="w-8 h-8" />
+                <Icons.menu className="size-8" />
               </NotificationCount>
             ) : (
-              <Icons.menu className="w-8 h-8" />
+              <Icons.menu className="size-8" />
             )}
           </SheetTrigger>
         </div>
@@ -62,63 +57,63 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
               </SheetClose>
             </SheetTitle>
           </SheetHeader>
-          <SignedIn>
-            {userInfo.id && (
-              <nav className="grid grid-flow-row mt-2 text-sm auto-rows-max">
-                {items.map((item, index) => (
-                  <SheetClose key={index} asChild>
-                    <Link
-                      href={item.disabled ? "#" : item.href}
-                      className={cn(
-                        "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground",
-                        item.disabled && "cursor-not-allowed opacity-60"
-                      )}
-                    >
-                      {item.title}
-                    </Link>
-                  </SheetClose>
-                ))}
-                <div className="mt-6">
-                  <ProfileSlate userInfo={userInfo} />
-                  <div className="flex flex-col mt-2">
-                    <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
-                      <SheetClose>
-                        <button
-                          onClick={() => {
-                            window.Clerk.openUserProfile();
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <Icons.account className="w-4 h-4" />
-                          <span>My Account</span>
-                        </button>
-                      </SheetClose>
-                    </div>
-                    <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
-                      <SheetClose>
-                        <SignOutButton>
-                          <div className="flex items-center gap-2">
-                            <Icons.signOut className="w-4 h-4" />
-                            <span>Sign Out</span>
-                          </div>
-                        </SignOutButton>
-                      </SheetClose>
-                    </div>
+
+          {userInfo.id && (
+            <nav className="grid grid-flow-row mt-2 text-sm auto-rows-max">
+              {items.map((item, index) => (
+                <SheetClose key={index} asChild>
+                  <Link
+                    href={item.disabled ? "#" : item.href}
+                    className={cn(
+                      "flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground",
+                      item.disabled && "cursor-not-allowed opacity-60"
+                    )}
+                  >
+                    {item.title}
+                  </Link>
+                </SheetClose>
+              ))}
+              <div className="mt-6">
+                <ProfileSlate userInfo={userInfo} />
+                <div className="flex flex-col mt-2">
+                  <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
+                    <SheetClose>
+                      <button
+                        onClick={() => {
+                          window.Clerk.openUserProfile();
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Icons.account className="size-4" />
+                        <span>My Account</span>
+                      </button>
+                    </SheetClose>
+                  </div>
+                  <div className="w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer">
+                    <SheetClose>
+                      <SignOutButton>
+                        <div className="flex items-center gap-2">
+                          <Icons.signOut className="size-4" />
+                          <span>Sign Out</span>
+                        </div>
+                      </SignOutButton>
+                    </SheetClose>
                   </div>
                 </div>
-              </nav>
-            )}
-          </SignedIn>
-          <SignedOut>
+              </div>
+            </nav>
+          )}
+
+          {!userInfo.id && (
             <SheetClose>
               <SignInButton>
                 <div className="flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4">
-                  <Icons.signIn className="w-4 h-4" />
+                  <Icons.signIn className="size-4" />
                   <span>Sign In</span>
                 </div>
               </SignInButton>
             </SheetClose>
-          </SignedOut>
+          )}
           {children}
         </SheetContent>
       </Sheet>

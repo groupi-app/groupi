@@ -1,3 +1,5 @@
+import { setupClerkTestingToken } from "@clerk/testing/cypress";
+
 describe("template spec", () => {
   before(() => {
     cy.task("seedUsers");
@@ -13,6 +15,7 @@ describe("template spec", () => {
       defaultCommandTimeout: 10000,
     },
     () => {
+      setupClerkTestingToken();
       // Log in
       cy.visit("/", { failOnStatusCode: false });
       cy.get("[data-test='profile-dropdown']").should("not.exist");
@@ -111,7 +114,12 @@ describe("template spec", () => {
       cy.get("[data-test='full-post-back']").should("exist").click();
 
       // Log out
-      cy.clerkSignOut();
+      cy.clerkSignOut().then(() => {
+        cy.log("Clerk: Finished signing out.");
+      });
+      cy.on("fail", (error) => {
+        cy.log("Clerk: Error during sign out:", error.message);
+      });
     }
   );
 });

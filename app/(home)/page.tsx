@@ -28,7 +28,7 @@ export default function Home() {
       </div>
       <Link href="/create">
         <Button className="flex items-center gap-1">
-          <Icons.arrowRight className="w-4 h-4" />
+          <Icons.arrowRight className="size-4" />
           <span>Get Started!</span>
         </Button>
       </Link>

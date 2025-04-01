@@ -1,7 +1,7 @@
 "use server";
 
 import { ReplyAuthorEventPost } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
 import { db } from "../db";
@@ -48,7 +48,7 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
 
   if (!post) return { error: "Post not found" };
 
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) return { error: "User not found" };
 
@@ -82,7 +82,7 @@ export async function createPost({
   eventId: string;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 
@@ -160,7 +160,7 @@ export async function updatePost({
   content: string;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 
@@ -208,7 +208,7 @@ export async function updatePost({
 
 export async function deletePost({ id }: { id: string }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 

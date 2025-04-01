@@ -4,15 +4,16 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env.mjs";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import Script from "next/script";
 
-export default async function Page({
-  params,
-}: {
-  params: { eventId: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ eventId: string }>;
+  }
+) {
+  const params = await props.params;
   const { eventId } = params;
   const event = await db.event.findUnique({
     where: {
@@ -27,7 +28,7 @@ export default async function Page({
     return <ErrorPage message={"Event not found"} />;
   }
 
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return <ErrorPage message={"User not found"} />;

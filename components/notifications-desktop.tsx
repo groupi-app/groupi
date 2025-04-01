@@ -13,7 +13,7 @@ export function NotificationsDesktop({ userId }: { userId: string }) {
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" className="rounded-full">
           <NotificationCount userId={userId}>
-            <Icons.bell className="w-5 h-5" />
+            <Icons.bell className="size-5" />
           </NotificationCount>
         </Button>
       </PopoverTrigger>

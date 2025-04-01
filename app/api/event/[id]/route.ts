@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const id = context.params.id;
+  const id = (await context.params).id;
 
   const result = await db.event.findUnique({
     where: {

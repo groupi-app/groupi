@@ -38,7 +38,7 @@ export default function MemberIcon({
   member,
   userRole,
   userId,
-  key,
+  itemKey,
   className,
   align,
   eventDateTime,
@@ -46,7 +46,7 @@ export default function MemberIcon({
   member: Member;
   userRole: $Enums.Role;
   userId: string;
-  key: string;
+  itemKey: string;
   className?: string;
   align?: "start" | "center" | "end";
   eventDateTime: Date | null;
@@ -81,7 +81,7 @@ export default function MemberIcon({
         className
       )}
       layout
-      key={key}
+      key={itemKey}
     >
       <Dialog>
         <Tooltip>
@@ -148,7 +148,7 @@ export default function MemberIcon({
                     >
                       <DialogTrigger asChild>
                         <div className="flex items-center gap-1">
-                          <Icons.shield className="w-4 h-4" />
+                          <Icons.shield className="size-4" />
                           <span>Promote</span>
                         </div>
                       </DialogTrigger>
@@ -165,7 +165,7 @@ export default function MemberIcon({
                     >
                       <DialogTrigger asChild>
                         <div className="flex items-center gap-1">
-                          <Icons.shieldOff className="w-4 h-4" />
+                          <Icons.shieldOff className="size-4" />
                           <span>Demote</span>
                         </div>
                       </DialogTrigger>
@@ -183,7 +183,7 @@ export default function MemberIcon({
                 >
                   <DialogTrigger asChild>
                     <div className="flex items-center gap-1">
-                      <Icons.kick className="w-4 h-4" />
+                      <Icons.kick className="size-4" />
                       <span>Kick</span>
                     </div>
                   </DialogTrigger>

@@ -61,7 +61,7 @@ export function FullPost({ postId }: { postId: string }) {
             </Link>
             {(isMod || userId === post.authorId) && (
               <>
-                <DropdownMenuTrigger className="w-8 h-8 hover:bg-accent transition-all rounded-md flex items-center justify-center">
+                <DropdownMenuTrigger className="size-8 hover:bg-accent transition-all rounded-md flex items-center justify-center">
                   <Icons.more />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -69,7 +69,7 @@ export function FullPost({ postId }: { postId: string }) {
                     <DropdownMenuItem className="cursor-pointer" asChild>
                       <Link href={`/post/${post.id}/edit`}>
                         <div className="flex items-center gap-1">
-                          <Icons.edit className="w-4 h-4" />
+                          <Icons.edit className="size-4" />
                           <span>Edit</span>
                         </div>
                       </Link>
@@ -82,7 +82,7 @@ export function FullPost({ postId }: { postId: string }) {
                   >
                     <DialogTrigger asChild>
                       <div className="flex items-center gap-1">
-                        <Icons.delete className="w-4 h-4" />
+                        <Icons.delete className="size-4" />
                         <span>Delete</span>
                       </div>
                     </DialogTrigger>
@@ -102,7 +102,7 @@ export function FullPost({ postId }: { postId: string }) {
               <div className="flex items-center gap-2">
                 {member ? (
                   <MemberIcon
-                    key={member.id}
+                    itemKey={member.id}
                     userId={userId}
                     userRole={userRole}
                     member={member}
@@ -110,7 +110,7 @@ export function FullPost({ postId }: { postId: string }) {
                     align="start"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary" />
+                  <div className="size-10 rounded-full bg-primary" />
                 )}
 
                 <span className="text-muted-foreground">{fullName}</span>

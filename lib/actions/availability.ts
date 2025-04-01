@@ -1,7 +1,7 @@
 "use server";
 
 import { ActionResponse, PotentialDateTimeWithAvailabilities } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { $Enums } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
@@ -23,7 +23,7 @@ export interface PDTData {
 export async function getEventPotentialDateTimes(
   eventId: string
 ): Promise<ActionResponse<PDTData>> {
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return { error: "User not found" };
@@ -93,7 +93,7 @@ export async function updateMembershipAvailabilities(
   }[]
 ) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       console.log("User not found");
@@ -199,7 +199,7 @@ export async function updateMembershipAvailabilities(
 
 export async function chooseDateTime(eventId: string, pdtId: string) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       console.log("User not found");

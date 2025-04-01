@@ -8,6 +8,7 @@ import Replies from "@/components/replies";
 import { markPostNotifsAsRead } from "@/lib/actions/notification";
 import { fetchPostData } from "@/lib/actions/post";
 import { getPostQuery } from "@/lib/query-definitions";
+import { auth } from "@clerk/nextjs/server";
 import {
   HydrationBoundary,
   QueryClient,
@@ -16,8 +17,14 @@ import {
 
 import { notFound } from "next/navigation";
 
-export default async function Page({ params }: { params: { postId: string } }) {
+export default async function Page(props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
   const { postId } = params;
+  const { userId }: { userId: string | null } = await auth();
+
+  if (!userId) {
+    return <ErrorPage message={"User not found"} />;
+  }
 
   const data = await fetchPostData(postId);
 
@@ -50,7 +57,7 @@ export default async function Page({ params }: { params: { postId: string } }) {
       <HydrationBoundary state={dehydrate(queryClient)}>
         <div className="container max-w-4xl">
           <FullPost postId={postId} />
-          <Replies postId={postId} />
+          <Replies postId={postId} userId={userId} />
         </div>
       </HydrationBoundary>
     </QueryProvider>

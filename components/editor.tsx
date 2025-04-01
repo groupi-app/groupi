@@ -208,11 +208,12 @@ export function Editor({
               <Button
                 className="w-full md:w-max flex items-center gap-1"
                 type="submit"
+                disabled={isSaving}
               >
                 {isSaving ? (
                   <Icons.spinner className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Icons.save className="w-4 h-4" />
+                  <Icons.save className="size-4" />
                 )}
                 <span>Save</span>{" "}
               </Button>
@@ -221,11 +222,12 @@ export function Editor({
                 data-test="post-editor-submit"
                 className="w-full md:w-max flex items-center gap-1"
                 type="submit"
+                disabled={isSaving}
               >
                 {isSaving ? (
                   <Icons.spinner className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Icons.submit className="w-4 h-4" />
+                  <Icons.submit className="size-4" />
                 )}
                 <span>Submit</span>
               </Button>
@@ -242,10 +244,10 @@ export function Editor({
           </DialogHeader>
           <DialogFooter>
             <div className="flex items-center gap-2">
-              <DialogClose className="flex-grow" asChild>
+              <DialogClose className="grow" asChild>
                 <Button variant="ghost">Cancel</Button>
               </DialogClose>
-              <Link className="flex-grow" href={backUrl}>
+              <Link className="grow" href={backUrl}>
                 <Button className="w-full" variant="destructive">
                   Discard
                 </Button>

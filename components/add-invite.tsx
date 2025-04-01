@@ -93,9 +93,9 @@ export function AddInvite({ eventId }: { eventId: string }) {
   }
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Button className="flex items-center gap-1">
-          <Icons.plus className="w-4 h-4" />
+          <Icons.plus className="size-4" />
           <span>New Invite</span>
         </Button>
       </DialogTrigger>
@@ -210,11 +210,15 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     <span>Cancel</span>
                   </Button>
                 </DialogClose>
-                <Button className="flex items-center gap-1" type="submit">
+                <Button
+                  className="flex items-center gap-1"
+                  type="submit"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
-                    <Icons.spinner className="w-4 h-4 animate-spin" />
+                    <Icons.spinner className="size-4 animate-spin" />
                   ) : (
-                    <Icons.plus className="w-4 h-4" />
+                    <Icons.plus className="size-4" />
                   )}
 
                   <span>Add</span>

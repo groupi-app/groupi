@@ -89,10 +89,8 @@ export function NewEventSingleDate() {
         title: "Event Created",
         description: "The event was created successfully.",
       });
-      setIsSaving(false);
       router.push(`/event/${res.success.id}`);
     }
-    setIsSaving(false);
   }
 
   return (
@@ -167,6 +165,7 @@ export function NewEventSingleDate() {
               data-test="new-event-single-submit"
               className="flex items-center gap-1"
               type="submit"
+              disabled={isSaving}
             >
               {isSaving ? (
                 <Icons.spinner className="h-4 w-4 animate-spin" />

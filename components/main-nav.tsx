@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { siteConfig } from "@/config/site";
 import { MainNavItem, UserInfo } from "@/types";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
 import * as React from "react";
 import { MobileNav } from "./mobile-nav";
@@ -34,41 +34,37 @@ export function MainNav({ items, userInfo }: MainNavProps) {
               {siteConfig.name}
             </span>
           </Link>
-          <SignedIn>
-            {items?.length ? (
-              <NavigationMenu>
-                <NavigationMenuList
-                  className={"hidden gap-4 font-semibold text-sm md:flex"}
-                >
-                  {items?.map((item, i) => (
-                    <NavigationMenuItem key={i}>
-                      <NavigationMenuLink
-                        className={
-                          "px-2 py-2 transition-colors dark:hover:bg-accent rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10"
-                        }
-                        href={item.href}
-                      >
-                        {item.title}
-                      </NavigationMenuLink>
-                    </NavigationMenuItem>
-                  ))}
-                </NavigationMenuList>
-              </NavigationMenu>
-            ) : null}
-          </SignedIn>
+          {userInfo.id && items?.length ? (
+            <NavigationMenu>
+              <NavigationMenuList
+                className={"hidden gap-4 font-semibold text-sm md:flex"}
+              >
+                {items?.map((item, i) => (
+                  <NavigationMenuItem key={i}>
+                    <NavigationMenuLink
+                      className={
+                        "px-2 py-2 transition-colors dark:hover:bg-accent rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10"
+                      }
+                      href={item.href}
+                    >
+                      {item.title}
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          ) : null}
           <MobileNav userInfo={userInfo} items={items ? items : []} />
         </div>
-        <SignedIn>
-          {userInfo.id && (
-            <div className="hidden md:block">
-              <div className="flex items-center gap-3">
-                <NotificationsDesktop userId={userInfo.id} />
-                <ProfileDropdown userInfo={userInfo} />
-              </div>
+        {userInfo.id && (
+          <div className="hidden md:block">
+            <div className="flex items-center gap-3">
+              <NotificationsDesktop userId={userInfo.id} />
+              <ProfileDropdown userInfo={userInfo} />
             </div>
-          )}
-        </SignedIn>
-        <SignedOut>
+          </div>
+        )}
+        {!userInfo.id && (
           <div
             className={
               "hidden md:block px-2 py-2 transition-colors hover:bg-primary-foreground/10 dark:hover:bg-accent rounded-md font-semibold cursor-pointer"
@@ -77,11 +73,11 @@ export function MainNav({ items, userInfo }: MainNavProps) {
             <SignInButton>
               <div className="flex items-center gap-1">
                 <span className="whitespace-nowrap">Sign In</span>
-                <Icons.signIn className="w-5 h-5" />
+                <Icons.signIn className="size-5" />
               </div>
             </SignInButton>
           </div>
-        </SignedOut>
+        )}
       </NotificationCloseContextProvider>
     </div>
   );
