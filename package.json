@@ -11,8 +11,8 @@
     "migrate": "prisma migrate dev",
     "cypress:open": "cypress open",
     "seed-clerk": "npx tsx lib/seed-clerk.ts",
-    "e2e": "start-server-and-test dev http://localhost:3000 \"cypress open --e2e\"",
-    "e2e:headless": "start-server-and-test dev http://localhost:3000 \"cypress run --e2e\""
+    "e2e": "npx concurrently --kill-others-on-fail --success first \"npm run dev\" \"npx wait-on http://localhost:3000 && npx cypress run --e2e\"",
+    "e2e:headless": "npx concurrently --kill-others-on-fail --success first \"npm run dev\" \"npx wait-on http://localhost:3000 && npx cypress run --e2e\""
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.25.5",
