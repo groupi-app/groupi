@@ -1,7 +1,7 @@
 "use server";
 
 import { ActionResponse, EventInviteData } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { db } from "../db";
@@ -34,7 +34,7 @@ export const getEventInviteData = cache(
         return { error: "Event not found." };
       }
 
-      const { userId }: { userId: string | null } = auth();
+      const { userId }: { userId: string | null } = await auth();
 
       if (!userId) {
         return { error: "User not found." };
@@ -71,7 +71,7 @@ export async function createInvite({
   expiresAt: Date | null;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return { error: "User not found" };
@@ -116,7 +116,7 @@ export async function createInvite({
 
 export async function deleteInvite(id: string) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return { error: "User not found" };
@@ -167,7 +167,7 @@ export async function deleteInvite(id: string) {
 
 export async function deleteInvites(ids: string[]) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return { error: "User not found" };

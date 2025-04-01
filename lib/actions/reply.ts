@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
 import { db } from "../db";
@@ -36,7 +36,7 @@ export async function createReply({
     });
     if (!post) return { error: "Post not found" };
 
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
     if (!userId) return { error: "User not found" };
 
     if (authorId !== userId) return { error: "User not authorized" };
@@ -119,7 +119,7 @@ export async function updateReply({
   text: string;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
     if (!userId) return { error: "User not found" };
 
     const reply = await db.reply.findUnique({
@@ -185,7 +185,7 @@ export async function deleteReply({ id }: { id: string }) {
     });
     if (!reply) return { error: "Reply not found" };
 
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
     if (!userId) return { error: "User not found" };
 
     const currentUserMembership = reply.post.event.memberships.find(

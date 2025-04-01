@@ -4,17 +4,18 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { getEventPotentialDateTimes } from "@/lib/actions/availability";
 import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
-export default async function Page({
-  params,
-}: {
-  params: { eventId: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ eventId: string }>;
+  }
+) {
+  const params = await props.params;
   const { eventId } = params;
 
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return <ErrorPage message={"User not found"} />;

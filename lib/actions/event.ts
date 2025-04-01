@@ -6,7 +6,7 @@ import {
   MembershipWithAvailabilities,
   ReplyAuthorPost,
 } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { Event } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { BatchEvent } from "pusher";
@@ -73,7 +73,7 @@ export const fetchEventData = cache(
 
       if (!event) return { error: "Event not found" };
 
-      const { userId }: { userId: string | null } = auth();
+      const { userId }: { userId: string | null } = await auth();
 
       if (!userId) return { error: "User not found" };
 
@@ -103,7 +103,7 @@ export async function createEvent({
   potentialDateTimes,
 }: CreateEventProps) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 
@@ -190,7 +190,7 @@ export async function updateEventDetails({
   location,
 }: UpdateEventDetailsProps) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 
@@ -273,7 +273,7 @@ export async function updateEventDateTime({
   dateTime: string;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 
@@ -367,7 +367,7 @@ export async function updateEventPotentialDateTimes({
   potentialDateTimes: string[];
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 
@@ -476,7 +476,7 @@ export async function updateEventPotentialDateTimes({
 
 export async function deleteEvent(eventId: string) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 
@@ -526,7 +526,7 @@ export async function deleteEvent(eventId: string) {
 
 export async function leaveEvent(eventId: string) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "User not found" };
 

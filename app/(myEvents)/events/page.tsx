@@ -3,7 +3,7 @@ import { EventList } from "@/components/event-list";
 import QueryProvider from "@/components/providers/query-provider";
 import { fetchPersonData } from "@/lib/actions/person";
 import { getPersonQuery } from "@/lib/query-definitions";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import {
   HydrationBoundary,
   QueryClient,
@@ -12,7 +12,7 @@ import {
 import { notFound } from "next/navigation";
 
 export default async function Page() {
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
   if (!userId) {
     return <ErrorPage message={"User not found"} />;
   }

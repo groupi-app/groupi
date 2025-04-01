@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { Analytics } from "@/components/analytics";
 import { MainNav } from "@/components/main-nav";
 import { ModeToggle } from "@/components/mode-toggle";
-import ClerkProvider from "@/components/providers/my-clerk-provider";
 import QueryProvider from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
@@ -18,7 +17,9 @@ import { navConfig } from "@/config/nav";
 import { fetchNotificationsForPerson } from "@/lib/actions/notification";
 import { getNotificationQuery } from "@/lib/query-definitions";
 import { UserInfo } from "@/types";
-import { currentUser } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+
 import {
   dehydrate,
   HydrationBoundary,
@@ -122,16 +123,22 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-          fontHeading.variable
-        )}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "hsl(285, 100%, 34%)", // change this value (you can get it from you're css variables, make sure to include 'hsl' and commas)
+        },
+      }}
+    >
+      <html lang="en">
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            fontSans.variable,
+            fontHeading.variable
+          )}
+        >
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TooltipProvider>
               {user !== null && queryDefinition !== null ? (
                 <QueryProvider queryDefinition={queryDefinition}>
@@ -143,13 +150,13 @@ export default async function RootLayout({
                 <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
               )}
             </TooltipProvider>
-          </ClerkProvider>
-        </ThemeProvider>
-        <Analytics />
-        <Toaster />
-        <TailwindIndicator />
-      </body>
-    </html>
+          </ThemeProvider>
+          <Analytics />
+          <Toaster />
+          <TailwindIndicator />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
 

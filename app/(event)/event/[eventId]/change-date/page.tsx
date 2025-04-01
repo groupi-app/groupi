@@ -2,17 +2,18 @@ import ErrorPage from "@/components/error";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
-export default async function Page({
-  params,
-}: {
-  params: { eventId: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ eventId: string }>;
+  }
+) {
+  const params = await props.params;
   const { eventId } = params;
 
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   const event = await db.event.findFirst({
     where: {

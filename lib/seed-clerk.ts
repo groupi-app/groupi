@@ -4,7 +4,7 @@ import { db } from "./db";
 
 // wipe all users in clerk
 async function wipeUsers(clerkClient: any) {
-  const existingUsers = await clerkClient.users.getUserList();
+  const { data: existingUsers } = await clerkClient.users.getUserList();
   await Promise.all(
     existingUsers.map((user: User) => clerkClient.users.deleteUser(user.id))
   );

@@ -14,11 +14,12 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function Page({
-  params,
-}: {
-  params: { eventId: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ eventId: string }>;
+  }
+) {
+  const params = await props.params;
   const { eventId } = params;
 
   const data = await getEventPotentialDateTimes(eventId);

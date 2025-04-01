@@ -1,6 +1,6 @@
 import { AcceptInviteButton } from "@/components/invite-accept";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 
 import { redirect } from "next/navigation";
 
@@ -15,12 +15,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function Page({
-  params,
-}: {
-  params: { inviteId: string };
-}) {
-  const { userId }: { userId: string | null } = auth();
+export default async function Page(
+  props: {
+    params: Promise<{ inviteId: string }>;
+  }
+) {
+  const params = await props.params;
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return <ErrorPage message={"User not found"} />;

@@ -1,7 +1,7 @@
 "use server";
 
 import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import {
   $Enums,
   Membership,
@@ -17,7 +17,7 @@ import { getNotificationQuery } from "../query-definitions";
 export const fetchNotificationsForPerson = async (
   id: string
 ): Promise<ActionResponse<NotificationWithPersonEventPost[]>> => {
-  const { userId }: { userId: string | null } = auth();
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return {
@@ -62,7 +62,7 @@ export const markNotificationAsRead = async (
   id: string
 ): Promise<ActionResponse<NotificationWithPersonEventPost>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -116,7 +116,7 @@ export const markAllNotificationsAsRead = async (): Promise<
   ActionResponse<number>
 > => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -163,7 +163,7 @@ export const markNotificationAsUnread = async (
   id: string
 ): Promise<ActionResponse<NotificationWithPersonEventPost>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -216,7 +216,7 @@ export const markEventNotifsAsRead = async (
   eventId: string
 ): Promise<ActionResponse<number>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -277,7 +277,7 @@ export const markPostNotifsAsRead = async (
   postId: string
 ): Promise<ActionResponse<number>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -328,7 +328,7 @@ export const deleteNotification = async (
   id: string
 ): Promise<ActionResponse<NotificationWithPersonEventPost>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -379,7 +379,7 @@ export const deleteAllNotifications = async (): Promise<
   ActionResponse<number>
 > => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -423,7 +423,7 @@ export const createNotification = async (
   notification: Omit<Notification, "id" | "createdAt" | "updatedAt" | "author">
 ): Promise<ActionResponse<Notification>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -521,7 +521,7 @@ export const createEventNotifs = async ({
   datetime?: Date;
 }): Promise<ActionResponse<number>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -609,7 +609,7 @@ export const createEventModNotifs = async ({
   rsvp?: $Enums.Status;
 }): Promise<ActionResponse<number>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
@@ -697,7 +697,7 @@ export const createPostNotifs = async ({
   type: "NEW_REPLY";
 }): Promise<ActionResponse<number>> => {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
