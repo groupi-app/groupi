@@ -112,11 +112,11 @@ export function formatRoleBadge(role: $Enums.Role | undefined) {
   }
   switch (role) {
     case "ATTENDEE":
-      return React.createElement(Icons.account, { className: "w-4 h-4" });
+      return React.createElement(Icons.account, { className: "size-4" });
     case "MODERATOR":
-      return React.createElement(Icons.shield, { className: "w-4 h-4" });
+      return React.createElement(Icons.shield, { className: "size-4" });
     case "ORGANIZER":
-      return React.createElement(Icons.crown, { className: "w-4 h-4" });
+      return React.createElement(Icons.crown, { className: "size-4" });
     default:
       return React.createElement("<span>Unknown</span>");
   }

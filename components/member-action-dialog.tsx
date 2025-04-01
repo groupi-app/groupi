@@ -110,10 +110,10 @@ export function MemberActionDialog({
       </DialogHeader>
       <DialogFooter>
         <div className="flex items-center gap-2">
-          <DialogClose className="flex-grow" asChild>
+          <DialogClose className="grow" asChild>
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
-          <DialogClose className="flex-grow" asChild>
+          <DialogClose className="grow" asChild>
             <Button
               onClick={() => {
                 if (action === MemberAction.KICK) {

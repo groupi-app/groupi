@@ -7,11 +7,11 @@ export function EventHeaderSkeleton() {
       <Skeleton className="h-12 w-96" />
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1 text-muted-foreground">
-          <Icons.location className="w-6 h-6" />
+          <Icons.location className="size-6" />
           <Skeleton className="h-4 w-24" />
         </div>
         <div className="flex items-center gap-1 text-muted-foreground">
-          <Icons.date className="w-6 h-6" />
+          <Icons.date className="size-6" />
           <Skeleton className="h-4 w-24" />
         </div>
       </div>

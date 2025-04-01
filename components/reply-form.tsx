@@ -84,11 +84,15 @@ export default function ReplyForm({
               </FormItem>
             )}
           />
-          <Button className="mt-5 flex items-center gap-1" type="submit">
+          <Button
+            className="mt-5 flex items-center gap-1"
+            type="submit"
+            disabled={isSaving}
+          >
             {isSaving ? (
               <Icons.spinner className="h-4 w-4 animate-spin" />
             ) : (
-              <Icons.submit className="w-4 h-4" />
+              <Icons.submit className="size-4" />
             )}
             Send
           </Button>

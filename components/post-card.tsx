@@ -46,7 +46,7 @@ export function PostCard({
           <div className="absolute top-4 left-3">
             {member ? (
               <MemberIcon
-                key={member.id}
+                itemKey={member.id}
                 member={member}
                 userId={userId}
                 userRole={userRole}
@@ -55,7 +55,7 @@ export function PostCard({
                 align="start"
               />
             ) : (
-              <div className="rounded-full w-10 h-10 bg-primary" />
+              <div className="rounded-full size-10 bg-primary" />
             )}
           </div>
           <Link
@@ -101,7 +101,7 @@ export function PostCard({
           </Link>
           {canDelete && (
             <>
-              <DropdownMenuTrigger className="absolute z-20 w-8 h-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center">
+              <DropdownMenuTrigger className="absolute z-20 size-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center">
                 <Icons.more />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -109,7 +109,7 @@ export function PostCard({
                   <DropdownMenuItem className="cursor-pointer" asChild>
                     <Link href={`/post/${id}/edit`}>
                       <div className="flex items-center gap-1">
-                        <Icons.edit className="w-4 h-4" />
+                        <Icons.edit className="size-4" />
                         <span>Edit</span>
                       </div>
                     </Link>
@@ -122,7 +122,7 @@ export function PostCard({
                 >
                   <DialogTrigger asChild>
                     <div className="flex items-center gap-1">
-                      <Icons.delete className="w-4 h-4" />
+                      <Icons.delete className="size-4" />
                       <span>Delete</span>
                     </div>
                   </DialogTrigger>
@@ -143,7 +143,7 @@ PostCard.Skeleton = function PostCardSkeleton() {
       <div className="w-full transition-all pt-4 px-5 pb-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-1">
-            <Skeleton className="w-10 h-10 rounded-full" />
+            <Skeleton className="size-10 rounded-full" />
             <div className="flex flex-col space-y-1">
               <Skeleton className="w-36 h-4" />
               <Skeleton className="w-16 h-3" />

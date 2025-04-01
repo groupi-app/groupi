@@ -49,8 +49,8 @@ export function EventHeader({ eventId }: { eventId: string }) {
             {title}
           </h1>
           <DropdownMenu>
-            <DropdownMenuTrigger className="w-12 h-12 hover:bg-accent transition-all rounded-md flex items-center justify-center">
-              <Icons.more className="w-8 h-8" />
+            <DropdownMenuTrigger className="size-12 hover:bg-accent transition-all rounded-md flex items-center justify-center">
+              <Icons.more className="size-8" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {userMembership.role === "ORGANIZER" ? (
@@ -58,7 +58,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
                   <Link href={`/event/${eventId}/edit`}>
                     <DropdownMenuItem className="cursor-pointer">
                       <div className="flex items-center gap-1">
-                        <Icons.edit className="w-4 h-4" />
+                        <Icons.edit className="size-4" />
                         <span>Edit Details</span>
                       </div>
                     </DropdownMenuItem>
@@ -66,14 +66,14 @@ export function EventHeader({ eventId }: { eventId: string }) {
                   <Link href={`/event/${eventId}/change-date`}>
                     <DropdownMenuItem className="cursor-pointer">
                       <div className="flex items-center gap-1">
-                        <Icons.date className="w-4 h-4" />
+                        <Icons.date className="size-4" />
                         <span>Change Date</span>
                       </div>
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuItem className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
                     <DialogTrigger className="flex items-center gap-1">
-                      <Icons.delete className="w-4 h-4" />
+                      <Icons.delete className="size-4" />
                       <span>Delete Event</span>
                     </DialogTrigger>
                   </DropdownMenuItem>
@@ -81,7 +81,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
               ) : (
                 <DropdownMenuItem className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground">
                   <DialogTrigger className="flex items-center gap-1">
-                    <Icons.leave className="w-4 h-4" />
+                    <Icons.leave className="size-4" />
                     <span>Leave Event</span>
                   </DialogTrigger>
                 </DropdownMenuItem>
@@ -92,12 +92,12 @@ export function EventHeader({ eventId }: { eventId: string }) {
         <div className="flex flex-col gap-2">
           {location && (
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Icons.location className="w-6 h-6 text-primary" />
+              <Icons.location className="size-6 text-primary" />
               <span data-test="event-location">{location}</span>
             </div>
           )}
           <div className="flex items-center gap-1 text-muted-foreground">
-            <Icons.date className="w-6 h-6 text-primary" />
+            <Icons.date className="size-6 text-primary" />
             {eventDateStr != null ? (
               <span data-test="event-datetime">{eventDateStr}</span>
             ) : userMembership.role === "ORGANIZER" ? (
@@ -108,7 +108,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
                   size={"sm"}
                 >
                   <span>Choose Date/Time</span>
-                  <Icons.arrowRight className="w-4 h-4" />
+                  <Icons.arrowRight className="size-4" />
                 </Button>
               </Link>
             ) : (
@@ -119,7 +119,7 @@ export function EventHeader({ eventId }: { eventId: string }) {
                   size={"sm"}
                 >
                   <span>Set Availability</span>
-                  <Icons.arrowRight className="w-4 h-4" />
+                  <Icons.arrowRight className="size-4" />
                 </Button>
               </Link>
             )}

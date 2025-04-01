@@ -146,11 +146,12 @@ export default function EditEventInfo({
             <Button
               className="w-full md:w-max flex items-center gap-1"
               type="submit"
+              disabled={isSaving}
             >
               {isSaving ? (
                 <Icons.spinner className="h-4 w-4 animate-spin" />
               ) : (
-                <Icons.save className="w-4 h-4" />
+                <Icons.save className="size-4" />
               )}
               <span>Save</span>
             </Button>

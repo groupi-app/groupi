@@ -41,7 +41,7 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
             className="rounded-full"
           >
             <NotificationCount userId={userInfo.id}>
-              <Icons.bell className="w-5 h-5" />
+              <Icons.bell className="size-5" />
             </NotificationCount>
           </Button>
         </div>

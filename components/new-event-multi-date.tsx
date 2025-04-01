@@ -114,10 +114,8 @@ export function NewEventMultiDate() {
         title: "Event Created",
         description: "The event was created successfully.",
       });
-      setIsSaving(false);
       router.push(`/event/${res.success.id}`);
     }
-    setIsSaving(false);
   }
 
   return (
@@ -172,7 +170,7 @@ export function NewEventMultiDate() {
                 className="flex items-center gap-1 max-w-sm w-full mx-auto"
                 type="submit"
               >
-                <Icons.plus className="w-5 h-5" />
+                <Icons.plus className="size-5" />
                 <span>Add {form1.watch("dates").length} Options</span>
               </Button>
             </div>
@@ -191,7 +189,7 @@ export function NewEventMultiDate() {
                       className="flex items-center gap-1 text-xs hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => form2.setValue("dateTimes", [])}
                     >
-                      <Icons.delete className="w-4 h-4" /> <span>Clear</span>
+                      <Icons.delete className="size-4" /> <span>Clear</span>
                     </Button>
                   </div>
                   {form2
@@ -226,7 +224,7 @@ export function NewEventMultiDate() {
                           size="icon"
                           className="hover:bg-destructive hover:text-destructive-foreground"
                         >
-                          <Icons.close className="w-4 h-4" />
+                          <Icons.close className="size-4" />
                         </Button>
                       </div>
                     ))}
@@ -244,7 +242,7 @@ export function NewEventMultiDate() {
           </Button>
         </Link>
         <Button
-          disabled={form2.watch("dateTimes").length < 2}
+          disabled={form2.watch("dateTimes").length < 2 || isSaving}
           className="flex items-center gap-1"
           type="submit"
           form="form2"

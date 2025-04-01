@@ -15,11 +15,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function Page(
-  props: {
-    params: Promise<{ inviteId: string }>;
-  }
-) {
+export default async function Page(props: {
+  params: Promise<{ inviteId: string }>;
+}) {
   const params = await props.params;
   const { userId }: { userId: string | null } = await auth();
 
@@ -79,12 +77,12 @@ export default async function Page(
           <div className="flex flex-col gap-2 my-4">
             {invite.event.location && (
               <div className="flex items-center gap-1 ">
-                <Icons.location className="w-6 h-6 text-primary" />
+                <Icons.location className="size-6 text-primary" />
                 <span data-test="event-location">{invite.event.location}</span>
               </div>
             )}
             <div className="flex items-center gap-1 ">
-              <Icons.date className="w-6 h-6 text-primary" />
+              <Icons.date className="size-6 text-primary" />
               {invite.event.chosenDateTime ? (
                 <span data-test="event-datetime">
                   {invite.event.chosenDateTime.toLocaleString([], {
@@ -101,7 +99,7 @@ export default async function Page(
               )}
             </div>
             <div className="flex items-center gap-1 ">
-              <Icons.people className="w-6 h-6 text-primary" />
+              <Icons.people className="size-6 text-primary" />
               <span>{invite.event.memberships.length}</span>
             </div>
           </div>

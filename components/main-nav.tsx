@@ -73,7 +73,7 @@ export function MainNav({ items, userInfo }: MainNavProps) {
             <SignInButton>
               <div className="flex items-center gap-1">
                 <span className="whitespace-nowrap">Sign In</span>
-                <Icons.signIn className="w-5 h-5" />
+                <Icons.signIn className="size-5" />
               </div>
             </SignInButton>
           </div>

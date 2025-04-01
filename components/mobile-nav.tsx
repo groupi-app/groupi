@@ -33,13 +33,13 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
           <Link href="/">
             <Icons.logo width="36" height="36" viewBox="0 0 197 225" />
           </Link>
-          <SheetTrigger className="relative flex items-center justify-center w-12 h-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground">
+          <SheetTrigger className="relative flex items-center justify-center size-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground">
             {userInfo.id ? (
               <NotificationCount userId={userInfo.id}>
-                <Icons.menu className="w-8 h-8" />
+                <Icons.menu className="size-8" />
               </NotificationCount>
             ) : (
-              <Icons.menu className="w-8 h-8" />
+              <Icons.menu className="size-8" />
             )}
           </SheetTrigger>
         </div>
@@ -84,7 +84,7 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                         }}
                         className="flex items-center gap-2"
                       >
-                        <Icons.account className="w-4 h-4" />
+                        <Icons.account className="size-4" />
                         <span>My Account</span>
                       </button>
                     </SheetClose>
@@ -93,7 +93,7 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                     <SheetClose>
                       <SignOutButton>
                         <div className="flex items-center gap-2">
-                          <Icons.signOut className="w-4 h-4" />
+                          <Icons.signOut className="size-4" />
                           <span>Sign Out</span>
                         </div>
                       </SignOutButton>
@@ -108,7 +108,7 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
             <SheetClose>
               <SignInButton>
                 <div className="flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4">
-                  <Icons.signIn className="w-4 h-4" />
+                  <Icons.signIn className="size-4" />
                   <span>Sign In</span>
                 </div>
               </SignInButton>

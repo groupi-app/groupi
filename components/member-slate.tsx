@@ -21,7 +21,7 @@ export function MemberSlate({
   return (
     <div className="flex items-center gap-3 py-2">
       <MemberIcon
-        key={key}
+        itemKey={key}
         member={member}
         userId={userId}
         userRole={userRole}

@@ -102,7 +102,7 @@ export function AvailabilityCard({
       >
         <div className="flex items-center gap-2 text-xs">
           <div className="flex items-center gap-1">
-            <Icons.check className="w-4 h-4 text-green-500" />
+            <Icons.check className="size-4 text-green-500" />
             <span>
               {pdt.availabilities
                 .filter((a) => a.status === "YES")
@@ -118,7 +118,7 @@ export function AvailabilityCard({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <Icons.close className="w-4 h-4 text-red-500" />
+            <Icons.close className="size-4 text-red-500" />
             <span>
               {pdt.availabilities
                 .filter((a) => a.status === "NO")
@@ -127,9 +127,9 @@ export function AvailabilityCard({
           </div>
         </div>
         {!listOpen ? (
-          <Icons.down className="w-4 h-4 text-muted-foreground" />
+          <Icons.down className="size-4 text-muted-foreground" />
         ) : (
-          <Icons.up className="w-4 h-4 text-muted-foreground" />
+          <Icons.up className="size-4 text-muted-foreground" />
         )}
       </div>
       {listOpen && (
@@ -137,7 +137,7 @@ export function AvailabilityCard({
           {pdt.availabilities.filter((a) => a.status === "YES").length > 0 && (
             <div>
               <div className="flex items-center gap-1">
-                <Icons.check className="w-6 h-6 text-green-500" />
+                <Icons.check className="size-6 text-green-500" />
                 <span>Yes</span>
               </div>
               <div className="flex flex-col divide-y ml-3">
@@ -148,7 +148,7 @@ export function AvailabilityCard({
                       key={a.membershipId + a.potentialDateTimeId}
                       className="flex items-center gap-2 py-2"
                     >
-                      <Avatar className="w-6 h-6">
+                      <Avatar className="size-6">
                         <AvatarFallback>
                           {getInitials(
                             a.membership.person.firstName,
@@ -185,7 +185,7 @@ export function AvailabilityCard({
                       key={a.membershipId + a.potentialDateTimeId}
                       className="flex items-center gap-2 py-2"
                     >
-                      <Avatar className="w-6 h-6">
+                      <Avatar className="size-6">
                         <AvatarFallback>
                           {getInitials(
                             a.membership.person.firstName,
@@ -208,7 +208,7 @@ export function AvailabilityCard({
           {pdt.availabilities.filter((a) => a.status === "NO").length > 0 && (
             <div>
               <div className="flex items-center gap-1">
-                <Icons.close className="w-6 h-6 text-red-500" />
+                <Icons.close className="size-6 text-red-500" />
                 <span>No</span>
               </div>
               <div className="flex flex-col divide-y ml-3">
@@ -219,7 +219,7 @@ export function AvailabilityCard({
                       key={a.membershipId + a.potentialDateTimeId}
                       className="flex items-center gap-2 py-2"
                     >
-                      <Avatar className="w-6 h-6">
+                      <Avatar className="size-6">
                         <AvatarFallback>
                           {getInitials(
                             a.membership.person.firstName,

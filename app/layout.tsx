@@ -123,14 +123,8 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: "hsl(285, 100%, 34%)", // change this value (you can get it from you're css variables, make sure to include 'hsl' and commas)
-        },
-      }}
-    >
-      <html lang="en">
+    <ClerkProvider>
+      <html suppressHydrationWarning lang="en">
         <body
           className={cn(
             "min-h-screen bg-background font-sans antialiased",
@@ -172,7 +166,7 @@ function InnerLayout({
       <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
         <MainNav userInfo={userInfo} items={navConfig.mainNav} />
       </header>
-      <main className="flex-grow">{children}</main>
+      <main className="grow">{children}</main>
       <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground">
         <div className="container mx-auto py-4 flex gap-8 items-center">
           <ModeToggle />

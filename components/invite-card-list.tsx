@@ -60,7 +60,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
       </div>
       <div className="flex items-center gap-2 ml-2 mt-4">
         <Checkbox
-          className="w-6 h-6 hover:bg-primary transition-all"
+          className="size-6 hover:bg-primary transition-all"
           checked={valid.every((invite) => selectedInvites.includes(invite.id))}
           onCheckedChange={() => {
             if (valid.every((invite) => selectedInvites.includes(invite.id))) {
@@ -78,7 +78,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
           <div>
             <div className="flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground">
               <h1 className="font-heading text-2xl ">Valid ({valid.length})</h1>
-              <div className="w-6 h-6">
+              <div className="size-6">
                 {showValid ? (
                   <Icons.up className="w-full h-full" />
                 ) : (
@@ -111,7 +111,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
       )}
       <div className="flex items-center gap-2 ml-2 mt-4">
         <Checkbox
-          className="w-6 h-6 hover:bg-primary transition-all"
+          className="size-6 hover:bg-primary transition-all"
           checked={
             expired.length > 0 &&
             expired.every((invite) => selectedInvites.includes(invite.id))
@@ -136,7 +136,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
               <h1 className="font-heading text-2xl ">
                 Expired ({expired.length})
               </h1>
-              <div className="w-6 h-6">
+              <div className="size-6">
                 {showExpired ? (
                   <Icons.up className="w-full h-full" />
                 ) : (
