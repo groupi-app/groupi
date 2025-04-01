@@ -24,11 +24,11 @@ export function EventCard({ event }: { event: EventWithMembers }) {
     <Link href={`/event/${id}`}>
       <div className="flex flex-col gap-2 border border-border shadow-md p-4 px-6 hover:bg-accent transition-all cursor-pointer rounded-md">
         <div className="flex flex-col md:flex-row gap-2 md:gap-8">
-          <div className="flex flex-col flex-grow gap-2 md:w-1/2">
+          <div className="flex flex-col grow gap-2 md:w-1/2">
             <h1 className="font-heading text-2xl">{title}</h1>
             <p className="text-muted-foreground">{description}</p>
             <div className="flex items-center gap-1">
-              <Avatar className="w-8 h-8">
+              <Avatar className="size-8">
                 <AvatarImage src={owner.imageUrl} />
                 <AvatarFallback>
                   {getInitials(owner.firstName, owner.lastName)}
@@ -45,12 +45,12 @@ export function EventCard({ event }: { event: EventWithMembers }) {
             <div className="flex flex-col gap-2">
               {location && (
                 <div className="flex items-center gap-1 ">
-                  <Icons.location className="w-6 h-6 text-primary" />
+                  <Icons.location className="size-6 text-primary" />
                   <span>{location}</span>
                 </div>
               )}
               <div className="flex items-center gap-1 ">
-                <Icons.date className="w-6 h-6 text-primary" />
+                <Icons.date className="size-6 text-primary" />
                 {chosenDateTime != null ? (
                   <span>
                     {new Date(chosenDateTime).toLocaleString([], {
@@ -67,7 +67,7 @@ export function EventCard({ event }: { event: EventWithMembers }) {
                 )}
               </div>
               <div className="flex items-center gap-1 ">
-                <Icons.people className="w-6 h-6 text-primary" />
+                <Icons.people className="size-6 text-primary" />
                 <span>{memberships.length}</span>
               </div>
             </div>

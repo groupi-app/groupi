@@ -28,7 +28,7 @@ export default function Page() {
         <Skeleton className="w-1/2 h-4" />
       </div>
       <Button className="w-full md:w-max flex items-center gap-1 mt-4">
-        <Icons.save className="w-4 h-4" />
+        <Icons.save className="size-4" />
         <span>Save</span>{" "}
       </Button>
     </div>

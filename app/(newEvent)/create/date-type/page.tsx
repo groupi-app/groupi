@@ -28,7 +28,7 @@ export default function Page() {
             variant="outline"
             className="py-12 text-xl w-full flex items-center justify-center gap-3"
           >
-            <Icons.organizer className="w-16 h-16 min-w-[4rem]" />
+            <Icons.organizer className="size-16 min-w-[4rem]" />
             <span>Choose a date myself</span>
           </Button>
         </Link>
@@ -40,7 +40,7 @@ export default function Page() {
           >
             <Icons.group
               color2="fill-muted-foreground"
-              className="w-24 h-24 min-w-[4rem]"
+              className="size-24 min-w-[4rem]"
             />
             <span>Poll Attendees</span>
           </Button>

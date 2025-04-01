@@ -4,7 +4,7 @@ import { updateReply } from "@/lib/actions/reply";
 import { cn, formatDate } from "@/lib/utils";
 import { Member } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { $Enums, Reply } from "@prisma/client";
+import { $Enums, Reply as PrismaReply } from "@prisma/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -38,7 +38,7 @@ export default function Reply({
   userRole,
   eventDateTime,
 }: {
-  reply: Reply;
+  reply: PrismaReply;
   member: Member | undefined;
   userId: string;
   userRole: $Enums.Role;
@@ -92,7 +92,7 @@ export default function Reply({
         >
           {member ? (
             <MemberIcon
-              key={member.id}
+              itemKey={member.id}
               userId={userId}
               userRole={userRole}
               member={member}
@@ -100,7 +100,7 @@ export default function Reply({
               align={isMe ? "end" : "start"}
             />
           ) : (
-            <div className="rounded-full w-10 h-10 bg-primary" />
+            <div className="rounded-full size-10 bg-primary" />
           )}
 
           <div
@@ -120,7 +120,7 @@ export default function Reply({
               <>
                 <DropdownMenuTrigger
                   className={cn(
-                    "absolute z-20 w-8 h-8 transition-all rounded-md hover:bg-muted top-3 right-2 flex items-center justify-center",
+                    "absolute z-20 size-8 transition-all rounded-md hover:bg-muted top-3 right-2 flex items-center justify-center",
                     isMe ? "hover:bg-accent/10" : "hover:bg-muted-foreground/10"
                   )}
                 >
@@ -134,7 +134,7 @@ export default function Reply({
                       asChild
                     >
                       <div className="flex items-center gap-1">
-                        <Icons.edit className="w-4 h-4" />
+                        <Icons.edit className="size-4" />
                         <span>Edit</span>
                       </div>
                     </DropdownMenuItem>
@@ -146,7 +146,7 @@ export default function Reply({
                   >
                     <DialogTrigger asChild>
                       <div className="flex items-center gap-1">
-                        <Icons.delete className="w-4 h-4" />
+                        <Icons.delete className="size-4" />
                         <span>Delete</span>
                       </div>
                     </DialogTrigger>
@@ -163,18 +163,19 @@ export default function Reply({
                     render={({ field }) => (
                       <FormItem className="w-full">
                         <FormControl>
-                          <div className="relative">
+                          <div className="relative min-h-24">
                             <Textarea
-                              className="bg-background/10 pr-6 "
+                              className="bg-background/10 pr-6 my-1 h-[90px] min-h-[90px]"
                               {...field}
                             />
                             <div className="flex flex-col items-center absolute top-1 right-1">
                               <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger asChild>
                                   <Button
-                                    className="w-6 h-6 p-1"
+                                    className="size-10 p-1"
                                     variant="ghost"
                                     type="submit"
+                                    disabled={isSaving}
                                   >
                                     {isSaving ? (
                                       <Icons.spinner className="animate-spin" />
@@ -186,9 +187,9 @@ export default function Reply({
                                 <TooltipContent>Save</TooltipContent>
                               </Tooltip>
                               <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger asChild>
                                   <Button
-                                    className="w-6 h-6 p-1"
+                                    className="size-10 p-1"
                                     variant="ghost"
                                     onClick={() => {
                                       setEditMode(false);

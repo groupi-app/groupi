@@ -1,14 +1,15 @@
 import { Editor } from "@/components/editor";
 import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 
-export default async function Page({
-  params,
-}: {
-  params: { eventId: string };
-}) {
-  const { userId }: { userId: string | null } = auth();
+export default async function Page(
+  props: {
+    params: Promise<{ eventId: string }>;
+  }
+) {
+  const params = await props.params;
+  const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
     return <ErrorPage message={"User not found"} />;

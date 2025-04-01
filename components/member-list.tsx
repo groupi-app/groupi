@@ -82,7 +82,7 @@ export function MemberList({ eventId }: { eventId: string }) {
         {(userRole === "ORGANIZER" || userRole === "MODERATOR") && (
           <Link href={`/event/${eventId}/invite`}>
             <Button className="flex items-center gap-1" size="sm">
-              <Icons.invite className="w-4 h-4" />
+              <Icons.invite className="size-4" />
               <span>Invite</span>
             </Button>
           </Link>
@@ -103,7 +103,7 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userId={userId}
                   userRole={userRole}
                   member={member}
-                  key={member.id}
+                  itemKey={member.id}
                   align={i === 0 ? "start" : "center"}
                   eventDateTime={eventDateTime}
                 />

@@ -1,3 +1,5 @@
+import { setupClerkTestingToken } from "@clerk/testing/cypress";
+
 describe("template spec", () => {
   before(() => {
     cy.task("seedUsers");
@@ -5,6 +7,7 @@ describe("template spec", () => {
 
   beforeEach(() => {
     cy.task("refreshUser", "testuser1");
+    setupClerkTestingToken();
   });
 
   it(

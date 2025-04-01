@@ -91,17 +91,17 @@ export function DateCard({
           </div>
           <div className="flex items-center gap-2 mt-2">
             <div className="flex items-center gap-1">
-              <Icons.check className="w-6 h-6 rounded-full  text-green-500" />
+              <Icons.check className="size-6 rounded-full  text-green-500" />
               <span>{yesAmount}</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="rounded-full w-6 h-6 text-center font-semibold text-yellow-500 cursor-default">
+              <div className="rounded-full size-6 text-center font-semibold text-yellow-500 cursor-default">
                 <span>?</span>
               </div>
               <span>{maybeAmount}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Icons.close className="w-6 h-6 rounded-full text-red-500" />
+              <Icons.close className="size-6 rounded-full text-red-500" />
 
               <span>{noAmount}</span>
             </div>
@@ -161,7 +161,7 @@ export function DateCard({
                     <span>Yes</span>
                     <div
                       className={cn(
-                        "rounded-full w-5 h-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
+                        "rounded-full size-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
                         selectedTab === "yes" &&
                           "bg-accent text-accent-foreground"
                       )}
@@ -175,7 +175,7 @@ export function DateCard({
                     <span>Maybe</span>
                     <div
                       className={cn(
-                        "rounded-full w-5 h-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
+                        "rounded-full size-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
                         selectedTab === "maybe" &&
                           "bg-accent text-accent-foreground"
                       )}
@@ -189,7 +189,7 @@ export function DateCard({
                     <span>No</span>
                     <div
                       className={cn(
-                        "rounded-full w-5 h-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
+                        "rounded-full size-5 text-center text-muted-foreground cursor-default flex items-center justify-center",
                         selectedTab === "no" &&
                           "bg-accent text-accent-foreground"
                       )}
@@ -291,6 +291,7 @@ export function DateCard({
                 <Button
                   className="flex items-center gap-1"
                   onClick={selectDate}
+                  disabled={isLoading}
                 >
                   {isLoading && (
                     <Icons.spinner className="h-4 w-4 animate-spin" />

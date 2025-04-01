@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { $Enums, Membership } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { pusherServer } from "../pusher-server";
@@ -16,7 +16,7 @@ export async function updateMembershipRole({
   role: $Enums.Role;
 }) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 
@@ -85,7 +85,7 @@ export async function updateMembershipRole({
 
 export async function deleteMembership(membership: Membership) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 
@@ -140,7 +140,7 @@ export async function deleteMembership(membership: Membership) {
 
 export async function updateRSVP(eventId: string, status: $Enums.Status) {
   try {
-    const { userId }: { userId: string | null } = auth();
+    const { userId }: { userId: string | null } = await auth();
 
     if (!userId) return { error: "Current user not found" };
 

@@ -125,7 +125,7 @@ export function AvailabilityForm({
             variant="outline"
           >
             <div className="flex items-center gap-1">
-              <Icons.check className="w-5 h-5" />
+              <Icons.check className="size-5" />
               <span>All Yes</span>
             </div>
           </Button>
@@ -147,7 +147,7 @@ export function AvailabilityForm({
             variant="outline"
           >
             <div className="flex items-center gap-1">
-              <Icons.close className="w-5 h-5" />
+              <Icons.close className="size-5" />
               <span>All No</span>
             </div>
           </Button>
@@ -180,12 +180,12 @@ export function AvailabilityForm({
             !(
               form.watch("formAnswers").filter((a) => a.answer).length ===
               form.watch("formAnswers").length
-            )
+            ) || isLoading
           }
           className="my-2"
         >
           <div className="flex items-center gap-1">
-            {isLoading && <Icons.spinner className="animate-spin w-5 h-5" />}
+            {isLoading && <Icons.spinner className="animate-spin size-5" />}
             <span>Submit</span>
           </div>
         </Button>

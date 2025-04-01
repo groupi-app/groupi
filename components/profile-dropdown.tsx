@@ -51,14 +51,14 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
               }}
               className="flex items-center gap-2 w-full"
             >
-              <Icons.account className="w-4 h-4" />
+              <Icons.account className="size-4" />
               <span>My Account</span>
             </button>
           </DropdownMenuItem>
           <SignOutButton>
             <DropdownMenuItem className="cursor-pointer">
               <div className="flex items-center gap-2">
-                <Icons.signOut className="w-4 h-4" />
+                <Icons.signOut className="size-4" />
                 <span>Sign Out</span>
               </div>
             </DropdownMenuItem>

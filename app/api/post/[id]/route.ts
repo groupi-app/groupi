@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = (await context.params);
   const { title, content } = await request.json();
   if (!title || !content) {
     return NextResponse.json(
@@ -22,9 +22,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = (await context.params);
   await deletePost({ id });
   return NextResponse.json({ message: "Post Deleted" }, { status: 200 });
 }

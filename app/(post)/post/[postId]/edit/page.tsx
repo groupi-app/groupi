@@ -1,13 +1,13 @@
 import { Editor } from "@/components/editor";
 import ErrorPage from "@/components/error";
 import { db } from "@/lib/db";
-import { currentUser } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 
-export default async function Page({ params }: { params: { postId: string } }) {
+export default async function Page(props: { params: Promise<{ postId: string }> }) {
+  const params = await props.params;
   const { postId } = params;
 
-  const user = await currentUser();
-  const userId = user ? user.id : "";
+  const { userId }: { userId: string | null } = await auth();
 
   const post = await db.post.findFirst({
     where: {

@@ -14,12 +14,12 @@ export function AttendeeSlate({
   userId,
   userRole,
   member,
-  key,
+  itemKey,
 }: {
   userId: string;
   userRole: $Enums.Role;
   member: MembershipWithAvailabilities;
-  key: string;
+  itemKey: string;
 }) {
   const [dialogAction, setDialogAction] = useState<MemberAction>(
     MemberAction.KICK
@@ -46,7 +46,7 @@ export function AttendeeSlate({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 py-2 items-center">
           <div className="flex items-center gap-2">
             <MemberIcon
-              key={key}
+              itemKey={itemKey}
               member={member}
               userId={userId}
               userRole={userRole}
@@ -73,9 +73,9 @@ export function AttendeeSlate({
             >
               <span>Availability</span>
               {availabilitiesOpen ? (
-                <Icons.up className="w-4 h-4" />
+                <Icons.up className="size-4" />
               ) : (
-                <Icons.down className="w-4 h-4" />
+                <Icons.down className="size-4" />
               )}
             </Button>
           ) : (
@@ -98,7 +98,7 @@ export function AttendeeSlate({
           <div className="flex items-center gap-1">
             {!isMe && canPromote && member.role === "ATTENDEE" && (
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <Button
                       onClick={() => {
@@ -116,7 +116,7 @@ export function AttendeeSlate({
             )}
             {!isMe && canPromote && member.role === "MODERATOR" && (
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <Button
                       onClick={() => {
@@ -135,7 +135,7 @@ export function AttendeeSlate({
             )}
             {!isMe && canKick && (
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <Button
                       onClick={() => {
@@ -199,7 +199,7 @@ export function AttendeeSlate({
                       </div>
                       <div className="flex items-center gap-1">
                         {availability.status === "YES" && (
-                          <Icons.check className="w-6 h-6 text-green-500" />
+                          <Icons.check className="size-6 text-green-500" />
                         )}
                         {availability.status === "MAYBE" && (
                           <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
@@ -207,7 +207,7 @@ export function AttendeeSlate({
                           </span>
                         )}
                         {availability.status === "NO" && (
-                          <Icons.close className="w-6 h-6 text-red-500" />
+                          <Icons.close className="size-6 text-red-500" />
                         )}
                         <span>{availability.status}</span>
                       </div>

@@ -152,7 +152,7 @@ export function NotificationSlate({
         href={getNotificationLink()}
         className="hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all"
       >
-        {!read && <div className="w-2 h-2 rounded-full bg-primary p-1" />}
+        {!read && <div className="size 2 rounded-full bg-primary p-1" />}
         <div className="flex flex-col gap-1">
           <p
             dangerouslySetInnerHTML={getNotificationMessage()}
@@ -168,7 +168,7 @@ export function NotificationSlate({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="w-8 h-8 absolute right-2 top-0 bottom-0 my-auto"
+              className="size-8 absolute right-2 top-0 bottom-0 my-auto"
               size="icon"
               variant="ghost"
             >
@@ -192,7 +192,7 @@ export function NotificationSlate({
                 asChild
               >
                 <div className="flex items-center gap-1">
-                  <Icons.unread className="w-4 h-4" />
+                  <Icons.unread className="size-4" />
                   <span>Mark as unread</span>
                 </div>
               </DropdownMenuItem>
@@ -212,7 +212,7 @@ export function NotificationSlate({
                 asChild
               >
                 <div className="flex items-center gap-1">
-                  <Icons.read className="w-4 h-4" />
+                  <Icons.read className="size-4" />
                   <span>Mark as read</span>
                 </div>
               </DropdownMenuItem>
@@ -232,7 +232,7 @@ export function NotificationSlate({
               className="focus:bg-destructive focus:text-destructive-foreground cursor-pointer"
             >
               <div className="flex items-center gap-1">
-                <Icons.delete className="w-4 h-4" />
+                <Icons.delete className="size-4" />
                 <span>Delete</span>
               </div>
             </DropdownMenuItem>

@@ -128,7 +128,7 @@ export function AttendeeList({ eventId }: { eventId: string }) {
           {members.sort(sort).map((member) => (
             <motion.div layout variants={item} key={member.id}>
               <AttendeeSlate
-                key={member.id}
+                itemKey={member.id}
                 userId={userId}
                 userRole={userRole}
                 member={member}

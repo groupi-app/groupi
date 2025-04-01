@@ -57,7 +57,7 @@ export function InviteLinkCard({
               );
             }
           }}
-          className="w-6 h-6 z-20 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto hover:bg-primary transition-all"
+          className="size-6 z-20 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto hover:bg-primary transition-all"
         />
         <DialogTrigger
           onClick={() => {
@@ -89,14 +89,14 @@ export function InviteLinkCard({
                 </div>
                 <div className="flex items-center gap-4 md:gap-8 px-3">
                   <div className="flex items-center gap-1">
-                    <Icons.time className="w-8 h-8 text-muted-foreground" />
+                    <Icons.time className="size-8 text-muted-foreground" />
                     <span className="md:text-lg">
                       {expiresAt ? timeUntil(expiresAt) : "Never"}
                     </span>
                   </div>
                   {/* Uses left */}
                   <div className="flex items-center gap-1">
-                    <Icons.account className="w-8 h-8 text-muted-foreground" />
+                    <Icons.account className="size-8 text-muted-foreground" />
                     <span className="md:text-lg">
                       {maxUses ? (
                         <span>
@@ -121,7 +121,7 @@ export function InviteLinkCard({
             variant="outline"
             size="icon"
           >
-            <Icons.delete className="w-5 h-5" />
+            <Icons.delete className="size-5" />
           </Button>
         </DialogTrigger>
       </div>
@@ -146,7 +146,7 @@ export function InviteLinkCard({
                 readOnly
               />
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <Button
                     onClick={() => {
                       navigator.clipboard.writeText(
@@ -160,7 +160,7 @@ export function InviteLinkCard({
                     variant="outline"
                     size="icon"
                   >
-                    <Icons.copy className="w-5 h-5" />
+                    <Icons.copy className="size-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Copy Invite Link</TooltipContent>
