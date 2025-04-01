@@ -64,7 +64,7 @@
     "pusher-js": "^8.4.0-rc2",
     "react": "19.1.0",
     "react-cool-onclickoutside": "^1.7.0",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "^9.6.4",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.55.0",
     "react-qr-code": "^2.0.15",
