@@ -1,6 +1,6 @@
 services:
   postgres:
-    container_name: postgres
+    container_name: groupi_postgres
     image: postgres
     environment:
       - POSTGRES_USER=postgres
@@ -9,7 +9,7 @@ services:
     ports:
       - 6500:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - groupi_postgres_data:/var/lib/postgresql/data/
 
 volumes:
-  postgres_data:
+  groupi_postgres_data:
