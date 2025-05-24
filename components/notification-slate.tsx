@@ -2,29 +2,28 @@ import {
   deleteNotification,
   markNotificationAsRead,
   markNotificationAsUnread,
-} from "@/lib/actions/notification";
-import { formatDate } from "@/lib/utils";
-import { NotificationWithPersonEventPost } from "@/types";
-import Link from "next/link";
-import { Icons } from "./icons";
-import { useNotificationCloseContext } from "./providers/notif-close-provider";
-import { Button } from "./ui/button";
-import { Dialog } from "./ui/dialog";
+} from '@/lib/actions/notification';
+import { formatDate } from '@/lib/utils';
+import { NotificationWithPersonEventPost } from '@/types';
+import Link from 'next/link';
+import { Icons } from './icons';
+import { useNotificationCloseContext } from './providers/notif-close-provider';
+import { Button } from './ui/button';
+import { Dialog } from './ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { useToast } from "./ui/use-toast";
+} from './ui/dropdown-menu';
+import { useToast } from './ui/use-toast';
 
 export function NotificationSlate({
   notification,
 }: {
   notification: NotificationWithPersonEventPost;
 }) {
-  const { event, post, createdAt, type, read, datetime, author, rsvp } =
-    notification;
+  const { event, post, createdAt, type, read, datetime, author, rsvp } = notification;
   const { toast } = useToast();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {
@@ -34,18 +33,18 @@ export function NotificationSlate({
 
   const getNotificationLink = () => {
     switch (type) {
-      case "EVENT_EDITED":
-      case "DATE_CHANGED":
-      case "DATE_CHOSEN":
-      case "DATE_RESET":
-      case "USER_JOINED":
-      case "USER_LEFT":
-      case "USER_PROMOTED":
-      case "USER_DEMOTED":
-      case "USER_RSVP":
+      case 'EVENT_EDITED':
+      case 'DATE_CHANGED':
+      case 'DATE_CHOSEN':
+      case 'DATE_RESET':
+      case 'USER_JOINED':
+      case 'USER_LEFT':
+      case 'USER_PROMOTED':
+      case 'USER_DEMOTED':
+      case 'USER_RSVP':
         return `/event/${event?.id}`;
-      case "NEW_POST":
-      case "NEW_REPLY":
+      case 'NEW_POST':
+      case 'NEW_REPLY':
         return `/post/${post?.id}`;
       //default
       default:
@@ -55,90 +54,88 @@ export function NotificationSlate({
 
   const getNotificationMessage = () => {
     switch (type) {
-      case "EVENT_EDITED":
+      case 'EVENT_EDITED':
         return {
           __html: `The details of <strong>${event?.title}</strong> have been updated.`,
         };
-      case "DATE_CHANGED":
-        if (!datetime) throw new Error("Datetime not found");
+      case 'DATE_CHANGED':
+        if (!datetime) throw new Error('Datetime not found');
         return {
           __html: `The date of <strong>${
             event?.title
           }</strong> has changed to <strong>${datetime?.toLocaleString([], {
-            weekday: "short",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
+            weekday: 'short',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
           })}</strong>.`,
         };
-      case "DATE_CHOSEN":
-        if (!datetime) throw new Error("Datetime not found");
+      case 'DATE_CHOSEN':
+        if (!datetime) throw new Error('Datetime not found');
         return {
           __html: `<strong>${
             event?.title
           }</strong> will be held on <strong>${datetime?.toLocaleString([], {
-            weekday: "short",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
+            weekday: 'short',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
           })}</strong>.`,
         };
-      case "DATE_RESET":
+      case 'DATE_RESET':
         return {
           __html: `A new poll has started for the date of <strong>${event?.title}</strong>.`,
         };
-      case "NEW_POST":
-        if (!author) throw new Error("Author not found");
+      case 'NEW_POST':
+        if (!author) throw new Error('Author not found');
         return {
           __html: `<strong>${
             author.firstName ?? author.lastName ?? author.username
-          }</strong> created a new post, <strong>${
-            post?.title
-          }</strong>, in <strong>${event?.title}</strong>.`,
+          }</strong> created a new post, <strong>${post?.title}</strong>, in <strong>${
+            event?.title
+          }</strong>.`,
         };
-      case "NEW_REPLY":
-        if (!author) throw new Error("Author not found");
+      case 'NEW_REPLY':
+        if (!author) throw new Error('Author not found');
         return {
           __html: `<strong>${
             author.firstName ?? author.lastName ?? author.username
-          }</strong> replied to a post, <strong>${
-            post?.title
-          }</strong>, in <strong>${event?.title}</strong>.`,
+          }</strong> replied to a post, <strong>${post?.title}</strong>, in <strong>${
+            event?.title
+          }</strong>.`,
         };
-      case "USER_JOINED":
-        if (!author) throw new Error("Author not found");
+      case 'USER_JOINED':
+        if (!author) throw new Error('Author not found');
         return {
           __html: `<strong>${
             author.firstName ?? author.lastName ?? author.username
           }</strong> has joined <strong>${event?.title}</strong>.`,
         };
-      case "USER_LEFT":
-        if (!author) throw new Error("Author not found");
+      case 'USER_LEFT':
+        if (!author) throw new Error('Author not found');
         return {
           __html: `<strong>${
             author.firstName ?? author.lastName ?? author.username
           }</strong> has left <strong>${event?.title}</strong>.`,
         };
-      case "USER_PROMOTED":
+      case 'USER_PROMOTED':
         return {
           __html: `You are now a Moderator of <strong>${event?.title}</strong>.`,
         };
-      case "USER_DEMOTED":
+      case 'USER_DEMOTED':
         return {
           __html: `You are no longer a Moderator of <strong>${event?.title}</strong>.`,
         };
-      case "USER_RSVP":
-        if (!author) throw new Error("Author not found");
+      case 'USER_RSVP':
+        if (!author) throw new Error('Author not found');
         return {
           __html: `<strong>${
             author.firstName ?? author.lastName ?? author.username
-          }</strong> has RSVP'd <strong>${rsvp}</strong> to <strong>${
-            event?.title
-          }</strong>.`,
+          }</strong> has RSVP'd <strong>${rsvp}</strong> to <strong>${event?.title}</strong>.`,
         };
     }
   };
@@ -154,13 +151,8 @@ export function NotificationSlate({
       >
         {!read && <div className="size 2 rounded-full bg-primary p-1" />}
         <div className="flex flex-col gap-1">
-          <p
-            dangerouslySetInnerHTML={getNotificationMessage()}
-            className="text-sm"
-          ></p>
-          <span className="text-xs text-muted-foreground">
-            {formatDate(createdAt)}
-          </span>
+          <p dangerouslySetInnerHTML={getNotificationMessage()} className="text-sm"></p>
+          <span className="text-xs text-muted-foreground">{formatDate(createdAt)}</span>
         </div>
       </Link>
 
@@ -182,9 +174,9 @@ export function NotificationSlate({
                   const res = await markNotificationAsUnread(notification.id);
                   if (res.error) {
                     toast({
-                      title: "An error occurred",
-                      description:
-                        "There was a problem marking this notification as unread.",
+                      title: 'An error occurred',
+                      description: 'There was a problem marking this notification as unread.',
+                      variant: 'destructive',
                     });
                   }
                 }}
@@ -202,9 +194,8 @@ export function NotificationSlate({
                   const res = await markNotificationAsRead(notification.id);
                   if (res.error) {
                     toast({
-                      title: "An error occurred",
-                      description:
-                        "There was a problem marking this notification as read.",
+                      title: 'An error occurred',
+                      description: 'There was a problem marking this notification as read.',
                     });
                   }
                 }}
@@ -222,9 +213,8 @@ export function NotificationSlate({
                 const res = await deleteNotification(notification.id);
                 if (res.error) {
                   toast({
-                    title: "An error occurred",
-                    description:
-                      "There was a problem deleting this notification.",
+                    title: 'An error occurred',
+                    description: 'There was a problem deleting this notification.',
                   });
                 }
               }}

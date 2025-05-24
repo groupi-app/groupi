@@ -1,9 +1,36 @@
-"use server";
+'use server';
 
-import { ActionResponse } from "@/types";
-import { NotificationMethodType, NotificationType } from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { db } from "../db";
+import { ActionResponse, SettingsData } from '@/types';
+import { NotificationMethodType, NotificationType } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { db } from '../db';
+import { auth } from '@clerk/nextjs/server';
+
+export async function fetchUserSettings(): Promise<ActionResponse<SettingsData>> {
+  const { userId }: { userId: string | null } = await auth();
+
+  if (!userId) {
+    return { error: 'User not found' };
+  }
+  const res = await db.personSettings.findUnique({
+    where: {
+      personId: userId,
+    },
+    include: {
+      notificationMethods: {
+        include: {
+          notifications: true,
+        },
+      },
+    },
+  });
+  if (!res) {
+    return { error: 'Settings not found' };
+  }
+  return {
+    success: res,
+  };
+}
 
 /**
  * Adds a new notification method to a user's settings
@@ -18,7 +45,7 @@ export async function addNotificationMethod(
     notifications: Record<NotificationType, boolean>;
   }
 ): Promise<ActionResponse<any>> {
-  if (!personId) return { error: "User ID is required" };
+  if (!personId) return { error: 'User ID is required' };
 
   try {
     const settings = await db.personSettings.findUnique({
@@ -26,7 +53,7 @@ export async function addNotificationMethod(
     });
 
     if (!settings) {
-      return { error: "Settings not found for user" };
+      return { error: 'Settings not found for user' };
     }
 
     // Create the notification method
@@ -46,24 +73,22 @@ export async function addNotificationMethod(
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     return { success: method };
   } catch (error) {
-    console.error("Error adding notification method:", error);
-    return { error: "Failed to add notification method" };
+    console.error('Error adding notification method:', error);
+    return { error: 'Failed to add notification method' };
   }
 }
 
 /**
  * Deletes a notification method
  */
-export async function deleteNotificationMethod(
-  methodId: string
-): Promise<ActionResponse<any>> {
-  "use server";
+export async function deleteNotificationMethod(methodId: string): Promise<ActionResponse<any>> {
+  'use server';
 
-  if (!methodId) return { error: "Method ID is required" };
+  if (!methodId) return { error: 'Method ID is required' };
 
   try {
     await db.notificationMethod.delete({
@@ -71,12 +96,12 @@ export async function deleteNotificationMethod(
     });
 
     // Revalidate settings path to refresh the UI
-    revalidatePath("/");
+    revalidatePath('/');
 
     return { success: { deleted: true } };
   } catch (error) {
-    console.error("Error deleting notification method:", error);
-    return { error: "Failed to delete notification method" };
+    console.error('Error deleting notification method:', error);
+    return { error: 'Failed to delete notification method' };
   }
 }
 
@@ -92,9 +117,9 @@ export async function updateNotificationMethod(
     notifications: Record<NotificationType, boolean>;
   }
 ): Promise<ActionResponse<any>> {
-  "use server";
+  'use server';
 
-  if (!methodId) return { error: "Method ID is required" };
+  if (!methodId) return { error: 'Method ID is required' };
 
   try {
     const updated = await db.notificationMethod.update({
@@ -122,11 +147,61 @@ export async function updateNotificationMethod(
     });
 
     // Revalidate settings path to refresh the UI
-    revalidatePath("/");
+    revalidatePath('/');
 
     return { success: updated };
   } catch (error) {
-    console.error("Error updating notification method:", error);
-    return { error: "Failed to update notification method" };
+    console.error('Error updating notification method:', error);
+    return { error: 'Failed to update notification method' };
+  }
+}
+
+/**
+ * Updates all notification settings for the current user
+ */
+export async function updateUserSettings(data: {
+  notificationMethods: Array<{
+    id?: string;
+    type: NotificationMethodType;
+    name?: string;
+    value: string;
+    enabled: boolean;
+    notifications: Array<{ notificationType: NotificationType; enabled: boolean }>;
+  }>;
+}): Promise<ActionResponse<any>> {
+  'use server';
+  const { userId } = await auth();
+  if (!userId) return { error: 'User not found' };
+  try {
+    // Get the user's settings record
+    const settings = await db.personSettings.findUnique({ where: { personId: userId } });
+    if (!settings) return { error: 'Settings not found for user' };
+
+    // Remove all existing notification methods for this user
+    await db.notificationMethod.deleteMany({ where: { settingsId: settings.id } });
+
+    // Add all new/updated notification methods
+    for (const method of data.notificationMethods) {
+      await db.notificationMethod.create({
+        data: {
+          type: method.type,
+          value: method.value,
+          enabled: method.enabled,
+          settingsId: settings.id,
+          name: method.name,
+          notifications: {
+            create: method.notifications.map((n) => ({
+              notificationType: n.notificationType,
+              enabled: n.enabled,
+            })),
+          },
+        },
+      });
+    }
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating user settings:', error);
+    return { error: 'Failed to update notification settings' };
   }
 }

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { createInvite } from "@/lib/actions/invite";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogClose } from "@radix-ui/react-dialog";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
+import { createInvite } from '@/lib/actions/invite';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DialogClose } from '@radix-ui/react-dialog';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { Button } from './ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,36 +16,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./ui/form";
-import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { useToast } from "./ui/use-toast";
+} from './ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useToast } from './ui/use-toast';
 
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
-    name: z
-      .string()
-      .max(64, { message: "Invite name must be less than 65 characters." }),
+    name: z.string().max(64, { message: 'Invite name must be less than 65 characters.' }),
     expiresIn: z.number().nullable(),
     maxUses: z
       .number()
-      .min(1, { message: "Max uses must be positive integer" })
+      .min(1, { message: 'Max uses must be positive integer' })
       .max(999999, {
-        message: "Max uses must be less than 1,000,000 (if not unlimited)",
+        message: 'Max uses must be less than 1,000,000 (if not unlimited)',
       })
       .nullable(),
   });
@@ -53,7 +38,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: '',
       expiresIn: null,
       maxUses: null,
     },
@@ -66,10 +51,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const expiresAt =
-      values.expiresIn === null
-        ? null
-        : new Date(Date.now() + values.expiresIn);
+    const expiresAt = values.expiresIn === null ? null : new Date(Date.now() + values.expiresIn);
 
     const res = await createInvite({
       name: values.name,
@@ -79,14 +61,15 @@ export function AddInvite({ eventId }: { eventId: string }) {
     });
     if (res.success) {
       toast({
-        title: "Invite Created",
-        description: "The invite has been successfully created.",
+        title: 'Invite Created',
+        description: 'The invite has been successfully created.',
       });
       setIsOpen(false);
     } else if (res.error) {
       toast({
-        title: "Error",
-        description: "Unable to create invite.",
+        title: 'Error',
+        description: 'Unable to create invite.',
+        variant: 'destructive',
       });
     }
     setIsLoading(false);
@@ -105,10 +88,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
           <DialogDescription>Add an invite to this event.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-3"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-3">
             {/* Name */}
             <FormField
               control={form.control}
@@ -119,9 +99,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
                   <FormControl>
                     <Input placeholder="Invite name" {...field} />
                   </FormControl>
-                  <span className="text-muted-foreground text-sm ml-1">
-                    optional
-                  </span>
+                  <span className="text-muted-foreground text-sm ml-1">optional</span>
                   <FormMessage />
                 </FormItem>
               )}
@@ -137,9 +115,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     {/* <Input placeholder="5 days" {...field} /> */}
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(
-                          value === "never" ? null : Number(value)
-                        );
+                        field.onChange(value === 'never' ? null : Number(value));
                       }}
                     >
                       <SelectTrigger className="w-[180px]">
@@ -147,25 +123,13 @@ export function AddInvite({ eventId }: { eventId: string }) {
                       </SelectTrigger>
                       <SelectContent>
                         {/* value is time in ms */}
-                        <SelectItem value={String(30 * 60 * 1000)}>
-                          30 minutes
-                        </SelectItem>
-                        <SelectItem value={String(60 * 60 * 1000)}>
-                          1 hour
-                        </SelectItem>
-                        <SelectItem value={String(6 * 60 * 60 * 1000)}>
-                          6 hours
-                        </SelectItem>
-                        <SelectItem value={String(12 * 60 * 60 * 1000)}>
-                          12 hours
-                        </SelectItem>
-                        <SelectItem value={String(24 * 60 * 60 * 1000)}>
-                          1 day
-                        </SelectItem>
-                        <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>
-                          7 days
-                        </SelectItem>
-                        <SelectItem value={String("never")}>Never</SelectItem>
+                        <SelectItem value={String(30 * 60 * 1000)}>30 minutes</SelectItem>
+                        <SelectItem value={String(60 * 60 * 1000)}>1 hour</SelectItem>
+                        <SelectItem value={String(6 * 60 * 60 * 1000)}>6 hours</SelectItem>
+                        <SelectItem value={String(12 * 60 * 60 * 1000)}>12 hours</SelectItem>
+                        <SelectItem value={String(24 * 60 * 60 * 1000)}>1 day</SelectItem>
+                        <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>7 days</SelectItem>
+                        <SelectItem value={String('never')}>Never</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -185,9 +149,9 @@ export function AddInvite({ eventId }: { eventId: string }) {
                       type="number"
                       placeholder="Unlimited"
                       {...field}
-                      value={field.value ?? ""}
+                      value={field.value ?? ''}
                       onChange={(e) => {
-                        if (e.target.value === "") {
+                        if (e.target.value === '') {
                           field.onChange(null);
                         } else {
                           field.onChange(Number(e.target.value));
@@ -210,11 +174,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     <span>Cancel</span>
                   </Button>
                 </DialogClose>
-                <Button
-                  className="flex items-center gap-1"
-                  type="submit"
-                  disabled={isLoading}
-                >
+                <Button className="flex items-center gap-1" type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <Icons.spinner className="size-4 animate-spin" />
                   ) : (

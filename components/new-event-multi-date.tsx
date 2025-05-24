@@ -1,20 +1,20 @@
-"use client";
-import { useFormContext } from "@/components/providers/form-context-provider";
-import { Calendar } from "@/components/ui/calendar";
-import { createEvent } from "@/lib/actions/event";
-import { merge } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
-import { Input } from "./ui/input";
-import { ScrollArea } from "./ui/scroll-area";
-import { useToast } from "./ui/use-toast";
+'use client';
+import { useFormContext } from '@/components/providers/form-context-provider';
+import { Calendar } from '@/components/ui/calendar';
+import { createEvent } from '@/lib/actions/event';
+import { merge } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { Button } from './ui/button';
+import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
+import { useToast } from './ui/use-toast';
 
 interface Form1Types {
   dates: Date[];
@@ -26,16 +26,12 @@ interface Form2Types {
 }
 
 const form1Schema = z.object({
-  dates: z
-    .array(z.date())
-    .min(1, { message: "At least one date is required." }),
-  time: z.string().regex(new RegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")),
+  dates: z.array(z.date()).min(1, { message: 'At least one date is required.' }),
+  time: z.string().regex(new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')),
 });
 
 const form2Schema = z.object({
-  dateTimes: z
-    .array(z.date())
-    .min(2, { message: "At least two dates are required." }),
+  dateTimes: z.array(z.date()).min(2, { message: 'At least two dates are required.' }),
 });
 
 export function NewEventMultiDate() {
@@ -49,7 +45,7 @@ export function NewEventMultiDate() {
     defaultValues: {
       dates: [new Date()],
       time: new Date().toLocaleTimeString([], {
-        timeStyle: "short",
+        timeStyle: 'short',
         hour12: false,
       }),
     },
@@ -63,31 +59,27 @@ export function NewEventMultiDate() {
   });
 
   if (!formState.title) {
-    router.push("/create");
+    router.push('/create');
     return null;
   }
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${
-      new Date().getTimezoneOffset() > 0 ? "-" : "+"
+      new Date().getTimezoneOffset() > 0 ? '-' : '+'
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
 
   async function onSubmit1(data: z.infer<typeof form1Schema>) {
     const dates = data.dates;
-    const localTime = data.time + ":00";
+    const localTime = data.time + ':00';
 
     const dateTimes = dates.map(
-      (date) => new Date(`${date.toISOString().split("T")[0]}T${localTime}`)
+      (date) => new Date(`${date.toISOString().split('T')[0]}T${localTime}`)
     );
 
     form2.setValue(
-      "dateTimes",
-      merge(
-        form2.getValues("dateTimes"),
-        dateTimes,
-        (a, b) => a.getTime() === b.getTime()
-      )
+      'dateTimes',
+      merge(form2.getValues('dateTimes'), dateTimes, (a, b) => a.getTime() === b.getTime())
     );
   }
 
@@ -104,15 +96,16 @@ export function NewEventMultiDate() {
     });
     if (res.error) {
       toast({
-        title: "Error",
-        description: "The event was unable to be created.",
+        title: 'Error',
+        description: 'The event was unable to be created.',
+        variant: 'destructive',
       });
       setIsSaving(false);
     }
     if (res.success) {
       toast({
-        title: "Event Created",
-        description: "The event was created successfully.",
+        title: 'Event Created',
+        description: 'The event was created successfully.',
       });
       router.push(`/event/${res.success.id}`);
     }
@@ -134,9 +127,7 @@ export function NewEventMultiDate() {
                         mode="multiple"
                         className="rounded-md border border-border w-max mx-auto"
                         selected={field.value}
-                        onSelect={(dates) =>
-                          dates ? form1.setValue("dates", dates) : null
-                        }
+                        onSelect={(dates) => (dates ? form1.setValue('dates', dates) : null)}
                         {...field}
                       />
                     </FormControl>
@@ -151,11 +142,7 @@ export function NewEventMultiDate() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input
-                          type="time"
-                          className="w-max mx-auto cursor-text"
-                          {...field}
-                        />
+                        <Input type="time" className="w-max mx-auto cursor-text" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -166,12 +153,12 @@ export function NewEventMultiDate() {
                 </span>
               </div>
               <Button
-                disabled={form1.watch("dates").length < 1}
+                disabled={form1.watch('dates').length < 1}
                 className="flex items-center gap-1 max-w-sm w-full mx-auto"
                 type="submit"
               >
                 <Icons.plus className="size-5" />
-                <span>Add {form1.watch("dates").length} Options</span>
+                <span>Add {form1.watch('dates').length} Options</span>
               </Button>
             </div>
           </form>
@@ -187,36 +174,31 @@ export function NewEventMultiDate() {
                       size="sm"
                       variant="ghost"
                       className="flex items-center gap-1 text-xs hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => form2.setValue("dateTimes", [])}
+                      onClick={() => form2.setValue('dateTimes', [])}
                     >
                       <Icons.delete className="size-4" /> <span>Clear</span>
                     </Button>
                   </div>
                   {form2
-                    .watch("dateTimes")
+                    .watch('dateTimes')
                     .sort((a, b) => a.getTime() - b.getTime())
                     .map((date, i) => (
-                      <div
-                        className="py-1 flex items-center justify-between"
-                        key={i}
-                      >
+                      <div className="py-1 flex items-center justify-between" key={i}>
                         <div>
                           {date.toLocaleString([], {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "numeric",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "numeric",
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
                           })}
                         </div>
                         <Button
                           onClick={() => {
                             form2.setValue(
-                              "dateTimes",
-                              form2
-                                .watch("dateTimes")
-                                .filter((_, index) => index !== i)
+                              'dateTimes',
+                              form2.watch('dateTimes').filter((_, index) => index !== i)
                             );
                           }}
                           type="button"
@@ -236,22 +218,18 @@ export function NewEventMultiDate() {
       </div>
       <div className="flex justify-between">
         <Link href="/create/date-type">
-          <Button className="flex items-center gap-1" variant={"secondary"}>
+          <Button className="flex items-center gap-1" variant={'secondary'}>
             <span>Back</span>
             <Icons.back className="text-sm" />
           </Button>
         </Link>
         <Button
-          disabled={form2.watch("dateTimes").length < 2 || isSaving}
+          disabled={form2.watch('dateTimes').length < 2 || isSaving}
           className="flex items-center gap-1"
           type="submit"
           form="form2"
         >
-          {isSaving ? (
-            <Icons.spinner className="h-4 w-4 animate-spin" />
-          ) : (
-            <></>
-          )}
+          {isSaving ? <Icons.spinner className="h-4 w-4 animate-spin" /> : <></>}
           Submit
         </Button>
       </div>

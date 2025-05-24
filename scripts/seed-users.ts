@@ -32,6 +32,9 @@ export default async function seedUsers() {
           lastName,
           username,
           imageUrl: userObj.imageUrl,
+          settings: {
+            create: {},
+          },
         },
       });
       people.push(person);

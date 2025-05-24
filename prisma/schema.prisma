@@ -183,7 +183,7 @@ model NotificationMethod {
   settingsId    String
   type          NotificationMethodType
   enabled       Boolean                @default(true)
-  name          String                 @default("Default")
+  name          String? // Name of the method, e.g., "Work Email", "Personal Webhook"
   value         String // Email address, webhook URL, etc.
   notifications NotificationSetting[]
 }

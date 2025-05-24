@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Form,
@@ -8,30 +8,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { LocationInput } from "./location-input";
-import { useFormContext } from "./providers/form-context-provider";
-import { Button } from "./ui/button";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { LocationInput } from './location-input';
+import { useFormContext } from './providers/form-context-provider';
+import { Button } from './ui/button';
 
 const formSchema = z.object({
   title: z.string().min(1, {
-    message: "Event Title is required",
+    message: 'Event Title is required',
   }),
   description: z
     .string()
-    .max(1000, { message: "Description must be less than 1000 characters." })
+    .max(1000, { message: 'Description must be less than 1000 characters.' })
     .optional(),
   location: z
     .string()
-    .max(200, { message: "Location must be less than 200 characters." })
+    .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
 });
 
@@ -46,11 +46,12 @@ export default function NewEventInfo() {
       description: formState.description,
       location: formState.location,
     },
+    mode: 'onChange',
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setFormState(data);
-    router.push("/create/date-type");
+    router.push('/create/date-type');
   }
 
   return (
@@ -63,18 +64,12 @@ export default function NewEventInfo() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Title<span className="text-muted-foreground">*</span>
+                  Title<span className="text-destructive align-text-top font-black">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    data-test="new-event-title"
-                    placeholder="Groupi Party!"
-                    {...field}
-                  />
+                  <Input data-test="new-event-title" placeholder="Groupi Party!" {...field} />
                 </FormControl>
-                <FormDescription>
-                  The title of your event. (required)
-                </FormDescription>
+                <FormDescription>The title of your event. (required)</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -92,9 +87,7 @@ export default function NewEventInfo() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
-                  A brief description of your event.
-                </FormDescription>
+                <FormDescription>A brief description of your event.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -108,9 +101,7 @@ export default function NewEventInfo() {
                 <FormControl>
                   <LocationInput dataTest="new-event-location" field={field} />
                 </FormControl>
-                <FormDescription>
-                  The location where your event is taking place.
-                </FormDescription>
+                <FormDescription>The location where your event is taking place.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -119,7 +110,7 @@ export default function NewEventInfo() {
             <Button
               data-test="new-event-next-button"
               className="flex items-center gap-1"
-              variant={"secondary"}
+              variant={'secondary'}
               type="submit"
             >
               <span>Next</span>

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { acceptInvite } from "@/lib/actions/invite";
-import { useRouter } from "next/navigation";
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { acceptInvite } from '@/lib/actions/invite';
+import { useRouter } from 'next/navigation';
 
 export function AcceptInviteButton({
   inviteId,
@@ -28,8 +28,9 @@ export function AcceptInviteButton({
           });
           if (res.error) {
             toast({
-              title: "Error using invite",
+              title: 'Error using invite',
               description: res.error,
+              variant: 'destructive',
             });
           } else if (res.success) {
             router.push(`/event/${eventId}`);

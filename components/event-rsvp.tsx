@@ -1,21 +1,15 @@
-import { updateRSVP } from "@/lib/actions/member";
-import { MembershipWithAvailabilities } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTrigger,
-} from "./ui/dialog";
-import { Form, FormControl, FormField, FormItem } from "./ui/form";
-import { useToast } from "./ui/use-toast";
+import { updateRSVP } from '@/lib/actions/member';
+import { MembershipWithAvailabilities } from '@/types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTrigger } from './ui/dialog';
+import { Form, FormControl, FormField, FormItem } from './ui/form';
+import { useToast } from './ui/use-toast';
 
 export function EventRSVP({
   title,
@@ -30,12 +24,12 @@ export function EventRSVP({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const formSchema = z.object({
-    rsvp: z.enum(["YES", "NO", "MAYBE", "PENDING"]),
+    rsvp: z.enum(['YES', 'NO', 'MAYBE', 'PENDING']),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       rsvp: userMembership.rsvpStatus,
     },
@@ -47,13 +41,14 @@ export function EventRSVP({
     if (res.success) {
       setDialogOpen(false);
       toast({
-        title: "RSVP updated",
-        description: "Your RSVP status has been successfully updated",
+        title: 'RSVP updated',
+        description: 'Your RSVP status has been successfully updated',
       });
     } else if (res.error) {
       toast({
-        title: "Failed to update RSVP",
-        description: "An error occurred while updating your RSVP status",
+        title: 'Failed to update RSVP',
+        description: 'An error occurred while updating your RSVP status',
+        variant: 'destructive',
       });
     }
     setIsSaving(false);
@@ -62,24 +57,22 @@ export function EventRSVP({
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       {dateTime != null &&
-        userMembership.role !== "ORGANIZER" &&
-        (userMembership.rsvpStatus !== "PENDING" ? (
+        userMembership.role !== 'ORGANIZER' &&
+        (userMembership.rsvpStatus !== 'PENDING' ? (
           <DialogTrigger asChild>
             <Button
               className="flex items-center gap-3 w-max text-muted-foreground"
-              variant={"ghost"}
-              size={"sm"}
+              variant={'ghost'}
+              size={'sm'}
             >
               <span className="text-primary font-semibold">RSVP:</span>
               <div className="flex items-center gap-1">
-                {userMembership.rsvpStatus === "YES" ? (
+                {userMembership.rsvpStatus === 'YES' ? (
                   <Icons.check className="text-green-500" />
-                ) : userMembership.rsvpStatus === "NO" ? (
+                ) : userMembership.rsvpStatus === 'NO' ? (
                   <Icons.close className="text-red-500" />
                 ) : (
-                  <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
-                    ?
-                  </span>
+                  <span className="font-semibold w-6 text-xl text-yellow-500 text-center">?</span>
                 )}
                 <span>{userMembership.rsvpStatus}</span>
               </div>
@@ -92,7 +85,7 @@ export function EventRSVP({
               <div className="flex items-center justify-between">
                 <div>
                   <AlertTitle className="flex items-center gap-1">
-                    <Icons.info className="size-6 text-primary" />{" "}
+                    <Icons.info className="size-6 text-primary" />{' '}
                     <span>Your RSVP is Pending!</span>
                   </AlertTitle>
                   <AlertDescription className="text-muted-foreground">
@@ -109,16 +102,15 @@ export function EventRSVP({
           <h1 className="text-2xl font-heading">RSVP</h1>
         </DialogHeader>
         <DialogDescription>
-          Will you be attending{" "}
-          <span className="text-foreground font-semibold">{title}</span> on{" "}
+          Will you be attending <span className="text-foreground font-semibold">{title}</span> on{' '}
           <span className="text-foreground font-semibold">
             {dateTime?.toLocaleString([], {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
             })}
           </span>
           ?
@@ -133,8 +125,8 @@ export function EventRSVP({
                   <FormControl className="w-1/3">
                     <Button
                       type="button"
-                      variant={field.value === "YES" ? "default" : "outline"}
-                      onClick={() => field.onChange("YES")}
+                      variant={field.value === 'YES' ? 'default' : 'outline'}
+                      onClick={() => field.onChange('YES')}
                       disabled={isSaving}
                     >
                       <div className="flex items-center gap-1 pr-2">
@@ -146,8 +138,8 @@ export function EventRSVP({
                   <FormControl className="w-1/3">
                     <Button
                       type="button"
-                      variant={field.value === "MAYBE" ? "default" : "outline"}
-                      onClick={() => field.onChange("MAYBE")}
+                      variant={field.value === 'MAYBE' ? 'default' : 'outline'}
+                      onClick={() => field.onChange('MAYBE')}
                       disabled={isSaving}
                     >
                       <div className="flex items-center gap-1 pr-2">
@@ -161,8 +153,8 @@ export function EventRSVP({
                   <FormControl className="w-1/3">
                     <Button
                       type="button"
-                      variant={field.value === "NO" ? "default" : "outline"}
-                      onClick={() => field.onChange("NO")}
+                      variant={field.value === 'NO' ? 'default' : 'outline'}
+                      onClick={() => field.onChange('NO')}
                       disabled={isSaving}
                     >
                       <div className="flex items-center gap-1 pr-2">
@@ -178,11 +170,7 @@ export function EventRSVP({
               <Button
                 className="mt-5 flex items-center gap-1 w-full sm:w-auto"
                 type="submit"
-                disabled={
-                  isSaving ||
-                  !form.formState.isValid ||
-                  form.watch("rsvp") === "PENDING"
-                }
+                disabled={isSaving || !form.formState.isValid || form.watch('rsvp') === 'PENDING'}
               >
                 {isSaving ? (
                   <Icons.spinner className="h-4 w-4 animate-spin" />

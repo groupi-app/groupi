@@ -36,6 +36,7 @@ import {
   MailOpen as Read,
   MessageCircle as Reply,
   Save,
+  Undo2 as Undo,
   Shield,
   ShieldOff,
   PanelLeft as Sidebar,
@@ -47,7 +48,10 @@ import {
   Underline,
   Mail as Unread,
   X,
-} from "lucide-react";
+  Mail,
+  Webhook,
+  Megaphone,
+} from 'lucide-react';
 
 export type Icon = LucideIcon;
 
@@ -74,6 +78,7 @@ export const Icons = {
   delete: Delete,
   edit: Edit,
   save: Save,
+  undo: Undo,
   submit: Submit,
   back: ChevronLeft,
   forward: ChevronRight,
@@ -98,6 +103,9 @@ export const Icons = {
   copy: Copy,
   invite: Invite,
   leave: Leave,
+  mail: Mail,
+  webhook: Webhook,
+  megaphone: Megaphone,
   logo: ({ ...props }: LucideProps) => (
     <svg fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -117,12 +125,7 @@ export const Icons = {
     </svg>
   ),
   organizer: ({ ...props }: LucideProps) => (
-    <svg
-      fill="none"
-      viewBox="0 0 298 298"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
+    <svg fill="none" viewBox="0 0 298 298" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#clip0_1_7)">
         <path
           d="M133.438 166.375C164.193 166.375 189.125 141.443 189.125 110.688C189.125 79.9321 164.193 55 133.438 55C102.682 55 77.75 79.9321 77.75 110.688C77.75 141.443 102.682 166.375 133.438 166.375Z"
@@ -157,12 +160,7 @@ export const Icons = {
     </svg>
   ),
   group: ({ color2, ...props }: LucideProps & { color2: string }) => (
-    <svg
-      viewBox="0 0 553 298"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
+    <svg viewBox="0 0 553 298" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
         d="M133.438 166.375C164.193 166.375 189.125 141.443 189.125 110.688C189.125 79.9321 164.193 55 133.438 55C102.682 55 77.75 79.9321 77.75 110.688C77.75 141.443 102.682 166.375 133.438 166.375Z"
         className={color2}

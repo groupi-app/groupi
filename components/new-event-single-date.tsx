@@ -1,22 +1,22 @@
-"use client";
-import { useFormContext } from "@/components/providers/form-context-provider";
-import { Calendar } from "@/components/ui/calendar";
-import { createEvent } from "@/lib/actions/event";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
-import { Input } from "./ui/input";
-import { useToast } from "./ui/use-toast";
+'use client';
+import { useFormContext } from '@/components/providers/form-context-provider';
+import { Calendar } from '@/components/ui/calendar';
+import { createEvent } from '@/lib/actions/event';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { Button } from './ui/button';
+import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
+import { Input } from './ui/input';
+import { useToast } from './ui/use-toast';
 
 const formSchema = z.object({
   date: z.date(),
-  time: z.string().regex(new RegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")),
+  time: z.string().regex(new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')),
 });
 
 export function NewEventSingleDate() {
@@ -30,23 +30,23 @@ export function NewEventSingleDate() {
     defaultValues: {
       date: new Date(),
       time: new Date().toLocaleTimeString([], {
-        timeStyle: "short",
+        timeStyle: 'short',
         hour12: false,
       }),
     },
   });
 
   if (!formState.title) {
-    router.push("/create");
+    router.push('/create');
     return null;
   }
 
   const getDateTime = () => {
-    const date = form.watch("date");
-    const time = form.watch("time");
+    const date = form.watch('date');
+    const time = form.watch('time');
 
     // Split time into hours and minutes
-    const [hours, minutes] = time.split(":").map(Number);
+    const [hours, minutes] = time.split(':').map(Number);
 
     // Create new date object and set time components
     const dateTime = new Date(date);
@@ -57,13 +57,13 @@ export function NewEventSingleDate() {
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${
-      new Date().getTimezoneOffset() > 0 ? "-" : "+"
+      new Date().getTimezoneOffset() > 0 ? '-' : '+'
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    const [hours, minutes] = data.time.split(":").map(Number);
+    const [hours, minutes] = data.time.split(':').map(Number);
 
     // Create new date object and set time components
     const dateTime = new Date(data.date);
@@ -79,15 +79,16 @@ export function NewEventSingleDate() {
     });
     if (res.error) {
       toast({
-        title: "Error",
-        description: "The event was unable to be created.",
+        title: 'Error',
+        description: 'The event was unable to be created.',
+        variant: 'destructive',
       });
       setIsSaving(false);
     }
     if (res.success) {
       toast({
-        title: "Event Created",
-        description: "The event was created successfully.",
+        title: 'Event Created',
+        description: 'The event was created successfully.',
       });
       router.push(`/event/${res.success.id}`);
     }
@@ -107,9 +108,7 @@ export function NewEventSingleDate() {
                     mode="single"
                     className="rounded-md border border-border w-max mx-auto"
                     selected={field.value}
-                    onSelect={(date) =>
-                      date ? form.setValue("date", date) : null
-                    }
+                    onSelect={(date) => (date ? form.setValue('date', date) : null)}
                     {...field}
                   />
                 </FormControl>
@@ -135,20 +134,18 @@ export function NewEventSingleDate() {
                 </FormItem>
               )}
             />
-            <span className="text-muted-foreground text-sm text-center">
-              {getTimezoneString()}
-            </span>
+            <span className="text-muted-foreground text-sm text-center">{getTimezoneString()}</span>
           </div>
           <div className="mx-auto">
             <div className="flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto">
               <h2 className="text-xl font-semibold">
                 {getDateTime().toLocaleString([], {
-                  weekday: "short",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: 'numeric',
                   hour12: true,
                 })}
               </h2>
@@ -156,7 +153,7 @@ export function NewEventSingleDate() {
           </div>
           <div className="flex justify-between mt-2">
             <Link href="/create/date-type">
-              <Button className="flex items-center gap-1" variant={"secondary"}>
+              <Button className="flex items-center gap-1" variant={'secondary'}>
                 <span>Back</span>
                 <Icons.back className="text-sm" />
               </Button>
@@ -167,11 +164,7 @@ export function NewEventSingleDate() {
               type="submit"
               disabled={isSaving}
             >
-              {isSaving ? (
-                <Icons.spinner className="h-4 w-4 animate-spin" />
-              ) : (
-                <></>
-              )}
+              {isSaving ? <Icons.spinner className="h-4 w-4 animate-spin" /> : <></>}
               Submit
             </Button>
           </div>
