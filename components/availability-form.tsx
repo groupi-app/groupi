@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { eventLogger } from '@/lib/logger';
 import { AvailabilityCard } from './availability-card';
 import { Icons } from './icons';
 import { Button } from './ui/button';
@@ -28,10 +29,8 @@ export function AvailabilityForm({
   const answerMap = (
     status: $Enums.Status | undefined
   ): 'yes' | 'maybe' | 'no' => {
-    // YES = "yes",
-    // MAYBE = "maybe",
-    // NO = "no",
-    console.log(status);
+    // Convert status to lowercase for form
+    eventLogger.debug('Converting availability status', { status });
     switch (status) {
       case 'YES':
         return 'yes';

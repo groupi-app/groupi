@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { useToast } from './ui/use-toast';
 import { updateUserSettings } from '@/lib/actions/settings';
+import { log } from '@/lib/logger';
 
 export function SettingsForm({ children }: { children: ReactNode }) {
   const methods = useFormContext();
@@ -12,7 +13,7 @@ export function SettingsForm({ children }: { children: ReactNode }) {
 
   // Submit handler: call server action to update settings
   const onSubmit = async (data: any) => {
-    console.log('DATA', data);
+    log.info('Updating user settings', { data });
     const res = await updateUserSettings(data);
     if (res?.error) {
       toast({

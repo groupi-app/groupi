@@ -99,7 +99,7 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      'no-console': 'warn', // Allow console but warn
+      'no-console': 'warn', // Prefer structured logging with Pino
       '@typescript-eslint/no-explicit-any': 'warn', // Allow any but warn
       '@typescript-eslint/no-empty-object-type': 'warn',
       'no-undef': 'off', // TypeScript handles this

@@ -74,6 +74,8 @@
     "next": "15.2.4",
     "ngrok": "^5.0.0-beta.2",
     "npm": "^10.2.4",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
     "postcss": "8.4.23",
     "pusher": "^5.2.0",
     "pusher-js": "^8.4.0-rc2",

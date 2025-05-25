@@ -28,6 +28,7 @@ import {
   TrashIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { notificationLogger } from '@/lib/logger';
 
 interface NotificationSettingsProps {
   userId: string;
@@ -63,7 +64,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         const response = await getNotificationSettings(userId);
         setSettingsData(response);
       } catch (error) {
-        console.error('Error loading settings:', error);
+        notificationLogger.error('Error loading settings', error);
       } finally {
         setIsLoading(false);
       }
@@ -118,7 +119,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       setSettingsData(response);
       resetNewMethodForm();
     } catch (error) {
-      console.error('Error adding notification method:', error);
+      notificationLogger.error('Error adding notification method', error);
     }
   };
 
@@ -139,7 +140,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       // Update unsaved changes flag
       setHasUnsavedChanges(Object.keys(newPendingChanges).length > 0);
     } catch (error) {
-      console.error('Error deleting notification method:', error);
+      notificationLogger.error('Error deleting notification method', error);
     }
   };
 
@@ -236,7 +237,10 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       setPendingChanges({});
       setHasUnsavedChanges(false);
     } catch (error) {
-      console.error('Failed to save changes:', error);
+      notificationLogger.error(
+        'Failed to save notification settings changes',
+        error
+      );
     } finally {
       setIsSaving(false);
     }

@@ -11,6 +11,7 @@ import { Member } from '@/types';
 import { $Enums } from '@prisma/client';
 import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
 import { motion } from 'framer-motion';
+import { log } from '@/lib/logger';
 import { Icons } from './icons';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
@@ -58,7 +59,7 @@ export default function MemberIcon({
 
   const fullName = getFullName(firstName, lastName);
 
-  console.log(fullName);
+  log.debug('Rendering member icon', { fullName, memberId: member.id });
 
   const isMe = userId === member.person.id;
 

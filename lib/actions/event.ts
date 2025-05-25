@@ -13,6 +13,7 @@ import { BatchEvent } from 'pusher';
 import { cache } from 'react';
 import { pusherServer } from '../pusher-server';
 import { getEventQuery, getPersonQuery } from '../query-definitions';
+import { eventLogger } from '../logger';
 import { createEventModNotifs, createEventNotifs } from './notification';
 
 export interface EventData {
@@ -127,7 +128,10 @@ export async function createEvent({
     if (!event) return { error: 'Event not created' };
 
     if (potentialDateTimes) {
-      console.log(potentialDateTimes);
+      eventLogger.debug('Adding potential date times to event', {
+        eventId: event.id,
+        dateCount: potentialDateTimes.length,
+      });
       const eventRes = await db.event.update({
         where: {
           id: event.id,
