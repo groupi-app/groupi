@@ -48,18 +48,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'username is required' }, { status: 400 });
     }
 
-    const person = await db.person.update({
-      where: {
-        id,
-      },
-      data: {
+    const person = await db.person.upsert({
+      where: { id },
+      update: {
         firstName: first_name ?? null,
         lastName: last_name ?? null,
         username,
         imageUrl: image_url,
       },
+      create: {
+        id,
+        firstName: first_name ?? null,
+        lastName: last_name ?? null,
+        username,
+        imageUrl: image_url,
+        settings: { create: {} },
+      },
+      include: { settings: true },
     });
-    return NextResponse.json({ message: 'Updated person', person }, { status: 200 });
+    return NextResponse.json({ message: 'Upserted person', person }, { status: 200 });
   }
 
   if (eventType === 'user.deleted') {
