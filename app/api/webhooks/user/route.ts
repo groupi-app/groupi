@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
         lastName: last_name ?? null,
         username,
         imageUrl: image_url,
-        settings: { create: {} },
       },
       include: { settings: true },
     });
