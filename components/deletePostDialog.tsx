@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   DialogClose,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { deletePost } from "@/lib/actions/post";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/dialog';
+import { deletePost } from '@/lib/actions/post';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useRouter } from 'next/navigation';
+import { Button } from './ui/button';
+import { useToast } from './ui/use-toast';
 
 async function removePost({
   id,
@@ -26,14 +26,14 @@ async function removePost({
   if (res.success) {
     router.push(`/event/${res.success.post.eventId}`);
     toast({
-      title: "Post deleted",
-      description: "The post has been deleted.",
+      title: 'Post deleted',
+      description: 'The post has been deleted.',
     });
   } else {
     toast({
-      title: "Uh oh!",
-      description: "The post could not be deleted.",
-      variant: "destructive",
+      title: 'Uh oh!',
+      description: 'The post could not be deleted.',
+      variant: 'destructive',
     });
   }
 }
@@ -51,16 +51,16 @@ export function DeletePostDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center justify-end gap-2">
+        <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
               onClick={() => {
                 removePost({ id, toast, router });
               }}
-              variant="destructive"
+              variant='destructive'
             >
               Delete
             </Button>

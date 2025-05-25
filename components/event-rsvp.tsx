@@ -7,7 +7,13 @@ import { z } from 'zod';
 import { Icons } from './icons';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTrigger } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTrigger,
+} from './ui/dialog';
 import { Form, FormControl, FormField, FormItem } from './ui/form';
 import { useToast } from './ui/use-toast';
 
@@ -61,49 +67,52 @@ export function EventRSVP({
         (userMembership.rsvpStatus !== 'PENDING' ? (
           <DialogTrigger asChild>
             <Button
-              className="flex items-center gap-3 w-max text-muted-foreground"
+              className='flex items-center gap-3 w-max text-muted-foreground'
               variant={'ghost'}
               size={'sm'}
             >
-              <span className="text-primary font-semibold">RSVP:</span>
-              <div className="flex items-center gap-1">
+              <span className='text-primary font-semibold'>RSVP:</span>
+              <div className='flex items-center gap-1'>
                 {userMembership.rsvpStatus === 'YES' ? (
-                  <Icons.check className="text-green-500" />
+                  <Icons.check className='text-green-500' />
                 ) : userMembership.rsvpStatus === 'NO' ? (
-                  <Icons.close className="text-red-500" />
+                  <Icons.close className='text-red-500' />
                 ) : (
-                  <span className="font-semibold w-6 text-xl text-yellow-500 text-center">?</span>
+                  <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                    ?
+                  </span>
                 )}
                 <span>{userMembership.rsvpStatus}</span>
               </div>
-              <Icons.arrowRight className="size-4" />
+              <Icons.arrowRight className='size-4' />
             </Button>
           </DialogTrigger>
         ) : (
           <DialogTrigger asChild>
-            <Alert className="hover:bg-accent transition-all cursor-pointer group">
-              <div className="flex items-center justify-between">
+            <Alert className='hover:bg-accent transition-all cursor-pointer group'>
+              <div className='flex items-center justify-between'>
                 <div>
-                  <AlertTitle className="flex items-center gap-1">
-                    <Icons.info className="size-6 text-primary" />{' '}
+                  <AlertTitle className='flex items-center gap-1'>
+                    <Icons.info className='size-6 text-primary' />{' '}
                     <span>Your RSVP is Pending!</span>
                   </AlertTitle>
-                  <AlertDescription className="text-muted-foreground">
+                  <AlertDescription className='text-muted-foreground'>
                     Please click here to RSVP to this event.
                   </AlertDescription>
                 </div>
-                <Icons.arrowRight className="size-6 text-muted-foreground " />
+                <Icons.arrowRight className='size-6 text-muted-foreground ' />
               </div>
             </Alert>
           </DialogTrigger>
         ))}
       <DialogContent>
         <DialogHeader>
-          <h1 className="text-2xl font-heading">RSVP</h1>
+          <h1 className='text-2xl font-heading'>RSVP</h1>
         </DialogHeader>
         <DialogDescription>
-          Will you be attending <span className="text-foreground font-semibold">{title}</span> on{' '}
-          <span className="text-foreground font-semibold">
+          Will you be attending{' '}
+          <span className='text-foreground font-semibold'>{title}</span> on{' '}
+          <span className='text-foreground font-semibold'>
             {dateTime?.toLocaleString([], {
               weekday: 'long',
               year: 'numeric',
@@ -119,46 +128,46 @@ export function EventRSVP({
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
-              name="rsvp"
+              name='rsvp'
               render={({ field }) => (
-                <FormItem className="flex gap-2 items-center space-y-0">
-                  <FormControl className="w-1/3">
+                <FormItem className='flex gap-2 items-center space-y-0'>
+                  <FormControl className='w-1/3'>
                     <Button
-                      type="button"
+                      type='button'
                       variant={field.value === 'YES' ? 'default' : 'outline'}
                       onClick={() => field.onChange('YES')}
                       disabled={isSaving}
                     >
-                      <div className="flex items-center gap-1 pr-2">
-                        <Icons.check className="text-green-500" />
+                      <div className='flex items-center gap-1 pr-2'>
+                        <Icons.check className='text-green-500' />
                         <span>Yes</span>
                       </div>
                     </Button>
                   </FormControl>
-                  <FormControl className="w-1/3">
+                  <FormControl className='w-1/3'>
                     <Button
-                      type="button"
+                      type='button'
                       variant={field.value === 'MAYBE' ? 'default' : 'outline'}
                       onClick={() => field.onChange('MAYBE')}
                       disabled={isSaving}
                     >
-                      <div className="flex items-center gap-1 pr-2">
-                        <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
+                      <div className='flex items-center gap-1 pr-2'>
+                        <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
                           ?
                         </span>
                         <span>Maybe</span>
                       </div>
                     </Button>
                   </FormControl>
-                  <FormControl className="w-1/3">
+                  <FormControl className='w-1/3'>
                     <Button
-                      type="button"
+                      type='button'
                       variant={field.value === 'NO' ? 'default' : 'outline'}
                       onClick={() => field.onChange('NO')}
                       disabled={isSaving}
                     >
-                      <div className="flex items-center gap-1 pr-2">
-                        <Icons.close className="text-red-500" />
+                      <div className='flex items-center gap-1 pr-2'>
+                        <Icons.close className='text-red-500' />
                         <span>No</span>
                       </div>
                     </Button>
@@ -166,16 +175,20 @@ export function EventRSVP({
                 </FormItem>
               )}
             />
-            <div className="flex justify-end">
+            <div className='flex justify-end'>
               <Button
-                className="mt-5 flex items-center gap-1 w-full sm:w-auto"
-                type="submit"
-                disabled={isSaving || !form.formState.isValid || form.watch('rsvp') === 'PENDING'}
+                className='mt-5 flex items-center gap-1 w-full sm:w-auto'
+                type='submit'
+                disabled={
+                  isSaving ||
+                  !form.formState.isValid ||
+                  form.watch('rsvp') === 'PENDING'
+                }
               >
                 {isSaving ? (
-                  <Icons.spinner className="h-4 w-4 animate-spin" />
+                  <Icons.spinner className='h-4 w-4 animate-spin' />
                 ) : (
-                  <Icons.save className="size-4" />
+                  <Icons.save className='size-4' />
                 )}
                 Save
               </Button>

@@ -97,18 +97,20 @@ export function NewEventSingleDate() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="my-8 flex flex-col gap-4">
+        <div className='my-8 flex flex-col gap-4'>
           <FormField
             control={form.control}
-            name="date"
+            name='date'
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Calendar
-                    mode="single"
-                    className="rounded-md border border-border w-max mx-auto"
+                    mode='single'
+                    className='rounded-md border border-border w-max mx-auto'
                     selected={field.value}
-                    onSelect={(date) => (date ? form.setValue('date', date) : null)}
+                    onSelect={date =>
+                      date ? form.setValue('date', date) : null
+                    }
                     {...field}
                   />
                 </FormControl>
@@ -116,17 +118,17 @@ export function NewEventSingleDate() {
               </FormItem>
             )}
           />
-          <div className="text-center">
+          <div className='text-center'>
             <FormField
               control={form.control}
-              name="time"
+              name='time'
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      data-test="new-event-single-time"
-                      type="time"
-                      className="w-max mx-auto cursor-text"
+                      data-test='new-event-single-time'
+                      type='time'
+                      className='w-max mx-auto cursor-text'
                       {...field}
                     />
                   </FormControl>
@@ -134,11 +136,13 @@ export function NewEventSingleDate() {
                 </FormItem>
               )}
             />
-            <span className="text-muted-foreground text-sm text-center">{getTimezoneString()}</span>
+            <span className='text-muted-foreground text-sm text-center'>
+              {getTimezoneString()}
+            </span>
           </div>
-          <div className="mx-auto">
-            <div className="flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto">
-              <h2 className="text-xl font-semibold">
+          <div className='mx-auto'>
+            <div className='flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto'>
+              <h2 className='text-xl font-semibold'>
                 {getDateTime().toLocaleString([], {
                   weekday: 'short',
                   year: 'numeric',
@@ -151,20 +155,24 @@ export function NewEventSingleDate() {
               </h2>
             </div>
           </div>
-          <div className="flex justify-between mt-2">
-            <Link href="/create/date-type">
-              <Button className="flex items-center gap-1" variant={'secondary'}>
+          <div className='flex justify-between mt-2'>
+            <Link href='/create/date-type'>
+              <Button className='flex items-center gap-1' variant={'secondary'}>
                 <span>Back</span>
-                <Icons.back className="text-sm" />
+                <Icons.back className='text-sm' />
               </Button>
             </Link>
             <Button
-              data-test="new-event-single-submit"
-              className="flex items-center gap-1"
-              type="submit"
+              data-test='new-event-single-submit'
+              className='flex items-center gap-1'
+              type='submit'
               disabled={isSaving}
             >
-              {isSaving ? <Icons.spinner className="h-4 w-4 animate-spin" /> : <></>}
+              {isSaving ? (
+                <Icons.spinner className='h-4 w-4 animate-spin' />
+              ) : (
+                <></>
+              )}
               Submit
             </Button>
           </div>

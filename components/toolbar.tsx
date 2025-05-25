@@ -1,9 +1,9 @@
-"use-client";
+'use-client';
 
-import { Icons } from "@/components/icons";
-import { type Editor } from "@tiptap/react";
+import { Icons } from '@/components/icons';
+import { type Editor } from '@tiptap/react';
 
-import { Toggle } from "@/components/ui/toggle";
+import { Toggle } from '@/components/ui/toggle';
 
 type ToolbarProps = {
   editor: Editor | null;
@@ -13,10 +13,10 @@ export function Toolbar({ editor }: ToolbarProps) {
   if (!editor) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-md flex-wrap">
+    <div className='flex items-center gap-2 rounded-md flex-wrap'>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("heading")}
+        size='sm'
+        pressed={editor.isActive('heading')}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 2 }).run();
         }}
@@ -24,8 +24,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.heading />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("bold")}
+        size='sm'
+        pressed={editor.isActive('bold')}
         onPressedChange={() => {
           editor.chain().focus().toggleBold().run();
         }}
@@ -33,8 +33,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.bold />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("italic")}
+        size='sm'
+        pressed={editor.isActive('italic')}
         onPressedChange={() => {
           editor.chain().focus().toggleItalic().run();
         }}
@@ -42,8 +42,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.italic />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("underline")}
+        size='sm'
+        pressed={editor.isActive('underline')}
         onPressedChange={() => {
           editor.chain().focus().toggleUnderline().run();
         }}
@@ -51,8 +51,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.underline />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("strike")}
+        size='sm'
+        pressed={editor.isActive('strike')}
         onPressedChange={() => {
           editor.chain().focus().toggleStrike().run();
         }}
@@ -60,8 +60,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.strikethrough />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("code")}
+        size='sm'
+        pressed={editor.isActive('code')}
         onPressedChange={() => {
           editor.chain().focus().toggleCode().run();
         }}
@@ -69,8 +69,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.code />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("bulletList")}
+        size='sm'
+        pressed={editor.isActive('bulletList')}
         onPressedChange={() => {
           editor.chain().focus().toggleBulletList().run();
         }}
@@ -78,8 +78,8 @@ export function Toolbar({ editor }: ToolbarProps) {
         <Icons.list />
       </Toggle>
       <Toggle
-        size="sm"
-        pressed={editor.isActive("orderedList")}
+        size='sm'
+        pressed={editor.isActive('orderedList')}
         onPressedChange={() => {
           editor.chain().focus().toggleOrderedList().run();
         }}
@@ -92,29 +92,29 @@ export function Toolbar({ editor }: ToolbarProps) {
 
 Toolbar.Skeleton = function ToolbarSkeleton() {
   return (
-    <div className="flex items-center gap-2 rounded-md flex-wrap mb-2">
-      <Toggle size="sm">
+    <div className='flex items-center gap-2 rounded-md flex-wrap mb-2'>
+      <Toggle size='sm'>
         <Icons.heading />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.bold />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.italic />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.underline />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.strikethrough />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.code />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.list />
       </Toggle>
-      <Toggle size="sm">
+      <Toggle size='sm'>
         <Icons.listOrdered />
       </Toggle>
     </div>

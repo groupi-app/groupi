@@ -1,10 +1,10 @@
-import { ActionResponse, PersonData } from "@/types";
-import { cache } from "react";
-import { db } from "../db";
+import { ActionResponse, PersonData } from '@/types';
+import { cache } from 'react';
+import { db } from '../db';
 
 export const fetchPersonData = cache(
   async (userId: string): Promise<ActionResponse<PersonData>> => {
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const person = await db.person.findUnique({
       where: { id: userId },
@@ -17,7 +17,7 @@ export const fetchPersonData = cache(
       },
     });
 
-    if (!person) return { error: "User not found" };
+    if (!person) return { error: 'User not found' };
 
     return { success: person };
   }

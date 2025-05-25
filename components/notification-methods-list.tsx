@@ -30,7 +30,9 @@ interface NewNotificationMethod {
   notifications: NewNotificationSetting[];
 }
 
-export function NotificationMethodsList({ emails }: NotificationMethodsListProps) {
+export function NotificationMethodsList({
+  emails,
+}: NotificationMethodsListProps) {
   const { control, watch } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -51,7 +53,10 @@ export function NotificationMethodsList({ emails }: NotificationMethodsListProps
 
   // Helper: get all notification types as array of { notificationType, enabled: true }
   const getDefaultNotifications = () =>
-    Object.values(NotificationType).map((type) => ({ notificationType: type, enabled: true }));
+    Object.values(NotificationType).map(type => ({
+      notificationType: type,
+      enabled: true,
+    }));
 
   // Helper to append and track the last added index
   const handleAppend = (method: NewNotificationMethod) => {
@@ -60,20 +65,27 @@ export function NotificationMethodsList({ emails }: NotificationMethodsListProps
   };
 
   return (
-    <div className="space-y-4 mb-20">
+    <div className='space-y-4 mb-20'>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="flex items-center gap-1" type="button" variant="outline">
-            <Icons.plus className="size-4" />
+          <Button
+            className='flex items-center gap-1'
+            type='button'
+            variant='outline'
+          >
+            <Icons.plus className='size-4' />
             <span>Add notification method</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent align='start'>
           {/* Email category with sub-items for each email */}
-          <div className="px-2 py-1 text-xs text-muted-foreground font-semibold">Email</div>
-          {emails.map((email) => {
+          <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
+            Email
+          </div>
+          {emails.map(email => {
             const alreadyAdded = methods.some(
-              (m: any) => m.type === NotificationMethodType.EMAIL && m.value === email
+              (m: any) =>
+                m.type === NotificationMethodType.EMAIL && m.value === email
             );
             return (
               <DropdownMenuItem

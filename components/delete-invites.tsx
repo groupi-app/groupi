@@ -23,7 +23,7 @@ export function DeleteInvites({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button disabled={!selectedInvites.length} variant="destructive">
+        <Button disabled={!selectedInvites.length} variant='destructive'>
           Delete {selectedInvites.length} Invite
           {selectedInvites.length === 1 ? '' : 's'}
         </Button>
@@ -35,13 +35,14 @@ export function DeleteInvites({
             {selectedInvites.length === 1 ? '' : 's'}{' '}
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the selected invites? This action cannot be undone.
+            Are you sure you want to delete the selected invites? This action
+            cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <div className="flex gap-4 justify-end">
+          <div className='flex gap-4 justify-end'>
             <DialogClose>
-              <Button variant="ghost">Cancel</Button>
+              <Button variant='ghost'>Cancel</Button>
             </DialogClose>
             <DialogClose asChild>
               <Button
@@ -50,7 +51,8 @@ export function DeleteInvites({
                   if (res.success) {
                     toast({
                       title: 'Invites Deleted',
-                      description: 'The invites have been successfully deleted.',
+                      description:
+                        'The invites have been successfully deleted.',
                     });
                     setSelectedInvites([]);
                   }
@@ -62,7 +64,7 @@ export function DeleteInvites({
                     });
                   }
                 }}
-                variant="destructive"
+                variant='destructive'
               >
                 Delete
               </Button>

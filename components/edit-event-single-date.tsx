@@ -106,19 +106,21 @@ export function EditEventSingleDate({
 
   return (
     <Form {...form}>
-      <form id="edit-date-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="my-8 flex flex-col gap-4">
+      <form id='edit-date-form' onSubmit={form.handleSubmit(onSubmit)}>
+        <div className='my-8 flex flex-col gap-4'>
           <FormField
             control={form.control}
-            name="date"
+            name='date'
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <Calendar
-                    mode="single"
-                    className="rounded-md border border-border w-max mx-auto"
+                    mode='single'
+                    className='rounded-md border border-border w-max mx-auto'
                     selected={field.value}
-                    onSelect={(date) => (date ? form.setValue('date', date) : null)}
+                    onSelect={date =>
+                      date ? form.setValue('date', date) : null
+                    }
                     defaultMonth={field.value}
                     {...field}
                   />
@@ -127,17 +129,17 @@ export function EditEventSingleDate({
               </FormItem>
             )}
           />
-          <div className="text-center">
+          <div className='text-center'>
             <FormField
               control={form.control}
-              name="time"
+              name='time'
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      data-test="new-event-single-time"
-                      type="time"
-                      className="w-max mx-auto cursor-text"
+                      data-test='new-event-single-time'
+                      type='time'
+                      className='w-max mx-auto cursor-text'
                       {...field}
                     />
                   </FormControl>
@@ -145,11 +147,13 @@ export function EditEventSingleDate({
                 </FormItem>
               )}
             />
-            <span className="text-muted-foreground text-sm text-center">{getTimezoneString()}</span>
+            <span className='text-muted-foreground text-sm text-center'>
+              {getTimezoneString()}
+            </span>
           </div>
-          <div className="mx-auto">
-            <div className="flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto">
-              <h2 className="text-xl font-semibold">
+          <div className='mx-auto'>
+            <div className='flex items-center rounded-lg bg-muted p-4 max-w-sm w-max mx-auto'>
+              <h2 className='text-xl font-semibold'>
                 {getDateTime().toLocaleString([], {
                   weekday: 'short',
                   year: 'numeric',
@@ -162,19 +166,19 @@ export function EditEventSingleDate({
               </h2>
             </div>
           </div>
-          <div className="flex justify-between mt-2">
+          <div className='flex justify-between mt-2'>
             <Link href={`/event/${eventId}/change-date`}>
-              <Button className="flex items-center gap-1" variant={'secondary'}>
+              <Button className='flex items-center gap-1' variant={'secondary'}>
                 <span>Back</span>
-                <Icons.back className="text-sm" />
+                <Icons.back className='text-sm' />
               </Button>
             </Link>
             <Dialog>
               <DialogTrigger asChild>
                 <Button
-                  data-test="new-event-single-submit"
-                  className="flex items-center gap-1"
-                  type="button"
+                  data-test='new-event-single-submit'
+                  className='flex items-center gap-1'
+                  type='button'
                 >
                   Submit
                 </Button>
@@ -183,21 +187,25 @@ export function EditEventSingleDate({
                 <DialogHeader>
                   <DialogTitle>Update Date/Time</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to update the date/time? This will override any existing
-                    polls.
+                    Are you sure you want to update the date/time? This will
+                    override any existing polls.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="ghost">Cancel</Button>
+                    <Button variant='ghost'>Cancel</Button>
                   </DialogClose>
                   <Button
-                    className="flex items-center gap-1"
-                    type="submit"
-                    form="edit-date-form"
+                    className='flex items-center gap-1'
+                    type='submit'
+                    form='edit-date-form'
                     disabled={isSaving}
                   >
-                    {isSaving ? <Icons.spinner className="h-4 w-4 animate-spin" /> : <></>}
+                    {isSaving ? (
+                      <Icons.spinner className='h-4 w-4 animate-spin' />
+                    ) : (
+                      <></>
+                    )}
                     Confirm
                   </Button>
                 </DialogFooter>

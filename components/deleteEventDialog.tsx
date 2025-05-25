@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   DialogClose,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { deleteEvent } from "@/lib/actions/event";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/dialog';
+import { deleteEvent } from '@/lib/actions/event';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useRouter } from 'next/navigation';
+import { Button } from './ui/button';
+import { useToast } from './ui/use-toast';
 
 async function removeEvent({
   id,
@@ -26,14 +26,14 @@ async function removeEvent({
   if (res.success) {
     router.push(`/events`);
     toast({
-      title: "Event deleted",
-      description: "The event has been deleted.",
+      title: 'Event deleted',
+      description: 'The event has been deleted.',
     });
   } else {
     toast({
-      title: "Uh oh!",
-      description: "The event could not be deleted.",
-      variant: "destructive",
+      title: 'Uh oh!',
+      description: 'The event could not be deleted.',
+      variant: 'destructive',
     });
   }
 }
@@ -51,17 +51,17 @@ export function DeleteEventDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center gap-2">
-          <DialogClose className="grow" asChild>
-            <Button variant="ghost">Cancel</Button>
+        <div className='flex items-center gap-2'>
+          <DialogClose className='grow' asChild>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
-          <DialogClose className="grow" asChild>
+          <DialogClose className='grow' asChild>
             <Button
               onClick={() => {
                 removeEvent({ id, toast, router });
               }}
-              className="w-full"
-              variant="destructive"
+              className='w-full'
+              variant='destructive'
             >
               Delete
             </Button>

@@ -1,14 +1,14 @@
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { db } from '@/lib/db';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const idSchema = z.string().length(32).startsWith("user_");
+const idSchema = z.string().length(32).startsWith('user_');
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = (await context.params);
+  const { id } = await context.params;
 
   const validationResult = idSchema.safeParse(id);
   if (!validationResult.success) {
@@ -25,7 +25,7 @@ export async function GET(
   });
 
   if (!result) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
+    return NextResponse.json({ message: 'User not found' }, { status: 404 });
   }
 
   return NextResponse.json(result, { status: 200 });

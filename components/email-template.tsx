@@ -5,7 +5,9 @@ interface EmailTemplateProps {
   notification: NotificationWithPersonEventPost;
 }
 
-export function NotificationEmailTemplate({ notification }: Readonly<EmailTemplateProps>) {
+export function NotificationEmailTemplate({
+  notification,
+}: Readonly<EmailTemplateProps>) {
   const { event, post, type, datetime, author, rsvp, createdAt } = notification;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   if (!baseUrl) {
@@ -83,35 +85,46 @@ export function NotificationEmailTemplate({ notification }: Readonly<EmailTempla
       case 'DATE_RESET':
         return (
           <div>
-            A new poll has started for the date of <strong>{event?.title}</strong>.
+            A new poll has started for the date of{' '}
+            <strong>{event?.title}</strong>.
           </div>
         );
       case 'NEW_POST':
         return (
           <div>
-            <strong>{author?.firstName ?? author?.lastName ?? author?.username}</strong> created a
-            new post, <strong>{post?.title}</strong>, in <strong>{event?.title}</strong>.
+            <strong>
+              {author?.firstName ?? author?.lastName ?? author?.username}
+            </strong>{' '}
+            created a new post, <strong>{post?.title}</strong>, in{' '}
+            <strong>{event?.title}</strong>.
           </div>
         );
       case 'NEW_REPLY':
         return (
           <div>
-            <strong>{author?.firstName ?? author?.lastName ?? author?.username}</strong> replied to
-            a post, <strong>{post?.title}</strong>, in <strong>{event?.title}</strong>.
+            <strong>
+              {author?.firstName ?? author?.lastName ?? author?.username}
+            </strong>{' '}
+            replied to a post, <strong>{post?.title}</strong>, in{' '}
+            <strong>{event?.title}</strong>.
           </div>
         );
       case 'USER_JOINED':
         return (
           <div>
-            <strong>{author?.firstName ?? author?.lastName ?? author?.username}</strong> has joined{' '}
-            <strong>{event?.title}</strong>.
+            <strong>
+              {author?.firstName ?? author?.lastName ?? author?.username}
+            </strong>{' '}
+            has joined <strong>{event?.title}</strong>.
           </div>
         );
       case 'USER_LEFT':
         return (
           <div>
-            <strong>{author?.firstName ?? author?.lastName ?? author?.username}</strong> has left{' '}
-            <strong>{event?.title}</strong>.
+            <strong>
+              {author?.firstName ?? author?.lastName ?? author?.username}
+            </strong>{' '}
+            has left <strong>{event?.title}</strong>.
           </div>
         );
       case 'USER_PROMOTED':
@@ -129,8 +142,11 @@ export function NotificationEmailTemplate({ notification }: Readonly<EmailTempla
       case 'USER_RSVP':
         return (
           <div>
-            <strong>{author?.firstName ?? author?.lastName ?? author?.username}</strong> has RSVP'd{' '}
-            <strong>{rsvp}</strong> to <strong>{event?.title}</strong>.
+            <strong>
+              {author?.firstName ?? author?.lastName ?? author?.username}
+            </strong>{' '}
+            has RSVP&apos;d <strong>{rsvp}</strong> to{' '}
+            <strong>{event?.title}</strong>.
           </div>
         );
       default:

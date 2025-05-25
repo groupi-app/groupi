@@ -1,52 +1,49 @@
-"use client";
+'use client';
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   addNotificationMethod,
   deleteNotificationMethod,
   getNotificationSettings,
   getNotificationTypeDisplayName,
   updateNotificationSettings,
-} from "@/lib/actions/settings";
-import { NotificationMethodType, NotificationType } from "@prisma/client";
+} from '@/lib/actions/settings';
+import { NotificationMethodType, NotificationType } from '@prisma/client';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   PlusIcon,
   TrashIcon,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface NotificationSettingsProps {
   userId: string;
 }
 
 export function NotificationSettings({ userId }: NotificationSettingsProps) {
-  const router = useRouter();
-
   const [settingsData, setSettingsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>(
     {}
   );
   const [newMethodType, setNewMethodType] = useState<
-    NotificationMethodType | ""
-  >("");
-  const [newMethodValue, setNewMethodValue] = useState("");
-  const [newMethodName, setNewMethodName] = useState("");
+    NotificationMethodType | ''
+  >('');
+  const [newMethodValue, setNewMethodValue] = useState('');
+  const [newMethodName, setNewMethodName] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<
     Record<string, Record<NotificationType, boolean>>
@@ -66,7 +63,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         const response = await getNotificationSettings(userId);
         setSettingsData(response);
       } catch (error) {
-        console.error("Error loading settings:", error);
+        console.error('Error loading settings:', error);
       } finally {
         setIsLoading(false);
       }
@@ -77,30 +74,30 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
   // Format method type for display
   const formatMethodType = (type: NotificationMethodType) => {
-    return type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, " ");
+    return type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, ' ');
   };
 
   // Get placeholder text for method value input
   const getMethodValuePlaceholder = (type: NotificationMethodType) => {
     switch (type) {
-      case "EMAIL":
-        return "Enter email address";
-      case "SMS":
-        return "Enter phone number";
-      case "PUSH":
-        return "Push notification token";
-      case "WEBHOOK":
-        return "Enter webhook URL";
+      case 'EMAIL':
+        return 'Enter email address';
+      case 'SMS':
+        return 'Enter phone number';
+      case 'PUSH':
+        return 'Push notification token';
+      case 'WEBHOOK':
+        return 'Enter webhook URL';
       default:
-        return "Enter value";
+        return 'Enter value';
     }
   };
 
   // Reset form after adding a method
   const resetNewMethodForm = () => {
-    setNewMethodType("");
-    setNewMethodValue("");
-    setNewMethodName("");
+    setNewMethodType('');
+    setNewMethodValue('');
+    setNewMethodName('');
   };
 
   // Handle adding a new notification method
@@ -121,7 +118,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       setSettingsData(response);
       resetNewMethodForm();
     } catch (error) {
-      console.error("Error adding notification method:", error);
+      console.error('Error adding notification method:', error);
     }
   };
 
@@ -142,7 +139,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       // Update unsaved changes flag
       setHasUnsavedChanges(Object.keys(newPendingChanges).length > 0);
     } catch (error) {
-      console.error("Error deleting notification method:", error);
+      console.error('Error deleting notification method:', error);
     }
   };
 
@@ -184,7 +181,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
     >;
 
     // Initialize with all notification types set to false
-    notificationTypes.forEach((type) => {
+    notificationTypes.forEach(type => {
       settings[type] = false;
     });
 
@@ -239,7 +236,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       setPendingChanges({});
       setHasUnsavedChanges(false);
     } catch (error) {
-      console.error("Failed to save changes:", error);
+      console.error('Failed to save changes:', error);
     } finally {
       setIsSaving(false);
     }
@@ -247,7 +244,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
   // Toggle card expanded state
   const toggleCardExpanded = (methodId: string) => {
-    setExpandedCards((prev) => ({
+    setExpandedCards(prev => ({
       ...prev,
       [methodId]: !prev[methodId],
     }));
@@ -255,37 +252,37 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
-        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+      <div className='animate-pulse space-y-4'>
+        <div className='h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6'></div>
+        <div className='h-48 bg-gray-200 dark:bg-gray-700 rounded w-full'></div>
+        <div className='h-48 bg-gray-200 dark:bg-gray-700 rounded w-full'></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-xl font-medium">Notification Methods</h2>
-        <p className="text-gray-500 text-sm">
+    <div className='space-y-6'>
+      <div className='space-y-4'>
+        <h2 className='text-xl font-medium'>Notification Methods</h2>
+        <p className='text-gray-500 text-sm'>
           Add notification methods and choose which types of notifications to
           send to each method.
         </p>
 
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="space-y-2 min-w-[200px]">
-            <Label htmlFor="method-type">Notification Method</Label>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <div className='space-y-2 min-w-[200px]'>
+            <Label htmlFor='method-type'>Notification Method</Label>
             <Select
               value={newMethodType}
-              onValueChange={(value) =>
+              onValueChange={value =>
                 setNewMethodType(value as NotificationMethodType)
               }
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select method" />
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select method' />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(NotificationMethodType).map((type) => (
+                {Object.values(NotificationMethodType).map(type => (
                   <SelectItem key={type} value={type}>
                     {formatMethodType(type)}
                   </SelectItem>
@@ -296,28 +293,28 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
           {newMethodType && (
             <>
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="method-name">Display Name (Optional)</Label>
+              <div className='space-y-2 flex-1'>
+                <Label htmlFor='method-name'>Display Name (Optional)</Label>
                 <Input
-                  id="method-name"
-                  placeholder="My personal email"
+                  id='method-name'
+                  placeholder='My personal email'
                   value={newMethodName}
-                  onChange={(e) => setNewMethodName(e.target.value)}
+                  onChange={e => setNewMethodName(e.target.value)}
                 />
               </div>
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="method-value">
-                  {formatMethodType(newMethodType as NotificationMethodType)}{" "}
+              <div className='space-y-2 flex-1'>
+                <Label htmlFor='method-value'>
+                  {formatMethodType(newMethodType as NotificationMethodType)}{' '}
                   Value
                 </Label>
                 <Input
-                  id="method-value"
+                  id='method-value'
                   placeholder={getMethodValuePlaceholder(
                     newMethodType as NotificationMethodType
                   )}
                   value={newMethodValue}
-                  onChange={(e) => setNewMethodValue(e.target.value)}
-                  type={newMethodType === "EMAIL" ? "email" : "text"}
+                  onChange={e => setNewMethodValue(e.target.value)}
+                  type={newMethodType === 'EMAIL' ? 'email' : 'text'}
                 />
               </div>
             </>
@@ -326,7 +323,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
           <Button
             onClick={handleAddMethod}
             disabled={!newMethodType || !newMethodValue}
-            className="flex gap-2 items-center"
+            className='flex gap-2 items-center'
           >
             <PlusIcon size={16} />
             <span>Add Method</span>
@@ -334,38 +331,38 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {!settingsData?.success?.notificationMethods.length ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className='text-center py-8 text-gray-500'>
             <p>No notification methods added yet.</p>
-            <p className="text-sm">
+            <p className='text-sm'>
               Add a notification method above to get started.
             </p>
           </div>
         ) : (
           settingsData.success.notificationMethods.map((method: any) => (
-            <Card key={method.id} className="w-full">
+            <Card key={method.id} className='w-full'>
               <CardHeader
-                className="cursor-pointer"
+                className='cursor-pointer'
                 onClick={() => toggleCardExpanded(method.id)}
               >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
+                <div className='flex items-center justify-between'>
+                  <CardTitle className='flex items-center gap-2'>
                     <span>{method.name}</span>
-                    <span className="text-sm font-normal text-gray-500">
+                    <span className='text-sm font-normal text-gray-500'>
                       ({method.value})
                     </span>
                   </CardTitle>
-                  <div className="flex items-center gap-4">
+                  <div className='flex items-center gap-4'>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
+                      variant='ghost'
+                      size='sm'
+                      onClick={e => {
                         e.stopPropagation();
                         handleDeleteMethod(method.id);
                       }}
                     >
-                      <TrashIcon size={16} className="text-red-500" />
+                      <TrashIcon size={16} className='text-red-500' />
                     </Button>
                     {expandedCards[method.id] ? (
                       <ChevronUpIcon size={20} />
@@ -378,17 +375,17 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
 
               {expandedCards[method.id] && (
                 <CardContent>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium mb-4">
+                  <div className='space-y-1'>
+                    <h3 className='text-sm font-medium mb-4'>
                       Notification Types
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {notificationTypes.map((type) => (
-                        <div key={type} className="flex items-start space-x-2">
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      {notificationTypes.map(type => (
+                        <div key={type} className='flex items-start space-x-2'>
                           <Checkbox
                             id={`${method.id}-${type}`}
                             checked={isNotificationEnabled(method.id, type)}
-                            onCheckedChange={(checked) =>
+                            onCheckedChange={checked =>
                               toggleNotificationType(
                                 method.id,
                                 type,
@@ -396,10 +393,10 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
                               )
                             }
                           />
-                          <div className="grid gap-1.5 leading-none">
+                          <div className='grid gap-1.5 leading-none'>
                             <Label
                               htmlFor={`${method.id}-${type}`}
-                              className="text-sm font-medium cursor-pointer"
+                              className='text-sm font-medium cursor-pointer'
                             >
                               {getNotificationTypeDisplayName(type)}
                             </Label>
@@ -416,12 +413,12 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       </div>
 
       {hasUnsavedChanges && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <Alert className="bg-primary text-primary-foreground flex items-center justify-between p-4 shadow-lg">
+        <div className='fixed bottom-6 right-6 z-50'>
+          <Alert className='bg-primary text-primary-foreground flex items-center justify-between p-4 shadow-lg'>
             <AlertDescription>You have unsaved changes</AlertDescription>
             <Button
-              variant="secondary"
-              size="sm"
+              variant='secondary'
+              size='sm'
               onClick={saveChanges}
               disabled={isSaving}
             >

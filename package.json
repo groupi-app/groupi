@@ -2,6 +2,7 @@
   "name": "groupi",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "dotenv -e .env.local -- npx concurrently \"npm run dev:next\" \"npm run dev:prisma\" \"npm run dev:db\" \"npm run dev:ngrok\"",
     "dev:next": "next dev --turbopack",
@@ -12,6 +13,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prisma:migrate-deploy": "dotenv -e .env.local -- npx prisma migrate deploy",
     "postinstall": "dotenv -e .env.local -- prisma generate",
     "migrate": "dotenv -e .env.local -- prisma migrate dev",
@@ -19,7 +23,8 @@
     "seed-users": "dotenv -e .env.local -- npx tsx scripts/seed-users.ts",
     "cypress:open": "cypress open",
     "e2e": "dotenv -e .env.local -- npx concurrently --success last \"npm run dev:db && npx wait-on http://localhost:5432\" \"npm run prisma:migrate-deploy && npm run dev:next && npx wait-on http://localhost:3000\" \"npx wait-on http://localhost:3000 && CYPRESS_DATABASE_URL=$DATABASE_URL npx cypress open\"",
-    "e2e:headless": "dotenv -e .env.local ./scripts/e2e-full.sh"
+    "e2e:headless": "dotenv -e .env.local ./scripts/e2e-full.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/backend": "^1.32.2",
@@ -94,11 +99,24 @@
   "devDependencies": {
     "@clerk/nextjs": "^6.20.0",
     "@clerk/testing": "^1.3.3",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.27.0",
+    "@next/eslint-plugin-next": "^15.3.2",
     "@prisma/client": "^5.21.1",
     "@radix-ui/react-navigation-menu": "^1.2.5",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
     "cypress": "^13.14.2",
     "dotenv-cli": "^8.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
     "next-themes": "^0.2.1",
+    "prettier": "^3.5.3",
     "prisma": "^5.21.1",
     "start-server-and-test": "^2.0.11",
     "tsconfig-paths": "^4.2.0",
@@ -109,5 +127,11 @@
     "@radix-ui/react-focus-scope": "^1.0.4",
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }

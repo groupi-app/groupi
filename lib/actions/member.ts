@@ -1,12 +1,12 @@
-"use server";
+'use server';
 
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { $Enums, Membership } from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { pusherServer } from "../pusher-server";
-import { getEventQuery, getPersonQuery } from "../query-definitions";
-import { createEventModNotifs, createNotification } from "./notification";
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { $Enums, Membership } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { pusherServer } from '../pusher-server';
+import { getEventQuery, getPersonQuery } from '../query-definitions';
+import { createEventModNotifs, createNotification } from './notification';
 
 export async function updateMembershipRole({
   membership,
@@ -18,7 +18,7 @@ export async function updateMembershipRole({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const currentUserMembership = await db.membership.findFirst({
       where: {
@@ -28,14 +28,14 @@ export async function updateMembershipRole({
     });
 
     if (!currentUserMembership)
-      return { error: "You are not a member of this event" };
+      return { error: 'You are not a member of this event' };
 
-    if (currentUserMembership.role !== "ORGANIZER") {
-      return { error: "Only organizers can update roles" };
+    if (currentUserMembership.role !== 'ORGANIZER') {
+      return { error: 'Only organizers can update roles' };
     }
 
-    if (membership.role === "ORGANIZER") {
-      return { error: "Organizer role cannot be updated" };
+    if (membership.role === 'ORGANIZER') {
+      return { error: 'Organizer role cannot be updated' };
     }
 
     await db.membership.update({
@@ -46,17 +46,17 @@ export async function updateMembershipRole({
         role: role,
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
     const queryDefinition = getEventQuery(membership.eventId);
     pusherServer.trigger(
       queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
-    if (role === "MODERATOR") {
+    if (role === 'MODERATOR') {
       await createNotification({
-        type: "USER_PROMOTED",
+        type: 'USER_PROMOTED',
         personId: membership.personId,
         eventId: membership.eventId,
         authorId: userId,
@@ -65,9 +65,9 @@ export async function updateMembershipRole({
         read: false,
         rsvp: null,
       });
-    } else if (role === "ATTENDEE") {
+    } else if (role === 'ATTENDEE') {
       await createNotification({
-        type: "USER_DEMOTED",
+        type: 'USER_DEMOTED',
         personId: membership.personId,
         eventId: membership.eventId,
         authorId: userId,
@@ -77,7 +77,7 @@ export async function updateMembershipRole({
         rsvp: null,
       });
     }
-    return { success: "Role Updated" };
+    return { success: 'Role Updated' };
   } catch (error) {
     return { error: error };
   }
@@ -87,7 +87,7 @@ export async function deleteMembership(membership: Membership) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const currentUserMembership = await db.membership.findFirst({
       where: {
@@ -97,21 +97,21 @@ export async function deleteMembership(membership: Membership) {
     });
 
     if (!currentUserMembership)
-      return { error: "You are not a member of this event" };
+      return { error: 'You are not a member of this event' };
 
-    if (currentUserMembership.role === "ATTENDEE") {
-      return { error: "Only moderators and organizers can kick members" };
+    if (currentUserMembership.role === 'ATTENDEE') {
+      return { error: 'Only moderators and organizers can kick members' };
     }
 
-    if (membership.role === "ORGANIZER") {
-      return { error: "Cannot kick organizer" };
+    if (membership.role === 'ORGANIZER') {
+      return { error: 'Cannot kick organizer' };
     }
 
     if (
-      membership.role === "MODERATOR" &&
-      currentUserMembership.role === "MODERATOR"
+      membership.role === 'MODERATOR' &&
+      currentUserMembership.role === 'MODERATOR'
     ) {
-      return { error: "Only the organizer can kick a moderator" };
+      return { error: 'Only the organizer can kick a moderator' };
     }
 
     await db.membership.delete({
@@ -119,20 +119,20 @@ export async function deleteMembership(membership: Membership) {
         id: membership.id,
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
     const eventQueryDefinition = getEventQuery(membership.eventId);
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
     const personQueryDefinition = getPersonQuery(membership.personId);
     pusherServer.trigger(
       personQueryDefinition.pusherChannel,
       personQueryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
-    return { success: "Membership Deleted" };
+    return { success: 'Membership Deleted' };
   } catch (error) {
     return { error: error };
   }
@@ -142,7 +142,7 @@ export async function updateRSVP(eventId: string, status: $Enums.Status) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const membership = await db.membership.findFirst({
       where: {
@@ -151,10 +151,10 @@ export async function updateRSVP(eventId: string, status: $Enums.Status) {
       },
     });
 
-    if (!membership) return { error: "You are not a member of this event" };
+    if (!membership) return { error: 'You are not a member of this event' };
 
-    if (membership.role === "ORGANIZER") {
-      return { error: "Organizer cannot RSVP" };
+    if (membership.role === 'ORGANIZER') {
+      return { error: 'Organizer cannot RSVP' };
     }
 
     await db.membership.update({
@@ -165,21 +165,21 @@ export async function updateRSVP(eventId: string, status: $Enums.Status) {
         rsvpStatus: status,
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
     const queryDefinition = getEventQuery(eventId);
     pusherServer.trigger(
       queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
     createEventModNotifs({
-      type: "USER_RSVP",
+      type: 'USER_RSVP',
       eventId: eventId,
       rsvp: status,
     });
 
-    return { success: "RSVP Updated" };
+    return { success: 'RSVP Updated' };
   } catch (error) {
     return { error: error };
   }

@@ -1,7 +1,6 @@
 import { Resend } from 'resend';
 
 declare global {
-  // eslint-disable-next-line no-var
   var cachedResend: Resend | undefined;
 }
 

@@ -1,19 +1,19 @@
-"use server";
+'use server';
 
-import { db } from "@/lib/db";
+import { db } from '@/lib/db';
 import {
   ActionResponse,
   MembershipWithAvailabilities,
   ReplyAuthorPost,
-} from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import { Event } from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { BatchEvent } from "pusher";
-import { cache } from "react";
-import { pusherServer } from "../pusher-server";
-import { getEventQuery, getPersonQuery } from "../query-definitions";
-import { createEventModNotifs, createEventNotifs } from "./notification";
+} from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import { Event } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { BatchEvent } from 'pusher';
+import { cache } from 'react';
+import { pusherServer } from '../pusher-server';
+import { getEventQuery, getPersonQuery } from '../query-definitions';
+import { createEventModNotifs, createEventNotifs } from './notification';
 
 export interface EventData {
   event: Event & {
@@ -71,26 +71,24 @@ export const fetchEventData = cache(
         },
       });
 
-      if (!event) return { error: "Event not found" };
+      if (!event) return { error: 'Event not found' };
 
       const { userId }: { userId: string | null } = await auth();
 
-      if (!userId) return { error: "User not found" };
+      if (!userId) return { error: 'User not found' };
 
-      if (
-        !event.memberships.find((membership) => membership.personId === userId)
-      )
-        return { error: "You are not a member of this event" };
+      if (!event.memberships.find(membership => membership.personId === userId))
+        return { error: 'You are not a member of this event' };
 
       const userMembership = event.memberships.find(
-        (membership) => membership.personId === userId
+        membership => membership.personId === userId
       );
 
-      if (!userMembership) return { error: "Role not found" };
+      if (!userMembership) return { error: 'Role not found' };
 
       return { success: { event, userMembership, userId } };
-    } catch (error) {
-      return { error: "Could not fetch event data" };
+    } catch {
+      return { error: 'Could not fetch event data' };
     }
   }
 );
@@ -105,7 +103,7 @@ export async function createEvent({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.create({
       data: {
@@ -116,8 +114,8 @@ export async function createEvent({
         memberships: {
           create: {
             personId: userId,
-            role: "ORGANIZER",
-            rsvpStatus: "YES",
+            role: 'ORGANIZER',
+            rsvpStatus: 'YES',
           },
         },
       },
@@ -126,7 +124,7 @@ export async function createEvent({
       },
     });
 
-    if (!event) return { error: "Event not created" };
+    if (!event) return { error: 'Event not created' };
 
     if (potentialDateTimes) {
       console.log(potentialDateTimes);
@@ -137,7 +135,7 @@ export async function createEvent({
         data: {
           potentialDateTimes: {
             createMany: {
-              data: potentialDateTimes.map((dateTime) => ({
+              data: potentialDateTimes.map(dateTime => ({
                 dateTime,
               })),
             },
@@ -154,14 +152,14 @@ export async function createEvent({
             id: event.id,
           },
         });
-        return { error: "Could not update event" };
+        return { error: 'Could not update event' };
       }
 
       for (const potentialDateTime of eventRes.potentialDateTimes) {
         const eventRes = await db.availability.create({
           data: {
             membershipId: event.memberships[0].id,
-            status: "YES",
+            status: 'YES',
             potentialDateTimeId: potentialDateTime.id,
           },
         });
@@ -171,7 +169,7 @@ export async function createEvent({
               id: event.id,
             },
           });
-          return { error: "Could not update availability" };
+          return { error: 'Could not update availability' };
         }
       }
     }
@@ -179,7 +177,7 @@ export async function createEvent({
     return { success: event };
   } catch (error) {
     console.log(error);
-    return { error: "Could not create event" };
+    return { error: 'Could not create event' };
   }
 }
 
@@ -192,7 +190,7 @@ export async function updateEventDetails({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -204,16 +202,16 @@ export async function updateEventDetails({
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!userMembership) return { error: "User not a member of this event" };
+    if (!userMembership) return { error: 'User not a member of this event' };
 
-    if (userMembership.role !== "ORGANIZER")
-      return { error: "You do not have permission to edit this event" };
+    if (userMembership.role !== 'ORGANIZER')
+      return { error: 'You do not have permission to edit this event' };
 
     const updatedEvent = await db.event.update({
       where: {
@@ -227,9 +225,9 @@ export async function updateEventDetails({
       },
     });
 
-    if (!updatedEvent) return { error: "Could not update event" };
+    if (!updatedEvent) return { error: 'Could not update event' };
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(id);
 
@@ -237,7 +235,7 @@ export async function updateEventDetails({
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Event Data updated" },
+        data: { message: 'Event Data updated' },
       },
     ];
 
@@ -246,22 +244,22 @@ export async function updateEventDetails({
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
-    await createEventNotifs({ eventId: id, type: "EVENT_EDITED" });
+    await createEventNotifs({ eventId: id, type: 'EVENT_EDITED' });
 
     return { success: updatedEvent };
   } catch (error) {
     console.log(error);
-    return { error: "Could not update event" };
+    return { error: 'Could not update event' };
   }
 }
 
@@ -275,7 +273,7 @@ export async function updateEventDateTime({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -286,16 +284,16 @@ export async function updateEventDateTime({
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!userMembership) return { error: "User not a member of this event" };
+    if (!userMembership) return { error: 'User not a member of this event' };
 
-    if (userMembership.role !== "ORGANIZER")
-      return { error: "You do not have permission to edit this event" };
+    if (userMembership.role !== 'ORGANIZER')
+      return { error: 'You do not have permission to edit this event' };
 
     const updatedEvent = await db.event.update({
       where: {
@@ -310,22 +308,22 @@ export async function updateEventDateTime({
       where: {
         eventId,
         role: {
-          not: "ORGANIZER",
+          not: 'ORGANIZER',
         },
       },
       data: {
-        rsvpStatus: "PENDING",
+        rsvpStatus: 'PENDING',
       },
     });
 
-    if (!updatedEvent) return { error: "Could not update event" };
+    if (!updatedEvent) return { error: 'Could not update event' };
 
     const eventQueryDefinition = getEventQuery(eventId);
     const events: BatchEvent[] = [
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       },
     ];
 
@@ -334,28 +332,28 @@ export async function updateEventDateTime({
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     await createEventNotifs({
       eventId,
-      type: "DATE_CHANGED",
+      type: 'DATE_CHANGED',
       datetime: new Date(dateTime),
     });
 
     return { success: updatedEvent };
   } catch (error) {
     console.log(error);
-    return { error: "Could not update event" };
+    return { error: 'Could not update event' };
   }
 }
 
@@ -369,7 +367,7 @@ export async function updateEventPotentialDateTimes({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -381,16 +379,16 @@ export async function updateEventPotentialDateTimes({
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!userMembership) return { error: "User not a member of this event" };
+    if (!userMembership) return { error: 'User not a member of this event' };
 
-    if (userMembership.role !== "ORGANIZER")
-      return { error: "You do not have permission to edit this event" };
+    if (userMembership.role !== 'ORGANIZER')
+      return { error: 'You do not have permission to edit this event' };
 
     const updatedEvent = await db.event.update({
       where: {
@@ -400,7 +398,7 @@ export async function updateEventPotentialDateTimes({
         potentialDateTimes: {
           deleteMany: {},
           createMany: {
-            data: potentialDateTimes.map((dateTime) => ({
+            data: potentialDateTimes.map(dateTime => ({
               dateTime,
             })),
           },
@@ -412,18 +410,18 @@ export async function updateEventPotentialDateTimes({
       },
     });
 
-    if (!updatedEvent) return { error: "Could not update event" };
+    if (!updatedEvent) return { error: 'Could not update event' };
 
     for (const potentialDateTime of updatedEvent.potentialDateTimes) {
       const eventRes = await db.availability.create({
         data: {
           membershipId: userMembership.id,
-          status: "YES",
+          status: 'YES',
           potentialDateTimeId: potentialDateTime.id,
         },
       });
       if (!eventRes) {
-        return { error: "Could not update availability" };
+        return { error: 'Could not update availability' };
       }
     }
 
@@ -431,22 +429,22 @@ export async function updateEventPotentialDateTimes({
       where: {
         eventId,
         role: {
-          not: "ORGANIZER",
+          not: 'ORGANIZER',
         },
       },
       data: {
-        rsvpStatus: "PENDING",
+        rsvpStatus: 'PENDING',
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(eventId);
     const events: BatchEvent[] = [
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       },
     ];
 
@@ -455,22 +453,22 @@ export async function updateEventPotentialDateTimes({
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
-    await createEventNotifs({ eventId, type: "DATE_RESET" });
+    await createEventNotifs({ eventId, type: 'DATE_RESET' });
 
     return { success: updatedEvent };
   } catch (error) {
     console.log(error);
-    return { error: "Could not update event" };
+    return { error: 'Could not update event' };
   }
 }
 
@@ -478,7 +476,7 @@ export async function deleteEvent(eventId: string) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -489,16 +487,16 @@ export async function deleteEvent(eventId: string) {
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!userMembership) return { error: "User not a member of this event" };
+    if (!userMembership) return { error: 'User not a member of this event' };
 
-    if (userMembership.role !== "ORGANIZER")
-      return { error: "You do not have permission to delete this event" };
+    if (userMembership.role !== 'ORGANIZER')
+      return { error: 'You do not have permission to delete this event' };
 
     await db.event.delete({
       where: {
@@ -511,16 +509,16 @@ export async function deleteEvent(eventId: string) {
       pusherServer.trigger(
         personQueryDefinition.pusherChannel,
         personQueryDefinition.pusherEvent,
-        { message: "Data updated" }
+        { message: 'Data updated' }
       );
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
-    return { success: "Event deleted" };
+    return { success: 'Event deleted' };
   } catch (error) {
     console.log(error);
-    return { error: "Could not delete event" };
+    return { error: 'Could not delete event' };
   }
 }
 
@@ -528,7 +526,7 @@ export async function leaveEvent(eventId: string) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -539,18 +537,18 @@ export async function leaveEvent(eventId: string) {
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!userMembership) return { error: "User not a member of this event" };
+    if (!userMembership) return { error: 'User not a member of this event' };
 
-    if (userMembership.role === "ORGANIZER")
-      return { error: "Organizers cannot leave the event" };
+    if (userMembership.role === 'ORGANIZER')
+      return { error: 'Organizers cannot leave the event' };
 
-    await createEventModNotifs({ eventId, type: "USER_LEFT" });
+    await createEventModNotifs({ eventId, type: 'USER_LEFT' });
 
     await db.membership.delete({
       where: {
@@ -558,18 +556,18 @@ export async function leaveEvent(eventId: string) {
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(eventId);
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
-    return { success: "Left event" };
+    return { success: 'Left event' };
   } catch (error) {
     console.log(error);
-    return { error: "Could not leave event" };
+    return { error: 'Could not leave event' };
   }
 }

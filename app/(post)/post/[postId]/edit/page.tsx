@@ -1,9 +1,11 @@
-import { Editor } from "@/components/editor";
-import ErrorPage from "@/components/error";
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { Editor } from '@/components/editor';
+import ErrorPage from '@/components/error';
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
 
-export default async function Page(props: { params: Promise<{ postId: string }> }) {
+export default async function Page(props: {
+  params: Promise<{ postId: string }>;
+}) {
   const params = await props.params;
   const { postId } = params;
 
@@ -15,20 +17,20 @@ export default async function Page(props: { params: Promise<{ postId: string }> 
     },
   });
 
-  const title = post?.title || "";
-  const content = post?.content || "";
-  const id = post?.id || "";
-  const authorId = post?.authorId || "";
-  const eventId = post?.eventId || "";
+  const title = post?.title || '';
+  const content = post?.content || '';
+  const id = post?.id || '';
+  const authorId = post?.authorId || '';
+  const eventId = post?.eventId || '';
 
   if (authorId !== userId) {
     return (
-      <ErrorPage message={"You do not have permission to edit this post."} />
+      <ErrorPage message={'You do not have permission to edit this post.'} />
     );
   }
 
   return (
-    <div className="container pt-6">
+    <div className='container pt-6'>
       <Editor eventId={eventId} postData={{ title, content, id }} />
     </div>
   );

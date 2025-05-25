@@ -4,10 +4,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import useOnclickOutside from "react-cool-onclickoutside";
-import { ControllerRenderProps } from "react-hook-form";
-import usePlacesAutocomplete from "use-places-autocomplete";
+} from '@/components/ui/command';
+import useOnclickOutside from 'react-cool-onclickoutside';
+import { ControllerRenderProps } from 'react-hook-form';
+import usePlacesAutocomplete from 'use-places-autocomplete';
 
 export function LocationInput({
   dataTest,
@@ -22,7 +22,7 @@ export function LocationInput({
       datetime?: string | undefined;
       potentialDateTimes?: string[] | undefined;
     },
-    "location"
+    'location'
   >;
 }) {
   const {
@@ -30,7 +30,7 @@ export function LocationInput({
     suggestions: { status, data },
     setValue,
     clearSuggestions,
-  } = usePlacesAutocomplete({ callbackName: "initMap" });
+  } = usePlacesAutocomplete({ callbackName: 'initMap' });
 
   const handleSelect = (address: string) => {
     field.onChange(address);
@@ -49,10 +49,10 @@ export function LocationInput({
       <Command>
         <CommandInput
           data-test={dataTest}
-          className="text-foreground text-base"
+          className='text-foreground text-base'
           disabled={!ready}
           placeholder="123 Main St... or 'My house'"
-          onValueChange={(value) => {
+          onValueChange={value => {
             field.onChange(value);
             setValue(value);
           }}
@@ -60,8 +60,8 @@ export function LocationInput({
         />
 
         <CommandList>
-          <CommandGroup heading={field.value ? "Suggestions" : ""}>
-            {status === "OK" &&
+          <CommandGroup heading={field.value ? 'Suggestions' : ''}>
+            {status === 'OK' &&
               data.map(({ place_id, description }) => (
                 <CommandItem key={place_id} onSelect={handleSelect}>
                   {description}

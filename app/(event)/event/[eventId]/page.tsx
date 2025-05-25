@@ -1,24 +1,22 @@
-import ErrorPage from "@/components/error";
-import { EventHeader } from "@/components/event-header";
-import { MemberList } from "@/components/member-list";
-import { NewPostButton } from "@/components/new-post-button";
-import { PostFeed } from "@/components/post-feed";
-import QueryProvider from "@/components/providers/query-provider";
-import { fetchEventData } from "@/lib/actions/event";
-import { markEventNotifsAsRead } from "@/lib/actions/notification";
-import { getEventQuery } from "@/lib/query-definitions";
+import ErrorPage from '@/components/error';
+import { EventHeader } from '@/components/event-header';
+import { MemberList } from '@/components/member-list';
+import { NewPostButton } from '@/components/new-post-button';
+import { PostFeed } from '@/components/post-feed';
+import QueryProvider from '@/components/providers/query-provider';
+import { fetchEventData } from '@/lib/actions/event';
+import { markEventNotifsAsRead } from '@/lib/actions/notification';
+import { getEventQuery } from '@/lib/query-definitions';
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
-} from "@tanstack/react-query";
-import { notFound, redirect } from "next/navigation";
+} from '@tanstack/react-query';
+import { notFound, redirect } from 'next/navigation';
 
-export default async function Page(
-  props: {
-    params: Promise<{ eventId: string }>;
-  }
-) {
+export default async function Page(props: {
+  params: Promise<{ eventId: string }>;
+}) {
   const params = await props.params;
   const { eventId } = params;
 
@@ -33,11 +31,11 @@ export default async function Page(
   }
 
   const userMembership = data.success?.event.memberships.find(
-    (membership) => membership.personId === data.success?.userId
+    membership => membership.personId === data.success?.userId
   );
 
   if (!userMembership) {
-    return <ErrorPage message={"You are not a member of this event."} />;
+    return <ErrorPage message={'You are not a member of this event.'} />;
   }
 
   if (
@@ -61,9 +59,9 @@ export default async function Page(
   return (
     <QueryProvider queryDefinition={queryDefinition}>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <div className="container pt-6 pb-24 space-y-5">
+        <div className='container pt-6 pb-24 space-y-5'>
           <EventHeader eventId={eventId} />
-          <div className="max-w-4xl mx-auto flex flex-col gap-4">
+          <div className='max-w-4xl mx-auto flex flex-col gap-4'>
             <MemberList eventId={eventId} />
             <PostFeed eventId={eventId} />
           </div>

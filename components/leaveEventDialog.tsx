@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   DialogClose,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { leaveEvent } from "@/lib/actions/event";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/dialog';
+import { leaveEvent } from '@/lib/actions/event';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useRouter } from 'next/navigation';
+import { Button } from './ui/button';
+import { useToast } from './ui/use-toast';
 
 async function exitEvent({
   id,
@@ -26,14 +26,14 @@ async function exitEvent({
   if (res.success) {
     router.push(`/events`);
     toast({
-      title: "Event left",
-      description: "You have left the event.",
+      title: 'Event left',
+      description: 'You have left the event.',
     });
   } else {
     toast({
-      title: "Uh oh!",
-      description: "Unable to leave the event.",
-      variant: "destructive",
+      title: 'Uh oh!',
+      description: 'Unable to leave the event.',
+      variant: 'destructive',
     });
   }
 }
@@ -51,16 +51,16 @@ export function LeaveEventDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center justify-end gap-2">
+        <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
               onClick={() => {
                 exitEvent({ id, toast, router });
               }}
-              variant="destructive"
+              variant='destructive'
             >
               Leave
             </Button>

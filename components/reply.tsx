@@ -55,7 +55,8 @@ export default function Reply({
     },
   });
   const isMe = userId === reply.authorId;
-  const canDelete = isMe || userRole === 'MODERATOR' || userRole === 'ORGANIZER';
+  const canDelete =
+    isMe || userRole === 'MODERATOR' || userRole === 'ORGANIZER';
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
@@ -76,12 +77,20 @@ export default function Reply({
     setEditMode(false);
   }
 
-  const name = member?.person.firstName ?? member?.person.lastName ?? member?.person.username;
+  const name =
+    member?.person.firstName ??
+    member?.person.lastName ??
+    member?.person.username;
 
   return (
     <Dialog>
       <DropdownMenu>
-        <div className={cn('flex items-center gap-2', isMe ? 'flex-row-reverse -mr-4' : '-ml-4')}>
+        <div
+          className={cn(
+            'flex items-center gap-2',
+            isMe ? 'flex-row-reverse -mr-4' : '-ml-4'
+          )}
+        >
           {member ? (
             <MemberIcon
               itemKey={member.id}
@@ -92,18 +101,22 @@ export default function Reply({
               align={isMe ? 'end' : 'start'}
             />
           ) : (
-            <div className="rounded-full size-10 bg-primary" />
+            <div className='rounded-full size-10 bg-primary' />
           )}
 
           <div
             className={cn(
               'rounded-lg max-w-xl px-4 pb-4 min-w-0 break-words relative',
               canDelete ? 'pr-12' : '',
-              isMe ? 'bg-primary text-primary-foreground pt-4' : 'bg-muted text-foreground',
+              isMe
+                ? 'bg-primary text-primary-foreground pt-4'
+                : 'bg-muted text-foreground',
               editMode ? 'w-full' : ''
             )}
           >
-            {!isMe && <div className="text-xs text-muted-foreground pt-2">{name}</div>}
+            {!isMe && (
+              <div className='text-xs text-muted-foreground pt-2'>{name}</div>
+            )}
             {canDelete && (
               <>
                 <DropdownMenuTrigger
@@ -114,15 +127,15 @@ export default function Reply({
                 >
                   <Icons.more />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align='end'>
                   {isMe && (
                     <DropdownMenuItem
                       onClick={() => setEditMode(true)}
-                      className="cursor-pointer"
+                      className='cursor-pointer'
                       asChild
                     >
-                      <div className="flex items-center gap-1">
-                        <Icons.edit className="size-4" />
+                      <div className='flex items-center gap-1'>
+                        <Icons.edit className='size-4' />
                         <span>Edit</span>
                       </div>
                     </DropdownMenuItem>
@@ -130,11 +143,11 @@ export default function Reply({
 
                   <DropdownMenuItem
                     asChild
-                    className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                    className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
                   >
                     <DialogTrigger asChild>
-                      <div className="flex items-center gap-1">
-                        <Icons.delete className="size-4" />
+                      <div className='flex items-center gap-1'>
+                        <Icons.delete className='size-4' />
                         <span>Delete</span>
                       </div>
                     </DialogTrigger>
@@ -147,26 +160,26 @@ export default function Reply({
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                   <FormField
                     control={form.control}
-                    name="reply"
+                    name='reply'
                     render={({ field }) => (
-                      <FormItem className="w-full">
+                      <FormItem className='w-full'>
                         <FormControl>
-                          <div className="relative min-h-24">
+                          <div className='relative min-h-24'>
                             <Textarea
-                              className="bg-background/10 pr-6 my-1 h-[90px] min-h-[90px]"
+                              className='bg-background/10 pr-6 my-1 h-[90px] min-h-[90px]'
                               {...field}
                             />
-                            <div className="flex flex-col items-center absolute top-1 right-1">
+                            <div className='flex flex-col items-center absolute top-1 right-1'>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    className="size-10 p-1"
-                                    variant="ghost"
-                                    type="submit"
+                                    className='size-10 p-1'
+                                    variant='ghost'
+                                    type='submit'
                                     disabled={isSaving}
                                   >
                                     {isSaving ? (
-                                      <Icons.spinner className="animate-spin" />
+                                      <Icons.spinner className='animate-spin' />
                                     ) : (
                                       <Icons.check />
                                     )}
@@ -177,8 +190,8 @@ export default function Reply({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    className="size-10 p-1"
-                                    variant="ghost"
+                                    className='size-10 p-1'
+                                    variant='ghost'
                                     onClick={() => {
                                       setEditMode(false);
                                       form.reset({ reply: reply.text });
@@ -198,10 +211,12 @@ export default function Reply({
                 </form>
               </Form>
             ) : (
-              <p className="whitespace-pre-wrap">{reply.text}</p>
+              <p className='whitespace-pre-wrap'>{reply.text}</p>
             )}
 
-            <div className="text-xs text-primary-foreground/60">{formatDate(reply.createdAt)}</div>
+            <div className='text-xs text-primary-foreground/60'>
+              {formatDate(reply.createdAt)}
+            </div>
           </div>
         </div>
       </DropdownMenu>

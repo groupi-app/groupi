@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 interface FormContextType {
   formState: {
@@ -23,7 +23,7 @@ export function FormContextProvider({ children }: { children: ReactNode }) {
     description?: string;
     location?: string;
   }>({
-    title: "",
+    title: '',
     description: undefined,
     location: undefined,
   });
@@ -39,7 +39,7 @@ export function useFormContext() {
   const context = useContext(FormContext);
 
   if (!context) {
-    throw new Error("useFormContext must be used within a FormContextProvider");
+    throw new Error('useFormContext must be used within a FormContextProvider');
   }
 
   return context;

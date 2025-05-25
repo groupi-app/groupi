@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     const { id, first_name, last_name, username, image_url } = userData;
 
     if (!username) {
-      return NextResponse.json({ message: 'username is required' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'username is required' },
+        { status: 400 }
+      );
     }
 
     // Create the person
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Created person with settings", person },
+      { message: 'Created person with settings', person },
       { status: 201 }
     );
   }
@@ -48,7 +51,10 @@ export async function POST(req: NextRequest) {
     const { id, first_name, last_name, username, image_url } = userData;
 
     if (!username) {
-      return NextResponse.json({ message: 'username is required' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'username is required' },
+        { status: 400 }
+      );
     }
 
     const person = await db.person.upsert({
@@ -73,7 +79,10 @@ export async function POST(req: NextRequest) {
         settings: true, // Include settings in the response
       },
     });
-    return NextResponse.json({ message: 'Upserted person', person }, { status: 200 });
+    return NextResponse.json(
+      { message: 'Upserted person', person },
+      { status: 200 }
+    );
   }
 
   if (eventType === 'user.deleted') {

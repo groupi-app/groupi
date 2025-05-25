@@ -23,7 +23,8 @@ export function NotificationSlate({
 }: {
   notification: NotificationWithPersonEventPost;
 }) {
-  const { event, post, createdAt, type, read, datetime, author, rsvp } = notification;
+  const { event, post, createdAt, type, read, datetime, author, rsvp } =
+    notification;
   const { toast } = useToast();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {
@@ -141,18 +142,23 @@ export function NotificationSlate({
   };
 
   return (
-    <div className="relative">
+    <div className='relative'>
       <Link
         onClick={() => {
           closeMenus();
         }}
         href={getNotificationLink()}
-        className="hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all"
+        className='hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
       >
-        {!read && <div className="size 2 rounded-full bg-primary p-1" />}
-        <div className="flex flex-col gap-1">
-          <p dangerouslySetInnerHTML={getNotificationMessage()} className="text-sm"></p>
-          <span className="text-xs text-muted-foreground">{formatDate(createdAt)}</span>
+        {!read && <div className='size 2 rounded-full bg-primary p-1' />}
+        <div className='flex flex-col gap-1'>
+          <p
+            dangerouslySetInnerHTML={getNotificationMessage()}
+            className='text-sm'
+          ></p>
+          <span className='text-xs text-muted-foreground'>
+            {formatDate(createdAt)}
+          </span>
         </div>
       </Link>
 
@@ -160,14 +166,14 @@ export function NotificationSlate({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="size-8 absolute right-2 top-0 bottom-0 my-auto"
-              size="icon"
-              variant="ghost"
+              className='size-8 absolute right-2 top-0 bottom-0 my-auto'
+              size='icon'
+              variant='ghost'
             >
               <Icons.more />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="">
+          <DropdownMenuContent align='end' className=''>
             {read ? (
               <DropdownMenuItem
                 onClick={async () => {
@@ -175,16 +181,17 @@ export function NotificationSlate({
                   if (res.error) {
                     toast({
                       title: 'An error occurred',
-                      description: 'There was a problem marking this notification as unread.',
+                      description:
+                        'There was a problem marking this notification as unread.',
                       variant: 'destructive',
                     });
                   }
                 }}
-                className="cursor-pointer"
+                className='cursor-pointer'
                 asChild
               >
-                <div className="flex items-center gap-1">
-                  <Icons.unread className="size-4" />
+                <div className='flex items-center gap-1'>
+                  <Icons.unread className='size-4' />
                   <span>Mark as unread</span>
                 </div>
               </DropdownMenuItem>
@@ -195,15 +202,16 @@ export function NotificationSlate({
                   if (res.error) {
                     toast({
                       title: 'An error occurred',
-                      description: 'There was a problem marking this notification as read.',
+                      description:
+                        'There was a problem marking this notification as read.',
                     });
                   }
                 }}
-                className="cursor-pointer"
+                className='cursor-pointer'
                 asChild
               >
-                <div className="flex items-center gap-1">
-                  <Icons.read className="size-4" />
+                <div className='flex items-center gap-1'>
+                  <Icons.read className='size-4' />
                   <span>Mark as read</span>
                 </div>
               </DropdownMenuItem>
@@ -214,15 +222,16 @@ export function NotificationSlate({
                 if (res.error) {
                   toast({
                     title: 'An error occurred',
-                    description: 'There was a problem deleting this notification.',
+                    description:
+                      'There was a problem deleting this notification.',
                   });
                 }
               }}
               asChild
-              className="focus:bg-destructive focus:text-destructive-foreground cursor-pointer"
+              className='focus:bg-destructive focus:text-destructive-foreground cursor-pointer'
             >
-              <div className="flex items-center gap-1">
-                <Icons.delete className="size-4" />
+              <div className='flex items-center gap-1'>
+                <Icons.delete className='size-4' />
                 <span>Delete</span>
               </div>
             </DropdownMenuItem>

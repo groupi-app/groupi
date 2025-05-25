@@ -1,3 +1,4 @@
+import React from 'react';
 import '@/styles/globals.css';
 import { Inter as FontSans } from 'next/font/google';
 import localFont from 'next/font/local';
@@ -20,7 +21,11 @@ import { UserInfo } from '@/types';
 import { ClerkProvider } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
 
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from '@tanstack/react-query';
 import Link from 'next/link';
 
 const fontSans = FontSans({
@@ -39,7 +44,13 @@ export const metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  keywords: ['Next.js', 'React', 'Tailwind CSS', 'Server Components', 'Radix UI'],
+  keywords: [
+    'Next.js',
+    'React',
+    'Tailwind CSS',
+    'Server Components',
+    'Radix UI',
+  ],
   authors: [
     {
       name: 'Theia Surette',
@@ -74,7 +85,11 @@ export const metadata = {
   manifest: `${siteConfig.url}/site.webmanifest`,
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const user = await currentUser();
 
   const queryClient = new QueryClient();
@@ -110,7 +125,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <ClerkProvider>
-      <html suppressHydrationWarning lang="en">
+      <html suppressHydrationWarning lang='en'>
         <body
           className={cn(
             'min-h-screen bg-background font-sans antialiased',
@@ -118,7 +133,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             fontHeading.variable
           )}
         >
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
             <TooltipProvider>
               {user !== null && queryDefinition !== null ? (
                 <QueryProvider queryDefinition={queryDefinition}>
@@ -140,24 +155,33 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
-function InnerLayout({ userInfo, children }: { userInfo: UserInfo; children: React.ReactNode }) {
+function InnerLayout({
+  userInfo,
+  children,
+}: {
+  userInfo: UserInfo;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
+    <div className='flex flex-col min-h-screen'>
+      <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
         <MainNav userInfo={userInfo} items={navConfig.mainNav} />
       </header>
-      <main className="grow">{children}</main>
-      <footer className="bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24">
-        <div className="container mx-auto py-4 flex gap-8 items-center">
+      <main className='grow'>{children}</main>
+      <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+        <div className='container mx-auto py-4 flex gap-8 items-center'>
           <ModeToggle />
-          <div className="flex flex-col gap-2">
+          <div className='flex flex-col gap-2'>
             <p>
               Built by{' '}
-              <Link className="underline font-medium" href="https://tsurette.com">
+              <Link
+                className='underline font-medium'
+                href='https://tsurette.com'
+              >
                 Theia
               </Link>
             </p>
-            <p className="text-sm">
+            <p className='text-sm'>
               &copy; {new Date().getFullYear()} {siteConfig.name}
             </p>
           </div>

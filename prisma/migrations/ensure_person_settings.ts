@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 // This script creates PersonSettings for all existing users who don't have one
 async function main() {
@@ -6,7 +6,7 @@ async function main() {
 
   try {
     console.log(
-      "Starting migration to ensure all users have PersonSettings..."
+      'Starting migration to ensure all users have PersonSettings...'
     );
 
     // Get all persons without settings
@@ -31,9 +31,9 @@ async function main() {
       console.log(`Created settings for user: ${person.username}`);
     }
 
-    console.log("Migration completed successfully");
+    console.log('Migration completed successfully');
   } catch (error) {
-    console.error("Migration failed:", error);
+    console.error('Migration failed:', error);
   } finally {
     await prisma.$disconnect();
   }

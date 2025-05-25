@@ -1,7 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { createReply } from '@/lib/actions/reply';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +24,13 @@ const formSchema = z.object({
     .max(350, 'Reply must be 350 characters or less'),
 });
 
-export default function ReplyForm({ postId, userId }: { postId: string; userId: string }) {
+export default function ReplyForm({
+  postId,
+  userId,
+}: {
+  postId: string;
+  userId: string;
+}) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,24 +68,32 @@ export default function ReplyForm({ postId, userId }: { postId: string; userId: 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <FormField
             control={form.control}
-            name="reply"
+            name='reply'
             render={({ field }) => (
-              <FormItem className="w-full">
+              <FormItem className='w-full'>
                 <FormControl>
-                  <Textarea className="resize-none" placeholder="Type a reply..." {...field} />
+                  <Textarea
+                    className='resize-none'
+                    placeholder='Type a reply...'
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button className="mt-5 flex items-center gap-1" type="submit" disabled={isSaving}>
+          <Button
+            className='mt-5 flex items-center gap-1'
+            type='submit'
+            disabled={isSaving}
+          >
             {isSaving ? (
-              <Icons.spinner className="h-4 w-4 animate-spin" />
+              <Icons.spinner className='h-4 w-4 animate-spin' />
             ) : (
-              <Icons.submit className="size-4" />
+              <Icons.submit className='size-4' />
             )}
             Send
           </Button>

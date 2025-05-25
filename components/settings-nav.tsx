@@ -21,9 +21,9 @@ export function SettingsNav() {
             setHasTransition(false);
           }, 300);
         }}
-        size="icon"
-        variant="outline"
-        className="z-10 md:hidden mb-2 ml-0"
+        size='icon'
+        variant='outline'
+        className='z-10 md:hidden mb-2 ml-0'
       >
         <Icons.sidebar />
       </Button>
@@ -34,8 +34,8 @@ export function SettingsNav() {
           hasTransition ? 'transition-all ease-in-out' : 'transition-none'
         )}
       >
-        <div className="flex items-center justify-between p-4 md:hidden">
-          <h1 className="font-heading text-2xl">Settings</h1>
+        <div className='flex items-center justify-between p-4 md:hidden'>
+          <h1 className='font-heading text-2xl'>Settings</h1>
           <Button
             onClick={() => {
               setHasTransition(true);
@@ -44,14 +44,14 @@ export function SettingsNav() {
                 setHasTransition(false);
               }, 300);
             }}
-            variant="ghost"
-            size="icon"
+            variant='ghost'
+            size='icon'
           >
             <Icons.close />
           </Button>
         </div>
-        <div className="flex flex-col p-2 gap-2 z-40">
-          {settingsConfig.settingsNav.map((item) => (
+        <div className='flex flex-col p-2 gap-2 z-40'>
+          {settingsConfig.settingsNav.map(item => (
             <Link
               key={item.href}
               href={item.href}

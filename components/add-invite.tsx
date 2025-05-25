@@ -17,14 +17,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
 import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { useToast } from './ui/use-toast';
 
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
-    name: z.string().max(64, { message: 'Invite name must be less than 65 characters.' }),
+    name: z
+      .string()
+      .max(64, { message: 'Invite name must be less than 65 characters.' }),
     expiresIn: z.number().nullable(),
     maxUses: z
       .number()
@@ -51,7 +66,10 @@ export function AddInvite({ eventId }: { eventId: string }) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const expiresAt = values.expiresIn === null ? null : new Date(Date.now() + values.expiresIn);
+    const expiresAt =
+      values.expiresIn === null
+        ? null
+        : new Date(Date.now() + values.expiresIn);
 
     const res = await createInvite({
       name: values.name,
@@ -77,8 +95,8 @@ export function AddInvite({ eventId }: { eventId: string }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-1">
-          <Icons.plus className="size-4" />
+        <Button className='flex items-center gap-1'>
+          <Icons.plus className='size-4' />
           <span>New Invite</span>
         </Button>
       </DialogTrigger>
@@ -88,18 +106,23 @@ export function AddInvite({ eventId }: { eventId: string }) {
           <DialogDescription>Add an invite to this event.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-3">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='flex flex-col gap-3'
+          >
             {/* Name */}
             <FormField
               control={form.control}
-              name="name"
+              name='name'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Invite name" {...field} />
+                    <Input placeholder='Invite name' {...field} />
                   </FormControl>
-                  <span className="text-muted-foreground text-sm ml-1">optional</span>
+                  <span className='text-muted-foreground text-sm ml-1'>
+                    optional
+                  </span>
                   <FormMessage />
                 </FormItem>
               )}
@@ -107,28 +130,42 @@ export function AddInvite({ eventId }: { eventId: string }) {
             {/* Expires in */}
             <FormField
               control={form.control}
-              name="expiresIn"
+              name='expiresIn'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Expires in</FormLabel>
                   <FormControl>
                     {/* <Input placeholder="5 days" {...field} /> */}
                     <Select
-                      onValueChange={(value) => {
-                        field.onChange(value === 'never' ? null : Number(value));
+                      onValueChange={value => {
+                        field.onChange(
+                          value === 'never' ? null : Number(value)
+                        );
                       }}
                     >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Never" {...field} />
+                      <SelectTrigger className='w-[180px]'>
+                        <SelectValue placeholder='Never' {...field} />
                       </SelectTrigger>
                       <SelectContent>
                         {/* value is time in ms */}
-                        <SelectItem value={String(30 * 60 * 1000)}>30 minutes</SelectItem>
-                        <SelectItem value={String(60 * 60 * 1000)}>1 hour</SelectItem>
-                        <SelectItem value={String(6 * 60 * 60 * 1000)}>6 hours</SelectItem>
-                        <SelectItem value={String(12 * 60 * 60 * 1000)}>12 hours</SelectItem>
-                        <SelectItem value={String(24 * 60 * 60 * 1000)}>1 day</SelectItem>
-                        <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>7 days</SelectItem>
+                        <SelectItem value={String(30 * 60 * 1000)}>
+                          30 minutes
+                        </SelectItem>
+                        <SelectItem value={String(60 * 60 * 1000)}>
+                          1 hour
+                        </SelectItem>
+                        <SelectItem value={String(6 * 60 * 60 * 1000)}>
+                          6 hours
+                        </SelectItem>
+                        <SelectItem value={String(12 * 60 * 60 * 1000)}>
+                          12 hours
+                        </SelectItem>
+                        <SelectItem value={String(24 * 60 * 60 * 1000)}>
+                          1 day
+                        </SelectItem>
+                        <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>
+                          7 days
+                        </SelectItem>
                         <SelectItem value={String('never')}>Never</SelectItem>
                       </SelectContent>
                     </Select>
@@ -140,17 +177,17 @@ export function AddInvite({ eventId }: { eventId: string }) {
             {/* Max uses */}
             <FormField
               control={form.control}
-              name="maxUses"
+              name='maxUses'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Max uses</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      placeholder="Unlimited"
+                      type='number'
+                      placeholder='Unlimited'
                       {...field}
                       value={field.value ?? ''}
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.value === '') {
                           field.onChange(null);
                         } else {
@@ -161,24 +198,28 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     />
                   </FormControl>
                   <FormMessage />
-                  <span className="text-muted-foreground text-sm ml-1">
+                  <span className='text-muted-foreground text-sm ml-1'>
                     leave blank for unlimited
                   </span>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <div className="flex items-center gap-2 justify-end">
+              <div className='flex items-center gap-2 justify-end'>
                 <DialogClose asChild>
-                  <Button variant="ghost" className="flex items-center gap-1">
+                  <Button variant='ghost' className='flex items-center gap-1'>
                     <span>Cancel</span>
                   </Button>
                 </DialogClose>
-                <Button className="flex items-center gap-1" type="submit" disabled={isLoading}>
+                <Button
+                  className='flex items-center gap-1'
+                  type='submit'
+                  disabled={isLoading}
+                >
                   {isLoading ? (
-                    <Icons.spinner className="size-4 animate-spin" />
+                    <Icons.spinner className='size-4 animate-spin' />
                   ) : (
-                    <Icons.plus className="size-4" />
+                    <Icons.plus className='size-4' />
                   )}
 
                   <span>Add</span>

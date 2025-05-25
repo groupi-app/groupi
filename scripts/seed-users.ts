@@ -11,7 +11,9 @@ export default async function seedUsers() {
       secretKey: process.env.CLERK_SECRET_KEY,
     });
     const { data: existingUsers } = await clerkClient.users.getUserList();
-    await Promise.all(existingUsers.map((user: User) => clerkClient.users.deleteUser(user.id)));
+    await Promise.all(
+      existingUsers.map((user: User) => clerkClient.users.deleteUser(user.id))
+    );
     await db.person.deleteMany();
     const people = [];
     for (const user of users) {

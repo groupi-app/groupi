@@ -57,64 +57,77 @@ export default function NewEventInfo() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="gap-6 flex flex-col">
+        <div className='gap-6 flex flex-col'>
           <FormField
             control={form.control}
-            name="title"
+            name='title'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Title<span className="text-destructive align-text-top font-black">*</span>
+                  Title
+                  <span className='text-destructive align-text-top font-black'>
+                    *
+                  </span>
                 </FormLabel>
                 <FormControl>
-                  <Input data-test="new-event-title" placeholder="Groupi Party!" {...field} />
+                  <Input
+                    data-test='new-event-title'
+                    placeholder='Groupi Party!'
+                    {...field}
+                  />
                 </FormControl>
-                <FormDescription>The title of your event. (required)</FormDescription>
+                <FormDescription>
+                  The title of your event. (required)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="description"
+            name='description'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
-                    data-test="new-event-description"
-                    placeholder="Join us for food and festivities..."
+                    data-test='new-event-description'
+                    placeholder='Join us for food and festivities...'
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>A brief description of your event.</FormDescription>
+                <FormDescription>
+                  A brief description of your event.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="location"
+            name='location'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <LocationInput dataTest="new-event-location" field={field} />
+                  <LocationInput dataTest='new-event-location' field={field} />
                 </FormControl>
-                <FormDescription>The location where your event is taking place.</FormDescription>
+                <FormDescription>
+                  The location where your event is taking place.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="flex justify-end">
+          <div className='flex justify-end'>
             <Button
-              data-test="new-event-next-button"
-              className="flex items-center gap-1"
+              data-test='new-event-next-button'
+              className='flex items-center gap-1'
               variant={'secondary'}
-              type="submit"
+              type='submit'
             >
               <span>Next</span>
-              <Icons.forward className="text-sm" />
+              <Icons.forward className='text-sm' />
             </Button>
           </div>
         </div>

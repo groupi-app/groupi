@@ -1,5 +1,8 @@
 import { useNotifications } from '@/data/notification-hooks';
-import { deleteAllNotifications, markAllNotificationsAsRead } from '@/lib/actions/notification';
+import {
+  deleteAllNotifications,
+  markAllNotificationsAsRead,
+} from '@/lib/actions/notification';
 import { cn } from '@/lib/utils';
 import { NotificationWithPersonEventPost } from '@/types';
 import { useState } from 'react';
@@ -26,16 +29,18 @@ import { ScrollArea } from './ui/scroll-area';
 import { useToast } from './ui/use-toast';
 
 export function NotificationWidget({ userId }: { userId: string }) {
-  const [dialogType, setDialogType] = useState<'mark-all-as-read' | 'delete-all'>(
-    'mark-all-as-read'
-  );
+  const [dialogType, setDialogType] = useState<
+    'mark-all-as-read' | 'delete-all'
+  >('mark-all-as-read');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const { toast } = useToast();
 
   const { data: notificationData } = useNotifications(userId);
 
-  const { notifications }: { notifications: NotificationWithPersonEventPost[] } = notificationData;
+  const {
+    notifications,
+  }: { notifications: NotificationWithPersonEventPost[] } = notificationData;
 
   const filtered = (notification: NotificationWithPersonEventPost) => {
     if (filter === 'unread') {
@@ -45,44 +50,44 @@ export function NotificationWidget({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex item-center gap-4">
-        <h1 className="text-card-foreground font-semibold text-xl flex items-center">
+    <div className='flex flex-col gap-2'>
+      <div className='flex item-center gap-4'>
+        <h1 className='text-card-foreground font-semibold text-xl flex items-center'>
           Notifications
         </h1>
         <Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
+              <Button size='icon' variant='ghost'>
                 <Icons.more />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DialogTrigger asChild>
-                <DropdownMenuItem asChild className="cursor-pointer">
+                <DropdownMenuItem asChild className='cursor-pointer'>
                   <div
                     onClick={() => {
                       setDialogType('mark-all-as-read');
                     }}
-                    className="flex items-center gap-1"
+                    className='flex items-center gap-1'
                   >
-                    <Icons.read className="size-4" />
+                    <Icons.read className='size-4' />
                     <span>Mark all as read</span>
                   </div>
                 </DropdownMenuItem>
               </DialogTrigger>
               <DialogTrigger asChild>
                 <DropdownMenuItem
-                  className="focus:text-destructive-foreground focus:bg-destructive cursor-pointer"
+                  className='focus:text-destructive-foreground focus:bg-destructive cursor-pointer'
                   asChild
                 >
                   <div
                     onClick={() => {
                       setDialogType('delete-all');
                     }}
-                    className="flex items-center gap-1"
+                    className='flex items-center gap-1'
                   >
-                    <Icons.delete className="size-4" />
+                    <Icons.delete className='size-4' />
                     <span>Delete All</span>
                   </div>
                 </DropdownMenuItem>
@@ -96,12 +101,14 @@ export function NotificationWidget({ userId }: { userId: string }) {
                   <h1>Mark all as read</h1>
                 </DialogTitle>
                 <DialogDescription>
-                  <p>Are you sure you want to mark all notifications as read?</p>
+                  <p>
+                    Are you sure you want to mark all notifications as read?
+                  </p>
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="ghost">Cancel</Button>
+                  <Button variant='ghost'>Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
                   <Button
@@ -110,7 +117,8 @@ export function NotificationWidget({ userId }: { userId: string }) {
                       if (res.error) {
                         toast({
                           title: 'An error occurred',
-                          description: 'There was a problem marking the notifications as read.',
+                          description:
+                            'There was a problem marking the notifications as read.',
                           variant: 'destructive',
                         });
                       }
@@ -133,7 +141,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
               </DialogHeader>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="ghost">Cancel</Button>
+                  <Button variant='ghost'>Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
                   <Button
@@ -142,11 +150,12 @@ export function NotificationWidget({ userId }: { userId: string }) {
                       if (res.error) {
                         toast({
                           title: 'An error occurred',
-                          description: 'There was a problem deleting notifications.',
+                          description:
+                            'There was a problem deleting notifications.',
                         });
                       }
                     }}
-                    variant="destructive"
+                    variant='destructive'
                   >
                     Delete
                   </Button>
@@ -156,40 +165,43 @@ export function NotificationWidget({ userId }: { userId: string }) {
           )}
         </Dialog>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center">
+      <div className='flex items-center gap-4'>
+        <div className='flex items-center'>
           <Button
-            size="sm"
+            size='sm'
             className={cn(
               'rounded-r-none h-10',
               filter === 'all' && 'bg-accent text-accent-foreground'
             )}
-            variant="outline"
+            variant='outline'
             onClick={() => setFilter('all')}
           >
             All
           </Button>
           <Button
-            size="sm"
+            size='sm'
             className={cn(
               'rounded-l-none h-10',
               filter === 'unread' && 'bg-accent text-accent-foreground'
             )}
-            variant="outline"
+            variant='outline'
             onClick={() => setFilter('unread')}
           >
             Unread
           </Button>
         </div>
-        <div className="flex items-center gap-2"></div>
+        <div className='flex items-center gap-2'></div>
       </div>
-      <ScrollArea className="h-64 p-1">
-        <div className="divide-y">
+      <ScrollArea className='h-64 p-1'>
+        <div className='divide-y'>
           {notifications
             ?.filter(filtered)
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-            .map((notification) => (
-              <NotificationSlate key={notification.id} notification={notification} />
+            .map(notification => (
+              <NotificationSlate
+                key={notification.id}
+                notification={notification}
+              />
             ))}
         </div>
       </ScrollArea>

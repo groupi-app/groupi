@@ -1,16 +1,16 @@
-"use server";
+'use server';
 
-import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
-import { BatchEvent } from "pusher";
-import { db } from "../db";
-import { pusherServer } from "../pusher-server";
+import { auth } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+import { BatchEvent } from 'pusher';
+import { db } from '../db';
+import { pusherServer } from '../pusher-server';
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
-} from "../query-definitions";
-import { createPostNotifs } from "./notification";
+} from '../query-definitions';
+import { createPostNotifs } from './notification';
 
 export async function createReply({
   postId,
@@ -34,19 +34,17 @@ export async function createReply({
         },
       },
     });
-    if (!post) return { error: "Post not found" };
+    if (!post) return { error: 'Post not found' };
 
     const { userId }: { userId: string | null } = await auth();
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
-    if (authorId !== userId) return { error: "User not authorized" };
+    if (authorId !== userId) return { error: 'User not authorized' };
 
     if (
-      !post.event.memberships.find(
-        (membership) => membership.personId === userId
-      )
+      !post.event.memberships.find(membership => membership.personId === userId)
     )
-      return { error: "You are not a member of this event" };
+      return { error: 'You are not a member of this event' };
 
     const reply = await db.reply.create({
       data: {
@@ -70,7 +68,7 @@ export async function createReply({
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(post.eventId);
     const postQueryDefinition = getPostQuery(post.id);
@@ -79,12 +77,12 @@ export async function createReply({
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Event data updated" },
+        data: { message: 'Event data updated' },
       },
       {
         channel: postQueryDefinition.pusherChannel,
         name: postQueryDefinition.pusherEvent,
-        data: { message: "Post data updated" },
+        data: { message: 'Post data updated' },
       },
     ];
 
@@ -93,17 +91,17 @@ export async function createReply({
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
-    await createPostNotifs({ postId, type: "NEW_REPLY" });
+    await createPostNotifs({ postId, type: 'NEW_REPLY' });
 
     return { success: reply };
   } catch (error) {
@@ -120,7 +118,7 @@ export async function updateReply({
 }) {
   try {
     const { userId }: { userId: string | null } = await auth();
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const reply = await db.reply.findUnique({
       where: {
@@ -130,9 +128,9 @@ export async function updateReply({
         post: true,
       },
     });
-    if (!reply) return { error: "Reply not found" };
+    if (!reply) return { error: 'Reply not found' };
 
-    if (reply.authorId !== userId) return { error: "User not authorized" };
+    if (reply.authorId !== userId) return { error: 'User not authorized' };
 
     await db.reply.update({
       where: {
@@ -143,7 +141,7 @@ export async function updateReply({
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(reply.post.eventId);
     const postQueryDefinition = getPostQuery(reply.post.id);
@@ -151,15 +149,15 @@ export async function updateReply({
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
+      { message: 'Event data updated' }
     );
     pusherServer.trigger(
       postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
+      { message: 'Post data updated' }
     );
 
-    return { success: "Reply updated" };
+    return { success: 'Reply updated' };
   } catch (error) {
     return { error: error };
   }
@@ -183,20 +181,20 @@ export async function deleteReply({ id }: { id: string }) {
         },
       },
     });
-    if (!reply) return { error: "Reply not found" };
+    if (!reply) return { error: 'Reply not found' };
 
     const { userId }: { userId: string | null } = await auth();
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const currentUserMembership = reply.post.event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
     if (!currentUserMembership)
-      return { error: "You are not a member of this event" };
+      return { error: 'You are not a member of this event' };
 
-    if (reply.authorId !== userId && currentUserMembership.role === "ATTENDEE")
-      return { error: "User not authorized" };
+    if (reply.authorId !== userId && currentUserMembership.role === 'ATTENDEE')
+      return { error: 'User not authorized' };
 
     await db.reply.delete({
       where: {
@@ -204,7 +202,7 @@ export async function deleteReply({ id }: { id: string }) {
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(reply.post.eventId);
     const postQueryDefinition = getPostQuery(reply.post.id);
@@ -212,15 +210,15 @@ export async function deleteReply({ id }: { id: string }) {
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
+      { message: 'Event data updated' }
     );
     pusherServer.trigger(
       postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
+      { message: 'Post data updated' }
     );
 
-    return { success: "Reply deleted" };
+    return { success: 'Reply deleted' };
   } catch (error) {
     return { error: error };
   }

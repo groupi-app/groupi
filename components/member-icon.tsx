@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   cn,
@@ -6,13 +6,13 @@ import {
   formatRoleName,
   getFullName,
   getInitials,
-} from "@/lib/utils";
-import { Member } from "@/types";
-import { $Enums } from "@prisma/client";
-import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
-import { motion } from "framer-motion";
-import { Icons } from "./icons";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+} from '@/lib/utils';
+import { Member } from '@/types';
+import { $Enums } from '@prisma/client';
+import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
+import { motion } from 'framer-motion';
+import { Icons } from './icons';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,14 +20,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+} from './ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 import {
   MemberAction,
   MemberActionDialog,
-} from "@/components/member-action-dialog";
-import { useState } from "react";
+} from '@/components/member-action-dialog';
+import { useState } from 'react';
 
 const item = {
   hidden: { opacity: 0, x: 15 },
@@ -48,7 +48,7 @@ export default function MemberIcon({
   userId: string;
   itemKey: string;
   className?: string;
-  align?: "start" | "center" | "end";
+  align?: 'start' | 'center' | 'end';
   eventDateTime: Date | null;
 }) {
   const { firstName, lastName, username, imageUrl } = member.person;
@@ -64,10 +64,10 @@ export default function MemberIcon({
 
   const canKick =
     !isMe &&
-    ((userRole === "MODERATOR" && member.role === "ATTENDEE") ||
-      userRole === "ORGANIZER");
+    ((userRole === 'MODERATOR' && member.role === 'ATTENDEE') ||
+      userRole === 'ORGANIZER');
 
-  const canPromote = !isMe && userRole === "ORGANIZER";
+  const canPromote = !isMe && userRole === 'ORGANIZER';
 
   const [dialogAction, setDialogAction] = useState<MemberAction>(
     MemberAction.KICK
@@ -77,7 +77,7 @@ export default function MemberIcon({
     <motion.div
       variants={item}
       className={cn(
-        "flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-10",
+        'flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-10',
         className
       )}
       layout
@@ -87,7 +87,7 @@ export default function MemberIcon({
         <Tooltip>
           <DropdownMenu>
             <TooltipTrigger asChild>
-              <DropdownMenuTrigger className="rounded-full">
+              <DropdownMenuTrigger className='rounded-full'>
                 <Avatar>
                   <AvatarImage src={imageUrl} />
                   <AvatarFallback>{initials}</AvatarFallback>
@@ -96,40 +96,40 @@ export default function MemberIcon({
             </TooltipTrigger>
             <DropdownMenuContent align={align}>
               <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span className="text-base text-card-foreground">
+                <div className='flex flex-col'>
+                  <span className='text-base text-card-foreground'>
                     {fullName}
                   </span>
-                  <span className="text-muted-foreground">{username}</span>
+                  <span className='text-muted-foreground'>{username}</span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>
-                <div className="flex items-center gap-1">
-                  <div className="text-card-foreground">
+                <div className='flex items-center gap-1'>
+                  <div className='text-card-foreground'>
                     {formatRoleBadge(role)}
                   </div>
-                  <span className="text-card-foreground">
+                  <span className='text-card-foreground'>
                     {formatRoleName(role)}
                   </span>
                 </div>
               </DropdownMenuLabel>
               {eventDateTime && (
                 <DropdownMenuLabel>
-                  <div className="flex items-center gap-1 text-muted-foreground">
+                  <div className='flex items-center gap-1 text-muted-foreground'>
                     <span>RSVP: </span>
-                    {member.rsvpStatus === "YES" && (
-                      <Icons.check className="text-green-500" />
+                    {member.rsvpStatus === 'YES' && (
+                      <Icons.check className='text-green-500' />
                     )}
-                    {member.rsvpStatus === "MAYBE" && (
-                      <span className="font-semibold w-6 text-xl text-yellow-500 text-center">
+                    {member.rsvpStatus === 'MAYBE' && (
+                      <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
                         ?
                       </span>
                     )}
-                    {member.rsvpStatus === "NO" && (
-                      <Icons.close className="text-red-500" />
+                    {member.rsvpStatus === 'NO' && (
+                      <Icons.close className='text-red-500' />
                     )}
-                    <span className="text-foreground">{member.rsvpStatus}</span>
+                    <span className='text-foreground'>{member.rsvpStatus}</span>
                   </div>
                 </DropdownMenuLabel>
               )}
@@ -138,34 +138,34 @@ export default function MemberIcon({
 
               {canPromote && (
                 <>
-                  {member.role === "ATTENDEE" && (
+                  {member.role === 'ATTENDEE' && (
                     <DropdownMenuItem
                       onClick={() => {
                         setDialogAction(MemberAction.PROMOTE);
                       }}
                       asChild
-                      className="cursor-pointer"
+                      className='cursor-pointer'
                     >
                       <DialogTrigger asChild>
-                        <div className="flex items-center gap-1">
-                          <Icons.shield className="size-4" />
+                        <div className='flex items-center gap-1'>
+                          <Icons.shield className='size-4' />
                           <span>Promote</span>
                         </div>
                       </DialogTrigger>
                     </DropdownMenuItem>
                   )}
 
-                  {member.role === "MODERATOR" && (
+                  {member.role === 'MODERATOR' && (
                     <DropdownMenuItem
                       onClick={() => {
                         setDialogAction(MemberAction.DEMOTE);
                       }}
                       asChild
-                      className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
                     >
                       <DialogTrigger asChild>
-                        <div className="flex items-center gap-1">
-                          <Icons.shieldOff className="size-4" />
+                        <div className='flex items-center gap-1'>
+                          <Icons.shieldOff className='size-4' />
                           <span>Demote</span>
                         </div>
                       </DialogTrigger>
@@ -179,11 +179,11 @@ export default function MemberIcon({
                     setDialogAction(MemberAction.KICK);
                   }}
                   asChild
-                  className="cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
+                  className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
                 >
                   <DialogTrigger asChild>
-                    <div className="flex items-center gap-1">
-                      <Icons.kick className="size-4" />
+                    <div className='flex items-center gap-1'>
+                      <Icons.kick className='size-4' />
                       <span>Kick</span>
                     </div>
                   </DialogTrigger>
@@ -192,7 +192,7 @@ export default function MemberIcon({
             </DropdownMenuContent>
             <MemberActionDialog action={dialogAction} member={member} />
             <TooltipContent>
-              <span>{fullName != "" ? fullName : username}</span>
+              <span>{fullName != '' ? fullName : username}</span>
             </TooltipContent>
           </DropdownMenu>
         </Tooltip>

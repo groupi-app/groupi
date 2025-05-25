@@ -1,7 +1,7 @@
-import { fetchPersonData } from "@/lib/actions/person";
-import { getPersonQuery } from "@/lib/query-definitions";
-import { ActionResponse, PersonData } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { fetchPersonData } from '@/lib/actions/person';
+import { getPersonQuery } from '@/lib/query-definitions';
+import { ActionResponse, PersonData } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export function usePersonDataQuery(
   userId: string,

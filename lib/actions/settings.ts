@@ -6,7 +6,9 @@ import { revalidatePath } from 'next/cache';
 import { db } from '../db';
 import { auth } from '@clerk/nextjs/server';
 
-export async function fetchUserSettings(): Promise<ActionResponse<SettingsData>> {
+export async function fetchUserSettings(): Promise<
+  ActionResponse<SettingsData>
+> {
   const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
@@ -85,7 +87,9 @@ export async function addNotificationMethod(
 /**
  * Deletes a notification method
  */
-export async function deleteNotificationMethod(methodId: string): Promise<ActionResponse<any>> {
+export async function deleteNotificationMethod(
+  methodId: string
+): Promise<ActionResponse<any>> {
   'use server';
 
   if (!methodId) return { error: 'Method ID is required' };
@@ -166,7 +170,10 @@ export async function updateUserSettings(data: {
     name?: string;
     value: string;
     enabled: boolean;
-    notifications: Array<{ notificationType: NotificationType; enabled: boolean }>;
+    notifications: Array<{
+      notificationType: NotificationType;
+      enabled: boolean;
+    }>;
   }>;
 }): Promise<ActionResponse<any>> {
   'use server';
@@ -174,11 +181,15 @@ export async function updateUserSettings(data: {
   if (!userId) return { error: 'User not found' };
   try {
     // Get the user's settings record
-    const settings = await db.personSettings.findUnique({ where: { personId: userId } });
+    const settings = await db.personSettings.findUnique({
+      where: { personId: userId },
+    });
     if (!settings) return { error: 'Settings not found for user' };
 
     // Remove all existing notification methods for this user
-    await db.notificationMethod.deleteMany({ where: { settingsId: settings.id } });
+    await db.notificationMethod.deleteMany({
+      where: { settingsId: settings.id },
+    });
 
     // Add all new/updated notification methods
     for (const method of data.notificationMethods) {
@@ -190,7 +201,7 @@ export async function updateUserSettings(data: {
           settingsId: settings.id,
           name: method.name,
           notifications: {
-            create: method.notifications.map((n) => ({
+            create: method.notifications.map(n => ({
               notificationType: n.notificationType,
               enabled: n.enabled,
             })),
