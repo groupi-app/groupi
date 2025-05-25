@@ -10,9 +10,10 @@ export const env = createEnv({
     PUSHER_APP_ID: z.string().min(1),
     PUSHER_APP_SECRET: z.string().min(1),
     GOOGLE_API_KEY: z.string().min(1),
-    
+    RESEND_API_KEY: z.string().min(1).startsWith("re_"),
   },
   client: {
+    NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1).startsWith("/"),
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1).startsWith("/"),
@@ -21,6 +22,7 @@ export const env = createEnv({
     NEXT_PUBLIC_PUSHER_APP_CLUSTER: z.string().min(1),
   },
   runtimeEnv: {
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
     DATABASE_URL: process.env.DATABASE_URL,
     DIRECT_URL: process.env.DIRECT_URL,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
@@ -34,5 +36,6 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_X_FORCE_REDIRECT_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_X_FORCE_REDIRECT_URL,
     NEXT_PUBLIC_PUSHER_APP_KEY: process.env.NEXT_PUBLIC_PUSHER_APP_KEY,
     NEXT_PUBLIC_PUSHER_APP_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
 });

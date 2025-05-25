@@ -1,18 +1,16 @@
-"use server";
+'use server';
 
-import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import {
-  $Enums,
-  Membership,
-  Notification,
-  NotificationType,
-} from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { BatchEvent } from "pusher";
-import { db } from "../db";
-import { pusherServer } from "../pusher-server";
-import { getNotificationQuery } from "../query-definitions";
+import { ActionResponse, NotificationWithPersonEventPost } from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import { $Enums, Membership, Notification, NotificationType } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { BatchEvent } from 'pusher';
+import { db } from '../db';
+import { pusherServer } from '../pusher-server';
+import { getNotificationQuery } from '../query-definitions';
+import { resend } from '../email';
+import { EmailTemplate, NotificationEmailTemplate } from '@/components/email-template';
+import { CreateEmailResponseSuccess } from 'resend';
 
 export const fetchNotificationsForPerson = async (
   id: string
@@ -21,7 +19,7 @@ export const fetchNotificationsForPerson = async (
 
   if (!userId) {
     return {
-      error: "User not found",
+      error: 'User not found',
     };
   }
 
@@ -49,7 +47,7 @@ export const fetchNotificationsForPerson = async (
 
   if (!person) {
     return {
-      error: "Person not found",
+      error: 'Person not found',
     };
   }
 
@@ -66,7 +64,7 @@ export const markNotificationAsRead = async (
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -88,39 +86,35 @@ export const markNotificationAsRead = async (
 
     if (!notification) {
       return {
-        error: "Notification not found",
+        error: 'Notification not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notification,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
 
-export const markAllNotificationsAsRead = async (): Promise<
-  ActionResponse<number>
-> => {
+export const markAllNotificationsAsRead = async (): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -135,26 +129,24 @@ export const markAllNotificationsAsRead = async (): Promise<
 
     if (!notifications) {
       return {
-        error: "Notifications not found",
+        error: 'Notifications not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notifications.count,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
@@ -167,7 +159,7 @@ export const markNotificationAsUnread = async (
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -188,39 +180,35 @@ export const markNotificationAsUnread = async (
 
     if (!notification) {
       return {
-        error: "Notification not found",
+        error: 'Notification not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notification,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
 
-export const markEventNotifsAsRead = async (
-  eventId: string
-): Promise<ActionResponse<number>> => {
+export const markEventNotifsAsRead = async (eventId: string): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -249,39 +237,35 @@ export const markEventNotifsAsRead = async (
 
     if (!notifications) {
       return {
-        error: "Notifications not found",
+        error: 'Notifications not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notifications.count,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
 
-export const markPostNotifsAsRead = async (
-  postId: string
-): Promise<ActionResponse<number>> => {
+export const markPostNotifsAsRead = async (postId: string): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -300,26 +284,24 @@ export const markPostNotifsAsRead = async (
 
     if (!notifications) {
       return {
-        error: "Notifications not found",
+        error: 'Notifications not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notifications.count,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
@@ -332,7 +314,7 @@ export const deleteNotification = async (
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -351,39 +333,35 @@ export const deleteNotification = async (
 
     if (!notification) {
       return {
-        error: "Notification not found",
+        error: 'Notification not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notification,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
 
-export const deleteAllNotifications = async (): Promise<
-  ActionResponse<number>
-> => {
+export const deleteAllNotifications = async (): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -395,39 +373,37 @@ export const deleteAllNotifications = async (): Promise<
 
     if (!notifications) {
       return {
-        error: "Notifications not found",
+        error: 'Notifications not found',
       };
     }
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const personQueryDefinition = getNotificationQuery(userId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Event data updated',
+    });
 
     return {
       success: notifications.count,
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
 
 export const createNotification = async (
-  notification: Omit<Notification, "id" | "createdAt" | "updatedAt" | "author">
+  notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'author'>
 ): Promise<ActionResponse<Notification>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -444,13 +420,11 @@ export const createNotification = async (
       });
       if (!event) {
         return {
-          error: "Event not found",
+          error: 'Event not found',
         };
       }
 
-      membership = event.memberships.find(
-        (membership) => membership.personId === userId
-      );
+      membership = event.memberships.find((membership) => membership.personId === userId);
     } else if (notification.postId) {
       const post = await db.post.findUnique({
         where: {
@@ -467,18 +441,16 @@ export const createNotification = async (
 
       if (!post) {
         return {
-          error: "Post not found",
+          error: 'Post not found',
         };
       }
 
-      membership = post.event.memberships.find(
-        (membership) => membership.personId === userId
-      );
+      membership = post.event.memberships.find((membership) => membership.personId === userId);
     }
 
     if (!membership) {
       return {
-        error: "User not in event",
+        error: 'User not in event',
       };
     }
 
@@ -489,22 +461,18 @@ export const createNotification = async (
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
-    const personQueryDefinition = getNotificationQuery(
-      newNotification.personId
-    );
+    const personQueryDefinition = getNotificationQuery(newNotification.personId);
 
-    pusherServer.trigger(
-      personQueryDefinition.pusherChannel,
-      personQueryDefinition.pusherEvent,
-      { message: "Data updated" }
-    );
+    pusherServer.trigger(personQueryDefinition.pusherChannel, personQueryDefinition.pusherEvent, {
+      message: 'Data updated',
+    });
 
     return { success: newNotification };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
@@ -516,7 +484,7 @@ export const createEventNotifs = async ({
   datetime,
 }: {
   eventId: string;
-  type: Exclude<NotificationType, "NEW_REPLY">;
+  type: Exclude<NotificationType, 'NEW_REPLY'>;
   postId?: string;
   datetime?: Date;
 }): Promise<ActionResponse<number>> => {
@@ -525,7 +493,7 @@ export const createEventNotifs = async ({
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -540,18 +508,16 @@ export const createEventNotifs = async ({
 
     if (!event) {
       return {
-        error: "Event not found",
+        error: 'Event not found',
       };
     }
 
     // make sure user is in the event
-    const membership = event.memberships.find(
-      (membership) => membership.personId === userId
-    );
+    const membership = event.memberships.find((membership) => membership.personId === userId);
 
     if (!membership) {
       return {
-        error: "User not in event",
+        error: 'User not in event',
       };
     }
 
@@ -570,7 +536,7 @@ export const createEventNotifs = async ({
       })),
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const events: BatchEvent[] = [];
 
@@ -579,14 +545,14 @@ export const createEventNotifs = async ({
       events.push({
         channel: notificationQueryDefinition.pusherChannel,
         name: notificationQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
     return {
@@ -594,7 +560,7 @@ export const createEventNotifs = async ({
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
@@ -605,7 +571,7 @@ export const createEventModNotifs = async ({
   rsvp,
 }: {
   eventId: string;
-  type: Exclude<NotificationType, "NEW_REPLY">;
+  type: Exclude<NotificationType, 'NEW_REPLY'>;
   rsvp?: $Enums.Status;
 }): Promise<ActionResponse<number>> => {
   try {
@@ -613,7 +579,7 @@ export const createEventModNotifs = async ({
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -628,26 +594,21 @@ export const createEventModNotifs = async ({
 
     if (!event) {
       return {
-        error: "Event not found",
+        error: 'Event not found',
       };
     }
 
     // make sure user is in the event
-    const membership = event.memberships.find(
-      (membership) => membership.personId === userId
-    );
+    const membership = event.memberships.find((membership) => membership.personId === userId);
 
     if (!membership) {
       return {
-        error: "User not in event",
+        error: 'User not in event',
       };
     }
 
     const personIds = event.memberships
-      .filter(
-        (membership) =>
-          membership.personId !== userId && membership.role !== "ATTENDEE"
-      )
+      .filter((membership) => membership.personId !== userId && membership.role !== 'ATTENDEE')
       .map((membership) => membership.personId);
 
     const notifications = await db.notification.createMany({
@@ -660,7 +621,7 @@ export const createEventModNotifs = async ({
       })),
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const events: BatchEvent[] = [];
 
@@ -669,14 +630,14 @@ export const createEventModNotifs = async ({
       events.push({
         channel: notificationQueryDefinition.pusherChannel,
         name: notificationQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
     return {
@@ -684,7 +645,7 @@ export const createEventModNotifs = async ({
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
     };
   }
 };
@@ -694,14 +655,14 @@ export const createPostNotifs = async ({
   type,
 }: {
   postId: string;
-  type: "NEW_REPLY";
+  type: 'NEW_REPLY';
 }): Promise<ActionResponse<number>> => {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
@@ -721,18 +682,16 @@ export const createPostNotifs = async ({
 
     if (!post) {
       return {
-        error: "Post not found",
+        error: 'Post not found',
       };
     }
 
     // make sure user is in the event
-    const membership = post.event.memberships.find(
-      (membership) => membership.personId === userId
-    );
+    const membership = post.event.memberships.find((membership) => membership.personId === userId);
 
     if (!membership) {
       return {
-        error: "User not in event",
+        error: 'User not in event',
       };
     }
 
@@ -750,7 +709,7 @@ export const createPostNotifs = async ({
       })),
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const events: BatchEvent[] = [];
 
@@ -759,14 +718,14 @@ export const createPostNotifs = async ({
       events.push({
         channel: notificationQueryDefinition.pusherChannel,
         name: notificationQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      console.log('No events to send');
     }
 
     return {
@@ -774,7 +733,128 @@ export const createPostNotifs = async ({
     };
   } catch (e) {
     return {
-      error: "Notification not found",
+      error: 'Notification not found',
+    };
+  }
+};
+
+export const sendExternalNotifications = async (
+  notification: NotificationWithPersonEventPost
+): Promise<ActionResponse<string>> => {
+  try {
+    const { userId }: { userId: string | null } = await auth();
+
+    if (!userId) {
+      return {
+        error: 'User not found',
+      };
+    }
+
+    // Route given notification to given services based on user's notification settings
+    const person = await db.person.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        settings: {
+          include: {
+            notificationMethods: {
+              include: {
+                notifications: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!person) {
+      return {
+        error: 'Person not found',
+      };
+    }
+    if (!person.settings) {
+      return {
+        error: 'Settings not found',
+      };
+    }
+
+    const methods = person.settings.notificationMethods.filter((method) =>
+      method.notifications.some(
+        (notif) => notif.notificationType === notification.type && notif.enabled
+      )
+    );
+
+    // Handle each method
+    for (const method of methods) {
+      switch (method.type) {
+        case 'EMAIL': {
+          console.log(`Sending email to ${method.value}`);
+          const res = await sendEmailNotification({ notification });
+          if (res.error) {
+            console.error(`Failed to send email: ${res.error}`);
+          } else {
+            console.log(`Email sent successfully: ${res.success}`);
+          }
+          break;
+        }
+        case 'PUSH': {
+          // Send push notification
+          // Implement push notification logic here
+          console.log(`Sending push notification to ${method.value}`);
+          break;
+        }
+        case 'WEBHOOK': {
+          // Send webhook notification
+          console.log(`Sending webhook notification to ${method.value}`);
+        }
+        default:
+          console.warn(`Unknown notification method: ${method.type}`);
+      }
+    }
+  } catch (e) {
+    return {
+      error: 'Notification could not be sent',
+    };
+  }
+};
+
+const sendEmailNotification = async ({
+  notification,
+}: {
+  notification: NotificationWithPersonEventPost;
+}): Promise<ActionResponse<CreateEmailResponseSuccess>> => {
+  try {
+    // turn notification details into email title and content
+    if (!notification) {
+      return {
+        error: 'Notification details are required',
+      };
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: '<your-email@example.com>',
+      to: '<recipient-email@example.com>',
+      subject: 'Notification',
+      react: NotificationEmailTemplate({ notification }),
+    });
+
+    if (error) {
+      return {
+        error: 'Failed to send email',
+      };
+    }
+    if (!data) {
+      return {
+        error: 'No data returned from email service',
+      };
+    }
+    return {
+      success: data,
+    };
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    return {
+      error: 'Email sending failed',
     };
   }
 };

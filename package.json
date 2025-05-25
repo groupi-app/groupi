@@ -82,6 +82,7 @@
     "react-textarea-autosize": "^8.5.9",
     "react-type-animation": "^3.2.0",
     "recharts": "^2.15.1",
+    "resend": "^4.5.1",
     "svix": "^1.8.0",
     "tailwind-merge": "^1.13.2",
     "tailwindcss": "^4.0.0",

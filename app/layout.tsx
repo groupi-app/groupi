@@ -1,40 +1,36 @@
-import "@/styles/globals.css";
-import { Inter as FontSans } from "next/font/google";
-import localFont from "next/font/local";
+import '@/styles/globals.css';
+import { Inter as FontSans } from 'next/font/google';
+import localFont from 'next/font/local';
 
-import { siteConfig } from "@/config/site";
-import { cn } from "@/lib/utils";
+import { siteConfig } from '@/config/site';
+import { cn } from '@/lib/utils';
 
-import { Analytics } from "@/components/analytics";
-import { MainNav } from "@/components/main-nav";
-import { ModeToggle } from "@/components/mode-toggle";
-import QueryProvider from "@/components/providers/query-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { navConfig } from "@/config/nav";
-import { fetchNotificationsForPerson } from "@/lib/actions/notification";
-import { getNotificationQuery } from "@/lib/query-definitions";
-import { UserInfo } from "@/types";
-import { ClerkProvider } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
+import { Analytics } from '@/components/analytics';
+import { MainNav } from '@/components/main-nav';
+import { ModeToggle } from '@/components/mode-toggle';
+import QueryProvider from '@/components/providers/query-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import { TailwindIndicator } from '@/components/tailwind-indicator';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { navConfig } from '@/config/nav';
+import { fetchNotificationsForPerson } from '@/lib/actions/notification';
+import { getNotificationQuery } from '@/lib/query-definitions';
+import { UserInfo } from '@/types';
+import { ClerkProvider } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
-import Link from "next/link";
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 
 const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
+  subsets: ['latin'],
+  variable: '--font-sans',
 });
 
 const fontHeading = localFont({
-  src: "../assets/fonts/Geologica.ttf",
-  variable: "--font-heading",
+  src: '../assets/fonts/Geologica.ttf',
+  variable: '--font-heading',
 });
 
 export const metadata = {
@@ -43,52 +39,42 @@ export const metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  keywords: [
-    "Next.js",
-    "React",
-    "Tailwind CSS",
-    "Server Components",
-    "Radix UI",
-  ],
+  keywords: ['Next.js', 'React', 'Tailwind CSS', 'Server Components', 'Radix UI'],
   authors: [
     {
-      name: "Theia Surette",
-      url: "https://tsurette.com",
+      name: 'Theia Surette',
+      url: 'https://tsurette.com',
     },
   ],
-  creator: "Theia Surette",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  creator: 'Theia Surette',
+  // themeColor: [
+  //   { media: "(prefers-color-scheme: light)", color: "white" },
+  //   { media: "(prefers-color-scheme: dark)", color: "black" },
+  // ],
   openGraph: {
-    type: "website",
-    locale: "en_US",
+    type: 'website',
+    locale: 'en_US',
     url: siteConfig.url,
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
   },
   twitter: {
-    card: "summary_large_image",
+    card: 'summary_large_image',
     title: siteConfig.name,
     description: siteConfig.description,
     images: [`${siteConfig.url}/og.jpg`],
-    creator: "@theiasurette",
+    creator: '@theiasurette',
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
   },
   manifest: `${siteConfig.url}/site.webmanifest`,
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
 
   const queryClient = new QueryClient();
@@ -105,11 +91,11 @@ export default async function RootLayout({
   }
 
   let userInfo: UserInfo = {
-    firstName: "",
-    lastName: "",
-    username: "",
-    imageUrl: "",
-    id: "",
+    firstName: '',
+    lastName: '',
+    username: '',
+    imageUrl: '',
+    id: '',
   };
 
   if (user) {
@@ -127,7 +113,7 @@ export default async function RootLayout({
       <html suppressHydrationWarning lang="en">
         <body
           className={cn(
-            "min-h-screen bg-background font-sans antialiased",
+            'min-h-screen bg-background font-sans antialiased',
             fontSans.variable,
             fontHeading.variable
           )}
@@ -154,13 +140,7 @@ export default async function RootLayout({
   );
 }
 
-function InnerLayout({
-  userInfo,
-  children,
-}: {
-  userInfo: UserInfo;
-  children: React.ReactNode;
-}) {
+function InnerLayout({ userInfo, children }: { userInfo: UserInfo; children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground">
@@ -172,11 +152,8 @@ function InnerLayout({
           <ModeToggle />
           <div className="flex flex-col gap-2">
             <p>
-              Built by{" "}
-              <Link
-                className="underline font-medium"
-                href="https://tsurette.com"
-              >
+              Built by{' '}
+              <Link className="underline font-medium" href="https://tsurette.com">
                 Theia
               </Link>
             </p>
