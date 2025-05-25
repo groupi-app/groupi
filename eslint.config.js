@@ -93,7 +93,11 @@ const eslintConfig = [
       'react/prop-types': 'off', // Using TypeScript for prop validation
       '@typescript-eslint/no-unused-vars': [
         'warn',
-        { argsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       'no-console': 'warn', // Allow console but warn
       '@typescript-eslint/no-explicit-any': 'warn', // Allow any but warn
