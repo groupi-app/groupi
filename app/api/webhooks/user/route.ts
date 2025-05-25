@@ -27,14 +27,7 @@ export async function POST(req: NextRequest) {
         lastName: last_name ?? null,
         username,
         imageUrl: image_url,
-        // Create PersonSettings at the same time
-        settings: {
-          create: {}, // Empty object will create PersonSettings with defaults
-        },
-      },
-      include: {
-        settings: true, // Include settings in the response
-      },
+      }
     });
 
     return NextResponse.json({ message: 'Created person with settings', person }, { status: 201 });
