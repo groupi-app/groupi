@@ -55,8 +55,7 @@ export async function POST(req: NextRequest) {
         lastName: last_name ?? null,
         username,
         imageUrl: image_url,
-      },
-      include: { settings: true },
+      }
     });
     return NextResponse.json({ message: 'Upserted person', person }, { status: 200 });
   }
