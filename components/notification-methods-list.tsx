@@ -84,7 +84,7 @@ export function NotificationMethodsList({
           </div>
           {emails.map(email => {
             const alreadyAdded = methods.some(
-              (m: any) =>
+              (m: NewNotificationMethod) =>
                 m.type === NotificationMethodType.EMAIL && m.value === email
             );
             return (

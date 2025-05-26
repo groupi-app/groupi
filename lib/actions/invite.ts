@@ -8,6 +8,7 @@ import { db } from '../db';
 import { pusherServer } from '../pusher-server';
 import { getEventQuery, getInviteQuery } from '../query-definitions';
 import { createEventModNotifs } from './notification';
+import { log } from '@/lib/logger';
 
 export const getEventInviteData = cache(
   async (eventId: string): Promise<ActionResponse<EventInviteData>> => {
@@ -109,7 +110,10 @@ export async function createInvite({
 
     return { success: 'Invite Created' };
   } catch (error) {
-    console.log(error);
+    log.error('Failed to create invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Unable to create invite.' };
   }
 }
@@ -160,7 +164,10 @@ export async function deleteInvite(id: string) {
 
     return { success: 'Invite Deleted' };
   } catch (error) {
-    console.log(error);
+    log.error('Failed to delete invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Unable to delete invite.' };
   }
 }
@@ -211,7 +218,10 @@ export async function deleteInvites(ids: string[]) {
 
     return { success: 'Invites Deleted' };
   } catch (error) {
-    console.log(error);
+    log.error('Failed to delete invites', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Unable to delete invites.' };
   }
 }
@@ -272,7 +282,11 @@ export async function acceptInvite({
       },
     });
 
-    console.log(mem);
+    log.info('Membership created successfully', {
+      membershipId: mem.id,
+      personId: mem.personId,
+      eventId: mem.eventId,
+    });
 
     // decrement remaining uses
     await db.invite.update({
@@ -301,7 +315,10 @@ export async function acceptInvite({
 
     return { success: 'Invite successfully used' };
   } catch (error) {
-    console.log(error);
+    log.error('Failed to accept invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Unable to use invite.' };
   }
 }

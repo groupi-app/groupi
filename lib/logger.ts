@@ -1,11 +1,13 @@
 import pino from 'pino';
 
-// Configure logger based on environment
+// Only use pino-pretty transport if explicitly enabled (e.g., for local dev CLI)
+const usePretty = Boolean(process.env.PINO_PRETTY);
+
 const logger = pino({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  transport:
-    process.env.NODE_ENV === 'development'
-      ? {
+  ...(usePretty
+    ? {
+        transport: {
           target: 'pino-pretty',
           options: {
             colorize: true,
@@ -13,8 +15,9 @@ const logger = pino({
             translateTime: 'yyyy-mm-dd HH:MM:ss',
             singleLine: true,
           },
-        }
-      : undefined,
+        },
+      }
+    : {}),
   formatters: {
     level: label => {
       return { level: label.toUpperCase() };
@@ -33,17 +36,17 @@ export { logger };
 
 // Convenience methods for different log levels
 export const log = {
-  debug: (message: string, data?: any) => logger.debug(data, message),
-  info: (message: string, data?: any) => logger.info(data, message),
-  warn: (message: string, data?: any) => logger.warn(data, message),
-  error: (message: string, error?: Error | any) => {
+  debug: (message: string, data?: object) => logger.debug(data, message),
+  info: (message: string, data?: object) => logger.info(data, message),
+  warn: (message: string, data?: object) => logger.warn(data, message),
+  error: (message: string, error?: Error | object) => {
     if (error instanceof Error) {
-      logger.error({ err: error, stack: error.stack }, message);
+      logger.error({ err: error }, message);
     } else {
       logger.error(error, message);
     }
   },
-  fatal: (message: string, error?: Error | any) => {
+  fatal: (message: string, error?: Error | object) => {
     if (error instanceof Error) {
       logger.fatal({ err: error, stack: error.stack }, message);
     } else {

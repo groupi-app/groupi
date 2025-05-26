@@ -222,10 +222,15 @@ export function NotificationSettingsCard({
                                 : false
                           }
                           onCheckedChange={checked => {
-                            const updated = field.value.map((notif: any) => ({
-                              ...notif,
-                              enabled: checked === true,
-                            }));
+                            const updated = field.value.map(
+                              (notif: {
+                                notificationType: NotificationType;
+                                enabled: boolean;
+                              }) => ({
+                                ...notif,
+                                enabled: checked === true,
+                              })
+                            );
                             field.onChange(updated);
                           }}
                         />

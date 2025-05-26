@@ -18,7 +18,13 @@ export enum MemberAction {
   PROMOTE = 'PROMOTE',
 }
 
-async function demoteMember({ member, toast }: { member: Member; toast: any }) {
+async function demoteMember({
+  member,
+  toast,
+}: {
+  member: Member;
+  toast: ReturnType<typeof useToast>['toast'];
+}) {
   const res = await updateMembershipRole({
     membership: member,
     role: 'ATTENDEE',
@@ -42,7 +48,7 @@ async function promoteMember({
   toast,
 }: {
   member: Member;
-  toast: any;
+  toast: ReturnType<typeof useToast>['toast'];
 }) {
   const res = await updateMembershipRole({
     membership: member,
@@ -62,7 +68,13 @@ async function promoteMember({
   }
 }
 
-async function kickMember({ member, toast }: { member: Member; toast: any }) {
+async function kickMember({
+  member,
+  toast,
+}: {
+  member: Member;
+  toast: ReturnType<typeof useToast>['toast'];
+}) {
   const res = await deleteMembership(member);
   if (res.success) {
     toast({

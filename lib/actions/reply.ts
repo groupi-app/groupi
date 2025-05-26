@@ -11,6 +11,7 @@ import {
   getPostQuery,
 } from '../query-definitions';
 import { createPostNotifs } from './notification';
+import { log } from '@/lib/logger';
 
 export async function createReply({
   postId,
@@ -98,7 +99,7 @@ export async function createReply({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      log.debug('No events to send for reply creation');
     }
 
     await createPostNotifs({ postId, type: 'NEW_REPLY' });

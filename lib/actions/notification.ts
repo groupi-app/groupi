@@ -16,6 +16,7 @@ import { getNotificationQuery } from '../query-definitions';
 import { resend } from '../email';
 import { NotificationEmailTemplate } from '@/components/email-template';
 import { CreateEmailResponseSuccess } from 'resend';
+import { notificationLogger, emailLogger } from '@/lib/logger';
 
 export const fetchNotificationsForPerson = async (
   id: string
@@ -605,7 +606,7 @@ export const createEventNotifs = async ({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      notificationLogger.debug('No events to send for notification update');
     }
 
     return {
@@ -695,7 +696,9 @@ export const createEventModNotifs = async ({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      notificationLogger.debug(
+        'No events to send for event modification notification'
+      );
     }
 
     return {
@@ -785,7 +788,7 @@ export const createPostNotifs = async ({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      notificationLogger.debug('No events to send for post notification');
     }
 
     return {
@@ -848,28 +851,51 @@ export const sendExternalNotifications = async (
     for (const method of methods) {
       switch (method.type) {
         case 'EMAIL': {
-          console.log(`Sending email to ${method.value}`);
+          emailLogger.info('Sending email notification', {
+            recipientEmail: method.value,
+            notificationId: notification.id,
+            notificationType: notification.type,
+          });
           const res = await sendEmailNotification({ notification });
           if (res.error) {
-            console.error(`Failed to send email: ${res.error}`);
+            emailLogger.error('Failed to send email notification', {
+              error: res.error,
+              recipientEmail: method.value,
+              notificationId: notification.id,
+            });
           } else {
-            console.log(`Email sent successfully: ${res.success}`);
+            emailLogger.info('Email notification sent successfully', {
+              result: res.success,
+              recipientEmail: method.value,
+              notificationId: notification.id,
+            });
           }
           break;
         }
         case 'PUSH': {
           // Send push notification
           // Implement push notification logic here
-          console.log(`Sending push notification to ${method.value}`);
+          notificationLogger.info('Sending push notification', {
+            recipientToken: method.value,
+            notificationId: notification.id,
+            notificationType: notification.type,
+          });
           break;
         }
         case 'WEBHOOK': {
           // Send webhook notification
-          console.log(`Sending webhook notification to ${method.value}`);
+          notificationLogger.info('Sending webhook notification', {
+            webhookUrl: method.value,
+            notificationId: notification.id,
+            notificationType: notification.type,
+          });
           break;
         }
         default:
-          console.warn(`Unknown notification method: ${method.type}`);
+          notificationLogger.warn('Unknown notification method', {
+            methodType: method.type,
+            notificationId: notification.id,
+          });
       }
     }
 
@@ -917,7 +943,10 @@ const sendEmailNotification = async ({
       success: data,
     };
   } catch (error) {
-    console.error('Failed to send email:', error);
+    emailLogger.error('Failed to send email notification', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       error: 'Email sending failed',
     };

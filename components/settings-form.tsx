@@ -1,18 +1,18 @@
 'use client';
-import { ReactNode } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { useToast } from './ui/use-toast';
 import { updateUserSettings } from '@/lib/actions/settings';
 import { log } from '@/lib/logger';
+import { SettingsForm as SettingsFormType } from './settings-form-provider';
 
-export function SettingsForm({ children }: { children: ReactNode }) {
-  const methods = useFormContext();
+export function SettingsForm({ children }: { children: React.ReactNode }) {
+  const methods = useFormContext<SettingsFormType>();
   const { reset } = methods;
   const { toast } = useToast();
 
   // Submit handler: call server action to update settings
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SettingsFormType) => {
     log.info('Updating user settings', { data });
     const res = await updateUserSettings(data);
     if (res?.error) {

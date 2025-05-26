@@ -119,3 +119,6 @@ playwright/.cache/
 # Documentation builds
 docs/.vitepress/dist
 docs/.vitepress/cache
+
+# Cypress config
+cypress.config.ts

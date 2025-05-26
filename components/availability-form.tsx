@@ -73,7 +73,10 @@ export function AvailabilityForm({
     );
   }
 
-  function setFormAnswer(index: number, value: any) {
+  function setFormAnswer(
+    index: number,
+    value: { potentialDateTimeId: string; answer: 'yes' | 'no' | 'maybe' }
+  ) {
     let availabilities = form.getValues().formAnswers;
     availabilities[index] = value;
     form.setValue(`formAnswers`, availabilities);

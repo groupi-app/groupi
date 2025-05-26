@@ -19,7 +19,7 @@ async function removePost({
   router,
 }: {
   id: string;
-  toast: any;
+  toast: ReturnType<typeof useToast>['toast'];
   router: AppRouterInstance;
 }) {
   const res = await deletePost({ id });

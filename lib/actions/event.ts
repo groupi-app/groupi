@@ -180,7 +180,10 @@ export async function createEvent({
 
     return { success: event };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to create event', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not create event' };
   }
 }
@@ -255,14 +258,18 @@ export async function updateEventDetails({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      eventLogger.debug('No events to send for event update');
     }
 
     await createEventNotifs({ eventId: id, type: 'EVENT_EDITED' });
 
     return { success: updatedEvent };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to update event details', {
+      eventId: id,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not update event' };
   }
 }
@@ -343,7 +350,7 @@ export async function updateEventDateTime({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      eventLogger.debug('No events to send for event date update');
     }
 
     revalidatePath('/');
@@ -356,7 +363,12 @@ export async function updateEventDateTime({
 
     return { success: updatedEvent };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to update event date/time', {
+      eventId,
+      dateTime,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not update event' };
   }
 }
@@ -464,14 +476,18 @@ export async function updateEventPotentialDateTimes({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      eventLogger.debug('No events to send for event date reset');
     }
 
     await createEventNotifs({ eventId, type: 'DATE_RESET' });
 
     return { success: updatedEvent };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to reset event date', {
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not update event' };
   }
 }
@@ -521,7 +537,11 @@ export async function deleteEvent(eventId: string) {
 
     return { success: 'Event deleted' };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to delete event', {
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not delete event' };
   }
 }
@@ -571,7 +591,11 @@ export async function leaveEvent(eventId: string) {
 
     return { success: 'Left event' };
   } catch (error) {
-    console.log(error);
+    eventLogger.error('Failed to leave event', {
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { error: 'Could not leave event' };
   }
 }

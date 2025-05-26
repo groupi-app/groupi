@@ -12,6 +12,7 @@ import {
   getPostQuery,
 } from '../query-definitions';
 import { createEventNotifs } from './notification';
+import { log } from '@/lib/logger';
 
 export interface PostData {
   success?: {
@@ -139,7 +140,7 @@ export async function createPost({
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log('No events to send');
+      log.debug('No events to send for post creation');
     }
 
     await createEventNotifs({ eventId, type: 'NEW_POST', postId: res.id });

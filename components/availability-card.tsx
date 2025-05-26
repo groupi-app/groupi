@@ -15,7 +15,10 @@ export function AvailabilityCard({
 }: {
   pdt: PotentialDateTimeWithAvailabilities;
   formAnswers: { potentialDateTimeId: string; answer: string }[];
-  setFormAnswer: (index: number, value: any) => void;
+  setFormAnswer: (
+    index: number,
+    value: { potentialDateTimeId: string; answer: 'yes' | 'no' | 'maybe' }
+  ) => void;
   index: number;
 }) {
   const [listOpen, setListOpen] = useState(false);

@@ -11,7 +11,13 @@ import { deleteReply } from '@/lib/actions/reply';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 
-async function removeReply({ id, toast }: { id: string; toast: any }) {
+async function removeReply({
+  id,
+  toast,
+}: {
+  id: string;
+  toast: ReturnType<typeof useToast>['toast'];
+}) {
   const res = await deleteReply({ id });
   if (res.success) {
     toast({

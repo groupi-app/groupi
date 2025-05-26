@@ -19,7 +19,7 @@ async function removeEvent({
   router,
 }: {
   id: string;
-  toast: any;
+  toast: ReturnType<typeof useToast>['toast'];
   router: AppRouterInstance;
 }) {
   const res = await deleteEvent(id);

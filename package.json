@@ -94,7 +94,6 @@
     "tailwind-merge": "^1.13.2",
     "tailwindcss": "^4.0.0",
     "tailwindcss-animate": "^1.0.6",
-    "typescript": "^5.8.2",
     "use-places-autocomplete": "^4.0.1",
     "zod": "^3.23.4"
   },
@@ -121,8 +120,10 @@
     "prettier": "^3.5.3",
     "prisma": "^5.21.1",
     "start-server-and-test": "^2.0.11",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "tw-animate-css": "^1.2.5"
+    "tw-animate-css": "^1.2.5",
+    "typescript": "^5.8.3"
   },
   "overrides": {
     "@radix-ui/react-dismissable-layer": "^1.0.5",
