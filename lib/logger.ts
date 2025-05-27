@@ -1,23 +1,7 @@
 import pino from 'pino';
 
-// Only use pino-pretty transport if explicitly enabled (e.g., for local dev CLI)
-const usePretty = Boolean(process.env.PINO_PRETTY);
-
 const logger = pino({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  ...(usePretty
-    ? {
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            ignore: 'pid,hostname',
-            translateTime: 'yyyy-mm-dd HH:MM:ss',
-            singleLine: true,
-          },
-        },
-      }
-    : {}),
   formatters: {
     level: label => {
       return { level: label.toUpperCase() };

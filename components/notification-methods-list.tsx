@@ -2,7 +2,11 @@
 
 import { Button } from './ui/button';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { NotificationMethodType, NotificationType } from '@prisma/client';
+import {
+  NotificationMethodType,
+  NotificationType,
+  WebhookFormat,
+} from '@prisma/client';
 import { NotificationSettingsCard } from './notification-settings-card';
 import {
   DropdownMenu,
@@ -28,6 +32,10 @@ interface NewNotificationMethod {
   name: string;
   enabled: boolean;
   notifications: NewNotificationSetting[];
+  // Webhook-specific fields
+  webhookFormat?: WebhookFormat;
+  customTemplate?: string;
+  webhookHeaders?: string;
 }
 
 export function NotificationMethodsList({
@@ -112,8 +120,9 @@ export function NotificationMethodsList({
                 type: NotificationMethodType.WEBHOOK,
                 value: '',
                 name: '',
-                enabled: true,
+                enabled: true, // Start enabled since URL is required anyway
                 notifications: getDefaultNotifications(),
+                webhookFormat: WebhookFormat.GENERIC, // Default webhook format to satisfy validation
               })
             }
           >

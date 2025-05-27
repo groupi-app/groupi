@@ -17,11 +17,26 @@ export default async function SettingsLayout({
     return <ErrorPage message='Unable to load user settings' />;
   }
 
+  // Transform database data to only include form-editable fields
   const transformedData = {
-    ...data.success,
     notificationMethods: data.success.notificationMethods.map(method => ({
-      ...method,
+      type: method.type,
+      value: method.value,
+      enabled: method.enabled,
       name: method.name ?? undefined,
+      notifications: method.notifications.map(notification => ({
+        notificationType: notification.notificationType,
+        enabled: notification.enabled,
+      })),
+      // Include webhook-specific fields if present
+      ...(method.webhookFormat && { webhookFormat: method.webhookFormat }),
+      ...(method.customTemplate && { customTemplate: method.customTemplate }),
+      ...(method.webhookHeaders && {
+        webhookHeaders:
+          typeof method.webhookHeaders === 'string'
+            ? method.webhookHeaders
+            : JSON.stringify(method.webhookHeaders),
+      }),
     })),
   };
 

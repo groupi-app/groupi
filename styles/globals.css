@@ -100,7 +100,7 @@
   --border2: var(--border);
   --input: hsl(214.3 31.8% 91.4%);
 
-  --primary: hsl(285 100% 34%);
+  --primary: hsl(285, 100%, 34%);
   --primary-foreground: hsl(210 40% 98%);
 
   --secondary: hsl(210 40% 96.1%);
@@ -137,7 +137,7 @@
   --border2: var(--border);
   --input: hsl(216 34% 17%);
 
-  --primary: hsl(285 100% 34%);
+  --primary: hsl(285, 100%, 34%);
   --primary-foreground: hsl(210 40% 98%);
 
   --secondary: hsl(222.2 47.4% 11.2%);

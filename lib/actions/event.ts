@@ -128,10 +128,13 @@ export async function createEvent({
     if (!event) return { error: 'Event not created' };
 
     if (potentialDateTimes) {
-      eventLogger.debug('Adding potential date times to event', {
-        eventId: event.id,
-        dateCount: potentialDateTimes.length,
-      });
+      eventLogger.debug(
+        {
+          eventId: event.id,
+          dateCount: potentialDateTimes.length,
+        },
+        'Adding potential date times to event'
+      );
       const eventRes = await db.event.update({
         where: {
           id: event.id,
@@ -180,10 +183,13 @@ export async function createEvent({
 
     return { success: event };
   } catch (error) {
-    eventLogger.error('Failed to create event', {
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to create event'
+    );
     return { error: 'Could not create event' };
   }
 }
@@ -265,11 +271,14 @@ export async function updateEventDetails({
 
     return { success: updatedEvent };
   } catch (error) {
-    eventLogger.error('Failed to update event details', {
-      eventId: id,
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        eventId: id,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to update event details'
+    );
     return { error: 'Could not update event' };
   }
 }
@@ -363,12 +372,15 @@ export async function updateEventDateTime({
 
     return { success: updatedEvent };
   } catch (error) {
-    eventLogger.error('Failed to update event date/time', {
-      eventId,
-      dateTime,
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        eventId,
+        dateTime,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to update event date/time'
+    );
     return { error: 'Could not update event' };
   }
 }
@@ -483,11 +495,14 @@ export async function updateEventPotentialDateTimes({
 
     return { success: updatedEvent };
   } catch (error) {
-    eventLogger.error('Failed to reset event date', {
-      eventId,
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        eventId,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to reset event date'
+    );
     return { error: 'Could not update event' };
   }
 }
@@ -537,11 +552,14 @@ export async function deleteEvent(eventId: string) {
 
     return { success: 'Event deleted' };
   } catch (error) {
-    eventLogger.error('Failed to delete event', {
-      eventId,
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        eventId,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to delete event'
+    );
     return { error: 'Could not delete event' };
   }
 }
@@ -591,11 +609,14 @@ export async function leaveEvent(eventId: string) {
 
     return { success: 'Left event' };
   } catch (error) {
-    eventLogger.error('Failed to leave event', {
-      eventId,
-      error: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    eventLogger.error(
+      {
+        eventId,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Failed to leave event'
+    );
     return { error: 'Could not leave event' };
   }
 }

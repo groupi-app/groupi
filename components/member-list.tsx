@@ -103,6 +103,7 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userId={userId}
                   userRole={userRole}
                   member={member}
+                  key={member.id}
                   itemKey={member.id}
                   align={i === 0 ? 'start' : 'center'}
                   eventDateTime={eventDateTime}

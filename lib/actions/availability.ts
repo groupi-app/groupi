@@ -115,9 +115,12 @@ export async function updateMembershipAvailabilities(
     });
 
     if (!event) {
-      eventLogger.warn('Event not found during availability update', {
-        eventId,
-      });
+      eventLogger.warn(
+        {
+          eventId,
+        },
+        'Event not found during availability update'
+      );
       return { error: 'Event not found' };
     }
 
@@ -151,16 +154,22 @@ export async function updateMembershipAvailabilities(
         if (update) {
           availability.status = update.status;
         } else {
-          eventLogger.warn('Availability not found for update', {
-            potentialDateTimeId: availability.potentialDateTimeId,
-          });
+          eventLogger.warn(
+            {
+              potentialDateTimeId: availability.potentialDateTimeId,
+            },
+            'Availability not found for update'
+          );
           return { error: 'Availability not found' };
         }
       });
-      eventLogger.debug('Updated availabilities', {
-        originalCount: availabilities?.length,
-        updatedCount: tempAvailabilities.length,
-      });
+      eventLogger.debug(
+        {
+          originalCount: availabilities?.length,
+          updatedCount: tempAvailabilities.length,
+        },
+        'Updated availabilities'
+      );
       for (const update of availabilityUpdates) {
         await db.availability.updateMany({
           where: {
@@ -228,9 +237,12 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
     });
 
     if (!event) {
-      eventLogger.warn('Event not found during date time selection', {
-        eventId,
-      });
+      eventLogger.warn(
+        {
+          eventId,
+        },
+        'Event not found during date time selection'
+      );
       return { error: 'Event not found' };
     }
 
@@ -247,11 +259,14 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
     }
 
     if (userMembership.role !== 'ORGANIZER') {
-      eventLogger.warn('User not an organizer, cannot choose date time', {
-        userId,
-        eventId,
-        role: userMembership.role,
-      });
+      eventLogger.warn(
+        {
+          userId,
+          eventId,
+          role: userMembership.role,
+        },
+        'User not an organizer, cannot choose date time'
+      );
       return { error: 'User not an organizer' };
     }
 
@@ -260,7 +275,7 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
     )?.dateTime;
 
     if (!dateTime) {
-      eventLogger.warn('Date not found for selection', { eventId, pdtId });
+      eventLogger.warn({ eventId, pdtId }, 'Date not found for selection');
       return { error: 'Date not found' };
     }
 

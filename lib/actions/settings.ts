@@ -1,7 +1,11 @@
 'use server';
 
 import { ActionResponse, SettingsData } from '@/types';
-import { NotificationMethodType, NotificationType } from '@prisma/client';
+import {
+  NotificationMethodType,
+  NotificationType,
+  WebhookFormat,
+} from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { db } from '../db';
 import { auth } from '@clerk/nextjs/server';
@@ -49,6 +53,10 @@ export async function updateUserSettings(data: {
       notificationType: NotificationType;
       enabled: boolean;
     }>;
+    // Webhook-specific fields
+    webhookFormat?: WebhookFormat;
+    customTemplate?: string;
+    webhookHeaders?: string;
   }>;
 }): Promise<ActionResponse<boolean>> {
   'use server';
@@ -68,21 +76,40 @@ export async function updateUserSettings(data: {
 
     // Add all new/updated notification methods
     for (const method of data.notificationMethods) {
-      await db.notificationMethod.create({
-        data: {
-          type: method.type,
-          value: method.value,
-          enabled: method.enabled,
-          settingsId: settings.id,
-          name: method.name,
-          notifications: {
-            create: method.notifications.map(n => ({
-              notificationType: n.notificationType,
-              enabled: n.enabled,
-            })),
-          },
+      // Prepare base data - properly typed for Prisma
+      const baseData = {
+        type: method.type,
+        value: method.value,
+        enabled: method.enabled,
+        settingsId: settings.id,
+        name: method.name,
+        notifications: {
+          create: method.notifications.map(n => ({
+            notificationType: n.notificationType,
+            enabled: n.enabled,
+          })),
         },
-      });
+      };
+
+      // Only include webhook-specific fields for WEBHOOK methods
+      if (method.type === 'WEBHOOK') {
+        const methodData = {
+          ...baseData,
+          webhookFormat: method.webhookFormat,
+          customTemplate: method.customTemplate,
+          webhookHeaders: method.webhookHeaders
+            ? JSON.parse(method.webhookHeaders)
+            : null,
+        };
+
+        await db.notificationMethod.create({
+          data: methodData,
+        });
+      } else {
+        await db.notificationMethod.create({
+          data: baseData,
+        });
+      }
     }
     revalidatePath('/');
     return { success: true };

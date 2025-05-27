@@ -97,13 +97,9 @@ export function NotificationWidget({ userId }: { userId: string }) {
           {dialogType === 'mark-all-as-read' ? (
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  <h1>Mark all as read</h1>
-                </DialogTitle>
+                <DialogTitle>Mark all as read</DialogTitle>
                 <DialogDescription>
-                  <p>
-                    Are you sure you want to mark all notifications as read?
-                  </p>
+                  Are you sure you want to mark all notifications as read?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -132,11 +128,9 @@ export function NotificationWidget({ userId }: { userId: string }) {
           ) : (
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  <h1>Delete All</h1>
-                </DialogTitle>
+                <DialogTitle>Delete All</DialogTitle>
                 <DialogDescription>
-                  <p>Are you sure you want to delete all notifications?</p>
+                  Are you sure you want to delete all notifications?
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>

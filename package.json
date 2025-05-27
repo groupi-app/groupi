@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env.local -- npx concurrently \"npm run dev:next\" \"npm run dev:prisma\" \"npm run dev:db\" \"npm run dev:ngrok\"",
+    "dev": "dotenv -e .env.local -- npx concurrently \"npm run dev:next | pino-pretty\" \"npm run dev:prisma\" \"npm run dev:db\" \"npm run dev:ngrok\"",
     "dev:next": "next dev --turbopack",
     "dev:prisma": "prisma studio",
     "dev:db": "docker compose up -d",

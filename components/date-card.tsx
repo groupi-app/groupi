@@ -269,14 +269,10 @@ export function DateCard({
         {dialogType === 'confirm' && (
           <>
             <DialogHeader>
-              <DialogTitle>
-                <h1 className='font-semibold text-2xl'>Confirm Selection</h1>
-              </DialogTitle>
+              <DialogTitle>Confirm Selection</DialogTitle>
               <DialogDescription>
-                <p className='text-muted-foreground'>
-                  Are you sure you want to select this date? If you change your
-                  mind, you can always pick a different date or run a new poll.
-                </p>
+                Are you sure you want to select this date? If you change your
+                mind, you can always pick a different date or run a new poll.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

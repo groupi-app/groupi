@@ -174,17 +174,31 @@ enum NotificationMethodType {
   WEBHOOK
 }
 
+enum WebhookFormat {
+  DISCORD
+  SLACK
+  TEAMS
+  GENERIC
+  CUSTOM
+}
+
 // Updated model to reference PersonSettings instead of Person
 model NotificationMethod {
-  id            String                 @id @default(cuid())
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  settings      PersonSettings         @relation(fields: [settingsId], references: [id], onDelete: Cascade)
-  settingsId    String
-  type          NotificationMethodType
-  enabled       Boolean                @default(true)
-  name          String? // Name of the method, e.g., "Work Email", "Personal Webhook"
-  value         String // Email address, webhook URL, etc.
+  id         String                 @id @default(cuid())
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  settings   PersonSettings         @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId String
+  type       NotificationMethodType
+  enabled    Boolean                @default(true)
+  name       String? // Name of the method, e.g., "Work Email", "Personal Webhook"
+  value      String // Email address, webhook URL, etc.
+
+  // Webhook-specific configuration (JSON fields for flexibility)
+  webhookHeaders Json? // Custom headers as JSON object
+  customTemplate String? // Custom JSON template with {{variable}} placeholders (only used when webhookFormat = CUSTOM)
+  webhookFormat  WebhookFormat? // Preset format: discord, slack, teams, generic, custom
+
   notifications NotificationSetting[]
 }
 

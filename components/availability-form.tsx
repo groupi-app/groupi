@@ -30,7 +30,7 @@ export function AvailabilityForm({
     status: $Enums.Status | undefined
   ): 'yes' | 'maybe' | 'no' => {
     // Convert status to lowercase for form
-    eventLogger.debug('Converting availability status', { status });
+    eventLogger.debug({ status }, 'Converting availability status');
     switch (status) {
       case 'YES':
         return 'yes';

@@ -1,4 +1,3 @@
-'use client';
 import { NotificationWithPersonEventPost } from '@/types';
 
 interface EmailTemplateProps {
@@ -8,11 +7,35 @@ interface EmailTemplateProps {
 export function NotificationEmailTemplate({
   notification,
 }: Readonly<EmailTemplateProps>) {
-  const { event, post, type, datetime, author, rsvp, createdAt } = notification;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!baseUrl) {
-    throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
-  }
+  const { event, post, type, datetime, author, rsvp } = notification;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  // Use hosted logo URL for email compatibility
+  const logoUrl = `${baseUrl}/groupi.svg`;
+
+  // Helper to get a dynamic heading based on notification type
+  const getEmailHeading = () => {
+    switch (type) {
+      case 'EVENT_EDITED':
+      case 'DATE_CHANGED':
+      case 'DATE_CHOSEN':
+      case 'DATE_RESET':
+        return 'Event Updated!';
+      case 'NEW_POST':
+        return 'New Post!';
+      case 'NEW_REPLY':
+        return 'New Reply!';
+      case 'USER_JOINED':
+      case 'USER_LEFT':
+      case 'USER_PROMOTED':
+      case 'USER_DEMOTED':
+        return 'Membership Updated!';
+      case 'USER_RSVP':
+        return 'New RSVP!';
+      default:
+        return 'Groupi';
+    }
+  };
 
   // Helper to get the link for the notification
   const getNotificationLink = () => {
@@ -166,6 +189,12 @@ export function NotificationEmailTemplate({
         margin: '0 auto',
       }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={logoUrl}
+        alt='Groupi Logo'
+        style={{ maxWidth: '200px', height: 'auto' }}
+      />
       <h2
         style={{
           color: '#1a202c',
@@ -173,7 +202,7 @@ export function NotificationEmailTemplate({
           marginBottom: 12,
         }}
       >
-        Notification from Groupi
+        {getEmailHeading()}
       </h2>
       <div
         style={{
@@ -187,7 +216,7 @@ export function NotificationEmailTemplate({
         href={getNotificationLink()}
         style={{
           display: 'inline-block',
-          background: '#2563eb',
+          background: '#8200ad',
           color: '#fff',
           padding: '10px 18px',
           borderRadius: 6,
@@ -198,25 +227,6 @@ export function NotificationEmailTemplate({
       >
         View {type === 'NEW_POST' || type === 'NEW_REPLY' ? 'Post' : 'Event'}
       </a>
-      <div
-        style={{
-          marginTop: 32,
-          fontSize: 12,
-          color: '#888',
-        }}
-      >
-        Sent{' '}
-        {createdAt
-          ? new Date(createdAt).toLocaleString(undefined, {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: 'numeric',
-            })
-          : ''}
-      </div>
     </div>
   );
 }
