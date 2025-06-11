@@ -22,7 +22,7 @@ import {
 import { Form, FormControl, FormField, FormItem } from './ui/form';
 import { Textarea } from './ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   reply: z
@@ -46,7 +46,6 @@ export default function Reply({
 }) {
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -62,15 +61,12 @@ export default function Reply({
     setIsSaving(true);
     const res = await updateReply({ replyId: reply.id, text: values.reply });
     if (res.success) {
-      toast({
-        title: 'Reply updated',
+      toast.success('Reply updated', {
         description: 'Your reply has been successfully updated',
       });
     } else {
-      toast({
-        title: 'Failed to update reply',
+      toast.error('Failed to update reply', {
         description: 'The reply was unable to be updated.',
-        variant: 'destructive',
       });
     }
     setIsSaving(false);

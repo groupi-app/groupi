@@ -27,7 +27,7 @@ import {
   DialogHeader,
 } from './ui/dialog';
 import { Input } from './ui/input';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function InviteLinkCard({
   invite,
@@ -39,7 +39,6 @@ export function InviteLinkCard({
   setSelectedInvites: (invites: string[]) => void;
 }) {
   const [dialogType, setDialogType] = useState<'delete' | 'view'>('view');
-  const { toast } = useToast();
   const { id, name, usesRemaining, maxUses, expiresAt, createdAt, createdBy } =
     invite;
 
@@ -152,10 +151,7 @@ export function InviteLinkCard({
                       navigator.clipboard.writeText(
                         `${window.location.origin}/invite/${id}`
                       );
-                      toast({
-                        title: 'Copied!',
-                        description: 'The invite link has been copied.',
-                      });
+                      toast.success('The invite link has been copied.');
                     }}
                     variant='outline'
                     size='icon'
@@ -231,11 +227,9 @@ export function InviteLinkCard({
                     onClick={async () => {
                       const res = await deleteInvite(id);
                       if (res.success) {
-                        toast({
-                          title: 'Invite Deleted',
-                          description:
-                            'The invite has been successfully deleted.',
-                        });
+                        toast.success(
+                          'The invite has been successfully deleted.'
+                        );
                       }
                     }}
                     variant='destructive'

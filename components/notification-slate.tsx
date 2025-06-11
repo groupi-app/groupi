@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function NotificationSlate({
   notification,
@@ -25,7 +25,6 @@ export function NotificationSlate({
 }) {
   const { event, post, createdAt, type, read, datetime, author, rsvp } =
     notification;
-  const { toast } = useToast();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {
     setPopoverOpen(false);
@@ -179,11 +178,9 @@ export function NotificationSlate({
                 onClick={async () => {
                   const res = await markNotificationAsUnread(notification.id);
                   if (res.error) {
-                    toast({
-                      title: 'An error occurred',
+                    toast.error('An error occurred', {
                       description:
                         'There was a problem marking this notification as unread.',
-                      variant: 'destructive',
                     });
                   }
                 }}
@@ -200,8 +197,7 @@ export function NotificationSlate({
                 onClick={async () => {
                   const res = await markNotificationAsRead(notification.id);
                   if (res.error) {
-                    toast({
-                      title: 'An error occurred',
+                    toast.error('An error occurred', {
                       description:
                         'There was a problem marking this notification as read.',
                     });
@@ -220,8 +216,7 @@ export function NotificationSlate({
               onClick={async () => {
                 const res = await deleteNotification(notification.id);
                 if (res.error) {
-                  toast({
-                    title: 'An error occurred',
+                  toast.error('An error occurred', {
                     description:
                       'There was a problem deleting this notification.',
                   });

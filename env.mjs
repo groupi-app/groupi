@@ -11,6 +11,7 @@ export const env = createEnv({
     PUSHER_APP_SECRET: z.string().min(1),
     GOOGLE_API_KEY: z.string().min(1),
     RESEND_API_KEY: z.string().min(1).startsWith('re_'),
+    PUSHER_BEAMS_SECRET_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
@@ -23,6 +24,7 @@ export const env = createEnv({
       .startsWith('/'),
     NEXT_PUBLIC_PUSHER_APP_KEY: z.string().min(1),
     NEXT_PUBLIC_PUSHER_APP_CLUSTER: z.string().min(1),
+    NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID: z.string().min(1),
   },
   runtimeEnv: {
     NEXT_PUBLIC_BASE_URL:
@@ -43,5 +45,8 @@ export const env = createEnv({
     NEXT_PUBLIC_PUSHER_APP_KEY: process.env.NEXT_PUBLIC_PUSHER_APP_KEY,
     NEXT_PUBLIC_PUSHER_APP_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID:
+      process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID,
+    PUSHER_BEAMS_SECRET_KEY: process.env.PUSHER_BEAMS_SECRET_KEY,
   },
 });

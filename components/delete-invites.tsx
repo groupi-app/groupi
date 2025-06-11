@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function DeleteInvites({
   selectedInvites,
@@ -19,7 +19,6 @@ export function DeleteInvites({
   selectedInvites: string[];
   setSelectedInvites: (invites: string[]) => void;
 }) {
-  const { toast } = useToast();
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -49,18 +48,15 @@ export function DeleteInvites({
                 onClick={async () => {
                   const res = await deleteInvites(selectedInvites);
                   if (res.success) {
-                    toast({
-                      title: 'Invites Deleted',
+                    toast.success('Invites Deleted', {
                       description:
                         'The invites have been successfully deleted.',
                     });
                     setSelectedInvites([]);
                   }
                   if (res.error) {
-                    toast({
-                      title: 'Error',
+                    toast.error('Error', {
                       description: 'Unable to delete invites.',
-                      variant: 'destructive',
                     });
                   }
                 }}

@@ -19,7 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { createPost, updatePost } from '@/lib/actions/post';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -46,7 +46,6 @@ export function Editor({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [titleEdited, setTitleEdited] = useState<boolean>(false);
   const [contentEdited, setContentEdited] = useState<boolean>(false);
-  const { toast } = useToast();
   const backUrl = postData ? `/post/${postData.id}` : `/event/${eventId}`;
   const title = postData?.title || '';
   const content = postData?.content || '';
@@ -83,10 +82,7 @@ export function Editor({
         eventId,
       });
       if (res.success) {
-        toast({
-          title: 'Post Created',
-          description: 'Your post has been successfully created.',
-        });
+        toast.success('Your post has been successfully created.');
       }
       setIsSaving(false);
       router.push(`/event/${eventId}`);
@@ -97,10 +93,7 @@ export function Editor({
         content: values.content,
       });
       if (res.success) {
-        toast({
-          title: 'Post Edited',
-          description: 'Your post has been successfully edited.',
-        });
+        toast.success('Your post has been successfully edited.');
       }
       setIsSaving(false);
       router.push(`/post/${postData.id}`);

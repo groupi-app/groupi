@@ -11,36 +11,30 @@ import { deleteEvent } from '@/lib/actions/event';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 async function removeEvent({
   id,
-  toast,
   router,
 }: {
   id: string;
-  toast: ReturnType<typeof useToast>['toast'];
   router: AppRouterInstance;
 }) {
   const res = await deleteEvent(id);
   if (res.success) {
     router.push(`/events`);
-    toast({
-      title: 'Event deleted',
+    toast.success('Event deleted', {
       description: 'The event has been deleted.',
     });
   } else {
-    toast({
-      title: 'Uh oh!',
+    toast.error('Uh oh!', {
       description: 'The event could not be deleted.',
-      variant: 'destructive',
     });
   }
 }
 
 export function DeleteEventDialog({ id }: { id: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
@@ -58,7 +52,7 @@ export function DeleteEventDialog({ id }: { id: string }) {
           <DialogClose className='grow' asChild>
             <Button
               onClick={() => {
-                removeEvent({ id, toast, router });
+                removeEvent({ id, router });
               }}
               className='w-full'
               variant='destructive'

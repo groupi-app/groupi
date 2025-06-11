@@ -21,7 +21,7 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function DateCard({
   pdt,
@@ -42,24 +42,16 @@ export function DateCard({
     'overview'
   );
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   async function selectDate() {
     setIsLoading(true);
     const res = await chooseDateTime(pdt.eventId, pdt.id);
     if (res.error) {
-      toast({
-        title: 'Error selecting date',
-        description: 'The date could not be selected. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('The date could not be selected. Please try again.');
     }
     if (res.success) {
-      toast({
-        title: 'Date selected!',
-        description: 'The date has been successfully selected.',
-      });
+      toast.success('The date has been successfully selected.');
       router.push(`/event/${pdt.eventId}`);
     }
     setIsLoading(false);

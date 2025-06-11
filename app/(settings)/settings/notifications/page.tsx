@@ -1,4 +1,6 @@
+import ErrorPage from '@/components/error';
 import { NotificationMethodsList } from '@/components/notification-methods-list';
+import { PushNotificationSettings } from '@/components/push-notification-settings';
 import { fetchUserSettings } from '@/lib/actions/settings';
 import { currentUser } from '@clerk/nextjs/server';
 
@@ -14,6 +16,9 @@ export default async function NotificationSettings() {
 
   // Fetch emails from Clerk
   const user = await currentUser();
+  if (!user) {
+    return <ErrorPage message='You are not signed in.' />;
+  }
   const emails = user?.emailAddresses?.map(e => e.emailAddress) || [];
 
   return (
@@ -22,7 +27,11 @@ export default async function NotificationSettings() {
       <p className='mb-6 text-muted-foreground'>
         Manage your notification preferences.
       </p>
-      <NotificationMethodsList emails={emails} />
+
+      <div className='space-y-6'>
+        <PushNotificationSettings />
+        <NotificationMethodsList emails={emails} userID={user.id} />
+      </div>
     </div>
   );
 }

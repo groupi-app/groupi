@@ -1285,16 +1285,45 @@ export const sendExternalNotifications = async (
         }
         case 'PUSH': {
           // Send push notification
-          // Implement push notification logic here
           notificationLogger.info(
             {
-              recipientToken: method.value,
+              recipientUserId: method.value,
               notificationId: notification.id,
               notificationType: notification.type,
             },
             'Sending push notification'
           );
-          results.push({ method: 'PUSH', success: true }); // Placeholder until implemented
+
+          const pushResult = await sendPushNotificationToUser({
+            notification,
+            targetUserId: method.value,
+          });
+
+          if (pushResult.error) {
+            notificationLogger.error(
+              {
+                error: pushResult.error,
+                recipientUserId: method.value,
+                notificationId: notification.id,
+              },
+              'Failed to send push notification'
+            );
+            results.push({
+              method: 'PUSH',
+              success: false,
+              error: pushResult.error,
+            });
+          } else {
+            notificationLogger.info(
+              {
+                result: pushResult.success,
+                recipientUserId: method.value,
+                notificationId: notification.id,
+              },
+              'Push notification sent successfully'
+            );
+            results.push({ method: 'PUSH', success: true });
+          }
           break;
         }
         case 'WEBHOOK': {
@@ -1666,4 +1695,192 @@ const sendWebhookNotification = async ({
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
+};
+
+const sendPushNotificationToUser = async ({
+  notification,
+  targetUserId,
+}: {
+  notification: NotificationWithPersonEventPost;
+  targetUserId: string;
+}): Promise<ActionResponse<string>> => {
+  try {
+    // Generate push notification payload from notification data
+    const payload = generatePushNotificationPayload(notification);
+
+    notificationLogger.info(
+      {
+        targetUserId,
+        notificationId: notification.id,
+        notificationType: notification.type,
+        title: payload.title,
+        body: payload.body,
+      },
+      'Sending push notification via Pusher Beams'
+    );
+
+    // Use Pusher Beams to send notification to authenticated user
+    const { sendPusherBeamsNotification } = await import(
+      '@/lib/pusher-beams-server'
+    );
+
+    const result = await sendPusherBeamsNotification(targetUserId, {
+      title: payload.title,
+      body: payload.body,
+      data: payload.data,
+      url: payload.url,
+      tag: payload.tag,
+    });
+
+    if (result.success) {
+      notificationLogger.info(
+        {
+          targetUserId,
+          notificationId: notification.id,
+        },
+        'Push notification sent successfully via Pusher Beams'
+      );
+      return {
+        success: `Push notification sent successfully`,
+      };
+    } else {
+      notificationLogger.error(
+        {
+          targetUserId,
+          notificationId: notification.id,
+          error: result.error,
+        },
+        'Failed to send push notification via Pusher Beams'
+      );
+      return {
+        error: result.error || 'Failed to send push notification',
+      };
+    }
+  } catch (error) {
+    notificationLogger.error(
+      {
+        targetUserId,
+        notificationId: notification.id,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      },
+      'Exception in sendPushNotificationToUser'
+    );
+    return {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
+
+const generatePushNotificationPayload = (
+  notification: NotificationWithPersonEventPost
+) => {
+  const { event, post, type, datetime, author, rsvp } = notification;
+
+  // Generate notification link
+  const getNotificationLink = () => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    switch (type) {
+      case 'EVENT_EDITED':
+      case 'DATE_CHANGED':
+      case 'DATE_CHOSEN':
+      case 'DATE_RESET':
+      case 'USER_JOINED':
+      case 'USER_LEFT':
+      case 'USER_PROMOTED':
+      case 'USER_DEMOTED':
+      case 'USER_RSVP':
+        return `${baseUrl}/event/${event?.id}`;
+      case 'NEW_POST':
+      case 'NEW_REPLY':
+        return `${baseUrl}/post/${post?.id}`;
+      default:
+        return `${baseUrl}/event/${event?.id}`;
+    }
+  };
+
+  // Generate notification title and body
+  const getNotificationTitleAndBody = () => {
+    const authorName =
+      author?.firstName || author?.lastName || author?.username || 'Someone';
+
+    switch (type) {
+      case 'EVENT_EDITED':
+        return {
+          title: `Event Updated: ${event?.title}`,
+          body: `The details of ${event?.title} have been updated.`,
+        };
+      case 'DATE_CHANGED':
+        return {
+          title: `Date Changed: ${event?.title}`,
+          body: `The date of ${event?.title} has changed to ${datetime ? new Date(datetime).toLocaleString() : 'a new time'}.`,
+        };
+      case 'DATE_CHOSEN':
+        return {
+          title: `Date Set: ${event?.title}`,
+          body: `${event?.title} will be held on ${datetime ? new Date(datetime).toLocaleString() : 'the chosen date'}.`,
+        };
+      case 'DATE_RESET':
+        return {
+          title: `New Poll: ${event?.title}`,
+          body: `A new poll has started for the date of ${event?.title}.`,
+        };
+      case 'NEW_POST':
+        return {
+          title: `New Post: ${post?.title}`,
+          body: `${authorName} created a new post in ${event?.title}.`,
+        };
+      case 'NEW_REPLY':
+        return {
+          title: `New Reply: ${post?.title}`,
+          body: `${authorName} replied to a post in ${event?.title}.`,
+        };
+      case 'USER_JOINED':
+        return {
+          title: `User Joined: ${event?.title}`,
+          body: `${authorName} has joined ${event?.title}.`,
+        };
+      case 'USER_LEFT':
+        return {
+          title: `User Left: ${event?.title}`,
+          body: `${authorName} has left ${event?.title}.`,
+        };
+      case 'USER_PROMOTED':
+        return {
+          title: `Promoted: ${event?.title}`,
+          body: `You are now a Moderator of ${event?.title}.`,
+        };
+      case 'USER_DEMOTED':
+        return {
+          title: `Role Changed: ${event?.title}`,
+          body: `You are no longer a Moderator of ${event?.title}.`,
+        };
+      case 'USER_RSVP':
+        return {
+          title: `New RSVP: ${event?.title}`,
+          body: `${authorName} has RSVP'd ${rsvp || 'to'} ${event?.title}.`,
+        };
+      default:
+        return {
+          title: 'Groupi Notification',
+          body: 'You have a new notification from Groupi.',
+        };
+    }
+  };
+
+  const { title, body } = getNotificationTitleAndBody();
+
+  return {
+    title,
+    body,
+    data: {
+      notificationId: notification.id,
+      type: notification.type,
+      eventId: event?.id,
+      postId: post?.id,
+      url: getNotificationLink(),
+    },
+    url: getNotificationLink(),
+    tag: `groupi-${notification.type}-${event?.id || post?.id}`,
+  };
 };

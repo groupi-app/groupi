@@ -21,7 +21,7 @@ import {
 } from './ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
 import { Input } from './ui/input';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   date: z.date(),
@@ -36,7 +36,6 @@ export function EditEventSingleDate({
   datetime: Date | undefined;
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const form = useForm({
@@ -88,18 +87,11 @@ export function EditEventSingleDate({
       dateTime: dateTime.toISOString(),
     });
     if (res.error) {
-      toast({
-        title: 'Error',
-        description: 'The date/time was unable to be updated.',
-        variant: 'destructive',
-      });
+      toast.error('The date/time was unable to be updated.');
       setIsSaving(false);
     }
     if (res.success) {
-      toast({
-        title: 'Date/time Updated',
-        description: 'The date/time has been updated.',
-      });
+      toast.success('The date/time has been updated.');
       router.push(`/event/${res.success.id}`);
     }
   }

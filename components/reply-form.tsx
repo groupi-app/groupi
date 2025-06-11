@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from './icons';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   reply: z
@@ -32,7 +32,6 @@ export default function ReplyForm({
   userId: string;
 }) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -51,16 +50,9 @@ export default function ReplyForm({
 
     if (res.success) {
       form.reset();
-      toast({
-        title: 'Reply sent',
-        description: 'Your reply has been successfully sent',
-      });
+      toast.success('Your reply has been successfully sent');
     } else {
-      toast({
-        title: 'Failed to send reply',
-        description: 'The reply was unable to be sent.',
-        variant: 'destructive',
-      });
+      toast.error('The reply was unable to be sent.');
     }
     setIsSaving(false);
   }

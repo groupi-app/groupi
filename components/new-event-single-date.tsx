@@ -12,7 +12,7 @@ import { Icons } from './icons';
 import { Button } from './ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
 import { Input } from './ui/input';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   date: z.date(),
@@ -22,7 +22,6 @@ const formSchema = z.object({
 export function NewEventSingleDate() {
   const { formState } = useFormContext();
   const router = useRouter();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const form = useForm({
@@ -78,18 +77,11 @@ export function NewEventSingleDate() {
       dateTime: dateTime.toISOString(),
     });
     if (res.error) {
-      toast({
-        title: 'Error',
-        description: 'The event was unable to be created.',
-        variant: 'destructive',
-      });
+      toast.error('The event was unable to be created.');
       setIsSaving(false);
     }
     if (res.success) {
-      toast({
-        title: 'Event Created',
-        description: 'The event was created successfully.',
-      });
+      toast.success('The event was created successfully.');
       router.push(`/event/${res.success.id}`);
     }
   }

@@ -10,7 +10,7 @@ import {
 import { deleteMembership, updateMembershipRole } from '@/lib/actions/member';
 import { Member } from '@/types';
 import { Button } from './ui/button';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export enum MemberAction {
   KICK = 'KICK',
@@ -18,74 +18,47 @@ export enum MemberAction {
   PROMOTE = 'PROMOTE',
 }
 
-async function demoteMember({
-  member,
-  toast,
-}: {
-  member: Member;
-  toast: ReturnType<typeof useToast>['toast'];
-}) {
+async function demoteMember({ member }: { member: Member }) {
   const res = await updateMembershipRole({
     membership: member,
     role: 'ATTENDEE',
   });
   if (res.success) {
-    toast({
-      title: 'Moderator demoted',
+    toast.success('Moderator demoted', {
       description: 'The moderator has been demoted to a normal attendee.',
     });
   } else {
-    toast({
-      title: 'Uh oh!',
+    toast.error('Uh oh!', {
       description: 'The moderator could not be demoted.',
-      variant: 'destructive',
     });
   }
 }
 
-async function promoteMember({
-  member,
-  toast,
-}: {
-  member: Member;
-  toast: ReturnType<typeof useToast>['toast'];
-}) {
+async function promoteMember({ member }: { member: Member }) {
   const res = await updateMembershipRole({
     membership: member,
     role: 'MODERATOR',
   });
   if (res.success) {
-    toast({
-      title: 'Attendee promoted',
+    toast.success('Attendee promoted', {
       description: 'The attendee has been promoted to a moderator.',
     });
   } else {
-    toast({
-      title: 'Uh oh!',
+    toast.error('Uh oh!', {
       description: 'The attendee could not be promoted.',
-      variant: 'destructive',
     });
   }
 }
 
-async function kickMember({
-  member,
-  toast,
-}: {
-  member: Member;
-  toast: ReturnType<typeof useToast>['toast'];
-}) {
+async function kickMember({ member }: { member: Member }) {
   const res = await deleteMembership(member);
   if (res.success) {
-    toast({
-      title: 'Attendee kicked',
+    toast.success('Attendee kicked', {
       description: 'The attendee has been kicked from the event.',
     });
   } else {
-    toast({
-      title: 'Uh oh!',
+    toast.error('Uh oh!', {
       description: 'The attendee could not be kicked.',
-      variant: 'destructive',
     });
   }
 }
@@ -97,7 +70,6 @@ export function MemberActionDialog({
   member: Member;
   action: MemberAction;
 }) {
-  const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
@@ -129,11 +101,11 @@ export function MemberActionDialog({
             <Button
               onClick={() => {
                 if (action === MemberAction.KICK) {
-                  kickMember({ member, toast });
+                  kickMember({ member });
                 } else if (action === MemberAction.DEMOTE) {
-                  demoteMember({ member, toast });
+                  demoteMember({ member });
                 } else if (action === MemberAction.PROMOTE) {
-                  promoteMember({ member, toast });
+                  promoteMember({ member });
                 }
               }}
               className='w-full'

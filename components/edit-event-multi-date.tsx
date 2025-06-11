@@ -23,7 +23,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 interface Form1Types {
   dates: Date[];
@@ -55,7 +55,6 @@ export function EditEventMultiDate({
   dates: Date[] | undefined;
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const form1 = useForm<Form1Types>({
@@ -108,18 +107,11 @@ export function EditEventMultiDate({
       potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
     });
     if (res.error) {
-      toast({
-        title: 'Error',
-        description: 'The event was unable to be updated.',
-        variant: 'destructive',
-      });
+      toast.error('The event was unable to be updated.');
       setIsSaving(false);
     }
     if (res.success) {
-      toast({
-        title: 'Date/time poll created',
-        description: 'A new date/time poll has been created.',
-      });
+      toast.success('A new date/time poll has been created.');
       router.push(`/event/${res.success.id}`);
     }
   }

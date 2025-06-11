@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Form, FormControl, FormField, FormItem } from './ui/form';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function EventRSVP({
   title,
@@ -26,7 +26,6 @@ export function EventRSVP({
   dateTime: Date | null;
   userMembership: MembershipWithAvailabilities;
 }) {
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const formSchema = z.object({
@@ -46,16 +45,9 @@ export function EventRSVP({
     const res = await updateRSVP(userMembership.eventId, values.rsvp);
     if (res.success) {
       setDialogOpen(false);
-      toast({
-        title: 'RSVP updated',
-        description: 'Your RSVP status has been successfully updated',
-      });
+      toast.success('Your RSVP status has been successfully updated');
     } else if (res.error) {
-      toast({
-        title: 'Failed to update RSVP',
-        description: 'An error occurred while updating your RSVP status',
-        variant: 'destructive',
-      });
+      toast.error('An error occurred while updating your RSVP status');
     }
     setIsSaving(false);
   }

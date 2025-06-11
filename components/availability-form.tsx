@@ -12,7 +12,7 @@ import { AvailabilityCard } from './availability-card';
 import { Icons } from './icons';
 import { Button } from './ui/button';
 import { Form, FormControl, FormField, FormItem } from './ui/form';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function AvailabilityForm({
   potentialDateTimes,
@@ -23,7 +23,6 @@ export function AvailabilityForm({
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   const answerMap = (
@@ -96,19 +95,16 @@ export function AvailabilityForm({
     );
 
     if (res.error) {
-      toast({
-        title: 'Unable to update',
+      toast.error('Unable to update', {
         description:
           'There was an error updating your availability. Please try again.',
-        variant: 'destructive',
       });
       setIsLoading(false);
       router.refresh();
     }
 
     if (res.success) {
-      toast({
-        title: 'Availability Updated',
+      toast.success('Availability Updated', {
         description: 'Your availability has been successfully updated.',
       });
       setIsLoading(false);

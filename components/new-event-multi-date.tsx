@@ -14,7 +14,7 @@ import { Button } from './ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 interface Form1Types {
   dates: Date[];
@@ -41,7 +41,6 @@ const form2Schema = z.object({
 export function NewEventMultiDate() {
   const { formState } = useFormContext();
   const router = useRouter();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const form1 = useForm<Form1Types>({
@@ -103,18 +102,11 @@ export function NewEventMultiDate() {
       potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
     });
     if (res.error) {
-      toast({
-        title: 'Error',
-        description: 'The event was unable to be created.',
-        variant: 'destructive',
-      });
+      toast.error('The event was unable to be created.');
       setIsSaving(false);
     }
     if (res.success) {
-      toast({
-        title: 'Event Created',
-        description: 'The event was created successfully.',
-      });
+      toast.success('The event was created successfully.');
       router.push(`/event/${res.success.id}`);
     }
   }

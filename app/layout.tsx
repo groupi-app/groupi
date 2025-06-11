@@ -9,10 +9,11 @@ import { cn } from '@/lib/utils';
 import { Analytics } from '@/components/analytics';
 import { MainNav } from '@/components/main-nav';
 import { ModeToggle } from '@/components/mode-toggle';
+import { PWARegistration } from '@/components/pwa-registration';
 import QueryProvider from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TailwindIndicator } from '@/components/tailwind-indicator';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { navConfig } from '@/config/nav';
 import { fetchNotificationsForPerson } from '@/lib/actions/notification';
@@ -20,6 +21,7 @@ import { getNotificationQuery } from '@/lib/query-definitions';
 import { UserInfo } from '@/types';
 import { ClerkProvider } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
+import { PusherBeamsProvider } from '@/components/providers/pusher-beams-context-provider';
 
 import {
   dehydrate,
@@ -27,6 +29,7 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import Link from 'next/link';
+import { GlobalPushNotifications } from '@/components/global-push-notifications';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -50,6 +53,10 @@ export const metadata = {
     'Tailwind CSS',
     'Server Components',
     'Radix UI',
+    'Progressive Web App',
+    'PWA',
+    'Event Planning',
+    'Group Events',
   ],
   authors: [
     {
@@ -58,10 +65,12 @@ export const metadata = {
     },
   ],
   creator: 'Theia Surette',
-  // themeColor: [
-  //   { media: "(prefers-color-scheme: light)", color: "white" },
-  //   { media: "(prefers-color-scheme: dark)", color: "black" },
-  // ],
+  metadataBase: new URL(siteConfig.url),
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Groupi',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -82,7 +91,7 @@ export const metadata = {
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },
-  manifest: `${siteConfig.url}/site.webmanifest`,
+  manifest: '/manifest.json',
 };
 
 export default async function RootLayout({
@@ -133,19 +142,23 @@ export default async function RootLayout({
             fontHeading.variable
           )}
         >
-          <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
-            <TooltipProvider>
-              {user !== null && queryDefinition !== null ? (
-                <QueryProvider queryDefinition={queryDefinition}>
-                  <HydrationBoundary state={dehydrate(queryClient)}>
-                    <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
-                  </HydrationBoundary>
-                </QueryProvider>
-              ) : (
-                <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
-              )}
-            </TooltipProvider>
-          </ThemeProvider>
+          <PusherBeamsProvider>
+            <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+              <TooltipProvider>
+                {user !== null && queryDefinition !== null ? (
+                  <QueryProvider queryDefinition={queryDefinition}>
+                    <HydrationBoundary state={dehydrate(queryClient)}>
+                      <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
+                    </HydrationBoundary>
+                  </QueryProvider>
+                ) : (
+                  <InnerLayout userInfo={userInfo}>{children}</InnerLayout>
+                )}
+              </TooltipProvider>
+            </ThemeProvider>
+            <GlobalPushNotifications />
+          </PusherBeamsProvider>
+          <PWARegistration />
           <Analytics />
           <Toaster />
           <TailwindIndicator />

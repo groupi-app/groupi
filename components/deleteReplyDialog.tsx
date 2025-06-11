@@ -9,32 +9,18 @@ import {
 } from '@/components/ui/dialog';
 import { deleteReply } from '@/lib/actions/reply';
 import { Button } from './ui/button';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
-async function removeReply({
-  id,
-  toast,
-}: {
-  id: string;
-  toast: ReturnType<typeof useToast>['toast'];
-}) {
+async function removeReply({ id }: { id: string }) {
   const res = await deleteReply({ id });
   if (res.success) {
-    toast({
-      title: 'Post deleted',
-      description: 'The post has been deleted.',
-    });
+    toast.success('The reply has been deleted.');
   } else {
-    toast({
-      title: 'Uh oh!',
-      description: 'The post could not be deleted.',
-      variant: 'destructive',
-    });
+    toast.error('The reply could not be deleted.');
   }
 }
 
 export function DeleteReplyDialog({ id }: { id: string }) {
-  const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
@@ -52,7 +38,7 @@ export function DeleteReplyDialog({ id }: { id: string }) {
           <DialogClose asChild>
             <Button
               onClick={() => {
-                removeReply({ id, toast });
+                removeReply({ id });
               }}
               variant='destructive'
             >

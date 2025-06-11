@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
@@ -62,8 +62,6 @@ export function AddInvite({ eventId }: { eventId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const { toast } = useToast();
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     const expiresAt =
@@ -78,17 +76,10 @@ export function AddInvite({ eventId }: { eventId: string }) {
       maxUses: values.maxUses,
     });
     if (res.success) {
-      toast({
-        title: 'Invite Created',
-        description: 'The invite has been successfully created.',
-      });
+      toast.success('The invite has been successfully created.');
       setIsOpen(false);
     } else if (res.error) {
-      toast({
-        title: 'Error',
-        description: 'Unable to create invite.',
-        variant: 'destructive',
-      });
+      toast.error('Unable to create invite.');
     }
     setIsLoading(false);
   }

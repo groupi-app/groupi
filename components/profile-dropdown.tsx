@@ -12,6 +12,7 @@ import {
 import { getFullName, getInitials } from '@/lib/utils';
 import { UserInfo } from '@/types';
 import { SignOutButton } from '@clerk/nextjs';
+import Link from 'next/link';
 import { Icons } from './icons';
 
 interface ProfileDropdownProps {
@@ -54,6 +55,12 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
               <Icons.account className='size-4' />
               <span>My Account</span>
             </button>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className='cursor-pointer'>
+            <Link href='/settings' className='flex items-center gap-2 w-full'>
+              <Icons.settings className='size-4' />
+              <span>Settings</span>
+            </Link>
           </DropdownMenuItem>
           <SignOutButton>
             <DropdownMenuItem className='cursor-pointer'>

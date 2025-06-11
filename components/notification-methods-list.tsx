@@ -19,6 +19,7 @@ import { useState } from 'react';
 
 interface NotificationMethodsListProps {
   emails: string[];
+  userID: string;
 }
 
 interface NewNotificationSetting {
@@ -40,6 +41,7 @@ interface NewNotificationMethod {
 
 export function NotificationMethodsList({
   emails,
+  userID,
 }: NotificationMethodsListProps) {
   const { control, watch } = useFormContext();
   const { fields, append, remove } = useFieldArray({
@@ -133,7 +135,7 @@ export function NotificationMethodsList({
               !hasPush &&
               handleAppend({
                 type: NotificationMethodType.PUSH,
-                value: 'PUSH',
+                value: userID,
                 name: '',
                 enabled: true,
                 notifications: getDefaultNotifications(),

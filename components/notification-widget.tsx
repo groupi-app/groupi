@@ -26,15 +26,13 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 export function NotificationWidget({ userId }: { userId: string }) {
   const [dialogType, setDialogType] = useState<
     'mark-all-as-read' | 'delete-all'
   >('mark-all-as-read');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-
-  const { toast } = useToast();
 
   const { data: notificationData } = useNotifications(userId);
 
@@ -111,12 +109,9 @@ export function NotificationWidget({ userId }: { userId: string }) {
                     onClick={async () => {
                       const res = await markAllNotificationsAsRead();
                       if (res.error) {
-                        toast({
-                          title: 'An error occurred',
-                          description:
-                            'There was a problem marking the notifications as read.',
-                          variant: 'destructive',
-                        });
+                        toast.error(
+                          'There was a problem marking the notifications as read.'
+                        );
                       }
                     }}
                   >
@@ -142,11 +137,9 @@ export function NotificationWidget({ userId }: { userId: string }) {
                     onClick={async () => {
                       const res = await deleteAllNotifications();
                       if (res.error) {
-                        toast({
-                          title: 'An error occurred',
-                          description:
-                            'There was a problem deleting notifications.',
-                        });
+                        toast.error(
+                          'There was a problem deleting notifications.'
+                        );
                       }
                     }}
                     variant='destructive'

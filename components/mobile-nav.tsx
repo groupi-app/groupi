@@ -91,6 +91,17 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                   </div>
                   <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <SheetClose asChild>
+                      <Link
+                        href='/settings'
+                        className='flex items-center gap-2'
+                      >
+                        <Icons.settings className='size-4' />
+                        <span>Settings</span>
+                      </Link>
+                    </SheetClose>
+                  </div>
+                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
+                    <SheetClose asChild>
                       <SignOutButton>
                         <div className='flex items-center gap-2'>
                           <Icons.signOut className='size-4' />

@@ -21,7 +21,7 @@ import { z } from 'zod';
 import { Icons } from './icons';
 import { LocationInput } from './location-input';
 import { Button } from './ui/button';
-import { useToast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -49,7 +49,6 @@ export default function EditEventInfo({
 }) {
   const { eventId, title, description, location } = eventData;
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,15 +69,12 @@ export default function EditEventInfo({
       location: data.location,
     });
     if (res.error) {
-      toast({
-        title: 'Error editing event',
+      toast.error('Error editing event', {
         description: 'Failed to edit event details.',
-        variant: 'destructive',
       });
     }
     if (res.success) {
-      toast({
-        title: 'Event updated',
+      toast.success('Event updated', {
         description: 'Event details have been updated.',
       });
       router.push(`/event/${eventId}`);
