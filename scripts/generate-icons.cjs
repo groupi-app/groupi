@@ -38,7 +38,7 @@ async function generateIcons() {
     // Generate each size
     for (const { size, name } of sizes) {
       const outputPath = path.join(outputDir, name);
-      
+
       await sharp(svgBuffer)
         .resize(size, size)
         .png({
@@ -46,7 +46,7 @@ async function generateIcons() {
           compressionLevel: 9,
         })
         .toFile(outputPath);
-      
+
       console.log(`✅ Generated ${name} (${size}x${size})`);
     }
 
@@ -58,16 +58,15 @@ async function generateIcons() {
         compressionLevel: 9,
       })
       .toFile(path.join(outputDir, 'icon.png'));
-    
+
     console.log('✅ Generated icon.png (192x192)');
 
     console.log('🎉 All icons generated successfully!');
-    
+
     // List all generated files
     console.log('\n📁 Generated files:');
     sizes.forEach(({ name }) => console.log(`   ${name}`));
     console.log('   icon.png');
-
   } catch (error) {
     console.error('❌ Error generating icons:', error);
     process.exit(1);

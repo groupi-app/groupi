@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { usePusherBeams } from '@/components/providers/pusher-beams-context-provider';
+import { notificationLogger } from '@/lib/logger';
+
 export function GlobalPushNotifications() {
   const {
     checkExistingSubscription,
@@ -13,8 +15,9 @@ export function GlobalPushNotifications() {
   useEffect(() => {
     // Actively check for existing subscriptions when component mounts
     const checkSubscription = async () => {
-      console.log(
-        '🔍 GlobalPushNotifications: Checking for existing subscriptions...'
+      notificationLogger.debug(
+        'GlobalPushNotifications: Checking for existing subscriptions',
+        { userId }
       );
       await checkExistingSubscription();
     };
@@ -28,14 +31,18 @@ export function GlobalPushNotifications() {
     // Log subscription state changes
     if (!isCheckingExisting) {
       if (isSubscribed) {
-        console.log(
-          '🔔 GlobalPushNotifications: Push notifications are active'
+        notificationLogger.info(
+          'GlobalPushNotifications: Push notifications are active',
+          { userId }
         );
       } else {
-        console.log('ℹ️ GlobalPushNotifications: No active push notifications');
+        notificationLogger.debug(
+          'GlobalPushNotifications: No active push notifications',
+          { userId }
+        );
       }
     }
-  }, [isCheckingExisting, isSubscribed]);
+  }, [isCheckingExisting, isSubscribed, userId]);
 
   return null;
 }

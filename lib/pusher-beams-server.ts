@@ -11,7 +11,7 @@ const beamsClient = new PushNotifications({
 export interface PusherBeamsNotification {
   title: string;
   body: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   url?: string;
   tag?: string;
   icon?: string;

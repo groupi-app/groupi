@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import PushNotifications from '@pusher/push-notifications-server';
 import { env } from '@/env.mjs';
 import { NextResponse } from 'next/server';
+import { notificationLogger } from '@/lib/logger';
 
 const beamsClient = new PushNotifications({
   instanceId: env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID,
@@ -13,21 +14,23 @@ export async function POST() {
     // Get the authenticated user from Clerk
     const { userId } = await auth();
 
-    console.log('Pusher Beams auth request - userId:', userId);
+    notificationLogger.debug('Pusher Beams auth request', { userId });
 
     if (!userId) {
-      console.log('No userId found in auth context');
+      notificationLogger.warn('No userId found in auth context');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Generate Pusher Beams token for the authenticated user
     const beamsToken = beamsClient.generateToken(userId);
 
-    console.log('Generated Pusher Beams token successfully for user:', userId);
+    notificationLogger.info('Generated Pusher Beams token successfully', {
+      userId,
+    });
 
     return NextResponse.json(beamsToken);
   } catch (error) {
-    console.error('Error generating Pusher Beams token:', error);
+    notificationLogger.error('Error generating Pusher Beams token', error);
     return NextResponse.json(
       { error: 'Failed to generate authentication token' },
       { status: 500 }
