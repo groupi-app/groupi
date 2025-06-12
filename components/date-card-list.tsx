@@ -1,6 +1,6 @@
-"use client";
-import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { DateCard } from "./date-card";
+'use client';
+import { PotentialDateTimeWithAvailabilities } from '@/types';
+import { DateCard } from './date-card';
 
 import {
   Select,
@@ -10,12 +10,12 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { usePDTs } from "@/data/pdt-hooks";
-import { getRanks } from "@/lib/utils";
-import { Role } from "@prisma/client";
-import { LayoutGroup, motion } from "framer-motion";
-import { useState } from "react";
+} from '@/components/ui/select';
+import { usePDTs } from '@/data/pdt-hooks';
+import { getRanks } from '@/lib/utils';
+import { Role } from '@prisma/client';
+import { LayoutGroup, motion } from 'framer-motion';
+import { useState } from 'react';
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,7 +33,7 @@ const item = {
 };
 
 export function DateCardList({ eventId }: { eventId: string }) {
-  const [sortBy, setSortBy] = useState<"rank" | "date">("rank");
+  const [sortBy, setSortBy] = useState<'rank' | 'date'>('rank');
   const { data: pdtData } = usePDTs(eventId);
   const {
     potentialDateTimes,
@@ -50,13 +50,13 @@ export function DateCardList({ eventId }: { eventId: string }) {
     b: PotentialDateTimeWithAvailabilities & { rank: number }
   ) => {
     switch (sortBy) {
-      case "rank":
+      case 'rank':
         // sort by rank, then by date if ranks are equal
         return (
           a.rank - b.rank ||
           new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
         );
-      case "date":
+      case 'date':
         // sort by date
         return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime();
     }
@@ -64,33 +64,33 @@ export function DateCardList({ eventId }: { eventId: string }) {
 
   return (
     <>
-      <div className="w-36 my-2">
+      <div className='w-36 my-2'>
         <Select
           value={sortBy}
-          onValueChange={(value) => setSortBy(value as "rank" | "date")}
+          onValueChange={value => setSortBy(value as 'rank' | 'date')}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Sort By" />
+            <SelectValue placeholder='Sort By' />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               <SelectLabel>Sort By</SelectLabel>
-              <SelectItem value="rank">Rank</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
+              <SelectItem value='rank'>Rank</SelectItem>
+              <SelectItem value='date'>Date</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </div>
       <motion.div
-        initial="hidden"
-        animate="show"
+        initial='hidden'
+        animate='show'
         variants={container}
-        className="flex flex-col gap-3"
+        className='flex flex-col gap-3'
       >
         <LayoutGroup>
           {getRanks(potentialDateTimes)
             .sort(sort)
-            .map((pdt) => (
+            .map(pdt => (
               <motion.div layout variants={item} key={pdt.id}>
                 <DateCard pdt={pdt} userId={userId} userRole={userRole} />
               </motion.div>

@@ -1,11 +1,11 @@
-import { AcceptInviteButton } from "@/components/invite-accept";
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { AcceptInviteButton } from '@/components/invite-accept';
+import { db } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
 
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
-import ErrorPage from "@/components/error";
-import { Icons } from "@/components/icons";
+import ErrorPage from '@/components/error';
+import { Icons } from '@/components/icons';
 import {
   Card,
   CardContent,
@@ -13,7 +13,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 export default async function Page(props: {
   params: Promise<{ inviteId: string }>;
@@ -22,7 +22,7 @@ export default async function Page(props: {
   const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
-    return <ErrorPage message={"User not found"} />;
+    return <ErrorPage message={'User not found'} />;
   }
 
   const invite = await db.invite.findUnique({
@@ -39,11 +39,11 @@ export default async function Page(props: {
   });
 
   if (!invite) {
-    return <ErrorPage message={"Invite not found"} />;
+    return <ErrorPage message={'Invite not found'} />;
   }
 
   const currentMembership = invite.event.memberships.find(
-    (membership) => membership.personId === userId
+    membership => membership.personId === userId
   );
 
   if (currentMembership) {
@@ -55,57 +55,57 @@ export default async function Page(props: {
     invite.expiresAt !== null &&
     new Date().getTime() > invite.expiresAt.getTime()
   ) {
-    return <ErrorPage message={"Invite has expired"} />;
+    return <ErrorPage message={'Invite has expired'} />;
   }
 
   // check if invite is out of uses
   if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
-    return <ErrorPage message={"Invite has no uses remaining"} />;
+    return <ErrorPage message={'Invite has no uses remaining'} />;
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <Card className="w-full max-w-md">
+    <div className='flex justify-center items-center h-screen'>
+      <Card className='w-full max-w-md'>
         <CardHeader>
           <CardDescription>You have been invited to</CardDescription>
           <CardTitle>{invite.event.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            {invite.event.description ?? ""}
+          <p className='text-muted-foreground'>
+            {invite.event.description ?? ''}
           </p>
-          <div className="flex flex-col gap-2 my-4">
+          <div className='flex flex-col gap-2 my-4'>
             {invite.event.location && (
-              <div className="flex items-center gap-1 ">
-                <Icons.location className="size-6 text-primary" />
-                <span data-test="event-location">{invite.event.location}</span>
+              <div className='flex items-center gap-1 '>
+                <Icons.location className='size-6 text-primary' />
+                <span data-test='event-location'>{invite.event.location}</span>
               </div>
             )}
-            <div className="flex items-center gap-1 ">
-              <Icons.date className="size-6 text-primary" />
+            <div className='flex items-center gap-1 '>
+              <Icons.date className='size-6 text-primary' />
               {invite.event.chosenDateTime ? (
-                <span data-test="event-datetime">
+                <span data-test='event-datetime'>
                   {invite.event.chosenDateTime.toLocaleString([], {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
                   })}
                 </span>
               ) : (
-                "TBD"
+                'TBD'
               )}
             </div>
-            <div className="flex items-center gap-1 ">
-              <Icons.people className="size-6 text-primary" />
+            <div className='flex items-center gap-1 '>
+              <Icons.people className='size-6 text-primary' />
               <span>{invite.event.memberships.length}</span>
             </div>
           </div>
         </CardContent>
         <CardFooter>
-          <div className="flex justify-end w-full">
+          <div className='flex justify-end w-full'>
             <AcceptInviteButton
               inviteId={params.inviteId}
               eventId={invite.event.id}

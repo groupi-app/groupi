@@ -1,15 +1,15 @@
-"use client";
-import MemberIcon from "@/components/member-icon";
-import { useEventMembers } from "@/data/event-hooks";
-import { getFullName } from "@/lib/utils";
-import { Member } from "@/types";
-import { $Enums } from "@prisma/client";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useLayoutEffect, useRef, useState } from "react";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
+'use client';
+import MemberIcon from '@/components/member-icon';
+import { useEventMembers } from '@/data/event-hooks';
+import { getFullName } from '@/lib/utils';
+import { Member } from '@/types';
+import { $Enums } from '@prisma/client';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { Icons } from './icons';
+import { Button } from './ui/button';
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data: memberData } = useEventMembers(eventId);
@@ -43,8 +43,8 @@ export function MemberList({ eventId }: { eventId: string }) {
 
     checkOverflow();
 
-    window.addEventListener("resize", checkOverflow);
-    return () => window.removeEventListener("resize", checkOverflow);
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
   }, []);
 
   const container = {
@@ -64,8 +64,8 @@ export function MemberList({ eventId }: { eventId: string }) {
 
   const sortByRole = (a: Member, b: Member) => {
     return (
-      (b.role === "ORGANIZER" ? 3 : b.role === "MODERATOR" ? 2 : 1) -
-        (a.role === "ORGANIZER" ? 3 : a.role === "MODERATOR" ? 2 : 1) ||
+      (b.role === 'ORGANIZER' ? 3 : b.role === 'MODERATOR' ? 2 : 1) -
+        (a.role === 'ORGANIZER' ? 3 : a.role === 'MODERATOR' ? 2 : 1) ||
       getFullName(a.person.firstName, a.person.lastName).localeCompare(
         getFullName(b.person.firstName, b.person.lastName)
       )
@@ -74,15 +74,15 @@ export function MemberList({ eventId }: { eventId: string }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <h2 className="text-xl font-heading font-medium">Attendees</h2>
-        <div className="rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center">
+      <div className='flex items-center gap-2'>
+        <h2 className='text-xl font-heading font-medium'>Attendees</h2>
+        <div className='rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center'>
           <span>{members.length}</span>
         </div>
-        {(userRole === "ORGANIZER" || userRole === "MODERATOR") && (
+        {(userRole === 'ORGANIZER' || userRole === 'MODERATOR') && (
           <Link href={`/event/${eventId}/invite`}>
-            <Button className="flex items-center gap-1" size="sm">
-              <Icons.invite className="size-4" />
+            <Button className='flex items-center gap-1' size='sm'>
+              <Icons.invite className='size-4' />
               <span>Invite</span>
             </Button>
           </Link>
@@ -90,10 +90,10 @@ export function MemberList({ eventId }: { eventId: string }) {
       </div>
       <motion.div
         variants={container}
-        initial="hidden"
-        animate="show"
+        initial='hidden'
+        animate='show'
         ref={ref}
-        className="flex items-center p-2 -space-x-2 h-[54px] overflow-hidden"
+        className='flex items-center p-2 -space-x-2 h-[54px] overflow-hidden'
       >
         <LayoutGroup>
           <AnimatePresence>
@@ -103,15 +103,16 @@ export function MemberList({ eventId }: { eventId: string }) {
                   userId={userId}
                   userRole={userRole}
                   member={member}
+                  key={member.id}
                   itemKey={member.id}
-                  align={i === 0 ? "start" : "center"}
+                  align={i === 0 ? 'start' : 'center'}
                   eventDateTime={eventDateTime}
                 />
               ) : (
                 i === visibleIcons - 1 && (
                   <motion.div variants={item} layout key={i}>
                     <Link href={`${pathname}/attendees`}>
-                      <Button className="rounded-full z-30" key={i}>
+                      <Button className='rounded-full z-30' key={i}>
                         +{members.length - visibleIcons + 1}
                       </Button>
                     </Link>
@@ -123,7 +124,7 @@ export function MemberList({ eventId }: { eventId: string }) {
         </LayoutGroup>
       </motion.div>
       <Link href={`${pathname}/attendees`}>
-        <span className="rounded-full z-30 text-primary hover:underline">
+        <span className='rounded-full z-30 text-primary hover:underline'>
           View All
         </span>
       </Link>

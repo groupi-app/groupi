@@ -1,15 +1,15 @@
-import { deletePost, updatePost } from "@/lib/actions/post";
-import { NextResponse } from "next/server";
+import { deletePost, updatePost } from '@/lib/actions/post';
+import { NextResponse } from 'next/server';
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = (await context.params);
+  const { id } = await context.params;
   const { title, content } = await request.json();
   if (!title || !content) {
     return NextResponse.json(
-      { message: "Incomplete Request Object" },
+      { message: 'Incomplete Request Object' },
       { status: 400 }
     );
   }
@@ -17,14 +17,14 @@ export async function PATCH(
   if (res.error) {
     return NextResponse.json({ message: res.error }, { status: 400 });
   }
-  return NextResponse.json({ message: "Post Updated" }, { status: 200 });
+  return NextResponse.json({ message: 'Post Updated' }, { status: 200 });
 }
 
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = (await context.params);
+  const { id } = await context.params;
   await deletePost({ id });
-  return NextResponse.json({ message: "Post Deleted" }, { status: 200 });
+  return NextResponse.json({ message: 'Post Deleted' }, { status: 200 });
 }

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 type NotificationCloseContextType = {
   popoverOpen: boolean;
@@ -37,7 +37,7 @@ export function useNotificationCloseContext() {
   const context = useContext(NotificationCloseContext);
   if (!context) {
     throw new Error(
-      "useNotificationCloseContext must be used within NotificationCloseContext.Provider"
+      'useNotificationCloseContext must be used within NotificationCloseContext.Provider'
     );
   }
   return context;

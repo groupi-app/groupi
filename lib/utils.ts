@@ -1,9 +1,12 @@
-import { Icons } from "@/components/icons";
-import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { $Enums } from "@prisma/client";
-import { type ClassValue, clsx } from "clsx";
-import React from "react";
-import { twMerge } from "tailwind-merge";
+import { Icons } from '@/components/icons';
+import {
+  PotentialDateTimeWithAvailabilities,
+  NotificationWithPersonEventPost,
+} from '@/types';
+import { $Enums } from '@prisma/client';
+import { type ClassValue, clsx } from 'clsx';
+import React from 'react';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,28 +18,28 @@ export function formatDate(date: Date) {
   var interval = seconds / 31536000;
 
   if (interval > 1) {
-    return Math.floor(interval) + "y ago";
+    return Math.floor(interval) + 'y ago';
   }
   interval = seconds / 2592000;
   if (interval > 1) {
-    return Math.floor(interval) + "mon ago";
+    return Math.floor(interval) + 'mon ago';
   }
   interval = seconds / 86400;
   if (interval > 1) {
-    return Math.floor(interval) + "d ago";
+    return Math.floor(interval) + 'd ago';
   }
   interval = seconds / 3600;
   if (interval > 1) {
-    return Math.floor(interval) + "h ago";
+    return Math.floor(interval) + 'h ago';
   }
   interval = seconds / 60;
   if (interval > 1) {
-    return Math.floor(interval) + "min ago";
+    return Math.floor(interval) + 'min ago';
   }
   if (seconds < 10) {
-    return "just now";
+    return 'just now';
   }
-  return Math.floor(seconds) + " seconds ago";
+  return Math.floor(seconds) + ' seconds ago';
 }
 
 export function timeUntil(date: Date) {
@@ -45,28 +48,28 @@ export function timeUntil(date: Date) {
   var interval = seconds / 31536000;
 
   if (interval > 1) {
-    return Math.floor(interval) + "y";
+    return Math.floor(interval) + 'y';
   }
   interval = seconds / 2592000;
   if (interval > 1) {
-    return Math.floor(interval) + "mon";
+    return Math.floor(interval) + 'mon';
   }
   interval = seconds / 86400;
   if (interval > 1) {
-    return Math.floor(interval) + "d";
+    return Math.floor(interval) + 'd';
   }
   interval = seconds / 3600;
   if (interval > 1) {
-    return Math.floor(interval) + "h";
+    return Math.floor(interval) + 'h';
   }
   interval = seconds / 60;
   if (interval > 1) {
-    return Math.floor(interval) + "min";
+    return Math.floor(interval) + 'min';
   }
   if (seconds < 0) {
-    return "Expired";
+    return 'Expired';
   }
-  return Math.floor(seconds) + "s";
+  return Math.floor(seconds) + 's';
 }
 
 export function getFullName(
@@ -74,74 +77,78 @@ export function getFullName(
   lastName: string | null | undefined
 ): string {
   if (firstName && lastName) {
-    return firstName + " " + lastName;
+    return firstName + ' ' + lastName;
   } else if (firstName && !lastName) {
     return firstName;
   } else if (!firstName && lastName) {
     return lastName;
   }
-  return "";
+  return '';
 }
 
 export function getInitials(
   firstName: string | null | undefined,
   lastName: string | null | undefined
 ): string {
-  return firstName?.toString()[0] + "" + lastName?.toString()[0];
+  return firstName?.toString()[0] + '' + lastName?.toString()[0];
 }
 
 export function formatRoleName(role: $Enums.Role | undefined) {
   if (!role) {
-    return "Unknown";
+    return 'Unknown';
   }
   switch (role) {
-    case "ATTENDEE":
-      return "Attendee";
-    case "MODERATOR":
-      return "Moderator";
-    case "ORGANIZER":
-      return "Organizer";
+    case 'ATTENDEE':
+      return 'Attendee';
+    case 'MODERATOR':
+      return 'Moderator';
+    case 'ORGANIZER':
+      return 'Organizer';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 }
 
 export function formatRoleBadge(role: $Enums.Role | undefined) {
   if (!role) {
-    return "Unknown";
+    return 'Unknown';
   }
   switch (role) {
-    case "ATTENDEE":
-      return React.createElement(Icons.account, { className: "size-4" });
-    case "MODERATOR":
-      return React.createElement(Icons.shield, { className: "size-4" });
-    case "ORGANIZER":
-      return React.createElement(Icons.crown, { className: "size-4" });
+    case 'ATTENDEE':
+      return React.createElement(Icons.account, { className: 'size-4' });
+    case 'MODERATOR':
+      return React.createElement(Icons.shield, { className: 'size-4' });
+    case 'ORGANIZER':
+      return React.createElement(Icons.crown, { className: 'size-4' });
     default:
-      return React.createElement("<span>Unknown</span>");
+      return React.createElement('<span>Unknown</span>');
   }
 }
 
-export function merge(a: any, b: any, predicate = (a: any, b: any) => a === b) {
+export function merge<T>(
+  a: T[],
+  b: T[],
+  predicate = (a: T, b: T) => a === b
+): T[] {
   const c = [...a]; // copy to avoid side effects
   // add all items from B to copy C if they're not already present
-  b.forEach((bItem: any) =>
-    c.some((cItem) => predicate(bItem, cItem)) ? null : c.push(bItem)
+  b.forEach((bItem: T) =>
+    c.some(cItem => predicate(bItem, cItem)) ? null : c.push(bItem)
   );
   return c;
 }
 
 export function getRanks(pdts: PotentialDateTimeWithAvailabilities[]) {
   // Calculate scores for each potential date time
-  const scoreMap = pdts.map((pdt) => {
+  const scoreMap = pdts.map(pdt => {
     const score = pdt.availabilities.reduce((acc, availability) => {
       return (
         acc +
-        (availability.status === "YES"
+        (availability.status === 'YES'
           ? 2
-          : availability.status === "MAYBE"
-          ? 1
-          : 0)
+          : availability.status === 'MAYBE'
+            ? 1
+            : 0)
       );
     }, 0);
     return { pdt, score };
@@ -163,4 +170,56 @@ export function getRanks(pdts: PotentialDateTimeWithAvailabilities[]) {
       ...item.pdt,
     };
   });
+}
+
+export function getNotificationSubject(
+  notification: NotificationWithPersonEventPost
+): string {
+  const { type, event, post, author, rsvp } = notification;
+
+  // Helper to get author name
+  const getAuthorName = () => {
+    if (!author) return 'Someone';
+    return author.firstName || author.lastName || author.username || 'Someone';
+  };
+
+  switch (type) {
+    case 'EVENT_EDITED':
+      return `Event Updated: ${event?.title || 'Event'}`;
+
+    case 'DATE_CHOSEN':
+      return `Date Set for ${event?.title || 'Event'}`;
+
+    case 'DATE_CHANGED':
+      return `Date Changed for ${event?.title || 'Event'}`;
+
+    case 'DATE_RESET':
+      return `New Date Poll for ${event?.title || 'Event'}`;
+
+    case 'NEW_POST':
+      return `New Post in ${event?.title || 'Event'}: ${post?.title || 'Post'}`;
+
+    case 'NEW_REPLY':
+      return `New Reply to ${post?.title || 'Post'}`;
+
+    case 'USER_JOINED':
+      return `${getAuthorName()} Joined ${event?.title || 'Event'}`;
+
+    case 'USER_LEFT':
+      return `${getAuthorName()} Left ${event?.title || 'Event'}`;
+
+    case 'USER_PROMOTED':
+      return `You're Now a Moderator of ${event?.title || 'Event'}`;
+
+    case 'USER_DEMOTED':
+      return `Moderator Status Removed for ${event?.title || 'Event'}`;
+
+    case 'USER_RSVP': {
+      const rsvpStatus = rsvp ? rsvp.toLowerCase() : 'responded';
+      return `${getAuthorName()} RSVP'd ${rsvpStatus} to ${event?.title || 'Event'}`;
+    }
+
+    default:
+      return `Notification from ${event?.title || 'Groupi'}`;
+  }
 }

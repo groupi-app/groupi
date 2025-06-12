@@ -1,18 +1,19 @@
-"use server";
+'use server';
 
-import { ActionResponse, PotentialDateTimeWithAvailabilities } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import { $Enums } from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { BatchEvent } from "pusher";
-import { db } from "../db";
-import { pusherServer } from "../pusher-server";
+import { ActionResponse, PotentialDateTimeWithAvailabilities } from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import { $Enums } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { BatchEvent } from 'pusher';
+import { db } from '../db';
+import { pusherServer } from '../pusher-server';
+import { eventLogger } from '../logger';
 import {
   getEventQuery,
   getPDTQuery,
   getPersonQuery,
-} from "../query-definitions";
-import { createEventNotifs } from "./notification";
+} from '../query-definitions';
+import { createEventNotifs } from './notification';
 
 export interface PDTData {
   potentialDateTimes: PotentialDateTimeWithAvailabilities[];
@@ -26,7 +27,7 @@ export async function getEventPotentialDateTimes(
   const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
-    return { error: "User not found" };
+    return { error: 'User not found' };
   }
 
   const event = await db.event.findUnique({
@@ -61,19 +62,19 @@ export async function getEventPotentialDateTimes(
   });
 
   if (!event) {
-    return { error: "Event not found" };
+    return { error: 'Event not found' };
   }
 
   const userMembership = event.memberships.find(
-    (membership) => membership.personId === userId
+    membership => membership.personId === userId
   );
 
   if (!userMembership) {
-    return { error: "User not a member of this event" };
+    return { error: 'User not a member of this event' };
   }
 
   if (event.chosenDateTime) {
-    return { error: "A date has already been chosen for this event" };
+    return { error: 'A date has already been chosen for this event' };
   }
 
   return {
@@ -89,15 +90,15 @@ export async function updateMembershipAvailabilities(
   eventId: string,
   availabilityUpdates: {
     potentialDateTimeId: string;
-    status: "YES" | "NO" | "MAYBE";
+    status: 'YES' | 'NO' | 'MAYBE';
   }[]
 ) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
-      console.log("User not found");
-      return { error: "User not found" };
+      eventLogger.warn('User not found during availability update');
+      return { error: 'User not found' };
     }
 
     const event = await db.event.findUnique({
@@ -114,21 +115,29 @@ export async function updateMembershipAvailabilities(
     });
 
     if (!event) {
-      console.log("Event not found");
-      return { error: "Event not found" };
+      eventLogger.warn(
+        {
+          eventId,
+        },
+        'Event not found during availability update'
+      );
+      return { error: 'Event not found' };
     }
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
     if (!userMembership) {
-      console.log("User not a member of this event");
-      return { error: "User not a member of this event" };
+      eventLogger.warn(
+        'User not a member of this event during availability update',
+        { userId, eventId }
+      );
+      return { error: 'User not a member of this event' };
     }
 
     const availabilities = event.memberships.find(
-      (m) => m.personId === userId
+      m => m.personId === userId
     )?.availabilities;
 
     let tempAvailabilities = [];
@@ -136,20 +145,31 @@ export async function updateMembershipAvailabilities(
     if (availabilities && availabilities.length > 0) {
       tempAvailabilities = [...availabilities];
 
-      tempAvailabilities.forEach(async (availability) => {
+      tempAvailabilities.forEach(async availability => {
         const update = availabilityUpdates.find(
-          (update) =>
+          update =>
             update.potentialDateTimeId === availability.potentialDateTimeId
         );
 
         if (update) {
           availability.status = update.status;
         } else {
-          console.log("Availability not found");
-          return { error: "Availability not found" };
+          eventLogger.warn(
+            {
+              potentialDateTimeId: availability.potentialDateTimeId,
+            },
+            'Availability not found for update'
+          );
+          return { error: 'Availability not found' };
         }
       });
-      console.log(availabilities, tempAvailabilities);
+      eventLogger.debug(
+        {
+          originalCount: availabilities?.length,
+          updatedCount: tempAvailabilities.length,
+        },
+        'Updated availabilities'
+      );
       for (const update of availabilityUpdates) {
         await db.availability.updateMany({
           where: {
@@ -172,7 +192,7 @@ export async function updateMembershipAvailabilities(
       //     });
       //   });
       await db.availability.createMany({
-        data: availabilityUpdates.map((update) => ({
+        data: availabilityUpdates.map(update => ({
           status: update.status,
           membershipId: userMembership.id,
           potentialDateTimeId: update.potentialDateTimeId,
@@ -185,15 +205,15 @@ export async function updateMembershipAvailabilities(
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
+      { message: 'Event data updated' }
     );
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     return { success: true };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to update availability" };
+    eventLogger.error('Failed to update availability', error);
+    return { error: 'Unable to update availability' };
   }
 }
 
@@ -202,8 +222,8 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
-      console.log("User not found");
-      return { error: "User not found" };
+      eventLogger.warn('User not found during date time selection');
+      return { error: 'User not found' };
     }
 
     const event = await db.event.findUnique({
@@ -217,31 +237,46 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
     });
 
     if (!event) {
-      console.log("Event not found");
-      return { error: "Event not found" };
+      eventLogger.warn(
+        {
+          eventId,
+        },
+        'Event not found during date time selection'
+      );
+      return { error: 'Event not found' };
     }
 
     const userMembership = event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
     if (!userMembership) {
-      console.log("User not a member of this event");
-      return { error: "User not a member of this event" };
+      eventLogger.warn(
+        'User not a member of event during date time selection',
+        { userId, eventId }
+      );
+      return { error: 'User not a member of this event' };
     }
 
-    if (userMembership.role !== "ORGANIZER") {
-      console.log("User not an organizer");
-      return { error: "User not an organizer" };
+    if (userMembership.role !== 'ORGANIZER') {
+      eventLogger.warn(
+        {
+          userId,
+          eventId,
+          role: userMembership.role,
+        },
+        'User not an organizer, cannot choose date time'
+      );
+      return { error: 'User not an organizer' };
     }
 
     const dateTime = event.potentialDateTimes.find(
-      (pdt) => pdt.id === pdtId
+      pdt => pdt.id === pdtId
     )?.dateTime;
 
     if (!dateTime) {
-      console.log("Date not found");
-      return { error: "Date not found" };
+      eventLogger.warn({ eventId, pdtId }, 'Date not found for selection');
+      return { error: 'Date not found' };
     }
 
     await db.event.update({
@@ -254,7 +289,7 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(eventId);
 
@@ -262,7 +297,7 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Event Data updated" },
+        data: { message: 'Event Data updated' },
       },
     ];
 
@@ -271,25 +306,25 @@ export async function chooseDateTime(eventId: string, pdtId: string) {
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      eventLogger.debug('No pusher events to send for date time selection');
     }
 
     await createEventNotifs({
       eventId,
-      type: "DATE_CHOSEN",
+      type: 'DATE_CHOSEN',
       datetime: dateTime,
     });
 
     return { success: true };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to choose date" };
+    eventLogger.error('Failed to choose date time', error);
+    return { error: 'Unable to choose date' };
   }
 }

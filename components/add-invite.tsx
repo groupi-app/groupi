@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { createInvite } from "@/lib/actions/invite";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogClose } from "@radix-ui/react-dialog";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { Button } from "./ui/button";
+import { createInvite } from '@/lib/actions/invite';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DialogClose } from '@radix-ui/react-dialog';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { Button } from './ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from './ui/dialog';
 import {
   Form,
   FormControl,
@@ -24,28 +24,28 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import { Input } from "./ui/input";
+} from './ui/form';
+import { Input } from './ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { useToast } from "./ui/use-toast";
+} from './ui/select';
+import { toast } from 'sonner';
 
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
     name: z
       .string()
-      .max(64, { message: "Invite name must be less than 65 characters." }),
+      .max(64, { message: 'Invite name must be less than 65 characters.' }),
     expiresIn: z.number().nullable(),
     maxUses: z
       .number()
-      .min(1, { message: "Max uses must be positive integer" })
+      .min(1, { message: 'Max uses must be positive integer' })
       .max(999999, {
-        message: "Max uses must be less than 1,000,000 (if not unlimited)",
+        message: 'Max uses must be less than 1,000,000 (if not unlimited)',
       })
       .nullable(),
   });
@@ -53,7 +53,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: '',
       expiresIn: null,
       maxUses: null,
     },
@@ -61,8 +61,6 @@ export function AddInvite({ eventId }: { eventId: string }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  const { toast } = useToast();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -78,24 +76,18 @@ export function AddInvite({ eventId }: { eventId: string }) {
       maxUses: values.maxUses,
     });
     if (res.success) {
-      toast({
-        title: "Invite Created",
-        description: "The invite has been successfully created.",
-      });
+      toast.success('The invite has been successfully created.');
       setIsOpen(false);
     } else if (res.error) {
-      toast({
-        title: "Error",
-        description: "Unable to create invite.",
-      });
+      toast.error('Unable to create invite.');
     }
     setIsLoading(false);
   }
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-1">
-          <Icons.plus className="size-4" />
+        <Button className='flex items-center gap-1'>
+          <Icons.plus className='size-4' />
           <span>New Invite</span>
         </Button>
       </DialogTrigger>
@@ -107,19 +99,19 @@ export function AddInvite({ eventId }: { eventId: string }) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-3"
+            className='flex flex-col gap-3'
           >
             {/* Name */}
             <FormField
               control={form.control}
-              name="name"
+              name='name'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Invite name" {...field} />
+                    <Input placeholder='Invite name' {...field} />
                   </FormControl>
-                  <span className="text-muted-foreground text-sm ml-1">
+                  <span className='text-muted-foreground text-sm ml-1'>
                     optional
                   </span>
                   <FormMessage />
@@ -129,21 +121,21 @@ export function AddInvite({ eventId }: { eventId: string }) {
             {/* Expires in */}
             <FormField
               control={form.control}
-              name="expiresIn"
+              name='expiresIn'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Expires in</FormLabel>
                   <FormControl>
                     {/* <Input placeholder="5 days" {...field} /> */}
                     <Select
-                      onValueChange={(value) => {
+                      onValueChange={value => {
                         field.onChange(
-                          value === "never" ? null : Number(value)
+                          value === 'never' ? null : Number(value)
                         );
                       }}
                     >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Never" {...field} />
+                      <SelectTrigger className='w-[180px]'>
+                        <SelectValue placeholder='Never' {...field} />
                       </SelectTrigger>
                       <SelectContent>
                         {/* value is time in ms */}
@@ -165,7 +157,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
                         <SelectItem value={String(7 * 24 * 60 * 60 * 1000)}>
                           7 days
                         </SelectItem>
-                        <SelectItem value={String("never")}>Never</SelectItem>
+                        <SelectItem value={String('never')}>Never</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -176,18 +168,18 @@ export function AddInvite({ eventId }: { eventId: string }) {
             {/* Max uses */}
             <FormField
               control={form.control}
-              name="maxUses"
+              name='maxUses'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Max uses</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      placeholder="Unlimited"
+                      type='number'
+                      placeholder='Unlimited'
                       {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        if (e.target.value === "") {
+                      value={field.value ?? ''}
+                      onChange={e => {
+                        if (e.target.value === '') {
                           field.onChange(null);
                         } else {
                           field.onChange(Number(e.target.value));
@@ -197,28 +189,28 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     />
                   </FormControl>
                   <FormMessage />
-                  <span className="text-muted-foreground text-sm ml-1">
+                  <span className='text-muted-foreground text-sm ml-1'>
                     leave blank for unlimited
                   </span>
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <div className="flex items-center gap-2 justify-end">
+              <div className='flex items-center gap-2 justify-end'>
                 <DialogClose asChild>
-                  <Button variant="ghost" className="flex items-center gap-1">
+                  <Button variant='ghost' className='flex items-center gap-1'>
                     <span>Cancel</span>
                   </Button>
                 </DialogClose>
                 <Button
-                  className="flex items-center gap-1"
-                  type="submit"
+                  className='flex items-center gap-1'
+                  type='submit'
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Icons.spinner className="size-4 animate-spin" />
+                    <Icons.spinner className='size-4 animate-spin' />
                   ) : (
-                    <Icons.plus className="size-4" />
+                    <Icons.plus className='size-4' />
                   )}
 
                   <span>Add</span>

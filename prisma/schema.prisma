@@ -12,18 +12,30 @@ datasource db {
 }
 
 model Person {
-  id                    String         @id
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  id                    String          @id
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
   memberships           Membership[]
   posts                 Post[]
   replies               Reply[]
   firstName             String?
   lastName              String?
-  username              String         @unique
+  username              String          @unique
   imageUrl              String
-  notifications         Notification[] @relation("PersonNotifications")
-  authoredNotifications Notification[] @relation("AuthorNotifications")
+  notifications         Notification[]  @relation("PersonNotifications")
+  authoredNotifications Notification[]  @relation("AuthorNotifications")
+  settings              PersonSettings?
+}
+
+// New model to hold all user settings
+model PersonSettings {
+  id                  String               @id @default(cuid())
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  person              Person               @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId            String               @unique // Ensures one-to-one relationship
+  notificationMethods NotificationMethod[] // Moved from Person model
+  // Future settings can be added here
 }
 
 model Event {
@@ -154,4 +166,48 @@ enum NotificationType {
   USER_PROMOTED // When the receiving user is promoted to moderator of an event
   USER_DEMOTED // When the receiving user is demoted from moderator of an event
   USER_RSVP // When another user RSVPs to an event that the receiving user owns or moderates
+}
+
+enum NotificationMethodType {
+  EMAIL
+  PUSH
+  WEBHOOK
+}
+
+enum WebhookFormat {
+  DISCORD
+  SLACK
+  TEAMS
+  GENERIC
+  CUSTOM
+}
+
+// Updated model to reference PersonSettings instead of Person
+model NotificationMethod {
+  id         String                 @id @default(cuid())
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  settings   PersonSettings         @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId String
+  type       NotificationMethodType
+  enabled    Boolean                @default(true)
+  name       String? // Name of the method, e.g., "Work Email", "Personal Webhook"
+  value      String // Email address, webhook URL, etc.
+
+  // Webhook-specific configuration (JSON fields for flexibility)
+  webhookHeaders Json? // Custom headers as JSON object
+  customTemplate String? // Custom JSON template with {{variable}} placeholders (only used when webhookFormat = CUSTOM)
+  webhookFormat  WebhookFormat? // Preset format: discord, slack, teams, generic, custom
+
+  notifications NotificationSetting[]
+}
+
+model NotificationSetting {
+  id                 String             @id @default(cuid())
+  notificationType   NotificationType
+  notificationMethod NotificationMethod @relation(fields: [methodId], references: [id], onDelete: Cascade)
+  methodId           String
+  enabled            Boolean            @default(true)
+
+  @@unique([notificationType, methodId])
 }

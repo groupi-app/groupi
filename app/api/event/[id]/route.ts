@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { db } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
 export async function GET(
   _request: Request,
@@ -17,7 +17,7 @@ export async function GET(
   });
 
   if (!result) {
-    return NextResponse.json({ message: "Event not found" }, { status: 404 });
+    return NextResponse.json({ message: 'Event not found' }, { status: 404 });
   }
 
   return NextResponse.json(result, { status: 200 });

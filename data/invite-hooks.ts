@@ -1,7 +1,7 @@
-import { getEventInviteData } from "@/lib/actions/invite";
-import { getInviteQuery } from "@/lib/query-definitions";
-import { ActionResponse, EventInviteData } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { getEventInviteData } from '@/lib/actions/invite';
+import { getInviteQuery } from '@/lib/query-definitions';
+import { ActionResponse, EventInviteData } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export function useInviteDataQuery(
   eventId: string,

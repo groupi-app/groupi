@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   DialogClose,
   DialogContent,
@@ -6,41 +6,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { deletePost } from "@/lib/actions/post";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/dialog';
+import { deletePost } from '@/lib/actions/post';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useRouter } from 'next/navigation';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 async function removePost({
   id,
-  toast,
   router,
 }: {
   id: string;
-  toast: any;
   router: AppRouterInstance;
 }) {
   const res = await deletePost({ id });
   if (res.success) {
     router.push(`/event/${res.success.post.eventId}`);
-    toast({
-      title: "Post deleted",
-      description: "The post has been deleted.",
-    });
+    toast.success('The post has been deleted.');
   } else {
-    toast({
-      title: "Uh oh!",
-      description: "The post could not be deleted.",
-      variant: "destructive",
-    });
+    toast.error('The post could not be deleted.');
   }
 }
 
 export function DeletePostDialog({ id }: { id: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
@@ -51,16 +41,16 @@ export function DeletePostDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center justify-end gap-2">
+        <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
               onClick={() => {
-                removePost({ id, toast, router });
+                removePost({ id, router });
               }}
-              variant="destructive"
+              variant='destructive'
             >
               Delete
             </Button>

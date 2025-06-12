@@ -14,12 +14,12 @@
 // ***********************************************************
 
 // import commands.js using ES2015 syntax:
-import "./commands";
+import './commands';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
-import { addClerkCommands } from "@clerk/testing/cypress";
+import { addClerkCommands } from '@clerk/testing/cypress';
 addClerkCommands({ Cypress, cy });
 
 export {};
