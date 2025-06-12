@@ -1,7 +1,7 @@
-import { EventData, fetchEventData } from "@/lib/actions/event";
-import { getEventQuery } from "@/lib/query-definitions";
-import { ActionResponse } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { EventData, fetchEventData } from '@/lib/actions/event';
+import { getEventQuery } from '@/lib/query-definitions';
+import { ActionResponse } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export function useEventDataQuery(
   eventId: string,

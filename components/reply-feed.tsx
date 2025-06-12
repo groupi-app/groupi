@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Reply from "@/components/reply";
-import { usePostReplies } from "@/data/post-hooks";
-import { AuthorReply, Member } from "@/types";
-import { $Enums } from "@prisma/client";
-import { LayoutGroup, motion } from "framer-motion";
+import Reply from '@/components/reply';
+import { usePostReplies } from '@/data/post-hooks';
+import { AuthorReply, Member } from '@/types';
+import { $Enums } from '@prisma/client';
+import { LayoutGroup, motion } from 'framer-motion';
 
 export default function ReplyFeed({ postId }: { postId: string }) {
   const { data: replyData } = usePostReplies(postId);
@@ -40,23 +40,23 @@ export default function ReplyFeed({ postId }: { postId: string }) {
   return (
     <motion.div
       variants={container}
-      initial="hidden"
-      animate="show"
-      className="flex flex-col gap-4"
+      initial='hidden'
+      animate='show'
+      className='flex flex-col gap-4'
     >
       <LayoutGroup>
         {replies
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .map((reply) => (
+          .map(reply => (
             <motion.div
               layout
               variants={item}
               key={reply.id}
-              className="w-full"
+              className='w-full'
             >
               <Reply
                 reply={reply}
-                member={members.find((m) => m.personId === reply.authorId)}
+                member={members.find(m => m.personId === reply.authorId)}
                 userId={userId}
                 userRole={userRole}
                 eventDateTime={eventDateTime}

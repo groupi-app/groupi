@@ -1,13 +1,14 @@
 import { clerkSetup } from '@clerk/testing/cypress';
 import { defineConfig } from 'cypress';
-import { db } from './lib/db';
-import seedUsers from './scripts/seed-users';
 
 export default defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
       on('task', {
-        refreshUser: async (username: string) => {
+        refreshUser: async username => {
+          // Dynamic import of db
+          const { db } = await import('./lib/db.js');
+
           await db.event.deleteMany({
             where: {
               memberships: {
@@ -30,8 +31,12 @@ export default defineConfig({
         },
         seedUsers: async () => {
           try {
-            await seedUsers(); // Call the imported function
-            return null; // Cypress tasks should return null or a serializable value
+            // Dynamic import of seedUsers - use .ts extension in import
+            const { default: seedUsersFunction } = await import(
+              './scripts/seed-users.ts'
+            );
+            await seedUsersFunction();
+            return null;
           } catch (error) {
             console.error('Error in Cypress task seeding:', error);
             throw error;
@@ -40,6 +45,6 @@ export default defineConfig({
       });
       return clerkSetup({ config });
     },
-    baseUrl: 'http://localhost:3000', // your app's URL
+    baseUrl: 'http://localhost:3000',
   },
 });

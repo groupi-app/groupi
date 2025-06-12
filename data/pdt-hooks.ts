@@ -1,10 +1,10 @@
 import {
   getEventPotentialDateTimes,
   PDTData,
-} from "@/lib/actions/availability";
-import { getPDTQuery } from "@/lib/query-definitions";
-import { ActionResponse } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+} from '@/lib/actions/availability';
+import { getPDTQuery } from '@/lib/query-definitions';
+import { ActionResponse } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export function usePDTDataQuery(
   eventId: string,

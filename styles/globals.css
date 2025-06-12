@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -39,14 +39,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
-  --font-heading: var(--font-heading), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
+  --font-sans:
+    var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-heading:
+    var(--font-heading), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -98,7 +100,7 @@
   --border2: var(--border);
   --input: hsl(214.3 31.8% 91.4%);
 
-  --primary: hsl(285 100% 34%);
+  --primary: hsl(285, 100%, 34%);
   --primary-foreground: hsl(210 40% 98%);
 
   --secondary: hsl(210 40% 96.1%);
@@ -135,7 +137,7 @@
   --border2: var(--border);
   --input: hsl(216 34% 17%);
 
-  --primary: hsl(285 100% 34%);
+  --primary: hsl(285, 100%, 34%);
   --primary-foreground: hsl(210 40% 98%);
 
   --secondary: hsl(222.2 47.4% 11.2%);
@@ -161,7 +163,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
@@ -231,8 +235,8 @@
 .cl-fileDropAreaHint,
 .cl-fileDropAreaFooterHint,
 .cl-form
-  p[data-localization-key="userProfile.emailAddressPage.emailCode.formHint"],
-p[data-localization-key="userProfile.profilePage.successMessage"] {
+  p[data-localization-key='userProfile.emailAddressPage.emailCode.formHint'],
+p[data-localization-key='userProfile.profilePage.successMessage'] {
   @apply text-muted-foreground;
 }
 
@@ -240,9 +244,9 @@ p[data-localization-key="userProfile.profilePage.successMessage"] {
   @apply bg-border;
 }
 
-.cl-formFieldInput[type="text"],
-.cl-formFieldInput[type="email"],
-.cl-formFieldInput[type="password"] {
+.cl-formFieldInput[type='text'],
+.cl-formFieldInput[type='email'],
+.cl-formFieldInput[type='password'] {
   @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
@@ -271,7 +275,7 @@ p[data-localization-key="userProfile.profilePage.successMessage"] {
   @apply text-foreground;
 }
 
-button[data-localization-key="userProfile.start.dangerSection.deleteAccountButton"] {
+button[data-localization-key='userProfile.start.dangerSection.deleteAccountButton'] {
   @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
 }
 
@@ -314,7 +318,7 @@ button[data-localization-key="userProfile.start.dangerSection.deleteAccountButto
   @apply rounded-full border border-input bg-background px-2.5 py-0.5 text-xs text-foreground shadow-none!;
 }
 
-.cl-badge[data-localization-key="badge__unverified"] {
+.cl-badge[data-localization-key='badge__unverified'] {
   @apply border bg-transparent text-destructive dark:text-red-500;
 }
 
@@ -361,7 +365,7 @@ button[data-localization-key="userProfile.start.dangerSection.deleteAccountButto
   @apply rounded-lg rounded-l-none border border-input bg-linear-to-t from-background to-background;
 }
 
-h1[data-localization-key="userProfile.navbar.title"] {
+h1[data-localization-key='userProfile.navbar.title'] {
   @apply text-foreground;
 }
 
@@ -386,7 +390,7 @@ h1[data-localization-key="userProfile.navbar.title"] {
   @apply border border-input bg-background;
 }
 
-.cl-menuItem[data-color="neutral"] {
+.cl-menuItem[data-color='neutral'] {
   @apply text-foreground hover:bg-muted;
 }
 

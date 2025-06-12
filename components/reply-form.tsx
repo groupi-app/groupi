@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { createReply } from "@/lib/actions/reply";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { createReply } from '@/lib/actions/reply';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   reply: z
     .string()
-    .min(1, "Reply must be at least 1 character")
-    .max(350, "Reply must be 350 characters or less"),
+    .min(1, 'Reply must be at least 1 character')
+    .max(350, 'Reply must be 350 characters or less'),
 });
 
 export default function ReplyForm({
@@ -32,12 +32,11 @@ export default function ReplyForm({
   userId: string;
 }) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      reply: "",
+      reply: '',
     },
   });
 
@@ -51,15 +50,9 @@ export default function ReplyForm({
 
     if (res.success) {
       form.reset();
-      toast({
-        title: "Reply sent",
-        description: "Your reply has been successfully sent",
-      });
+      toast.success('Your reply has been successfully sent');
     } else {
-      toast({
-        title: "Failed to send reply",
-        description: "The reply was unable to be sent.",
-      });
+      toast.error('The reply was unable to be sent.');
     }
     setIsSaving(false);
   }
@@ -67,16 +60,16 @@ export default function ReplyForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <FormField
             control={form.control}
-            name="reply"
+            name='reply'
             render={({ field }) => (
-              <FormItem className="w-full">
+              <FormItem className='w-full'>
                 <FormControl>
                   <Textarea
-                    className="resize-none"
-                    placeholder="Type a reply..."
+                    className='resize-none'
+                    placeholder='Type a reply...'
                     {...field}
                   />
                 </FormControl>
@@ -85,14 +78,14 @@ export default function ReplyForm({
             )}
           />
           <Button
-            className="mt-5 flex items-center gap-1"
-            type="submit"
+            className='mt-5 flex items-center gap-1'
+            type='submit'
             disabled={isSaving}
           >
             {isSaving ? (
-              <Icons.spinner className="h-4 w-4 animate-spin" />
+              <Icons.spinner className='h-4 w-4 animate-spin' />
             ) : (
-              <Icons.submit className="size-4" />
+              <Icons.submit className='size-4' />
             )}
             Send
           </Button>

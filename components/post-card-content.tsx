@@ -1,5 +1,5 @@
-"use client";
-import { useIsOverflowing } from "@/lib/use-is-overflow";
+'use client';
+import { useIsOverflowing } from '@/lib/use-is-overflow';
 
 export function PostCardContent({ content }: { content: string }) {
   const [ref, isOverflowing] = useIsOverflowing();
@@ -7,14 +7,14 @@ export function PostCardContent({ content }: { content: string }) {
   return (
     <>
       <div
-        className="max-h-[120px] overflow-hidden whitespace-pre-wrap"
+        className='max-h-[120px] overflow-hidden whitespace-pre-wrap'
         ref={ref}
         dangerouslySetInnerHTML={{
           __html: content,
         }}
       />
       {isOverflowing && (
-        <div className="text-muted-foreground">Open to see full post...</div>
+        <div className='text-muted-foreground'>Open to see full post...</div>
       )}
     </>
   );

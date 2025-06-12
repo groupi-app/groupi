@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Form,
@@ -8,32 +8,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
-import { updateEventDetails } from "@/lib/actions/event";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Icons } from "./icons";
-import { LocationInput } from "./location-input";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+import { updateEventDetails } from '@/lib/actions/event';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Icons } from './icons';
+import { LocationInput } from './location-input';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   title: z.string().min(1, {
-    message: "Event Title is required",
+    message: 'Event Title is required',
   }),
   description: z
     .string()
-    .max(1000, { message: "Description must be less than 1000 characters." })
+    .max(1000, { message: 'Description must be less than 1000 characters.' })
     .optional(),
   location: z
     .string()
-    .max(200, { message: "Location must be less than 200 characters." })
+    .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
 });
 
@@ -49,7 +49,6 @@ export default function EditEventInfo({
 }) {
   const { eventId, title, description, location } = eventData;
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,15 +69,13 @@ export default function EditEventInfo({
       location: data.location,
     });
     if (res.error) {
-      toast({
-        title: "Error editing event",
-        description: "Failed to edit event details.",
+      toast.error('Error editing event', {
+        description: 'Failed to edit event details.',
       });
     }
     if (res.success) {
-      toast({
-        title: "Event updated",
-        description: "Event details have been updated.",
+      toast.success('Event updated', {
+        description: 'Event details have been updated.',
       });
       router.push(`/event/${eventId}`);
     }
@@ -88,17 +85,17 @@ export default function EditEventInfo({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="gap-6 flex flex-col">
+        <div className='gap-6 flex flex-col'>
           <FormField
             control={form.control}
-            name="title"
+            name='title'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Title<span className="text-muted-foreground">*</span>
+                  Title<span className='text-muted-foreground'>*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Groupi Party!" {...field} />
+                  <Input placeholder='Groupi Party!' {...field} />
                 </FormControl>
                 <FormDescription>
                   The title of your event. (required)
@@ -109,13 +106,13 @@ export default function EditEventInfo({
           />
           <FormField
             control={form.control}
-            name="description"
+            name='description'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Join us for food and festivities..."
+                    placeholder='Join us for food and festivities...'
                     {...field}
                   />
                 </FormControl>
@@ -128,12 +125,12 @@ export default function EditEventInfo({
           />
           <FormField
             control={form.control}
-            name="location"
+            name='location'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <LocationInput dataTest="edit-event-location" field={field} />
+                  <LocationInput dataTest='edit-event-location' field={field} />
                 </FormControl>
                 <FormDescription>
                   The location where your event is taking place.
@@ -142,16 +139,16 @@ export default function EditEventInfo({
               </FormItem>
             )}
           />
-          <div className="flex justify-end">
+          <div className='flex justify-end'>
             <Button
-              className="w-full md:w-max flex items-center gap-1"
-              type="submit"
+              className='w-full md:w-max flex items-center gap-1'
+              type='submit'
               disabled={isSaving}
             >
               {isSaving ? (
-                <Icons.spinner className="h-4 w-4 animate-spin" />
+                <Icons.spinner className='h-4 w-4 animate-spin' />
               ) : (
-                <Icons.save className="size-4" />
+                <Icons.save className='size-4' />
               )}
               <span>Save</span>
             </Button>

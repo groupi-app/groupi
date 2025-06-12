@@ -1,24 +1,22 @@
-import { AvailabilityForm } from "@/components/availability-form";
-import ErrorPage from "@/components/error";
-import { Icons } from "@/components/icons";
-import { Button } from "@/components/ui/button";
-import { getEventPotentialDateTimes } from "@/lib/actions/availability";
-import { PotentialDateTimeWithAvailabilities } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import Link from "next/link";
+import { AvailabilityForm } from '@/components/availability-form';
+import ErrorPage from '@/components/error';
+import { Icons } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { getEventPotentialDateTimes } from '@/lib/actions/availability';
+import { PotentialDateTimeWithAvailabilities } from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import Link from 'next/link';
 
-export default async function Page(
-  props: {
-    params: Promise<{ eventId: string }>;
-  }
-) {
+export default async function Page(props: {
+  params: Promise<{ eventId: string }>;
+}) {
   const params = await props.params;
   const { eventId } = params;
 
   const { userId }: { userId: string | null } = await auth();
 
   if (!userId) {
-    return <ErrorPage message={"User not found"} />;
+    return <ErrorPage message={'User not found'} />;
   }
 
   let potentialDateTimes: PotentialDateTimeWithAvailabilities[] = [];
@@ -32,34 +30,34 @@ export default async function Page(
   }
 
   if (!potentialDateTimes || potentialDateTimes.length === 0) {
-    return <ErrorPage message={"Voting is not enabled for this event"} />;
+    return <ErrorPage message={'Voting is not enabled for this event'} />;
   }
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${
-      new Date().getTimezoneOffset() > 0 ? "-" : "+"
+      new Date().getTimezoneOffset() > 0 ? '-' : '+'
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
 
   const userMembership = potentialDateTimes[0].event.memberships.find(
-    (membership) => membership.personId === userId
+    membership => membership.personId === userId
   );
 
-  if (userMembership?.role === "ORGANIZER") {
-    return <ErrorPage message={"Organizers cannot vote on availabilities"} />;
+  if (userMembership?.role === 'ORGANIZER') {
+    return <ErrorPage message={'Organizers cannot vote on availabilities'} />;
   }
 
   const memberAvailabilities = userMembership?.availabilities;
 
   return (
-    <div className="container max-w-5xl py-4">
+    <div className='container max-w-5xl py-4'>
       <div>
         {memberAvailabilities && memberAvailabilities.length > 0 && (
-          <div className="w-max">
-            <Link data-test="full-post-back" href={`/event/${eventId}`}>
+          <div className='w-max'>
+            <Link data-test='full-post-back' href={`/event/${eventId}`}>
               <Button
-                variant={"ghost"}
-                className="flex items-center gap-1 pl-2"
+                variant={'ghost'}
+                className='flex items-center gap-1 pl-2'
               >
                 <Icons.back />
                 <span>{potentialDateTimes[0].event.title}</span>
@@ -68,15 +66,15 @@ export default async function Page(
           </div>
         )}
 
-        <div className="my-2">
-          <h1 className="font-heading text-4xl">When are you around?</h1>
-          <h2 className="text-muted-foreground text-lg">
+        <div className='my-2'>
+          <h1 className='font-heading text-4xl'>When are you around?</h1>
+          <h2 className='text-muted-foreground text-lg'>
             Don&apos;t worry. You can update this later.
           </h2>
         </div>
       </div>
-      <div className="py-4 w-full">
-        <span className="text-sm italic text-muted-foreground">
+      <div className='py-4 w-full'>
+        <span className='text-sm italic text-muted-foreground'>
           Current timezone: {getTimezoneString()}
         </span>
         <AvailabilityForm

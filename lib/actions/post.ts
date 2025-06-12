@@ -1,17 +1,18 @@
-"use server";
+'use server';
 
-import { ReplyAuthorEventPost } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
-import { BatchEvent } from "pusher";
-import { db } from "../db";
-import { pusherServer } from "../pusher-server";
+import { ReplyAuthorEventPost } from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+import { BatchEvent } from 'pusher';
+import { db } from '../db';
+import { pusherServer } from '../pusher-server';
 import {
   getEventQuery,
   getPersonQuery,
   getPostQuery,
-} from "../query-definitions";
-import { createEventNotifs } from "./notification";
+} from '../query-definitions';
+import { createEventNotifs } from './notification';
+import { log } from '@/lib/logger';
 
 export interface PostData {
   success?: {
@@ -46,22 +47,22 @@ export const fetchPostData = async (postId: string): Promise<PostData> => {
     },
   });
 
-  if (!post) return { error: "Post not found" };
+  if (!post) return { error: 'Post not found' };
 
   const { userId }: { userId: string | null } = await auth();
 
-  if (!userId) return { error: "User not found" };
+  if (!userId) return { error: 'User not found' };
 
   if (
-    !post.event.memberships.find((membership) => membership.personId === userId)
+    !post.event.memberships.find(membership => membership.personId === userId)
   )
-    return { error: "You are not a member of this event" };
+    return { error: 'You are not a member of this event' };
 
   const userRole = post.event.memberships.find(
-    (membership) => membership.personId === userId
+    membership => membership.personId === userId
   )?.role;
 
-  if (!userRole) return { error: "Role not found" };
+  if (!userRole) return { error: 'Role not found' };
 
   return {
     success: {
@@ -84,7 +85,7 @@ export async function createPost({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const event = await db.event.findUnique({
       where: {
@@ -95,10 +96,10 @@ export async function createPost({
       },
     });
 
-    if (!event) return { error: "Event not found" };
+    if (!event) return { error: 'Event not found' };
 
-    if (!event.memberships.find((membership) => membership.personId === userId))
-      return { error: "You are not a member of this event" };
+    if (!event.memberships.find(membership => membership.personId === userId))
+      return { error: 'You are not a member of this event' };
 
     const res = await db.post.create({
       data: {
@@ -116,14 +117,14 @@ export async function createPost({
       },
     });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(eventId);
     const events: BatchEvent[] = [
       {
         channel: eventQueryDefinition.pusherChannel,
         name: eventQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       },
     ];
 
@@ -132,19 +133,19 @@ export async function createPost({
       events.push({
         channel: personQueryDefinition.pusherChannel,
         name: personQueryDefinition.pusherEvent,
-        data: { message: "Data updated" },
+        data: { message: 'Data updated' },
       });
     }
 
     if (events.length > 0) {
       await pusherServer.triggerBatch(events);
     } else {
-      console.log("No events to send");
+      log.debug('No events to send for post creation');
     }
 
-    await createEventNotifs({ eventId, type: "NEW_POST", postId: res.id });
+    await createEventNotifs({ eventId, type: 'NEW_POST', postId: res.id });
 
-    return { success: "Post Created" };
+    return { success: 'Post Created' };
   } catch (error) {
     return { error: error };
   }
@@ -162,7 +163,7 @@ export async function updatePost({
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const post = await db.post.findUnique({
       where: {
@@ -170,9 +171,9 @@ export async function updatePost({
       },
     });
 
-    if (!post) return { error: "Post not found" };
+    if (!post) return { error: 'Post not found' };
 
-    if (userId !== post.authorId) return { error: "User not authorized" };
+    if (userId !== post.authorId) return { error: 'User not authorized' };
 
     await db.post.update({
       where: {
@@ -184,7 +185,7 @@ export async function updatePost({
         editedAt: new Date().toISOString(),
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(post.eventId);
     const postQueryDefinition = getPostQuery(id);
@@ -192,15 +193,15 @@ export async function updatePost({
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
+      { message: 'Event data updated' }
     );
     pusherServer.trigger(
       postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
+      { message: 'Post data updated' }
     );
 
-    return { success: "Post Updated" };
+    return { success: 'Post Updated' };
   } catch (error) {
     return { error: error };
   }
@@ -210,7 +211,7 @@ export async function deletePost({ id }: { id: string }) {
   try {
     const { userId }: { userId: string | null } = await auth();
 
-    if (!userId) return { error: "Current user not found" };
+    if (!userId) return { error: 'Current user not found' };
 
     const post = await db.post.findUnique({
       where: {
@@ -225,24 +226,24 @@ export async function deletePost({ id }: { id: string }) {
       },
     });
 
-    if (!post) return { error: "Post not found" };
+    if (!post) return { error: 'Post not found' };
 
     const currentUserMembership = post.event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
     if (!currentUserMembership)
-      return { error: "You are not a member of this event" };
+      return { error: 'You are not a member of this event' };
 
-    if (userId !== post.authorId && currentUserMembership.role === "ATTENDEE")
-      return { error: "User not authorized" };
+    if (userId !== post.authorId && currentUserMembership.role === 'ATTENDEE')
+      return { error: 'User not authorized' };
 
     const res = await db.post.delete({
       where: {
         id: id,
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
 
     const eventQueryDefinition = getEventQuery(post.eventId);
     const postQueryDefinition = getPostQuery(id);
@@ -250,15 +251,15 @@ export async function deletePost({ id }: { id: string }) {
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Event data updated" }
+      { message: 'Event data updated' }
     );
     pusherServer.trigger(
       postQueryDefinition.pusherChannel,
       postQueryDefinition.pusherEvent,
-      { message: "Post data updated" }
+      { message: 'Post data updated' }
     );
 
-    return { success: { message: "Post Deleted", post: res } };
+    return { success: { message: 'Post Deleted', post: res } };
   } catch (error) {
     return { error: error };
   }

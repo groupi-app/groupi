@@ -1,7 +1,7 @@
-import { fetchNotificationsForPerson } from "@/lib/actions/notification";
-import { getNotificationQuery } from "@/lib/query-definitions";
-import { ActionResponse, NotificationWithPersonEventPost } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { fetchNotificationsForPerson } from '@/lib/actions/notification';
+import { getNotificationQuery } from '@/lib/query-definitions';
+import { ActionResponse, NotificationWithPersonEventPost } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export function useNotificationsDataQuery(
   userId: string,

@@ -1,6 +1,6 @@
-import { PostData, fetchPostData } from "@/lib/actions/post";
-import { getPostQuery } from "@/lib/query-definitions";
-import { useQuery } from "@tanstack/react-query";
+import { PostData, fetchPostData } from '@/lib/actions/post';
+import { getPostQuery } from '@/lib/query-definitions';
+import { useQuery } from '@tanstack/react-query';
 
 export function usePostDataQuery(
   postId: string,

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { PostCard } from "@/components/post-card";
-import { useEventPosts } from "@/data/event-hooks";
-import { Member, ReplyAuthorPost } from "@/types";
-import { $Enums } from "@prisma/client";
-import { LayoutGroup, motion } from "framer-motion";
+import { PostCard } from '@/components/post-card';
+import { useEventPosts } from '@/data/event-hooks';
+import { Member, ReplyAuthorPost } from '@/types';
+import { $Enums } from '@prisma/client';
+import { LayoutGroup, motion } from 'framer-motion';
 
 export function PostFeed({ eventId }: { eventId: string }) {
   const { data: postData } = useEventPosts(eventId);
@@ -40,29 +40,29 @@ export function PostFeed({ eventId }: { eventId: string }) {
 
   return (
     <div>
-      <h2 className="text-xl font-heading font-medium">Posts</h2>
+      <h2 className='text-xl font-heading font-medium'>Posts</h2>
       {posts.length > 0 ? (
         <motion.div
           variants={container}
-          initial="hidden"
-          animate="show"
-          className="w-full flex flex-col items-center gap-3 py-2"
+          initial='hidden'
+          animate='show'
+          className='w-full flex flex-col items-center gap-3 py-2'
         >
           <LayoutGroup>
             {posts
               .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-              .map((post) => (
+              .map(post => (
                 <motion.div
                   layout
                   variants={item}
                   key={post.id}
-                  className="w-full"
+                  className='w-full'
                 >
                   <PostCard
                     userId={userId}
                     userRole={userRole}
                     post={post}
-                    member={members.find((m) => m.personId === post.authorId)}
+                    member={members.find(m => m.personId === post.authorId)}
                     eventDateTime={eventDateTime}
                   />
                 </motion.div>
@@ -70,7 +70,7 @@ export function PostFeed({ eventId }: { eventId: string }) {
           </LayoutGroup>
         </motion.div>
       ) : (
-        <h1 className="font-heading text-lg mt-4">No posts yet!</h1>
+        <h1 className='font-heading text-lg mt-4'>No posts yet!</h1>
       )}
     </div>
   );

@@ -1,13 +1,14 @@
-"use server";
+'use server';
 
-import { ActionResponse, EventInviteData } from "@/types";
-import { auth } from "@clerk/nextjs/server";
-import { revalidatePath } from "next/cache";
-import { cache } from "react";
-import { db } from "../db";
-import { pusherServer } from "../pusher-server";
-import { getEventQuery, getInviteQuery } from "../query-definitions";
-import { createEventModNotifs } from "./notification";
+import { ActionResponse, EventInviteData } from '@/types';
+import { auth } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+import { cache } from 'react';
+import { db } from '../db';
+import { pusherServer } from '../pusher-server';
+import { getEventQuery, getInviteQuery } from '../query-definitions';
+import { createEventModNotifs } from './notification';
+import { log } from '@/lib/logger';
 
 export const getEventInviteData = cache(
   async (eventId: string): Promise<ActionResponse<EventInviteData>> => {
@@ -31,30 +32,30 @@ export const getEventInviteData = cache(
       });
 
       if (!event) {
-        return { error: "Event not found." };
+        return { error: 'Event not found.' };
       }
 
       const { userId }: { userId: string | null } = await auth();
 
       if (!userId) {
-        return { error: "User not found." };
+        return { error: 'User not found.' };
       }
 
       const membership = event.memberships.find(
-        (membership) => membership.personId === userId
+        membership => membership.personId === userId
       );
 
       if (!membership) {
-        return { error: "You are not a member of this event." };
+        return { error: 'You are not a member of this event.' };
       }
 
-      if (membership.role === "ATTENDEE") {
-        return { error: "You do not have permission to view this page" };
+      if (membership.role === 'ATTENDEE') {
+        return { error: 'You do not have permission to view this page' };
       }
 
       return { success: event };
-    } catch (error) {
-      return { error: "Unable to get invites." };
+    } catch {
+      return { error: 'Unable to get invites.' };
     }
   }
 );
@@ -74,7 +75,7 @@ export async function createInvite({
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
-      return { error: "User not found" };
+      return { error: 'User not found' };
     }
 
     const membership = await db.membership.findFirst({
@@ -84,8 +85,8 @@ export async function createInvite({
       },
     });
 
-    if (!membership || membership.role === "ATTENDEE") {
-      return { error: "You do not have permission to create invites." };
+    if (!membership || membership.role === 'ATTENDEE') {
+      return { error: 'You do not have permission to create invites.' };
     }
 
     await db.invite.create({
@@ -98,19 +99,22 @@ export async function createInvite({
         maxUses: uses,
       },
     });
-    revalidatePath("/");
+    revalidatePath('/');
 
     const queryDefinition = getInviteQuery(eventId);
     pusherServer.trigger(
       queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
-    return { success: "Invite Created" };
+    return { success: 'Invite Created' };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to create invite." };
+    log.error('Failed to create invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+    return { error: 'Unable to create invite.' };
   }
 }
 
@@ -119,7 +123,7 @@ export async function deleteInvite(id: string) {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
-      return { error: "User not found" };
+      return { error: 'User not found' };
     }
 
     const invite = await db.invite.findUnique({
@@ -136,32 +140,35 @@ export async function deleteInvite(id: string) {
     });
 
     if (!invite) {
-      return { error: "Invite not found." };
+      return { error: 'Invite not found.' };
     }
 
     const membership = invite.event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!membership || membership.role === "ATTENDEE") {
-      return { error: "You do not have permission to delete this invite." };
+    if (!membership || membership.role === 'ATTENDEE') {
+      return { error: 'You do not have permission to delete this invite.' };
     }
 
     await db.invite.delete({ where: { id: id } });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const queryDefinition = getInviteQuery(invite.eventId);
     pusherServer.trigger(
       queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
-    return { success: "Invite Deleted" };
+    return { success: 'Invite Deleted' };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to delete invite." };
+    log.error('Failed to delete invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+    return { error: 'Unable to delete invite.' };
   }
 }
 
@@ -170,7 +177,7 @@ export async function deleteInvites(ids: string[]) {
     const { userId }: { userId: string | null } = await auth();
 
     if (!userId) {
-      return { error: "User not found" };
+      return { error: 'User not found' };
     }
 
     const invites = await db.invite.findMany({
@@ -187,32 +194,35 @@ export async function deleteInvites(ids: string[]) {
     });
 
     if (!invites) {
-      return { error: "Invites not found." };
+      return { error: 'Invites not found.' };
     }
 
     const membership = invites[0].event.memberships.find(
-      (membership) => membership.personId === userId
+      membership => membership.personId === userId
     );
 
-    if (!membership || membership.role === "ATTENDEE") {
-      return { error: "You do not have permission to delete these invites." };
+    if (!membership || membership.role === 'ATTENDEE') {
+      return { error: 'You do not have permission to delete these invites.' };
     }
 
     await db.invite.deleteMany({ where: { id: { in: ids } } });
 
-    revalidatePath("/");
+    revalidatePath('/');
 
     const queryDefinition = getInviteQuery(invites[0].eventId);
     pusherServer.trigger(
       queryDefinition.pusherChannel,
       queryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
-    return { success: "Invites Deleted" };
+    return { success: 'Invites Deleted' };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to delete invites." };
+    log.error('Failed to delete invites', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+    return { error: 'Unable to delete invites.' };
   }
 }
 
@@ -235,7 +245,7 @@ export async function acceptInvite({
 
     // check if invite exists
     if (!invite) {
-      return { error: "Invite does not exist" };
+      return { error: 'Invite does not exist' };
     }
 
     // check if invite has expired
@@ -243,12 +253,12 @@ export async function acceptInvite({
       invite.expiresAt !== null &&
       new Date().getTime() > invite.expiresAt.getTime()
     ) {
-      return { error: "Invite has expired" };
+      return { error: 'Invite has expired' };
     }
 
     // check if invite is out of uses
     if (invite.usesRemaining !== null && invite.usesRemaining < 1) {
-      return { error: "Invite is out of uses" };
+      return { error: 'Invite is out of uses' };
     }
 
     // check if membership exists
@@ -261,7 +271,7 @@ export async function acceptInvite({
 
     // if membership does not already exist
     if (currentMembership) {
-      return { error: "Membership already exists" };
+      return { error: 'Membership already exists' };
     }
 
     // create membership
@@ -272,7 +282,11 @@ export async function acceptInvite({
       },
     });
 
-    console.log(mem);
+    log.info('Membership created successfully', {
+      membershipId: mem.id,
+      personId: mem.personId,
+      eventId: mem.eventId,
+    });
 
     // decrement remaining uses
     await db.invite.update({
@@ -284,24 +298,27 @@ export async function acceptInvite({
     pusherServer.trigger(
       inviteQueryDefinition.pusherChannel,
       inviteQueryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
     const eventQueryDefinition = getEventQuery(invite.eventId);
     pusherServer.trigger(
       eventQueryDefinition.pusherChannel,
       eventQueryDefinition.pusherEvent,
-      { message: "Data updated" }
+      { message: 'Data updated' }
     );
 
     await createEventModNotifs({
       eventId: invite.eventId,
-      type: "USER_JOINED",
+      type: 'USER_JOINED',
     });
 
-    return { success: "Invite successfully used" };
+    return { success: 'Invite successfully used' };
   } catch (error) {
-    console.log(error);
-    return { error: "Unable to use invite." };
+    log.error('Failed to accept invite', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+    return { error: 'Unable to use invite.' };
   }
 }

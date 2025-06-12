@@ -1,13 +1,13 @@
-"use client";
-import { useInvites } from "@/data/invite-hooks";
-import { CreatedByInvite } from "@/types";
-import { LayoutGroup, motion } from "framer-motion";
-import { useState } from "react";
-import { AddInvite } from "./add-invite";
-import { DeleteInvites } from "./delete-invites";
-import { Icons } from "./icons";
-import { InviteLinkCard } from "./invite-link-card";
-import { Checkbox } from "./ui/checkbox";
+'use client';
+import { useInvites } from '@/data/invite-hooks';
+import { CreatedByInvite } from '@/types';
+import { LayoutGroup, motion } from 'framer-motion';
+import { useState } from 'react';
+import { AddInvite } from './add-invite';
+import { DeleteInvites } from './delete-invites';
+import { Icons } from './icons';
+import { InviteLinkCard } from './invite-link-card';
+import { Checkbox } from './ui/checkbox';
 
 const container = {
   hidden: { opacity: 0 },
@@ -34,23 +34,23 @@ export function InviteCardList({ eventId }: { eventId: string }) {
   const [selectedInvites, setSelectedInvites] = useState<string[]>([]);
 
   const valid = invites.filter(
-    (invite) =>
+    invite =>
       (!invite.expiresAt ||
         invite.expiresAt.getTime() > new Date().getTime()) &&
       (invite.usesRemaining === null || invite.usesRemaining > 0)
   );
 
   const expired = invites.filter(
-    (invite) =>
+    invite =>
       (invite.expiresAt && invite.expiresAt.getTime() < new Date().getTime()) ||
       (invite.usesRemaining !== null && invite.usesRemaining === 0)
   );
 
   return (
     <div>
-      <div className="flex items-center mt-4 gap-4 flex-wrap">
-        <h1 className="font-heading font-medium text-4xl">Invites</h1>
-        <div className="flex items-center gap-2">
+      <div className='flex items-center mt-4 gap-4 flex-wrap'>
+        <h1 className='font-heading font-medium text-4xl'>Invites</h1>
+        <div className='flex items-center gap-2'>
           <AddInvite eventId={eventId} />
           <DeleteInvites
             selectedInvites={selectedInvites}
@@ -58,15 +58,15 @@ export function InviteCardList({ eventId }: { eventId: string }) {
           />
         </div>
       </div>
-      <div className="flex items-center gap-2 ml-2 mt-4">
+      <div className='flex items-center gap-2 ml-2 mt-4'>
         <Checkbox
-          className="size-6 hover:bg-primary transition-all"
-          checked={valid.every((invite) => selectedInvites.includes(invite.id))}
+          className='size-6 hover:bg-primary transition-all'
+          checked={valid.every(invite => selectedInvites.includes(invite.id))}
           onCheckedChange={() => {
-            if (valid.every((invite) => selectedInvites.includes(invite.id))) {
+            if (valid.every(invite => selectedInvites.includes(invite.id))) {
               setSelectedInvites([]);
             } else {
-              setSelectedInvites(valid.map((invite) => invite.id));
+              setSelectedInvites(valid.map(invite => invite.id));
             }
           }}
         />
@@ -76,13 +76,13 @@ export function InviteCardList({ eventId }: { eventId: string }) {
           }}
         >
           <div>
-            <div className="flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground">
-              <h1 className="font-heading text-2xl ">Valid ({valid.length})</h1>
-              <div className="size-6">
+            <div className='flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground'>
+              <h1 className='font-heading text-2xl '>Valid ({valid.length})</h1>
+              <div className='size-6'>
                 {showValid ? (
-                  <Icons.up className="w-full h-full" />
+                  <Icons.up className='w-full h-full' />
                 ) : (
-                  <Icons.down className="w-full h-full" />
+                  <Icons.down className='w-full h-full' />
                 )}
               </div>
             </div>
@@ -91,13 +91,13 @@ export function InviteCardList({ eventId }: { eventId: string }) {
       </div>
       {showValid && (
         <motion.div
-          initial="hidden"
-          animate="show"
+          initial='hidden'
+          animate='show'
           variants={container}
-          className="flex flex-col gap-2 py-4"
+          className='flex flex-col gap-2 py-4'
         >
           <LayoutGroup>
-            {valid.map((invite) => (
+            {valid.map(invite => (
               <motion.div layout key={invite.id} variants={item}>
                 <InviteLinkCard
                   selectedInvites={selectedInvites}
@@ -109,20 +109,18 @@ export function InviteCardList({ eventId }: { eventId: string }) {
           </LayoutGroup>
         </motion.div>
       )}
-      <div className="flex items-center gap-2 ml-2 mt-4">
+      <div className='flex items-center gap-2 ml-2 mt-4'>
         <Checkbox
-          className="size-6 hover:bg-primary transition-all"
+          className='size-6 hover:bg-primary transition-all'
           checked={
             expired.length > 0 &&
-            expired.every((invite) => selectedInvites.includes(invite.id))
+            expired.every(invite => selectedInvites.includes(invite.id))
           }
           onCheckedChange={() => {
-            if (
-              expired.every((invite) => selectedInvites.includes(invite.id))
-            ) {
+            if (expired.every(invite => selectedInvites.includes(invite.id))) {
               setSelectedInvites([]);
             } else {
-              setSelectedInvites(expired.map((invite) => invite.id));
+              setSelectedInvites(expired.map(invite => invite.id));
             }
           }}
         />
@@ -132,15 +130,15 @@ export function InviteCardList({ eventId }: { eventId: string }) {
           }}
         >
           <div>
-            <div className="flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground">
-              <h1 className="font-heading text-2xl ">
+            <div className='flex items-center gap-1 transition-all text-muted-foreground hover:text-accent-foreground'>
+              <h1 className='font-heading text-2xl '>
                 Expired ({expired.length})
               </h1>
-              <div className="size-6">
+              <div className='size-6'>
                 {showExpired ? (
-                  <Icons.up className="w-full h-full" />
+                  <Icons.up className='w-full h-full' />
                 ) : (
-                  <Icons.down className="w-full h-full" />
+                  <Icons.down className='w-full h-full' />
                 )}
               </div>
             </div>
@@ -149,13 +147,13 @@ export function InviteCardList({ eventId }: { eventId: string }) {
       </div>
       {showExpired && (
         <motion.div
-          initial="hidden"
-          animate="show"
+          initial='hidden'
+          animate='show'
           variants={container}
-          className="flex flex-col gap-2 py-4"
+          className='flex flex-col gap-2 py-4'
         >
           <LayoutGroup>
-            {expired.map((invite) => (
+            {expired.map(invite => (
               <motion.div variants={item} key={invite.id}>
                 <InviteLinkCard
                   selectedInvites={selectedInvites}

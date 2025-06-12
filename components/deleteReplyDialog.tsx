@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   DialogClose,
   DialogContent,
@@ -6,29 +6,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { deleteReply } from "@/lib/actions/reply";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from '@/components/ui/dialog';
+import { deleteReply } from '@/lib/actions/reply';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
 
-async function removeReply({ id, toast }: { id: string; toast: any }) {
+async function removeReply({ id }: { id: string }) {
   const res = await deleteReply({ id });
   if (res.success) {
-    toast({
-      title: "Post deleted",
-      description: "The post has been deleted.",
-    });
+    toast.success('The reply has been deleted.');
   } else {
-    toast({
-      title: "Uh oh!",
-      description: "The post could not be deleted.",
-      variant: "destructive",
-    });
+    toast.error('The reply could not be deleted.');
   }
 }
 
 export function DeleteReplyDialog({ id }: { id: string }) {
-  const { toast } = useToast();
   return (
     <DialogContent>
       <DialogHeader>
@@ -39,16 +31,16 @@ export function DeleteReplyDialog({ id }: { id: string }) {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <div className="flex items-center justify-end gap-2">
+        <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
               onClick={() => {
-                removeReply({ id, toast });
+                removeReply({ id });
               }}
-              variant="destructive"
+              variant='destructive'
             >
               Delete
             </Button>
