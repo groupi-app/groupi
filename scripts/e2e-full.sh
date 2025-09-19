@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Start the database
+# Load environment variables from the web app's .env.local
+export $(grep -v '^#' apps/web/.env.local | xargs)
+
+# Start the database (Supabase local stack)
 npm run dev:db
 
-# Wait for PostgreSQL to be ready on port 6500
-until nc -z localhost 6500; do
-  echo "Waiting for PostgreSQL on localhost:6500..."
+# Wait for PostgreSQL to be ready on Supabase default port 54322
+until nc -z localhost 54322; do
+  echo "Waiting for PostgreSQL on localhost:54322..."
   sleep 1
 done
-echo "PostgreSQL is ready on localhost:6500"
+echo "PostgreSQL is ready on localhost:54322"
 
 # Start the Next.js development server
 npm run dev:next &
@@ -19,7 +22,7 @@ npx wait-on http://localhost:3000
 CYPRESS_DATABASE_URL="$DATABASE_URL" npx cypress run --e2e
 
 # Cleanup
-docker compose down
+npm run dev:db:stop
 npm run next:stop
 
 # Kill the background Next.js process if it's still running

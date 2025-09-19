@@ -1,9 +1,14 @@
 // prettier-ignore
 import 'tsconfig-paths/register';
+import { config } from 'dotenv';
+import { resolve } from 'path';
 import { seedUsers as users } from '../data/seed-users';
-import { db } from '../lib/db';
+import { db } from '../packages/services/src/db';
 import { createClerkClient } from '@clerk/backend'; // Import createClerkClient
-import { createLogger } from '../lib/logger';
+import { createLogger } from '../packages/services/src/logger';
+
+// Load environment variables from the web app's .env.local
+config({ path: resolve(process.cwd(), 'apps/web/.env.local') });
 
 const logger = createLogger('seed-users');
 
@@ -49,7 +54,7 @@ export default async function seedUsers() {
     // Wait a bit to ensure Clerk has processed the deletions
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const people = [];
+    const people: any[] = [];
     logger.info(`Creating ${users.length} new users...`);
 
     for (const [index, user] of users.entries()) {

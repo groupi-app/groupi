@@ -1,34 +1,170 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Groupi
 
-## Getting Started
+A modern event planning and group coordination platform built with Next.js, React Native, and a monorepo architecture.
 
-First, run the development server:
+## Development Workflow
+
+### Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start development environment (web app + package watches + Prisma Studio)
+pnpm dev
+
+# Start full development environment (includes database and ngrok)
+pnpm dev:full
+```
+
+### Monorepo Development
+
+This project uses a monorepo structure with the following packages:
+
+- `@groupi/web` - Next.js web application
+- `@groupi/hooks` - React hooks for data fetching
+- `@groupi/services` - Server-side business logic
+- `@groupi/schema` - TypeScript types and DTOs
+- `@groupi/ui` - Shared UI components
+
+#### Development Modes
+
+**Option 1: Basic Development Mode (Recommended)**
+
+```bash
+# Start web app, Prisma Studio, and package watches
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Option 2: Full Development Mode**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start everything: web app, Supabase (local Postgres + services), Prisma Studio, ngrok, and package watches
+pnpm dev:full
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+**Option 3: Individual Services**
 
-## Learn More
+```bash
+# Start just the web app
+turbo dev --filter=@groupi/web
 
-To learn more about Next.js, take a look at the following resources:
+# Watch all packages for changes
+pnpm dev:watch
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start database (Supabase local stack)
+pnpm dev:db
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+# Start Prisma Studio
+pnpm dev:prisma
+```
 
-## Deploy on Vercel
+**Option 4: Manual Rebuild**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# When you make changes to packages, rebuild them
+pnpm build --filter=@groupi/hooks
+pnpm build --filter=@groupi/schema
+# etc.
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Package Development
+
+When working on packages:
+
+1. **Make changes** to source files in `packages/*/src/`
+2. **Watch mode** automatically rebuilds on file changes
+3. **Next.js** picks up the changes and hot reloads
+4. **TypeScript** provides full type safety across packages
+
+### Available Scripts
+
+```bash
+# Development
+pnpm dev              # Start web app with all services
+pnpm dev:watch        # Watch all packages for changes
+pnpm dev:prisma       # Start Prisma Studio
+pnpm dev:db           # Start database
+
+# Building
+pnpm build            # Build all packages
+pnpm build --filter=@groupi/hooks  # Build specific package
+
+# Code Quality
+pnpm lint             # Lint all packages
+pnpm lint:fix         # Fix linting issues
+pnpm format           # Format code
+pnpm type-check       # Type check all packages
+
+# Database
+pnpm migrate          # Run database migrations
+pnpm generate         # Generate Prisma client
+pnpm seed-users       # Seed test users
+```
+
+## Architecture
+
+### Package Structure
+
+```
+packages/
+├── hooks/          # React hooks for data fetching
+├── schema/         # TypeScript types and DTOs
+├── services/       # Server-side business logic
+└── ui/            # Shared UI components
+
+apps/
+└── web/           # Next.js web application
+```
+
+### Data Flow
+
+1. **Schema** defines types and DTOs
+2. **Services** implement business logic using schema types
+3. **Hooks** provide React-friendly data fetching using services
+4. **UI** components use hooks for data and schema for types
+5. **Web app** orchestrates everything together
+
+### Type Safety
+
+All packages use proper TypeScript DTOs instead of `any`:
+
+- `PostPageDTO` - For post page display
+- `PostReplyFeedDTO` - For reply feed functionality
+- `PostCardDTO` - For post cards and feeds
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `pnpm install`
+3. Set up environment variables (see `.env.example`)
+4. Start development: `pnpm dev`
+
+This will automatically:
+
+- Start the web app
+- Start Prisma Studio
+- Watch all packages for changes
+
+For full development environment (including database and ngrok):
+
+```bash
+pnpm dev:full
+```
+
+**Note**: The full development mode requires:
+
+- Supabase CLI installed (for local Postgres stack)
+- Ngrok authtoken configured for webhooks
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk
+- **Styling**: Tailwind CSS
+- **State Management**: TanStack Query
+- **Monorepo**: Turborepo with pnpm workspaces
+- **Real-time**: Pusher
+- **Testing**: Cypress for E2E

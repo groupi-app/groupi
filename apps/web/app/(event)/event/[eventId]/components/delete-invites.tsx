@@ -1,0 +1,98 @@
+'use client';
+
+// Migrated from server actions to tRPC hooks
+import { useDeleteManyInvites } from '@groupi/hooks';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
+
+export function DeleteInvites({
+  selectedInvites,
+  setSelectedInvites,
+}: {
+  selectedInvites: string[];
+  setSelectedInvites: (invites: string[]) => void;
+}) {
+  // Use our new tRPC hook with integrated real-time sync
+  const deleteInvitesMutation = useDeleteManyInvites();
+
+  const handleDeleteInvites = () => {
+    deleteInvitesMutation.mutate(
+      { inviteIds: selectedInvites },
+      {
+        onSuccess: ([error, _result]: [any, any]) => {
+          if (error) {
+            toast.error('Failed to delete invites', {
+              description:
+                'The invites could not be deleted. Please try again.',
+            });
+            return;
+          }
+
+          toast.success('Invites Deleted', {
+            description: 'The invites have been successfully deleted.',
+          });
+          setSelectedInvites([]);
+        },
+        onError: () => {
+          toast.error('Failed to delete invites', {
+            description: 'An unexpected error occurred. Please try again.',
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button disabled={!selectedInvites.length} variant='destructive'>
+          Delete {selectedInvites.length} Invite
+          {selectedInvites.length === 1 ? '' : 's'}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            Delete {selectedInvites.length} Invite
+            {selectedInvites.length === 1 ? '' : 's'}{' '}
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete the selected invites? This action
+            cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <div className='flex gap-4 justify-end'>
+            <DialogClose>
+              <Button
+                variant='ghost'
+                disabled={deleteInvitesMutation.isLoading}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button
+                onClick={handleDeleteInvites}
+                disabled={deleteInvitesMutation.isLoading}
+                variant='destructive'
+              >
+                {deleteInvitesMutation.isLoading ? 'Deleting...' : 'Delete'}
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

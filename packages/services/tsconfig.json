@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "types": ["node"],
+    "module": "ESNext",
+    "downlevelIteration": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@groupi/ui": ["../ui/src"],
+      "@groupi/ui/*": ["../ui/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    {
+      "path": "../schema"
+    },
+    {
+      "path": "../ui"
+    }
+  ]
+}

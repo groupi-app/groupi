@@ -1,0 +1,75 @@
+export interface QueryDefinition {
+  queryKey: string;
+  pusherChannel: string;
+  pusherEvent: string;
+}
+
+export const getEventQuery: (eventId: string) => QueryDefinition = (
+  eventId: string
+) => {
+  return {
+    queryKey: `eventData__${eventId}`,
+    pusherChannel: `event__${eventId}`,
+    pusherEvent: 'update_event_data',
+  };
+};
+
+export const getPostQuery: (postId: string) => QueryDefinition = (
+  postId: string
+) => {
+  return {
+    queryKey: `postData__${postId}`,
+    pusherChannel: `post__${postId}`,
+    pusherEvent: 'update_post_data',
+  };
+};
+
+export const getInviteQuery: (eventId: string) => QueryDefinition = (
+  eventId: string
+) => {
+  return {
+    queryKey: `inviteData__${eventId}`,
+    pusherChannel: `invite__${eventId}`,
+    pusherEvent: 'update_invite_data',
+  };
+};
+
+export const getPersonQuery: (personId: string) => QueryDefinition = (
+  personId: string
+) => {
+  return {
+    queryKey: `personData__${personId}`,
+    pusherChannel: `person__${personId}`,
+    pusherEvent: 'update_person_data',
+  };
+};
+
+export const getPDTQuery: (eventId: string) => QueryDefinition = (
+  eventId: string
+) => {
+  return {
+    queryKey: `pdtData__${eventId}`,
+    pusherChannel: `pdt__${eventId}`,
+    pusherEvent: 'update_pdt_data',
+  };
+};
+
+export const getNotificationQuery: (userId: string) => QueryDefinition = (
+  userId: string
+) => {
+  return {
+    queryKey: `notificationData__${userId}`,
+    pusherChannel: `notification__${userId}`,
+    pusherEvent: 'update_notification_data',
+  };
+};
+
+export const getSettingsQuery: (userId: string) => QueryDefinition = (
+  userId: string
+) => {
+  return {
+    queryKey: `settingsData__${userId}`,
+    pusherChannel: `settings__${userId}`,
+    pusherEvent: 'update_settings_data',
+  };
+};
