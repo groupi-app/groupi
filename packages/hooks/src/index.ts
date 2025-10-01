@@ -39,8 +39,6 @@ export { useEventChangeDateMulti } from './queries/pages/event-change-date-multi
 export {
   useCreateEvent,
   useUpdateEventDetails,
-  useUpdateEventDateTime,
-  useUpdateEventPotentialDateTimes,
   useDeleteEvent,
   useLeaveEvent,
 } from './mutations/event';
@@ -59,7 +57,6 @@ export {
 export {
   useCreateInvite,
   useDeleteInvite,
-  useDeleteManyInvites,
   useAcceptInvite,
 } from './mutations/invite';
 
@@ -68,9 +65,6 @@ export {
   useMarkNotificationAsRead,
   useMarkNotificationAsUnread,
   useMarkAllNotificationsAsRead,
-  useDeleteNotification,
-  useDeleteAllNotifications,
-  useMarkEventNotificationsAsRead,
 } from './mutations/notification';
 
 // Availability mutations
@@ -84,6 +78,13 @@ export { useUpdateUserSettings } from './mutations/settings';
 // Alias for backward compatibility
 export { useUpdateUserSettings as useUpdateDefaultNotifMethod } from './mutations/settings';
 
+// Membership mutations
+export {
+  useRemoveMember,
+  useUpdateMemberRole,
+  useUpdateRSVP,
+} from './mutations/membership';
+
 // ============================================================================
 // REAL-TIME UTILITIES
 // ============================================================================
@@ -94,5 +95,9 @@ export { useSupabaseRealtime } from './realtime/use-supabase-realtime';
 // CLIENTS
 // ============================================================================
 
-export { api } from './clients/trpc-client';
+export {
+  api,
+  createTRPCClient,
+  createQueryClient,
+} from './clients/trpc-client';
 export { getSupabaseClient } from './clients/supabase-client';

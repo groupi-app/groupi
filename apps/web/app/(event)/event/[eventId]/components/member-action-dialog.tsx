@@ -58,7 +58,7 @@ export function MemberActionDialog({
     } else if (action === MemberAction.DEMOTE) {
       updateMemberRoleMutation.mutate(
         {
-          memberId: member.id,
+          membershipId: member.id,
           role: 'ATTENDEE',
         },
         {
@@ -86,7 +86,7 @@ export function MemberActionDialog({
     } else if (action === MemberAction.PROMOTE) {
       updateMemberRoleMutation.mutate(
         {
-          memberId: member.id,
+          membershipId: member.id,
           role: 'MODERATOR',
         },
         {

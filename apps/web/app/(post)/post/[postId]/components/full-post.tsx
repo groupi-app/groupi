@@ -27,13 +27,13 @@ export function FullPost({ postId }: { postId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'PostNotFoundError':
+      case 'NotFoundError':
         return (
           <div className='text-center py-8'>
             <h1 className='text-2xl font-bold text-red-600'>Post not found</h1>
           </div>
         );
-      case 'PostUserNotMemberError':
+      case 'UnauthorizedError':
         return (
           <div className='text-center py-8'>
             <h1 className='text-2xl font-bold text-red-600'>
@@ -64,7 +64,7 @@ export function FullPost({ postId }: { postId: string }) {
           className='flex items-center gap-2 hover:cursor-pointer hover:opacity-80'
           href={`/event/${post.event.id}`}
         >
-          <Icons.arrowLeft className='w-4 h-4' />
+          <Icons.back className='w-4 h-4' />
           <span>Back to {post.event.title}</span>
         </Link>
         <div className='flex items-center gap-2'>
@@ -97,11 +97,7 @@ export function FullPost({ postId }: { postId: string }) {
                   </DialogTrigger>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DeletePostDialog
-                eventId={post.event.id}
-                postId={postId}
-                title={post.title}
-              />
+              <DeletePostDialog id={postId} />
             </Dialog>
           )}
         </div>
@@ -114,7 +110,8 @@ export function FullPost({ postId }: { postId: string }) {
             </div>
             <div className='flex-1'>
               <p className='text-sm font-medium'>
-                {getFullName(author) || author.username}
+                {getFullName(author.firstName, author.lastName) ||
+                  author.username}
               </p>
               <p className='text-xs text-muted-foreground'>
                 {new Date(post.createdAt).toLocaleString()}
@@ -134,8 +131,8 @@ export function FullPost({ postId }: { postId: string }) {
         </div>
         <div className='px-6 py-4 border-t mt-6'>
           <div className='flex items-center text-sm text-muted-foreground'>
-            <Icons.message className='w-4 h-4 mr-1' />
-            <span>{post._count.replies} replies</span>
+            <Icons.reply className='w-4 h-4 mr-1' />
+            <span>{post.replies.length} replies</span>
           </div>
         </div>
       </div>

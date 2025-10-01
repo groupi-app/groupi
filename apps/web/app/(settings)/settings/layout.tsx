@@ -4,7 +4,6 @@ import { SettingsNav } from './components/settings-nav';
 import ErrorPage from '@/components/error';
 import { SettingsFormProvider } from './components/settings-form-provider';
 import { SettingsForm } from './components/settings-form';
-import { UserNotificationSettingsDTO } from '@groupi/schema';
 import { auth } from '@clerk/nextjs/server';
 import { ReactNode } from 'react';
 
@@ -19,15 +18,14 @@ export default async function SettingsLayout({
     return <ErrorPage message='User not authenticated' />;
   }
 
-  const [error, settingsData] = await fetchUserSettings(userId);
+  const [error, settingsData] = await fetchUserSettings({ userId });
 
   if (error || !settingsData) {
     return <ErrorPage message='Unable to load user settings' />;
   }
 
   // Transform database data to only include form-editable fields
-  type NotificationMethod =
-    UserNotificationSettingsDTO['notificationMethods'][number];
+  type NotificationMethod = (typeof settingsData.notificationMethods)[number];
   type Notification = NotificationMethod['notifications'][number];
 
   const transformedData = {

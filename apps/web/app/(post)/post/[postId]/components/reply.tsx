@@ -5,7 +5,7 @@ import { useUpdateReply } from '@groupi/hooks';
 import { cn, formatDate } from '@/lib/utils';
 import { Member } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RoleType, type Reply } from '@groupi/schema';
+import { RoleType, type PostDetailDTO } from '@groupi/schema';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -43,7 +43,7 @@ export default function ReplyComponent({
   userRole,
   eventDateTime,
 }: {
-  reply: Reply;
+  reply: PostDetailDTO['replies'][0];
   member: Member | undefined;
   userId: string;
   userRole: RoleType;
@@ -61,7 +61,7 @@ export default function ReplyComponent({
       reply: reply.text,
     },
   });
-  const isMe = userId === reply.authorId;
+  const isMe = userId === reply.author.id;
   const canDelete =
     isMe || userRole === 'MODERATOR' || userRole === 'ORGANIZER';
 

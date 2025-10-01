@@ -1,7 +1,7 @@
 'use client';
 
 // Migrated from server actions to tRPC hooks
-import { useDeleteManyInvites } from '@groupi/hooks';
+import { useDeleteInvite } from '@groupi/hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,34 +22,24 @@ export function DeleteInvites({
   selectedInvites: string[];
   setSelectedInvites: (invites: string[]) => void;
 }) {
-  // Use our new tRPC hook with integrated real-time sync
-  const deleteInvitesMutation = useDeleteManyInvites();
+  // Use our tRPC hook with integrated real-time sync
+  const deleteInvite = useDeleteInvite();
 
-  const handleDeleteInvites = () => {
-    deleteInvitesMutation.mutate(
-      { inviteIds: selectedInvites },
-      {
-        onSuccess: ([error, _result]: [any, any]) => {
-          if (error) {
-            toast.error('Failed to delete invites', {
-              description:
-                'The invites could not be deleted. Please try again.',
-            });
-            return;
-          }
-
-          toast.success('Invites Deleted', {
-            description: 'The invites have been successfully deleted.',
-          });
-          setSelectedInvites([]);
-        },
-        onError: () => {
-          toast.error('Failed to delete invites', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
+  const handleDeleteInvites = async () => {
+    try {
+      for (const inviteId of selectedInvites) {
+        const [error] = await deleteInvite.mutateAsync(inviteId);
+        if (error) throw error;
       }
-    );
+      toast.success('Invites Deleted', {
+        description: 'The invites have been successfully deleted.',
+      });
+      setSelectedInvites([]);
+    } catch (_err) {
+      toast.error('Failed to delete invites', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+    }
   };
 
   return (
@@ -74,20 +64,17 @@ export function DeleteInvites({
         <DialogFooter>
           <div className='flex gap-4 justify-end'>
             <DialogClose>
-              <Button
-                variant='ghost'
-                disabled={deleteInvitesMutation.isLoading}
-              >
+              <Button variant='ghost' disabled={deleteInvite.isLoading}>
                 Cancel
               </Button>
             </DialogClose>
             <DialogClose asChild>
               <Button
                 onClick={handleDeleteInvites}
-                disabled={deleteInvitesMutation.isLoading}
+                disabled={deleteInvite.isLoading}
                 variant='destructive'
               >
-                {deleteInvitesMutation.isLoading ? 'Deleting...' : 'Delete'}
+                {deleteInvite.isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </DialogClose>
           </div>

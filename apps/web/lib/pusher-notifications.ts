@@ -1,7 +1,7 @@
 import * as PusherPushNotifications from '@pusher/push-notifications-web';
 import { useUser } from '@clerk/nextjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { notificationLogger } from '@/lib/logger';
+import { pusherLogger } from './logger';
 
 declare global {
   interface Window {
@@ -82,7 +82,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
         beamsClientRef.current = client;
         return client;
       } catch (error) {
-        notificationLogger.error('Failed to initialize Pusher Beams client', {
+        pusherLogger.error('Failed to initialize Pusher Beams client', {
           error,
         });
         hasInitialized.current = false;
@@ -113,7 +113,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
     try {
       // Check if device already has a user ID set
       const existingUserId = await client.getUserId();
-      notificationLogger.debug('Checking existing user ID', { existingUserId });
+      pusherLogger.debug('Checking existing user ID', { existingUserId });
 
       if (existingUserId === user.id) {
         // Device is already registered to this user
@@ -126,12 +126,12 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
           otherUserId: undefined,
           error: undefined,
         }));
-        notificationLogger.info('✅ Existing subscription found for user', {
+        pusherLogger.info('✅ Existing subscription found for user', {
           userId: user.id,
         });
       } else if (existingUserId) {
         // Device is registered to a different user - don't clear, just warn
-        notificationLogger.warn('Device registered to different user', {
+        pusherLogger.warn('Device registered to different user', {
           existingUserId,
           currentUserId: user.id,
         });
@@ -143,7 +143,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
           isRegistered: false,
           isSubscribed: false,
         }));
-        notificationLogger.warn(
+        pusherLogger.warn(
           'Warning: Device has subscription for different user'
         );
       } else {
@@ -154,12 +154,10 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
           hasOtherUserSubscription: false,
           otherUserId: undefined,
         }));
-        notificationLogger.debug('No existing subscription found');
+        pusherLogger.debug('No existing subscription found');
       }
     } catch (error) {
-      notificationLogger.error('Failed to check existing subscription', {
-        error,
-      });
+      pusherLogger.error('Failed to check existing subscription', { error });
       setState(prev => ({ ...prev, isCheckingExisting: false }));
     }
   }, [state.isSupported, initializeBeamsClient, user?.id]);
@@ -173,7 +171,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
       return;
     }
 
-    notificationLogger.info('Starting Pusher Beams for user', {
+    pusherLogger.info('Starting Pusher Beams for user', {
       userId: user.id,
     });
 
@@ -186,7 +184,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
       // Check if there's an existing user subscription that needs to be overridden
       const existingUserId = await client.getUserId();
       if (existingUserId && existingUserId !== user.id) {
-        notificationLogger.warn('Overriding existing subscription', {
+        pusherLogger.warn('Overriding existing subscription', {
           existingUserId,
           newUserId: user.id,
         });
@@ -194,16 +192,16 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
         await client.clearAllState();
       }
 
-      notificationLogger.debug('Starting Pusher Beams client');
+      pusherLogger.debug('Starting Pusher Beams client');
       await client.start();
-      notificationLogger.debug('Pusher Beams client started successfully');
+      pusherLogger.debug('Pusher Beams client started successfully');
 
-      notificationLogger.debug('Setting user ID for Pusher Beams', {
+      pusherLogger.debug('Setting user ID for Pusher Beams', {
         userId: user.id,
       });
       await client.setUserId(user.id, {
         fetchToken: async () => {
-          notificationLogger.debug('Fetching Pusher Beams auth token');
+          pusherLogger.debug('Fetching Pusher Beams auth token');
           const response = await fetch('/api/pusher/beams-auth', {
             method: 'POST',
             headers: {
@@ -213,7 +211,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
 
           if (!response.ok) {
             const errorText = await response.text();
-            notificationLogger.error('Failed to fetch Pusher Beams token', {
+            pusherLogger.error('Failed to fetch Pusher Beams token', {
               status: response.status,
               errorText,
             });
@@ -223,7 +221,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
           }
 
           const data = await response.json();
-          notificationLogger.debug('Received Pusher Beams token data', {
+          pusherLogger.debug('Received Pusher Beams token data', {
             data,
           });
           return data;
@@ -239,11 +237,11 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
         error: undefined,
       }));
 
-      notificationLogger.info('Pusher Beams started successfully for user', {
+      pusherLogger.info('Pusher Beams started successfully for user', {
         userId: user.id,
       });
     } catch (error) {
-      notificationLogger.error('Failed to start Pusher Beams', { error });
+      pusherLogger.error('Failed to start Pusher Beams', { error });
       setState(prev => ({
         ...prev,
         error:
@@ -266,7 +264,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
       const deviceId = await client.getDeviceId();
 
       if (deviceId) {
-        notificationLogger.info('Clearing user association for device', {
+        pusherLogger.info('Clearing user association for device', {
           deviceId,
         });
 
@@ -285,17 +283,16 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
           otherUserId: undefined,
         }));
 
-        notificationLogger.info(
+        pusherLogger.info(
           '✅ Successfully unsubscribed from push notifications'
         );
       } else {
-        notificationLogger.debug('No device registration found to unsubscribe');
+        pusherLogger.debug('No device registration found to unsubscribe');
       }
     } catch (error) {
-      notificationLogger.error(
-        'Failed to unsubscribe from push notifications',
-        { error }
-      );
+      pusherLogger.error('Failed to unsubscribe from push notifications', {
+        error,
+      });
       setState(prev => ({
         ...prev,
         error:
@@ -316,7 +313,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
     try {
       return await client.getDeviceId();
     } catch (error) {
-      notificationLogger.error('Failed to get device ID', { error });
+      pusherLogger.error('Failed to get device ID', { error });
       return null;
     }
   }, []);

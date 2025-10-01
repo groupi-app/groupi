@@ -5,7 +5,7 @@ const defaultClientOptions: NonNullable<QueryClientConfig['defaultOptions']> = {
   queries: {
     staleTime: 30 * 1000, // 30s
     gcTime: 5 * 60 * 1000, // 5m
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       if (error && typeof error === 'object' && 'message' in error) {
         const message = (error as { message?: string }).message ?? '';
         if (

@@ -1,6 +1,5 @@
 'use client';
 import { useEventInvites } from '@groupi/hooks';
-import { CreatedByInvite } from '@/types';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useState } from 'react';
 import { AddInvite } from './add-invite';
@@ -39,13 +38,12 @@ export function InviteCardList({ eventId }: { eventId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         return <div>Event not found</div>;
-      case 'EventUserNotMemberError':
-        return <div>You are not a member of this event</div>;
       case 'UnauthorizedError':
-        return <div>You are not authorized to view invites</div>;
+        return <div>You are not a member of this event</div>;
       case 'DatabaseError':
+      case 'ConnectionError':
         return <div>Error loading invites</div>;
       default:
         return <div>An unexpected error occurred</div>;
@@ -53,7 +51,7 @@ export function InviteCardList({ eventId }: { eventId: string }) {
   }
 
   // If error is null, inviteData is guaranteed to exist
-  const { event, invites } = inviteData;
+  const { invites } = inviteData;
 
   const valid = invites.filter(
     invite =>

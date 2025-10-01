@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate, getFullName } from '@/lib/utils';
-import { Member, ReplyAuthorEventPost } from '@/types';
+import { Member } from '@/types';
 import Link from 'next/link';
 import { DeletePostDialog } from './deletePostDialog';
 import { Icons } from '@/components/icons';
@@ -15,8 +15,35 @@ import MemberIcon from '@/app/(event)/event/[eventId]/components/member-icon';
 import { PostCardContent } from './post-card-content';
 import RepliesIcons from './replies-icons';
 
+type MinimalAuthor = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string;
+  imageUrl: string;
+};
+
+type MinimalReply = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  author: MinimalAuthor;
+};
+
+type MinimalPostForCard = {
+  id: string;
+  title: string;
+  content: string;
+  author: MinimalAuthor;
+  createdAt: Date;
+  editedAt: Date | null;
+  replies: MinimalReply[];
+  authorId: string;
+  event: { memberships: Member[] };
+};
+
 interface PostCardProps {
-  postData: ReplyAuthorEventPost;
+  postData: MinimalPostForCard;
   eventDateTime: Date | null;
 }
 

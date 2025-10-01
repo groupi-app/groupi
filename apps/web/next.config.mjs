@@ -6,6 +6,7 @@ const nextConfig = {
     '@groupi/ui',
     '@groupi/hooks',
     '@groupi/schema',
+    '@groupi/api',
     '@groupi/services',
   ],
   turbopack: {

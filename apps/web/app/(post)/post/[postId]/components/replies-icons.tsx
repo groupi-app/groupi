@@ -1,9 +1,19 @@
-import { AuthorReply } from '@/types';
-import { Person } from '@prisma/client';
+type MinimalAuthor = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string;
+  imageUrl: string;
+};
+
+type MinimalReply = {
+  createdAt: Date;
+  author: MinimalAuthor;
+};
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function RepliesIcons({ replies }: { replies: AuthorReply[] }) {
-  let authors: Person[] = [];
+export default function RepliesIcons({ replies }: { replies: MinimalReply[] }) {
+  let authors: MinimalAuthor[] = [];
   replies
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .map(reply => {

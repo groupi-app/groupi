@@ -1,7 +1,7 @@
-import { NotificationWithPersonEventPost } from '@groupi/schema';
+import type { WebhookNotificationDTO } from '@groupi/schema';
 
 interface EmailTemplateProps {
-  notification: NotificationWithPersonEventPost;
+  notification: WebhookNotificationDTO;
 }
 
 export function NotificationEmailTemplate({

@@ -1,12 +1,36 @@
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../clients/trpc-client';
+import { createTRPCRouterPredicate } from '../utils/query-key-utils';
+import type {
+  ResultTuple,
+  EventHeaderDTO,
+  CreateEventParams,
+  NotFoundError,
+  UnauthorizedError,
+  DatabaseError,
+  ValidationError,
+} from '@groupi/schema';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type EventMutationError =
+  | NotFoundError
+  | UnauthorizedError
+  | DatabaseError
+  | ValidationError;
+
+// Note: Input types now imported from @groupi/schema params
+// - CreateEventInput -> CreateEventParams
 
 // ============================================================================
 // EVENT MUTATION HOOKS
 // ============================================================================
 
 /**
- * Enhanced create event hook that returns mutation status and real-time info
+ * Enhanced create event hook with clean mutation function
  */
 export function useCreateEvent() {
   const queryClient = useQueryClient();
@@ -14,22 +38,50 @@ export function useCreateEvent() {
   const mutation = api.event.create.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'person',
+        predicate: createTRPCRouterPredicate(['event', 'person']),
       });
     },
     retry: false,
   });
 
+  // Clean mutation function for components
+  const createEvent = useCallback(
+    async (
+      input: CreateEventParams,
+      callbacks?: {
+        onSuccess?: (event: EventHeaderDTO) => void;
+        onError?: (error: EventMutationError) => void;
+      }
+    ): Promise<ResultTuple<EventMutationError, EventHeaderDTO>> => {
+      try {
+        const result = await mutation.mutateAsync(input);
+        const [error, event] = result;
+
+        if (error) {
+          callbacks?.onError?.(error as EventMutationError);
+          return [error as EventMutationError, undefined];
+        }
+
+        callbacks?.onSuccess?.(event);
+        return [null, event];
+      } catch (error) {
+        const mutationError = error as EventMutationError;
+        callbacks?.onError?.(mutationError);
+        return [mutationError, undefined];
+      }
+    },
+    [mutation]
+  );
+
   return {
-    // Mutation methods and status
-    mutate: mutation.mutate,
-    mutateAsync: mutation.mutateAsync,
+    // Clean mutation function
+    createEvent,
+
+    // Mutation status
     isLoading: mutation.isPending,
     isError: mutation.isError,
     isSuccess: mutation.isSuccess,
     error: mutation.error,
-    data: mutation.data,
     reset: mutation.reset,
 
     // Real-time sync status
@@ -46,20 +98,22 @@ export function useUpdateEventDetails() {
   const mutation = api.event.updateDetails.useMutation({
     onMutate: async ({ eventId: _eventId, title, description, location }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       // Optimistic update
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'event' },
-        (old: any) => {
+        { predicate: createTRPCRouterPredicate(['event']) },
+        (old: unknown) => {
           if (!old || !Array.isArray(old) || old[0] !== null) return old;
-          const [_error, data] = old;
-          if (!data?.event) return old;
+          const [_error, data] = old as [unknown, unknown];
+          if (!data || typeof data !== 'object' || !('event' in data))
+            return old;
+          if (!data.event || typeof data.event !== 'object') return old;
           return [
             null,
             {
@@ -86,7 +140,7 @@ export function useUpdateEventDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
     },
     retry: false,
@@ -116,32 +170,37 @@ export function useUpdateEventDetails() {
 export function useUpdateEventDateTime() {
   const queryClient = useQueryClient();
 
-  const mutation = api.event.updateDateTime.useMutation({
-    onMutate: async ({ eventId: _eventId, chosenDateTime }) => {
+  // Note: updateDateTime endpoint no longer exists
+  // Use updateDetails endpoint for event modifications
+  const mutation = api.event.updateDetails.useMutation({
+    onMutate: async ({ eventId: _eventId, title, description, location }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       // Optimistic update
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'event' },
-        (old: any) => {
+        { predicate: createTRPCRouterPredicate(['event']) },
+        (old: unknown) => {
           if (!old || !Array.isArray(old) || old[0] !== null) return old;
-          const [_error, data] = old;
-          if (!data?.event) return old;
+          const [_error, data] = old as [unknown, unknown];
+          if (!data || typeof data !== 'object' || !('event' in data))
+            return old;
+          if (!data.event || typeof data.event !== 'object') return old;
           return [
             null,
             {
               ...data,
               event: {
                 ...data.event,
-                chosenDateTime: chosenDateTime
-                  ? new Date(chosenDateTime)
-                  : null,
+                // No direct dateTime arg here anymore; keep event fields stable
+                ...(title !== undefined && { title }),
+                ...(description !== undefined && { description }),
+                ...(location !== undefined && { location }),
               },
             },
           ];
@@ -159,7 +218,7 @@ export function useUpdateEventDateTime() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
     },
     retry: false,
@@ -189,11 +248,12 @@ export function useUpdateEventDateTime() {
 export function useUpdateEventPotentialDateTimes() {
   const queryClient = useQueryClient();
 
-  const mutation = api.event.updatePotentialDateTimes.useMutation({
+  // Note: updatePotentialDateTimes endpoint no longer exists
+  // This function is now non-functional
+  const mutation = api.event.updateDetails.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'availability',
+        predicate: createTRPCRouterPredicate(['event', 'availability']),
       });
     },
     retry: false,
@@ -223,23 +283,32 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   const mutation = api.event.delete.useMutation({
-    onMutate: async ({ id }) => {
+    onMutate: async ({ eventId }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       // Optimistically remove from cache
       queryClient.removeQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' &&
-          typeof query.queryKey[1] === 'object' &&
-          query.queryKey[1] !== null &&
-          'id' in query.queryKey[1] &&
-          query.queryKey[1].id === id,
+        predicate: query => {
+          const routerAndProcedure = query.queryKey[0];
+          if (
+            !Array.isArray(routerAndProcedure) ||
+            routerAndProcedure[0] !== 'event'
+          ) {
+            return false;
+          }
+          return (
+            typeof query.queryKey[1] === 'object' &&
+            query.queryKey[1] !== null &&
+            'id' in (query.queryKey[1] as Record<string, unknown>) &&
+            (query.queryKey[1] as Record<string, unknown>).id === eventId
+          );
+        },
       });
 
       return { previousQueries };
@@ -253,8 +322,7 @@ export function useDeleteEvent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'person',
+        predicate: createTRPCRouterPredicate(['event', 'person']),
       });
     },
     retry: false,
@@ -285,20 +353,18 @@ export function useLeaveEvent() {
   const queryClient = useQueryClient();
 
   const mutation = api.event.leave.useMutation({
-    onMutate: async ({ id: _id }) => {
+    onMutate: async ({ eventId: _eventId }) => {
       await queryClient.cancelQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'person',
+        predicate: createTRPCRouterPredicate(['event', 'person']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'person',
+        predicate: createTRPCRouterPredicate(['event', 'person']),
       });
 
       // Optimistically remove event queries from cache
       queryClient.removeQueries({
-        predicate: query => query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['event']),
       });
 
       return { previousQueries };
@@ -312,8 +378,7 @@ export function useLeaveEvent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'event' || query.queryKey[0] === 'person',
+        predicate: createTRPCRouterPredicate(['event', 'person']),
       });
     },
     retry: false,

@@ -3,11 +3,8 @@
 import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@clerk/nextjs';
-import {
-  trpcApi as api,
-  createTRPCClient,
-  createQueryClient,
-} from '@groupi/hooks';
+import { api } from '@groupi/hooks';
+import { createTRPCClient, createQueryClient } from '@groupi/hooks';
 
 interface TRPCProviderProps {
   children: React.ReactNode;

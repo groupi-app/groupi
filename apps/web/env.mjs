@@ -18,6 +18,7 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().min(1).startsWith('re_'),
     PUSHER_BEAMS_SECRET_KEY: z.string().min(1),
     SENTRY_AUTH_TOKEN: z.string().min(1),
+    DEBUG: z.enum(['true', 'false']).optional(),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
@@ -57,5 +58,6 @@ export const env = createEnv({
     PUSHER_BEAMS_SECRET_KEY: process.env.PUSHER_BEAMS_SECRET_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+    DEBUG: process.env.DEBUG,
   },
 });

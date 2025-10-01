@@ -25,26 +25,14 @@ export function PostEditWrapper({
   const [error, postData] = data;
 
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'PostNotFoundError':
-        errorMessage = 'Post not found';
-        break;
-      case 'PostUserNotMemberError':
-        errorMessage = 'You are not a member of this event';
-        break;
+      case 'NotFoundError':
+        return <div>Post not found</div>;
+      case 'UnauthorizedError':
+        return <div>You are not a member of this event</div>;
       default:
-        errorMessage = 'Failed to load post data';
+        return <div>Error loading post</div>;
     }
-
-    return (
-      <div className='container pt-6'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>{errorMessage}</p>
-        </div>
-      </div>
-    );
   }
 
   const { post } = postData;

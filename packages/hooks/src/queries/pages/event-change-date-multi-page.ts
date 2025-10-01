@@ -1,5 +1,5 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
 
 // ============================================================================
 // EVENT CHANGE DATE MULTI PAGE HOOK
@@ -12,8 +12,8 @@ import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
  */
 export function useEventChangeDateMulti(eventId: string) {
   // Standard tRPC query
-  const query = api.event.getChangeDateMultiPageData.useQuery(
-    { id: eventId },
+  const query = api.event.getHeaderData.useQuery(
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -34,7 +34,7 @@ export function useEventChangeDateMulti(eventId: string) {
             // Invalidate the query to refetch potential date times
             queryClient.invalidateQueries({
               queryKey: [
-                ['event', 'getChangeDateMultiPageData'],
+                ['event', 'getHeaderData'],
                 { input: { id: eventId }, type: 'query' },
               ],
             });

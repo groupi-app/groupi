@@ -1,6 +1,5 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventInvitePageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
 
 // ============================================================================
 // EVENT INVITE PAGE HOOK

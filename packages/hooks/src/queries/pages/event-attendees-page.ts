@@ -1,6 +1,7 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventAttendeesPageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import { PersonSchema } from '@groupi/schema';
+import type { EventAttendeesPageDTO, ResultTuple } from '@groupi/schema';
 
 // ============================================================================
 // EVENT ATTENDEES PAGE HOOK
@@ -14,7 +15,7 @@ import type { EventAttendeesPageResult } from '@groupi/schema';
 export function useEventAttendees(eventId: string) {
   // Standard tRPC query
   const query = api.event.getAttendeesPageData.useQuery(
-    { id: eventId },
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -44,24 +45,31 @@ export function useEventAttendees(eventId: string) {
         {
           table: 'Person',
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          filter: '',
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['event', 'getAttendeesPageData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: EventAttendeesPageResult | undefined) => {
+              (
+                oldValue:
+                  | ResultTuple<unknown, EventAttendeesPageDTO>
+                  | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
+                const parsed = PersonSchema.partial().safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const personPatch = parsed.data;
 
-                // Update person data in memberships
                 const updatedMemberships = data.event.memberships.map(
                   membership => {
-                    if (membership.person.id === payload.new?.id) {
+                    if (membership.person.id === personPatch.id) {
                       return {
                         ...membership,
-                        person: { ...membership.person, ...payload.new },
+                        person: { ...membership.person, ...personPatch },
                       };
                     }
                     return membership;
@@ -74,7 +82,7 @@ export function useEventAttendees(eventId: string) {
                     ...data,
                     event: { ...data.event, memberships: updatedMemberships },
                   },
-                ] as EventAttendeesPageResult;
+                ] as ResultTuple<unknown, EventAttendeesPageDTO>;
               }
             );
           },

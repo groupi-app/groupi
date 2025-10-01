@@ -17,6 +17,7 @@ The schema layer defines all data structures and validation rules using Zod sche
 - **ResultTuple**: A consistent pattern for returning `[error, data]` tuples
 
 #### Example Page Schema Structure:
+
 ```typescript
 // packages/schema/src/dto/event-header.ts
 export const EventHeaderDataSchema = z.object({
@@ -52,6 +53,7 @@ The service layer handles all business logic and database operations using Effec
 - **Schema Validation**: All data is validated against schemas before returning
 
 #### Service Pattern:
+
 ```typescript
 export const getEventHeaderData = async (
   eventId: string,
@@ -64,7 +66,7 @@ export const getEventHeaderData = async (
         cause => new Error(`Failed to fetch: ${cause}`),
         'operation description'
       );
-      
+
       // Validate and return ResultTuple
       const validatedResult = EventHeaderDataSchema.parse(result);
       return success(validatedResult);
@@ -73,7 +75,7 @@ export const getEventHeaderData = async (
     'operation-name',
     contextData
   );
-  
+
   return Effect.runPromise(effect);
 };
 ```
@@ -88,6 +90,7 @@ The API layer provides tRPC routers that expose service functions:
 - **Direct Service Calls**: Routers simply call service functions
 
 #### API Pattern:
+
 ```typescript
 export const eventRouter = createTRPCRouter({
   getHeaderData: protectedProcedure
@@ -108,6 +111,7 @@ The hooks layer provides React Query hooks with built-in real-time synchronizati
 - **Error Handling**: Consistent error states across all hooks
 
 #### Hook Organization:
+
 ```
 packages/hooks/src/
 ├── queries/                 # All query hooks
@@ -132,30 +136,34 @@ packages/hooks/src/
 ```
 
 #### Hook Pattern:
+
 ```typescript
 export function useEventHeader(eventId: string) {
   const query = api.event.getHeaderData.useQuery(
     { id: eventId },
-    { 
-      staleTime: 30 * 1000, 
+    {
+      staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
       retry: false, // Retries are handled by Effect layer
     }
   );
 
-  useSupabaseRealtime({
-    channel: `event-header-${eventId}`,
-    changes: [
-      {
-        table: 'Event',
-        filter: `id=eq.${eventId}`,
-        event: '*',
-        handler: ({ payload, queryClient }) => {
-          // Update cache with real-time data
+  useSupabaseRealtime(
+    {
+      channel: `event-header-${eventId}`,
+      changes: [
+        {
+          table: 'Event',
+          filter: `id=eq.${eventId}`,
+          event: '*',
+          handler: ({ payload, queryClient }) => {
+            // Update cache with real-time data
+          },
         },
-      },
-    ],
-  }, [eventId]);
+      ],
+    },
+    [eventId]
+  );
 
   return { data: query.data, isLoading: query.isLoading };
 }
@@ -170,16 +178,20 @@ Server-side prefetching for SSR and hydration:
 - **Error Resilience**: Continues rendering even if prefetch fails
 
 #### Prefetch Pattern:
+
 ```typescript
-export async function prefetchEventPageComponents(eventId: string, userId?: string) {
+export async function prefetchEventPageComponents(
+  eventId: string,
+  userId?: string
+) {
   const { helpers, queryClient } = createTRPCServerHelpers(userId);
-  
+
   await Promise.allSettled([
     helpers.event.getHeaderData.prefetch({ id: eventId }),
     helpers.event.getMemberListData.prefetch({ id: eventId }),
     helpers.event.getPostFeedData.prefetch({ id: eventId }),
   ]);
-  
+
   return dehydrate(queryClient);
 }
 ```
@@ -197,7 +209,7 @@ export default async function EventPage({ params }) {
 
   try {
     const dehydratedState = await prefetchEventPageComponents(eventId, userId);
-    
+
     return (
       <HydrationBoundary state={dehydratedState}>
         <EventHeader eventId={eventId} />
@@ -223,23 +235,27 @@ export default async function EventPage({ params }) {
 ## Key Benefits
 
 ### 1. Type Safety
+
 - End-to-end type safety from database to UI
 - Discriminated unions for exhaustive error handling
 - Zod validation ensures data integrity
 
 ### 2. Performance
+
 - Parallel data fetching reduces latency
 - Server-side rendering for instant page loads
 - Smart caching prevents unnecessary requests
 - Real-time updates without polling
 
 ### 3. Developer Experience
+
 - Consistent patterns across all pages
 - Clear separation of concerns
 - Easy to test each layer independently
 - Self-documenting code with TypeScript
 
 ### 4. Error Handling
+
 - Functional error handling with Effect
 - Type-safe error discrimination
 - Automatic Sentry integration
@@ -247,6 +263,7 @@ export default async function EventPage({ params }) {
 - Retry logic centralized in service layer (not in React Query)
 
 ### 5. Real-time Features
+
 - Automatic UI updates when data changes
 - Optimistic updates for instant feedback
 - Conflict resolution built-in
@@ -255,11 +272,14 @@ export default async function EventPage({ params }) {
 ## Page Implementations
 
 ### Data-Fetching Pages
+
 1. **Event Page** (`/event/[eventId]`)
+
    - Components: EventHeader, MemberList, PostFeed
    - Real-time: Event updates, membership changes, new posts
 
 2. **Event Subpages** - All following the same pattern:
+
    - **Invite Management** (`/event/[eventId]/invite`)
      - Components: InviteCardList
      - Real-time: Invite changes, person updates
@@ -289,14 +309,17 @@ export default async function EventPage({ params }) {
      - Real-time: Potential date time changes
 
 3. **MyEvents Page** (`/events`)
+
    - Components: EventList
    - Real-time: Event updates, membership changes
 
 4. **Post Detail Page** (`/post/[postId]`)
+
    - Components: FullPost, Replies
    - Real-time: Post edits, new replies
 
 5. **Invite Page** (`/invite/[inviteId]`)
+
    - Components: InviteDetails
    - Real-time: Not needed (invites are static)
 
@@ -305,6 +328,7 @@ export default async function EventPage({ params }) {
    - Real-time: Not needed (user-specific)
 
 ### Static/Form Pages
+
 1. **Home Page** (`/`) - Static landing page
 2. **Auth Pages** (`/sign-in`, `/sign-up`) - Handled by Clerk
 3. **New Event Pages** (`/create/*`) - Client-side forms
@@ -324,6 +348,7 @@ export default async function EventPage({ params }) {
 ## Refactoring Status
 
 All pages have been systematically refactored to follow the new architecture pattern:
+
 - ✅ Proper server-side prefetching with HydrationBoundary
 - ✅ ResultTuple error handling with discriminated unions
 - ✅ Effect services with logging and Sentry integration

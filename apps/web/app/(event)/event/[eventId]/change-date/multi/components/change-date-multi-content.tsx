@@ -16,20 +16,19 @@ export function ChangeDateMultiContent({ eventId }: { eventId: string }) {
     );
   }
 
-  const [error, changeDateData] = data;
+  const [error] = data;
 
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'Event not found';
         break;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         errorMessage = 'You are not a member of this event';
         break;
-      case 'UnauthorizedError':
-        errorMessage =
-          'You do not have permission to change the date of this event';
+      case 'AuthenticationError':
+        errorMessage = 'Please sign in';
         break;
       case 'DatabaseError':
         errorMessage = 'Failed to load event data';
@@ -46,8 +45,7 @@ export function ChangeDateMultiContent({ eventId }: { eventId: string }) {
     );
   }
 
-  const { event } = changeDateData;
-  const dates = event.potentialDateTimes?.map(pdt => pdt.dateTime);
+  const dates = undefined;
 
   return (
     <div className='container max-w-4xl'>

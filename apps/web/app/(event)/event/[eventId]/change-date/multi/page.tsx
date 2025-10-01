@@ -1,4 +1,5 @@
 import { ChangeDateMultiContent } from './components/change-date-multi-content';
+import { pageLogger } from '@/lib/logger';
 import { prefetchEventChangeDateMultiPageData } from '@groupi/hooks/server';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ export default async function EventChangeDateMultiPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in event change date multi page:', error);
+    pageLogger.error('Error in event change date multi page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

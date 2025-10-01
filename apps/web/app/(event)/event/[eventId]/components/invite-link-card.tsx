@@ -11,7 +11,8 @@ import {
 // Migrated from server actions to tRPC hooks
 import { useDeleteInvite } from '@groupi/hooks';
 import { cn, getFullName, timeUntil } from '@/lib/utils';
-import { CreatedByInvite } from '@/types';
+import type { EventInviteDTO } from '@groupi/schema';
+// DTO adjusted
 import {
   DialogDescription,
   DialogTitle,
@@ -20,6 +21,7 @@ import {
 import { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getInviteUrl } from '@/lib/urls';
 import {
   Dialog,
   DialogClose,
@@ -35,7 +37,7 @@ export function InviteLinkCard({
   selectedInvites,
   setSelectedInvites,
 }: {
-  invite: CreatedByInvite;
+  invite: EventInviteDTO;
   selectedInvites: string[];
   setSelectedInvites: (invites: string[]) => void;
 }) {
@@ -47,11 +49,14 @@ export function InviteLinkCard({
   const { id, name, usesRemaining, maxUses, expiresAt, createdAt, createdBy } =
     invite;
 
+  // Generate invite URL using utility function
+  const inviteUrl = getInviteUrl(id);
+
   const handleDeleteInvite = () => {
     deleteInviteMutation.mutate(
       { inviteId: id },
       {
-        onSuccess: ([error, _result]: [any, any]) => {
+        onSuccess: ([error, _result]: [Error | null, unknown]) => {
           if (error) {
             toast.error('Failed to delete invite', {
               description: 'The invite could not be deleted. Please try again.',
@@ -162,23 +167,15 @@ export function InviteLinkCard({
               </DialogTitle>
             </DialogHeader>
             <div className='p-4 bg-white w-max rounded-xl mx-auto my-4 border border-border shadow-md'>
-              <QRCode
-                size={128}
-                value={`${window.location.origin}/invite/${id}`}
-              />
+              <QRCode size={128} value={inviteUrl} />
             </div>
             <div className='flex items-center gap-1'>
-              <Input
-                value={`${window.location.origin}/invite/${id}`}
-                readOnly
-              />
+              <Input value={inviteUrl} readOnly />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => {
-                      navigator.clipboard.writeText(
-                        `${window.location.origin}/invite/${id}`
-                      );
+                      navigator.clipboard.writeText(inviteUrl);
                       toast.success('The invite link has been copied.');
                     }}
                     variant='outline'

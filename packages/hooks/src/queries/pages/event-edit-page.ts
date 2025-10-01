@@ -1,6 +1,9 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventEditPageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import { EventSchema } from '@groupi/schema';
+import type { ResultTuple } from '@groupi/schema';
+// No specific EditPage DTO exists; use EventHeaderDTO/event subset shape if needed
+import type { EventHeaderDTO as EventEditPageResult } from '@groupi/schema';
 
 // ============================================================================
 // EVENT EDIT PAGE HOOK
@@ -13,8 +16,8 @@ import type { EventEditPageResult } from '@groupi/schema';
  */
 export function useEventEdit(eventId: string) {
   // Standard tRPC query
-  const query = api.event.getEditPageData.useQuery(
-    { id: eventId },
+  const query = api.event.getHeaderData.useQuery(
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -31,30 +34,32 @@ export function useEventEdit(eventId: string) {
           table: 'Event',
           filter: `id=eq.${eventId}`,
           event: 'UPDATE',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             // Update the query data when event is edited
             queryClient.setQueryData(
               [
                 ['event', 'getEditPageData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: EventEditPageResult | undefined) => {
+              (
+                oldValue: ResultTuple<unknown, EventEditPageResult> | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
-
+                const parsed = EventSchema.partial().safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const patch = parsed.data;
                 return [
                   null,
                   {
                     ...data,
                     event: {
                       ...data.event,
-                      title: payload.new?.title || data.event.title,
-                      description: payload.new?.description || data.event.description,
-                      location: payload.new?.location || data.event.location,
+                      ...patch,
                     },
                   },
-                ] as EventEditPageResult;
+                ] as ResultTuple<unknown, EventEditPageResult>;
               }
             );
           },

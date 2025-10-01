@@ -36,17 +36,20 @@ export function AvailabilityContent({
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'AvailabilityNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'No availability data found';
         break;
-      case 'AvailabilityEventNotFoundError':
-        errorMessage = 'Event not found';
-        break;
-      case 'AvailabilityUserNotMemberError':
+      case 'UnauthorizedError':
         errorMessage = 'You are not a member of this event';
         break;
-      case 'UnauthorizedAvailabilityError':
-        errorMessage = 'You are not authorized to view availability';
+      case 'AuthenticationError':
+        errorMessage = 'Please sign in to view availability';
+        break;
+      case 'ConnectionError':
+        errorMessage = 'Network error. Please try again.';
+        break;
+      case 'ConstraintError':
+        errorMessage = 'Invalid request';
         break;
       case 'DatabaseError':
         errorMessage = error.message || 'Failed to load availability data';

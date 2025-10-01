@@ -1,12 +1,41 @@
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../clients/trpc-client';
+import { createTRPCRouterPredicate } from '../utils/query-key-utils';
+import type {
+  ResultTuple,
+  PostDetailPageDTO,
+  PostDTO,
+  CreatePostParams,
+  UpdatePostParams,
+  NotFoundError,
+  UnauthorizedError,
+  DatabaseError,
+  ValidationError,
+} from '@groupi/schema';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+// Union types for specific error handling
+type PostMutationError =
+  | NotFoundError
+  | UnauthorizedError
+  | DatabaseError
+  | ValidationError;
+
+// Note: Input types now imported from @groupi/schema params
+// - CreatePostInput -> CreatePostParams
+// - UpdatePostInput -> UpdatePostParams
+// PostResponse type removed in favor of proper DTOs from schema
 
 // ============================================================================
 // POST MUTATION HOOKS
 // ============================================================================
 
 /**
- * Enhanced create post hook
+ * Enhanced create post hook with clean mutation function
  */
 export function useCreatePost() {
   const queryClient = useQueryClient();
@@ -14,22 +43,51 @@ export function useCreatePost() {
   const mutation = api.post.create.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['post', 'event']),
       });
     },
     retry: false,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
+  // Clean mutation function for components
+  const createPost = useCallback(
+    async (
+      input: CreatePostParams,
+      callbacks?: {
+        onSuccess?: (post: PostDTO) => void;
+        onError?: (error: PostMutationError) => void;
+      }
+    ): Promise<ResultTuple<PostMutationError, PostDTO>> => {
+      try {
+        const result = await mutation.mutateAsync(input);
+        const [error, post] = result;
+
+        if (error) {
+          callbacks?.onError?.(error as PostMutationError);
+          return [error as PostMutationError, undefined];
+        }
+
+        callbacks?.onSuccess?.(post);
+        return [null, post];
+      } catch (error) {
+        const mutationError = error as PostMutationError;
+        callbacks?.onError?.(mutationError);
+        return [mutationError, undefined];
+      }
+    },
+    [mutation]
+  );
+
   return {
-    // Mutation methods and status
-    mutate: mutation.mutate,
-    mutateAsync: mutation.mutateAsync,
+    // Clean mutation function
+    createPost,
+
+    // Mutation status
     isLoading: mutation.isPending,
     isError: mutation.isError,
     isSuccess: mutation.isSuccess,
     error: mutation.error,
-    data: mutation.data,
     reset: mutation.reset,
 
     // Real-time sync status
@@ -46,20 +104,23 @@ export function useUpdatePost() {
   const mutation = api.post.update.useMutation({
     onMutate: async ({ id: _postId, content }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       // Optimistic update
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'post' },
-        (old: [any, any] | undefined) => {
-          if (!old) return old;
-          const [error, post] = old;
-          if (error || !post) return old;
+        { predicate: createTRPCRouterPredicate(['post']) },
+        (old: unknown) => {
+          const typed = old as
+            | ResultTuple<unknown, PostDetailPageDTO>
+            | undefined;
+          if (!typed) return old as unknown;
+          const [error, post] = typed;
+          if (error || !post) return old as unknown;
 
           return [null, { ...post, content }];
         }
@@ -76,21 +137,53 @@ export function useUpdatePost() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
     },
     retry: false,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
+  // Clean mutation function for components
+  const updatePost = useCallback(
+    async (
+      input: UpdatePostParams,
+      callbacks?: {
+        onSuccess?: (post: PostDTO) => void;
+        onError?: (error: PostMutationError) => void;
+      }
+    ): Promise<ResultTuple<PostMutationError, PostDTO>> => {
+      try {
+        const result = await mutation.mutateAsync(input);
+        const [error, post] = result;
+
+        if (error) {
+          callbacks?.onError?.(error as PostMutationError);
+          return [error as PostMutationError, undefined];
+        }
+
+        callbacks?.onSuccess?.(post);
+        return [null, post];
+      } catch (error) {
+        const mutationError = error as PostMutationError;
+        callbacks?.onError?.(mutationError);
+        return [mutationError, undefined];
+      }
+    },
+    [mutation]
+  );
+
   return {
-    mutate: mutation.mutate,
-    mutateAsync: mutation.mutateAsync,
+    // Clean mutation function
+    updatePost,
+
+    // Mutation status
     isLoading: mutation.isPending,
     isError: mutation.isError,
     isSuccess: mutation.isSuccess,
     error: mutation.error,
-    data: mutation.data,
     reset: mutation.reset,
+
     realTime: {
       isConnected: true,
       isEnabled: true,
@@ -107,20 +200,18 @@ export function useDeletePost() {
   const queryClient = useQueryClient();
 
   const mutation = api.post.delete.useMutation({
-    onMutate: async ({ id: _id }) => {
+    onMutate: async ({ postId: _postId }) => {
       await queryClient.cancelQueries({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['post', 'event']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['post', 'event']),
       });
 
       // Optimistically remove post
       queryClient.removeQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       return { previousQueries };
@@ -134,22 +225,52 @@ export function useDeletePost() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['post', 'event']),
       });
     },
     retry: false,
   });
 
+  // Clean mutation function for components
+  const deletePost = useCallback(
+    async (
+      postId: string,
+      callbacks?: {
+        onSuccess?: () => void;
+        onError?: (error: PostMutationError) => void;
+      }
+    ): Promise<ResultTuple<PostMutationError, { message: string }>> => {
+      try {
+        const result = await mutation.mutateAsync({ postId });
+        const [error, deleteResult] = result;
+
+        if (error) {
+          callbacks?.onError?.(error as PostMutationError);
+          return [error as PostMutationError, undefined];
+        }
+
+        callbacks?.onSuccess?.();
+        return [null, deleteResult as { message: string }];
+      } catch (error) {
+        const mutationError = error as PostMutationError;
+        callbacks?.onError?.(mutationError);
+        return [mutationError, undefined];
+      }
+    },
+    [mutation]
+  );
+
   return {
-    mutate: mutation.mutate,
-    mutateAsync: mutation.mutateAsync,
+    // Clean mutation function
+    deletePost,
+
+    // Mutation status
     isLoading: mutation.isPending,
     isError: mutation.isError,
     isSuccess: mutation.isSuccess,
     error: mutation.error,
-    data: mutation.data,
     reset: mutation.reset,
+
     realTime: {
       isConnected: true,
       isEnabled: true,
@@ -170,28 +291,30 @@ export function useCreateReply() {
   const queryClient = useQueryClient();
 
   const mutation = api.reply.create.useMutation({
-    onMutate: async ({ postId, text }) => {
+    onMutate: async ({ postId: _postId, text }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       // Optimistically add reply to post
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'post' },
-        (old: [any, any] | undefined) => {
-          if (!old) return old;
-          const [error, post] = old;
-          if (error || !post || !post.replies) return old;
+        { predicate: createTRPCRouterPredicate(['post']) },
+        (old: unknown) => {
+          const typed = old as
+            | ResultTuple<unknown, PostDetailPageDTO>
+            | undefined;
+          if (!typed) return old as unknown;
+          const [error, post] = typed;
+          if (error || !post || !post.post.replies) return old as unknown;
 
           // Create optimistic reply
           const tempReply = {
             id: `temp-${Date.now()}`,
             text,
-            postId,
             createdAt: new Date(),
             updatedAt: new Date(),
             author: {
@@ -200,7 +323,7 @@ export function useCreateReply() {
               firstName: 'Creating...',
               lastName: '',
               username: '',
-              imageUrl: null,
+              imageUrl: '',
             },
           };
 
@@ -208,13 +331,12 @@ export function useCreateReply() {
             null,
             {
               ...post,
-              replies: {
-                ...post.replies,
-                replies: [...post.replies.replies, tempReply],
-                total: post.replies.total + 1,
+              post: {
+                ...post.post,
+                replies: [...post.post.replies, tempReply],
               },
             },
-          ];
+          ] as ResultTuple<unknown, PostDetailPageDTO>;
         }
       );
 
@@ -229,7 +351,7 @@ export function useCreateReply() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
     },
     retry: false,
@@ -262,8 +384,7 @@ export function useUpdateReply() {
   const mutation = api.reply.update.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'reply',
+        predicate: createTRPCRouterPredicate(['post', 'reply']),
       });
     },
     retry: false,
@@ -297,36 +418,38 @@ export function useDeleteReply() {
   const queryClient = useQueryClient();
 
   const mutation = api.reply.delete.useMutation({
-    onMutate: async ({ id: replyIdToDelete }) => {
+    onMutate: async ({ replyId: replyIdToDelete }) => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'post',
+        predicate: createTRPCRouterPredicate(['post']),
       });
 
       // Optimistically remove reply from post
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'post' },
-        (old: [any, any] | undefined) => {
-          if (!old) return old;
-          const [error, post] = old;
-          if (error || !post || !post.replies) return old;
+        { predicate: createTRPCRouterPredicate(['post']) },
+        (old: unknown) => {
+          const typed = old as
+            | ResultTuple<unknown, PostDetailPageDTO>
+            | undefined;
+          if (!typed) return old as unknown;
+          const [error, post] = typed;
+          if (error || !post || !post.post.replies) return old as unknown;
 
           return [
             null,
             {
               ...post,
-              replies: {
-                ...post.replies,
-                replies: post.replies.replies.filter(
-                  (r: any) => r.id !== replyIdToDelete
+              post: {
+                ...post.post,
+                replies: post.post.replies.filter(
+                  r => r.id !== replyIdToDelete
                 ),
-                total: Math.max(0, post.replies.total - 1),
               },
             },
-          ];
+          ] as ResultTuple<unknown, PostDetailPageDTO>;
         }
       );
 
@@ -341,8 +464,7 @@ export function useDeleteReply() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'post' || query.queryKey[0] === 'reply',
+        predicate: createTRPCRouterPredicate(['post', 'reply']),
       });
     },
     retry: false,

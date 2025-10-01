@@ -1,7 +1,20 @@
 import pino from 'pino';
 
+const getLogLevel = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'info';
+  }
+  return process.env.DEBUG === 'true' ? 'debug' : 'info';
+};
+
+// Create a logger for the web app
 const logger = pino({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: getLogLevel(),
+  browser: {
+    // For browser environments, we want to use console methods
+    // but with pino's structured logging format
+    asObject: true,
+  },
   formatters: {
     level: label => {
       return { level: label.toUpperCase() };
@@ -10,7 +23,7 @@ const logger = pino({
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
 });
 
-// Create child loggers for different parts of the application
+// Create child loggers for different parts of the web application
 export const createLogger = (module: string) => {
   return logger.child({ module });
 };
@@ -25,7 +38,29 @@ export const log = {
   warn: (message: string, data?: object) => logger.warn(data, message),
   error: (message: string, error?: Error | object) => {
     if (error instanceof Error) {
-      logger.error({ err: error }, message);
+      logger.error(
+        {
+          err: error,
+          stack: error.stack,
+          name: error.name,
+          cause: error.cause,
+          // Include any additional properties on the error
+          ...Object.getOwnPropertyNames(error).reduce(
+            (acc, prop) => {
+              if (!['message', 'stack', 'name'].includes(prop)) {
+                try {
+                  acc[prop] = (error as any)[prop];
+                } catch (e) {
+                  // Ignore properties that can't be serialized
+                }
+              }
+              return acc;
+            },
+            {} as Record<string, any>
+          ),
+        },
+        message
+      );
     } else {
       logger.error(error, message);
     }
@@ -39,10 +74,10 @@ export const log = {
   },
 };
 
-// Specialized loggers for different domains
-export const authLogger = createLogger('auth');
-export const dbLogger = createLogger('database');
+// Specialized loggers for different parts of the web app
+export const pageLogger = createLogger('pages');
+export const componentLogger = createLogger('components');
 export const apiLogger = createLogger('api');
-export const eventLogger = createLogger('events');
-export const notificationLogger = createLogger('notifications');
-export const emailLogger = createLogger('email');
+export const authLogger = createLogger('auth');
+export const pusherLogger = createLogger('pusher');
+export const hookLogger = createLogger('hooks');

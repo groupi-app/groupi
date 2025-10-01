@@ -1,9 +1,9 @@
-import { Editor } from '../components/editor';
 import { PostEditWrapper } from '../components/post-edit-wrapper';
 import { prefetchPostDetailPageData } from '@groupi/hooks/server';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
+import { pageLogger } from '@/lib/logger';
 
 export default async function PostEditPage(props: {
   params: Promise<{ postId: string }>;
@@ -26,7 +26,7 @@ export default async function PostEditPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in post edit page:', error);
+    pageLogger.error('Error in post edit page', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

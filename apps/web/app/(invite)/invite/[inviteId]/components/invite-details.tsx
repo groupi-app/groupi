@@ -34,16 +34,14 @@ export function InviteDetails({
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'InviteNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'Invite not found';
         break;
-      case 'InviteExpiredError':
-        errorMessage = 'This invite has expired';
-        break;
-      case 'InviteNoUsesError':
-        errorMessage = 'This invite has no uses remaining';
+      case 'ValidationError':
+        errorMessage = error.message || 'Invalid or expired invite';
         break;
       case 'DatabaseError':
+      case 'ConnectionError':
         errorMessage = error.message || 'Failed to load invite';
         break;
     }
@@ -86,14 +84,17 @@ export function InviteDetails({
               <Icons.date className='size-6 text-primary' />
               {inviteData.event.chosenDateTime ? (
                 <span data-test='event-datetime'>
-                  {new Date(inviteData.event.chosenDateTime).toLocaleString([], {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
+                  {new Date(inviteData.event.chosenDateTime).toLocaleString(
+                    [],
+                    {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    }
+                  )}
                 </span>
               ) : (
                 'TBD'

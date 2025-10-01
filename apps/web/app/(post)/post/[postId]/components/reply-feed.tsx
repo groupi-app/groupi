@@ -3,6 +3,7 @@
 import Reply from './reply';
 import { usePostDetail } from '@groupi/hooks';
 import { useAuth } from '@clerk/nextjs';
+import type { PostDetailDTO } from '@groupi/schema';
 import { LayoutGroup, motion } from 'framer-motion';
 
 const container = {
@@ -35,8 +36,7 @@ export default function ReplyFeed({ postId }: { postId: string }) {
   }
 
   const { post, userMembership } = postData;
-  const replies = post.replies || [];
-  const isModerator = userMembership.role === 'ORGANIZER';
+  const replies: PostDetailDTO['replies'] = post.replies || [];
 
   if (replies.length === 0) {
     return (

@@ -7,12 +7,12 @@ interface FormContextType {
     title: string;
     description?: string | undefined;
     location?: string | undefined;
-  }; // Replace 'any' with the actual type of formState
+  };
   setFormState: (state: {
     title: string;
     description?: string | undefined;
     location?: string | undefined;
-  }) => void; // Replace 'any' with the actual type of the state parameter
+  }) => void;
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined);

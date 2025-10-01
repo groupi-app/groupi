@@ -16,32 +16,20 @@ import { toast } from 'sonner';
 export function DeletePostDialog({ id }: { id: string }) {
   const router = useRouter();
   // Use our new tRPC hook with integrated real-time sync
-  const deletePostMutation = useDeletePost();
+  const { deletePost, isLoading } = useDeletePost();
 
   const handleDeletePost = () => {
-    deletePostMutation.mutate(
-      { id },
-      {
-        onSuccess: ([error, _result]) => {
-          if (error) {
-            toast.error('Failed to delete post', {
-              description: 'The post could not be deleted. Please try again.',
-            });
-            return;
-          }
-
-          // Navigate back to the event page
-          // We need to extract eventId from the result or store it separately
-          toast.success('The post has been deleted.');
-          router.back(); // Go back to previous page
-        },
-        onError: () => {
-          toast.error('Failed to delete post', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    deletePost(id, {
+      onSuccess: () => {
+        toast.success('The post has been deleted.');
+        router.back();
+      },
+      onError: () => {
+        toast.error('Failed to delete post', {
+          description: 'An unexpected error occurred. Please try again.',
+        });
+      },
+    });
   };
 
   return (
@@ -61,10 +49,10 @@ export function DeletePostDialog({ id }: { id: string }) {
           <DialogClose asChild>
             <Button
               onClick={handleDeletePost}
-              disabled={deletePostMutation.isLoading}
+              disabled={isLoading}
               variant='destructive'
             >
-              {deletePostMutation.isLoading ? 'Deleting...' : 'Delete'}
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogClose>
         </div>

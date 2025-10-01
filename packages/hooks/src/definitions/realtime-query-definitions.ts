@@ -9,7 +9,7 @@
 export interface InvalidationMessage {
   type: string;
   queryKeys: string[][]; // Array of query key arrays to invalidate
-  data?: any; // Optional payload data
+  data?: unknown; // Optional payload data
 }
 
 /**
@@ -236,7 +236,7 @@ export function getUserChannel(userId: string): string {
 export function createInvalidationMessage(
   type: string,
   queryKeys: string[][],
-  data?: any
+  data?: unknown
 ): InvalidationMessage {
   return {
     type,

@@ -1,5 +1,4 @@
-import { api } from '../clients/trpc-client';
-import type { SettingsPageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
 
 // ============================================================================
 // SETTINGS PAGE HOOK

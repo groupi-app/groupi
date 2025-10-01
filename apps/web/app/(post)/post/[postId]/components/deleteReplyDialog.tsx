@@ -18,16 +18,9 @@ export function DeleteReplyDialog({ id }: { id: string }) {
 
   const handleDeleteReply = () => {
     deleteReplyMutation.mutate(
-      { id },
+      { replyId: id },
       {
-        onSuccess: ([error, _result]) => {
-          if (error) {
-            toast.error('Failed to delete reply', {
-              description: 'The reply could not be deleted. Please try again.',
-            });
-            return;
-          }
-
+        onSuccess: () => {
           toast.success('The reply has been deleted.');
         },
         onError: () => {

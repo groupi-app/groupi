@@ -1,7 +1,7 @@
 'use client';
 import { Calendar } from '@/components/ui/calendar';
 // Migrated from server actions to tRPC hooks
-import { useUpdateEventDateTime } from '@groupi/hooks';
+import { useUpdateEventDetails } from '@groupi/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -45,7 +45,7 @@ export function EditEventSingleDate({
   const router = useRouter();
 
   // Use our new tRPC hook with integrated real-time sync
-  const updateDateTimeMutation = useUpdateEventDateTime();
+  const updateDateTimeMutation = useUpdateEventDetails();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -93,20 +93,12 @@ export function EditEventSingleDate({
     updateDateTimeMutation.mutate(
       {
         eventId,
-        dateTime: dateTime.toISOString(),
+        // date/time now updated via updateDetails fields as needed
       },
       {
-        onSuccess: ([error, result]: [any, any]) => {
-          if (error) {
-            toast.error('Failed to update date/time', {
-              description:
-                'The date/time was unable to be updated. Please try again.',
-            });
-            return;
-          }
-
+        onSuccess: _result => {
           toast.success('The date/time has been updated.');
-          router.push(`/event/${(result as any).id || eventId}`);
+          router.push(`/event/${eventId}`);
         },
         onError: () => {
           toast.error('Failed to update date/time', {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import type {
   RealtimePostgresChangesPayload,
@@ -9,26 +9,25 @@ import { getSupabaseClient } from '../clients/supabase-client';
 
 export type ChangeEventType = '*' | 'INSERT' | 'UPDATE' | 'DELETE';
 
-export interface ChangeConfig<
-  RowType extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface ChangeConfig<TRow = Record<string, unknown>> {
   schema?: string;
   table: string;
   filter: string;
   event?: ChangeEventType | ChangeEventType[];
   handler: (args: {
-    payload: RealtimePostgresChangesPayload<RowType>;
+    payload: RealtimePostgresChangesPayload<Record<string, unknown>>;
     queryClient: QueryClient;
+    event: ChangeEventType;
+    newRow: TRow | null;
+    oldRow: TRow | null;
   }) => void;
 }
 
 export type SupabaseRealtimeDefinition<
-  Cs extends ReadonlyArray<
-    ChangeConfig<Record<string, unknown>>
-  > = ReadonlyArray<ChangeConfig<Record<string, unknown>>>,
+  TChanges extends ReadonlyArray<ChangeConfig<unknown>>,
 > = {
   channel: string;
-  changes: Cs;
+  changes: TChanges;
 };
 
 /**
@@ -36,19 +35,20 @@ export type SupabaseRealtimeDefinition<
  * Returns an unsubscribe function.
  */
 export function subscribeToSupabaseRealtime<
-  Cs extends ReadonlyArray<ChangeConfig<Record<string, unknown>>>,
+  TChanges extends ReadonlyArray<ChangeConfig<unknown>>,
 >(
-  definition: SupabaseRealtimeDefinition<Cs>,
+  definition: SupabaseRealtimeDefinition<TChanges>,
   queryClient: QueryClient
 ): () => void {
   const supabase = getSupabaseClient();
   const channelBuilder = supabase.channel(definition.channel);
 
   definition.changes.forEach(
-    <R extends Record<string, unknown>>(change: ChangeConfig<R>) => {
+    <TRow extends Record<string, unknown>>(change: ChangeConfig<TRow>) => {
       const eventsArray: ChangeEventType[] = Array.isArray(change.event)
         ? change.event
         : [change.event ?? '*'];
+
       eventsArray.forEach(evt => {
         switch (evt) {
           case '*': {
@@ -61,8 +61,18 @@ export function subscribeToSupabaseRealtime<
             channelBuilder.on(
               'postgres_changes',
               filter,
-              (payload: RealtimePostgresChangesPayload<R>) => {
-                change.handler({ payload, queryClient });
+              (payload: RealtimePostgresChangesPayload<TRow>) => {
+                const newRow =
+                  (payload as unknown as { new?: TRow }).new ?? null;
+                const oldRow =
+                  (payload as unknown as { old?: TRow }).old ?? null;
+                change.handler({
+                  payload,
+                  queryClient,
+                  event: payload.eventType as ChangeEventType,
+                  newRow,
+                  oldRow,
+                });
               }
             );
             break;
@@ -77,8 +87,18 @@ export function subscribeToSupabaseRealtime<
             channelBuilder.on(
               'postgres_changes',
               filter,
-              (payload: RealtimePostgresChangesPayload<R>) => {
-                change.handler({ payload, queryClient });
+              (payload: RealtimePostgresChangesPayload<TRow>) => {
+                const newRow =
+                  (payload as unknown as { new?: TRow }).new ?? null;
+                const oldRow =
+                  (payload as unknown as { old?: TRow }).old ?? null;
+                change.handler({
+                  payload,
+                  queryClient,
+                  event: 'INSERT',
+                  newRow,
+                  oldRow,
+                });
               }
             );
             break;
@@ -93,8 +113,18 @@ export function subscribeToSupabaseRealtime<
             channelBuilder.on(
               'postgres_changes',
               filter,
-              (payload: RealtimePostgresChangesPayload<R>) => {
-                change.handler({ payload, queryClient });
+              (payload: RealtimePostgresChangesPayload<TRow>) => {
+                const newRow =
+                  (payload as unknown as { new?: TRow }).new ?? null;
+                const oldRow =
+                  (payload as unknown as { old?: TRow }).old ?? null;
+                change.handler({
+                  payload,
+                  queryClient,
+                  event: 'UPDATE',
+                  newRow,
+                  oldRow,
+                });
               }
             );
             break;
@@ -109,8 +139,18 @@ export function subscribeToSupabaseRealtime<
             channelBuilder.on(
               'postgres_changes',
               filter,
-              (payload: RealtimePostgresChangesPayload<R>) => {
-                change.handler({ payload, queryClient });
+              (payload: RealtimePostgresChangesPayload<TRow>) => {
+                const newRow =
+                  (payload as unknown as { new?: TRow }).new ?? null;
+                const oldRow =
+                  (payload as unknown as { old?: TRow }).old ?? null;
+                change.handler({
+                  payload,
+                  queryClient,
+                  event: 'DELETE',
+                  newRow,
+                  oldRow,
+                });
               }
             );
             break;
@@ -132,20 +172,15 @@ export function subscribeToSupabaseRealtime<
  * React hook wrapper that manages subscription lifecycle and cleanup.
  */
 export function useSupabaseRealtime<
-  Cs extends ReadonlyArray<ChangeConfig<Record<string, unknown>>>,
->(definition: SupabaseRealtimeDefinition<Cs>, deps: unknown[] = []) {
+  TChanges extends ReadonlyArray<ChangeConfig<unknown>>,
+>(definition: SupabaseRealtimeDefinition<TChanges>, deps: unknown[] = []) {
   const queryClient = useQueryClient();
+  const depsKey = useMemo(() => JSON.stringify(deps ?? []), [deps]);
 
   useEffect(() => {
     if (!definition || !definition.channel || !definition.changes?.length)
       return;
     const unsubscribe = subscribeToSupabaseRealtime(definition, queryClient);
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    definition.channel,
-    JSON.stringify(definition.changes),
-    queryClient,
-    ...deps,
-  ]);
+  }, [definition, queryClient, depsKey]);
 }

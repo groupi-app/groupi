@@ -1,5 +1,6 @@
 import { DateSelectContent } from './components/date-select-content';
 import { prefetchEventDateSelectPageData } from '@groupi/hooks/server';
+import { pageLogger } from '@/lib/logger';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
@@ -28,7 +29,7 @@ export default async function EventDateSelectPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in event date select page:', error);
+    pageLogger.error('Error in event date select page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

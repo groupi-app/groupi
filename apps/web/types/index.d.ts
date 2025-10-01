@@ -2,7 +2,7 @@ import { $Enums, Event, Prisma } from "@prisma/client";
 
 declare global {
   interface Window {
-    Clerk: any;
+    Clerk: unknown;
   }
 }
 

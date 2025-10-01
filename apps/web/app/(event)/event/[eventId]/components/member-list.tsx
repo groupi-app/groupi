@@ -68,11 +68,11 @@ export function MemberList({ eventId }: { eventId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         return <div>Event not found</div>;
-      case 'EventUserNotFoundError':
+      case 'AuthenticationError':
         return <div>User not found</div>;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:
         return <div>Error loading members</div>;

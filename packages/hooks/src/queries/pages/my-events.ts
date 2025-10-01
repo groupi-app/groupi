@@ -1,6 +1,5 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { MyEventsResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
 
 // ============================================================================
 // MY EVENTS PAGE HOOK
@@ -27,6 +26,7 @@ export function useMyEvents() {
         {
           table: 'Membership',
           event: '*',
+          filter: '*',
           handler: ({ queryClient }) => {
             // Invalidate the query to refetch all data
             queryClient.invalidateQueries({
@@ -37,6 +37,7 @@ export function useMyEvents() {
         {
           table: 'Event',
           event: '*',
+          filter: '*',
           handler: ({ queryClient }) => {
             // Invalidate the query to refetch all data
             queryClient.invalidateQueries({
@@ -47,6 +48,7 @@ export function useMyEvents() {
         {
           table: 'Person',
           event: '*',
+          filter: '*',
           handler: ({ queryClient }) => {
             // Invalidate the query to refetch all data
             queryClient.invalidateQueries({

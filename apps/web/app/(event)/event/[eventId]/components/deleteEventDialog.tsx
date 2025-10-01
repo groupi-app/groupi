@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-export function DeleteEventDialog({ id }: { id: string }) {
+export function DeleteEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
   const deleteEvent = useDeleteEvent();
   return (
@@ -34,7 +34,7 @@ export function DeleteEventDialog({ id }: { id: string }) {
             <Button
               onClick={() => {
                 deleteEvent.mutate(
-                  { id },
+                  { eventId },
                   {
                     onSuccess: () => {
                       router.push(`/events`);

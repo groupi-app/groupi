@@ -5,7 +5,6 @@ import { Icons } from '@/components/icons';
 import { usePusherBeams } from '@/components/providers/pusher-beams-context-provider';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { notificationLogger } from '@/lib/logger';
 
 export function PushNotificationSettings() {
   const {
@@ -39,8 +38,6 @@ export function PushNotificationSettings() {
         toast.success('Push notifications disabled successfully');
       }
     } catch (error) {
-      notificationLogger.error('Failed to toggle push notifications', error);
-
       // Handle specific authentication errors
       if (error instanceof Error) {
         if (

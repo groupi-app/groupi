@@ -1,49 +1,14 @@
-import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
 import {
-  // Import safe-wrapper service functions
-  getEventInviteData,
-  fetchInviteData,
+  // Import service functions
   createInvite,
   deleteInvite,
-  deleteInvites,
   acceptInvite,
-  // Import component-specific services
-  getInvitePageData,
+  fetchInvitePageData,
   getEventInvitePageData,
 } from '@groupi/services';
-
-// ============================================================================
-// INPUT SCHEMAS
-// ============================================================================
-
-const GetEventInviteDataSchema = z.object({
-  eventId: z.string(),
-});
-
-const FetchInviteDataSchema = z.object({
-  inviteId: z.string(),
-});
-
-const CreateInviteSchema = z.object({
-  eventId: z.string(),
-  name: z.string().optional(),
-  maxUses: z.number().nullable().optional(),
-  expiresAt: z.date().nullable().optional(),
-});
-
-const DeleteInviteSchema = z.object({
-  inviteId: z.string(),
-});
-
-const DeleteInvitesSchema = z.object({
-  inviteIds: z.array(z.string()).min(1, 'At least one invite ID is required'),
-});
-
-const AcceptInviteSchema = z.object({
-  inviteId: z.string(),
-  personId: z.string(),
-});
+import { CreateInviteParams } from '@groupi/schema/params';
+import { z } from 'zod';
 
 // ============================================================================
 // INVITE ROUTER
@@ -55,10 +20,11 @@ export const inviteRouter = createTRPCRouter({
    * Returns: [error, eventInviteDTO] tuple
    */
   getEventData: protectedProcedure
-    .input(GetEventInviteDataSchema)
-    .query(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await getEventInviteData(input.eventId, ctx.userId);
+    .input(z.object({ eventId: z.string() }))
+    .query(async ({ input }) => {
+      return await getEventInvitePageData({
+        eventId: input.eventId,
+      });
     }),
 
   /**
@@ -66,10 +32,11 @@ export const inviteRouter = createTRPCRouter({
    * Returns: [error, individualInviteDTO] tuple
    */
   getById: publicProcedure
-    .input(FetchInviteDataSchema)
+    .input(z.object({ inviteId: z.string() }))
     .query(async ({ input }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await fetchInviteData(input.inviteId);
+      return await fetchInvitePageData({
+        inviteId: input.inviteId,
+      });
     }),
 
   /**
@@ -77,18 +44,14 @@ export const inviteRouter = createTRPCRouter({
    * Returns: [error, invite] tuple
    */
   create: protectedProcedure
-    .input(CreateInviteSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await createInvite(
-        {
-          eventId: input.eventId,
-          name: input.name,
-          maxUses: input.maxUses || null,
-          expiresAt: input.expiresAt || null,
-        },
-        ctx.userId
-      );
+    .input(CreateInviteParams)
+    .mutation(async ({ input }) => {
+      return await createInvite({
+        eventId: input.eventId,
+        name: input.name,
+        maxUses: input.maxUses,
+        expiresAt: input.expiresAt,
+      });
     }),
 
   /**
@@ -96,21 +59,11 @@ export const inviteRouter = createTRPCRouter({
    * Returns: [error, { message }] tuple
    */
   delete: protectedProcedure
-    .input(DeleteInviteSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await deleteInvite(input.inviteId, ctx.userId);
-    }),
-
-  /**
-   * Delete multiple invites
-   * Returns: [error, { message }] tuple
-   */
-  deleteMany: protectedProcedure
-    .input(DeleteInvitesSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await deleteInvites(input.inviteIds, ctx.userId);
+    .input(z.object({ inviteId: z.string() }))
+    .mutation(async ({ input }) => {
+      return await deleteInvite({
+        inviteId: input.inviteId,
+      });
     }),
 
   /**
@@ -118,10 +71,11 @@ export const inviteRouter = createTRPCRouter({
    * Returns: [error, { message, membershipId }] tuple
    */
   accept: publicProcedure
-    .input(AcceptInviteSchema)
+    .input(z.object({ inviteId: z.string(), personId: z.string() }))
     .mutation(async ({ input }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await acceptInvite(input.inviteId, input.personId);
+      return await acceptInvite({
+        inviteId: input.inviteId,
+      });
     }),
 
   // ============================================================================
@@ -135,7 +89,9 @@ export const inviteRouter = createTRPCRouter({
   getInvitePageData: publicProcedure
     .input(z.object({ inviteId: z.string() }))
     .query(async ({ input }) => {
-      return await getInvitePageData(input.inviteId);
+      return await fetchInvitePageData({
+        inviteId: input.inviteId,
+      });
     }),
 
   /**
@@ -144,8 +100,10 @@ export const inviteRouter = createTRPCRouter({
    */
   getEventInvitePageData: protectedProcedure
     .input(z.object({ eventId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      return await getEventInvitePageData(input.eventId, ctx.userId);
+    .query(async ({ input }) => {
+      return await getEventInvitePageData({
+        eventId: input.eventId,
+      });
     }),
 });
 

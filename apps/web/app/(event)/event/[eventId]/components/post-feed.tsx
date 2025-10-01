@@ -11,15 +11,15 @@ export function PostFeed({ eventId }: { eventId: string }) {
     return <div>Loading posts...</div>;
   }
 
-  const [error, postData] = data;
+  const [error, postFeedData] = data;
 
   if (error) {
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         return <div>Event not found</div>;
-      case 'EventUserNotFoundError':
+      case 'AuthenticationError':
         return <div>User not found</div>;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:
         return <div>Error loading posts</div>;
@@ -28,8 +28,8 @@ export function PostFeed({ eventId }: { eventId: string }) {
 
   // If error is null, postData is guaranteed to exist
 
-  const posts = postData.event?.posts || [];
-  const eventDateTime = postData.event?.chosenDateTime;
+  const posts = postFeedData.event.posts || [];
+  const eventDateTime = undefined as unknown as Date | null;
 
   const container = {
     hidden: { opacity: 0 },
@@ -70,8 +70,10 @@ export function PostFeed({ eventId }: { eventId: string }) {
                   key={post.id}
                   className='w-full'
                 >
-                  {/* @ts-expect-error: Temporary fix - post data structure needs to be updated */}
-                  <PostCard postData={post} eventDateTime={eventDateTime} />
+                  <PostCard
+                    postData={{ ...post, event: postFeedData.event }}
+                    eventDateTime={eventDateTime}
+                  />
                 </motion.div>
               ))}
           </LayoutGroup>

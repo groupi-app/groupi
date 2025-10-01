@@ -6,12 +6,11 @@ import {
   WebhookFormat,
 } from '@prisma/client';
 import {
-  // Import safe-wrapper service functions
+  // Import service functions
   fetchUserSettings,
   updateUserSettings,
-  // Import component-specific services
-  getSettingsPageData,
 } from '@groupi/services';
+import { UpdateUserSettingsParams } from '@groupi/schema/params';
 
 // ============================================================================
 // INPUT SCHEMAS (settings-specific)
@@ -21,9 +20,9 @@ import {
 export const UpdateUserSettingsInputSchema = z.object({
   notificationMethods: z.array(
     z.object({
-      id: z.string().optional(),
+      id: z.string(),
       type: z.nativeEnum(NotificationMethodType),
-      name: z.string().optional(),
+      name: z.string().nullable().optional(),
       value: z.string(),
       enabled: z.boolean(),
       notifications: z.array(
@@ -49,9 +48,8 @@ export const settingsRouter = createTRPCRouter({
    * Get current user's settings
    * Returns: [error, settings] tuple
    */
-  getCurrent: protectedProcedure.query(async ({ ctx }) => {
-    // Return safe-wrapper tuple directly - no error conversion needed
-    return await fetchUserSettings(ctx.userId);
+  getCurrent: protectedProcedure.query(async () => {
+    return await fetchUserSettings({});
   }),
 
   /**
@@ -59,10 +57,14 @@ export const settingsRouter = createTRPCRouter({
    * Returns: [error, settings] tuple
    */
   update: protectedProcedure
-    .input(UpdateUserSettingsInputSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await updateUserSettings(input, ctx.userId);
+    .input(UpdateUserSettingsParams)
+    .mutation(async ({ input }) => {
+      return await updateUserSettings({
+        notificationMethods: input.notificationMethods.map(method => ({
+          ...method,
+          name: method.name ?? null,
+        })),
+      });
     }),
 
   // ============================================================================
@@ -73,7 +75,7 @@ export const settingsRouter = createTRPCRouter({
    * Get settings page data
    * Returns: [error, SettingsPageData] tuple
    */
-  getSettingsPageData: protectedProcedure.query(async ({ ctx }) => {
-    return await getSettingsPageData(ctx.userId);
+  getSettingsPageData: protectedProcedure.query(async () => {
+    return await fetchUserSettings({});
   }),
 });

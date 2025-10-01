@@ -35,7 +35,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getAvailableWebhookFormats } from '@/lib/webhook-templates';
+// Temporary: inline available webhook formats to remove dependency
+const getAvailableWebhookFormats = () => [
+  { value: 'JSON', label: 'JSON', description: 'Generic JSON' },
+  { value: 'DISCORD', label: 'Discord', description: 'Discord webhook' },
+  { value: 'SLACK', label: 'Slack', description: 'Slack webhook' },
+  { value: 'CUSTOM', label: 'Custom', description: 'Custom template' },
+];
 
 const notificationTypeLabels: Record<
   NotificationType,

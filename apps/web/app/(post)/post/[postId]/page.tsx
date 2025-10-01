@@ -1,10 +1,10 @@
 import { FullPost } from './components/full-post';
 import { Replies } from './components/replies';
 import { prefetchPostDetailPageData } from '@groupi/hooks/server';
-import { markPostNotifsAsRead } from '@groupi/services';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
+import { pageLogger } from '@/lib/logger';
 
 export default async function PostDetailPage(props: {
   params: Promise<{ postId: string }>;
@@ -21,10 +21,7 @@ export default async function PostDetailPage(props: {
     // Prefetch post detail data
     const dehydratedState = await prefetchPostDetailPageData(postId, userId);
 
-    // Mark post notifications as read (fire-and-forget)
-    markPostNotifsAsRead(postId, userId).catch(_error => {
-      // Silently handle notification read errors
-    });
+    // Marking post notifications has been removed from this path
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -34,8 +31,8 @@ export default async function PostDetailPage(props: {
         </div>
       </HydrationBoundary>
     );
-  } catch (error) {
-    console.error('Error in post detail page:', error);
+  } catch (error: unknown) {
+    pageLogger.error('Error in post page', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

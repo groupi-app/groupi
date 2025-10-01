@@ -1,9 +1,14 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import {
+  EventHeaderDTO as EventHeaderSchema,
+  PersonSchema,
+  MembershipSchema,
+} from '@groupi/schema';
 import type {
-  EventHeaderResult,
-  MemberListResult,
-  PostFeedResult,
+  EventHeaderDTO,
+  MemberListPageDTO,
+  ResultTuple,
 } from '@groupi/schema';
 
 // ============================================================================
@@ -18,7 +23,7 @@ import type {
 export function useEventHeader(eventId: string) {
   // Standard tRPC query
   const query = api.event.getHeaderData.useQuery(
-    { id: eventId },
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -35,25 +40,29 @@ export function useEventHeader(eventId: string) {
           table: 'Event',
           filter: `id=eq.${eventId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['event', 'getHeaderData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: EventHeaderResult | undefined) => {
+              (oldValue: ResultTuple<unknown, EventHeaderDTO> | undefined) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
 
-                // Update event data with new values
+                const parsed = EventHeaderSchema.shape.event
+                  .partial()
+                  .safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const updated = parsed.data;
                 return [
                   null,
                   {
                     ...data,
-                    event: { ...data.event, ...payload.new },
+                    event: { ...data.event, ...updated },
                   },
-                ] as EventHeaderResult;
+                ] as ResultTuple<unknown, EventHeaderDTO>;
               }
             );
           },
@@ -62,29 +71,31 @@ export function useEventHeader(eventId: string) {
           table: 'Membership',
           filter: `eventId=eq.${eventId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['event', 'getHeaderData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: EventHeaderResult | undefined) => {
+              (oldValue: ResultTuple<unknown, EventHeaderDTO> | undefined) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
 
-                // Update membership data if it matches the current user
-                if (payload.new?.id === data.userMembership.id) {
+                const parsed = MembershipSchema.partial().safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const updated = parsed.data;
+                if (updated.id === data.userMembership.id) {
                   return [
                     null,
                     {
                       ...data,
                       userMembership: {
                         ...data.userMembership,
-                        ...payload.new,
+                        ...updated,
                       },
                     },
-                  ] as EventHeaderResult;
+                  ] as ResultTuple<unknown, EventHeaderDTO>;
                 }
                 return oldValue;
               }
@@ -112,7 +123,7 @@ export function useEventHeader(eventId: string) {
 export function useMemberList(eventId: string) {
   // Standard tRPC query
   const query = api.event.getMemberListData.useQuery(
-    { id: eventId },
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -129,24 +140,30 @@ export function useMemberList(eventId: string) {
           table: 'Membership',
           filter: `eventId=eq.${eventId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ event, newRow, oldRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['event', 'getMemberListData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: MemberListResult | undefined) => {
+              (
+                oldValue: ResultTuple<unknown, MemberListPageDTO> | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
 
-                // Handle membership changes
                 const memberships = [...data.event.memberships];
-                const membershipIndex = memberships.findIndex(
-                  m => m.id === payload.old?.id || m.id === payload.new?.id
-                );
+                const idToMatch = (
+                  event === 'DELETE'
+                    ? (oldRow as { id?: string } | null)?.id
+                    : (newRow as { id?: string } | null)?.id
+                ) as string | undefined;
+                const membershipIndex = idToMatch
+                  ? memberships.findIndex(m => m.id === idToMatch)
+                  : -1;
 
-                if (payload.eventType === 'INSERT' && payload.new) {
+                if (event === 'INSERT') {
                   // Add new membership (need to fetch person data)
                   queryClient.invalidateQueries({
                     queryKey: [
@@ -154,15 +171,15 @@ export function useMemberList(eventId: string) {
                       { input: { id: eventId }, type: 'query' },
                     ],
                   });
-                } else if (
-                  payload.eventType === 'UPDATE' &&
-                  payload.new &&
-                  membershipIndex >= 0
-                ) {
-                  // Update existing membership
+                  return oldValue;
+                }
+
+                if (event === 'UPDATE' && membershipIndex >= 0 && newRow) {
+                  const parsed = MembershipSchema.partial().safeParse(newRow);
+                  if (!parsed.success) return oldValue;
                   memberships[membershipIndex] = {
                     ...memberships[membershipIndex],
-                    ...payload.new,
+                    ...parsed.data,
                   };
                   return [
                     null,
@@ -170,12 +187,10 @@ export function useMemberList(eventId: string) {
                       ...data,
                       event: { ...data.event, memberships },
                     },
-                  ] as MemberListResult;
-                } else if (
-                  payload.eventType === 'DELETE' &&
-                  membershipIndex >= 0
-                ) {
-                  // Remove membership
+                  ] as ResultTuple<unknown, MemberListPageDTO>;
+                }
+
+                if (event === 'DELETE' && membershipIndex >= 0) {
                   memberships.splice(membershipIndex, 1);
                   return [
                     null,
@@ -183,7 +198,7 @@ export function useMemberList(eventId: string) {
                       ...data,
                       event: { ...data.event, memberships },
                     },
-                  ] as MemberListResult;
+                  ] as ResultTuple<unknown, MemberListPageDTO>;
                 }
 
                 return oldValue;
@@ -195,23 +210,28 @@ export function useMemberList(eventId: string) {
           table: 'Person',
           filter: `id=in.(${query.data?.[1]?.event.memberships.map(m => m.person.id).join(',') || ''})`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['event', 'getMemberListData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: MemberListResult | undefined) => {
+              (
+                oldValue: ResultTuple<unknown, MemberListPageDTO> | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
 
-                // Update person data in memberships
+                const parsed = PersonSchema.partial().safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const personUpdate = parsed.data;
+
                 const memberships = data.event.memberships.map(membership => {
-                  if (membership.person.id === payload.new?.id) {
+                  if (membership.person.id === personUpdate.id) {
                     return {
                       ...membership,
-                      person: { ...membership.person, ...payload.new },
+                      person: { ...membership.person, ...personUpdate },
                     };
                   }
                   return membership;
@@ -223,7 +243,7 @@ export function useMemberList(eventId: string) {
                     ...data,
                     event: { ...data.event, memberships },
                   },
-                ] as MemberListResult;
+                ] as ResultTuple<unknown, MemberListPageDTO>;
               }
             );
           },
@@ -250,8 +270,8 @@ export function useMemberList(eventId: string) {
  */
 export function usePostFeed(eventId: string) {
   // Standard tRPC query
-  const query = api.event.getPostFeedData.useQuery(
-    { id: eventId },
+  const query = api.post.getPostFeedData.useQuery(
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -268,151 +288,39 @@ export function usePostFeed(eventId: string) {
           table: 'Post',
           filter: `eventId=eq.${eventId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
-            queryClient.setQueryData(
-              [
+          handler: ({ queryClient }) => {
+            queryClient.invalidateQueries({
+              queryKey: [
                 ['event', 'getPostFeedData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: PostFeedResult | undefined) => {
-                if (!oldValue) return oldValue;
-                const [error, data] = oldValue;
-                if (error || !data) return oldValue;
-
-                // Handle post changes
-                const posts = [...data.event.posts];
-                const postIndex = posts.findIndex(
-                  p => p.id === payload.old?.id || p.id === payload.new?.id
-                );
-
-                if (payload.eventType === 'INSERT' && payload.new) {
-                  // Add new post (need to fetch author data)
-                  queryClient.invalidateQueries({
-                    queryKey: [
-                      ['event', 'getPostFeedData'],
-                      { input: { id: eventId }, type: 'query' },
-                    ],
-                  });
-                } else if (
-                  payload.eventType === 'UPDATE' &&
-                  payload.new &&
-                  postIndex >= 0
-                ) {
-                  // Update existing post
-                  posts[postIndex] = { ...posts[postIndex], ...payload.new };
-                  // Sort posts by updatedAt
-                  posts.sort(
-                    (a, b) =>
-                      new Date(b.updatedAt).getTime() -
-                      new Date(a.updatedAt).getTime()
-                  );
-                  return [
-                    null,
-                    {
-                      ...data,
-                      event: { ...data.event, posts },
-                    },
-                  ] as PostFeedResult;
-                } else if (payload.eventType === 'DELETE' && postIndex >= 0) {
-                  // Remove post
-                  posts.splice(postIndex, 1);
-                  return [
-                    null,
-                    {
-                      ...data,
-                      event: { ...data.event, posts },
-                    },
-                  ] as PostFeedResult;
-                }
-
-                return oldValue;
-              }
-            );
+            });
           },
         },
         {
           table: 'Reply',
-          filter: `postId=in.(${query.data?.[1]?.event.posts.map(p => p.id).join(',') || ''})`,
+          filter: `postId=eq.${eventId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
-            queryClient.setQueryData(
-              [
+          handler: ({ queryClient }) => {
+            queryClient.invalidateQueries({
+              queryKey: [
                 ['event', 'getPostFeedData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: PostFeedResult | undefined) => {
-                if (!oldValue) return oldValue;
-                const [error, data] = oldValue;
-                if (error || !data) return oldValue;
-
-                // Update reply count for affected post
-                const posts = data.event.posts.map(post => {
-                  if (
-                    payload.new?.postId === post.id ||
-                    payload.old?.postId === post.id
-                  ) {
-                    const countChange =
-                      payload.eventType === 'INSERT'
-                        ? 1
-                        : payload.eventType === 'DELETE'
-                          ? -1
-                          : 0;
-                    return {
-                      ...post,
-                      _count: {
-                        replies: Math.max(0, post._count.replies + countChange),
-                      },
-                    };
-                  }
-                  return post;
-                });
-
-                return [
-                  null,
-                  {
-                    ...data,
-                    event: { ...data.event, posts },
-                  },
-                ] as PostFeedResult;
-              }
-            );
+            });
           },
         },
         {
           table: 'Person',
-          filter: `id=in.(${query.data?.[1]?.event.posts.map(p => p.author.id).join(',') || ''})`,
+          filter: '*',
           event: '*',
-          handler: ({ payload, queryClient }) => {
-            queryClient.setQueryData(
-              [
+          handler: ({ queryClient }) => {
+            queryClient.invalidateQueries({
+              queryKey: [
                 ['event', 'getPostFeedData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: PostFeedResult | undefined) => {
-                if (!oldValue) return oldValue;
-                const [error, data] = oldValue;
-                if (error || !data) return oldValue;
-
-                // Update author data in posts
-                const posts = data.event.posts.map(post => {
-                  if (post.author.id === payload.new?.id) {
-                    return {
-                      ...post,
-                      author: { ...post.author, ...payload.new },
-                    };
-                  }
-                  return post;
-                });
-
-                return [
-                  null,
-                  {
-                    ...data,
-                    event: { ...data.event, posts },
-                  },
-                ] as PostFeedResult;
-              }
-            );
+            });
           },
         },
       ],

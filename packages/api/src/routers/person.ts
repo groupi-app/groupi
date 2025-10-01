@@ -1,37 +1,13 @@
-import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
 import {
-  // Import safe-wrapper service functions
+  // Import service functions
   fetchPersonData,
+  fetchUserDashboardData,
   createUserFromWebhook,
   updateUserFromWebhook,
   deleteUserFromWebhook,
-  // Import component-specific services
-  getEventListData,
-  getMyEventsData,
 } from '@groupi/services';
-
-// ============================================================================
-// INPUT SCHEMAS
-// ============================================================================
-
-const UserWebhookSchema = z.object({
-  id: z.string(),
-  firstName: z.string().nullable(),
-  lastName: z.string().nullable(),
-  username: z.string(),
-  imageUrl: z.string(),
-});
-
-const GetPersonSchema = z.object({
-  userId: z.string(),
-});
-
-const UpdatePersonSchema = z.object({
-  userId: z.string(),
-  name: z.string().optional(),
-  email: z.string().email().optional(),
-});
+import { z } from 'zod';
 
 // ============================================================================
 // PERSON ROUTER
@@ -43,19 +19,19 @@ export const personRouter = createTRPCRouter({
    * Returns: [error, userDashboardDTO] tuple
    */
   getById: protectedProcedure
-    .input(GetPersonSchema)
+    .input(z.object({ userId: z.string() }))
     .query(async ({ input, ctx: _ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await fetchPersonData(input.userId);
+      return await fetchPersonData({
+        personId: input.userId,
+      });
     }),
 
   /**
    * Get current user's data
    * Returns: [error, userDashboardDTO] tuple
    */
-  getCurrent: protectedProcedure.query(async ({ ctx }) => {
-    // Use the userId from context to get current user's data
-    return await fetchPersonData(ctx.userId);
+  getCurrent: protectedProcedure.query(async () => {
+    return await fetchUserDashboardData({});
   }),
 
   /**
@@ -63,15 +39,20 @@ export const personRouter = createTRPCRouter({
    * Returns: [error, person] tuple
    */
   update: protectedProcedure
-    .input(UpdatePersonSchema)
-    .mutation(async ({ input, ctx }) => {
+    .input(
+      z.object({
+        userId: z.string(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
       // For now, return a basic update response
       // This should be implemented with a proper updatePerson service function
       const updateData = {
         id: input.userId,
         firstName: input.name?.split(' ')[0] || null,
         lastName: input.name?.split(' ').slice(1).join(' ') || null,
-        username: ctx.userId, // Use existing username
         imageUrl: '', // Keep existing image
       };
 
@@ -83,9 +64,16 @@ export const personRouter = createTRPCRouter({
    * Returns: [error, person] tuple
    */
   createFromWebhook: publicProcedure
-    .input(UserWebhookSchema)
+    .input(
+      z.object({
+        id: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        username: z.string(),
+        imageUrl: z.string(),
+      })
+    )
     .mutation(async ({ input }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
       return await createUserFromWebhook({
         id: input.id,
         firstName: input.firstName,
@@ -100,7 +88,15 @@ export const personRouter = createTRPCRouter({
    * Returns: [error, person] tuple
    */
   updateFromWebhook: publicProcedure
-    .input(UserWebhookSchema)
+    .input(
+      z.object({
+        id: z.string(),
+        firstName: z.string().nullable(),
+        lastName: z.string().nullable(),
+        username: z.string(),
+        imageUrl: z.string(),
+      })
+    )
     .mutation(async ({ input }) => {
       // Return safe-wrapper tuple directly - no error conversion needed
       return await updateUserFromWebhook({
@@ -119,8 +115,9 @@ export const personRouter = createTRPCRouter({
   deleteFromWebhook: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await deleteUserFromWebhook(input.id);
+      return await deleteUserFromWebhook({
+        userId: input.id,
+      });
     }),
 
   // ============================================================================
@@ -128,23 +125,68 @@ export const personRouter = createTRPCRouter({
   // ============================================================================
 
   /**
-   * Get event list data (for EventList component)
-   * Returns: [error, EventListData] tuple
-   */
-  getEventListData: protectedProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      return await getEventListData(input.userId);
-    }),
-
-  /**
    * Get my events data (for MyEvents page)
    * Returns: [error, MyEventsData] tuple
    */
-  getMyEventsData: protectedProcedure
-    .query(async ({ ctx }) => {
-      return await getMyEventsData(ctx.userId);
-    }),
+  getMyEventsData: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      console.log('[tRPC] getMyEventsData called with context:', {
+        hasContext: !!ctx,
+        contextKeys: ctx ? Object.keys(ctx) : [],
+      });
+
+      const [error, result] = await fetchUserDashboardData({});
+
+      if (error) {
+        // Enhanced error logging with full error details
+        const errorInfo = {
+          message: error.message,
+          errorType: error._tag || error.constructor.name,
+          stack: error.stack,
+          cause: error.cause,
+          // Try to serialize the full error object
+          fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+          timestamp: new Date().toISOString(),
+        };
+
+        console.error('[tRPC] fetchUserDashboardData failed:', errorInfo);
+
+        // Create a more informative error with the original error as cause
+        const enhancedError = new Error(
+          `Failed to fetch user dashboard data: ${error.message}`
+        );
+        enhancedError.cause = error;
+        (enhancedError as any).originalError = error;
+        (enhancedError as any).errorType = error._tag || error.constructor.name;
+
+        // Return the tuple with error - don't throw
+        return [error, undefined] as const;
+      }
+
+      console.log('[tRPC] getMyEventsData success:', {
+        hasResult: !!result,
+        resultType: typeof result,
+        resultKeys:
+          result && typeof result === 'object' ? Object.keys(result) : [],
+      });
+
+      // Return the tuple with result - this is the safe-wrapper pattern
+      return [null, result] as const;
+    } catch (err) {
+      // Catch any unexpected errors and log them with full context
+      console.error('[tRPC] getMyEventsData unexpected error:', {
+        error: err,
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        errorType: err instanceof Error ? err.constructor.name : typeof err,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Return tuple with error instead of throwing
+      const error = err instanceof Error ? err : new Error(String(err));
+      return [error, undefined] as const;
+    }
+  }),
 });
 
 export type PersonRouter = typeof personRouter;

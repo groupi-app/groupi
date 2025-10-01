@@ -1,5 +1,4 @@
-import { api } from '../clients/trpc-client';
-import type { InvitePageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
 
 // ============================================================================
 // INVITE PAGE HOOK

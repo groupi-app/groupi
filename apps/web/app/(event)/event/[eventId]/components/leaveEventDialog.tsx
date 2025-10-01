@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-export function LeaveEventDialog({ id }: { id: string }) {
+export function LeaveEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
   const leaveEvent = useLeaveEvent();
   return (
@@ -34,7 +34,7 @@ export function LeaveEventDialog({ id }: { id: string }) {
             <Button
               onClick={() => {
                 leaveEvent.mutate(
-                  { id },
+                  { eventId },
                   {
                     onSuccess: () => {
                       router.push(`/events`);

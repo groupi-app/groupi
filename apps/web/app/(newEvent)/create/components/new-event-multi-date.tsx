@@ -49,8 +49,8 @@ export function NewEventMultiDate() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Use the hook to get the mutation function
-  const { mutateAsync: createEvent } = useCreateEvent();
+  // Use the hook to get the clean mutation function
+  const { createEvent } = useCreateEvent();
 
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
@@ -116,7 +116,7 @@ export function NewEventMultiDate() {
       setIsSaving(false);
     } else if (result) {
       toast.success('The event was created successfully.');
-      router.push(`/event/${result.id}`);
+      router.push(`/event/${result.event.id}`);
     }
   }
 

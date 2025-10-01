@@ -2,6 +2,7 @@
 
 import { Icons } from '@/components/icons';
 import { useEventHeader } from '@groupi/hooks';
+import { MembershipWithAvailabilities } from '@/types';
 import Link from 'next/link';
 import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
@@ -28,12 +29,12 @@ export function EventHeader({ eventId }: { eventId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         return <div>Event not found</div>;
-      case 'EventUserNotFoundError':
+      case 'AuthenticationError':
         router.push('/sign-in');
         return null;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:
         return <div>An unexpected error occurred</div>;
@@ -146,13 +147,13 @@ export function EventHeader({ eventId }: { eventId: string }) {
         <EventRSVP
           title={title}
           dateTime={chosenDateTime}
-          userMembership={userMembership as any}
+          userMembership={userMembership as MembershipWithAvailabilities}
         />
       </header>
       {userMembership.role === 'ORGANIZER' ? (
-        <DeleteEventDialog id={eventId} />
+        <DeleteEventDialog eventId={eventId} />
       ) : (
-        <LeaveEventDialog id={eventId} />
+        <LeaveEventDialog eventId={eventId} />
       )}
     </Dialog>
   );

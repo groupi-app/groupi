@@ -1,4 +1,4 @@
-import { api } from '../clients/trpc-client';
+import { api } from '../../clients/trpc-client';
 
 // ============================================================================
 // EVENT CHANGE DATE PAGE HOOK
@@ -11,8 +11,8 @@ import { api } from '../clients/trpc-client';
  */
 export function useEventChangeDate(eventId: string) {
   // Standard tRPC query
-  const query = api.event.getChangeDatePageData.useQuery(
-    { id: eventId },
+  const query = api.event.getHeaderData.useQuery(
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,

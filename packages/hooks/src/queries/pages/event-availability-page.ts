@@ -1,6 +1,5 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventAvailabilityPageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
 
 // ============================================================================
 // EVENT AVAILABILITY PAGE HOOK
@@ -13,7 +12,7 @@ import type { EventAvailabilityPageResult } from '@groupi/schema';
  */
 export function useEventAvailability(eventId: string) {
   // Standard tRPC query
-  const query = api.availability.getAvailabilityPageData.useQuery(
+  const query = api.availability.getEventPotentialDateTimes.useQuery(
     { eventId },
     {
       staleTime: 30 * 1000,

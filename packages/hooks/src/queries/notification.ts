@@ -1,10 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { NotificationType } from '@prisma/client';
 import { api } from '../clients/trpc-client';
 // WebSocketProvider removed; Supabase Realtime handles invalidation
 import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
+import { createTRPCRouterPredicate } from '../utils/query-key-utils';
+import { NotificationDTO as NotificationSchema } from '@groupi/schema';
+import type { ResultTuple } from '@groupi/schema';
 
 // Types for notification data
 interface NotificationData {
@@ -24,9 +24,8 @@ interface NotificationData {
  * Returns both data and real-time connection status
  */
 export function useNotifications(userId: string) {
-  const queryClient = useQueryClient();
   const query = api.notification.getForUser.useQuery(
-    { id: userId },
+    { cursor: undefined }, // Explicitly pass cursor as undefined for first page
     {
       staleTime: 30 * 1000, // 30 seconds
       gcTime: 5 * 60 * 1000, // 5 minutes
@@ -45,41 +44,38 @@ export function useNotifications(userId: string) {
           table: 'Notification',
           filter: `personId=eq.${userId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
-            const newRow = (
-              payload as RealtimePostgresChangesPayload<NotificationData>
-            ).new as unknown as NotificationData | null;
-            const oldRow = (
-              payload as RealtimePostgresChangesPayload<NotificationData>
-            ).old as unknown as NotificationData | null;
+          handler: ({ event, newRow, oldRow, queryClient }) => {
             queryClient.setQueriesData(
-              { predicate: q => q.queryKey[0] === 'notification' },
-              (old: [any, NotificationData[]] | undefined) => {
+              { predicate: createTRPCRouterPredicate(['notification']) },
+              (old: ResultTuple<unknown, NotificationData[]> | undefined) => {
                 if (!old) return old;
                 const [error, notifications] = old;
                 if (error || !notifications) return old;
-                switch (
-                  (payload as RealtimePostgresChangesPayload<NotificationData>)
-                    .eventType
-                ) {
-                  case 'INSERT':
-                    return [
-                      null,
-                      newRow ? [newRow, ...notifications] : notifications,
-                    ];
-                  case 'UPDATE':
+                switch (event) {
+                  case 'INSERT': {
+                    const parsed = NotificationSchema.safeParse(newRow);
+                    if (!parsed.success) return old;
+                    return [null, [parsed.data, ...notifications]];
+                  }
+                  case 'UPDATE': {
+                    const parsed =
+                      NotificationSchema.partial().safeParse(newRow);
+                    if (!parsed.success) return old;
+                    const patch = parsed.data;
                     return [
                       null,
                       notifications.map(n =>
-                        newRow && n.id === newRow.id ? { ...n, ...newRow } : n
+                        n.id === patch.id ? { ...n, ...patch } : n
                       ),
                     ];
+                  }
                   case 'DELETE':
                     return [
                       null,
-                      notifications.filter(n =>
-                        oldRow ? n.id !== oldRow.id : true
-                      ),
+                      notifications.filter(n => {
+                        const delId = (oldRow as { id?: string } | null)?.id;
+                        return n.id !== (delId ?? '');
+                      }),
                     ];
                   default:
                     return old;
@@ -135,7 +131,7 @@ export function useUnreadNotificationCount(userId: string) {
 
   const validNotifications = Array.isArray(notifications) ? notifications : [];
   const unreadCount = validNotifications.filter(
-    (notification: any) => !notification.read
+    (notification: { read?: boolean }) => !notification.read
   ).length;
 
   return {

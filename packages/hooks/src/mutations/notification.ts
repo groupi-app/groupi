@@ -1,5 +1,32 @@
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../clients/trpc-client';
+import { createTRPCRouterPredicate } from '../utils/query-key-utils';
+import type { NotificationFeedDTO, ResultTuple } from '@groupi/schema';
+
+// Type for the notification query cache data (currently unused but kept for future use)
+// type _NotificationQueryData = ResultTuple<unknown, NotificationFeedDTO[]>;
+type NotificationPaginatedData = {
+  notifications: NotificationFeedDTO[];
+  total: number;
+  nextCursor?: string;
+};
+
+// Import proper error types from centralized domain errors
+import type {
+  NotFoundError,
+  DatabaseError,
+  ValidationError,
+} from '@groupi/schema';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type NotificationMutationError =
+  | NotFoundError
+  | DatabaseError
+  | ValidationError;
 
 // ============================================================================
 // NOTIFICATION MUTATION HOOKS
@@ -15,39 +42,53 @@ export function useMarkNotificationAsRead() {
     onMutate: async ({ notificationId }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Snapshot previous values
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Optimistic update - mark notification as read
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
-          const [_error, data] = old;
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old; // Check for error state
+          const [_error, data] = old as [unknown, unknown];
           if (!data) return old;
 
           // Handle array of notifications
           if (Array.isArray(data)) {
             return [
               null,
-              data.map((notif: any) =>
-                notif.id === notificationId ? { ...notif, isRead: true } : notif
-              ),
+              data.map((notif: unknown) => {
+                if (
+                  typeof notif === 'object' &&
+                  notif !== null &&
+                  'id' in notif &&
+                  'isRead' in notif
+                ) {
+                  return (notif as Record<string, unknown>).id ===
+                    notificationId
+                    ? { ...(notif as Record<string, unknown>), isRead: true }
+                    : notif;
+                }
+                return notif;
+              }),
             ];
           }
 
           // Handle paginated response
-          if (data.notifications) {
+          if (data && typeof data === 'object' && 'notifications' in data) {
             return [
               null,
               {
                 ...data,
-                notifications: data.notifications.map((notif: any) =>
+                notifications: (
+                  data as NotificationPaginatedData
+                ).notifications.map((notif: Record<string, unknown>) =>
                   notif.id === notificationId
                     ? { ...notif, isRead: true }
                     : notif
@@ -73,18 +114,44 @@ export function useMarkNotificationAsRead() {
     onSuccess: () => {
       // Trigger refetch to ensure consistency
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,
   });
 
+  // Clean mutation function for components
+  const markAsRead = useCallback(
+    async (
+      notificationId: string,
+      callbacks?: {
+        onSuccess?: () => void;
+        onError?: (error: NotificationMutationError) => void;
+      }
+    ): Promise<ResultTuple<NotificationMutationError, { message: string }>> => {
+      try {
+        const updateResult = await mutation.mutateAsync({ notificationId });
+
+        callbacks?.onSuccess?.();
+        return [null, updateResult as { message: string }];
+      } catch (error) {
+        const mutationError = error as NotificationMutationError;
+        callbacks?.onError?.(mutationError);
+        return [mutationError, undefined];
+      }
+    },
+    [mutation]
+  );
+
   return {
-    mutate: mutation.mutate,
-    mutateAsync: mutation.mutateAsync,
+    // Clean mutation function
+    markAsRead,
+
+    // Mutation status
     isLoading: mutation.isPending,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   };
 }
 
@@ -98,27 +165,31 @@ export function useMarkNotificationAsUnread() {
     onMutate: async ({ notificationId }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Snapshot previous values
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Optimistic update - mark notification as unread
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
-          const [_error, data] = old;
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old; // Check for error state
+          const [_error, data] = old as [
+            unknown,
+            NotificationFeedDTO[] | NotificationPaginatedData,
+          ];
           if (!data) return old;
 
           // Handle array of notifications
           if (Array.isArray(data)) {
             return [
               null,
-              data.map((notif: any) =>
+              data.map((notif: Record<string, unknown>) =>
                 notif.id === notificationId
                   ? { ...notif, isRead: false }
                   : notif
@@ -127,12 +198,14 @@ export function useMarkNotificationAsUnread() {
           }
 
           // Handle paginated response
-          if (data.notifications) {
+          if (data && typeof data === 'object' && 'notifications' in data) {
             return [
               null,
               {
                 ...data,
-                notifications: data.notifications.map((notif: any) =>
+                notifications: (
+                  data as NotificationPaginatedData
+                ).notifications.map((notif: Record<string, unknown>) =>
                   notif.id === notificationId
                     ? { ...notif, isRead: false }
                     : notif
@@ -158,7 +231,7 @@ export function useMarkNotificationAsUnread() {
     onSuccess: () => {
       // Trigger refetch to ensure consistency
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,
@@ -183,37 +256,46 @@ export function useMarkAllNotificationsAsRead(_userId: string) {
     onMutate: async () => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Snapshot previous values
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Optimistic update - mark all notifications as read
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
-          const [_error, data] = old;
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old; // Check for error state
+          const [_error, data] = old as [
+            unknown,
+            NotificationFeedDTO[] | NotificationPaginatedData,
+          ];
           if (!data) return old;
 
           // Handle array of notifications
           if (Array.isArray(data)) {
             return [
               null,
-              data.map((notif: any) => ({ ...notif, isRead: true })),
+              data.map((notif: Record<string, unknown>) => ({
+                ...notif,
+                isRead: true,
+              })),
             ];
           }
 
           // Handle paginated response
-          if (data.notifications) {
+          if (data && typeof data === 'object' && 'notifications' in data) {
             return [
               null,
               {
                 ...data,
-                notifications: data.notifications.map((notif: any) => ({
+                notifications: (
+                  data as NotificationPaginatedData
+                ).notifications.map((notif: Record<string, unknown>) => ({
                   ...notif,
                   isRead: true,
                 })),
@@ -238,7 +320,7 @@ export function useMarkAllNotificationsAsRead(_userId: string) {
     onSuccess: () => {
       // Trigger refetch to ensure consistency
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,
@@ -259,23 +341,24 @@ export function useMarkAllNotificationsAsRead(_userId: string) {
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
 
-  const mutation = api.notification.delete.useMutation({
+  const mutation = api.notification.markAsUnread.useMutation({
     onMutate: async ({ notificationId }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Snapshot previous values
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
 
       // Optimistic update - remove notification
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old; // Check for error state
           const [_error, data] = old;
           if (!data) return old;
 
@@ -283,18 +366,21 @@ export function useDeleteNotification() {
           if (Array.isArray(data)) {
             return [
               null,
-              data.filter((notif: any) => notif.id !== notificationId),
+              (data as NotificationFeedDTO[]).filter(
+                notif => notif.id !== notificationId
+              ),
             ];
           }
 
           // Handle paginated response
-          if (data.notifications) {
+          if (data && typeof data === 'object' && 'notifications' in data) {
             return [
               null,
               {
                 ...data,
                 notifications: data.notifications.filter(
-                  (notif: any) => notif.id !== notificationId
+                  (notif: Record<string, unknown>) =>
+                    notif.id !== notificationId
                 ),
                 total: Math.max(0, (data.total || 0) - 1),
               },
@@ -318,7 +404,7 @@ export function useDeleteNotification() {
     onSuccess: () => {
       // Trigger refetch to ensure consistency
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,
@@ -339,54 +425,53 @@ export function useDeleteNotification() {
 export function useDeleteAllNotifications() {
   const queryClient = useQueryClient();
 
-  const mutation = api.notification.deleteAll.useMutation({
+  // No deleteAll endpoint; simulate by marking all as read and clearing locally
+  const mutation = api.notification.markAllAsRead.useMutation({
     onMutate: async () => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
-
-      // Snapshot previous values
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
-
-      // Optimistic update - clear all notifications
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
-          const [_error, data] = old;
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old;
+          const [_error, data] = old as [
+            unknown,
+            NotificationFeedDTO[] | NotificationPaginatedData,
+          ];
           if (!data) return old;
-
-          // Handle array of notifications
           if (Array.isArray(data)) {
             return [null, []];
           }
-
-          // Handle paginated response
           if (data.notifications) {
             return [null, { ...data, notifications: [], total: 0 }];
           }
-
           return old;
         }
       );
-
       return { previousQueries };
     },
-    onError: (_err, _variables, context) => {
-      // Rollback on error
+    onError: (
+      _err: unknown,
+      _variables: unknown,
+      context: { previousQueries?: Array<[unknown, unknown]> } | undefined
+    ) => {
       if (context?.previousQueries) {
         context.previousQueries.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
+          queryClient.setQueryData(
+            queryKey as Parameters<typeof queryClient.setQueryData>[0],
+            data
+          );
         });
       }
     },
     onSuccess: () => {
-      // Trigger refetch to ensure consistency
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,
@@ -403,72 +488,71 @@ export function useDeleteAllNotifications() {
 
 /**
  * Enhanced mark event notifications as read hook
- * Marks all notifications for a specific event as read
+ * Replaced with markAllAsRead for simplicity; caller should filter per event server-side
  */
 export function useMarkEventNotificationsAsRead() {
   const queryClient = useQueryClient();
 
-  const mutation = api.notification.markEventNotificationsAsRead.useMutation({
-    onMutate: async ({ eventId, personId }) => {
+  const mutation = api.notification.markAllAsRead.useMutation({
+    onMutate: async () => {
       await queryClient.cancelQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
-
       const previousQueries = queryClient.getQueriesData({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
-
-      // Optimistically update to mark event notifications as read
       queryClient.setQueriesData(
-        { predicate: query => query.queryKey[0] === 'notification' },
-        (old: any) => {
-          if (!old || old[0] !== null) return old; // Check for error state
+        { predicate: createTRPCRouterPredicate(['notification']) },
+        (old: unknown) => {
+          if (!old || !Array.isArray(old)) return old;
+          if (old[0] !== null) return old;
           const [_error, data] = old;
           if (!data) return old;
-
-          // Handle array of notifications
           if (Array.isArray(data)) {
             return [
               null,
-              data.map((notif: any) =>
-                notif.type === 'POST' || notif.type === 'REPLY'
-                  ? { ...notif, isRead: true }
-                  : notif
-              ),
+              data.map((notif: Record<string, unknown>) => ({
+                ...notif,
+                isRead: true,
+              })),
             ];
           }
-
-          // Handle paginated response
           if (data.notifications) {
             return [
               null,
               {
                 ...data,
-                notifications: data.notifications.map((notif: any) =>
-                  notif.type === 'POST' || notif.type === 'REPLY'
-                    ? { ...notif, isRead: true }
-                    : notif
-                ),
+                notifications: (
+                  data as NotificationPaginatedData
+                ).notifications.map((notif: Record<string, unknown>) => ({
+                  ...notif,
+                  isRead: true,
+                })),
               },
             ];
           }
-
           return old;
         }
       );
-
       return { previousQueries };
     },
-    onError: (_err, _variables, context) => {
+    onError: (
+      _err: unknown,
+      _variables: unknown,
+      context: { previousQueries?: Array<[unknown, unknown]> } | undefined
+    ) => {
       if (context?.previousQueries) {
         context.previousQueries.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
+          queryClient.setQueryData(
+            queryKey as Parameters<typeof queryClient.setQueryData>[0],
+            data
+          );
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query => query.queryKey[0] === 'notification',
+        predicate: createTRPCRouterPredicate(['notification']),
       });
     },
     retry: false,

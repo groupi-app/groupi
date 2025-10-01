@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../clients/trpc-client';
+import { createTRPCRouterPredicate } from '../utils/query-key-utils';
 
 // ============================================================================
 // AVAILABILITY MUTATION HOOKS
@@ -14,8 +15,7 @@ export function useUpdateMemberAvailabilities() {
   const mutation = api.availability.updateAvailabilities.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'availability' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['availability', 'event']),
       });
     },
     retry: false,
@@ -52,8 +52,7 @@ export function useChooseDateTime() {
   const mutation = api.availability.chooseDateTime.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: query =>
-          query.queryKey[0] === 'availability' || query.queryKey[0] === 'event',
+        predicate: createTRPCRouterPredicate(['availability', 'event']),
       });
     },
     retry: false,

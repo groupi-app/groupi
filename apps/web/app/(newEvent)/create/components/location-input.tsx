@@ -8,6 +8,7 @@ import {
 import useOnclickOutside from 'react-cool-onclickoutside';
 import { ControllerRenderProps } from 'react-hook-form';
 import usePlacesAutocomplete from 'use-places-autocomplete';
+import { useEffect } from 'react';
 
 export function LocationInput({
   dataTest,
@@ -30,7 +31,21 @@ export function LocationInput({
     suggestions: { status, data },
     setValue,
     clearSuggestions,
-  } = usePlacesAutocomplete({ callbackName: 'initMap' });
+  } = usePlacesAutocomplete({
+    requestOptions: {
+      /* Define search scope here if needed */
+    },
+    debounce: 300,
+  });
+
+  // Debug logging to see if Google Maps API is loaded
+  useEffect(() => {
+    console.log('LocationInput ready status:', ready);
+    console.log(
+      'Google Maps API loaded:',
+      typeof window !== 'undefined' && window.google
+    );
+  }, [ready]);
 
   const handleSelect = (address: string) => {
     field.onChange(address);

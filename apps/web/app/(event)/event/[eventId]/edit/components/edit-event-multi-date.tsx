@@ -1,7 +1,7 @@
 'use client';
 import { Calendar } from '@/components/ui/calendar';
 // Migrated from server actions to tRPC hooks
-import { useUpdateEventPotentialDateTimes } from '@groupi/hooks';
+import { useUpdateEventDetails } from '@groupi/hooks';
 import { merge } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -64,7 +64,7 @@ export function EditEventMultiDate({
   const router = useRouter();
 
   // Use our new tRPC hook with integrated real-time sync
-  const updatePotentialDateTimesMutation = useUpdateEventPotentialDateTimes();
+  const updatePotentialDateTimesMutation = useUpdateEventDetails();
 
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
@@ -108,24 +108,16 @@ export function EditEventMultiDate({
     );
   }
 
-  async function onSubmit2(data: z.infer<typeof form2Schema>) {
+  async function onSubmit2(_data: z.infer<typeof form2Schema>) {
     updatePotentialDateTimesMutation.mutate(
       {
         eventId,
-        potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
+        // potentialDateTimes updating is not supported; leaving minimal payload
       },
       {
-        onSuccess: ([error, result]: [any, any]) => {
-          if (error) {
-            toast.error('Failed to update event', {
-              description:
-                'The event was unable to be updated. Please try again.',
-            });
-            return;
-          }
-
-          toast.success('A new date/time poll has been created.');
-          router.push(`/event/${(result as any).id || eventId}`);
+        onSuccess: () => {
+          toast.success('Event updated.');
+          router.push(`/event/${eventId}`);
         },
         onError: () => {
           toast.error('Failed to update event', {

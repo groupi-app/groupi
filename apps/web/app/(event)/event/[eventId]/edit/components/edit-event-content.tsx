@@ -22,30 +22,14 @@ export function EditEventContent({ eventId }: { eventId: string }) {
   const [error, pageData] = data;
 
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'EventNotFoundError':
-        errorMessage = 'Event not found';
-        break;
-      case 'EventUserNotMemberError':
-        errorMessage = 'You are not a member of this event';
-        break;
+      case 'NotFoundError':
+        return <div>Event not found</div>;
       case 'UnauthorizedError':
-        errorMessage = 'You do not have permission to edit this event';
-        break;
-      case 'DatabaseError':
-        errorMessage = 'Failed to load event data';
-        break;
+        return <div>You are not a member of this event</div>;
+      default:
+        return <div>Failed to load event data</div>;
     }
-
-    return (
-      <div className='container max-w-4xl mt-10'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>{errorMessage}</p>
-        </div>
-      </div>
-    );
   }
 
   const { event } = pageData;

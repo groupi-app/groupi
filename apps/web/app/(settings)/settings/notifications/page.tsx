@@ -2,11 +2,12 @@ import { SettingsContent } from '../components/settings-content';
 import { prefetchSettingsPageData } from '@groupi/hooks/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
+import { pageLogger } from '@/lib/logger';
 import { redirect } from 'next/navigation';
 
 export default async function NotificationSettings() {
   const user = await currentUser();
-  
+
   if (!user) {
     redirect('/sign-in');
   }
@@ -29,14 +30,12 @@ export default async function NotificationSettings() {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in notification settings page:', error);
+    pageLogger.error('Error in notification settings page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>
           <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>
-            An error occurred while loading your settings.
-          </p>
+          <p className='mt-2'>An error occurred while loading your settings.</p>
         </div>
       </div>
     );

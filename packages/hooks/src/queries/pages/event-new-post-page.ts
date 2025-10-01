@@ -1,4 +1,4 @@
-import { api } from '../clients/trpc-client';
+import { api } from '../../clients/trpc-client';
 
 // ============================================================================
 // EVENT NEW POST PAGE HOOK
@@ -12,7 +12,7 @@ import { api } from '../clients/trpc-client';
 export function useEventNewPost(eventId: string) {
   // Standard tRPC query
   const query = api.event.getNewPostPageData.useQuery(
-    { id: eventId },
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,

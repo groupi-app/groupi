@@ -1,0 +1,1055 @@
+import { Effect, Schedule } from 'effect';
+import { auth } from '@clerk/nextjs/server';
+import { db } from '../infrastructure/db';
+import { createEffectLoggerLayer } from '../infrastructure/logger';
+import type { PostFeedDTO, ResultTuple } from '@groupi/schema';
+import {
+  GetPostFeedDataParams,
+  CreatePostParams,
+  GetPostDetailPageDataParams,
+  UpdatePostParams,
+  DeletePostParams,
+} from '@groupi/schema/params';
+import { PostDTO, PostDetailPageDTO } from '@groupi/schema/data';
+import {
+  UnauthorizedError,
+  DatabaseError,
+  ConnectionError,
+  NotFoundError,
+  ConstraintError,
+  ValidationError,
+  AuthenticationError,
+} from '@groupi/schema';
+import { getPrismaError } from '../shared/errors';
+import { createEventNotifications } from './notification';
+// No more manual reporting imports needed!
+
+// ============================================================================
+// POST DOMAIN SERVICES
+// ============================================================================
+
+/**
+ * Get posts for an event with pagination
+ */
+export const getPostFeedData = async ({
+  eventId,
+  cursor,
+  limit = 20,
+}: GetPostFeedDataParams): Promise<
+  ResultTuple<
+    | NotFoundError
+    | UnauthorizedError
+    | AuthenticationError
+    | DatabaseError
+    | ConnectionError,
+    PostFeedDTO
+  >
+> => {
+  // Get auth outside Effect.gen so it's available in error handlers
+  const { userId } = await auth();
+  if (!userId) {
+    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Fetching posts for event', {
+      eventId,
+      userId,
+      cursor,
+      limit,
+    });
+
+    // Check if user is a member
+    const membership = yield* Effect.promise(() =>
+      db.membership.findFirst({
+        where: { eventId, personId: userId },
+        select: { id: true, role: true },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'getPostsByEvent.checkMembership',
+              eventId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!membership) {
+      yield* Effect.logInfo('User not authorized to view posts', {
+        userId,
+        eventId,
+        reason: 'not_member_of_event',
+        operation: 'getPostsByEvent',
+      });
+      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      return;
+    }
+
+    // Fetch event base and memberships for card permissions
+    const eventData = yield* Effect.promise(() =>
+      db.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          chosenDateTime: true,
+          memberships: {
+            select: {
+              id: true,
+              eventId: true,
+              personId: true,
+              role: true,
+              rsvpStatus: true,
+              person: {
+                select: {
+                  id: true,
+                  createdAt: true,
+                  updatedAt: true,
+                  firstName: true,
+                  lastName: true,
+                  username: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Event', cause)),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Get posts with author and reply counts
+    const posts = yield* Effect.promise(() =>
+      db.post.findMany({
+        where: { eventId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          authorId: true,
+          eventId: true,
+          createdAt: true,
+          updatedAt: true,
+          editedAt: true,
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              username: true,
+              imageUrl: true,
+            },
+          },
+          replies: {
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              text: true,
+              createdAt: true,
+              updatedAt: true,
+              author: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  username: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+          _count: { select: { replies: true } },
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'getPostsByEvent.fetchPosts',
+              eventId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    const result: PostFeedDTO = {
+      event: {
+        id: eventData?.id ?? eventId,
+        chosenDateTime: eventData?.chosenDateTime ?? null,
+        memberships: eventData?.memberships ?? [],
+        posts: posts.map(p => ({
+          id: p.id,
+          title: p.title,
+          content: p.content,
+          authorId: p.authorId,
+          eventId: p.eventId,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          editedAt: p.editedAt,
+          author: {
+            id: p.author.id,
+            firstName: p.author.firstName,
+            lastName: p.author.lastName,
+            username: p.author.username,
+            imageUrl: p.author.imageUrl,
+          },
+          replies: p.replies
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, 3)
+            .map(r => ({
+              id: r.id,
+              text: r.text,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              author: {
+                id: r.author.id,
+                firstName: r.author.firstName,
+                lastName: r.author.lastName,
+                username: r.author.username,
+                imageUrl: r.author.imageUrl,
+              },
+            })),
+          replyCount: p._count.replies,
+        })),
+      },
+      userMembership: {
+        id: membership.id,
+        role: membership.role,
+      },
+    };
+
+    yield* Effect.logDebug('Posts fetched successfully', {
+      eventId,
+      userId,
+      postCount: posts.length,
+    });
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        yield* Effect.void;
+        if (
+          err instanceof UnauthorizedError ||
+          err instanceof ConnectionError ||
+          err instanceof DatabaseError
+        ) {
+          return [err, undefined] as const;
+        }
+        return [new DatabaseError('Failed to fetch posts'), undefined] as const;
+      });
+    }),
+    Effect.map(result => [null, result] as [null, PostFeedDTO])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('posts'))
+  );
+};
+
+/**
+ * Fetch post detail page data (post + replies + permissions)
+ * Retries on database errors
+ */
+export const fetchPostDetailPageData = async ({
+  postId,
+}: GetPostDetailPageDataParams): Promise<
+  ResultTuple<
+    | NotFoundError
+    | DatabaseError
+    | UnauthorizedError
+    | AuthenticationError
+    | ConnectionError,
+    PostDetailPageDTO
+  >
+> => {
+  // Get auth outside Effect.gen so it's available in error handlers
+  const { userId } = await auth();
+  if (!userId) {
+    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Fetching post detail page data', {
+      postId,
+      userId,
+    });
+    const postData = yield* Effect.promise(() =>
+      // Get post data
+      db.post.findUnique({
+        where: { id: postId },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          createdAt: true,
+          updatedAt: true,
+          editedAt: true,
+          authorId: true,
+          eventId: true,
+          author: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              username: true,
+              imageUrl: true,
+            },
+          },
+          event: {
+            select: {
+              id: true,
+              title: true,
+              chosenDateTime: true,
+              memberships: {
+                where: { personId: userId },
+                select: {
+                  id: true,
+                  role: true,
+                  personId: true,
+                },
+                take: 1,
+              },
+            },
+          },
+          replies: {
+            select: {
+              id: true,
+              text: true,
+              createdAt: true,
+              updatedAt: true,
+              author: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  username: true,
+                  imageUrl: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      })
+    ).pipe(
+      // Map error to DatabaseError
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      // Log warning if database connection issue encountered
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'fetchPostDetailPageData',
+              postId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      // Retry on ConnectionError with exponential backoff
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+    // If post not found, return error
+    if (!postData) {
+      yield* Effect.logInfo('Post not found', {
+        userId,
+        postId,
+        operation: 'fetchPostDetailPageData',
+      });
+      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      return;
+    }
+
+    // Find user's membership
+    const userMembership = postData.event.memberships.find(
+      membership => membership.personId === userId
+    );
+
+    // If user is not a member of the event, return error
+    if (!userMembership) {
+      yield* Effect.logInfo('User not authorized to view post', {
+        userId,
+        postId,
+        reason: 'not_member_of_event',
+        operation: 'fetchPostDetailPageData',
+      });
+      yield* Effect.fail(
+        new UnauthorizedError('Not authorized to view this post')
+      );
+      return;
+    }
+
+    // Construct result
+    const result: PostDetailPageDTO = {
+      post: {
+        id: postData.id,
+        title: postData.title,
+        content: postData.content,
+        authorId: postData.authorId,
+        eventId: postData.eventId,
+        createdAt: postData.createdAt,
+        updatedAt: postData.updatedAt,
+        editedAt: postData.editedAt,
+        author: {
+          id: postData.author.id,
+          firstName: postData.author.firstName,
+          lastName: postData.author.lastName,
+          username: postData.author.username,
+          imageUrl: postData.author.imageUrl,
+        },
+        replies: postData.replies.map(reply => ({
+          id: reply.id,
+          text: reply.text,
+          createdAt: reply.createdAt,
+          updatedAt: reply.updatedAt,
+          author: {
+            id: reply.author.id,
+            firstName: reply.author.firstName,
+            lastName: reply.author.lastName,
+            username: reply.author.username,
+            imageUrl: reply.author.imageUrl,
+          },
+        })),
+        event: {
+          id: postData.event.id,
+          title: postData.event.title,
+          chosenDateTime: postData.event.chosenDateTime,
+        },
+      },
+      userMembership: {
+        id: userMembership.id,
+        role: userMembership.role,
+        personId: userMembership.personId,
+      },
+    };
+    yield* Effect.logDebug('Post detail page data fetched successfully', {
+      postId,
+      userId,
+      result,
+    });
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        if (
+          err instanceof NotFoundError ||
+          err instanceof UnauthorizedError ||
+          err instanceof ConnectionError ||
+          err instanceof DatabaseError
+        ) {
+          return [err, undefined] as const;
+        }
+        return [
+          new DatabaseError('Failed to fetch post detail page data'),
+          undefined,
+        ] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, PostDetailPageDTO])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('posts'))
+  );
+};
+
+/**
+ * Create a new post
+ * Retries on database errors
+ */
+export const createPost = async (
+  postData: CreatePostParams
+): Promise<
+  ResultTuple<
+    | DatabaseError
+    | UnauthorizedError
+    | AuthenticationError
+    | ConnectionError
+    | ConstraintError
+    | ValidationError,
+    PostDTO
+  >
+> => {
+  // Get auth outside Effect.gen so it's available in error handlers
+  const { userId } = await auth();
+  if (!userId) {
+    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  }
+
+  const { eventId, title, content } = postData;
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Creating new post', {
+      eventId,
+      userId,
+      title,
+    });
+
+    // Check if user is a member of the event
+    const membership = yield* Effect.promise(() =>
+      db.membership.findFirst({
+        where: {
+          eventId,
+          personId: userId,
+        },
+      })
+    ).pipe(
+      // Map error using our enhanced error helper
+      Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
+      // Log warning if database connection issue encountered
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'createPost.checkMembership',
+              eventId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      // Retry on ConnectionError with exponential backoff
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // If user is not a member of the event, return error
+    if (!membership) {
+      yield* Effect.logInfo('User not authorized to create post', {
+        userId,
+        eventId,
+        reason: 'not_member_of_event',
+        operation: 'createPost',
+      });
+      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      return;
+    }
+
+    // Create the post
+    const post = yield* Effect.promise(() =>
+      db.post.create({
+        data: {
+          title,
+          content,
+          eventId,
+          authorId: userId,
+        },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          authorId: true,
+          eventId: true,
+          createdAt: true,
+          updatedAt: true,
+          editedAt: true,
+        },
+      })
+    ).pipe(
+      // Map error using our enhanced error helper
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      // Log warning if database connection issue encountered
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'createPost.createPost',
+              eventId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      // Retry on ConnectionError with exponential backoff
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Update event timestamp (fire-and-forget)
+    Effect.runPromise(
+      Effect.promise(() =>
+        db.event.update({
+          where: { id: postData.eventId },
+          data: { updatedAt: new Date() },
+        })
+      ).pipe(
+        Effect.tapError(() =>
+          Effect.logDebug('Failed to update event timestamp', {
+            eventId: postData.eventId,
+            postId: post.id,
+          })
+        ),
+        Effect.catchAll(() => Effect.succeed(void 0)) // Ignore errors
+      )
+    );
+
+    // Construct result
+    const result: PostDTO = {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      authorId: post.authorId,
+      eventId: post.eventId,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      editedAt: post.editedAt,
+    };
+
+    yield* Effect.logInfo('Post created successfully', {
+      userId, // Who performed the action
+      authorId: userId, // Who authored the post (same as userId for create)
+      postId: post.id,
+      eventId,
+      title,
+      operation: 'create',
+    });
+
+    // Trigger NEW_POST notification for event members (fire-and-forget)
+    yield* Effect.fork(
+      createEventNotifications({
+        eventId,
+        type: 'NEW_POST',
+        authorId: userId,
+        postId: post.id,
+      }).pipe(
+        Effect.tapError(error =>
+          Effect.logWarning('Failed to create NEW_POST notifications', {
+            eventId,
+            postId: post.id,
+            authorId: userId,
+            error: error.message,
+            errorType: error.constructor.name,
+          })
+        ),
+        Effect.catchAll(() =>
+          Effect.succeed({ message: 'Notifications failed' })
+        )
+      )
+    );
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        if (
+          err instanceof UnauthorizedError ||
+          err instanceof ConnectionError ||
+          err instanceof ConstraintError ||
+          err instanceof ValidationError ||
+          err instanceof DatabaseError
+        ) {
+          return [err, undefined] as const;
+        }
+        return [new DatabaseError('Failed to create post'), undefined] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, PostDTO])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('posts'))
+  );
+};
+
+/**
+ * Update a post
+ * Retries on database errors
+ */
+export const updatePost = async (
+  updateData: UpdatePostParams
+): Promise<
+  ResultTuple<
+    | NotFoundError
+    | UnauthorizedError
+    | AuthenticationError
+    | DatabaseError
+    | ConnectionError
+    | ConstraintError
+    | ValidationError,
+    PostDTO
+  >
+> => {
+  // Get auth outside Effect.gen so it's available in error handlers
+  const { userId } = await auth();
+  if (!userId) {
+    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  }
+
+  const { id: postId, title, content } = updateData;
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Updating post', {
+      postId,
+      userId,
+      title,
+    });
+
+    // Check if post exists and user can edit it
+    const existingPost = yield* Effect.promise(() =>
+      db.post.findUnique({
+        where: { id: postId },
+        include: {
+          event: {
+            include: {
+              memberships: {
+                where: { personId: userId },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'updatePost.fetchPost',
+              postId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!existingPost) {
+      yield* Effect.logInfo('Post not found for update', {
+        userId,
+        postId,
+        operation: 'updatePost',
+      });
+      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      return;
+    }
+
+    const userMembership = existingPost.event.memberships[0];
+    if (!userMembership) {
+      yield* Effect.logInfo('User not authorized to update post', {
+        userId,
+        postId,
+        reason: 'not_member_of_event',
+        operation: 'updatePost',
+      });
+      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      return;
+    }
+
+    // Check authorization (author or organizer/moderator)
+    if (
+      existingPost.authorId !== userId &&
+      !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
+    ) {
+      yield* Effect.logInfo('User not authorized to edit post', {
+        userId,
+        postId,
+        reason: 'insufficient_permissions',
+        operation: 'updatePost',
+      });
+      yield* Effect.fail(
+        new UnauthorizedError('Not authorized to edit this post')
+      );
+      return;
+    }
+
+    const post = yield* Effect.promise(() =>
+      db.post.update({
+        where: { id: postId },
+        data: {
+          title,
+          content,
+          editedAt: new Date(),
+        },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          authorId: true,
+          eventId: true,
+          createdAt: true,
+          updatedAt: true,
+          editedAt: true,
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      Effect.tapError(error =>
+        error instanceof ConnectionError
+          ? Effect.logWarning('Database connection issue encountered', {
+              operation: 'updatePost.updatePost',
+              postId,
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: true,
+            })
+          : Effect.void
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Direct construction
+    const result: PostDTO = {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      authorId: post.authorId,
+      eventId: post.eventId,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      editedAt: post.editedAt,
+    };
+
+    yield* Effect.logInfo('Post updated successfully', {
+      userId, // Who performed the action
+      authorId: existingPost.authorId, // Who originally authored the post
+      postId: post.id,
+      eventId: post.eventId,
+      title: updateData.title,
+      operation: 'update',
+    });
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
+          return [err, undefined] as const;
+        }
+        return [new DatabaseError('Failed to update post'), undefined] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, PostDTO])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('posts'))
+  );
+};
+
+/**
+ * Delete a post
+ * Retries on database errors
+ */
+export const deletePost = async ({
+  postId,
+}: DeletePostParams): Promise<
+  ResultTuple<
+    | NotFoundError
+    | UnauthorizedError
+    | AuthenticationError
+    | DatabaseError
+    | ConnectionError
+    | ConstraintError,
+    { message: string }
+  >
+> => {
+  // Get auth outside Effect.gen so it's available in error handlers
+  const { userId } = await auth();
+  if (!userId) {
+    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Deleting post', {
+      postId,
+      userId,
+    });
+
+    // Check if post exists and user can delete it
+    const existingPost = yield* Effect.promise(() =>
+      db.post.findUnique({
+        where: { id: postId },
+        include: {
+          event: {
+            include: {
+              memberships: {
+                where: { personId: userId },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'deletePost.fetchPost',
+          postId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof DatabaseError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof DatabaseError,
+      })
+    );
+
+    if (!existingPost) {
+      yield* Effect.logInfo('Post not found for deletion', {
+        userId,
+        postId,
+        operation: 'deletePost',
+      });
+      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      return;
+    }
+
+    const userMembership = existingPost.event.memberships[0];
+    if (!userMembership) {
+      yield* Effect.logInfo('User not authorized to delete post', {
+        userId,
+        postId,
+        reason: 'not_member_of_event',
+        operation: 'deletePost',
+      });
+      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      return;
+    }
+
+    // Check authorization (author or organizer/moderator)
+    if (
+      existingPost.authorId !== userId &&
+      !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
+    ) {
+      yield* Effect.logInfo('User not authorized to delete post', {
+        userId,
+        postId,
+        reason: 'insufficient_permissions',
+        operation: 'deletePost',
+      });
+      yield* Effect.fail(
+        new UnauthorizedError('Not authorized to delete this post')
+      );
+      return;
+    }
+
+    yield* Effect.promise(() =>
+      db.post.delete({
+        where: { id: postId },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Post', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'deletePost.deletePost',
+          postId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof DatabaseError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof DatabaseError,
+      })
+    );
+
+    const result = { message: 'Post deleted successfully' };
+
+    yield* Effect.logInfo('Post deleted successfully', {
+      userId, // Who performed the action
+      authorId: existingPost.authorId, // Who originally authored the post
+      postId,
+      eventId: existingPost.eventId,
+      operation: 'delete',
+    });
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
+          return [err, undefined] as const;
+        }
+        return [new DatabaseError('Failed to delete post'), undefined] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, { message: string }])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('posts'))
+  );
+};

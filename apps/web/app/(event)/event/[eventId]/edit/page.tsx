@@ -1,9 +1,11 @@
 import { EditEventContent } from './components/edit-event-content';
 import { prefetchEventEditPageData } from '@groupi/hooks/server';
+import { pageLogger } from '@/lib/logger';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import { GoogleMapsScript } from '@/components/google-maps-script';
+import { env } from '@/env.mjs';
 
 export default async function EventEditPage(props: {
   params: Promise<{ eventId: string }>;
@@ -25,11 +27,11 @@ export default async function EventEditPage(props: {
         <HydrationBoundary state={dehydratedState}>
           <EditEventContent eventId={eventId} />
         </HydrationBoundary>
-        <GoogleMapsScript />
+        <GoogleMapsScript apiKey={env.GOOGLE_API_KEY} />
       </>
     );
   } catch (error) {
-    console.error('Error in event edit page:', error);
+    pageLogger.error('Error in event edit page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

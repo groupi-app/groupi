@@ -3,6 +3,7 @@ import { prefetchMyEventsPageData } from '@groupi/hooks/server';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
+import { pageLogger } from '@/lib/logger';
 
 export default async function MyEventsPage() {
   const { userId }: { userId: string | null } = await auth();
@@ -23,7 +24,7 @@ export default async function MyEventsPage() {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in my events page:', error);
+    pageLogger.error('Error in my events page', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

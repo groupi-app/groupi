@@ -1,7 +1,7 @@
 'use client';
 
 import { useMyEvents } from '@groupi/hooks';
-import { useAuth } from '@clerk/nextjs';
+import type { UserDashboardDTO } from '@groupi/schema';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useState } from 'react';
 import { EventCard } from './event-card';
@@ -32,7 +32,6 @@ const item = {
 };
 
 export function EventList() {
-  const { userId } = useAuth();
   const { data, isLoading } = useMyEvents();
   const [sortBy, setSortBy] = useState<
     'title' | 'createdat' | 'eventdate' | 'lastactivity'
@@ -51,7 +50,7 @@ export function EventList() {
 
   if (error) {
     switch (error._tag) {
-      case 'UserNotFoundError':
+      case 'NotFoundError':
         return (
           <div className='flex items-center justify-center py-8'>
             <div className='text-lg text-red-600'>User not found</div>
@@ -68,7 +67,9 @@ export function EventList() {
       default:
         return (
           <div className='flex items-center justify-center py-8'>
-            <div className='text-lg text-red-600'>An unexpected error occurred</div>
+            <div className='text-lg text-red-600'>
+              An unexpected error occurred
+            </div>
           </div>
         );
     }
@@ -82,9 +83,11 @@ export function EventList() {
     );
   }
 
-  const events = myEventsData.memberships.map(membership => membership.event);
+  const events = myEventsData.memberships.map(
+    (membership: UserDashboardDTO['memberships'][0]) => membership.event
+  );
 
-  const sort = (a: typeof events[0], b: typeof events[0]) => {
+  const sort = (a: (typeof events)[0], b: (typeof events)[0]) => {
     switch (sortBy) {
       case 'title':
         return a.title.localeCompare(b.title);
@@ -108,10 +111,11 @@ export function EventList() {
 
   const filteredEvents =
     filter === 'my'
-      ? events.filter(event =>
-          event.memberships.some(
-            membership =>
-              membership.personId === userId && membership.role === 'ORGANIZER'
+      ? events.filter((event: UserDashboardDTO['memberships'][0]['event']) =>
+          myEventsData.memberships.some(
+            (membership: UserDashboardDTO['memberships'][0]) =>
+              membership.event.id === event.id &&
+              membership.role === 'ORGANIZER'
           )
         )
       : events;

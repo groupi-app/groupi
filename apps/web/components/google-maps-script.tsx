@@ -1,13 +1,27 @@
-'use client';
-
 import Script from 'next/script';
-import { env } from '@/env.mjs';
 
-export function GoogleMapsScript() {
+interface GoogleMapsScriptProps {
+  apiKey: string;
+}
+
+export function GoogleMapsScript({ apiKey }: GoogleMapsScriptProps) {
   return (
-    <Script
-      defer
-      src={`https://maps.googleapis.com/maps/api/js?key=${env.GOOGLE_API_KEY}&libraries=places&callback=initMap`}
-    />
+    <>
+      <Script
+        id='google-maps-init'
+        strategy='beforeInteractive'
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.initMap = function() {
+              console.log('Google Maps API loaded successfully');
+            };
+          `,
+        }}
+      />
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`}
+        strategy='afterInteractive'
+      />
+    </>
   );
 }

@@ -16,15 +16,15 @@ export function NewPostContent({ eventId }: { eventId: string }) {
     );
   }
 
-  const [error, pageData] = data;
+  const [error] = data;
 
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'Event not found';
         break;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         errorMessage = 'You are not a member of this event';
         break;
       case 'DatabaseError':

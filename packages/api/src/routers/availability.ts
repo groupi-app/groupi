@@ -1,40 +1,17 @@
-import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
-import { db } from '@groupi/services';
 import {
-  // Import safe-wrapper service functions
+  // Import param schemas
+  GetEventPotentialDateTimesParams,
+  GetMyAvailabilitiesParams,
+} from '@groupi/schema/params';
+import {
+  // Import service functions
   getEventPotentialDateTimes,
-  updateMembershipAvailabilities,
+  updateMemberAvailabilities,
   chooseDateTime,
-  // Import component-specific services
-  getEventAvailabilityPageData,
-  getEventDateSelectPageData,
+  getMyAvailabilities,
 } from '@groupi/services';
-
-// ============================================================================
-// INPUT SCHEMAS
-// ============================================================================
-
-const GetEventPotentialDateTimesSchema = z.object({
-  eventId: z.string(),
-});
-
-const UpdateMembershipAvailabilitiesSchema = z.object({
-  eventId: z.string(),
-  availabilityUpdates: z
-    .array(
-      z.object({
-        potentialDateTimeId: z.string(),
-        status: z.enum(['YES', 'NO', 'MAYBE']),
-      })
-    )
-    .min(1, 'At least one availability update is required'),
-});
-
-const ChooseDateTimeSchema = z.object({
-  eventId: z.string(),
-  pdtId: z.string(),
-});
+import { z } from 'zod';
 
 // ============================================================================
 // AVAILABILITY ROUTER
@@ -45,28 +22,22 @@ export const availabilityRouter = createTRPCRouter({
    * Granular: current user's availability statuses for an event's PDTs
    */
   getMyAvailabilities: protectedProcedure
-    .input(z.object({ eventId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      const membership = await db.membership.findFirst({
-        where: { personId: ctx.userId, eventId: input.eventId },
-        select: { id: true },
+    .input(GetMyAvailabilitiesParams)
+    .query(async ({ input }) => {
+      return await getMyAvailabilities({
+        eventId: input.eventId,
       });
-      if (!membership) return [new Error('Unauthorized'), null] as const;
-      const statuses = await db.availability.findMany({
-        where: { membershipId: membership.id },
-        select: { potentialDateTimeId: true, status: true },
-      });
-      return [null, statuses] as const;
     }),
   /**
    * Get event potential date times with availability data
    * Returns: [error, { potentialDateTimes, userId, userRole }] tuple
    */
   getEventPotentialDateTimes: protectedProcedure
-    .input(GetEventPotentialDateTimesSchema)
-    .query(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await getEventPotentialDateTimes(input.eventId, ctx.userId);
+    .input(GetEventPotentialDateTimesParams)
+    .query(async ({ input }) => {
+      return await getEventPotentialDateTimes({
+        eventId: input.eventId,
+      });
     }),
 
   /**
@@ -74,14 +45,27 @@ export const availabilityRouter = createTRPCRouter({
    * Returns: [error, { message }] tuple
    */
   updateAvailabilities: protectedProcedure
-    .input(UpdateMembershipAvailabilitiesSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await updateMembershipAvailabilities(
-        input.eventId,
-        input.availabilityUpdates,
-        ctx.userId
-      );
+    .input(
+      z.object({
+        eventId: z.string(),
+        availabilityUpdates: z
+          .array(
+            z.object({
+              potentialDateTimeId: z.string(),
+              status: z.enum(['YES', 'NO', 'MAYBE']),
+            })
+          )
+          .min(1, 'At least one availability update is required'),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await updateMemberAvailabilities({
+        eventId: input.eventId,
+        availabilities: input.availabilityUpdates.map(update => ({
+          potentialDateTimeId: update.potentialDateTimeId,
+          status: update.status,
+        })),
+      });
     }),
 
   /**
@@ -89,34 +73,17 @@ export const availabilityRouter = createTRPCRouter({
    * Returns: [error, { message }] tuple
    */
   chooseDateTime: protectedProcedure
-    .input(ChooseDateTimeSchema)
-    .mutation(async ({ input, ctx }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await chooseDateTime(input.eventId, input.pdtId, ctx.userId);
-    }),
-
-  // ============================================================================
-  // COMPONENT-SPECIFIC DATA ENDPOINTS
-  // ============================================================================
-
-  /**
-   * Get availability page data
-   * Returns: [error, EventAvailabilityPageData] tuple
-   */
-  getAvailabilityPageData: protectedProcedure
-    .input(GetEventPotentialDateTimesSchema)
-    .query(async ({ input, ctx }) => {
-      return await getEventAvailabilityPageData(input.eventId, ctx.userId);
-    }),
-
-  /**
-   * Get date select page data (organizer-only)
-   * Returns: [error, EventDateSelectPageData] tuple
-   */
-  getDateSelectPageData: protectedProcedure
-    .input(GetEventPotentialDateTimesSchema)
-    .query(async ({ input, ctx }) => {
-      return await getEventDateSelectPageData(input.eventId, ctx.userId);
+    .input(
+      z.object({
+        eventId: z.string(),
+        pdtId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await chooseDateTime({
+        eventId: input.eventId,
+        potentialDateTimeId: input.pdtId,
+      });
     }),
 });
 

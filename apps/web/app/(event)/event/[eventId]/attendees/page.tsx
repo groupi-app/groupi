@@ -8,6 +8,7 @@ import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { pageLogger } from '@/lib/logger';
 
 export default async function EventAttendeesPage(props: {
   params: Promise<{ eventId: string }>;
@@ -49,7 +50,7 @@ export default async function EventAttendeesPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in event attendees page:', error);
+    pageLogger.error('Error in event attendees page', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

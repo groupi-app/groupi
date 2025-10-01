@@ -48,7 +48,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
           <DropdownMenuItem asChild className='cursor-pointer'>
             <button
               onClick={() => {
-                window.Clerk.openUserProfile();
+                (window as any).Clerk?.openUserProfile();
               }}
               className='flex items-center gap-2 w-full'
             >

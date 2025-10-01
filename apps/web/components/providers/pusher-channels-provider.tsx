@@ -20,12 +20,12 @@ interface PusherChannelsContextValue {
   bind: (
     channelName: string,
     eventName: string,
-    handler: (data: any) => void
+    handler: (data: unknown) => void
   ) => void;
   unbind: (
     channelName: string,
     eventName: string,
-    handler: (data: any) => void
+    handler: (data: unknown) => void
   ) => void;
 }
 
@@ -73,7 +73,9 @@ export function PusherChannelsProvider({
         client.connection.unbind('connected', handleConnected);
         client.connection.unbind('disconnected', handleDisconnected);
         client.connection.unbind('state_change', handleStateChange);
-      } catch {}
+      } catch {
+        // Ignore cleanup errors
+      }
     };
   }, []);
 
@@ -104,7 +106,7 @@ export function PusherChannelsProvider({
       bind: (
         channelName: string,
         eventName: string,
-        handler: (data: any) => void
+        handler: (data: unknown) => void
       ) => {
         const ch =
           channelsRef.current.get(channelName) ||
@@ -116,7 +118,7 @@ export function PusherChannelsProvider({
       unbind: (
         channelName: string,
         eventName: string,
-        handler: (data: any) => void
+        handler: (data: unknown) => void
       ) => {
         const ch = channelsRef.current.get(channelName);
         if (!ch) return;
@@ -144,7 +146,7 @@ export function usePusherChannels() {
 export function usePusherEvent(
   channelName: string,
   eventName: string,
-  handler: (data: any) => void,
+  handler: (data: unknown) => void,
   deps: React.DependencyList = []
 ) {
   const { subscribe, bind, unbind } = usePusherChannels();

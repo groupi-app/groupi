@@ -1,29 +1,17 @@
-import { initTRPC, TRPCError } from '@trpc/server';
-import { auth } from '@clerk/nextjs/server';
+import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
+import { apiLogger } from '@groupi/services';
 
 // ============================================================================
 // CONTEXT
 // ============================================================================
 
 /**
- * Inner context - minimal context created for each request
- */
-export async function createInnerTRPCContext() {
-  return {};
-}
-
-/**
- * Context for tRPC procedures - includes auth information
+ * Context for tRPC procedures - minimal context
+ * Auth is handled directly in services via auth() calls
  */
 export async function createTRPCContext() {
-  const innerContext = await createInnerTRPCContext();
-  const { userId } = await auth();
-
-  return {
-    ...innerContext,
-    userId,
-  };
+  return {};
 }
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
@@ -66,24 +54,10 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 /**
- * Protected procedure - requires authentication
- * Returns a tuple [error, null] if auth fails instead of throwing
+ * Protected procedure - auth is handled in services
+ * Services will return [AuthenticationError, null] if not authenticated
  */
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.userId) {
-    throw new TRPCError({
-      code: 'UNAUTHORIZED',
-      message: 'You must be logged in to access this resource',
-    });
-  }
-
-  return next({
-    ctx: {
-      ...ctx,
-      userId: ctx.userId, // TypeScript now knows userId is guaranteed to exist
-    },
-  });
-});
+export const protectedProcedure = t.procedure;
 
 // ============================================================================
 // MIDDLEWARE
@@ -92,23 +66,33 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
 /**
  * Custom middleware for logging procedure calls
  */
-export const loggingMiddleware = t.middleware(
-  async ({ path: _path, type: _type, next }) => {
-    // const start = Date.now();
+export const loggingMiddleware = t.middleware(async ({ path, type, next }) => {
+  const start = Date.now();
 
-    const result = await next();
+  const result = await next();
 
-    // const _durationMs = Date.now() - start;
+  const durationMs = Date.now() - start;
 
-    // Log tRPC procedure calls: [tRPC] TYPE path - duration
-    // console.log(`[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`, {
-    //   success: result.ok,
-    //   durationMs,
-    // });
-
-    return result;
+  // Log tRPC procedure calls with structured logging
+  if (result.ok) {
+    apiLogger.info(`[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`, {
+      type,
+      path,
+      success: true,
+      durationMs,
+    });
+  } else {
+    apiLogger.warn(`[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`, {
+      type,
+      path,
+      success: false,
+      durationMs,
+      error: result.error?.message,
+    });
   }
-);
+
+  return result;
+});
 
 /**
  * Logged procedure - includes request logging

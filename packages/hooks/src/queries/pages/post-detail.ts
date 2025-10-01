@@ -1,6 +1,7 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { PostDetailResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import { PostDetailPageDTO as PostDetailPageSchema } from '@groupi/schema';
+import type { PostDetailPageDTO, ResultTuple } from '@groupi/schema';
 
 // ============================================================================
 // POST DETAIL PAGE HOOK
@@ -13,8 +14,8 @@ import type { PostDetailResult } from '@groupi/schema';
  */
 export function usePostDetail(postId: string) {
   // Standard tRPC query
-  const query = api.post.getDetailData.useQuery(
-    { id: postId },
+  const query = api.post.getByIdWithReplies.useQuery(
+    { postId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -31,25 +32,31 @@ export function usePostDetail(postId: string) {
           table: 'Post',
           filter: `id=eq.${postId}`,
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['post', 'getDetailData'],
                 { input: { id: postId }, type: 'query' },
               ],
-              (oldValue: PostDetailResult | undefined) => {
+              (
+                oldValue: ResultTuple<unknown, PostDetailPageDTO> | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
+                const PostPatchSchema =
+                  PostDetailPageSchema.shape.post.partial();
+                const parsed = PostPatchSchema.safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const updated = parsed.data;
 
-                // Update post data with new values
                 return [
                   null,
                   {
                     ...data,
-                    post: { ...data.post, ...payload.new },
+                    post: { ...data.post, ...updated },
                   },
-                ] as PostDetailResult;
+                ] as ResultTuple<unknown, PostDetailPageDTO>;
               }
             );
           },
@@ -71,33 +78,44 @@ export function usePostDetail(postId: string) {
         {
           table: 'Person',
           event: '*',
-          handler: ({ payload, queryClient }) => {
+          filter: '*',
+          handler: ({ newRow, queryClient }) => {
             queryClient.setQueryData(
               [
                 ['post', 'getDetailData'],
                 { input: { id: postId }, type: 'query' },
               ],
-              (oldValue: PostDetailResult | undefined) => {
+              (
+                oldValue: ResultTuple<unknown, PostDetailPageDTO> | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
-
+                const PersonPatchSchema =
+                  PostDetailPageSchema.shape.post.shape.author.partial();
+                const parsed = PersonPatchSchema.safeParse(newRow);
+                if (!parsed.success) return oldValue;
+                const personUpdate = parsed.data;
                 // Update author data if it matches
                 let updated = false;
-                const updatedPost = { ...data.post };
+                const current = data as PostDetailPageDTO;
+                const updatedPost = { ...current.post };
 
-                if (data.post.author.id === payload.new?.id) {
-                  updatedPost.author = { ...data.post.author, ...payload.new };
+                if (current.post.author.id === personUpdate.id) {
+                  updatedPost.author = {
+                    ...current.post.author,
+                    ...personUpdate,
+                  };
                   updated = true;
                 }
 
                 // Update reply authors
-                const updatedReplies = data.post.replies.map(reply => {
-                  if (reply.author.id === payload.new?.id) {
+                const updatedReplies = current.post.replies.map(reply => {
+                  if (reply.author.id === personUpdate.id) {
                     updated = true;
                     return {
                       ...reply,
-                      author: { ...reply.author, ...payload.new },
+                      author: { ...reply.author, ...personUpdate },
                     };
                   }
                   return reply;
@@ -107,10 +125,10 @@ export function usePostDetail(postId: string) {
                   return [
                     null,
                     {
-                      ...data,
+                      ...current,
                       post: { ...updatedPost, replies: updatedReplies },
                     },
-                  ] as PostDetailResult;
+                  ] as ResultTuple<unknown, PostDetailPageDTO>;
                 }
 
                 return oldValue;

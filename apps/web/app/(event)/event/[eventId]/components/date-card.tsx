@@ -54,7 +54,7 @@ export function DateCard({
         pdtId: pdt.id,
       },
       {
-        onSuccess: ([error, _result]: [Error | null, any]) => {
+        onSuccess: ([error, _result]: [Error | null, unknown]) => {
           if (error) {
             toast.error('Failed to select date', {
               description: 'The date could not be selected. Please try again.',

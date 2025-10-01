@@ -1,4 +1,3 @@
-'use client';
 import NewEventInfo from './components/new-event-info';
 import { env } from '@/env.mjs';
 import Script from 'next/script';
@@ -11,8 +10,19 @@ export default function Page() {
         <NewEventInfo />
       </div>
       <Script
-        defer
+        id='google-maps-init-create'
+        strategy='beforeInteractive'
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.initMap = function() {
+              console.log('Google Maps API loaded successfully');
+            };
+          `,
+        }}
+      />
+      <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${env.GOOGLE_API_KEY}&libraries=places&callback=initMap`}
+        strategy='afterInteractive'
       />
     </>
   );

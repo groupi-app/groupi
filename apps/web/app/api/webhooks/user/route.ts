@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   if (eventType === 'user.deleted') {
     const userData = data as UserJSON;
     const userId = userData.id as string;
-    const [error, result] = await deleteUserFromWebhook(userId);
+    const [error, result] = await deleteUserFromWebhook({ userId });
 
     if (error || !result) {
       return NextResponse.json(
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `Deleted ${(result as any).count} ${(result as any).count === 1 ? 'person' : 'people'}`,
+      message: result.message,
     });
   }
 

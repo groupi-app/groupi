@@ -1,12 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "outDir": "dist",
+    "composite": false,
     "baseUrl": ".",
     "jsx": "react-jsx",
     "types": ["node", "react"],
-    "noEmit": false,
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
       "@groupi/schema": ["../../packages/schema/src"],
@@ -14,6 +13,5 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../../packages/schema" }]
+  "exclude": ["node_modules", "dist"]
 }

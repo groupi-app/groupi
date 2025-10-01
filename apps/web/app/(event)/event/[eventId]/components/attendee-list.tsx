@@ -2,10 +2,11 @@
 import { useEventAttendees } from '@groupi/hooks';
 import { getFullName } from '@/lib/utils';
 import { MembershipWithAvailabilities } from '@/types';
+import type { EventAttendeesPageDTO } from '@groupi/schema';
 
 // Adapter function to convert new data structure to old interface for compatibility
 function adaptMembershipToAttendeeSlate(
-  membership: any,
+  membership: EventAttendeesPageDTO['event']['memberships'][0],
   eventId: string,
   eventTitle: string
 ): MembershipWithAvailabilities {
@@ -82,9 +83,9 @@ export function AttendeeList({ eventId }: { eventId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'EventNotFoundError':
+      case 'NotFoundError':
         return <div>Event not found</div>;
-      case 'EventUserNotMemberError':
+      case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       case 'DatabaseError':
         return <div>Error loading attendees</div>;
@@ -102,7 +103,9 @@ export function AttendeeList({ eventId }: { eventId: string }) {
 
   const sortedAttendees = [...attendees].sort((a, b) => {
     if (sortBy === 'name') {
-      return getFullName(a.person).localeCompare(getFullName(b.person));
+      return getFullName(a.person.firstName, a.person.lastName).localeCompare(
+        getFullName(b.person.firstName, b.person.lastName)
+      );
     } else {
       return a.role.localeCompare(b.role);
     }
@@ -169,9 +172,10 @@ export function AttendeeList({ eventId }: { eventId: string }) {
             <motion.div layout variants={item} key={attendee.id}>
               <AttendeeSlate
                 key={attendee.id}
-                eventId={eventId}
-                membershipId={attendee.id}
-                membership={attendee}
+                userId={attendee.person.id}
+                userRole={attendee.role}
+                member={attendee}
+                itemKey={attendee.id}
               />
             </motion.div>
           ))}

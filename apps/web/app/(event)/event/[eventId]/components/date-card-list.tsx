@@ -44,16 +44,14 @@ export function DateCardList({ eventId }: { eventId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'AvailabilityNotFoundError':
-        return <div>Date options not found</div>;
-      case 'AvailabilityEventNotFoundError':
-        return <div>Event not found</div>;
-      case 'AvailabilityUserNotMemberError':
+      case 'NotFoundError':
+        return <div>No availability data found</div>;
+      case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
-      case 'UnauthorizedAvailabilityError':
-        return <div>You are not authorized to view date options</div>;
+      case 'AuthenticationError':
+        return <div>Please sign in</div>;
       default:
-        return <div>Error loading date options</div>;
+        return <div>Error loading availability</div>;
     }
   }
 

@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "composite": true,
     "outDir": "dist",
     "baseUrl": ".",
     "moduleResolution": "bundler",
@@ -10,24 +9,18 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": false,
+    "noEmit": true,
     "types": ["node"],
     "module": "ESNext",
     "downlevelIteration": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@groupi/schema": ["../schema/src"],
+      "@groupi/schema/*": ["../schema/src/*"],
       "@groupi/ui": ["../ui/src"],
       "@groupi/ui/*": ["../ui/src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../schema"
-    },
-    {
-      "path": "../ui"
-    }
-  ]
+  "exclude": ["node_modules", "dist"]
 }

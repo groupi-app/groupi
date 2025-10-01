@@ -1,10 +1,6 @@
-import {
-  useNotifications,
-  useMarkAllNotificationsAsRead,
-  useDeleteAllNotifications,
-} from '@groupi/hooks';
+import { useNotifications, useMarkAllNotificationsAsRead } from '@groupi/hooks';
 import { cn } from '@/lib/utils';
-import { NotificationWithPersonEventPost } from '@groupi/schema';
+import type { NotificationFeedDTO } from '@groupi/schema';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { NotificationSlate } from './notification-slate';
@@ -36,7 +32,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
 
   const { data, isLoading } = useNotifications(userId);
   const markAllAsRead = useMarkAllNotificationsAsRead(userId);
-  const deleteAll = useDeleteAllNotifications();
+  // delete all not implemented in new API; button will show dialog but disabled
 
   if (isLoading || !data) {
     return <div>Loading notifications...</div>;
@@ -46,10 +42,12 @@ export function NotificationWidget({ userId }: { userId: string }) {
 
   if (error) {
     switch (error._tag) {
-      case 'NotificationNotFoundError':
+      case 'NotFoundError':
         return <div>Notifications not found</div>;
-      case 'NotificationUnauthorizedError':
+      case 'UnauthorizedError':
         return <div>You are not authorized to view notifications</div>;
+      case 'DatabaseError':
+      case 'ConnectionError':
       default:
         return <div>Error loading notifications</div>;
     }
@@ -58,11 +56,9 @@ export function NotificationWidget({ userId }: { userId: string }) {
   // If error is null, notificationData is guaranteed to exist
 
   const notifications =
-    // @ts-expect-error: Temporary fix - notification data structure needs to be updated
-    notificationData?.notifications ||
-    ([] as NotificationWithPersonEventPost[]);
+    (notificationData as unknown as NotificationFeedDTO[]) || [];
 
-  const filtered = (notification: NotificationWithPersonEventPost) => {
+  const filtered = (notification: NotificationFeedDTO) => {
     if (filter === 'unread') {
       return !notification.read;
     }
@@ -129,19 +125,16 @@ export function NotificationWidget({ userId }: { userId: string }) {
                 <DialogClose asChild>
                   <Button
                     onClick={() => {
-                      markAllAsRead.mutate(
-                        { id: userId },
-                        {
-                          onError: _error => {
-                            toast.error(
-                              'There was a problem marking the notifications as read.'
-                            );
-                          },
-                          onSuccess: () => {
-                            toast.success('All notifications marked as read');
-                          },
-                        }
-                      );
+                      markAllAsRead.mutate(undefined, {
+                        onError: _error => {
+                          toast.error(
+                            'There was a problem marking the notifications as read.'
+                          );
+                        },
+                        onSuccess: () => {
+                          toast.success('All notifications marked as read');
+                        },
+                      });
                     }}
                   >
                     Confirm
@@ -162,21 +155,7 @@ export function NotificationWidget({ userId }: { userId: string }) {
                   <Button variant='ghost'>Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button
-                    onClick={() => {
-                      deleteAll.mutate(undefined, {
-                        onError: _error => {
-                          toast.error(
-                            'There was a problem deleting notifications.'
-                          );
-                        },
-                        onSuccess: () => {
-                          toast.success('All notifications deleted');
-                        },
-                      });
-                    }}
-                    variant='destructive'
-                  >
+                  <Button disabled variant='destructive'>
                     Delete
                   </Button>
                 </DialogClose>
@@ -217,9 +196,10 @@ export function NotificationWidget({ userId }: { userId: string }) {
           {notifications
             ?.filter(filtered)
             .sort(
-              (a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime()
+              (a: NotificationFeedDTO, b: NotificationFeedDTO) =>
+                b.createdAt.getTime() - a.createdAt.getTime()
             )
-            .map((notification: any) => (
+            .map((notification: NotificationFeedDTO) => (
               <NotificationSlate
                 key={notification.id}
                 notification={notification}

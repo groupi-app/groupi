@@ -9,9 +9,9 @@ import {
 } from '@/lib/utils';
 import { Member } from '@/types';
 import { RoleType } from '@groupi/schema';
+import { componentLogger } from '@/lib/logger';
 import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
 import { motion } from 'framer-motion';
-import { log } from '@/lib/logger';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -60,7 +60,10 @@ export default function MemberIcon({
 
   const fullName = getFullName(firstName, lastName);
 
-  log.debug('Rendering member icon', { fullName, memberId: member.id });
+  componentLogger.debug('Rendering member icon', {
+    fullName,
+    memberId: member.id,
+  });
 
   const isMe = userId === member.person.id;
 

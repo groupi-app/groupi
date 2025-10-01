@@ -1,6 +1,6 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventDateSelectPageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import { createTRPCRouterPredicate } from '../../utils/query-key-utils';
 
 // ============================================================================
 // EVENT DATE SELECT PAGE HOOK
@@ -13,7 +13,7 @@ import type { EventDateSelectPageResult } from '@groupi/schema';
  */
 export function useEventDateSelect(eventId: string) {
   // Standard tRPC query
-  const query = api.availability.getDateSelectPageData.useQuery(
+  const query = api.availability.getEventPotentialDateTimes.useQuery(
     { eventId },
     {
       staleTime: 30 * 1000,
@@ -34,10 +34,7 @@ export function useEventDateSelect(eventId: string) {
           handler: ({ queryClient }) => {
             // Invalidate the query to refetch availability data
             queryClient.invalidateQueries({
-              queryKey: [
-                ['availability', 'getDateSelectPageData'],
-                { input: { eventId }, type: 'query' },
-              ],
+              predicate: createTRPCRouterPredicate(['availability']),
             });
           },
         },
@@ -48,10 +45,7 @@ export function useEventDateSelect(eventId: string) {
           handler: ({ queryClient }) => {
             // Invalidate the query when date options change
             queryClient.invalidateQueries({
-              queryKey: [
-                ['availability', 'getDateSelectPageData'],
-                { input: { eventId }, type: 'query' },
-              ],
+              predicate: createTRPCRouterPredicate(['availability']),
             });
           },
         },

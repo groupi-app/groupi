@@ -1,9 +1,9 @@
-import { AcceptInviteButton } from './components/invite-accept';
 import { InviteDetails } from './components/invite-details';
 import { prefetchInvitePageData } from '@groupi/hooks/server';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
+import { pageLogger } from '@/lib/logger';
 
 export default async function InvitePage(props: {
   params: Promise<{ inviteId: string }>;
@@ -26,7 +26,7 @@ export default async function InvitePage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in invite page:', error);
+    pageLogger.error('Error in invite page', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

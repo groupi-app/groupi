@@ -26,13 +26,11 @@ export function SettingsContent({
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'SettingsNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'Settings not found';
         break;
-      case 'UserNotFoundError':
-        errorMessage = 'User not found';
-        break;
       case 'DatabaseError':
+      case 'ConnectionError':
         errorMessage = error.message || 'Failed to load settings';
         break;
     }

@@ -3,14 +3,23 @@ import 'tsconfig-paths/register';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { seedUsers as users } from '../data/seed-users';
-import { db } from '../packages/services/src/db';
-import { createClerkClient } from '@clerk/backend'; // Import createClerkClient
-import { createLogger } from '../packages/services/src/logger';
+import { db } from '../packages/services/src/infrastructure/db';
+import { createClerkClient } from '@clerk/backend';
+import pino from 'pino';
 
-// Load environment variables from the web app's .env.local
+// Load environment variables from the root .env.local first, then web app
+config({ path: resolve(process.cwd(), '.env.local') });
 config({ path: resolve(process.cwd(), 'apps/web/.env.local') });
 
-const logger = createLogger('seed-users');
+const logger = pino({
+  level: 'debug',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+    },
+  },
+});
 
 export default async function seedUsers() {
   try {
@@ -47,9 +56,17 @@ export default async function seedUsers() {
     await Promise.allSettled(deletionPromises);
     logger.info('User cleanup completed');
 
-    // Clear database
-    await db.person.deleteMany();
-    logger.info('Database person table cleared');
+    // Clear database in proper order (due to foreign key constraints)
+    try {
+      await db.notification.deleteMany();
+      await db.membership.deleteMany();
+      await db.personSettings.deleteMany();
+      await db.person.deleteMany();
+      logger.info('Database tables cleared successfully');
+    } catch (dbError) {
+      logger.error('Error clearing database:', dbError);
+      throw dbError;
+    }
 
     // Wait a bit to ensure Clerk has processed the deletions
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -76,21 +93,47 @@ export default async function seedUsers() {
         const firstName = userObj.firstName || '';
         const lastName = userObj.lastName || '';
         const username = userObj.username || '';
-        const person = await db.person.create({
-          data: {
-            id: userObj.id,
-            firstName,
-            lastName,
-            username,
-            imageUrl: userObj.imageUrl,
-            settings: {
-              create: {},
-            },
-          },
-        });
 
-        logger.debug(`Created database person: ${person.username}`);
-        people.push(person);
+        try {
+          const person = await db.person.create({
+            data: {
+              id: userObj.id,
+              firstName,
+              lastName,
+              username,
+              imageUrl: userObj.imageUrl || '',
+              settings: {
+                create: {}, // This creates a PersonSettings record
+              },
+            },
+            include: {
+              settings: true, // Include settings in the response
+            },
+          });
+
+          logger.debug(
+            `Created database person: ${person.username} with settings: ${person.settings?.id}`
+          );
+          people.push(person);
+        } catch (dbError: any) {
+          logger.error(
+            `Failed to create database person for ${username}:`,
+            dbError
+          );
+          // Try to clean up the Clerk user if database creation failed
+          try {
+            await clerkClient.users.deleteUser(userObj.id);
+            logger.debug(
+              `Cleaned up Clerk user ${userObj.id} after database failure`
+            );
+          } catch (cleanupError) {
+            logger.warn(
+              `Failed to clean up Clerk user ${userObj.id}:`,
+              cleanupError
+            );
+          }
+          throw dbError;
+        }
       } catch (error: any) {
         if (
           error?.errors?.[0]?.code === 'form_identifier_exists' ||
@@ -119,23 +162,52 @@ export default async function seedUsers() {
                 const firstName = userObj.firstName || '';
                 const lastName = userObj.lastName || '';
                 const username = userObj.username || '';
-                const person = await db.person.create({
-                  data: {
-                    id: userObj.id,
-                    firstName,
-                    lastName,
-                    username,
-                    imageUrl: userObj.imageUrl,
-                    settings: {
-                      create: {},
+                try {
+                  const person = await db.person.create({
+                    data: {
+                      id: userObj.id,
+                      firstName,
+                      lastName,
+                      username,
+                      imageUrl: userObj.imageUrl || '',
+                      settings: {
+                        create: {}, // This creates a PersonSettings record
+                      },
                     },
-                  },
-                });
-                people.push(person);
-                logger.debug(
-                  `Added existing user to database: ${person.username}`
-                );
+                    include: {
+                      settings: true,
+                    },
+                  });
+                  people.push(person);
+                  logger.debug(
+                    `Added existing user to database: ${person.username} with settings: ${person.settings?.id}`
+                  );
+                } catch (dbError) {
+                  logger.error(
+                    `Failed to add existing user ${username} to database:`,
+                    dbError
+                  );
+                  throw dbError;
+                }
               } else {
+                // Check if PersonSettings exist, create if not
+                if (!existingPerson.settings) {
+                  try {
+                    await db.personSettings.create({
+                      data: {
+                        personId: existingPerson.id,
+                      },
+                    });
+                    logger.debug(
+                      `Created missing settings for existing person: ${existingPerson.username}`
+                    );
+                  } catch (settingsError) {
+                    logger.warn(
+                      `Failed to create settings for ${existingPerson.username}:`,
+                      settingsError
+                    );
+                  }
+                }
                 people.push(existingPerson);
                 logger.debug(
                   `User already exists in database: ${existingPerson.username}`
@@ -171,4 +243,15 @@ export default async function seedUsers() {
   }
 }
 
-seedUsers();
+// Only run if this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedUsers()
+    .then(() => {
+      logger.info('Seed script completed successfully');
+      process.exit(0);
+    })
+    .catch(error => {
+      logger.error('Seed script failed:', error);
+      process.exit(1);
+    });
+}

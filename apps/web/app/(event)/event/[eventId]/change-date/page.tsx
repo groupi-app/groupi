@@ -1,4 +1,5 @@
 import { ChangeDateContent } from './components/change-date-content';
+import { pageLogger } from '@/lib/logger';
 import { prefetchEventChangeDatePageData } from '@groupi/hooks/server';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ export default async function EventChangeDatePage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in event change date page:', error);
+    pageLogger.error('Error in event change date page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

@@ -80,7 +80,7 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                     <SheetClose asChild>
                       <button
                         onClick={() => {
-                          window.Clerk.openUserProfile();
+                          (window as any).Clerk?.openUserProfile();
                         }}
                         className='flex items-center gap-2'
                       >

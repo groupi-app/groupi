@@ -2,6 +2,7 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { InviteCardList } from '../components/invite-card-list';
 import { prefetchEventInvitePageData } from '@groupi/hooks/server';
+import { pageLogger } from '@/lib/logger';
 import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
@@ -36,7 +37,7 @@ export default async function EventInvitePage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    console.error('Error in event invite page:', error);
+    pageLogger.error('Error in event invite page:', { error });
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

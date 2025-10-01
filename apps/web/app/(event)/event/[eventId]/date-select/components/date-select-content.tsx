@@ -24,18 +24,15 @@ export function DateSelectContent({ eventId }: { eventId: string }) {
   if (error) {
     let errorMessage = 'An error occurred';
     switch (error._tag) {
-      case 'AvailabilityNotFoundError':
-      case 'AvailabilityEventNotFoundError':
+      case 'NotFoundError':
         errorMessage = 'Event not found';
         break;
-      case 'AvailabilityUserNotMemberError':
-        errorMessage = 'You do not have permission to view this page';
-        break;
-      case 'UnauthorizedAvailabilityError':
       case 'UnauthorizedError':
+      case 'AuthenticationError':
         errorMessage = 'You do not have permission to view this page';
         break;
       case 'DatabaseError':
+      case 'ConnectionError':
         errorMessage = 'Failed to load date options';
         break;
     }

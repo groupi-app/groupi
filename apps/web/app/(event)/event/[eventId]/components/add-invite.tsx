@@ -63,7 +63,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Use our new tRPC hook with integrated real-time sync
-  const createInviteMutation = useCreateInvite();
+  const { createInvite, isLoading } = useCreateInvite();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const expiresAt =
@@ -71,7 +71,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
         ? null
         : new Date(Date.now() + values.expiresIn);
 
-    createInviteMutation.mutate(
+    await createInvite(
       {
         name: values.name,
         eventId: eventId,
@@ -79,22 +79,27 @@ export function AddInvite({ eventId }: { eventId: string }) {
         maxUses: values.maxUses,
       },
       {
-        onSuccess: ([error, _invite]: [Error | null, any]) => {
-          if (error) {
-            toast.error('Failed to create invite', {
-              description: 'The invite could not be created. Please try again.',
-            });
-            return;
-          }
-
+        onSuccess: () => {
           toast.success('The invite has been successfully created.');
           setIsOpen(false);
           form.reset(); // Reset form after successful creation
         },
-        onError: () => {
-          toast.error('Failed to create invite', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
+        onError: error => {
+          // Handle specific error types
+          if (error._tag === 'UnauthorizedError') {
+            toast.error('Permission denied', {
+              description:
+                'You do not have permission to create invites for this event.',
+            });
+          } else if (error._tag === 'ValidationError') {
+            toast.error('Invalid input', {
+              description: 'Please check your invite details and try again.',
+            });
+          } else {
+            toast.error('Failed to create invite', {
+              description: 'The invite could not be created. Please try again.',
+            });
+          }
         },
       }
     );
@@ -221,9 +226,9 @@ export function AddInvite({ eventId }: { eventId: string }) {
                 <Button
                   className='flex items-center gap-1'
                   type='submit'
-                  disabled={createInviteMutation.isLoading}
+                  disabled={isLoading}
                 >
-                  {createInviteMutation.isLoading ? (
+                  {isLoading ? (
                     <Icons.spinner className='size-4 animate-spin' />
                   ) : (
                     <Icons.plus className='size-4' />

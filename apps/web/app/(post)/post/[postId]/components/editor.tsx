@@ -51,8 +51,8 @@ export function Editor({
   const content = postData?.content || '';
 
   // Use our new tRPC hooks with integrated real-time sync
-  const createPostMutation = useCreatePost();
-  const updatePostMutation = useUpdatePost();
+  const { createPost, isLoading: isCreating } = useCreatePost();
+  const { updatePost, isLoading: isUpdating } = useUpdatePost();
 
   const formSchema = z.object({
     title: z
@@ -80,22 +80,10 @@ export function Editor({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!postData) {
-      // Creating a new post
-      createPostMutation.mutate(
+      createPost(
+        { title: values.title, content: values.content, eventId },
         {
-          title: values.title,
-          content: values.content,
-          eventId,
-        },
-        {
-          onSuccess: ([error, _post]) => {
-            if (error) {
-              toast.error('Failed to create post', {
-                description: 'The post could not be created. Please try again.',
-              });
-              return;
-            }
-
+          onSuccess: () => {
             toast.success('Your post has been successfully created.');
             router.push(`/event/${eventId}`);
           },
@@ -107,22 +95,10 @@ export function Editor({
         }
       );
     } else {
-      // Updating an existing post
-      updatePostMutation.mutate(
+      updatePost(
+        { id: postData.id, title: values.title, content: values.content },
         {
-          id: postData.id,
-          title: values.title,
-          content: values.content,
-        },
-        {
-          onSuccess: ([error, _post]) => {
-            if (error) {
-              toast.error('Failed to update post', {
-                description: 'The post could not be updated. Please try again.',
-              });
-              return;
-            }
-
+          onSuccess: () => {
             toast.success('Your post has been successfully edited.');
             router.push(`/post/${postData.id}`);
           },
@@ -137,7 +113,7 @@ export function Editor({
   }
 
   // Check if any mutation is pending
-  const isSaving = createPostMutation.isLoading || updatePostMutation.isLoading;
+  const isSaving = isCreating || isUpdating;
 
   const contentEditedOnChange = (c: string) => {
     if (c !== content) {

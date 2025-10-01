@@ -1,22 +1,17 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "noEmit": false,
-    "composite": true,
+    "noEmit": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@groupi/schema": ["../schema/src"],
+      "@groupi/schema/*": ["../schema/src/*"],
+      "@groupi/services": ["../services/src"],
+      "@groupi/services/*": ["../services/src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../schema"
-    },
-    {
-      "path": "../services"
-    }
-  ]
+  "exclude": ["node_modules", "dist"]
 }

@@ -22,20 +22,11 @@
     "paths": {
       "@groupi/ui": ["./packages/ui/src"],
       "@groupi/services": ["./packages/services/src"],
-      "@groupi/services/*": ["./packages/services/src/*"],
       "@groupi/schema": ["./packages/schema/src"],
       "@groupi/utils": ["./packages/utils/src"],
       "@groupi/hooks": ["./packages/hooks/src"]
     }
   },
   "include": ["apps/**/*.ts", "apps/**/*.tsx", "**/.next/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".next", "packages"],
-  "references": [
-    {
-      "path": "./packages/schema"
-    },
-    {
-      "path": "./packages/services"
-    }
-  ]
+  "exclude": ["node_modules", "dist", ".next", "packages"]
 }

@@ -1,6 +1,6 @@
 import PusherBeams from '@pusher/push-notifications-server';
 import { env } from '@/env.mjs';
-import { notificationLogger } from '@/lib/logger';
+import { pusherLogger } from './logger';
 
 // Initialize Pusher Beams server client
 const beamsClient = new PusherBeams({
@@ -26,7 +26,7 @@ export async function sendPusherBeamsNotification(
   notification: PusherBeamsNotification
 ): Promise<{ success?: string; error?: string }> {
   try {
-    notificationLogger.info(
+    pusherLogger.info(
       {
         userId,
         title: notification.title,
@@ -70,7 +70,7 @@ export async function sendPusherBeamsNotification(
       publishRequest
     );
 
-    notificationLogger.info(
+    pusherLogger.info(
       {
         userId,
         publishResponse,
@@ -81,7 +81,7 @@ export async function sendPusherBeamsNotification(
 
     return { success: 'Pusher Beams notification sent successfully' };
   } catch (error) {
-    notificationLogger.error(
+    pusherLogger.error(
       {
         userId,
         title: notification.title,
@@ -109,7 +109,7 @@ export async function sendPusherBeamsNotificationToUsers(
       return { success: 'No users to notify' };
     }
 
-    notificationLogger.info(
+    pusherLogger.info(
       {
         userIds,
         userCount: userIds.length,
@@ -151,7 +151,7 @@ export async function sendPusherBeamsNotificationToUsers(
       publishRequest
     );
 
-    notificationLogger.info(
+    pusherLogger.info(
       {
         userIds,
         userCount: userIds.length,
@@ -165,7 +165,7 @@ export async function sendPusherBeamsNotificationToUsers(
       success: `Pusher Beams notification sent to ${userIds.length} users successfully`,
     };
   } catch (error) {
-    notificationLogger.error(
+    pusherLogger.error(
       {
         userIds,
         userCount: userIds.length,

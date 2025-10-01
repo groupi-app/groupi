@@ -1,11 +1,20 @@
-import { formatDate, getFullName, getInitials } from '@/lib/utils';
-import { EventWithMembers } from '@groupi/schema';
+import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
-import ErrorPage from '@/components/error';
 import { Icons } from '@/components/icons';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export function EventCard({ event }: { event: EventWithMembers }) {
+// Type for the event data that this component expects
+// Simplified to match what we actually have from UserDashboardDTO.memberships[].event
+type EventCardData = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  chosenDateTime: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export function EventCard({ event }: { event: EventCardData }) {
   const {
     id,
     title,
@@ -14,12 +23,7 @@ export function EventCard({ event }: { event: EventWithMembers }) {
     chosenDateTime,
     createdAt,
     updatedAt,
-    memberships,
   } = event;
-  const owner = memberships.find(m => m.role === 'ORGANIZER')?.person;
-  if (!owner) {
-    return <ErrorPage message={'Unable to load event.'} />;
-  }
   return (
     <Link href={`/event/${id}`}>
       <div className='flex flex-col gap-2 border border-border shadow-md p-4 px-6 hover:bg-accent transition-all cursor-pointer rounded-md'>
@@ -27,19 +31,7 @@ export function EventCard({ event }: { event: EventWithMembers }) {
           <div className='flex flex-col grow gap-2 md:w-1/2'>
             <h1 className='font-heading text-2xl'>{title}</h1>
             <p className='text-muted-foreground'>{description}</p>
-            <div className='flex items-center gap-1'>
-              <Avatar className='size-8'>
-                <AvatarImage src={owner.imageUrl} />
-                <AvatarFallback>
-                  {getInitials(owner.firstName, owner.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              <span className='text-muted-foreground'>
-                {getFullName(owner.firstName, owner.lastName) !== ''
-                  ? getFullName(owner.firstName, owner.lastName)
-                  : owner.username}
-              </span>
-            </div>
+            {/* Owner info removed - not available in current data structure */}
           </div>
           <div className='flex flex-col md:w-1/2 justify-between gap-2'>
             <div className='flex flex-col gap-2'>
@@ -66,10 +58,7 @@ export function EventCard({ event }: { event: EventWithMembers }) {
                   <span>TBD</span>
                 )}
               </div>
-              <div className='flex items-center gap-1 '>
-                <Icons.people className='size-6 text-primary' />
-                <span>{memberships.length}</span>
-              </div>
+              {/* Member count removed - not available in current data structure */}
             </div>
             <div className='flex flex-col'>
               {/* Created at */}

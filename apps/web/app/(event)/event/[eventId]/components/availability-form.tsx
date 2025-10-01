@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { eventLogger } from '@/lib/logger';
 import { AvailabilityCard } from './availability-card';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,6 @@ export function AvailabilityForm({
     status: StatusType | undefined
   ): 'yes' | 'maybe' | 'no' => {
     // Convert status to lowercase for form
-    eventLogger.debug({ status }, 'Converting availability status');
     switch (status) {
       case 'YES':
         return 'yes';
@@ -104,7 +102,7 @@ export function AvailabilityForm({
         availabilityUpdates,
       },
       {
-        onSuccess: ([error, _result]: [Error | null, any]) => {
+        onSuccess: ([error, _result]: [Error | null, unknown]) => {
           if (error) {
             toast.error('Unable to update', {
               description:

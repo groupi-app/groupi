@@ -47,31 +47,18 @@ export function EventRSVP({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    updateRSVPMutation.mutate(
-      {
-        eventId: userMembership.eventId,
-        status: values.rsvp,
-      },
-      {
-        onSuccess: ([error, _result]) => {
-          if (error) {
-            toast.error('Failed to update RSVP', {
-              description:
-                'Your RSVP status could not be updated. Please try again.',
-            });
-            return;
-          }
-
-          setDialogOpen(false);
-          toast.success('Your RSVP status has been successfully updated');
-        },
-        onError: () => {
-          toast.error('Failed to update RSVP', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    const [error] = await updateRSVPMutation.updateRSVP({
+      eventId: userMembership.eventId,
+      status: values.rsvp,
+    });
+    if (error) {
+      toast.error('Failed to update RSVP', {
+        description: 'Your RSVP status could not be updated. Please try again.',
+      });
+      return;
+    }
+    setDialogOpen(false);
+    toast.success('Your RSVP status has been successfully updated');
   }
 
   return (

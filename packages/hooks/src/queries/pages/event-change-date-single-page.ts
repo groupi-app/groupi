@@ -1,6 +1,9 @@
-import { api } from '../clients/trpc-client';
-import { useSupabaseRealtime } from '../realtime/use-supabase-realtime';
-import type { EventChangeDateSinglePageResult } from '@groupi/schema';
+import { api } from '../../clients/trpc-client';
+import { useSupabaseRealtime } from '../../realtime/use-supabase-realtime';
+import { EventSchema } from '@groupi/schema';
+import type { ResultTuple } from '@groupi/schema';
+// No dedicated DTO; use minimal event subset shape for result typing
+import type { EventDetailsDTO as EventChangeDateSinglePageResult } from '@groupi/schema';
 
 // ============================================================================
 // EVENT CHANGE DATE SINGLE PAGE HOOK
@@ -13,8 +16,8 @@ import type { EventChangeDateSinglePageResult } from '@groupi/schema';
  */
 export function useEventChangeDateSingle(eventId: string) {
   // Standard tRPC query
-  const query = api.event.getChangeDateSinglePageData.useQuery(
-    { id: eventId },
+  const query = api.event.getHeaderData.useQuery(
+    { eventId },
     {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -31,30 +34,35 @@ export function useEventChangeDateSingle(eventId: string) {
           table: 'Event',
           filter: `id=eq.${eventId}`,
           event: 'UPDATE',
-          handler: ({ payload, queryClient }) => {
+          handler: ({ newRow, queryClient }) => {
             // Update the query data when event date is changed
             queryClient.setQueryData(
               [
                 ['event', 'getChangeDateSinglePageData'],
                 { input: { id: eventId }, type: 'query' },
               ],
-              (oldValue: EventChangeDateSinglePageResult | undefined) => {
+              (
+                oldValue:
+                  | ResultTuple<unknown, EventChangeDateSinglePageResult>
+                  | undefined
+              ) => {
                 if (!oldValue) return oldValue;
                 const [error, data] = oldValue;
                 if (error || !data) return oldValue;
-
+                const parsed = EventSchema.pick({ chosenDateTime: true })
+                  .partial()
+                  .safeParse(newRow);
+                if (!parsed.success) return oldValue;
                 return [
                   null,
                   {
                     ...data,
                     event: {
                       ...data.event,
-                      chosenDateTime:
-                        payload.new?.chosenDateTime ||
-                        data.event.chosenDateTime,
+                      ...parsed.data,
                     },
                   },
-                ] as EventChangeDateSinglePageResult;
+                ] as ResultTuple<unknown, EventChangeDateSinglePageResult>;
               }
             );
           },
