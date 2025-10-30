@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -78,10 +78,13 @@ export const fetchInvitePageData = async ({
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -143,10 +146,11 @@ export const fetchInvitePageData = async ({
         id: inviteData.createdBy.id,
         person: {
           id: inviteData.createdBy.person.id,
-          firstName: inviteData.createdBy.person.firstName,
-          lastName: inviteData.createdBy.person.lastName,
-          username: inviteData.createdBy.person.username,
-          imageUrl: inviteData.createdBy.person.imageUrl,
+          user: {
+            name: inviteData.createdBy.person.user.name,
+            email: inviteData.createdBy.person.user.email,
+            image: inviteData.createdBy.person.user.image,
+          },
         },
       },
       event: {
@@ -229,9 +233,12 @@ export const getEventInvitePageData = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -272,10 +279,13 @@ export const getEventInvitePageData = async ({
                   person: {
                     select: {
                       id: true,
-                      firstName: true,
-                      lastName: true,
-                      username: true,
-                      imageUrl: true,
+                      user: {
+                        select: {
+                          name: true,
+                          email: true,
+                          image: true,
+                        },
+                      },
                     },
                   },
                 },
@@ -344,10 +354,11 @@ export const getEventInvitePageData = async ({
           id: invite.createdBy.id,
           person: {
             id: invite.createdBy.person.id,
-            firstName: invite.createdBy.person.firstName,
-            lastName: invite.createdBy.person.lastName,
-            username: invite.createdBy.person.username,
-            imageUrl: invite.createdBy.person.imageUrl,
+            user: {
+              name: invite.createdBy.person.user.name,
+              email: invite.createdBy.person.user.email,
+              image: invite.createdBy.person.user.image,
+            },
           },
         },
       })),
@@ -396,9 +407,12 @@ export const createInvite = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { eventId, name, maxUses, expiresAt } = inviteData;
@@ -470,10 +484,13 @@ export const createInvite = async (
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -514,10 +531,11 @@ export const createInvite = async (
         id: invite.createdBy.id,
         person: {
           id: invite.createdBy.person.id,
-          firstName: invite.createdBy.person.firstName,
-          lastName: invite.createdBy.person.lastName,
-          username: invite.createdBy.person.username,
-          imageUrl: invite.createdBy.person.imageUrl,
+          user: {
+            name: invite.createdBy.person.user.name,
+            email: invite.createdBy.person.user.email,
+            image: invite.createdBy.person.user.image,
+          },
         },
       },
     };
@@ -579,9 +597,12 @@ export const deleteInvite = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -755,9 +776,12 @@ export const acceptInvite = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {

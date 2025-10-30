@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -39,9 +39,12 @@ export const fetchUserSettings = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -179,9 +182,12 @@ export const updateUserSettings = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { notificationMethods } = input;

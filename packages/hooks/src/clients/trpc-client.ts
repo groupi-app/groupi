@@ -1,5 +1,4 @@
 import { createTRPCReact } from '@trpc/react-query';
-import { QueryClient } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 
@@ -24,4 +23,5 @@ export const createTRPCClient = (config: {
 
 export { api as trpcApi };
 
-export const createQueryClient = () => new QueryClient();
+// Re-export the proper createQueryClient with defaults
+export { createQueryClient } from './query-client';

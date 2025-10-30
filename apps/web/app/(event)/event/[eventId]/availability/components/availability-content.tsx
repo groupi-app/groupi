@@ -124,7 +124,6 @@ export function AvailabilityContent({
           Current timezone: {getTimezoneString()}
         </span>
         <AvailabilityForm
-          // @ts-expect-error: Temporary fix - component needs to be updated for new data structure
           potentialDateTimes={potentialDateTimes}
           userId={userId}
         />

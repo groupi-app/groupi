@@ -1,22 +1,18 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
 import {
   GetPersonDataParams,
   GetUserDashboardDataParams,
-  CreateUserFromWebhookParams,
-  UpdateUserFromWebhookParams,
-  DeleteUserFromWebhookParams,
+  DeleteUserParams,
 } from '@groupi/schema/params';
 import { UserDashboardDTO, PersonBasicDTO } from '@groupi/schema/data';
 import {
   NotFoundError,
   DatabaseError,
   ConnectionError,
-  ConstraintError,
-  ValidationError,
   OperationError,
   AuthenticationError,
 } from '@groupi/schema';
@@ -40,10 +36,6 @@ export const fetchPersonData = async ({
         where: { id: personId },
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
         },
       })
     ).pipe(
@@ -70,13 +62,24 @@ export const fetchPersonData = async ({
       return;
     }
 
-    // Direct construction - no factory needed
+    // Fetch corresponding User data for display info
+    const user = yield* Effect.promise(() =>
+      db.user.findUnique({
+        where: { id: person.id },
+        select: {
+          name: true,
+          email: true,
+          image: true,
+        },
+      })
+    ).pipe(Effect.mapError((cause: Error) => getPrismaError('User', cause)));
+
+    // Direct construction
     const result: PersonBasicDTO = {
       id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      username: person.username,
-      imageUrl: person.imageUrl,
+      name: user?.name || null,
+      email: user?.email || '',
+      image: user?.image || null,
     };
 
     yield* Effect.logDebug('Person data fetched successfully', {
@@ -125,9 +128,12 @@ export const fetchUserDashboardData = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -135,6 +141,47 @@ export const fetchUserDashboardData = async (
       userId,
     });
 
+    // Fetch User data first
+    const user = yield* Effect.promise(() =>
+      db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          imageKey: true,
+          pronouns: true,
+          bio: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('User', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'fetchUserDashboardData',
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof DatabaseError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof DatabaseError,
+      })
+    );
+
+    if (!user) {
+      yield* Effect.fail(new NotFoundError(`User not found`, userId));
+      return;
+    }
+
+    // Fetch Person data with memberships
     const person = yield* Effect.promise(() =>
       db.person.findUnique({
         where: { id: userId },
@@ -181,16 +228,18 @@ export const fetchUserDashboardData = async (
       return;
     }
 
-    // Direct construction - no factory needed
+    // Direct construction
     const result: UserDashboardDTO = {
-      id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      username: person.username,
-      imageUrl: person.imageUrl,
-      createdAt: person.createdAt,
-      updatedAt: person.updatedAt,
-      memberships: person.memberships.map(membership => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      imageKey: user.imageKey,
+      pronouns: user.pronouns,
+      bio: user.bio,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      memberships: person?.memberships.map(membership => ({
         id: membership.id,
         role: membership.role,
         rsvpStatus: membership.rsvpStatus,
@@ -241,216 +290,24 @@ export const fetchUserDashboardData = async (
   );
 };
 
-/**
- * Create user from webhook (Clerk webhook)
- * Retries on DatabaseError
- */
-export const createUserFromWebhook = async (
-  userData: CreateUserFromWebhookParams
-): Promise<
-  ResultTuple<
-    | OperationError
-    | DatabaseError
-    | ConnectionError
-    | ConstraintError
-    | ValidationError,
-    PersonBasicDTO
-  >
-> => {
-  const effect = Effect.gen(function* () {
-    yield* Effect.logDebug('Creating user from webhook', {
-      userId: userData.id,
-      username: userData.username,
-    });
-
-    const person = yield* Effect.promise(() =>
-      db.person.create({
-        data: {
-          id: userData.id,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          username: userData.username,
-          imageUrl: userData.imageUrl,
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
-        },
-      })
-    ).pipe(
-      Effect.mapError((cause: Error) => getPrismaError('Person', cause)),
-      Effect.tapError(error =>
-        Effect.logError('Database operation encountered error', {
-          operation: 'createUserFromWebhook',
-          userId: userData.id,
-          error: error.message,
-          errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
-        })
-      ),
-      Effect.retry({
-        schedule: Schedule.exponential(1000).pipe(
-          Schedule.intersect(Schedule.recurs(3))
-        ),
-        while: error => error instanceof DatabaseError,
-      })
-    );
-
-    // Direct construction
-    const result: PersonBasicDTO = {
-      id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      username: person.username,
-      imageUrl: person.imageUrl,
-    };
-
-    yield* Effect.logInfo('User created from webhook successfully', {
-      userId: userData.id, // Who was created
-      username: userData.username,
-      operation: 'create',
-    });
-
-    return result;
-  }).pipe(
-    Effect.catchAll(_err => {
-      return Effect.succeed([
-        new OperationError('Failed to create user from webhook'),
-        undefined,
-      ] as const);
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, PersonBasicDTO])
-  );
-
-  return Effect.runPromise(
-    Effect.provide(effect, createEffectLoggerLayer('persons'))
-  );
-};
+// NOTE: createUser and updateUser functions have been removed.
+// Use createUserAdmin, updateUserAdmin, and deleteUserAdmin from auth.ts instead.
+// Those functions properly handle both User (auth) and Person (app data) records.
 
 /**
- * Update user from webhook (Clerk webhook)
+ * Delete user
  * Retries on DatabaseError
  */
-export const updateUserFromWebhook = async (
-  userData: UpdateUserFromWebhookParams
-): Promise<
-  ResultTuple<
-    | NotFoundError
-    | DatabaseError
-    | ConnectionError
-    | ConstraintError
-    | ValidationError,
-    PersonBasicDTO
-  >
-> => {
-  const effect = Effect.gen(function* () {
-    yield* Effect.logDebug('Updating user from webhook', {
-      userId: userData.id,
-      username: userData.username,
-    });
-
-    const person = yield* Effect.promise(() =>
-      db.person.update({
-        where: { id: userData.id },
-        data: {
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          username: userData.username,
-          imageUrl: userData.imageUrl,
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
-        },
-      })
-    ).pipe(
-      Effect.mapError((cause: Error) => getPrismaError('Person', cause)),
-      Effect.tapError(error =>
-        Effect.logError('Database operation encountered error', {
-          operation: 'updateUserFromWebhook',
-          userId: userData.id,
-          error: error.message,
-          errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
-        })
-      ),
-      Effect.retry({
-        schedule: Schedule.exponential(1000).pipe(
-          Schedule.intersect(Schedule.recurs(3))
-        ),
-        while: error => error instanceof DatabaseError,
-      })
-    );
-
-    // Direct construction
-    const result: PersonBasicDTO = {
-      id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      username: person.username,
-      imageUrl: person.imageUrl,
-    };
-
-    yield* Effect.logInfo('User updated from webhook successfully', {
-      userId: userData.id, // Who was updated
-      username: userData.username,
-      operation: 'update',
-    });
-
-    return result;
-  }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        // Check for specific error types
-        if (err instanceof Error && err.message.includes('not found')) {
-          yield* Effect.logInfo('User not found for webhook update', {
-            userId: userData.id,
-            operation: 'updateUserFromWebhook',
-          });
-          return [
-            new NotFoundError(`Person not found`, userData.id),
-            undefined,
-          ] as const;
-        }
-
-        // For unexpected errors, return DatabaseError
-        return [
-          new DatabaseError('Failed to update user from webhook'),
-          undefined,
-        ] as const;
-      });
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, PersonBasicDTO])
-  );
-
-  return Effect.runPromise(
-    Effect.provide(effect, createEffectLoggerLayer('persons'))
-  );
-};
-
-/**
- * Delete user from webhook (Clerk webhook)
- * Retries on DatabaseError
- */
-export const deleteUserFromWebhook = async ({
+export const deleteUser = async ({
   userId,
-}: DeleteUserFromWebhookParams): Promise<
+}: DeleteUserParams): Promise<
   ResultTuple<
     NotFoundError | OperationError | DatabaseError | ConnectionError,
     { message: string }
   >
 > => {
   const effect = Effect.gen(function* () {
-    yield* Effect.logDebug('Deleting user from webhook', {
+    yield* Effect.logDebug('Deleting user', {
       userId,
     });
 
@@ -462,7 +319,7 @@ export const deleteUserFromWebhook = async ({
       Effect.mapError((cause: Error) => getPrismaError('Person', cause)),
       Effect.tapError(error =>
         Effect.logError('Database operation encountered error', {
-          operation: 'deleteUserFromWebhook',
+          operation: 'deleteUser',
           userId,
           error: error.message,
           errorType: error.constructor.name,
@@ -479,7 +336,7 @@ export const deleteUserFromWebhook = async ({
 
     const result = { message: 'User deleted successfully' };
 
-    yield* Effect.logInfo('User deleted from webhook successfully', {
+    yield* Effect.logInfo('User deleted successfully', {
       userId, // Who was deleted
       operation: 'delete',
     });
@@ -491,9 +348,9 @@ export const deleteUserFromWebhook = async ({
         yield* Effect.void;
         // Check for specific error types
         if (err instanceof Error && err.message.includes('not found')) {
-          yield* Effect.logInfo('User not found for webhook deletion', {
+          yield* Effect.logInfo('User not found for deletion', {
             userId,
-            operation: 'deleteUserFromWebhook',
+            operation: 'deleteUser',
           });
           return [
             new NotFoundError(`Person not found`, userId),
@@ -503,7 +360,7 @@ export const deleteUserFromWebhook = async ({
 
         // For unexpected errors, return OperationError
         return [
-          new OperationError('Failed to delete user from webhook'),
+          new OperationError('Failed to delete user'),
           undefined,
         ] as const;
       });

@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, getFullName, getInitials } from '@/lib/utils';
+import { cn, getInitialsFromName } from '@/lib/utils';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -148,23 +148,22 @@ export function AvailabilityCard({
                   .filter(a => a.status === 'YES')
                   .map(a => (
                     <div
-                      key={a.membershipId + a.potentialDateTimeId}
+                      key={a.membership.id + pdt.id}
                       className='flex items-center gap-2 py-2'
                     >
                       <Avatar className='size-6'>
                         <AvatarFallback>
-                          {getInitials(
-                            a.membership.person.firstName,
-                            a.membership.person.lastName
-                          )}
+                          {(
+                            a.membership.person.user?.name?.[0] || ''
+                          ).toUpperCase()}
                         </AvatarFallback>
-                        <AvatarImage src={a.membership.person.imageUrl} />
+                        <AvatarImage
+                          src={a.membership.person.user?.image || undefined}
+                        />
                       </Avatar>
                       <span>
-                        {getFullName(
-                          a.membership.person.firstName,
-                          a.membership.person.lastName
-                        )}
+                        {a.membership.person.user?.name ||
+                          a.membership.person.user?.email}
                       </span>
                     </div>
                   ))}
@@ -184,23 +183,23 @@ export function AvailabilityCard({
                   .filter(a => a.status === 'MAYBE')
                   .map(a => (
                     <div
-                      key={a.membershipId + a.potentialDateTimeId}
+                      key={a.membership.id + pdt.id}
                       className='flex items-center gap-2 py-2'
                     >
                       <Avatar className='size-6'>
                         <AvatarFallback>
-                          {getInitials(
-                            a.membership.person.firstName,
-                            a.membership.person.lastName
+                          {getInitialsFromName(
+                            a.membership.person.user?.name ?? undefined,
+                            a.membership.person.user?.email ?? undefined
                           )}
                         </AvatarFallback>
-                        <AvatarImage src={a.membership.person.imageUrl} />
+                        <AvatarImage
+                          src={a.membership.person.user?.image || undefined}
+                        />
                       </Avatar>
                       <span>
-                        {getFullName(
-                          a.membership.person.firstName,
-                          a.membership.person.lastName
-                        )}
+                        {a.membership.person.user?.name ||
+                          a.membership.person.user?.email}
                       </span>
                     </div>
                   ))}
@@ -218,23 +217,23 @@ export function AvailabilityCard({
                   .filter(a => a.status === 'NO')
                   .map(a => (
                     <div
-                      key={a.membershipId + a.potentialDateTimeId}
+                      key={a.membership.id + pdt.id}
                       className='flex items-center gap-2 py-2'
                     >
                       <Avatar className='size-6'>
                         <AvatarFallback>
-                          {getInitials(
-                            a.membership.person.firstName,
-                            a.membership.person.lastName
+                          {getInitialsFromName(
+                            a.membership.person.user?.name ?? undefined,
+                            a.membership.person.user?.email ?? undefined
                           )}
                         </AvatarFallback>
-                        <AvatarImage src={a.membership.person.imageUrl} />
+                        <AvatarImage
+                          src={a.membership.person.user?.image || undefined}
+                        />
                       </Avatar>
                       <span>
-                        {getFullName(
-                          a.membership.person.firstName,
-                          a.membership.person.lastName
-                        )}
+                        {a.membership.person.user?.name ||
+                          a.membership.person.user?.email}
                       </span>
                     </div>
                   ))}

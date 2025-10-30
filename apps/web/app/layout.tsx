@@ -10,10 +10,11 @@ import { MainNav } from '@/components/main-nav';
 import { ModeToggle } from '@/components/mode-toggle';
 import { GlobalUI } from '@/components/global-ui';
 import { navConfig } from '@/config/nav';
-import { ClerkProvider } from '@clerk/nextjs';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentSession, Session } from '@groupi/services';
 import { ClientProviders } from '@/components/providers/client-providers';
 import Link from 'next/link';
+
+export const dynamic = 'force-dynamic';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -83,33 +84,38 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
+  const [error, sessionData] = await getCurrentSession();
+  const session = error ? null : sessionData;
 
   return (
-    <ClerkProvider>
-      <html suppressHydrationWarning lang='en'>
-        <body
-          className={cn(
-            'min-h-screen bg-background font-sans antialiased',
-            fontSans.variable,
-            fontHeading.variable
-          )}
-        >
-          <ClientProviders userId={userId}>
-            <InnerLayout>{children}</InnerLayout>
-          </ClientProviders>
-          <GlobalUI />
-        </body>
-      </html>
-    </ClerkProvider>
+    <html suppressHydrationWarning lang='en'>
+      <body
+        className={cn(
+          'min-h-screen bg-background font-sans antialiased',
+          fontSans.variable,
+          fontHeading.variable
+        )}
+      >
+        <ClientProviders userId={!session ? null : session.user.id}>
+          <InnerLayout session={session}>{children}</InnerLayout>
+        </ClientProviders>
+        <GlobalUI />
+      </body>
+    </html>
   );
 }
 
-function InnerLayout({ children }: { children: React.ReactNode }) {
+function InnerLayout({
+  children,
+  session,
+}: {
+  children: React.ReactNode;
+  session: Session | null;
+}) {
   return (
     <div className='flex flex-col min-h-screen'>
       <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-        <MainNav items={navConfig.mainNav} />
+        <MainNav items={navConfig.mainNav} session={session} />
       </header>
       <main className='grow'>{children}</main>
       <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>

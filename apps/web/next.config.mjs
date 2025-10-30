@@ -1,5 +1,18 @@
 import { withSentryConfig } from '@sentry/nextjs';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+// Get the directory of this file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from monorepo root BEFORE env.mjs validation
+config({ path: resolve(__dirname, '../../.env.local') });
+config({ path: resolve(__dirname, '../../.env') });
+
 import './env.mjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: [
@@ -9,6 +22,32 @@ const nextConfig = {
     '@groupi/api',
     '@groupi/services',
   ],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Exclude server-only modules from client bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        async_hooks: false,
+        child_process: false,
+        diagnostics_channel: false,
+        fs: false,
+        net: false,
+        tls: false,
+        worker_threads: false,
+      };
+    }
+
+    // Suppress Supabase realtime-js WebSocket dynamic import warnings
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
+    return config;
+  },
   turbopack: {
     rules: {
       '*.svg': {
@@ -19,14 +58,7 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.clerk.dev',
-      },
-      {
-        protocol: 'https',
-        hostname: 'img.clerk.com',
-      },
+      // Add other image domains as needed
     ],
   },
 };

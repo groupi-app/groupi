@@ -95,9 +95,7 @@ export default function ReplyComponent({
   }
 
   const name =
-    member?.person.firstName ??
-    member?.person.lastName ??
-    member?.person.username;
+    member?.person.user.name ?? member?.person.user.email.split('@')[0];
 
   return (
     <Dialog>

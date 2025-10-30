@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -43,11 +43,16 @@ export const getMemberListData = async ({
     MemberListPageDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Fetching member list data', {
       eventId,
       userId,
@@ -68,16 +73,19 @@ export const getMemberListData = async ({
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
             orderBy: [
               { role: 'desc' }, // ORGANIZER first, then MODERATOR, then ATTENDEE
-              { person: { firstName: 'asc' } },
+              { person: { user: { name: 'asc' } } },
             ],
           },
         },
@@ -142,10 +150,11 @@ export const getMemberListData = async ({
           rsvpStatus: membership.rsvpStatus,
           person: {
             id: membership.person.id,
-            firstName: membership.person.firstName,
-            lastName: membership.person.lastName,
-            username: membership.person.username,
-            imageUrl: membership.person.imageUrl,
+            user: {
+              name: membership.person.user?.name || null,
+              email: membership.person.user?.email || '',
+              image: membership.person.user?.image || null,
+            },
           },
         })),
       },
@@ -203,11 +212,16 @@ export const updateMemberRSVP = async ({
     MembershipDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Updating member RSVP status', {
       eventId,
       userId,
@@ -390,9 +404,12 @@ export const updateMemberRole = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -619,9 +636,12 @@ export const removeMemberFromEvent = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {

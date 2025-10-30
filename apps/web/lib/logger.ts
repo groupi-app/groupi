@@ -36,33 +36,14 @@ export const log = {
   debug: (message: string, data?: object) => logger.debug(data, message),
   info: (message: string, data?: object) => logger.info(data, message),
   warn: (message: string, data?: object) => logger.warn(data, message),
-  error: (message: string, error?: Error | object) => {
-    if (error instanceof Error) {
+  error: (message: string, data?: Error | object) => {
+    if (data instanceof Error) {
       logger.error(
-        {
-          err: error,
-          stack: error.stack,
-          name: error.name,
-          cause: error.cause,
-          // Include any additional properties on the error
-          ...Object.getOwnPropertyNames(error).reduce(
-            (acc, prop) => {
-              if (!['message', 'stack', 'name'].includes(prop)) {
-                try {
-                  acc[prop] = (error as any)[prop];
-                } catch (e) {
-                  // Ignore properties that can't be serialized
-                }
-              }
-              return acc;
-            },
-            {} as Record<string, any>
-          ),
-        },
+        { err: data, stack: data.stack, cause: data.cause },
         message
       );
     } else {
-      logger.error(error, message);
+      logger.error(data, message);
     }
   },
   fatal: (message: string, error?: Error | object) => {

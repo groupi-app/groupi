@@ -1,6 +1,7 @@
 import { Effect, Schedule } from 'effect';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
+import { getCurrentUserId } from './auth';
 import type { ResultTuple } from '@groupi/schema';
 import {
   CreateEventParams,
@@ -29,7 +30,6 @@ import {
 } from '@groupi/schema';
 import { getPrismaError } from '../shared/errors';
 import { createEventNotifications } from './notification';
-import { auth } from '@clerk/nextjs/server';
 
 // ============================================================================
 // EVENT DOMAIN SERVICES
@@ -51,10 +51,16 @@ export const getEventHeaderData = async ({
     EventHeaderDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Fetching event header data', {
       eventId,
       userId,
@@ -145,7 +151,6 @@ export const getEventHeaderData = async ({
     Effect.catchAll(err => {
       return Effect.gen(function* () {
         yield* Effect.void;
-        yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
           return [err, undefined] as const;
@@ -183,10 +188,16 @@ export const getEventNewPostPageData = async ({
     EventNewPostPageDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Fetching event new post page data', {
       eventId,
       userId,
@@ -307,10 +318,16 @@ export const getEventAttendeesPageData = async ({
     EventAttendeesPageDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Fetching event attendees page data', {
       eventId,
       userId,
@@ -333,16 +350,19 @@ export const getEventAttendeesPageData = async ({
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
             orderBy: [
               { role: 'desc' }, // ORGANIZER first
-              { person: { firstName: 'asc' } },
+              { person: { user: { name: 'asc' } } },
             ],
           },
         },
@@ -408,10 +428,11 @@ export const getEventAttendeesPageData = async ({
           eventId: membership.eventId,
           person: {
             id: membership.person.id,
-            firstName: membership.person.firstName,
-            lastName: membership.person.lastName,
-            username: membership.person.username,
-            imageUrl: membership.person.imageUrl,
+            user: {
+              name: membership.person.user?.name || null,
+              email: membership.person.user?.email || '',
+              image: membership.person.user?.image || null,
+            },
           },
         })),
       },
@@ -461,14 +482,21 @@ export const createEvent = async ({
     | ConnectionError
     | ConstraintError
     | ValidationError
-    | OperationError,
+    | OperationError
+    | AuthenticationError,
     EventDetailsDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Creating new event', {
       userId,
       title,
@@ -501,10 +529,13 @@ export const createEvent = async ({
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -547,14 +578,17 @@ export const createEvent = async ({
       },
       memberships: event.memberships.map(membership => ({
         id: membership.id,
+        personId: membership.personId,
+        eventId: membership.eventId,
         role: membership.role,
         rsvpStatus: membership.rsvpStatus,
         person: {
           id: membership.person.id,
-          firstName: membership.person.firstName,
-          lastName: membership.person.lastName,
-          username: membership.person.username,
-          imageUrl: membership.person.imageUrl,
+          user: {
+            name: membership.person.user?.name || null,
+            email: membership.person.user?.email || '',
+            image: membership.person.user?.image || null,
+          },
         },
       })),
     };
@@ -599,14 +633,21 @@ export const updateEventDetails = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError
-    | ValidationError,
+    | ValidationError
+    | AuthenticationError,
     EventDetailsDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Updating event details', {
       eventId,
       userId,
@@ -663,10 +704,13 @@ export const updateEventDetails = async ({
               person: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -718,14 +762,17 @@ export const updateEventDetails = async ({
       },
       memberships: event.memberships.map(membership => ({
         id: membership.id,
+        personId: membership.personId,
+        eventId: membership.eventId,
         role: membership.role,
         rsvpStatus: membership.rsvpStatus,
         person: {
           id: membership.person.id,
-          firstName: membership.person.firstName,
-          lastName: membership.person.lastName,
-          username: membership.person.username,
-          imageUrl: membership.person.imageUrl,
+          user: {
+            name: membership.person.user?.name || null,
+            email: membership.person.user?.email || '',
+            image: membership.person.user?.image || null,
+          },
         },
       })),
     };
@@ -794,14 +841,21 @@ export const deleteEvent = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError
-    | OperationError,
+    | OperationError
+    | AuthenticationError,
     { message: string }
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Deleting event', {
       eventId,
       userId,
@@ -911,14 +965,21 @@ export const leaveEvent = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError
-    | OperationError,
+    | OperationError
+    | AuthenticationError,
     { message: string }
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId)
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
     yield* Effect.logDebug('Leaving event', {
       eventId,
       userId,

@@ -16,8 +16,8 @@ export function GlobalPushNotifications() {
     // Actively check for existing subscriptions when component mounts
     const checkSubscription = async () => {
       componentLogger.info(
-        'GlobalPushNotifications: Checking for existing subscriptions',
-        { userId }
+        { userId },
+        'GlobalPushNotifications: Checking for existing subscriptions'
       );
       await checkExistingSubscription();
     };
@@ -32,17 +32,17 @@ export function GlobalPushNotifications() {
     if (!isCheckingExisting) {
       if (isSubscribed) {
         componentLogger.info(
-          'GlobalPushNotifications: Push notifications are active',
           {
             userId,
-          }
+          },
+          'GlobalPushNotifications: Push notifications are active'
         );
       } else {
         componentLogger.info(
-          'GlobalPushNotifications: No active push notifications',
           {
             userId,
-          }
+          },
+          'GlobalPushNotifications: No active push notifications'
         );
       }
     }

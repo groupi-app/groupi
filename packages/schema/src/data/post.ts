@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   PostSchema,
   ReplySchema,
-  PersonSchema,
+  UserSchema,
   EventSchema,
   MembershipSchema,
 } from '../generated';
@@ -28,12 +28,13 @@ export type PostDTO = z.infer<typeof PostDTO>;
 
 // Post with author DTO
 export const PostWithAuthorDTO = PostDTO.extend({
-  author: PersonSchema.pick({
-    id: true,
-    firstName: true,
-    lastName: true,
-    username: true,
-    imageUrl: true,
+  author: z.object({
+    id: z.string(),
+    user: UserSchema.pick({
+      name: true,
+      email: true,
+      image: true,
+    }),
   }),
 });
 
@@ -48,12 +49,13 @@ export const PostCardDTO = PostWithAuthorDTO.extend({
       createdAt: true,
       updatedAt: true,
     }).extend({
-      author: PersonSchema.pick({
-        id: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-        imageUrl: true,
+      author: z.object({
+        id: z.string(),
+        user: UserSchema.pick({
+          name: true,
+          email: true,
+          image: true,
+        }),
       }),
     })
   ),
@@ -70,12 +72,13 @@ export const PostDetailDTO = PostWithAuthorDTO.extend({
       createdAt: true,
       updatedAt: true,
     }).extend({
-      author: PersonSchema.pick({
-        id: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-        imageUrl: true,
+      author: z.object({
+        id: z.string(),
+        user: UserSchema.pick({
+          name: true,
+          email: true,
+          image: true,
+        }),
       }),
     })
   ),
@@ -103,14 +106,15 @@ export const PostFeedDTO = z.object({
         personId: true,
         eventId: true,
       }).extend({
-        person: PersonSchema.pick({
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
+        person: z.object({
+          id: z.string(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+          user: UserSchema.pick({
+            name: true,
+            email: true,
+            image: true,
+          }),
         }),
       })
     ),
@@ -138,3 +142,32 @@ export const PostDetailPageDTO = z.object({
 });
 
 export type PostDetailPageDTO = z.infer<typeof PostDetailPageDTO>;
+
+// ============================================================================
+// ADMIN-SPECIFIC DTOS
+// ============================================================================
+
+// Post admin list item DTO - for admin dashboard
+export const PostAdminListItemDTO = PostSchema.pick({
+  id: true,
+  title: true,
+  content: true,
+  createdAt: true,
+  updatedAt: true,
+  editedAt: true,
+}).extend({
+  author: UserSchema.pick({
+    id: true,
+    name: true,
+    email: true,
+  }),
+  event: EventSchema.pick({
+    id: true,
+    title: true,
+  }),
+  _count: z.object({
+    replies: z.number(),
+  }),
+});
+
+export type PostAdminListItemDTO = z.infer<typeof PostAdminListItemDTO>;

@@ -10,7 +10,7 @@ import {
 
 // Migrated from server actions to tRPC hooks
 import { useDeleteInvite } from '@groupi/hooks';
-import { cn, getFullName, timeUntil } from '@/lib/utils';
+import { cn, timeUntil } from '@/lib/utils';
 import type { EventInviteDTO } from '@groupi/schema';
 // DTO adjusted
 import {
@@ -200,12 +200,7 @@ export function InviteLinkCard({
               <div className='flex items-center gap-1'>
                 <span className='text-muted-foreground'>Created by:</span>
                 <span className='flex items-center gap-2'>
-                  {!createdBy.person.firstName && !createdBy.person.lastName
-                    ? createdBy.person.username
-                    : `${getFullName(
-                        createdBy.person.firstName,
-                        createdBy.person.lastName
-                      )} (${createdBy.person.username})`}
+                  {createdBy.person.user?.name || createdBy.person.user?.email}
                 </span>
               </div>{' '}
               <div className='flex items-center gap-1'>

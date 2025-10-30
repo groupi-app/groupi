@@ -1,6 +1,7 @@
-import { getFullName } from '@/lib/utils';
-import { Member } from '@/types';
+import { EventPageDTO } from '@groupi/schema';
 import { Role } from '@prisma/client';
+
+type Member = EventPageDTO['memberships'][0];
 import MemberIcon from './member-icon';
 
 export function MemberSlate({
@@ -16,7 +17,7 @@ export function MemberSlate({
   eventDateTime: Date | null;
   key: string;
 }) {
-  const fullName = getFullName(member.person.firstName, member.person.lastName);
+  const fullName = member.person.user.name || member.person.user.email;
 
   return (
     <div className='flex items-center gap-3 py-2'>
@@ -31,7 +32,9 @@ export function MemberSlate({
         {fullName != '' && (
           <span className='text-base text-card-foreground'>{fullName}</span>
         )}
-        <span className='text-muted-foreground'>{member.person.username}</span>
+        <span className='text-muted-foreground'>
+          {member.person.user.name || member.person.user.email}
+        </span>
       </div>
     </div>
   );

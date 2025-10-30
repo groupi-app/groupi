@@ -1,27 +1,17 @@
 import { DateSelectContent } from './components/date-select-content';
 import { prefetchEventDateSelectPageData } from '@groupi/hooks/server';
 import { pageLogger } from '@/lib/logger';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 
 export default async function EventDateSelectPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event date select page data
-    const dehydratedState = await prefetchEventDateSelectPageData(
-      eventId,
-      userId
-    );
+    const dehydratedState = await prefetchEventDateSelectPageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -29,7 +19,7 @@ export default async function EventDateSelectPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event date select page:', { error });
+    pageLogger.error({ error }, 'Error in event date select page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

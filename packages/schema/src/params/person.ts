@@ -20,37 +20,14 @@ export type GetUserDashboardDataParams = z.infer<
   typeof GetUserDashboardDataParams
 >;
 
-// Create user from webhook parameters
-export const CreateUserFromWebhookParams = z.object({
-  id: PersonSchema.shape.id,
-  firstName: PersonSchema.shape.firstName,
-  lastName: PersonSchema.shape.lastName,
-  username: PersonSchema.shape.username,
-  imageUrl: PersonSchema.shape.imageUrl,
-});
+// NOTE: CreateUserParams and UpdateUserParams have been removed.
+// Person table no longer has firstName, lastName, username, imageUrl fields.
+// User creation/updates should use Better Auth admin APIs (createUserAdmin, updateUserAdmin)
+// which properly handle both User (auth data) and Person (app data) records.
 
-export type CreateUserFromWebhookParams = z.infer<
-  typeof CreateUserFromWebhookParams
->;
-
-// Update user from webhook parameters
-export const UpdateUserFromWebhookParams = z.object({
-  id: PersonSchema.shape.id,
-  firstName: PersonSchema.shape.firstName.optional(),
-  lastName: PersonSchema.shape.lastName.optional(),
-  username: PersonSchema.shape.username.optional(),
-  imageUrl: PersonSchema.shape.imageUrl.optional(),
-});
-
-export type UpdateUserFromWebhookParams = z.infer<
-  typeof UpdateUserFromWebhookParams
->;
-
-// Delete user from webhook parameters
-export const DeleteUserFromWebhookParams = z.object({
+// Delete user parameters
+export const DeleteUserParams = z.object({
   userId: PersonSchema.shape.id,
 });
 
-export type DeleteUserFromWebhookParams = z.infer<
-  typeof DeleteUserFromWebhookParams
->;
+export type DeleteUserParams = z.infer<typeof DeleteUserParams>;

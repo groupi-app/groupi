@@ -1,9 +1,7 @@
 import { EditEventContent } from './components/edit-event-content';
 import { prefetchEventEditPageData } from '@groupi/hooks/server';
 import { pageLogger } from '@/lib/logger';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 import { GoogleMapsScript } from '@/components/google-maps-script';
 import { env } from '@/env.mjs';
 
@@ -12,15 +10,10 @@ export default async function EventEditPage(props: {
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event edit page data
-    const dehydratedState = await prefetchEventEditPageData(eventId, userId);
+    const dehydratedState = await prefetchEventEditPageData(eventId);
 
     return (
       <>
@@ -31,7 +24,7 @@ export default async function EventEditPage(props: {
       </>
     );
   } catch (error) {
-    pageLogger.error('Error in event edit page:', { error });
+    pageLogger.error({ error }, 'Error in event edit page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

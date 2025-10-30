@@ -4,7 +4,6 @@ import { SettingsNav } from './components/settings-nav';
 import ErrorPage from '@/components/error';
 import { SettingsFormProvider } from './components/settings-form-provider';
 import { SettingsForm } from './components/settings-form';
-import { auth } from '@clerk/nextjs/server';
 import { ReactNode } from 'react';
 
 export default async function SettingsLayout({
@@ -12,13 +11,7 @@ export default async function SettingsLayout({
 }: {
   children: ReactNode;
 }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return <ErrorPage message='User not authenticated' />;
-  }
-
-  const [error, settingsData] = await fetchUserSettings({ userId });
+  const [error, settingsData] = await fetchUserSettings({});
 
   if (error || !settingsData) {
     return <ErrorPage message='Unable to load user settings' />;

@@ -9,7 +9,7 @@ export function GoogleMapsScript({ apiKey }: GoogleMapsScriptProps) {
     <>
       <Script
         id='google-maps-init'
-        strategy='beforeInteractive'
+        strategy='afterInteractive'
         dangerouslySetInnerHTML={{
           __html: `
             window.initMap = function() {

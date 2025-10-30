@@ -1,6 +1,6 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { EventSchema, MembershipSchema, PersonSchema } from '../generated';
+import { EventSchema, MembershipSchema, UserSchema } from '../generated';
 
 // ============================================================================
 // MEMBERSHIP DOMAIN DATA DTOS
@@ -25,12 +25,13 @@ export const MembershipWithPersonDTO = MembershipSchema.pick({
   role: true,
   rsvpStatus: true,
 }).extend({
-  person: PersonSchema.pick({
-    id: true,
-    firstName: true,
-    lastName: true,
-    username: true,
-    imageUrl: true,
+  person: z.object({
+    id: z.string(),
+    user: UserSchema.pick({
+      name: true,
+      email: true,
+      image: true,
+    }),
   }),
 });
 
@@ -52,7 +53,7 @@ export const MemberListPageDTO = z.object({
     id: true,
     role: true,
   }),
-  userId: PersonSchema.shape.id,
+  userId: z.string(),
 });
 
 export type MemberListPageDTO = z.infer<typeof MemberListPageDTO>;

@@ -1,3 +1,4 @@
+'use client';
 import { useNotifications, useMarkAllNotificationsAsRead } from '@groupi/hooks';
 import { cn } from '@/lib/utils';
 import type { NotificationFeedDTO } from '@groupi/schema';
@@ -41,7 +42,8 @@ export function NotificationWidget({ userId }: { userId: string }) {
   const [error, notificationData] = data;
 
   if (error) {
-    switch (error._tag) {
+    const errorTag = '_tag' in error ? error._tag : null;
+    switch (errorTag) {
       case 'NotFoundError':
         return <div>Notifications not found</div>;
       case 'UnauthorizedError':

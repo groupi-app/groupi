@@ -3,9 +3,7 @@ import { Button } from '@/components/ui/button';
 import { InviteCardList } from '../components/invite-card-list';
 import { prefetchEventInvitePageData } from '@groupi/hooks/server';
 import { pageLogger } from '@/lib/logger';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export default async function EventInvitePage(props: {
@@ -13,15 +11,10 @@ export default async function EventInvitePage(props: {
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event invite page data
-    const dehydratedState = await prefetchEventInvitePageData(eventId, userId);
+    const dehydratedState = await prefetchEventInvitePageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -37,7 +30,7 @@ export default async function EventInvitePage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event invite page:', { error });
+    pageLogger.error({ error }, 'Error in event invite page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

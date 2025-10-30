@@ -104,16 +104,13 @@ export function DateCardList({ eventId }: { eventId: string }) {
         className='flex flex-col gap-3'
       >
         <LayoutGroup>
-          {
-            /* @ts-expect-error: Temporary fix - getRanks function needs to be updated for new data structure */
-            getRanks(potentialDateTimes)
-              .sort(sort)
-              .map(pdt => (
-                <motion.div layout variants={item} key={pdt.id}>
-                  <DateCard pdt={pdt} userId={userId} userRole={userRole} />
-                </motion.div>
-              ))
-          }
+          {getRanks(potentialDateTimes)
+            .sort(sort)
+            .map(pdt => (
+              <motion.div layout variants={item} key={pdt.id}>
+                <DateCard pdt={pdt} userId={userId} userRole={userRole} />
+              </motion.div>
+            ))}
         </LayoutGroup>
       </motion.div>
     </>

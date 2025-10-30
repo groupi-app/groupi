@@ -101,6 +101,109 @@ export const postRouter = createTRPCRouter({
         postId: input.postId,
       });
     }),
+
+  /**
+   * List all posts (admin operation with pagination)
+   * Returns: [error, { items, nextCursor, totalCount }] tuple
+   */
+  listAll: protectedProcedure
+    .input(
+      z.object({
+        cursor: z.string().optional(),
+        limit: z.number().min(1).max(100).optional(),
+        search: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const { db } = await import('@groupi/services');
+        const limit = input.limit || 50;
+        const search = input.search?.trim();
+
+        // Build where clause for search
+        const where = search
+          ? {
+              OR: [
+                { title: { contains: search, mode: 'insensitive' as const } },
+                { content: { contains: search, mode: 'insensitive' as const } },
+              ],
+            }
+          : {};
+
+        // Get total count for pagination UI
+        const totalCount = await db.post.count({ where });
+
+        // Fetch posts with cursor-based pagination
+        const posts = await db.post.findMany({
+          where,
+          take: limit + 1, // Fetch one extra to determine if there's a next page
+          cursor: input.cursor ? { id: input.cursor } : undefined,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
+            editedAt: true,
+            author: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+            event: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+            _count: {
+              select: {
+                replies: true,
+              },
+            },
+          },
+        });
+
+        // Determine if there's a next page
+        let nextCursor: string | undefined = undefined;
+        if (posts.length > limit) {
+          const nextItem = posts.pop(); // Remove the extra item
+          nextCursor = nextItem!.id;
+        }
+
+        // Transform data for client
+        const items = posts.map(post => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+          editedAt: post.editedAt,
+          author: post.author.user,
+          event: post.event,
+          _count: post._count,
+        }));
+
+        return [
+          null,
+          {
+            items,
+            nextCursor,
+            totalCount,
+          },
+        ] as const;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        return [error, undefined] as const;
+      }
+    }),
 });
 
 export type PostRouter = typeof postRouter;

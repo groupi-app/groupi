@@ -3,10 +3,9 @@ import { MemberList } from './components/member-list';
 import { NewPostButton } from './components/new-post-button';
 import { PostFeed } from './components/post-feed';
 import { prefetchEventPageComponents } from '@groupi/hooks/server';
-// Removed markEventNotifsAsRead; handled elsewhere if needed
-import { auth } from '@clerk/nextjs/server';
-import { HydrationBoundary } from '@tanstack/react-query';
+import { getCurrentUserId } from '@groupi/services';
 import { redirect } from 'next/navigation';
+import { HydrationBoundary } from '@tanstack/react-query';
 import { pageLogger } from '@/lib/logger';
 
 export default async function EventPage(props: {
@@ -14,15 +13,18 @@ export default async function EventPage(props: {
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
 
-  if (!userId) {
+  // Validate session server-side
+  const [authError, userId] = await getCurrentUserId();
+
+  if (authError || !userId) {
     redirect('/sign-in');
   }
 
   try {
     // Prefetch all component data in parallel
-    const dehydratedState = await prefetchEventPageComponents(eventId, userId);
+    // Services will get userId internally via getCurrentUserId()
+    const dehydratedState = await prefetchEventPageComponents(eventId);
 
     // Marking notifications as read has been removed in this path
 
@@ -39,7 +41,7 @@ export default async function EventPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event page', { eventId, error });
+    pageLogger.error({ error, eventId }, 'Error in event page');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

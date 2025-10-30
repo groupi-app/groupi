@@ -1,8 +1,17 @@
 import NewEventInfo from './components/new-event-info';
+import { getCurrentUserId } from '@groupi/services';
+import { redirect } from 'next/navigation';
 import { env } from '@/env.mjs';
 import Script from 'next/script';
 
-export default function Page() {
+export default async function Page() {
+  // Validate session server-side
+  const [authError, userId] = await getCurrentUserId();
+
+  if (authError || !userId) {
+    redirect('/sign-in');
+  }
+
   return (
     <>
       <div className='container max-w-4xl mt-10'>

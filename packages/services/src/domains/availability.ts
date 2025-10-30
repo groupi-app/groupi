@@ -1,6 +1,7 @@
 import { Effect, Schedule } from 'effect';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
+import { getCurrentUserId } from './auth';
 import type { ResultTuple } from '@groupi/schema';
 import {
   GetMyAvailabilitiesParams,
@@ -8,7 +9,6 @@ import {
   UpdateMemberAvailabilitiesParams,
   ChooseDateTimeParams,
 } from '@groupi/schema/params';
-import { auth } from '@clerk/nextjs/server';
 import { PDTDTO } from '@groupi/schema/data';
 import {
   NotFoundError,
@@ -42,15 +42,16 @@ export const getMyAvailabilities = async ({
     Array<{ potentialDateTimeId: string; status: string }>
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      yield* Effect.logInfo('Not authenticated', {
-        eventId,
-        operation: 'getMyAvailabilities',
-      });
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Fetching user availabilities', {
       eventId,
       userId,
@@ -182,15 +183,16 @@ export const getEventPotentialDateTimes = async ({
     PDTDTO
   >
 > => {
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      yield* Effect.logInfo('Not authenticated', {
-        eventId,
-        operation: 'getEventPotentialDateTimes',
-      });
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Fetching event potential date times', {
       eventId,
       userId,
@@ -206,8 +208,24 @@ export const getEventPotentialDateTimes = async ({
               availabilities: {
                 include: {
                   membership: {
-                    include: {
-                      person: true,
+                    select: {
+                      id: true,
+                      personId: true,
+                      eventId: true,
+                      role: true,
+                      rsvpStatus: true,
+                      person: {
+                        select: {
+                          id: true,
+                          user: {
+                            select: {
+                              name: true,
+                              email: true,
+                              image: true,
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -274,12 +292,16 @@ export const getEventPotentialDateTimes = async ({
             membership: {
               id: string;
               personId: string;
+              eventId: string;
+              role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
+              rsvpStatus: 'YES' | 'MAYBE' | 'NO' | 'PENDING';
               person: {
                 id: string;
-                firstName: string | null;
-                lastName: string | null;
-                username: string;
-                imageUrl: string;
+                user: {
+                  name: string | null;
+                  email: string;
+                  image: string | null;
+                };
               };
             };
           }>;
@@ -292,12 +314,16 @@ export const getEventPotentialDateTimes = async ({
             membership: {
               id: availability.membership.id,
               personId: availability.membership.personId,
+              eventId: availability.membership.eventId,
+              role: availability.membership.role,
+              rsvpStatus: availability.membership.rsvpStatus,
               person: {
                 id: availability.membership.person.id,
-                firstName: availability.membership.person.firstName,
-                lastName: availability.membership.person.lastName,
-                username: availability.membership.person.username,
-                imageUrl: availability.membership.person.imageUrl,
+                user: {
+                  name: availability.membership.person.user.name,
+                  email: availability.membership.person.user.email,
+                  image: availability.membership.person.user.image,
+                },
               },
             },
           })),
@@ -360,15 +386,17 @@ export const updateMemberAvailabilities = async (
   >
 > => {
   const { eventId, availabilities } = input;
+
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      yield* Effect.logInfo('Not authenticated', {
-        eventId,
-        operation: 'updateMemberAvailabilities',
-      });
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Updating member availabilities', {
       eventId,
       userId,
@@ -525,16 +553,17 @@ export const chooseDateTime = async (
   >
 > => {
   const { eventId, potentialDateTimeId } = input;
+
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
+  }
+
   const effect = Effect.gen(function* () {
-    const { userId } = yield* Effect.promise(() => auth());
-    if (!userId) {
-      yield* Effect.logInfo('Not authenticated', {
-        eventId,
-        potentialDateTimeId,
-        operation: 'chooseDateTime',
-      });
-      return [new AuthenticationError('Not authenticated'), undefined] as const;
-    }
     yield* Effect.logDebug('Choosing date time for event', {
       eventId,
       userId,

@@ -1,6 +1,5 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
-import { auth } from '@clerk/nextjs/server';
 import superjson from 'superjson';
 
 import type { AppRouter } from '@groupi/api';
@@ -12,19 +11,14 @@ export const api = createTRPCReact<AppRouter>();
 
 /**
  * Create the tRPC client with configuration
+ * Note: Better Auth session cookies are automatically sent with requests
  */
 export const trpcClient = api.createClient({
   links: [
     httpBatchLink({
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/trpc`,
       transformer: superjson,
-      headers: async () => {
-        // Get auth token from Clerk
-        const { userId } = await auth();
-        return {
-          authorization: userId ? `Bearer ${userId}` : '',
-        };
-      },
+      // No need for custom headers - Better Auth cookies are sent automatically
     }),
   ],
 });
@@ -33,3 +27,8 @@ export const trpcClient = api.createClient({
  * Export the client for provider setup
  */
 export { trpcClient as client };
+
+/**
+ * Export api as trpc for convenience in components
+ */
+export { api as trpc };

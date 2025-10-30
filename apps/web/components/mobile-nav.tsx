@@ -1,3 +1,4 @@
+'use client';
 import {
   Sheet,
   SheetClose,
@@ -12,14 +13,16 @@ import * as React from 'react';
 import { Icons } from '@/components/icons';
 import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
-import { MainNavItem, UserInfo } from '@/types';
-import { SignInButton, SignOutButton } from '@clerk/nextjs';
+import { MainNavItem } from '@/types';
+import { PersonBasicDTO } from '@groupi/schema';
+import { signOut } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
 import { NotificationCount } from './notification-count';
 import { ProfileSlate } from './profile-slate';
 import { useNotificationCloseContext } from '@/components/providers/notif-close-provider';
 
 interface MobileNavProps {
-  userInfo: UserInfo;
+  userInfo: PersonBasicDTO;
   items: MainNavItem[];
   children?: React.ReactNode;
 }
@@ -78,15 +81,13 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                 <div className='flex flex-col mt-2'>
                   <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <SheetClose asChild>
-                      <button
-                        onClick={() => {
-                          (window as any).Clerk?.openUserProfile();
-                        }}
+                      <Link
+                        href='/settings'
                         className='flex items-center gap-2'
                       >
                         <Icons.account className='size-4' />
-                        <span>My Account</span>
-                      </button>
+                        <span>My Profile</span>
+                      </Link>
                     </SheetClose>
                   </div>
                   <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
@@ -102,12 +103,16 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
                   </div>
                   <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <SheetClose asChild>
-                      <SignOutButton>
+                      <Button
+                        variant='ghost'
+                        onClick={() => signOut()}
+                        className='w-full justify-start p-0 h-auto'
+                      >
                         <div className='flex items-center gap-2'>
                           <Icons.signOut className='size-4' />
                           <span>Sign Out</span>
                         </div>
-                      </SignOutButton>
+                      </Button>
                     </SheetClose>
                   </div>
                 </div>
@@ -117,12 +122,12 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
 
           {!userInfo.id && (
             <SheetClose asChild>
-              <SignInButton>
+              <Link href='/sign-in'>
                 <div className='flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4'>
                   <Icons.signIn className='size-4' />
                   <span>Sign In</span>
                 </div>
-              </SignInButton>
+              </Link>
             </SheetClose>
           )}
           {children}

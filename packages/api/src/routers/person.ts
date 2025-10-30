@@ -3,11 +3,15 @@ import {
   // Import service functions
   fetchPersonData,
   fetchUserDashboardData,
-  createUserFromWebhook,
-  updateUserFromWebhook,
-  deleteUserFromWebhook,
+  // Better Auth admin functions
+  createUserAdmin,
+  updateUserAdmin,
+  deleteUserAdmin,
+  createLogger,
 } from '@groupi/services';
 import { z } from 'zod';
+
+const logger = createLogger('person-router');
 
 // ============================================================================
 // PERSON ROUTER
@@ -36,7 +40,8 @@ export const personRouter = createTRPCRouter({
 
   /**
    * Update person data
-   * Returns: [error, person] tuple
+   * Uses Better Auth admin API, automatically syncs Person table via hooks
+   * Returns: [error, result] tuple
    */
   update: protectedProcedure
     .input(
@@ -44,81 +49,158 @@ export const personRouter = createTRPCRouter({
         userId: z.string(),
         name: z.string().optional(),
         email: z.string().email().optional(),
+        image: z.string().optional(),
+        imageKey: z.string().optional(),
+        oldImageKey: z.string().optional(), // For deleting old image
+        pronouns: z.string().optional(),
+        bio: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      // For now, return a basic update response
-      // This should be implemented with a proper updatePerson service function
-      const updateData = {
-        id: input.userId,
-        firstName: input.name?.split(' ')[0] || null,
-        lastName: input.name?.split(' ').slice(1).join(' ') || null,
-        imageUrl: '', // Keep existing image
-      };
+      // Delete old image from UploadThing if:
+      // 1. A new image is being uploaded (different key), OR
+      // 2. The image is being cleared/removed (no new image)
+      const shouldDeleteOldImage =
+        input.oldImageKey &&
+        (input.oldImageKey !== input.imageKey || !input.image);
 
-      return await updateUserFromWebhook(updateData);
-    }),
+      if (shouldDeleteOldImage && input.oldImageKey) {
+        try {
+          const { UTApi } = await import('uploadthing/server');
+          const utapi = new UTApi();
+          await utapi.deleteFiles(input.oldImageKey);
+        } catch (error) {
+          // Log but don't fail the update if deletion fails
+          logger.error(
+            { error, imageKey: input.oldImageKey },
+            'Failed to delete old avatar from UploadThing'
+          );
+        }
+      }
 
-  /**
-   * Create user from webhook (Clerk webhook)
-   * Returns: [error, person] tuple
-   */
-  createFromWebhook: publicProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        firstName: z.string().nullable(),
-        lastName: z.string().nullable(),
-        username: z.string(),
-        imageUrl: z.string(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      return await createUserFromWebhook({
-        id: input.id,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        username: input.username,
-        imageUrl: input.imageUrl,
+      return await updateUserAdmin({
+        userId: input.userId,
+        name: input.name,
+        email: input.email,
+        image: input.image,
+        imageKey: input.imageKey,
+        pronouns: input.pronouns,
+        bio: input.bio,
       });
     }),
 
   /**
-   * Update user from webhook (Clerk webhook)
-   * Returns: [error, person] tuple
-   */
-  updateFromWebhook: publicProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        firstName: z.string().nullable(),
-        lastName: z.string().nullable(),
-        username: z.string(),
-        imageUrl: z.string(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      // Return safe-wrapper tuple directly - no error conversion needed
-      return await updateUserFromWebhook({
-        id: input.id,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        username: input.username,
-        imageUrl: input.imageUrl,
-      });
-    }),
-
-  /**
-   * Delete user from webhook (Clerk webhook)
+   * Create user (admin operation)
+   * Uses Better Auth admin API, automatically creates Person record via hooks
    * Returns: [error, result] tuple
    */
-  deleteFromWebhook: publicProcedure
+  create: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        email: z.string().email(),
+        username: z.string().optional(),
+        image: z.string().optional(),
+        role: z.enum(['admin', 'user']).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await createUserAdmin({
+        name: input.name,
+        email: input.email,
+        username: input.username,
+        image: input.image,
+        role: input.role,
+      });
+    }),
+
+  /**
+   * Update user by ID (admin operation)
+   * Uses Better Auth admin API, automatically syncs Person table via hooks
+   * Returns: [error, result] tuple
+   */
+  updateById: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        username: z.string().optional(),
+        role: z.string().optional(),
+        image: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await updateUserAdmin({
+        userId: input.id,
+        name: input.name,
+        email: input.email,
+        username: input.username,
+        role: input.role,
+        image: input.image,
+      });
+    }),
+
+  /**
+   * Delete user (admin operation)
+   * Uses Better Auth admin API, automatically deletes Person record via hooks
+   * Returns: [error, result] tuple
+   */
+  delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      return await deleteUserFromWebhook({
+      return await deleteUserAdmin({
         userId: input.id,
       });
     }),
+
+  /**
+   * List all users (admin operation)
+   * Returns all users with their activity counts for admin dashboard
+   * Returns: [error, users] tuple
+   */
+  listAll: protectedProcedure.query(async () => {
+    // Fetch from User table (auth data) and join with Person (relationships)
+    const { db } = await import('@groupi/services');
+    const users = await db.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        displayUsername: true,
+        role: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Get activity counts from Person table
+    const usersWithCounts = await Promise.all(
+      users.map(async user => {
+        const person = await db.person.findUnique({
+          where: { id: user.id },
+          select: {
+            _count: {
+              select: {
+                memberships: true,
+                posts: true,
+                replies: true,
+              },
+            },
+          },
+        });
+        return {
+          ...user,
+          _count: person?._count || { memberships: 0, posts: 0, replies: 0 },
+        };
+      })
+    );
+
+    return [null, usersWithCounts] as const;
+  }),
 
   // ============================================================================
   // COMPONENT-SPECIFIC DATA ENDPOINTS
@@ -128,60 +210,13 @@ export const personRouter = createTRPCRouter({
    * Get my events data (for MyEvents page)
    * Returns: [error, MyEventsData] tuple
    */
-  getMyEventsData: protectedProcedure.query(async ({ ctx }) => {
+  getMyEventsData: protectedProcedure.query(async ({ ctx: _ctx }) => {
     try {
-      console.log('[tRPC] getMyEventsData called with context:', {
-        hasContext: !!ctx,
-        contextKeys: ctx ? Object.keys(ctx) : [],
-      });
+      // tRPC context logged by middleware
 
-      const [error, result] = await fetchUserDashboardData({});
-
-      if (error) {
-        // Enhanced error logging with full error details
-        const errorInfo = {
-          message: error.message,
-          errorType: error._tag || error.constructor.name,
-          stack: error.stack,
-          cause: error.cause,
-          // Try to serialize the full error object
-          fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-          timestamp: new Date().toISOString(),
-        };
-
-        console.error('[tRPC] fetchUserDashboardData failed:', errorInfo);
-
-        // Create a more informative error with the original error as cause
-        const enhancedError = new Error(
-          `Failed to fetch user dashboard data: ${error.message}`
-        );
-        enhancedError.cause = error;
-        (enhancedError as any).originalError = error;
-        (enhancedError as any).errorType = error._tag || error.constructor.name;
-
-        // Return the tuple with error - don't throw
-        return [error, undefined] as const;
-      }
-
-      console.log('[tRPC] getMyEventsData success:', {
-        hasResult: !!result,
-        resultType: typeof result,
-        resultKeys:
-          result && typeof result === 'object' ? Object.keys(result) : [],
-      });
-
-      // Return the tuple with result - this is the safe-wrapper pattern
-      return [null, result] as const;
+      // Services already handle all error logging
+      return await fetchUserDashboardData({});
     } catch (err) {
-      // Catch any unexpected errors and log them with full context
-      console.error('[tRPC] getMyEventsData unexpected error:', {
-        error: err,
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
-        errorType: err instanceof Error ? err.constructor.name : typeof err,
-        timestamp: new Date().toISOString(),
-      });
-
       // Return tuple with error instead of throwing
       const error = err instanceof Error ? err : new Error(String(err));
       return [error, undefined] as const;

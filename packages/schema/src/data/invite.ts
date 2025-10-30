@@ -4,7 +4,7 @@ import {
   InviteSchema,
   EventSchema,
   MembershipSchema,
-  PersonSchema,
+  UserSchema,
 } from '../generated';
 
 // ============================================================================
@@ -30,12 +30,13 @@ export const EventInviteDTO = InviteDTO.extend({
   createdBy: MembershipSchema.pick({
     id: true,
   }).extend({
-    person: PersonSchema.pick({
-      id: true,
-      firstName: true,
-      lastName: true,
-      username: true,
-      imageUrl: true,
+    person: z.object({
+      id: z.string(),
+      user: UserSchema.pick({
+        name: true,
+        email: true,
+        image: true,
+      }),
     }),
   }),
 });

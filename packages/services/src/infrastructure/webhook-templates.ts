@@ -196,19 +196,19 @@ export function extractWebhookVariables(
       case 'DATE_RESET':
         return `A new poll has started for the date of ${event?.title}.`;
       case 'NEW_POST':
-        return `${author?.firstName ?? author?.lastName ?? author?.username} created a new post, ${post?.title}, in ${event?.title}.`;
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} created a new post, ${post?.title}, in ${event?.title}.`;
       case 'NEW_REPLY':
-        return `${author?.firstName ?? author?.lastName ?? author?.username} replied to a post, ${post?.title}, in ${event?.title}.`;
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} replied to a post, ${post?.title}, in ${event?.title}.`;
       case 'USER_JOINED':
-        return `${author?.firstName ?? author?.lastName ?? author?.username} has joined ${event?.title}.`;
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} has joined ${event?.title}.`;
       case 'USER_LEFT':
-        return `${author?.firstName ?? author?.lastName ?? author?.username} has left ${event?.title}.`;
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} has left ${event?.title}.`;
       case 'USER_PROMOTED':
         return `You are now a Moderator of ${event?.title}.`;
       case 'USER_DEMOTED':
         return `You are no longer a Moderator of ${event?.title}.`;
       case 'USER_RSVP':
-        return `${author?.firstName ?? author?.lastName ?? author?.username} has RSVP'd ${rsvp} to ${event?.title}.`;
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} has RSVP'd ${rsvp} to ${event?.title}.`;
       default:
         return 'Notification from Groupi';
     }
@@ -239,9 +239,8 @@ export function extractWebhookVariables(
   };
 
   const authorName =
-    notification.author?.firstName ??
-    notification.author?.lastName ??
-    notification.author?.username ??
+    notification.author?.user.name ??
+    notification.author?.user.email.split('@')[0] ??
     'Unknown User';
 
   return {

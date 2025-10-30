@@ -1,8 +1,8 @@
 import { InviteDetails } from './components/invite-details';
 import { prefetchInvitePageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
-import { HydrationBoundary } from '@tanstack/react-query';
+import { getCurrentUserId } from '@groupi/services';
 import { redirect } from 'next/navigation';
+import { HydrationBoundary } from '@tanstack/react-query';
 import { pageLogger } from '@/lib/logger';
 
 export default async function InvitePage(props: {
@@ -10,23 +10,26 @@ export default async function InvitePage(props: {
 }) {
   const params = await props.params;
   const { inviteId } = params;
-  const { userId }: { userId: string | null } = await auth();
 
-  if (!userId) {
+  // Validate session server-side
+  const [authError, _userId] = await getCurrentUserId();
+
+  if (authError || !_userId) {
     redirect('/sign-in');
   }
 
   try {
     // Prefetch invite page data
-    const dehydratedState = await prefetchInvitePageData(inviteId, userId);
+    // Services will get userId internally via getCurrentUserId()
+    const dehydratedState = await prefetchInvitePageData(inviteId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
-        <InviteDetails inviteId={inviteId} userId={userId} />
+        <InviteDetails inviteId={inviteId} userId={_userId} />
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in invite page', { error });
+    pageLogger.error({ error }, 'Error in invite page');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

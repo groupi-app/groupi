@@ -1,6 +1,5 @@
-import { cn, getFullName } from '@/lib/utils';
-import { MembershipWithAvailabilities } from '@/types';
-import { RoleType } from '@groupi/schema';
+import { cn } from '@/lib/utils';
+import { EventAttendeesPageDTO, RoleType, StatusType } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -14,6 +13,22 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+type AvailabilityWithDateTime = {
+  status: StatusType;
+  membershipId: string;
+  potentialDateTimeId: string;
+  potentialDateTime: {
+    id: string;
+    eventId: string;
+    dateTime: Date;
+  };
+};
+
+type Attendee = EventAttendeesPageDTO['event']['memberships'][0] & {
+  event?: { chosenDateTime: Date | null };
+  availabilities?: AvailabilityWithDateTime[];
+};
+
 export function AttendeeSlate({
   userId,
   userRole,
@@ -22,7 +37,7 @@ export function AttendeeSlate({
 }: {
   userId: string;
   userRole: RoleType;
-  member: MembershipWithAvailabilities;
+  member: Attendee;
   itemKey: string;
 }) {
   const [dialogAction, setDialogAction] = useState<MemberAction>(
@@ -31,7 +46,7 @@ export function AttendeeSlate({
 
   const [availabilitiesOpen, setAvailabilitiesOpen] = useState(false);
 
-  const fullName = getFullName(member.person.firstName, member.person.lastName);
+  const fullName = member.person.user.name || member.person.user.email;
 
   const isMe = userId === member.person.id;
 
@@ -42,7 +57,7 @@ export function AttendeeSlate({
 
   const canPromote = !isMe && userRole === 'ORGANIZER';
 
-  const dateNotSelected = member.event.chosenDateTime === null;
+  const dateNotSelected = member.event?.chosenDateTime === null;
 
   return (
     <Dialog>
@@ -54,12 +69,12 @@ export function AttendeeSlate({
               member={member}
               userId={userId}
               userRole={userRole}
-              eventDateTime={member.event.chosenDateTime}
+              eventDateTime={member.event?.chosenDateTime ?? null}
             />
             <div>
               <div className='text-lg'>{fullName}</div>
               <div className='text-muted-foreground'>
-                {member.person.username}
+                {member.person.user.name || member.person.user.email}
               </div>
             </div>
           </div>
@@ -167,7 +182,7 @@ export function AttendeeSlate({
               transition={{ duration: 0.25 }}
               className='flex flex-col gap-2 overflow-hidden'
             >
-              {member.availabilities.length > 0 ? (
+              {member.availabilities && member.availabilities.length > 0 ? (
                 member.availabilities
                   .sort(
                     (a, b) =>

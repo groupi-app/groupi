@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   EventSchema,
   MembershipSchema,
-  PersonSchema,
+  UserSchema,
   PostSchema,
   ReplySchema,
 } from '../generated';
@@ -23,11 +23,10 @@ export const EventCardDTO = EventSchema.pick({
   updatedAt: true,
 }).extend({
   memberCount: z.number(),
-  owner: PersonSchema.pick({
-    firstName: true,
-    lastName: true,
-    username: true,
-    imageUrl: true,
+  owner: UserSchema.pick({
+    name: true,
+    email: true,
+    image: true,
   }),
 });
 
@@ -56,15 +55,18 @@ export const EventDetailsDTO = EventHeaderDTO.extend({
   memberships: z.array(
     MembershipSchema.pick({
       id: true,
+      personId: true,
+      eventId: true,
       role: true,
       rsvpStatus: true,
     }).extend({
-      person: PersonSchema.pick({
-        id: true,
-        firstName: true,
-        lastName: true,
-        username: true,
-        imageUrl: true,
+      person: z.object({
+        id: z.string(),
+        user: UserSchema.pick({
+          name: true,
+          email: true,
+          image: true,
+        }),
       }),
     })
   ),
@@ -83,12 +85,13 @@ export const EventPageDTO = EventDetailsDTO.extend({
       eventId: true,
     })
       .extend({
-        author: PersonSchema.pick({
-          id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
+        author: z.object({
+          id: z.string(),
+          user: UserSchema.pick({
+            name: true,
+            email: true,
+            image: true,
+          }),
         }),
       })
       .extend({
@@ -97,12 +100,13 @@ export const EventPageDTO = EventDetailsDTO.extend({
             id: true,
             text: true,
           }).extend({
-            author: PersonSchema.pick({
-              id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              imageUrl: true,
+            author: z.object({
+              id: z.string(),
+              user: UserSchema.pick({
+                name: true,
+                email: true,
+                image: true,
+              }),
             }),
           })
         ),
@@ -142,12 +146,13 @@ export const EventAttendeesPageDTO = z.object({
         personId: true,
         eventId: true,
       }).extend({
-        person: PersonSchema.pick({
-          id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
+        person: z.object({
+          id: z.string(),
+          user: UserSchema.pick({
+            name: true,
+            email: true,
+            image: true,
+          }),
         }),
       })
     ),
@@ -155,3 +160,30 @@ export const EventAttendeesPageDTO = z.object({
 });
 
 export type EventAttendeesPageDTO = z.infer<typeof EventAttendeesPageDTO>;
+
+// ============================================================================
+// ADMIN-SPECIFIC DTOS
+// ============================================================================
+
+// Event admin list item DTO - for admin dashboard
+export const EventAdminListItemDTO = EventSchema.pick({
+  id: true,
+  title: true,
+  description: true,
+  location: true,
+  chosenDateTime: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  organizer: UserSchema.pick({
+    id: true,
+    name: true,
+    email: true,
+  }).nullable(),
+  _count: z.object({
+    memberships: z.number(),
+    posts: z.number(),
+  }),
+});
+
+export type EventAdminListItemDTO = z.infer<typeof EventAdminListItemDTO>;

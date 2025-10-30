@@ -1,27 +1,26 @@
 import { AvailabilityContent } from './components/availability-content';
+import { getCurrentUserId } from '@groupi/services';
+import { redirect } from 'next/navigation';
 import { pageLogger } from '@/lib/logger';
 import { prefetchEventAvailabilityPageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 
 export default async function EventAvailabilityPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
 
-  if (!userId) {
+  // Validate session server-side
+  const [authError, userId] = await getCurrentUserId();
+
+  if (authError || !userId) {
     redirect('/sign-in');
   }
 
   try {
     // Prefetch event availability page data
-    const dehydratedState = await prefetchEventAvailabilityPageData(
-      eventId,
-      userId
-    );
+    const dehydratedState = await prefetchEventAvailabilityPageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -29,7 +28,7 @@ export default async function EventAvailabilityPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event availability page:', { error });
+    pageLogger.error({ error }, 'Error in event availability page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

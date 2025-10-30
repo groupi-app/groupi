@@ -1,8 +1,8 @@
 import { PostEditWrapper } from '../components/post-edit-wrapper';
-import { prefetchPostDetailPageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
-import { HydrationBoundary } from '@tanstack/react-query';
+import { getCurrentUserId } from '@groupi/services';
 import { redirect } from 'next/navigation';
+import { prefetchPostDetailPageData } from '@groupi/hooks/server';
+import { HydrationBoundary } from '@tanstack/react-query';
 import { pageLogger } from '@/lib/logger';
 
 export default async function PostEditPage(props: {
@@ -10,15 +10,17 @@ export default async function PostEditPage(props: {
 }) {
   const params = await props.params;
   const { postId } = params;
-  const { userId }: { userId: string | null } = await auth();
 
-  if (!userId) {
+  // Validate session server-side
+  const [authError, userId] = await getCurrentUserId();
+
+  if (authError || !userId) {
     redirect('/sign-in');
   }
 
   try {
     // Prefetch post detail data
-    const dehydratedState = await prefetchPostDetailPageData(postId, userId);
+    const dehydratedState = await prefetchPostDetailPageData(postId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -26,7 +28,7 @@ export default async function PostEditPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in post edit page', { error });
+    pageLogger.error({ error }, 'Error in post edit page');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

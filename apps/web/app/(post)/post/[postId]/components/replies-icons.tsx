@@ -1,9 +1,10 @@
 type MinimalAuthor = {
   id: string;
-  firstName: string | null;
-  lastName: string | null;
-  username: string;
-  imageUrl: string;
+  user: {
+    name: string | null;
+    email: string;
+    image: string | null;
+  } | null;
 };
 
 type MinimalReply = {
@@ -30,11 +31,14 @@ export default function RepliesIcons({ replies }: { replies: MinimalReply[] }) {
     <div className='flex items-center'>
       {authors.map((author, i) => (
         <Avatar className='size-6' key={i}>
-          <AvatarImage src={author.imageUrl} alt={author.username} />
+          <AvatarImage
+            src={author.user?.image || ''}
+            alt={author.user?.name || author.user?.email || 'User'}
+          />
           <AvatarFallback>
-            {author.firstName?.toString()[0] +
-              '' +
-              author.lastName?.toString()[0]}
+            {author.user?.name?.slice(0, 2).toUpperCase() ||
+              author.user?.email.slice(0, 2).toUpperCase() ||
+              '??'}
           </AvatarFallback>
         </Avatar>
       ))}

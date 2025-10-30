@@ -1,6 +1,7 @@
+'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getFullName, getInitials } from '@/lib/utils';
-import { UserInfo } from '@/types';
+import { getInitialsFromName } from '@/lib/utils';
+import { PersonBasicDTO } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -9,27 +10,28 @@ import { NotificationWidget } from './notification-widget';
 import { Button } from '@/components/ui/button';
 
 interface ProfileSlateProps {
-  userInfo: UserInfo;
+  userInfo: PersonBasicDTO;
 }
 
 export function ProfileSlate({ userInfo }: ProfileSlateProps) {
   const [open, setOpen] = useState(false);
 
-  const initials = getInitials(userInfo.firstName, userInfo.lastName);
-  const fullName = getFullName(userInfo.firstName, userInfo.lastName);
+  const initials = getInitialsFromName(userInfo.name, userInfo.email);
 
   return (
     <div>
       <div className='flex items-center gap-3'>
         <Avatar>
-          <AvatarImage src={userInfo.imageUrl} />
+          <AvatarImage src={userInfo.image || ''} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col items-start'>
-          {fullName != '' && (
-            <span className='text-base text-card-foreground'>{fullName}</span>
+          {userInfo.name && (
+            <span className='text-base text-card-foreground'>
+              {userInfo.name}
+            </span>
           )}
-          <span className='text-muted-foreground'>{userInfo.username}</span>
+          <span className='text-muted-foreground'>{userInfo.email}</span>
         </div>
         <div>
           <Button

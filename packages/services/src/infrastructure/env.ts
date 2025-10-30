@@ -19,11 +19,6 @@ export const requireEnvVar = (key: string): string => {
 export const getDATABASE_URL = () => requireEnvVar('DATABASE_URL');
 export const getDIRECT_URL = () => requireEnvVar('DIRECT_URL');
 
-// Clerk - lazy access
-export const getCLERK_SECRET_KEY = () => requireEnvVar('CLERK_SECRET_KEY');
-export const getCLERK_WEBHOOK_SIGNING_SECRET = () =>
-  requireEnvVar('CLERK_WEBHOOK_SIGNING_SECRET');
-
 // Pusher - lazy access
 export const getPUSHER_APP_ID = () => requireEnvVar('PUSHER_APP_ID');
 export const getPUSHER_APP_SECRET = () => requireEnvVar('PUSHER_APP_SECRET');
@@ -41,14 +36,6 @@ export const getRESEND_FROM_EMAIL = () =>
 // Public variables (for client-side use) - lazy access
 export const getNEXT_PUBLIC_BASE_URL = () =>
   getEnvVar('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000';
-export const getNEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = () =>
-  requireEnvVar('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
-export const getNEXT_PUBLIC_CLERK_SIGN_IN_URL = () =>
-  requireEnvVar('NEXT_PUBLIC_CLERK_SIGN_IN_URL');
-export const getNEXT_PUBLIC_CLERK_SIGN_UP_URL = () =>
-  requireEnvVar('NEXT_PUBLIC_CLERK_SIGN_UP_URL');
-export const getNEXT_PUBLIC_CLERK_SIGN_X_FORCE_REDIRECT_URL = () =>
-  requireEnvVar('NEXT_PUBLIC_CLERK_SIGN_X_FORCE_REDIRECT_URL');
 export const getNEXT_PUBLIC_PUSHER_APP_KEY = () =>
   requireEnvVar('NEXT_PUBLIC_PUSHER_APP_KEY');
 export const getNEXT_PUBLIC_PUSHER_APP_CLUSTER = () =>

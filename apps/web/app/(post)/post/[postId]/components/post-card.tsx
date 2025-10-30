@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate, getFullName } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { Member } from '@/types';
 import Link from 'next/link';
 import { DeletePostDialog } from './deletePostDialog';
@@ -17,10 +17,11 @@ import RepliesIcons from './replies-icons';
 
 type MinimalAuthor = {
   id: string;
-  firstName: string | null;
-  lastName: string | null;
-  username: string;
-  imageUrl: string;
+  user: {
+    name: string | null;
+    email: string;
+    image: string | null;
+  };
 };
 
 type MinimalReply = {
@@ -60,7 +61,6 @@ export function PostCard({ postData, eventDateTime }: PostCardProps) {
     event,
   } = postData;
   if (!author) return null;
-  const fullName = getFullName(author.firstName, author.lastName);
 
   // TODO: Get userId and userRole from auth
   const userId = 'temp-user-id';
@@ -103,15 +103,9 @@ export function PostCard({ postData, eventDateTime }: PostCardProps) {
                   <span className='sm:text-xl font-heading text-card-foreground truncate overflow-hidden w-full'>
                     {title}
                   </span>
-                  {fullName != '' ? (
-                    <span className='text-sm text-muted-foreground'>
-                      {fullName}
-                    </span>
-                  ) : (
-                    <span className='text-sm text-muted-foreground'>
-                      {author.username}
-                    </span>
-                  )}
+                  <span className='text-sm text-muted-foreground'>
+                    {author.user.name || author.user.email}
+                  </span>
                 </div>
                 <PostCardContent content={content} />
                 <div className='flex items-center justify-between mt-2'>

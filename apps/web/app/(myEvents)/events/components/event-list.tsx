@@ -49,7 +49,8 @@ export function EventList() {
   const [error, myEventsData] = data;
 
   if (error) {
-    switch (error._tag) {
+    const errorTag = '_tag' in error ? error._tag : null;
+    switch (errorTag) {
       case 'NotFoundError':
         return (
           <div className='flex items-center justify-center py-8'>

@@ -1,3 +1,5 @@
+'use client';
+
 import { Icons } from '@/components/icons';
 import { NotificationCount } from './notification-count';
 import { NotificationWidget } from './notification-widget';

@@ -11,12 +11,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePostDetail } from '@groupi/hooks';
-import { getFullName } from '@/lib/utils';
-import { useAuth } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth-client';
 import Link from 'next/link';
 
 export function FullPost({ postId }: { postId: string }) {
-  const { userId } = useAuth();
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const { data, isLoading } = usePostDetail(postId);
 
   if (isLoading || !data) {
@@ -106,12 +106,13 @@ export function FullPost({ postId }: { postId: string }) {
         <div className=''>
           <div className='flex items-center gap-3 mb-4 pb-2 border-b'>
             <div className='h-10 w-10 rounded-full bg-secondary flex items-center justify-center'>
-              <span className='text-sm font-medium'>{author.username[0]}</span>
+              <span className='text-sm font-medium'>
+                {author.user?.name?.[0] || author.user?.email[0]}
+              </span>
             </div>
             <div className='flex-1'>
               <p className='text-sm font-medium'>
-                {getFullName(author.firstName, author.lastName) ||
-                  author.username}
+                {author.user?.name || author.user?.email}
               </p>
               <p className='text-xs text-muted-foreground'>
                 {new Date(post.createdAt).toLocaleString()}

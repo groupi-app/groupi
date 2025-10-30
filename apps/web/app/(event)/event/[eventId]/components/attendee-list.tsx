@@ -1,43 +1,5 @@
 'use client';
 import { useEventAttendees } from '@groupi/hooks';
-import { getFullName } from '@/lib/utils';
-import { MembershipWithAvailabilities } from '@/types';
-import type { EventAttendeesPageDTO } from '@groupi/schema';
-
-// Adapter function to convert new data structure to old interface for compatibility
-function adaptMembershipToAttendeeSlate(
-  membership: EventAttendeesPageDTO['event']['memberships'][0],
-  eventId: string,
-  eventTitle: string
-): MembershipWithAvailabilities {
-  return {
-    id: membership.id,
-    role: membership.role,
-    rsvpStatus: membership.rsvpStatus,
-    personId: membership.person.id,
-    eventId: eventId,
-    person: {
-      id: membership.person.id,
-      createdAt: new Date(), // Placeholder
-      updatedAt: new Date(), // Placeholder
-      firstName: membership.person.firstName,
-      lastName: membership.person.lastName,
-      username: membership.person.username,
-      imageUrl: membership.person.imageUrl,
-    },
-    event: {
-      id: eventId,
-      createdAt: new Date(), // Placeholder
-      updatedAt: new Date(), // Placeholder
-      title: eventTitle,
-      description: '', // Placeholder
-      location: '', // Placeholder
-      chosenDateTime: null, // Placeholder
-    },
-    availabilities: [], // Placeholder - component doesn't use this for display
-  };
-}
-
 import { LayoutGroup, motion } from 'framer-motion';
 import { useState } from 'react';
 import { AttendeeSlate } from './attendee-slate';
@@ -95,16 +57,12 @@ export function AttendeeList({ eventId }: { eventId: string }) {
   }
 
   const { event } = attendeesData;
-  const { memberships, title } = event;
+  const { memberships } = event;
 
-  const attendees = memberships.map(membership =>
-    adaptMembershipToAttendeeSlate(membership, eventId, title)
-  );
-
-  const sortedAttendees = [...attendees].sort((a, b) => {
+  const sortedAttendees = [...memberships].sort((a, b) => {
     if (sortBy === 'name') {
-      return getFullName(a.person.firstName, a.person.lastName).localeCompare(
-        getFullName(b.person.firstName, b.person.lastName)
+      return (a.person.user.name || a.person.user.email).localeCompare(
+        b.person.user.name || b.person.user.email
       );
     } else {
       return a.role.localeCompare(b.role);
@@ -174,7 +132,10 @@ export function AttendeeList({ eventId }: { eventId: string }) {
                 key={attendee.id}
                 userId={attendee.person.id}
                 userRole={attendee.role}
-                member={attendee}
+                member={{
+                  ...attendee,
+                  event: { chosenDateTime: event.chosenDateTime },
+                }}
                 itemKey={attendee.id}
               />
             </motion.div>

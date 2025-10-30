@@ -15,7 +15,7 @@ export function SettingsForm({ children }: { children: React.ReactNode }) {
 
   // Submit handler: use tRPC mutation instead of server action
   const onSubmit = async (data: SettingsFormType) => {
-    componentLogger.info('Updating user settings', { data });
+    componentLogger.info({ data }, 'Updating user settings');
 
     updateSettings.updateSettings(data, {
       onSuccess: () => toast.success('Settings updated'),

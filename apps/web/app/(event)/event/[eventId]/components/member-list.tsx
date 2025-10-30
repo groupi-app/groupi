@@ -1,9 +1,8 @@
 'use client';
 import MemberIcon from './member-icon';
 import { useMemberList } from '@groupi/hooks';
-import { getFullName } from '@/lib/utils';
 import { EventPageDTO } from '@groupi/schema';
-import { Member } from '@/types';
+
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -11,28 +10,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
-// Adapter function to convert DTO structure to old Member interface
-function adaptMembershipToMember(
-  membership: EventPageDTO['memberships'][number],
-  eventId: string
-): Member {
-  return {
-    id: membership.id,
-    role: membership.role,
-    rsvpStatus: membership.rsvpStatus,
-    personId: membership.person.id,
-    eventId: eventId,
-    person: {
-      id: membership.person.id,
-      createdAt: new Date(), // Placeholder - component doesn't actually use this
-      updatedAt: new Date(), // Placeholder - component doesn't actually use this
-      firstName: membership.person.firstName,
-      lastName: membership.person.lastName,
-      username: membership.person.username,
-      imageUrl: membership.person.imageUrl,
-    },
-  };
-}
+// Adapter function removed - Member type now matches EventPageDTO structure directly
 
 export function MemberList({ eventId }: { eventId: string }) {
   const { data, isLoading } = useMemberList(eventId);
@@ -111,8 +89,8 @@ export function MemberList({ eventId }: { eventId: string }) {
     return (
       (b.role === 'ORGANIZER' ? 3 : b.role === 'MODERATOR' ? 2 : 1) -
         (a.role === 'ORGANIZER' ? 3 : a.role === 'MODERATOR' ? 2 : 1) ||
-      getFullName(a.person.firstName, a.person.lastName).localeCompare(
-        getFullName(b.person.firstName, b.person.lastName)
+      (a.person.user.name || a.person.user.email).localeCompare(
+        b.person.user.name || b.person.user.email
       )
     );
   };
@@ -149,15 +127,11 @@ export function MemberList({ eventId }: { eventId: string }) {
                   membership: EventPageDTO['memberships'][number],
                   i: number
                 ) => {
-                  const adaptedMember = adaptMembershipToMember(
-                    membership,
-                    eventId
-                  );
                   return i < visibleIcons - 1 ? (
                     <MemberIcon
                       userId={userId}
                       userRole={userRole}
-                      member={adaptedMember}
+                      member={membership}
                       key={membership.id}
                       itemKey={membership.id}
                       align={i === 0 ? 'start' : 'center'}

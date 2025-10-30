@@ -1,8 +1,5 @@
 import { Icons } from '@/components/icons';
-import {
-  PotentialDateTimeWithAvailabilities,
-  NotificationWithPersonEventPost,
-} from '@/types';
+import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { $Enums } from '@prisma/client';
 import React from 'react';
 
@@ -78,25 +75,19 @@ export function timeUntil(date: Date) {
   return Math.floor(seconds) + 's';
 }
 
-export function getFullName(
-  firstName: string | null | undefined,
-  lastName: string | null | undefined
+// Helper for extracting initials from User.name field
+export function getInitialsFromName(
+  name: string | null | undefined,
+  fallback?: string | undefined
 ): string {
-  if (firstName && lastName) {
-    return firstName + ' ' + lastName;
-  } else if (firstName && !lastName) {
-    return firstName;
-  } else if (!firstName && lastName) {
-    return lastName;
+  if (!name) {
+    return fallback?.slice(0, 2).toUpperCase() || '??';
   }
-  return '';
-}
-
-export function getInitials(
-  firstName: string | null | undefined,
-  lastName: string | null | undefined
-): string {
-  return firstName?.toString()[0] + '' + lastName?.toString()[0];
+  const parts = name.split(' ').filter(p => p);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 export function formatRoleName(role: $Enums.Role | undefined) {
@@ -178,15 +169,23 @@ export function getRanks(pdts: PotentialDateTimeWithAvailabilities[]) {
   });
 }
 
+type NotificationForSubject = {
+  type: string;
+  event?: { title?: string } | null;
+  post?: { title?: string } | null;
+  author?: { user: { name?: string | null; email?: string } } | null;
+  rsvp?: string | null;
+};
+
 export function getNotificationSubject(
-  notification: NotificationWithPersonEventPost
+  notification: NotificationForSubject
 ): string {
   const { type, event, post, author, rsvp } = notification;
 
   // Helper to get author name
   const getAuthorName = () => {
-    if (!author) return 'Someone';
-    return author.firstName || author.lastName || author.username || 'Someone';
+    if (!author?.user) return 'Someone';
+    return author.user.name || author.user.email?.split('@')[0] || 'Someone';
   };
 
   switch (type) {

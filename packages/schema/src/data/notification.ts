@@ -4,7 +4,7 @@ import {
   NotificationSchema,
   EventSchema,
   PostSchema,
-  PersonSchema,
+  UserSchema,
 } from '../generated';
 
 // ============================================================================
@@ -33,13 +33,16 @@ export const NotificationFeedDTO = NotificationDTO.extend({
     id: true,
     title: true,
   }).nullable(),
-  author: PersonSchema.pick({
-    id: true,
-    firstName: true,
-    lastName: true,
-    username: true,
-    imageUrl: true,
-  }).nullable(),
+  author: z
+    .object({
+      id: z.string(),
+      user: UserSchema.pick({
+        name: true,
+        email: true,
+        image: true,
+      }),
+    })
+    .nullable(),
 });
 
 export type NotificationFeedDTO = z.infer<typeof NotificationFeedDTO>;
@@ -54,13 +57,16 @@ export const WebhookNotificationDTO = NotificationDTO.extend({
     id: true,
     title: true,
   }).nullable(),
-  author: PersonSchema.pick({
-    id: true,
-    firstName: true,
-    lastName: true,
-    username: true,
-    imageUrl: true,
-  }).nullable(),
+  author: z
+    .object({
+      id: z.string(),
+      user: UserSchema.pick({
+        name: true,
+        email: true,
+        image: true,
+      }),
+    })
+    .nullable(),
 });
 
 export type WebhookNotificationDTO = z.infer<typeof WebhookNotificationDTO>;

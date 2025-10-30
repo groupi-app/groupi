@@ -4,11 +4,11 @@ import {
   cn,
   formatRoleBadge,
   formatRoleName,
-  getFullName,
-  getInitials,
+  getInitialsFromName,
 } from '@/lib/utils';
-import { Member } from '@/types';
-import { RoleType } from '@groupi/schema';
+import { EventPageDTO, RoleType } from '@groupi/schema';
+
+type Member = EventPageDTO['memberships'][0];
 import { componentLogger } from '@/lib/logger';
 import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
 import { motion } from 'framer-motion';
@@ -53,17 +53,19 @@ export default function MemberIcon({
   align?: 'start' | 'center' | 'end';
   eventDateTime: Date | null;
 }) {
-  const { firstName, lastName, username, imageUrl } = member.person;
+  const user = member.person.user;
   const role = member.role;
 
-  const initials = getInitials(firstName, lastName);
+  const fullName = user?.name || user?.email || '';
+  const initials = getInitialsFromName(user?.name, user?.email);
 
-  const fullName = getFullName(firstName, lastName);
-
-  componentLogger.debug('Rendering member icon', {
-    fullName,
-    memberId: member.id,
-  });
+  componentLogger.debug(
+    {
+      fullName,
+      memberId: member.id,
+    },
+    'Rendering member icon'
+  );
 
   const isMe = userId === member.person.id;
 
@@ -94,7 +96,7 @@ export default function MemberIcon({
             <TooltipTrigger asChild>
               <DropdownMenuTrigger className='rounded-full'>
                 <Avatar>
-                  <AvatarImage src={imageUrl} />
+                  <AvatarImage src={user?.image || undefined} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
@@ -105,7 +107,7 @@ export default function MemberIcon({
                   <span className='text-base text-card-foreground'>
                     {fullName}
                   </span>
-                  <span className='text-muted-foreground'>{username}</span>
+                  <span className='text-muted-foreground'>{user?.email}</span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -197,7 +199,7 @@ export default function MemberIcon({
             </DropdownMenuContent>
             <MemberActionDialog action={dialogAction} member={member} />
             <TooltipContent>
-              <span>{fullName != '' ? fullName : username}</span>
+              <span>{fullName}</span>
             </TooltipContent>
           </DropdownMenu>
         </Tooltip>

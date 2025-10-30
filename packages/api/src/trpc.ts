@@ -75,20 +75,26 @@ export const loggingMiddleware = t.middleware(async ({ path, type, next }) => {
 
   // Log tRPC procedure calls with structured logging
   if (result.ok) {
-    apiLogger.info(`[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`, {
-      type,
-      path,
-      success: true,
-      durationMs,
-    });
+    apiLogger.info(
+      {
+        type,
+        path,
+        success: true,
+        durationMs,
+      },
+      `[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`
+    );
   } else {
-    apiLogger.warn(`[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`, {
-      type,
-      path,
-      success: false,
-      durationMs,
-      error: result.error?.message,
-    });
+    apiLogger.warn(
+      {
+        type,
+        path,
+        success: false,
+        durationMs,
+        error: result.error?.message,
+      },
+      `[tRPC] ${type.toUpperCase()} ${path} - ${durationMs}ms`
+    );
   }
 
   return result;

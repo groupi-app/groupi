@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
 import { api } from '@groupi/hooks';
 import { createTRPCClient, createQueryClient } from '@groupi/hooks';
 
@@ -11,24 +10,13 @@ interface TRPCProviderProps {
 }
 
 export function TRPCProvider({ children }: TRPCProviderProps) {
-  const { getToken } = useAuth();
-
   const [queryClient] = useState(() => createQueryClient());
 
   const [trpcClient] = useState(() =>
     createTRPCClient({
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/trpc`,
-      headers: async () => {
-        try {
-          const token = await getToken();
-          return { authorization: token ? `Bearer ${token}` : '' } as Record<
-            string,
-            string
-          >;
-        } catch (_error) {
-          return {} as Record<string, string>;
-        }
-      },
+      // Better Auth cookies are automatically sent with requests
+      // No need for custom headers - auth is handled via cookies
     })
   );
 

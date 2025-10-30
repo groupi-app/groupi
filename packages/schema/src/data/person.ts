@@ -1,40 +1,40 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { PersonSchema, MembershipSchema, EventSchema } from '../generated';
+import { UserSchema, MembershipSchema, EventSchema } from '../generated';
 
 // ============================================================================
 // PERSON DOMAIN DATA DTOS
 // ============================================================================
 
-// Basic person DTO - the foundation for all person-related DTOs
-export const PersonBasicDTO = PersonSchema.pick({
+// Basic person DTO - uses User table for auth data
+export const PersonBasicDTO = UserSchema.pick({
   id: true,
-  firstName: true,
-  lastName: true,
-  username: true,
-  imageUrl: true,
+  name: true,
+  email: true,
+  image: true,
 });
 
 export type PersonBasicDTO = z.infer<typeof PersonBasicDTO>;
 
 // Author DTO - for displaying post/reply authors
-export const AuthorDTO = PersonSchema.pick({
+export const AuthorDTO = UserSchema.pick({
   id: true,
-  firstName: true,
-  lastName: true,
-  username: true,
-  imageUrl: true,
+  name: true,
+  email: true,
+  image: true,
 });
 
 export type AuthorDTO = z.infer<typeof AuthorDTO>;
 
 // User dashboard DTO - for main user profile/dashboard
-export const UserDashboardDTO = PersonSchema.pick({
+export const UserDashboardDTO = UserSchema.pick({
   id: true,
-  firstName: true,
-  lastName: true,
-  username: true,
-  imageUrl: true,
+  name: true,
+  email: true,
+  image: true,
+  imageKey: true,
+  pronouns: true,
+  bio: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
@@ -60,13 +60,36 @@ export const UserDashboardDTO = PersonSchema.pick({
 export type UserDashboardDTO = z.infer<typeof UserDashboardDTO>;
 
 // User profile DTO - for profile pages
-export const UserProfileDTO = PersonSchema.pick({
+export const UserProfileDTO = UserSchema.pick({
   id: true,
-  firstName: true,
-  lastName: true,
-  username: true,
-  imageUrl: true,
+  name: true,
+  email: true,
+  image: true,
   createdAt: true,
 });
 
 export type UserProfileDTO = z.infer<typeof UserProfileDTO>;
+
+// ============================================================================
+// ADMIN-SPECIFIC DTOS
+// ============================================================================
+
+// User admin list item DTO - for admin dashboard
+export const UserAdminListItemDTO = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string(),
+  username: z.string().nullable(),
+  displayUsername: z.string().nullable(),
+  role: z.string().nullable(),
+  image: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  _count: z.object({
+    memberships: z.number(),
+    posts: z.number(),
+    replies: z.number(),
+  }),
+});
+
+export type UserAdminListItemDTO = z.infer<typeof UserAdminListItemDTO>;

@@ -12,6 +12,8 @@ generator zod {
   createOptionalDefaultValuesTypes = true
   addIncludeTypes                  = true
   addSelectTypes                   = true
+  prismaClientPath                 = "@prisma/client"
+  useTypeAssertions                = false
 }
 
 datasource db {
@@ -20,20 +22,90 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// Better Auth User model - authentication data
+model User {
+  id              String   @id @default(cuid())
+  name            String?
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  image           String?
+  imageKey        String? // UploadThing file key for deletion
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  // Username plugin fields
+  username        String?  @unique
+  displayUsername String?
+  // Admin plugin role field (comma-separated roles: "admin", "user", etc.)
+  role            String?  @default("user")
+  // Profile fields
+  pronouns        String?
+  bio             String?
+
+  // Better Auth relations
+  sessions Session[]
+  accounts Account[]
+
+  // Person relation for app data
+  person Person?
+}
+
+// Person model - only app-specific data (auth data lives in User table)
 model Person {
   id                    String          @id
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+  user                  User            @relation(fields: [id], references: [id], onDelete: Cascade)
   memberships           Membership[]
   posts                 Post[]
   replies               Reply[]
-  firstName             String?
-  lastName              String?
-  username              String          @unique
-  imageUrl              String
   notifications         Notification[]  @relation("PersonNotifications")
   authoredNotifications Notification[]  @relation("AuthorNotifications")
   settings              PersonSettings?
+}
+
+// Better Auth Session model
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Better Auth Account model (for OAuth providers)
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+// Better Auth Verification model
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
 }
 
 // New model to hold all user settings

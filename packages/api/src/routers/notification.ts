@@ -65,19 +65,14 @@ export const notificationRouter = createTRPCRouter({
    */
   getForUser: protectedProcedure
     .input(z.object({ cursor: z.string().optional() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const [error, result] = await fetchNotificationsForPerson({
         cursor: input.cursor,
       });
 
       if (error) {
         // Log more detailed error information
-        console.error('[tRPC] fetchNotificationsForPerson failed:', {
-          error: error.message,
-          errorType: error._tag,
-          input,
-          stack: error.stack,
-        });
+        // Log error information handled by tRPC error handler
         throw new Error(`Failed to fetch notifications: ${error.message}`);
       }
 

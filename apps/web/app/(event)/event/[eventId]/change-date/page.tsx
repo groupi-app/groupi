@@ -1,27 +1,17 @@
 import { ChangeDateContent } from './components/change-date-content';
 import { pageLogger } from '@/lib/logger';
 import { prefetchEventChangeDatePageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 
 export default async function EventChangeDatePage(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event change date page data
-    const dehydratedState = await prefetchEventChangeDatePageData(
-      eventId,
-      userId
-    );
+    const dehydratedState = await prefetchEventChangeDatePageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -29,7 +19,7 @@ export default async function EventChangeDatePage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event change date page:', { error });
+    pageLogger.error({ error }, 'Error in event change date page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

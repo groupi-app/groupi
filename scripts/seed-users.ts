@@ -4,7 +4,10 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 import { seedUsers as users } from '../data/seed-users';
 import { db } from '../packages/services/src/infrastructure/db';
-import { createClerkClient } from '@clerk/backend';
+import {
+  createUserAdmin,
+  deleteUserAdmin,
+} from '../packages/services/src/domains/auth';
 import pino from 'pino';
 
 // Load environment variables from the root .env.local first, then web app
@@ -21,33 +24,49 @@ const logger = pino({
   },
 });
 
+// Set defaults for Better Auth if not present (seed script doesn't need real auth)
+if (!process.env.BETTER_AUTH_URL) {
+  process.env.BETTER_AUTH_URL = 'http://localhost:3000';
+  logger.debug('Set default BETTER_AUTH_URL for seed script');
+}
+if (!process.env.BETTER_AUTH_SECRET) {
+  process.env.BETTER_AUTH_SECRET = 'seed-script-secret';
+  logger.debug('Set default BETTER_AUTH_SECRET for seed script');
+}
+if (!process.env.DISCORD_CLIENT_ID) {
+  process.env.DISCORD_CLIENT_ID = 'seed-script-discord-id';
+}
+if (!process.env.DISCORD_CLIENT_SECRET) {
+  process.env.DISCORD_CLIENT_SECRET = 'seed-script-discord-secret';
+}
+if (!process.env.GOOGLE_CLIENT_ID) {
+  process.env.GOOGLE_CLIENT_ID = 'seed-script-google-id';
+}
+if (!process.env.GOOGLE_CLIENT_SECRET) {
+  process.env.GOOGLE_CLIENT_SECRET = 'seed-script-google-secret';
+}
+
 export default async function seedUsers() {
   try {
-    const clerkClient = createClerkClient({
-      // Use createClerkClient
-      secretKey: process.env.CLERK_SECRET_KEY,
+    logger.info('Starting user seeding process with Better Auth...');
+
+    // Get existing users from database
+    const existingUsers = await db.user.findMany({
+      select: { id: true, email: true },
     });
-
-    logger.info('Starting user seeding process...');
-
-    // Get existing users
-    const { data: existingUsers } = await clerkClient.users.getUserList();
     logger.info(`Found ${existingUsers.length} existing users to clean up`);
 
     // Delete existing users if they exist
     const deletionPromises = existingUsers.map(async user => {
       try {
-        await clerkClient.users.deleteUser(user.id);
-        logger.debug(`Deleted user: ${user.id}`);
-      } catch (error: any) {
-        if (
-          error?.errors?.[0]?.code === 'resource_not_found' ||
-          error?.status === 404
-        ) {
-          logger.debug(`User ${user.id} already deleted`);
-        } else {
+        const [error] = await deleteUserAdmin({ userId: user.id });
+        if (error) {
           logger.error(`Failed to delete user ${user.id}:`, error);
+        } else {
+          logger.debug(`Deleted user: ${user.email} (${user.id})`);
         }
+      } catch (error: any) {
+        logger.error(`Failed to delete user ${user.id}:`, error);
         // Continue even if deletion fails
       }
     });
@@ -56,181 +75,122 @@ export default async function seedUsers() {
     await Promise.allSettled(deletionPromises);
     logger.info('User cleanup completed');
 
-    // Clear database in proper order (due to foreign key constraints)
+    // Clear remaining database records in proper order (due to foreign key constraints)
     try {
       await db.notification.deleteMany();
+      await db.reply.deleteMany();
+      await db.post.deleteMany();
+      await db.invite.deleteMany();
+      await db.availability.deleteMany();
+      await db.potentialDateTime.deleteMany();
       await db.membership.deleteMany();
+      await db.event.deleteMany();
       await db.personSettings.deleteMany();
       await db.person.deleteMany();
+      await db.verification.deleteMany();
+      await db.session.deleteMany();
+      await db.account.deleteMany();
+      await db.user.deleteMany();
       logger.info('Database tables cleared successfully');
     } catch (dbError) {
       logger.error('Error clearing database:', dbError);
       throw dbError;
     }
 
-    // Wait a bit to ensure Clerk has processed the deletions
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait a bit to ensure database has processed the deletions
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const people: any[] = [];
+    const createdUsers: Array<{ id: string; email: string }> = [];
     logger.info(`Creating ${users.length} new users...`);
 
     for (const [index, user] of users.entries()) {
       try {
-        // Add a small delay between user creations to avoid rate limiting
+        // Add a small delay between user creations
         if (index > 0) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        const userObj = await clerkClient.users.createUser({
-          firstName: user.firstName,
-          lastName: user.lastName,
+        logger.debug(
+          `Creating user: ${user.name} (@${user.username}) - ${user.email}${
+            user.role === 'admin' ? ' [ADMIN]' : ''
+          }`
+        );
+
+        // Use Better Auth admin API to create user
+        const [error, result] = await createUserAdmin({
+          name: user.name,
+          email: user.email,
           username: user.username,
-          emailAddress: [user.email],
+          role: user.role || 'user',
+          image: undefined, // No default image
         });
 
-        logger.debug(`Created Clerk user: ${userObj.username} (${userObj.id})`);
+        if (error) {
+          logger.error(`Failed to create user ${user.email}:`, error);
+          throw error;
+        }
 
-        const firstName = userObj.firstName || '';
-        const lastName = userObj.lastName || '';
-        const username = userObj.username || '';
-
-        try {
-          const person = await db.person.create({
-            data: {
-              id: userObj.id,
-              firstName,
-              lastName,
-              username,
-              imageUrl: userObj.imageUrl || '',
-              settings: {
-                create: {}, // This creates a PersonSettings record
-              },
-            },
-            include: {
-              settings: true, // Include settings in the response
-            },
-          });
-
+        if (result) {
           logger.debug(
-            `Created database person: ${person.username} with settings: ${person.settings?.id}`
+            `Created user and person: ${user.name} (${result.id}) - ${user.email}`
           );
-          people.push(person);
-        } catch (dbError: any) {
-          logger.error(
-            `Failed to create database person for ${username}:`,
-            dbError
-          );
-          // Try to clean up the Clerk user if database creation failed
+
+          // Create PersonSettings for the new user
           try {
-            await clerkClient.users.deleteUser(userObj.id);
-            logger.debug(
-              `Cleaned up Clerk user ${userObj.id} after database failure`
-            );
-          } catch (cleanupError) {
+            await db.personSettings.create({
+              data: {
+                personId: result.id,
+              },
+            });
+            logger.debug(`Created settings for user: ${user.name}`);
+          } catch (settingsError) {
             logger.warn(
-              `Failed to clean up Clerk user ${userObj.id}:`,
-              cleanupError
+              `Failed to create settings for ${user.name}:`,
+              settingsError
             );
+            // Non-fatal, continue
           }
-          throw dbError;
+
+          createdUsers.push({ id: result.id, email: user.email });
         }
       } catch (error: any) {
+        // Check if user already exists
         if (
-          error?.errors?.[0]?.code === 'form_identifier_exists' ||
-          error?.status === 422
+          error?.message?.includes('Unique constraint') ||
+          error?.code === 'P2002'
         ) {
-          logger.warn(
-            `User ${user.username} already exists, trying to handle gracefully...`
-          );
-          // Try to find the existing user and add to database if needed
+          logger.warn(`User ${user.email} already exists, skipping...`);
+          // Try to find the existing user
           try {
-            const existingUser = await clerkClient.users.getUserList({
-              username: [user.username],
+            const existingUser = await db.user.findUnique({
+              where: { email: user.email },
             });
-            if (existingUser.data.length > 0) {
-              const userObj = existingUser.data[0];
-              logger.debug(
-                `Found existing user: ${userObj.username} (${userObj.id})`
-              );
-
-              // Check if person exists in database
-              const existingPerson = await db.person.findUnique({
-                where: { id: userObj.id },
+            if (existingUser) {
+              createdUsers.push({
+                id: existingUser.id,
+                email: existingUser.email,
               });
-
-              if (!existingPerson) {
-                const firstName = userObj.firstName || '';
-                const lastName = userObj.lastName || '';
-                const username = userObj.username || '';
-                try {
-                  const person = await db.person.create({
-                    data: {
-                      id: userObj.id,
-                      firstName,
-                      lastName,
-                      username,
-                      imageUrl: userObj.imageUrl || '',
-                      settings: {
-                        create: {}, // This creates a PersonSettings record
-                      },
-                    },
-                    include: {
-                      settings: true,
-                    },
-                  });
-                  people.push(person);
-                  logger.debug(
-                    `Added existing user to database: ${person.username} with settings: ${person.settings?.id}`
-                  );
-                } catch (dbError) {
-                  logger.error(
-                    `Failed to add existing user ${username} to database:`,
-                    dbError
-                  );
-                  throw dbError;
-                }
-              } else {
-                // Check if PersonSettings exist, create if not
-                if (!existingPerson.settings) {
-                  try {
-                    await db.personSettings.create({
-                      data: {
-                        personId: existingPerson.id,
-                      },
-                    });
-                    logger.debug(
-                      `Created missing settings for existing person: ${existingPerson.username}`
-                    );
-                  } catch (settingsError) {
-                    logger.warn(
-                      `Failed to create settings for ${existingPerson.username}:`,
-                      settingsError
-                    );
-                  }
-                }
-                people.push(existingPerson);
-                logger.debug(
-                  `User already exists in database: ${existingPerson.username}`
-                );
-              }
+              logger.debug(
+                `User already exists in database: ${existingUser.email}`
+              );
             }
           } catch (findError) {
             logger.error(
-              `Could not find or process existing user ${user.username}:`,
+              `Could not find existing user ${user.email}:`,
               findError
             );
           }
         } else {
-          logger.error(`Failed to create user ${user.username}:`, error);
+          logger.error(`Failed to create user ${user.email}:`, error);
           throw error;
         }
       }
     }
 
     logger.info(
-      `Successfully seeded ${people.length} users out of ${users.length} expected`
+      `Successfully seeded ${createdUsers.length} users out of ${users.length} expected`
     );
-    if (people.length >= users.length) {
+    if (createdUsers.length >= users.length) {
       logger.info('All users seeded successfully');
       return true;
     } else {

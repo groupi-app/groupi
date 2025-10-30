@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { z } from 'zod';
 import { db } from '../infrastructure/db';
 import {
@@ -68,10 +68,11 @@ export const getRepliesByPost = async ({
         updatedAt: Date;
         author: {
           id: string;
-          firstName: string | null;
-          lastName: string | null;
-          username: string;
-          imageUrl: string;
+          user: {
+            name: string | null;
+            email: string;
+            image: string | null;
+          };
         };
       }>;
       nextCursor?: string;
@@ -79,9 +80,12 @@ export const getRepliesByPost = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -174,6 +178,18 @@ export const getRepliesByPost = async ({
           postId: true,
           createdAt: true,
           updatedAt: true,
+          author: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
+            },
+          },
         },
       })
     ).pipe(
@@ -272,10 +288,11 @@ export const getRepliesByPost = async ({
               updatedAt: Date;
               author: {
                 id: string;
-                firstName: string | null;
-                lastName: string | null;
-                username: string;
-                imageUrl: string;
+                user: {
+                  name: string | null;
+                  email: string;
+                  image: string | null;
+                };
               };
             }>;
             nextCursor?: string;
@@ -298,9 +315,12 @@ export const createReply = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { postId, content } = replyData;
@@ -508,9 +528,12 @@ export const updateReply = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { replyId, content } = replyData;
@@ -665,9 +688,12 @@ export const deleteReply = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {

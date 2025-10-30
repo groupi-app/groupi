@@ -35,19 +35,14 @@ export function createServerQueryClient(): QueryClient {
 /**
  * Create tRPC server-side helpers for prefetching
  * Can optionally reuse an existing QueryClient for batching multiple prefetches
+ * Note: Auth is handled in services via getCurrentUserId(), no need to pass userId through context
  */
-export function createTRPCServerHelpers(
-  userId?: string,
-  queryClient?: QueryClient
-) {
+export function createTRPCServerHelpers(queryClient?: QueryClient) {
   const client = queryClient || createServerQueryClient();
 
   const helpers = createServerSideHelpers({
     router: appRouter,
-    ctx: {
-      userId: userId || null,
-      // Add other context properties as needed
-    },
+    ctx: {}, // Empty context - auth handled in services
     transformer: superjson,
     queryClient: client,
   });
@@ -61,32 +56,33 @@ export function createTRPCServerHelpers(
 
 /**
  * Prefetch event data for a specific event
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventData(eventId: string, userId?: string) {
+export async function prefetchEventData(eventId: string) {
   const queryClient = createServerQueryClient();
-  const { helpers } = createTRPCServerHelpers(userId, queryClient);
+  const { helpers } = createTRPCServerHelpers(queryClient);
 
   try {
     // Prefetch all event-related data in parallel
     await Promise.allSettled([
       helpers.event.getHeaderData.prefetch({ eventId }),
       helpers.invite.getEventData.prefetch({ eventId }),
-      // Note: availability service requires userId, but we can't include it in prefetch without auth context
     ]);
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event data', error);
+    prefetchLogger.error({ error }, 'Error prefetching event data');
     return dehydrate(queryClient); // Return empty dehydrated state
   }
 }
 
 /**
  * Prefetch post data for a specific post
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchPostData(postId: string, userId?: string) {
+export async function prefetchPostData(postId: string) {
   const queryClient = createServerQueryClient();
-  const { helpers } = createTRPCServerHelpers(userId, queryClient);
+  const { helpers } = createTRPCServerHelpers(queryClient);
 
   try {
     // Prefetch post with replies
@@ -94,48 +90,46 @@ export async function prefetchPostData(postId: string, userId?: string) {
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching post data', error);
+    prefetchLogger.error({ error }, 'Error prefetching post data');
     return dehydrate(queryClient);
   }
 }
 
 /**
  * Prefetch user dashboard data
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchUserDashboard(userId: string) {
+export async function prefetchUserDashboard() {
   const queryClient = createServerQueryClient();
-  const { helpers } = createTRPCServerHelpers(userId, queryClient);
+  const { helpers } = createTRPCServerHelpers(queryClient);
 
   try {
     // Prefetch user data and their memberships
     await Promise.allSettled([
       helpers.person.getCurrent.prefetch(),
-      helpers.person.getById.prefetch({ userId }),
       helpers.notification.getForUser.prefetch({ cursor: undefined }),
     ]);
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching user dashboard data', error);
+    prefetchLogger.error({ error }, 'Error prefetching user dashboard data');
     return dehydrate(queryClient);
   }
 }
 
 /**
  * Prefetch availability data for an event
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchAvailabilityData(
-  _eventId: string,
-  userId?: string
-) {
-  const { queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchAvailabilityData(_eventId: string) {
+  const { queryClient } = createTRPCServerHelpers();
 
   try {
-    // Note: availability service requires userId which should be provided by the caller
-    // await helpers.availability.getEventPotentialDateTimes.prefetch({ eventId, userId });
+    // Note: availability service will get userId via getCurrentUserId()
+    // await helpers.availability.getEventPotentialDateTimes.prefetch({ eventId });
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching availability data', error);
+    prefetchLogger.error({ error }, 'Error prefetching availability data');
     return dehydrate(queryClient);
   }
 }
@@ -146,18 +140,18 @@ export async function prefetchAvailabilityData(
 
 /**
  * Generic prefetch function that accepts multiple queries
+ * Services will get userId via getCurrentUserId()
  */
 export async function prefetchQueries(
-  queries: Array<() => Promise<unknown>>,
-  userId?: string
+  queries: Array<() => Promise<unknown>>
 ): Promise<DehydratedState> {
-  const { queryClient } = createTRPCServerHelpers(userId);
+  const { queryClient } = createTRPCServerHelpers();
 
   try {
     await Promise.allSettled(queries);
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching queries', error);
+    prefetchLogger.error({ error }, 'Error prefetching queries');
     return dehydrate(queryClient);
   }
 }
@@ -202,32 +196,29 @@ export function mergeDehydratedStates(
 /**
  * Prefetch data for the event page
  */
-export async function prefetchEventPage(eventId: string, userId?: string) {
-  return prefetchEventData(eventId, userId);
+export async function prefetchEventPage(eventId: string) {
+  return prefetchEventData(eventId);
 }
 
 /**
  * Prefetch data for the events list page
  */
-export async function prefetchEventsListPage(userId: string) {
-  return prefetchUserDashboard(userId);
+export async function prefetchEventsListPage() {
+  return prefetchUserDashboard();
 }
 
 /**
  * Prefetch data for the post page
  */
-export async function prefetchPostPage(postId: string, userId?: string) {
-  return prefetchPostData(postId, userId);
+export async function prefetchPostPage(postId: string) {
+  return prefetchPostData(postId);
 }
 
 /**
  * Prefetch data for the availability page
  */
-export async function prefetchAvailabilityPage(
-  eventId: string,
-  userId?: string
-) {
-  return prefetchAvailabilityData(eventId, userId);
+export async function prefetchAvailabilityPage(eventId: string) {
+  return prefetchAvailabilityData(eventId);
 }
 
 // ============================================================================
@@ -239,12 +230,10 @@ export async function prefetchAvailabilityPage(
 /**
  * Prefetch all component data for event page in parallel
  * Uses consolidated event page services
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventPageComponents(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventPageComponents(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch all event page component data in parallel
@@ -255,7 +244,7 @@ export async function prefetchEventPageComponents(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event page components', error);
+    prefetchLogger.error({ error }, 'Error prefetching event page components');
     return dehydrate(queryClient);
   }
 }
@@ -263,9 +252,10 @@ export async function prefetchEventPageComponents(
 /**
  * Prefetch data for MyEvents page
  * Uses consolidated my events service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchMyEventsPageData(userId?: string) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchMyEventsPageData() {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch my events data
@@ -273,7 +263,7 @@ export async function prefetchMyEventsPageData(userId?: string) {
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching my events page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching my events page data');
     return dehydrate(queryClient);
   }
 }
@@ -281,12 +271,10 @@ export async function prefetchMyEventsPageData(userId?: string) {
 /**
  * Prefetch data for Invite page
  * Uses consolidated invite page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchInvitePageData(
-  inviteId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchInvitePageData(inviteId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch invite page data
@@ -294,7 +282,7 @@ export async function prefetchInvitePageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching invite page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching invite page data');
     return dehydrate(queryClient);
   }
 }
@@ -302,12 +290,10 @@ export async function prefetchInvitePageData(
 /**
  * Prefetch data for Post Detail page
  * Uses consolidated post detail service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchPostDetailPageData(
-  postId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchPostDetailPageData(postId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch post detail data
@@ -315,7 +301,7 @@ export async function prefetchPostDetailPageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching post detail page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching post detail page data');
     return dehydrate(queryClient);
   }
 }
@@ -323,9 +309,10 @@ export async function prefetchPostDetailPageData(
 /**
  * Prefetch data for Settings page
  * Uses consolidated settings page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchSettingsPageData(userId?: string) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchSettingsPageData() {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch settings page data
@@ -333,7 +320,7 @@ export async function prefetchSettingsPageData(userId?: string) {
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching settings page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching settings page data');
     return dehydrate(queryClient);
   }
 }
@@ -341,12 +328,10 @@ export async function prefetchSettingsPageData(userId?: string) {
 /**
  * Prefetch data for Event Invite page
  * Uses consolidated event invite page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventInvitePageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventInvitePageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event invite page data
@@ -354,7 +339,7 @@ export async function prefetchEventInvitePageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event invite page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching event invite page data');
     return dehydrate(queryClient);
   }
 }
@@ -362,12 +347,10 @@ export async function prefetchEventInvitePageData(
 /**
  * Prefetch data for Event Attendees page
  * Uses consolidated event attendees page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventAttendeesPageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventAttendeesPageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event attendees page data
@@ -375,7 +358,10 @@ export async function prefetchEventAttendeesPageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event attendees page data', error);
+    prefetchLogger.error(
+      { error },
+      'Error prefetching event attendees page data'
+    );
     return dehydrate(queryClient);
   }
 }
@@ -383,22 +369,20 @@ export async function prefetchEventAttendeesPageData(
 /**
  * Prefetch data for Event Availability page
  * Uses consolidated event availability page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventAvailabilityPageData(
-  _eventId: string,
-  userId?: string
-) {
-  const { queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventAvailabilityPageData(_eventId: string) {
+  const { queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event availability page data
-    // Note: availability services require userId parameter
+    // Services will get userId via getCurrentUserId()
 
     return dehydrate(queryClient);
   } catch (error) {
     prefetchLogger.error(
-      'Error prefetching event availability page data',
-      error
+      { error },
+      'Error prefetching event availability page data'
     );
     return dehydrate(queryClient);
   }
@@ -407,12 +391,10 @@ export async function prefetchEventAvailabilityPageData(
 /**
  * Prefetch data for Event New Post page
  * Uses consolidated event new post page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventNewPostPageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventNewPostPageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event new post page data
@@ -420,7 +402,10 @@ export async function prefetchEventNewPostPageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event new post page data', error);
+    prefetchLogger.error(
+      { error },
+      'Error prefetching event new post page data'
+    );
     return dehydrate(queryClient);
   }
 }
@@ -428,12 +413,10 @@ export async function prefetchEventNewPostPageData(
 /**
  * Prefetch data for Event Edit page
  * Uses consolidated event edit page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventEditPageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventEditPageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Use header data as fallback since edit page endpoint doesn't exist
@@ -441,7 +424,7 @@ export async function prefetchEventEditPageData(
 
     return dehydrate(queryClient);
   } catch (error) {
-    prefetchLogger.error('Error prefetching event edit page data', error);
+    prefetchLogger.error({ error }, 'Error prefetching event edit page data');
     return dehydrate(queryClient);
   }
 }
@@ -449,21 +432,19 @@ export async function prefetchEventEditPageData(
 /**
  * Prefetch data for Event Date Select page (organizer-only)
  * Uses consolidated event date select page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventDateSelectPageData(
-  _eventId: string,
-  userId?: string
-) {
-  const { queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventDateSelectPageData(_eventId: string) {
+  const { queryClient } = createTRPCServerHelpers();
 
   try {
     // Use availability data as fallback since date select endpoint doesn't exist
-    // Note: requires userId for proper functionality
+    // Services will get userId via getCurrentUserId()
     return dehydrate(queryClient);
   } catch (error) {
     prefetchLogger.error(
-      'Error prefetching event date select page data',
-      error
+      { error },
+      'Error prefetching event date select page data'
     );
     return dehydrate(queryClient);
   }
@@ -472,12 +453,10 @@ export async function prefetchEventDateSelectPageData(
 /**
  * Prefetch data for Event Change Date page
  * Uses consolidated event change date page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventChangeDatePageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventChangeDatePageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Use header data as fallback since change date endpoint doesn't exist
@@ -486,8 +465,8 @@ export async function prefetchEventChangeDatePageData(
     return dehydrate(queryClient);
   } catch (error) {
     prefetchLogger.error(
-      'Error prefetching event change date page data',
-      error
+      { error },
+      'Error prefetching event change date page data'
     );
     return dehydrate(queryClient);
   }
@@ -496,12 +475,10 @@ export async function prefetchEventChangeDatePageData(
 /**
  * Prefetch data for Event Change Date Single page
  * Uses consolidated event change date single page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventChangeDateSinglePageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventChangeDateSinglePageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event change date single page data
@@ -510,8 +487,8 @@ export async function prefetchEventChangeDateSinglePageData(
     return dehydrate(queryClient);
   } catch (error) {
     prefetchLogger.error(
-      'Error prefetching event change date single page data',
-      error
+      { error },
+      'Error prefetching event change date single page data'
     );
     return dehydrate(queryClient);
   }
@@ -520,12 +497,10 @@ export async function prefetchEventChangeDateSinglePageData(
 /**
  * Prefetch data for Event Change Date Multi page
  * Uses consolidated event change date multi page service
+ * Services will get userId via getCurrentUserId()
  */
-export async function prefetchEventChangeDateMultiPageData(
-  eventId: string,
-  userId?: string
-) {
-  const { helpers, queryClient } = createTRPCServerHelpers(userId);
+export async function prefetchEventChangeDateMultiPageData(eventId: string) {
+  const { helpers, queryClient } = createTRPCServerHelpers();
 
   try {
     // Prefetch event change date multi page data
@@ -534,8 +509,8 @@ export async function prefetchEventChangeDateMultiPageData(
     return dehydrate(queryClient);
   } catch (error) {
     prefetchLogger.error(
-      'Error prefetching event change date multi page data',
-      error
+      { error },
+      'Error prefetching event change date multi page data'
     );
     return dehydrate(queryClient);
   }

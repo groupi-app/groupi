@@ -3,6 +3,7 @@
 // ============================================================================
 
 // Core business domains
+export * from './auth';
 export * from './person';
 export * from './event';
 export * from './membership';

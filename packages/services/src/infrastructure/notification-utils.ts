@@ -3,7 +3,7 @@ type NotificationWithPersonEventPost = {
   type: string;
   event?: { title?: string } | null;
   post?: { title?: string } | null;
-  author?: { firstName?: string; lastName?: string; username?: string } | null;
+  author?: { user: { name?: string | null; email?: string } } | null;
   rsvp?: string | null;
 };
 
@@ -14,8 +14,8 @@ export function getNotificationSubject(
 
   // Helper to get author name
   const getAuthorName = () => {
-    if (!author) return 'Someone';
-    return author.firstName || author.lastName || author.username || 'Someone';
+    if (!author?.user) return 'Someone';
+    return author.user.name || author.user.email?.split('@')[0] || 'Someone';
   };
 
   switch (type) {

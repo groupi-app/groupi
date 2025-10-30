@@ -4,7 +4,7 @@ import {
   AvailabilitySchema,
   PotentialDateTimeSchema,
   MembershipSchema,
-  PersonSchema,
+  UserSchema,
   EventSchema,
 } from '../generated';
 
@@ -39,13 +39,17 @@ export const DateOptionDTO = PotentialDateTimeDTO.extend({
       membership: MembershipSchema.pick({
         id: true,
         personId: true,
+        eventId: true,
+        role: true,
+        rsvpStatus: true,
       }).extend({
-        person: PersonSchema.pick({
-          id: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          imageUrl: true,
+        person: z.object({
+          id: z.string(),
+          user: UserSchema.pick({
+            name: true,
+            email: true,
+            image: true,
+          }),
         }),
       }),
     })

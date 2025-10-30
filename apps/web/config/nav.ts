@@ -10,5 +10,9 @@ export const navConfig: NavConfig = {
       title: 'New Event',
       href: '/create',
     },
+    {
+      title: 'Admin',
+      href: '/admin',
+    },
   ],
 };

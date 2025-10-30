@@ -1,20 +1,21 @@
 import { EventList } from './components/event-list';
 import { prefetchMyEventsPageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from '@groupi/services';
 import { HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import { pageLogger } from '@/lib/logger';
 
 export default async function MyEventsPage() {
-  const { userId }: { userId: string | null } = await auth();
+  const [authError, userId] = await getCurrentUserId();
 
-  if (!userId) {
+  if (authError || !userId) {
     redirect('/sign-in');
   }
 
   try {
     // Prefetch my events data
-    const dehydratedState = await prefetchMyEventsPageData(userId);
+    // Services will get userId internally via getCurrentUserId()
+    const dehydratedState = await prefetchMyEventsPageData();
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -24,7 +25,7 @@ export default async function MyEventsPage() {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in my events page', { error });
+    pageLogger.error({ error }, 'Error in my events page');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

@@ -4,9 +4,7 @@ import { AttendeeList } from '../components/attendee-list';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { prefetchEventAttendeesPageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { pageLogger } from '@/lib/logger';
 
@@ -15,18 +13,10 @@ export default async function EventAttendeesPage(props: {
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event attendees page data
-    const dehydratedState = await prefetchEventAttendeesPageData(
-      eventId,
-      userId
-    );
+    const dehydratedState = await prefetchEventAttendeesPageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -50,7 +40,7 @@ export default async function EventAttendeesPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event attendees page', { error });
+    pageLogger.error({ error }, 'Error in event attendees page');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

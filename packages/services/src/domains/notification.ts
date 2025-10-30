@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -43,9 +43,12 @@ export const fetchNotificationsForPerson = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId: personId } = await auth();
-  if (!personId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, personId] = await getCurrentUserId();
+  if (authError || !personId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -79,10 +82,13 @@ export const fetchNotificationsForPerson = async ({
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              imageUrl: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
             },
           },
         },
@@ -133,10 +139,11 @@ export const fetchNotificationsForPerson = async ({
       author: notification.author
         ? {
             id: notification.author.id,
-            firstName: notification.author.firstName,
-            lastName: notification.author.lastName,
-            username: notification.author.username,
-            imageUrl: notification.author.imageUrl,
+            user: {
+              name: notification.author.user.name,
+              email: notification.author.user.email,
+              image: notification.author.user.image,
+            },
           }
         : null,
     }));
@@ -188,9 +195,12 @@ export const markNotificationAsRead = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -329,9 +339,12 @@ export const markNotificationAsUnread = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -466,9 +479,12 @@ export const markAllNotificationsAsRead = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {

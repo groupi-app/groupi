@@ -116,7 +116,7 @@ export function NotificationEmailTemplate({
         return (
           <div>
             <strong>
-              {author?.firstName ?? author?.lastName ?? author?.username}
+              {author?.user.name ?? author?.user.email.split('@')[0]}
             </strong>{' '}
             created a new post, <strong>{post?.title}</strong>, in{' '}
             <strong>{event?.title}</strong>.
@@ -126,7 +126,7 @@ export function NotificationEmailTemplate({
         return (
           <div>
             <strong>
-              {author?.firstName ?? author?.lastName ?? author?.username}
+              {author?.user.name ?? author?.user.email.split('@')[0]}
             </strong>{' '}
             replied to a post, <strong>{post?.title}</strong>, in{' '}
             <strong>{event?.title}</strong>.
@@ -136,7 +136,7 @@ export function NotificationEmailTemplate({
         return (
           <div>
             <strong>
-              {author?.firstName ?? author?.lastName ?? author?.username}
+              {author?.user.name ?? author?.user.email.split('@')[0]}
             </strong>{' '}
             has joined <strong>{event?.title}</strong>.
           </div>
@@ -145,7 +145,7 @@ export function NotificationEmailTemplate({
         return (
           <div>
             <strong>
-              {author?.firstName ?? author?.lastName ?? author?.username}
+              {author?.user.name ?? author?.user.email.split('@')[0]}
             </strong>{' '}
             has left <strong>{event?.title}</strong>.
           </div>
@@ -166,7 +166,7 @@ export function NotificationEmailTemplate({
         return (
           <div>
             <strong>
-              {author?.firstName ?? author?.lastName ?? author?.username}
+              {author?.user.name ?? author?.user.email.split('@')[0]}
             </strong>{' '}
             has RSVP&apos;d <strong>{rsvp}</strong> to{' '}
             <strong>{event?.title}</strong>.

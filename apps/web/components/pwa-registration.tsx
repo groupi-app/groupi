@@ -9,14 +9,17 @@ export function PWARegistration() {
       navigator.serviceWorker
         .register('/service-worker.js')
         .then(registration => {
-          componentLogger.debug('Service worker registered successfully', {
-            scope: registration.scope,
-          });
+          componentLogger.debug(
+            {
+              scope: registration.scope,
+            },
+            'Service worker registered successfully'
+          );
         })
         .catch(registrationError => {
           componentLogger.error(
-            'Service worker registration failed',
-            registrationError
+            { error: registrationError },
+            'Service worker registration failed'
           );
         });
     }

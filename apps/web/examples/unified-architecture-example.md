@@ -7,11 +7,15 @@ This document shows how to integrate the new unified real-time architecture with
 ```typescript
 // app/(event)/event/[eventId]/page.tsx
 import { prefetchEventData, UnifiedQueryProvider } from '@groupi/hooks';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@groupi/services';
 
 export default async function EventPage({ params }: { params: Promise<{ eventId: string }> }) {
-  const { userId } = await auth();
+  const [error, userId] = await auth.getCurrentUserId();
   const { eventId } = await params;
+  
+  if (!userId) {
+    redirect('/sign-in');
+  }
 
   // Server-side prefetch
   const dehydratedState = await prefetchEventData(eventId, userId);
@@ -64,9 +68,10 @@ import {
   UnifiedWebPusherProvider,
   prefetchUserDashboard
 } from '@groupi/hooks';
+import { auth } from '@groupi/services';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
+  const [error, userId] = await auth.getCurrentUserId();
 
   // Prefetch user data
   const dehydratedState = userId
@@ -74,23 +79,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     : undefined;
 
   return (
-    <ClerkProvider>
-      <html>
-        <body>
-          <UnifiedWebPusherProvider
-            appKey={env.NEXT_PUBLIC_PUSHER_APP_KEY}
-            cluster={env.NEXT_PUBLIC_PUSHER_APP_CLUSTER}
+    <html>
+      <body>
+        <UnifiedWebPusherProvider
+          appKey={env.NEXT_PUBLIC_PUSHER_APP_KEY}
+          cluster={env.NEXT_PUBLIC_PUSHER_APP_CLUSTER}
+        >
+          <UnifiedQueryProvider
+            dehydratedState={dehydratedState}
+            userId={userId}
           >
-            <UnifiedQueryProvider
-              dehydratedState={dehydratedState}
-              userId={userId}
-            >
-              {children}
-            </UnifiedQueryProvider>
-          </UnifiedWebPusherProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+            {children}
+          </UnifiedQueryProvider>
+        </UnifiedWebPusherProvider>
+      </body>
+    </html>
   );
 }
 ```

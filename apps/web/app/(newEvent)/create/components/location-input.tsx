@@ -38,13 +38,9 @@ export function LocationInput({
     debounce: 300,
   });
 
-  // Debug logging to see if Google Maps API is loaded
+  // Check if Google Maps API is loaded
   useEffect(() => {
-    console.log('LocationInput ready status:', ready);
-    console.log(
-      'Google Maps API loaded:',
-      typeof window !== 'undefined' && window.google
-    );
+    // Google Maps API status checking removed - handled by usePlacesAutocomplete
   }, [ready]);
 
   const handleSelect = (address: string) => {

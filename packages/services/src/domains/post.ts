@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { PostFeedDTO, ResultTuple } from '@groupi/schema';
@@ -46,9 +46,12 @@ export const getPostFeedData = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -117,10 +120,13 @@ export const getPostFeedData = async ({
                   id: true,
                   createdAt: true,
                   updatedAt: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -157,10 +163,13 @@ export const getPostFeedData = async ({
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              imageUrl: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
             },
           },
           replies: {
@@ -174,10 +183,13 @@ export const getPostFeedData = async ({
               author: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -223,25 +235,26 @@ export const getPostFeedData = async ({
           editedAt: p.editedAt,
           author: {
             id: p.author.id,
-            firstName: p.author.firstName,
-            lastName: p.author.lastName,
-            username: p.author.username,
-            imageUrl: p.author.imageUrl,
+            user: {
+              name: p.author.user?.name || null,
+              email: p.author.user?.email || '',
+              image: p.author.user?.image || null,
+            },
           },
           replies: p.replies
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .slice(0, 3)
             .map(r => ({
               id: r.id,
-              text: r.text,
               createdAt: r.createdAt,
               updatedAt: r.updatedAt,
               author: {
                 id: r.author.id,
-                firstName: r.author.firstName,
-                lastName: r.author.lastName,
-                username: r.author.username,
-                imageUrl: r.author.imageUrl,
+                user: {
+                  name: r.author.user?.name || null,
+                  email: r.author.user?.email || '',
+                  image: r.author.user?.image || null,
+                },
               },
             })),
           replyCount: p._count.replies,
@@ -300,9 +313,12 @@ export const fetchPostDetailPageData = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {
@@ -326,10 +342,13 @@ export const fetchPostDetailPageData = async ({
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
-              username: true,
-              imageUrl: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
             },
           },
           event: {
@@ -357,10 +376,13 @@ export const fetchPostDetailPageData = async ({
               author: {
                 select: {
                   id: true,
-                  firstName: true,
-                  lastName: true,
-                  username: true,
-                  imageUrl: true,
+                  user: {
+                    select: {
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
                 },
               },
             },
@@ -435,10 +457,11 @@ export const fetchPostDetailPageData = async ({
         editedAt: postData.editedAt,
         author: {
           id: postData.author.id,
-          firstName: postData.author.firstName,
-          lastName: postData.author.lastName,
-          username: postData.author.username,
-          imageUrl: postData.author.imageUrl,
+          user: {
+            name: postData.author.user?.name || null,
+            email: postData.author.user?.email || '',
+            image: postData.author.user?.image || null,
+          },
         },
         replies: postData.replies.map(reply => ({
           id: reply.id,
@@ -447,10 +470,11 @@ export const fetchPostDetailPageData = async ({
           updatedAt: reply.updatedAt,
           author: {
             id: reply.author.id,
-            firstName: reply.author.firstName,
-            lastName: reply.author.lastName,
-            username: reply.author.username,
-            imageUrl: reply.author.imageUrl,
+            user: {
+              name: reply.author.user?.name || null,
+              email: reply.author.user?.email || '',
+              image: reply.author.user?.image || null,
+            },
           },
         })),
         event: {
@@ -516,9 +540,12 @@ export const createPost = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { eventId, title, content } = postData;
@@ -726,9 +753,12 @@ export const updatePost = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const { id: postId, title, content } = updateData;
@@ -915,9 +945,12 @@ export const deletePost = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const { userId } = await auth();
-  if (!userId) {
-    return [new AuthenticationError('Not authenticated'), undefined] as const;
+  const [authError, userId] = await getCurrentUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError('Not authenticated'),
+      undefined,
+    ] as const;
   }
 
   const effect = Effect.gen(function* () {

@@ -1,27 +1,17 @@
 import { ChangeDateMultiContent } from './components/change-date-multi-content';
 import { pageLogger } from '@/lib/logger';
 import { prefetchEventChangeDateMultiPageData } from '@groupi/hooks/server';
-import { auth } from '@clerk/nextjs/server';
 import { HydrationBoundary } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 
 export default async function EventChangeDateMultiPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const params = await props.params;
   const { eventId } = params;
-  const { userId }: { userId: string | null } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
 
   try {
     // Prefetch event change date multi page data
-    const dehydratedState = await prefetchEventChangeDateMultiPageData(
-      eventId,
-      userId
-    );
+    const dehydratedState = await prefetchEventChangeDateMultiPageData(eventId);
 
     return (
       <HydrationBoundary state={dehydratedState}>
@@ -29,7 +19,7 @@ export default async function EventChangeDateMultiPage(props: {
       </HydrationBoundary>
     );
   } catch (error) {
-    pageLogger.error('Error in event change date multi page:', { error });
+    pageLogger.error({ error }, 'Error in event change date multi page:');
     return (
       <div className='container pt-6'>
         <div className='text-center py-8'>

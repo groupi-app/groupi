@@ -2,7 +2,7 @@
 
 import Reply from './reply';
 import { usePostDetail } from '@groupi/hooks';
-import { useAuth } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth-client';
 import type { PostDetailDTO } from '@groupi/schema';
 import { LayoutGroup, motion } from 'framer-motion';
 
@@ -22,7 +22,8 @@ const item = {
 };
 
 export default function ReplyFeed({ postId }: { postId: string }) {
-  const { userId } = useAuth();
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const { data, isLoading } = usePostDetail(postId);
 
   if (isLoading || !data) {
