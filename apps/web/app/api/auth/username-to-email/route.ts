@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ email: user.email });
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Error looking up username:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

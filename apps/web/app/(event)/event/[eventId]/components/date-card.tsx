@@ -1,8 +1,7 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// Migrated from server actions to tRPC hooks
-import { useChooseDateTime } from '@groupi/hooks';
+import { chooseDateTimeAction } from '@/actions/availability-actions';
 import { cn } from '@/lib/utils';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { Role } from '@prisma/client';
@@ -42,36 +41,25 @@ export function DateCard({
   const [dialogType, setDialogType] = useState<'overview' | 'confirm'>(
     'overview'
   );
+  const [isSelecting, setIsSelecting] = useState(false);
   const router = useRouter();
 
-  // Use our new tRPC hook with integrated real-time sync
-  const chooseDateTimeMutation = useChooseDateTime();
+  async function selectDate() {
+    setIsSelecting(true);
+    const [error] = await chooseDateTimeAction({
+      eventId: pdt.eventId,
+      pdtId: pdt.id,
+    });
 
-  function selectDate() {
-    chooseDateTimeMutation.mutate(
-      {
-        eventId: pdt.eventId,
-        pdtId: pdt.id,
-      },
-      {
-        onSuccess: ([error, _result]: [Error | null, unknown]) => {
-          if (error) {
-            toast.error('Failed to select date', {
-              description: 'The date could not be selected. Please try again.',
-            });
-            return;
-          }
-
-          toast.success('The date has been successfully selected.');
-          router.push(`/event/${pdt.eventId}`);
-        },
-        onError: () => {
-          toast.error('Failed to select date', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Failed to select date', {
+        description: 'The date could not be selected. Please try again.',
+      });
+      setIsSelecting(false);
+    } else {
+      toast.success('The date has been successfully selected.');
+      router.push(`/event/${pdt.eventId}`);
+    }
   }
 
   return (
@@ -297,9 +285,9 @@ export function DateCard({
                 <Button
                   className='flex items-center gap-1'
                   onClick={selectDate}
-                  disabled={chooseDateTimeMutation.isLoading}
+                  disabled={isSelecting}
                 >
-                  {chooseDateTimeMutation.isLoading && (
+                  {isSelecting && (
                     <Icons.spinner className='h-4 w-4 animate-spin' />
                   )}
                   <span>Confirm</span>

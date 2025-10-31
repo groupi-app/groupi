@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useUpdateEventDetails } from '@groupi/hooks';
+import { updateEventDetailsAction } from '@/actions/event-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -50,10 +50,6 @@ export default function EditEventInfo({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const router = useRouter();
 
-  // Use the hook to get the mutation function
-  const updateEventDetailsMutation = useUpdateEventDetails();
-  const { mutateAsync: updateEventDetails } = updateEventDetailsMutation;
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,7 +61,7 @@ export default function EditEventInfo({
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    const [error, result] = await updateEventDetails({
+    const [error, result] = await updateEventDetailsAction({
       eventId: eventId,
       title: data.title,
       description: data.description,
@@ -76,6 +72,7 @@ export default function EditEventInfo({
       toast.error('Error editing event', {
         description: 'Failed to edit event details.',
       });
+      setIsSaving(false);
     } else if (result) {
       toast.success('Event updated', {
         description: 'Event details have been updated.',

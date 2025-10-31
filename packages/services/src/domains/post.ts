@@ -2,7 +2,7 @@ import { Effect, Schedule } from 'effect';
 import { getCurrentUserId } from './auth';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
-import type { PostFeedDTO, ResultTuple } from '@groupi/schema';
+import type { ResultTuple } from '@groupi/schema';
 import {
   GetPostFeedDataParams,
   CreatePostParams,
@@ -10,7 +10,11 @@ import {
   UpdatePostParams,
   DeletePostParams,
 } from '@groupi/schema/params';
-import { PostDTO, PostDetailPageDTO } from '@groupi/schema/data';
+import {
+  PostData,
+  PostDetailPageData,
+  PostFeedData,
+} from '@groupi/schema/data';
 import {
   UnauthorizedError,
   DatabaseError,
@@ -42,14 +46,14 @@ export const getPostFeedData = async ({
     | AuthenticationError
     | DatabaseError
     | ConnectionError,
-    PostFeedDTO
+    PostFeedData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -97,7 +101,9 @@ export const getPostFeedData = async ({
         reason: 'not_member_of_event',
         operation: 'getPostsByEvent',
       });
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -219,7 +225,7 @@ export const getPostFeedData = async ({
       })
     );
 
-    const result: PostFeedDTO = {
+    const result: PostFeedData = {
       event: {
         id: eventData?.id ?? eventId,
         chosenDateTime: eventData?.chosenDateTime ?? null,
@@ -285,10 +291,13 @@ export const getPostFeedData = async ({
         ) {
           return [err, undefined] as const;
         }
-        return [new DatabaseError('Failed to fetch posts'), undefined] as const;
+        return [
+          new DatabaseError({ message: 'Failed to fetch posts' }),
+          undefined,
+        ] as const;
       });
     }),
-    Effect.map(result => [null, result] as [null, PostFeedDTO])
+    Effect.map(result => [null, result] as [null, PostFeedData])
   );
 
   return Effect.runPromise(
@@ -309,14 +318,14 @@ export const fetchPostDetailPageData = async ({
     | UnauthorizedError
     | AuthenticationError
     | ConnectionError,
-    PostDetailPageDTO
+    PostDetailPageData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -421,7 +430,9 @@ export const fetchPostDetailPageData = async ({
         postId,
         operation: 'fetchPostDetailPageData',
       });
-      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Post not found`, cause: postId })
+      );
       return;
     }
 
@@ -439,13 +450,13 @@ export const fetchPostDetailPageData = async ({
         operation: 'fetchPostDetailPageData',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to view this post')
+        new UnauthorizedError({ message: 'Not authorized to view this post' })
       );
       return;
     }
 
     // Construct result
-    const result: PostDetailPageDTO = {
+    const result: PostDetailPageData = {
       post: {
         id: postData.id,
         title: postData.title,
@@ -508,13 +519,15 @@ export const fetchPostDetailPageData = async ({
           return [err, undefined] as const;
         }
         return [
-          new DatabaseError('Failed to fetch post detail page data'),
+          new DatabaseError({
+            message: 'Failed to fetch post detail page data',
+          }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, PostDetailPageDTO])
+    Effect.map(result => [null, result] as [null, PostDetailPageData])
   );
 
   return Effect.runPromise(
@@ -536,14 +549,14 @@ export const createPost = async (
     | ConnectionError
     | ConstraintError
     | ValidationError,
-    PostDTO
+    PostData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -597,7 +610,9 @@ export const createPost = async (
         reason: 'not_member_of_event',
         operation: 'createPost',
       });
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -665,7 +680,7 @@ export const createPost = async (
     );
 
     // Construct result
-    const result: PostDTO = {
+    const result: PostData = {
       id: post.id,
       title: post.title,
       content: post.content,
@@ -722,11 +737,14 @@ export const createPost = async (
         ) {
           return [err, undefined] as const;
         }
-        return [new DatabaseError('Failed to create post'), undefined] as const;
+        return [
+          new DatabaseError({ message: 'Failed to create post' }),
+          undefined,
+        ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, PostDTO])
+    Effect.map(result => [null, result] as [null, PostData])
   );
 
   return Effect.runPromise(
@@ -749,14 +767,14 @@ export const updatePost = async (
     | ConnectionError
     | ConstraintError
     | ValidationError,
-    PostDTO
+    PostData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -812,7 +830,9 @@ export const updatePost = async (
         postId,
         operation: 'updatePost',
       });
-      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Post not found`, cause: postId })
+      );
       return;
     }
 
@@ -824,7 +844,9 @@ export const updatePost = async (
         reason: 'not_member_of_event',
         operation: 'updatePost',
       });
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -840,7 +862,7 @@ export const updatePost = async (
         operation: 'updatePost',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to edit this post')
+        new UnauthorizedError({ message: 'Not authorized to edit this post' })
       );
       return;
     }
@@ -887,7 +909,7 @@ export const updatePost = async (
     );
 
     // Direct construction
-    const result: PostDTO = {
+    const result: PostData = {
       id: post.id,
       title: post.title,
       content: post.content,
@@ -915,11 +937,14 @@ export const updatePost = async (
         if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
           return [err, undefined] as const;
         }
-        return [new DatabaseError('Failed to update post'), undefined] as const;
+        return [
+          new DatabaseError({ message: 'Failed to update post' }),
+          undefined,
+        ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, PostDTO])
+    Effect.map(result => [null, result] as [null, PostData])
   );
 
   return Effect.runPromise(
@@ -948,7 +973,7 @@ export const deletePost = async ({
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -983,14 +1008,14 @@ export const deletePost = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -1000,7 +1025,9 @@ export const deletePost = async ({
         postId,
         operation: 'deletePost',
       });
-      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Post not found`, cause: postId })
+      );
       return;
     }
 
@@ -1012,7 +1039,9 @@ export const deletePost = async ({
         reason: 'not_member_of_event',
         operation: 'deletePost',
       });
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -1028,7 +1057,7 @@ export const deletePost = async ({
         operation: 'deletePost',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to delete this post')
+        new UnauthorizedError({ message: 'Not authorized to delete this post' })
       );
       return;
     }
@@ -1046,14 +1075,14 @@ export const deletePost = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -1075,7 +1104,10 @@ export const deletePost = async ({
         if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
           return [err, undefined] as const;
         }
-        return [new DatabaseError('Failed to delete post'), undefined] as const;
+        return [
+          new DatabaseError({ message: 'Failed to delete post' }),
+          undefined,
+        ] as const;
       });
     }),
     // Map result to tuple

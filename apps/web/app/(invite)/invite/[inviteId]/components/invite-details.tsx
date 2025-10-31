@@ -1,6 +1,4 @@
-'use client';
-
-import { useInvitePage } from '@groupi/hooks';
+import { getCachedInviteData } from '@groupi/services';
 import { Icons } from '@/components/icons';
 import {
   Card,
@@ -12,24 +10,14 @@ import {
 } from '@/components/ui/card';
 import { AcceptInviteButton } from './invite-accept';
 
-export function InviteDetails({
+export async function InviteDetails({
   inviteId,
   userId,
 }: {
   inviteId: string;
   userId: string;
 }) {
-  const { data, isLoading } = useInvitePage(inviteId);
-
-  if (isLoading || !data) {
-    return (
-      <div className='flex justify-center items-center h-screen'>
-        <div className='text-lg'>Loading invite...</div>
-      </div>
-    );
-  }
-
-  const [error, inviteData] = data;
+  const [error, inviteData] = await getCachedInviteData(inviteId);
 
   if (error) {
     let errorMessage = 'An error occurred';

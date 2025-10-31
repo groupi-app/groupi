@@ -1,7 +1,6 @@
 'use client';
 
-// Migrated from server actions to tRPC hooks
-import { useDeleteInvite } from '@groupi/hooks';
+import { deleteInviteAction } from '@/actions/invite-actions';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function DeleteInvites({
   selectedInvites,
@@ -22,23 +22,25 @@ export function DeleteInvites({
   selectedInvites: string[];
   setSelectedInvites: (invites: string[]) => void;
 }) {
-  // Use our tRPC hook with integrated real-time sync
-  const deleteInvite = useDeleteInvite();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDeleteInvites = async () => {
+    setIsLoading(true);
     try {
       for (const inviteId of selectedInvites) {
-        const [error] = await deleteInvite.mutateAsync(inviteId);
+        const [error] = await deleteInviteAction({ inviteId });
         if (error) throw error;
       }
       toast.success('Invites Deleted', {
         description: 'The invites have been successfully deleted.',
       });
       setSelectedInvites([]);
-    } catch (_err) {
+    } catch {
       toast.error('Failed to delete invites', {
         description: 'An unexpected error occurred. Please try again.',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,17 +66,17 @@ export function DeleteInvites({
         <DialogFooter>
           <div className='flex gap-4 justify-end'>
             <DialogClose>
-              <Button variant='ghost' disabled={deleteInvite.isLoading}>
+              <Button variant='ghost' disabled={isLoading}>
                 Cancel
               </Button>
             </DialogClose>
             <DialogClose asChild>
               <Button
                 onClick={handleDeleteInvites}
-                disabled={deleteInvite.isLoading}
+                disabled={isLoading}
                 variant='destructive'
               >
-                {deleteInvite.isLoading ? 'Deleting...' : 'Delete'}
+                {isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </DialogClose>
           </div>

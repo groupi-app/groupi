@@ -8,11 +8,11 @@ import {
 } from '../generated';
 
 // ============================================================================
-// NOTIFICATION DOMAIN DATA DTOS
+// NOTIFICATION DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic notification DTO
-export const NotificationDTO = NotificationSchema.pick({
+// Basic notification data
+export const NotificationData = NotificationSchema.pick({
   id: true,
   type: true,
   read: true,
@@ -21,10 +21,10 @@ export const NotificationDTO = NotificationSchema.pick({
   rsvp: true,
 });
 
-export type NotificationDTO = z.infer<typeof NotificationDTO>;
+export type NotificationData = z.infer<typeof NotificationData>;
 
-// Notification feed DTO - for notification lists and feeds
-export const NotificationFeedDTO = NotificationDTO.extend({
+// Notification feed data - for notification lists and feeds
+export const NotificationFeedData = NotificationData.extend({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -45,10 +45,10 @@ export const NotificationFeedDTO = NotificationDTO.extend({
     .nullable(),
 });
 
-export type NotificationFeedDTO = z.infer<typeof NotificationFeedDTO>;
+export type NotificationFeedData = z.infer<typeof NotificationFeedData>;
 
-// Webhook notification DTO - for webhook templates and external integrations
-export const WebhookNotificationDTO = NotificationDTO.extend({
+// Webhook notification data - for webhook templates and external integrations
+export const WebhookNotificationData = NotificationData.extend({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -69,4 +69,4 @@ export const WebhookNotificationDTO = NotificationDTO.extend({
     .nullable(),
 });
 
-export type WebhookNotificationDTO = z.infer<typeof WebhookNotificationDTO>;
+export type WebhookNotificationData = z.infer<typeof WebhookNotificationData>;

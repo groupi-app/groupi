@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { getSupabaseClient } from '@groupi/hooks';
+import { createClient } from '@/lib/supabase';
 
 interface RealtimeInvalidationProviderProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export function SupabaseRealtimeProvider({
 
   useEffect(() => {
     if (!userId) return;
-    const supabase = getSupabaseClient();
+    const supabase = createClient();
     const channel = supabase.channel(`user-${userId}`).subscribe();
     return () => {
       channel.unsubscribe();

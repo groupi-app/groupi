@@ -1,6 +1,6 @@
 // Webhook template system for different notification services
 import type {
-  WebhookNotificationDTO,
+  WebhookNotificationData,
   NotificationTypeType,
 } from '@groupi/schema';
 import { WebhookFormat } from '@prisma/client';
@@ -178,7 +178,7 @@ export const WEBHOOK_TEMPLATES: Record<string, WebhookTemplate> = {
  * Extract variables from a notification for webhook templating
  */
 export function extractWebhookVariables(
-  notification: WebhookNotificationDTO
+  notification: WebhookNotificationData
 ): WebhookVariables {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -281,7 +281,7 @@ export function replaceTemplateVariables(
  * Generate webhook payload from template and notification
  */
 export function generateWebhookPayload(
-  notification: WebhookNotificationDTO,
+  notification: WebhookNotificationData,
   webhookFormat: WebhookFormat,
   customTemplate?: string // Custom JSON template from database (customTemplate field)
 ): { payload: string; headers: Record<string, string> } {

@@ -1,13 +1,13 @@
 'use client';
 import { useFormContext } from '@/components/providers/form-context-provider';
 import { Calendar } from '@/components/ui/calendar';
-import { useCreateEvent } from '@groupi/hooks';
+import { createEventAction } from '@/actions/event-actions';
 import { merge } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -49,9 +49,6 @@ export function NewEventMultiDate() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Use the hook to get the clean mutation function
-  const { createEvent } = useCreateEvent();
-
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
     defaultValues: {
@@ -70,8 +67,20 @@ export function NewEventMultiDate() {
     },
   });
 
+  // Use useWatch instead of form.watch() for React Compiler compatibility
+  const watchedDates =
+    useWatch({ control: form1.control, name: 'dates' }) || [];
+  const watchedDateTimes =
+    useWatch({ control: form2.control, name: 'dateTimes' }) || [];
+
+  // Move redirect to useEffect to avoid calling during render
+  useEffect(() => {
+    if (!formState.title) {
+      router.push('/create');
+    }
+  }, [formState.title, router]);
+
   if (!formState.title) {
-    router.push('/create');
     return null;
   }
 
@@ -104,7 +113,7 @@ export function NewEventMultiDate() {
 
     const { title, description, location } = formState;
 
-    const [error, result] = await createEvent({
+    const [error, result] = await createEventAction({
       title,
       description,
       location,
@@ -168,12 +177,12 @@ export function NewEventMultiDate() {
                 </span>
               </div>
               <Button
-                disabled={form1.watch('dates').length < 1}
+                disabled={watchedDates.length < 1}
                 className='flex items-center gap-1 max-w-sm w-full mx-auto'
                 type='submit'
               >
                 <Icons.plus className='size-5' />
-                <span>Add {form1.watch('dates').length} Options</span>
+                <span>Add {watchedDates.length} Options</span>
               </Button>
             </div>
           </form>
@@ -216,6 +225,7 @@ export function NewEventMultiDate() {
                           onClick={() => {
                             form2.setValue(
                               'dateTimes',
+                              // eslint-disable-next-line react-hooks/incompatible-library
                               form2
                                 .watch('dateTimes')
                                 .filter((_, index) => index !== i)
@@ -244,7 +254,7 @@ export function NewEventMultiDate() {
           </Button>
         </Link>
         <Button
-          disabled={form2.watch('dateTimes').length < 2 || isSaving}
+          disabled={watchedDateTimes.length < 2 || isSaving}
           className='flex items-center gap-1'
           type='submit'
           form='form2'

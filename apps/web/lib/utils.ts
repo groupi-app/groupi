@@ -16,9 +16,9 @@ export {
 } from '@groupi/ui';
 
 export function formatDate(date: Date) {
-  var seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
-  var interval = seconds / 31536000;
+  let interval = seconds / 31536000;
 
   if (interval > 1) {
     return Math.floor(interval) + 'y ago';
@@ -46,9 +46,9 @@ export function formatDate(date: Date) {
 }
 
 export function timeUntil(date: Date) {
-  var seconds = Math.floor((date.getTime() - Date.now()) / 1000);
+  const seconds = Math.floor((date.getTime() - Date.now()) / 1000);
 
-  var interval = seconds / 31536000;
+  let interval = seconds / 31536000;
 
   if (interval > 1) {
     return Math.floor(interval) + 'y';

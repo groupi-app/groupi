@@ -42,7 +42,8 @@ const nextConfig = {
       ...(config.ignoreWarnings || []),
       {
         module: /@supabase\/realtime-js/,
-        message: /Critical dependency: the request of a dependency is an expression/,
+        message:
+          /Critical dependency: the request of a dependency is an expression/,
       },
     ];
 
@@ -60,6 +61,36 @@ const nextConfig = {
     remotePatterns: [
       // Add other image domains as needed
     ],
+  },
+  cacheComponents: true,
+  cacheLife: {
+    // Default fallback for general content
+    default: {
+      stale: 300, // 5 minutes
+      revalidate: 120, // 2 minutes
+      expire: 3600, // 1 hour
+    },
+    // Event headers, details, and member lists
+    event: {
+      stale: 300, // 5 minutes
+      revalidate: 120, // 2 minutes
+      expire: 1800, // 30 minutes
+    },
+    // Posts, replies, and frequently updated content
+    posts: {
+      stale: 30, // 30 seconds
+      revalidate: 15, // 15 seconds
+      expire: 300, // 5 minutes
+    },
+    // User-specific private data (settings, preferences)
+    user: {
+      stale: 300, // 5 minutes
+      revalidate: 120, // 2 minutes
+      expire: 900, // 15 minutes
+    },
+  },
+  experimental: {
+    turbopackFileSystemCacheForDev: true,
   },
 };
 

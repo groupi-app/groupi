@@ -8,7 +8,7 @@ import {
   GetUserDashboardDataParams,
   DeleteUserParams,
 } from '@groupi/schema/params';
-import { UserDashboardDTO, PersonBasicDTO } from '@groupi/schema/data';
+import { UserDashboardData, PersonBasicData } from '@groupi/schema/data';
 import {
   NotFoundError,
   DatabaseError,
@@ -23,7 +23,7 @@ import { getPrismaError } from '../shared/errors';
 export const fetchPersonData = async ({
   personId,
 }: GetPersonDataParams): Promise<
-  ResultTuple<DatabaseError | NotFoundError | ConnectionError, PersonBasicDTO>
+  ResultTuple<DatabaseError | NotFoundError | ConnectionError, PersonBasicData>
 > => {
   const effect = Effect.gen(function* () {
     yield* Effect.logDebug('Fetching person data', {
@@ -46,19 +46,21 @@ export const fetchPersonData = async ({
           personId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!person) {
-      yield* Effect.fail(new NotFoundError(`Person not found`, personId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Person not found`, cause: personId })
+      );
       return;
     }
 
@@ -75,7 +77,7 @@ export const fetchPersonData = async ({
     ).pipe(Effect.mapError((cause: Error) => getPrismaError('User', cause)));
 
     // Direct construction
-    const result: PersonBasicDTO = {
+    const result: PersonBasicData = {
       id: person.id,
       name: user?.name || null,
       email: user?.email || '',
@@ -102,13 +104,13 @@ export const fetchPersonData = async ({
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to fetch person data'),
+          new DatabaseError({ message: 'Failed to fetch person data' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, PersonBasicDTO])
+    Effect.map(result => [null, result] as [null, PersonBasicData])
   );
 
   return Effect.runPromise(
@@ -124,14 +126,14 @@ export const fetchUserDashboardData = async (
 ): Promise<
   ResultTuple<
     DatabaseError | NotFoundError | ConnectionError | AuthenticationError,
-    UserDashboardDTO
+    UserDashboardData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -165,19 +167,21 @@ export const fetchUserDashboardData = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!user) {
-      yield* Effect.fail(new NotFoundError(`User not found`, userId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `User not found`, cause: userId })
+      );
       return;
     }
 
@@ -212,24 +216,26 @@ export const fetchUserDashboardData = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!person) {
-      yield* Effect.fail(new NotFoundError(`Person not found`, userId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Person not found`, cause: userId })
+      );
       return;
     }
 
     // Direct construction
-    const result: UserDashboardDTO = {
+    const result: UserDashboardData = {
       id: user.id,
       name: user.name,
       email: user.email,
@@ -276,13 +282,13 @@ export const fetchUserDashboardData = async (
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to fetch user dashboard data'),
+          new DatabaseError({ message: 'Failed to fetch user dashboard data' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, UserDashboardDTO])
+    Effect.map(result => [null, result] as [null, UserDashboardData])
   );
 
   return Effect.runPromise(
@@ -323,14 +329,14 @@ export const deleteUser = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -353,14 +359,14 @@ export const deleteUser = async ({
             operation: 'deleteUser',
           });
           return [
-            new NotFoundError(`Person not found`, userId),
+            new NotFoundError({ message: `Person not found`, cause: userId }),
             undefined,
           ] as const;
         }
 
         // For unexpected errors, return OperationError
         return [
-          new OperationError('Failed to delete user'),
+          new OperationError({ message: 'Failed to delete user' }),
           undefined,
         ] as const;
       });

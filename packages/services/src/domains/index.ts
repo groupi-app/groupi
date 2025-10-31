@@ -12,5 +12,5 @@ export * from './invite';
 export * from './post';
 export * from './notification';
 export * from './settings';
-
 export * from './reply';
+export * from './admin';

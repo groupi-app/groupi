@@ -1,11 +1,10 @@
 'use client';
 
-// Migrated from server actions to tRPC hooks
-import { useUpdateReply } from '@groupi/hooks';
+import { updateReplyAction } from '@/actions/reply-actions';
 import { cn, formatDate } from '@/lib/utils';
 import { Member } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RoleType, type PostDetailDTO } from '@groupi/schema';
+import { RoleType, type PostDetailData } from '@groupi/schema';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -43,16 +42,14 @@ export default function ReplyComponent({
   userRole,
   eventDateTime,
 }: {
-  reply: PostDetailDTO['replies'][0];
+  reply: PostDetailData['replies'][0];
   member: Member | undefined;
   userId: string;
   userRole: RoleType;
   eventDateTime: Date | null;
 }) {
   const [editMode, setEditMode] = useState(false);
-
-  // Use our new tRPC hook with integrated real-time sync
-  const updateReplyMutation = useUpdateReply();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,32 +63,24 @@ export default function ReplyComponent({
     isMe || userRole === 'MODERATOR' || userRole === 'ORGANIZER';
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    updateReplyMutation.mutate(
-      {
-        replyId: reply.id,
-        text: values.reply,
-      },
-      {
-        onSuccess: ([error, _result]) => {
-          if (error) {
-            toast.error('Failed to update reply', {
-              description: 'The reply could not be updated. Please try again.',
-            });
-            return;
-          }
+    setIsUpdating(true);
+    const [error] = await updateReplyAction({
+      replyId: reply.id,
+      text: values.reply,
+    });
 
-          toast.success('Reply updated', {
-            description: 'Your reply has been successfully updated',
-          });
-          setEditMode(false);
-        },
-        onError: () => {
-          toast.error('Failed to update reply', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Failed to update reply', {
+        description: 'The reply could not be updated. Please try again.',
+      });
+      setIsUpdating(false);
+    } else {
+      toast.success('Reply updated', {
+        description: 'Your reply has been successfully updated',
+      });
+      setEditMode(false);
+      setIsUpdating(false);
+    }
   }
 
   const name =
@@ -191,9 +180,9 @@ export default function ReplyComponent({
                                     className='size-10 p-1'
                                     variant='ghost'
                                     type='submit'
-                                    disabled={updateReplyMutation.isLoading}
+                                    disabled={isUpdating}
                                   >
-                                    {updateReplyMutation.isLoading ? (
+                                    {isUpdating ? (
                                       <Icons.spinner className='animate-spin' />
                                     ) : (
                                       <Icons.check />

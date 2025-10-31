@@ -2,10 +2,30 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@groupi/services';
 import { AdminDashboard } from './components/admin-dashboard';
+import { AdminDashboardSkeleton } from '@/components/skeletons/admin-dashboard-skeleton';
+import { Suspense } from 'react';
 
-export const dynamic = 'force-dynamic';
+type PageProps = {
+  searchParams?: Promise<{ [key: string]: string | undefined }>;
+};
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+
+  return (
+    <div className='container mx-auto py-8'>
+      <Suspense fallback={<AdminDashboardSkeleton />}>
+        <AdminContent searchParams={resolvedSearchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+type AdminContentProps = {
+  searchParams?: { [key: string]: string | undefined };
+};
+
+async function AdminContent({ searchParams }: AdminContentProps) {
   // Properly validate session on server (not just cookie check)
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -24,9 +44,5 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  return (
-    <div className='container mx-auto py-8'>
-      <AdminDashboard />
-    </div>
-  );
+  return <AdminDashboard searchParams={searchParams} />;
 }

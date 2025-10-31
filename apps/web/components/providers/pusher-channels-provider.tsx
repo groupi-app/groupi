@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import type Pusher from 'pusher-js';
 import type { Channel } from 'pusher-js';
-import { pusherClient } from '@/lib/pusher-client';
+import { getPusherClient } from '@/lib/pusher-client';
 
 interface PusherChannelsContextValue {
   client: Pusher | null;
@@ -43,9 +43,9 @@ export function PusherChannelsProvider({
   const connectionStateRef = useRef<string>('disconnected');
   const isConnectedRef = useRef<boolean>(false);
 
-  // Initialize singleton client from app lib
-  if (!clientRef.current) {
-    clientRef.current = pusherClient;
+  // Initialize singleton client from app lib on first render
+  if (!clientRef.current && typeof window !== 'undefined') {
+    clientRef.current = getPusherClient();
   }
 
   useEffect(() => {

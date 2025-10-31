@@ -9,7 +9,7 @@ import {
   UpdateMemberAvailabilitiesParams,
   ChooseDateTimeParams,
 } from '@groupi/schema/params';
-import { PDTDTO } from '@groupi/schema/data';
+import { AvailabilityPageData } from '@groupi/schema/data';
 import {
   NotFoundError,
   UnauthorizedError,
@@ -46,7 +46,7 @@ export const getMyAvailabilities = async ({
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -92,7 +92,9 @@ export const getMyAvailabilities = async ({
         reason: 'not_member_of_event',
         operation: 'getMyAvailabilities',
       });
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -155,7 +157,7 @@ export const getMyAvailabilities = async ({
           ];
         }
         return [
-          new DatabaseError('Failed to fetch availabilities'),
+          new DatabaseError({ message: 'Failed to fetch availabilities' }),
           undefined,
         ] as [DatabaseError, undefined];
       });
@@ -180,14 +182,14 @@ export const getEventPotentialDateTimes = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError,
-    PDTDTO
+    AvailabilityPageData
   >
 > => {
   // Get auth outside Effect.gen
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -247,14 +249,14 @@ export const getEventPotentialDateTimes = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -264,7 +266,9 @@ export const getEventPotentialDateTimes = async ({
         eventId,
         operation: 'getEventPotentialDateTimes',
       });
-      return yield* Effect.fail(new NotFoundError(`Event not found`, eventId));
+      return yield* Effect.fail(
+        new NotFoundError({ message: `Event not found`, cause: eventId })
+      );
     }
 
     if (eventData.memberships.length === 0) {
@@ -275,14 +279,16 @@ export const getEventPotentialDateTimes = async ({
         operation: 'getEventPotentialDateTimes',
       });
       return yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
     }
 
     const userMembership = eventData.memberships[0];
 
     // Direct construction
-    const result: PDTDTO = {
+    const result: AvailabilityPageData = {
       potentialDateTimes: eventData.potentialDateTimes.map(
         (pdt: {
           id: string;
@@ -341,7 +347,7 @@ export const getEventPotentialDateTimes = async ({
 
     return result;
   }).pipe(
-    Effect.map(result => [null, result] as [null, PDTDTO]),
+    Effect.map(result => [null, result] as [null, AvailabilityPageData]),
     Effect.catchAll(err => {
       return Effect.gen(function* () {
         yield* Effect.void;
@@ -357,7 +363,9 @@ export const getEventPotentialDateTimes = async ({
           ];
         }
         return [
-          new DatabaseError('Failed to fetch potential date times'),
+          new DatabaseError({
+            message: 'Failed to fetch potential date times',
+          }),
           undefined,
         ] as [DatabaseError, undefined];
       });
@@ -391,7 +399,7 @@ export const updateMemberAvailabilities = async (
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -420,14 +428,14 @@ export const updateMemberAvailabilities = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -439,9 +447,9 @@ export const updateMemberAvailabilities = async (
         operation: 'updateMemberAvailabilities',
       });
       yield* Effect.fail(
-        new UnauthorizedError(
-          'Not authorized to update availabilities for this event'
-        )
+        new UnauthorizedError({
+          message: 'Not authorized to update availabilities for this event',
+        })
       );
       return;
     }
@@ -462,14 +470,14 @@ export const updateMemberAvailabilities = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -491,14 +499,14 @@ export const updateMemberAvailabilities = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -521,7 +529,7 @@ export const updateMemberAvailabilities = async (
           return [err, undefined] as const;
         }
         return [
-          new DatabaseError('Failed to update availabilities'),
+          new DatabaseError({ message: 'Failed to update availabilities' }),
           undefined,
         ] as const;
       });
@@ -558,7 +566,7 @@ export const chooseDateTime = async (
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -588,14 +596,14 @@ export const chooseDateTime = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -607,7 +615,9 @@ export const chooseDateTime = async (
         operation: 'chooseDateTime',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Only organizers can choose the date')
+        new UnauthorizedError({
+          message: 'Only organizers can choose the date',
+        })
       );
       return;
     }
@@ -629,14 +639,14 @@ export const chooseDateTime = async (
           potentialDateTimeId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -649,7 +659,10 @@ export const chooseDateTime = async (
         operation: 'chooseDateTime',
       });
       yield* Effect.fail(
-        new NotFoundError('Potential date time not found', potentialDateTimeId)
+        new NotFoundError({
+          message: 'Potential date time not found',
+          cause: potentialDateTimeId,
+        })
       );
       return;
     }
@@ -669,14 +682,14 @@ export const chooseDateTime = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -723,7 +736,7 @@ export const chooseDateTime = async (
           return [err, undefined] as const;
         }
         return [
-          new OperationError('Failed to choose date time'),
+          new OperationError({ message: 'Failed to choose date time' }),
           undefined,
         ] as const;
       });

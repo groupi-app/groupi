@@ -1,12 +1,11 @@
 'use client';
 import { Calendar } from '@/components/ui/calendar';
-// Migrated from server actions to tRPC hooks
-import { useUpdateEventDetails } from '@groupi/hooks';
+import { updateEventDetailsAction } from '@/actions/event-actions';
 import { merge } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
@@ -62,9 +61,7 @@ export function EditEventMultiDate({
   dates: Date[] | undefined;
 }) {
   const router = useRouter();
-
-  // Use our new tRPC hook with integrated real-time sync
-  const updatePotentialDateTimesMutation = useUpdateEventDetails();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
@@ -108,24 +105,24 @@ export function EditEventMultiDate({
     );
   }
 
-  async function onSubmit2(_data: z.infer<typeof form2Schema>) {
-    updatePotentialDateTimesMutation.mutate(
-      {
-        eventId,
-        // potentialDateTimes updating is not supported; leaving minimal payload
-      },
-      {
-        onSuccess: () => {
-          toast.success('Event updated.');
-          router.push(`/event/${eventId}`);
-        },
-        onError: () => {
-          toast.error('Failed to update event', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+  async function onSubmit2() {
+    setIsUpdating(true);
+
+    // Note: This component needs refactoring - updateEventDetails doesn't support changing potential date times
+    const [error] = await updateEventDetailsAction({
+      eventId,
+      // potentialDateTimes updating not currently supported by this action
+    });
+
+    if (error) {
+      toast.error('Failed to update event', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+      setIsUpdating(false);
+    } else {
+      toast.success('Event updated.');
+      router.push(`/event/${eventId}`);
+    }
   }
 
   return (
@@ -224,6 +221,7 @@ export function EditEventMultiDate({
                           onClick={() => {
                             form2.setValue(
                               'dateTimes',
+                              // eslint-disable-next-line react-hooks/incompatible-library
                               form2
                                 .watch('dateTimes')
                                 .filter((_, index) => index !== i)
@@ -278,12 +276,9 @@ export function EditEventMultiDate({
                 className='flex items-center gap-1'
                 type='submit'
                 form='form2'
-                disabled={
-                  updatePotentialDateTimesMutation.isLoading ||
-                  form2.watch('dateTimes').length < 2
-                }
+                disabled={isUpdating || form2.watch('dateTimes').length < 2}
               >
-                {updatePotentialDateTimesMutation.isLoading ? (
+                {isUpdating ? (
                   <Icons.spinner className='h-4 w-4 animate-spin' />
                 ) : (
                   <></>

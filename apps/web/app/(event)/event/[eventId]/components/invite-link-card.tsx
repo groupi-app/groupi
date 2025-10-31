@@ -8,11 +8,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-// Migrated from server actions to tRPC hooks
-import { useDeleteInvite } from '@groupi/hooks';
+import { deleteInviteAction } from '@/actions/invite-actions';
 import { cn, timeUntil } from '@/lib/utils';
-import type { EventInviteDTO } from '@groupi/schema';
-// DTO adjusted
+import type { EventInviteData } from '@groupi/schema';
 import {
   DialogDescription,
   DialogTitle,
@@ -37,14 +35,12 @@ export function InviteLinkCard({
   selectedInvites,
   setSelectedInvites,
 }: {
-  invite: EventInviteDTO;
+  invite: EventInviteData;
   selectedInvites: string[];
   setSelectedInvites: (invites: string[]) => void;
 }) {
   const [dialogType, setDialogType] = useState<'delete' | 'view'>('view');
-
-  // Use our new tRPC hook with integrated real-time sync
-  const deleteInviteMutation = useDeleteInvite();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { id, name, usesRemaining, maxUses, expiresAt, createdAt, createdBy } =
     invite;
@@ -52,27 +48,18 @@ export function InviteLinkCard({
   // Generate invite URL using utility function
   const inviteUrl = getInviteUrl(id);
 
-  const handleDeleteInvite = () => {
-    deleteInviteMutation.mutate(
-      { inviteId: id },
-      {
-        onSuccess: ([error, _result]: [Error | null, unknown]) => {
-          if (error) {
-            toast.error('Failed to delete invite', {
-              description: 'The invite could not be deleted. Please try again.',
-            });
-            return;
-          }
+  const handleDeleteInvite = async () => {
+    setIsDeleting(true);
+    const [error] = await deleteInviteAction({ inviteId: id });
 
-          toast.success('The invite has been successfully deleted.');
-        },
-        onError: () => {
-          toast.error('Failed to delete invite', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Failed to delete invite', {
+        description: 'The invite could not be deleted. Please try again.',
+      });
+      setIsDeleting(false);
+    } else {
+      toast.success('The invite has been successfully deleted.');
+    }
   };
 
   return (
@@ -240,20 +227,17 @@ export function InviteLinkCard({
             <DialogFooter>
               <div className='flex gap-4 justify-end'>
                 <DialogClose asChild>
-                  <Button
-                    variant='ghost'
-                    disabled={deleteInviteMutation.isLoading}
-                  >
+                  <Button variant='ghost' disabled={isDeleting}>
                     Cancel
                   </Button>
                 </DialogClose>
                 <DialogClose asChild>
                   <Button
                     onClick={handleDeleteInvite}
-                    disabled={deleteInviteMutation.isLoading}
+                    disabled={isDeleting}
                     variant='destructive'
                   >
-                    {deleteInviteMutation.isLoading ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? 'Deleting...' : 'Delete'}
                   </Button>
                 </DialogClose>
               </div>

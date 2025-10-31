@@ -9,11 +9,11 @@ import {
 } from '../generated';
 
 // ============================================================================
-// POST DOMAIN DATA DTOS
+// POST DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic post DTO
-export const PostDTO = PostSchema.pick({
+// Basic post data
+export const PostData = PostSchema.pick({
   id: true,
   title: true,
   content: true,
@@ -24,10 +24,10 @@ export const PostDTO = PostSchema.pick({
   editedAt: true,
 });
 
-export type PostDTO = z.infer<typeof PostDTO>;
+export type PostData = z.infer<typeof PostData>;
 
-// Post with author DTO
-export const PostWithAuthorDTO = PostDTO.extend({
+// Post with author data
+export const PostWithAuthorData = PostData.extend({
   author: z.object({
     id: z.string(),
     user: UserSchema.pick({
@@ -38,10 +38,10 @@ export const PostWithAuthorDTO = PostDTO.extend({
   }),
 });
 
-export type PostWithAuthorDTO = z.infer<typeof PostWithAuthorDTO>;
+export type PostWithAuthorData = z.infer<typeof PostWithAuthorData>;
 
-// Post card DTO - for post lists and feeds
-export const PostCardDTO = PostWithAuthorDTO.extend({
+// Post card data - for post lists and feeds (inline in PostFeedData)
+const PostCardData = PostWithAuthorData.extend({
   replyCount: z.number(),
   replies: z.array(
     ReplySchema.pick({
@@ -61,10 +61,8 @@ export const PostCardDTO = PostWithAuthorDTO.extend({
   ),
 });
 
-export type PostCardDTO = z.infer<typeof PostCardDTO>;
-
-// Post detail DTO - for post detail pages
-export const PostDetailDTO = PostWithAuthorDTO.extend({
+// Post detail data - for post detail pages
+export const PostDetailData = PostWithAuthorData.extend({
   replies: z.array(
     ReplySchema.pick({
       id: true,
@@ -89,15 +87,15 @@ export const PostDetailDTO = PostWithAuthorDTO.extend({
   }),
 });
 
-export type PostDetailDTO = z.infer<typeof PostDetailDTO>;
+export type PostDetailData = z.infer<typeof PostDetailData>;
 
-// Post feed DTO - for event post feeds
-export const PostFeedDTO = z.object({
+// Post feed data - for event post feeds
+export const PostFeedData = z.object({
   event: EventSchema.pick({
     id: true,
     chosenDateTime: true,
   }).extend({
-    posts: z.array(PostCardDTO),
+    posts: z.array(PostCardData),
     memberships: z.array(
       MembershipSchema.pick({
         id: true,
@@ -125,15 +123,15 @@ export const PostFeedDTO = z.object({
   }),
 });
 
-export type PostFeedDTO = z.infer<typeof PostFeedDTO>;
+export type PostFeedData = z.infer<typeof PostFeedData>;
 
 // ============================================================================
 // PAGE-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Post detail page DTO
-export const PostDetailPageDTO = z.object({
-  post: PostDetailDTO,
+// Post detail page data
+export const PostDetailPageData = z.object({
+  post: PostDetailData,
   userMembership: MembershipSchema.pick({
     id: true,
     role: true,
@@ -141,14 +139,14 @@ export const PostDetailPageDTO = z.object({
   }),
 });
 
-export type PostDetailPageDTO = z.infer<typeof PostDetailPageDTO>;
+export type PostDetailPageData = z.infer<typeof PostDetailPageData>;
 
 // ============================================================================
-// ADMIN-SPECIFIC DTOS
+// ADMIN-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Post admin list item DTO - for admin dashboard
-export const PostAdminListItemDTO = PostSchema.pick({
+// Post admin list item data - for admin dashboard
+export const PostAdminListItemData = PostSchema.pick({
   id: true,
   title: true,
   content: true,
@@ -170,4 +168,4 @@ export const PostAdminListItemDTO = PostSchema.pick({
   }),
 });
 
-export type PostAdminListItemDTO = z.infer<typeof PostAdminListItemDTO>;
+export type PostAdminListItemData = z.infer<typeof PostAdminListItemData>;

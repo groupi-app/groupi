@@ -1,6 +1,5 @@
 import { Effect, Schedule } from 'effect';
 import { getCurrentUserId } from './auth';
-import { z } from 'zod';
 import { db } from '../infrastructure/db';
 import {
   GetRepliesByPostParams,
@@ -8,6 +7,7 @@ import {
   UpdateReplyParams,
   DeleteReplyParams,
 } from '@groupi/schema/params';
+import { ReplyData, OperationResult } from '@groupi/schema/data';
 import {
   NotFoundError,
   UnauthorizedError,
@@ -20,25 +20,8 @@ import {
 } from '@groupi/schema';
 import { getPrismaError } from '../shared/errors';
 import { createEventNotifications } from './notification';
-import { OperationSuccessSchema } from '../shared/operations';
 import type { ResultTuple } from '@groupi/schema';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
-
-// Import centralized domain errors
-
-// ============================================================================
-// ZOD SCHEMAS FOR RETURN TYPES
-// ============================================================================
-
-// Schema for created replies
-export const CreatedReplySchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  authorId: z.string(),
-  postId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
 
 // ============================================================================
 // PUBLIC API FUNCTIONS WITH RESULT TUPLE PATTERN
@@ -83,7 +66,7 @@ export const getRepliesByPost = async ({
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -125,7 +108,9 @@ export const getRepliesByPost = async ({
     );
 
     if (!post) {
-      yield* Effect.fail(new NotFoundError(`Post not found`, postId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Post not found`, cause: postId })
+      );
       return;
     }
 
@@ -159,7 +144,9 @@ export const getRepliesByPost = async ({
     );
 
     if (!membership) {
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -268,7 +255,7 @@ export const getRepliesByPost = async ({
               errorType: err.constructor.name,
             });
             return [
-              new DatabaseError('Failed to fetch replies'),
+              new DatabaseError({ message: 'Failed to fetch replies' }),
               undefined,
             ] as const;
         }
@@ -311,14 +298,14 @@ export const createReply = async (
 ): Promise<
   ResultTuple<
     UnauthorizedError | DatabaseError | AuthenticationError,
-    z.infer<typeof CreatedReplySchema>
+    ReplyData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -352,19 +339,19 @@ export const createReply = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!post) {
-      yield* Effect.fail(new DatabaseError('Post not found'));
+      yield* Effect.fail(new DatabaseError({ message: 'Post not found' }));
       return;
     }
 
@@ -375,7 +362,7 @@ export const createReply = async (
 
     if (!userMembership) {
       yield* Effect.fail(
-        new UnauthorizedError('You are not a member of this event')
+        new UnauthorizedError({ message: 'You are not a member of this event' })
       );
       return;
     }
@@ -398,14 +385,14 @@ export const createReply = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -431,19 +418,26 @@ export const createReply = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
-    // Validate result against schema
-    const validatedResult = CreatedReplySchema.parse(reply);
+    // Direct construction - matches ReplyData schema
+    const validatedResult: ReplyData = {
+      id: reply.id,
+      text: reply.text,
+      authorId: reply.authorId,
+      postId: reply.postId,
+      createdAt: reply.createdAt,
+      updatedAt: reply.updatedAt,
+    };
 
     yield* Effect.logInfo('Reply created successfully', {
       userId, // Who performed the action
@@ -497,15 +491,13 @@ export const createReply = async (
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to create reply'),
+          new DatabaseError({ message: 'Failed to create reply' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(
-      result => [null, result] as [null, z.infer<typeof CreatedReplySchema>]
-    )
+    Effect.map(result => [null, result] as [null, ReplyData])
   );
 
   return Effect.runPromise(
@@ -524,14 +516,14 @@ export const updateReply = async (
     | ConstraintError
     | ValidationError
     | AuthenticationError,
-    z.infer<typeof OperationSuccessSchema>
+    OperationResult
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -560,25 +552,29 @@ export const updateReply = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!reply) {
-      yield* Effect.fail(new NotFoundError(`Reply not found`, replyId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Reply not found`, cause: replyId })
+      );
       return;
     }
 
     // Check authorization (business logic - no retry)
     if (reply.authorId !== userId) {
-      yield* Effect.fail(new UnauthorizedError('User not authorized'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'User not authorized' })
+      );
       return;
     }
 
@@ -596,14 +592,14 @@ export const updateReply = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -656,15 +652,13 @@ export const updateReply = async (
           operation: 'updateReply',
         });
         return [
-          new DatabaseError('Failed to update reply'),
+          new DatabaseError({ message: 'Failed to update reply' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(
-      result => [null, result] as [null, z.infer<typeof OperationSuccessSchema>]
-    )
+    Effect.map(result => [null, result] as [null, OperationResult])
   );
 
   // Run the effect and return the result tuple
@@ -684,14 +678,14 @@ export const deleteReply = async ({
     | ConstraintError
     | OperationError
     | AuthenticationError,
-    z.infer<typeof OperationSuccessSchema>
+    OperationResult
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -726,19 +720,21 @@ export const deleteReply = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!reply) {
-      yield* Effect.fail(new NotFoundError(`Reply not found`, replyId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Reply not found`, cause: replyId })
+      );
       return;
     }
 
@@ -749,7 +745,7 @@ export const deleteReply = async ({
 
     if (!currentUserMembership) {
       yield* Effect.fail(
-        new UnauthorizedError('You are not a member of this event')
+        new UnauthorizedError({ message: 'You are not a member of this event' })
       );
       return;
     }
@@ -758,7 +754,9 @@ export const deleteReply = async ({
       reply.authorId !== userId &&
       currentUserMembership.role === 'ATTENDEE'
     ) {
-      yield* Effect.fail(new UnauthorizedError('User not authorized'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'User not authorized' })
+      );
       return;
     }
 
@@ -775,14 +773,14 @@ export const deleteReply = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -834,15 +832,13 @@ export const deleteReply = async ({
           operation: 'deleteReply',
         });
         return [
-          new OperationError('Failed to delete reply'),
+          new OperationError({ message: 'Failed to delete reply' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(
-      result => [null, result] as [null, z.infer<typeof OperationSuccessSchema>]
-    )
+    Effect.map(result => [null, result] as [null, OperationResult])
   );
 
   // Run the effect and return the result tuple

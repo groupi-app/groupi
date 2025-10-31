@@ -1,12 +1,12 @@
 'use client';
 import { useFormContext } from '@/components/providers/form-context-provider';
 import { Calendar } from '@/components/ui/calendar';
-import { useCreateEvent } from '@groupi/hooks';
+import { createEventAction } from '@/actions/event-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -30,9 +30,6 @@ export function NewEventSingleDate() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Use the hook to get the clean mutation function
-  const { createEvent } = useCreateEvent();
-
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,22 +41,25 @@ export function NewEventSingleDate() {
     },
   });
 
+  // Use useWatch instead of form.watch() for React Compiler compatibility
+  const watchedDate = useWatch({ control: form.control, name: 'date' });
+  const watchedTime = useWatch({ control: form.control, name: 'time' });
+
+  // Move redirect to useEffect to avoid calling during render
+  useEffect(() => {
+    if (!formState.title) {
+      router.push('/create');
+    }
+  }, [formState.title, router]);
+
   if (!formState.title) {
-    router.push('/create');
     return null;
   }
 
   const getDateTime = () => {
-    const date = form.watch('date');
-    const time = form.watch('time');
-
-    // Split time into hours and minutes
-    const [hours, minutes] = time.split(':').map(Number);
-
-    // Create new date object and set time components
-    const dateTime = new Date(date);
+    const [hours, minutes] = watchedTime.split(':').map(Number);
+    const dateTime = new Date(watchedDate);
     dateTime.setHours(hours, minutes, 0, 0);
-
     return dateTime;
   };
 
@@ -79,7 +79,7 @@ export function NewEventSingleDate() {
 
     const { title, description, location } = formState;
 
-    const [error, result] = await createEvent({
+    const [error, result] = await createEventAction({
       title,
       description,
       location,

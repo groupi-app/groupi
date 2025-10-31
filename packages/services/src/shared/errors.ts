@@ -25,28 +25,45 @@ export function getPrismaError(
     | PrismaClientUnknownRequestError
     | PrismaClientRustPanicError
     | Error
-): Error {
+):
+  | ValidationError
+  | ConnectionError
+  | OperationError
+  | DatabaseError
+  | NotFoundError
+  | UnauthorizedError
+  | ConstraintError
+  | ConflictError {
   // Handle Prisma Client validation errors
   if (cause instanceof PrismaClientValidationError) {
-    return new ValidationError(`Invalid data provided: ${cause.message}`);
+    return new ValidationError({
+      message: `Invalid data provided: ${cause.message}`,
+      cause,
+    });
   }
 
   // Handle Prisma Client initialization errors
   if (cause instanceof PrismaClientInitializationError) {
-    return new ConnectionError(
-      'Failed to initialize database connection',
-      cause
-    );
+    return new ConnectionError({
+      message: 'Failed to initialize database connection',
+      cause,
+    });
   }
 
   // Handle Prisma Client Rust panic errors
   if (cause instanceof PrismaClientRustPanicError) {
-    return new OperationError('Database engine crashed', cause);
+    return new OperationError({
+      message: 'Database engine crashed',
+      cause,
+    });
   }
 
   // Handle unknown request errors
   if (cause instanceof PrismaClientUnknownRequestError) {
-    return new DatabaseError('Unknown database error', cause);
+    return new DatabaseError({
+      message: 'Unknown database error',
+      cause,
+    });
   }
 
   // Handle known request errors with specific error codes
@@ -55,7 +72,10 @@ export function getPrismaError(
       // Not Found Errors
       case 'P2025': // "An operation failed because it depends on one or more records that were required but not found."
       case 'P2001': // "The record searched for in the where condition does not exist"
-        return new NotFoundError(`${resourceName} not found`, cause);
+        return new NotFoundError({
+          message: `${resourceName} not found`,
+          cause,
+        });
 
       // Connection Errors
       case 'P1001': // "Can't reach database server"
@@ -63,12 +83,18 @@ export function getPrismaError(
       case 'P1008': // "Operations timed out"
       case 'P1011': // "Error opening a TLS connection"
       case 'P2037': // "Too many database connections opened"
-        return new ConnectionError('Database connection error', cause);
+        return new ConnectionError({
+          message: 'Database connection error',
+          cause,
+        });
 
       // Authentication/Authorization Errors
       case 'P1000': // "Authentication failed against database server"
       case 'P1010': // "User was denied access on the database"
-        return new UnauthorizedError('Database access denied', cause);
+        return new UnauthorizedError({
+          message: 'Database access denied',
+          cause,
+        });
 
       // Constraint Violation Errors
       case 'P2002': // "Unique constraint failed"
@@ -81,11 +107,17 @@ export function getPrismaError(
       case 'P2020': // "Value out of range for the type"
       case 'P2021': // "The table does not exist in the current database"
       case 'P2022': // "The column does not exist in the current database"
-        return new ConstraintError('Database constraint violation', cause);
+        return new ConstraintError({
+          message: 'Database constraint violation',
+          cause,
+        });
 
       // Conflict/Concurrency Errors
       case 'P2034': // "Transaction failed due to a write conflict or a deadlock"
-        return new ConflictError('Database write conflict or deadlock', cause);
+        return new ConflictError({
+          message: 'Database write conflict or deadlock',
+          cause,
+        });
 
       // Validation Errors
       case 'P2005': // "The value stored in the database for the field is invalid for the field's type"
@@ -100,7 +132,10 @@ export function getPrismaError(
       case 'P2016': // "Query interpretation error"
       case 'P2017': // "The records for relation are not connected"
       case 'P2033': // "A number used in the query does not fit into a 64 bit signed integer"
-        return new ValidationError('Data validation error');
+        return new ValidationError({
+          message: 'Data validation error',
+          cause,
+        });
 
       // Database/Schema Errors
       case 'P1003': // "Database does not exist"
@@ -112,10 +147,10 @@ export function getPrismaError(
       case 'P2030': // "Cannot find a fulltext index to use for the search"
       case 'P2035': // "Assertion violation on the database"
       case 'P2036': // "Error in external connector"
-        return new DatabaseError(
-          'Database schema or configuration error',
-          cause
-        );
+        return new DatabaseError({
+          message: 'Database schema or configuration error',
+          cause,
+        });
 
       // Migration/Schema Engine Errors (P3xxx)
       case 'P3000': // "Failed to create database"
@@ -127,7 +162,10 @@ export function getPrismaError(
       case 'P3009': // "migrate found failed migrations"
       case 'P3014': // "Prisma Migrate could not create the shadow database"
       case 'P3018': // "A migration failed to apply"
-        return new OperationError('Database migration error', cause);
+        return new OperationError({
+          message: 'Database migration error',
+          cause,
+        });
 
       // Accelerate Errors (P6xxx and P5011)
       case 'P6000': // Generic server error
@@ -141,14 +179,23 @@ export function getPrismaError(
       case 'P6009': // Response size limit exceeded
       case 'P6010': // Project disabled
       case 'P5011': // Too many requests
-        return new OperationError('Prisma Accelerate error', cause);
+        return new OperationError({
+          message: 'Prisma Accelerate error',
+          cause,
+        });
 
       // Default case for any unhandled error codes
       default:
-        return new DatabaseError(`Database error (${cause.code})`, cause);
+        return new DatabaseError({
+          message: `Database error (${cause.code})`,
+          cause,
+        });
     }
   }
 
   // Fallback for any other error types
-  return new DatabaseError('Unknown database error', cause);
+  return new DatabaseError({
+    message: 'Unknown database error',
+    cause,
+  });
 }

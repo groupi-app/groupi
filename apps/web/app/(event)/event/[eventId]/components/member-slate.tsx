@@ -1,7 +1,7 @@
-import { EventPageDTO } from '@groupi/schema';
+import { MemberListPageData } from '@groupi/schema';
 import { Role } from '@prisma/client';
 
-type Member = EventPageDTO['memberships'][0];
+type Member = MemberListPageData['event']['memberships'][0];
 import MemberIcon from './member-icon';
 
 export function MemberSlate({

@@ -260,12 +260,12 @@ export const getCurrentUserId = async (): Promise<
             cause,
             status: cause.status,
           });
-          return new DatabaseError(`Auth API Error: ${cause.message}`, {
+          return new DatabaseError({
+            message: `Auth API Error: ${cause.message}`,
             cause,
-            status: cause.status,
           });
         }
-        return new DatabaseError('Failed to get session', { cause });
+        return new DatabaseError({ message: 'Failed to get session', cause });
       })
     );
     if (!session?.user?.id) {
@@ -319,12 +319,12 @@ export const getCurrentSession = async (): Promise<
             cause,
             status: cause.status,
           });
-          return new DatabaseError(`Auth API Error: ${cause.message}`, {
+          return new DatabaseError({
+            message: `Auth API Error: ${cause.message}`,
             cause,
-            status: cause.status,
           });
         }
-        return new DatabaseError('Failed to get session', { cause });
+        return new DatabaseError({ message: 'Failed to get session', cause });
       })
     );
 
@@ -403,7 +403,7 @@ export const createUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to create user', { cause });
+        return new DatabaseError({ message: 'Failed to create user', cause });
       })
     );
 
@@ -416,7 +416,10 @@ export const createUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to create person record', { cause });
+        return new DatabaseError({
+          message: 'Failed to create person record',
+          cause,
+        });
       })
     );
 
@@ -494,7 +497,7 @@ export const updateUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to update user', { cause });
+        return new DatabaseError({ message: 'Failed to update user', cause });
       })
     );
 
@@ -537,7 +540,10 @@ export const deleteUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to delete person record', { cause });
+        return new DatabaseError({
+          message: 'Failed to delete person record',
+          cause,
+        });
       })
     );
 
@@ -548,7 +554,7 @@ export const deleteUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to delete user', { cause });
+        return new DatabaseError({ message: 'Failed to delete user', cause });
       })
     );
 

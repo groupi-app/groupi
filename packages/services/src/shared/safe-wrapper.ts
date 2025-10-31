@@ -19,7 +19,9 @@ export function safeWrapper<Args extends unknown[], T, E extends Error>(
     } catch (err) {
       if (err instanceof z.ZodError) {
         return [
-          new ValidationError(`Validation failed: ${err.message}`),
+          new ValidationError({
+            message: `Validation failed: ${err.message}`,
+          }),
           undefined,
         ];
       }

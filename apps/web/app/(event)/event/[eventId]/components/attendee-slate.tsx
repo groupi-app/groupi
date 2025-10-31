@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { EventAttendeesPageDTO, RoleType, StatusType } from '@groupi/schema';
+import { EventAttendeesPageData, RoleType, StatusType } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -24,7 +24,7 @@ type AvailabilityWithDateTime = {
   };
 };
 
-type Attendee = EventAttendeesPageDTO['event']['memberships'][0] & {
+type Attendee = EventAttendeesPageData['event']['memberships'][0] & {
   event?: { chosenDateTime: Date | null };
   availabilities?: AvailabilityWithDateTime[];
 };

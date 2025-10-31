@@ -11,9 +11,9 @@ import {
   AcceptInviteParams,
 } from '@groupi/schema/params';
 import {
-  EventInviteDTO,
-  InvitePageDTO,
-  EventInvitePageDTO,
+  EventInviteData,
+  InvitePageData,
+  EventInvitePageData,
 } from '@groupi/schema/data';
 import {
   NotFoundError,
@@ -40,7 +40,7 @@ export const fetchInvitePageData = async ({
 }: GetInvitePageDataParams): Promise<
   ResultTuple<
     NotFoundError | ValidationError | DatabaseError | ConnectionError,
-    InvitePageDTO
+    InvitePageData
   >
 > => {
   const effect = Effect.gen(function* () {
@@ -99,25 +99,29 @@ export const fetchInvitePageData = async ({
           inviteId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!inviteData) {
-      yield* Effect.fail(new NotFoundError(`Invite not found`, inviteId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Invite not found`, cause: inviteId })
+      );
       return;
     }
 
     // Check if invite is expired
     if (inviteData.expiresAt && inviteData.expiresAt < new Date()) {
-      yield* Effect.fail(new ValidationError('Invite has expired'));
+      yield* Effect.fail(
+        new ValidationError({ message: 'Invite has expired' })
+      );
       return;
     }
 
@@ -127,12 +131,14 @@ export const fetchInvitePageData = async ({
       inviteData.usesRemaining !== null &&
       inviteData.usesRemaining <= 0
     ) {
-      yield* Effect.fail(new ValidationError('Invite has no remaining uses'));
+      yield* Effect.fail(
+        new ValidationError({ message: 'Invite has no remaining uses' })
+      );
       return;
     }
 
     // Direct construction
-    const result: InvitePageDTO = {
+    const result: InvitePageData = {
       id: inviteData.id,
       name: inviteData.name,
       eventId: inviteData.eventId,
@@ -203,13 +209,13 @@ export const fetchInvitePageData = async ({
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to fetch invite data'),
+          new DatabaseError({ message: 'Failed to fetch invite data' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, InvitePageDTO])
+    Effect.map(result => [null, result] as [null, InvitePageData])
   );
 
   return Effect.runPromise(
@@ -229,14 +235,14 @@ export const getEventInvitePageData = async ({
     | DatabaseError
     | ConnectionError
     | AuthenticationError,
-    EventInvitePageDTO
+    EventInvitePageData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -304,19 +310,22 @@ export const getEventInvitePageData = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!eventData) {
-      return [new NotFoundError(`Event not found`, eventId), undefined];
+      return [
+        new NotFoundError({ message: `Event not found`, cause: eventId }),
+        undefined,
+      ];
     }
 
     // Check if user has permission to manage invites
@@ -326,13 +335,13 @@ export const getEventInvitePageData = async ({
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
       return [
-        new UnauthorizedError('Not authorized to manage invites'),
+        new UnauthorizedError({ message: 'Not authorized to manage invites' }),
         undefined,
       ];
     }
 
     // Direct construction
-    const result: EventInvitePageDTO = {
+    const result: EventInvitePageData = {
       id: eventData.id,
       title: eventData.title,
       description: eventData.description,
@@ -377,13 +386,15 @@ export const getEventInvitePageData = async ({
             return [err, undefined] as const;
           default:
             return [
-              new DatabaseError('Failed to fetch event invite data'),
+              new DatabaseError({
+                message: 'Failed to fetch event invite data',
+              }),
               undefined,
             ] as const;
         }
       });
     }),
-    Effect.map(result => [null, result] as [null, EventInvitePageDTO])
+    Effect.map(result => [null, result] as [null, EventInvitePageData])
   );
 
   return Effect.runPromise(effect);
@@ -403,14 +414,14 @@ export const createInvite = async (
     | ConstraintError
     | ValidationError
     | AuthenticationError,
-    EventInviteDTO
+    EventInviteData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -441,20 +452,20 @@ export const createInvite = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!membership) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to create invites')
+        new UnauthorizedError({ message: 'Not authorized to create invites' })
       );
       return;
     }
@@ -506,18 +517,18 @@ export const createInvite = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
-    const result: EventInviteDTO = {
+    const result: EventInviteData = {
       id: invite.id,
       name: invite.name,
       eventId: invite.eventId,
@@ -566,13 +577,13 @@ export const createInvite = async (
 
         // For unexpected errors, return InviteCreationError
         return [
-          new OperationError('Failed to create invite'),
+          new OperationError({ message: 'Failed to create invite' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventInviteDTO])
+    Effect.map(result => [null, result] as [null, EventInviteData])
   );
 
   return Effect.runPromise(
@@ -600,7 +611,7 @@ export const deleteInvite = async ({
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -653,7 +664,9 @@ export const deleteInvite = async ({
     );
 
     if (!invite) {
-      yield* Effect.fail(new NotFoundError(`Invite not found`, inviteId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Invite not found`, cause: inviteId })
+      );
       return;
     }
 
@@ -663,7 +676,7 @@ export const deleteInvite = async ({
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to delete invites')
+        new UnauthorizedError({ message: 'Not authorized to delete invites' })
       );
       return;
     }
@@ -745,7 +758,7 @@ export const deleteInvite = async ({
               errorType: err.constructor.name,
             });
             return [
-              new OperationError('Failed to delete invite'),
+              new OperationError({ message: 'Failed to delete invite' }),
               undefined,
             ] as const;
         }
@@ -779,7 +792,7 @@ export const acceptInvite = async ({
   const [authError, userId] = await getCurrentUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -828,13 +841,17 @@ export const acceptInvite = async ({
     );
 
     if (!invite) {
-      yield* Effect.fail(new NotFoundError(`Invite not found`, inviteId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Invite not found`, cause: inviteId })
+      );
       return;
     }
 
     // Check if invite is expired
     if (invite.expiresAt && invite.expiresAt < new Date()) {
-      yield* Effect.fail(new ValidationError('Invite has expired'));
+      yield* Effect.fail(
+        new ValidationError({ message: 'Invite has expired' })
+      );
       return;
     }
 
@@ -844,7 +861,9 @@ export const acceptInvite = async ({
       invite.usesRemaining !== null &&
       invite.usesRemaining <= 0
     ) {
-      yield* Effect.fail(new ValidationError('Invite has no remaining uses'));
+      yield* Effect.fail(
+        new ValidationError({ message: 'Invite has no remaining uses' })
+      );
       return;
     }
 
@@ -1034,7 +1053,7 @@ export const acceptInvite = async ({
               errorType: err.constructor.name,
             });
             return [
-              new OperationError('Failed to accept invite'),
+              new OperationError({ message: 'Failed to accept invite' }),
               undefined,
             ] as const;
         }

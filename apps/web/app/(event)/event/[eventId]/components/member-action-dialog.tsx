@@ -7,11 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// Migrated from server actions to tRPC hooks
-import { useRemoveMember, useUpdateMemberRole } from '@groupi/hooks';
+import {
+  removeMemberAction,
+  updateMemberRoleAction,
+} from '@/actions/membership-actions';
 import { Member } from '@/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export enum MemberAction {
   KICK = 'KICK',
@@ -26,96 +29,58 @@ export function MemberActionDialog({
   member: Member;
   action: MemberAction;
 }) {
-  // Use our new tRPC hooks with integrated real-time sync
-  const removeMemberMutation = useRemoveMember();
-  const updateMemberRoleMutation = useUpdateMemberRole();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleMemberAction = () => {
+  const handleMemberAction = async () => {
+    setIsLoading(true);
+
     if (action === MemberAction.KICK) {
-      removeMemberMutation.mutate(
-        { memberId: member.id },
-        {
-          onSuccess: ([error, _result]) => {
-            if (error) {
-              toast.error('Failed to kick member', {
-                description:
-                  'The attendee could not be kicked. Please try again.',
-              });
-              return;
-            }
+      const [error] = await removeMemberAction({ memberId: member.id });
 
-            toast.success('Attendee kicked', {
-              description: 'The attendee has been kicked from the event.',
-            });
-          },
-          onError: () => {
-            toast.error('Failed to kick member', {
-              description: 'An unexpected error occurred. Please try again.',
-            });
-          },
-        }
-      );
+      if (error) {
+        toast.error('Failed to kick member', {
+          description: 'The attendee could not be kicked. Please try again.',
+        });
+        setIsLoading(false);
+      } else {
+        toast.success('Attendee kicked', {
+          description: 'The attendee has been kicked from the event.',
+        });
+      }
     } else if (action === MemberAction.DEMOTE) {
-      updateMemberRoleMutation.mutate(
-        {
-          membershipId: member.id,
-          role: 'ATTENDEE',
-        },
-        {
-          onSuccess: ([error, _result]) => {
-            if (error) {
-              toast.error('Failed to demote moderator', {
-                description:
-                  'The moderator could not be demoted. Please try again.',
-              });
-              return;
-            }
+      const [error] = await updateMemberRoleAction({
+        membershipId: member.id,
+        role: 'ATTENDEE',
+      });
 
-            toast.success('Moderator demoted', {
-              description:
-                'The moderator has been demoted to a normal attendee.',
-            });
-          },
-          onError: () => {
-            toast.error('Failed to demote moderator', {
-              description: 'An unexpected error occurred. Please try again.',
-            });
-          },
-        }
-      );
+      if (error) {
+        toast.error('Failed to demote moderator', {
+          description: 'The moderator could not be demoted. Please try again.',
+        });
+        setIsLoading(false);
+      } else {
+        toast.success('Moderator demoted', {
+          description: 'The moderator has been demoted to a normal attendee.',
+        });
+      }
     } else if (action === MemberAction.PROMOTE) {
-      updateMemberRoleMutation.mutate(
-        {
-          membershipId: member.id,
-          role: 'MODERATOR',
-        },
-        {
-          onSuccess: ([error, _result]) => {
-            if (error) {
-              toast.error('Failed to promote attendee', {
-                description:
-                  'The attendee could not be promoted. Please try again.',
-              });
-              return;
-            }
+      const [error] = await updateMemberRoleAction({
+        membershipId: member.id,
+        role: 'MODERATOR',
+      });
 
-            toast.success('Attendee promoted', {
-              description: 'The attendee has been promoted to a moderator.',
-            });
-          },
-          onError: () => {
-            toast.error('Failed to promote attendee', {
-              description: 'An unexpected error occurred. Please try again.',
-            });
-          },
-        }
-      );
+      if (error) {
+        toast.error('Failed to promote attendee', {
+          description: 'The attendee could not be promoted. Please try again.',
+        });
+        setIsLoading(false);
+      } else {
+        toast.success('Attendee promoted', {
+          description: 'The attendee has been promoted to a moderator.',
+        });
+      }
     }
   };
-
-  // Check if any mutation is loading
-  const isLoading =
-    removeMemberMutation.isLoading || updateMemberRoleMutation.isLoading;
 
   return (
     <DialogContent>

@@ -1,9 +1,9 @@
 import {
-  useMarkNotificationAsRead,
-  useMarkNotificationAsUnread,
-} from '@groupi/hooks';
+  markNotificationAsReadAction,
+  markNotificationAsUnreadAction,
+} from '@/actions/notification-actions';
 import { formatDate } from '@/lib/utils';
-import type { NotificationFeedDTO } from '@groupi/schema';
+import type { NotificationFeedData } from '@groupi/schema';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { useNotificationCloseContext } from '@/components/providers/notif-close-provider';
@@ -20,13 +20,10 @@ import { toast } from 'sonner';
 export function NotificationSlate({
   notification,
 }: {
-  notification: NotificationFeedDTO;
+  notification: NotificationFeedData;
 }) {
   const { createdAt, type, read } = notification;
 
-  // tRPC hooks for notification actions
-  const { markAsRead } = useMarkNotificationAsRead();
-  const { mutate: markUnreadMutate } = useMarkNotificationAsUnread();
   const { setPopoverOpen, setSheetOpen } = useNotificationCloseContext();
   const closeMenus = () => {
     setPopoverOpen(false);
@@ -72,18 +69,16 @@ export function NotificationSlate({
           <DropdownMenuContent align='end' className=''>
             {read ? (
               <DropdownMenuItem
-                onClick={() => {
-                  markUnreadMutate(
-                    { notificationId: notification.id },
-                    {
-                      onError: () => {
-                        toast.error('An error occurred', {
-                          description:
-                            'There was a problem marking this notification as unread.',
-                        });
-                      },
-                    }
-                  );
+                onClick={async () => {
+                  const [error] = await markNotificationAsUnreadAction({
+                    notificationId: notification.id,
+                  });
+                  if (error) {
+                    toast.error('An error occurred', {
+                      description:
+                        'There was a problem marking this notification as unread.',
+                    });
+                  }
                 }}
                 className='cursor-pointer'
                 asChild
@@ -95,15 +90,16 @@ export function NotificationSlate({
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
-                onClick={() => {
-                  markAsRead(notification.id, {
-                    onError: () => {
-                      toast.error('An error occurred', {
-                        description:
-                          'There was a problem marking this notification as read.',
-                      });
-                    },
+                onClick={async () => {
+                  const [error] = await markNotificationAsReadAction({
+                    notificationId: notification.id,
                   });
+                  if (error) {
+                    toast.error('An error occurred', {
+                      description:
+                        'There was a problem marking this notification as read.',
+                    });
+                  }
                 }}
                 className='cursor-pointer'
                 asChild

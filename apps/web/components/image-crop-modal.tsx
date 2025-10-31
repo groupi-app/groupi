@@ -100,7 +100,7 @@ export function ImageCropModal({
       onCropComplete(croppedBlob);
       onOpenChange(false);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Error cropping image:', error);
     }
   };

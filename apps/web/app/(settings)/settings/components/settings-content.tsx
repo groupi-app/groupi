@@ -1,46 +1,26 @@
-'use client';
-
-import { useSettingsPage } from '@groupi/hooks';
+import { getCachedSettingsData } from '@groupi/services';
 import { PushNotificationSettings } from './push-notification-settings';
 import { NotificationMethodsList } from './notification-methods-list';
+import { redirect } from 'next/navigation';
 
-export function SettingsContent({
+export async function SettingsContent({
   emails,
   userId,
 }: {
   emails: string[];
   userId: string;
 }) {
-  const { data, isLoading } = useSettingsPage();
-
-  if (isLoading || !data) {
-    return (
-      <div className='flex items-center justify-center py-8'>
-        <div className='text-lg'>Loading settings...</div>
-      </div>
-    );
-  }
-
-  const [error] = data;
+  const [error] = await getCachedSettingsData();
 
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
       case 'NotFoundError':
-        errorMessage = 'Settings not found';
-        break;
-      case 'DatabaseError':
-      case 'ConnectionError':
-        errorMessage = error.message || 'Failed to load settings';
-        break;
+        return <div>Settings not found</div>;
+      case 'AuthenticationError':
+        redirect('/sign-in');
+      default:
+        return <div>Failed to load settings</div>;
     }
-
-    return (
-      <div className='text-center py-8'>
-        <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-        <p className='mt-2'>{errorMessage}</p>
-      </div>
-    );
   }
 
   // Settings data is available if no error

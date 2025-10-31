@@ -1,16 +1,15 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitialsFromName } from '@/lib/utils';
-import { PersonBasicDTO } from '@groupi/schema';
+import { PersonBasicData } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
-import { NotificationCount } from './notification-count';
-import { NotificationWidget } from './notification-widget';
+// TODO: Re-implement notification components with server actions
 import { Button } from '@/components/ui/button';
 
 interface ProfileSlateProps {
-  userInfo: PersonBasicDTO;
+  userInfo: PersonBasicData;
 }
 
 export function ProfileSlate({ userInfo }: ProfileSlateProps) {
@@ -42,9 +41,8 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
             variant='ghost'
             className='rounded-full'
           >
-            <NotificationCount userId={userInfo.id}>
-              <Icons.bell className='size-5' />
-            </NotificationCount>
+            <Icons.bell className='size-5' />
+            {/* TODO: Re-implement NotificationCount */}
           </Button>
         </div>
       </div>
@@ -55,9 +53,12 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className='overflow-hidden p-2'
+            className='overflow-hidden p-4'
           >
-            <NotificationWidget userId={userInfo.id} />
+            <div className='text-sm text-muted-foreground'>
+              Notifications temporarily disabled during migration
+            </div>
+            {/* TODO: Re-implement NotificationWidget */}
           </motion.div>
         )}
       </AnimatePresence>

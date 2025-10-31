@@ -1,3 +1,5 @@
+'use client';
+
 import { NewEventMultiDate } from '../components/new-event-multi-date';
 
 export default function Page() {

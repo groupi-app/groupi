@@ -6,9 +6,9 @@ import {
   formatRoleName,
   getInitialsFromName,
 } from '@/lib/utils';
-import { EventPageDTO, RoleType } from '@groupi/schema';
+import { MemberListPageData, RoleType } from '@groupi/schema';
 
-type Member = EventPageDTO['memberships'][0];
+type Member = MemberListPageData['event']['memberships'][0];
 import { componentLogger } from '@/lib/logger';
 import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
 import { motion } from 'framer-motion';

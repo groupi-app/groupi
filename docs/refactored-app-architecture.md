@@ -274,12 +274,10 @@ export default async function EventPage({ params }) {
 ### Data-Fetching Pages
 
 1. **Event Page** (`/event/[eventId]`)
-
    - Components: EventHeader, MemberList, PostFeed
    - Real-time: Event updates, membership changes, new posts
 
 2. **Event Subpages** - All following the same pattern:
-
    - **Invite Management** (`/event/[eventId]/invite`)
      - Components: InviteCardList
      - Real-time: Invite changes, person updates
@@ -309,17 +307,14 @@ export default async function EventPage({ params }) {
      - Real-time: Potential date time changes
 
 3. **MyEvents Page** (`/events`)
-
    - Components: EventList
    - Real-time: Event updates, membership changes
 
 4. **Post Detail Page** (`/post/[postId]`)
-
    - Components: FullPost, Replies
    - Real-time: Post edits, new replies
 
 5. **Invite Page** (`/invite/[inviteId]`)
-
    - Components: InviteDetails
    - Real-time: Not needed (invites are static)
 

@@ -1,53 +1,26 @@
-'use client';
-
-import { useEventChangeDate } from '@groupi/hooks';
+import { getCachedEventHeaderData } from '@groupi/services';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export function ChangeDateContent({ eventId }: { eventId: string }) {
-  const { data, isLoading } = useEventChangeDate(eventId);
-
-  if (isLoading || !data) {
-    return (
-      <div className='container max-w-4xl'>
-        <div className='text-center py-8'>
-          <div className='text-lg'>Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const [error, changeDateData] = data;
+export async function ChangeDateContent({ eventId }: { eventId: string }) {
+  const [error, eventData] = await getCachedEventHeaderData(eventId);
 
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
       case 'NotFoundError':
-        errorMessage = 'Event not found';
-        break;
-      case 'UnauthorizedError':
-        errorMessage = 'You are not a member of this event';
-        break;
+        return <div>Event not found</div>;
       case 'AuthenticationError':
-        errorMessage = 'Please sign in';
-        break;
-      case 'DatabaseError':
-        errorMessage = 'Failed to load event data';
-        break;
+        redirect('/sign-in');
+      case 'UnauthorizedError':
+        return <div>You are not a member of this event</div>;
+      default:
+        return <div>Failed to load event data</div>;
     }
-
-    return (
-      <div className='container max-w-4xl'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>{errorMessage}</p>
-        </div>
-      </div>
-    );
   }
 
-  const { event } = changeDateData;
+  const { event } = eventData;
 
   return (
     <div className='container max-w-4xl'>

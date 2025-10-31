@@ -8,11 +8,11 @@ import {
 } from '../generated';
 
 // ============================================================================
-// INVITE DOMAIN DATA DTOS
+// INVITE DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic invite DTO
-export const InviteDTO = InviteSchema.pick({
+// Basic invite data
+export const InviteData = InviteSchema.pick({
   id: true,
   name: true,
   eventId: true,
@@ -23,10 +23,10 @@ export const InviteDTO = InviteSchema.pick({
   createdAt: true,
 });
 
-export type InviteDTO = z.infer<typeof InviteDTO>;
+export type InviteData = z.infer<typeof InviteData>;
 
-// Event invite DTO - for individual invite entries in invite lists
-export const EventInviteDTO = InviteDTO.extend({
+// Event invite data - for individual invite entries in invite lists
+export const EventInviteData = InviteData.extend({
   createdBy: MembershipSchema.pick({
     id: true,
   }).extend({
@@ -41,10 +41,10 @@ export const EventInviteDTO = InviteDTO.extend({
   }),
 });
 
-export type EventInviteDTO = z.infer<typeof EventInviteDTO>;
+export type EventInviteData = z.infer<typeof EventInviteData>;
 
-// Event invite management DTO - for invite management page showing all invites
-export const EventInviteManagementDTO = EventSchema.pick({
+// Event invite management data - for invite management page showing all invites
+export const EventInviteManagementData = EventSchema.pick({
   id: true,
   title: true,
   description: true,
@@ -53,7 +53,7 @@ export const EventInviteManagementDTO = EventSchema.pick({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  invites: z.array(EventInviteDTO),
+  invites: z.array(EventInviteData),
   memberships: z.array(
     MembershipSchema.pick({
       id: true,
@@ -65,10 +65,12 @@ export const EventInviteManagementDTO = EventSchema.pick({
   ),
 });
 
-export type EventInviteManagementDTO = z.infer<typeof EventInviteManagementDTO>;
+export type EventInviteManagementData = z.infer<
+  typeof EventInviteManagementData
+>;
 
-// Individual invite page DTO - for showing invite details with full event info
-export const IndividualInviteDTO = EventInviteDTO.extend({
+// Individual invite page data - for showing invite details with full event info
+export const IndividualInviteData = EventInviteData.extend({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -80,16 +82,16 @@ export const IndividualInviteDTO = EventInviteDTO.extend({
   }),
 });
 
-export type IndividualInviteDTO = z.infer<typeof IndividualInviteDTO>;
+export type IndividualInviteData = z.infer<typeof IndividualInviteData>;
 
 // ============================================================================
 // PAGE-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Invite page DTO
-export const InvitePageDTO = IndividualInviteDTO;
-export type InvitePageDTO = z.infer<typeof InvitePageDTO>;
+// Invite page data
+export const InvitePageData = IndividualInviteData;
+export type InvitePageData = z.infer<typeof InvitePageData>;
 
-// Event invite page DTO
-export const EventInvitePageDTO = EventInviteManagementDTO;
-export type EventInvitePageDTO = z.infer<typeof EventInvitePageDTO>;
+// Event invite page data
+export const EventInvitePageData = EventInviteManagementData;
+export type EventInvitePageData = z.infer<typeof EventInvitePageData>;

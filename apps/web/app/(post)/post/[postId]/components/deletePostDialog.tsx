@@ -7,29 +7,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// Migrated from server actions to tRPC hooks
-import { useDeletePost } from '@groupi/hooks';
+import { deletePostAction } from '@/actions/post-actions';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function DeletePostDialog({ id }: { id: string }) {
   const router = useRouter();
-  // Use our new tRPC hook with integrated real-time sync
-  const { deletePost, isLoading } = useDeletePost();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDeletePost = () => {
-    deletePost(id, {
-      onSuccess: () => {
-        toast.success('The post has been deleted.');
-        router.back();
-      },
-      onError: () => {
-        toast.error('Failed to delete post', {
-          description: 'An unexpected error occurred. Please try again.',
-        });
-      },
-    });
+  const handleDeletePost = async () => {
+    setIsLoading(true);
+    const [error] = await deletePostAction({ postId: id });
+
+    if (error) {
+      toast.error('Failed to delete post', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+      setIsLoading(false);
+    } else {
+      toast.success('The post has been deleted.');
+      router.back();
+    }
   };
 
   return (
@@ -44,7 +44,9 @@ export function DeletePostDialog({ id }: { id: string }) {
       <DialogFooter>
         <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost'>Cancel</Button>
+            <Button variant='ghost' disabled={isLoading}>
+              Cancel
+            </Button>
           </DialogClose>
           <DialogClose asChild>
             <Button

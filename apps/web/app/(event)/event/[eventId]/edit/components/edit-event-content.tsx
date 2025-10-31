@@ -1,30 +1,19 @@
-'use client';
-
-import { useEventEdit } from '@groupi/hooks';
+import { getCachedEventHeaderData } from '@groupi/services';
 import EditEventInfo from './edit-event-info';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export function EditEventContent({ eventId }: { eventId: string }) {
-  const { data, isLoading } = useEventEdit(eventId);
-
-  if (isLoading || !data) {
-    return (
-      <div className='container max-w-4xl mt-10'>
-        <div className='text-center py-8'>
-          <div className='text-lg'>Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const [error, pageData] = data;
+export async function EditEventContent({ eventId }: { eventId: string }) {
+  const [error, eventData] = await getCachedEventHeaderData(eventId);
 
   if (error) {
     switch (error._tag) {
       case 'NotFoundError':
         return <div>Event not found</div>;
+      case 'AuthenticationError':
+        redirect('/sign-in');
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:
@@ -32,7 +21,7 @@ export function EditEventContent({ eventId }: { eventId: string }) {
     }
   }
 
-  const { event } = pageData;
+  const { event } = eventData;
 
   return (
     <div className='container max-w-4xl mt-10'>

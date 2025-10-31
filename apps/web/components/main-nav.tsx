@@ -70,7 +70,7 @@ export function MainNav({ items, session }: MainNavProps) {
       {session?.user && (
         <div className='hidden md:block'>
           <div className='flex items-center gap-3'>
-            <NotificationsDesktop userId={session.user.id} />
+            <NotificationsDesktop />
             <ProfileDropdown
               userInfo={{
                 id: session.user.id,

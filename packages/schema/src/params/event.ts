@@ -31,7 +31,7 @@ export type GetEventAttendeesPageDataParams = z.infer<
   typeof GetEventAttendeesPageDataParams
 >;
 
-// Create event parameters (migrated from CreateEventDTO)
+// Create event parameters
 export const CreateEventParams = EventSchema.pick({
   title: true,
 }).extend({
@@ -44,7 +44,7 @@ export const CreateEventParams = EventSchema.pick({
 
 export type CreateEventParams = z.infer<typeof CreateEventParams>;
 
-// Update event details parameters (migrated from UpdateEventDetailsDTO)
+// Update event details parameters
 export const UpdateEventDetailsParams = z.object({
   eventId: EventSchema.shape.id,
   title: EventSchema.shape.title.optional(),

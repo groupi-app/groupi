@@ -7,29 +7,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// Migrated from server actions to tRPC hooks
-import { useDeleteReply } from '@groupi/hooks';
+import { deleteReplyAction } from '@/actions/reply-actions';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function DeleteReplyDialog({ id }: { id: string }) {
-  // Use our new tRPC hook with integrated real-time sync
-  const deleteReplyMutation = useDeleteReply();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDeleteReply = () => {
-    deleteReplyMutation.mutate(
-      { replyId: id },
-      {
-        onSuccess: () => {
-          toast.success('The reply has been deleted.');
-        },
-        onError: () => {
-          toast.error('Failed to delete reply', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+  const handleDeleteReply = async () => {
+    setIsLoading(true);
+    const [error] = await deleteReplyAction({ replyId: id });
+
+    if (error) {
+      toast.error('Failed to delete reply', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+      setIsLoading(false);
+    } else {
+      toast.success('The reply has been deleted.');
+    }
   };
 
   return (
@@ -44,15 +41,17 @@ export function DeleteReplyDialog({ id }: { id: string }) {
       <DialogFooter>
         <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost'>Cancel</Button>
+            <Button variant='ghost' disabled={isLoading}>
+              Cancel
+            </Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
               onClick={handleDeleteReply}
-              disabled={deleteReplyMutation.isLoading}
+              disabled={isLoading}
               variant='destructive'
             >
-              {deleteReplyMutation.isLoading ? 'Deleting...' : 'Delete'}
+              {isLoading ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogClose>
         </div>

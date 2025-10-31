@@ -1,44 +1,50 @@
 import { SettingsContent } from '../components/settings-content';
-import { prefetchSettingsPageData } from '@groupi/hooks/server';
-import { getCurrentSession } from '@groupi/services';
-import { HydrationBoundary } from '@tanstack/react-query';
-import { pageLogger } from '@/lib/logger';
+import { getCachedSettingsData, getCurrentSession } from '@groupi/services';
+import { SettingsFormSkeleton } from '@/components/skeletons/settings-form-skeleton';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 
+/**
+ * Notification Settings Page - Uses private cache for user-specific data
+ * - Settings data cached with "use cache: private" (5 min TTL)
+ * - Ensures user isolation
+ * - Cache invalidates on settings updates
+ */
 export default async function NotificationSettings() {
-  const [error, session] = await getCurrentSession();
+  return (
+    <div className='md:container max-w-2xl mx-auto py-8'>
+      <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
+      <p className='mb-6 text-muted-foreground'>
+        Manage your notification preferences.
+      </p>
+      <Suspense fallback={<SettingsFormSkeleton />}>
+        <SettingsContentServer />
+      </Suspense>
+    </div>
+  );
+}
 
-  if (error || !session) {
+async function SettingsContentServer() {
+  'use cache: private';
+
+  const [sessionError, session] = await getCurrentSession();
+
+  if (sessionError || !session) {
     redirect('/sign-in');
+  }
+
+  const [error] = await getCachedSettingsData();
+
+  if (error) {
+    return (
+      <div className='text-center py-8'>
+        <h2 className='text-xl font-bold text-red-600'>Error</h2>
+        <p className='mt-2'>An error occurred while loading your settings.</p>
+      </div>
+    );
   }
 
   const emails = [session.user.email]; // Better Auth uses single email
 
-  try {
-    // Prefetch settings page data
-    // Services will get userId internally via getCurrentUserId()
-    const dehydratedState = await prefetchSettingsPageData();
-
-    return (
-      <HydrationBoundary state={dehydratedState}>
-        <div className='md:container max-w-2xl mx-auto py-8'>
-          <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
-          <p className='mb-6 text-muted-foreground'>
-            Manage your notification preferences.
-          </p>
-          <SettingsContent emails={emails} userId={session.user.id} />
-        </div>
-      </HydrationBoundary>
-    );
-  } catch (error) {
-    pageLogger.error({ error }, 'Error in notification settings page:');
-    return (
-      <div className='container pt-6'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>An error occurred while loading your settings.</p>
-        </div>
-      </div>
-    );
-  }
+  return <SettingsContent emails={emails} userId={session.user.id} />;
 }

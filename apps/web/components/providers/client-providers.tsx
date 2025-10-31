@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { TRPCProvider } from './trpc-provider';
 import { SupabaseRealtimeProvider } from './supabase-realtime-provider';
 import { PusherChannelsProvider } from './pusher-channels-provider';
 import { NotificationCloseContextProvider } from './notif-close-provider';
@@ -20,16 +19,14 @@ export function ClientProviders({ children, userId }: ClientProvidersProps) {
     <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
       <TooltipProvider>
         <PusherBeamsProvider>
-          <TRPCProvider>
-            <PusherChannelsProvider>
-              <SupabaseRealtimeProvider userId={userId}>
-                <NotificationCloseContextProvider>
-                  {children}
-                </NotificationCloseContextProvider>
-                <GlobalPushNotifications />
-              </SupabaseRealtimeProvider>
-            </PusherChannelsProvider>
-          </TRPCProvider>
+          <PusherChannelsProvider>
+            <SupabaseRealtimeProvider userId={userId}>
+              <NotificationCloseContextProvider>
+                {children}
+              </NotificationCloseContextProvider>
+              <GlobalPushNotifications />
+            </SupabaseRealtimeProvider>
+          </PusherChannelsProvider>
         </PusherBeamsProvider>
       </TooltipProvider>
     </ThemeProvider>

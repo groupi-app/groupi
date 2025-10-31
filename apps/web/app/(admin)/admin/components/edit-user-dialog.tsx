@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { trpc } from '@/lib/utils/api';
+import { useState, useEffect, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { UserAdminListItemDTO } from '@groupi/schema';
+import { toast } from 'sonner';
+import type { UserAdminListItemData } from '@groupi/schema';
+import { updateUserAction } from '@/actions/admin-actions';
 
 type EditUserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: UserAdminListItemDTO;
+  user: UserAdminListItemData;
   onSuccess: () => void;
   onClose: () => void;
 };
@@ -37,39 +38,51 @@ export function EditUserDialog({
   onSuccess,
   onClose,
 }: EditUserDialogProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    role: 'user',
-    image: '',
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize form state from user prop
+  const getInitialFormData = () => ({
+    name: user.name || '',
+    username: user.username || '',
+    role: user.role || 'user',
+    image: user.image || '',
   });
 
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Reset form when dialog opens with potentially different user
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        username: user.username || '',
-        role: user.role || 'user',
-        image: user.image || '',
-      });
+    if (open) {
+      setFormData(getInitialFormData());
+      setError(null);
     }
-  }, [user]);
-
-  const updateMutation = trpc.person.updateById.useMutation({
-    onSuccess: () => {
-      onSuccess();
-      onClose();
-    },
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, user.id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({
-      id: user.id,
-      name: formData.name,
-      username: formData.username || undefined,
-      role: formData.role,
-      image: formData.image || undefined,
+    setError(null);
+
+    startTransition(async () => {
+      const [err] = await updateUserAction({
+        id: user.id,
+        name: formData.name,
+        username: formData.username || undefined,
+        role: formData.role,
+        image: formData.image || undefined,
+      });
+
+      if (err) {
+        setError(err.message);
+        toast.error('Failed to update user', {
+          description: err.message,
+        });
+      } else {
+        toast.success('User updated successfully');
+        onSuccess();
+        onClose();
+      }
     });
   };
 
@@ -161,19 +174,17 @@ export function EditUserDialog({
               type='button'
               variant='outline'
               onClick={onClose}
-              disabled={updateMutation.isPending}
+              disabled={isPending}
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+            <Button type='submit' disabled={isPending}>
+              {isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
 
-          {updateMutation.isError && (
-            <p className='mt-2 text-sm text-destructive'>
-              Error: {updateMutation.error.message}
-            </p>
+          {error && (
+            <p className='mt-2 text-sm text-destructive'>Error: {error}</p>
           )}
         </form>
       </DialogContent>

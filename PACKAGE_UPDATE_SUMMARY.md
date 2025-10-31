@@ -11,6 +11,7 @@ All outdated packages have been updated to their latest versions, including majo
 ### Stage 1: Minor/Patch Updates (~45 packages)
 
 **Development Tools:**
+
 - TypeScript: 5.8.3 → 5.9.3
 - ESLint: 9.29.0 → 9.38.0
 - @typescript-eslint/eslint-plugin: 8.34.1 → 8.46.2
@@ -26,6 +27,7 @@ All outdated packages have been updated to their latest versions, including majo
 - supabase: 2.33.9 → 2.54.11
 
 **Radix UI Components (13 packages):**
+
 - @radix-ui/react-checkbox: 1.3.2 → 1.3.3
 - @radix-ui/react-dialog: 1.1.14 → 1.1.15
 - @radix-ui/react-dropdown-menu: 2.1.15 → 2.1.16
@@ -41,6 +43,7 @@ All outdated packages have been updated to their latest versions, including majo
 - @radix-ui/react-tooltip: 1.2.7 → 1.2.8
 
 **UI/Frontend Libraries:**
+
 - Tailwind CSS: 4.1.10 → 4.1.16
 - @tailwindcss/postcss: 4.1.10 → 4.1.16
 - @tanstack/react-query: 5.80.10 → 5.90.5
@@ -57,11 +60,13 @@ All outdated packages have been updated to their latest versions, including majo
 - tw-animate-css: 1.3.4 → 1.4.0
 
 **tRPC Ecosystem:**
+
 - @trpc/client: 11.4.3 → 11.7.1
 - @trpc/react-query: 11.4.3 → 11.7.1
 - @trpc/server: 11.4.3 → 11.7.1
 
 **Other:**
+
 - pino-pretty: 13.0.0 → 13.1.2
 - require-in-the-middle: 8.0.0 → 8.0.1
 
@@ -70,23 +75,28 @@ All outdated packages have been updated to their latest versions, including majo
 ### Stage 2: Medium-Risk Major Updates (~15 packages)
 
 **React Ecosystem:**
+
 - React: 19.1.0 → 19.2.0
 - React DOM: 19.1.0 → 19.2.0
 - @types/react: 19.0.12 → 19.2.2
 - @types/react-dom: 19.0.4 → 19.2.2
 
 **Type Definitions:**
+
 - @types/node: 20.2.4 → 24.9.2
 
 **Authentication & Monitoring:**
+
 - @sentry/nextjs: 9.35.0 → 10.22.0
 - @sentry/node: 9.35.0 → 10.22.0
 - @clerk/backend: 1.34.0 → 2.19.1
 
 **Testing:**
+
 - Cypress: 13.17.0 → 15.5.0
 
 **Utilities:**
+
 - @hookform/resolvers: 3.10.0 → 5.2.2
 - concurrently: 8.2.2 → 9.2.1
 - clsx: 1.2.1 → 2.1.1
@@ -98,17 +108,21 @@ All outdated packages have been updated to their latest versions, including majo
 ### Stage 3: High-Risk Major Updates (~20 packages)
 
 **Framework:**
+
 - ⚠️ Next.js: 15.3.0 → **16.0.1** (Major version jump)
 - @next/eslint-plugin-next: 15.3.4 → 16.0.1
 
 **Database:**
+
 - ⚠️ Prisma Client: 5.22.0 → **6.18.0** (Major version jump)
 - ⚠️ Prisma CLI: 5.22.0 → **6.18.0**
 
 **Validation:**
+
 - ⚠️ Zod: 3.25.67 → **4.1.12** (Major version jump)
 
 **Rich Text Editor (Complete rewrite):**
+
 - ⚠️ @tiptap/extension-character-count: 2.22.0 → **3.9.1**
 - ⚠️ @tiptap/extension-heading: 2.22.0 → **3.9.1**
 - ⚠️ @tiptap/extension-placeholder: 2.22.0 → **3.9.1**
@@ -118,9 +132,11 @@ All outdated packages have been updated to their latest versions, including majo
 - ⚠️ @tiptap/starter-kit: 2.22.0 → **3.9.1**
 
 **Logging:**
+
 - ⚠️ Pino: 9.7.0 → **10.1.0** (Breaking API changes)
 
 **Other Libraries:**
+
 - date-fns: 3.6.0 → 4.1.0
 - recharts: 2.15.4 → 3.3.0
 - resend: 4.6.0 → 6.3.0
@@ -138,16 +154,19 @@ All outdated packages have been updated to their latest versions, including majo
 ## 🔧 Breaking Changes & Fixes Applied
 
 ### 1. **Pino 10 Logging API Changes**
+
 **Breaking Change:** Pino 10 changed the logger method signature from:
+
 ```typescript
 // Old (Pino 9)
-logger.error('message', { data })
+logger.error('message', { data });
 
 // New (Pino 10)
-logger.error({ data }, 'message')
+logger.error({ data }, 'message');
 ```
 
 **Files Fixed:**
+
 - `apps/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/api/auth/username-to-email/route.ts`
 - `apps/web/app/api/auth/user/route.ts`
@@ -167,9 +186,11 @@ logger.error({ data }, 'message')
 **Total**: ~50 logger calls updated across 15 files
 
 ### 2. **next-themes 0.4.6 Type Export Changes**
+
 **Breaking Change:** Type imports moved to main export.
 
 **Fixed:**
+
 ```typescript
 // Old
 import { ThemeProvider } from 'next-themes';
@@ -182,9 +203,11 @@ import { ThemeProvider, type ThemeProviderProps } from 'next-themes';
 **File:** `apps/web/components/providers/theme-provider.tsx`
 
 ### 3. **zod-prisma-types Generator Issue**
+
 **Issue:** The `zod-prisma-types` package generates `z.cuid()` calls, but Zod 3.23+ removed this method.
 
 **Temporary Fix:** After each `pnpm generate`, run:
+
 ```bash
 sed -i '' 's/z\.cuid()/z.string()/g' packages/schema/src/generated/index.ts
 ```
@@ -192,22 +215,28 @@ sed -i '' 's/z\.cuid()/z.string()/g' packages/schema/src/generated/index.ts
 **⚠️ Note:** This will need a permanent solution when updating `zod-prisma-types` or contributing a fix upstream.
 
 ### 4. **Next.js 15/16 Static Generation Strictness**
+
 **Issue:** Pages using `headers()` failed static generation.
 
 **Fixed:** Added `export const dynamic = 'force-dynamic';` to:
+
 - `apps/web/app/layout.tsx` (makes all routes dynamic by default)
 - `apps/web/app/(admin)/admin/page.tsx`
 - `apps/web/app/(home)/page.tsx`
 
 ### 5. **TypeScript Strictness Improvements**
+
 With TypeScript 5.9.3, type inference became more strict.
 
 **Fixes Applied:**
+
 - Added type assertion in `admin-dashboard.tsx` (removed incorrect `users` prop)
 - Added type assertion in `event-list.tsx` for event ID
 
 ### 6. **Linting Errors (Pre-existing)**
+
 **Fixed:**
+
 - Unescaped apostrophes in sign-in page
 - Added proper `Link` component imports
 - Added eslint-disable comments for intentional console.error statements
@@ -217,13 +246,16 @@ With TypeScript 5.9.3, type inference became more strict.
 ## ⚠️ Known Issues & Warnings
 
 ### 1. Sentry Dependency Version Mismatch (Non-blocking)
+
 The build shows warnings about `import-in-the-middle` version mismatches:
+
 - Sentry's OpenTelemetry dependencies expect v1.14.4
 - Project uses v2.0.0
 
 **Impact:** These are warnings only and don't prevent the build or runtime functionality. Sentry and OpenTelemetry still work correctly.
 
 ### 2. Supabase CLI Binary Missing (Non-blocking)
+
 ```
 WARN Failed to create bin at .../supabase/bin/supabase
 ```
@@ -231,11 +263,13 @@ WARN Failed to create bin at .../supabase/bin/supabase
 **Impact:** This is a known pnpm issue with the Supabase CLI package but doesn't affect functionality. The Supabase CLI can still be run directly if needed.
 
 ### 3. zod-prisma-types Compatibility
+
 The `zod-prisma-types` package hasn't been updated to support Zod 3.23+'s removal of `z.cuid()`.
 
 **Current Workaround:** Manual replacement after each generation.
 
 **Recommended Actions:**
+
 1. Watch for `zod-prisma-types` updates that add Zod 4 compatibility
 2. Consider contributing a fix upstream
 3. Or switch to manual Zod schema definitions
@@ -255,6 +289,7 @@ The `zod-prisma-types` package hasn't been updated to support Zod 3.23+'s remova
 ## ✅ Verification
 
 ### Build Status
+
 ```bash
 ✅ pnpm install - Success
 ✅ pnpm generate - Success (with manual z.cuid fix)
@@ -263,6 +298,7 @@ The `zod-prisma-types` package hasn't been updated to support Zod 3.23+'s remova
 ```
 
 ### No Outdated Packages
+
 Running `pnpm outdated` shows no outdated packages remaining.
 
 ---
@@ -275,29 +311,24 @@ Since only manual spot-checking is feasible, test these key areas:
   - Sign in with magic link
   - Sign up
   - Sign out
-  
 - [ ] **Event Management**
   - Create event
   - Edit event
   - View event details
   - RSVP to event
   - View attendees
-  
 - [ ] **Posts & Replies**
   - Create post
   - Edit post
   - Add replies
-  
 - [ ] **Notifications**
   - Push notifications (if configured)
   - Email notifications
   - Notification settings page
-  
 - [ ] **Profile & Settings**
   - View profile
   - Edit profile
   - Update settings
-  
 - [ ] **Admin Dashboard** (if admin user)
   - User management
   - Event management
@@ -308,6 +339,7 @@ Since only manual spot-checking is feasible, test these key areas:
 ## 🚨 Important Notes
 
 1. **Prisma Schema Generation:** After running `pnpm generate`, you must run:
+
    ```bash
    sed -i '' 's/z\.cuid()/z.string()/g' packages/schema/src/generated/index.ts
    ```
@@ -325,6 +357,7 @@ Since only manual spot-checking is feasible, test these key areas:
 ## 📚 Migration References
 
 For detailed migration information, refer to:
+
 - [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/building-your-application/upgrading)
 - [Prisma 6 Upgrade Guide](https://www.prisma.io/docs/guides/upgrade-guides/upgrading-versions/upgrading-to-prisma-6)
 - [Zod 4 Changelog](https://github.com/colinhacks/zod/releases)
@@ -340,4 +373,3 @@ Your monorepo is now running on the latest versions of all dependencies, includi
 **Total Time:** ~15 minutes
 **Files Modified:** 25 files
 **Build Status:** ✅ Passing
-
