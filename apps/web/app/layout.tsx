@@ -6,15 +6,21 @@ import localFont from 'next/font/local';
 import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
 
-import { MainNav } from '@/components/main-nav';
+import { MainNavStatic } from '@/components/main-nav-static';
+// Temporarily disabled to test prerendering issue
+// import { MainNavDynamicWrapper } from '@/components/main-nav-dynamic-wrapper';
 import { ModeToggle } from '@/components/mode-toggle';
 import { GlobalUI } from '@/components/global-ui';
-import { navConfig } from '@/config/nav';
-import { getCurrentSession, Session } from '@groupi/services';
-import { ClientProviders } from '@/components/providers/client-providers';
+import { FooterCopyright } from '@/components/footer-copyright';
+// Temporarily disabled to test prerendering issue
+// import { navConfig } from '@/config/nav';
 import Link from 'next/link';
-
-export const dynamic = 'force-dynamic';
+// Temporarily disabled to test prerendering issue
+// import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { PusherBeamsProviderWrapper } from '@/components/providers/pusher-beams-provider-wrapper';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -79,14 +85,11 @@ export const metadata = {
   manifest: '/manifest.json',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [error, sessionData] = await getCurrentSession();
-  const session = error ? null : sessionData;
-
   return (
     <html suppressHydrationWarning lang='en'>
       <body
@@ -96,47 +99,61 @@ export default async function RootLayout({
           fontHeading.variable
         )}
       >
-        <ClientProviders userId={!session ? null : session.user.id}>
-          <InnerLayout session={session}>{children}</InnerLayout>
-        </ClientProviders>
+        <RootContent>{children}</RootContent>
         <GlobalUI />
       </body>
     </html>
   );
 }
 
-function InnerLayout({
-  children,
-  session,
-}: {
-  children: React.ReactNode;
-  session: Session | null;
-}) {
+function RootContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className='flex flex-col min-h-screen'>
-      <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-        <MainNav items={navConfig.mainNav} session={session} />
-      </header>
-      <main className='grow'>{children}</main>
-      <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
-        <div className='container mx-auto py-4 flex gap-8 items-center'>
-          <ModeToggle />
-          <div className='flex flex-col gap-2'>
-            <p>
-              Built by{' '}
-              <Link
-                className='underline font-medium'
-                href='https://tsurette.com'
-              >
-                Theia
-              </Link>
-            </p>
-            <p className='text-sm'>
-              &copy; {new Date().getFullYear()} {siteConfig.name}
-            </p>
+    <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+      <TooltipProvider>
+        <PusherBeamsProviderWrapper>
+          <div className='flex flex-col min-h-screen'>
+            <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+              <MainNavStatic
+                dynamicContent={
+                  // Temporarily disabled to test prerendering issue
+                  // <Suspense fallback={<MainNavDynamicSkeleton />}>
+                  //   <MainNavDynamicWrapper items={navConfig.mainNav} />
+                  // </Suspense>
+                  <MainNavDynamicSkeleton />
+                }
+              />
+            </header>
+            <main className='grow'>{children}</main>
+            <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+              <div className='container mx-auto py-4 flex gap-8 items-center'>
+                <ModeToggle />
+                <div className='flex flex-col gap-2'>
+                  <p>
+                    Built by{' '}
+                    <Link
+                      className='underline font-medium'
+                      href='https://tsurette.com'
+                    >
+                      Theia
+                    </Link>
+                  </p>
+                  <FooterCopyright />
+                </div>
+              </div>
+            </footer>
           </div>
-        </div>
-      </footer>
+        </PusherBeamsProviderWrapper>
+      </TooltipProvider>
+    </ThemeProvider>
+  );
+}
+
+// Skeleton for dynamic nav content
+function MainNavDynamicSkeleton() {
+  return (
+    <div className='flex items-center justify-end w-full gap-2'>
+      <Skeleton className='h-8 w-24' />
+      <Skeleton className='h-8 w-8 rounded-full' />
     </div>
   );
 }

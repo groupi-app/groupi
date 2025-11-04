@@ -11,6 +11,8 @@ import {
   admin,
   apiKey,
 } from 'better-auth/plugins';
+import { nextCookies } from 'better-auth/next-js';
+import { headers } from 'next/headers';
 import { PrismaClient } from '@prisma/client';
 import { createEffectLoggerLayer, authLogger } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -154,6 +156,7 @@ export const auth = betterAuth({
     }),
     admin(),
     apiKey(), // For API key authentication
+    nextCookies(), // Must be last plugin - handles cookies in Server Actions/Components
   ],
   hooks: {
     after: createAuthMiddleware(async ctx => {
@@ -237,6 +240,9 @@ export type User = typeof auth.$Infer.Session.user;
 // ============================================================================
 
 /**
+ * @deprecated Use getUserId() from './auth-helpers' instead
+ * This wrapper function is kept for backwards compatibility but will be removed in a future version.
+ *
  * Get the current user ID from session
  * Returns [null, null] if no session, [error, undefined] on API failure, [null, userId] on success
  */
@@ -246,33 +252,36 @@ export const getCurrentUserId = async (): Promise<
   const effect = Effect.gen(function* () {
     yield* Effect.logDebug('Getting current user ID');
 
-    const { headers } = yield* Effect.promise(() => import('next/headers'));
-    const requestHeaders = yield* Effect.promise(() => headers());
+    const requestHeadersValue = yield* Effect.tryPromise({
+      try: async () => await headers(),
+      catch: error =>
+        new DatabaseError({
+          message: 'Failed to get headers',
+          cause: error instanceof Error ? error : new Error(String(error)),
+        }),
+    });
 
     const session = yield* Effect.promise(() =>
       auth.api.getSession({
-        headers: requestHeaders,
+        headers: requestHeadersValue,
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
         if (cause instanceof APIError) {
-          Effect.logError('Auth API Error', {
+          return new DatabaseError({
+            message: `Auth API Error: ${cause.message}`,
             cause,
-            status: cause.status,
-          });
-          return new DatabaseError(`Auth API Error: ${cause.message}`, {
-            cause,
-            status: cause.status,
           });
         }
-        return new DatabaseError('Failed to get session', { cause });
+        return new DatabaseError({ message: 'Failed to get session', cause });
       })
     );
+
     if (!session?.user?.id) {
       yield* Effect.logInfo('No active session found', {
         operation: 'getCurrentUserId',
       });
-      return null; // No session is not an error, just return null
+      return null;
     }
 
     yield* Effect.logDebug('Successfully retrieved user ID', {
@@ -296,6 +305,9 @@ export const getCurrentUserId = async (): Promise<
 };
 
 /**
+ * @deprecated Use getSession() from './auth-helpers' instead
+ * This wrapper function is kept for backwards compatibility but will be removed in a future version.
+ *
  * Get the current session
  * Returns [null, null] if no session, [error, undefined] on API failure, [null, session] on success
  */
@@ -305,26 +317,28 @@ export const getCurrentSession = async (): Promise<
   const effect = Effect.gen(function* () {
     yield* Effect.logDebug('Getting current session');
 
-    const { headers } = yield* Effect.promise(() => import('next/headers'));
-    const requestHeaders = yield* Effect.promise(() => headers());
+    const requestHeadersValue = yield* Effect.tryPromise({
+      try: async () => await headers(),
+      catch: error =>
+        new DatabaseError({
+          message: 'Failed to get headers',
+          cause: error instanceof Error ? error : new Error(String(error)),
+        }),
+    });
 
     const session = yield* Effect.promise(() =>
       auth.api.getSession({
-        headers: requestHeaders,
+        headers: requestHeadersValue,
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
         if (cause instanceof APIError) {
-          Effect.logError('Auth API Error', {
+          return new DatabaseError({
+            message: `Auth API Error: ${cause.message}`,
             cause,
-            status: cause.status,
-          });
-          return new DatabaseError(`Auth API Error: ${cause.message}`, {
-            cause,
-            status: cause.status,
           });
         }
-        return new DatabaseError('Failed to get session', { cause });
+        return new DatabaseError({ message: 'Failed to get session', cause });
       })
     );
 
@@ -332,7 +346,7 @@ export const getCurrentSession = async (): Promise<
       yield* Effect.logInfo('No active session found', {
         operation: 'getCurrentSession',
       });
-      return null; // No session is not an error, just return null
+      return null;
     }
 
     yield* Effect.logDebug('Successfully retrieved session', {
@@ -358,10 +372,11 @@ export const getCurrentSession = async (): Promise<
 
 /**
  * Legacy compatibility function that mimics Clerk's auth() return format
- * @deprecated Use getCurrentUserId() or getRequiredUserId() instead
+ * @deprecated Use getUserId() from './auth-helpers' instead
  */
 export const getLegacyAuth = async () => {
-  const [error, userId] = await getCurrentUserId();
+  const { getUserId } = await import('./auth-helpers');
+  const [error, userId] = await getUserId();
   return {
     userId: error || !userId ? null : userId,
   };
@@ -403,7 +418,7 @@ export const createUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to create user', { cause });
+        return new DatabaseError({ message: 'Failed to create user', cause });
       })
     );
 
@@ -416,7 +431,10 @@ export const createUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to create person record', { cause });
+        return new DatabaseError({
+          message: 'Failed to create person record',
+          cause,
+        });
       })
     );
 
@@ -494,7 +512,7 @@ export const updateUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to update user', { cause });
+        return new DatabaseError({ message: 'Failed to update user', cause });
       })
     );
 
@@ -537,7 +555,10 @@ export const deleteUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to delete person record', { cause });
+        return new DatabaseError({
+          message: 'Failed to delete person record',
+          cause,
+        });
       })
     );
 
@@ -548,7 +569,7 @@ export const deleteUserAdmin = async (params: {
       })
     ).pipe(
       Effect.mapError((cause: Error) => {
-        return new DatabaseError('Failed to delete user', { cause });
+        return new DatabaseError({ message: 'Failed to delete user', cause });
       })
     );
 
