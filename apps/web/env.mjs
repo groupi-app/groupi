@@ -6,9 +6,9 @@ import { z } from 'zod';
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string(),
-    DIRECT_URL: z.string().url(),
+    DIRECT_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().min(1),
-    BETTER_AUTH_URL: z.string().url(),
+    BETTER_AUTH_URL: z.url(),
     // OAuth Providers
     DISCORD_CLIENT_ID: z.string().min(1),
     DISCORD_CLIENT_SECRET: z.string().min(1),
@@ -23,12 +23,13 @@ export const env = createEnv({
     DEBUG: z.enum(['true', 'false']).optional(),
   },
   client: {
-    NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_BASE_URL: z.url().optional(),
     NEXT_PUBLIC_PUSHER_APP_KEY: z.string().min(1),
     NEXT_PUBLIC_PUSHER_APP_CLUSTER: z.string().min(1),
     NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID: z.string().min(1),
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    NEXT_PUBLIC_GOOGLE_API_KEY: z.string().min(1),
   },
   runtimeEnv: {
     NEXT_PUBLIC_BASE_URL:
@@ -56,5 +57,6 @@ export const env = createEnv({
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
     DEBUG: process.env.DEBUG,
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
   },
 });
