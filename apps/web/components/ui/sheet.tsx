@@ -9,9 +9,29 @@ import { cn } from '@/lib/utils';
 
 const Sheet = SheetPrimitive.Root;
 
-const SheetTrigger = SheetPrimitive.Trigger;
+const SheetTrigger = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Trigger>
+>((props, ref) => (
+  <SheetPrimitive.Trigger
+    ref={ref}
+    suppressHydrationWarning
+    {...props}
+  />
+));
+SheetTrigger.displayName = SheetPrimitive.Trigger.displayName;
 
-const SheetClose = SheetPrimitive.Close;
+const SheetClose = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Close>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Close>
+>((props, ref) => (
+  <SheetPrimitive.Close
+    ref={ref}
+    suppressHydrationWarning
+    {...props}
+  />
+));
+SheetClose.displayName = SheetPrimitive.Close.displayName;
 
 const SheetPortal = SheetPrimitive.Portal;
 

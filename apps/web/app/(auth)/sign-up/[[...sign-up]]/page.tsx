@@ -23,7 +23,7 @@ export default function SignUpPage() {
       if (error) {
         setError(error.message || 'Authentication failed');
       }
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

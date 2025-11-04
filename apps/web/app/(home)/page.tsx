@@ -3,8 +3,6 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
-
 export default function Home() {
   return (
     <div className='container max-w-3xl py-8 flex flex-col gap-8'>

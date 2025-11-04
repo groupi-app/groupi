@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { getCurrentUserId } from './auth';
+import { getUserId } from './auth-helpers';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -9,7 +9,7 @@ import {
   UpdateMemberRoleParams,
   RemoveMemberFromEventParams,
 } from '@groupi/schema/params';
-import { MembershipDTO, MemberListPageDTO } from '@groupi/schema/data';
+import { MembershipData, MemberListPageData } from '@groupi/schema/data';
 import {
   NotFoundError,
   UnauthorizedError,
@@ -40,14 +40,14 @@ export const getMemberListData = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError,
-    MemberListPageDTO
+    MemberListPageData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -99,14 +99,14 @@ export const getMemberListData = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -116,7 +116,9 @@ export const getMemberListData = async ({
         eventId,
         operation: 'getMemberListData',
       });
-      yield* Effect.fail(new NotFoundError(`Event not found`, eventId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Event not found`, cause: eventId })
+      );
       return;
     }
 
@@ -132,13 +134,13 @@ export const getMemberListData = async ({
         operation: 'getMemberListData',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to view this event')
+        new UnauthorizedError({ message: 'Not authorized to view this event' })
       );
       return;
     }
 
     // Direct construction
-    const result: MemberListPageDTO = {
+    const result: MemberListPageData = {
       event: {
         id: eventData.id,
         chosenDateTime: eventData.chosenDateTime,
@@ -181,13 +183,13 @@ export const getMemberListData = async ({
           return [err, undefined] as const;
         }
         return [
-          new DatabaseError('Failed to fetch member list data'),
+          new DatabaseError({ message: 'Failed to fetch member list data' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, MemberListPageDTO])
+    Effect.map(result => [null, result] as [null, MemberListPageData])
   );
 
   return Effect.runPromise(
@@ -209,14 +211,14 @@ export const updateMemberRSVP = async ({
     | ConnectionError
     | ConstraintError
     | ValidationError,
-    MembershipDTO
+    MembershipData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -244,20 +246,22 @@ export const updateMemberRSVP = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!membership) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update member RSVP')
+        new UnauthorizedError({
+          message: 'Not authorized to update member RSVP',
+        })
       );
       return;
     }
@@ -285,19 +289,19 @@ export const updateMemberRSVP = async ({
           rsvpStatus,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     // Direct construction
-    const result: MembershipDTO = {
+    const result: MembershipData = {
       id: updatedMembership.id,
       personId: updatedMembership.personId,
       eventId: updatedMembership.eventId,
@@ -372,13 +376,13 @@ export const updateMemberRSVP = async ({
           return [err, undefined] as const;
         }
         return [
-          new DatabaseError('Failed to update RSVP status'),
+          new DatabaseError({ message: 'Failed to update RSVP status' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, MembershipDTO])
+    Effect.map(result => [null, result] as [null, MembershipData])
   );
 
   return Effect.runPromise(
@@ -400,14 +404,14 @@ export const updateMemberRole = async ({
     | ConstraintError
     | ValidationError
     | AuthenticationError,
-    MembershipDTO
+    MembershipData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -443,20 +447,22 @@ export const updateMemberRole = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!targetMembership) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update member roles')
+        new UnauthorizedError({
+          message: 'Not authorized to update member roles',
+        })
       );
       return;
     }
@@ -467,7 +473,9 @@ export const updateMemberRole = async ({
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update member roles')
+        new UnauthorizedError({
+          message: 'Not authorized to update member roles',
+        })
       );
       return;
     }
@@ -494,19 +502,19 @@ export const updateMemberRole = async ({
           newRole: role,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     // Direct construction
-    const result: MembershipDTO = {
+    const result: MembershipData = {
       id: updatedMembership.id,
       personId: updatedMembership.personId,
       eventId: updatedMembership.eventId,
@@ -606,13 +614,13 @@ export const updateMemberRole = async ({
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to update member role'),
+          new DatabaseError({ message: 'Failed to update member role' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, MembershipDTO])
+    Effect.map(result => [null, result] as [null, MembershipData])
   );
 
   return Effect.runPromise(
@@ -636,10 +644,10 @@ export const removeMemberFromEvent = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -674,19 +682,21 @@ export const removeMemberFromEvent = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!targetMembership) {
-      yield* Effect.fail(new UnauthorizedError('Not a member of this event'));
+      yield* Effect.fail(
+        new UnauthorizedError({ message: 'Not a member of this event' })
+      );
       return;
     }
 
@@ -696,7 +706,7 @@ export const removeMemberFromEvent = async ({
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to remove members')
+        new UnauthorizedError({ message: 'Not authorized to remove members' })
       );
       return;
     }
@@ -704,7 +714,7 @@ export const removeMemberFromEvent = async ({
     // Cannot remove the organizer
     if (targetMembership.role === 'ORGANIZER') {
       yield* Effect.fail(
-        new UnauthorizedError('Cannot remove the event organizer')
+        new UnauthorizedError({ message: 'Cannot remove the event organizer' })
       );
       return;
     }
@@ -722,14 +732,14 @@ export const removeMemberFromEvent = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -788,7 +798,7 @@ export const removeMemberFromEvent = async ({
 
         // For unexpected errors, return OperationError
         return [
-          new OperationError('Failed to remove member'),
+          new OperationError({ message: 'Failed to remove member' }),
           undefined,
         ] as const;
       });

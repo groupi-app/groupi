@@ -1,11 +1,10 @@
 'use client';
-// Migrated from server actions to tRPC hooks
-import { useUpdateMemberAvailabilities } from '@groupi/hooks';
+import { updateAvailabilitiesAction } from '@/actions/availability-actions';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StatusType } from '@groupi/schema';
 import { useRouter } from 'next/navigation';
-
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { AvailabilityCard } from './availability-card';
@@ -23,9 +22,7 @@ export function AvailabilityForm({
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const router = useRouter();
-
-  // Use our new tRPC hook with integrated real-time sync
-  const updateAvailabilitiesMutation = useUpdateMemberAvailabilities();
+  const [isLoading, setIsLoading] = useState(false);
 
   const answerMap = (
     status: StatusType | undefined
@@ -96,33 +93,24 @@ export function AvailabilityForm({
       status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
     }));
 
-    updateAvailabilitiesMutation.mutate(
-      {
-        eventId,
-        availabilityUpdates,
-      },
-      {
-        onSuccess: ([error, _result]: [Error | null, unknown]) => {
-          if (error) {
-            toast.error('Unable to update', {
-              description:
-                'There was an error updating your availability. Please try again.',
-            });
-            return;
-          }
+    setIsLoading(true);
+    const [error] = await updateAvailabilitiesAction({
+      eventId,
+      availabilityUpdates,
+    });
 
-          toast.success('Availability Updated', {
-            description: 'Your availability has been successfully updated.',
-          });
-          router.push(`/event/${eventId}`);
-        },
-        onError: () => {
-          toast.error('Unable to update', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Unable to update', {
+        description:
+          'There was an error updating your availability. Please try again.',
+      });
+      setIsLoading(false);
+    } else {
+      toast.success('Availability Updated', {
+        description: 'Your availability has been successfully updated.',
+      });
+      router.push(`/event/${eventId}`);
+    }
   }
 
   return (
@@ -174,6 +162,7 @@ export function AvailabilityForm({
                     <AvailabilityCard
                       key={pdt.id}
                       pdt={pdt}
+                      // eslint-disable-next-line react-hooks/incompatible-library
                       formAnswers={form.watch('formAnswers')}
                       setFormAnswer={toggleFormValue}
                       index={i}
@@ -191,14 +180,12 @@ export function AvailabilityForm({
             !(
               form.watch('formAnswers').filter(a => a.answer).length ===
               form.watch('formAnswers').length
-            ) || updateAvailabilitiesMutation.isLoading
+            ) || isLoading
           }
           className='my-2'
         >
           <div className='flex items-center gap-1'>
-            {updateAvailabilitiesMutation.isLoading && (
-              <Icons.spinner className='animate-spin size-5' />
-            )}
+            {isLoading && <Icons.spinner className='animate-spin size-5' />}
             <span>Submit</span>
           </div>
         </Button>

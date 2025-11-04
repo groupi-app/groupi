@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { EventSchema, MembershipSchema, UserSchema } from '../generated';
 
 // ============================================================================
-// MEMBERSHIP DOMAIN DATA DTOS
+// MEMBERSHIP DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic membership DTO
-export const MembershipDTO = MembershipSchema.pick({
+// Basic membership data
+export const MembershipData = MembershipSchema.pick({
   id: true,
   personId: true,
   eventId: true,
@@ -15,10 +15,10 @@ export const MembershipDTO = MembershipSchema.pick({
   rsvpStatus: true,
 });
 
-export type MembershipDTO = z.infer<typeof MembershipDTO>;
+export type MembershipData = z.infer<typeof MembershipData>;
 
 // Membership with person details
-export const MembershipWithPersonDTO = MembershipSchema.pick({
+export const MembershipWithPersonData = MembershipSchema.pick({
   id: true,
   personId: true,
   eventId: true,
@@ -35,19 +35,19 @@ export const MembershipWithPersonDTO = MembershipSchema.pick({
   }),
 });
 
-export type MembershipWithPersonDTO = z.infer<typeof MembershipWithPersonDTO>;
+export type MembershipWithPersonData = z.infer<typeof MembershipWithPersonData>;
 
-// Member list DTO - for attendees pages
-export const MemberListDTO = z.array(MembershipWithPersonDTO);
-export type MemberListDTO = z.infer<typeof MemberListDTO>;
+// Member list data - for attendees pages
+export const MemberListData = z.array(MembershipWithPersonData);
+export type MemberListData = z.infer<typeof MemberListData>;
 
-// Member list page DTO
-export const MemberListPageDTO = z.object({
+// Member list page data
+export const MemberListPageData = z.object({
   event: EventSchema.pick({
     id: true,
     chosenDateTime: true,
   }).extend({
-    memberships: z.array(MembershipWithPersonDTO),
+    memberships: z.array(MembershipWithPersonData),
   }),
   userMembership: MembershipSchema.pick({
     id: true,
@@ -56,4 +56,4 @@ export const MemberListPageDTO = z.object({
   userId: z.string(),
 });
 
-export type MemberListPageDTO = z.infer<typeof MemberListPageDTO>;
+export type MemberListPageData = z.infer<typeof MemberListPageData>;

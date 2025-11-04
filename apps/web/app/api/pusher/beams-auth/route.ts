@@ -1,4 +1,4 @@
-import { getCurrentUserId } from '@groupi/services';
+import { getUserIdUncached } from '@groupi/services';
 import PushNotifications from '@pusher/push-notifications-server';
 import { env } from '@/env.mjs';
 import { NextResponse } from 'next/server';
@@ -11,8 +11,7 @@ const beamsClient = new PushNotifications({
 
 export async function POST() {
   try {
-    // Get the authenticated user from Better Auth
-    const [error, userId] = await getCurrentUserId();
+    const [error, userId] = await getUserIdUncached();
     if (error || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

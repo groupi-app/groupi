@@ -26,7 +26,7 @@ export default function SignInPage() {
       if (error) {
         setError(error.message || 'Authentication failed');
       }
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function SignInPage() {
         setSuccess(true);
         setIdentifier(''); // Clear the field
       }
-    } catch (_err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

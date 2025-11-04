@@ -7,15 +7,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useDeleteEvent } from '@groupi/hooks';
+import { deleteEventAction } from '@/actions/event-actions';
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function DeleteEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
-  const deleteEvent = useDeleteEvent();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const [error] = await deleteEventAction({ eventId });
+
+    if (error) {
+      toast.error('Uh oh!', {
+        description: 'The event could not be deleted.',
+      });
+      setIsDeleting(false);
+    } else {
+      toast.success('Event deleted', {
+        description: 'The event has been deleted.',
+      });
+      router.push(`/events`);
+    }
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -28,32 +47,18 @@ export function DeleteEventDialog({ eventId }: { eventId: string }) {
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose className='grow' asChild>
-            <Button variant='ghost'>Cancel</Button>
+            <Button variant='ghost' disabled={isDeleting}>
+              Cancel
+            </Button>
           </DialogClose>
           <DialogClose className='grow' asChild>
             <Button
-              onClick={() => {
-                deleteEvent.mutate(
-                  { eventId },
-                  {
-                    onSuccess: () => {
-                      router.push(`/events`);
-                      toast.success('Event deleted', {
-                        description: 'The event has been deleted.',
-                      });
-                    },
-                    onError: () => {
-                      toast.error('Uh oh!', {
-                        description: 'The event could not be deleted.',
-                      });
-                    },
-                  }
-                );
-              }}
+              onClick={handleDelete}
               className='w-full'
               variant='destructive'
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogClose>
         </div>

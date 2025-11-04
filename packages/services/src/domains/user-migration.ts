@@ -60,7 +60,27 @@ export const syncUserToPerson = async (
     });
 
     return { id: person.id };
-  });
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        if (
+          err instanceof DatabaseError ||
+          err instanceof ConnectionError ||
+          err instanceof ConstraintError ||
+          err instanceof ValidationError
+        ) {
+          return [err, undefined] as const;
+        }
+        return [
+          new DatabaseError({ message: 'Failed to sync user to person' }),
+          undefined,
+        ] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, { id: string }])
+  );
 
   return Effect.runPromise(
     effect.pipe(Effect.provide(createEffectLoggerLayer('user-migration')))

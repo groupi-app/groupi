@@ -20,8 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-// Migrated from server actions to tRPC hooks
-import { useCreatePost, useUpdatePost } from '@groupi/hooks';
+import { createPostAction, updatePostAction } from '@/actions/post-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -46,13 +45,10 @@ export function Editor({
 }) {
   const [titleEdited, setTitleEdited] = useState<boolean>(false);
   const [contentEdited, setContentEdited] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
   const backUrl = postData ? `/post/${postData.id}` : `/event/${eventId}`;
   const title = postData?.title || '';
   const content = postData?.content || '';
-
-  // Use our new tRPC hooks with integrated real-time sync
-  const { createPost, isLoading: isCreating } = useCreatePost();
-  const { updatePost, isLoading: isUpdating } = useUpdatePost();
 
   const formSchema = z.object({
     title: z
@@ -79,41 +75,42 @@ export function Editor({
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+
     if (!postData) {
-      createPost(
-        { title: values.title, content: values.content, eventId },
-        {
-          onSuccess: () => {
-            toast.success('Your post has been successfully created.');
-            router.push(`/event/${eventId}`);
-          },
-          onError: () => {
-            toast.error('Failed to create post', {
-              description: 'An unexpected error occurred. Please try again.',
-            });
-          },
-        }
-      );
+      const [error] = await createPostAction({
+        title: values.title,
+        content: values.content,
+        eventId,
+      });
+
+      if (error) {
+        toast.error('Failed to create post', {
+          description: 'An unexpected error occurred. Please try again.',
+        });
+        setIsSaving(false);
+      } else {
+        toast.success('Your post has been successfully created.');
+        router.push(`/event/${eventId}`);
+      }
     } else {
-      updatePost(
-        { id: postData.id, title: values.title, content: values.content },
-        {
-          onSuccess: () => {
-            toast.success('Your post has been successfully edited.');
-            router.push(`/post/${postData.id}`);
-          },
-          onError: () => {
-            toast.error('Failed to update post', {
-              description: 'An unexpected error occurred. Please try again.',
-            });
-          },
-        }
-      );
+      const [error] = await updatePostAction({
+        id: postData.id,
+        title: values.title,
+        content: values.content,
+      });
+
+      if (error) {
+        toast.error('Failed to update post', {
+          description: 'An unexpected error occurred. Please try again.',
+        });
+        setIsSaving(false);
+      } else {
+        toast.success('Your post has been successfully edited.');
+        router.push(`/post/${postData.id}`);
+      }
     }
   }
-
-  // Check if any mutation is pending
-  const isSaving = isCreating || isUpdating;
 
   const contentEditedOnChange = (c: string) => {
     if (c !== content) {

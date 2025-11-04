@@ -1,39 +1,13 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import {
-  EventSchema,
-  MembershipSchema,
-  UserSchema,
-  PostSchema,
-  ReplySchema,
-} from '../generated';
+import { EventSchema, MembershipSchema, UserSchema } from '../generated';
 
 // ============================================================================
-// EVENT DOMAIN DATA DTOS
+// EVENT DOMAIN DATA TYPES
 // ============================================================================
 
-// Minimal event DTO for cards and lists
-export const EventCardDTO = EventSchema.pick({
-  id: true,
-  title: true,
-  description: true,
-  location: true,
-  chosenDateTime: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  memberCount: z.number(),
-  owner: UserSchema.pick({
-    name: true,
-    email: true,
-    image: true,
-  }),
-});
-
-export type EventCardDTO = z.infer<typeof EventCardDTO>;
-
-// Event header DTO for event page header
-export const EventHeaderDTO = z.object({
+// Event header data for event page header
+export const EventHeaderData = z.object({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -48,10 +22,10 @@ export const EventHeaderDTO = z.object({
   }),
 });
 
-export type EventHeaderDTO = z.infer<typeof EventHeaderDTO>;
+export type EventHeaderData = z.infer<typeof EventHeaderData>;
 
-// Detailed event DTO for SSR pages and basic event operations
-export const EventDetailsDTO = EventHeaderDTO.extend({
+// Detailed event data for SSR pages and basic event operations
+export const EventDetailsData = EventHeaderData.extend({
   memberships: z.array(
     MembershipSchema.pick({
       id: true,
@@ -72,56 +46,14 @@ export const EventDetailsDTO = EventHeaderDTO.extend({
   ),
 });
 
-export type EventDetailsDTO = z.infer<typeof EventDetailsDTO>;
-
-// Event DTO with posts for event page
-export const EventPageDTO = EventDetailsDTO.extend({
-  posts: z.array(
-    PostSchema.pick({
-      id: true,
-      title: true,
-      content: true,
-      authorId: true,
-      eventId: true,
-    })
-      .extend({
-        author: z.object({
-          id: z.string(),
-          user: UserSchema.pick({
-            name: true,
-            email: true,
-            image: true,
-          }),
-        }),
-      })
-      .extend({
-        replies: z.array(
-          ReplySchema.pick({
-            id: true,
-            text: true,
-          }).extend({
-            author: z.object({
-              id: z.string(),
-              user: UserSchema.pick({
-                name: true,
-                email: true,
-                image: true,
-              }),
-            }),
-          })
-        ),
-      })
-  ),
-});
-
-export type EventPageDTO = z.infer<typeof EventPageDTO>;
+export type EventDetailsData = z.infer<typeof EventDetailsData>;
 
 // ============================================================================
-// PAGE-SPECIFIC DTOS
+// PAGE-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Event new post page DTO
-export const EventNewPostPageDTO = z.object({
+// Event new post page data
+export const EventNewPostPageData = z.object({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -129,10 +61,10 @@ export const EventNewPostPageDTO = z.object({
   userRole: MembershipSchema.shape.role,
 });
 
-export type EventNewPostPageDTO = z.infer<typeof EventNewPostPageDTO>;
+export type EventNewPostPageData = z.infer<typeof EventNewPostPageData>;
 
-// Event attendees page DTO
-export const EventAttendeesPageDTO = z.object({
+// Event attendees page data
+export const EventAttendeesPageData = z.object({
   event: EventSchema.pick({
     id: true,
     title: true,
@@ -159,14 +91,14 @@ export const EventAttendeesPageDTO = z.object({
   }),
 });
 
-export type EventAttendeesPageDTO = z.infer<typeof EventAttendeesPageDTO>;
+export type EventAttendeesPageData = z.infer<typeof EventAttendeesPageData>;
 
 // ============================================================================
-// ADMIN-SPECIFIC DTOS
+// ADMIN-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Event admin list item DTO - for admin dashboard
-export const EventAdminListItemDTO = EventSchema.pick({
+// Event admin list item data - for admin dashboard
+export const EventAdminListItemData = EventSchema.pick({
   id: true,
   title: true,
   description: true,
@@ -186,4 +118,4 @@ export const EventAdminListItemDTO = EventSchema.pick({
   }),
 });
 
-export type EventAdminListItemDTO = z.infer<typeof EventAdminListItemDTO>;
+export type EventAdminListItemData = z.infer<typeof EventAdminListItemData>;

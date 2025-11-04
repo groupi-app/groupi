@@ -1,6 +1,7 @@
 'use client';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { DateCard } from './date-card';
+import { Role } from '@prisma/client';
 
 import {
   Select,
@@ -11,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { usePDTs } from '@groupi/hooks';
 import { getRanks } from '@/lib/utils';
 
 import { LayoutGroup, motion } from 'framer-motion';
@@ -32,34 +32,16 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function DateCardList({ eventId }: { eventId: string }) {
+export function DateCardList({
+  potentialDateTimes,
+  userId,
+  userRole,
+}: {
+  potentialDateTimes: PotentialDateTimeWithAvailabilities[];
+  userId: string;
+  userRole: Role;
+}) {
   const [sortBy, setSortBy] = useState<'rank' | 'date'>('rank');
-  const { data, isLoading } = usePDTs(eventId);
-
-  if (isLoading || !data) {
-    return <div>Loading...</div>;
-  }
-
-  const [error, pdtData] = data;
-
-  if (error) {
-    switch (error._tag) {
-      case 'NotFoundError':
-        return <div>No availability data found</div>;
-      case 'UnauthorizedError':
-        return <div>You are not a member of this event</div>;
-      case 'AuthenticationError':
-        return <div>Please sign in</div>;
-      default:
-        return <div>Error loading availability</div>;
-    }
-  }
-
-  // If error is null, pdtData is guaranteed to exist
-
-  const potentialDateTimes = pdtData?.potentialDateTimes || [];
-  const userId = pdtData?.userId;
-  const userRole = pdtData?.userRole;
 
   const sort = (
     a: PotentialDateTimeWithAvailabilities & { rank: number },

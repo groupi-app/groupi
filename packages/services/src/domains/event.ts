@@ -1,7 +1,7 @@
 import { Effect, Schedule } from 'effect';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
-import { getCurrentUserId } from './auth';
+import { getUserId } from './auth-helpers';
 import type { ResultTuple } from '@groupi/schema';
 import {
   CreateEventParams,
@@ -13,10 +13,10 @@ import {
   LeaveEventParams,
 } from '@groupi/schema/params';
 import {
-  EventHeaderDTO,
-  EventDetailsDTO,
-  EventNewPostPageDTO,
-  EventAttendeesPageDTO,
+  EventHeaderData,
+  EventDetailsData,
+  EventNewPostPageData,
+  EventAttendeesPageData,
 } from '@groupi/schema/data';
 import {
   NotFoundError,
@@ -48,14 +48,14 @@ export const getEventHeaderData = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError,
-    EventHeaderDTO
+    EventHeaderData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -95,14 +95,14 @@ export const getEventHeaderData = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -112,13 +112,17 @@ export const getEventHeaderData = async ({
         eventId,
         operation: 'getEventHeaderData',
       });
-      yield* Effect.fail(new NotFoundError(`Event not found`, eventId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Event not found`, cause: eventId })
+      );
       return;
     }
 
     if (eventData.memberships.length === 0) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
       return;
     }
@@ -126,7 +130,7 @@ export const getEventHeaderData = async ({
     const userMembership = eventData.memberships[0];
 
     // Direct construction - no factory needed
-    const result: EventHeaderDTO = {
+    const result: EventHeaderData = {
       event: {
         id: eventData.id,
         title: eventData.title,
@@ -148,23 +152,32 @@ export const getEventHeaderData = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        // Log expected errors at info level
-        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-
-        // For unexpected errors, return DatabaseError
-        return [
-          new DatabaseError('Failed to fetch event header data'),
+    Effect.catchTags({
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event header data' }),
           undefined,
-        ] as const;
-      });
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event header data' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event header data' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event header data' }),
+          undefined,
+        ] as const),
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventHeaderDTO])
+    Effect.map(result => [null, result] as [null, EventHeaderData])
   );
 
   return Effect.runPromise(
@@ -185,14 +198,14 @@ export const getEventNewPostPageData = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError,
-    EventNewPostPageDTO
+    EventNewPostPageData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -227,14 +240,14 @@ export const getEventNewPostPageData = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -244,7 +257,9 @@ export const getEventNewPostPageData = async ({
         eventId,
         operation: 'getEventNewPostPageData',
       });
-      yield* Effect.fail(new NotFoundError(`Event not found`, eventId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Event not found`, cause: eventId })
+      );
       return;
     }
 
@@ -256,13 +271,15 @@ export const getEventNewPostPageData = async ({
         operation: 'getEventNewPostPageData',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
       return;
     }
 
     // Direct construction - no validation needed
-    const result: EventNewPostPageDTO = {
+    const result: EventNewPostPageData = {
       event: {
         id: eventData.id,
         title: eventData.title,
@@ -277,24 +294,32 @@ export const getEventNewPostPageData = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        // Log expected errors at info level
-        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-
-        // For unexpected errors, return DatabaseError
-        return [
-          new DatabaseError('Failed to fetch event data'),
+    Effect.catchTags({
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event data' }),
           undefined,
-        ] as const;
-      });
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event data' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event data' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to fetch event data' }),
+          undefined,
+        ] as const),
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventNewPostPageDTO])
+    Effect.map(result => [null, result] as [null, EventNewPostPageData])
   );
 
   return Effect.runPromise(
@@ -315,14 +340,14 @@ export const getEventAttendeesPageData = async ({
     | DatabaseError
     | ConnectionError
     | ConstraintError,
-    EventAttendeesPageDTO
+    EventAttendeesPageData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -376,14 +401,14 @@ export const getEventAttendeesPageData = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -393,7 +418,9 @@ export const getEventAttendeesPageData = async ({
         eventId,
         operation: 'getEventAttendeesPageData',
       });
-      yield* Effect.fail(new NotFoundError(`Event not found`, eventId));
+      yield* Effect.fail(
+        new NotFoundError({ message: `Event not found`, cause: eventId })
+      );
       return;
     }
 
@@ -409,13 +436,15 @@ export const getEventAttendeesPageData = async ({
         operation: 'getEventAttendeesPageData',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
       return;
     }
 
     // Direct construction
-    const result: EventAttendeesPageDTO = {
+    const result: EventAttendeesPageData = {
       event: {
         id: eventData.id,
         title: eventData.title,
@@ -446,21 +475,40 @@ export const getEventAttendeesPageData = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-        return [
-          new DatabaseError('Failed to fetch event attendees data'),
+    Effect.catchTags({
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({
+            message: 'Failed to fetch event attendees data',
+          }),
           undefined,
-        ] as const;
-      });
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({
+            message: 'Failed to fetch event attendees data',
+          }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({
+            message: 'Failed to fetch event attendees data',
+          }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({
+            message: 'Failed to fetch event attendees data',
+          }),
+          undefined,
+        ] as const),
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventAttendeesPageDTO])
+    Effect.map(result => [null, result] as [null, EventAttendeesPageData])
   );
 
   return Effect.runPromise(
@@ -484,14 +532,14 @@ export const createEvent = async ({
     | ValidationError
     | OperationError
     | AuthenticationError,
-    EventDetailsDTO
+    EventDetailsData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -551,19 +599,19 @@ export const createEvent = async ({
           title,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     // Direct construction
-    const result: EventDetailsDTO = {
+    const result: EventDetailsData = {
       event: {
         id: event.id,
         title: event.title,
@@ -603,14 +651,35 @@ export const createEvent = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(_err =>
-      Effect.succeed([
-        new DatabaseError('Failed to create event'),
-        undefined,
-      ] as const)
-    ),
+    Effect.catchTags({
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to create event' }),
+          undefined,
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to create event' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to create event' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to create event' }),
+          undefined,
+        ] as const),
+      OperationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to create event' }),
+          undefined,
+        ] as const),
+    }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventDetailsDTO])
+    Effect.map(result => [null, result] as [null, EventDetailsData])
   );
 
   return Effect.runPromise(
@@ -635,14 +704,14 @@ export const updateEventDetails = async ({
     | ConstraintError
     | ValidationError
     | AuthenticationError,
-    EventDetailsDTO
+    EventDetailsData
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -672,20 +741,22 @@ export const updateEventDetails = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!membership) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update this event')
+        new UnauthorizedError({
+          message: 'Not authorized to update this event',
+        })
       );
       return;
     }
@@ -726,14 +797,14 @@ export const updateEventDetails = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -741,13 +812,15 @@ export const updateEventDetails = async ({
     const userMembership = event.memberships.find(m => m.personId === userId);
     if (!userMembership) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
       return;
     }
 
     // Direct construction
-    const result: EventDetailsDTO = {
+    const result: EventDetailsData = {
       event: {
         id: event.id,
         title: event.title,
@@ -807,21 +880,32 @@ export const updateEventDetails = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        if (err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-        return [
-          new DatabaseError('Failed to update event details'),
+    Effect.catchTags({
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to update event details' }),
           undefined,
-        ] as const;
-      });
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to update event details' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to update event details' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to update event details' }),
+          undefined,
+        ] as const),
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventDetailsDTO])
+    Effect.map(result => [null, result] as [null, EventDetailsData])
   );
 
   return Effect.runPromise(
@@ -847,10 +931,10 @@ export const deleteEvent = async ({
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -879,20 +963,22 @@ export const deleteEvent = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!membership) {
       yield* Effect.fail(
-        new UnauthorizedError('Only organizers can delete events')
+        new UnauthorizedError({
+          message: 'Only organizers can delete events',
+        })
       );
       return;
     }
@@ -910,14 +996,14 @@ export const deleteEvent = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -931,18 +1017,30 @@ export const deleteEvent = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        if (err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-        return [
-          new OperationError('Failed to delete event'),
+    Effect.catchTags({
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new OperationError({ message: 'Failed to delete event' }),
           undefined,
-        ] as const;
-      });
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new OperationError({ message: 'Failed to delete event' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new OperationError({ message: 'Failed to delete event' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new OperationError({ message: 'Failed to delete event' }),
+          undefined,
+        ] as const),
+      OperationError: error => Effect.succeed([error, undefined] as const),
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
     }),
     // Map result to tuple
     Effect.map(result => [null, result] as [null, { message: string }])
@@ -971,10 +1069,10 @@ export const leaveEvent = async ({
   >
 > => {
   // Get auth outside Effect.gen
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -1001,14 +1099,14 @@ export const leaveEvent = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -1020,7 +1118,9 @@ export const leaveEvent = async ({
         operation: 'leaveEvent',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to access this event')
+        new UnauthorizedError({
+          message: 'Not authorized to access this event',
+        })
       );
       return;
     }
@@ -1034,7 +1134,9 @@ export const leaveEvent = async ({
         operation: 'leaveEvent',
       });
       yield* Effect.fail(
-        new UnauthorizedError('Organizers cannot leave their own event')
+        new UnauthorizedError({
+          message: 'Organizers cannot leave their own event',
+        })
       );
       return;
     }
@@ -1053,14 +1155,14 @@ export const leaveEvent = async ({
           membershipId: membership.id,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -1097,15 +1199,30 @@ export const leaveEvent = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        if (err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-        return [new DatabaseError('Failed to leave event'), undefined] as const;
-      });
+    Effect.catchTags({
+      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
+      DatabaseError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to leave event' }),
+          undefined,
+        ] as const),
+      ConnectionError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to leave event' }),
+          undefined,
+        ] as const),
+      ConstraintError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to leave event' }),
+          undefined,
+        ] as const),
+      ValidationError: _error =>
+        Effect.succeed([
+          new DatabaseError({ message: 'Failed to leave event' }),
+          undefined,
+        ] as const),
+      OperationError: error => Effect.succeed([error, undefined] as const),
+      NotFoundError: error => Effect.succeed([error, undefined] as const),
     }),
     // Map result to tuple
     Effect.map(result => [null, result] as [null, { message: string }])

@@ -7,7 +7,7 @@ const logger = createLogger('uploadthing-delete');
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify user is authenticated
+    // Verify user is authenticated - use direct API for Route Handlers with request object
     const session = await auth.api.getSession({
       headers: req.headers,
     });

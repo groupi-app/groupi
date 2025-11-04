@@ -1,41 +1,31 @@
 import { PostEditWrapper } from '../components/post-edit-wrapper';
-import { getCurrentUserId } from '@groupi/services';
+import { getUserId } from '@groupi/services';
 import { redirect } from 'next/navigation';
-import { prefetchPostDetailPageData } from '@groupi/hooks/server';
-import { HydrationBoundary } from '@tanstack/react-query';
-import { pageLogger } from '@/lib/logger';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Suspense } from 'react';
 
-export default async function PostEditPage(props: {
+export default function PostEditPage(props: {
   params: Promise<{ postId: string }>;
 }) {
+  return (
+    <Suspense fallback={<Skeleton className='h-screen w-full' />}>
+      <PostEditContent params={props.params} />
+    </Suspense>
+  );
+}
+
+async function PostEditContent(props: { params: Promise<{ postId: string }> }) {
+  // Dynamic rendering - wrapped in Suspense boundary
   const params = await props.params;
   const { postId } = params;
 
-  // Validate session server-side
-  const [authError, userId] = await getCurrentUserId();
+  // Auth check - getUserId() handles headers() internally with prerendering detection
+  const [authError, userId] = await getUserId();
 
   if (authError || !userId) {
     redirect('/sign-in');
   }
 
-  try {
-    // Prefetch post detail data
-    const dehydratedState = await prefetchPostDetailPageData(postId);
-
-    return (
-      <HydrationBoundary state={dehydratedState}>
-        <PostEditWrapper postId={postId} userId={userId} />
-      </HydrationBoundary>
-    );
-  } catch (error) {
-    pageLogger.error({ error }, 'Error in post edit page');
-    return (
-      <div className='container pt-6'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>An error occurred while loading the post.</p>
-        </div>
-      </div>
-    );
-  }
+  // PostEditWrapper is a client component that fetches its own data
+  return <PostEditWrapper postId={postId} userId={userId} />;
 }

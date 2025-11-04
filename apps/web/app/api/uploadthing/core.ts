@@ -13,7 +13,7 @@ export const ourFileRouter = {
     },
   })
     .middleware(async ({ req }) => {
-      // Authenticate user with Better Auth
+      // Authenticate user with Better Auth - use direct API for third-party middleware
       const session = await auth.api.getSession({
         headers: req.headers,
       });
@@ -27,9 +27,9 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This runs on the server after upload completes
-      // eslint-disable-next-line no-console
+       
       console.log('Avatar upload complete for userId:', metadata.userId);
-      // eslint-disable-next-line no-console
+       
       console.log('File URL:', file.url);
 
       // Return data to the client

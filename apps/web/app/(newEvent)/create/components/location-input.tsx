@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Command,
   CommandGroup,
@@ -8,7 +10,12 @@ import {
 import useOnclickOutside from 'react-cool-onclickoutside';
 import { ControllerRenderProps } from 'react-hook-form';
 import usePlacesAutocomplete from 'use-places-autocomplete';
-import { useEffect } from 'react';
+import { useLoadScript } from '@react-google-maps/api';
+import { env } from '@/env.mjs';
+
+const libraries: ('places' | 'drawing' | 'geometry' | 'visualization')[] = [
+  'places',
+];
 
 export function LocationInput({
   dataTest,
@@ -26,6 +33,11 @@ export function LocationInput({
     'location'
   >;
 }) {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY,
+    libraries,
+  });
+
   const {
     ready,
     suggestions: { status, data },
@@ -37,11 +49,6 @@ export function LocationInput({
     },
     debounce: 300,
   });
-
-  // Check if Google Maps API is loaded
-  useEffect(() => {
-    // Google Maps API status checking removed - handled by usePlacesAutocomplete
-  }, [ready]);
 
   const handleSelect = (address: string) => {
     field.onChange(address);
@@ -61,7 +68,7 @@ export function LocationInput({
         <CommandInput
           data-test={dataTest}
           className='text-foreground text-base'
-          disabled={!ready}
+          disabled={!isLoaded || !ready}
           placeholder="123 Main St... or 'My house'"
           onValueChange={value => {
             field.onChange(value);

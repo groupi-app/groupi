@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { trpc } from '@/lib/utils/api';
-import { useRouter } from 'next/navigation';
+// TODO: Migrate profile functionality to server actions
 import {
   Dialog,
   DialogContent,
@@ -38,7 +37,7 @@ const profileFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   pronouns: z.string().max(50).optional(),
   bio: z.string().max(500).optional(),
-  image: z.string().url().optional().or(z.literal('')),
+  image: z.url().optional().or(z.literal('')),
 });
 
 interface ProfileEditDialogProps {
@@ -62,13 +61,15 @@ export function ProfileEditDialog({
 }: ProfileEditDialogProps) {
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [newImageKey, setNewImageKey] = useState<string | null>(null);
+  // TODO: Migrate to server actions - these variables are unused until migration
+  // const [newImageKey, setNewImageKey] = useState<string | null>(null);
+  const [_newImageKey, setNewImageKey] = useState<string | null>(null);
   const [uploadedButNotSaved, setUploadedButNotSaved] = useState<string | null>(
     null
   ); // Track uploads that need cleanup on cancel
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const router = useRouter();
+  // const router = useRouter();
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -126,18 +127,20 @@ export function ProfileEditDialog({
     }
   }, [open, uploadedButNotSaved]);
 
-  const utils = trpc.useUtils();
-  const updateMutation = trpc.person.update.useMutation({
-    onSuccess: async () => {
-      // Invalidate tRPC queries
-      await utils.person.getCurrent.invalidate();
-
-      // Trigger a router refresh to revalidate server components and refetch session
-      router.refresh();
-
-      onOpenChange(false);
-    },
-  });
+  // TODO: Migrate to server actions
+  // Commented out trpc calls until migration is complete
+  // const utils = trpc.useUtils();
+  // const updateMutation = trpc.person.update.useMutation({
+  //   onSuccess: async () => {
+  //     // Invalidate tRPC queries
+  //     await utils.person.getCurrent.invalidate();
+  //
+  //     // Trigger a router refresh to revalidate server components and refetch session
+  //     router.refresh();
+  //
+  //     onOpenChange(false);
+  //   },
+  // });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,25 +186,29 @@ export function ProfileEditDialog({
     setNewImageKey(null);
   };
 
-  const onSubmit = (values: z.infer<typeof profileFormSchema>) => {
-    const mutationData = {
-      userId: userInfo.id,
-      name: values.name || undefined,
-      pronouns: values.pronouns || undefined,
-      bio: values.bio || undefined,
-      // Keep empty string as empty string (don't convert to undefined)
-      image: values.image !== undefined ? values.image : undefined,
-      imageKey: newImageKey || undefined,
-      oldImageKey: userInfo.imageKey || undefined,
-    };
+  const onSubmit = (_values: z.infer<typeof profileFormSchema>) => {
+    // TODO: Migrate to server actions
+    // const mutationData = {
+    //   userId: userInfo.id,
+    //   name: values.name || undefined,
+    //   pronouns: values.pronouns || undefined,
+    //   bio: values.bio || undefined,
+    //   // Keep empty string as empty string (don't convert to undefined)
+    //   image: values.image !== undefined ? values.image : undefined,
+    //   imageKey: newImageKey || undefined,
+    //   oldImageKey: userInfo.imageKey || undefined,
+    // };
+    //
+    // updateMutation.mutate(mutationData);
+    //
+    // // Clear the uploaded-but-not-saved flag since we're saving now
+    // setUploadedButNotSaved(null);
 
-    updateMutation.mutate(mutationData);
-
-    // Clear the uploaded-but-not-saved flag since we're saving now
-    setUploadedButNotSaved(null);
+    alert('Profile update functionality is being migrated to server actions');
   };
 
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
+  // eslint-disable-next-line react-hooks/incompatible-library
   const currentImage = form.watch('image');
 
   return (
@@ -318,36 +325,29 @@ export function ProfileEditDialog({
               )}
             />
 
-            {updateMutation.isError && (
+            {/* TODO: Migrate to server actions */}
+            {/* {updateMutation.isError && (
               <p className='text-sm text-destructive'>
                 Error: {updateMutation.error.message}
               </p>
-            )}
+            )} */}
 
             <div className='flex gap-2'>
               <Button
                 type='button'
                 variant='ghost'
                 onClick={() => onOpenChange(false)}
-                disabled={
-                  isUploading ||
-                  updateMutation.isPending ||
-                  form.formState.isSubmitting
-                }
+                disabled={isUploading || form.formState.isSubmitting}
                 className='flex-1'
               >
                 Cancel
               </Button>
               <Button
                 type='submit'
-                disabled={
-                  isUploading ||
-                  updateMutation.isPending ||
-                  form.formState.isSubmitting
-                }
+                disabled={isUploading || form.formState.isSubmitting}
                 className='flex-1'
               >
-                {(updateMutation.isPending || form.formState.isSubmitting) && (
+                {(isUploading || form.formState.isSubmitting) && (
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 )}
                 {isUploading ? 'Uploading...' : 'Save'}

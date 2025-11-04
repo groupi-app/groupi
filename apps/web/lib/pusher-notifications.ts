@@ -1,3 +1,5 @@
+'use client';
+
 import * as PusherPushNotifications from '@pusher/push-notifications-web';
 import { useSession } from '@/lib/auth-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,8 +11,16 @@ declare global {
   }
 }
 
-const PUSHER_BEAMS_INSTANCE_ID =
-  process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID || '';
+/**
+ * Get the Pusher Beams instance ID.
+ * Safe to call in client components - process.env.NEXT_PUBLIC_* vars are inlined at build time.
+ */
+function getPusherBeamsInstanceId(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID || '';
+}
 
 export interface PusherBeamsState {
   isSupported: boolean;
@@ -77,7 +87,7 @@ export function usePusherBeams(): PusherBeamsState & PusherBeamsActions {
       try {
         hasInitialized.current = true;
         const client = new PusherPushNotifications.Client({
-          instanceId: PUSHER_BEAMS_INSTANCE_ID,
+          instanceId: getPusherBeamsInstanceId(),
         });
 
         beamsClientRef.current = client;

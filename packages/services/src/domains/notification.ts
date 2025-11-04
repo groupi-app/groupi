@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { getCurrentUserId } from './auth';
+import { getUserId } from './auth-helpers';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -10,7 +10,7 @@ import {
   MarkAllNotificationsAsReadParams,
   CreateEventNotificationsParams,
 } from '@groupi/schema/params';
-import { NotificationFeedDTO } from '@groupi/schema/data';
+import { NotificationFeedData } from '@groupi/schema/data';
 import {
   NotFoundError,
   UnauthorizedError,
@@ -39,14 +39,14 @@ export const fetchNotificationsForPerson = async ({
     | DatabaseError
     | ConnectionError
     | AuthenticationError,
-    NotificationFeedDTO[]
+    NotificationFeedData[]
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, personId] = await getCurrentUserId();
+  const [authError, personId] = await getUserId();
   if (authError || !personId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -105,19 +105,19 @@ export const fetchNotificationsForPerson = async ({
           personId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     // Direct construction
-    const result: NotificationFeedDTO[] = notifications.map(notification => ({
+    const result: NotificationFeedData[] = notifications.map(notification => ({
       id: notification.id,
       type: notification.type,
       read: notification.read,
@@ -165,13 +165,13 @@ export const fetchNotificationsForPerson = async ({
         });
 
         return [
-          new DatabaseError('Failed to fetch notifications'),
+          new DatabaseError({ message: 'Failed to fetch notifications' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, NotificationFeedDTO[]])
+    Effect.map(result => [null, result] as [null, NotificationFeedData[]])
   );
 
   return Effect.runPromise(
@@ -195,10 +195,10 @@ export const markNotificationAsRead = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -224,27 +224,32 @@ export const markNotificationAsRead = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!notification) {
       yield* Effect.fail(
-        new NotFoundError(`Notification not found`, notificationId)
+        new NotFoundError({
+          message: `Notification not found`,
+          cause: notificationId,
+        })
       );
       return;
     }
 
     if (notification.personId !== userId) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update this notification')
+        new UnauthorizedError({
+          message: 'Not authorized to update this notification',
+        })
       );
       return;
     }
@@ -263,14 +268,14 @@ export const markNotificationAsRead = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -309,7 +314,7 @@ export const markNotificationAsRead = async ({
 
         // For unexpected errors, return NotificationUpdateError
         return [
-          new DatabaseError('Failed to mark notification as read'),
+          new DatabaseError({ message: 'Failed to mark notification as read' }),
           undefined,
         ] as const;
       });
@@ -339,10 +344,10 @@ export const markNotificationAsUnread = async ({
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -368,27 +373,32 @@ export const markNotificationAsUnread = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!notification) {
       yield* Effect.fail(
-        new NotFoundError(`Notification not found`, notificationId)
+        new NotFoundError({
+          message: `Notification not found`,
+          cause: notificationId,
+        })
       );
       return;
     }
 
     if (notification.personId !== userId) {
       yield* Effect.fail(
-        new UnauthorizedError('Not authorized to update this notification')
+        new UnauthorizedError({
+          message: 'Not authorized to update this notification',
+        })
       );
       return;
     }
@@ -407,14 +417,14 @@ export const markNotificationAsUnread = async ({
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -453,7 +463,9 @@ export const markNotificationAsUnread = async ({
 
         // For unexpected errors, return NotificationUpdateError
         return [
-          new DatabaseError('Failed to mark notification as unread'),
+          new DatabaseError({
+            message: 'Failed to mark notification as unread',
+          }),
           undefined,
         ] as const;
       });
@@ -479,10 +491,10 @@ export const markAllNotificationsAsRead = async (
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -505,14 +517,14 @@ export const markAllNotificationsAsRead = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -528,7 +540,9 @@ export const markAllNotificationsAsRead = async (
   }).pipe(
     Effect.catchAll(_err => {
       return Effect.succeed([
-        new DatabaseError('Failed to mark all notifications as read'),
+        new DatabaseError({
+          message: 'Failed to mark all notifications as read',
+        }),
         undefined,
       ] as const);
     }),
@@ -582,14 +596,14 @@ export const createEventNotifications = ({
           type,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -626,14 +640,14 @@ export const createEventNotifications = ({
           memberCount: memberships.length,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -651,7 +665,7 @@ export const createEventNotifications = ({
   }).pipe(
     Effect.catchAll(_err => {
       return Effect.fail(
-        new OperationError('Failed to create event notifications')
+        new OperationError({ message: 'Failed to create event notifications' })
       );
     })
   );

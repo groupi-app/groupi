@@ -43,7 +43,7 @@ export function PusherChannelsProvider({
   const connectionStateRef = useRef<string>('disconnected');
   const isConnectedRef = useRef<boolean>(false);
 
-  // Initialize singleton client from app lib
+  // Initialize singleton client from app lib on first render
   if (!clientRef.current) {
     clientRef.current = pusherClient;
   }

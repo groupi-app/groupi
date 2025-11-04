@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { ReplySchema, UserSchema } from '../generated';
 
 // ============================================================================
-// REPLY DOMAIN DATA DTOS
+// REPLY DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic reply DTO
-export const ReplyDTO = ReplySchema.pick({
+// Basic reply data
+export const ReplyData = ReplySchema.pick({
   id: true,
   text: true,
   authorId: true,
@@ -16,10 +16,10 @@ export const ReplyDTO = ReplySchema.pick({
   updatedAt: true,
 });
 
-export type ReplyDTO = z.infer<typeof ReplyDTO>;
+export type ReplyData = z.infer<typeof ReplyData>;
 
-// Reply with author DTO
-export const ReplyWithAuthorDTO = ReplyDTO.extend({
+// Reply with author data
+export const ReplyWithAuthorData = ReplyData.extend({
   author: z.object({
     id: z.string(),
     user: UserSchema.pick({
@@ -30,18 +30,18 @@ export const ReplyWithAuthorDTO = ReplyDTO.extend({
   }),
 });
 
-export type ReplyWithAuthorDTO = z.infer<typeof ReplyWithAuthorDTO>;
+export type ReplyWithAuthorData = z.infer<typeof ReplyWithAuthorData>;
 
-// Reply feed DTO - for displaying reply lists
-export const ReplyFeedDTO = z.array(ReplyWithAuthorDTO);
-export type ReplyFeedDTO = z.infer<typeof ReplyFeedDTO>;
+// Reply feed data - for displaying reply lists
+export const ReplyFeedData = z.array(ReplyWithAuthorData);
+export type ReplyFeedData = z.infer<typeof ReplyFeedData>;
 
 // ============================================================================
-// ADMIN-SPECIFIC DTOS
+// ADMIN-SPECIFIC DATA TYPES
 // ============================================================================
 
-// Reply admin list item DTO - for admin dashboard
-export const ReplyAdminListItemDTO = ReplySchema.pick({
+// Reply admin list item data - for admin dashboard
+export const ReplyAdminListItemData = ReplySchema.pick({
   id: true,
   text: true,
   createdAt: true,
@@ -62,4 +62,4 @@ export const ReplyAdminListItemDTO = ReplySchema.pick({
   }),
 });
 
-export type ReplyAdminListItemDTO = z.infer<typeof ReplyAdminListItemDTO>;
+export type ReplyAdminListItemData = z.infer<typeof ReplyAdminListItemData>;

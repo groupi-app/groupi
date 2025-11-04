@@ -1,5 +1,5 @@
 import { Effect, Schedule } from 'effect';
-import { getCurrentUserId } from './auth';
+import { getUserId } from './auth-helpers';
 import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
@@ -8,8 +8,8 @@ import {
   UpdateUserSettingsParams,
 } from '@groupi/schema/params';
 import {
-  SettingsPageDTO,
-  NotificationMethodSettingsDTO,
+  SettingsPageData,
+  NotificationMethodSettingsData,
 } from '@groupi/schema/data';
 import {
   NotFoundError,
@@ -35,14 +35,14 @@ export const fetchUserSettings = async (
 ): Promise<
   ResultTuple<
     NotFoundError | DatabaseError | ConnectionError | AuthenticationError,
-    SettingsPageDTO
+    SettingsPageData
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -92,23 +92,29 @@ export const fetchUserSettings = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     if (!settingsData) {
-      return [new NotFoundError(`User settings not found`, userId), undefined];
+      return [
+        new NotFoundError({
+          message: `User settings not found`,
+          cause: userId,
+        }),
+        undefined,
+      ];
     }
 
     // Direct construction
-    const result: SettingsPageDTO = {
+    const result: SettingsPageData = {
       id: settingsData.id,
       createdAt: settingsData.createdAt,
       updatedAt: settingsData.updatedAt,
@@ -150,13 +156,13 @@ export const fetchUserSettings = async (
 
         // For unexpected errors, return DatabaseError
         return [
-          new DatabaseError('Failed to fetch user settings'),
+          new DatabaseError({ message: 'Failed to fetch user settings' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, SettingsPageDTO])
+    Effect.map(result => [null, result] as [null, SettingsPageData])
   );
 
   return Effect.runPromise(
@@ -178,14 +184,14 @@ export const updateUserSettings = async (
     | ValidationError
     | OperationError
     | AuthenticationError,
-    NotificationMethodSettingsDTO[]
+    NotificationMethodSettingsData[]
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
-  const [authError, userId] = await getCurrentUserId();
+  const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
-      authError || new AuthenticationError('Not authenticated'),
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
       undefined,
     ] as const;
   }
@@ -212,14 +218,14 @@ export const updateUserSettings = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
@@ -233,10 +239,10 @@ export const updateUserSettings = async (
     ).pipe(
       Effect.mapError(
         cause =>
-          new DatabaseError(
-            'Failed to delete existing notification methods',
-            cause
-          )
+          new DatabaseError({
+            message: 'Failed to delete existing notification methods',
+            cause,
+          })
       ),
       Effect.tapError(error =>
         Effect.logError('Database operation encountered error', {
@@ -244,19 +250,19 @@ export const updateUserSettings = async (
           userId,
           error: error.message,
           errorType: error.constructor.name,
-          willRetry: error instanceof DatabaseError,
+          willRetry: error instanceof ConnectionError,
         })
       ),
       Effect.retry({
         schedule: Schedule.exponential(1000).pipe(
           Schedule.intersect(Schedule.recurs(3))
         ),
-        while: error => error instanceof DatabaseError,
+        while: error => error instanceof ConnectionError,
       })
     );
 
     // Create new notification methods
-    const createdMethods: NotificationMethodSettingsDTO[] = [];
+    const createdMethods: NotificationMethodSettingsData[] = [];
     for (const method of notificationMethods) {
       const notificationMethod = yield* Effect.promise(() =>
         db.notificationMethod.create({
@@ -302,14 +308,14 @@ export const updateUserSettings = async (
             methodType: method.type,
             error: error.message,
             errorType: error.constructor.name,
-            willRetry: error instanceof DatabaseError,
+            willRetry: error instanceof ConnectionError,
           })
         ),
         Effect.retry({
           schedule: Schedule.exponential(1000).pipe(
             Schedule.intersect(Schedule.recurs(3))
           ),
-          while: error => error instanceof DatabaseError,
+          while: error => error instanceof ConnectionError,
         })
       );
 
@@ -352,21 +358,24 @@ export const updateUserSettings = async (
             operation: 'updateUserSettings',
           });
           return [
-            new NotFoundError(`User settings not found`, userId),
+            new NotFoundError({
+              message: `User settings not found`,
+              cause: userId,
+            }),
             undefined,
           ] as const;
         }
 
         // For unexpected errors, return SettingsUpdateError
         return [
-          new DatabaseError('Failed to update user settings'),
+          new DatabaseError({ message: 'Failed to update user settings' }),
           undefined,
         ] as const;
       });
     }),
     // Map result to tuple
     Effect.map(
-      result => [null, result] as [null, NotificationMethodSettingsDTO[]]
+      result => [null, result] as [null, NotificationMethodSettingsData[]]
     )
   );
 

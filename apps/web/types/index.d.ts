@@ -29,6 +29,6 @@ export type ActionResponse<T> = {
 };
 
 // Import types from schema package and export with backward compatible names
-export type { DateOptionDTO as PotentialDateTimeWithAvailabilities } from '@groupi/schema';
-export type { MembershipDTO as MembershipWithAvailabilities } from '@groupi/schema';
-export type { MembershipWithPersonDTO as Member } from '@groupi/schema';
+export type { DateOptionData as PotentialDateTimeWithAvailabilities } from '@groupi/schema';
+export type { MembershipData as MembershipWithAvailabilities } from '@groupi/schema';
+export type { MembershipWithPersonData as Member } from '@groupi/schema';

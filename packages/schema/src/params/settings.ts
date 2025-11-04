@@ -14,7 +14,7 @@ export const GetUserSettingsParams = z.object({});
 
 export type GetUserSettingsParams = z.infer<typeof GetUserSettingsParams>;
 
-// Update user settings parameters (migrated from UpdateUserSettingsDTO)
+// Update user settings parameters
 export const UpdateUserSettingsParams = z.object({
   notificationMethods: z.array(
     NotificationMethodSchema.pick({

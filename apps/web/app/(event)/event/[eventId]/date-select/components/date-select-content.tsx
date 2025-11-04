@@ -1,53 +1,29 @@
-'use client';
-
-import { useEventDateSelect } from '@groupi/hooks';
+import { getCachedEventAvailabilityData } from '@groupi/services';
 import { DateCardList } from '../../components/date-card-list';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export function DateSelectContent({ eventId }: { eventId: string }) {
-  const { data, isLoading } = useEventDateSelect(eventId);
-
-  if (isLoading || !data) {
-    return (
-      <div className='container max-w-5xl py-4'>
-        <div className='text-center py-8'>
-          <div className='text-lg'>Loading date options...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const [error, dateSelectData] = data;
+export async function DateSelectContent({ eventId }: { eventId: string }) {
+  const [error, availabilityData] =
+    await getCachedEventAvailabilityData(eventId);
 
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
       case 'NotFoundError':
-        errorMessage = 'Event not found';
-        break;
-      case 'UnauthorizedError':
+        return <div>Event not found</div>;
       case 'AuthenticationError':
-        errorMessage = 'You do not have permission to view this page';
-        break;
-      case 'DatabaseError':
-      case 'ConnectionError':
-        errorMessage = 'Failed to load date options';
-        break;
+        redirect('/sign-in');
+        // eslint-disable-next-line no-fallthrough
+      case 'UnauthorizedError':
+        return <div>You do not have permission to view this page</div>;
+      default:
+        return <div>Failed to load date options</div>;
     }
-
-    return (
-      <div className='container max-w-5xl py-4'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>{errorMessage}</p>
-        </div>
-      </div>
-    );
   }
 
-  const { potentialDateTimes } = dateSelectData;
+  const { potentialDateTimes } = availabilityData;
 
   return (
     <div className='container max-w-5xl py-4 flex flex-col'>
@@ -67,7 +43,13 @@ export function DateSelectContent({ eventId }: { eventId: string }) {
         <h1 className='font-heading text-4xl my-4'>
           Choose a date/time for your event.
         </h1>
-        <DateCardList eventId={eventId} />
+        <DateCardList
+          potentialDateTimes={potentialDateTimes}
+          userId={availabilityData.userId}
+          userRole={
+            availabilityData.userRole as 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
+          }
+        />
       </div>
     </div>
   );

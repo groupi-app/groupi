@@ -1,6 +1,9 @@
 // ============================================================================
-// CENTRALIZED DATA/DTO EXPORTS
+// CENTRALIZED DATA EXPORTS
 // ============================================================================
+
+// Shared/generic data types
+export * from './shared';
 
 // Domain-specific data types
 export * from './person';

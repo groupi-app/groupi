@@ -28,7 +28,7 @@ export type GetEventPotentialDateTimesParams = z.infer<
   typeof GetEventPotentialDateTimesParams
 >;
 
-// Update member availabilities parameters (migrated from UpdateMemberAvailabilitiesDTO)
+// Update member availabilities parameters
 export const UpdateMemberAvailabilitiesParams = z.object({
   eventId: EventSchema.shape.id,
   availabilities: z.array(
@@ -44,7 +44,7 @@ export type UpdateMemberAvailabilitiesParams = z.infer<
   typeof UpdateMemberAvailabilitiesParams
 >;
 
-// Choose date time parameters (migrated from ChooseDateTimeDTO)
+// Choose date time parameters
 export const ChooseDateTimeParams = z.object({
   eventId: EventSchema.shape.id,
   potentialDateTimeId: PotentialDateTimeSchema.shape.id,

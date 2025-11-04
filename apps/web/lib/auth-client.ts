@@ -1,4 +1,5 @@
-// Import only client-side auth utilities
+'use client';
+
 import { createAuthClient } from 'better-auth/react';
 import {
   usernameClient,
@@ -7,6 +8,15 @@ import {
   oneTapClient,
 } from 'better-auth/client/plugins';
 
+/**
+ * Better Auth client instance.
+ *
+ * Following the official Better Auth pattern from:
+ * https://www.better-auth.com/docs/concepts/client
+ *
+ * This is a simple, straightforward client setup that works with Next.js 16.
+ * The 'use client' directive ensures this only runs in the browser.
+ */
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
   plugins: [
@@ -24,15 +34,8 @@ export const authClient = createAuthClient({
   ],
 });
 
-export const {
-  signIn,
-  signUp,
-  signOut,
-  useSession,
-  getSession,
-  isUsernameAvailable,
-  $Infer,
-} = authClient;
+// Export commonly used methods for convenience
+export const { signIn, signUp, signOut, useSession } = authClient;
 
 // Helper function to send magic link with either email or username
 export async function sendMagicLinkWithEmailOrUsername({
@@ -47,7 +50,7 @@ export async function sendMagicLinkWithEmailOrUsername({
 
   if (isEmail) {
     // Send magic link directly with email
-    return await signIn.magicLink({
+    return await authClient.signIn.magicLink({
       email: identifier,
       callbackURL: callbackURL || '/events',
     });
@@ -72,11 +75,11 @@ export async function sendMagicLinkWithEmailOrUsername({
       const { email } = await response.json();
 
       // Now send magic link with the email
-      return await signIn.magicLink({
+      return await authClient.signIn.magicLink({
         email,
         callbackURL: callbackURL || '/events',
       });
-    } catch (_error) {
+    } catch {
       return {
         error: {
           message: 'Failed to send magic link',

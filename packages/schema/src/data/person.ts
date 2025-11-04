@@ -3,31 +3,31 @@ import { z } from 'zod';
 import { UserSchema, MembershipSchema, EventSchema } from '../generated';
 
 // ============================================================================
-// PERSON DOMAIN DATA DTOS
+// PERSON DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic person DTO - uses User table for auth data
-export const PersonBasicDTO = UserSchema.pick({
+// Basic person data - uses User table for auth data
+export const PersonBasicData = UserSchema.pick({
   id: true,
   name: true,
   email: true,
   image: true,
 });
 
-export type PersonBasicDTO = z.infer<typeof PersonBasicDTO>;
+export type PersonBasicData = z.infer<typeof PersonBasicData>;
 
-// Author DTO - for displaying post/reply authors
-export const AuthorDTO = UserSchema.pick({
+// Author data - for displaying post/reply authors
+export const AuthorData = UserSchema.pick({
   id: true,
   name: true,
   email: true,
   image: true,
 });
 
-export type AuthorDTO = z.infer<typeof AuthorDTO>;
+export type AuthorData = z.infer<typeof AuthorData>;
 
-// User dashboard DTO - for main user profile/dashboard
-export const UserDashboardDTO = UserSchema.pick({
+// User dashboard data - for main user profile/dashboard
+export const UserDashboardData = UserSchema.pick({
   id: true,
   name: true,
   email: true,
@@ -57,25 +57,14 @@ export const UserDashboardDTO = UserSchema.pick({
   ),
 });
 
-export type UserDashboardDTO = z.infer<typeof UserDashboardDTO>;
-
-// User profile DTO - for profile pages
-export const UserProfileDTO = UserSchema.pick({
-  id: true,
-  name: true,
-  email: true,
-  image: true,
-  createdAt: true,
-});
-
-export type UserProfileDTO = z.infer<typeof UserProfileDTO>;
+export type UserDashboardData = z.infer<typeof UserDashboardData>;
 
 // ============================================================================
-// ADMIN-SPECIFIC DTOS
+// ADMIN-SPECIFIC DATA TYPES
 // ============================================================================
 
-// User admin list item DTO - for admin dashboard
-export const UserAdminListItemDTO = z.object({
+// User admin list item data - for admin dashboard
+export const UserAdminListItemData = z.object({
   id: z.string(),
   name: z.string().nullable(),
   email: z.string(),
@@ -92,4 +81,4 @@ export const UserAdminListItemDTO = z.object({
   }),
 });
 
-export type UserAdminListItemDTO = z.infer<typeof UserAdminListItemDTO>;
+export type UserAdminListItemData = z.infer<typeof UserAdminListItemData>;

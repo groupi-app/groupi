@@ -1,7 +1,6 @@
 'use client';
 
-// Migrated from server actions to tRPC hooks
-import { useCreateInvite } from '@groupi/hooks';
+import { createInviteAction } from '@/actions/invite-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useState } from 'react';
@@ -36,6 +35,11 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 
+// Helper function to calculate expiration date
+function calculateExpirationDate(expiresInMs: number | null): Date | null {
+  return expiresInMs === null ? null : new Date(Date.now() + expiresInMs);
+}
+
 export function AddInvite({ eventId }: { eventId: string }) {
   const formSchema = z.object({
     name: z
@@ -61,48 +65,42 @@ export function AddInvite({ eventId }: { eventId: string }) {
   });
 
   const [isOpen, setIsOpen] = useState(false);
-
-  // Use our new tRPC hook with integrated real-time sync
-  const { createInvite, isLoading } = useCreateInvite();
+  const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const expiresAt =
-      values.expiresIn === null
-        ? null
-        : new Date(Date.now() + values.expiresIn);
+    setIsLoading(true);
 
-    await createInvite(
-      {
-        name: values.name,
-        eventId: eventId,
-        expiresAt: expiresAt,
-        maxUses: values.maxUses,
-      },
-      {
-        onSuccess: () => {
-          toast.success('The invite has been successfully created.');
-          setIsOpen(false);
-          form.reset(); // Reset form after successful creation
-        },
-        onError: error => {
-          // Handle specific error types
-          if (error._tag === 'UnauthorizedError') {
-            toast.error('Permission denied', {
-              description:
-                'You do not have permission to create invites for this event.',
-            });
-          } else if (error._tag === 'ValidationError') {
-            toast.error('Invalid input', {
-              description: 'Please check your invite details and try again.',
-            });
-          } else {
-            toast.error('Failed to create invite', {
-              description: 'The invite could not be created. Please try again.',
-            });
-          }
-        },
+    const expiresAt = calculateExpirationDate(values.expiresIn);
+    const [error] = await createInviteAction({
+      name: values.name,
+      eventId: eventId,
+      expiresAt: expiresAt,
+      maxUses: values.maxUses,
+    });
+
+    if (error) {
+      // Handle specific error types
+      if (error._tag === 'UnauthorizedError') {
+        toast.error('Permission denied', {
+          description:
+            'You do not have permission to create invites for this event.',
+        });
+      } else if (error._tag === 'ValidationError') {
+        toast.error('Invalid input', {
+          description: 'Please check your invite details and try again.',
+        });
+      } else {
+        toast.error('Failed to create invite', {
+          description: 'The invite could not be created. Please try again.',
+        });
       }
-    );
+      setIsLoading(false);
+    } else {
+      toast.success('The invite has been successfully created.');
+      setIsOpen(false);
+      form.reset();
+      setIsLoading(false);
+    }
   }
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

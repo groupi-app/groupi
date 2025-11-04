@@ -1,43 +1,22 @@
-'use client';
+import { getCachedPostWithReplies } from '@groupi/services';
+import { ReplyFeedClient } from './reply-feed-client';
+import { redirect } from 'next/navigation';
 
-import Reply from './reply';
-import { usePostDetail } from '@groupi/hooks';
-import { useSession } from '@/lib/auth-client';
-import type { PostDetailDTO } from '@groupi/schema';
-import { LayoutGroup, motion } from 'framer-motion';
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 15 },
-  show: { opacity: 1, y: 0 },
-};
-
-export default function ReplyFeed({ postId }: { postId: string }) {
-  const { data: session } = useSession();
-  const userId = session?.user?.id;
-  const { data, isLoading } = usePostDetail(postId);
-
-  if (isLoading || !data) {
-    return <div>Loading replies...</div>;
-  }
-
-  const [error, postData] = data;
+export default async function ReplyFeed({ postId }: { postId: string }) {
+  const [error, postData] = await getCachedPostWithReplies(postId);
 
   if (error) {
-    return <div>Error loading replies</div>;
+    switch (error._tag) {
+      case 'AuthenticationError':
+        redirect('/sign-in');
+      // eslint-disable-next-line no-fallthrough
+      default:
+        return <div>Error loading replies</div>;
+    }
   }
 
   const { post, userMembership } = postData;
-  const replies: PostDetailDTO['replies'] = post.replies || [];
+  const replies = post.replies || [];
 
   if (replies.length === 0) {
     return (
@@ -48,26 +27,11 @@ export default function ReplyFeed({ postId }: { postId: string }) {
   }
 
   return (
-    <motion.div
-      initial='hidden'
-      animate='show'
-      variants={container}
-      className='flex flex-col gap-4'
-    >
-      <LayoutGroup>
-        {replies.map(reply => (
-          <motion.div layout variants={item} key={reply.id}>
-            <Reply
-              key={reply.id}
-              reply={reply}
-              member={undefined} // Member data not included in reply
-              userId={userId || ''}
-              userRole={userMembership.role}
-              eventDateTime={post.event.chosenDateTime}
-            />
-          </motion.div>
-        ))}
-      </LayoutGroup>
-    </motion.div>
+    <ReplyFeedClient
+      replies={replies}
+      userId={post.authorId}
+      userMembership={userMembership}
+      post={post}
+    />
   );
 }

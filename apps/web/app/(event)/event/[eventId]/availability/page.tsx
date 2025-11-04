@@ -1,43 +1,73 @@
-import { AvailabilityContent } from './components/availability-content';
-import { getCurrentUserId } from '@groupi/services';
+import { AvailabilityServer } from './components/availability-server';
+import { getUserId } from '@groupi/services';
 import { redirect } from 'next/navigation';
-import { pageLogger } from '@/lib/logger';
-import { prefetchEventAvailabilityPageData } from '@groupi/hooks/server';
-import { HydrationBoundary } from '@tanstack/react-query';
+import { Icons } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Suspense } from 'react';
 
+/**
+ * Availability Page - Hybrid cache + realtime pattern
+ * - Static shell: Container, heading, back button render immediately
+ * - Dynamic content: Auth + cached data + realtime sync
+ */
 export default async function EventAvailabilityPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const params = await props.params;
   const { eventId } = params;
 
-  // Validate session server-side
-  const [authError, userId] = await getCurrentUserId();
+  return (
+    <div className='container max-w-5xl py-4'>
+      {/* Static shell - renders immediately */}
+      <div className='mb-6'>
+        <Link href={`/event/${eventId}`}>
+          <Button variant='ghost' className='flex items-center gap-1 pl-2'>
+            <Icons.back />
+            <span>Back to Event</span>
+          </Button>
+        </Link>
+      </div>
+
+      <div className='mb-6'>
+        <h1 className='text-3xl font-heading font-bold'>
+          Set Your Availability
+        </h1>
+        <p className='text-muted-foreground mt-2'>
+          Select the dates and times you are available for this event.
+        </p>
+      </div>
+
+      {/* Dynamic content - wrapped in Suspense */}
+      <Suspense fallback={<AvailabilityFormSkeleton />}>
+        <DynamicAvailabilityContent eventId={eventId} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function DynamicAvailabilityContent({ eventId }: { eventId: string }) {
+  // Dynamic rendering - wrapped in Suspense boundary
+  // Auth check - getUserId() handles headers() internally with prerendering detection
+  const [authError, userId] = await getUserId();
 
   if (authError || !userId) {
     redirect('/sign-in');
   }
 
-  try {
-    // Prefetch event availability page data
-    const dehydratedState = await prefetchEventAvailabilityPageData(eventId);
+  // Fetch cached data and pass to client with realtime
+  return <AvailabilityServer eventId={eventId} userId={userId} />;
+}
 
-    return (
-      <HydrationBoundary state={dehydratedState}>
-        <AvailabilityContent eventId={eventId} userId={userId} />
-      </HydrationBoundary>
-    );
-  } catch (error) {
-    pageLogger.error({ error }, 'Error in event availability page:');
-    return (
-      <div className='container pt-6'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>
-            An error occurred while loading availability data.
-          </p>
-        </div>
+function AvailabilityFormSkeleton() {
+  return (
+    <div className='space-y-6'>
+      <Skeleton className='h-64 w-full' />
+      <div className='flex justify-end gap-3'>
+        <Skeleton className='h-10 w-24' />
+        <Skeleton className='h-10 w-32' />
       </div>
-    );
-  }
+    </div>
+  );
 }

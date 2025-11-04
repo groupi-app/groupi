@@ -7,21 +7,21 @@ import {
 } from '../generated';
 
 // ============================================================================
-// SETTINGS DOMAIN DATA DTOS
+// SETTINGS DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic settings DTO
-export const SettingsDTO = PersonSettingsSchema.pick({
+// Basic settings data
+export const SettingsData = PersonSettingsSchema.pick({
   id: true,
   personId: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export type SettingsDTO = z.infer<typeof SettingsDTO>;
+export type SettingsData = z.infer<typeof SettingsData>;
 
-// Notification method DTO
-export const NotificationMethodDTO = NotificationMethodSchema.pick({
+// Notification method data
+export const NotificationMethodData = NotificationMethodSchema.pick({
   id: true,
   type: true,
   enabled: true,
@@ -32,10 +32,10 @@ export const NotificationMethodDTO = NotificationMethodSchema.pick({
   webhookFormat: true,
 });
 
-export type NotificationMethodDTO = z.infer<typeof NotificationMethodDTO>;
+export type NotificationMethodData = z.infer<typeof NotificationMethodData>;
 
-// Notification method with settings DTO
-export const NotificationMethodSettingsDTO = NotificationMethodDTO.extend({
+// Notification method with settings data
+export const NotificationMethodSettingsData = NotificationMethodData.extend({
   notifications: z.array(
     NotificationSettingSchema.pick({
       notificationType: true,
@@ -44,18 +44,18 @@ export const NotificationMethodSettingsDTO = NotificationMethodDTO.extend({
   ),
 });
 
-export type NotificationMethodSettingsDTO = z.infer<
-  typeof NotificationMethodSettingsDTO
+export type NotificationMethodSettingsData = z.infer<
+  typeof NotificationMethodSettingsData
 >;
 
-// Settings page DTO
-export const SettingsPageDTO = PersonSettingsSchema.pick({
+// Settings page data
+export const SettingsPageData = PersonSettingsSchema.pick({
   id: true,
   createdAt: true,
   updatedAt: true,
   personId: true,
 }).extend({
-  notificationMethods: z.array(NotificationMethodSettingsDTO),
+  notificationMethods: z.array(NotificationMethodSettingsData),
 });
 
-export type SettingsPageDTO = z.infer<typeof SettingsPageDTO>;
+export type SettingsPageData = z.infer<typeof SettingsPageData>;

@@ -4,13 +4,20 @@ import { useFormContext } from '@/components/providers/form-context-provider';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Page() {
   const { formState } = useFormContext();
   const router = useRouter();
 
+  // Move redirect to useEffect to avoid calling during prerender
+  useEffect(() => {
+    if (!formState.title) {
+      router.push('/create');
+    }
+  }, [formState.title, router]);
+
   if (!formState.title) {
-    router.push('/create');
     return null;
   }
 

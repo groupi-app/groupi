@@ -9,14 +9,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-// Migrated from server actions to tRPC hooks
-import { useCreateReply } from '@groupi/hooks';
+import { createReplyAction } from '@/actions/reply-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 const formSchema = z.object({
   reply: z
@@ -27,13 +27,11 @@ const formSchema = z.object({
 
 export default function ReplyForm({
   postId,
-  userId: _userId,
 }: {
   postId: string;
   userId: string;
 }) {
-  // Use our new tRPC hook with integrated real-time sync
-  const createReplyMutation = useCreateReply();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,30 +42,22 @@ export default function ReplyForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    createReplyMutation.mutate(
-      {
-        text: values.reply,
-        postId: postId,
-      },
-      {
-        onSuccess: ([error, _reply]) => {
-          if (error) {
-            toast.error('Failed to send reply', {
-              description: 'The reply could not be sent. Please try again.',
-            });
-            return;
-          }
+    setIsLoading(true);
+    const [error] = await createReplyAction({
+      text: values.reply,
+      postId: postId,
+    });
 
-          form.reset();
-          toast.success('Your reply has been successfully sent');
-        },
-        onError: () => {
-          toast.error('Failed to send reply', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Failed to send reply', {
+        description: 'The reply could not be sent. Please try again.',
+      });
+      setIsLoading(false);
+    } else {
+      form.reset();
+      toast.success('Your reply has been successfully sent');
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -90,13 +80,8 @@ export default function ReplyForm({
               </FormItem>
             )}
           />
-          <Button
-            disabled={createReplyMutation.isLoading}
-            size='sm'
-            type='submit'
-            className='h-20'
-          >
-            {createReplyMutation.isLoading ? (
+          <Button disabled={isLoading} size='sm' type='submit' className='h-20'>
+            {isLoading ? (
               <Icons.spinner className='h-4 w-4 animate-spin' />
             ) : (
               <Icons.submit className='h-4 w-4' />

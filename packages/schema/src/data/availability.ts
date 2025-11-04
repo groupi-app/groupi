@@ -5,33 +5,32 @@ import {
   PotentialDateTimeSchema,
   MembershipSchema,
   UserSchema,
-  EventSchema,
 } from '../generated';
 
 // ============================================================================
-// AVAILABILITY DOMAIN DATA DTOS
+// AVAILABILITY DOMAIN DATA TYPES
 // ============================================================================
 
-// Basic availability DTO
-export const AvailabilityDTO = AvailabilitySchema.pick({
+// Basic availability data
+export const AvailabilityData = AvailabilitySchema.pick({
   membershipId: true,
   potentialDateTimeId: true,
   status: true,
 });
 
-export type AvailabilityDTO = z.infer<typeof AvailabilityDTO>;
+export type AvailabilityData = z.infer<typeof AvailabilityData>;
 
-// Potential date time DTO
-export const PotentialDateTimeDTO = PotentialDateTimeSchema.pick({
+// Potential date time data
+export const PotentialDateTimeData = PotentialDateTimeSchema.pick({
   id: true,
   eventId: true,
   dateTime: true,
 });
 
-export type PotentialDateTimeDTO = z.infer<typeof PotentialDateTimeDTO>;
+export type PotentialDateTimeData = z.infer<typeof PotentialDateTimeData>;
 
-// Date option DTO - represents a potential date/time with availability info
-export const DateOptionDTO = PotentialDateTimeDTO.extend({
+// Date option data - represents a potential date/time with availability info
+export const DateOptionData = PotentialDateTimeData.extend({
   availabilities: z.array(
     AvailabilitySchema.pick({
       status: true,
@@ -56,49 +55,13 @@ export const DateOptionDTO = PotentialDateTimeDTO.extend({
   ),
 });
 
-export type DateOptionDTO = z.infer<typeof DateOptionDTO>;
+export type DateOptionData = z.infer<typeof DateOptionData>;
 
-// PDT (Potential Date Time) DTO - for availability pages
-export const PDTDTO = z.object({
-  potentialDateTimes: z.array(DateOptionDTO),
+// Availability data - for availability pages showing potential date times with availability info
+export const AvailabilityPageData = z.object({
+  potentialDateTimes: z.array(DateOptionData),
   userRole: MembershipSchema.shape.role,
   userId: z.string(),
 });
 
-export type PDTDTO = z.infer<typeof PDTDTO>;
-
-// Event availability page DTO
-export const EventAvailabilityPageDTO = z.object({
-  event: EventSchema.pick({
-    id: true,
-    title: true,
-    chosenDateTime: true,
-  }),
-  potentialDateTimes: z.array(DateOptionDTO),
-  userMembership: MembershipSchema.pick({
-    id: true,
-    role: true,
-  }),
-});
-
-export type EventAvailabilityPageDTO = z.infer<typeof EventAvailabilityPageDTO>;
-
-// Date selection page DTO
-export const DateSelectionPageDTO = z.object({
-  event: EventSchema.pick({
-    id: true,
-    title: true,
-  }),
-  potentialDateTimes: z.array(
-    PotentialDateTimeDTO.extend({
-      availabilityCount: AvailabilitySchema.pick({
-        status: true,
-      }),
-    })
-  ),
-  userRole: MembershipSchema.pick({
-    role: true,
-  }),
-});
-
-export type DateSelectionPageDTO = z.infer<typeof DateSelectionPageDTO>;
+export type AvailabilityPageData = z.infer<typeof AvailabilityPageData>;

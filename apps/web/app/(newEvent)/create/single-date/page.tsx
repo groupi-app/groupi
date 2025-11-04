@@ -1,3 +1,5 @@
+'use client';
+
 import { NewEventSingleDate } from '../components/new-event-single-date';
 
 export default function Page() {

@@ -17,9 +17,20 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
-import { LocationInput } from './location-input';
+import dynamic from 'next/dynamic';
 import { useFormContext } from '@/components/providers/form-context-provider';
 import { Button } from '@/components/ui/button';
+
+const LocationInput = dynamic(() => import('./location-input').then(mod => ({ default: mod.LocationInput })), {
+  ssr: false,
+  loading: () => (
+    <Input
+      data-test='new-event-location'
+      placeholder="123 Main St... or 'My house'"
+      disabled
+    />
+  ),
+});
 
 const formSchema = z.object({
   title: z.string().min(1, {

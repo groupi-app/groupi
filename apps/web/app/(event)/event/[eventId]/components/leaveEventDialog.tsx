@@ -7,15 +7,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useLeaveEvent } from '@groupi/hooks';
+import { leaveEventAction } from '@/actions/event-actions';
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function LeaveEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
-  const leaveEvent = useLeaveEvent();
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  const handleLeave = async () => {
+    setIsLeaving(true);
+    const [error] = await leaveEventAction({ eventId });
+
+    if (error) {
+      toast.error('Unable to leave the event.');
+      setIsLeaving(false);
+    } else {
+      toast.success('You have left the event.');
+      router.push(`/events`);
+    }
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -28,27 +43,17 @@ export function LeaveEventDialog({ eventId }: { eventId: string }) {
       <DialogFooter>
         <div className='flex items-center justify-end gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost'>Cancel</Button>
+            <Button variant='ghost' disabled={isLeaving}>
+              Cancel
+            </Button>
           </DialogClose>
           <DialogClose asChild>
             <Button
-              onClick={() => {
-                leaveEvent.mutate(
-                  { eventId },
-                  {
-                    onSuccess: () => {
-                      router.push(`/events`);
-                      toast.success('You have left the event.');
-                    },
-                    onError: () => {
-                      toast.error('Unable to leave the event.');
-                    },
-                  }
-                );
-              }}
+              onClick={handleLeave}
               variant='destructive'
+              disabled={isLeaving}
             >
-              Leave
+              {isLeaving ? 'Leaving...' : 'Leave'}
             </Button>
           </DialogClose>
         </div>

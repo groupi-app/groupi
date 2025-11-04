@@ -19,6 +19,9 @@ export { Effect } from 'effect';
 // Domain-organized services
 export * from './domains';
 
+// Cache layer (Next.js 16 "use cache" functions)
+export * from './cache';
+
 // ============================================================================
 // LEGACY EXPORTS REMOVED - All services now organized in domains/
 // ============================================================================

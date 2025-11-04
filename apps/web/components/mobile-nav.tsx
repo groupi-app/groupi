@@ -14,15 +14,15 @@ import { Icons } from '@/components/icons';
 import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
 import { MainNavItem } from '@/types';
-import { PersonBasicDTO } from '@groupi/schema';
+import { PersonBasicData } from '@groupi/schema';
 import { signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
-import { NotificationCount } from './notification-count';
+// TODO: Re-implement NotificationCount with server actions
 import { ProfileSlate } from './profile-slate';
 import { useNotificationCloseContext } from '@/components/providers/notif-close-provider';
 
 interface MobileNavProps {
-  userInfo: PersonBasicDTO;
+  userInfo: PersonBasicData;
   items: MainNavItem[];
   children?: React.ReactNode;
 }
@@ -37,13 +37,8 @@ export function MobileNav({ items, children, userInfo }: MobileNavProps) {
             <Icons.logo width='36' height='36' viewBox='0 0 197 225' />
           </Link>
           <SheetTrigger className='relative flex items-center justify-center size-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground'>
-            {userInfo.id ? (
-              <NotificationCount userId={userInfo.id}>
-                <Icons.menu className='size-8' />
-              </NotificationCount>
-            ) : (
-              <Icons.menu className='size-8' />
-            )}
+            <Icons.menu className='size-8' />
+            {/* TODO: Re-implement notification count with server actions */}
           </SheetTrigger>
         </div>
         <SheetContent side='top'>

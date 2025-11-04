@@ -2,15 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-// Migrated from server actions to tRPC hooks
-import { useAcceptInvite } from '@groupi/hooks';
+import { acceptInviteAction } from '@/actions/invite-actions';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
+import { useState } from 'react';
 
 export function AcceptInviteButton({
   inviteId,
   eventId,
-  personId,
 }: {
   //   params: { eventId: string };
   inviteId: string;
@@ -18,37 +17,29 @@ export function AcceptInviteButton({
   personId: string;
 }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Use our new tRPC hook with integrated real-time sync
-  const acceptInviteMutation = useAcceptInvite();
+  const handleAcceptInvite = async () => {
+    setIsLoading(true);
+    const [error] = await acceptInviteAction({
+      inviteId: inviteId,
+    });
 
-  const handleAcceptInvite = () => {
-    acceptInviteMutation.mutate(
-      {
-        inviteId: inviteId,
-        personId: personId,
-      },
-      {
-        onSuccess: _result => {
-          // Mutation successful, navigate to event
-          router.push(`/event/${eventId}`);
-        },
-        onError: () => {
-          toast.error('Failed to accept invite', {
-            description: 'An unexpected error occurred. Please try again.',
-          });
-        },
-      }
-    );
+    if (error) {
+      toast.error('Failed to accept invite', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
+      setIsLoading(false);
+    } else {
+      // Mutation successful, navigate to event
+      router.push(`/event/${eventId}`);
+    }
   };
 
   return (
     <div>
-      <Button
-        onClick={handleAcceptInvite}
-        disabled={acceptInviteMutation.isLoading}
-      >
-        {acceptInviteMutation.isLoading ? (
+      <Button onClick={handleAcceptInvite} disabled={isLoading}>
+        {isLoading ? (
           <>
             <Icons.spinner className='mr-2 h-4 w-4 animate-spin' />
             Accepting...

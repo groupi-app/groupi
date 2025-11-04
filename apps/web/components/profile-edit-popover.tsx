@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { trpc } from '@/lib/utils/api';
+// TODO: Migrate profile functionality to server actions
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitialsFromName } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+// import { Loader2 } from 'lucide-react'; // TODO: Uncomment when migration is complete
 
 interface ProfileEditDialogProps {
   userInfo: {
@@ -35,41 +35,45 @@ export function ProfileEditDialog({
   open,
   onOpenChange,
 }: ProfileEditDialogProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    pronouns: '',
-    bio: '',
-    image: '',
+  // Initialize form state from userInfo prop
+  const getInitialFormData = () => ({
+    name: userInfo.name || '',
+    pronouns: userInfo.pronouns || '',
+    bio: userInfo.bio || '',
+    image: userInfo.image || '',
   });
 
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Reset form when dialog opens
   useEffect(() => {
-    if (userInfo && open) {
-      setFormData({
-        name: userInfo.name || '',
-        pronouns: userInfo.pronouns || '',
-        bio: userInfo.bio || '',
-        image: userInfo.image || '',
-      });
+    if (open) {
+      setFormData(getInitialFormData());
     }
-  }, [userInfo, open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
-  const utils = trpc.useUtils();
-  const updateMutation = trpc.person.update.useMutation({
-    onSuccess: () => {
-      utils.person.getCurrent.invalidate();
-      onOpenChange(false);
-    },
-  });
+  // TODO: Migrate to server actions
+  // Commented out trpc calls until migration is complete
+  // const utils = trpc.useUtils();
+  // const updateMutation = trpc.person.update.useMutation({
+  //   onSuccess: () => {
+  //     utils.person.getCurrent.invalidate();
+  //     onOpenChange(false);
+  //   },
+  // });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate({
-      userId: userInfo.id,
-      name: formData.name || undefined,
-      pronouns: formData.pronouns || undefined,
-      bio: formData.bio || undefined,
-      image: formData.image || undefined,
-    });
+    // TODO: Migrate to server actions
+    // updateMutation.mutate({
+    //   userId: userInfo.id,
+    //   name: formData.name || undefined,
+    //   pronouns: formData.pronouns || undefined,
+    //   bio: formData.bio || undefined,
+    //   image: formData.image || undefined,
+    // });
+    alert('Profile update functionality is being migrated to server actions');
   };
 
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
@@ -141,30 +145,26 @@ export function ProfileEditDialog({
             />
           </div>
 
-          {updateMutation.isError && (
+          {/* TODO: Migrate to server actions */}
+          {/* {updateMutation.isError && (
             <p className='text-sm text-destructive'>
               Error: {updateMutation.error.message}
             </p>
-          )}
+          )} */}
 
           <div className='flex gap-2'>
             <Button
               type='button'
               variant='outline'
               onClick={() => onOpenChange(false)}
-              disabled={updateMutation.isPending}
               className='flex-1'
             >
               Cancel
             </Button>
-            <Button
-              type='submit'
-              disabled={updateMutation.isPending}
-              className='flex-1'
-            >
-              {updateMutation.isPending && (
+            <Button type='submit' className='flex-1'>
+              {/* {updateMutation.isPending && (
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              )}
+              )} */}
               Save
             </Button>
           </div>

@@ -1,7 +1,7 @@
-import { NotificationFeedDTO } from '@groupi/schema';
+import { NotificationFeedData } from '@groupi/schema';
 
 interface EmailTemplateProps {
-  notification: NotificationFeedDTO;
+  notification: NotificationFeedData;
 }
 
 export function NotificationEmailTemplate({

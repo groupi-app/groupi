@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUserId } from '@groupi/services';
+import { getUserIdUncached } from '@groupi/services';
 import { apiLogger } from '@/lib/logger';
 
 export async function GET() {
   try {
-    const [error, userId] = await getCurrentUserId();
+    const [error, userId] = await getUserIdUncached();
     if (error || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

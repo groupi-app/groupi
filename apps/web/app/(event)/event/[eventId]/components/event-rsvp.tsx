@@ -1,7 +1,6 @@
 'use client';
 
-// Migrated from server actions to tRPC hooks
-import { useUpdateRSVP } from '@groupi/hooks';
+import { updateRSVPAction } from '@/actions/membership-actions';
 import { MembershipWithAvailabilities } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -30,9 +29,7 @@ export function EventRSVP({
   userMembership: MembershipWithAvailabilities;
 }) {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-
-  // Use our new tRPC hook with integrated real-time sync
-  const updateRSVPMutation = useUpdateRSVP();
+  const [isLoading, setIsLoading] = useState(false);
 
   const formSchema = z.object({
     rsvp: z.enum(['YES', 'NO', 'MAYBE', 'PENDING']),
@@ -47,7 +44,8 @@ export function EventRSVP({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const [error] = await updateRSVPMutation.updateRSVP({
+    setIsLoading(true);
+    const [error] = await updateRSVPAction({
       eventId: userMembership.eventId,
       status: values.rsvp,
     });
@@ -55,10 +53,12 @@ export function EventRSVP({
       toast.error('Failed to update RSVP', {
         description: 'Your RSVP status could not be updated. Please try again.',
       });
+      setIsLoading(false);
       return;
     }
     setDialogOpen(false);
     toast.success('Your RSVP status has been successfully updated');
+    setIsLoading(false);
   }
 
   return (
@@ -137,7 +137,7 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'YES' ? 'default' : 'outline'}
                       onClick={() => field.onChange('YES')}
-                      disabled={updateRSVPMutation.isLoading}
+                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <Icons.check className='text-green-500' />
@@ -150,7 +150,7 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'MAYBE' ? 'default' : 'outline'}
                       onClick={() => field.onChange('MAYBE')}
-                      disabled={updateRSVPMutation.isLoading}
+                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
@@ -165,7 +165,7 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'NO' ? 'default' : 'outline'}
                       onClick={() => field.onChange('NO')}
-                      disabled={updateRSVPMutation.isLoading}
+                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <Icons.close className='text-red-500' />
@@ -181,12 +181,13 @@ export function EventRSVP({
                 className='mt-5 flex items-center gap-1 w-full sm:w-auto'
                 type='submit'
                 disabled={
-                  updateRSVPMutation.isLoading ||
+                  isLoading ||
                   !form.formState.isValid ||
+                  // eslint-disable-next-line react-hooks/incompatible-library
                   form.watch('rsvp') === 'PENDING'
                 }
               >
-                {updateRSVPMutation.isLoading ? (
+                {isLoading ? (
                   <Icons.spinner className='h-4 w-4 animate-spin' />
                 ) : (
                   <Icons.save className='size-4' />

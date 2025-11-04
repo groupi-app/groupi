@@ -1,19 +1,19 @@
-'use client';
-
-import { useEventAvailability } from '@groupi/hooks';
+import { getCachedEventAvailabilityData } from '@groupi/services';
 import { AvailabilityForm } from '../../components/availability-form';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export function AvailabilityContent({
+export async function AvailabilityContent({
   eventId,
   userId,
 }: {
   eventId: string;
   userId: string;
 }) {
-  const { data, isLoading } = useEventAvailability(eventId);
+  const [error, availabilityData] =
+    await getCachedEventAvailabilityData(eventId);
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${
@@ -21,49 +21,18 @@ export function AvailabilityContent({
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
 
-  if (isLoading || !data) {
-    return (
-      <div className='container max-w-5xl py-4'>
-        <div className='text-center py-8'>
-          <div className='text-lg'>Loading availability options...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const [error, availabilityData] = data;
-
   if (error) {
-    let errorMessage = 'An error occurred';
     switch (error._tag) {
       case 'NotFoundError':
-        errorMessage = 'No availability data found';
-        break;
-      case 'UnauthorizedError':
-        errorMessage = 'You are not a member of this event';
-        break;
+        return <div>No availability data found</div>;
       case 'AuthenticationError':
-        errorMessage = 'Please sign in to view availability';
-        break;
-      case 'ConnectionError':
-        errorMessage = 'Network error. Please try again.';
-        break;
-      case 'ConstraintError':
-        errorMessage = 'Invalid request';
-        break;
-      case 'DatabaseError':
-        errorMessage = error.message || 'Failed to load availability data';
-        break;
+        redirect('/sign-in');
+        // eslint-disable-next-line no-fallthrough
+      case 'UnauthorizedError':
+        return <div>You are not a member of this event</div>;
+      default:
+        return <div>Failed to load availability data</div>;
     }
-
-    return (
-      <div className='container max-w-5xl py-4'>
-        <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Error</h1>
-          <p className='mt-2'>{errorMessage}</p>
-        </div>
-      </div>
-    );
   }
 
   const { potentialDateTimes, userRole } = availabilityData;

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Icons } from '@/components/icons';
 
 // Type for the event data that this component expects
-// Simplified to match what we actually have from UserDashboardDTO.memberships[].event
+// Simplified to match what we actually have from UserDashboardData.memberships[].event
 type EventCardData = {
   id: string;
   title: string;
