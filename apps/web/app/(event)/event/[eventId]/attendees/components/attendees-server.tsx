@@ -28,4 +28,3 @@ export async function AttendeesServer({ eventId }: { eventId: string }) {
 
   return <AttendeesClient eventId={eventId} initialData={attendeesData} />;
 }
-

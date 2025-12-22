@@ -144,26 +144,40 @@ export function MemberListClient({
       );
     },
     onUpdate: data => {
-      pusherLogger.debug({ eventId, data }, 'Received onUpdate in MemberListClient');
+      pusherLogger.debug(
+        { eventId, data },
+        'Received onUpdate in MemberListClient'
+      );
       // Pusher sends MembershipData (minimal) but we need to preserve person data
       // Verify we have MembershipData with required fields
       if (!data || typeof data !== 'object') {
-        pusherLogger.debug({ eventId, data }, 'Skipping update - invalid data in MemberListClient');
+        pusherLogger.debug(
+          { eventId, data },
+          'Skipping update - invalid data in MemberListClient'
+        );
         return;
       }
       const updateData = data as MembershipData;
-      
+
       // Ensure we have the required fields
-      if (!('id' in updateData) || !('role' in updateData) || !('rsvpStatus' in updateData)) {
+      if (
+        !('id' in updateData) ||
+        !('role' in updateData) ||
+        !('rsvpStatus' in updateData)
+      ) {
         pusherLogger.debug(
           { eventId, updateData },
           'Skipping update - missing required fields in MemberListClient'
         );
         return; // Not valid MembershipData, skip
       }
-      
+
       pusherLogger.debug(
-        { eventId, membershipId: updateData.id, rsvpStatus: updateData.rsvpStatus },
+        {
+          eventId,
+          membershipId: updateData.id,
+          rsvpStatus: updateData.rsvpStatus,
+        },
         'Updating cache with membership data in MemberListClient'
       );
       queryClient.setQueryData<EventAttendeesPageData>(

@@ -4,7 +4,7 @@ import PusherClient from 'pusher-js';
 
 /**
  * Pusher Channels client instance.
- * 
+ *
  * Simple singleton pattern - the client is created once and reused.
  * The 'use client' directive ensures this only runs in the browser.
  */

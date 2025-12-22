@@ -53,7 +53,7 @@ export function EventRSVP({
       userMembership: initialUserMembership,
     } as EventHeaderData,
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.userMembership, // Extract userMembership for reactivity
+    select: data => data.userMembership, // Extract userMembership for reactivity
   });
 
   const userMembership = eventHeaderData || initialUserMembership;
@@ -80,7 +80,7 @@ export function EventRSVP({
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Close dialog immediately for instant feedback (optimistic update handles UI)
     setDialogOpen(false);
-    
+
     updateRSVP.mutate(
       {
         eventId: eventId,
@@ -92,7 +92,8 @@ export function EventRSVP({
         },
         onError: () => {
           toast.error('Failed to update RSVP', {
-            description: 'Your RSVP status could not be updated. Please try again.',
+            description:
+              'Your RSVP status could not be updated. Please try again.',
           });
         },
       }
@@ -157,13 +158,13 @@ export function EventRSVP({
                   ? dateTime
                   : new Date(dateTime)
                 ).toLocaleString([], {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })
               : null}
           </span>
           ?

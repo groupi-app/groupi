@@ -31,10 +31,3 @@ export function NewEventFormSkeleton() {
     </div>
   );
 }
-
-
-
-
-
-
-

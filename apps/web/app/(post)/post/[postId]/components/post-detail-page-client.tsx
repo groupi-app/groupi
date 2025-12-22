@@ -17,14 +17,14 @@ interface PostDetailPageClientProps {
   initialUserId: string;
 }
 
-export function PostDetailPageClient({ 
-  postId, 
+export function PostDetailPageClient({
+  postId,
   initialPost,
   initialUserMembership,
   initialUserId,
 }: PostDetailPageClientProps) {
   const postRef = useRef<HTMLDivElement>(null);
-  
+
   // Fetch post data for sticky header (use React Query to get latest)
   const { data: postData } = useQuery<PostDetailPageData>({
     queryKey: qk.posts.detail(postId),
@@ -43,7 +43,9 @@ export function PostDetailPageClient({
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const { markPostNotificationsAsReadAction } = await import('@/actions/notification-actions');
+        const { markPostNotificationsAsReadAction } = await import(
+          '@/actions/notification-actions'
+        );
         await markPostNotificationsAsReadAction({ postId });
       } catch (err) {
         // Silently fail - don't block page rendering
@@ -65,4 +67,3 @@ export function PostDetailPageClient({
     </>
   );
 }
-

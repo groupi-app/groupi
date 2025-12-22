@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { AttendeesServer } from './attendees-server';
 import { AttendeeListSkeleton } from '@/components/skeletons/attendee-list-skeleton';
 import { Suspense } from 'react';
-import { getUserId, shouldRedirectToAvailability, getCachedEventAttendeesData } from '@groupi/services/server';
+import {
+  getUserId,
+  shouldRedirectToAvailability,
+  getCachedEventAttendeesData,
+} from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { componentLogger } from '@/lib/logger';
 
@@ -13,9 +17,9 @@ import { componentLogger } from '@/lib/logger';
  * Handles auth, availability check, and renders attendees content
  * All checks and redirects happen inside Suspense boundary for instant skeleton rendering
  */
-export async function AttendeesPageContent({ 
+export async function AttendeesPageContent({
   params,
-}: { 
+}: {
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
@@ -67,4 +71,3 @@ export async function AttendeesPageContent({
     </div>
   );
 }
-

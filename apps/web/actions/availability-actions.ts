@@ -1,7 +1,12 @@
 'use server';
 
 import { updateTag } from 'next/cache';
-import { updateMemberAvailabilities, chooseDateTime, resetChosenDate, updatePotentialDateTimes } from '@groupi/services';
+import {
+  updateMemberAvailabilities,
+  chooseDateTime,
+  resetChosenDate,
+  updatePotentialDateTimes,
+} from '@groupi/services';
 import { db } from '@groupi/services/server';
 import { pusherServer } from '@/lib/pusher-server';
 import { pusherLogger } from '@/lib/logger';
@@ -70,14 +75,22 @@ export async function updateAvailabilitiesAction(
       type: 'UPDATE' as const,
       new: { eventId: input.eventId },
     };
-    
+
     pusherLogger.debug(
-      { eventId: input.eventId, channel: availabilityChannel, data: availabilityEventData },
+      {
+        eventId: input.eventId,
+        channel: availabilityChannel,
+        data: availabilityEventData,
+      },
       'Triggering Pusher availability-changed event for availability update'
     );
-    
+
     await pusherServer
-      .trigger(availabilityChannel, 'availability-changed', availabilityEventData)
+      .trigger(
+        availabilityChannel,
+        'availability-changed',
+        availabilityEventData
+      )
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: availabilityChannel },
@@ -130,12 +143,12 @@ export async function chooseDateTimeAction(
         chosenDateTime: chosenDateTime,
       },
     };
-    
+
     pusherLogger.debug(
       { eventId: input.eventId, channel: headerChannel, data: headerEventData },
       'Triggering Pusher event-changed event for date selection'
     );
-    
+
     await pusherServer
       .trigger(headerChannel, 'event-changed', headerEventData)
       .then(() => {
@@ -157,14 +170,22 @@ export async function chooseDateTimeAction(
       type: 'UPDATE' as const,
       new: { eventId: input.eventId },
     };
-    
+
     pusherLogger.debug(
-      { eventId: input.eventId, channel: availabilityChannel, data: availabilityEventData },
+      {
+        eventId: input.eventId,
+        channel: availabilityChannel,
+        data: availabilityEventData,
+      },
       'Triggering Pusher availability-changed event for date selection'
     );
-    
+
     await pusherServer
-      .trigger(availabilityChannel, 'availability-changed', availabilityEventData)
+      .trigger(
+        availabilityChannel,
+        'availability-changed',
+        availabilityEventData
+      )
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: availabilityChannel },
@@ -198,7 +219,7 @@ export async function resetChosenDateAction(
     { eventId: input.eventId },
     'resetChosenDateAction called'
   );
-  
+
   const result = await resetChosenDate({
     eventId: input.eventId,
   });
@@ -214,7 +235,7 @@ export async function resetChosenDateAction(
       { eventId: input.eventId },
       'Date reset successful, preparing to trigger Pusher events'
     );
-    
+
     updateTag(`event-${input.eventId}`);
     updateTag(`event-${input.eventId}-header`);
     updateTag(`event-${input.eventId}-availability`);
@@ -228,12 +249,12 @@ export async function resetChosenDateAction(
         chosenDateTime: null,
       },
     };
-    
+
     pusherLogger.debug(
       { eventId: input.eventId, channel: headerChannel, data: headerEventData },
       'Triggering Pusher event-changed event for date reset'
     );
-    
+
     await pusherServer
       .trigger(headerChannel, 'event-changed', headerEventData)
       .then(() => {
@@ -255,14 +276,22 @@ export async function resetChosenDateAction(
       type: 'UPDATE' as const,
       new: { eventId: input.eventId },
     };
-    
+
     pusherLogger.debug(
-      { eventId: input.eventId, channel: availabilityChannel, data: availabilityEventData },
+      {
+        eventId: input.eventId,
+        channel: availabilityChannel,
+        data: availabilityEventData,
+      },
       'Triggering Pusher availability-changed event for date reset'
     );
-    
+
     await pusherServer
-      .trigger(availabilityChannel, 'availability-changed', availabilityEventData)
+      .trigger(
+        availabilityChannel,
+        'availability-changed',
+        availabilityEventData
+      )
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: availabilityChannel },
@@ -294,10 +323,13 @@ export async function updatePotentialDateTimesAction(
   input: UpdatePotentialDateTimesInput
 ): Promise<ResultTuple<AvailabilityMutationError, { message: string }>> {
   pusherLogger.debug(
-    { eventId: input.eventId, potentialDateTimesCount: input.potentialDateTimes.length },
+    {
+      eventId: input.eventId,
+      potentialDateTimesCount: input.potentialDateTimes.length,
+    },
     'updatePotentialDateTimesAction called'
   );
-  
+
   const result = await updatePotentialDateTimes({
     eventId: input.eventId,
     potentialDateTimes: input.potentialDateTimes,
@@ -314,7 +346,7 @@ export async function updatePotentialDateTimesAction(
       { eventId: input.eventId },
       'Potential date times updated successfully, preparing to trigger Pusher events'
     );
-    
+
     updateTag(`event-${input.eventId}`);
     updateTag(`event-${input.eventId}-header`);
     updateTag(`event-${input.eventId}-availability`);
@@ -325,14 +357,22 @@ export async function updatePotentialDateTimesAction(
       type: 'UPDATE' as const,
       new: { eventId: input.eventId },
     };
-    
+
     pusherLogger.debug(
-      { eventId: input.eventId, channel: availabilityChannel, data: availabilityEventData },
+      {
+        eventId: input.eventId,
+        channel: availabilityChannel,
+        data: availabilityEventData,
+      },
       'Triggering Pusher availability-changed event for potential date times update'
     );
-    
+
     await pusherServer
-      .trigger(availabilityChannel, 'availability-changed', availabilityEventData)
+      .trigger(
+        availabilityChannel,
+        'availability-changed',
+        availabilityEventData
+      )
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: availabilityChannel },

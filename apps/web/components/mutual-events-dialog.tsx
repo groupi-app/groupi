@@ -30,7 +30,11 @@ export function MutualEventsDialog({
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
 
-  const { data: eventsData, isLoading, error } = useQuery({
+  const {
+    data: eventsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: currentUserId
       ? qk.users.mutualEvents(currentUserId, userId)
       : ['users', 'mutualEvents', 'pending'],
@@ -47,9 +51,7 @@ export function MutualEventsDialog({
       <DialogContent className='sm:max-w-[600px] max-h-[80vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Mutual Events</DialogTitle>
-          <DialogDescription>
-            Events you both are members of
-          </DialogDescription>
+          <DialogDescription>Events you both are members of</DialogDescription>
         </DialogHeader>
 
         {isLoading || !currentUserId ? (
@@ -121,4 +123,3 @@ export function MutualEventsDialog({
     </Dialog>
   );
 }
-

@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ email: user.email });
   } catch (error) {
-     
     console.error('Error looking up username:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

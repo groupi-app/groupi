@@ -23,7 +23,7 @@ export function InviteDetailsSkeleton() {
           {/* Description */}
           <Skeleton className='h-4 w-full mb-2' />
           <Skeleton className='h-4 w-5/6 mb-4' />
-          
+
           {/* Event details */}
           <div className='flex flex-col gap-2 my-4'>
             {/* Location */}

@@ -78,10 +78,12 @@ pnpm lint --filter=@groupi/ui
 ## Current Status
 
 The package currently provides:
+
 - **Utilities**: `cn()` function for className merging
 - **Design Tokens**: Foundation for design system
 
 Future additions:
+
 - Shared component library
 - Web-specific components
 - Email template components
@@ -93,4 +95,3 @@ Future additions:
 3. **No dependencies**: Minimize external dependencies
 4. **Type safety**: All exports should be properly typed
 5. **Documentation**: Add JSDoc comments for public APIs
-

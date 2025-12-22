@@ -38,7 +38,9 @@ export function AvailabilityCard({
               })}
             </h1>
             <h2 className='text-muted-foreground text-sm'>
-              {new Date(pdt.dateTime).toLocaleTimeString([], { timeStyle: 'short' })}
+              {new Date(pdt.dateTime).toLocaleTimeString([], {
+                timeStyle: 'short',
+              })}
             </h2>
           </div>
         </div>

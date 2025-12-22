@@ -91,25 +91,23 @@ export async function createPostAction(
     updateTag(`event-${input.eventId}-posts`);
 
     // Trigger Pusher event for other users
-    await pusherServer.trigger(
-      `event-${input.eventId}-posts`,
-      'post-changed',
-      {
+    await pusherServer
+      .trigger(`event-${input.eventId}-posts`, 'post-changed', {
         type: 'INSERT',
         new: result[1],
-      }
-    ).catch((err: unknown) => {
-      // Log but don't fail the action if Pusher fails
-      pusherLogger.error(
-        {
-          error: err,
-          eventId: input.eventId,
-          operation: 'post-changed',
-          type: 'INSERT',
-        },
-        'Failed to trigger post-changed event'
-      );
-    });
+      })
+      .catch((err: unknown) => {
+        // Log but don't fail the action if Pusher fails
+        pusherLogger.error(
+          {
+            error: err,
+            eventId: input.eventId,
+            operation: 'post-changed',
+            type: 'INSERT',
+          },
+          'Failed to trigger post-changed event'
+        );
+      });
   }
 
   return result;
@@ -138,24 +136,22 @@ export async function updatePostAction(
       updateTag(`event-${eventId}-posts`);
 
       // Trigger Pusher event for other users
-      await pusherServer.trigger(
-        `event-${eventId}-posts`,
-        'post-changed',
-        {
+      await pusherServer
+        .trigger(`event-${eventId}-posts`, 'post-changed', {
           type: 'UPDATE',
           new: result[1],
-        }
-      ).catch((err: unknown) => {
-        pusherLogger.error(
-          {
-            error: err,
-            eventId,
-            operation: 'post-changed',
-            type: 'UPDATE',
-          },
-          'Failed to trigger post-changed event'
-        );
-      });
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              error: err,
+              eventId,
+              operation: 'post-changed',
+              type: 'UPDATE',
+            },
+            'Failed to trigger post-changed event'
+          );
+        });
     }
   }
 
@@ -196,24 +192,22 @@ export async function deletePostAction(
     updateTag(`event-${eventId}-posts`);
 
     // Trigger Pusher event for other users
-    await pusherServer.trigger(
-      `event-${eventId}-posts`,
-      'post-changed',
-      {
+    await pusherServer
+      .trigger(`event-${eventId}-posts`, 'post-changed', {
         type: 'DELETE',
         old: { id: input.postId },
-      }
-    ).catch((err: unknown) => {
-      pusherLogger.error(
-        {
-          error: err,
-          eventId,
-          operation: 'post-changed',
-          type: 'DELETE',
-        },
-        'Failed to trigger post-changed event'
-      );
-    });
+      })
+      .catch((err: unknown) => {
+        pusherLogger.error(
+          {
+            error: err,
+            eventId,
+            operation: 'post-changed',
+            type: 'DELETE',
+          },
+          'Failed to trigger post-changed event'
+        );
+      });
   }
 
   return result;

@@ -1,7 +1,11 @@
 import { AvailabilityServer } from './availability-server';
 import { Suspense } from 'react';
 import { AvailabilityFormSkeleton } from '@/components/skeletons/availability-form-skeleton';
-import { getUserId, getCachedEventHeaderData, getCachedEventAvailabilityData } from '@groupi/services/server';
+import {
+  getUserId,
+  getCachedEventHeaderData,
+  getCachedEventAvailabilityData,
+} from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { componentLogger } from '@/lib/logger';
 
@@ -10,9 +14,9 @@ import { componentLogger } from '@/lib/logger';
  * Handles auth, header check, and renders availability content
  * All checks and redirects happen inside Suspense boundary for instant skeleton rendering
  */
-export async function AvailabilityPageContent({ 
+export async function AvailabilityPageContent({
   params,
-}: { 
+}: {
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
@@ -27,7 +31,10 @@ export async function AvailabilityPageContent({
   // Check if event has a chosen date inside Suspense - redirects work via Next.js streaming meta tag
   const [headerError, headerData] = await getCachedEventHeaderData(eventId);
   if (!headerError && headerData?.event?.chosenDateTime) {
-    componentLogger.info({ eventId }, 'Event has chosen date, redirecting to event page');
+    componentLogger.info(
+      { eventId },
+      'Event has chosen date, redirecting to event page'
+    );
     redirect(`/event/${eventId}`);
   }
 
@@ -57,4 +64,3 @@ export async function AvailabilityPageContent({
     </div>
   );
 }
-

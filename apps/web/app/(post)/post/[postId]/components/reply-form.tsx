@@ -115,7 +115,6 @@ export default function ReplyForm({
     );
   }
 
-
   // Check if content is actually empty (handles HTML from Tiptap)
   const isEmptyHtml = (html: string) => {
     if (!html || html.trim().length === 0) return true;

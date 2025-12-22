@@ -15,7 +15,7 @@ export async function DateSelectContent({ eventId }: { eventId: string }) {
         return <div>Event not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-         
+
       case 'UnauthorizedError':
         return <div>You do not have permission to view this page</div>;
       default:

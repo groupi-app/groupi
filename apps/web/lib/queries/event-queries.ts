@@ -2,10 +2,7 @@ import {
   fetchEventHeaderAction,
   fetchUserEventsAction,
 } from '@/actions/query-actions';
-import type {
-  EventHeaderData,
-  UserDashboardData,
-} from '@groupi/schema/data';
+import type { EventHeaderData, UserDashboardData } from '@groupi/schema/data';
 
 /**
  * Query adapter functions for events
@@ -47,4 +44,3 @@ export async function fetchUserEvents(): Promise<UserDashboardData> {
 
   return data;
 }
-

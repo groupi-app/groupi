@@ -12,11 +12,7 @@ const DialogTrigger = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
 >((props, ref) => (
-  <DialogPrimitive.Trigger
-    ref={ref}
-    suppressHydrationWarning
-    {...props}
-  />
+  <DialogPrimitive.Trigger ref={ref} suppressHydrationWarning {...props} />
 ));
 DialogTrigger.displayName = DialogPrimitive.Trigger.displayName;
 
@@ -24,11 +20,7 @@ const DialogClose = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Close>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
 >((props, ref) => (
-  <DialogPrimitive.Close
-    ref={ref}
-    suppressHydrationWarning
-    {...props}
-  />
+  <DialogPrimitive.Close ref={ref} suppressHydrationWarning {...props} />
 ));
 DialogClose.displayName = DialogPrimitive.Close.displayName;
 

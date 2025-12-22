@@ -19,4 +19,3 @@ export function PostCardContent({ content }: { content: string }) {
     </>
   );
 }
-

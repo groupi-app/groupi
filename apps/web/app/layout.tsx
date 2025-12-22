@@ -122,38 +122,38 @@ function RootContent({ children }: { children: React.ReactNode }) {
             <Suspense fallback={null}>
               <PusherBeamsProviderWrapper>
                 <div className='flex flex-col min-h-screen'>
-                {/* Static header shell - renders immediately */}
-                <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-                  <MainNavStatic
-                    dynamicContent={
-                      <Suspense fallback={<MainNavDynamicSkeleton />}>
-                        <MainNavDynamicWrapper items={navConfig.mainNav} />
-                      </Suspense>
-                    }
-                  />
-                </header>
-                {/* Static main content area */}
-                <main className='grow'>{children}</main>
-                {/* Static footer */}
-                <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
-                  <div className='container mx-auto py-4 flex gap-8 items-center'>
-                    <ModeToggle />
-                    <div className='flex flex-col gap-2'>
-                      <p>
-                        Built by{' '}
-                        <Link
-                          className='underline font-medium'
-                          href='https://tsurette.com'
-                        >
-                          Theia
-                        </Link>
-                      </p>
-                      <FooterCopyright />
+                  {/* Static header shell - renders immediately */}
+                  <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+                    <MainNavStatic
+                      dynamicContent={
+                        <Suspense fallback={<MainNavDynamicSkeleton />}>
+                          <MainNavDynamicWrapper items={navConfig.mainNav} />
+                        </Suspense>
+                      }
+                    />
+                  </header>
+                  {/* Static main content area */}
+                  <main className='grow'>{children}</main>
+                  {/* Static footer */}
+                  <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+                    <div className='container mx-auto py-4 flex gap-8 items-center'>
+                      <ModeToggle />
+                      <div className='flex flex-col gap-2'>
+                        <p>
+                          Built by{' '}
+                          <Link
+                            className='underline font-medium'
+                            href='https://tsurette.com'
+                          >
+                            Theia
+                          </Link>
+                        </p>
+                        <FooterCopyright />
+                      </div>
                     </div>
-                  </div>
-                </footer>
-              </div>
-            </PusherBeamsProviderWrapper>
+                  </footer>
+                </div>
+              </PusherBeamsProviderWrapper>
             </Suspense>
           </NavigationGuardProvider>
         </TooltipProvider>
@@ -171,13 +171,13 @@ function MainNavDynamicSkeleton() {
         <Skeleton className='h-8 w-20' />
         <Skeleton className='h-8 w-24' />
       </div>
-      
+
       {/* Right side: notifications and profile (hidden on mobile) */}
       <div className='hidden md:flex ml-auto items-center gap-3'>
         <Skeleton className='h-8 w-8 rounded-full' />
         <Skeleton className='h-8 w-8 rounded-full' />
       </div>
-      
+
       {/* Mobile nav button skeleton (visible on mobile) */}
       <Skeleton className='h-8 w-8 rounded-md md:hidden' />
     </div>

@@ -22,7 +22,7 @@ export function AcceptInviteButton({
     acceptInvite.mutate(
       { inviteId, eventId },
       {
-        onSuccess: (data) => {
+        onSuccess: data => {
           // Mutation successful, navigate to event using returned eventId
           router.push(`/event/${data.eventId}`);
         },

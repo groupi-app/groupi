@@ -13,7 +13,9 @@ const __dirname = dirname(__filename);
 // We also explicitly load from root to ensure variables are available during config evaluation
 const rootEnvLocal = resolve(__dirname, '../../.env.local');
 // Resolve symlinks to get the actual file path
-const actualEnvLocalPath = existsSync(rootEnvLocal) ? realpathSync(rootEnvLocal) : rootEnvLocal;
+const actualEnvLocalPath = existsSync(rootEnvLocal)
+  ? realpathSync(rootEnvLocal)
+  : rootEnvLocal;
 config({ path: actualEnvLocalPath, override: false });
 const rootEnv = resolve(__dirname, '../../.env');
 if (existsSync(rootEnv)) {

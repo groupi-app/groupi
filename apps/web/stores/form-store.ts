@@ -22,11 +22,11 @@ const initialState: FormState = {
   location: undefined,
 };
 
-export const useFormStore = create<FormStore>((set) => ({
+export const useFormStore = create<FormStore>(set => ({
   formState: initialState,
-  setFormState: (state) => set({ formState: state }),
+  setFormState: state => set({ formState: state }),
   reset: () => set({ formState: initialState }),
   shouldResetOnCreate: false,
-  setShouldResetOnCreate: (value: boolean) => set({ shouldResetOnCreate: value }),
+  setShouldResetOnCreate: (value: boolean) =>
+    set({ shouldResetOnCreate: value }),
 }));
-

@@ -41,7 +41,7 @@ export function ReplyFeedClient({
   newestReplyRef,
 }: ReplyFeedClientProps) {
   const queryClient = useQueryClient();
-  
+
   // Debounce timer for marking notifications as read
   const markAsReadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -125,15 +125,15 @@ export function ReplyFeedClient({
       const pusherData = data as
         | Reply_Type
         | (Reply_Type & { authorId?: string });
-      
+
       // Extract authorId from Pusher data (may be in author.id or authorId field)
       // Extract this before setQueryData so we can use it for auto-mark logic
       const pusherAuthorId =
         (pusherData as Reply_Type).author?.id ||
         (pusherData as { authorId?: string }).authorId;
-      
+
       let replyWasAdded = false;
-      
+
       queryClient.setQueryData<PostDetailPageData>(
         qk.posts.detail(post.id),
         old => {
@@ -248,14 +248,19 @@ export function ReplyFeedClient({
         }
         markAsReadTimeoutRef.current = setTimeout(async () => {
           try {
-            const { markNotificationAsReadByPostAndTypeAction } = await import('@/actions/notification-actions');
+            const { markNotificationAsReadByPostAndTypeAction } = await import(
+              '@/actions/notification-actions'
+            );
             await markNotificationAsReadByPostAndTypeAction({
               postId: post.id,
               type: 'NEW_REPLY',
             });
           } catch (err) {
             // Silently fail - don't interrupt real-time updates
-            console.error('Failed to mark NEW_REPLY notification as read:', err);
+            console.error(
+              'Failed to mark NEW_REPLY notification as read:',
+              err
+            );
           }
         }, 500);
       }
@@ -317,7 +322,7 @@ export function ReplyFeedClient({
   return (
     <div className='flex flex-col'>
       <LayoutGroup>
-        {replies.map((reply) => {
+        {replies.map(reply => {
           const member = reply.author
             ? getMemberForReply(reply.author.id)
             : undefined;

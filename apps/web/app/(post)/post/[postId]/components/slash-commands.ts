@@ -70,4 +70,3 @@ export const getSlashCommands = (_editor?: Editor): SlashCommand[] => {
     },
   ];
 };
-

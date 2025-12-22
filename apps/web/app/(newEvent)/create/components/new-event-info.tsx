@@ -21,16 +21,20 @@ import dynamic from 'next/dynamic';
 import { useFormContext } from './form-context';
 import { Button } from '@/components/ui/button';
 
-const LocationInput = dynamic(() => import('./location-input').then(mod => ({ default: mod.LocationInput })), {
-  ssr: false,
-  loading: () => (
-    <Input
-      data-test='new-event-location'
-      placeholder="123 Main St... or 'My house'"
-      disabled
-    />
-  ),
-});
+const LocationInput = dynamic(
+  () =>
+    import('./location-input').then(mod => ({ default: mod.LocationInput })),
+  {
+    ssr: false,
+    loading: () => (
+      <Input
+        data-test='new-event-location'
+        placeholder="123 Main St... or 'My house'"
+        disabled
+      />
+    ),
+  }
+);
 
 const formSchema = z.object({
   title: z.string().min(1, {

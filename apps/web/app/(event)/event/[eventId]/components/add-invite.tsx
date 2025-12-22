@@ -69,11 +69,11 @@ export function AddInvite({ eventId }: { eventId: string }) {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const expiresAt = calculateExpirationDate(values.expiresIn);
-    
+
     // Close dialog and reset form immediately (optimistic update)
     setIsOpen(false);
     form.reset();
-    
+
     createInvite.mutate(
       {
         name: values.name,
@@ -88,7 +88,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
         onError: (error: unknown) => {
           // Reopen dialog on error so user can try again
           setIsOpen(true);
-          
+
           // Handle specific error types
           const err = error as { _tag?: string };
           if (err._tag === 'UnauthorizedError') {
@@ -229,10 +229,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
                     <span>Cancel</span>
                   </Button>
                 </DialogClose>
-                <Button
-                  className='flex items-center gap-1'
-                  type='submit'
-                >
+                <Button className='flex items-center gap-1' type='submit'>
                   <Icons.plus className='size-4' />
                   <span>Add</span>
                 </Button>

@@ -153,4 +153,3 @@ export async function fetchMutualEventsAction(
 ): Promise<ResultTuple<SerializedError, MutualEventsData>> {
   return await getCachedMutualEventsData(otherUserId);
 }
-

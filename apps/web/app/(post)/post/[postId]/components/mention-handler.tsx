@@ -9,11 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { Dialog } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -23,7 +19,10 @@ import {
   formatRoleName,
   getInitialsFromName,
 } from '@/lib/utils';
-import { MemberAction, MemberActionDialog } from '@/components/member-action-dialog';
+import {
+  MemberAction,
+  MemberActionDialog,
+} from '@/components/member-action-dialog';
 import { ProfileViewDialog } from '@/components/profile-view-dialog';
 import { useMobile } from '@/hooks/use-mobile';
 import type { PostDetailPageData } from '@groupi/schema/data';
@@ -263,58 +262,59 @@ export function MentionHandler({
                   <Icons.account className='size-4 mr-2' />
                   View Profile
                 </Button>
-              {(canKick || canPromote) && (
-                <>
-                  {canPromote && selectedMember.role === 'ATTENDEE' && (
-                    <Button
-                      variant='ghost'
-                      className='w-full justify-start'
-                      onClick={() => {
-                        setDialogAction(MemberAction.PROMOTE);
-                        setSheetOpen(false);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <Icons.shield className='size-4 mr-2' />
-                      Promote
-                    </Button>
-                  )}
-                  {canPromote && selectedMember.role === 'MODERATOR' && (
-                    <Button
-                      variant='ghost'
-                      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
-                      onClick={() => {
-                        setDialogAction(MemberAction.DEMOTE);
-                        setSheetOpen(false);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <Icons.shieldOff className='size-4 mr-2' />
-                      Demote
-                    </Button>
-                  )}
-                  {canKick && (
-                    <Button
-                      variant='ghost'
-                      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
-                      onClick={() => {
-                        setDialogAction(MemberAction.KICK);
-                        setSheetOpen(false);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <Icons.kick className='size-4 mr-2' />
-                      Kick
-                    </Button>
-                  )}
-                </>
-              )}
+                {(canKick || canPromote) && (
+                  <>
+                    {canPromote && selectedMember.role === 'ATTENDEE' && (
+                      <Button
+                        variant='ghost'
+                        className='w-full justify-start'
+                        onClick={() => {
+                          setDialogAction(MemberAction.PROMOTE);
+                          setSheetOpen(false);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Icons.shield className='size-4 mr-2' />
+                        Promote
+                      </Button>
+                    )}
+                    {canPromote && selectedMember.role === 'MODERATOR' && (
+                      <Button
+                        variant='ghost'
+                        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                        onClick={() => {
+                          setDialogAction(MemberAction.DEMOTE);
+                          setSheetOpen(false);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Icons.shieldOff className='size-4 mr-2' />
+                        Demote
+                      </Button>
+                    )}
+                    {canKick && (
+                      <Button
+                        variant='ghost'
+                        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                        onClick={() => {
+                          setDialogAction(MemberAction.KICK);
+                          setSheetOpen(false);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Icons.kick className='size-4 mr-2' />
+                        Kick
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </DrawerHeader>
           </DrawerContent>
         </Drawer>
       ) : (
-        selectedMember && mentionElement && (
+        selectedMember &&
+        mentionElement && (
           <DropdownMenu
             open={!!selectedMember}
             onOpenChange={open => {
@@ -345,10 +345,7 @@ export function MentionHandler({
       )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         {selectedMember && (
-          <MemberActionDialog
-            action={dialogAction}
-            member={selectedMember}
-          />
+          <MemberActionDialog action={dialogAction} member={selectedMember} />
         )}
       </Dialog>
       {selectedMember && (
@@ -361,4 +358,3 @@ export function MentionHandler({
     </>
   );
 }
-

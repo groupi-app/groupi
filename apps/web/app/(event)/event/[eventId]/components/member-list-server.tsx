@@ -10,14 +10,17 @@ import { componentLogger } from '@/lib/logger';
  */
 export async function MemberListServer({ eventId }: { eventId: string }) {
   'use cache: private';
-  
+
   try {
     componentLogger.debug({ eventId }, 'Fetching member list');
 
     const [error, memberListData] = await getCachedEventAttendeesData(eventId);
 
     if (error) {
-      componentLogger.error({ eventId, errorTag: error._tag, error }, 'Error fetching member list');
+      componentLogger.error(
+        { eventId, errorTag: error._tag, error },
+        'Error fetching member list'
+      );
       switch (error._tag) {
         case 'NotFoundError':
           return <div>Event not found</div>;
@@ -40,7 +43,10 @@ export async function MemberListServer({ eventId }: { eventId: string }) {
     const eventDateTime = event.chosenDateTime;
     const userRole = userMembership.role as RoleType;
 
-    componentLogger.debug({ eventId, memberCount: members.length }, 'Rendering MemberListClient');
+    componentLogger.debug(
+      { eventId, memberCount: members.length },
+      'Rendering MemberListClient'
+    );
     // Pass static data to client component
     return (
       <MemberListClient

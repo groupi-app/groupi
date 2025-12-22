@@ -308,4 +308,3 @@ export function PostCardSkeleton() {
 
 // Attach Skeleton as a static property for backward compatibility
 PostCard.Skeleton = PostCardSkeleton;
-

@@ -57,31 +57,35 @@ export function formatReplyDate(date: Date | string) {
   // Convert string to Date if needed
   const dateObj = date instanceof Date ? date : new Date(date);
   const now = new Date();
-  
+
   // Get start of today (midnight)
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
   // Get start of yesterday
   const startOfYesterday = new Date(startOfToday);
   startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-  
+
   // Format time as "2:45PM"
   const timeStr = dateObj.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
   });
-  
+
   // Check if it's today
   if (dateObj >= startOfToday) {
     return timeStr;
   }
-  
+
   // Check if it's yesterday
   if (dateObj >= startOfYesterday && dateObj < startOfToday) {
     return `Yesterday at ${timeStr}`;
   }
-  
+
   // Older than yesterday - use numerical date
   return dateObj.toLocaleDateString('en-US', {
     month: 'numeric',

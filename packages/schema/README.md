@@ -71,7 +71,10 @@ import type { EventPageDTO, PostCardDTO } from '@groupi/schema/data';
 ### Importing Error Types
 
 ```typescript
-import type { EventNotFoundError, PostNotFoundError } from '@groupi/schema/errors';
+import type {
+  EventNotFoundError,
+  PostNotFoundError,
+} from '@groupi/schema/errors';
 ```
 
 ### Validation
@@ -152,4 +155,3 @@ type EventResult = ResultTuple<EventError, EventData>;
 3. **Type safety**: Prefer discriminated unions for errors
 4. **Single source**: All types should be defined here, not duplicated
 5. **Documentation**: Add JSDoc comments for complex types
-

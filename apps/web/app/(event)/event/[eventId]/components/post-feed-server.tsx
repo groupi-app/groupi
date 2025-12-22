@@ -9,7 +9,7 @@ import { componentLogger } from '@/lib/logger';
  */
 export async function PostFeedServer({ eventId }: { eventId: string }) {
   'use cache: private';
-  
+
   try {
     componentLogger.debug({ eventId }, 'Fetching post feed');
 
@@ -17,7 +17,10 @@ export async function PostFeedServer({ eventId }: { eventId: string }) {
     const [error, postFeedData] = await getCachedPostFeedData(eventId);
 
     if (error) {
-      componentLogger.error({ eventId, errorTag: error._tag, error }, 'Error fetching post feed');
+      componentLogger.error(
+        { eventId, errorTag: error._tag, error },
+        'Error fetching post feed'
+      );
       switch (error._tag) {
         case 'NotFoundError':
           return <div>Event not found</div>;
@@ -41,7 +44,10 @@ export async function PostFeedServer({ eventId }: { eventId: string }) {
     }
 
     const posts = postFeedData.event.posts || [];
-    componentLogger.debug({ eventId, postCount: posts.length }, 'Rendering PostFeedClient');
+    componentLogger.debug(
+      { eventId, postCount: posts.length },
+      'Rendering PostFeedClient'
+    );
 
     // Pass static data to client component
     return (

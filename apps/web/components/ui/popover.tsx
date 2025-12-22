@@ -11,11 +11,7 @@ const PopoverTrigger = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
 >((props, ref) => (
-  <PopoverPrimitive.Trigger
-    ref={ref}
-    suppressHydrationWarning
-    {...props}
-  />
+  <PopoverPrimitive.Trigger ref={ref} suppressHydrationWarning {...props} />
 ));
 PopoverTrigger.displayName = PopoverPrimitive.Trigger.displayName;
 

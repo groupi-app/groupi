@@ -69,7 +69,9 @@ export function EventHeaderClient({
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const { markEventNotificationsAsReadAction } = await import('@/actions/notification-actions');
+        const { markEventNotificationsAsReadAction } = await import(
+          '@/actions/notification-actions'
+        );
         await markEventNotificationsAsReadAction({ eventId });
       } catch (err) {
         // Silently fail - don't block page rendering
@@ -247,53 +249,54 @@ export function EventHeaderClient({
     [isMobile]
   );
 
-  const menuItems = userMembership.role === 'ORGANIZER' ? (
-    <>
-      <Link href={`/event/${eventId}/edit`}>
+  const menuItems =
+    userMembership.role === 'ORGANIZER' ? (
+      <>
+        <Link href={`/event/${eventId}/edit`}>
+          <Button
+            variant='ghost'
+            className='w-full justify-start'
+            onClick={() => setDrawerOpen(false)}
+          >
+            <Icons.edit className='size-4 mr-2' />
+            Edit Details
+          </Button>
+        </Link>
+        <Link href={`/event/${eventId}/change-date`}>
+          <Button
+            variant='ghost'
+            className='w-full justify-start'
+            onClick={() => setDrawerOpen(false)}
+          >
+            <Icons.date className='size-4 mr-2' />
+            Change Date
+          </Button>
+        </Link>
         <Button
           variant='ghost'
-          className='w-full justify-start'
-          onClick={() => setDrawerOpen(false)}
+          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          onClick={() => {
+            setDrawerOpen(false);
+            setDeleteDialogOpen(true);
+          }}
         >
-          <Icons.edit className='size-4 mr-2' />
-          Edit Details
+          <Icons.delete className='size-4 mr-2' />
+          Delete Event
         </Button>
-      </Link>
-      <Link href={`/event/${eventId}/change-date`}>
-        <Button
-          variant='ghost'
-          className='w-full justify-start'
-          onClick={() => setDrawerOpen(false)}
-        >
-          <Icons.date className='size-4 mr-2' />
-          Change Date
-        </Button>
-      </Link>
+      </>
+    ) : (
       <Button
         variant='ghost'
         className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
         onClick={() => {
           setDrawerOpen(false);
-          setDeleteDialogOpen(true);
+          setLeaveDialogOpen(true);
         }}
       >
-        <Icons.delete className='size-4 mr-2' />
-        Delete Event
+        <Icons.leave className='size-4 mr-2' />
+        Leave Event
       </Button>
-    </>
-  ) : (
-    <Button
-      variant='ghost'
-      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
-      onClick={() => {
-        setDrawerOpen(false);
-        setLeaveDialogOpen(true);
-      }}
-    >
-      <Icons.leave className='size-4 mr-2' />
-      Leave Event
-    </Button>
-  );
+    );
 
   return (
     <>

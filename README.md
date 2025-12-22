@@ -56,6 +56,7 @@ pnpm dev
 ```
 
 This starts:
+
 - Next.js web app (http://localhost:3000)
 - Prisma Studio (http://localhost:5555)
 - Database (Supabase local stack)

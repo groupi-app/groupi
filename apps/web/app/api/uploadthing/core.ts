@@ -27,9 +27,9 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This runs on the server after upload completes
-       
+
       console.log('Avatar upload complete for userId:', metadata.userId);
-       
+
       console.log('File URL:', file.url);
 
       // Return data to the client

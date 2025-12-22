@@ -57,9 +57,11 @@ export function AttendeesClient({
     refetchOnMount: true,
   });
 
-  const members = memberListData?.event.memberships || initialData.event.memberships;
+  const members =
+    memberListData?.event.memberships || initialData.event.memberships;
   const userId = memberListData?.userId || initialData.userId;
-  const userRole = memberListData?.userMembership.role || initialData.userMembership.role;
+  const userRole =
+    memberListData?.userMembership.role || initialData.userMembership.role;
   const eventDateTime = initialData.event.chosenDateTime;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +69,7 @@ export function AttendeesClient({
   // Filter and sort members
   const filteredAndSortedMembers = useMemo(() => {
     // Filter by search query
-    const filtered = members.filter((member) => {
+    const filtered = members.filter(member => {
       const name = member.person.user.name || '';
       const email = member.person.user.email || '';
       const searchLower = searchQuery.toLowerCase();
@@ -95,7 +97,10 @@ export function AttendeesClient({
   // Sync with Pusher member changes (user joining, role updates, and member leaving)
   const handleMemberChanged = useCallback(
     (data: unknown) => {
-      pusherLogger.debug({ eventId, data }, 'Received member-changed event in AttendeesClient');
+      pusherLogger.debug(
+        { eventId, data },
+        'Received member-changed event in AttendeesClient'
+      );
       const eventData = data as {
         type: 'INSERT' | 'UPDATE' | 'DELETE';
         new?: { id: string } | MembershipData;
@@ -103,7 +108,12 @@ export function AttendeesClient({
       };
 
       pusherLogger.debug(
-        { eventId, type: eventData.type, hasNew: !!eventData.new, hasOld: !!eventData.old },
+        {
+          eventId,
+          type: eventData.type,
+          hasNew: !!eventData.new,
+          hasOld: !!eventData.old,
+        },
         'Processing member-changed event'
       );
 
@@ -127,8 +137,11 @@ export function AttendeesClient({
       // Handle role updates and RSVP updates
       if (eventData.type === 'UPDATE' && eventData.new) {
         const updateData = eventData.new;
-        pusherLogger.debug({ eventId, updateData }, 'Processing UPDATE event in AttendeesClient');
-        
+        pusherLogger.debug(
+          { eventId, updateData },
+          'Processing UPDATE event in AttendeesClient'
+        );
+
         // Check if we have MembershipData (has role and rsvpStatus)
         // If we only have { id }, skip (will be handled by refetch)
         if (!('role' in updateData) || !('rsvpStatus' in updateData)) {
@@ -139,10 +152,14 @@ export function AttendeesClient({
           );
           return;
         }
-        
+
         const membershipData = updateData as MembershipData;
         pusherLogger.debug(
-          { eventId, membershipId: membershipData.id, rsvpStatus: membershipData.rsvpStatus },
+          {
+            eventId,
+            membershipId: membershipData.id,
+            rsvpStatus: membershipData.rsvpStatus,
+          },
           'Updating cache with membership data in AttendeesClient'
         );
         queryClient.setQueryData<EventAttendeesPageData>(
@@ -222,12 +239,12 @@ export function AttendeesClient({
           type='text'
           placeholder='Search attendees...'
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className='pl-10'
         />
       </div>
       <div className='flex flex-col gap-2 divide-y'>
-        {filteredAndSortedMembers.map((member) => (
+        {filteredAndSortedMembers.map(member => (
           <AttendeeSlate
             key={member.id}
             userId={userId}
@@ -244,4 +261,3 @@ export function AttendeesClient({
     </div>
   );
 }
-

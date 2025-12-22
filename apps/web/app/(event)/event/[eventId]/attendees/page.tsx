@@ -21,7 +21,11 @@ export default function EventAttendeesPage(props: {
         <div className='container max-w-4xl py-4'>
           {/* Static shell - renders immediately */}
           <div className='w-max'>
-            <Button variant={'ghost'} className='flex items-center gap-1 pl-2' disabled>
+            <Button
+              variant={'ghost'}
+              className='flex items-center gap-1 pl-2'
+              disabled
+            >
               <Icons.back />
               <span>Back to Event</span>
             </Button>

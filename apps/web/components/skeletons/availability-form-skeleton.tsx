@@ -11,7 +11,7 @@ export function AvailabilityFormSkeleton() {
           Don&apos;t worry. You can update this later.
         </p>
       </div>
-      
+
       {/* Timezone and calendar */}
       <div className='py-4 w-full'>
         <span className='text-sm italic text-muted-foreground'>
@@ -21,7 +21,7 @@ export function AvailabilityFormSkeleton() {
           <CalendarSkeleton />
         </div>
       </div>
-      
+
       {/* Action buttons */}
       <div className='flex gap-3 justify-end mt-6'>
         <Skeleton className='h-10 w-24' />

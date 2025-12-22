@@ -13,7 +13,7 @@ interface MainNavDynamicWrapperProps {
  * Server component wrapper that fetches session and passes it to MainNavDynamic
  * Uses 'use cache: private' + cacheLife to enable headers() and prevent prerendering
  * Wrapped in Suspense boundary in layout.tsx
- * 
+ *
  * Fetches username and profile fields (name, image, pronouns, bio) from database (cached)
  * to ensure they're up-to-date even if session JWT is stale
  */
@@ -91,8 +91,12 @@ export async function MainNavDynamicWrapper({
           ...(profileData && {
             ...(profileData.name !== null && { name: profileData.name }),
             ...(profileData.image !== null && { image: profileData.image }),
-            ...(profileData.imageKey !== null && { imageKey: profileData.imageKey }),
-            ...(profileData.pronouns !== null && { pronouns: profileData.pronouns }),
+            ...(profileData.imageKey !== null && {
+              imageKey: profileData.imageKey,
+            }),
+            ...(profileData.pronouns !== null && {
+              pronouns: profileData.pronouns,
+            }),
             ...(profileData.bio !== null && { bio: profileData.bio }),
           }),
         },

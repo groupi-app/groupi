@@ -16,7 +16,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
 async function DynamicSettingsContent({ children }: { children: ReactNode }) {
   // Only wrap notifications page with SettingsFormProvider
   // Account page handles its own form provider
-  
+
   // Check if we're on the notifications route by checking if we need settings data
   // We'll use a client component wrapper to detect the route
   // For now, we'll wrap all children but account page handles its own provider
@@ -33,13 +33,13 @@ function SettingsLayoutSkeleton() {
           <Skeleton className='h-10 w-full' />
           <Skeleton className='h-10 w-full' />
         </div>
-        
+
         <div className='space-y-4'>
           <Skeleton className='h-6 w-32' />
           <Skeleton className='h-10 w-full' />
           <Skeleton className='h-10 w-full' />
         </div>
-        
+
         <div className='space-y-4'>
           <Skeleton className='h-6 w-48' />
           <div className='space-y-2'>
@@ -47,7 +47,7 @@ function SettingsLayoutSkeleton() {
             <Skeleton className='h-20 w-full' />
           </div>
         </div>
-        
+
         {/* Action buttons */}
         <div className='flex items-center gap-4 pt-4'>
           <Skeleton className='h-10 w-24' />

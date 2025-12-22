@@ -89,6 +89,7 @@ The app uses Next.js Server Components by default, with Client Components (`'use
 ### Real-time Updates
 
 Real-time functionality is provided via Pusher:
+
 - Push notifications (Pusher Beams)
 - Channel subscriptions for live updates
 - Automatic cache invalidation via TanStack Query
@@ -96,6 +97,7 @@ Real-time functionality is provided via Pusher:
 ### Authentication
 
 Authentication is handled by Better Auth with:
+
 - Session management
 - Protected routes
 - Server-side auth checks
@@ -109,6 +111,7 @@ Authentication is handled by Better Auth with:
 ## Provider Architecture
 
 The app uses a provider hierarchy in `components/providers/`:
+
 - `ThemeProvider` - Dark/light mode
 - `TooltipProvider` - Radix UI tooltips
 - `PusherBeamsProvider` - Push notifications
@@ -119,7 +122,7 @@ See `components/providers/README.md` for details.
 ## Migration Notes
 
 The application is in transition:
+
 - **Legacy**: Server actions in `actions/` directory
 - **Future**: tRPC procedures (planned migration)
 - **Current**: Mix of both patterns
-

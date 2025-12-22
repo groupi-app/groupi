@@ -23,7 +23,10 @@ import { ReactRenderer } from '@tiptap/react';
 import { MentionList } from './mention-list';
 import { SlashCommandExtension } from './slash-command-extension';
 import type { PostDetailPageData } from '@groupi/schema/data';
-import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
+import type {
+  SuggestionProps,
+  SuggestionKeyDownProps,
+} from '@tiptap/suggestion';
 
 type Member = PostDetailPageData['post']['event']['memberships'][0];
 
@@ -77,7 +80,10 @@ export function Tiptap({
   }, [members]);
 
   useEffect(() => {
-    console.log('[Tiptap] Props changed', { eventId, membersCount: members.length });
+    console.log('[Tiptap] Props changed', {
+      eventId,
+      membersCount: members.length,
+    });
   }, [eventId, members.length]);
 
   // Memoize extensions to ensure mention extension is included when eventId exists
@@ -92,7 +98,8 @@ export function Tiptap({
         },
         code: {
           HTMLAttributes: {
-            class: 'text-sm rounded-md bg-muted/50 border border-border/50 py-1 px-1.5 mx-1',
+            class:
+              'text-sm rounded-md bg-muted/50 border border-border/50 py-1 px-1.5 mx-1',
           },
         },
       }),
@@ -122,107 +129,172 @@ export function Tiptap({
       SlashCommandExtension,
       ...(eventId
         ? (() => {
-            console.log('[Tiptap] Adding mention extension', { eventId, membersCount: members.length });
+            console.log('[Tiptap] Adding mention extension', {
+              eventId,
+              membersCount: members.length,
+            });
             return [
               Mention.configure({
-              HTMLAttributes: {
-                class: 'mention',
-              },
-              renderHTML({ node }) {
-                return [
-                  'span',
-                  {
-                    class: 'mention',
-                    'data-id': node.attrs.id,
-                    'data-type': 'mention',
-                  },
-                  `@${node.attrs.label ?? node.attrs.id}`,
-                ];
-              },
-              suggestion: {
-                char: '@',
-                allowSpaces: false,
-                items: ({ query }: { query: string }) => {
-                  // Use members from closure instead of ref to avoid accessing ref during render
-                  const currentMembers = members;
-                  console.log('[Mention] items called', { query, membersCount: currentMembers?.length, eventId });
-                  if (!currentMembers || currentMembers.length === 0) {
-                    console.log('[Mention] No members available');
-                    return [];
-                  }
-                  const lowerQuery = query.toLowerCase();
-                  const filtered = currentMembers
-                    .filter(member => {
-                      const user = member.person.user;
-                      const displayName =
-                        (user?.name || user?.email || '').toLowerCase();
-                      const username = (user?.username || '').toLowerCase();
-                      return (
-                        displayName.includes(lowerQuery) ||
-                        username.includes(lowerQuery)
-                      );
-                    })
-                    .slice(0, 5);
-                  console.log('[Mention] Filtered results', filtered.length);
-                  return filtered;
+                HTMLAttributes: {
+                  class: 'mention',
                 },
-                render: () => {
-                  let component: ReactRenderer | null = null;
-                  let container: HTMLDivElement | null = null;
-                  let scrollHandler: (() => void) | null = null;
-                  let resizeHandler: (() => void) | null = null;
+                renderHTML({ node }) {
+                  return [
+                    'span',
+                    {
+                      class: 'mention',
+                      'data-id': node.attrs.id,
+                      'data-type': 'mention',
+                    },
+                    `@${node.attrs.label ?? node.attrs.id}`,
+                  ];
+                },
+                suggestion: {
+                  char: '@',
+                  allowSpaces: false,
+                  items: ({ query }: { query: string }) => {
+                    // Use members from closure instead of ref to avoid accessing ref during render
+                    const currentMembers = members;
+                    console.log('[Mention] items called', {
+                      query,
+                      membersCount: currentMembers?.length,
+                      eventId,
+                    });
+                    if (!currentMembers || currentMembers.length === 0) {
+                      console.log('[Mention] No members available');
+                      return [];
+                    }
+                    const lowerQuery = query.toLowerCase();
+                    const filtered = currentMembers
+                      .filter(member => {
+                        const user = member.person.user;
+                        const displayName = (
+                          user?.name ||
+                          user?.email ||
+                          ''
+                        ).toLowerCase();
+                        const username = (user?.username || '').toLowerCase();
+                        return (
+                          displayName.includes(lowerQuery) ||
+                          username.includes(lowerQuery)
+                        );
+                      })
+                      .slice(0, 5);
+                    console.log('[Mention] Filtered results', filtered.length);
+                    return filtered;
+                  },
+                  render: () => {
+                    let component: ReactRenderer | null = null;
+                    let container: HTMLDivElement | null = null;
+                    let scrollHandler: (() => void) | null = null;
+                    let resizeHandler: (() => void) | null = null;
 
-                  return {
-                    onStart: (props: SuggestionProps<Member>) => {
-                      console.log('[Mention] onStart called', props);
-                      component = new ReactRenderer(MentionList, {
-                        props: {
+                    return {
+                      onStart: (props: SuggestionProps<Member>) => {
+                        console.log('[Mention] onStart called', props);
+                        component = new ReactRenderer(MentionList, {
+                          props: {
+                            items: props.items,
+                            command: props.command,
+                          },
+                          editor: props.editor,
+                        });
+
+                        container = document.createElement('div');
+                        container.style.position = 'fixed';
+                        container.style.zIndex = '9999';
+                        document.body.appendChild(container);
+
+                        // ReactRenderer.element is the root DOM element
+                        container.appendChild(component.element);
+
+                        const updatePosition = () => {
+                          if (!props.clientRect || !container) return;
+                          const rect = props.clientRect();
+                          if (!rect) return;
+                          container.style.left = `${rect.left}px`;
+                          container.style.top = `${rect.bottom + window.scrollY + 4}px`;
+                        };
+
+                        updatePosition();
+
+                        scrollHandler = () => updatePosition();
+                        resizeHandler = () => updatePosition();
+                        window.addEventListener('scroll', scrollHandler, true);
+                        window.addEventListener('resize', resizeHandler);
+                      },
+                      onUpdate(props: SuggestionProps<Member>) {
+                        component?.updateProps({
                           items: props.items,
                           command: props.command,
-                        },
-                        editor: props.editor,
-                      });
+                        });
 
-                      container = document.createElement('div');
-                      container.style.position = 'fixed';
-                      container.style.zIndex = '9999';
-                      document.body.appendChild(container);
-                      
-                      // ReactRenderer.element is the root DOM element
-                      container.appendChild(component.element);
-
-                      const updatePosition = () => {
-                        if (!props.clientRect || !container) return;
-                        const rect = props.clientRect();
-                        if (!rect) return;
-                        container.style.left = `${rect.left}px`;
-                        container.style.top = `${rect.bottom + window.scrollY + 4}px`;
-                      };
-
-                      updatePosition();
-
-                      scrollHandler = () => updatePosition();
-                      resizeHandler = () => updatePosition();
-                      window.addEventListener('scroll', scrollHandler, true);
-                      window.addEventListener('resize', resizeHandler);
-                    },
-                    onUpdate(props: SuggestionProps<Member>) {
-                      component?.updateProps({
-                        items: props.items,
-                        command: props.command,
-                      });
-
-                      if (props.clientRect && container) {
-                        const rect = props.clientRect();
-                        if (!rect) return;
-                        container.style.left = `${rect.left}px`;
-                        container.style.top = `${rect.bottom + window.scrollY + 4}px`;
-                      }
-                    },
-                    onKeyDown(props: SuggestionKeyDownProps) {
-                      if (props.event.key === 'Escape') {
+                        if (props.clientRect && container) {
+                          const rect = props.clientRect();
+                          if (!rect) return;
+                          container.style.left = `${rect.left}px`;
+                          container.style.top = `${rect.bottom + window.scrollY + 4}px`;
+                        }
+                      },
+                      onKeyDown(props: SuggestionKeyDownProps) {
+                        if (props.event.key === 'Escape') {
+                          if (scrollHandler) {
+                            window.removeEventListener(
+                              'scroll',
+                              scrollHandler,
+                              true
+                            );
+                          }
+                          if (resizeHandler) {
+                            window.removeEventListener('resize', resizeHandler);
+                          }
+                          if (container && container.parentNode) {
+                            container.parentNode.removeChild(container);
+                          }
+                          component?.destroy();
+                          component = null;
+                          container = null;
+                          scrollHandler = null;
+                          resizeHandler = null;
+                          return true;
+                        }
+                        // Handle Enter and Tab when menu is open - prevent form submission
+                        if (
+                          (props.event.key === 'Enter' ||
+                            props.event.key === 'Tab') &&
+                          component?.ref
+                        ) {
+                          const ref = component.ref as {
+                            onKeyDown?: (props: {
+                              event: KeyboardEvent;
+                            }) => boolean;
+                          };
+                          const handled = ref.onKeyDown?.({
+                            event: props.event,
+                          });
+                          if (handled) {
+                            return true; // Prevent default behavior (form submission)
+                          }
+                        }
+                        if (component?.ref) {
+                          const ref = component.ref as {
+                            onKeyDown?: (props: {
+                              event: KeyboardEvent;
+                            }) => boolean;
+                          };
+                          return (
+                            ref.onKeyDown?.({ event: props.event }) ?? false
+                          );
+                        }
+                        return false;
+                      },
+                      onExit() {
                         if (scrollHandler) {
-                          window.removeEventListener('scroll', scrollHandler, true);
+                          window.removeEventListener(
+                            'scroll',
+                            scrollHandler,
+                            true
+                          );
                         }
                         if (resizeHandler) {
                           window.removeEventListener('resize', resizeHandler);
@@ -235,43 +307,12 @@ export function Tiptap({
                         container = null;
                         scrollHandler = null;
                         resizeHandler = null;
-                        return true;
-                      }
-                      // Handle Enter and Tab when menu is open - prevent form submission
-                      if ((props.event.key === 'Enter' || props.event.key === 'Tab') && component?.ref) {
-                        const ref = component.ref as { onKeyDown?: (props: { event: KeyboardEvent }) => boolean };
-                        const handled = ref.onKeyDown?.({ event: props.event });
-                        if (handled) {
-                          return true; // Prevent default behavior (form submission)
-                        }
-                      }
-                      if (component?.ref) {
-                        const ref = component.ref as { onKeyDown?: (props: { event: KeyboardEvent }) => boolean };
-                        return ref.onKeyDown?.({ event: props.event }) ?? false;
-                      }
-                      return false;
-                    },
-                    onExit() {
-                      if (scrollHandler) {
-                        window.removeEventListener('scroll', scrollHandler, true);
-                      }
-                      if (resizeHandler) {
-                        window.removeEventListener('resize', resizeHandler);
-                      }
-                      if (container && container.parentNode) {
-                        container.parentNode.removeChild(container);
-                      }
-                      component?.destroy();
-                      component = null;
-                      container = null;
-                      scrollHandler = null;
-                      resizeHandler = null;
-                    },
-                  };
+                      },
+                    };
+                  },
                 },
-              },
-            }),
-          ];
+              }),
+            ];
           })()
         : []),
     ];

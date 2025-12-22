@@ -46,10 +46,13 @@ type SerializedErrorWithMessage = { _tag: string; message: string };
  * Serializes a result tuple for server actions, preserving error messages
  * This ensures errors can be safely passed to client components
  */
-function serializeErrorResult<TError extends { _tag: string; message?: string }, TData>([
-  err,
-  data,
-]: ResultTuple<TError, TData>): ResultTuple<SerializedErrorWithMessage, TData> {
+function serializeErrorResult<
+  TError extends { _tag: string; message?: string },
+  TData,
+>([err, data]: ResultTuple<TError, TData>): ResultTuple<
+  SerializedErrorWithMessage,
+  TData
+> {
   if (err) {
     // Convert error to plain object with tag and message
     // Use empty string as fallback for errors without messages
@@ -109,7 +112,7 @@ export async function updateAccountSettingsAction(
       updateTag(`user-${userId}`);
       updateTag(`user-${userId}-settings`);
       updateTag(`user-${userId}-account`);
-      
+
       // Revalidate the layout to refresh session in profile dropdown
       // This forces MainNavDynamicWrapper to re-fetch the session
       const { revalidatePath } = await import('next/cache');
@@ -135,7 +138,7 @@ export async function updateProfileAction(
     if (userId) {
       updateTag(`user-${userId}`);
       updateTag(`user-${userId}-settings`);
-      
+
       // Revalidate the layout to refresh session in profile dropdown
       // This forces MainNavDynamicWrapper to re-fetch the session
       const { revalidatePath } = await import('next/cache');
@@ -181,7 +184,7 @@ export async function unlinkAccountAction(
     if (userId) {
       updateTag(`user-${userId}`);
       updateTag(`user-${userId}-account`);
-      
+
       // Revalidate the account settings page to refresh the UI
       const { revalidatePath } = await import('next/cache');
       revalidatePath('/settings/account');

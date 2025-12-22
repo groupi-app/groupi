@@ -68,11 +68,11 @@ export const fetchEvent = (eventId: string) =>
         'event.findUnique'
       )
     );
-    
+
     if (!event) {
       return yield* _(Effect.fail(new EventNotFoundError()));
     }
-    
+
     return EventSchema.parse(event);
   });
 ```
@@ -97,37 +97,43 @@ const result = await Effect.runPromise(
 Services return Effect types that can be composed:
 
 ```typescript
-const result = yield* _(
-  fetchEvent(eventId).pipe(
-    Effect.catchAll(error => {
-      // Handle specific error types
-      if (error instanceof EventNotFoundError) {
-        return Effect.succeed(null);
-      }
-      return Effect.fail(error);
-    })
-  )
-);
+const result =
+  yield *
+  _(
+    fetchEvent(eventId).pipe(
+      Effect.catchAll(error => {
+        // Handle specific error types
+        if (error instanceof EventNotFoundError) {
+          return Effect.succeed(null);
+        }
+        return Effect.fail(error);
+      })
+    )
+  );
 ```
 
 ## Domain Services
 
 ### Event Service (`domains/event.ts`)
+
 - Event creation and management
 - Event data fetching
 - Member coordination
 
 ### Post Service (`domains/post.ts`)
+
 - Post creation and management
 - Reply handling
 - Feed generation
 
 ### Membership Service (`domains/membership.ts`)
+
 - Membership management
 - Role and permission handling
 - RSVP coordination
 
 ### Other Domains
+
 - `account.ts` - Account management
 - `availability.ts` - Availability tracking
 - `invite.ts` - Invitation handling
@@ -137,21 +143,25 @@ const result = yield* _(
 ## Infrastructure
 
 ### Database (`infrastructure/db.ts`)
+
 - Prisma client wrapper
 - Database operation helpers
 - Retry logic
 
 ### Logging (`infrastructure/logger.ts`)
+
 - Pino logger setup
 - Structured logging
 - Log levels and formatting
 
 ### Sentry (`infrastructure/sentry.ts`)
+
 - Error tracking
 - Performance monitoring
 - Context and breadcrumbs
 
 ### Real-time (`infrastructure/pusher-server.ts`)
+
 - Pusher server integration
 - Channel management
 - Event broadcasting
@@ -179,9 +189,7 @@ import { Effect } from 'effect';
 import { fetchEvent } from './domains/event';
 
 const result = await Effect.runPromise(
-  fetchEvent('event-id').pipe(
-    Effect.provide(TestDatabaseLayer)
-  )
+  fetchEvent('event-id').pipe(Effect.provide(TestDatabaseLayer))
 );
 ```
 
@@ -198,6 +206,7 @@ const result = await Effect.runPromise(
 ## Migration Notes
 
 The package is transitioning to:
+
 - Effect-based error handling (complete)
 - Safe-wrapper tuple pattern for API boundaries (in progress)
 - Full Sentry integration (partial)

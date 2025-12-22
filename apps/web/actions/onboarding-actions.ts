@@ -47,10 +47,13 @@ type SerializedErrorWithMessage = { _tag: string; message: string };
  * Serializes a result tuple for server actions, preserving error messages
  * This ensures errors can be safely passed to client components
  */
-function serializeErrorResult<TError extends { _tag: string; message?: string }, TData>([
-  err,
-  data,
-]: ResultTuple<TError, TData>): ResultTuple<SerializedErrorWithMessage, TData> {
+function serializeErrorResult<
+  TError extends { _tag: string; message?: string },
+  TData,
+>([err, data]: ResultTuple<TError, TData>): ResultTuple<
+  SerializedErrorWithMessage,
+  TData
+> {
   if (err) {
     // Convert error to plain object with tag and message
     // Use empty string as fallback for errors without messages
@@ -63,14 +66,12 @@ function serializeErrorResult<TError extends { _tag: string; message?: string },
  * Complete onboarding - sets username, display name, and optionally other profile fields
  * Returns: [error, { id }] tuple
  */
-export async function completeOnboardingAction(
-  input: {
-    username: string;
-    displayName?: string;
-    pronouns?: string;
-    bio?: string;
-  }
-): Promise<ResultTuple<OnboardingMutationError, { id: string }>> {
+export async function completeOnboardingAction(input: {
+  username: string;
+  displayName?: string;
+  pronouns?: string;
+  bio?: string;
+}): Promise<ResultTuple<OnboardingMutationError, { id: string }>> {
   const [authError, userId] = await getUserId();
   if (authError || !userId) {
     return [
@@ -133,8 +134,7 @@ export async function checkNeedsOnboardingAction(): Promise<
 > {
   const { needsOnboarding } = await import('@groupi/services/server');
   const result = await needsOnboarding();
-  
+
   // Serialize the result tuple to prevent Error object serialization issues
   return serializeErrorResult(result);
 }
-

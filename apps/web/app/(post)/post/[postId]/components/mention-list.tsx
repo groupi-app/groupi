@@ -14,50 +14,50 @@ interface MentionListProps {
   isMobile?: boolean;
 }
 
-export const MentionList = forwardRef<{ onKeyDown: (props: { event: KeyboardEvent }) => boolean }, MentionListProps>(
-  ({ items, command, isMobile = false }, ref) => {
-    const config: SuggestionItemConfig<Member> = {
-      getKey: (item) => item.personId,
-      renderPrefix: (item) => {
-        const user = item.person.user;
-        const initials = getInitialsFromName(user?.name, user?.email);
-        return (
-          <Avatar className='h-6 w-6'>
-            <AvatarImage src={user?.image || undefined} />
-            <AvatarFallback className='text-xs'>{initials}</AvatarFallback>
-          </Avatar>
-        );
-      },
-      getPrimaryText: (item) => {
-        const user = item.person.user;
-        return user?.name || user?.email || '';
-      },
-      getSecondaryText: (item) => {
-        const username = item.person.user?.username;
-        return username ? `@${username}` : null;
-      },
-      layout: 'horizontal',
-    };
+export const MentionList = forwardRef<
+  { onKeyDown: (props: { event: KeyboardEvent }) => boolean },
+  MentionListProps
+>(({ items, command, isMobile = false }, ref) => {
+  const config: SuggestionItemConfig<Member> = {
+    getKey: item => item.personId,
+    renderPrefix: item => {
+      const user = item.person.user;
+      const initials = getInitialsFromName(user?.name, user?.email);
+      return (
+        <Avatar className='h-6 w-6'>
+          <AvatarImage src={user?.image || undefined} />
+          <AvatarFallback className='text-xs'>{initials}</AvatarFallback>
+        </Avatar>
+      );
+    },
+    getPrimaryText: item => {
+      const user = item.person.user;
+      return user?.name || user?.email || '';
+    },
+    getSecondaryText: item => {
+      const username = item.person.user?.username;
+      return username ? `@${username}` : null;
+    },
+    layout: 'horizontal',
+  };
 
-    const handleCommand = (item: Member) => {
-      const displayName = item.person.user?.name || item.person.user?.email || '';
-      command({
-        id: item.personId,
-        label: displayName,
-      });
-    };
+  const handleCommand = (item: Member) => {
+    const displayName = item.person.user?.name || item.person.user?.email || '';
+    command({
+      id: item.personId,
+      label: displayName,
+    });
+  };
 
-    return (
-      <SuggestionList
-        ref={ref}
-        items={items}
-        command={handleCommand}
-        isMobile={isMobile}
-        config={config}
-      />
-    );
-  }
-);
+  return (
+    <SuggestionList
+      ref={ref}
+      items={items}
+      command={handleCommand}
+      isMobile={isMobile}
+      config={config}
+    />
+  );
+});
 
 MentionList.displayName = 'MentionList';
-

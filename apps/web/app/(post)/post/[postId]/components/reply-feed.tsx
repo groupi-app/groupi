@@ -9,14 +9,14 @@ import { redirect } from 'next/navigation';
  */
 export default async function ReplyFeed({ postId }: { postId: string }) {
   'use cache: private';
-  
+
   const [error, postData] = await getCachedPostWithReplies(postId);
 
   if (error) {
     switch (error._tag) {
       case 'AuthenticationError':
         redirect('/sign-in');
-       
+
       default:
         return <div>Error loading replies</div>;
     }

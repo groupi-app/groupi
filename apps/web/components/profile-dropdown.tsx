@@ -62,7 +62,9 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
                 </span>
               )}
               <span className='text-muted-foreground'>
-                {completeUserInfo.username ? `@${completeUserInfo.username}` : completeUserInfo.email}
+                {completeUserInfo.username
+                  ? `@${completeUserInfo.username}`
+                  : completeUserInfo.email}
               </span>
             </div>
           </DropdownMenuLabel>
@@ -82,10 +84,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onClick={handleSignOut}
-          >
+          <DropdownMenuItem className='cursor-pointer' onClick={handleSignOut}>
             <div className='flex items-center gap-2'>
               <Icons.signOut className='size-4' />
               <span>Sign Out</span>

@@ -9,7 +9,7 @@ import { RepliesClient } from './replies-client';
  */
 export async function Replies({ postId }: { postId: string }) {
   'use cache: private';
-  
+
   const [authError, userId] = await getUserId();
 
   if (authError || !userId) {
@@ -27,7 +27,7 @@ export async function Replies({ postId }: { postId: string }) {
   }
 
   const { post, userMembership } = postData;
-  
+
   if (!post) {
     return (
       <div className='text-center py-8'>

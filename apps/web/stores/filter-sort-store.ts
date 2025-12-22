@@ -12,10 +12,9 @@ interface FilterSortStore {
   setFilter: (value: Filter) => void;
 }
 
-export const useFilterSortStore = create<FilterSortStore>((set) => ({
+export const useFilterSortStore = create<FilterSortStore>(set => ({
   sortBy: 'lastactivity',
   filter: 'all',
-  setSortBy: (value) => set({ sortBy: value }),
-  setFilter: (value) => set({ filter: value }),
+  setSortBy: value => set({ sortBy: value }),
+  setFilter: value => set({ filter: value }),
 }));
-

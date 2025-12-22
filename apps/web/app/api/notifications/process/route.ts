@@ -4,7 +4,7 @@ import { processNotificationDelivery } from '@groupi/services';
 /**
  * API route to process notification delivery (email, webhook, and push)
  * This is called as a background job when notifications are created
- * 
+ *
  * POST /api/notifications/process
  * Body: { notificationId: string }
  */
@@ -48,11 +48,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Failed to process notification',
-        message:
-          error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
 }
-

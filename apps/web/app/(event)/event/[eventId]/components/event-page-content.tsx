@@ -6,7 +6,11 @@ import { MemberListSkeleton } from '@/components/skeletons/member-list-skeleton'
 import { PostFeedSkeleton } from './post-feed-skeleton';
 import { Suspense } from 'react';
 import { cacheLife } from 'next/cache';
-import { getCachedEventHeaderData, shouldRedirectToAvailability, getUserId } from '@groupi/services/server';
+import {
+  getCachedEventHeaderData,
+  shouldRedirectToAvailability,
+  getUserId,
+} from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { componentLogger } from '@/lib/logger';
 
@@ -16,9 +20,9 @@ import { componentLogger } from '@/lib/logger';
  * Uses "use cache: private" at component level for PPR optimization
  * All checks and redirects happen inside Suspense boundary for instant skeleton rendering
  */
-export async function EventPageContent({ 
+export async function EventPageContent({
   params,
-}: { 
+}: {
   params: Promise<{ eventId: string }>;
 }) {
   'use cache: private';
@@ -36,7 +40,7 @@ export async function EventPageContent({
 
   // Fetch header data inside Suspense
   const [headerError, headerData] = await getCachedEventHeaderData(eventId);
-  
+
   componentLogger.debug(
     {
       eventId: headerData?.event?.id,
@@ -48,13 +52,18 @@ export async function EventPageContent({
   );
 
   if (headerError) {
-    componentLogger.info({ eventId, errorTag: headerError._tag }, 'Handling error');
+    componentLogger.info(
+      { eventId, errorTag: headerError._tag },
+      'Handling error'
+    );
     switch (headerError._tag) {
       case 'NotFoundError':
         return (
           <div className='container pt-6 pb-24'>
             <div className='text-center py-8'>
-              <h1 className='text-2xl font-bold text-red-600'>Event not found</h1>
+              <h1 className='text-2xl font-bold text-red-600'>
+                Event not found
+              </h1>
             </div>
           </div>
         );
@@ -72,7 +81,10 @@ export async function EventPageContent({
           </div>
         );
       default:
-        componentLogger.error({ eventId, error: headerError }, 'Unexpected error');
+        componentLogger.error(
+          { eventId, error: headerError },
+          'Unexpected error'
+        );
         return (
           <div className='container pt-6 pb-24'>
             <div className='text-center py-8'>
@@ -101,7 +113,10 @@ export async function EventPageContent({
   // Check if user should be redirected to availability page
   // Only redirects if there's an active poll (no chosen date) and user hasn't set availability
   try {
-    componentLogger.debug({ eventId }, 'Checking if redirect to availability is needed');
+    componentLogger.debug(
+      { eventId },
+      'Checking if redirect to availability is needed'
+    );
     const shouldRedirect = await shouldRedirectToAvailability(eventId);
     componentLogger.debug(
       { eventId, shouldRedirect },
@@ -113,23 +128,26 @@ export async function EventPageContent({
     }
   } catch (error) {
     // If availability check fails, log but don't block rendering
-    componentLogger.error({ eventId, error }, 'Error checking availability redirect');
+    componentLogger.error(
+      { eventId, error },
+      'Error checking availability redirect'
+    );
   }
 
   componentLogger.debug({ eventId }, 'Rendering child components');
   return (
     <div className='container pt-6 pb-24 space-y-5'>
-        <Suspense fallback={<EventHeaderSkeleton />}>
-          <EventHeaderServer eventId={eventId} />
+      <Suspense fallback={<EventHeaderSkeleton />}>
+        <EventHeaderServer eventId={eventId} />
+      </Suspense>
+      <div className='max-w-4xl mx-auto flex flex-col gap-4'>
+        <Suspense fallback={<MemberListSkeleton />}>
+          <MemberListServer eventId={eventId} />
         </Suspense>
-        <div className='max-w-4xl mx-auto flex flex-col gap-4'>
-          <Suspense fallback={<MemberListSkeleton />}>
-            <MemberListServer eventId={eventId} />
-          </Suspense>
-          <Suspense fallback={<PostFeedSkeleton />}>
-            <PostFeedServer eventId={eventId} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<PostFeedSkeleton />}>
+          <PostFeedServer eventId={eventId} />
+        </Suspense>
       </div>
+    </div>
   );
 }

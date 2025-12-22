@@ -17,7 +17,9 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [lastSentIdentifier, setLastSentIdentifier] = useState<string | null>(null);
+  const [lastSentIdentifier, setLastSentIdentifier] = useState<string | null>(
+    null
+  );
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -89,7 +91,8 @@ export default function SignInPage() {
       return;
     }
 
-    const identifierToUse = resend && lastSentIdentifier ? lastSentIdentifier : identifier;
+    const identifierToUse =
+      resend && lastSentIdentifier ? lastSentIdentifier : identifier;
 
     if (!identifierToUse) {
       setError('Please enter your email or username');
@@ -97,7 +100,8 @@ export default function SignInPage() {
     }
 
     // Check if this is a different identifier than the last one sent
-    const isDifferentIdentifier = lastSentIdentifier && identifierToUse !== lastSentIdentifier;
+    const isDifferentIdentifier =
+      lastSentIdentifier && identifierToUse !== lastSentIdentifier;
 
     setLoading(true);
     setError('');
@@ -190,7 +194,11 @@ export default function SignInPage() {
                   onChange={e => {
                     setIdentifier(e.target.value);
                     // Clear success state when user starts typing a different identifier
-                    if (success && lastSentIdentifier && e.target.value !== lastSentIdentifier) {
+                    if (
+                      success &&
+                      lastSentIdentifier &&
+                      e.target.value !== lastSentIdentifier
+                    ) {
                       setSuccess(false);
                     }
                   }}

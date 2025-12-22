@@ -76,7 +76,7 @@ export function PostFeedClient({
     tags: [`event-${event.id}`, `event-${event.id}-posts`],
     queryKey: qk.posts.feed(event.id),
     // Custom handlers to update PostFeedData structure
-    onInsert: (data) => {
+    onInsert: data => {
       // Data from Pusher is PostData (minimal), but we need PostCardData (full structure)
       const postData = data as {
         id: string;
@@ -88,73 +88,72 @@ export function PostFeedClient({
         updatedAt: Date | string;
         editedAt?: Date | string | null;
       };
-      
-      queryClient.setQueryData<PostFeedData>(
-        qk.posts.feed(event.id),
-        (old) => {
-          if (!old) return old;
-          
-          // Check if post already exists (avoid duplicates)
-          const exists = old.event.posts.some((p) => p.id === postData.id);
-          if (exists) {
-            return old;
-          }
-          
-          // Find the author's membership to get user data
-          const authorMembership = old.event.memberships.find(
-            (m) => m.personId === postData.authorId
-          );
-          
-          // If we can't find the author, skip adding the post
-          // (it will be fetched on next refresh)
-          if (!authorMembership) {
-            return old;
-          }
-          
-          // Transform PostData into PostCardData structure
-          const newPost: Post = {
-            id: postData.id,
-            title: postData.title,
-            content: postData.content,
-            authorId: postData.authorId,
-            eventId: postData.eventId,
-            createdAt: typeof postData.createdAt === 'string' 
-              ? new Date(postData.createdAt) 
+
+      queryClient.setQueryData<PostFeedData>(qk.posts.feed(event.id), old => {
+        if (!old) return old;
+
+        // Check if post already exists (avoid duplicates)
+        const exists = old.event.posts.some(p => p.id === postData.id);
+        if (exists) {
+          return old;
+        }
+
+        // Find the author's membership to get user data
+        const authorMembership = old.event.memberships.find(
+          m => m.personId === postData.authorId
+        );
+
+        // If we can't find the author, skip adding the post
+        // (it will be fetched on next refresh)
+        if (!authorMembership) {
+          return old;
+        }
+
+        // Transform PostData into PostCardData structure
+        const newPost: Post = {
+          id: postData.id,
+          title: postData.title,
+          content: postData.content,
+          authorId: postData.authorId,
+          eventId: postData.eventId,
+          createdAt:
+            typeof postData.createdAt === 'string'
+              ? new Date(postData.createdAt)
               : postData.createdAt,
-            updatedAt: typeof postData.updatedAt === 'string'
+          updatedAt:
+            typeof postData.updatedAt === 'string'
               ? new Date(postData.updatedAt)
               : postData.updatedAt,
-            editedAt: postData.editedAt
-              ? (typeof postData.editedAt === 'string'
-                  ? new Date(postData.editedAt)
-                  : postData.editedAt)
-              : (typeof postData.updatedAt === 'string'
-                  ? new Date(postData.updatedAt)
-                  : postData.updatedAt),
-            author: {
-              id: authorMembership.person.id,
-              user: {
-                name: authorMembership.person.user.name,
-                email: authorMembership.person.user.email,
-                image: authorMembership.person.user.image,
-                username: authorMembership.person.user.username,
-              },
+          editedAt: postData.editedAt
+            ? typeof postData.editedAt === 'string'
+              ? new Date(postData.editedAt)
+              : postData.editedAt
+            : typeof postData.updatedAt === 'string'
+              ? new Date(postData.updatedAt)
+              : postData.updatedAt,
+          author: {
+            id: authorMembership.person.id,
+            user: {
+              name: authorMembership.person.user.name,
+              email: authorMembership.person.user.email,
+              image: authorMembership.person.user.image,
+              username: authorMembership.person.user.username,
             },
-            replies: [], // New post has no replies yet
-            replyCount: 0,
-          };
-          
-          return {
-            ...old,
-            event: {
-              ...old.event,
-              posts: [newPost, ...old.event.posts],
-            },
-          };
-        }
-      );
+          },
+          replies: [], // New post has no replies yet
+          replyCount: 0,
+        };
+
+        return {
+          ...old,
+          event: {
+            ...old.event,
+            posts: [newPost, ...old.event.posts],
+          },
+        };
+      });
     },
-    onUpdate: (data) => {
+    onUpdate: data => {
       // Data from Pusher might be PostData (minimal) or PostCardData (full)
       const updateData = data as {
         id: string;
@@ -168,86 +167,82 @@ export function PostFeedClient({
         replies?: Post['replies'];
         replyCount?: number;
       };
-      
-      queryClient.setQueryData<PostFeedData>(
-        qk.posts.feed(event.id),
-        (old) => {
-          if (!old) return old;
-          
-          return {
-            ...old,
-            event: {
-              ...old.event,
-              posts: old.event.posts.map((p) => {
-                if (p.id !== updateData.id) return p;
-                
-                // If updateData has full structure, use it
-                if (updateData.author && updateData.replies !== undefined) {
-                  return {
-                    ...p,
-                    ...updateData,
-                    updatedAt: updateData.updatedAt
-                      ? (typeof updateData.updatedAt === 'string'
-                          ? new Date(updateData.updatedAt)
-                          : updateData.updatedAt)
-                      : p.updatedAt,
-                    editedAt: updateData.editedAt !== undefined
-                      ? (updateData.editedAt
-                          ? (typeof updateData.editedAt === 'string'
-                              ? new Date(updateData.editedAt)
-                              : updateData.editedAt)
-                          : (updateData.updatedAt
-                              ? (typeof updateData.updatedAt === 'string'
-                                  ? new Date(updateData.updatedAt)
-                                  : updateData.updatedAt)
-                              : p.updatedAt))
-                      : p.editedAt,
-                  } as Post;
-                }
-                
-                // Otherwise, merge minimal update with existing post structure
+
+      queryClient.setQueryData<PostFeedData>(qk.posts.feed(event.id), old => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          event: {
+            ...old.event,
+            posts: old.event.posts.map(p => {
+              if (p.id !== updateData.id) return p;
+
+              // If updateData has full structure, use it
+              if (updateData.author && updateData.replies !== undefined) {
                 return {
                   ...p,
-                  title: updateData.title ?? p.title,
-                  content: updateData.content ?? p.content,
+                  ...updateData,
                   updatedAt: updateData.updatedAt
-                    ? (typeof updateData.updatedAt === 'string'
-                        ? new Date(updateData.updatedAt)
-                        : updateData.updatedAt)
+                    ? typeof updateData.updatedAt === 'string'
+                      ? new Date(updateData.updatedAt)
+                      : updateData.updatedAt
                     : p.updatedAt,
-                  editedAt: updateData.editedAt !== undefined
-                    ? (updateData.editedAt
-                        ? (typeof updateData.editedAt === 'string'
-                            ? new Date(updateData.editedAt)
-                            : updateData.editedAt)
-                        : (updateData.updatedAt
-                            ? (typeof updateData.updatedAt === 'string'
-                                ? new Date(updateData.updatedAt)
-                                : updateData.updatedAt)
-                            : p.updatedAt))
+                  editedAt:
+                    updateData.editedAt !== undefined
+                      ? updateData.editedAt
+                        ? typeof updateData.editedAt === 'string'
+                          ? new Date(updateData.editedAt)
+                          : updateData.editedAt
+                        : updateData.updatedAt
+                          ? typeof updateData.updatedAt === 'string'
+                            ? new Date(updateData.updatedAt)
+                            : updateData.updatedAt
+                          : p.updatedAt
+                      : p.editedAt,
+                } as Post;
+              }
+
+              // Otherwise, merge minimal update with existing post structure
+              return {
+                ...p,
+                title: updateData.title ?? p.title,
+                content: updateData.content ?? p.content,
+                updatedAt: updateData.updatedAt
+                  ? typeof updateData.updatedAt === 'string'
+                    ? new Date(updateData.updatedAt)
+                    : updateData.updatedAt
+                  : p.updatedAt,
+                editedAt:
+                  updateData.editedAt !== undefined
+                    ? updateData.editedAt
+                      ? typeof updateData.editedAt === 'string'
+                        ? new Date(updateData.editedAt)
+                        : updateData.editedAt
+                      : updateData.updatedAt
+                        ? typeof updateData.updatedAt === 'string'
+                          ? new Date(updateData.updatedAt)
+                          : updateData.updatedAt
+                        : p.updatedAt
                     : p.editedAt,
-                };
-              }),
-            },
-          };
-        }
-      );
+              };
+            }),
+          },
+        };
+      });
     },
-    onDelete: (data) => {
+    onDelete: data => {
       const deletedPost = data as { id: string };
-      queryClient.setQueryData<PostFeedData>(
-        qk.posts.feed(event.id),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            event: {
-              ...old.event,
-              posts: old.event.posts.filter((p) => p.id !== deletedPost.id),
-            },
-          };
-        }
-      );
+      queryClient.setQueryData<PostFeedData>(qk.posts.feed(event.id), old => {
+        if (!old) return old;
+        return {
+          ...old,
+          event: {
+            ...old.event,
+            posts: old.event.posts.filter(p => p.id !== deletedPost.id),
+          },
+        };
+      });
     },
   });
 

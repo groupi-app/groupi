@@ -25,34 +25,31 @@ export function useDeleteReply() {
       if (error) throw error;
       return data;
     },
-    onMutate: async (deletedReply) => {
+    onMutate: async deletedReply => {
       // Find which post this reply belongs to by searching all post detail queries
       const queryCache = queryClient.getQueryCache();
       const queries = queryCache.findAll({ queryKey: ['posts', 'detail'] });
 
       // Save previous data for all affected queries
-      const prevData = queries.map((query) => ({
+      const prevData = queries.map(query => ({
         queryKey: [...query.queryKey],
         data: query.state.data,
       }));
 
       // Optimistically remove reply from all post details
-      queries.forEach((query) => {
-        queryClient.setQueryData<PostDetailPageData>(
-          query.queryKey,
-          (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              post: {
-                ...old.post,
-                replies: old.post.replies.filter(
-                  (r) => r.id !== deletedReply.replyId
-                ),
-              },
-            };
-          }
-        );
+      queries.forEach(query => {
+        queryClient.setQueryData<PostDetailPageData>(query.queryKey, old => {
+          if (!old) return old;
+          return {
+            ...old,
+            post: {
+              ...old.post,
+              replies: old.post.replies.filter(
+                r => r.id !== deletedReply.replyId
+              ),
+            },
+          };
+        });
       });
 
       return { prevData };
@@ -60,12 +57,20 @@ export function useDeleteReply() {
     onError: (_err: ReplyMutationError, _deletedReply, ctx?) => {
       // Rollback on error
       if (ctx?.prevData) {
-        ctx.prevData.forEach(({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
-          queryClient.setQueryData(queryKey, data);
-        });
+        ctx.prevData.forEach(
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
+            queryClient.setQueryData(queryKey, data);
+          }
+        );
       }
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       // If we have postId, invalidate that specific post detail
       if (data.postId) {
         queryClient.invalidateQueries({
@@ -76,4 +81,3 @@ export function useDeleteReply() {
     },
   });
 }
-

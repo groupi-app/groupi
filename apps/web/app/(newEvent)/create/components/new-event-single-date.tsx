@@ -3,7 +3,7 @@ import { useFormContext } from './form-context';
 import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useRef } from 'react';
+import { useCallback } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
@@ -32,7 +32,6 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
   const { formState, reset } = useFormContext();
   const router = useRouter();
   const createEvent = useCreateEvent();
-  const isSubmittingRef = useRef(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -48,6 +47,39 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
   // Use useWatch instead of form.watch() for React Compiler compatibility
   const watchedDate = useWatch({ control: form.control, name: 'date' });
   const watchedTime = useWatch({ control: form.control, name: 'time' });
+
+  const onSubmit = useCallback(
+    (data: z.infer<typeof formSchema>) => {
+      const [hours, minutes] = data.time.split(':').map(Number);
+
+      // Create new date object and set time components
+      const dateTime = new Date(data.date);
+      dateTime.setHours(hours, minutes, 0, 0);
+
+      const { title, description, location } = formState;
+
+      createEvent.mutate(
+        {
+          title,
+          description,
+          location,
+          potentialDateTimes: [dateTime.toISOString()],
+        },
+        {
+          onSuccess: result => {
+            toast.success('The event was created successfully.');
+            // Reset form context before navigation so it's fresh when user comes back
+            reset();
+            router.push(`/event/${result.event.id}`);
+          },
+          onError: () => {
+            toast.error('The event was unable to be created.');
+          },
+        }
+      );
+    },
+    [formState, createEvent, reset, router]
+  );
 
   // In wizard mode, redirect is handled by parent
   // Keep validation check but don't redirect
@@ -67,39 +99,6 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
       new Date().getTimezoneOffset() > 0 ? '-' : '+'
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
-
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    const [hours, minutes] = data.time.split(':').map(Number);
-
-    // Create new date object and set time components
-    const dateTime = new Date(data.date);
-    dateTime.setHours(hours, minutes, 0, 0);
-
-    const { title, description, location } = formState;
-
-    isSubmittingRef.current = true;
-    createEvent.mutate(
-      {
-        title,
-        description,
-        location,
-        potentialDateTimes: [dateTime.toISOString()],
-      },
-      {
-        onSuccess: (result) => {
-          toast.success('The event was created successfully.');
-          // Reset form context before navigation so it's fresh when user comes back
-          reset();
-          isSubmittingRef.current = false;
-          router.push(`/event/${result.event.id}`);
-        },
-        onError: () => {
-          toast.error('The event was unable to be created.');
-          isSubmittingRef.current = false;
-        },
-      }
-    );
-  }
 
   const isSaving = createEvent.isPending;
 

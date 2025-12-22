@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
 
   // Check if user already completed onboarding
   const [onboardingError, needsOnboardingCheck] = await needsOnboarding();
-  
+
   // If user doesn't need onboarding, redirect to events page
   if (!onboardingError && needsOnboardingCheck === false) {
     redirect('/events');
@@ -22,4 +22,3 @@ export default async function OnboardingPage() {
 
   return <OnboardingContent />;
 }
-

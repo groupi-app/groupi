@@ -9,11 +9,7 @@ import { cn } from '@/lib/utils';
 import { useSettingsFormSubmit } from './settings-form';
 import { SettingsForm as SettingsFormType } from './settings-form-provider';
 
-export function ConfirmSettings({ 
-  shouldFlash,
-}: { 
-  shouldFlash?: boolean;
-}) {
+export function ConfirmSettings({ shouldFlash }: { shouldFlash?: boolean }) {
   const { formState, reset, handleSubmit } = useFormContext<SettingsFormType>();
   const onSubmitHandler = useSettingsFormSubmit();
 
@@ -35,9 +31,7 @@ export function ConfirmSettings({
       >
         <CardHeader>
           <div className='flex flex-col md:flex-row gap-2 items-center justify-between'>
-            <span>
-              You have unsaved changes!
-            </span>
+            <span>You have unsaved changes!</span>
             <div className='flex items-center gap-3 w-full md:w-max'>
               <Button
                 className='flex items-center gap-1 grow'
