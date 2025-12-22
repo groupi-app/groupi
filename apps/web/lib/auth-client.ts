@@ -17,8 +17,21 @@ import {
  * This is a simple, straightforward client setup that works with Next.js 16.
  * The 'use client' directive ensures this only runs in the browser.
  */
+// Get base URL: use NEXT_PUBLIC_BASE_URL if set, otherwise detect from window.location
+const getBaseURL = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  // In browser, use current origin
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  // Fallback for SSR
+  return 'http://localhost:3000';
+};
+
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+  baseURL: getBaseURL(),
   plugins: [
     usernameClient(),
     magicLinkClient(),
