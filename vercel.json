@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd ../.. && pnpm prisma generate && pnpm turbo build --filter=@groupi/web",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "rootDirectory": "apps/web"
+}
