@@ -14,6 +14,7 @@ generator zod {
   addSelectTypes                   = true
   prismaClientPath                 = "@prisma/client"
   useTypeAssertions                = false
+  useDefaultValidators             = false
 }
 
 datasource db {
