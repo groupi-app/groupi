@@ -16,7 +16,7 @@ export default async function ReplyFeed({ postId }: { postId: string }) {
     switch (error._tag) {
       case 'AuthenticationError':
         redirect('/sign-in');
-
+      // eslint-disable-next-line no-fallthrough
       default:
         return <div>Error loading replies</div>;
     }

@@ -70,6 +70,7 @@ export async function EventPageContent({
       case 'AuthenticationError':
         componentLogger.info({ eventId }, 'Redirecting to sign-in');
         redirect('/sign-in');
+      // eslint-disable-next-line no-fallthrough
       case 'UnauthorizedError':
         return (
           <div className='container pt-6 pb-24'>
