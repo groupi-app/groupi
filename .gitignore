@@ -45,5 +45,8 @@ docker-compose.yml
 compose.yml
 *.dump
 
+# supabase
+supabase/.temp/
+
 *.turbo
 .turboapps/web/.env.sentry-build-plugin
