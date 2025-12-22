@@ -76,6 +76,7 @@ const eslintConfig = [
     plugins: {
       prettier,
       '@typescript-eslint': typescriptEslint,
+      'react-hooks': reactHooks,
     },
     languageOptions: {
       globals: {
@@ -104,6 +105,16 @@ const eslintConfig = [
       '@typescript-eslint/no-empty-object-type': 'warn',
       'no-undef': 'off', // TypeScript handles this
       'no-fallthrough': 'error',
+    },
+  },
+  // Server components can return JSX from try/catch
+  {
+    files: ['**/*-server.tsx', '**/*-server.ts'],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'react-hooks/error-boundaries': 'off', // Server components can return JSX from try/catch
     },
   },
 ];

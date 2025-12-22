@@ -1,33 +1,45 @@
 export interface SeedUser {
-  firstName: string;
-  lastName: string;
+  name: string;
   username: string;
   email: string;
+  role?: 'admin' | 'user';
 }
 
 export const seedUsers: SeedUser[] = [
   {
-    firstName: 'Test',
-    lastName: 'User1',
-    username: 'testuser1',
-    email: 'testuser1+clerk_test@example.com',
+    name: 'Admin User',
+    username: 'admin',
+    email: 'admin+test@example.com',
+    role: 'admin', // Admin user
   },
   {
-    firstName: 'Test',
-    lastName: 'User2',
-    username: 'testuser2',
-    email: 'testuser2+clerk_test@example.com',
+    name: 'Alice Johnson',
+    username: 'alice_j',
+    email: 'alice.johnson+test@example.com',
   },
   {
-    firstName: 'Test',
-    lastName: 'User3',
-    username: 'testuser3',
-    email: 'testuser3+clerk_test@example.com',
+    name: 'Bob Smith',
+    username: 'bob_smith',
+    email: 'bob.smith+test@example.com',
   },
   {
-    firstName: 'Test',
-    lastName: 'User4',
-    username: 'testuser4',
-    email: 'testuser4+clerk_test@example.com',
+    name: 'Carol Davis',
+    username: 'carol_d',
+    email: 'carol.davis+test@example.com',
+  },
+  {
+    name: 'David Wilson',
+    username: 'david_w',
+    email: 'david.wilson+test@example.com',
+  },
+  {
+    name: 'Emma Brown',
+    username: 'emma_b',
+    email: 'emma.brown+test@example.com',
+  },
+  {
+    name: 'Frank Miller',
+    username: 'frank_m',
+    email: 'frank.miller+test@example.com',
   },
 ];

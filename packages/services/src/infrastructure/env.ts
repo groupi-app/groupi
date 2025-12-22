@@ -1,0 +1,63 @@
+/**
+ * Shared environment configuration for services package
+ * This provides a simple way to access environment variables across packages
+ */
+
+export const getEnvVar = (key: string): string | undefined => {
+  return process.env[key];
+};
+
+export const requireEnvVar = (key: string): string => {
+  const value = getEnvVar(key);
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
+// Database - lazy access
+export const getDATABASE_URL = () => requireEnvVar('DATABASE_URL');
+export const getDIRECT_URL = () => requireEnvVar('DIRECT_URL');
+
+// Pusher - lazy access
+export const getPUSHER_APP_ID = () => requireEnvVar('PUSHER_APP_ID');
+export const getPUSHER_APP_SECRET = () => requireEnvVar('PUSHER_APP_SECRET');
+export const getPUSHER_BEAMS_SECRET_KEY = () =>
+  requireEnvVar('PUSHER_BEAMS_SECRET_KEY');
+
+// Google - lazy access
+export const getGOOGLE_API_KEY = () => requireEnvVar('GOOGLE_API_KEY');
+
+// Resend - lazy access
+export const getRESEND_API_KEY = () => requireEnvVar('RESEND_API_KEY');
+export const getRESEND_FROM_EMAIL = () =>
+  getEnvVar('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
+
+// Public variables (for client-side use) - lazy access
+export const getNEXT_PUBLIC_BASE_URL = () =>
+  getEnvVar('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000';
+export const getNEXT_PUBLIC_PUSHER_APP_KEY = () =>
+  requireEnvVar('NEXT_PUBLIC_PUSHER_APP_KEY');
+export const getNEXT_PUBLIC_PUSHER_APP_CLUSTER = () =>
+  requireEnvVar('NEXT_PUBLIC_PUSHER_APP_CLUSTER');
+export const getNEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID = () =>
+  requireEnvVar('NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID');
+
+// Sentry - lazy access
+export const getSENTRY_DSN = () =>
+  getEnvVar('SENTRY_DSN') || getEnvVar('NEXT_PUBLIC_SENTRY_DSN');
+export const getSENTRY_AUTH_TOKEN = () => getEnvVar('SENTRY_AUTH_TOKEN');
+
+// Debug - lazy access
+export const isDEBUG_ENABLED = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const debugEnv = getEnvVar('DEBUG');
+  return debugEnv === 'true' && !isProduction;
+};
+
+// Loki - lazy access (optional)
+export const getLOKI_ENABLED = () => getEnvVar('LOKI_ENABLED') === 'true';
+export const getLOKI_URL = () =>
+  getEnvVar('LOKI_URL') || 'https://logs-prod-036.grafana.net/loki/api/v1/push';
+export const getLOKI_INSTANCE_ID = () => getEnvVar('LOKI_INSTANCE_ID');
+export const getLOKI_TOKEN = () => getEnvVar('LOKI_TOKEN');

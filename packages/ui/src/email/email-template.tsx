@@ -1,0 +1,243 @@
+import { NotificationFeedData } from '@groupi/schema';
+
+interface EmailTemplateProps {
+  notification: NotificationFeedData;
+}
+
+export function NotificationEmailTemplate({
+  notification,
+}: Readonly<EmailTemplateProps>) {
+  const { event, post, type, datetime, author, rsvp } = notification;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  // Embed SVG as data URI for email compatibility (works in dev and production)
+  // Email clients often block external images, so embedding ensures it always displays
+  const logoDataUri =
+    'data:image/svg+xml;base64,' +
+    Buffer.from(
+      '<svg width="559" height="160" viewBox="0 0 559 160" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(%23clip0_2021_8)"><path d="M35.1804 74.865C52.5096 74.865 66.5577 60.7922 66.5577 43.4325C66.5577 26.0728 52.5096 12 35.1804 12C17.8513 12 3.80322 26.0728 3.80322 43.4325C3.80322 60.7922 17.8513 74.865 35.1804 74.865Z" fill="%238200AD"/><path d="M0 103.757C0 84.2935 15.7508 68.515 35.1805 68.515C54.6102 68.515 70.361 84.2935 70.361 103.757V139H0V103.757Z" fill="%238200AD"/><path fill-rule="evenodd" clip-rule="evenodd" d="M103.124 35.7484C97.2591 31.3909 88.978 32.6215 84.6282 38.4972L60.4375 71.1724C68.7163 76.5047 74.3226 85.2818 75.6377 95.1105L105.868 54.2771C110.218 48.4015 108.99 40.1059 103.124 35.7484Z" fill="%238200AD"/></g><path d="M177.488 126.92C170.576 126.92 164.069 125.853 157.968 123.72C151.867 121.587 146.491 118.515 141.84 114.504C137.232 110.451 133.605 105.544 130.96 99.784C128.315 94.024 126.992 87.5173 126.992 80.264C126.992 73.0533 128.251 66.5893 130.768 60.872C133.328 55.112 136.869 50.184 141.392 46.088C145.915 41.992 151.163 38.8773 157.136 36.744C163.109 34.568 169.531 33.48 176.4 33.48C179.557 33.48 182.864 33.736 186.32 34.248C189.776 34.7173 193.296 35.5707 196.88 36.808C200.464 38.0453 203.984 39.7947 207.44 42.056L198.608 58.504C195.536 56.4987 192.272 55.0267 188.816 54.088C185.36 53.1067 181.691 52.616 177.808 52.616C173.328 52.616 169.296 53.256 165.712 54.536C162.128 55.816 159.077 57.672 156.56 60.104C154.085 62.4933 152.187 65.3947 150.864 68.808C149.541 72.2213 148.88 76.0827 148.88 80.392C148.88 86.5787 150.203 91.7627 152.848 95.944C155.493 100.083 159.077 103.219 163.6 105.352C168.123 107.443 173.179 108.488 178.768 108.488C180.987 108.488 183.099 108.296 185.104 107.912C187.109 107.528 188.88 107.08 190.416 106.568V90.696H172.112V73.8H209.04V119.496C206.352 121.032 203.152 122.355 199.44 123.464C195.771 124.573 191.995 125.427 188.112 126.024C184.272 126.621 180.731 126.92 177.488 126.92ZM227.079 125V59.72H248.071V67.336C250.034 63.9653 252.636 61.512 255.879 59.976C259.122 58.44 262.642 57.672 266.439 57.672C267.89 57.672 269.191 57.7573 270.343 57.928C271.495 58.0987 272.626 58.2907 273.735 58.504L271.239 80.072C269.788 79.56 268.252 79.1547 266.631 78.856C265.01 78.5147 263.388 78.344 261.767 78.344C257.799 78.344 254.514 79.496 251.911 81.8C249.351 84.0613 248.071 87.3893 248.071 91.784V125H227.079ZM313.747 126.92C306.622 126.92 300.328 125.363 294.867 122.248C289.406 119.091 285.118 114.888 282.003 109.64C278.931 104.392 277.395 98.632 277.395 92.36C277.395 87.7947 278.27 83.4427 280.019 79.304C281.811 75.1227 284.328 71.432 287.571 68.232C290.814 64.9893 294.654 62.4507 299.091 60.616C303.528 58.7387 308.414 57.8 313.747 57.8C320.872 57.8 327.166 59.3787 332.627 62.536C338.088 65.6507 342.355 69.832 345.427 75.08C348.499 80.328 350.035 86.088 350.035 92.36C350.035 96.9253 349.16 101.299 347.411 105.48C345.662 109.619 343.166 113.288 339.923 116.488C336.68 119.688 332.84 122.227 328.403 124.104C323.966 125.981 319.08 126.92 313.747 126.92ZM313.747 108.872C316.734 108.872 319.422 108.211 321.811 106.888C324.2 105.523 326.078 103.603 327.443 101.128C328.808 98.6533 329.491 95.7307 329.491 92.36C329.491 88.9467 328.808 86.024 327.443 83.592C326.12 81.1173 324.264 79.2187 321.875 77.896C319.486 76.5307 316.776 75.848 313.747 75.848C310.718 75.848 308.008 76.5307 305.619 77.896C303.23 79.2187 301.352 81.1173 299.987 83.592C298.622 86.024 297.939 88.9467 297.939 92.36C297.939 95.7307 298.622 98.6533 299.987 101.128C301.395 103.603 303.294 105.523 305.683 106.888C308.072 108.211 310.76 108.872 313.747 108.872ZM387.929 126.92C381.998 126.92 377.092 125.768 373.209 123.464C369.326 121.117 366.425 117.896 364.505 113.8C362.628 109.661 361.689 104.861 361.689 99.4V59.72H382.681V96.264C382.681 99.848 383.62 102.685 385.497 104.776C387.417 106.867 390.19 107.912 393.817 107.912C396.164 107.912 398.212 107.4 399.961 106.376C401.753 105.309 403.118 103.859 404.057 102.024C405.038 100.189 405.529 98.056 405.529 95.624V59.72H426.521V125H408.409V118.088C406.318 120.435 403.673 122.504 400.473 124.296C397.273 126.045 393.092 126.92 387.929 126.92ZM443.954 151.88V59.72H462.066V67.208C464.498 64.3493 467.591 62.0667 471.346 60.36C475.143 58.6533 479.538 57.8 484.53 57.8C490.759 57.8 496.306 59.2293 501.17 62.088C506.077 64.9467 509.938 68.9787 512.754 74.184C515.57 79.3893 516.978 85.448 516.978 92.36C516.978 97.224 516.167 101.768 514.546 105.992C512.967 110.173 510.706 113.843 507.762 117C504.818 120.115 501.341 122.547 497.33 124.296C493.362 126.045 488.967 126.92 484.146 126.92C480.306 126.92 476.765 126.301 473.522 125.064C470.322 123.827 467.442 122.077 464.882 119.816V151.88H443.954ZM480.626 108.872C483.655 108.872 486.365 108.211 488.754 106.888C491.143 105.523 493.021 103.603 494.386 101.128C495.751 98.6533 496.434 95.7307 496.434 92.36C496.434 88.9467 495.73 86.024 494.322 83.592C492.957 81.1173 491.079 79.2187 488.69 77.896C486.343 76.5307 483.655 75.848 480.626 75.848C477.639 75.848 474.951 76.5307 472.562 77.896C470.173 79.2187 468.295 81.1173 466.93 83.592C465.565 86.024 464.882 88.9467 464.882 92.36C464.882 95.7307 465.565 98.6533 466.93 101.128C468.295 103.603 470.151 105.523 472.498 106.888C474.887 108.211 477.597 108.872 480.626 108.872ZM529.204 125V59.72H550.196V125H529.204ZM539.7 50.056C536.329 50.056 533.385 49.0107 530.868 46.92C528.393 44.7867 527.156 41.9493 527.156 38.408C527.156 34.7813 528.393 31.9227 530.868 29.832C533.385 27.7413 536.329 26.696 539.7 26.696C543.113 26.696 546.057 27.7413 548.532 29.832C551.007 31.9227 552.244 34.7813 552.244 38.408C552.244 41.9493 551.007 44.7867 548.532 46.92C546.057 49.0107 543.113 50.056 539.7 50.056Z" fill="%238200AD"/><defs><clipPath id="clip0_2021_8"><rect width="111" height="127" fill="white" transform="translate(0 12)"/></clipPath></defs></svg>'
+    ).toString('base64');
+
+  // Helper to get a dynamic heading based on notification type
+  const getEmailHeading = () => {
+    switch (type) {
+      case 'EVENT_EDITED':
+      case 'DATE_CHANGED':
+      case 'DATE_CHOSEN':
+      case 'DATE_RESET':
+        return 'Event Updated!';
+      case 'NEW_POST':
+        return 'New Post!';
+      case 'NEW_REPLY':
+        return 'New Reply!';
+      case 'USER_MENTIONED':
+        return 'You Were Mentioned!';
+      case 'USER_JOINED':
+      case 'USER_LEFT':
+      case 'USER_PROMOTED':
+      case 'USER_DEMOTED':
+        return 'Membership Updated!';
+      case 'USER_RSVP':
+        return 'New RSVP!';
+      default:
+        return 'Groupi';
+    }
+  };
+
+  // Helper to get the link for the notification
+  const getNotificationLink = () => {
+    switch (type) {
+      case 'EVENT_EDITED':
+      case 'DATE_CHANGED':
+      case 'DATE_CHOSEN':
+      case 'DATE_RESET':
+      case 'USER_JOINED':
+      case 'USER_LEFT':
+      case 'USER_PROMOTED':
+      case 'USER_DEMOTED':
+      case 'USER_RSVP':
+        return `${baseUrl}/event/${event?.id}`;
+      case 'NEW_POST':
+      case 'NEW_REPLY':
+      case 'USER_MENTIONED':
+        return `${baseUrl}/post/${post?.id}`;
+      default:
+        return `${baseUrl}/event/${event?.id}`;
+    }
+  };
+
+  // Helper to get the message for the notification
+  const getNotificationMessage = () => {
+    switch (type) {
+      case 'EVENT_EDITED':
+        return (
+          <div>
+            The details of <strong>{event?.title}</strong> have been updated.
+          </div>
+        );
+      case 'DATE_CHANGED':
+        return (
+          <div>
+            The date of <strong>{event?.title}</strong> has changed to{' '}
+            <strong>
+              {datetime
+                ? new Date(datetime).toLocaleString(undefined, {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                  })
+                : ''}
+            </strong>
+            .
+          </div>
+        );
+      case 'DATE_CHOSEN':
+        return (
+          <div>
+            <strong>{event?.title}</strong> will be held on{' '}
+            <strong>
+              {datetime
+                ? new Date(datetime).toLocaleString(undefined, {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                  })
+                : ''}
+            </strong>
+            .
+          </div>
+        );
+      case 'DATE_RESET':
+        return (
+          <div>
+            A new poll has started for the date of{' '}
+            <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'NEW_POST':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            created a new post, <strong>{post?.title}</strong>, in{' '}
+            <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'NEW_REPLY':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            replied to a post, <strong>{post?.title}</strong>, in{' '}
+            <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'USER_MENTIONED':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            mentioned you in <strong>{post?.title}</strong>.
+          </div>
+        );
+      case 'USER_JOINED':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            has joined <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'USER_LEFT':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            has left <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'USER_PROMOTED':
+        return (
+          <div>
+            You are now a Moderator of <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'USER_DEMOTED':
+        return (
+          <div>
+            You are no longer a Moderator of <strong>{event?.title}</strong>.
+          </div>
+        );
+      case 'USER_RSVP':
+        return (
+          <div>
+            <strong>
+              {author?.user.name ?? author?.user.email.split('@')[0]}
+            </strong>{' '}
+            has RSVP&apos;d <strong>{rsvp}</strong> to{' '}
+            <strong>{event?.title}</strong>.
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div
+      style={{
+        fontFamily: 'sans-serif',
+        color: '#222',
+        background: '#fff',
+        padding: 24,
+        borderRadius: 8,
+        maxWidth: 600,
+        margin: '0 auto',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={logoDataUri}
+        alt='Groupi Logo'
+        style={{ maxWidth: '200px', height: 'auto' }}
+      />
+      <h2
+        style={{
+          color: '#1a202c',
+          fontSize: '24px',
+          marginBottom: 16,
+        }}
+      >
+        {getEmailHeading()}
+      </h2>
+      <p>{getNotificationMessage()}</p>
+      <a
+        href={getNotificationLink()}
+        style={{
+          display: 'block',
+          marginTop: 24,
+          padding: '12px 24px',
+          background: '#8200AD',
+          color: '#fff',
+          textDecoration: 'none',
+          borderRadius: 4,
+          textAlign: 'center',
+          fontWeight: '500',
+        }}
+      >
+        View Notification
+      </a>
+    </div>
+  );
+}
