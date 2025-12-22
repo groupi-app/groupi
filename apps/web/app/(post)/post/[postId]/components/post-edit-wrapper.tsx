@@ -17,7 +17,7 @@ export async function PostEditWrapper({
         return <div>Post not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-
+      // eslint-disable-next-line no-fallthrough
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:

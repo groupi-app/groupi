@@ -18,7 +18,7 @@ export async function SettingsContent({
         return <div>Settings not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-
+      // eslint-disable-next-line no-fallthrough
       default:
         return <div>Failed to load settings</div>;
     }
