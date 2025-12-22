@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && pnpm prisma generate && pnpm turbo build --filter=@groupi/web",
+  "buildCommand": "cd ../.. && pnpm prisma generate && pnpm prisma migrate deploy && pnpm turbo build --filter=@groupi/web",
   "outputDirectory": ".next",
   "installCommand": "pnpm install",
   "framework": "nextjs"
