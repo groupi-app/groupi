@@ -31,3 +31,10 @@ export const DeleteUserParams = z.object({
 });
 
 export type DeleteUserParams = z.infer<typeof DeleteUserParams>;
+
+// Get user profile parameters
+export const GetUserProfileParams = z.object({
+  userId: PersonSchema.shape.id,
+});
+
+export type GetUserProfileParams = z.infer<typeof GetUserProfileParams>;

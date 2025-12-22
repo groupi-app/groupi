@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserIdUncached } from '@groupi/services';
+import { getUserIdUncached } from '@groupi/services/server';
 import { apiLogger } from '@/lib/logger';
 
 export async function GET() {

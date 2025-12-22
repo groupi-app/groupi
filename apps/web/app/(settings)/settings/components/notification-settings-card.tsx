@@ -53,7 +53,7 @@ const notificationTypeLabels: Record<
   },
   NEW_REPLY: {
     label: 'New Reply',
-    description: "someone replies to a post I've interacted with.",
+    description: "someone replies to my post.",
   },
   DATE_CHOSEN: {
     label: 'Date Chosen',
@@ -91,6 +91,10 @@ const notificationTypeLabels: Record<
     label: 'User RSVP',
     description: 'a user RSVPs to one of my events.',
   },
+  USER_MENTIONED: {
+    label: 'Mentioned',
+    description: "someone mentions me in a post or reply.",
+  },
 };
 
 interface NotificationSettingsCardProps {
@@ -108,7 +112,8 @@ export function NotificationSettingsCard({
   const methodType: NotificationMethodType = watch(
     `notificationMethods.${index}.type`
   );
-  const methodValue = watch(`notificationMethods.${index}.value`);
+  // methodValue is watched but not used directly - form handles it
+  watch(`notificationMethods.${index}.value`);
   const enabled: boolean = watch(`notificationMethods.${index}.enabled`);
   const name: string = watch(`notificationMethods.${index}.name`);
   const webhookFormat: WebhookFormat = watch(
@@ -121,7 +126,7 @@ export function NotificationSettingsCard({
     name && name.trim() !== ''
       ? name
       : methodType === 'EMAIL'
-        ? methodValue
+        ? 'Email'
         : methodType === 'WEBHOOK'
           ? 'Webhook'
           : methodType === 'PUSH'
@@ -426,12 +431,84 @@ export function NotificationSettingsCard({
               const someChecked = field.value.some(
                 (n: { enabled: boolean }) => n.enabled
               );
+
+              // Group notification types by category
+              const eventUpdates: NotificationType[] = [
+                NotificationType.EVENT_EDITED,
+                NotificationType.DATE_CHOSEN,
+                NotificationType.DATE_CHANGED,
+                NotificationType.DATE_RESET,
+              ];
+              const postsAndReplies: NotificationType[] = [
+                NotificationType.NEW_POST,
+                NotificationType.NEW_REPLY,
+                NotificationType.USER_MENTIONED,
+              ];
+              const membership: NotificationType[] = [
+                NotificationType.USER_JOINED,
+                NotificationType.USER_LEFT,
+                NotificationType.USER_PROMOTED,
+                NotificationType.USER_DEMOTED,
+                NotificationType.USER_RSVP,
+              ];
+
+              // Helper to find notification by type
+              const findNotification = (type: NotificationType) => {
+                return field.value.findIndex(
+                  (n: { notificationType: string }) => n.notificationType === type
+                );
+              };
+
+              // Helper to render checkbox for a notification type
+              const renderCheckbox = (type: NotificationType) => {
+                const notifIdx = findNotification(type);
+                if (notifIdx === -1) return null;
+                const notif = field.value[notifIdx];
+                return (
+                  <FormItem
+                    key={type}
+                    className='flex flex-row items-center space-x-3 space-y-0'
+                  >
+                    <FormControl>
+                      <Checkbox
+                        id={`notification-${index}-${type}`}
+                        checked={notif.enabled}
+                        onCheckedChange={checked => {
+                          const updated = [...field.value];
+                          updated[notifIdx] = {
+                            ...updated[notifIdx],
+                            enabled: checked === true,
+                          };
+                          field.onChange(updated);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel
+                      htmlFor={`notification-${index}-${type}`}
+                    >
+                      {notificationTypeLabels[type] ? (
+                        <>
+                          <span>
+                            {notificationTypeLabels[type].description}
+                          </span>{' '}
+                          <span className='text-muted-foreground'>
+                            ({notificationTypeLabels[type].label})
+                          </span>
+                        </>
+                      ) : (
+                        type
+                      )}
+                    </FormLabel>
+                  </FormItem>
+                );
+              };
+
               return (
                 <FormItem>
                   <FormLabel className='flex items-center gap-2'>
                     Notify this method when...
                   </FormLabel>
-                  <div className='flex flex-col gap-2'>
+                  <div className='flex flex-col gap-4'>
                     {/* Select All Checkbox */}
                     <FormItem className='flex flex-row items-center space-x-3 space-y-0 mb-2'>
                       <FormControl>
@@ -465,61 +542,30 @@ export function NotificationSettingsCard({
                         Select all
                       </FormLabel>
                     </FormItem>
-                    {/* Individual Notification Type Checkboxes */}
-                    {field.value.map(
-                      (
-                        notif: { notificationType: string; enabled: boolean },
-                        notifIdx: number
-                      ) => (
-                        <FormItem
-                          key={notif.notificationType}
-                          className='flex flex-row items-center space-x-3 space-y-0'
-                        >
-                          <FormControl>
-                            <Checkbox
-                              id={`notification-${index}-${notif.notificationType}`}
-                              checked={notif.enabled}
-                              onCheckedChange={checked => {
-                                const updated = [...field.value];
-                                updated[notifIdx] = {
-                                  ...updated[notifIdx],
-                                  enabled: checked === true,
-                                };
-                                field.onChange(updated);
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel
-                            htmlFor={`notification-${index}-${notif.notificationType}`}
-                          >
-                            {notificationTypeLabels[
-                              notif.notificationType as NotificationType
-                            ] ? (
-                              <>
-                                <span>
-                                  {
-                                    notificationTypeLabels[
-                                      notif.notificationType as NotificationType
-                                    ].description
-                                  }
-                                </span>{' '}
-                                <span className='text-muted-foreground'>
-                                  (
-                                  {
-                                    notificationTypeLabels[
-                                      notif.notificationType as NotificationType
-                                    ].label
-                                  }
-                                  )
-                                </span>
-                              </>
-                            ) : (
-                              notif.notificationType
-                            )}
-                          </FormLabel>
-                        </FormItem>
-                      )
-                    )}
+
+                    {/* Event Updates Category */}
+                    <div className='flex flex-col gap-2'>
+                      <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
+                        Event Updates
+                      </div>
+                      {eventUpdates.map(type => renderCheckbox(type))}
+                    </div>
+
+                    {/* Posts & Replies Category */}
+                    <div className='flex flex-col gap-2'>
+                      <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
+                        Posts & Replies
+                      </div>
+                      {postsAndReplies.map(type => renderCheckbox(type))}
+                    </div>
+
+                    {/* Membership Category */}
+                    <div className='flex flex-col gap-2'>
+                      <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
+                        Membership
+                      </div>
+                      {membership.map(type => renderCheckbox(type))}
+                    </div>
                   </div>
                 </FormItem>
               );

@@ -19,7 +19,11 @@ import {
   AuthenticationError,
 } from '@groupi/schema';
 import { getPrismaError } from '../shared/errors';
-import { createEventNotifications } from './notification';
+import {
+  createMentionNotifications,
+  createTargetedNotification,
+} from './notification';
+import { extractMentionedPersonIds } from '../shared/mention-utils';
 import type { ResultTuple } from '@groupi/schema';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 
@@ -311,6 +315,10 @@ export const createReply = async (
   }
 
   const { postId, content } = replyData;
+
+  // Store post author ID outside Effect for use in notification creation
+  let postAuthorId: string | null = null;
+
   const effect = Effect.gen(function* () {
     yield* Effect.logDebug('Creating reply', {
       postId,
@@ -354,6 +362,9 @@ export const createReply = async (
       yield* Effect.fail(new DatabaseError({ message: 'Post not found' }));
       return;
     }
+
+    // Store post author ID for notification creation
+    postAuthorId = post.authorId;
 
     // Check if user is a member (business logic - no retry)
     const userMembership = post.event.memberships.find(
@@ -447,33 +458,7 @@ export const createReply = async (
       operation: 'create',
     });
 
-    // Trigger NEW_REPLY notification for event members (fire-and-forget)
-    // Get eventId from the post data we fetched earlier
-    const eventId = post.event.id;
-    yield* Effect.fork(
-      createEventNotifications({
-        eventId,
-        type: 'NEW_REPLY',
-        authorId: userId,
-        postId,
-      }).pipe(
-        Effect.tapError(error =>
-          Effect.logWarning('Failed to create NEW_REPLY notifications', {
-            eventId,
-            postId,
-            replyId: reply.id,
-            authorId: userId,
-            error: error.message,
-            errorType: error.constructor.name,
-          })
-        ),
-        Effect.catchAll(() =>
-          Effect.succeed({ message: 'Notifications failed' })
-        )
-      )
-    );
-
-    return validatedResult;
+    return { validatedResult, eventId: post.event.id };
   }).pipe(
     Effect.catchAll(err => {
       return Effect.gen(function* () {
@@ -497,12 +482,114 @@ export const createReply = async (
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, ReplyData])
+    Effect.map(
+      result =>
+        [null, result] as [
+          null,
+          { validatedResult: ReplyData; eventId: string },
+        ]
+    )
   );
 
-  return Effect.runPromise(
+  const result = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('replies'))
   );
+
+  // Trigger NEW_REPLY notification for post author only (if not the reply author)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (
+    !result[0] &&
+    result[1] &&
+    postAuthorId &&
+    postAuthorId !== result[1].validatedResult.authorId
+  ) {
+    Effect.runPromise(
+      createTargetedNotification({
+        personId: postAuthorId,
+        eventId: result[1].eventId,
+        type: 'NEW_REPLY',
+        authorId: result[1].validatedResult.authorId,
+        postId: replyData.postId,
+      }).pipe(
+        Effect.tapError(error =>
+          Effect.logWarning('Failed to create NEW_REPLY notification', {
+            eventId: result[1].eventId,
+            postId: replyData.postId,
+            replyId: result[1].validatedResult.id,
+            replyAuthorId: result[1].validatedResult.authorId,
+            postAuthorId: postAuthorId,
+            error: error.message,
+            errorType: error.constructor.name,
+          })
+        ),
+        Effect.catchAll(() =>
+          Effect.succeed({ message: 'Notification failed' })
+        )
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  // Extract mentions and create mention notifications (fire-and-forget)
+  // This should run regardless of NEW_REPLY notification status
+  if (!result[0] && result[1]) {
+    try {
+      const mentionedPersonIds = extractMentionedPersonIds(replyData.content);
+      if (mentionedPersonIds.length > 0) {
+        Effect.runPromise(
+          createMentionNotifications({
+            personIds: mentionedPersonIds,
+            authorId: result[1].validatedResult.authorId,
+            eventId: result[1].eventId,
+            postId: replyData.postId,
+          }).pipe(
+            Effect.tapError(error =>
+              Effect.logWarning(
+                'Failed to create mention notifications for reply',
+                {
+                  eventId: result[1].eventId,
+                  postId: replyData.postId,
+                  replyId: result[1].validatedResult.id,
+                  authorId: result[1].validatedResult.authorId,
+                  mentionCount: mentionedPersonIds.length,
+                  error: error.message,
+                  errorType: error.constructor.name,
+                }
+              )
+            ),
+            Effect.catchAll(() =>
+              Effect.succeed({ message: 'Mention notifications failed' })
+            )
+          )
+        ).catch(() => {
+          // Ignore errors - fire-and-forget
+        });
+      }
+    } catch (err) {
+      // Ignore mention extraction errors - don't block reply creation
+      Effect.runPromise(
+        Effect.logWarning('Failed to extract mentions from reply', {
+          replyId: result[1].validatedResult.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      ).catch(() => {
+        // Ignore logging errors
+      });
+    }
+  }
+
+  // Return only the validatedResult, not the eventId
+  if (result[0]) {
+    return [result[0], undefined] as const;
+  }
+  if (!result[1] || !result[1].validatedResult) {
+    return [
+      new DatabaseError({ message: 'Failed to create reply' }),
+      undefined,
+    ] as const;
+  }
+  return [null, result[1].validatedResult] as const;
 };
 
 export const updateReply = async (
@@ -516,7 +603,7 @@ export const updateReply = async (
     | ConstraintError
     | ValidationError
     | AuthenticationError,
-    OperationResult
+    ReplyData & { postId: string }
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
@@ -529,18 +616,39 @@ export const updateReply = async (
   }
 
   const { replyId, content } = replyData;
+
+  // Store reply data outside Effect for use in mention detection
+  let oldContentForMentions: string | null = null;
+  let replyDataForMentions: {
+    authorId: string;
+    post: { eventId: string };
+  } | null = null;
+
   const effect = Effect.gen(function* () {
     yield* Effect.logDebug('Updating reply', {
       replyId,
       userId,
     });
 
-    // Fetch reply with post
+    // Fetch reply with post and author
     const reply = yield* Effect.promise(() =>
       db.reply.findUnique({
         where: { id: replyId },
         include: {
           post: true,
+          author: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  image: true,
+                  username: true,
+                },
+              },
+            },
+          },
         },
       })
     ).pipe(
@@ -578,10 +686,28 @@ export const updateReply = async (
       return;
     }
 
-    yield* Effect.promise(() =>
+    // Store old content and reply data for mention comparison
+    oldContentForMentions = reply.text;
+    replyDataForMentions = {
+      authorId: reply.authorId,
+      post: { eventId: reply.post.eventId },
+    };
+
+    const updatedReply = yield* Effect.promise(() =>
       db.reply.update({
         where: { id: replyId },
-        data: { text: content },
+        data: {
+          text: content,
+          updatedAt: new Date(),
+        },
+        select: {
+          id: true,
+          text: true,
+          authorId: true,
+          postId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       })
     ).pipe(
       Effect.mapError((cause: Error) => getPrismaError('Reply', cause)),
@@ -603,7 +729,15 @@ export const updateReply = async (
       })
     );
 
-    const result = { message: 'Reply updated' };
+    // Direct construction - matches ReplyData schema with postId
+    const result: ReplyData & { postId: string } = {
+      id: updatedReply.id,
+      text: updatedReply.text,
+      authorId: updatedReply.authorId,
+      postId: updatedReply.postId,
+      createdAt: updatedReply.createdAt,
+      updatedAt: updatedReply.updatedAt,
+    };
 
     yield* Effect.logInfo('Reply updated successfully', {
       userId, // Who performed the action
@@ -658,13 +792,83 @@ export const updateReply = async (
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, OperationResult])
+    Effect.map(
+      result => [null, result] as [null, ReplyData & { postId: string }]
+    )
   );
 
-  // Run the effect and return the result tuple
-  return Effect.runPromise(
+  const result = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('replies'))
   );
+
+  // Extract mentions from new content and compare with old content
+  // Only notify for newly added mentions (fire-and-forget)
+  if (
+    !result[0] &&
+    result[1] &&
+    replyDataForMentions &&
+    oldContentForMentions
+  ) {
+    try {
+      // Capture for type narrowing - use non-null assertion since we've checked above
+      const mentionData: { authorId: string; post: { eventId: string } } =
+        replyDataForMentions;
+      const newMentionedPersonIds = extractMentionedPersonIds(
+        replyData.content
+      );
+      const oldMentionedPersonIds = extractMentionedPersonIds(
+        oldContentForMentions
+      );
+
+      // Find newly added mentions (in new but not in old)
+      const newMentions = newMentionedPersonIds.filter(
+        id => !oldMentionedPersonIds.includes(id)
+      );
+
+      if (newMentions.length > 0) {
+        Effect.runPromise(
+          createMentionNotifications({
+            personIds: newMentions,
+            authorId: mentionData.authorId,
+            eventId: mentionData.post.eventId,
+            postId: result[1].postId,
+          }).pipe(
+            Effect.tapError(error =>
+              Effect.logWarning(
+                'Failed to create mention notifications for reply update',
+                {
+                  eventId: mentionData.post.eventId,
+                  postId: result[1].postId,
+                  replyId: replyData.replyId,
+                  authorId: mentionData.authorId,
+                  newMentionCount: newMentions.length,
+                  error: error.message,
+                  errorType: error.constructor.name,
+                }
+              )
+            ),
+            Effect.catchAll(() =>
+              Effect.succeed({ message: 'Mention notifications failed' })
+            )
+          )
+        ).catch(() => {
+          // Ignore errors - fire-and-forget
+        });
+      }
+    } catch (err) {
+      // Ignore mention extraction errors - don't block reply update
+      Effect.runPromise(
+        Effect.logWarning('Failed to extract mentions from updated reply', {
+          replyId: replyData.replyId,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      ).catch(() => {
+        // Ignore logging errors
+      });
+    }
+  }
+
+  return result;
 };
 
 export const deleteReply = async ({
@@ -678,7 +882,7 @@ export const deleteReply = async ({
     | ConstraintError
     | OperationError
     | AuthenticationError,
-    OperationResult
+    OperationResult & { postId: string }
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
@@ -760,6 +964,9 @@ export const deleteReply = async ({
       return;
     }
 
+    // Store postId before deletion
+    const postId = reply.post.id;
+
     yield* Effect.promise(() =>
       db.reply.delete({
         where: { id: replyId },
@@ -784,7 +991,7 @@ export const deleteReply = async ({
       })
     );
 
-    const result = { message: 'Reply deleted' };
+    const result = { message: 'Reply deleted', postId };
 
     yield* Effect.logInfo('Reply deleted successfully', {
       userId, // Who performed the action
@@ -838,7 +1045,9 @@ export const deleteReply = async ({
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, OperationResult])
+    Effect.map(
+      result => [null, result] as [null, OperationResult & { postId: string }]
+    )
   );
 
   // Run the effect and return the result tuple

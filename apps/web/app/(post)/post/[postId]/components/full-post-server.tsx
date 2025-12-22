@@ -1,12 +1,19 @@
-import { getCachedPostWithReplies, getUserId } from '@groupi/services';
+import {
+  getCachedPostWithReplies,
+  getUserId,
+  shouldRedirectToAvailability,
+} from '@groupi/services/server';
 import { FullPostClient } from './full-post-client';
 import { redirect } from 'next/navigation';
 
 /**
  * Server component that fetches cached post data
- * Dynamic rendering - data fetching happens at request time
+ * Uses "use cache: private" at component level for PPR optimization
+ * On cache hit, component renders instantly without suspending
  */
 export async function FullPostServer({ postId }: { postId: string }) {
+  'use cache: private';
+
   const [authError, userId] = await getUserId();
 
   if (authError || !userId) {
@@ -43,6 +50,13 @@ export async function FullPostServer({ postId }: { postId: string }) {
   }
 
   const { post, userMembership } = postData;
+
+  // Check if user should be redirected to availability page
+  // Only redirects if there's an active poll (no chosen date) and user hasn't set availability
+  const shouldRedirect = await shouldRedirectToAvailability(post.eventId);
+  if (shouldRedirect === true) {
+    redirect(`/event/${post.eventId}/availability`);
+  }
 
   return (
     <FullPostClient

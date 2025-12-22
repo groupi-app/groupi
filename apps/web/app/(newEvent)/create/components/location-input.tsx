@@ -17,7 +17,7 @@ const libraries: ('places' | 'drawing' | 'geometry' | 'visualization')[] = [
   'places',
 ];
 
-export function LocationInput({
+function LocationInputAutocomplete({
   dataTest,
   field,
 }: {
@@ -33,11 +33,6 @@ export function LocationInput({
     'location'
   >;
 }) {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY,
-    libraries,
-  });
-
   const {
     ready,
     suggestions: { status, data },
@@ -68,7 +63,7 @@ export function LocationInput({
         <CommandInput
           data-test={dataTest}
           className='text-foreground text-base'
-          disabled={!isLoaded || !ready}
+          disabled={!ready}
           placeholder="123 Main St... or 'My house'"
           onValueChange={value => {
             field.onChange(value);
@@ -90,4 +85,46 @@ export function LocationInput({
       </Command>
     </div>
   );
+}
+
+export function LocationInput({
+  dataTest,
+  field,
+}: {
+  dataTest: string;
+  field: ControllerRenderProps<
+    {
+      title: string;
+      description?: string | undefined;
+      location?: string | undefined;
+      datetime?: string | undefined;
+      potentialDateTimes?: string[] | undefined;
+    },
+    'location'
+  >;
+}) {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_API_KEY,
+    libraries,
+  });
+
+  // Only render the autocomplete component after the script is loaded
+  if (!isLoaded) {
+    return (
+      <Command shouldFilter={false}>
+        <CommandInput
+          data-test={dataTest}
+          className='text-foreground text-base'
+          disabled
+          placeholder="123 Main St... or 'My house'"
+          {...field}
+        />
+        <CommandList>
+          <CommandGroup heading={''} />
+        </CommandList>
+      </Command>
+    );
+  }
+
+  return <LocationInputAutocomplete dataTest={dataTest} field={field} />;
 }

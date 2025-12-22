@@ -2,14 +2,23 @@ import { withSentryConfig } from '@sentry/nextjs';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { existsSync, realpathSync } from 'fs';
 
 // Get the directory of this file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load environment variables from monorepo root BEFORE env.mjs validation
-config({ path: resolve(__dirname, '../../.env.local') });
-config({ path: resolve(__dirname, '../../.env') });
+// Next.js automatically loads .env.local from apps/web directory (symlinked to root)
+// We also explicitly load from root to ensure variables are available during config evaluation
+const rootEnvLocal = resolve(__dirname, '../../.env.local');
+// Resolve symlinks to get the actual file path
+const actualEnvLocalPath = existsSync(rootEnvLocal) ? realpathSync(rootEnvLocal) : rootEnvLocal;
+config({ path: actualEnvLocalPath, override: false });
+const rootEnv = resolve(__dirname, '../../.env');
+if (existsSync(rootEnv)) {
+  config({ path: rootEnv, override: false });
+}
 
 import './env.mjs';
 
@@ -36,16 +45,6 @@ const nextConfig = {
         worker_threads: false,
       };
     }
-
-    // Suppress Supabase realtime-js WebSocket dynamic import warnings
-    config.ignoreWarnings = [
-      ...(config.ignoreWarnings || []),
-      {
-        module: /@supabase\/realtime-js/,
-        message:
-          /Critical dependency: the request of a dependency is an expression/,
-      },
-    ];
 
     return config;
   },
@@ -89,6 +88,13 @@ const nextConfig = {
       expire: 900, // 15 minutes
     },
   },
+  serverExternalPackages: [
+    'require-in-the-middle',
+    'import-in-the-middle',
+    'pino',
+    'pino-abstract-transport',
+    'thread-stream',
+  ],
   experimental: {
     turbopackFileSystemCacheForDev: true,
     // Enable detailed prerender debugging

@@ -1,4 +1,4 @@
-import { getCachedEventAvailabilityData } from '@groupi/services';
+import { getCachedEventAvailabilityData } from '@groupi/services/server';
 import { AvailabilityForm } from '../../components/availability-form';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ export async function AvailabilityContent({
         return <div>No availability data found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+         
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:

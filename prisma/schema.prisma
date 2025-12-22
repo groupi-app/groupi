@@ -24,7 +24,7 @@ datasource db {
 
 // Better Auth User model - authentication data
 model User {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid())
   name            String?
   email           String   @unique
   emailVerified   Boolean  @default(false)
@@ -37,6 +37,10 @@ model User {
   displayUsername String?
   // Admin plugin role field (comma-separated roles: "admin", "user", etc.)
   role            String?  @default("user")
+  // Admin plugin banned field
+  banned          Boolean  @default(false)
+  // Two-factor authentication plugin fields
+  twoFactorEnabled Boolean @default(false)
   // Profile fields
   pronouns        String?
   bio             String?
@@ -65,7 +69,7 @@ model Person {
 
 // Better Auth Session model
 model Session {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   expiresAt DateTime
   token     String   @unique
   createdAt DateTime @default(now())
@@ -78,7 +82,7 @@ model Session {
 
 // Better Auth Account model (for OAuth providers)
 model Account {
-  id                    String    @id @default(cuid())
+  id                    String    @id @default(uuid())
   accountId             String
   providerId            String
   userId                String
@@ -98,7 +102,7 @@ model Account {
 
 // Better Auth Verification model
 model Verification {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   identifier String
   value      String
   expiresAt  DateTime
@@ -144,6 +148,8 @@ model Membership {
   rsvpStatus     Status         @default(PENDING)
   availabilities Availability[]
   invites        Invite[]
+  posts          Post[]
+  replies        Reply[]
 }
 
 model PotentialDateTime {
@@ -170,6 +176,9 @@ model Post {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   editedAt      DateTime       @default(now())
+  membership    Membership?    @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  membershipId  String?
+  // Denormalized fields for querying/RLS (derived from membership)
   author        Person         @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
   eventId       String
@@ -181,14 +190,17 @@ model Post {
 }
 
 model Reply {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    Person   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  String
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  text      String
+  id           String      @id @default(cuid())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  membership   Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  membershipId String?
+  // Denormalized fields for querying/RLS
+  author       Person      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId     String
+  postId       String
+  post         Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  text         String
 }
 
 enum Status {
@@ -247,6 +259,7 @@ enum NotificationType {
   USER_PROMOTED // When the receiving user is promoted to moderator of an event
   USER_DEMOTED // When the receiving user is demoted from moderator of an event
   USER_RSVP // When another user RSVPs to an event that the receiving user owns or moderates
+  USER_MENTIONED // When a user mentions you in a post or reply
 }
 
 enum NotificationMethodType {
@@ -291,4 +304,12 @@ model NotificationSetting {
   enabled            Boolean            @default(true)
 
   @@unique([notificationType, methodId])
+}
+
+// Better Auth JWT Plugin - JWKS table
+model Jwks {
+  id         String   @id @default(uuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime @default(now())
 }

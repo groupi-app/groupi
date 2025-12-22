@@ -1,13 +1,15 @@
-import { getCachedPostWithReplies, getUserId } from '@groupi/services';
-import { ReplyFeedClient } from './reply-feed-client';
-import ReplyForm from './reply-form';
+import { getCachedPostWithReplies, getUserId } from '@groupi/services/server';
 import { redirect } from 'next/navigation';
+import { RepliesClient } from './replies-client';
 
 /**
  * Server component that fetches cached replies
- * Dynamic rendering - data fetching happens at request time
+ * Uses "use cache: private" at component level for PPR optimization
+ * On cache hit, component renders instantly without suspending
  */
 export async function Replies({ postId }: { postId: string }) {
+  'use cache: private';
+  
   const [authError, userId] = await getUserId();
 
   if (authError || !userId) {
@@ -16,7 +18,7 @@ export async function Replies({ postId }: { postId: string }) {
 
   const [error, postData] = await getCachedPostWithReplies(postId);
 
-  if (error) {
+  if (error || !postData) {
     return (
       <div className='text-center py-8'>
         <p className='text-red-600'>Error loading replies</p>
@@ -25,20 +27,24 @@ export async function Replies({ postId }: { postId: string }) {
   }
 
   const { post, userMembership } = postData;
+  
+  if (!post) {
+    return (
+      <div className='text-center py-8'>
+        <p className='text-red-600'>Error loading replies</p>
+      </div>
+    );
+  }
+
   const replies = post.replies || [];
 
   return (
-    <div className='flex flex-col my-12'>
-      <h1 className='text-2xl font-heading font-medium mb-4'>Replies</h1>
-      <div className='flex flex-col gap-4'>
-        <ReplyForm postId={postId} userId={userId} />
-        <ReplyFeedClient
-          replies={replies}
-          userMembership={userMembership}
-          userId={userId}
-          post={post}
-        />
-      </div>
-    </div>
+    <RepliesClient
+      postId={postId}
+      userId={userId}
+      replies={replies}
+      userMembership={userMembership}
+      post={post}
+    />
   );
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Load environment variables from the web app's .env.local
-export $(grep -v '^#' apps/web/.env.local | xargs)
+# Load environment variables from the root .env.local
+export $(grep -v '^#' .env.local | xargs)
 
 # Start the database (Supabase local stack)
 npm run dev:db

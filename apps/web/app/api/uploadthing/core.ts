@@ -1,6 +1,6 @@
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import { UploadThingError } from 'uploadthing/server';
-import { auth } from '@groupi/services';
+import { auth } from '@groupi/services/server';
 
 const f = createUploadthing();
 

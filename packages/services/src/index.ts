@@ -19,8 +19,9 @@ export { Effect } from 'effect';
 // Domain-organized services
 export * from './domains';
 
-// Cache layer (Next.js 16 "use cache" functions)
-export * from './cache';
+// Cache layer is NOT exported from main entry point
+// Import from '@groupi/services/server' or '@groupi/services/cache' instead
+// This prevents server-only code from being bundled for client
 
 // ============================================================================
 // LEGACY EXPORTS REMOVED - All services now organized in domains/

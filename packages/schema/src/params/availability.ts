@@ -51,3 +51,22 @@ export const ChooseDateTimeParams = z.object({
 });
 
 export type ChooseDateTimeParams = z.infer<typeof ChooseDateTimeParams>;
+
+// Reset chosen date parameters
+export const ResetChosenDateParams = z.object({
+  eventId: EventSchema.shape.id,
+});
+
+export type ResetChosenDateParams = z.infer<typeof ResetChosenDateParams>;
+
+// Update potential date times parameters
+export const UpdatePotentialDateTimesParams = z.object({
+  eventId: EventSchema.shape.id,
+  potentialDateTimes: z
+    .array(z.string())
+    .min(2, 'At least two date options are required'),
+});
+
+export type UpdatePotentialDateTimesParams = z.infer<
+  typeof UpdatePotentialDateTimesParams
+>;

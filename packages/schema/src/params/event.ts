@@ -1,6 +1,6 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { EventSchema } from '../generated';
+import { EventSchema, PersonSchema } from '../generated';
 
 // ============================================================================
 // EVENT DOMAIN PARAMETER SCHEMAS
@@ -67,3 +67,10 @@ export const LeaveEventParams = z.object({
 });
 
 export type LeaveEventParams = z.infer<typeof LeaveEventParams>;
+
+// Get mutual events parameters
+export const GetMutualEventsParams = z.object({
+  otherUserId: PersonSchema.shape.id,
+});
+
+export type GetMutualEventsParams = z.infer<typeof GetMutualEventsParams>;

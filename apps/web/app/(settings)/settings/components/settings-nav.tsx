@@ -11,6 +11,7 @@ export function SettingsNav() {
   const [open, setOpen] = useState(false);
   const [hasTransition, setHasTransition] = useState(false);
   const currentPath = usePathname();
+
   return (
     <>
       <Button

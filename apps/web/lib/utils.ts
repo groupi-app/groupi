@@ -15,8 +15,10 @@ export {
   breakpoints,
 } from '@groupi/ui';
 
-export function formatDate(date: Date) {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+export function formatDate(date: Date | string) {
+  // Convert string to Date if needed (server components serialize dates as strings)
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const seconds = Math.floor((Date.now() - dateObj.getTime()) / 1000);
 
   let interval = seconds / 31536000;
 
@@ -45,8 +47,53 @@ export function formatDate(date: Date) {
   return Math.floor(seconds) + ' seconds ago';
 }
 
-export function timeUntil(date: Date) {
-  const seconds = Math.floor((date.getTime() - Date.now()) / 1000);
+/**
+ * Format date for replies with specific rules:
+ * - Today: just the time (e.g., "2:45PM")
+ * - Yesterday: "yesterday at 2:45PM"
+ * - Older: numerical date (e.g., "12/25/2024")
+ */
+export function formatReplyDate(date: Date | string) {
+  // Convert string to Date if needed
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const now = new Date();
+  
+  // Get start of today (midnight)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // Get start of yesterday
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  
+  // Format time as "2:45PM"
+  const timeStr = dateObj.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  
+  // Check if it's today
+  if (dateObj >= startOfToday) {
+    return timeStr;
+  }
+  
+  // Check if it's yesterday
+  if (dateObj >= startOfYesterday && dateObj < startOfToday) {
+    return `Yesterday at ${timeStr}`;
+  }
+  
+  // Older than yesterday - use numerical date
+  return dateObj.toLocaleDateString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function timeUntil(date: Date | string) {
+  // Convert string to Date if needed (server components serialize dates as strings)
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const seconds = Math.floor((dateObj.getTime() - Date.now()) / 1000);
 
   let interval = seconds / 31536000;
 
@@ -206,6 +253,9 @@ export function getNotificationSubject(
 
     case 'NEW_REPLY':
       return `New Reply to ${post?.title || 'Post'}`;
+
+    case 'USER_MENTIONED':
+      return `${getAuthorName()} mentioned you in ${post?.title || 'Post'}`;
 
     case 'USER_JOINED':
       return `${getAuthorName()} Joined ${event?.title || 'Event'}`;

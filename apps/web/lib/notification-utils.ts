@@ -16,6 +16,7 @@ export function getNotificationTypeDisplayName(type: NotificationType): string {
     USER_RSVP: 'User RSVP',
     NEW_POST: 'New Post',
     NEW_REPLY: 'New Reply',
+    USER_MENTIONED: 'Mentioned',
   };
 
   return displayNames[type] || type;

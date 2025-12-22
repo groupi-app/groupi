@@ -82,3 +82,16 @@ export const UserAdminListItemData = z.object({
 });
 
 export type UserAdminListItemData = z.infer<typeof UserAdminListItemData>;
+
+// User profile data - for viewing another user's profile
+export const UserProfileData = UserSchema.pick({
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+  username: true,
+  pronouns: true,
+  bio: true,
+});
+
+export type UserProfileData = z.infer<typeof UserProfileData>;

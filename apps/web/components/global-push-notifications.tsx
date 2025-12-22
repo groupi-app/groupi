@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePusherBeams } from '@/components/providers/pusher-beams-context-provider';
+import { usePusherBeams } from '@/stores/pusher-beams-store';
 import { componentLogger } from '@/lib/logger';
 
 /**

@@ -1,5 +1,5 @@
 import { PostEditWrapper } from '../components/post-edit-wrapper';
-import { getUserId } from '@groupi/services';
+import { getUserId } from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense } from 'react';
@@ -8,9 +8,11 @@ export default function PostEditPage(props: {
   params: Promise<{ postId: string }>;
 }) {
   return (
-    <Suspense fallback={<Skeleton className='h-screen w-full' />}>
-      <PostEditContent params={props.params} />
-    </Suspense>
+    <div className='container'>
+      <Suspense fallback={<Skeleton className='h-screen w-full' />}>
+        <PostEditContent params={props.params} />
+      </Suspense>
+    </div>
   );
 }
 

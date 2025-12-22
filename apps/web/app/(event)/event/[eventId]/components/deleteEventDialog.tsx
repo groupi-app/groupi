@@ -7,33 +7,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { deleteEventAction } from '@/actions/event-actions';
-
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useDeleteEvent } from '@/hooks/mutations/use-delete-event';
 
 export function DeleteEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteEvent = useDeleteEvent();
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    const [error] = await deleteEventAction({ eventId });
-
-    if (error) {
-      toast.error('Uh oh!', {
-        description: 'The event could not be deleted.',
-      });
-      setIsDeleting(false);
-    } else {
-      toast.success('Event deleted', {
-        description: 'The event has been deleted.',
-      });
-      router.push(`/events`);
-    }
+  const handleDelete = () => {
+    deleteEvent.mutate(
+      { eventId },
+      {
+        onSuccess: () => {
+          toast.success('Event deleted', {
+            description: 'The event has been deleted.',
+          });
+          router.push(`/events`);
+        },
+        onError: () => {
+          toast.error('Uh oh!', {
+            description: 'The event could not be deleted.',
+          });
+        },
+      }
+    );
   };
+
+  const isDeleting = deleteEvent.isPending;
 
   return (
     <DialogContent>

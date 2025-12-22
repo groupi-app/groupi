@@ -604,7 +604,7 @@ export const deleteInvite = async ({
     | DatabaseError
     | ConnectionError
     | AuthenticationError,
-    { message: string }
+    { message: string; eventId: string }
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
@@ -681,6 +681,9 @@ export const deleteInvite = async ({
       return;
     }
 
+    // Get eventId before deletion
+    const eventId = invite.createdBy.event.id;
+
     yield* Effect.promise(() =>
       db.invite.delete({
         where: { id: inviteId },
@@ -707,7 +710,7 @@ export const deleteInvite = async ({
       })
     );
 
-    const result = { message: 'Invite deleted successfully' };
+    const result = { message: 'Invite deleted successfully', eventId };
 
     yield* Effect.logInfo('Invite deleted successfully', {
       userId,
@@ -764,7 +767,9 @@ export const deleteInvite = async ({
         }
       });
     }),
-    Effect.map(result => [null, result] as [null, { message: string }])
+    Effect.map(
+      result => [null, result] as [null, { message: string; eventId: string }]
+    )
   );
 
   return Effect.runPromise(
@@ -785,7 +790,7 @@ export const acceptInvite = async ({
     | ConnectionError
     | ConstraintError
     | AuthenticationError,
-    { message: string; membershipId: string }
+    { message: string; membershipId: string; eventId: string }
   >
 > => {
   // Get auth outside Effect.gen so it's available in error handlers
@@ -872,6 +877,7 @@ export const acceptInvite = async ({
       return {
         message: 'Already a member of this event',
         membershipId: invite.event.memberships[0].id,
+        eventId: invite.eventId,
       };
     }
 
@@ -940,6 +946,7 @@ export const acceptInvite = async ({
     const result = {
       message: 'Successfully joined event',
       membershipId: membership.id,
+      eventId: invite.eventId,
     };
 
     yield* Effect.logInfo('Invite accepted successfully', {
@@ -949,58 +956,13 @@ export const acceptInvite = async ({
       operation: 'accept',
     });
 
-    // Trigger USER_JOINED notification for event members (fire-and-forget)
-    yield* Effect.fork(
-      createEventNotifications({
+    return {
+      result,
+      notificationInfo: {
         eventId: invite.eventId,
-        type: 'USER_JOINED',
-        authorId: userId,
-      }).pipe(
-        Effect.catchAll(error => {
-          return Effect.gen(function* () {
-            yield* Effect.void;
-            switch (error.constructor.name) {
-              case 'ConnectionError':
-                yield* Effect.logWarning(
-                  'Notification service connection issue',
-                  {
-                    eventId: invite.eventId,
-                    authorId: userId,
-                    notificationType: 'USER_JOINED',
-                    membershipId: membership.id,
-                    error: error.message,
-                  }
-                );
-                break;
-              case 'NotFoundError':
-                yield* Effect.logInfo(
-                  'Event not found for USER_JOINED notification',
-                  {
-                    eventId: invite.eventId,
-                    authorId: userId,
-                    notificationType: 'USER_JOINED',
-                  }
-                );
-                break;
-              default:
-                yield* Effect.logError(
-                  'Unexpected error creating USER_JOINED notifications',
-                  {
-                    eventId: invite.eventId,
-                    authorId: userId,
-                    notificationType: 'USER_JOINED',
-                    error: error.message,
-                    errorType: error.constructor.name,
-                  }
-                );
-            }
-            return { message: 'User joined notification attempt completed' };
-          });
-        })
-      )
-    );
-
-    return result;
+        membershipId: membership.id,
+      },
+    };
   }).pipe(
     Effect.catchAll(err => {
       return Effect.gen(function* () {
@@ -1061,11 +1023,86 @@ export const acceptInvite = async ({
     }),
     Effect.map(
       result =>
-        [null, result] as [null, { message: string; membershipId: string }]
+        [null, result] as [
+          null,
+          {
+            result: { message: string; membershipId: string; eventId: string };
+            notificationInfo?: { eventId: string; membershipId: string };
+          },
+        ]
     )
   );
 
-  return Effect.runPromise(
+  const effectResult = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('invites'))
   );
+
+  // Trigger USER_JOINED notification for event members (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!effectResult[0] && effectResult[1]?.notificationInfo) {
+    const { notificationInfo } = effectResult[1];
+    Effect.runPromise(
+      createEventNotifications({
+        eventId: notificationInfo.eventId,
+        type: 'USER_JOINED',
+        authorId: userId,
+      }).pipe(
+        Effect.catchAll(error => {
+          return Effect.gen(function* () {
+            yield* Effect.void;
+            switch (error.constructor.name) {
+              case 'ConnectionError':
+                yield* Effect.logWarning(
+                  'Notification service connection issue',
+                  {
+                    eventId: notificationInfo.eventId,
+                    authorId: userId,
+                    notificationType: 'USER_JOINED',
+                    membershipId: notificationInfo.membershipId,
+                    error: error.message,
+                  }
+                );
+                break;
+              case 'NotFoundError':
+                yield* Effect.logInfo(
+                  'Event not found for USER_JOINED notification',
+                  {
+                    eventId: notificationInfo.eventId,
+                    authorId: userId,
+                    notificationType: 'USER_JOINED',
+                  }
+                );
+                break;
+              default:
+                yield* Effect.logError(
+                  'Unexpected error creating USER_JOINED notifications',
+                  {
+                    eventId: notificationInfo.eventId,
+                    authorId: userId,
+                    notificationType: 'USER_JOINED',
+                    error: error.message,
+                    errorType: error.constructor.name,
+                  }
+                );
+            }
+            return { message: 'User joined notification attempt completed' };
+          });
+        })
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  // Return only the result, not the notificationInfo
+  if (effectResult[0]) {
+    return [effectResult[0], undefined] as const;
+  }
+  if (!effectResult[1] || !effectResult[1].result) {
+    return [
+      new DatabaseError({ message: 'Failed to accept invite' }),
+      undefined,
+    ] as const;
+  }
+  return [null, effectResult[1].result] as const;
 };

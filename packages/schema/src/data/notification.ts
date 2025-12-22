@@ -70,3 +70,10 @@ export const WebhookNotificationData = NotificationData.extend({
 });
 
 export type WebhookNotificationData = z.infer<typeof WebhookNotificationData>;
+
+// Notification count data
+export const NotificationCountData = z.object({
+  count: z.number(),
+});
+
+export type NotificationCountData = z.infer<typeof NotificationCountData>;

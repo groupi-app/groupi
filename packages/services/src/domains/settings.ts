@@ -114,12 +114,17 @@ export const fetchUserSettings = async (
     }
 
     // Direct construction
+    // Ensure notificationMethods is always an array (safety check)
+    // Prisma should return empty array for empty relations, but defensive check ensures
+    // we never get undefined even if there's a race condition or Prisma edge case
+    const notificationMethods = settingsData.notificationMethods || [];
+
     const result: SettingsPageData = {
       id: settingsData.id,
       createdAt: settingsData.createdAt,
       updatedAt: settingsData.updatedAt,
       personId: settingsData.personId,
-      notificationMethods: settingsData.notificationMethods.map(method => ({
+      notificationMethods: notificationMethods.map(method => ({
         id: method.id,
         type: method.type,
         enabled: method.enabled,
@@ -264,13 +269,60 @@ export const updateUserSettings = async (
     // Create new notification methods
     const createdMethods: NotificationMethodSettingsData[] = [];
     for (const method of notificationMethods) {
+      // Resolve email from user account if EMAIL method has empty value
+      let resolvedValue = method.value;
+      if (
+        method.type === 'EMAIL' &&
+        (!method.value || method.value.trim() === '')
+      ) {
+        const user = yield* Effect.promise(() =>
+          db.user.findUnique({
+            where: { id: userId },
+            select: { email: true },
+          })
+        ).pipe(
+          Effect.mapError(cause => getPrismaError('User', cause)),
+          Effect.tapError(error =>
+            Effect.logError('Database operation encountered error', {
+              operation: 'updateUserSettings.fetchUserEmail',
+              userId,
+              error: error.message,
+              errorType: error.constructor.name,
+              willRetry: error instanceof ConnectionError,
+            })
+          ),
+          Effect.retry({
+            schedule: Schedule.exponential(1000).pipe(
+              Schedule.intersect(Schedule.recurs(3))
+            ),
+            while: error => error instanceof ConnectionError,
+          })
+        );
+
+        if (!user || !user.email) {
+          yield* Effect.fail(
+            new ValidationError({
+              message:
+                'User email not found. Cannot create email notification method.',
+            })
+          );
+          return;
+        }
+
+        resolvedValue = user.email;
+        yield* Effect.logDebug('Resolved email from user account', {
+          userId,
+          email: user.email,
+        });
+      }
+
       const notificationMethod = yield* Effect.promise(() =>
         db.notificationMethod.create({
           data: {
             settings: { connect: { personId: userId } },
             type: method.type,
             name: method.name,
-            value: method.value,
+            value: resolvedValue,
             enabled: method.enabled,
             webhookFormat: method.webhookFormat,
             customTemplate: method.customTemplate,

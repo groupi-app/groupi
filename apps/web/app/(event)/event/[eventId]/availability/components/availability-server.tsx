@@ -1,10 +1,14 @@
-import { getCachedEventAvailabilityData } from '@groupi/services';
+import { getCachedEventAvailabilityData } from '@groupi/services/server';
 import { AvailabilityClient } from './availability-client';
-import { redirect } from 'next/navigation';
+import { Icons } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { cacheLife } from 'next/cache';
 
 /**
  * Server component that fetches cached availability data
- * Uses "use cache: private" for user-specific data
+ * Uses "use cache: private" at component level for PPR optimization
+ * On cache hit, component renders instantly without suspending
  */
 export async function AvailabilityServer({
   eventId,
@@ -13,6 +17,12 @@ export async function AvailabilityServer({
   eventId: string;
   userId: string;
 }) {
+  'use cache: private';
+  cacheLife({ stale: 60 }); // Prevent prerendering, enable headers() access
+
+  // Auth and header checks are now done in AvailabilityPageContent inside Suspense
+  // userId is passed as prop (auth already checked in AvailabilityPageContent)
+
   const [error, availabilityData] =
     await getCachedEventAvailabilityData(eventId);
 
@@ -25,9 +35,7 @@ export async function AvailabilityServer({
       case 'UnauthorizedError':
         errorMessage = 'You are not a member of this event';
         break;
-      case 'AuthenticationError':
-        redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+      // AuthenticationError is handled at page level before Suspense
       case 'ConnectionError':
         errorMessage = 'Network error. Please try again.';
         break;
@@ -35,7 +43,7 @@ export async function AvailabilityServer({
         errorMessage = 'Invalid request';
         break;
       case 'DatabaseError':
-        errorMessage = error.message || 'Failed to load availability data';
+        errorMessage = 'Failed to load availability data';
         break;
     }
 
@@ -67,12 +75,31 @@ export async function AvailabilityServer({
     );
   }
 
+  // Check if user has any availabilities set
+  const memberAvailabilities = potentialDateTimes.flatMap(pdt =>
+    pdt.availabilities.filter(avail => avail.membership.person.id === userId)
+  );
+  const hasAvailability = memberAvailabilities.length > 0;
+
   // Pass data to client component
   return (
-    <AvailabilityClient
-      eventId={eventId}
-      userId={userId}
-      potentialDateTimes={potentialDateTimes}
-    />
+    <>
+      {/* Only show back button if user has already set availability */}
+      {hasAvailability && (
+        <div className='mb-6'>
+          <Link href={`/event/${eventId}`}>
+            <Button variant='ghost' className='flex items-center gap-1 pl-2'>
+              <Icons.back />
+              <span>Back to Event</span>
+            </Button>
+          </Link>
+        </div>
+      )}
+      <AvailabilityClient
+        eventId={eventId}
+        userId={userId}
+        potentialDateTimes={potentialDateTimes}
+      />
+    </>
   );
 }

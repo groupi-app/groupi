@@ -15,3 +15,4 @@ export * from './post';
 export * from './reply';
 export * from './notification';
 export * from './settings';
+export * from './account';

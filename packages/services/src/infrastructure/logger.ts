@@ -1,5 +1,7 @@
 import pino from 'pino';
 import { Effect, Logger } from 'effect';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import {
   handleSentryReporting,
   shouldProcessLevel,
@@ -8,6 +10,21 @@ import {
   type ReportOptions,
 } from './report-core';
 import { isDEBUG_ENABLED } from './env';
+import { isLokiEnabled } from './loki-transport';
+
+/**
+ * Logger Configuration with Grafana Cloud Loki Integration
+ *
+ * This logger sends logs to Grafana Cloud Loki when enabled via environment variables.
+ * To enable Loki logging, set the following environment variables:
+ * - LOKI_ENABLED=true
+ * - LOKI_INSTANCE_ID=<your-instance-id>
+ * - LOKI_TOKEN=<your-token>
+ * - LOKI_URL=<optional-url-defaults-to-prod>
+ *
+ * Logs are batched and sent asynchronously to avoid blocking the application.
+ * Only server-side logs are sent to Loki (client-side logs use browser console).
+ */
 
 const getLogLevel = () => {
   if (process.env.NODE_ENV === 'production') {
@@ -16,7 +33,8 @@ const getLogLevel = () => {
   return isDEBUG_ENABLED() ? 'debug' : 'info';
 };
 
-const logger = pino({
+// Base logger configuration
+const loggerConfig: pino.LoggerOptions = {
   level: getLogLevel(),
   formatters: {
     level: label => {
@@ -24,7 +42,33 @@ const logger = pino({
     },
   },
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
-});
+};
+
+// Create logger with transport if enabled
+// Note: When using transport, Pino runs in worker thread mode
+// We disable transport in development to avoid worker thread module resolution issues
+// Transport is only enabled in production when LOKI_ENABLED=true
+let logger: pino.Logger;
+
+if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
+  // Resolve absolute path to transport worker file
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const transportPath = resolve(__dirname, 'loki-transport-worker.ts');
+
+  // Use pino.transport() with explicit worker options for better compatibility
+  // This helps resolve module paths correctly in pnpm monorepos
+  // The transport is passed as the second argument to pino()
+  const transport = pino.transport({
+    target: transportPath,
+    options: {},
+  });
+  logger = pino(loggerConfig, transport);
+} else {
+  // No transport - use standard logger
+  // In development, this avoids worker thread module resolution issues
+  logger = pino(loggerConfig);
+}
 
 // Create child loggers for different parts of the application
 export const createLogger = (module: string) => {

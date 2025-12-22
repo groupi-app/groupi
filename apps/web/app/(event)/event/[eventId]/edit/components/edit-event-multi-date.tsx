@@ -1,6 +1,7 @@
 'use client';
 import { Calendar } from '@/components/ui/calendar';
-import { updateEventDetailsAction } from '@/actions/event-actions';
+import { useResetChosenDate } from '@/hooks/mutations/use-reset-chosen-date';
+import { useUpdatePotentialDateTimes } from '@/hooks/mutations/use-update-potential-date-times';
 import { merge } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -8,6 +9,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { qk } from '@/lib/query-keys';
+import type { AvailabilityPageData, EventHeaderData } from '@groupi/schema/data';
+import { componentLogger } from '@/lib/logger';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,7 +66,11 @@ export function EditEventMultiDate({
   dates: Date[] | undefined;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const resetChosenDate = useResetChosenDate();
+  const updatePotentialDateTimes = useUpdatePotentialDateTimes();
 
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
@@ -106,23 +115,192 @@ export function EditEventMultiDate({
   }
 
   async function onSubmit2() {
+    const startTime = performance.now();
+    componentLogger.debug({ eventId, timestamp: startTime }, 'onSubmit2: Starting');
+    
     setIsUpdating(true);
+    const dialogCloseTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: dialogCloseTime - startTime }, 'onSubmit2: Dialog closed');
+    
+    setDialogOpen(false); // Close dialog immediately
 
-    // Note: This component needs refactoring - updateEventDetails doesn't support changing potential date times
-    const [error] = await updateEventDetailsAction({
-      eventId,
-      // potentialDateTimes updating not currently supported by this action
-    });
-
-    if (error) {
-      toast.error('Failed to update event', {
-        description: 'An unexpected error occurred. Please try again.',
-      });
-      setIsUpdating(false);
-    } else {
-      toast.success('Event updated.');
-      router.push(`/event/${eventId}`);
+    const dateTimes = form2.getValues('dateTimes');
+    const getDateTimesTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: getDateTimesTime - startTime, dateCount: dateTimes.length }, 'onSubmit2: Got date times');
+    
+    // Manually apply optimistic updates synchronously (before navigation)
+    // This ensures the cache is updated instantly without waiting for async onMutate
+    const oldAvailabilityData = queryClient.getQueryData<AvailabilityPageData>(
+      qk.availability.data(eventId)
+    );
+    const getCacheTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: getCacheTime - startTime, hasOldData: !!oldAvailabilityData }, 'onSubmit2: Got cache data');
+    
+    // Find organizer's membership
+    let organizerMembership: AvailabilityPageData['potentialDateTimes'][0]['availabilities'][0]['membership'] | null = null;
+    
+    if (oldAvailabilityData) {
+      for (const pdt of oldAvailabilityData.potentialDateTimes) {
+        const organizerAvail = pdt.availabilities.find(
+          avail => avail.membership.role === 'ORGANIZER'
+        );
+        if (organizerAvail) {
+          organizerMembership = organizerAvail.membership;
+          break;
+        }
+      }
     }
+
+    // If not found in availability data, try to get from memberships list cache
+    if (!organizerMembership) {
+      const membershipsData = queryClient.getQueryData<{
+        event: {
+          memberships: Array<{
+            id: string;
+            personId: string;
+            eventId: string;
+            role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
+            rsvpStatus: 'YES' | 'MAYBE' | 'NO' | 'PENDING';
+            person: {
+              id: string;
+              user: {
+                name: string | null;
+                email: string;
+                image: string | null;
+                username: string | null;
+              };
+            };
+          }>;
+        };
+      }>(qk.memberships.list(eventId));
+
+      if (membershipsData) {
+        const organizer = membershipsData.event.memberships.find(
+          m => m.role === 'ORGANIZER'
+        );
+        if (organizer) {
+          organizerMembership = {
+            id: organizer.id,
+            personId: organizer.personId,
+            eventId: organizer.eventId,
+            role: organizer.role,
+            rsvpStatus: organizer.rsvpStatus,
+            person: {
+              id: organizer.person.id,
+              user: organizer.person.user,
+            },
+          };
+        }
+      }
+    }
+
+    // Optimistically update availability data
+    const beforeMapTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: beforeMapTime - startTime }, 'onSubmit2: Before mapping date times');
+    
+    const newPotentialDateTimes = dateTimes.map((dt, index) => {
+      const availabilities = organizerMembership
+        ? [
+            {
+              status: 'YES' as const,
+              membership: organizerMembership,
+            },
+          ]
+        : [];
+
+      return {
+        id: `temp-${index}-${Date.now()}`,
+        eventId: eventId,
+        dateTime: dt,
+        availabilities,
+      };
+    });
+    const afterMapTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: afterMapTime - startTime, mappedCount: newPotentialDateTimes.length }, 'onSubmit2: After mapping date times');
+
+    const beforeSetAvailabilityTime = performance.now();
+    queryClient.setQueryData<AvailabilityPageData>(
+      qk.availability.data(eventId),
+      (old: AvailabilityPageData | undefined) => {
+        if (!old) {
+          return {
+            potentialDateTimes: newPotentialDateTimes,
+            userRole: 'ORGANIZER' as const,
+            userId: organizerMembership?.personId || '',
+          };
+        }
+        return {
+          ...old,
+          potentialDateTimes: newPotentialDateTimes,
+        };
+      }
+    );
+    const afterSetAvailabilityTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: afterSetAvailabilityTime - startTime, setTime: afterSetAvailabilityTime - beforeSetAvailabilityTime }, 'onSubmit2: Set availability cache');
+
+    // Optimistically update event header (set chosenDateTime to null)
+    const beforeSetHeaderTime = performance.now();
+    queryClient.setQueryData<EventHeaderData>(
+      qk.events.header(eventId),
+      (old: EventHeaderData | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          event: {
+            ...old.event,
+            chosenDateTime: null,
+          },
+        };
+      }
+    );
+    const afterSetHeaderTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: afterSetHeaderTime - startTime, setTime: afterSetHeaderTime - beforeSetHeaderTime }, 'onSubmit2: Set header cache');
+
+    // Navigate immediately after synchronous cache updates
+    const beforeNavTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: beforeNavTime - startTime }, 'onSubmit2: About to navigate');
+    router.push(`/event/${eventId}`);
+    const afterNavTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: afterNavTime - startTime, navTime: afterNavTime - beforeNavTime }, 'onSubmit2: Navigation called');
+    
+    // Start mutations in background (they'll update cache with real data when complete)
+    const beforeMutationsTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: beforeMutationsTime - startTime }, 'onSubmit2: About to start mutations');
+    
+    updatePotentialDateTimes.mutate(
+      { eventId, potentialDateTimes: dateTimes },
+      {
+        onSuccess: () => {
+          const successTime = performance.now();
+          componentLogger.debug({ eventId, elapsed: successTime - startTime }, 'onSubmit2: updatePotentialDateTimes success');
+          toast.success('New poll started successfully.');
+          setIsUpdating(false);
+        },
+        onError: () => {
+          const errorTime = performance.now();
+          componentLogger.debug({ eventId, elapsed: errorTime - startTime }, 'onSubmit2: updatePotentialDateTimes error');
+          toast.error('Failed to start new poll', {
+            description: 'An unexpected error occurred. Please try again.',
+          });
+          setIsUpdating(false);
+        },
+      }
+    );
+
+    resetChosenDate.mutate(
+      { eventId },
+      {
+        onError: () => {
+          componentLogger.debug({ eventId }, 'onSubmit2: resetChosenDate error');
+          toast.error('Failed to reset date', {
+            description: 'An unexpected error occurred. Please try again.',
+          });
+        },
+      }
+    );
+    
+    const afterMutationsTime = performance.now();
+    componentLogger.debug({ eventId, elapsed: afterMutationsTime - startTime, mutationsTime: afterMutationsTime - beforeMutationsTime }, 'onSubmit2: Mutations started, function complete');
   }
 
   return (
@@ -249,7 +427,7 @@ export function EditEventMultiDate({
             <Icons.back className='text-sm' />
           </Button>
         </Link>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button
               disabled={form2.watch('dateTimes').length < 2}

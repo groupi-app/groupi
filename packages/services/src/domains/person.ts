@@ -7,8 +7,13 @@ import {
   GetPersonDataParams,
   GetUserDashboardDataParams,
   DeleteUserParams,
+  GetUserProfileParams,
 } from '@groupi/schema/params';
-import { UserDashboardData, PersonBasicData } from '@groupi/schema/data';
+import {
+  UserDashboardData,
+  PersonBasicData,
+  UserProfileData,
+} from '@groupi/schema/data';
 import {
   NotFoundError,
   DatabaseError,
@@ -289,6 +294,104 @@ export const fetchUserDashboardData = async (
     }),
     // Map result to tuple
     Effect.map(result => [null, result] as [null, UserDashboardData])
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('persons'))
+  );
+};
+
+/**
+ * Fetch user profile data by ID
+ */
+export const fetchUserProfile = async ({
+  userId,
+}: GetUserProfileParams): Promise<
+  ResultTuple<DatabaseError | NotFoundError | ConnectionError, UserProfileData>
+> => {
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Fetching user profile', {
+      userId,
+    });
+
+    // Database operation with retry on connection issues
+    const user = yield* Effect.promise(() =>
+      db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          username: true,
+          pronouns: true,
+          bio: true,
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('User', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'fetchUserProfile',
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!user) {
+      yield* Effect.fail(
+        new NotFoundError({ message: `User not found`, cause: userId })
+      );
+      return;
+    }
+
+    // Direct construction
+    const result: UserProfileData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      username: user.username,
+      pronouns: user.pronouns,
+      bio: user.bio,
+    };
+
+    yield* Effect.logDebug('User profile fetched successfully', {
+      userId,
+    });
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        // Log expected errors at info level
+        if (err instanceof NotFoundError) {
+          yield* Effect.logInfo('User not found', {
+            userId,
+            operation: 'fetchUserProfile',
+          });
+          return [err, undefined] as const;
+        }
+
+        // For unexpected errors, return DatabaseError
+        return [
+          new DatabaseError({ message: 'Failed to fetch user profile' }),
+          undefined,
+        ] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, UserProfileData])
   );
 
   return Effect.runPromise(

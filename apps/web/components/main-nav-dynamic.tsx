@@ -1,3 +1,5 @@
+'use client';
+
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -12,7 +14,6 @@ import { NotificationsDesktop } from './notifications-desktop';
 import { ProfileDropdown } from './profile-dropdown';
 import { Session } from '@groupi/services';
 import { Icons } from '@/components/icons';
-import { NotificationCloseContextProvider } from '@/components/providers/notif-close-provider';
 
 interface MainNavDynamicProps {
   items?: MainNavItem[];
@@ -33,7 +34,7 @@ export function MainNavDynamic({ items, session }: MainNavDynamicProps) {
   );
 
   return (
-    <NotificationCloseContextProvider>
+    <>
       {session?.user?.id && filteredItems?.length ? (
         <NavigationMenu>
           <NavigationMenuList
@@ -60,6 +61,14 @@ export function MainNavDynamic({ items, session }: MainNavDynamicProps) {
           name: session?.user?.name || null,
           email: session?.user?.email || '',
           image: session?.user?.image || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          imageKey: (session?.user as any)?.imageKey || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          pronouns: (session?.user as any)?.pronouns || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          bio: (session?.user as any)?.bio || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          username: (session?.user as any)?.username || null,
         }}
         items={filteredItems || []}
       />
@@ -77,6 +86,8 @@ export function MainNavDynamic({ items, session }: MainNavDynamicProps) {
                   imageKey: session.user.imageKey || null,
                   pronouns: session.user.pronouns || null,
                   bio: session.user.bio || null,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  username: (session.user as any).username || null,
                 }}
               />
             </div>
@@ -99,6 +110,6 @@ export function MainNavDynamic({ items, session }: MainNavDynamicProps) {
           </div>
         )}
       </div>
-    </NotificationCloseContextProvider>
+    </>
   );
 }

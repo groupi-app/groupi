@@ -12,14 +12,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import { updateEventDetailsAction } from '@/actions/event-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 
 const formSchema = z.object({
   title: z
@@ -47,8 +46,8 @@ export default function EditEventInfo({
   };
 }) {
   const { eventId, title, description, location } = eventData;
-  const [isSaving, setIsSaving] = useState<boolean>(false);
   const router = useRouter();
+  const updateEvent = useUpdateEvent();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,27 +58,31 @@ export default function EditEventInfo({
     },
   });
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
-    setIsSaving(true);
-    const [error, result] = await updateEventDetailsAction({
-      eventId: eventId,
-      title: data.title,
-      description: data.description,
-      location: data.location,
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    // Show toast and redirect immediately (optimistic)
+    toast.success('Event updated', {
+      description: 'Event details have been updated.',
     });
+    router.push(`/event/${eventId}`);
 
-    if (error) {
-      toast.error('Error editing event', {
-        description: 'Failed to edit event details.',
-      });
-      setIsSaving(false);
-    } else if (result) {
-      toast.success('Event updated', {
-        description: 'Event details have been updated.',
-      });
-      router.push(`/event/${eventId}`);
-    }
-    setIsSaving(false);
+    // Handle mutation in background
+    updateEvent.mutate(
+      {
+        eventId: eventId,
+        title: data.title,
+        description: data.description,
+        location: data.location,
+      },
+      {
+        onError: () => {
+          // Rollback navigation and show error toast
+          router.push(`/event/${eventId}/edit`);
+          toast.error('Error editing event', {
+            description: 'Failed to edit event details.',
+          });
+        },
+      }
+    );
   }
 
   return (
@@ -92,11 +95,7 @@ export default function EditEventInfo({
             <FormItem>
               <FormLabel>Event Title</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='Enter event title'
-                  {...field}
-                  disabled={isSaving}
-                />
+                <Input placeholder='Enter event title' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -113,7 +112,6 @@ export default function EditEventInfo({
                   placeholder='Tell us a little bit about the event'
                   className='resize-none'
                   {...field}
-                  disabled={isSaving}
                 />
               </FormControl>
               <FormDescription>
@@ -130,19 +128,13 @@ export default function EditEventInfo({
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='Enter event location'
-                  {...field}
-                  disabled={isSaving}
-                />
+                <Input placeholder='Enter event location' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
+        <Button type='submit'>Save Changes</Button>
       </form>
     </Form>
   );

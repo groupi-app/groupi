@@ -6,5 +6,9 @@ export const settingsConfig: SettingsNavConfig = {
       title: 'Notifications',
       href: '/settings/notifications',
     },
+    {
+      title: 'Account',
+      href: '/settings/account',
+    },
   ],
 };

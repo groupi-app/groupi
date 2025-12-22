@@ -1,4 +1,4 @@
-import { getCachedEventHeaderData } from '@groupi/services';
+import { getCachedEventHeaderData } from '@groupi/services/server';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ export async function ChangeDateContent({ eventId }: { eventId: string }) {
         return <div>Event not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+         
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:

@@ -31,6 +31,7 @@ export const MembershipWithPersonData = MembershipSchema.pick({
       name: true,
       email: true,
       image: true,
+      username: true,
     }),
   }),
 });

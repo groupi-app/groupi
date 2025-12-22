@@ -2,6 +2,8 @@
 
 import { updateTag } from 'next/cache';
 import { createInvite, deleteInvite, acceptInvite } from '@groupi/services';
+import { getUserId } from '@groupi/services/server';
+import { pusherServer } from '@/lib/pusher-server';
 import type { ResultTuple, EventInviteData } from '@groupi/schema';
 import type { CreateInviteParams } from '@groupi/schema/params';
 import type {
@@ -19,7 +21,7 @@ import type {
 // INVITE ACTIONS
 // ============================================================================
 
-type InviteMutationError =
+export type InviteMutationError =
   | NotFoundError
   | UnauthorizedError
   | DatabaseError
@@ -52,9 +54,21 @@ export async function createInviteAction(
   });
 
   // Invalidate event invites cache on successful creation
-  if (!result[0]) {
+  if (!result[0] && result[1]) {
     updateTag(`event-${input.eventId}`);
     updateTag(`event-${input.eventId}-invites`);
+
+    // Trigger Pusher event for event invites
+    await pusherServer.trigger(
+      `event-${input.eventId}-invites`,
+      'invite-changed',
+      {
+        type: 'INSERT',
+        new: result[1],
+      }
+    ).catch((err: unknown) => {
+      console.error('[Pusher] Failed to trigger invite-changed:', err);
+    });
   }
 
   return result;
@@ -67,16 +81,29 @@ export async function createInviteAction(
 export async function deleteInviteAction(
   input: DeleteInviteInput
 ): Promise<
-  ResultTuple<InviteMutationError, { message: string; eventId?: string }>
+  ResultTuple<InviteMutationError, { message: string; eventId: string }>
 > {
   const result = await deleteInvite({
     inviteId: input.inviteId,
   });
 
   // Invalidate invites cache on successful deletion
-  if (!result[0] && result[1] && 'eventId' in result[1] && result[1].eventId) {
-    updateTag(`event-${result[1].eventId}`);
-    updateTag(`event-${result[1].eventId}-invites`);
+  if (!result[0] && result[1] && result[1].eventId) {
+    const eventId = result[1].eventId;
+    updateTag(`event-${eventId}`);
+    updateTag(`event-${eventId}-invites`);
+
+    // Trigger Pusher event for event invites
+    await pusherServer.trigger(
+      `event-${eventId}-invites`,
+      'invite-changed',
+      {
+        type: 'DELETE',
+        old: { id: input.inviteId },
+      }
+    ).catch((err: unknown) => {
+      console.error('[Pusher] Failed to trigger invite-changed:', err);
+    });
   }
 
   return result;
@@ -91,7 +118,7 @@ export async function acceptInviteAction(
 ): Promise<
   ResultTuple<
     InviteMutationError,
-    { message: string; membershipId: string; eventId?: string }
+    { message: string; membershipId: string; eventId: string }
   >
 > {
   const result = await acceptInvite({
@@ -99,9 +126,38 @@ export async function acceptInviteAction(
   });
 
   // Invalidate event members cache on successful acceptance
-  if (!result[0] && result[1] && 'eventId' in result[1] && result[1].eventId) {
-    updateTag(`event-${result[1].eventId}`);
-    updateTag(`event-${result[1].eventId}-members`);
+  if (!result[0] && result[1]) {
+    const eventId = result[1].eventId;
+    const membershipId = result[1].membershipId;
+    updateTag(`event-${eventId}`);
+    updateTag(`event-${eventId}-members`);
+
+    // Trigger Pusher event for event members with membership ID
+    await pusherServer.trigger(
+      `event-${eventId}-members`,
+      'member-changed',
+      {
+        type: 'INSERT',
+        new: { id: membershipId },
+      }
+    ).catch((err: unknown) => {
+      console.error('[Pusher] Failed to trigger member-changed:', err);
+    });
+
+    // Also trigger for user's event list if we can get userId
+    const [, userId] = await getUserId();
+    if (userId) {
+      await pusherServer.trigger(
+        `user-${userId}-events`,
+        'event-changed',
+        {
+          type: 'INSERT',
+          new: { id: eventId },
+        }
+      ).catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger event-changed:', err);
+      });
+    }
   }
 
   return result;

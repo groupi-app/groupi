@@ -20,15 +20,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { createPostAction, updatePostAction } from '@/actions/post-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { useCreatePost } from '@/hooks/mutations/use-create-post';
+import { useUpdatePost } from '@/hooks/mutations/use-update-post';
 import * as z from 'zod';
 import { Tiptap } from './tiptap';
 import { Button } from '@/components/ui/button';
+import { componentLogger } from '@/lib/logger';
+import { useQuery } from '@tanstack/react-query';
+import { fetchMemberList } from '@/lib/queries/membership-queries';
+import { qk } from '@/lib/query-keys';
+import type { PostDetailPageData } from '@groupi/schema/data';
+
+type Member = PostDetailPageData['post']['event']['memberships'][0];
 
 interface PostData {
   title: string;
@@ -36,6 +44,15 @@ interface PostData {
   id: string;
 }
 
+/**
+ * Post editor component.
+ *
+ * Form state is explicitly cleared on:
+ * - Successful submit (post created/updated)
+ * - User clicking "Leave" in the unsaved changes dialog
+ *
+ * @see docs/STATE_ARCHITECTURE.md for the full state management guide
+ */
 export function Editor({
   eventId,
   postData,
@@ -45,7 +62,10 @@ export function Editor({
 }) {
   const [titleEdited, setTitleEdited] = useState<boolean>(false);
   const [contentEdited, setContentEdited] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Reset key for TipTap - incremented to force content sync
+  const [editorResetKey, setEditorResetKey] = useState(0);
+
   const backUrl = postData ? `/post/${postData.id}` : `/event/${eventId}`;
   const title = postData?.title || '';
   const content = postData?.content || '';
@@ -55,12 +75,18 @@ export function Editor({
       .string()
       .trim()
       .min(1, 'Title is required')
-      .max(100, 'Your title is too long!'),
+      .max(100, 'Your title is too long!')
+      .refine(val => val.trim().length > 0, {
+        message: 'Title cannot be only whitespace',
+      }),
     content: z
       .string()
       .trim()
       .min(1, 'Post body is required')
-      .max(3000, 'Your post is too long!'),
+      .max(3000, 'Your post is too long!')
+      .refine(val => val.trim().length > 0, {
+        message: 'Post body cannot be only whitespace',
+      }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,44 +99,119 @@ export function Editor({
   });
 
   const router = useRouter();
+  const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
+
+  // Fetch members for mention functionality
+  const { data: memberListData } = useQuery({
+    queryKey: qk.memberships.list(eventId),
+    queryFn: () => fetchMemberList(eventId),
+    enabled: !!eventId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const members: Member[] =
+    (memberListData?.event.memberships.map(m => ({
+      id: m.id,
+      role: m.role,
+      rsvpStatus: m.rsvpStatus,
+      personId: m.personId,
+      eventId: m.eventId,
+      person: {
+        id: m.person.id,
+        createdAt: new Date(), // Default value since EventAttendeesPageData doesn't include this
+        updatedAt: new Date(), // Default value since EventAttendeesPageData doesn't include this
+        user: {
+          name: m.person.user?.name || null,
+          email: m.person.user?.email || '',
+          image: m.person.user?.image || null,
+          username: m.person.user?.username || null,
+        },
+      },
+    })) as Member[]) || [];
+
+  // Reset form and related state - called explicitly on leave/submit
+  const resetFormState = useCallback(() => {
+    form.reset(
+      {
+        title: title,
+        content: content,
+      },
+      {
+        keepErrors: false, // Clear any validation errors
+      }
+    );
+    // Also explicitly clear errors to ensure they're gone
+    form.clearErrors();
+    setTitleEdited(false);
+    setContentEdited(false);
+    // Increment reset key to force TipTap to sync content
+    setEditorResetKey(prev => prev + 1);
+  }, [form, title, content]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSaving(true);
-
     if (!postData) {
-      const [error] = await createPostAction({
-        title: values.title,
-        content: values.content,
-        eventId,
-      });
-
-      if (error) {
-        toast.error('Failed to create post', {
-          description: 'An unexpected error occurred. Please try again.',
-        });
-        setIsSaving(false);
-      } else {
-        toast.success('Your post has been successfully created.');
-        router.push(`/event/${eventId}`);
-      }
+      // Create new post
+      createPost.mutate(
+        {
+          title: values.title,
+          content: values.content,
+          eventId,
+        },
+        {
+          onSuccess: () => {
+            // Clear form before navigating away
+            resetFormState();
+            toast.success('Your post has been successfully created.');
+            router.push(`/event/${eventId}`);
+          },
+          onError: error => {
+            componentLogger.error(
+              {
+                error,
+                errorType: error?.constructor?.name,
+                errorMessage:
+                  error instanceof Error ? error.message : String(error),
+                eventId,
+              },
+              'Failed to create post'
+            );
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : 'An unexpected error occurred. Please try again.';
+            toast.error('Failed to create post', {
+              description: errorMessage,
+            });
+          },
+        }
+      );
     } else {
-      const [error] = await updatePostAction({
-        id: postData.id,
-        title: values.title,
-        content: values.content,
-      });
-
-      if (error) {
-        toast.error('Failed to update post', {
-          description: 'An unexpected error occurred. Please try again.',
-        });
-        setIsSaving(false);
-      } else {
-        toast.success('Your post has been successfully edited.');
-        router.push(`/post/${postData.id}`);
-      }
+      // Update existing post
+      updatePost.mutate(
+        {
+          id: postData.id,
+          title: values.title,
+          content: values.content,
+        },
+        {
+          onSuccess: () => {
+            // Clear form before navigating away
+            resetFormState();
+            toast.success('Your post has been successfully edited.');
+            router.push(`/post/${postData.id}`);
+          },
+          onError: () => {
+            toast.error('Failed to update post', {
+              description: 'An unexpected error occurred. Please try again.',
+            });
+          },
+        }
+      );
     }
   }
+
+  const isSaving = createPost.isPending || updatePost.isPending;
 
   const contentEditedOnChange = (c: string) => {
     if (c !== content) {
@@ -195,6 +296,9 @@ export function Editor({
                       content={field.value}
                       onChange={field.onChange}
                       onChangeCapture={contentEditedOnChange}
+                      resetKey={editorResetKey}
+                      eventId={eventId}
+                      members={members}
                     />
                   </FormControl>
                   <FormMessage data-test='post-editor-body-error' />
@@ -240,7 +344,7 @@ export function Editor({
                 <Button variant='ghost'>Stay</Button>
               </DialogClose>
               <DialogClose asChild>
-                <Link href={backUrl}>
+                <Link href={backUrl} onClick={resetFormState}>
                   <Button variant='destructive'>Leave</Button>
                 </Link>
               </DialogClose>

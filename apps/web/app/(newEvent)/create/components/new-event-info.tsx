@@ -13,12 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import dynamic from 'next/dynamic';
-import { useFormContext } from '@/components/providers/form-context-provider';
+import { useFormContext } from './form-context';
 import { Button } from '@/components/ui/button';
 
 const LocationInput = dynamic(() => import('./location-input').then(mod => ({ default: mod.LocationInput })), {
@@ -46,8 +46,11 @@ const formSchema = z.object({
     .optional(),
 });
 
-export default function NewEventInfo() {
-  const router = useRouter();
+interface NewEventInfoProps {
+  onNext: () => void;
+}
+
+export default function NewEventInfo({ onNext }: NewEventInfoProps) {
   const { formState, setFormState } = useFormContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,9 +63,18 @@ export default function NewEventInfo() {
     mode: 'onChange',
   });
 
+  // Sync form with context when context changes
+  useEffect(() => {
+    form.reset({
+      title: formState.title || '',
+      description: formState.description || '',
+      location: formState.location || '',
+    });
+  }, [formState.title, formState.description, formState.location, form]);
+
   function onSubmit(data: z.infer<typeof formSchema>) {
     setFormState(data);
-    router.push('/create/date-type');
+    onNext();
   }
 
   return (

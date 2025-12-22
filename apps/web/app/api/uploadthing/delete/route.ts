@@ -1,5 +1,5 @@
 import { UTApi } from 'uploadthing/server';
-import { auth } from '@groupi/services';
+import { auth } from '@groupi/services/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 

@@ -62,3 +62,40 @@ export function isError<TError, TData>(
 ): result is [TError, undefined] {
   return result[0] !== null;
 }
+
+// ============================================================================
+// SERIALIZATION FOR SERVER COMPONENT CACHING
+// ============================================================================
+
+/**
+ * Serialized error type that only contains the tag for cache safety
+ * Strips message, cause, and other details that may not be serializable
+ */
+export type SerializedError = { _tag: string };
+
+/**
+ * Serializes a result tuple for server component caching
+ * - Strips error details (keeping only the tag)
+ * - Converts Date objects to ISO strings for cache safety
+ *
+ * This ensures the result tuple can be safely cached by Next.js server components
+ * without serialization issues from Date objects or complex error objects.
+ */
+export function serializeResultTuple<TError extends { _tag: string }, TData>([
+  err,
+  data,
+]: ResultTuple<TError, TData>): ResultTuple<SerializedError, TData> {
+  if (err) {
+    // Strip error details, keep only the tag for cache safety
+    return [{ _tag: err._tag }, undefined];
+  }
+
+  // Convert Date → ISO for server component cache safety
+  const serializedData = JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      value instanceof Date ? value.toISOString() : value
+    )
+  ) as TData;
+
+  return [null, serializedData];
+}

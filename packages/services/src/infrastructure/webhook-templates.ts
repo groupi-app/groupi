@@ -199,6 +199,8 @@ export function extractWebhookVariables(
         return `${author?.user.name ?? author?.user.email.split('@')[0]} created a new post, ${post?.title}, in ${event?.title}.`;
       case 'NEW_REPLY':
         return `${author?.user.name ?? author?.user.email.split('@')[0]} replied to a post, ${post?.title}, in ${event?.title}.`;
+      case 'USER_MENTIONED':
+        return `${author?.user.name ?? author?.user.email.split('@')[0]} mentioned you in ${post?.title}.`;
       case 'USER_JOINED':
         return `${author?.user.name ?? author?.user.email.split('@')[0]} has joined ${event?.title}.`;
       case 'USER_LEFT':
@@ -226,6 +228,8 @@ export function extractWebhookVariables(
         return 'New Post!';
       case 'NEW_REPLY':
         return 'New Reply!';
+      case 'USER_MENTIONED':
+        return 'You Were Mentioned!';
       case 'USER_JOINED':
       case 'USER_LEFT':
       case 'USER_PROMOTED':

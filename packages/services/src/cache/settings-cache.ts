@@ -1,16 +1,10 @@
 'use cache: private';
 
 import { cacheTag, cacheLife } from 'next/cache';
-import type { ResultTuple } from '@groupi/schema';
+import type { ResultTuple, SerializedError } from '@groupi/schema';
+import { serializeResultTuple } from '@groupi/schema';
 import { fetchUserSettings } from '../domains/settings';
 import type { SettingsPageData } from '@groupi/schema/data';
-import type {
-  NotFoundError,
-  AuthenticationError,
-  DatabaseError,
-  ConnectionError,
-  ConstraintError,
-} from '@groupi/schema';
 
 // ============================================================================
 // SETTINGS CACHE FUNCTIONS (PRIVATE)
@@ -22,14 +16,7 @@ import type {
  * Uses "use cache: private" to allow access to headers/cookies for auth
  */
 export async function getCachedSettingsData(): Promise<
-  ResultTuple<
-    | NotFoundError
-    | AuthenticationError
-    | DatabaseError
-    | ConnectionError
-    | ConstraintError,
-    SettingsPageData
-  >
+  ResultTuple<SerializedError, SettingsPageData>
 > {
   'use cache: private';
   cacheLife('user');
@@ -42,5 +29,5 @@ export async function getCachedSettingsData(): Promise<
     cacheTag(`user-${userId}`, `user-${userId}-settings`);
   }
 
-  return result;
+  return serializeResultTuple(result);
 }

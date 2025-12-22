@@ -1,4 +1,4 @@
-import { getCachedSettingsData } from '@groupi/services';
+import { getCachedSettingsData } from '@groupi/services/server';
 import { PushNotificationSettings } from './push-notification-settings';
 import { NotificationMethodsList } from './notification-methods-list';
 import { redirect } from 'next/navigation';
@@ -18,7 +18,7 @@ export async function SettingsContent({
         return <div>Settings not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-      // eslint-disable-next-line no-fallthrough
+       
       default:
         return <div>Failed to load settings</div>;
     }

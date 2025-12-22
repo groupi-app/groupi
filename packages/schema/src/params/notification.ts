@@ -53,3 +53,24 @@ export const CreateEventNotificationsParams = z.object({
 export type CreateEventNotificationsParams = z.infer<
   typeof CreateEventNotificationsParams
 >;
+
+// Get unread notification count parameters
+export const GetUnreadNotificationCountParams = z.object({});
+
+export type GetUnreadNotificationCountParams = z.infer<
+  typeof GetUnreadNotificationCountParams
+>;
+
+// Delete notification parameters
+export const DeleteNotificationParams = z.object({
+  notificationId: NotificationSchema.shape.id,
+});
+
+export type DeleteNotificationParams = z.infer<typeof DeleteNotificationParams>;
+
+// Delete all notifications parameters
+export const DeleteAllNotificationsParams = z.object({});
+
+export type DeleteAllNotificationsParams = z.infer<
+  typeof DeleteAllNotificationsParams
+>;

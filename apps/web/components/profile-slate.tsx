@@ -5,11 +5,14 @@ import { PersonBasicData } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
-// TODO: Re-implement notification components with server actions
 import { Button } from '@/components/ui/button';
+import { NotificationWidget } from './notification-widget';
+import { NotificationCount } from './notification-count';
 
 interface ProfileSlateProps {
-  userInfo: PersonBasicData;
+  userInfo: PersonBasicData & {
+    username?: string | null;
+  };
 }
 
 export function ProfileSlate({ userInfo }: ProfileSlateProps) {
@@ -30,7 +33,9 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
               {userInfo.name}
             </span>
           )}
-          <span className='text-muted-foreground'>{userInfo.email}</span>
+          <span className='text-muted-foreground'>
+            {userInfo.username ? `@${userInfo.username}` : userInfo.email}
+          </span>
         </div>
         <div>
           <Button
@@ -39,10 +44,10 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
             }}
             size='icon'
             variant='ghost'
-            className='rounded-full'
+            className='rounded-full relative'
           >
             <Icons.bell className='size-5' />
-            {/* TODO: Re-implement NotificationCount */}
+            <NotificationCount />
           </Button>
         </div>
       </div>
@@ -53,12 +58,9 @@ export function ProfileSlate({ userInfo }: ProfileSlateProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className='overflow-hidden p-4'
+            className='overflow-hidden'
           >
-            <div className='text-sm text-muted-foreground'>
-              Notifications temporarily disabled during migration
-            </div>
-            {/* TODO: Re-implement NotificationWidget */}
+            <NotificationWidget maxHeight='400px' />
           </motion.div>
         )}
       </AnimatePresence>

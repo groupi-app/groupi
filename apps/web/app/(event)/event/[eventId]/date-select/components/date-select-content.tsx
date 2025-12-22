@@ -1,4 +1,4 @@
-import { getCachedEventAvailabilityData } from '@groupi/services';
+import { getCachedEventAvailabilityData } from '@groupi/services/server';
 import { DateCardList } from '../../components/date-card-list';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ export async function DateSelectContent({ eventId }: { eventId: string }) {
         return <div>Event not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+         
       case 'UnauthorizedError':
         return <div>You do not have permission to view this page</div>;
       default:

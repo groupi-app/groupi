@@ -1,6 +1,12 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { EventSchema, MembershipSchema, UserSchema } from '../generated';
+import {
+  EventSchema,
+  MembershipSchema,
+  UserSchema,
+  AvailabilitySchema,
+  PotentialDateTimeSchema,
+} from '../generated';
 
 // ============================================================================
 // EVENT DOMAIN DATA TYPES
@@ -40,6 +46,7 @@ export const EventDetailsData = EventHeaderData.extend({
           name: true,
           email: true,
           image: true,
+          username: true,
         }),
       }),
     })
@@ -84,11 +91,33 @@ export const EventAttendeesPageData = z.object({
             name: true,
             email: true,
             image: true,
+            username: true,
           }),
         }),
+        availabilities: z
+          .array(
+            AvailabilitySchema.pick({
+              status: true,
+              membershipId: true,
+              potentialDateTimeId: true,
+            }).extend({
+              potentialDateTime: PotentialDateTimeSchema.pick({
+                id: true,
+                eventId: true,
+                dateTime: true,
+              }),
+            })
+          )
+          .optional(),
       })
     ),
   }),
+  userMembership: MembershipSchema.pick({
+    id: true,
+    role: true,
+    rsvpStatus: true,
+  }),
+  userId: z.string(),
 });
 
 export type EventAttendeesPageData = z.infer<typeof EventAttendeesPageData>;
@@ -119,3 +148,18 @@ export const EventAdminListItemData = EventSchema.pick({
 });
 
 export type EventAdminListItemData = z.infer<typeof EventAdminListItemData>;
+
+// Mutual events data - events where both users are members
+export const MutualEventsData = z.array(
+  EventSchema.pick({
+    id: true,
+    title: true,
+    description: true,
+    location: true,
+    chosenDateTime: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+);
+
+export type MutualEventsData = z.infer<typeof MutualEventsData>;

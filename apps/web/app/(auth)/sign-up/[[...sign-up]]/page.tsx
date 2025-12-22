@@ -5,6 +5,7 @@ import { signIn } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { Icons } from '@/components/icons';
 
 export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function SignUpPage() {
     try {
       const { error } = await signIn.social({
         provider,
-        callbackURL: '/events',
+        callbackURL: '/onboarding',
       });
 
       if (error) {
@@ -46,6 +47,7 @@ export default function SignUpPage() {
                 variant='outline'
                 disabled={loading}
               >
+                <Icons.discord className='size-4 mr-2' />
                 Continue with Discord
               </Button>
               <Button
@@ -54,6 +56,7 @@ export default function SignUpPage() {
                 variant='outline'
                 disabled={loading}
               >
+                <Icons.google className='size-4 mr-2' />
                 Continue with Google
               </Button>
             </div>

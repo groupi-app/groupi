@@ -26,7 +26,7 @@ export default function Home() {
         </p>
         <p>Otherwise, I hope you enjoy!</p>
       </div>
-      <Link href='/create'>
+      <Link href='/create' className='w-max'>
         <Button className='flex items-center gap-1'>
           <Icons.arrowRight className='size-4' />
           <span>Get Started!</span>

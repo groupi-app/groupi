@@ -1,3 +1,5 @@
+'use client';
+
 import { Icons } from '@/components/icons';
 import {
   NavigationMenu,
@@ -63,6 +65,14 @@ export function MainNav({ items, session }: MainNavProps) {
             name: session?.user?.name || null,
             email: session?.user?.email || '',
             image: session?.user?.image || null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            imageKey: (session?.user as any)?.imageKey || null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pronouns: (session?.user as any)?.pronouns || null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            bio: (session?.user as any)?.bio || null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            username: (session?.user as any)?.username || null,
           }}
           items={filteredItems || []}
         />
@@ -83,6 +93,8 @@ export function MainNav({ items, session }: MainNavProps) {
                 pronouns: (session.user as any).pronouns || null,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 bio: (session.user as any).bio || null,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                username: (session.user as any).username || null,
               }}
             />
           </div>
