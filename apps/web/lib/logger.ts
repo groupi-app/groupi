@@ -59,26 +59,38 @@ const loggerConfig: pino.LoggerOptions = {
 // Note: When using transport, Pino runs in worker thread mode
 // We disable transport in development to avoid worker thread module resolution issues
 // Transport is only enabled in production when LOKI_ENABLED=true
+// If transport fails to initialize, we fall back to standard logger to prevent blocking
 let logger: pino.Logger;
 
 if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
-  // Resolve absolute path to transport worker file in services package
-  // Use .js version in production (TypeScript files aren't available in worker threads)
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  const transportPath = resolve(
-    __dirname,
-    '../../../packages/services/src/infrastructure/loki-transport-worker.js'
-  );
+  try {
+    // Resolve absolute path to transport worker file in services package
+    // Use .js version in production (TypeScript files aren't available in worker threads)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const transportPath = resolve(
+      __dirname,
+      '../../../packages/services/src/infrastructure/loki-transport-worker.js'
+    );
 
-  // Use pino.transport() with explicit worker options for better compatibility
-  // This helps resolve module paths correctly in pnpm monorepos
-  // The transport is passed as the second argument to pino()
-  const transport = pino.transport({
-    target: transportPath,
-    options: {},
-  });
-  logger = pino(loggerConfig, transport);
+    // Use pino.transport() with explicit worker options for better compatibility
+    // This helps resolve module paths correctly in pnpm monorepos
+    // The transport is passed as the second argument to pino()
+    const transport = pino.transport({
+      target: transportPath,
+      options: {},
+    });
+    logger = pino(loggerConfig, transport);
+  } catch (error) {
+    // If transport fails to initialize, fall back to standard logger
+    // This ensures logging never blocks the application
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[Logger] Failed to initialize Loki transport, falling back to standard logger:',
+      error
+    );
+    logger = pino(loggerConfig);
+  }
 } else {
   // No transport - use standard logger
   // In development, this avoids worker thread module resolution issues

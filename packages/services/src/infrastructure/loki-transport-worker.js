@@ -22,10 +22,19 @@ module.exports = async function () {
   const environment = process.env.NODE_ENV || 'development';
   const service = process.env.LOKI_SERVICE || 'services';
 
+  // If credentials are missing, return a no-op transport that silently discards logs
+  // This prevents blocking if Loki isn't properly configured
   if (!instanceId || !token) {
-    throw new Error(
-      'Loki credentials missing: LOKI_INSTANCE_ID and LOKI_TOKEN must be set'
+    console.warn(
+      '[Loki Transport] Credentials missing, logs will not be sent to Loki'
     );
+    // Return a no-op transport that discards all logs
+    return build(async function (source) {
+      // eslint-disable-next-line no-unused-vars
+      for await (const _obj of source) {
+        // Discard logs silently
+      }
+    });
   }
 
   const batchSize = 10;
