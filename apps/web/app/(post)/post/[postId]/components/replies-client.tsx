@@ -78,7 +78,8 @@ export function RepliesClient({
 
     // Get the position of the newest reply relative to the document
     const rect = newestReplyRef.current.getBoundingClientRect();
-    const currentScrollTop = window.scrollY || document.documentElement.scrollTop;
+    const currentScrollTop =
+      window.scrollY || document.documentElement.scrollTop;
     const elementTop = rect.top + currentScrollTop;
     const elementHeight = rect.height;
     const elementBottom = elementTop + elementHeight;
@@ -215,7 +216,7 @@ export function RepliesClient({
       // Consider "at bottom" if within 200px of bottom (more lenient for autoscroll)
       const autoscrollThreshold = 200;
       const distanceFromBottom = documentHeight - scrollBottom;
-      
+
       const isNearBottom = distanceFromBottom <= autoscrollThreshold;
 
       if (isNearBottom && !isAtBottom) {
@@ -241,31 +242,38 @@ export function RepliesClient({
   useEffect(() => {
     if (currentReplyCount > previousReplyCountRef.current) {
       const newMessages = currentReplyCount - previousReplyCountRef.current;
-      
+
       console.log('[Autoscroll] New message detected:', {
         previousCount: previousReplyCountRef.current,
         currentCount: currentReplyCount,
         newMessages,
       });
-      
+
       // Get the newest reply to check if it's from the current user
-      const newestReply = currentReplies.length > 0 ? currentReplies[currentReplies.length - 1] : null;
+      const newestReply =
+        currentReplies.length > 0
+          ? currentReplies[currentReplies.length - 1]
+          : null;
       const isMyMessage = newestReply?.author?.id === userId;
-      
+
       console.log('[Autoscroll] Message details:', {
         newestReplyId: newestReply?.id,
         newestReplyAuthorId: newestReply?.author?.id,
         userId,
         isMyMessage,
       });
-      
+
       const autoscrollThreshold = 200; // Autoscroll if within 200px of bottom
       const badgeThreshold = 300; // Only show badge if more than 300px from bottom
 
       // Helper function to attempt scrolling
       const attemptScroll = (attempts = 0, forceScroll = false) => {
-        console.log('[Autoscroll] Attempt scroll:', { attempts, forceScroll, hasRef: !!newestReplyRef.current });
-        
+        console.log('[Autoscroll] Attempt scroll:', {
+          attempts,
+          forceScroll,
+          hasRef: !!newestReplyRef.current,
+        });
+
         if (attempts > 20) {
           // Give up after 20 attempts (2 seconds)
           console.log('[Autoscroll] Giving up after 20 attempts');
@@ -308,7 +316,7 @@ export function RepliesClient({
         const scrollBottom = scrollTop + windowHeight;
         const documentHeight = document.documentElement.scrollHeight;
         const distanceFromBottom = documentHeight - scrollBottom;
-        
+
         console.log('[Autoscroll] Pusher message - checking position:', {
           scrollTop,
           scrollBottom,
@@ -317,7 +325,7 @@ export function RepliesClient({
           autoscrollThreshold,
           badgeThreshold,
         });
-        
+
         const wasNearBottom = distanceFromBottom <= autoscrollThreshold;
 
         if (wasNearBottom && !isScrollingRef.current) {
@@ -327,10 +335,15 @@ export function RepliesClient({
           setTimeout(() => attemptScroll(0, false), 50);
         } else if (distanceFromBottom > badgeThreshold) {
           // User is scrolled up significantly, increment badge count
-          console.log('[Autoscroll] Scrolled up - incrementing badge:', newMessages);
+          console.log(
+            '[Autoscroll] Scrolled up - incrementing badge:',
+            newMessages
+          );
           setNewMessageCount(prev => prev + newMessages);
         } else {
-          console.log('[Autoscroll] Not near bottom and not far enough for badge - no action');
+          console.log(
+            '[Autoscroll] Not near bottom and not far enough for badge - no action'
+          );
         }
       }
     }

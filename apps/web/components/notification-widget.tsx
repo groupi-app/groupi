@@ -6,7 +6,10 @@ import { fetchNotifications } from '@/lib/queries/notification-queries';
 import { qk } from '@/lib/query-keys';
 import { NotificationSlate } from './notification-slate';
 import { Button } from '@/components/ui/button';
-import { markAllNotificationsAsReadAction, deleteAllNotificationsAction } from '@/actions/notification-actions';
+import {
+  markAllNotificationsAsReadAction,
+  deleteAllNotificationsAction,
+} from '@/actions/notification-actions';
 import { toast } from 'sonner';
 import { usePusherRealtime } from '@/hooks/use-pusher-realtime';
 import { useSession } from '@/lib/auth-client';
@@ -39,15 +42,25 @@ interface NotificationWidgetProps {
  * Displays list of notifications with mark all as read functionality
  * Supports pagination and real-time updates via Pusher
  */
-export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetProps) {
+export function NotificationWidget({
+  maxHeight = '400px',
+}: NotificationWidgetProps) {
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const queryClient = useQueryClient();
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [allNotifications, setAllNotifications] = useState<NotificationFeedData[]>([]);
+  const [allNotifications, setAllNotifications] = useState<
+    NotificationFeedData[]
+  >([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { sheetOpen, setSheetOpen, handleContextMenu, handleMoreClick, isMobile } = useActionMenu();
+  const {
+    sheetOpen,
+    setSheetOpen,
+    handleContextMenu,
+    handleMoreClick,
+    isMobile,
+  } = useActionMenu();
 
   // Reset cursor when userId changes (useLayoutEffect for synchronous reset)
   useLayoutEffect(() => {
@@ -59,14 +72,22 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
   }, [userId]);
 
   // Fetch notifications
-  const { data: notifications, isLoading, isError, error } = useQuery({
+  const {
+    data: notifications,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: qk.notifications.list(userId || 'anonymous', cursor),
     queryFn: async () => {
       try {
         const result = await fetchNotifications(cursor);
         return result;
       } catch (err) {
-        console.error('[NotificationWidget] Error fetching notifications:', err);
+        console.error(
+          '[NotificationWidget] Error fetching notifications:',
+          err
+        );
         throw err;
       }
     },
@@ -83,7 +104,9 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
         // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronous state sync needed for query results
         setAllNotifications(prev => {
           const existingIds = new Set(prev.map(n => n.id));
-          const newNotifications = notifications.filter(n => !existingIds.has(n.id));
+          const newNotifications = notifications.filter(
+            n => !existingIds.has(n.id)
+          );
           return [...prev, ...newNotifications];
         });
       } else {
@@ -99,7 +122,7 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
     event: 'notification-changed',
     tags: userId ? [`user-${userId}-notifications`] : [],
     queryKey: qk.notifications.list(userId || 'anonymous'),
-    onInsert: (data) => {
+    onInsert: data => {
       const newNotification = data as NotificationFeedData;
       // Add to beginning of list
       setAllNotifications(prev => {
@@ -112,10 +135,14 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
     },
     onUpdate: () => {
       // Refetch notifications and count when updated
-      queryClient.invalidateQueries({ queryKey: qk.notifications.list(userId || 'anonymous') });
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.list(userId || 'anonymous'),
+      });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     },
-    onDelete: (data) => {
+    onDelete: data => {
       const deletedData = data as { id?: string; allDeleted?: boolean };
       if (deletedData.allDeleted) {
         // Clear all notifications
@@ -126,7 +153,9 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
         setAllNotifications(prev => prev.filter(n => n.id !== deletedData.id));
       }
       // Invalidate count
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     },
   });
 
@@ -139,12 +168,14 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
     } else {
       toast.success('All notifications marked as read');
       // Update local state optimistically
-      setAllNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
+      setAllNotifications(prev => prev.map(n => ({ ...n, read: true })));
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: qk.notifications.list(userId || 'anonymous') });
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.list(userId || 'anonymous'),
+      });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     }
   }, [queryClient, userId]);
 
@@ -167,8 +198,12 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
       setAllNotifications([]);
       setCursor(undefined);
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: qk.notifications.list(userId || 'anonymous') });
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.list(userId || 'anonymous'),
+      });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     }
     setDeleteDialogOpen(false);
   }, [queryClient, userId]);
@@ -197,18 +232,29 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
   if (isError) {
     return (
       <div className='p-4 text-sm text-muted-foreground'>
-        Error loading notifications: {error instanceof Error ? error.message : 'Unknown error'}
+        Error loading notifications:{' '}
+        {error instanceof Error ? error.message : 'Unknown error'}
       </div>
     );
   }
 
-  if (isLoading && notifications === undefined && allNotifications.length === 0) {
+  if (
+    isLoading &&
+    notifications === undefined &&
+    allNotifications.length === 0
+  ) {
     return (
-      <div className='p-4 text-sm text-muted-foreground'>Loading notifications...</div>
+      <div className='p-4 text-sm text-muted-foreground'>
+        Loading notifications...
+      </div>
     );
   }
 
-  if (!isLoading && notifications !== undefined && allNotifications.length === 0) {
+  if (
+    !isLoading &&
+    notifications !== undefined &&
+    allNotifications.length === 0
+  ) {
     return (
       <div className='p-4 text-sm text-muted-foreground'>
         No notifications yet
@@ -223,7 +269,11 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
       {allNotifications.length > 0 && (
         <div className='border-b p-2'>
           <div className='flex items-center gap-2'>
-            <Tabs value={filter} onValueChange={(value) => setFilter(value as 'all' | 'unread')} className='flex-1'>
+            <Tabs
+              value={filter}
+              onValueChange={value => setFilter(value as 'all' | 'unread')}
+              className='flex-1'
+            >
               <TabsList className='grid w-full grid-cols-2'>
                 <TabsTrigger value='all'>All</TabsTrigger>
                 <TabsTrigger value='unread'>Unread</TabsTrigger>
@@ -315,11 +365,16 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
         <div className='flex flex-col'>
           {filteredNotifications.length === 0 ? (
             <div className='p-4 text-sm text-muted-foreground text-center'>
-              {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
+              {filter === 'unread'
+                ? 'No unread notifications'
+                : 'No notifications'}
             </div>
           ) : (
             filteredNotifications.map(notification => (
-              <NotificationSlate key={notification.id} notification={notification} />
+              <NotificationSlate
+                key={notification.id}
+                notification={notification}
+              />
             ))
           )}
         </div>
@@ -343,7 +398,8 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
           <AlertDialogHeader>
             <AlertDialogTitle>Delete all notifications?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete all your notifications. This action cannot be undone.
+              This will permanently delete all your notifications. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -360,4 +416,3 @@ export function NotificationWidget({ maxHeight = '400px' }: NotificationWidgetPr
     </div>
   );
 }
-

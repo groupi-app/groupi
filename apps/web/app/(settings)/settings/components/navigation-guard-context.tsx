@@ -1,6 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from 'react';
 
 interface NavigationGuardContextValue {
   shouldBlockNavigation: () => boolean;
@@ -9,15 +14,10 @@ interface NavigationGuardContextValue {
   unregisterGuard: () => void;
 }
 
-const NavigationGuardContext = createContext<NavigationGuardContextValue | null>(
-  null
-);
+const NavigationGuardContext =
+  createContext<NavigationGuardContextValue | null>(null);
 
-export function NavigationGuardProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function NavigationGuardProvider({ children }: { children: ReactNode }) {
   const activeGuardRef = React.useRef<NavigationGuardContextValue | null>(null);
 
   const registerGuard = useCallback((guard: NavigationGuardContextValue) => {
@@ -61,33 +61,34 @@ export function useNavigationGuardContext() {
   return context;
 }
 
-export function useRegisterNavigationGuard(guard: Omit<NavigationGuardContextValue, 'registerGuard' | 'unregisterGuard'>) {
+export function useRegisterNavigationGuard(
+  guard: Omit<NavigationGuardContextValue, 'registerGuard' | 'unregisterGuard'>
+) {
   const context = useNavigationGuardContext();
   const guardRef = React.useRef(guard);
   const guardObjectRef = React.useRef<NavigationGuardContextValue | null>(null);
-  
+
   // Keep ref updated with latest guard functions
   React.useEffect(() => {
     guardRef.current = guard;
   }, [guard]);
-  
+
   // Create stable guard object only once
   React.useEffect(() => {
     if (!context || guardObjectRef.current) return;
-    
+
     guardObjectRef.current = {
       shouldBlockNavigation: () => guardRef.current.shouldBlockNavigation(),
       triggerFlash: () => guardRef.current.triggerFlash(),
       registerGuard: () => {},
       unregisterGuard: () => {},
     };
-    
+
     context.registerGuard(guardObjectRef.current);
-    
+
     return () => {
       context.unregisterGuard();
       guardObjectRef.current = null;
     };
   }, [context]);
 }
-

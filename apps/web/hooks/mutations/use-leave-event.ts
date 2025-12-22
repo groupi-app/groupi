@@ -49,7 +49,10 @@ export function useLeaveEvent() {
       // Save previous data for rollback
       const prevData = [
         ...userEventQueries.map(
-          (query: { queryKey: readonly unknown[]; state: { data: unknown } }) => ({
+          (query: {
+            queryKey: readonly unknown[];
+            state: { data: unknown };
+          }) => ({
             queryKey: [...query.queryKey],
             data: query.state.data,
           })
@@ -118,7 +121,13 @@ export function useLeaveEvent() {
       // Rollback on error
       if (ctx?.prevData) {
         ctx.prevData.forEach(
-          ({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
             queryClient.setQueryData(queryKey, data);
           }
         );
@@ -129,7 +138,7 @@ export function useLeaveEvent() {
       queryClient.removeQueries({
         queryKey: qk.events.header(variables.eventId),
       });
-      
+
       // Refetch active queries immediately (for current user's own leave action)
       // Invalidate inactive queries (they'll refetch on mount)
       queryClient.invalidateQueries({
@@ -140,7 +149,7 @@ export function useLeaveEvent() {
         queryKey: qk.availability.data(variables.eventId),
         refetchType: 'active', // Refetch if query is currently active/mounted
       });
-      
+
       // Server action already handles user events cache invalidation
       // Just invalidate all event queries to refetch fresh data
       queryClient.invalidateQueries({

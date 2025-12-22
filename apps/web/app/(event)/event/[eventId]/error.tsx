@@ -30,9 +30,12 @@ export default function EventError({
   return (
     <div className='container pt-6 pb-24'>
       <div className='text-center py-8'>
-        <h1 className='text-2xl font-bold text-red-600'>Something went wrong</h1>
+        <h1 className='text-2xl font-bold text-red-600'>
+          Something went wrong
+        </h1>
         <p className='mt-2 text-muted-foreground'>
-          {error.message || 'An unexpected error occurred while loading the event'}
+          {error.message ||
+            'An unexpected error occurred while loading the event'}
         </p>
         <div className='mt-4 flex gap-2 justify-center'>
           <Button onClick={reset} variant='outline'>
@@ -51,4 +54,3 @@ export default function EventError({
     </div>
   );
 }
-

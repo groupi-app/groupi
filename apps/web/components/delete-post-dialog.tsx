@@ -24,8 +24,11 @@ export function DeletePostDialog({ id }: { id: string }) {
           toast.success('The post has been deleted.');
           router.back();
         },
-        onError: (error) => {
-          const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+        onError: error => {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : 'An unexpected error occurred. Please try again.';
           toast.error('Failed to delete post', {
             description: errorMessage,
           });
@@ -66,4 +69,3 @@ export function DeletePostDialog({ id }: { id: string }) {
     </DialogContent>
   );
 }
-

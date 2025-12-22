@@ -6,11 +6,14 @@ import { useNavigationGuard } from '@/hooks/use-navigation-guard';
 import { AccountForm as AccountFormType } from './account-form-provider';
 import { useRegisterNavigationGuard } from './navigation-guard-context';
 
-export function AccountFormWithGuard({ children }: { children: React.ReactNode }) {
+export function AccountFormWithGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { formState } = useFormContext<AccountFormType>();
-  const { shouldFlash, shouldBlockNavigation, triggerFlash } = useNavigationGuard(
-    formState.isDirty
-  );
+  const { shouldFlash, shouldBlockNavigation, triggerFlash } =
+    useNavigationGuard(formState.isDirty);
 
   useRegisterNavigationGuard({
     shouldBlockNavigation,
@@ -24,4 +27,3 @@ export function AccountFormWithGuard({ children }: { children: React.ReactNode }
     </AccountForm>
   );
 }
-

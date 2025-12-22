@@ -5,7 +5,10 @@ import { EventAttendeesPageData, RoleType, StatusType } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
-import { MemberAction, MemberActionDialog } from '@/components/member-action-dialog';
+import {
+  MemberAction,
+  MemberActionDialog,
+} from '@/components/member-action-dialog';
 import MemberIcon from '@/components/member-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
@@ -192,7 +195,9 @@ export function AttendeeSlate({
                       new Date(b.potentialDateTime.dateTime).getTime()
                   )
                   .map((availability, i) => {
-                    const dateTime = new Date(availability.potentialDateTime.dateTime);
+                    const dateTime = new Date(
+                      availability.potentialDateTime.dateTime
+                    );
                     return (
                       <div
                         key={i}
@@ -211,24 +216,26 @@ export function AttendeeSlate({
                             })}
                           </h1>
                           <span className='text-sm text-muted-foreground'>
-                            {dateTime.toLocaleTimeString([], { timeStyle: 'short' })}
+                            {dateTime.toLocaleTimeString([], {
+                              timeStyle: 'short',
+                            })}
                           </span>
                         </div>
-                      <div className='flex items-center gap-1'>
-                        {availability.status === 'YES' && (
-                          <Icons.check className='size-6 text-green-500' />
-                        )}
-                        {availability.status === 'MAYBE' && (
-                          <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
-                            ?
-                          </span>
-                        )}
-                        {availability.status === 'NO' && (
-                          <Icons.close className='size-6 text-red-500' />
-                        )}
-                        <span>{availability.status}</span>
+                        <div className='flex items-center gap-1'>
+                          {availability.status === 'YES' && (
+                            <Icons.check className='size-6 text-green-500' />
+                          )}
+                          {availability.status === 'MAYBE' && (
+                            <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                              ?
+                            </span>
+                          )}
+                          {availability.status === 'NO' && (
+                            <Icons.close className='size-6 text-red-500' />
+                          )}
+                          <span>{availability.status}</span>
+                        </div>
                       </div>
-                    </div>
                     );
                   })
               ) : (

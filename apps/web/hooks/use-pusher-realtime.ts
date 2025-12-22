@@ -27,18 +27,14 @@ interface RecordWithId {
  */
 export function usePusherRealtime(config: PusherRealtimeConfig) {
   const queryClient = useQueryClient();
-  const {
-    queryKey,
-    tags,
-    onInsert,
-    onUpdate,
-    onDelete,
-    channel,
-    event,
-  } = config;
+  const { queryKey, tags, onInsert, onUpdate, onDelete, channel, event } =
+    config;
 
   useEffect(() => {
-    pusherLogger.debug({ channel, event, tags }, 'Initializing Pusher realtime hook');
+    pusherLogger.debug(
+      { channel, event, tags },
+      'Initializing Pusher realtime hook'
+    );
   }, [channel, event, tags]);
 
   const handleEvent = useCallback(
@@ -50,14 +46,14 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
       };
 
       pusherLogger.debug(
-        { 
-          channel, 
-          event, 
+        {
+          channel,
+          event,
           type: eventData.type,
           hasNew: !!eventData.new,
           hasOld: !!eventData.old,
-          data
-        }, 
+          data,
+        },
         'Received Pusher realtime event'
       );
 
@@ -72,9 +68,9 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
           queryClient.setQueryData(queryKey, (old: unknown) => {
             if (!Array.isArray(old)) {
               pusherLogger.warn(
-                { 
-                  channel, 
-                  event, 
+                {
+                  channel,
+                  event,
                   queryKey,
                   dataType: typeof old,
                   isArray: Array.isArray(old),
@@ -83,10 +79,7 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
               );
               return old; // Return unchanged if not an array
             }
-            return [
-              eventData.new,
-              ...old,
-            ];
+            return [eventData.new, ...old];
           });
         }
       } else if (eventData.type === 'UPDATE' && eventData.new) {
@@ -102,9 +95,9 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
           queryClient.setQueryData(queryKey, (old: unknown) => {
             if (!Array.isArray(old)) {
               pusherLogger.warn(
-                { 
-                  channel, 
-                  event, 
+                {
+                  channel,
+                  event,
                   queryKey,
                   dataType: typeof old,
                   isArray: Array.isArray(old),
@@ -113,7 +106,7 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
               );
               return old; // Return unchanged if not an array
             }
-            return old.map((item) => {
+            return old.map(item => {
               const record = item as RecordWithId;
               return record.id === (eventData.new as RecordWithId).id
                 ? eventData.new
@@ -130,9 +123,9 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
           queryClient.setQueryData(queryKey, (old: unknown) => {
             if (!Array.isArray(old)) {
               pusherLogger.warn(
-                { 
-                  channel, 
-                  event, 
+                {
+                  channel,
+                  event,
                   queryKey,
                   dataType: typeof old,
                   isArray: Array.isArray(old),
@@ -142,7 +135,7 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
               return old; // Return unchanged if not an array
             }
             return old.filter(
-              (item) =>
+              item =>
                 (item as RecordWithId).id !== (eventData.old as RecordWithId).id
             );
           });
@@ -155,8 +148,11 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tags }),
-      }).catch((err) => {
-        pusherLogger.error({ channel, event, tags, error: err }, 'Failed to invalidate cache');
+      }).catch(err => {
+        pusherLogger.error(
+          { channel, event, tags, error: err },
+          'Failed to invalidate cache'
+        );
       });
     },
     [queryClient, queryKey, tags, onInsert, onUpdate, onDelete, channel, event]
@@ -171,4 +167,3 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
     onDelete,
   ]);
 }
-

@@ -119,7 +119,7 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
         potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
       },
       {
-        onSuccess: (result) => {
+        onSuccess: result => {
           toast.success('The event was created successfully.');
           // Reset form context before navigation so it's fresh when user comes back
           reset();

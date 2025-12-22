@@ -88,14 +88,17 @@ export function AvailabilityClient({
       // Handle role updates
       if (eventData.type === 'UPDATE' && eventData.new) {
         const updatedMembership = eventData.new;
-        
+
         // Check if we have MembershipData (has role and rsvpStatus)
         // If we only have { id }, skip (will be handled by refetch)
-        if (!('role' in updatedMembership) || !('rsvpStatus' in updatedMembership)) {
+        if (
+          !('role' in updatedMembership) ||
+          !('rsvpStatus' in updatedMembership)
+        ) {
           // Not full MembershipData, skip update
           return;
         }
-        
+
         const membershipData = updatedMembership as MembershipData;
         queryClient.setQueryData<AvailabilityPageData>(
           qk.availability.data(eventId),

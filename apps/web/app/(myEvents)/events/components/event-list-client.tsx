@@ -44,7 +44,7 @@ export function EventListClient({
 }: EventListClientProps) {
   const queryClient = useQueryClient();
   const [isMounted, setIsMounted] = useState(false);
-  
+
   // Only enable animations after hydration to prevent mismatch
   useEffect(() => {
     // Use requestAnimationFrame to ensure DOM is ready

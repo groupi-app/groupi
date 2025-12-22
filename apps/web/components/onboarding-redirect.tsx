@@ -27,4 +27,3 @@ export async function OnboardingRedirect() {
   // User needs onboarding - redirect to onboarding page
   redirect('/onboarding');
 }
-

@@ -9,7 +9,7 @@ import { EventListWrapper } from './event-list-wrapper';
  */
 export async function EventListServer() {
   'use cache: private';
-  
+
   const [error, myEventsData] = await getCachedMyEventsData();
 
   if (error) {
@@ -25,9 +25,7 @@ export async function EventListServer() {
       case 'DatabaseError':
         return (
           <div className='flex items-center justify-center py-8'>
-            <div className='text-lg text-red-600'>
-              Error loading events
-            </div>
+            <div className='text-lg text-red-600'>Error loading events</div>
           </div>
         );
       default:

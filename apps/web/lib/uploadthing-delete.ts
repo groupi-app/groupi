@@ -7,7 +7,6 @@ export async function deleteUploadThingFile(fileKey: string) {
     await utapi.deleteFiles(fileKey);
     return { success: true };
   } catch (error) {
-     
     console.error('Failed to delete file from UploadThing:', error);
     return { success: false, error };
   }

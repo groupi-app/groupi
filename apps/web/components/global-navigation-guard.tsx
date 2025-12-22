@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 /**
  * Global navigation guard that intercepts all link clicks
  * and prevents navigation when there are unsaved changes.
- * 
+ *
  * Performance optimizations:
  * - Only attaches listener when guard context exists (settings pages)
  * - Early returns for non-link clicks
@@ -68,4 +68,3 @@ export function GlobalNavigationGuard() {
 
   return null;
 }
-

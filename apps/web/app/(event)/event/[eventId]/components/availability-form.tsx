@@ -71,7 +71,9 @@ export function AvailabilityForm({
 
     // Check if there are new potential date times
     const hasNewDates = potentialDateTimes.some(pdt => !currentIds.has(pdt.id));
-    const hasRemovedDates = currentAnswers.some(a => !newIds.has(a.potentialDateTimeId));
+    const hasRemovedDates = currentAnswers.some(
+      a => !newIds.has(a.potentialDateTimeId)
+    );
 
     if (hasNewDates || hasRemovedDates) {
       // Reset form with updated potential date times
@@ -88,7 +90,8 @@ export function AvailabilityForm({
           return {
             potentialDateTimeId: pdt.id,
             answer: answerMap(
-              pdt.availabilities.find(a => a.membership.personId === userId)?.status
+              pdt.availabilities.find(a => a.membership.personId === userId)
+                ?.status
             ),
           };
         }),

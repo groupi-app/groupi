@@ -23,7 +23,7 @@ export function NotificationCount() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const queryClient = useQueryClient();
-  
+
   // Get or create processed IDs set for this user
   const getProcessedIds = () => {
     if (!userId) return new Set<string>();
@@ -53,38 +53,40 @@ export function NotificationCount() {
     event: 'notification-changed',
     tags: userId ? [`user-${userId}-notifications-count`] : [],
     queryKey: qk.notifications.count(userId || 'anonymous'),
-    onInsert: (data) => {
+    onInsert: data => {
       const notification = data as NotificationFeedData;
-      
+
       if (!userId) return;
-      
+
       const processedIds = getProcessedIds();
-      
+
       // Skip if we've already processed this notification (shared across all instances)
       if (processedIds.has(notification.id)) {
         return;
       }
-      
+
       // Mark this notification as processed (shared across all instances)
       processedIds.add(notification.id);
-      
+
       // Directly increment count when a new notification is inserted
       // New notifications are always unread, so increment by 1
       queryClient.setQueryData<{ count: number }>(
         qk.notifications.count(userId),
-        (old) => {
+        old => {
           if (!old) {
             // If no existing data, invalidate to fetch from server
-            queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId) });
+            queryClient.invalidateQueries({
+              queryKey: qk.notifications.count(userId),
+            });
             return old;
           }
           return { count: old.count + 1 };
         }
       );
     },
-    onUpdate: (data) => {
+    onUpdate: data => {
       const updateData = data as { allRead?: boolean; id?: string };
-      
+
       // Handle "mark all as read" case - set count to 0 immediately
       if (updateData.allRead === true) {
         queryClient.setQueryData<{ count: number }>(
@@ -93,15 +95,19 @@ export function NotificationCount() {
         );
         return;
       }
-      
+
       // For individual notification updates (mark as read/unread),
       // we don't know the read status from the Pusher event, so invalidate to refetch
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     },
     onDelete: () => {
       // For deletes, we don't know if the deleted notification was read or unread
       // Invalidate to refetch the accurate count
-      queryClient.invalidateQueries({ queryKey: qk.notifications.count(userId || 'anonymous') });
+      queryClient.invalidateQueries({
+        queryKey: qk.notifications.count(userId || 'anonymous'),
+      });
     },
   });
 
@@ -120,4 +126,3 @@ export function NotificationCount() {
     </Badge>
   );
 }
-

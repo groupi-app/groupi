@@ -1,5 +1,8 @@
 import { AccountSettingsContent } from '../components/account-settings-content';
-import { getCachedAccountSettingsData, getSession } from '@groupi/services/server';
+import {
+  getCachedAccountSettingsData,
+  getSession,
+} from '@groupi/services/server';
 import { AccountSettingsSkeleton } from '@/components/skeletons/account-settings-skeleton';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
@@ -36,7 +39,9 @@ async function AccountSettingsContentServer() {
     return (
       <div className='text-center py-8'>
         <h2 className='text-xl font-bold text-red-600'>Error</h2>
-        <p className='mt-2'>An error occurred while loading your account settings.</p>
+        <p className='mt-2'>
+          An error occurred while loading your account settings.
+        </p>
       </div>
     );
   }
@@ -57,4 +62,3 @@ async function AccountSettingsContentServer() {
     </AccountFormProvider>
   );
 }
-

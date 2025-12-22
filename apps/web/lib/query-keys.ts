@@ -60,7 +60,8 @@ export const qk = {
      * Query key for invite management data in an event
      * @param eventId - Event ID
      */
-    management: (eventId: string) => ['invites', 'management', eventId] as const,
+    management: (eventId: string) =>
+      ['invites', 'management', eventId] as const,
   },
 
   availability: {
@@ -103,4 +104,3 @@ export const qk = {
       ['users', 'mutualEvents', currentUserId, otherUserId] as const,
   },
 } as const;
-

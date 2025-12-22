@@ -63,16 +63,14 @@ export async function updateMemberRoleAction(
     updateTag(`event-${eventId}-members`);
 
     // Trigger Pusher event for event members
-    await pusherServer.trigger(
-      `event-${eventId}-members`,
-      'member-changed',
-      {
+    await pusherServer
+      .trigger(`event-${eventId}-members`, 'member-changed', {
         type: 'UPDATE',
         new: result[1],
-      }
-    ).catch((err: unknown) => {
-      console.error('[Pusher] Failed to trigger member-changed:', err);
-    });
+      })
+      .catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger member-changed:', err);
+      });
   }
 
   return result;
@@ -98,16 +96,14 @@ export async function removeMemberAction(
     updateTag(`event-${eventId}-members`);
 
     // Trigger Pusher event for event members
-    await pusherServer.trigger(
-      `event-${eventId}-members`,
-      'member-changed',
-      {
+    await pusherServer
+      .trigger(`event-${eventId}-members`, 'member-changed', {
         type: 'DELETE',
         old: { id: input.memberId },
-      }
-    ).catch((err: unknown) => {
-      console.error('[Pusher] Failed to trigger member-changed:', err);
-    });
+      })
+      .catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger member-changed:', err);
+      });
   }
 
   return result;
@@ -124,7 +120,7 @@ export async function updateRSVPAction(
     { eventId: input.eventId, rsvpStatus: input.status },
     'updateRSVPAction called'
   );
-  
+
   const result = await updateMemberRSVP({
     eventId: input.eventId,
     rsvpStatus: input.status,
@@ -151,17 +147,14 @@ export async function updateRSVPAction(
       type: 'UPDATE' as const,
       new: result[1],
     };
-    
+
     pusherLogger.debug(
       { eventId: input.eventId, channel: memberChannel, data: memberEventData },
       'Triggering Pusher member-changed event for RSVP update'
     );
-    
-    await pusherServer.trigger(
-      memberChannel,
-      'member-changed',
-      memberEventData
-    )
+
+    await pusherServer
+      .trigger(memberChannel, 'member-changed', memberEventData)
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: memberChannel },
@@ -181,17 +174,14 @@ export async function updateRSVPAction(
       type: 'UPDATE' as const,
       new: result[1],
     };
-    
+
     pusherLogger.debug(
       { eventId: input.eventId, channel: headerChannel, data: headerEventData },
       'Triggering Pusher event-changed event for RSVP update'
     );
-    
-    await pusherServer.trigger(
-      headerChannel,
-      'event-changed',
-      headerEventData
-    )
+
+    await pusherServer
+      .trigger(headerChannel, 'event-changed', headerEventData)
       .then(() => {
         pusherLogger.info(
           { eventId: input.eventId, channel: headerChannel },

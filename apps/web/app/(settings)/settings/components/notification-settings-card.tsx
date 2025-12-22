@@ -53,7 +53,7 @@ const notificationTypeLabels: Record<
   },
   NEW_REPLY: {
     label: 'New Reply',
-    description: "someone replies to my post.",
+    description: 'someone replies to my post.',
   },
   DATE_CHOSEN: {
     label: 'Date Chosen',
@@ -93,7 +93,7 @@ const notificationTypeLabels: Record<
   },
   USER_MENTIONED: {
     label: 'Mentioned',
-    description: "someone mentions me in a post or reply.",
+    description: 'someone mentions me in a post or reply.',
   },
 };
 
@@ -455,7 +455,8 @@ export function NotificationSettingsCard({
               // Helper to find notification by type
               const findNotification = (type: NotificationType) => {
                 return field.value.findIndex(
-                  (n: { notificationType: string }) => n.notificationType === type
+                  (n: { notificationType: string }) =>
+                    n.notificationType === type
                 );
               };
 
@@ -483,9 +484,7 @@ export function NotificationSettingsCard({
                         }}
                       />
                     </FormControl>
-                    <FormLabel
-                      htmlFor={`notification-${index}-${type}`}
-                    >
+                    <FormLabel htmlFor={`notification-${index}-${type}`}>
                       {notificationTypeLabels[type] ? (
                         <>
                           <span>

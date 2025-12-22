@@ -108,4 +108,3 @@ export function isModerator(userRole: RoleType): boolean {
 export function isOrganizer(userRole: RoleType): boolean {
   return userRole === 'ORGANIZER';
 }
-

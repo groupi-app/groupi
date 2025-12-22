@@ -42,7 +42,10 @@ export function useUpdateMemberRole() {
 
       // Save previous data for rollback
       const prevData = memberListQueries.map(
-        (query: { queryKey: readonly unknown[]; state: { data: unknown } }) => ({
+        (query: {
+          queryKey: readonly unknown[];
+          state: { data: unknown };
+        }) => ({
           queryKey: [...query.queryKey],
           data: query.state.data,
         })
@@ -84,7 +87,13 @@ export function useUpdateMemberRole() {
       // Rollback on error
       if (ctx?.prevData) {
         ctx.prevData.forEach(
-          ({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
             queryClient.setQueryData(queryKey, data);
           }
         );

@@ -47,4 +47,3 @@ export async function fetchNotificationCount(): Promise<NotificationCountData> {
 
   return data;
 }
-

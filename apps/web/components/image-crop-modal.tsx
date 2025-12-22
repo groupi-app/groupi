@@ -100,7 +100,6 @@ export function ImageCropModal({
       onCropComplete(croppedBlob);
       onOpenChange(false);
     } catch (error) {
-       
       console.error('Error cropping image:', error);
     }
   };

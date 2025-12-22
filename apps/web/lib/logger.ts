@@ -4,16 +4,16 @@ import { dirname, resolve } from 'path';
 
 /**
  * Web App Logger with Grafana Cloud Loki Integration
- * 
+ *
  * This logger sends server-side logs to Grafana Cloud Loki when enabled.
  * Client-side (browser) logs continue to use console methods and are NOT sent to Loki.
- * 
+ *
  * To enable Loki logging, set the following environment variables:
  * - LOKI_ENABLED=true
  * - LOKI_INSTANCE_ID=<your-instance-id>
  * - LOKI_TOKEN=<your-token>
  * - LOKI_URL=<optional-url-defaults-to-prod>
- * 
+ *
  * All credentials MUST be stored in environment variables, never hardcoded.
  */
 
@@ -69,7 +69,7 @@ if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
     __dirname,
     '../../../packages/services/src/infrastructure/loki-transport-worker.ts'
   );
-  
+
   // Use pino.transport() with explicit worker options for better compatibility
   // This helps resolve module paths correctly in pnpm monorepos
   // The transport is passed as the second argument to pino()

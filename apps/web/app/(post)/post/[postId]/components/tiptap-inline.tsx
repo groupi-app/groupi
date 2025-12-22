@@ -19,7 +19,10 @@ import { ReactRenderer } from '@tiptap/react';
 import { MentionList } from './mention-list';
 import { SlashCommandExtension } from './slash-command-extension';
 import type { PostDetailPageData } from '@groupi/schema/data';
-import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
+import type {
+  SuggestionProps,
+  SuggestionKeyDownProps,
+} from '@tiptap/suggestion';
 
 type Member = PostDetailPageData['post']['event']['memberships'][0];
 
@@ -61,7 +64,7 @@ export function TiptapInline({
   useEffect(() => {
     membersRef.current = members || [];
   }, [members]);
-  
+
   // Store isMobile in a ref so the mention extension can access current value
   const isMobileRef = useRef<boolean>(isMobile);
   useEffect(() => {
@@ -83,7 +86,8 @@ export function TiptapInline({
         },
         code: {
           HTMLAttributes: {
-            class: 'text-sm rounded-md bg-muted/50 border border-border/50 py-1 px-1.5 mx-1',
+            class:
+              'text-sm rounded-md bg-muted/50 border border-border/50 py-1 px-1.5 mx-1',
           },
         },
       }),
@@ -136,8 +140,11 @@ export function TiptapInline({
                   return currentMembers
                     .filter(member => {
                       const user = member.person.user;
-                      const displayName =
-                        (user?.name || user?.email || '').toLowerCase();
+                      const displayName = (
+                        user?.name ||
+                        user?.email ||
+                        ''
+                      ).toLowerCase();
                       const username = (user?.username || '').toLowerCase();
                       return (
                         displayName.includes(lowerQuery) ||
@@ -168,10 +175,11 @@ export function TiptapInline({
                       });
 
                       container = document.createElement('div');
-                      
-                      const editorElement = props.editor.view.dom as HTMLElement;
+
+                      const editorElement = props.editor.view
+                        .dom as HTMLElement;
                       const editorParent = editorElement.parentElement;
-                      
+
                       if (mobileMode && editorParent) {
                         // On mobile: use absolute positioning relative to parent
                         // Use z-0 so it doesn't cover the input focus ring
@@ -185,33 +193,36 @@ export function TiptapInline({
                         container.style.position = 'fixed';
                         document.body.appendChild(container);
                       }
-                      
+
                       // ReactRenderer.element is the root DOM element
                       container.appendChild(component.element);
 
                       const updatePosition = () => {
                         if (!props.clientRect || !container) return;
                         const editorWidth = editorElement.offsetWidth;
-                        
+
                         const mobileMode = isMobileRef.current;
                         if (mobileMode && editorParent) {
                           // Mobile: position relative to parent
-                          const parentRect = editorParent.getBoundingClientRect();
-                          const editorRect = editorElement.getBoundingClientRect();
-                          
+                          const parentRect =
+                            editorParent.getBoundingClientRect();
+                          const editorRect =
+                            editorElement.getBoundingClientRect();
+
                           container.style.left = `${editorRect.left - parentRect.left}px`;
                           container.style.width = `${editorWidth}px`;
                           container.style.top = `${editorRect.top - parentRect.top}px`;
                           container.style.transform = 'translateY(-100%)';
-                          
+
                           // Remove top border radius from input when menu is open
                           if (editorElementRef) {
                             editorElementRef.classList.add('mention-menu-open');
                           }
                         } else {
                           // Desktop: position relative to viewport
-                          const editorRect = editorElement.getBoundingClientRect();
-                          
+                          const editorRect =
+                            editorElement.getBoundingClientRect();
+
                           container.style.left = `${editorRect.left}px`;
                           container.style.width = `${editorWidth}px`;
                           container.style.top = `${editorRect.top + window.scrollY}px`;
@@ -233,29 +244,33 @@ export function TiptapInline({
                       });
 
                       if (props.clientRect && container) {
-                        const editorElement = props.editor.view.dom as HTMLElement;
+                        const editorElement = props.editor.view
+                          .dom as HTMLElement;
                         const editorParent = editorElement.parentElement;
                         const editorWidth = editorElement.offsetWidth;
                         const mobileMode = isMobileRef.current;
-                        
+
                         if (mobileMode && editorParent) {
                           // Mobile: position relative to parent
-                          const parentRect = editorParent.getBoundingClientRect();
-                          const editorRect = editorElement.getBoundingClientRect();
-                          
+                          const parentRect =
+                            editorParent.getBoundingClientRect();
+                          const editorRect =
+                            editorElement.getBoundingClientRect();
+
                           container.style.left = `${editorRect.left - parentRect.left}px`;
                           container.style.width = `${editorWidth}px`;
                           container.style.top = `${editorRect.top - parentRect.top}px`;
                           container.style.transform = 'translateY(-100%)';
-                          
+
                           // Remove top border radius from input when menu is open
                           if (editorElementRef) {
                             editorElementRef.classList.add('mention-menu-open');
                           }
                         } else {
                           // Desktop: position relative to viewport
-                          const editorRect = editorElement.getBoundingClientRect();
-                          
+                          const editorRect =
+                            editorElement.getBoundingClientRect();
+
                           container.style.left = `${editorRect.left}px`;
                           container.style.width = `${editorWidth}px`;
                           container.style.top = `${editorRect.top + window.scrollY}px`;
@@ -268,10 +283,16 @@ export function TiptapInline({
                         suggestionMenuOpenRef.current = false;
                         const mobileMode = isMobileRef.current;
                         if (mobileMode && editorElementRef) {
-                          editorElementRef.classList.remove('mention-menu-open');
+                          editorElementRef.classList.remove(
+                            'mention-menu-open'
+                          );
                         }
                         if (scrollHandler) {
-                          window.removeEventListener('scroll', scrollHandler, true);
+                          window.removeEventListener(
+                            'scroll',
+                            scrollHandler,
+                            true
+                          );
                         }
                         if (resizeHandler) {
                           window.removeEventListener('resize', resizeHandler);
@@ -288,8 +309,16 @@ export function TiptapInline({
                         return true;
                       }
                       // Handle Enter and Tab when menu is open - prevent form submission
-                      if ((props.event.key === 'Enter' || props.event.key === 'Tab') && component?.ref) {
-                        const ref = component.ref as { onKeyDown?: (props: { event: KeyboardEvent }) => boolean };
+                      if (
+                        (props.event.key === 'Enter' ||
+                          props.event.key === 'Tab') &&
+                        component?.ref
+                      ) {
+                        const ref = component.ref as {
+                          onKeyDown?: (props: {
+                            event: KeyboardEvent;
+                          }) => boolean;
+                        };
                         const handled = ref.onKeyDown?.({ event: props.event });
                         if (handled) {
                           props.event.preventDefault();
@@ -300,7 +329,11 @@ export function TiptapInline({
                       }
                       // Always try to handle keyboard navigation even if not Enter/Tab
                       if (component?.ref) {
-                        const ref = component.ref as { onKeyDown?: (props: { event: KeyboardEvent }) => boolean };
+                        const ref = component.ref as {
+                          onKeyDown?: (props: {
+                            event: KeyboardEvent;
+                          }) => boolean;
+                        };
                         return ref.onKeyDown?.({ event: props.event }) ?? false;
                       }
                       return false;
@@ -312,7 +345,11 @@ export function TiptapInline({
                         editorElementRef.classList.remove('mention-menu-open');
                       }
                       if (scrollHandler) {
-                        window.removeEventListener('scroll', scrollHandler, true);
+                        window.removeEventListener(
+                          'scroll',
+                          scrollHandler,
+                          true
+                        );
                       }
                       if (resizeHandler) {
                         window.removeEventListener('resize', resizeHandler);
@@ -345,7 +382,10 @@ export function TiptapInline({
         // If suggestion menu is open, don't process Enter/Tab here - let suggestion plugin handle it
         // The suggestion plugin runs before this handler, so if it handled the key, this won't be called
         // But we check the ref here as a safety net to prevent form submission
-        if (suggestionMenuOpenRef.current && (event.key === 'Enter' || event.key === 'Tab')) {
+        if (
+          suggestionMenuOpenRef.current &&
+          (event.key === 'Enter' || event.key === 'Tab')
+        ) {
           return false; // Let suggestion plugin handle it
         }
 

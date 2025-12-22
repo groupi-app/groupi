@@ -86,7 +86,10 @@ export function useUpdatePost() {
       // Save previous data for all affected queries
       const prevData = [
         ...feedQueries.map(
-          (query: { queryKey: readonly unknown[]; state: { data: unknown } }) => ({
+          (query: {
+            queryKey: readonly unknown[];
+            state: { data: unknown };
+          }) => ({
             queryKey: [...query.queryKey],
             data: query.state.data,
           })
@@ -154,9 +157,17 @@ export function useUpdatePost() {
     ) => {
       // Rollback on error
       if (ctx?.prevData) {
-        ctx.prevData.forEach(({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
-          queryClient.setQueryData(queryKey, data);
-        });
+        ctx.prevData.forEach(
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
+            queryClient.setQueryData(queryKey, data);
+          }
+        );
       }
     },
     onSuccess: (data: PostData) => {

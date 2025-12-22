@@ -40,7 +40,10 @@ export function useDeleteEvent() {
 
       // Save previous data for rollback
       const prevData = userEventQueries.map(
-        (query: { queryKey: readonly unknown[]; state: { data: unknown } }) => ({
+        (query: {
+          queryKey: readonly unknown[];
+          state: { data: unknown };
+        }) => ({
           queryKey: [...query.queryKey],
           data: query.state.data,
         })
@@ -76,7 +79,13 @@ export function useDeleteEvent() {
       // Rollback on error
       if (ctx?.prevData) {
         ctx.prevData.forEach(
-          ({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
             queryClient.setQueryData(queryKey, data);
           }
         );

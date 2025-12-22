@@ -18,7 +18,7 @@ export async function SettingsContent({
         return <div>Settings not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-       
+
       default:
         return <div>Failed to load settings</div>;
     }

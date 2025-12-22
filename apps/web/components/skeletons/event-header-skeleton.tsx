@@ -14,7 +14,7 @@ export function EventHeaderSkeleton() {
           </DropdownMenuTrigger>
         </DropdownMenu>
       </div>
-      
+
       {/* Location and date */}
       <div className='flex flex-col gap-2'>
         <div className='flex items-center gap-1 text-muted-foreground'>
@@ -26,11 +26,11 @@ export function EventHeaderSkeleton() {
           <Skeleton className='h-4 w-48' />
         </div>
       </div>
-      
+
       {/* Description */}
       <Skeleton className='h-4 w-full' />
       <Skeleton className='h-4 w-5/6' />
-      
+
       {/* RSVP section */}
       <div className='mt-2'>
         <Skeleton className='h-10 w-48' />
@@ -38,4 +38,3 @@ export function EventHeaderSkeleton() {
     </header>
   );
 }
-

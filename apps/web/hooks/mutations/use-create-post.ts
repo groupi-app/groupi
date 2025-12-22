@@ -3,7 +3,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPostAction } from '@/actions/post-actions';
 import { qk } from '@/lib/query-keys';
-import type { PostFeedData, PostDetailPageData, EventHeaderData } from '@groupi/schema/data';
+import type {
+  PostFeedData,
+  PostDetailPageData,
+  EventHeaderData,
+} from '@groupi/schema/data';
 import type { PostMutationError } from '@/actions/post-actions';
 import { hookLogger } from '@/lib/logger';
 
@@ -52,14 +56,22 @@ export function useCreatePost() {
       const inputData = data as PostDataInput;
       return {
         ...inputData,
-        createdAt: inputData.createdAt instanceof Date ? inputData.createdAt : new Date(inputData.createdAt),
-        updatedAt: inputData.updatedAt instanceof Date ? inputData.updatedAt : new Date(inputData.updatedAt),
-        editedAt: inputData.editedAt 
-          ? (inputData.editedAt instanceof Date ? inputData.editedAt : new Date(inputData.editedAt))
+        createdAt:
+          inputData.createdAt instanceof Date
+            ? inputData.createdAt
+            : new Date(inputData.createdAt),
+        updatedAt:
+          inputData.updatedAt instanceof Date
+            ? inputData.updatedAt
+            : new Date(inputData.updatedAt),
+        editedAt: inputData.editedAt
+          ? inputData.editedAt instanceof Date
+            ? inputData.editedAt
+            : new Date(inputData.editedAt)
           : undefined,
       };
     },
-    onMutate: async (newPost) => {
+    onMutate: async newPost => {
       // Cancel outgoing queries to prevent overwriting optimistic update
       await queryClient.cancelQueries({
         queryKey: qk.posts.feed(newPost.eventId),
@@ -73,23 +85,23 @@ export function useCreatePost() {
       // Optimistically update cache
       queryClient.setQueryData<PostFeedData>(
         qk.posts.feed(newPost.eventId),
-        (old) => {
+        old => {
           if (!old) {
             // If no existing data, skip optimistic update
             // (shouldn't happen in practice, but if it does, we'll wait for server response)
             return old;
           }
-          
+
           // Find the current user's membership to get author data
           const currentUserMembership = old.event.memberships.find(
-            (m) => m.id === old.userMembership.id
+            m => m.id === old.userMembership.id
           );
-          
+
           // If we can't find the membership, skip optimistic update
           if (!currentUserMembership) {
             return old;
           }
-          
+
           return {
             ...old,
             event: {
@@ -136,7 +148,7 @@ export function useCreatePost() {
         },
         'Failed to create post'
       );
-      
+
       // Rollback on error
       if (ctx?.prev) {
         queryClient.setQueryData(qk.posts.feed(newPost.eventId), ctx.prev);
@@ -146,25 +158,25 @@ export function useCreatePost() {
       // Replace optimistic post with real data
       queryClient.setQueryData<PostFeedData>(
         qk.posts.feed(variables.eventId),
-        (old) => {
+        old => {
           if (!old) return old;
-          
+
           // Remove optimistic post
           const withoutOptimistic = old.event.posts.filter(
-            (p) => !('optimistic' in p && p.optimistic)
+            p => !('optimistic' in p && p.optimistic)
           );
-          
+
           // Find the author's membership to get user data
           const authorMembership = old.event.memberships.find(
-            (m) => m.personId === data.authorId
+            m => m.personId === data.authorId
           );
-          
+
           // If we can't find the author, skip adding the post
           // (it will be fetched via Pusher or on next refresh)
           if (!authorMembership) {
             return old;
           }
-          
+
           // Transform PostData into PostCardData structure
           const newPost: Post = {
             id: data.id,
@@ -187,7 +199,7 @@ export function useCreatePost() {
             replies: [], // New post has no replies yet
             replyCount: 0,
           };
-          
+
           return {
             ...old,
             event: {
@@ -203,22 +215,22 @@ export function useCreatePost() {
       const feedData = queryClient.getQueryData<PostFeedData>(
         qk.posts.feed(variables.eventId)
       );
-      
+
       // Get event header to access event title (required for PostDetailPageData)
       const eventHeader = queryClient.getQueryData<EventHeaderData>(
         qk.events.header(variables.eventId)
       );
-      
+
       if (feedData && eventHeader) {
         const authorMembership = feedData.event.memberships.find(
-          (m) => m.personId === data.authorId
+          m => m.personId === data.authorId
         );
-        
+
         // Find the current user's membership to get personId
         const userMembershipData = feedData.event.memberships.find(
-          (m) => m.id === feedData.userMembership.id
+          m => m.id === feedData.userMembership.id
         );
-        
+
         if (authorMembership && userMembershipData) {
           // Construct full post structure for detail page
           const fullPost: PostDetailPageData['post'] = {
@@ -247,7 +259,7 @@ export function useCreatePost() {
               memberships: feedData.event.memberships,
             },
           };
-          
+
           // Initialize post detail query cache
           queryClient.setQueryData<PostDetailPageData>(
             qk.posts.detail(data.id),
@@ -271,4 +283,3 @@ export function useCreatePost() {
     },
   });
 }
-

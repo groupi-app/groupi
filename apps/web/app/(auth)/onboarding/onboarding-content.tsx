@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 import { checkUsernameAvailabilityAction } from '@/actions/account-actions';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
@@ -160,13 +166,18 @@ export function OnboardingContent() {
                   )}
                 </div>
                 {availabilityStatus === 'available' && (
-                  <p className='text-sm text-green-600 mt-1'>Username is available</p>
+                  <p className='text-sm text-green-600 mt-1'>
+                    Username is available
+                  </p>
                 )}
                 {availabilityStatus === 'taken' && (
-                  <p className='text-sm text-red-600 mt-1'>Username is already taken</p>
+                  <p className='text-sm text-red-600 mt-1'>
+                    Username is already taken
+                  </p>
                 )}
                 <p className='text-sm text-muted-foreground mt-1'>
-                  Username can only contain letters, numbers, underscores, and hyphens
+                  Username can only contain letters, numbers, underscores, and
+                  hyphens
                 </p>
               </div>
 
@@ -245,4 +256,3 @@ export function OnboardingContent() {
     </div>
   );
 }
-

@@ -48,7 +48,9 @@ export function useDeleteInvite() {
       for (const query of inviteQueries) {
         const data = query.state.data as EventInvitePageData | undefined;
         if (data) {
-          const invite = data.invites.find((i) => i.id === deletedInvite.inviteId);
+          const invite = data.invites.find(
+            i => i.id === deletedInvite.inviteId
+          );
           if (invite) {
             eventId = invite.eventId;
             prevData.push({
@@ -65,7 +67,7 @@ export function useDeleteInvite() {
                 return {
                   ...old,
                   invites: old.invites.filter(
-                    (i) => i.id !== deletedInvite.inviteId
+                    i => i.id !== deletedInvite.inviteId
                   ),
                 };
               }
@@ -76,10 +78,10 @@ export function useDeleteInvite() {
       }
 
       // Also save data for any other queries (for rollback)
-      inviteQueries.forEach((query) => {
+      inviteQueries.forEach(query => {
         if (
           !prevData.some(
-            (p) => JSON.stringify(p.queryKey) === JSON.stringify(query.queryKey)
+            p => JSON.stringify(p.queryKey) === JSON.stringify(query.queryKey)
           )
         ) {
           prevData.push({
@@ -102,7 +104,13 @@ export function useDeleteInvite() {
       // Rollback on error
       if (ctx?.prevData) {
         ctx.prevData.forEach(
-          ({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
             queryClient.setQueryData(queryKey, data);
           }
         );

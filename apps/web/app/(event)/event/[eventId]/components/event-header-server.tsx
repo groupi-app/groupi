@@ -4,7 +4,10 @@ import { componentLogger } from '@/lib/logger';
 
 // Dynamically import EventHeaderClient to prevent bundling across route groups
 const EventHeaderClient = dynamic(
-  () => import('./event-header-client').then(mod => ({ default: mod.EventHeaderClient })),
+  () =>
+    import('./event-header-client').then(mod => ({
+      default: mod.EventHeaderClient,
+    })),
   { ssr: true }
 );
 
@@ -22,7 +25,10 @@ export async function EventHeaderServer({ eventId }: { eventId: string }) {
     const [error, eventData] = await getCachedEventHeaderData(eventId);
 
     if (error) {
-      componentLogger.error({ eventId, errorTag: error._tag, error }, 'Error fetching header data');
+      componentLogger.error(
+        { eventId, errorTag: error._tag, error },
+        'Error fetching header data'
+      );
       switch (error._tag) {
         case 'NotFoundError':
           return <div>Event not found</div>;

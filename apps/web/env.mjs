@@ -23,7 +23,9 @@ export const env = createEnv({
     DEBUG: z.enum(['true', 'false']).optional(),
     // Supabase JWT Configuration for Realtime
     SUPABASE_JWT_SECRET: z.string().min(1).optional(),
-    SUPABASE_JWT_ALG: z.enum(['HS256', 'HS384', 'HS512', 'RS256', 'ES256']).optional(),
+    SUPABASE_JWT_ALG: z
+      .enum(['HS256', 'HS384', 'HS512', 'RS256', 'ES256'])
+      .optional(),
     // Supabase Service Role Key (for local dev workaround - bypasses JWT verification)
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
     // Grafana Cloud Loki Configuration (optional)
@@ -70,7 +72,8 @@ export const env = createEnv({
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+    NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
     SUPABASE_JWT_ALG: process.env.SUPABASE_JWT_ALG,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,

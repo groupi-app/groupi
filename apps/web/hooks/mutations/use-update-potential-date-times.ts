@@ -25,7 +25,9 @@ export function useUpdatePotentialDateTimes() {
     ): Promise<{ message: string }> => {
       const [error, data] = await updatePotentialDateTimesAction({
         eventId: input.eventId,
-        potentialDateTimes: input.potentialDateTimes.map(dt => dt.toISOString()),
+        potentialDateTimes: input.potentialDateTimes.map(dt =>
+          dt.toISOString()
+        ),
       });
       if (error) throw error;
       return data;
@@ -47,8 +49,10 @@ export function useUpdatePotentialDateTimes() {
         qk.availability.data(input.eventId),
         (old: AvailabilityPageData | undefined) => {
           // Find organizer's membership from old data (if available)
-          let organizerMembership: AvailabilityPageData['potentialDateTimes'][0]['availabilities'][0]['membership'] | null = null;
-          
+          let organizerMembership:
+            | AvailabilityPageData['potentialDateTimes'][0]['availabilities'][0]['membership']
+            | null = null;
+
           if (old) {
             // Look for organizer membership in existing availabilities
             for (const pdt of old.potentialDateTimes) {
@@ -107,23 +111,25 @@ export function useUpdatePotentialDateTimes() {
           }
 
           // Create new potential date times with organizer's availability optimistically set to YES
-          const newPotentialDateTimes = input.potentialDateTimes.map((dt, index) => {
-            const availabilities = organizerMembership
-              ? [
-                  {
-                    status: 'YES' as const,
-                    membership: organizerMembership,
-                  },
-                ]
-              : [];
+          const newPotentialDateTimes = input.potentialDateTimes.map(
+            (dt, index) => {
+              const availabilities = organizerMembership
+                ? [
+                    {
+                      status: 'YES' as const,
+                      membership: organizerMembership,
+                    },
+                  ]
+                : [];
 
-            return {
-              id: `temp-${index}-${Date.now()}`,
-              eventId: input.eventId,
-              dateTime: dt,
-              availabilities,
-            };
-          });
+              return {
+                id: `temp-${index}-${Date.now()}`,
+                eventId: input.eventId,
+                dateTime: dt,
+                availabilities,
+              };
+            }
+          );
 
           if (!old) {
             // If no existing data, create new structure
@@ -151,13 +157,13 @@ export function useUpdatePotentialDateTimes() {
     ) => {
       // Rollback on error
       if (ctx?.prev) {
-        queryClient.setQueryData(
-          qk.availability.data(input.eventId),
-          ctx.prev
-        );
+        queryClient.setQueryData(qk.availability.data(input.eventId), ctx.prev);
       }
     },
-    onSuccess: (_data: { message: string }, variables: UpdatePotentialDateTimesInput) => {
+    onSuccess: (
+      _data: { message: string },
+      variables: UpdatePotentialDateTimesInput
+    ) => {
       // Invalidate to refetch with real data from server
       // This ensures we get the correct IDs and any server-side data
       queryClient.invalidateQueries({
@@ -166,4 +172,3 @@ export function useUpdatePotentialDateTimes() {
     },
   });
 }
-

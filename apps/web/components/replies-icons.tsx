@@ -19,8 +19,10 @@ export default function RepliesIcons({ replies }: { replies: MinimalReply[] }) {
   let authors: MinimalAuthor[] = [];
   replies
     .sort((a, b) => {
-      const aDate = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-      const bDate = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+      const aDate =
+        a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+      const bDate =
+        b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
       return bDate.getTime() - aDate.getTime();
     })
     .map(reply => {
@@ -35,7 +37,7 @@ export default function RepliesIcons({ replies }: { replies: MinimalReply[] }) {
 
   return (
     <div className='flex items-center'>
-      {authors.map((author) => (
+      {authors.map(author => (
         <Avatar className='size-6' key={author.id}>
           <AvatarImage
             src={author.user?.image || ''}
@@ -49,4 +51,3 @@ export default function RepliesIcons({ replies }: { replies: MinimalReply[] }) {
     </div>
   );
 }
-

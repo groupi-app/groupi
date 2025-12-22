@@ -6,11 +6,14 @@ import { useNavigationGuard } from '@/hooks/use-navigation-guard';
 import { SettingsForm as SettingsFormType } from './settings-form-provider';
 import { useRegisterNavigationGuard } from './navigation-guard-context';
 
-export function SettingsFormWithGuard({ children }: { children: React.ReactNode }) {
+export function SettingsFormWithGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { formState } = useFormContext<SettingsFormType>();
-  const { shouldFlash, shouldBlockNavigation, triggerFlash } = useNavigationGuard(
-    formState.isDirty
-  );
+  const { shouldFlash, shouldBlockNavigation, triggerFlash } =
+    useNavigationGuard(formState.isDirty);
 
   useRegisterNavigationGuard({
     shouldBlockNavigation,
@@ -24,4 +27,3 @@ export function SettingsFormWithGuard({ children }: { children: React.ReactNode 
     </SettingsForm>
   );
 }
-

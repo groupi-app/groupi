@@ -197,11 +197,7 @@ function EventActionMenu({
   );
 }
 
-export function EventCard({
-  event,
-  userRole,
-  eventId,
-}: EventCardProps) {
+export function EventCard({ event, userRole, eventId }: EventCardProps) {
   const {
     id,
     title,
@@ -316,9 +312,7 @@ export function EventCard({
         {isMobile ? (
           <div onContextMenu={handleContextMenu}>{cardContent}</div>
         ) : (
-          <ContextMenuTrigger asChild>
-            {cardContent}
-          </ContextMenuTrigger>
+          <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
         )}
       </EventActionMenu>
     </>

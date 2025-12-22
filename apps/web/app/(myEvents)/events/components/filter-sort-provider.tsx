@@ -10,10 +10,9 @@ import { usePusherChannelsInit } from '@/stores/pusher-channels-store';
 export function FilterSortProvider({ children }: { children: ReactNode }) {
   // Initialize Pusher channels connection listeners
   usePusherChannelsInit();
-  
+
   return <>{children}</>;
 }
 
 // Re-export hook for backward compatibility
 export { useFilterSortStore as useFilterSort } from '@/stores/filter-sort-store';
-

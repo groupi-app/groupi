@@ -65,24 +65,22 @@ export async function createEventAction(
       updateTag(`user-${userId}-events`);
 
       // Trigger Pusher event for user's event list
-      await pusherServer.trigger(
-        `user-${userId}-events`,
-        'event-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-events`, 'event-changed', {
           type: 'INSERT',
           new: result[1],
-        }
-      ).catch((err: unknown) => {
-        pusherLogger.error(
-          {
-            error: err,
-            userId,
-            operation: 'event-changed',
-            type: 'INSERT',
-          },
-          'Failed to trigger event-changed event'
-        );
-      });
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              error: err,
+              userId,
+              operation: 'event-changed',
+              type: 'INSERT',
+            },
+            'Failed to trigger event-changed event'
+          );
+        });
     }
   }
 
@@ -110,24 +108,22 @@ export async function updateEventDetailsAction(
     updateTag(`event-${input.eventId}-details`);
 
     // Trigger Pusher event for event header
-    await pusherServer.trigger(
-      `event-${input.eventId}-header`,
-      'event-changed',
-      {
+    await pusherServer
+      .trigger(`event-${input.eventId}-header`, 'event-changed', {
         type: 'UPDATE',
         new: result[1],
-      }
-    ).catch((err: unknown) => {
-      pusherLogger.error(
-        {
-          error: err,
-          eventId: input.eventId,
-          operation: 'event-changed',
-          type: 'UPDATE',
-        },
-        'Failed to trigger event-changed event'
-      );
-    });
+      })
+      .catch((err: unknown) => {
+        pusherLogger.error(
+          {
+            error: err,
+            eventId: input.eventId,
+            operation: 'event-changed',
+            type: 'UPDATE',
+          },
+          'Failed to trigger event-changed event'
+        );
+      });
   }
 
   return result;
@@ -152,46 +148,42 @@ export async function deleteEventAction(
       updateTag(`user-${userId}-events`);
 
       // Trigger Pusher event for user's event list
-      await pusherServer.trigger(
-        `user-${userId}-events`,
-        'event-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-events`, 'event-changed', {
           type: 'DELETE',
           old: { id: input.eventId },
-        }
-      ).catch((err: unknown) => {
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              error: err,
+              userId,
+              operation: 'event-changed',
+              type: 'DELETE',
+            },
+            'Failed to trigger event-changed event'
+          );
+        });
+    }
+    updateTag(`event-${input.eventId}`);
+
+    // Trigger Pusher event for event header
+    await pusherServer
+      .trigger(`event-${input.eventId}-header`, 'event-changed', {
+        type: 'DELETE',
+        old: { id: input.eventId },
+      })
+      .catch((err: unknown) => {
         pusherLogger.error(
           {
             error: err,
-            userId,
+            eventId: input.eventId,
             operation: 'event-changed',
             type: 'DELETE',
           },
           'Failed to trigger event-changed event'
         );
       });
-    }
-    updateTag(`event-${input.eventId}`);
-
-    // Trigger Pusher event for event header
-    await pusherServer.trigger(
-      `event-${input.eventId}-header`,
-      'event-changed',
-      {
-        type: 'DELETE',
-        old: { id: input.eventId },
-      }
-    ).catch((err: unknown) => {
-      pusherLogger.error(
-        {
-          error: err,
-          eventId: input.eventId,
-          operation: 'event-changed',
-          type: 'DELETE',
-        },
-        'Failed to trigger event-changed event'
-      );
-    });
   }
 
   return result;
@@ -203,7 +195,9 @@ export async function deleteEventAction(
  */
 export async function leaveEventAction(
   input: LeaveEventParams
-): Promise<ResultTuple<EventMutationError, { message: string; membershipId: string }>> {
+): Promise<
+  ResultTuple<EventMutationError, { message: string; membershipId: string }>
+> {
   const result = await leaveEvent({
     eventId: input.eventId,
   });
@@ -217,48 +211,44 @@ export async function leaveEventAction(
       updateTag(`user-${userId}-events`);
 
       // Trigger Pusher event for user's event list
-      await pusherServer.trigger(
-        `user-${userId}-events`,
-        'event-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-events`, 'event-changed', {
           type: 'DELETE',
           old: { id: input.eventId },
-        }
-      ).catch((err: unknown) => {
-        pusherLogger.error(
-          {
-            error: err,
-            userId,
-            operation: 'event-changed',
-            type: 'DELETE',
-          },
-          'Failed to trigger event-changed event'
-        );
-      });
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              error: err,
+              userId,
+              operation: 'event-changed',
+              type: 'DELETE',
+            },
+            'Failed to trigger event-changed event'
+          );
+        });
     }
     updateTag(`event-${input.eventId}`);
     updateTag(`event-${input.eventId}-members`);
 
     // Trigger Pusher event for event members with membership ID
-    await pusherServer.trigger(
-      `event-${input.eventId}-members`,
-      'member-changed',
-      {
+    await pusherServer
+      .trigger(`event-${input.eventId}-members`, 'member-changed', {
         type: 'DELETE',
         old: { id: membershipId },
-      }
-    ).catch((err: unknown) => {
-      pusherLogger.error(
-        {
-          error: err,
-          eventId: input.eventId,
-          membershipId,
-          operation: 'member-changed',
-          type: 'DELETE',
-        },
-        'Failed to trigger member-changed event'
-      );
-    });
+      })
+      .catch((err: unknown) => {
+        pusherLogger.error(
+          {
+            error: err,
+            eventId: input.eventId,
+            membershipId,
+            operation: 'member-changed',
+            type: 'DELETE',
+          },
+          'Failed to trigger member-changed event'
+        );
+      });
   }
 
   return result;

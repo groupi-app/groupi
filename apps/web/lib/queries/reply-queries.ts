@@ -19,4 +19,3 @@ export async function fetchReplies(
   const postDetail = await fetchPostDetail(postId);
   return postDetail.post.replies;
 }
-

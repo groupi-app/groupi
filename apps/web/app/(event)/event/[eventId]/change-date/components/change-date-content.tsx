@@ -13,7 +13,7 @@ export async function ChangeDateContent({ eventId }: { eventId: string }) {
         return <div>Event not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-         
+
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:

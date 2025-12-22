@@ -25,4 +25,3 @@ export async function fetchEventAvailability(
 
   return data;
 }
-

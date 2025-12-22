@@ -174,52 +174,52 @@ function ActionMenu({
               </Button>
               {(canKick || canPromote) && (
                 <>
-                {canPromote && (
-                  <>
-                    {member.role === 'ATTENDEE' && (
-                      <Button
-                        variant='ghost'
-                        className='w-full justify-start'
-                        onClick={() => {
-                          setDialogAction(MemberAction.PROMOTE);
-                          setSheetOpen(false);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Icons.shield className='size-4 mr-2' />
-                        Promote
-                      </Button>
-                    )}
-                    {member.role === 'MODERATOR' && (
-                      <Button
-                        variant='ghost'
-                        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
-                        onClick={() => {
-                          setDialogAction(MemberAction.DEMOTE);
-                          setSheetOpen(false);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Icons.shieldOff className='size-4 mr-2' />
-                        Demote
-                      </Button>
-                    )}
-                  </>
-                )}
-                {canKick && (
-                  <Button
-                    variant='ghost'
-                    className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
-                    onClick={() => {
-                      setDialogAction(MemberAction.KICK);
-                      setSheetOpen(false);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    <Icons.kick className='size-4 mr-2' />
-                    Kick
-                  </Button>
-                )}
+                  {canPromote && (
+                    <>
+                      {member.role === 'ATTENDEE' && (
+                        <Button
+                          variant='ghost'
+                          className='w-full justify-start'
+                          onClick={() => {
+                            setDialogAction(MemberAction.PROMOTE);
+                            setSheetOpen(false);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <Icons.shield className='size-4 mr-2' />
+                          Promote
+                        </Button>
+                      )}
+                      {member.role === 'MODERATOR' && (
+                        <Button
+                          variant='ghost'
+                          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                          onClick={() => {
+                            setDialogAction(MemberAction.DEMOTE);
+                            setSheetOpen(false);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <Icons.shieldOff className='size-4 mr-2' />
+                          Demote
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {canKick && (
+                    <Button
+                      variant='ghost'
+                      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                      onClick={() => {
+                        setDialogAction(MemberAction.KICK);
+                        setSheetOpen(false);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Icons.kick className='size-4 mr-2' />
+                      Kick
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -475,4 +475,3 @@ export default function MemberIcon({
     </motion.div>
   );
 }
-

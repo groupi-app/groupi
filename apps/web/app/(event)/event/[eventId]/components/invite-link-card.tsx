@@ -53,7 +53,7 @@ export function InviteLinkCard({
     // Don't close dialog immediately - let it close naturally when component unmounts
     // after optimistic delete removes the invite from the list
     // This prevents flashing
-    
+
     deleteInvite.mutate(
       { inviteId: id },
       {
@@ -164,12 +164,14 @@ export function InviteLinkCard({
         </DialogTrigger>
       </div>
 
-      <DialogContent onInteractOutside={(e) => {
-        // Prevent closing when clicking outside during delete
-        if (dialogType === 'delete') {
-          e.preventDefault();
-        }
-      }}>
+      <DialogContent
+        onInteractOutside={e => {
+          // Prevent closing when clicking outside during delete
+          if (dialogType === 'delete') {
+            e.preventDefault();
+          }
+        }}
+      >
         {dialogType === 'view' && (
           <div className='w-full overflow-hidden'>
             <DialogHeader className='w-full'>
@@ -251,15 +253,10 @@ export function InviteLinkCard({
             <DialogFooter>
               <div className='flex gap-4 justify-end'>
                 <DialogClose asChild>
-                  <Button variant='ghost'>
-                    Cancel
-                  </Button>
+                  <Button variant='ghost'>Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button
-                    onClick={handleDeleteInvite}
-                    variant='destructive'
-                  >
+                  <Button onClick={handleDeleteInvite} variant='destructive'>
                     Delete
                   </Button>
                 </DialogClose>

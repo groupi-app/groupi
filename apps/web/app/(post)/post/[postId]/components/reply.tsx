@@ -96,9 +96,7 @@ function ClickableAvatar({ author, isMe }: ClickableAvatarProps) {
         <DropdownMenuContent align={isMe ? 'end' : 'start'}>
           <DropdownMenuLabel>
             <div className='flex flex-col'>
-              <span className='text-base text-card-foreground'>
-                {fullName}
-              </span>
+              <span className='text-base text-card-foreground'>{fullName}</span>
               <span className='text-muted-foreground'>{user?.email}</span>
             </div>
           </DropdownMenuLabel>

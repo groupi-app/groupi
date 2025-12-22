@@ -16,9 +16,7 @@ import type { PostFeedData, PostDetailPageData } from '@groupi/schema/data';
  * @param eventId - Event ID
  * @returns PostFeedData or throws error
  */
-export async function fetchPostFeed(
-  eventId: string
-): Promise<PostFeedData> {
+export async function fetchPostFeed(eventId: string): Promise<PostFeedData> {
   const [error, data] = await fetchPostFeedAction(eventId);
 
   if (error) {
@@ -47,4 +45,3 @@ export async function fetchPostDetail(
 
   return data;
 }
-

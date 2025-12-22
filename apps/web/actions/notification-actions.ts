@@ -67,16 +67,17 @@ export async function markNotificationAsReadAction(
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { id: input.notificationId },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -102,16 +103,17 @@ export async function markNotificationAsUnreadAction(
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { id: input.notificationId },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -135,16 +137,17 @@ export async function markAllNotificationsAsReadAction(): Promise<
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications (all updated)
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { allRead: true },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -170,16 +173,17 @@ export async function deleteNotificationAction(
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'DELETE',
           old: { id: input.notificationId },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -203,16 +207,17 @@ export async function deleteAllNotificationsAction(): Promise<
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications (all deleted)
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'DELETE',
           old: { allDeleted: true },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -227,12 +232,7 @@ export async function deleteAllNotificationsAction(): Promise<
  */
 export async function markPostNotificationsAsReadAction(
   input: MarkPostNotificationsAsReadInput
-): Promise<
-  ResultTuple<
-    SerializedError,
-    { message: string; count: number }
-  >
-> {
+): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
   const result = await markPostNotificationsAsRead({
     postId: input.postId,
   });
@@ -244,16 +244,17 @@ export async function markPostNotificationsAsReadAction(
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { postId: input.postId, count: result[1]?.count },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -268,12 +269,7 @@ export async function markPostNotificationsAsReadAction(
  */
 export async function markEventNotificationsAsReadAction(
   input: MarkEventNotificationsAsReadInput
-): Promise<
-  ResultTuple<
-    SerializedError,
-    { message: string; count: number }
-  >
-> {
+): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
   const result = await markEventNotificationsAsRead({
     eventId: input.eventId,
   });
@@ -285,16 +281,17 @@ export async function markEventNotificationsAsReadAction(
       updateTag(`user-${userId}-notifications`);
 
       // Trigger Pusher event for user notifications
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { eventId: input.eventId, count: result[1]?.count },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 
@@ -309,12 +306,7 @@ export async function markEventNotificationsAsReadAction(
  */
 export async function markNotificationAsReadByPostAndTypeAction(
   input: MarkNotificationAsReadByPostAndTypeInput
-): Promise<
-  ResultTuple<
-    SerializedError,
-    { message: string; count: number }
-  >
-> {
+): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
   const result = await markNotificationAsReadByPostAndType({
     postId: input.postId,
     type: input.type,
@@ -325,16 +317,17 @@ export async function markNotificationAsReadByPostAndTypeAction(
     const [, userId] = await getUserId();
     if (userId) {
       // Trigger Pusher event for real-time UI updates
-      await pusherServer.trigger(
-        `user-${userId}-notifications`,
-        'notification-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-notifications`, 'notification-changed', {
           type: 'UPDATE',
           new: { postId: input.postId, notificationType: input.type },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger notification-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[Pusher] Failed to trigger notification-changed:',
+            err
+          );
+        });
     }
   }
 

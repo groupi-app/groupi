@@ -30,11 +30,11 @@ export function DeleteInvites({
     setIsOpen(false);
     const invitesToDelete = [...selectedInvites];
     setSelectedInvites([]);
-    
+
     // Track completion using an object to avoid closure issues
     const results = { success: 0, error: 0, total: invitesToDelete.length };
     const failedInvites: string[] = [];
-    
+
     const checkCompletion = () => {
       if (results.success + results.error === results.total) {
         if (results.error === 0) {
@@ -57,9 +57,9 @@ export function DeleteInvites({
         }
       }
     };
-    
+
     // Delete all invites (optimistic updates handle UI immediately)
-    invitesToDelete.forEach((inviteId) => {
+    invitesToDelete.forEach(inviteId => {
       deleteInvite.mutate(
         { inviteId },
         {
@@ -99,15 +99,10 @@ export function DeleteInvites({
         <DialogFooter>
           <div className='flex gap-4 justify-end'>
             <DialogClose asChild>
-              <Button variant='ghost'>
-                Cancel
-              </Button>
+              <Button variant='ghost'>Cancel</Button>
             </DialogClose>
             <DialogClose asChild>
-              <Button
-                onClick={handleDeleteInvites}
-                variant='destructive'
-              >
+              <Button onClick={handleDeleteInvites} variant='destructive'>
                 Delete
               </Button>
             </DialogClose>

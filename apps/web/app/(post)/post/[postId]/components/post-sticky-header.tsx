@@ -10,7 +10,10 @@ interface PostStickyHeaderProps {
   postRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function PostStickyHeader({ postTitle, postRef }: PostStickyHeaderProps) {
+export function PostStickyHeader({
+  postTitle,
+  postRef,
+}: PostStickyHeaderProps) {
   const [isVisible, setIsVisible] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +55,9 @@ export function PostStickyHeader({ postTitle, postRef }: PostStickyHeaderProps) 
       )}
     >
       <div className='py-2 flex items-center justify-between'>
-        <h2 className='text-sm font-medium truncate flex-1 mr-4'>{postTitle}</h2>
+        <h2 className='text-sm font-medium truncate flex-1 mr-4'>
+          {postTitle}
+        </h2>
         <Button
           onClick={scrollToPost}
           size='sm'
@@ -66,4 +71,3 @@ export function PostStickyHeader({ postTitle, postRef }: PostStickyHeaderProps) 
     </div>
   );
 }
-

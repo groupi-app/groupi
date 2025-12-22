@@ -59,16 +59,14 @@ export async function createInviteAction(
     updateTag(`event-${input.eventId}-invites`);
 
     // Trigger Pusher event for event invites
-    await pusherServer.trigger(
-      `event-${input.eventId}-invites`,
-      'invite-changed',
-      {
+    await pusherServer
+      .trigger(`event-${input.eventId}-invites`, 'invite-changed', {
         type: 'INSERT',
         new: result[1],
-      }
-    ).catch((err: unknown) => {
-      console.error('[Pusher] Failed to trigger invite-changed:', err);
-    });
+      })
+      .catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger invite-changed:', err);
+      });
   }
 
   return result;
@@ -94,16 +92,14 @@ export async function deleteInviteAction(
     updateTag(`event-${eventId}-invites`);
 
     // Trigger Pusher event for event invites
-    await pusherServer.trigger(
-      `event-${eventId}-invites`,
-      'invite-changed',
-      {
+    await pusherServer
+      .trigger(`event-${eventId}-invites`, 'invite-changed', {
         type: 'DELETE',
         old: { id: input.inviteId },
-      }
-    ).catch((err: unknown) => {
-      console.error('[Pusher] Failed to trigger invite-changed:', err);
-    });
+      })
+      .catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger invite-changed:', err);
+      });
   }
 
   return result;
@@ -133,30 +129,26 @@ export async function acceptInviteAction(
     updateTag(`event-${eventId}-members`);
 
     // Trigger Pusher event for event members with membership ID
-    await pusherServer.trigger(
-      `event-${eventId}-members`,
-      'member-changed',
-      {
+    await pusherServer
+      .trigger(`event-${eventId}-members`, 'member-changed', {
         type: 'INSERT',
         new: { id: membershipId },
-      }
-    ).catch((err: unknown) => {
-      console.error('[Pusher] Failed to trigger member-changed:', err);
-    });
+      })
+      .catch((err: unknown) => {
+        console.error('[Pusher] Failed to trigger member-changed:', err);
+      });
 
     // Also trigger for user's event list if we can get userId
     const [, userId] = await getUserId();
     if (userId) {
-      await pusherServer.trigger(
-        `user-${userId}-events`,
-        'event-changed',
-        {
+      await pusherServer
+        .trigger(`user-${userId}-events`, 'event-changed', {
           type: 'INSERT',
           new: { id: eventId },
-        }
-      ).catch((err: unknown) => {
-        console.error('[Pusher] Failed to trigger event-changed:', err);
-      });
+        })
+        .catch((err: unknown) => {
+          console.error('[Pusher] Failed to trigger event-changed:', err);
+        });
     }
   }
 

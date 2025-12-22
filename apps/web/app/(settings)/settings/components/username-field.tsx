@@ -2,7 +2,13 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { AccountForm } from './account-form-provider';
 import { checkUsernameAvailabilityAction } from '@/actions/account-actions';
@@ -17,7 +23,7 @@ export function UsernameField() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const username = watch('username');
-  
+
   // Store original username on mount
   useEffect(() => {
     if (originalUsernameRef.current === null) {
@@ -98,7 +104,7 @@ export function UsernameField() {
                 {...field}
                 placeholder='Enter username'
                 value={field.value ?? ''}
-                onChange={(e) => {
+                onChange={e => {
                   field.onChange(e.target.value || null);
                 }}
               />

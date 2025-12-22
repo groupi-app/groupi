@@ -38,4 +38,3 @@ export function OnboardingRedirectWrapper() {
 
   return null;
 }
-

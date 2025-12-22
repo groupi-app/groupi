@@ -2,10 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createInviteAction } from '@/actions/invite-actions';
-import type {
-  EventInviteData,
-  EventInvitePageData,
-} from '@groupi/schema/data';
+import type { EventInviteData, EventInvitePageData } from '@groupi/schema/data';
 import type { CreateInviteParams } from '@groupi/schema/params';
 import type { InviteMutationError } from '@/actions/invite-actions';
 import { qk } from '@/lib/query-keys';
@@ -56,7 +53,9 @@ export function useCreateInvite() {
               name: newInvite.name || 'New Invite',
               eventId: newInvite.eventId,
               createdById: 'optimistic', // Will be replaced by real data
-              expiresAt: newInvite.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              expiresAt:
+                newInvite.expiresAt ||
+                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
               usesRemaining: newInvite.maxUses || null,
               maxUses: newInvite.maxUses || null,
               createdAt: new Date(),
@@ -91,7 +90,13 @@ export function useCreateInvite() {
       // Rollback on error
       if (ctx?.prevData) {
         ctx.prevData.forEach(
-          ({ queryKey, data }: { queryKey: readonly unknown[]; data: unknown }) => {
+          ({
+            queryKey,
+            data,
+          }: {
+            queryKey: readonly unknown[];
+            data: unknown;
+          }) => {
             queryClient.setQueryData(queryKey, data);
           }
         );
@@ -102,7 +107,7 @@ export function useCreateInvite() {
       // This prevents glitching because Pusher will replace the optimistic
       // invite in place (same position), rather than removing and adding a new one
       // The optimistic invite will be seamlessly replaced when Pusher event arrives
-      
+
       // Silently invalidate for background sync (no refetch)
       // Pusher will handle real-time updates
       queryClient.invalidateQueries({

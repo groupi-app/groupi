@@ -14,10 +14,7 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch (parseError) {
-      apiLogger.error(
-        { error: parseError },
-        'Failed to parse request body'
-      );
+      apiLogger.error({ error: parseError }, 'Failed to parse request body');
       return NextResponse.json(
         { error: 'Invalid request body' },
         { status: 400 }
@@ -37,7 +34,10 @@ export async function POST(request: Request) {
 
     if (validTags.length === 0) {
       apiLogger.warn({ tags }, 'No valid tags provided');
-      return NextResponse.json({ error: 'No valid tags provided' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No valid tags provided' },
+        { status: 400 }
+      );
     }
 
     // Revalidate tags server-side (Route Handlers must use revalidateTag, not updateTag)
@@ -56,7 +56,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     apiLogger.error(
-      { error, errorMessage: error instanceof Error ? error.message : String(error) },
+      {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      },
       'Error invalidating cache'
     );
     return NextResponse.json(
@@ -65,4 +68,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

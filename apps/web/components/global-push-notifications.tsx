@@ -6,12 +6,12 @@ import { componentLogger } from '@/lib/logger';
 
 /**
  * Global component that manages push notification subscriptions.
- * 
+ *
  * This component:
  * - Checks for existing subscriptions on mount
  * - Logs subscription state changes
  * - Must be rendered within a PusherBeamsProvider
- * 
+ *
  * Note: This is already wrapped by PusherBeamsProvider in the layout,
  * so it doesn't need its own provider wrapper.
  */

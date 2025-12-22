@@ -193,7 +193,9 @@ export function ReplyListClient({
                             )}
                           </>
                         ) : (
-                          <div className='text-muted-foreground'>Unknown author</div>
+                          <div className='text-muted-foreground'>
+                            Unknown author
+                          </div>
                         )}
                       </div>
                     </TableCell>

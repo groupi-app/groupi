@@ -62,13 +62,13 @@ export function useResetChosenDate() {
     ) => {
       // Rollback on error
       if (ctx?.prev) {
-        queryClient.setQueryData(
-          qk.events.header(input.eventId),
-          ctx.prev
-        );
+        queryClient.setQueryData(qk.events.header(input.eventId), ctx.prev);
       }
     },
-    onSuccess: (_data: { message: string }, variables: ResetChosenDateInput) => {
+    onSuccess: (
+      _data: { message: string },
+      variables: ResetChosenDateInput
+    ) => {
       // Update cache with real data immediately (following RSVP update pattern)
       // Pusher will also broadcast to other users for real-time updates
       queryClient.setQueryData<EventHeaderData>(
@@ -92,4 +92,3 @@ export function useResetChosenDate() {
     },
   });
 }
-

@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
 import { usePathname } from 'next/navigation';
 
 export function useNavigationGuard(isDirty: boolean) {
@@ -66,7 +72,11 @@ export function useNavigationGuard(isDirty: boolean) {
     }
 
     // If pathname changed and we have unsaved changes
-    if (prevPathnameRef.current !== pathname && isDirty && !isNavigatingRef.current) {
+    if (
+      prevPathnameRef.current !== pathname &&
+      isDirty &&
+      !isNavigatingRef.current
+    ) {
       // This shouldn't happen if we're blocking navigation properly,
       // but if it does, trigger flash synchronously
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronous flash needed for navigation guard
@@ -96,4 +106,3 @@ export function useNavigationGuard(isDirty: boolean) {
     shouldBlockNavigation,
   };
 }
-
