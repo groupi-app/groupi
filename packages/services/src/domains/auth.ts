@@ -26,12 +26,27 @@ import type { Session } from './auth-types';
 // Create a singleton Prisma client for auth
 const prisma = new PrismaClient();
 
+// Determine base URL: use BETTER_AUTH_URL if set, otherwise use VERCEL_URL (for preview deployments),
+// or fall back to localhost for development
+const getBaseURL = () => {
+  if (process.env.BETTER_AUTH_URL) {
+    return process.env.BETTER_AUTH_URL;
+  }
+  // Vercel provides VERCEL_URL automatically (without protocol)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return 'http://localhost:3000';
+};
+
+const baseURL = getBaseURL();
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL,
   advanced: {
     database: {
       // Disable Better Auth ID generation - let Prisma generate UUIDs instead
@@ -76,9 +91,7 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: process.env.BETTER_AUTH_URL
-    ? [process.env.BETTER_AUTH_URL]
-    : ['http://localhost:3000'],
+  trustedOrigins: [baseURL],
   plugins: [
     twoFactor(),
     username(),
