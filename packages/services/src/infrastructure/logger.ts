@@ -52,9 +52,10 @@ let logger: pino.Logger;
 
 if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
   // Resolve absolute path to transport worker file
+  // Use .js version in production (TypeScript files aren't available in worker threads)
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
-  const transportPath = resolve(__dirname, 'loki-transport-worker.ts');
+  const transportPath = resolve(__dirname, 'loki-transport-worker.js');
 
   // Use pino.transport() with explicit worker options for better compatibility
   // This helps resolve module paths correctly in pnpm monorepos
