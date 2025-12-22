@@ -1,4 +1,3 @@
-import { clerkSetup } from '@clerk/testing/cypress';
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
@@ -43,7 +42,7 @@ export default defineConfig({
           }
         },
       });
-      return clerkSetup({ config });
+      return config;
     },
     baseUrl: 'http://localhost:3000',
   },

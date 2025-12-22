@@ -1,0 +1,51 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "GOOGLE_API_KEY",
+        "DIRECT_URL",
+        "DATABASE_URL",
+        "CLERK_SECRET_KEY",
+        "CLERK_WEBHOOK_SIGNING_SECRET",
+        "PUSHER_APP_ID",
+        "PUSHER_APP_SECRET",
+        "RESEND_API_KEY",
+        "PUSHER_BEAMS_SECRET_KEY",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_AUTH_TOKEN",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "DISCORD_CLIENT_ID",
+        "DISCORD_CLIENT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "NEXT_PUBLIC_BASE_URL",
+        "NEXT_PUBLIC_PUSHER_APP_KEY",
+        "NEXT_PUBLIC_PUSHER_APP_CLUSTER",
+        "NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+        "NEXT_PUBLIC_GOOGLE_API_KEY",
+        "VERCEL_URL"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "type-check": {
+      "cache": false
+    },
+    "lint": {},
+    "lint:fix": {},
+    "format": {},
+    "format:check": {},
+    "test": {},
+    "start": {}
+  }
+}

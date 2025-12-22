@@ -1,34 +1,143 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Groupi
 
-## Getting Started
+A modern event planning and group coordination platform built with Next.js, TypeScript, and a monorepo architecture.
 
-First, run the development server:
+## Overview
+
+Groupi is a full-stack application for organizing events, managing group memberships, and facilitating real-time communication. The platform enables users to create events, invite members, coordinate availability, and engage in discussions through posts and replies.
+
+### Key Features
+
+- **Event Management**: Create and manage events with date/time coordination
+- **Group Coordination**: Manage memberships, roles, and permissions
+- **Real-time Communication**: Posts, replies, and notifications with real-time updates
+- **Availability Tracking**: Coordinate member availability for events
+- **Cross-platform Ready**: Architecture designed for web and mobile (React Native)
+
+## Architecture
+
+The project follows a monorepo structure with clear separation of concerns:
+
+```
+groupi/
+├── apps/
+│   └── web/              # Next.js web application
+├── packages/
+│   ├── schema/           # TypeScript types, DTOs, and validation schemas
+│   ├── services/         # Server-side business logic (Effect-based)
+│   └── ui/               # Shared UI components and utilities
+└── prisma/               # Database schema and migrations
+```
+
+### Data Flow
+
+1. **Schema** (`@groupi/schema`) - Defines types, DTOs, and validation schemas
+2. **Services** (`@groupi/services`) - Implements business logic using Effect for error handling
+3. **Web App** (`@groupi/web`) - Next.js application that orchestrates everything
+4. **UI** (`@groupi/ui`) - Shared components and utilities
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm 10.12.1+
+- PostgreSQL (via Supabase CLI for local development)
+- Environment variables configured (see `.env.example`)
+
+### Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start development environment
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This starts:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js web app (http://localhost:3000)
+- Prisma Studio (http://localhost:5555)
+- Database (Supabase local stack)
+- Package watch mode for hot reloading
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Development Scripts
 
-## Learn More
+```bash
+# Development
+pnpm dev              # Start web app with all services
+pnpm dev:prisma       # Start Prisma Studio
+pnpm dev:db           # Start local database (Supabase)
 
-To learn more about Next.js, take a look at the following resources:
+# Building
+pnpm build            # Build all packages and apps
+pnpm build --filter=@groupi/web  # Build specific package/app
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Code Quality
+pnpm lint             # Lint all packages
+pnpm lint:fix         # Fix linting issues
+pnpm format           # Format code
+pnpm type-check       # Type check all packages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+# Database
+pnpm migrate          # Run database migrations
+pnpm generate         # Generate Prisma client
+pnpm seed-users       # Seed test users
+```
 
-## Deploy on Vercel
+### Package Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+When working on packages:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. Make changes to source files in `packages/*/src/`
+2. Watch mode automatically rebuilds on file changes
+3. Next.js picks up changes and hot reloads
+4. TypeScript provides full type safety across packages
+
+## Production
+
+### Building
+
+```bash
+# Build all packages and apps
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+### Environment Variables
+
+Ensure all required environment variables are set for production. See `.env.example` for reference.
+
+### Database Migrations
+
+```bash
+# Deploy migrations to production
+pnpm prisma:migrate-deploy
+```
+
+## Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Better Auth
+- **Styling**: Tailwind CSS
+- **State Management**: TanStack Query
+- **Real-time**: Pusher
+- **Error Handling**: Effect.ts
+- **Monorepo**: Turborepo with pnpm workspaces
+- **Testing**: Cypress for E2E
+
+## Project Structure
+
+- [`apps/web`](./apps/web/README.md) - Next.js web application
+- [`packages/schema`](./packages/schema/README.md) - Types and validation schemas
+- [`packages/services`](./packages/services/README.md) - Business logic layer
+- [`packages/ui`](./packages/ui/README.md) - Shared UI components
+
+## Getting Help
+
+For detailed information about each package or app, see their respective README files in the directories above.
