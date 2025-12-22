@@ -51,9 +51,7 @@ export const env = createEnv({
     DIRECT_URL: process.env.DIRECT_URL,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL:
-      process.env.BETTER_AUTH_URL && process.env.BETTER_AUTH_URL.trim() !== ''
-        ? process.env.BETTER_AUTH_URL
-        : undefined,
+      process.env.BETTER_AUTH_URL || 'http://localhost:3000',
     // OAuth Providers
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
