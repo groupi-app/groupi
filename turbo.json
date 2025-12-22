@@ -4,7 +4,21 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "GOOGLE_API_KEY",
+        "DIRECT_URL",
+        "DATABASE_URL",
+        "CLERK_SECRET_KEY",
+        "CLERK_WEBHOOK_SIGNING_SECRET",
+        "PUSHER_APP_ID",
+        "PUSHER_APP_SECRET",
+        "RESEND_API_KEY",
+        "PUSHER_BEAMS_SECRET_KEY",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_AUTH_TOKEN"
+      ]
     },
     "dev": {
       "cache": false,
