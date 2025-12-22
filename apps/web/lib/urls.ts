@@ -9,16 +9,7 @@ import { env } from '@/env.mjs';
  * Works on both server and client side
  */
 export function getBaseUrl(): string {
-  // Use env variable if set
-  if (env.NEXT_PUBLIC_BASE_URL) {
-    return env.NEXT_PUBLIC_BASE_URL;
-  }
-  // In browser, use current origin
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-  // Fallback for SSR
-  return 'http://localhost:3000';
+  return env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 }
 
 /**
