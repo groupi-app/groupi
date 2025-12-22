@@ -12,10 +12,12 @@ const PusherBeamsContext = createContext<
 >(null);
 
 export function PusherBeamsProvider({ children }: { children: ReactNode }) {
-  const beamsState = usePusherBeamsInternal();
+  // Always call hooks unconditionally (React rules)
+  // The Suspense boundary in the layout handles runtime data access
+  const internalBeamsState = usePusherBeamsInternal();
 
   return (
-    <PusherBeamsContext.Provider value={beamsState}>
+    <PusherBeamsContext.Provider value={internalBeamsState}>
       {children}
     </PusherBeamsContext.Provider>
   );

@@ -4,7 +4,11 @@ import { ReactNode } from 'react';
 import { PusherBeamsProvider } from '@/components/providers/pusher-beams-context-provider';
 import { GlobalPushNotifications } from '@/components/global-push-notifications';
 
-export function PusherBeamsProviderWrapper({ children }: { children: ReactNode }) {
+export function PusherBeamsProviderWrapper({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <PusherBeamsProvider>
       {children}
@@ -12,4 +16,3 @@ export function PusherBeamsProviderWrapper({ children }: { children: ReactNode }
     </PusherBeamsProvider>
   );
 }
-
