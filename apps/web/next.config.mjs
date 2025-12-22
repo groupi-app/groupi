@@ -116,8 +116,12 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: 'groupi',
-  project: 'javascript-nextjs',
+  org: process.env.SENTRY_ORG || 'groupi',
+  project: process.env.SENTRY_PROJECT || 'javascript-nextjs',
+
+  // Disable sourcemap uploads for preview deployments to avoid errors
+  // Sourcemaps are only needed for production
+  disable: process.env.VERCEL_ENV === 'preview' || !process.env.SENTRY_AUTH_TOKEN,
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
