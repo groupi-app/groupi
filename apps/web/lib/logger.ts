@@ -63,11 +63,12 @@ let logger: pino.Logger;
 
 if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
   // Resolve absolute path to transport worker file in services package
+  // Use .js version in production (TypeScript files aren't available in worker threads)
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
   const transportPath = resolve(
     __dirname,
-    '../../../packages/services/src/infrastructure/loki-transport-worker.ts'
+    '../../../packages/services/src/infrastructure/loki-transport-worker.js'
   );
 
   // Use pino.transport() with explicit worker options for better compatibility
