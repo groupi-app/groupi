@@ -8,6 +8,8 @@ import {
   GetEventPotentialDateTimesParams,
   UpdateMemberAvailabilitiesParams,
   ChooseDateTimeParams,
+  ResetChosenDateParams,
+  UpdatePotentialDateTimesParams,
 } from '@groupi/schema/params';
 import { AvailabilityPageData } from '@groupi/schema/data';
 import {
@@ -224,6 +226,7 @@ export const getEventPotentialDateTimes = async ({
                               name: true,
                               email: true,
                               image: true,
+                              username: true,
                             },
                           },
                         },
@@ -307,6 +310,7 @@ export const getEventPotentialDateTimes = async ({
                   name: string | null;
                   email: string;
                   image: string | null;
+                  username: string | null;
                 };
               };
             };
@@ -329,6 +333,7 @@ export const getEventPotentialDateTimes = async ({
                   name: availability.membership.person.user.name,
                   email: availability.membership.person.user.email,
                   image: availability.membership.person.user.image,
+                  username: availability.membership.person.user.username,
                 },
               },
             },
@@ -591,7 +596,7 @@ export const chooseDateTime = async (
       Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
       Effect.tapError(error =>
         Effect.logError('Database operation encountered error', {
-          operation: 'chooseDateTime.checkOrganizer',
+          operation: 'chooseDateTime.checkOrganizerAndEvent',
           eventId,
           userId,
           error: error.message,
@@ -621,6 +626,45 @@ export const chooseDateTime = async (
       );
       return;
     }
+
+    // Fetch event to check current chosenDateTime
+    const event = yield* Effect.promise(() =>
+      db.event.findUnique({
+        where: { id: eventId },
+        select: { chosenDateTime: true },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Event', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'chooseDateTime.fetchEvent',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!event) {
+      yield* Effect.fail(
+        new NotFoundError({
+          message: 'Event not found',
+          cause: eventId,
+        })
+      );
+      return;
+    }
+
+    // Determine if this is a date change or initial date selection
+    const isDateChange = event.chosenDateTime !== null;
 
     // Get the potential date time
     const potentialDateTime = yield* Effect.promise(() =>
@@ -703,28 +747,243 @@ export const chooseDateTime = async (
       operation: 'update',
     });
 
-    // Trigger DATE_CHOSEN notification for event members (fire-and-forget)
-    yield* Effect.fork(
-      createEventNotifications({
-        eventId,
-        type: 'DATE_CHOSEN',
-        authorId: userId,
+    return {
+      result,
+      notificationInfo: {
+        notificationType: isDateChange ? 'DATE_CHANGED' : 'DATE_CHOSEN',
         datetime: potentialDateTime.dateTime,
-      }).pipe(
+      },
+    };
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        yield* Effect.void;
+        if (err instanceof UnauthorizedError || err instanceof NotFoundError) {
+          return [err, undefined] as const;
+        }
+        return [
+          new OperationError({ message: 'Failed to choose date time' }),
+          undefined,
+        ] as const;
+      });
+    }),
+    // Map result to tuple - extract just the result message
+    Effect.flatMap(data => {
+      if (!data || typeof data !== 'object' || !('result' in data)) {
+        return Effect.fail(
+          new OperationError({ message: 'Failed to choose date time' })
+        );
+      }
+      return Effect.succeed([null, data.result] as [null, { message: string }]);
+    })
+  );
+
+  return Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('availability'))
+  );
+};
+
+/**
+ * Reset chosen date time for an event (organizer only)
+ * Sets chosenDateTime to null to start a new poll
+ */
+export const resetChosenDate = async (
+  input: ResetChosenDateParams
+): Promise<
+  ResultTuple<
+    | NotFoundError
+    | UnauthorizedError
+    | AuthenticationError
+    | DatabaseError
+    | ConnectionError
+    | ConstraintError
+    | OperationError,
+    { message: string }
+  >
+> => {
+  const { eventId } = input;
+
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
+      undefined,
+    ] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Resetting chosen date for event', {
+      eventId,
+      userId,
+    });
+
+    // Check if user is the organizer
+    const membership = yield* Effect.promise(() =>
+      db.membership.findFirst({
+        where: {
+          eventId,
+          personId: userId,
+          role: 'ORGANIZER',
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'resetChosenDate.checkOrganizer',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!membership) {
+      yield* Effect.logInfo('User not authorized to reset chosen date', {
+        userId,
+        eventId,
+        reason: 'not_organizer',
+        operation: 'resetChosenDate',
+      });
+      yield* Effect.fail(
+        new UnauthorizedError({
+          message: 'Only the organizer can reset the chosen date',
+        })
+      );
+      return;
+    }
+
+    // Update event with null chosenDateTime
+    yield* Effect.promise(() =>
+      db.event.update({
+        where: { id: eventId },
+        data: { chosenDateTime: null },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Event', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'resetChosenDate.updateEvent',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Fetch all potential date times for the event
+    const potentialDateTimes = yield* Effect.promise(() =>
+      db.potentialDateTime.findMany({
+        where: { eventId },
+        select: { id: true },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) =>
+        getPrismaError('PotentialDateTime', cause)
+      ),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'resetChosenDate.fetchPotentialDateTimes',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Delete existing availabilities for the organizer
+    yield* Effect.promise(() =>
+      db.availability.deleteMany({
+        where: {
+          membershipId: membership.id,
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Availability', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'resetChosenDate.deleteAvailabilities',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Create availability records for organizer (all YES) for all potential date times
+    if (potentialDateTimes.length > 0) {
+      yield* Effect.promise(() =>
+        db.availability.createMany({
+          data: potentialDateTimes.map(pdt => ({
+            membershipId: membership.id,
+            potentialDateTimeId: pdt.id,
+            status: 'YES',
+          })),
+        })
+      ).pipe(
+        Effect.mapError((cause: Error) =>
+          getPrismaError('Availability', cause)
+        ),
         Effect.tapError(error =>
-          Effect.logWarning('Failed to create DATE_CHOSEN notifications', {
+          Effect.logError('Database operation encountered error', {
+            operation: 'resetChosenDate.createAvailabilities',
             eventId,
-            authorId: userId,
-            chosenDateTime: potentialDateTime.dateTime,
+            userId,
             error: error.message,
             errorType: error.constructor.name,
+            willRetry: error instanceof ConnectionError,
           })
         ),
-        Effect.catchAll(() =>
-          Effect.succeed({ message: 'Notifications failed' })
-        )
-      )
-    );
+        Effect.retry({
+          schedule: Schedule.exponential(1000).pipe(
+            Schedule.intersect(Schedule.recurs(3))
+          ),
+          while: error => error instanceof ConnectionError,
+        })
+      );
+    }
+
+    const result = { message: 'Chosen date reset successfully' };
+
+    yield* Effect.logInfo('Event chosen date reset successfully', {
+      userId,
+      eventId,
+      operation: 'update',
+    });
 
     return result;
   }).pipe(
@@ -736,7 +995,272 @@ export const chooseDateTime = async (
           return [err, undefined] as const;
         }
         return [
-          new OperationError({ message: 'Failed to choose date time' }),
+          new OperationError({ message: 'Failed to reset chosen date' }),
+          undefined,
+        ] as const;
+      });
+    }),
+    // Map result to tuple
+    Effect.map(result => [null, result] as [null, { message: string }])
+  );
+
+  const result = await Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('availability'))
+  );
+
+  // Trigger DATE_RESET notification for event members (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!result[0] && result[1]) {
+    Effect.runPromise(
+      createEventNotifications({
+        eventId: input.eventId,
+        type: 'DATE_RESET',
+        authorId: userId,
+      }).pipe(
+        Effect.tapError(error =>
+          Effect.logWarning('Failed to create DATE_RESET notifications', {
+            eventId: input.eventId,
+            authorId: userId,
+            error: error.message,
+            errorType: error.constructor.name,
+          })
+        ),
+        Effect.catchAll(() =>
+          Effect.succeed({ message: 'Notifications failed' })
+        )
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  return result;
+};
+
+/**
+ * Update potential date times for an event (organizer only)
+ * Replaces all existing potential date times with new ones
+ */
+export const updatePotentialDateTimes = async (
+  input: UpdatePotentialDateTimesParams
+): Promise<
+  ResultTuple<
+    | NotFoundError
+    | UnauthorizedError
+    | AuthenticationError
+    | DatabaseError
+    | ConnectionError
+    | ConstraintError
+    | OperationError,
+    { message: string }
+  >
+> => {
+  const { eventId, potentialDateTimes } = input;
+
+  // Get auth outside Effect.gen
+  const [authError, userId] = await getUserId();
+  if (authError || !userId) {
+    return [
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
+      undefined,
+    ] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Updating potential date times for event', {
+      eventId,
+      userId,
+      potentialDateTimesCount: potentialDateTimes.length,
+    });
+
+    // Check if user is the organizer
+    const membership = yield* Effect.promise(() =>
+      db.membership.findFirst({
+        where: {
+          eventId,
+          personId: userId,
+          role: 'ORGANIZER',
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'updatePotentialDateTimes.checkOrganizer',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    if (!membership) {
+      yield* Effect.logInfo(
+        'User not authorized to update potential date times',
+        {
+          userId,
+          eventId,
+          reason: 'not_organizer',
+          operation: 'updatePotentialDateTimes',
+        }
+      );
+      yield* Effect.fail(
+        new UnauthorizedError({
+          message: 'Only the organizer can update potential date times',
+        })
+      );
+      return;
+    }
+
+    // Delete all existing potential date times (this will cascade delete availabilities)
+    yield* Effect.promise(() =>
+      db.potentialDateTime.deleteMany({
+        where: { eventId },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) =>
+        getPrismaError('PotentialDateTime', cause)
+      ),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'updatePotentialDateTimes.deleteOld',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Create new potential date times
+    yield* Effect.promise(() =>
+      db.potentialDateTime.createMany({
+        data: potentialDateTimes.map(dateTime => ({
+          eventId,
+          dateTime: new Date(dateTime),
+        })),
+        skipDuplicates: false,
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) =>
+        getPrismaError('PotentialDateTime', cause)
+      ),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'updatePotentialDateTimes.createNew',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Fetch the newly created potential date times to get their IDs
+    const createdPotentialDateTimes = yield* Effect.promise(() =>
+      db.potentialDateTime.findMany({
+        where: { eventId },
+        select: { id: true },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) =>
+        getPrismaError('PotentialDateTime', cause)
+      ),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'updatePotentialDateTimes.fetchNew',
+          eventId,
+          userId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    // Create availability records for organizer (all YES) for all new potential date times
+    if (createdPotentialDateTimes.length > 0) {
+      yield* Effect.promise(() =>
+        db.availability.createMany({
+          data: createdPotentialDateTimes.map(pdt => ({
+            membershipId: membership.id,
+            potentialDateTimeId: pdt.id,
+            status: 'YES',
+          })),
+        })
+      ).pipe(
+        Effect.mapError((cause: Error) =>
+          getPrismaError('Availability', cause)
+        ),
+        Effect.tapError(error =>
+          Effect.logError('Database operation encountered error', {
+            operation: 'updatePotentialDateTimes.createAvailabilities',
+            eventId,
+            userId,
+            error: error.message,
+            errorType: error.constructor.name,
+            willRetry: error instanceof ConnectionError,
+          })
+        ),
+        Effect.retry({
+          schedule: Schedule.exponential(1000).pipe(
+            Schedule.intersect(Schedule.recurs(3))
+          ),
+          while: error => error instanceof ConnectionError,
+        })
+      );
+    }
+
+    const result = { message: 'Potential date times updated successfully' };
+
+    yield* Effect.logInfo('Event potential date times updated successfully', {
+      userId,
+      eventId,
+      potentialDateTimesCount: potentialDateTimes.length,
+      operation: 'update',
+    });
+
+    return result;
+  }).pipe(
+    Effect.catchAll(err => {
+      return Effect.gen(function* () {
+        yield* Effect.void;
+        yield* Effect.void;
+        if (err instanceof UnauthorizedError || err instanceof NotFoundError) {
+          return [err, undefined] as const;
+        }
+        return [
+          new OperationError({
+            message: 'Failed to update potential date times',
+          }),
           undefined,
         ] as const;
       });

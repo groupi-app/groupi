@@ -1,8 +1,49 @@
 # Groupi
 
-A modern event planning and group coordination platform built with Next.js, React Native, and a monorepo architecture.
+A modern event planning and group coordination platform built with Next.js, TypeScript, and a monorepo architecture.
 
-## Development Workflow
+## Overview
+
+Groupi is a full-stack application for organizing events, managing group memberships, and facilitating real-time communication. The platform enables users to create events, invite members, coordinate availability, and engage in discussions through posts and replies.
+
+### Key Features
+
+- **Event Management**: Create and manage events with date/time coordination
+- **Group Coordination**: Manage memberships, roles, and permissions
+- **Real-time Communication**: Posts, replies, and notifications with real-time updates
+- **Availability Tracking**: Coordinate member availability for events
+- **Cross-platform Ready**: Architecture designed for web and mobile (React Native)
+
+## Architecture
+
+The project follows a monorepo structure with clear separation of concerns:
+
+```
+groupi/
+├── apps/
+│   └── web/              # Next.js web application
+├── packages/
+│   ├── schema/           # TypeScript types, DTOs, and validation schemas
+│   ├── services/         # Server-side business logic (Effect-based)
+│   └── ui/               # Shared UI components and utilities
+└── prisma/               # Database schema and migrations
+```
+
+### Data Flow
+
+1. **Schema** (`@groupi/schema`) - Defines types, DTOs, and validation schemas
+2. **Services** (`@groupi/services`) - Implements business logic using Effect for error handling
+3. **Web App** (`@groupi/web`) - Next.js application that orchestrates everything
+4. **UI** (`@groupi/ui`) - Shared components and utilities
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm 10.12.1+
+- PostgreSQL (via Supabase CLI for local development)
+- Environment variables configured (see `.env.example`)
 
 ### Quick Start
 
@@ -10,85 +51,27 @@ A modern event planning and group coordination platform built with Next.js, Reac
 # Install dependencies
 pnpm install
 
-# Start development environment (web app + package watches + Prisma Studio)
-pnpm dev
-
-# Start full development environment (includes database and ngrok)
-pnpm dev:full
-```
-
-### Monorepo Development
-
-This project uses a monorepo structure with the following packages:
-
-- `@groupi/web` - Next.js web application
-- `@groupi/hooks` - React hooks for data fetching
-- `@groupi/services` - Server-side business logic
-- `@groupi/schema` - TypeScript types and DTOs
-- `@groupi/ui` - Shared UI components
-
-#### Development Modes
-
-**Option 1: Basic Development Mode (Recommended)**
-
-```bash
-# Start web app, Prisma Studio, and package watches
+# Start development environment
 pnpm dev
 ```
 
-**Option 2: Full Development Mode**
+This starts:
+- Next.js web app (http://localhost:3000)
+- Prisma Studio (http://localhost:5555)
+- Database (Supabase local stack)
+- Package watch mode for hot reloading
 
-```bash
-# Start everything: web app, Supabase (local Postgres + services), Prisma Studio, ngrok, and package watches
-pnpm dev:full
-```
-
-**Option 3: Individual Services**
-
-```bash
-# Start just the web app
-turbo dev --filter=@groupi/web
-
-# Watch all packages for changes
-pnpm dev:watch
-
-# Start database (Supabase local stack)
-pnpm dev:db
-
-# Start Prisma Studio
-pnpm dev:prisma
-```
-
-**Option 4: Manual Rebuild**
-
-```bash
-# When you make changes to packages, rebuild them
-pnpm build --filter=@groupi/hooks
-pnpm build --filter=@groupi/schema
-# etc.
-```
-
-### Package Development
-
-When working on packages:
-
-1. **Make changes** to source files in `packages/*/src/`
-2. **Watch mode** automatically rebuilds on file changes
-3. **Next.js** picks up the changes and hot reloads
-4. **TypeScript** provides full type safety across packages
-
-### Available Scripts
+### Development Scripts
 
 ```bash
 # Development
 pnpm dev              # Start web app with all services
-pnpm dev:watch        # Watch all packages for changes
 pnpm dev:prisma       # Start Prisma Studio
-pnpm dev:db           # Start database
+pnpm dev:db           # Start local database (Supabase)
 
 # Building
-pnpm build            # Build all packages
-pnpm build --filter=@groupi/hooks  # Build specific package
+pnpm build            # Build all packages and apps
+pnpm build --filter=@groupi/web  # Build specific package/app
 
 # Code Quality
 pnpm lint             # Lint all packages
@@ -102,69 +85,58 @@ pnpm generate         # Generate Prisma client
 pnpm seed-users       # Seed test users
 ```
 
-## Architecture
+### Package Development
 
-### Package Structure
+When working on packages:
 
-```
-packages/
-├── hooks/          # React hooks for data fetching
-├── schema/         # TypeScript types and DTOs
-├── services/       # Server-side business logic
-└── ui/            # Shared UI components
+1. Make changes to source files in `packages/*/src/`
+2. Watch mode automatically rebuilds on file changes
+3. Next.js picks up changes and hot reloads
+4. TypeScript provides full type safety across packages
 
-apps/
-└── web/           # Next.js web application
-```
+## Production
 
-### Data Flow
-
-1. **Schema** defines types and DTOs
-2. **Services** implement business logic using schema types
-3. **Hooks** provide React-friendly data fetching using services
-4. **UI** components use hooks for data and schema for types
-5. **Web app** orchestrates everything together
-
-### Type Safety
-
-All packages use proper TypeScript DTOs instead of `any`:
-
-- `PostPageDTO` - For post page display
-- `PostReplyFeedDTO` - For reply feed functionality
-- `PostCardDTO` - For post cards and feeds
-
-## Getting Started
-
-1. Clone the repository
-2. Install dependencies: `pnpm install`
-3. Set up environment variables (see `.env.example`)
-4. Start development: `pnpm dev`
-
-This will automatically:
-
-- Start the web app
-- Start Prisma Studio
-- Watch all packages for changes
-
-For full development environment (including database and ngrok):
+### Building
 
 ```bash
-pnpm dev:full
+# Build all packages and apps
+pnpm build
+
+# Start production server
+pnpm start
 ```
 
-**Note**: The full development mode requires:
+### Environment Variables
 
-- Supabase CLI installed (for local Postgres stack)
-- Ngrok authtoken configured for webhooks
+Ensure all required environment variables are set for production. See `.env.example` for reference.
+
+### Database Migrations
+
+```bash
+# Deploy migrations to production
+pnpm prisma:migrate-deploy
+```
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Clerk
+- **Authentication**: Better Auth
 - **Styling**: Tailwind CSS
 - **State Management**: TanStack Query
-- **Monorepo**: Turborepo with pnpm workspaces
 - **Real-time**: Pusher
+- **Error Handling**: Effect.ts
+- **Monorepo**: Turborepo with pnpm workspaces
 - **Testing**: Cypress for E2E
+
+## Project Structure
+
+- [`apps/web`](./apps/web/README.md) - Next.js web application
+- [`packages/schema`](./packages/schema/README.md) - Types and validation schemas
+- [`packages/services`](./packages/services/README.md) - Business logic layer
+- [`packages/ui`](./packages/ui/README.md) - Shared UI components
+
+## Getting Help
+
+For detailed information about each package or app, see their respective README files in the directories above.

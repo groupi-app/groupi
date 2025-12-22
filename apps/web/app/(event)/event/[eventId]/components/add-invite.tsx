@@ -1,6 +1,5 @@
 'use client';
 
-import { createInviteAction } from '@/actions/invite-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useState } from 'react';
@@ -34,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useCreateInvite } from '@/hooks/mutations/use-create-invite';
 
 // Helper function to calculate expiration date
 function calculateExpirationDate(expiresInMs: number | null): Date | null {
@@ -65,43 +65,51 @@ export function AddInvite({ eventId }: { eventId: string }) {
   });
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const createInvite = useCreateInvite();
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-
+  function onSubmit(values: z.infer<typeof formSchema>) {
     const expiresAt = calculateExpirationDate(values.expiresIn);
-    const [error] = await createInviteAction({
-      name: values.name,
-      eventId: eventId,
-      expiresAt: expiresAt,
-      maxUses: values.maxUses,
-    });
-
-    if (error) {
-      // Handle specific error types
-      if (error._tag === 'UnauthorizedError') {
-        toast.error('Permission denied', {
-          description:
-            'You do not have permission to create invites for this event.',
-        });
-      } else if (error._tag === 'ValidationError') {
-        toast.error('Invalid input', {
-          description: 'Please check your invite details and try again.',
-        });
-      } else {
-        toast.error('Failed to create invite', {
-          description: 'The invite could not be created. Please try again.',
-        });
+    
+    // Close dialog and reset form immediately (optimistic update)
+    setIsOpen(false);
+    form.reset();
+    
+    createInvite.mutate(
+      {
+        name: values.name,
+        eventId: eventId,
+        expiresAt: expiresAt,
+        maxUses: values.maxUses,
+      },
+      {
+        onSuccess: () => {
+          toast.success('The invite has been successfully created.');
+        },
+        onError: (error: unknown) => {
+          // Reopen dialog on error so user can try again
+          setIsOpen(true);
+          
+          // Handle specific error types
+          const err = error as { _tag?: string };
+          if (err._tag === 'UnauthorizedError') {
+            toast.error('Permission denied', {
+              description:
+                'You do not have permission to create invites for this event.',
+            });
+          } else if (err._tag === 'ValidationError') {
+            toast.error('Invalid input', {
+              description: 'Please check your invite details and try again.',
+            });
+          } else {
+            toast.error('Failed to create invite', {
+              description: 'The invite could not be created. Please try again.',
+            });
+          }
+        },
       }
-      setIsLoading(false);
-    } else {
-      toast.success('The invite has been successfully created.');
-      setIsOpen(false);
-      form.reset();
-      setIsLoading(false);
-    }
+    );
   }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -224,14 +232,8 @@ export function AddInvite({ eventId }: { eventId: string }) {
                 <Button
                   className='flex items-center gap-1'
                   type='submit'
-                  disabled={isLoading}
                 >
-                  {isLoading ? (
-                    <Icons.spinner className='size-4 animate-spin' />
-                  ) : (
-                    <Icons.plus className='size-4' />
-                  )}
-
+                  <Icons.plus className='size-4' />
                   <span>Add</span>
                 </Button>
               </div>

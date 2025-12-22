@@ -7,27 +7,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { deleteReplyAction } from '@/actions/reply-actions';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useDeleteReply } from '@/hooks/mutations/use-delete-reply';
 
 export function DeleteReplyDialog({ id }: { id: string }) {
-  const [isLoading, setIsLoading] = useState(false);
+  const deleteReply = useDeleteReply();
 
-  const handleDeleteReply = async () => {
-    setIsLoading(true);
-    const [error] = await deleteReplyAction({ replyId: id });
-
-    if (error) {
-      toast.error('Failed to delete reply', {
-        description: 'An unexpected error occurred. Please try again.',
-      });
-      setIsLoading(false);
-    } else {
-      toast.success('The reply has been deleted.');
-    }
+  const handleDeleteReply = () => {
+    deleteReply.mutate(
+      { replyId: id },
+      {
+        onSuccess: () => {
+          toast.success('The reply has been deleted.');
+        },
+        onError: () => {
+          toast.error('Failed to delete reply', {
+            description: 'An unexpected error occurred. Please try again.',
+          });
+        },
+      }
+    );
   };
+
+  const isLoading = deleteReply.isPending;
 
   return (
     <DialogContent>

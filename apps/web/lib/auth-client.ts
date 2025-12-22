@@ -52,7 +52,7 @@ export async function sendMagicLinkWithEmailOrUsername({
     // Send magic link directly with email
     return await authClient.signIn.magicLink({
       email: identifier,
-      callbackURL: callbackURL || '/events',
+      callbackURL: callbackURL || '/onboarding',
     });
   } else {
     // Need to look up email from username first
@@ -77,7 +77,7 @@ export async function sendMagicLinkWithEmailOrUsername({
       // Now send magic link with the email
       return await authClient.signIn.magicLink({
         email,
-        callbackURL: callbackURL || '/events',
+        callbackURL: callbackURL || '/onboarding',
       });
     } catch {
       return {

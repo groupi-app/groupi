@@ -2,7 +2,7 @@
 
 import { Switch } from '@/components/ui/switch';
 import { Icons } from '@/components/icons';
-import { usePusherBeams } from '@/components/providers/pusher-beams-context-provider';
+import { usePusherBeams } from '@/stores/pusher-beams-store';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 

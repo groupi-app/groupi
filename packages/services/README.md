@@ -1,276 +1,203 @@
 # @groupi/services
 
-A modern service layer built with Effect.ts, providing robust error handling, logging, and observability for the Groupi application.
+Server-side business logic layer built with Effect.ts, providing robust error handling, logging, and observability.
 
-## Features
+## Overview
 
-- **Effect.ts Integration**: Type-safe error handling and composability
-- **Pino Logging**: Structured logging with multiple layers
-- **Sentry Monitoring**: Error tracking and performance monitoring
-- **Backward Compatibility**: Legacy wrapper functions for gradual migration
+This package contains all server-side business logic for the Groupi application. It uses Effect.ts for functional error handling, composability, and provides integration with logging (Pino) and monitoring (Sentry).
 
-## Sentry Integration
+## Architecture
 
-### Setup
+### Package Structure
 
-1. Install Sentry:
-
-```bash
-pnpm add @sentry/node
+```
+packages/services/src/
+├── domains/            # Domain-specific business logic
+│   ├── event.ts
+│   ├── post.ts
+│   ├── membership.ts
+│   └── ...
+├── cache/              # Cache layer for frequently accessed data
+├── infrastructure/     # Infrastructure concerns (DB, email, logging)
+├── shared/             # Shared utilities and patterns
+└── index.ts            # Main exports
 ```
 
-2. Uncomment the Sentry import in `sentry.ts`:
+### Key Responsibilities
 
-```ts
-import * as Sentry from '@sentry/node';
+1. **Business Logic**: Implements core business rules and workflows
+2. **Database Operations**: Wraps Prisma queries with error handling
+3. **Error Handling**: Uses Effect for composable error handling
+4. **Logging**: Structured logging with Pino
+5. **Monitoring**: Sentry integration for error tracking
+6. **Caching**: Cache layer for performance optimization
+
+### Data Flow
+
+```
+@groupi/web (Server Actions / tRPC)
+    ↓
+@groupi/services (business logic)
+    ↓
+@groupi/schema (validation)
+    ↓
+Database (Prisma)
 ```
 
-3. Replace `MockSentry` with `Sentry` in the `SentryClient` assignment.
+### Integration Points
 
-### Usage
+- **@groupi/schema**: Imports types, DTOs, and validation schemas
+- **@groupi/web**: Exported functions used by server actions and tRPC procedures
+- **Prisma**: Database access via Prisma Client
+- **Effect.ts**: Functional error handling and composition
 
-#### Basic Sentry Wrapper
+## Usage
 
-```ts
-import { withSentry } from '@groupi/services';
+### Basic Service Function
 
-const myEffect = Effect.gen(function* (_) {
-  // Your Effect logic here
-  return yield* _(someOperation());
-});
+```typescript
+import { Effect } from 'effect';
+import { dbOperation } from '@groupi/services/infrastructure';
+import { EventSchema } from '@groupi/schema';
 
-const wrappedEffect = withSentry(myEffect, {
-  name: 'fetchUserData',
-  op: 'service.fetch',
-  tags: { userId: '123' },
-  data: { context: 'user-profile' },
-});
-```
-
-#### Service Helper Functions
-
-```ts
-import { SentryHelpers } from '@groupi/services';
-
-// Database operations
-const dbEffect = SentryHelpers.withDbOperation(
-  prismaQuery,
-  'findMany',
-  'users'
-);
-
-// API operations
-const apiEffect = SentryHelpers.withApiOperation(
-  handleRequest,
-  'POST',
-  '/api/events'
-);
-
-// Service operations
-const serviceEffect = SentryHelpers.withServiceOperation(
-  businessLogic,
-  'event',
-  'create',
-  'event-123'
-);
-
-// Authentication operations
-const authEffect = SentryHelpers.withAuthOperation(
-  verifyToken,
-  'verify',
-  'user-456'
-);
-```
-
-#### Adding Context and Breadcrumbs
-
-```ts
-import {
-  addSentryContext,
-  addSentryBreadcrumb,
-  setSentryTags,
-} from '@groupi/services';
-
-const complexOperation = Effect.gen(function* (_) {
-  // Set global context
-  yield* _(
-    addSentryContext({
-      user: { id: '123', role: 'admin' },
-      event: { id: 'event-456', title: 'Team Meeting' },
-    })
-  );
-
-  // Add breadcrumb
-  yield* _(
-    addSentryBreadcrumb({
-      message: 'Starting data validation',
-      category: 'validation',
-      level: 'info',
-    })
-  );
-
-  // Set tags
-  yield* _(
-    setSentryTags({
-      feature: 'event-creation',
-      version: '1.0.0',
-    })
-  );
-
-  // Your business logic
-  return yield* _(performOperation());
-});
-```
-
-#### In API Routes
-
-```ts
-// app/api/events/[id]/route.ts
-import { SentryHelpers } from '@groupi/services';
-
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const result = await Effect.runPromise(
-    SentryHelpers.withApiOperation(
-      fetchEventDataEffect(params.id),
-      'GET',
-      '/api/events/[id]'
-    )
-  );
-
-  return Response.json(result);
-}
-```
-
-#### In Server Actions
-
-```ts
-// app/actions/events.ts
-import { SentryHelpers } from '@groupi/services';
-
-export async function createEventAction(formData: FormData) {
-  const result = await Effect.runPromise(
-    SentryHelpers.withServiceOperation(
-      createEventEffect({
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
-      }),
-      'event',
-      'create'
-    )
-  );
-
-  return result;
-}
-```
-
-### Advanced Usage
-
-#### Custom Spans
-
-```ts
-import { withSentrySpan } from '@groupi/services';
-
-const complexOperation = Effect.gen(function* (_) {
-  // Main operation
-  const data = yield* _(fetchData());
-
-  // Separate span for processing
-  const processedData = yield* _(
-    withSentrySpan(processData(data), {
-      name: 'process-data',
-      op: 'data.transform',
-      tags: { recordCount: data.length },
-    })
-  );
-
-  return processedData;
-});
-```
-
-#### Error Handling with Sentry
-
-```ts
-const robustOperation = Effect.gen(function* (_) {
-  return yield* _(dangerousOperation());
-}).pipe(
-  withSentry(_, {
-    name: 'robust-operation',
-    op: 'business.logic',
-    tags: { critical: true },
-  }),
-  Effect.catchAll(error => {
-    // Error is automatically captured by Sentry
-    // Handle specific error types
-    if (error instanceof ValidationError) {
-      return Effect.succeed({ error: 'Invalid input' });
-    }
-    return Effect.succeed({ error: 'Operation failed' });
-  })
-);
-```
-
-## Current Integration
-
-The following services are already integrated with Sentry:
-
-- **Event Service**: `fetchEventData`, `createEvent`
-- **Post Service**: `fetchPostPageData`, `createPost`
-
-Example from the codebase:
-
-```ts
-// From event.ts
-export const fetchEventData = cache(
-  async (eventId: string): Promise<ActionResponse<EventData>> => {
-    const result = await Effect.runPromise(
-      SentryHelpers.withServiceOperation(
-        Effect.gen(function* (_) {
-          const data = yield* _(fetchEventDataEffect(eventId));
-          return { success: data };
-        }).pipe(
-          Effect.catchAll(error => {
-            // Error handling...
-          }),
-          Effect.provide(EventLoggerLayer)
-        ),
-        'event',
-        'fetchData',
-        eventId
+export const fetchEvent = (eventId: string) =>
+  Effect.gen(function* (_) {
+    const event = yield* _(
+      dbOperation(
+        () => prisma.event.findUnique({ where: { id: eventId } }),
+        'event.findUnique'
       )
     );
+    
+    if (!event) {
+      return yield* _(Effect.fail(new EventNotFoundError()));
+    }
+    
+    return EventSchema.parse(event);
+  });
+```
 
-    return result;
-  }
+### With Sentry Integration
+
+```typescript
+import { SentryHelpers } from '@groupi/services';
+
+const result = await Effect.runPromise(
+  SentryHelpers.withServiceOperation(
+    fetchEvent(eventId),
+    'event',
+    'fetch',
+    eventId
+  )
 );
 ```
 
-## Benefits
+### Error Handling Pattern
 
-1. **Error Tracking**: All errors are automatically captured with full context
-2. **Performance Monitoring**: Track operation duration and identify bottlenecks
-3. **Breadcrumb Trails**: Understand the sequence of operations leading to issues
-4. **Contextual Metadata**: Rich tagging and data for debugging
-5. **Integration with Effect**: Seamless integration with Effect's error handling
+Services return Effect types that can be composed:
+
+```typescript
+const result = yield* _(
+  fetchEvent(eventId).pipe(
+    Effect.catchAll(error => {
+      // Handle specific error types
+      if (error instanceof EventNotFoundError) {
+        return Effect.succeed(null);
+      }
+      return Effect.fail(error);
+    })
+  )
+);
+```
+
+## Domain Services
+
+### Event Service (`domains/event.ts`)
+- Event creation and management
+- Event data fetching
+- Member coordination
+
+### Post Service (`domains/post.ts`)
+- Post creation and management
+- Reply handling
+- Feed generation
+
+### Membership Service (`domains/membership.ts`)
+- Membership management
+- Role and permission handling
+- RSVP coordination
+
+### Other Domains
+- `account.ts` - Account management
+- `availability.ts` - Availability tracking
+- `invite.ts` - Invitation handling
+- `notification.ts` - Notification logic
+- `settings.ts` - User settings
+
+## Infrastructure
+
+### Database (`infrastructure/db.ts`)
+- Prisma client wrapper
+- Database operation helpers
+- Retry logic
+
+### Logging (`infrastructure/logger.ts`)
+- Pino logger setup
+- Structured logging
+- Log levels and formatting
+
+### Sentry (`infrastructure/sentry.ts`)
+- Error tracking
+- Performance monitoring
+- Context and breadcrumbs
+
+### Real-time (`infrastructure/pusher-server.ts`)
+- Pusher server integration
+- Channel management
+- Event broadcasting
+
+## Development
+
+### Type Checking
+
+```bash
+pnpm type-check --filter=@groupi/services
+```
+
+### Building
+
+```bash
+pnpm build --filter=@groupi/services
+```
+
+### Testing Services
+
+Services use Effect, making them easy to test:
+
+```typescript
+import { Effect } from 'effect';
+import { fetchEvent } from './domains/event';
+
+const result = await Effect.runPromise(
+  fetchEvent('event-id').pipe(
+    Effect.provide(TestDatabaseLayer)
+  )
+);
+```
 
 ## Best Practices
 
-1. **Use Descriptive Names**: Make operation names clear and searchable
-2. **Include Relevant Tags**: Add context like user ID, event ID, etc.
-3. **Avoid Sensitive Data**: Don't include passwords or tokens in tags/data
-4. **Use Appropriate Levels**: Set correct severity levels for different operations
-5. **Group Related Operations**: Use consistent naming conventions for related operations
+1. **Use Effect**: All service functions should return Effect types
+2. **Validate Input**: Use schema validation before processing
+3. **Handle Errors**: Use discriminated unions for error types
+4. **Add Logging**: Use structured logging for important operations
+5. **Monitor**: Wrap critical operations with Sentry helpers
+6. **Cache**: Use cache layer for frequently accessed data
+7. **Compose**: Build complex operations from simple Effects
 
-## Migration Guide
+## Migration Notes
 
-To migrate existing services to use Sentry:
-
-1. Import the Sentry helpers
-2. Wrap your Effect operations with appropriate helpers
-3. Add relevant tags and context
-4. Test error scenarios to ensure proper capture
-5. Monitor Sentry dashboard for insights
-
-The integration maintains backward compatibility, so existing code will continue to work while gaining Sentry benefits.
+The package is transitioning to:
+- Effect-based error handling (complete)
+- Safe-wrapper tuple pattern for API boundaries (in progress)
+- Full Sentry integration (partial)

@@ -135,13 +135,6 @@ type AdminDashboardProps = {
 export function AdminDashboard({ searchParams }: AdminDashboardProps) {
   return (
     <div className='space-y-8'>
-      <div>
-        <h1 className='text-3xl font-bold tracking-tight'>Admin Dashboard</h1>
-        <p className='text-muted-foreground'>
-          Manage users and monitor platform activity
-        </p>
-      </div>
-
       {/* Stats Cards */}
       <Suspense fallback={<StatsLoading />}>
         <AdminStats />

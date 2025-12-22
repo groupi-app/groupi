@@ -54,3 +54,10 @@ export const isDEBUG_ENABLED = () => {
   const debugEnv = getEnvVar('DEBUG');
   return debugEnv === 'true' && !isProduction;
 };
+
+// Loki - lazy access (optional)
+export const getLOKI_ENABLED = () => getEnvVar('LOKI_ENABLED') === 'true';
+export const getLOKI_URL = () =>
+  getEnvVar('LOKI_URL') || 'https://logs-prod-036.grafana.net/loki/api/v1/push';
+export const getLOKI_INSTANCE_ID = () => getEnvVar('LOKI_INSTANCE_ID');
+export const getLOKI_TOKEN = () => getEnvVar('LOKI_TOKEN');

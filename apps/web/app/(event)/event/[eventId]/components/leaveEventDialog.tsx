@@ -7,29 +7,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { leaveEventAction } from '@/actions/event-actions';
-
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useLeaveEvent } from '@/hooks/mutations/use-leave-event';
 
 export function LeaveEventDialog({ eventId }: { eventId: string }) {
   const router = useRouter();
-  const [isLeaving, setIsLeaving] = useState(false);
+  const leaveEvent = useLeaveEvent();
 
-  const handleLeave = async () => {
-    setIsLeaving(true);
-    const [error] = await leaveEventAction({ eventId });
-
-    if (error) {
-      toast.error('Unable to leave the event.');
-      setIsLeaving(false);
-    } else {
-      toast.success('You have left the event.');
-      router.push(`/events`);
-    }
+  const handleLeave = () => {
+    leaveEvent.mutate(
+      { eventId },
+      {
+        onSuccess: () => {
+          toast.success('You have left the event.');
+          router.push(`/events`);
+        },
+        onError: () => {
+          toast.error('Unable to leave the event.');
+        },
+      }
+    );
   };
+
+  const isLeaving = leaveEvent.isPending;
 
   return (
     <DialogContent>

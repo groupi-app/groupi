@@ -48,6 +48,7 @@ export const DateOptionData = PotentialDateTimeData.extend({
             name: true,
             email: true,
             image: true,
+            username: true,
           }),
         }),
       }),

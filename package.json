@@ -12,12 +12,15 @@
     "next:stop": "pnpm kill-port 3000",
     "build": "turbo build",
     "start": "turbo start",
+    "preview": "pnpm build && pnpm start",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "turbo type-check",
     "prisma:migrate-deploy": "pnpm prisma migrate deploy",
+    "db:setup": "./scripts/setup-db.sh",
+    "db:reset": "./scripts/setup-db.sh",
     "postinstall": "./scripts/generate-and-fix.sh",
     "migrate": "pnpm prisma migrate dev",
     "generate": "./scripts/generate-and-fix.sh",
@@ -28,7 +31,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@prisma/client": "^6.18.0",
+    "@prisma/client": "^6.19.0",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
     "import-in-the-middle": "^2.0.0",
@@ -36,7 +39,6 @@
     "wait-on": "^9.0.1"
   },
   "devDependencies": {
-    "next-devtools-mcp": "^0.2.3",
     "@clerk/backend": "^2.19.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.38.0",
@@ -53,10 +55,13 @@
     "globals": "^16.4.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
+    "next-devtools-mcp": "^0.2.3",
     "pino": "^10.1.0",
+    "pino-abstract-transport": "^3.0.0",
+    "pino-loki": "^2.6.0",
     "pino-pretty": "^13.1.2",
     "prettier": "^3.6.2",
-    "prisma": "^6.18.0",
+    "prisma": "^6.19.0",
     "start-server-and-test": "^2.1.2",
     "supabase": "^2.54.11",
     "ts-node": "^10.9.2",
@@ -66,12 +71,21 @@
     "typescript": "^5.9.3",
     "zod-prisma-types": "^3.2.4"
   },
+  "pnpm": {
+    "overrides": {
+      "require-in-the-middle": "8.0.1",
+      "import-in-the-middle": "2.0.0",
+      "effect": "^3.19.3"
+    }
+  },
   "overrides": {
     "@radix-ui/react-dismissable-layer": "^1.0.5",
     "@radix-ui/react-focus-scope": "^1.0.4",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "next-devtools-mcp>zod": "$zod"
+    "next-devtools-mcp>zod": "$zod",
+    "require-in-the-middle": "8.0.1",
+    "import-in-the-middle": "2.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,scss,md}": [

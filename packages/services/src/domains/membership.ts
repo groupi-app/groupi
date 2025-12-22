@@ -21,7 +21,10 @@ import {
   OperationError,
 } from '@groupi/schema';
 import { getPrismaError } from '../shared/errors';
-import { createEventNotifications } from './notification';
+import {
+  createEventNotifications,
+  createTargetedNotification,
+} from './notification';
 
 // ============================================================================
 // MEMBERSHIP DOMAIN SERVICES
@@ -78,6 +81,7 @@ export const getMemberListData = async ({
                       name: true,
                       email: true,
                       image: true,
+                      username: true,
                     },
                   },
                 },
@@ -111,7 +115,7 @@ export const getMemberListData = async ({
     );
 
     if (!eventData) {
-      yield* Effect.logInfo('Event not found', {
+      yield* Effect.logDebug('Event not found', {
         userId,
         eventId,
         operation: 'getMemberListData',
@@ -156,6 +160,7 @@ export const getMemberListData = async ({
               name: membership.person.user?.name || null,
               email: membership.person.user?.email || '',
               image: membership.person.user?.image || null,
+              username: membership.person.user?.username || null,
             },
           },
         })),
@@ -175,21 +180,21 @@ export const getMemberListData = async ({
 
     return result;
   }).pipe(
-    Effect.catchAll(err => {
-      return Effect.gen(function* () {
-        yield* Effect.void;
-        yield* Effect.void;
-        if (err instanceof NotFoundError || err instanceof UnauthorizedError) {
-          return [err, undefined] as const;
-        }
-        return [
-          new DatabaseError({ message: 'Failed to fetch member list data' }),
-          undefined,
-        ] as const;
-      });
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, MemberListPageData])
+    Effect.either,
+    Effect.map(either =>
+      either._tag === 'Left'
+        ? ([
+            either.left instanceof NotFoundError ||
+            either.left instanceof UnauthorizedError
+              ? either.left
+              : new DatabaseError({
+                  message: 'Failed to fetch member list data',
+                  cause: either.left,
+                }),
+            undefined,
+          ] as [DatabaseError | UnauthorizedError | NotFoundError, undefined])
+        : ([null, either.right] as [null, MemberListPageData])
+    )
   );
 
   return Effect.runPromise(
@@ -318,7 +323,8 @@ export const updateMemberRSVP = async ({
     });
 
     // Trigger USER_RSVP notification for event members (fire-and-forget)
-    yield* Effect.fork(
+    // Run outside Effect.gen to ensure it executes with proper context
+    Effect.runPromise(
       createEventNotifications({
         eventId,
         type: 'USER_RSVP',
@@ -364,7 +370,9 @@ export const updateMemberRSVP = async ({
           });
         })
       )
-    );
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
 
     return result;
   }).pipe(
@@ -537,65 +545,17 @@ export const updateMemberRole = async ({
     const oldRoleLevel = roleHierarchy[targetMembership.role];
     const newRoleLevel = roleHierarchy[role];
 
-    if (newRoleLevel > oldRoleLevel) {
-      // Promotion - notify the user being promoted
-      yield* Effect.fork(
-        createEventNotifications({
-          eventId: targetMembership.eventId,
-          type: 'USER_PROMOTED',
-          authorId: userId,
-        }).pipe(
-          Effect.catchAll(error => {
-            return Effect.gen(function* () {
-              yield* Effect.void;
-              yield* Effect.logWarning(
-                'Failed to create USER_PROMOTED notifications',
-                {
-                  eventId: targetMembership.eventId,
-                  targetUserId: targetMembership.personId,
-                  authorId: userId,
-                  oldRole: targetMembership.role,
-                  newRole: role,
-                  error: error.message,
-                  errorType: error.constructor.name,
-                }
-              );
-              return { message: 'Promotion notification attempt completed' };
-            });
-          })
-        )
-      );
-    } else if (newRoleLevel < oldRoleLevel) {
-      // Demotion - notify the user being demoted
-      yield* Effect.fork(
-        createEventNotifications({
-          eventId: targetMembership.eventId,
-          type: 'USER_DEMOTED',
-          authorId: userId,
-        }).pipe(
-          Effect.catchAll(error => {
-            return Effect.gen(function* () {
-              yield* Effect.void;
-              yield* Effect.logWarning(
-                'Failed to create USER_DEMOTED notifications',
-                {
-                  eventId: targetMembership.eventId,
-                  targetUserId: targetMembership.personId,
-                  authorId: userId,
-                  oldRole: targetMembership.role,
-                  newRole: role,
-                  error: error.message,
-                  errorType: error.constructor.name,
-                }
-              );
-              return { message: 'Demotion notification attempt completed' };
-            });
-          })
-        )
-      );
-    }
-
-    return result;
+    return {
+      result,
+      notificationInfo: {
+        isPromotion: newRoleLevel > oldRoleLevel,
+        isDemotion: newRoleLevel < oldRoleLevel,
+        targetPersonId: targetMembership.personId,
+        eventId: targetMembership.eventId,
+        oldRole: targetMembership.role,
+        newRole: role,
+      },
+    };
   }).pipe(
     Effect.catchAll(err => {
       return Effect.gen(function* () {
@@ -620,12 +580,107 @@ export const updateMemberRole = async ({
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, MembershipData])
+    Effect.map(
+      result =>
+        [null, result] as [
+          null,
+          {
+            result: MembershipData;
+            notificationInfo?: {
+              isPromotion: boolean;
+              isDemotion: boolean;
+              targetPersonId: string;
+              eventId: string;
+              oldRole: string;
+              newRole: string;
+            };
+          },
+        ]
+    )
   );
 
-  return Effect.runPromise(
+  const effectResult = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('memberships'))
   );
+
+  // Trigger USER_PROMOTED or USER_DEMOTED notification (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!effectResult[0] && effectResult[1]?.notificationInfo) {
+    const { notificationInfo } = effectResult[1];
+    if (notificationInfo.isPromotion) {
+      Effect.runPromise(
+        createTargetedNotification({
+          personId: notificationInfo.targetPersonId,
+          eventId: notificationInfo.eventId,
+          type: 'USER_PROMOTED',
+          authorId: userId,
+        }).pipe(
+          Effect.catchAll(error => {
+            return Effect.gen(function* () {
+              yield* Effect.void;
+              yield* Effect.logWarning(
+                'Failed to create USER_PROMOTED notification',
+                {
+                  eventId: notificationInfo.eventId,
+                  targetUserId: notificationInfo.targetPersonId,
+                  authorId: userId,
+                  oldRole: notificationInfo.oldRole,
+                  newRole: notificationInfo.newRole,
+                  error: error.message,
+                  errorType: error.constructor.name,
+                }
+              );
+              return { message: 'Promotion notification attempt completed' };
+            });
+          })
+        )
+      ).catch(() => {
+        // Ignore errors - fire-and-forget
+      });
+    } else if (notificationInfo.isDemotion) {
+      Effect.runPromise(
+        createTargetedNotification({
+          personId: notificationInfo.targetPersonId,
+          eventId: notificationInfo.eventId,
+          type: 'USER_DEMOTED',
+          authorId: userId,
+        }).pipe(
+          Effect.catchAll(error => {
+            return Effect.gen(function* () {
+              yield* Effect.void;
+              yield* Effect.logWarning(
+                'Failed to create USER_DEMOTED notification',
+                {
+                  eventId: notificationInfo.eventId,
+                  targetUserId: notificationInfo.targetPersonId,
+                  authorId: userId,
+                  oldRole: notificationInfo.oldRole,
+                  newRole: notificationInfo.newRole,
+                  error: error.message,
+                  errorType: error.constructor.name,
+                }
+              );
+              return { message: 'Demotion notification attempt completed' };
+            });
+          })
+        )
+      ).catch(() => {
+        // Ignore errors - fire-and-forget
+      });
+    }
+  }
+
+  // Return only the result, not the notificationInfo
+  if (effectResult[0]) {
+    return [effectResult[0], undefined] as const;
+  }
+  if (!effectResult[1] || !effectResult[1].result) {
+    return [
+      new DatabaseError({ message: 'Failed to update member role' }),
+      undefined,
+    ] as const;
+  }
+  return [null, effectResult[1].result] as const;
 };
 
 /**
@@ -753,33 +808,13 @@ export const removeMemberFromEvent = async ({
       operation: 'delete',
     });
 
-    // Trigger USER_LEFT notification for event members (fire-and-forget)
-    yield* Effect.fork(
-      createEventNotifications({
+    return {
+      result,
+      notificationInfo: {
         eventId: targetMembership.eventId,
-        type: 'USER_LEFT',
-        authorId: targetMembership.personId, // The person who left
-      }).pipe(
-        Effect.catchAll(error => {
-          return Effect.gen(function* () {
-            yield* Effect.void;
-            yield* Effect.logWarning(
-              'Failed to create USER_LEFT notifications',
-              {
-                eventId: targetMembership.eventId,
-                targetUserId: targetMembership.personId,
-                removedBy: userId,
-                error: error.message,
-                errorType: error.constructor.name,
-              }
-            );
-            return { message: 'User left notification attempt completed' };
-          });
-        })
-      )
-    );
-
-    return result;
+        personId: targetMembership.personId,
+      },
+    };
   }).pipe(
     Effect.catchAll(err => {
       return Effect.gen(function* () {
@@ -804,10 +839,63 @@ export const removeMemberFromEvent = async ({
       });
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, { message: string }])
+    Effect.map(
+      result =>
+        [null, result] as [
+          null,
+          {
+            result: { message: string };
+            notificationInfo?: { eventId: string; personId: string };
+          },
+        ]
+    )
   );
 
-  return Effect.runPromise(
+  const effectResult = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('memberships'))
   );
+
+  // Trigger USER_LEFT notification for event members (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!effectResult[0] && effectResult[1]?.notificationInfo) {
+    const { notificationInfo } = effectResult[1];
+    Effect.runPromise(
+      createEventNotifications({
+        eventId: notificationInfo.eventId,
+        type: 'USER_LEFT',
+        authorId: notificationInfo.personId, // The person who left
+      }).pipe(
+        Effect.catchAll(error => {
+          return Effect.gen(function* () {
+            yield* Effect.void;
+            yield* Effect.logWarning(
+              'Failed to create USER_LEFT notifications',
+              {
+                eventId: notificationInfo.eventId,
+                targetUserId: notificationInfo.personId,
+                removedBy: userId,
+                error: error.message,
+                errorType: error.constructor.name,
+              }
+            );
+            return { message: 'User left notification attempt completed' };
+          });
+        })
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  // Return only the result, not the notificationInfo
+  if (effectResult[0]) {
+    return [effectResult[0], undefined] as const;
+  }
+  if (!effectResult[1] || !effectResult[1].result) {
+    return [
+      new OperationError({ message: 'Failed to remove member' }),
+      undefined,
+    ] as const;
+  }
+  return [null, effectResult[1].result] as const;
 };

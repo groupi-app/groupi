@@ -1,20 +1,21 @@
-import { getCachedMyEventsData } from '@groupi/services';
-import { EventListClient } from './event-list-client';
-import { redirect } from 'next/navigation';
+import { getCachedMyEventsData } from '@groupi/services/server';
+import { EventListWrapper } from './event-list-wrapper';
 
 /**
  * Server component that fetches cached events data
- * Uses "use cache" from the service layer
+ * Uses "use cache: private" at component level for PPR optimization
+ * On cache hit, component renders instantly without suspending
+ * Component-level caching is required for PPR to skip Suspense boundaries
  */
 export async function EventListServer() {
+  'use cache: private';
+  
   const [error, myEventsData] = await getCachedMyEventsData();
 
   if (error) {
     const errorTag = '_tag' in error ? error._tag : null;
     switch (errorTag) {
-      case 'AuthenticationError':
-        redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+      // AuthenticationError is handled at page level before Suspense
       case 'NotFoundError':
         return (
           <div className='flex items-center justify-center py-8'>
@@ -25,7 +26,7 @@ export async function EventListServer() {
         return (
           <div className='flex items-center justify-center py-8'>
             <div className='text-lg text-red-600'>
-              Error loading events: {error.message}
+              Error loading events
             </div>
           </div>
         );
@@ -51,9 +52,9 @@ export async function EventListServer() {
   const events = myEventsData.memberships.map(membership => membership.event);
   const userId = myEventsData.id;
 
-  // Pass static data to client component
+  // Pass static data to client wrapper component
   return (
-    <EventListClient
+    <EventListWrapper
       events={events}
       memberships={myEventsData.memberships}
       userId={userId}

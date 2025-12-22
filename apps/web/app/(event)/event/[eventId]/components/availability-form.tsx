@@ -1,17 +1,17 @@
 'use client';
-import { updateAvailabilitiesAction } from '@/actions/availability-actions';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StatusType } from '@groupi/schema';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
 import { z } from 'zod';
 import { AvailabilityCard } from './availability-card';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { useUpdateAvailability } from '@/hooks/mutations/use-update-availability';
 
 export function AvailabilityForm({
   potentialDateTimes,
@@ -22,7 +22,7 @@ export function AvailabilityForm({
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const updateAvailability = useUpdateAvailability();
 
   const answerMap = (
     status: StatusType | undefined
@@ -63,6 +63,39 @@ export function AvailabilityForm({
     },
   });
 
+  // Update form when potentialDateTimes changes (e.g., new poll started)
+  useEffect(() => {
+    const currentAnswers = form.getValues('formAnswers');
+    const currentIds = new Set(currentAnswers.map(a => a.potentialDateTimeId));
+    const newIds = new Set(potentialDateTimes.map(pdt => pdt.id));
+
+    // Check if there are new potential date times
+    const hasNewDates = potentialDateTimes.some(pdt => !currentIds.has(pdt.id));
+    const hasRemovedDates = currentAnswers.some(a => !newIds.has(a.potentialDateTimeId));
+
+    if (hasNewDates || hasRemovedDates) {
+      // Reset form with updated potential date times
+      form.reset({
+        formAnswers: potentialDateTimes.map(pdt => {
+          // Try to preserve existing answer if this date time already exists
+          const existingAnswer = currentAnswers.find(
+            a => a.potentialDateTimeId === pdt.id
+          );
+          if (existingAnswer) {
+            return existingAnswer;
+          }
+          // Otherwise, use the availability from the server or default to 'no'
+          return {
+            potentialDateTimeId: pdt.id,
+            answer: answerMap(
+              pdt.availabilities.find(a => a.membership.personId === userId)?.status
+            ),
+          };
+        }),
+      });
+    }
+  }, [potentialDateTimes, form, userId]);
+
   function setFormAnswers(
     answer: 'yes' | 'maybe' | 'no',
     index?: number | undefined
@@ -87,30 +120,35 @@ export function AvailabilityForm({
     form.setValue(`formAnswers`, availabilities);
   }
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
+  function onSubmit(data: z.infer<typeof formSchema>) {
     const availabilityUpdates = data.formAnswers.map(answer => ({
       potentialDateTimeId: answer.potentialDateTimeId,
       status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
     }));
 
-    setIsLoading(true);
-    const [error] = await updateAvailabilitiesAction({
-      eventId,
-      availabilityUpdates,
+    // Show toast and redirect immediately (optimistic)
+    toast.success('Availability Updated', {
+      description: 'Your availability has been successfully updated.',
     });
+    router.push(`/event/${eventId}`);
 
-    if (error) {
-      toast.error('Unable to update', {
-        description:
-          'There was an error updating your availability. Please try again.',
-      });
-      setIsLoading(false);
-    } else {
-      toast.success('Availability Updated', {
-        description: 'Your availability has been successfully updated.',
-      });
-      router.push(`/event/${eventId}`);
-    }
+    // Handle mutation in background
+    updateAvailability.mutate(
+      {
+        eventId,
+        availabilityUpdates,
+      },
+      {
+        onError: () => {
+          // Rollback navigation and show error toast
+          router.push(`/event/${eventId}/availability`);
+          toast.error('Unable to update', {
+            description:
+              'There was an error updating your availability. Please try again.',
+          });
+        },
+      }
+    );
   }
 
   return (
@@ -178,16 +216,15 @@ export function AvailabilityForm({
           type='submit'
           disabled={
             !(
-              form.watch('formAnswers').filter(a => a.answer).length ===
+              form
+                .watch('formAnswers')
+                .filter((a: { answer: string }) => a.answer).length ===
               form.watch('formAnswers').length
-            ) || isLoading
+            )
           }
           className='my-2'
         >
-          <div className='flex items-center gap-1'>
-            {isLoading && <Icons.spinner className='animate-spin size-5' />}
-            <span>Submit</span>
-          </div>
+          <span>Submit</span>
         </Button>
       </form>
     </Form>

@@ -8,7 +8,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { deleteInviteAction } from '@/actions/invite-actions';
 import { cn, timeUntil } from '@/lib/utils';
 import type { EventInviteData } from '@groupi/schema';
 import {
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useDeleteInvite } from '@/hooks/mutations/use-delete-invite';
 
 export function InviteLinkCard({
   invite,
@@ -40,7 +40,8 @@ export function InviteLinkCard({
   setSelectedInvites: (invites: string[]) => void;
 }) {
   const [dialogType, setDialogType] = useState<'delete' | 'view'>('view');
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const deleteInvite = useDeleteInvite();
 
   const { id, name, usesRemaining, maxUses, expiresAt, createdAt, createdBy } =
     invite;
@@ -48,22 +49,38 @@ export function InviteLinkCard({
   // Generate invite URL using utility function
   const inviteUrl = getInviteUrl(id);
 
-  const handleDeleteInvite = async () => {
-    setIsDeleting(true);
-    const [error] = await deleteInviteAction({ inviteId: id });
+  const handleDeleteInvite = () => {
+    // Don't close dialog immediately - let it close naturally when component unmounts
+    // after optimistic delete removes the invite from the list
+    // This prevents flashing
+    
+    deleteInvite.mutate(
+      { inviteId: id },
+      {
+        onSuccess: () => {
+          toast.success('The invite has been successfully deleted.');
+          // Dialog will close automatically when component unmounts
+        },
+        onError: () => {
+          // Keep dialog open on error so user can try again
+          toast.error('Failed to delete invite', {
+            description: 'The invite could not be deleted. Please try again.',
+          });
+        },
+      }
+    );
+  };
 
-    if (error) {
-      toast.error('Failed to delete invite', {
-        description: 'The invite could not be deleted. Please try again.',
-      });
-      setIsDeleting(false);
-    } else {
-      toast.success('The invite has been successfully deleted.');
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Reset dialog type when closing
+      setDialogType('view');
     }
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <div className='relative max-w-3xl'>
         <Checkbox
           checked={selectedInvites.includes(id)}
@@ -81,6 +98,7 @@ export function InviteLinkCard({
         <DialogTrigger
           onClick={() => {
             setDialogType('view');
+            setIsOpen(true);
           }}
           asChild
         >
@@ -100,7 +118,7 @@ export function InviteLinkCard({
                   </h1>
                   <span className='text-sm text-muted-foreground'>
                     Created:{' '}
-                    {createdAt.toLocaleString([], {
+                    {new Date(createdAt).toLocaleString([], {
                       dateStyle: 'short',
                       timeStyle: 'short',
                     })}
@@ -134,8 +152,9 @@ export function InviteLinkCard({
         <DialogTrigger asChild>
           <Button
             className='hover:bg-destructive hover:text-destructive-foreground z-20 absolute right-4 top-3 md:top-0 md:bottom-0 my-auto'
-            onClick={async () => {
+            onClick={() => {
               setDialogType('delete');
+              setIsOpen(true);
             }}
             variant='outline'
             size='icon'
@@ -145,7 +164,12 @@ export function InviteLinkCard({
         </DialogTrigger>
       </div>
 
-      <DialogContent>
+      <DialogContent onInteractOutside={(e) => {
+        // Prevent closing when clicking outside during delete
+        if (dialogType === 'delete') {
+          e.preventDefault();
+        }
+      }}>
         {dialogType === 'view' && (
           <div className='w-full overflow-hidden'>
             <DialogHeader className='w-full'>
@@ -178,7 +202,7 @@ export function InviteLinkCard({
               <div className='flex items-center gap-1'>
                 <span className='text-muted-foreground'>Created at:</span>
                 <span>
-                  {createdAt.toLocaleString([], {
+                  {new Date(createdAt).toLocaleString([], {
                     dateStyle: 'short',
                     timeStyle: 'short',
                   })}
@@ -194,7 +218,7 @@ export function InviteLinkCard({
                 <span className='text-muted-foreground'>Expires at:</span>
                 <span>
                   {expiresAt
-                    ? expiresAt?.toLocaleString([], {
+                    ? new Date(expiresAt).toLocaleString([], {
                         dateStyle: 'medium',
                         timeStyle: 'short',
                       })
@@ -227,17 +251,16 @@ export function InviteLinkCard({
             <DialogFooter>
               <div className='flex gap-4 justify-end'>
                 <DialogClose asChild>
-                  <Button variant='ghost' disabled={isDeleting}>
+                  <Button variant='ghost'>
                     Cancel
                   </Button>
                 </DialogClose>
                 <DialogClose asChild>
                   <Button
                     onClick={handleDeleteInvite}
-                    disabled={isDeleting}
                     variant='destructive'
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    Delete
                   </Button>
                 </DialogClose>
               </div>

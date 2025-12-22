@@ -17,6 +17,7 @@ import { PrismaClient } from '@prisma/client';
 import { createEffectLoggerLayer, authLogger } from '../infrastructure/logger';
 import type { ResultTuple } from '@groupi/schema';
 import { DatabaseError } from '@groupi/schema';
+import type { Session } from './auth-types';
 
 // ============================================================================
 // BETTER AUTH INSTANCE
@@ -31,6 +32,13 @@ export const auth = betterAuth({
   }),
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  advanced: {
+    database: {
+      // Disable Better Auth ID generation - let Prisma generate UUIDs instead
+      // This is required for Supabase RLS which expects UUIDs for authentication
+      generateId: false,
+    },
+  },
   socialProviders: {
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID!,
@@ -174,6 +182,11 @@ export const auth = betterAuth({
             await prisma.person.create({
               data: {
                 id: newSession.user.id,
+                // Create PersonSettings along with Person
+                // notificationMethods relation will be empty array by default
+                settings: {
+                  create: {},
+                },
               },
             });
             authLogger.info(
@@ -181,8 +194,30 @@ export const auth = betterAuth({
                 userId: newSession.user.id,
                 method: ctx.path,
               },
-              'Created Person record for user'
+              'Created Person record and settings for user'
             );
+          } else {
+            // Ensure PersonSettings exists even if Person already exists
+            const existingSettings = await prisma.personSettings.findUnique({
+              where: { personId: newSession.user.id },
+            });
+
+            if (!existingSettings) {
+              // Create PersonSettings with empty notificationMethods relation
+              await prisma.personSettings.create({
+                data: {
+                  personId: newSession.user.id,
+                  // notificationMethods will be empty array by default (relation)
+                },
+              });
+              authLogger.info(
+                {
+                  userId: newSession.user.id,
+                  method: ctx.path,
+                },
+                'Created PersonSettings for existing user'
+              );
+            }
           }
         } catch (error) {
           authLogger.error(
@@ -231,9 +266,9 @@ export const auth = betterAuth({
 // ============================================================================
 // TYPES
 // ============================================================================
-
-export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.Session.user;
+// Types are exported from auth-types.ts to avoid server-only dependencies
+// Re-export here for backward compatibility
+export type { Session, User } from './auth-types';
 
 // ============================================================================
 // AUTH DOMAIN SERVICES

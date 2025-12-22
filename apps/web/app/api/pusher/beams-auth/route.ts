@@ -1,4 +1,4 @@
-import { getUserIdUncached } from '@groupi/services';
+import { getUserIdUncached } from '@groupi/services/server';
 import PushNotifications from '@pusher/push-notifications-server';
 import { env } from '@/env.mjs';
 import { NextResponse } from 'next/server';

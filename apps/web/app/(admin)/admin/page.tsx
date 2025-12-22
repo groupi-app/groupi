@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { getSession } from '@groupi/services';
+import { getSession } from '@groupi/services/server';
 import { AdminDashboard } from './components/admin-dashboard';
 import { AdminDashboardSkeleton } from '@/components/skeletons/admin-dashboard-skeleton';
 import { Suspense } from 'react';
@@ -12,6 +12,13 @@ type PageProps = {
 export default async function AdminPage({ searchParams }: PageProps) {
   return (
     <div className='container mx-auto py-8'>
+      {/* Statically rendered header - no server data needed */}
+      <div className='mb-8'>
+        <h1 className='text-3xl font-bold tracking-tight'>Admin Dashboard</h1>
+        <p className='text-muted-foreground'>
+          Manage users and monitor platform activity
+        </p>
+      </div>
       <Suspense fallback={<AdminDashboardSkeleton />}>
         <AdminContent searchParams={searchParams} />
       </Suspense>

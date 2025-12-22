@@ -12,3 +12,4 @@ export * from './membership';
 export * from './availability';
 export * from './notification';
 export * from './settings';
+export * from './account';

@@ -7,20 +7,21 @@ import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
 
 import { MainNavStatic } from '@/components/main-nav-static';
-// Temporarily disabled to test prerendering issue
-// import { MainNavDynamicWrapper } from '@/components/main-nav-dynamic-wrapper';
+import { MainNavDynamicWrapper } from '@/components/main-nav-dynamic-wrapper';
 import { ModeToggle } from '@/components/mode-toggle';
 import { GlobalUI } from '@/components/global-ui';
 import { FooterCopyright } from '@/components/footer-copyright';
-// Temporarily disabled to test prerendering issue
-// import { navConfig } from '@/config/nav';
+import { navConfig } from '@/config/nav';
 import Link from 'next/link';
-// Temporarily disabled to test prerendering issue
-// import { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PusherBeamsProviderWrapper } from '@/components/providers/pusher-beams-provider-wrapper';
+import { QueryProvider } from '@/components/providers/query-provider';
+import { NavigationGuardProvider } from '@/app/(settings)/settings/components/navigation-guard-context';
+import { GlobalNavigationGuard } from '@/components/global-navigation-guard';
+import { OnboardingRedirectWrapper } from '@/components/onboarding-redirect-wrapper';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -108,52 +109,77 @@ export default function RootLayout({
 
 function RootContent({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
-      <TooltipProvider>
-        <PusherBeamsProviderWrapper>
-          <div className='flex flex-col min-h-screen'>
-            <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-              <MainNavStatic
-                dynamicContent={
-                  // Temporarily disabled to test prerendering issue
-                  // <Suspense fallback={<MainNavDynamicSkeleton />}>
-                  //   <MainNavDynamicWrapper items={navConfig.mainNav} />
-                  // </Suspense>
-                  <MainNavDynamicSkeleton />
-                }
-              />
-            </header>
-            <main className='grow'>{children}</main>
-            <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
-              <div className='container mx-auto py-4 flex gap-8 items-center'>
-                <ModeToggle />
-                <div className='flex flex-col gap-2'>
-                  <p>
-                    Built by{' '}
-                    <Link
-                      className='underline font-medium'
-                      href='https://tsurette.com'
-                    >
-                      Theia
-                    </Link>
-                  </p>
-                  <FooterCopyright />
-                </div>
+    <QueryProvider>
+      <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+        <TooltipProvider>
+          <NavigationGuardProvider>
+            <Suspense fallback={null}>
+              <GlobalNavigationGuard />
+            </Suspense>
+            <Suspense fallback={null}>
+              <OnboardingRedirectWrapper />
+            </Suspense>
+            <Suspense fallback={null}>
+              <PusherBeamsProviderWrapper>
+                <div className='flex flex-col min-h-screen'>
+                {/* Static header shell - renders immediately */}
+                <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+                  <MainNavStatic
+                    dynamicContent={
+                      <Suspense fallback={<MainNavDynamicSkeleton />}>
+                        <MainNavDynamicWrapper items={navConfig.mainNav} />
+                      </Suspense>
+                    }
+                  />
+                </header>
+                {/* Static main content area */}
+                <main className='grow'>{children}</main>
+                {/* Static footer */}
+                <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+                  <div className='container mx-auto py-4 flex gap-8 items-center'>
+                    <ModeToggle />
+                    <div className='flex flex-col gap-2'>
+                      <p>
+                        Built by{' '}
+                        <Link
+                          className='underline font-medium'
+                          href='https://tsurette.com'
+                        >
+                          Theia
+                        </Link>
+                      </p>
+                      <FooterCopyright />
+                    </div>
+                  </div>
+                </footer>
               </div>
-            </footer>
-          </div>
-        </PusherBeamsProviderWrapper>
-      </TooltipProvider>
-    </ThemeProvider>
+            </PusherBeamsProviderWrapper>
+            </Suspense>
+          </NavigationGuardProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryProvider>
   );
 }
 
-// Skeleton for dynamic nav content
+// Skeleton for dynamic nav content - matches MainNavDynamic structure
 function MainNavDynamicSkeleton() {
   return (
     <div className='flex items-center justify-end w-full gap-2'>
-      <Skeleton className='h-8 w-24' />
-      <Skeleton className='h-8 w-8 rounded-full' />
+      {/* Navigation menu items skeleton (hidden on mobile) */}
+      <div className='hidden gap-4 md:flex'>
+        <Skeleton className='h-8 w-20' />
+        <Skeleton className='h-8 w-24' />
+      </div>
+      
+      {/* Right side: notifications and profile (hidden on mobile) */}
+      <div className='hidden md:flex ml-auto items-center gap-3'>
+        <Skeleton className='h-8 w-8 rounded-full' />
+        <Skeleton className='h-8 w-8 rounded-full' />
+      </div>
+      
+      {/* Mobile nav button skeleton (visible on mobile) */}
+      <Skeleton className='h-8 w-8 rounded-md md:hidden' />
     </div>
   );
 }

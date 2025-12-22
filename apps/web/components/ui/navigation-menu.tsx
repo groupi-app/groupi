@@ -10,7 +10,32 @@ const navigationMenuTriggerStyle = cva(
 );
 
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
-const NavigationMenuLink = NavigationMenuPrimitive.Link;
+import Link from 'next/link';
+
+const NavigationMenuLink = React.forwardRef<
+  React.ComponentRef<typeof NavigationMenuPrimitive.Link>,
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
+>(function NavigationMenuLink({ href, onSelect, ...props }, ref) {
+  // If no href, fallback to regular primitive link (button, etc)
+  if (!href) {
+    return (
+      <NavigationMenuPrimitive.Link ref={ref} onSelect={onSelect} {...props} />
+    );
+  }
+  // Use asChild to make NavigationMenuPrimitive.Link render Next.js Link
+  // This ensures Next.js Link is used for all navigation
+  // Extract only the props that Next.js Link accepts (exclude Radix-specific props like onSelect)
+  const { className, children, onClick } = props;
+  return (
+    <NavigationMenuPrimitive.Link asChild onSelect={onSelect}>
+      <Link href={href} ref={ref} className={className} onClick={onClick}>
+        {children}
+      </Link>
+    </NavigationMenuPrimitive.Link>
+  );
+});
+
+NavigationMenuLink.displayName = 'NavigationMenuLink';
 
 export { NavigationMenuItem, NavigationMenuLink };
 

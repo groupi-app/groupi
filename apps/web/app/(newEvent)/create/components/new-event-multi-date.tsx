@@ -1,12 +1,10 @@
 'use client';
-import { useFormContext } from '@/components/providers/form-context-provider';
+import { useFormContext } from './form-context';
 import { Calendar } from '@/components/ui/calendar';
-import { createEventAction } from '@/actions/event-actions';
 import { merge } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
@@ -21,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useCreateEvent } from '@/hooks/mutations/use-create-event';
 
 interface Form1Types {
   dates: Date[];
@@ -44,10 +43,15 @@ const form2Schema = z.object({
     .min(2, { message: 'At least two dates are required.' }),
 });
 
-export function NewEventMultiDate() {
-  const { formState } = useFormContext();
+interface NewEventMultiDateProps {
+  onBack: () => void;
+}
+
+export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
+  const { formState, reset } = useFormContext();
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const createEvent = useCreateEvent();
+  const isSubmittingRef = useRef(false);
 
   const form1 = useForm<Form1Types>({
     resolver: zodResolver(form1Schema),
@@ -73,13 +77,8 @@ export function NewEventMultiDate() {
   const watchedDateTimes =
     useWatch({ control: form2.control, name: 'dateTimes' }) || [];
 
-  // Move redirect to useEffect to avoid calling during render
-  useEffect(() => {
-    if (!formState.title) {
-      router.push('/create');
-    }
-  }, [formState.title, router]);
-
+  // In wizard mode, redirect is handled by parent
+  // Keep validation check but don't redirect
   if (!formState.title) {
     return null;
   }
@@ -108,26 +107,34 @@ export function NewEventMultiDate() {
     );
   }
 
-  async function onSubmit2(data: z.infer<typeof form2Schema>) {
-    setIsSaving(true);
-
+  function onSubmit2(data: z.infer<typeof form2Schema>) {
     const { title, description, location } = formState;
 
-    const [error, result] = await createEventAction({
-      title,
-      description,
-      location,
-      potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
-    });
-
-    if (error) {
-      toast.error('The event was unable to be created.');
-      setIsSaving(false);
-    } else if (result) {
-      toast.success('The event was created successfully.');
-      router.push(`/event/${result.event.id}`);
-    }
+    isSubmittingRef.current = true;
+    createEvent.mutate(
+      {
+        title,
+        description,
+        location,
+        potentialDateTimes: data.dateTimes.map(date => date.toISOString()),
+      },
+      {
+        onSuccess: (result) => {
+          toast.success('The event was created successfully.');
+          // Reset form context before navigation so it's fresh when user comes back
+          reset();
+          isSubmittingRef.current = false;
+          router.push(`/event/${result.event.id}`);
+        },
+        onError: () => {
+          toast.error('The event was unable to be created.');
+          isSubmittingRef.current = false;
+        },
+      }
+    );
   }
+
+  const isSaving = createEvent.isPending;
 
   return (
     <div className='my-8 flex flex-col gap-6'>
@@ -247,12 +254,15 @@ export function NewEventMultiDate() {
         </Form>
       </div>
       <div className='flex justify-between'>
-        <Link href='/create/date-type'>
-          <Button className='flex items-center gap-1' variant={'secondary'}>
-            <span>Back</span>
-            <Icons.back className='text-sm' />
-          </Button>
-        </Link>
+        <Button
+          type='button'
+          className='flex items-center gap-1'
+          variant={'secondary'}
+          onClick={onBack}
+        >
+          <span>Back</span>
+          <Icons.back className='text-sm' />
+        </Button>
         <Button
           disabled={watchedDateTimes.length < 2 || isSaving}
           className='flex items-center gap-1'

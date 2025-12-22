@@ -1,9 +1,8 @@
 'use client';
 
-import { updateRSVPAction } from '@/actions/membership-actions';
 import { MembershipWithAvailabilities } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
@@ -14,22 +13,50 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { useUpdateRSVP } from '@/hooks/mutations/use-update-rsvp';
+import { useQuery } from '@tanstack/react-query';
+import { qk } from '@/lib/query-keys';
+import type { EventHeaderData } from '@groupi/schema/data';
+import { fetchEventHeader } from '@/lib/queries/event-queries';
 
 export function EventRSVP({
   title,
   dateTime,
-  userMembership,
+  userMembership: initialUserMembership,
+  eventId,
 }: {
   title: string;
-  dateTime: Date | null;
+  dateTime: Date | string | null;
   userMembership: MembershipWithAvailabilities;
+  eventId: string;
 }) {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const updateRSVP = useUpdateRSVP();
+
+  // Subscribe to React Query cache to get reactive updates
+  const { data: eventHeaderData } = useQuery({
+    queryKey: qk.events.header(eventId),
+    queryFn: () => fetchEventHeader(eventId),
+    initialData: {
+      event: {
+        id: eventId,
+        title: '',
+        description: '',
+        location: '',
+        chosenDateTime: null,
+      },
+      userMembership: initialUserMembership,
+    } as EventHeaderData,
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.userMembership, // Extract userMembership for reactivity
+  });
+
+  const userMembership = eventHeaderData || initialUserMembership;
 
   const formSchema = z.object({
     rsvp: z.enum(['YES', 'NO', 'MAYBE', 'PENDING']),
@@ -43,22 +70,33 @@ export function EventRSVP({
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    const [error] = await updateRSVPAction({
-      eventId: userMembership.eventId,
-      status: values.rsvp,
+  // Reset form when RSVP status changes (from optimistic updates or Pusher)
+  useEffect(() => {
+    form.reset({
+      rsvp: userMembership.rsvpStatus,
     });
-    if (error) {
-      toast.error('Failed to update RSVP', {
-        description: 'Your RSVP status could not be updated. Please try again.',
-      });
-      setIsLoading(false);
-      return;
-    }
+  }, [userMembership.rsvpStatus, form]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Close dialog immediately for instant feedback (optimistic update handles UI)
     setDialogOpen(false);
-    toast.success('Your RSVP status has been successfully updated');
-    setIsLoading(false);
+    
+    updateRSVP.mutate(
+      {
+        eventId: eventId,
+        status: values.rsvp,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Your RSVP status has been successfully updated');
+        },
+        onError: () => {
+          toast.error('Failed to update RSVP', {
+            description: 'Your RSVP status could not be updated. Please try again.',
+          });
+        },
+      }
+    );
   }
 
   return (
@@ -108,20 +146,25 @@ export function EventRSVP({
         ))}
       <DialogContent>
         <DialogHeader>
-          <h1 className='text-2xl font-heading'>RSVP</h1>
+          <DialogTitle className='text-2xl font-heading'>RSVP</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Will you be attending{' '}
           <span className='text-foreground font-semibold'>{title}</span> on{' '}
           <span className='text-foreground font-semibold'>
-            {dateTime?.toLocaleString([], {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            })}
+            {dateTime
+              ? (dateTime instanceof Date
+                  ? dateTime
+                  : new Date(dateTime)
+                ).toLocaleString([], {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+              : null}
           </span>
           ?
         </DialogDescription>
@@ -137,7 +180,6 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'YES' ? 'default' : 'outline'}
                       onClick={() => field.onChange('YES')}
-                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <Icons.check className='text-green-500' />
@@ -150,7 +192,6 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'MAYBE' ? 'default' : 'outline'}
                       onClick={() => field.onChange('MAYBE')}
-                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
@@ -165,7 +206,6 @@ export function EventRSVP({
                       type='button'
                       variant={field.value === 'NO' ? 'default' : 'outline'}
                       onClick={() => field.onChange('NO')}
-                      disabled={isLoading}
                     >
                       <div className='flex items-center gap-1 pr-2'>
                         <Icons.close className='text-red-500' />
@@ -181,17 +221,12 @@ export function EventRSVP({
                 className='mt-5 flex items-center gap-1 w-full sm:w-auto'
                 type='submit'
                 disabled={
-                  isLoading ||
                   !form.formState.isValid ||
                   // eslint-disable-next-line react-hooks/incompatible-library
                   form.watch('rsvp') === 'PENDING'
                 }
               >
-                {isLoading ? (
-                  <Icons.spinner className='h-4 w-4 animate-spin' />
-                ) : (
-                  <Icons.save className='size-4' />
-                )}
+                <Icons.save className='size-4' />
                 Save
               </Button>
             </div>

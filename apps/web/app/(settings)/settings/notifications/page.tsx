@@ -1,8 +1,11 @@
 import { SettingsContent } from '../components/settings-content';
-import { getCachedSettingsData, getSession } from '@groupi/services';
+import { getCachedSettingsData, getSession } from '@groupi/services/server';
 import { SettingsFormSkeleton } from '@/components/skeletons/settings-form-skeleton';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+import { SettingsFormProvider } from '../components/settings-form-provider';
+import { SettingsFormWithGuard } from '../components/settings-form-with-guard';
+import ErrorPage from '@/components/error';
 
 /**
  * Notification Settings Page - Dynamic rendering with Suspense
@@ -22,26 +25,59 @@ export default async function NotificationSettings() {
 }
 
 async function SettingsContentServer() {
-  // Testing: Remove 'use cache: private' to see if Suspense alone is enough
-  // Dynamic rendering - wrapped in Suspense boundary
   const [sessionError, session] = await getSession();
 
   if (sessionError || !session) {
     redirect('/sign-in');
   }
 
-  const [error] = await getCachedSettingsData();
+  const [error, settingsData] = await getCachedSettingsData();
 
-  if (error) {
-    return (
-      <div className='text-center py-8'>
-        <h2 className='text-xl font-bold text-red-600'>Error</h2>
-        <p className='mt-2'>An error occurred while loading your settings.</p>
-      </div>
-    );
+  if (error || !settingsData) {
+    return <ErrorPage message='Unable to load user settings' />;
   }
+
+  // Transform database data to only include form-editable fields
+  // Ensure notificationMethods is an array (default to empty array if undefined)
+  const notificationMethods = settingsData.notificationMethods || [];
+  type NotificationMethod = (typeof notificationMethods)[number];
+  type Notification = NotificationMethod['notifications'][number];
+
+  const transformedData = {
+    notificationMethods: notificationMethods.map(
+      (method: NotificationMethod) => ({
+        type: method.type,
+        value: method.value,
+        enabled: method.enabled,
+        name: method.name ?? undefined,
+        notifications: method.notifications.map(
+          (notification: Notification) => ({
+            notificationType: notification.notificationType,
+            enabled: notification.enabled,
+          })
+        ),
+        // Include webhook-specific fields if present
+        ...(method.webhookFormat && { webhookFormat: method.webhookFormat }),
+        ...(method.customTemplate && { customTemplate: method.customTemplate }),
+        ...(method.webhookHeaders && {
+          webhookHeaders:
+            typeof method.webhookHeaders === 'string'
+              ? method.webhookHeaders
+              : JSON.stringify(method.webhookHeaders),
+        }),
+      })
+    ),
+  };
 
   const emails = [session.user.email]; // Better Auth uses single email
 
-  return <SettingsContent emails={emails} userId={session.user.id} />;
+  return (
+    <SettingsFormProvider defaultValues={transformedData}>
+      <div className='relative'>
+        <SettingsFormWithGuard>
+          <SettingsContent emails={emails} userId={session.user.id} />
+        </SettingsFormWithGuard>
+      </div>
+    </SettingsFormProvider>
+  );
 }

@@ -792,16 +792,21 @@ export const getAllReplies = async (params?: {
     const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
     // Transform to ReplyAdminListItemData format
-    const result: ReplyAdminListItemData[] = items.map(
-      (reply: ReplyWithPost) => ({
+    // Filter out replies without authors (defensive programming)
+    const result: ReplyAdminListItemData[] = items
+      .filter(
+        (reply: ReplyWithPost) =>
+          reply.author?.user !== null && reply.author?.user !== undefined
+      )
+      .map((reply: ReplyWithPost) => ({
         id: reply.id,
         text: reply.text,
         createdAt: reply.createdAt,
         updatedAt: reply.updatedAt,
         author: {
-          id: reply.author.user.id,
-          name: reply.author.user.name,
-          email: reply.author.user.email,
+          id: reply.author!.user.id,
+          name: reply.author!.user.name,
+          email: reply.author!.user.email,
         },
         post: {
           id: reply.post.id,
@@ -811,8 +816,7 @@ export const getAllReplies = async (params?: {
             title: reply.post.event.title,
           },
         },
-      })
-    );
+      }));
 
     yield* Effect.logInfo('Successfully fetched all replies', {
       count: result.length,

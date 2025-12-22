@@ -181,13 +181,19 @@ export function ReplyListClient({
                     </TableCell>
                     <TableCell>
                       <div className='text-sm'>
-                        <div className='font-medium'>
-                          {reply.author.name || reply.author.email}
-                        </div>
-                        {reply.author.name && (
-                          <div className='text-muted-foreground'>
-                            {reply.author.email}
-                          </div>
+                        {reply.author ? (
+                          <>
+                            <div className='font-medium'>
+                              {reply.author.name || reply.author.email}
+                            </div>
+                            {reply.author.name && (
+                              <div className='text-muted-foreground'>
+                                {reply.author.email}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className='text-muted-foreground'>Unknown author</div>
                         )}
                       </div>
                     </TableCell>

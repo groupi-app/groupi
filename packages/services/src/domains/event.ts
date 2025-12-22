@@ -11,12 +11,14 @@ import {
   UpdateEventDetailsParams,
   DeleteEventParams,
   LeaveEventParams,
+  GetMutualEventsParams,
 } from '@groupi/schema/params';
 import {
   EventHeaderData,
   EventDetailsData,
   EventNewPostPageData,
   EventAttendeesPageData,
+  MutualEventsData,
 } from '@groupi/schema/data';
 import {
   NotFoundError,
@@ -107,7 +109,7 @@ export const getEventHeaderData = async ({
     );
 
     if (!eventData) {
-      yield* Effect.logInfo('Event not found', {
+      yield* Effect.logDebug('Event not found', {
         userId,
         eventId,
         operation: 'getEventHeaderData',
@@ -152,32 +154,21 @@ export const getEventHeaderData = async ({
 
     return result;
   }).pipe(
-    Effect.catchTags({
-      NotFoundError: error => Effect.succeed([error, undefined] as const),
-      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
-      DatabaseError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event header data' }),
-          undefined,
-        ] as const),
-      ConnectionError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event header data' }),
-          undefined,
-        ] as const),
-      ConstraintError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event header data' }),
-          undefined,
-        ] as const),
-      ValidationError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event header data' }),
-          undefined,
-        ] as const),
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventHeaderData])
+    Effect.either,
+    Effect.map(either =>
+      either._tag === 'Left'
+        ? ([
+            either.left instanceof NotFoundError ||
+            either.left instanceof UnauthorizedError
+              ? either.left
+              : new DatabaseError({
+                  message: 'Failed to fetch event header data',
+                  cause: either.left,
+                }),
+            undefined,
+          ] as [DatabaseError | UnauthorizedError | NotFoundError, undefined])
+        : ([null, either.right] as [null, EventHeaderData])
+    )
   );
 
   return Effect.runPromise(
@@ -252,7 +243,7 @@ export const getEventNewPostPageData = async ({
     );
 
     if (!eventData) {
-      yield* Effect.logInfo('Event not found', {
+      yield* Effect.logDebug('Event not found', {
         userId,
         eventId,
         operation: 'getEventNewPostPageData',
@@ -294,32 +285,21 @@ export const getEventNewPostPageData = async ({
 
     return result;
   }).pipe(
-    Effect.catchTags({
-      NotFoundError: error => Effect.succeed([error, undefined] as const),
-      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
-      DatabaseError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event data' }),
-          undefined,
-        ] as const),
-      ConnectionError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event data' }),
-          undefined,
-        ] as const),
-      ConstraintError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event data' }),
-          undefined,
-        ] as const),
-      ValidationError: _error =>
-        Effect.succeed([
-          new DatabaseError({ message: 'Failed to fetch event data' }),
-          undefined,
-        ] as const),
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventNewPostPageData])
+    Effect.either,
+    Effect.map(either =>
+      either._tag === 'Left'
+        ? ([
+            either.left instanceof NotFoundError ||
+            either.left instanceof UnauthorizedError
+              ? either.left
+              : new DatabaseError({
+                  message: 'Failed to fetch event data',
+                  cause: either.left,
+                }),
+            undefined,
+          ] as [DatabaseError | UnauthorizedError | NotFoundError, undefined])
+        : ([null, either.right] as [null, EventNewPostPageData])
+    )
   );
 
   return Effect.runPromise(
@@ -380,6 +360,21 @@ export const getEventAttendeesPageData = async ({
                       name: true,
                       email: true,
                       image: true,
+                      username: true,
+                    },
+                  },
+                },
+              },
+              availabilities: {
+                select: {
+                  status: true,
+                  membershipId: true,
+                  potentialDateTimeId: true,
+                  potentialDateTime: {
+                    select: {
+                      id: true,
+                      eventId: true,
+                      dateTime: true,
                     },
                   },
                 },
@@ -413,7 +408,7 @@ export const getEventAttendeesPageData = async ({
     );
 
     if (!eventData) {
-      yield* Effect.logInfo('Event not found', {
+      yield* Effect.logDebug('Event not found', {
         userId,
         eventId,
         operation: 'getEventAttendeesPageData',
@@ -461,10 +456,27 @@ export const getEventAttendeesPageData = async ({
               name: membership.person.user?.name || null,
               email: membership.person.user?.email || '',
               image: membership.person.user?.image || null,
+              username: membership.person.user?.username || null,
             },
           },
+          availabilities: membership.availabilities.map(availability => ({
+            status: availability.status,
+            membershipId: availability.membershipId,
+            potentialDateTimeId: availability.potentialDateTimeId,
+            potentialDateTime: {
+              id: availability.potentialDateTime.id,
+              eventId: availability.potentialDateTime.eventId,
+              dateTime: availability.potentialDateTime.dateTime,
+            },
+          })),
         })),
       },
+      userMembership: {
+        id: userMembership.id,
+        role: userMembership.role,
+        rsvpStatus: userMembership.rsvpStatus,
+      },
+      userId: userId,
     };
 
     yield* Effect.logDebug('Event attendees page data fetched successfully', {
@@ -475,40 +487,21 @@ export const getEventAttendeesPageData = async ({
 
     return result;
   }).pipe(
-    Effect.catchTags({
-      NotFoundError: error => Effect.succeed([error, undefined] as const),
-      UnauthorizedError: error => Effect.succeed([error, undefined] as const),
-      DatabaseError: _error =>
-        Effect.succeed([
-          new DatabaseError({
-            message: 'Failed to fetch event attendees data',
-          }),
-          undefined,
-        ] as const),
-      ConnectionError: _error =>
-        Effect.succeed([
-          new DatabaseError({
-            message: 'Failed to fetch event attendees data',
-          }),
-          undefined,
-        ] as const),
-      ConstraintError: _error =>
-        Effect.succeed([
-          new DatabaseError({
-            message: 'Failed to fetch event attendees data',
-          }),
-          undefined,
-        ] as const),
-      ValidationError: _error =>
-        Effect.succeed([
-          new DatabaseError({
-            message: 'Failed to fetch event attendees data',
-          }),
-          undefined,
-        ] as const),
-    }),
-    // Map result to tuple
-    Effect.map(result => [null, result] as [null, EventAttendeesPageData])
+    Effect.either,
+    Effect.map(either =>
+      either._tag === 'Left'
+        ? ([
+            either.left instanceof NotFoundError ||
+            either.left instanceof UnauthorizedError
+              ? either.left
+              : new DatabaseError({
+                  message: 'Failed to fetch event attendees data',
+                  cause: either.left,
+                }),
+            undefined,
+          ] as [DatabaseError | UnauthorizedError | NotFoundError, undefined])
+        : ([null, either.right] as [null, EventAttendeesPageData])
+    )
   );
 
   return Effect.runPromise(
@@ -582,10 +575,16 @@ export const createEvent = async ({
                       name: true,
                       email: true,
                       image: true,
+                      username: true,
                     },
                   },
                 },
               },
+            },
+          },
+          potentialDateTimes: {
+            select: {
+              id: true,
             },
           },
         },
@@ -609,6 +608,40 @@ export const createEvent = async ({
         while: error => error instanceof ConnectionError,
       })
     );
+
+    // Create availability records for organizer (all YES)
+    const organizerMembership = event.memberships[0];
+    if (organizerMembership && event.potentialDateTimes.length > 0) {
+      yield* Effect.promise(() =>
+        db.availability.createMany({
+          data: event.potentialDateTimes.map(pdt => ({
+            membershipId: organizerMembership.id,
+            potentialDateTimeId: pdt.id,
+            status: 'YES',
+          })),
+        })
+      ).pipe(
+        Effect.mapError((cause: Error) =>
+          getPrismaError('Availability', cause)
+        ),
+        Effect.tapError(error =>
+          Effect.logError('Database operation encountered error', {
+            operation: 'createEvent.createAvailabilities',
+            userId,
+            eventId: event.id,
+            error: error.message,
+            errorType: error.constructor.name,
+            willRetry: error instanceof ConnectionError,
+          })
+        ),
+        Effect.retry({
+          schedule: Schedule.exponential(1000).pipe(
+            Schedule.intersect(Schedule.recurs(3))
+          ),
+          while: error => error instanceof ConnectionError,
+        })
+      );
+    }
 
     // Direct construction
     const result: EventDetailsData = {
@@ -636,6 +669,7 @@ export const createEvent = async ({
             name: membership.person.user?.name || null,
             email: membership.person.user?.email || '',
             image: membership.person.user?.image || null,
+            username: membership.person.user?.username || null,
           },
         },
       })),
@@ -780,6 +814,7 @@ export const updateEventDetails = async ({
                       name: true,
                       email: true,
                       image: true,
+                      username: true,
                     },
                   },
                 },
@@ -845,6 +880,7 @@ export const updateEventDetails = async ({
             name: membership.person.user?.name || null,
             email: membership.person.user?.email || '',
             image: membership.person.user?.image || null,
+            username: membership.person.user?.username || null,
           },
         },
       })),
@@ -858,7 +894,8 @@ export const updateEventDetails = async ({
     });
 
     // Trigger EVENT_EDITED notification for event members (fire-and-forget)
-    yield* Effect.fork(
+    // Run outside Effect.gen to ensure it executes with proper context
+    Effect.runPromise(
       createEventNotifications({
         eventId,
         type: 'EVENT_EDITED',
@@ -876,7 +913,9 @@ export const updateEventDetails = async ({
           Effect.succeed({ message: 'Notifications failed' })
         )
       )
-    );
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
 
     return result;
   }).pipe(
@@ -908,9 +947,37 @@ export const updateEventDetails = async ({
     Effect.map(result => [null, result] as [null, EventDetailsData])
   );
 
-  return Effect.runPromise(
+  const result = await Effect.runPromise(
     Effect.provide(effect, createEffectLoggerLayer('events'))
   );
+
+  // Trigger EVENT_EDITED notification for event members (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!result[0] && result[1]) {
+    Effect.runPromise(
+      createEventNotifications({
+        eventId: eventId,
+        type: 'EVENT_EDITED',
+        authorId: userId,
+      }).pipe(
+        Effect.tapError(error =>
+          Effect.logWarning('Failed to create EVENT_EDITED notifications', {
+            eventId: eventId,
+            authorId: userId,
+            error: error.message,
+            errorType: error.constructor.name,
+          })
+        ),
+        Effect.catchAll(() =>
+          Effect.succeed({ message: 'Notifications failed' })
+        )
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  return result;
 };
 
 /**
@@ -1065,7 +1132,7 @@ export const leaveEvent = async ({
     | ConstraintError
     | OperationError
     | AuthenticationError,
-    { message: string }
+    { message: string; membershipId: string }
   >
 > => {
   // Get auth outside Effect.gen
@@ -1166,7 +1233,10 @@ export const leaveEvent = async ({
       })
     );
 
-    const result = { message: 'Left event successfully' };
+    const result = {
+      message: 'Left event successfully',
+      membershipId: membership.id,
+    };
 
     yield* Effect.logInfo('User left event successfully', {
       userId, // Who performed the action
@@ -1176,7 +1246,8 @@ export const leaveEvent = async ({
     });
 
     // Trigger USER_LEFT notification for event members (fire-and-forget)
-    yield* Effect.fork(
+    // Run outside Effect.gen to ensure it executes with proper context
+    Effect.runPromise(
       createEventNotifications({
         eventId,
         type: 'USER_LEFT',
@@ -1195,7 +1266,9 @@ export const leaveEvent = async ({
           Effect.succeed({ message: 'Notifications failed' })
         )
       )
-    );
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
 
     return result;
   }).pipe(
@@ -1225,7 +1298,173 @@ export const leaveEvent = async ({
       NotFoundError: error => Effect.succeed([error, undefined] as const),
     }),
     // Map result to tuple
-    Effect.map(result => [null, result] as [null, { message: string }])
+    Effect.map(
+      result =>
+        [null, result] as [null, { message: string; membershipId: string }]
+    )
+  );
+
+  const result = await Effect.runPromise(
+    Effect.provide(effect, createEffectLoggerLayer('events'))
+  );
+
+  // Trigger USER_LEFT notification for event members (fire-and-forget)
+  // Run after main Effect completes to avoid blocking or causing issues
+  if (!result[0] && result[1]) {
+    Effect.runPromise(
+      createEventNotifications({
+        eventId: eventId,
+        type: 'USER_LEFT',
+        authorId: userId,
+      }).pipe(
+        Effect.tapError(error =>
+          Effect.logWarning('Failed to create USER_LEFT notifications', {
+            eventId,
+            authorId: userId,
+            membershipId: result[1].membershipId,
+            error: error.message,
+            errorType: error.constructor.name,
+          })
+        ),
+        Effect.catchAll(() =>
+          Effect.succeed({ message: 'Notifications failed' })
+        )
+      )
+    ).catch(() => {
+      // Ignore errors - fire-and-forget
+    });
+  }
+
+  return result;
+};
+
+/**
+ * Fetch mutual events between current user and another user
+ */
+export const fetchMutualEvents = async ({
+  otherUserId,
+}: GetMutualEventsParams): Promise<
+  ResultTuple<
+    NotFoundError | AuthenticationError | DatabaseError | ConnectionError,
+    MutualEventsData
+  >
+> => {
+  // Get auth outside Effect.gen
+  const [authError, currentUserId] = await getUserId();
+  if (authError || !currentUserId) {
+    return [
+      authError || new AuthenticationError({ message: 'Not authenticated' }),
+      undefined,
+    ] as const;
+  }
+
+  const effect = Effect.gen(function* () {
+    yield* Effect.logDebug('Fetching mutual events', {
+      currentUserId,
+      otherUserId,
+    });
+
+    // Find events where both users have memberships
+    const currentUserMemberships = yield* Effect.promise(() =>
+      db.membership.findMany({
+        where: { personId: currentUserId },
+        select: {
+          eventId: true,
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Membership', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'fetchMutualEvents.findCurrentUserMemberships',
+          currentUserId,
+          otherUserId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    const currentUserEventIds = currentUserMemberships.map(m => m.eventId);
+
+    if (currentUserEventIds.length === 0) {
+      // No events for current user, so no mutual events
+      return [] as MutualEventsData;
+    }
+
+    // Find events where other user also has membership
+    const mutualEvents = yield* Effect.promise(() =>
+      db.event.findMany({
+        where: {
+          id: { in: currentUserEventIds },
+          memberships: {
+            some: {
+              personId: otherUserId,
+            },
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          location: true,
+          chosenDateTime: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      })
+    ).pipe(
+      Effect.mapError((cause: Error) => getPrismaError('Event', cause)),
+      Effect.tapError(error =>
+        Effect.logError('Database operation encountered error', {
+          operation: 'fetchMutualEvents.findMutualEvents',
+          currentUserId,
+          otherUserId,
+          error: error.message,
+          errorType: error.constructor.name,
+          willRetry: error instanceof ConnectionError,
+        })
+      ),
+      Effect.retry({
+        schedule: Schedule.exponential(1000).pipe(
+          Schedule.intersect(Schedule.recurs(3))
+        ),
+        while: error => error instanceof ConnectionError,
+      })
+    );
+
+    yield* Effect.logDebug('Mutual events fetched successfully', {
+      currentUserId,
+      otherUserId,
+      mutualEventCount: mutualEvents.length,
+    });
+
+    return mutualEvents as MutualEventsData;
+  }).pipe(
+    Effect.either,
+    Effect.map(either =>
+      either._tag === 'Left'
+        ? ([
+            either.left instanceof NotFoundError
+              ? either.left
+              : new DatabaseError({
+                  message: 'Failed to fetch mutual events',
+                  cause: either.left,
+                }),
+            undefined,
+          ] as [DatabaseError | NotFoundError, undefined])
+        : ([null, either.right] as [null, MutualEventsData])
+    )
   );
 
   return Effect.runPromise(

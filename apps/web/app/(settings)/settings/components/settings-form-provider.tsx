@@ -29,7 +29,9 @@ export const notificationMethodFormSchema = z
   })
   .superRefine((data, ctx) => {
     // Validate value field based on type
-    if (data.type !== NotificationMethodType.WEBHOOK) {
+    // EMAIL methods can have empty value (will be resolved from user account)
+    // PUSH methods use userId as value (already set)
+    if (data.type === NotificationMethodType.PUSH) {
       if (!data.value || data.value.trim() === '') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-// TODO: Migrate profile functionality to server actions
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,7 @@ import { Loader2, Camera, X } from 'lucide-react';
 import { ImageCropModal } from '@/components/image-crop-modal';
 import { useUploadThing } from '@/lib/uploadthing';
 import { createLogger } from '@/lib/logger';
+import { updateProfileAction } from '@/actions/account-actions';
 
 const logger = createLogger('profile-edit-dialog');
 
@@ -59,17 +60,17 @@ export function ProfileEditDialog({
   open,
   onOpenChange,
 }: ProfileEditDialogProps) {
+  const router = useRouter();
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  // TODO: Migrate to server actions - these variables are unused until migration
-  // const [newImageKey, setNewImageKey] = useState<string | null>(null);
-  const [_newImageKey, setNewImageKey] = useState<string | null>(null);
+  const [newImageKey, setNewImageKey] = useState<string | null>(null);
   const [uploadedButNotSaved, setUploadedButNotSaved] = useState<string | null>(
     null
   ); // Track uploads that need cleanup on cancel
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // const router = useRouter();
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -84,6 +85,14 @@ export function ProfileEditDialog({
   // Use UploadThing's built-in loading state
   const { startUpload, isUploading } = useUploadThing('avatarUploader');
 
+  // Debug: Log state changes
+  useEffect(() => {
+    logger.info(
+      { isPending, isUploading, isSubmitting, open },
+      'State changed'
+    );
+  }, [isPending, isUploading, isSubmitting, open]);
+
   // Reset form when dialog opens with fresh user data
   useEffect(() => {
     if (open && userInfo) {
@@ -96,6 +105,7 @@ export function ProfileEditDialog({
       // Reset the new image key state to prevent stale data
       setNewImageKey(null);
       setUploadedButNotSaved(null);
+      setUpdateError(null);
     }
   }, [userInfo, open, form]);
 
@@ -186,34 +196,110 @@ export function ProfileEditDialog({
     setNewImageKey(null);
   };
 
-  const onSubmit = (_values: z.infer<typeof profileFormSchema>) => {
-    // TODO: Migrate to server actions
-    // const mutationData = {
-    //   userId: userInfo.id,
-    //   name: values.name || undefined,
-    //   pronouns: values.pronouns || undefined,
-    //   bio: values.bio || undefined,
-    //   // Keep empty string as empty string (don't convert to undefined)
-    //   image: values.image !== undefined ? values.image : undefined,
-    //   imageKey: newImageKey || undefined,
-    //   oldImageKey: userInfo.imageKey || undefined,
-    // };
-    //
-    // updateMutation.mutate(mutationData);
-    //
-    // // Clear the uploaded-but-not-saved flag since we're saving now
-    // setUploadedButNotSaved(null);
+  // Prevent dialog from closing during submission or upload
+  const handleOpenChange = (newOpen: boolean) => {
+    logger.info(
+      {
+        newOpen,
+        isUploading,
+        isPending,
+        isSubmitting,
+        willPrevent: !newOpen && (isUploading || isPending || isSubmitting),
+      },
+      'handleOpenChange called'
+    );
+    // Prevent closing during upload, pending transition, or submission
+    if (!newOpen && (isUploading || isPending || isSubmitting)) {
+      logger.info(
+        {},
+        'Preventing dialog close - upload, transition, or submission in progress'
+      );
+      return;
+    }
+    logger.info({}, 'Allowing dialog close');
+    onOpenChange(newOpen);
+  };
 
-    alert('Profile update functionality is being migrated to server actions');
+  const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
+    logger.info({ values, isPending, isUploading }, 'onSubmit called');
+    setUpdateError(null);
+    setIsSubmitting(true);
+
+    startTransition(async () => {
+      logger.info({ isPending }, 'startTransition callback started');
+      try {
+        // Determine old image key - use current userInfo.imageKey if:
+        // 1. A new image was uploaded (newImageKey exists and differs), OR
+        // 2. Image was cleared (values.image is empty but userInfo.imageKey exists)
+        const imageChanged =
+          (newImageKey &&
+            userInfo.imageKey &&
+            newImageKey !== userInfo.imageKey) ||
+          (!values.image && userInfo.imageKey);
+        const oldImageKey = imageChanged
+          ? userInfo.imageKey || undefined
+          : undefined;
+
+        logger.info({}, 'Calling updateProfileAction');
+        const [error] = await updateProfileAction({
+          name: values.name || undefined,
+          pronouns: values.pronouns || undefined,
+          bio: values.bio || undefined,
+          image: values.image || undefined,
+          imageKey: newImageKey || undefined,
+          oldImageKey,
+        });
+
+        logger.info({ error }, 'updateProfileAction completed');
+
+        if (error) {
+          logger.info({ error }, 'Error occurred');
+          setUpdateError(
+            error instanceof Error ? error.message : 'Failed to update profile'
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Success - clear the uploaded-but-not-saved flag, close dialog immediately
+        // The layout will refresh in the background via revalidatePath, updating the dropdown
+        logger.info({}, 'Success - closing dialog');
+        setUploadedButNotSaved(null);
+        setIsSubmitting(false);
+        handleOpenChange(false);
+        // Refresh happens in background - don't await it
+        router.refresh();
+      } catch (err) {
+        logger.error({ error: err }, 'Unexpected error updating profile');
+        setUpdateError('An unexpected error occurred. Please try again.');
+        setIsSubmitting(false);
+      }
+    });
   };
 
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
   // eslint-disable-next-line react-hooks/incompatible-library
   const currentImage = form.watch('image');
 
+  logger.info({ open, isPending, isUploading, isSubmitting }, 'Render');
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[500px]'>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className='sm:max-w-[500px]'
+        onInteractOutside={e => {
+          // Prevent closing during upload, pending transition, or submission
+          if (isUploading || isPending || isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={e => {
+          // Prevent closing during upload, pending transition, or submission
+          if (isUploading || isPending || isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
           <DialogDescription>
@@ -221,7 +307,13 @@ export function ProfileEditDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              form.handleSubmit(onSubmit)(e);
+            }}
+            className='space-y-4'
+          >
             {/* Profile Picture and Name */}
             <div className='flex items-start gap-4'>
               <div className='flex flex-col items-center gap-2'>
@@ -325,29 +417,26 @@ export function ProfileEditDialog({
               )}
             />
 
-            {/* TODO: Migrate to server actions */}
-            {/* {updateMutation.isError && (
-              <p className='text-sm text-destructive'>
-                Error: {updateMutation.error.message}
-              </p>
-            )} */}
+            {updateError && (
+              <p className='text-sm text-destructive'>{updateError}</p>
+            )}
 
             <div className='flex gap-2'>
               <Button
                 type='button'
                 variant='ghost'
-                onClick={() => onOpenChange(false)}
-                disabled={isUploading || form.formState.isSubmitting}
+                onClick={() => handleOpenChange(false)}
+                disabled={isUploading || isPending || isSubmitting}
                 className='flex-1'
               >
                 Cancel
               </Button>
               <Button
                 type='submit'
-                disabled={isUploading || form.formState.isSubmitting}
+                disabled={isUploading || isPending || isSubmitting}
                 className='flex-1'
               >
-                {(isUploading || form.formState.isSubmitting) && (
+                {(isUploading || isPending || isSubmitting) && (
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 )}
                 {isUploading ? 'Uploading...' : 'Save'}

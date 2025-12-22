@@ -1,7 +1,7 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { chooseDateTimeAction } from '@/actions/availability-actions';
+import { useChooseDateTime } from '@/hooks/mutations/use-choose-date-time';
 import { cn } from '@/lib/utils';
 import { PotentialDateTimeWithAvailabilities } from '@/types';
 import { Role } from '@prisma/client';
@@ -41,25 +41,30 @@ export function DateCard({
   const [dialogType, setDialogType] = useState<'overview' | 'confirm'>(
     'overview'
   );
-  const [isSelecting, setIsSelecting] = useState(false);
   const router = useRouter();
+  const chooseDateTime = useChooseDateTime();
 
-  async function selectDate() {
-    setIsSelecting(true);
-    const [error] = await chooseDateTimeAction({
-      eventId: pdt.eventId,
-      pdtId: pdt.id,
-    });
+  function selectDate() {
+    // Show toast and redirect immediately (optimistic)
+    toast.success('The date has been successfully selected.');
+    router.push(`/event/${pdt.eventId}`);
 
-    if (error) {
-      toast.error('Failed to select date', {
-        description: 'The date could not be selected. Please try again.',
-      });
-      setIsSelecting(false);
-    } else {
-      toast.success('The date has been successfully selected.');
-      router.push(`/event/${pdt.eventId}`);
-    }
+    // Handle mutation in background
+    chooseDateTime.mutate(
+      {
+        eventId: pdt.eventId,
+        pdtId: pdt.id,
+        chosenDateTime: pdt.dateTime,
+      },
+      {
+        onError: () => {
+          // Show error toast (no navigation rollback needed since we're already on the page)
+          toast.error('Failed to select date', {
+            description: 'The date could not be selected. Please try again.',
+          });
+        },
+      }
+    );
   }
 
   return (
@@ -75,7 +80,7 @@ export function DateCard({
             <h1 className='font-semibold text-2xl'>#{pdt.rank}</h1>
             <div className='flex flex-col'>
               <h1>
-                {pdt.dateTime.toLocaleDateString([], {
+                {new Date(pdt.dateTime).toLocaleDateString([], {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -83,7 +88,9 @@ export function DateCard({
                 })}
               </h1>
               <span className='text-sm text-muted-foreground'>
-                {pdt.dateTime.toLocaleTimeString([], { timeStyle: 'short' })}
+                {new Date(pdt.dateTime).toLocaleTimeString([], {
+                  timeStyle: 'short',
+                })}
               </span>
             </div>
           </div>
@@ -140,16 +147,18 @@ export function DateCard({
         {dialogType === 'overview' && (
           <>
             <DialogHeader className='text-left'>
-              <h1 className='font-semibold text-2xl'>
-                {pdt.dateTime.toLocaleDateString([], {
+              <DialogTitle className='font-semibold text-2xl'>
+                {new Date(pdt.dateTime).toLocaleDateString([], {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
                 })}
-              </h1>
+              </DialogTitle>
               <h2 className='text-muted-foreground text-lg'>
-                {pdt.dateTime.toLocaleTimeString([], { timeStyle: 'short' })}
+                {new Date(pdt.dateTime).toLocaleTimeString([], {
+                  timeStyle: 'short',
+                })}
               </h2>
             </DialogHeader>
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
@@ -205,6 +214,7 @@ export function DateCard({
                       .map(availability => (
                         <MemberSlate
                           key={availability.membership.id}
+                          itemKey={availability.membership.id}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
@@ -222,6 +232,7 @@ export function DateCard({
                       .map(availability => (
                         <MemberSlate
                           key={availability.membership.id}
+                          itemKey={availability.membership.id}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
@@ -239,6 +250,7 @@ export function DateCard({
                       .map(availability => (
                         <MemberSlate
                           key={availability.membership.id}
+                          itemKey={availability.membership.id}
                           member={availability.membership}
                           userId={userId}
                           userRole={userRole}
@@ -285,11 +297,7 @@ export function DateCard({
                 <Button
                   className='flex items-center gap-1'
                   onClick={selectDate}
-                  disabled={isSelecting}
                 >
-                  {isSelecting && (
-                    <Icons.spinner className='h-4 w-4 animate-spin' />
-                  )}
                   <span>Confirm</span>
                 </Button>
               </DialogClose>

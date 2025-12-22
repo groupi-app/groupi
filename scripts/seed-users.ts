@@ -10,9 +10,8 @@ import {
 } from '../packages/services/src/domains/auth';
 import pino from 'pino';
 
-// Load environment variables from the root .env.local first, then web app
+// Load environment variables from the root .env.local
 config({ path: resolve(process.cwd(), '.env.local') });
-config({ path: resolve(process.cwd(), 'apps/web/.env.local') });
 
 const logger = pino({
   level: 'debug',

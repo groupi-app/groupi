@@ -1,7 +1,8 @@
 import { auth, type Session } from './auth';
 import { headers } from 'next/headers';
 import type { ResultTuple } from '@groupi/schema';
-import { AuthenticationError } from '@groupi/schema';
+import { AuthenticationError, DatabaseError } from '@groupi/schema';
+import { db } from '../infrastructure/db';
 
 /**
  * Get current user ID - for Server Components ONLY
@@ -124,6 +125,46 @@ export async function getSessionUncached(): Promise<
     return [
       new AuthenticationError({
         message: `Failed to get session: ${errorMessage}`,
+        cause: error instanceof Error ? error : new Error(String(error)),
+      }),
+      undefined,
+    ];
+  }
+}
+
+/**
+ * Check if user needs onboarding (missing username)
+ * Returns: [error, needsOnboarding] tuple
+ */
+export async function needsOnboarding(): Promise<
+  ResultTuple<AuthenticationError | DatabaseError, boolean>
+> {
+  try {
+    const [authError, session] = await getSession();
+
+    if (authError || !session) {
+      return [
+        authError || new AuthenticationError({ message: 'Not authenticated' }),
+        undefined,
+      ];
+    }
+
+    // Check if user has a username
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true },
+    });
+
+    if (!user) {
+      return [new DatabaseError({ message: 'User not found' }), undefined];
+    }
+
+    // User needs onboarding if they don't have a username
+    return [null, !user.username];
+  } catch (error) {
+    return [
+      new DatabaseError({
+        message: `Failed to check onboarding status: ${error instanceof Error ? error.message : String(error)}`,
         cause: error instanceof Error ? error : new Error(String(error)),
       }),
       undefined,

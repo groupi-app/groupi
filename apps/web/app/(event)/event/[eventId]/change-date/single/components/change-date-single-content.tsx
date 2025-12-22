@@ -1,4 +1,4 @@
-import { getCachedEventHeaderData } from '@groupi/services';
+import { getCachedEventHeaderData } from '@groupi/services/server';
 import { EditEventSingleDate } from '../../../edit/components/edit-event-single-date';
 import { redirect } from 'next/navigation';
 
@@ -15,7 +15,7 @@ export async function ChangeDateSingleContent({
         return <div>Event not found</div>;
       case 'AuthenticationError':
         redirect('/sign-in');
-        // eslint-disable-next-line no-fallthrough
+         
       case 'UnauthorizedError':
         return <div>You are not a member of this event</div>;
       default:

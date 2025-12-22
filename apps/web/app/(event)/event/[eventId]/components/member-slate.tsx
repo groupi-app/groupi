@@ -2,27 +2,27 @@ import { MemberListPageData } from '@groupi/schema';
 import { Role } from '@prisma/client';
 
 type Member = MemberListPageData['event']['memberships'][0];
-import MemberIcon from './member-icon';
+import MemberIcon from '@/components/member-icon';
 
 export function MemberSlate({
   member,
   userId,
   userRole,
   eventDateTime,
-  key,
+  itemKey,
 }: {
   member: Member;
   userId: string;
   userRole: Role;
   eventDateTime: Date | null;
-  key: string;
+  itemKey: string;
 }) {
   const fullName = member.person.user.name || member.person.user.email;
 
   return (
     <div className='flex items-center gap-3 py-2'>
       <MemberIcon
-        itemKey={key}
+        itemKey={itemKey}
         member={member}
         userId={userId}
         userRole={userRole}

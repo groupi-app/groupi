@@ -1,7 +1,8 @@
 'use server';
 
 import { updateTag } from 'next/cache';
-import { updateUserSettings, getUserId } from '@groupi/services';
+import { updateUserSettings } from '@groupi/services';
+import { getUserId } from '@groupi/services/server';
 import type {
   ResultTuple,
   NotificationMethodSettingsData,

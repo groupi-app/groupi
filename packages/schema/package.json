@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
-    "effect": "^3.18.4",
+    "effect": "^3.19.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {

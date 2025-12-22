@@ -37,6 +37,9 @@ export function getNotificationSubject(
     case 'NEW_REPLY':
       return `New Reply to ${post?.title || 'Post'}`;
 
+    case 'USER_MENTIONED':
+      return `${getAuthorName()} mentioned you in ${post?.title || 'Post'}`;
+
     case 'USER_JOINED':
       return `${getAuthorName()} Joined ${event?.title || 'Event'}`;
 

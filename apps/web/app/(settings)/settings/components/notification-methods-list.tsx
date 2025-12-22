@@ -40,7 +40,7 @@ interface NewNotificationMethod {
 }
 
 export function NotificationMethodsList({
-  emails,
+  emails: _emails, // eslint-disable-line @typescript-eslint/no-unused-vars -- Required by interface but not used
   userID,
 }: NotificationMethodsListProps) {
   const { control, watch } = useFormContext();
@@ -53,6 +53,11 @@ export function NotificationMethodsList({
   // Only allow one PUSH method
   const hasPush = methods.some(
     (m: NewNotificationMethod) => m.type === NotificationMethodType.PUSH
+  );
+
+  // Only allow one EMAIL method
+  const hasEmail = methods.some(
+    (m: NewNotificationMethod) => m.type === NotificationMethodType.EMAIL
   );
 
   // Reverse the fields so newest is at the top
@@ -88,34 +93,21 @@ export function NotificationMethodsList({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='start'>
-          {/* Email category with sub-items for each email */}
-          <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
-            Email
-          </div>
-          {emails.map(email => {
-            const alreadyAdded = methods.some(
-              (m: NewNotificationMethod) =>
-                m.type === NotificationMethodType.EMAIL && m.value === email
-            );
-            return (
-              <DropdownMenuItem
-                key={email}
-                onSelect={() =>
-                  !alreadyAdded &&
-                  handleAppend({
-                    type: NotificationMethodType.EMAIL,
-                    value: email,
-                    name: '',
-                    enabled: true,
-                    notifications: getDefaultNotifications(),
-                  })
-                }
-                disabled={alreadyAdded}
-              >
-                {email} {alreadyAdded && '(already added)'}
-              </DropdownMenuItem>
-            );
-          })}
+          <DropdownMenuItem
+            onSelect={() =>
+              !hasEmail &&
+              handleAppend({
+                type: NotificationMethodType.EMAIL,
+                value: '', // Will be resolved from user account
+                name: '',
+                enabled: true,
+                notifications: getDefaultNotifications(),
+              })
+            }
+            disabled={hasEmail}
+          >
+            Email {hasEmail && '(already added)'}
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() =>
               handleAppend({

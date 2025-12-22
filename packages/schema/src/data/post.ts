@@ -34,6 +34,7 @@ export const PostWithAuthorData = PostData.extend({
       name: true,
       email: true,
       image: true,
+      username: true,
     }),
   }),
 });
@@ -55,6 +56,7 @@ const PostCardData = PostWithAuthorData.extend({
           name: true,
           email: true,
           image: true,
+          username: true,
         }),
       }),
     })
@@ -84,6 +86,28 @@ export const PostDetailData = PostWithAuthorData.extend({
     id: true,
     title: true,
     chosenDateTime: true,
+  }).extend({
+    memberships: z.array(
+      MembershipSchema.pick({
+        id: true,
+        role: true,
+        rsvpStatus: true,
+        personId: true,
+        eventId: true,
+      }).extend({
+        person: z.object({
+          id: z.string(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+          user: UserSchema.pick({
+            name: true,
+            email: true,
+            image: true,
+            username: true,
+          }),
+        }),
+      })
+    ),
   }),
 });
 
@@ -112,6 +136,7 @@ export const PostFeedData = z.object({
             name: true,
             email: true,
             image: true,
+            username: true,
           }),
         }),
       })

@@ -1,4 +1,4 @@
-import { getCachedInviteData } from '@groupi/services';
+import { getCachedInviteData } from '@groupi/services/server';
 import { Icons } from '@/components/icons';
 import {
   Card,
@@ -26,11 +26,11 @@ export async function InviteDetails({
         errorMessage = 'Invite not found';
         break;
       case 'ValidationError':
-        errorMessage = error.message || 'Invalid or expired invite';
+        errorMessage = 'Invalid or expired invite';
         break;
       case 'DatabaseError':
       case 'ConnectionError':
-        errorMessage = error.message || 'Failed to load invite';
+        errorMessage = 'Failed to load invite';
         break;
     }
 

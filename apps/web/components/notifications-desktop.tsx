@@ -1,31 +1,29 @@
 'use client';
 
 import { Icons } from '@/components/icons';
-// TODO: Re-implement notification components with server actions
-import { useNotificationCloseContext } from '@/components/providers/notif-close-provider';
+import { useNotificationCloseStore } from '@/stores/notification-close-store';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { NotificationWidget } from './notification-widget';
+import { NotificationCount } from './notification-count';
 
 export function NotificationsDesktop() {
-  const { popoverOpen, setPopoverOpen } = useNotificationCloseContext();
+  const { popoverOpen, setPopoverOpen } = useNotificationCloseStore();
 
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <Button size='icon' variant='ghost' className='rounded-full'>
+        <Button size='icon' variant='ghost' className='rounded-full relative'>
           <Icons.bell className='size-5' />
-          {/* TODO: Re-implement NotificationCount */}
+          <NotificationCount />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align='end'>
-        <div className='p-4 text-sm text-muted-foreground'>
-          Notifications temporarily disabled during migration
-        </div>
-        {/* TODO: Re-implement NotificationWidget */}
+      <PopoverContent align='end' className='w-80 p-0'>
+        <NotificationWidget maxHeight='500px' />
       </PopoverContent>
     </Popover>
   );

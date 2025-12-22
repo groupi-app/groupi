@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@groupi/services';
+import { db } from '@groupi/services/server';
 
 export async function POST(request: NextRequest) {
   try {

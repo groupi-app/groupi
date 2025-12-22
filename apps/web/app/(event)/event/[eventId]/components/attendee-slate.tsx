@@ -1,10 +1,12 @@
+'use client';
+
 import { cn } from '@/lib/utils';
 import { EventAttendeesPageData, RoleType, StatusType } from '@groupi/schema';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
-import { MemberAction, MemberActionDialog } from './member-action-dialog';
-import MemberIcon from './member-icon';
+import { MemberAction, MemberActionDialog } from '@/components/member-action-dialog';
+import MemberIcon from '@/components/member-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import {
@@ -186,36 +188,32 @@ export function AttendeeSlate({
                 member.availabilities
                   .sort(
                     (a, b) =>
-                      a.potentialDateTime.dateTime.getTime() -
-                      b.potentialDateTime.dateTime.getTime()
+                      new Date(a.potentialDateTime.dateTime).getTime() -
+                      new Date(b.potentialDateTime.dateTime).getTime()
                   )
-                  .map((availability, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'flex items-center gap-8 p-2',
-                        i % 2 == 0 ? 'bg-muted' : ''
-                      )}
-                    >
-                      <div className='flex flex-col'>
-                        <h1>
-                          {availability.potentialDateTime.dateTime.toLocaleDateString(
-                            [],
-                            {
+                  .map((availability, i) => {
+                    const dateTime = new Date(availability.potentialDateTime.dateTime);
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          'flex items-center gap-8 p-2',
+                          i % 2 == 0 ? 'bg-muted' : ''
+                        )}
+                      >
+                        <div className='flex flex-col'>
+                          <h1>
+                            {dateTime.toLocaleDateString([], {
                               weekday: 'short',
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric',
-                            }
-                          )}
-                        </h1>
-                        <span className='text-sm text-muted-foreground'>
-                          {availability.potentialDateTime.dateTime.toLocaleTimeString(
-                            [],
-                            { timeStyle: 'short' }
-                          )}
-                        </span>
-                      </div>
+                            })}
+                          </h1>
+                          <span className='text-sm text-muted-foreground'>
+                            {dateTime.toLocaleTimeString([], { timeStyle: 'short' })}
+                          </span>
+                        </div>
                       <div className='flex items-center gap-1'>
                         {availability.status === 'YES' && (
                           <Icons.check className='size-6 text-green-500' />
@@ -231,7 +229,8 @@ export function AttendeeSlate({
                         <span>{availability.status}</span>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
               ) : (
                 <motion.p
                   initial={{ opacity: 0 }}

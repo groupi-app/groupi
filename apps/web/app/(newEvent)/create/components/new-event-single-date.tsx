@@ -1,11 +1,9 @@
 'use client';
-import { useFormContext } from '@/components/providers/form-context-provider';
+import { useFormContext } from './form-context';
 import { Calendar } from '@/components/ui/calendar';
-import { createEventAction } from '@/actions/event-actions';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
@@ -19,16 +17,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useCreateEvent } from '@/hooks/mutations/use-create-event';
 
 const formSchema = z.object({
   date: z.date(),
   time: z.string().regex(new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')),
 });
 
-export function NewEventSingleDate() {
-  const { formState } = useFormContext();
+interface NewEventSingleDateProps {
+  onBack: () => void;
+}
+
+export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
+  const { formState, reset } = useFormContext();
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const createEvent = useCreateEvent();
+  const isSubmittingRef = useRef(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -45,13 +49,8 @@ export function NewEventSingleDate() {
   const watchedDate = useWatch({ control: form.control, name: 'date' });
   const watchedTime = useWatch({ control: form.control, name: 'time' });
 
-  // Move redirect to useEffect to avoid calling during render
-  useEffect(() => {
-    if (!formState.title) {
-      router.push('/create');
-    }
-  }, [formState.title, router]);
-
+  // In wizard mode, redirect is handled by parent
+  // Keep validation check but don't redirect
   if (!formState.title) {
     return null;
   }
@@ -69,8 +68,7 @@ export function NewEventSingleDate() {
     }${Math.abs(new Date().getTimezoneOffset() / 60).toString()})`;
   };
 
-  async function onSubmit(data: z.infer<typeof formSchema>) {
-    setIsSaving(true);
+  function onSubmit(data: z.infer<typeof formSchema>) {
     const [hours, minutes] = data.time.split(':').map(Number);
 
     // Create new date object and set time components
@@ -79,21 +77,31 @@ export function NewEventSingleDate() {
 
     const { title, description, location } = formState;
 
-    const [error, result] = await createEventAction({
-      title,
-      description,
-      location,
-      potentialDateTimes: [dateTime.toISOString()],
-    });
-
-    if (error) {
-      toast.error('The event was unable to be created.');
-      setIsSaving(false);
-    } else if (result) {
-      toast.success('The event was created successfully.');
-      router.push(`/event/${result.event.id}`);
-    }
+    isSubmittingRef.current = true;
+    createEvent.mutate(
+      {
+        title,
+        description,
+        location,
+        potentialDateTimes: [dateTime.toISOString()],
+      },
+      {
+        onSuccess: (result) => {
+          toast.success('The event was created successfully.');
+          // Reset form context before navigation so it's fresh when user comes back
+          reset();
+          isSubmittingRef.current = false;
+          router.push(`/event/${result.event.id}`);
+        },
+        onError: () => {
+          toast.error('The event was unable to be created.');
+          isSubmittingRef.current = false;
+        },
+      }
+    );
   }
+
+  const isSaving = createEvent.isPending;
 
   return (
     <Form {...form}>
@@ -157,12 +165,15 @@ export function NewEventSingleDate() {
             </div>
           </div>
           <div className='flex justify-between mt-2'>
-            <Link href='/create/date-type'>
-              <Button className='flex items-center gap-1' variant={'secondary'}>
-                <span>Back</span>
-                <Icons.back className='text-sm' />
-              </Button>
-            </Link>
+            <Button
+              type='button'
+              className='flex items-center gap-1'
+              variant={'secondary'}
+              onClick={onBack}
+            >
+              <span>Back</span>
+              <Icons.back className='text-sm' />
+            </Button>
             <Button
               data-test='new-event-single-submit'
               className='flex items-center gap-1'

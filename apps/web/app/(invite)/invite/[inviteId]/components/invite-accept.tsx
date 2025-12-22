@@ -2,10 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { acceptInviteAction } from '@/actions/invite-actions';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
-import { useState } from 'react';
+import { useAcceptInvite } from '@/hooks/mutations/use-accept-invite';
 
 export function AcceptInviteButton({
   inviteId,
@@ -17,29 +16,29 @@ export function AcceptInviteButton({
   personId: string;
 }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const acceptInvite = useAcceptInvite();
 
   const handleAcceptInvite = async () => {
-    setIsLoading(true);
-    const [error] = await acceptInviteAction({
-      inviteId: inviteId,
-    });
-
-    if (error) {
-      toast.error('Failed to accept invite', {
-        description: 'An unexpected error occurred. Please try again.',
-      });
-      setIsLoading(false);
-    } else {
-      // Mutation successful, navigate to event
-      router.push(`/event/${eventId}`);
-    }
+    acceptInvite.mutate(
+      { inviteId, eventId },
+      {
+        onSuccess: (data) => {
+          // Mutation successful, navigate to event using returned eventId
+          router.push(`/event/${data.eventId}`);
+        },
+        onError: () => {
+          toast.error('Failed to accept invite', {
+            description: 'An unexpected error occurred. Please try again.',
+          });
+        },
+      }
+    );
   };
 
   return (
     <div>
-      <Button onClick={handleAcceptInvite} disabled={isLoading}>
-        {isLoading ? (
+      <Button onClick={handleAcceptInvite} disabled={acceptInvite.isPending}>
+        {acceptInvite.isPending ? (
           <>
             <Icons.spinner className='mr-2 h-4 w-4 animate-spin' />
             Accepting...

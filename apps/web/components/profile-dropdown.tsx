@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -24,16 +25,24 @@ interface ProfileDropdownProps {
     imageKey?: string | null;
     pronouns?: string | null;
     bio?: string | null;
+    username?: string | null;
   };
 }
 
 export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const router = useRouter();
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
 
   // TODO: Migrate to server actions
   // Using userInfo directly for now since trpc is not available
   const completeUserInfo = userInfo;
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <div className='h-10' data-test='profile-dropdown'>
@@ -53,7 +62,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
                 </span>
               )}
               <span className='text-muted-foreground'>
-                {completeUserInfo.email}
+                {completeUserInfo.username ? `@${completeUserInfo.username}` : completeUserInfo.email}
               </span>
             </div>
           </DropdownMenuLabel>
@@ -75,7 +84,7 @@ export function ProfileDropdown({ userInfo }: ProfileDropdownProps) {
           </DropdownMenuItem>
           <DropdownMenuItem
             className='cursor-pointer'
-            onClick={() => signOut()}
+            onClick={handleSignOut}
           >
             <div className='flex items-center gap-2'>
               <Icons.signOut className='size-4' />

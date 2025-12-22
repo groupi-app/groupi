@@ -1,7 +1,7 @@
-import React from 'react';
-import { FormContextProvider } from '@/components/providers/form-context-provider';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <FormContextProvider>{children}</FormContextProvider>;
+  // Layout is minimal - FormProvider is now in CreateWizard component
+  // When navigating away from /create, wizard unmounts and state resets automatically
+  return <>{children}</>;
 }

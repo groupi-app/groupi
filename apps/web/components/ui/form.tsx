@@ -70,7 +70,7 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue
 );
 
-export function FormItem({
+function FormItem({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
@@ -87,7 +87,7 @@ export function FormItem({
   );
 }
 
-export function FormLabel({
+function FormLabel({
   className,
   ...props
 }: React.ComponentProps<typeof LabelPrimitive.Root>) {
@@ -98,12 +98,13 @@ export function FormLabel({
       data-slot='form-label'
       className={cn(error && 'text-destructive', className)}
       htmlFor={formItemId}
+      suppressHydrationWarning
       {...props}
     />
   );
 }
 
-export function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
@@ -117,12 +118,13 @@ export function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
           : `${formDescriptionId} ${formMessageId}`
       }
       aria-invalid={!!error}
+      suppressHydrationWarning
       {...props}
     />
   );
 }
 
-export function FormDescription({
+function FormDescription({
   className,
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
@@ -138,7 +140,7 @@ export function FormDescription({
   );
 }
 
-export function FormMessage({
+function FormMessage({
   className,
   children,
   ...props
@@ -162,4 +164,4 @@ export function FormMessage({
   );
 }
 
-export { Form, FormField, useFormField };
+export { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage, useFormField };
