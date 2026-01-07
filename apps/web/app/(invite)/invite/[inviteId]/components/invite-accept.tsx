@@ -2,10 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { useAcceptInvite } from '@/hooks/mutations/use-accept-invite';
-import { startTransition } from 'react';
 
 export function AcceptInviteButton({
   inviteId,
@@ -16,7 +14,6 @@ export function AcceptInviteButton({
   eventId: string;
   personId: string;
 }) {
-  const router = useRouter();
   const acceptInvite = useAcceptInvite();
 
   const handleAcceptInvite = async () => {
@@ -24,11 +21,11 @@ export function AcceptInviteButton({
       { inviteId, eventId },
       {
         onSuccess: data => {
-          // Use startTransition to avoid race conditions with query invalidations
-          // and wrap navigation in a separate microtask to let React settle
-          startTransition(() => {
-            router.replace(`/event/${data.eventId}`);
-          });
+          // Use hard navigation to avoid React hooks order issues
+          // during soft navigation with concurrent query invalidations.
+          // This bypasses Next.js Router which has issues with hook counts
+          // during navigation while queries are being invalidated.
+          window.location.href = `/event/${data.eventId}`;
         },
         onError: () => {
           toast.error('Failed to accept invite', {
