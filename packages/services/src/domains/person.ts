@@ -100,7 +100,7 @@ export const fetchPersonData = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Person not found', {
+          yield* Effect.logDebug('Person not found', {
             personId,
             operation: 'fetchPersonData',
           });
@@ -278,7 +278,7 @@ export const fetchUserDashboardData = async (
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Person not found', {
+          yield* Effect.logDebug('Person not found', {
             userId,
             operation: 'fetchUserDashboardData',
           });
@@ -376,7 +376,7 @@ export const fetchUserProfile = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('User not found', {
+          yield* Effect.logDebug('User not found', {
             userId,
             operation: 'fetchUserProfile',
           });
@@ -457,7 +457,7 @@ export const deleteUser = async ({
         yield* Effect.void;
         // Check for specific error types
         if (err instanceof Error && err.message.includes('not found')) {
-          yield* Effect.logInfo('User not found for deletion', {
+          yield* Effect.logDebug('User not found for deletion', {
             userId,
             operation: 'deleteUser',
           });

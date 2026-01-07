@@ -244,7 +244,7 @@ export const getAccountSettingsData = async (
       { concurrency: 5 }
     );
 
-    yield* Effect.logInfo('Account settings fetched', {
+    yield* Effect.logDebug('Account settings fetched', {
       userId,
       linkedAccountCount: linkedAccounts.length,
     });
@@ -325,7 +325,7 @@ export const checkUsernameAvailability = async (
 
     const available = !existingUser;
 
-    yield* Effect.logInfo('Username availability checked', {
+    yield* Effect.logDebug('Username availability checked', {
       username: params.username,
       available,
     });

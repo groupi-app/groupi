@@ -181,7 +181,7 @@ export const fetchInvitePageData = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Invite not found', {
+          yield* Effect.logDebug('Invite not found', {
             inviteId,
             operation: 'fetchInvitePageData',
           });
@@ -189,7 +189,7 @@ export const fetchInvitePageData = async ({
         }
 
         if (err instanceof ValidationError && err.message.includes('expired')) {
-          yield* Effect.logInfo('Invite expired', {
+          yield* Effect.logDebug('Invite expired', {
             inviteId,
             operation: 'fetchInvitePageData',
           });
@@ -200,7 +200,7 @@ export const fetchInvitePageData = async ({
           err instanceof ValidationError &&
           err.message.includes('no remaining uses')
         ) {
-          yield* Effect.logInfo('Invite has no uses remaining', {
+          yield* Effect.logDebug('Invite has no uses remaining', {
             inviteId,
             operation: 'fetchInvitePageData',
           });
@@ -566,7 +566,7 @@ export const createInvite = async (
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to create invite', {
+          yield* Effect.logDebug('User not authorized to create invite', {
             userId,
             eventId,
             reason: 'insufficient_permissions',
@@ -725,14 +725,14 @@ export const deleteInvite = async ({
         yield* Effect.void;
         switch (err.constructor.name) {
           case 'NotFoundError':
-            yield* Effect.logInfo('Invite not found for deletion', {
+            yield* Effect.logDebug('Invite not found for deletion', {
               userId,
               inviteId,
               operation: 'deleteInvite',
             });
             return [err, undefined] as const;
           case 'UnauthorizedError':
-            yield* Effect.logInfo('User not authorized to delete invite', {
+            yield* Effect.logDebug('User not authorized to delete invite', {
               userId,
               inviteId,
               reason: 'insufficient_permissions',
@@ -969,14 +969,14 @@ export const acceptInvite = async ({
         yield* Effect.void;
         switch (err.constructor.name) {
           case 'NotFoundError':
-            yield* Effect.logInfo('Invite not found for acceptance', {
+            yield* Effect.logDebug('Invite not found for acceptance', {
               userId,
               inviteId,
               operation: 'acceptInvite',
             });
             return [err, undefined] as const;
           case 'ValidationError':
-            yield* Effect.logInfo('Invite validation failed', {
+            yield* Effect.logDebug('Invite validation failed', {
               userId,
               inviteId,
               reason: err.message,

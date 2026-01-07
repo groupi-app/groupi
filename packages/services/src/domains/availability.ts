@@ -88,7 +88,7 @@ export const getMyAvailabilities = async ({
     );
 
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to view availabilities', {
+      yield* Effect.logDebug('User not authorized to view availabilities', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -264,7 +264,7 @@ export const getEventPotentialDateTimes = async ({
     );
 
     if (!eventData) {
-      yield* Effect.logInfo('Event not found for availability data', {
+      yield* Effect.logDebug('Event not found for availability data', {
         userId,
         eventId,
         operation: 'getEventPotentialDateTimes',
@@ -275,7 +275,7 @@ export const getEventPotentialDateTimes = async ({
     }
 
     if (eventData.memberships.length === 0) {
-      yield* Effect.logInfo('User not authorized to view availability data', {
+      yield* Effect.logDebug('User not authorized to view availability data', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -445,7 +445,7 @@ export const updateMemberAvailabilities = async (
     );
 
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to update availabilities', {
+      yield* Effect.logDebug('User not authorized to update availabilities', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -613,7 +613,7 @@ export const chooseDateTime = async (
     );
 
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to choose date', {
+      yield* Effect.logDebug('User not authorized to choose date', {
         userId,
         eventId,
         reason: 'not_organizer',
@@ -695,7 +695,7 @@ export const chooseDateTime = async (
     );
 
     if (!potentialDateTime) {
-      yield* Effect.logInfo('Date selection failed', {
+      yield* Effect.logDebug('Date selection failed', {
         userId,
         eventId,
         potentialDateTimeId,
@@ -849,7 +849,7 @@ export const resetChosenDate = async (
     );
 
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to reset chosen date', {
+      yield* Effect.logDebug('User not authorized to reset chosen date', {
         userId,
         eventId,
         reason: 'not_organizer',

@@ -148,7 +148,7 @@ export const getAllUsers = async (): Promise<
       },
     }));
 
-    yield* Effect.logInfo('Successfully fetched all users', {
+    yield* Effect.logDebug('Successfully fetched all users', {
       count: result.length,
     });
 
@@ -376,7 +376,7 @@ export const getAllEvents = async (params?: {
       })
     );
 
-    yield* Effect.logInfo('Successfully fetched all events', {
+    yield* Effect.logDebug('Successfully fetched all events', {
       count: result.length,
       totalCount,
     });
@@ -598,7 +598,7 @@ export const getAllPosts = async (params?: {
       })
     );
 
-    yield* Effect.logInfo('Successfully fetched all posts', {
+    yield* Effect.logDebug('Successfully fetched all posts', {
       count: result.length,
       totalCount,
     });
@@ -818,7 +818,7 @@ export const getAllReplies = async (params?: {
         },
       }));
 
-    yield* Effect.logInfo('Successfully fetched all replies', {
+    yield* Effect.logDebug('Successfully fetched all replies', {
       count: result.length,
       totalCount,
     });

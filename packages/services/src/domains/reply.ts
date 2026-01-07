@@ -223,14 +223,14 @@ export const getRepliesByPost = async ({
         yield* Effect.void;
         switch (err.constructor.name) {
           case 'NotFoundError':
-            yield* Effect.logInfo('Post not found for replies', {
+            yield* Effect.logDebug('Post not found for replies', {
               userId,
               postId,
               operation: 'getRepliesByPost',
             });
             return [err, undefined] as const;
           case 'UnauthorizedError':
-            yield* Effect.logInfo('User not authorized to view replies', {
+            yield* Effect.logDebug('User not authorized to view replies', {
               userId,
               postId,
               reason: 'not_member_of_event',
@@ -465,7 +465,7 @@ export const createReply = async (
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to create reply', {
+          yield* Effect.logDebug('User not authorized to create reply', {
             userId,
             postId,
             reason: 'not_authorized_or_not_member',
@@ -752,7 +752,7 @@ export const updateReply = async (
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Reply not found for update', {
+          yield* Effect.logDebug('Reply not found for update', {
             userId,
             replyId,
             operation: 'updateReply',
@@ -761,7 +761,7 @@ export const updateReply = async (
         }
 
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to update reply', {
+          yield* Effect.logDebug('User not authorized to update reply', {
             userId,
             replyId,
             reason: 'insufficient_permissions',
@@ -771,7 +771,7 @@ export const updateReply = async (
         }
 
         if (err instanceof DatabaseError) {
-          yield* Effect.logInfo('Failed to update reply', {
+          yield* Effect.logDebug('Failed to update reply', {
             userId,
             replyId,
             operation: 'updateReply',
@@ -1006,7 +1006,7 @@ export const deleteReply = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Reply not found for deletion', {
+          yield* Effect.logDebug('Reply not found for deletion', {
             userId,
             replyId,
             operation: 'deleteReply',
@@ -1015,7 +1015,7 @@ export const deleteReply = async ({
         }
 
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to delete reply', {
+          yield* Effect.logDebug('User not authorized to delete reply', {
             userId,
             replyId,
             operation: 'deleteReply',
@@ -1024,7 +1024,7 @@ export const deleteReply = async ({
         }
 
         if (err instanceof DatabaseError) {
-          yield* Effect.logInfo('Failed to delete reply', {
+          yield* Effect.logDebug('Failed to delete reply', {
             userId,
             replyId,
             operation: 'deleteReply',
