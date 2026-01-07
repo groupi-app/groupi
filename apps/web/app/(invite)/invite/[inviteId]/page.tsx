@@ -1,5 +1,5 @@
 import { InviteDetails } from './components/invite-details';
-import { getUserId } from '@groupi/services/server';
+import { getUserId, db } from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
 import { Suspense } from 'react';
@@ -22,12 +22,34 @@ async function InviteContent(props: { params: Promise<{ inviteId: string }> }) {
   const { inviteId } = params;
 
   // Auth check - getUserId() handles headers() internally with prerendering detection
-  const [authError, _userId] = await getUserId();
+  const [authError, userId] = await getUserId();
 
-  if (authError || !_userId) {
+  if (authError || !userId) {
     redirect('/sign-in');
   }
 
+  // Check if user is already a member of the event this invite is for
+  const invite = await db.invite.findUnique({
+    where: { id: inviteId },
+    select: {
+      eventId: true,
+      event: {
+        select: {
+          memberships: {
+            where: { personId: userId },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  // If user is already a member, redirect to the event page
+  if (invite?.event.memberships.length) {
+    redirect(`/event/${invite.eventId}`);
+  }
+
   // InviteDetails is a client component that fetches its own data
-  return <InviteDetails inviteId={inviteId} userId={_userId} />;
+  return <InviteDetails inviteId={inviteId} userId={userId} />;
 }
