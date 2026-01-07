@@ -119,9 +119,13 @@ function sendToLoki(logObj: {
     ? Math.floor(logObj.time * 1000000).toString()
     : Math.floor(Date.now() * 1000000).toString();
 
+  // Send full JSON log line - Grafana can parse with LogQL: {service="..."} | json
+  // This preserves all structured data for querying and display
+  const logLine = JSON.stringify(logObj);
+
   lokiBatch.push({
     stream: streamLabels,
-    values: [[timestamp, logObj.msg || JSON.stringify(logObj)]],
+    values: [[timestamp, logLine]],
   });
 
   if (lokiBatch.length >= LOKI_BATCH_SIZE) {
