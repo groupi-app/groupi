@@ -8,15 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { AcceptInviteButton } from './invite-accept';
+import { AcceptInviteForm } from './invite-accept';
 
-export async function InviteDetails({
-  inviteId,
-  userId,
-}: {
-  inviteId: string;
-  userId: string;
-}) {
+export async function InviteDetails({ inviteId }: { inviteId: string }) {
   const [error, inviteData] = await getCachedInviteData(inviteId);
 
   if (error) {
@@ -96,10 +90,9 @@ export async function InviteDetails({
         </CardContent>
         <CardFooter>
           <div className='flex justify-end w-full'>
-            <AcceptInviteButton
+            <AcceptInviteForm
               inviteId={inviteId}
               eventId={inviteData.event.id}
-              personId={userId}
             />
           </div>
         </CardFooter>

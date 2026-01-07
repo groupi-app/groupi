@@ -1,8 +1,47 @@
 import { InviteDetails } from './components/invite-details';
-import { getUserId, db } from '@groupi/services/server';
+import { getUserId, db, getCachedInviteData } from '@groupi/services/server';
 import { redirect } from 'next/navigation';
 import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
+
+type Props = {
+  params: Promise<{ inviteId: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { inviteId } = await params;
+  const [error, inviteData] = await getCachedInviteData(inviteId);
+
+  if (error || !inviteData) {
+    return {
+      title: 'Invite',
+      description: "You've been invited to join an event",
+    };
+  }
+
+  const eventTitle = inviteData.event.title;
+  const eventDescription = inviteData.event.description || '';
+  const inviterName = inviteData.createdBy?.person?.user?.name || 'Someone';
+
+  return {
+    title: `Join ${eventTitle}`,
+    description:
+      `${inviterName} invited you to ${eventTitle}. ${eventDescription}`.trim(),
+    openGraph: {
+      title: `You're invited to ${eventTitle}`,
+      description:
+        eventDescription || `Join ${inviterName} and others at this event`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: `You're invited to ${eventTitle}`,
+      description:
+        eventDescription || `Join ${inviterName} and others at this event`,
+    },
+  };
+}
 
 export default function InvitePage(props: {
   params: Promise<{ inviteId: string }>;
@@ -50,6 +89,6 @@ async function InviteContent(props: { params: Promise<{ inviteId: string }> }) {
     redirect(`/event/${invite.eventId}`);
   }
 
-  // InviteDetails is a client component that fetches its own data
-  return <InviteDetails inviteId={inviteId} userId={userId} />;
+  // InviteDetails fetches invite data and renders accept form
+  return <InviteDetails inviteId={inviteId} />;
 }
