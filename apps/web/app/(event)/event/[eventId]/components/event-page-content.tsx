@@ -11,7 +11,7 @@ import {
   shouldRedirectToAvailability,
   getUserId,
 } from '@groupi/services/server';
-import { redirect } from 'next/navigation';
+import { redirect, isRedirectError } from 'next/navigation';
 import { componentLogger } from '@/lib/logger';
 
 /**
@@ -34,7 +34,7 @@ export async function EventPageContent({
   // Auth check inside Suspense - redirects work via Next.js streaming meta tag
   const [authError, userId] = await getUserId();
   if (authError || !userId) {
-    componentLogger.info({ eventId }, 'Redirecting to sign-in');
+    componentLogger.debug({ eventId }, 'Redirecting to sign-in');
     redirect('/sign-in');
   }
 
@@ -68,7 +68,7 @@ export async function EventPageContent({
           </div>
         );
       case 'AuthenticationError':
-        componentLogger.info({ eventId }, 'Redirecting to sign-in');
+        componentLogger.debug({ eventId }, 'Redirecting to sign-in');
         redirect('/sign-in');
       // eslint-disable-next-line no-fallthrough
       case 'UnauthorizedError':
@@ -124,10 +124,14 @@ export async function EventPageContent({
       'Availability redirect check result'
     );
     if (shouldRedirect === true) {
-      componentLogger.info({ eventId }, 'Redirecting to availability page');
+      componentLogger.debug({ eventId }, 'Redirecting to availability page');
       redirect(`/event/${eventId}/availability`);
     }
   } catch (error) {
+    // Rethrow redirect errors - they're not actual errors
+    if (isRedirectError(error)) {
+      throw error;
+    }
     // If availability check fails, log but don't block rendering
     componentLogger.error(
       { eventId, error },
