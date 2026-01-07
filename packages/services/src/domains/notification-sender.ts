@@ -3,6 +3,7 @@ import { db } from '../infrastructure/db';
 import { createEffectLoggerLayer } from '../infrastructure/logger';
 import { getPrismaError } from '../shared/errors';
 import { ConnectionError, NotFoundError } from '@groupi/schema';
+import { runWithContextAsync } from '../infrastructure/request-context';
 import {
   NotificationType,
   NotificationMethodType,
@@ -26,16 +27,20 @@ import React from 'react';
  * 2. Finds enabled notification methods for the user
  * 3. Sends emails for EMAIL methods
  * 4. Sends webhooks for WEBHOOK methods
+ *
+ * @param notificationId - The ID of the notification to process
+ * @param traceId - Optional trace ID for log correlation (used for fire-and-forget calls)
  */
 export const processNotificationDelivery = async (
-  notificationId: string
+  notificationId: string,
+  traceId?: string
 ): Promise<{
   emailsSent: number;
   webhooksSent: number;
   pushesSent: number;
 }> => {
   const effect = Effect.gen(function* () {
-    yield* Effect.logDebug('Processing notification delivery', {
+    yield* Effect.logInfo('Starting notification delivery', {
       notificationId,
     });
 
@@ -97,6 +102,7 @@ export const processNotificationDelivery = async (
     );
 
     if (!notification) {
+      yield* Effect.logWarning('Notification not found', { notificationId });
       yield* Effect.fail(
         new NotFoundError({
           message: `Notification not found`,
@@ -105,6 +111,15 @@ export const processNotificationDelivery = async (
       );
       return { emailsSent: 0, webhooksSent: 0, pushesSent: 0 };
     }
+
+    yield* Effect.logInfo('Notification fetched', {
+      notificationId,
+      type: notification.type,
+      personId: notification.personId,
+      eventTitle: notification.event?.title,
+      postTitle: notification.post?.title,
+      authorName: notification.author?.user?.name,
+    });
 
     // Fetch user's notification methods
     const settings = yield* Effect.promise(() =>
@@ -180,6 +195,12 @@ export const processNotificationDelivery = async (
       return { emailsSent: 0, webhooksSent: 0, pushesSent: 0 };
     }
 
+    yield* Effect.logInfo('Found notification methods to process', {
+      notificationId,
+      methodCount: relevantMethods.length,
+      methodTypes: relevantMethods.map(m => m.type),
+    });
+
     // Get user's current email (for EMAIL methods that might have empty value)
     const user = yield* Effect.promise(() =>
       db.user.findUnique({
@@ -200,9 +221,21 @@ export const processNotificationDelivery = async (
       try {
         if (method.type === NotificationMethodType.PUSH) {
           // Send push notification via Pusher Beams
+          yield* Effect.logInfo('Sending push notification', {
+            notificationId,
+            methodId: method.id,
+            personId: notification.personId,
+          });
+
           yield* Effect.promise(() =>
             sendPushNotification(notification, notification.personId)
           ).pipe(
+            Effect.tap(() =>
+              Effect.logInfo('Push notification sent successfully', {
+                notificationId,
+                methodId: method.id,
+              })
+            ),
             Effect.tapError((error: unknown) =>
               Effect.logError('Failed to send push notification', {
                 notificationId,
@@ -235,9 +268,23 @@ export const processNotificationDelivery = async (
           }
 
           // Send email notification
+          yield* Effect.logInfo('Sending email notification', {
+            notificationId,
+            methodId: method.id,
+            emailAddress,
+            notificationType: notification.type,
+          });
+
           yield* Effect.promise(() =>
             sendEmailNotification(notification, emailAddress)
           ).pipe(
+            Effect.tap(() =>
+              Effect.logInfo('Email notification sent successfully', {
+                notificationId,
+                methodId: method.id,
+                emailAddress,
+              })
+            ),
             Effect.tapError((error: unknown) =>
               Effect.logError('Failed to send email notification', {
                 notificationId,
@@ -270,6 +317,13 @@ export const processNotificationDelivery = async (
           }
 
           // Send webhook notification
+          yield* Effect.logInfo('Sending webhook notification', {
+            notificationId,
+            methodId: method.id,
+            webhookFormat: method.webhookFormat,
+            notificationType: notification.type,
+          });
+
           yield* Effect.promise(() =>
             sendWebhookNotification(
               notification,
@@ -283,6 +337,12 @@ export const processNotificationDelivery = async (
                 : undefined
             )
           ).pipe(
+            Effect.tap(() =>
+              Effect.logInfo('Webhook notification sent successfully', {
+                notificationId,
+                methodId: method.id,
+              })
+            ),
             Effect.tapError((error: unknown) =>
               Effect.logError('Failed to send webhook notification', {
                 notificationId,
@@ -318,9 +378,21 @@ export const processNotificationDelivery = async (
     return { emailsSent, webhooksSent, pushesSent };
   });
 
-  return Effect.runPromise(
-    Effect.provide(effect, createEffectLoggerLayer('notification-sender'))
-  );
+  const runEffect = () =>
+    Effect.runPromise(
+      Effect.provide(effect, createEffectLoggerLayer('notification-sender'))
+    );
+
+  // If traceId is provided, wrap in context for log correlation
+  // This is important for fire-and-forget calls where the original request context is lost
+  if (traceId) {
+    return runWithContextAsync(
+      { traceId, path: '/notifications/delivery' },
+      runEffect
+    );
+  }
+
+  return runEffect();
 };
 
 /**
