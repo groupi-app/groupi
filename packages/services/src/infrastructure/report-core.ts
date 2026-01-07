@@ -130,16 +130,33 @@ export function shouldProcessLevel(level: ReportLevel): boolean {
 
 /**
  * Prepares log data for structured logging
+ * Excludes redundant fields (category is same as module, level is already in Pino output)
  */
 export function prepareLogData(
   options: ReportOptions
 ): Record<string, unknown> {
-  const { category, level, data = {}, error, userId, tags = {} } = options;
+  const { data = {}, error, userId, tags = {} } = options;
+
+  // Filter out Effect internal fields that shouldn't be in logs
+  const filteredData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    // Skip Effect internal fields
+    if (key === 'locals' || key === 'context' || key === 'fiber') {
+      continue;
+    }
+    // Skip empty objects
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      Object.keys(value).length === 0
+    ) {
+      continue;
+    }
+    filteredData[key] = value;
+  }
 
   return {
-    category,
-    level,
-    ...data,
+    ...filteredData,
     ...(userId && { userId }),
     ...(Object.keys(tags).length > 0 && { tags }),
     ...(error && {

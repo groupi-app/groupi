@@ -109,10 +109,27 @@ export const log = {
 // Effect Logger integration with Pino and Sentry reporting
 const createEffectLogger = (pinoLogger: pino.Logger, module?: string) =>
   Logger.make(({ logLevel, message, cause, context, spans, annotations }) => {
-    // Convert message array to string
-    const logMessage = Array.isArray(message)
-      ? message.join(' ')
-      : String(message);
+    // Convert message array to string, handling objects properly
+    let logMessage: string;
+    let messageData: Record<string, unknown> = {};
+
+    if (Array.isArray(message)) {
+      // Separate string parts from object parts
+      const stringParts: string[] = [];
+      message.forEach((part, index) => {
+        if (typeof part === 'string') {
+          stringParts.push(part);
+        } else if (typeof part === 'object' && part !== null) {
+          // Add objects to messageData instead of converting to [object Object]
+          Object.assign(messageData, part);
+        } else if (part !== undefined && part !== null) {
+          stringParts.push(String(part));
+        }
+      });
+      logMessage = stringParts.join(' ');
+    } else {
+      logMessage = String(message);
+    }
 
     // Map Effect log levels to our ReportLevel
     let reportLevel: ReportLevel;
@@ -145,6 +162,11 @@ const createEffectLogger = (pinoLogger: pino.Logger, module?: string) =>
     // Prepare data for reporting
     const reportData: Record<string, unknown> = {};
 
+    // Add data extracted from message array (objects passed to Effect.logInfo, etc.)
+    if (Object.keys(messageData).length > 0) {
+      Object.assign(reportData, messageData);
+    }
+
     // Add context data
     if (context && typeof context === 'object' && context !== null) {
       Object.assign(reportData, context);
@@ -160,13 +182,27 @@ const createEffectLogger = (pinoLogger: pino.Logger, module?: string) =>
       reportData.spans = spansObj;
     }
 
-    // Add annotations
+    // Add annotations (skip empty HashMap from Effect)
     if (
       annotations &&
       typeof annotations === 'object' &&
       annotations !== null
     ) {
-      Object.assign(reportData, { annotations });
+      // Check if it's an Effect HashMap and has actual values
+      const annotationsObj = annotations as Record<string, unknown>;
+      if (annotationsObj._id === 'HashMap') {
+        // Effect HashMap - check if it has values
+        const values = annotationsObj.values;
+        if (Array.isArray(values) && values.length > 0) {
+          reportData.annotations = values;
+        }
+      } else {
+        // Regular object - only add if it has keys
+        const keys = Object.keys(annotationsObj);
+        if (keys.length > 0) {
+          reportData.annotations = annotations;
+        }
+      }
     }
 
     // Extract error from cause
