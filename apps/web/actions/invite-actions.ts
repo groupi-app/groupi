@@ -1,6 +1,7 @@
 'use server';
 
 import { updateTag } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createInvite, deleteInvite, acceptInvite } from '@groupi/services';
 import { getUserId } from '@groupi/services/server';
 import { pusherServer } from '@/lib/pusher-server';
@@ -196,4 +197,23 @@ export async function acceptInviteAction(
 
     return result;
   });
+}
+
+/**
+ * Accept an invite and redirect to the event page
+ * Used for server-side form submission with redirect
+ */
+export async function acceptInviteAndRedirectAction(
+  inviteId: string,
+  eventId: string
+): Promise<void> {
+  const result = await acceptInviteAction({ inviteId });
+
+  if (result[0]) {
+    // On error, redirect back with error param
+    redirect(`/invite/${inviteId}?error=${result[0]._tag}`);
+  }
+
+  // On success, redirect to event page
+  redirect(`/event/${eventId}`);
 }
