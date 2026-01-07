@@ -14,12 +14,22 @@ export async function POST(request: NextRequest) {
   // Get trace ID from middleware header
   const traceId = request.headers.get('x-trace-id') || undefined;
 
+  // Console.log for debugging - will show in Vercel logs regardless of Loki config
+  // eslint-disable-next-line no-console
+  console.log('[NotificationProcess] API route called, traceId:', traceId);
+
   return runWithContextAsync(
     { traceId, path: '/api/notifications/process' },
     async () => {
       try {
         const body = await request.json();
         const { notificationId } = body;
+
+        // eslint-disable-next-line no-console
+        console.log(
+          '[NotificationProcess] Processing notification:',
+          notificationId
+        );
 
         apiLogger.info({ notificationId }, 'Notification process API called');
 

@@ -39,6 +39,13 @@ export const processNotificationDelivery = async (
   webhooksSent: number;
   pushesSent: number;
 }> => {
+  // Console.log for debugging - will show in Vercel logs regardless of Loki config
+  // eslint-disable-next-line no-console
+  console.log('[NotificationSender] Starting processNotificationDelivery:', {
+    notificationId,
+    traceId,
+  });
+
   const effect = Effect.gen(function* () {
     yield* Effect.logInfo('Starting notification delivery', {
       notificationId,
@@ -100,6 +107,12 @@ export const processNotificationDelivery = async (
         while: error => error instanceof ConnectionError,
       })
     );
+
+    // eslint-disable-next-line no-console
+    console.log('[NotificationSender] Notification query result:', {
+      found: !!notification,
+      notificationId,
+    });
 
     if (!notification) {
       yield* Effect.logWarning('Notification not found', { notificationId });
@@ -173,6 +186,16 @@ export const processNotificationDelivery = async (
       })
     );
 
+    // eslint-disable-next-line no-console
+    console.log('[NotificationSender] Settings query result:', {
+      found: !!settings,
+      methodCount: settings?.notificationMethods?.length ?? 0,
+      methods: settings?.notificationMethods?.map(m => ({
+        type: m.type,
+        enabledNotifications: m.notifications.map(n => n.notificationType),
+      })),
+    });
+
     if (!settings || settings.notificationMethods.length === 0) {
       yield* Effect.logInfo('No enabled notification methods found', {
         notificationId,
@@ -185,6 +208,13 @@ export const processNotificationDelivery = async (
     const relevantMethods = settings.notificationMethods.filter(
       method => method.notifications.length > 0
     );
+
+    // eslint-disable-next-line no-console
+    console.log('[NotificationSender] Relevant methods for type:', {
+      notificationType: notification.type,
+      relevantMethodCount: relevantMethods.length,
+      relevantMethodTypes: relevantMethods.map(m => m.type),
+    });
 
     if (relevantMethods.length === 0) {
       yield* Effect.logInfo('No notification methods enabled for this type', {
