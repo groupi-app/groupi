@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
 
         // Process notification delivery (fire-and-forget style)
         // We don't await this to avoid blocking the request
-        // Note: Logs from this async task will still have the same traceId
-        processNotificationDelivery(notificationId)
+        // Pass traceId to preserve log correlation in async context
+        processNotificationDelivery(notificationId, traceId)
           .then(result => {
             apiLogger.info(
               {
