@@ -455,7 +455,7 @@ export const fetchPostDetailPageData = async ({
     );
     // If post not found, return error
     if (!postData) {
-      yield* Effect.logInfo('Post not found', {
+      yield* Effect.logDebug('Post not found', {
         userId,
         postId,
         operation: 'fetchPostDetailPageData',
@@ -473,7 +473,7 @@ export const fetchPostDetailPageData = async ({
 
     // If user is not a member of the event, return error
     if (!userMembership) {
-      yield* Effect.logInfo('User not authorized to view post', {
+      yield* Effect.logDebug('User not authorized to view post', {
         userId,
         postId,
         reason: 'not_member_of_event',
@@ -656,7 +656,7 @@ export const createPost = async (
 
     // If user is not a member of the event, return error
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to create post', {
+      yield* Effect.logDebug('User not authorized to create post', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -938,7 +938,7 @@ export const updatePost = async (
     );
 
     if (!existingPost) {
-      yield* Effect.logInfo('Post not found for update', {
+      yield* Effect.logDebug('Post not found for update', {
         userId,
         postId,
         operation: 'updatePost',
@@ -951,7 +951,7 @@ export const updatePost = async (
 
     const userMembership = existingPost.event.memberships[0];
     if (!userMembership) {
-      yield* Effect.logInfo('User not authorized to update post', {
+      yield* Effect.logDebug('User not authorized to update post', {
         userId,
         postId,
         reason: 'not_member_of_event',
@@ -968,7 +968,7 @@ export const updatePost = async (
       existingPost.authorId !== userId &&
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
-      yield* Effect.logInfo('User not authorized to edit post', {
+      yield* Effect.logDebug('User not authorized to edit post', {
         userId,
         postId,
         reason: 'insufficient_permissions',
@@ -1191,7 +1191,7 @@ export const deletePost = async ({
     );
 
     if (!existingPost) {
-      yield* Effect.logInfo('Post not found for deletion', {
+      yield* Effect.logDebug('Post not found for deletion', {
         userId,
         postId,
         operation: 'deletePost',
@@ -1204,7 +1204,7 @@ export const deletePost = async ({
 
     const userMembership = existingPost.event.memberships[0];
     if (!userMembership) {
-      yield* Effect.logInfo('User not authorized to delete post', {
+      yield* Effect.logDebug('User not authorized to delete post', {
         userId,
         postId,
         reason: 'not_member_of_event',
@@ -1221,7 +1221,7 @@ export const deletePost = async ({
       existingPost.authorId !== userId &&
       !['ORGANIZER', 'MODERATOR'].includes(userMembership.role)
     ) {
-      yield* Effect.logInfo('User not authorized to delete post', {
+      yield* Effect.logDebug('User not authorized to delete post', {
         userId,
         postId,
         reason: 'insufficient_permissions',
