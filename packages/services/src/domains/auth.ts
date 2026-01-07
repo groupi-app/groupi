@@ -314,7 +314,7 @@ export const getCurrentUserId = async (): Promise<
     );
 
     if (!session?.user?.id) {
-      yield* Effect.logInfo('No active session found', {
+      yield* Effect.logDebug('No active session found', {
         operation: 'getCurrentUserId',
       });
       return null;
@@ -379,7 +379,7 @@ export const getCurrentSession = async (): Promise<
     );
 
     if (!session?.user) {
-      yield* Effect.logInfo('No active session found', {
+      yield* Effect.logDebug('No active session found', {
         operation: 'getCurrentSession',
       });
       return null;

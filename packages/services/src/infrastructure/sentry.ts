@@ -58,9 +58,9 @@ export function withSentry<A, E, R>(
     }
 
     try {
-      // Log operation start
+      // Log operation start (debug level to avoid noise)
       yield* _(
-        Effect.logInfo(`[Sentry] Starting ${options.name}`, {
+        Effect.logDebug(`[Sentry] Starting ${options.name}`, {
           operation: options.op,
           tags: options.tags,
         })
@@ -80,9 +80,9 @@ export function withSentry<A, E, R>(
         },
       });
 
-      // Log success
+      // Log success (debug level to avoid noise)
       yield* _(
-        Effect.logInfo(`[Sentry] Completed ${options.name}`, {
+        Effect.logDebug(`[Sentry] Completed ${options.name}`, {
           operation: options.op,
           status: 'success',
         })
