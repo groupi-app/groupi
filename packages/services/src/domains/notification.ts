@@ -36,6 +36,7 @@ import {
 } from '@groupi/schema';
 import { getPrismaError } from '../shared/errors';
 import { getNEXT_PUBLIC_BASE_URL } from '../infrastructure/env';
+import { getTraceId } from '../infrastructure/request-context';
 
 // ============================================================================
 // NOTIFICATION DOMAIN SERVICES
@@ -48,17 +49,24 @@ import { getNEXT_PUBLIC_BASE_URL } from '../infrastructure/env';
 function triggerNotificationDelivery(notificationId: string): Promise<void> {
   const baseUrl = getNEXT_PUBLIC_BASE_URL();
   const apiUrl = `${baseUrl}/api/notifications/process`;
+  const traceId = getTraceId();
 
   notificationLogger.info(
-    { notificationId, apiUrl },
+    { notificationId, apiUrl, traceId },
     'Triggering notification delivery'
   );
 
+  // Build headers, including traceId for log correlation across the API call
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (traceId) {
+    headers['x-trace-id'] = traceId;
+  }
+
   return fetch(apiUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({ notificationId }),
   })
     .then(response => {
