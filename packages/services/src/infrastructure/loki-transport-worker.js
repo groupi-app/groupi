@@ -2,7 +2,7 @@
  * Loki Transport Worker for Grafana Cloud (JavaScript version)
  *
  * This file is loaded by Pino as a worker thread transport.
- * It sends logs to Grafana Cloud Loki using Bearer token authentication.
+ * It sends logs to Grafana Cloud Loki using Basic authentication.
  *
  * This is the JavaScript version used in production where TypeScript isn't available.
  */
@@ -42,38 +42,43 @@ module.exports = async function () {
   let batch = [];
   let batchTimeout = null;
 
-  const flushBatch = async () => {
+  // Create Basic auth header (Grafana Cloud Loki requires Basic auth, not Bearer)
+  const authHeader = `Basic ${Buffer.from(`${instanceId}:${token}`).toString('base64')}`;
+
+  const flushBatch = () => {
     if (batch.length === 0) return;
 
-    const logs = {
-      streams: batch,
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${instanceId}:${token}`,
-        },
-        body: JSON.stringify(logs),
-      });
-
-      if (!response.ok) {
-        console.error(
-          `[Loki Transport] Failed to send logs: ${response.status} ${response.statusText}`
-        );
-      }
-    } catch (error) {
-      // Log to console as fallback when transport fails
-      console.error('[Loki Transport] Connection error:', error);
-    }
-
+    const logsToSend = batch;
     batch = [];
     if (batchTimeout) {
       clearTimeout(batchTimeout);
       batchTimeout = null;
     }
+
+    const logs = {
+      streams: logsToSend,
+    };
+
+    // Fire-and-forget: don't await to avoid blocking
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      body: JSON.stringify(logs),
+    })
+      .then(response => {
+        if (!response.ok) {
+          console.error(
+            `[Loki Transport] Failed to send logs: ${response.status} ${response.statusText}`
+          );
+        }
+      })
+      .catch(error => {
+        // Log to console as fallback when transport fails
+        console.error('[Loki Transport] Connection error:', error);
+      });
   };
 
   return build(
@@ -95,10 +100,10 @@ module.exports = async function () {
         };
 
         // Convert timestamp to nanoseconds (Loki format)
-        // Pino time is in milliseconds since epoch, convert to nanoseconds (multiply by 1,000,000,000)
+        // Pino time is in milliseconds since epoch, convert to nanoseconds (multiply by 1,000,000)
         const timestamp = obj.time
-          ? Math.floor(obj.time * 1000000000).toString()
-          : Math.floor(Date.now() * 1000000000).toString();
+          ? Math.floor(obj.time * 1000000).toString()
+          : Math.floor(Date.now() * 1000000).toString();
 
         // Add log entry to batch
         batch.push({
@@ -106,9 +111,9 @@ module.exports = async function () {
           values: [[timestamp, message]],
         });
 
-        // Flush batch if it reaches the size limit
+        // Flush batch if it reaches the size limit (non-blocking)
         if (batch.length >= batchSize) {
-          await flushBatch();
+          flushBatch();
         } else if (!batchTimeout) {
           // Set timeout to flush batch after interval
           batchTimeout = setTimeout(flushBatch, batchInterval);
@@ -116,11 +121,11 @@ module.exports = async function () {
       }
 
       // Flush any remaining logs
-      await flushBatch();
+      flushBatch();
     },
     {
-      close: async () => {
-        await flushBatch();
+      close: () => {
+        flushBatch();
       },
     }
   );
