@@ -1,8 +1,13 @@
 import { Effect, Schedule } from 'effect';
 import { getUserId } from './auth-helpers';
 import { db } from '../infrastructure/db';
-import { createEffectLoggerLayer } from '../infrastructure/logger';
+import {
+  createEffectLoggerLayer,
+  createLogger,
+} from '../infrastructure/logger';
 import { getPusherServer } from '../infrastructure';
+
+const notificationLogger = createLogger('notifications');
 import type { ResultTuple } from '@groupi/schema';
 import { Status, NotificationType } from '@prisma/client';
 import {
@@ -44,8 +49,10 @@ function triggerNotificationDelivery(notificationId: string): Promise<void> {
   const baseUrl = getNEXT_PUBLIC_BASE_URL();
   const apiUrl = `${baseUrl}/api/notifications/process`;
 
-  // eslint-disable-next-line no-console
-  console.log('[Notification] Triggering delivery', { notificationId, apiUrl });
+  notificationLogger.info(
+    { notificationId, apiUrl },
+    'Triggering notification delivery'
+  );
 
   return fetch(apiUrl, {
     method: 'POST',
@@ -55,19 +62,26 @@ function triggerNotificationDelivery(notificationId: string): Promise<void> {
     body: JSON.stringify({ notificationId }),
   })
     .then(response => {
-      // eslint-disable-next-line no-console
-      console.log('[Notification] Delivery API response', {
-        notificationId,
-        status: response.status,
-        ok: response.ok,
-      });
+      if (response.ok) {
+        notificationLogger.info(
+          { notificationId, status: response.status },
+          'Notification delivery API succeeded'
+        );
+      } else {
+        notificationLogger.warn(
+          { notificationId, status: response.status },
+          'Notification delivery API failed'
+        );
+      }
     })
     .catch(error => {
-      // eslint-disable-next-line no-console
-      console.error('[Notification] Delivery API error', {
-        notificationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      notificationLogger.error(
+        {
+          notificationId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Notification delivery API error'
+      );
     });
 }
 
