@@ -29,6 +29,7 @@ import type {
   PostAdminListItemData,
   ReplyAdminListItemData,
 } from '@groupi/schema';
+import { withActionTrace } from '@/lib/action-trace';
 
 // ============================================================================
 // ADMIN LIST ACTIONS
@@ -51,7 +52,9 @@ type AdminMutationError =
 export async function getAllUsersAction(): Promise<
   ResultTuple<AdminMutationError, UserAdminListItemData[]>
 > {
-  return await getAllUsers();
+  return withActionTrace('getAllUsers', async () => {
+    return await getAllUsers();
+  });
 }
 
 /**
@@ -72,7 +75,9 @@ export async function getAllEventsAction(params?: {
     }
   >
 > {
-  return await getAllEvents(params);
+  return withActionTrace('getAllEvents', async () => {
+    return await getAllEvents(params);
+  });
 }
 
 /**
@@ -93,7 +98,9 @@ export async function getAllPostsAction(params?: {
     }
   >
 > {
-  return await getAllPosts(params);
+  return withActionTrace('getAllPosts', async () => {
+    return await getAllPosts(params);
+  });
 }
 
 /**
@@ -114,7 +121,9 @@ export async function getAllRepliesAction(params?: {
     }
   >
 > {
-  return await getAllReplies(params);
+  return withActionTrace('getAllReplies', async () => {
+    return await getAllReplies(params);
+  });
 }
 
 // ============================================================================
@@ -152,21 +161,23 @@ interface DeleteReplyInput {
 export async function updateUserAction(
   input: UpdateUserInput
 ): Promise<ResultTuple<AdminMutationError, { id: string }>> {
-  const result = await updateUserAdmin({
-    userId: input.id,
-    name: input.name,
-    username: input.username,
-    role: input.role,
-    image: input.image,
+  return withActionTrace('updateUser', async () => {
+    const result = await updateUserAdmin({
+      userId: input.id,
+      name: input.name,
+      username: input.username,
+      role: input.role,
+      image: input.image,
+    });
+
+    // Invalidate user cache on successful update
+    if (!result[0]) {
+      updateTag(`user-${input.id}`);
+      updateTag('admin-users');
+    }
+
+    return result;
   });
-
-  // Invalidate user cache on successful update
-  if (!result[0]) {
-    updateTag(`user-${input.id}`);
-    updateTag('admin-users');
-  }
-
-  return result;
 }
 
 /**
@@ -176,15 +187,17 @@ export async function updateUserAction(
 export async function deleteUserAction(
   input: DeleteUserInput
 ): Promise<ResultTuple<AdminMutationError, { message: string }>> {
-  const result = await deleteUserAdmin({ userId: input.id });
+  return withActionTrace('deleteUser', async () => {
+    const result = await deleteUserAdmin({ userId: input.id });
 
-  // Invalidate user cache on successful deletion
-  if (!result[0]) {
-    updateTag(`user-${input.id}`);
-    updateTag('admin-users');
-  }
+    // Invalidate user cache on successful deletion
+    if (!result[0]) {
+      updateTag(`user-${input.id}`);
+      updateTag('admin-users');
+    }
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -196,15 +209,17 @@ export async function deleteEventAction(
 ): Promise<
   ResultTuple<AdminMutationError, { message: string; eventId?: string }>
 > {
-  const result = await deleteEvent({ eventId: input.eventId });
+  return withActionTrace('deleteEvent', async () => {
+    const result = await deleteEvent({ eventId: input.eventId });
 
-  // Invalidate event cache on successful deletion
-  if (!result[0]) {
-    updateTag(`event-${input.eventId}`);
-    updateTag('admin-events');
-  }
+    // Invalidate event cache on successful deletion
+    if (!result[0]) {
+      updateTag(`event-${input.eventId}`);
+      updateTag('admin-events');
+    }
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -216,17 +231,24 @@ export async function deletePostAction(
 ): Promise<
   ResultTuple<AdminMutationError, { message: string; eventId?: string }>
 > {
-  const result = await deletePost({ postId: input.postId });
+  return withActionTrace('deletePost', async () => {
+    const result = await deletePost({ postId: input.postId });
 
-  // Invalidate post cache on successful deletion
-  if (!result[0] && result[1] && 'eventId' in result[1] && result[1].eventId) {
-    updateTag(`post-${input.postId}`);
-    updateTag(`event-${result[1].eventId}`);
-    updateTag(`event-${result[1].eventId}-posts`);
-    updateTag('admin-posts');
-  }
+    // Invalidate post cache on successful deletion
+    if (
+      !result[0] &&
+      result[1] &&
+      'eventId' in result[1] &&
+      result[1].eventId
+    ) {
+      updateTag(`post-${input.postId}`);
+      updateTag(`event-${result[1].eventId}`);
+      updateTag(`event-${result[1].eventId}-posts`);
+      updateTag('admin-posts');
+    }
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -238,15 +260,17 @@ export async function deleteReplyAction(
 ): Promise<
   ResultTuple<AdminMutationError, { message: string; postId?: string }>
 > {
-  const result = await deleteReply({ replyId: input.replyId });
+  return withActionTrace('deleteReply', async () => {
+    const result = await deleteReply({ replyId: input.replyId });
 
-  // Invalidate reply cache on successful deletion
-  if (!result[0] && result[1] && 'postId' in result[1] && result[1].postId) {
-    updateTag(`reply-${input.replyId}`);
-    updateTag(`post-${result[1].postId}`);
-    updateTag(`post-${result[1].postId}-replies`);
-    updateTag('admin-replies');
-  }
+    // Invalidate reply cache on successful deletion
+    if (!result[0] && result[1] && 'postId' in result[1] && result[1].postId) {
+      updateTag(`reply-${input.replyId}`);
+      updateTag(`post-${result[1].postId}`);
+      updateTag(`post-${result[1].postId}-replies`);
+      updateTag('admin-replies');
+    }
 
-  return result;
+    return result;
+  });
 }

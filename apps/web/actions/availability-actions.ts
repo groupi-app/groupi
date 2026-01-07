@@ -21,6 +21,7 @@ import type {
   ConstraintError,
   OperationError,
 } from '@groupi/schema';
+import { withActionTrace } from '@/lib/action-trace';
 
 // ============================================================================
 // AVAILABILITY ACTIONS
@@ -56,56 +57,62 @@ interface ChooseDateTimeInput {
 export async function updateAvailabilitiesAction(
   input: UpdateAvailabilitiesInput
 ): Promise<ResultTuple<AvailabilityMutationError, { message: string }>> {
-  const result = await updateMemberAvailabilities({
-    eventId: input.eventId,
-    availabilities: input.availabilityUpdates.map(update => ({
-      potentialDateTimeId: update.potentialDateTimeId,
-      status: update.status,
-    })),
+  return withActionTrace('updateAvailabilities', async () => {
+    const result = await updateMemberAvailabilities({
+      eventId: input.eventId,
+      availabilities: input.availabilityUpdates.map(update => ({
+        potentialDateTimeId: update.potentialDateTimeId,
+        status: update.status,
+      })),
+    });
+
+    // Invalidate availability cache on successful update
+    if (!result[0]) {
+      updateTag(`event-${input.eventId}`);
+      updateTag(`event-${input.eventId}-availability`);
+
+      // Trigger Pusher event for event availability
+      const availabilityChannel = `event-${input.eventId}-availability`;
+      const availabilityEventData = {
+        type: 'UPDATE' as const,
+        new: { eventId: input.eventId },
+      };
+
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: availabilityChannel,
+          data: availabilityEventData,
+        },
+        'Triggering Pusher availability-changed event for availability update'
+      );
+
+      await pusherServer
+        .trigger(
+          availabilityChannel,
+          'availability-changed',
+          availabilityEventData
+        )
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: availabilityChannel },
+            'Successfully triggered Pusher availability-changed event'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              eventId: input.eventId,
+              channel: availabilityChannel,
+              error: err,
+            },
+            'Failed to trigger Pusher availability-changed event'
+          );
+        });
+    }
+
+    return result;
   });
-
-  // Invalidate availability cache on successful update
-  if (!result[0]) {
-    updateTag(`event-${input.eventId}`);
-    updateTag(`event-${input.eventId}-availability`);
-
-    // Trigger Pusher event for event availability
-    const availabilityChannel = `event-${input.eventId}-availability`;
-    const availabilityEventData = {
-      type: 'UPDATE' as const,
-      new: { eventId: input.eventId },
-    };
-
-    pusherLogger.debug(
-      {
-        eventId: input.eventId,
-        channel: availabilityChannel,
-        data: availabilityEventData,
-      },
-      'Triggering Pusher availability-changed event for availability update'
-    );
-
-    await pusherServer
-      .trigger(
-        availabilityChannel,
-        'availability-changed',
-        availabilityEventData
-      )
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: availabilityChannel },
-          'Successfully triggered Pusher availability-changed event'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: availabilityChannel, error: err },
-          'Failed to trigger Pusher availability-changed event'
-        );
-      });
-  }
-
-  return result;
 }
 
 /**
@@ -115,92 +122,102 @@ export async function updateAvailabilitiesAction(
 export async function chooseDateTimeAction(
   input: ChooseDateTimeInput
 ): Promise<ResultTuple<AvailabilityMutationError, { message: string }>> {
-  const result = await chooseDateTime({
-    eventId: input.eventId,
-    potentialDateTimeId: input.pdtId,
-  });
-
-  // Invalidate event cache on successful date selection
-  if (!result[0]) {
-    updateTag(`event-${input.eventId}`);
-    updateTag(`event-${input.eventId}-header`);
-    updateTag(`event-${input.eventId}-availability`);
-
-    // Fetch the actual chosenDateTime to include in Pusher event
-    const potentialDateTime = await db.potentialDateTime.findUnique({
-      where: { id: input.pdtId },
-      select: { dateTime: true },
+  return withActionTrace('chooseDateTime', async () => {
+    const result = await chooseDateTime({
+      eventId: input.eventId,
+      potentialDateTimeId: input.pdtId,
     });
 
-    const chosenDateTime = potentialDateTime?.dateTime || null;
+    // Invalidate event cache on successful date selection
+    if (!result[0]) {
+      updateTag(`event-${input.eventId}`);
+      updateTag(`event-${input.eventId}-header`);
+      updateTag(`event-${input.eventId}-availability`);
 
-    // Trigger Pusher event for event header (chosen date affects header)
-    const headerChannel = `event-${input.eventId}-header`;
-    const headerEventData = {
-      type: 'UPDATE' as const,
-      new: {
-        id: input.eventId,
-        chosenDateTime: chosenDateTime,
-      },
-    };
-
-    pusherLogger.debug(
-      { eventId: input.eventId, channel: headerChannel, data: headerEventData },
-      'Triggering Pusher event-changed event for date selection'
-    );
-
-    await pusherServer
-      .trigger(headerChannel, 'event-changed', headerEventData)
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: headerChannel },
-          'Successfully triggered Pusher event-changed event'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: headerChannel, error: err },
-          'Failed to trigger Pusher event-changed event'
-        );
+      // Fetch the actual chosenDateTime to include in Pusher event
+      const potentialDateTime = await db.potentialDateTime.findUnique({
+        where: { id: input.pdtId },
+        select: { dateTime: true },
       });
 
-    // Trigger Pusher event for event availability
-    const availabilityChannel = `event-${input.eventId}-availability`;
-    const availabilityEventData = {
-      type: 'UPDATE' as const,
-      new: { eventId: input.eventId },
-    };
+      const chosenDateTime = potentialDateTime?.dateTime || null;
 
-    pusherLogger.debug(
-      {
-        eventId: input.eventId,
-        channel: availabilityChannel,
-        data: availabilityEventData,
-      },
-      'Triggering Pusher availability-changed event for date selection'
-    );
+      // Trigger Pusher event for event header (chosen date affects header)
+      const headerChannel = `event-${input.eventId}-header`;
+      const headerEventData = {
+        type: 'UPDATE' as const,
+        new: {
+          id: input.eventId,
+          chosenDateTime: chosenDateTime,
+        },
+      };
 
-    await pusherServer
-      .trigger(
-        availabilityChannel,
-        'availability-changed',
-        availabilityEventData
-      )
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: availabilityChannel },
-          'Successfully triggered Pusher availability-changed event'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: availabilityChannel, error: err },
-          'Failed to trigger Pusher availability-changed event'
-        );
-      });
-  }
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: headerChannel,
+          data: headerEventData,
+        },
+        'Triggering Pusher event-changed event for date selection'
+      );
 
-  return result;
+      await pusherServer
+        .trigger(headerChannel, 'event-changed', headerEventData)
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: headerChannel },
+            'Successfully triggered Pusher event-changed event'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            { eventId: input.eventId, channel: headerChannel, error: err },
+            'Failed to trigger Pusher event-changed event'
+          );
+        });
+
+      // Trigger Pusher event for event availability
+      const availabilityChannel = `event-${input.eventId}-availability`;
+      const availabilityEventData = {
+        type: 'UPDATE' as const,
+        new: { eventId: input.eventId },
+      };
+
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: availabilityChannel,
+          data: availabilityEventData,
+        },
+        'Triggering Pusher availability-changed event for date selection'
+      );
+
+      await pusherServer
+        .trigger(
+          availabilityChannel,
+          'availability-changed',
+          availabilityEventData
+        )
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: availabilityChannel },
+            'Successfully triggered Pusher availability-changed event'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              eventId: input.eventId,
+              channel: availabilityChannel,
+              error: err,
+            },
+            'Failed to trigger Pusher availability-changed event'
+          );
+        });
+    }
+
+    return result;
+  });
 }
 
 interface ResetChosenDateInput {
@@ -215,98 +232,108 @@ interface ResetChosenDateInput {
 export async function resetChosenDateAction(
   input: ResetChosenDateInput
 ): Promise<ResultTuple<AvailabilityMutationError, { message: string }>> {
-  pusherLogger.debug(
-    { eventId: input.eventId },
-    'resetChosenDateAction called'
-  );
-
-  const result = await resetChosenDate({
-    eventId: input.eventId,
-  });
-
-  pusherLogger.debug(
-    { eventId: input.eventId, hasError: !!result[0], hasData: !!result[1] },
-    'resetChosenDate result'
-  );
-
-  // Invalidate event cache on successful date reset
-  if (!result[0]) {
+  return withActionTrace('resetChosenDate', async () => {
     pusherLogger.debug(
       { eventId: input.eventId },
-      'Date reset successful, preparing to trigger Pusher events'
+      'resetChosenDateAction called'
     );
 
-    updateTag(`event-${input.eventId}`);
-    updateTag(`event-${input.eventId}-header`);
-    updateTag(`event-${input.eventId}-availability`);
-
-    // Trigger Pusher event for event header (chosen date reset affects header)
-    const headerChannel = `event-${input.eventId}-header`;
-    const headerEventData = {
-      type: 'UPDATE' as const,
-      new: {
-        id: input.eventId,
-        chosenDateTime: null,
-      },
-    };
+    const result = await resetChosenDate({
+      eventId: input.eventId,
+    });
 
     pusherLogger.debug(
-      { eventId: input.eventId, channel: headerChannel, data: headerEventData },
-      'Triggering Pusher event-changed event for date reset'
+      { eventId: input.eventId, hasError: !!result[0], hasData: !!result[1] },
+      'resetChosenDate result'
     );
 
-    await pusherServer
-      .trigger(headerChannel, 'event-changed', headerEventData)
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: headerChannel },
-          'Successfully triggered Pusher event-changed event for date reset'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: headerChannel, error: err },
-          'Failed to trigger Pusher event-changed event for date reset'
-        );
-      });
+    // Invalidate event cache on successful date reset
+    if (!result[0]) {
+      pusherLogger.debug(
+        { eventId: input.eventId },
+        'Date reset successful, preparing to trigger Pusher events'
+      );
 
-    // Trigger Pusher event for event availability
-    const availabilityChannel = `event-${input.eventId}-availability`;
-    const availabilityEventData = {
-      type: 'UPDATE' as const,
-      new: { eventId: input.eventId },
-    };
+      updateTag(`event-${input.eventId}`);
+      updateTag(`event-${input.eventId}-header`);
+      updateTag(`event-${input.eventId}-availability`);
 
-    pusherLogger.debug(
-      {
-        eventId: input.eventId,
-        channel: availabilityChannel,
-        data: availabilityEventData,
-      },
-      'Triggering Pusher availability-changed event for date reset'
-    );
+      // Trigger Pusher event for event header (chosen date reset affects header)
+      const headerChannel = `event-${input.eventId}-header`;
+      const headerEventData = {
+        type: 'UPDATE' as const,
+        new: {
+          id: input.eventId,
+          chosenDateTime: null,
+        },
+      };
 
-    await pusherServer
-      .trigger(
-        availabilityChannel,
-        'availability-changed',
-        availabilityEventData
-      )
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: availabilityChannel },
-          'Successfully triggered Pusher availability-changed event for date reset'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: availabilityChannel, error: err },
-          'Failed to trigger Pusher availability-changed event for date reset'
-        );
-      });
-  }
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: headerChannel,
+          data: headerEventData,
+        },
+        'Triggering Pusher event-changed event for date reset'
+      );
 
-  return result;
+      await pusherServer
+        .trigger(headerChannel, 'event-changed', headerEventData)
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: headerChannel },
+            'Successfully triggered Pusher event-changed event for date reset'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            { eventId: input.eventId, channel: headerChannel, error: err },
+            'Failed to trigger Pusher event-changed event for date reset'
+          );
+        });
+
+      // Trigger Pusher event for event availability
+      const availabilityChannel = `event-${input.eventId}-availability`;
+      const availabilityEventData = {
+        type: 'UPDATE' as const,
+        new: { eventId: input.eventId },
+      };
+
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: availabilityChannel,
+          data: availabilityEventData,
+        },
+        'Triggering Pusher availability-changed event for date reset'
+      );
+
+      await pusherServer
+        .trigger(
+          availabilityChannel,
+          'availability-changed',
+          availabilityEventData
+        )
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: availabilityChannel },
+            'Successfully triggered Pusher availability-changed event for date reset'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              eventId: input.eventId,
+              channel: availabilityChannel,
+              error: err,
+            },
+            'Failed to trigger Pusher availability-changed event for date reset'
+          );
+        });
+    }
+
+    return result;
+  });
 }
 
 interface UpdatePotentialDateTimesInput {
@@ -322,70 +349,76 @@ interface UpdatePotentialDateTimesInput {
 export async function updatePotentialDateTimesAction(
   input: UpdatePotentialDateTimesInput
 ): Promise<ResultTuple<AvailabilityMutationError, { message: string }>> {
-  pusherLogger.debug(
-    {
-      eventId: input.eventId,
-      potentialDateTimesCount: input.potentialDateTimes.length,
-    },
-    'updatePotentialDateTimesAction called'
-  );
-
-  const result = await updatePotentialDateTimes({
-    eventId: input.eventId,
-    potentialDateTimes: input.potentialDateTimes,
-  });
-
-  pusherLogger.debug(
-    { eventId: input.eventId, hasError: !!result[0], hasData: !!result[1] },
-    'updatePotentialDateTimes result'
-  );
-
-  // Invalidate event cache on successful update
-  if (!result[0]) {
-    pusherLogger.debug(
-      { eventId: input.eventId },
-      'Potential date times updated successfully, preparing to trigger Pusher events'
-    );
-
-    updateTag(`event-${input.eventId}`);
-    updateTag(`event-${input.eventId}-header`);
-    updateTag(`event-${input.eventId}-availability`);
-
-    // Trigger Pusher event for event availability (potential date times affect availability page)
-    const availabilityChannel = `event-${input.eventId}-availability`;
-    const availabilityEventData = {
-      type: 'UPDATE' as const,
-      new: { eventId: input.eventId },
-    };
-
+  return withActionTrace('updatePotentialDateTimes', async () => {
     pusherLogger.debug(
       {
         eventId: input.eventId,
-        channel: availabilityChannel,
-        data: availabilityEventData,
+        potentialDateTimesCount: input.potentialDateTimes.length,
       },
-      'Triggering Pusher availability-changed event for potential date times update'
+      'updatePotentialDateTimesAction called'
     );
 
-    await pusherServer
-      .trigger(
-        availabilityChannel,
-        'availability-changed',
-        availabilityEventData
-      )
-      .then(() => {
-        pusherLogger.info(
-          { eventId: input.eventId, channel: availabilityChannel },
-          'Successfully triggered Pusher availability-changed event for potential date times update'
-        );
-      })
-      .catch((err: unknown) => {
-        pusherLogger.error(
-          { eventId: input.eventId, channel: availabilityChannel, error: err },
-          'Failed to trigger Pusher availability-changed event for potential date times update'
-        );
-      });
-  }
+    const result = await updatePotentialDateTimes({
+      eventId: input.eventId,
+      potentialDateTimes: input.potentialDateTimes,
+    });
 
-  return result;
+    pusherLogger.debug(
+      { eventId: input.eventId, hasError: !!result[0], hasData: !!result[1] },
+      'updatePotentialDateTimes result'
+    );
+
+    // Invalidate event cache on successful update
+    if (!result[0]) {
+      pusherLogger.debug(
+        { eventId: input.eventId },
+        'Potential date times updated successfully, preparing to trigger Pusher events'
+      );
+
+      updateTag(`event-${input.eventId}`);
+      updateTag(`event-${input.eventId}-header`);
+      updateTag(`event-${input.eventId}-availability`);
+
+      // Trigger Pusher event for event availability (potential date times affect availability page)
+      const availabilityChannel = `event-${input.eventId}-availability`;
+      const availabilityEventData = {
+        type: 'UPDATE' as const,
+        new: { eventId: input.eventId },
+      };
+
+      pusherLogger.debug(
+        {
+          eventId: input.eventId,
+          channel: availabilityChannel,
+          data: availabilityEventData,
+        },
+        'Triggering Pusher availability-changed event for potential date times update'
+      );
+
+      await pusherServer
+        .trigger(
+          availabilityChannel,
+          'availability-changed',
+          availabilityEventData
+        )
+        .then(() => {
+          pusherLogger.info(
+            { eventId: input.eventId, channel: availabilityChannel },
+            'Successfully triggered Pusher availability-changed event for potential date times update'
+          );
+        })
+        .catch((err: unknown) => {
+          pusherLogger.error(
+            {
+              eventId: input.eventId,
+              channel: availabilityChannel,
+              error: err,
+            },
+            'Failed to trigger Pusher availability-changed event for potential date times update'
+          );
+        });
+    }
+
+    return result;
+  });
 }

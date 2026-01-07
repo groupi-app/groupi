@@ -18,6 +18,7 @@ import type {
   ConstraintError,
   OperationError,
 } from '@groupi/schema';
+import { withActionTrace } from '@/lib/action-trace';
 
 // ============================================================================
 // SETTINGS ACTIONS
@@ -42,20 +43,22 @@ export async function updateUserSettingsAction(
 ): Promise<
   ResultTuple<SettingsMutationError, NotificationMethodSettingsData[]>
 > {
-  const result = await updateUserSettings({
-    notificationMethods: input.notificationMethods.map(method => ({
-      ...method,
-      name: method.name ?? null,
-    })),
-  });
+  return withActionTrace('updateUserSettings', async () => {
+    const result = await updateUserSettings({
+      notificationMethods: input.notificationMethods.map(method => ({
+        ...method,
+        name: method.name ?? null,
+      })),
+    });
 
-  // Invalidate settings cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-settings`);
+    // Invalidate settings cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-settings`);
+      }
     }
-  }
 
-  return result;
+    return result;
+  });
 }
