@@ -1,7 +1,5 @@
 import pino from 'pino';
 import { Effect, Logger } from 'effect';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
 import {
   handleSentryReporting,
   shouldProcessLevel,
@@ -11,6 +9,7 @@ import {
 } from './report-core';
 import { isDEBUG_ENABLED } from './env';
 import { isLokiEnabled } from './loki-transport';
+import { sendToLoki, isLokiConfigured } from './loki-sender';
 
 /**
  * Logger Configuration with Grafana Cloud Loki Integration
@@ -44,42 +43,37 @@ const loggerConfig: pino.LoggerOptions = {
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
 };
 
-// Create logger with transport if enabled
-// Note: When using transport, Pino runs in worker thread mode
-// We disable transport in development to avoid worker thread module resolution issues
-// Transport is only enabled in production when LOKI_ENABLED=true
-// If transport fails to initialize, we fall back to standard logger to prevent blocking
+// Create logger with Loki integration if enabled
+// We use an inline approach instead of worker threads for Vercel serverless compatibility
 let logger: pino.Logger;
 
-if (isLokiEnabled() && process.env.NODE_ENV === 'production') {
-  try {
-    // Resolve absolute path to transport worker file
-    // Use .js version in production (TypeScript files aren't available in worker threads)
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const transportPath = resolve(__dirname, 'loki-transport-worker.js');
+// Check if we should send to Loki (production + enabled + configured)
+const shouldSendToLoki =
+  isLokiEnabled() &&
+  process.env.NODE_ENV === 'production' &&
+  isLokiConfigured();
 
-    // Use pino.transport() with explicit worker options for better compatibility
-    // This helps resolve module paths correctly in pnpm monorepos
-    // The transport is passed as the second argument to pino()
-    const transport = pino.transport({
-      target: transportPath,
-      options: {},
-    });
-    logger = pino(loggerConfig, transport);
-  } catch (error) {
-    // If transport fails to initialize, fall back to standard logger
-    // This ensures logging never blocks the application
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[Logger] Failed to initialize Loki transport, falling back to standard logger:',
-      error
-    );
-    logger = pino(loggerConfig);
-  }
+if (shouldSendToLoki) {
+  // Create a custom destination that sends to both console and Loki
+  const lokiDestination = {
+    write(msg: string) {
+      // Write to stdout for Vercel logs
+      process.stdout.write(msg);
+
+      // Parse and send to Loki (non-blocking)
+      try {
+        const logObj = JSON.parse(msg);
+        sendToLoki(logObj);
+      } catch {
+        // If parsing fails, still send raw message
+        sendToLoki({ level: 'INFO', msg: msg.trim(), time: Date.now() });
+      }
+    },
+  };
+
+  logger = pino(loggerConfig, lokiDestination);
 } else {
-  // No transport - use standard logger
-  // In development, this avoids worker thread module resolution issues
+  // Standard logger without Loki
   logger = pino(loggerConfig);
 }
 
