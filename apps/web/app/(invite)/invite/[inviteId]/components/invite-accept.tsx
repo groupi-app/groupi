@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { useAcceptInvite } from '@/hooks/mutations/use-accept-invite';
+import { startTransition } from 'react';
 
 export function AcceptInviteButton({
   inviteId,
@@ -23,8 +24,11 @@ export function AcceptInviteButton({
       { inviteId, eventId },
       {
         onSuccess: data => {
-          // Mutation successful, navigate to event using returned eventId
-          router.push(`/event/${data.eventId}`);
+          // Use startTransition to avoid race conditions with query invalidations
+          // and wrap navigation in a separate microtask to let React settle
+          startTransition(() => {
+            router.replace(`/event/${data.eventId}`);
+          });
         },
         onError: () => {
           toast.error('Failed to accept invite', {
