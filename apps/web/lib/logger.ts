@@ -6,6 +6,11 @@ import pino from 'pino';
  * This logger sends server-side logs to Grafana Cloud Loki when enabled.
  * Client-side (browser) logs continue to use console methods and are NOT sent to Loki.
  *
+ * Transaction Tracing:
+ * All logs automatically include a `traceId` field when running within a request context.
+ * Use this in Grafana to filter logs for a single transaction:
+ *   {service="groupi"} | json | traceId="abc123"
+ *
  * To enable Loki logging, set the following environment variables:
  * - LOKI_ENABLED=true
  * - LOKI_INSTANCE_ID=<your-instance-id>
@@ -14,6 +19,15 @@ import pino from 'pino';
  *
  * All credentials MUST be stored in environment variables, never hardcoded.
  */
+
+// Lazily load request-context on server only to avoid client-side bundling issues
+let getTraceId: (() => string | undefined) | undefined;
+if (typeof window === 'undefined') {
+  // Server-side: dynamically import to get trace ID from AsyncLocalStorage
+  import('@groupi/services/request-context').then(module => {
+    getTraceId = module.getTraceId;
+  });
+}
 
 // ============================================================================
 // Inline Loki Sender (avoids worker threads which don't work in Vercel serverless)
@@ -177,6 +191,11 @@ const loggerConfig: pino.LoggerOptions = {
     level: label => {
       return { level: label.toUpperCase() };
     },
+  },
+  // Add traceId to every log entry if within a request context (server-side only)
+  mixin() {
+    const traceId = getTraceId?.();
+    return traceId ? { traceId } : {};
   },
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
 };

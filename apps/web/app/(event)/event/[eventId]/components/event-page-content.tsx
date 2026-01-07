@@ -11,7 +11,8 @@ import {
   shouldRedirectToAvailability,
   getUserId,
 } from '@groupi/services/server';
-import { redirect, isRedirectError } from 'next/navigation';
+import { redirect } from 'next/navigation';
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { componentLogger } from '@/lib/logger';
 
 /**
