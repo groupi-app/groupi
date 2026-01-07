@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processNotificationDelivery } from '@groupi/services';
+import { apiLogger } from '@/lib/logger';
 
 /**
  * API route to process notification delivery (email, webhook, and push)
@@ -13,6 +14,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { notificationId } = body;
 
+    apiLogger.info({ notificationId }, 'Notification process API called');
+
     if (!notificationId || typeof notificationId !== 'string') {
       return NextResponse.json(
         { error: 'notificationId is required' },
@@ -24,18 +27,24 @@ export async function POST(request: NextRequest) {
     // We don't await this to avoid blocking the request
     processNotificationDelivery(notificationId)
       .then(result => {
-        console.log('Notification delivery processed', {
-          notificationId,
-          emailsSent: result.emailsSent,
-          webhooksSent: result.webhooksSent,
-          pushesSent: result.pushesSent,
-        });
+        apiLogger.info(
+          {
+            notificationId,
+            emailsSent: result.emailsSent,
+            webhooksSent: result.webhooksSent,
+            pushesSent: result.pushesSent,
+          },
+          'Notification delivery processed'
+        );
       })
       .catch(error => {
-        console.error('Error processing notification delivery', {
-          notificationId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        apiLogger.error(
+          {
+            notificationId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          'Error processing notification delivery'
+        );
       });
 
     // Return immediately
@@ -44,7 +53,10 @@ export async function POST(request: NextRequest) {
       message: 'Notification delivery queued',
     });
   } catch (error) {
-    console.error('Error in notification process route', error);
+    apiLogger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      'Error in notification process route'
+    );
     return NextResponse.json(
       {
         error: 'Failed to process notification',
