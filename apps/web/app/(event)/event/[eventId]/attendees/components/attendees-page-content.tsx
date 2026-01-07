@@ -27,7 +27,7 @@ export async function AttendeesPageContent({
   // Auth check inside Suspense - redirects work via Next.js streaming meta tag
   const [authError, userId] = await getUserId();
   if (authError || !userId) {
-    componentLogger.info({ eventId }, 'Redirecting to sign-in');
+    componentLogger.debug({ eventId }, 'Redirecting to sign-in');
     redirect('/sign-in');
   }
 
@@ -35,7 +35,7 @@ export async function AttendeesPageContent({
   // Only redirects if there's an active poll (no chosen date) and user hasn't set availability
   const shouldRedirect = await shouldRedirectToAvailability(eventId);
   if (shouldRedirect === true) {
-    componentLogger.info({ eventId }, 'Redirecting to availability page');
+    componentLogger.debug({ eventId }, 'Redirecting to availability page');
     redirect(`/event/${eventId}/availability`);
   }
 

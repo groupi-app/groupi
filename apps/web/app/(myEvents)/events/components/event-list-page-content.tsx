@@ -14,7 +14,7 @@ export async function EventListPageContent() {
   // Auth check inside Suspense - redirects work via Next.js streaming meta tag
   const [authError] = await getUserId();
   if (authError) {
-    componentLogger.info({}, 'Redirecting to sign-in');
+    componentLogger.debug({}, 'Redirecting to sign-in');
     redirect('/sign-in');
   }
 

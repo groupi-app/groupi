@@ -24,14 +24,14 @@ export async function AvailabilityPageContent({
   // Auth check inside Suspense - redirects work via Next.js streaming meta tag
   const [authError, userId] = await getUserId();
   if (authError || !userId) {
-    componentLogger.info({ eventId }, 'Redirecting to sign-in');
+    componentLogger.debug({ eventId }, 'Redirecting to sign-in');
     redirect('/sign-in');
   }
 
   // Check if event has a chosen date inside Suspense - redirects work via Next.js streaming meta tag
   const [headerError, headerData] = await getCachedEventHeaderData(eventId);
   if (!headerError && headerData?.event?.chosenDateTime) {
-    componentLogger.info(
+    componentLogger.debug(
       { eventId },
       'Event has chosen date, redirecting to event page'
     );
