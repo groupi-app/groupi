@@ -159,7 +159,7 @@ export const processNotificationDelivery = async (
     );
 
     if (!settings || settings.notificationMethods.length === 0) {
-      yield* Effect.logDebug('No enabled notification methods found', {
+      yield* Effect.logInfo('No enabled notification methods found', {
         notificationId,
         personId: notification.personId,
       });
@@ -172,7 +172,7 @@ export const processNotificationDelivery = async (
     );
 
     if (relevantMethods.length === 0) {
-      yield* Effect.logDebug('No notification methods enabled for this type', {
+      yield* Effect.logInfo('No notification methods enabled for this type', {
         notificationId,
         personId: notification.personId,
         notificationType: notification.type,
