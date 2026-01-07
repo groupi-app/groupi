@@ -44,6 +44,9 @@ function triggerNotificationDelivery(notificationId: string): Promise<void> {
   const baseUrl = getNEXT_PUBLIC_BASE_URL();
   const apiUrl = `${baseUrl}/api/notifications/process`;
 
+  // eslint-disable-next-line no-console
+  console.log('[Notification] Triggering delivery', { notificationId, apiUrl });
+
   return fetch(apiUrl, {
     method: 'POST',
     headers: {
@@ -51,11 +54,20 @@ function triggerNotificationDelivery(notificationId: string): Promise<void> {
     },
     body: JSON.stringify({ notificationId }),
   })
-    .then(() => {
-      // Success - don't need to do anything
+    .then(response => {
+      // eslint-disable-next-line no-console
+      console.log('[Notification] Delivery API response', {
+        notificationId,
+        status: response.status,
+        ok: response.ok,
+      });
     })
-    .catch(() => {
-      // Ignore errors - fire-and-forget
+    .catch(error => {
+      // eslint-disable-next-line no-console
+      console.error('[Notification] Delivery API error', {
+        notificationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
     });
 }
 
