@@ -1,8 +1,4 @@
 import pino from 'pino';
-import {
-  sendToLoki,
-  isLokiConfigured,
-} from '@groupi/services/infrastructure/loki-sender';
 
 /**
  * Web App Logger with Grafana Cloud Loki Integration
@@ -18,6 +14,130 @@ import {
  *
  * All credentials MUST be stored in environment variables, never hardcoded.
  */
+
+// ============================================================================
+// Inline Loki Sender (avoids worker threads which don't work in Vercel serverless)
+// ============================================================================
+
+interface LokiLogEntry {
+  stream: Record<string, string>;
+  values: [string, string][];
+}
+
+let lokiBatch: LokiLogEntry[] = [];
+let lokiBatchTimeout: ReturnType<typeof setTimeout> | null = null;
+const LOKI_BATCH_SIZE = 10;
+const LOKI_BATCH_INTERVAL = 5000;
+
+let cachedLokiConfig: {
+  url: string;
+  authHeader: string;
+  environment: string;
+  service: string;
+} | null = null;
+
+function getLokiConfig() {
+  if (cachedLokiConfig) return cachedLokiConfig;
+
+  const instanceId = process.env.LOKI_INSTANCE_ID;
+  const token = process.env.LOKI_TOKEN;
+  const url =
+    process.env.LOKI_URL ||
+    'https://logs-prod-036.grafana.net/loki/api/v1/push';
+  const environment = process.env.NODE_ENV || 'development';
+  const service = process.env.LOKI_SERVICE || 'web';
+
+  if (!instanceId || !token) {
+    return null;
+  }
+
+  cachedLokiConfig = {
+    url,
+    authHeader: `Basic ${Buffer.from(`${instanceId}:${token}`).toString('base64')}`,
+    environment,
+    service,
+  };
+
+  return cachedLokiConfig;
+}
+
+function flushLokiBatch() {
+  const config = getLokiConfig();
+  if (!config || lokiBatch.length === 0) return;
+
+  const logsToSend = lokiBatch;
+  lokiBatch = [];
+  if (lokiBatchTimeout) {
+    clearTimeout(lokiBatchTimeout);
+    lokiBatchTimeout = null;
+  }
+
+  // Fire-and-forget: don't await to avoid blocking
+  fetch(config.url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: config.authHeader,
+    },
+    body: JSON.stringify({ streams: logsToSend }),
+  })
+    .then(response => {
+      if (!response.ok) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[Loki] Failed to send logs: ${response.status} ${response.statusText}`
+        );
+      }
+    })
+    .catch(error => {
+      // eslint-disable-next-line no-console
+      console.error('[Loki] Connection error:', error);
+    });
+}
+
+function sendToLoki(logObj: {
+  level: string;
+  msg: string;
+  module?: string;
+  time?: number;
+  [key: string]: unknown;
+}) {
+  const config = getLokiConfig();
+  if (!config) return;
+
+  const streamLabels: Record<string, string> = {
+    Language: 'NodeJS',
+    source: 'Code',
+    environment: config.environment,
+    service: config.service,
+    module: String(logObj.module || 'default'),
+    level: String(logObj.level || 'INFO'),
+  };
+
+  // Convert timestamp to nanoseconds (Loki format)
+  const timestamp = logObj.time
+    ? Math.floor(logObj.time * 1000000).toString()
+    : Math.floor(Date.now() * 1000000).toString();
+
+  lokiBatch.push({
+    stream: streamLabels,
+    values: [[timestamp, logObj.msg || JSON.stringify(logObj)]],
+  });
+
+  if (lokiBatch.length >= LOKI_BATCH_SIZE) {
+    flushLokiBatch();
+  } else if (!lokiBatchTimeout) {
+    lokiBatchTimeout = setTimeout(flushLokiBatch, LOKI_BATCH_INTERVAL);
+  }
+}
+
+function isLokiConfigured(): boolean {
+  return getLokiConfig() !== null;
+}
+
+// ============================================================================
+// Pino Logger Configuration
+// ============================================================================
 
 const getLogLevel = () => {
   if (process.env.NODE_ENV === 'production') {
