@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processNotificationDelivery } from '@groupi/services';
+import { runWithContextAsync } from '@groupi/services/request-context';
 import { apiLogger } from '@/lib/logger';
 
 /**
@@ -10,59 +11,68 @@ import { apiLogger } from '@/lib/logger';
  * Body: { notificationId: string }
  */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { notificationId } = body;
+  // Get trace ID from middleware header
+  const traceId = request.headers.get('x-trace-id') || undefined;
 
-    apiLogger.info({ notificationId }, 'Notification process API called');
+  return runWithContextAsync(
+    { traceId, path: '/api/notifications/process' },
+    async () => {
+      try {
+        const body = await request.json();
+        const { notificationId } = body;
 
-    if (!notificationId || typeof notificationId !== 'string') {
-      return NextResponse.json(
-        { error: 'notificationId is required' },
-        { status: 400 }
-      );
-    }
+        apiLogger.info({ notificationId }, 'Notification process API called');
 
-    // Process notification delivery (fire-and-forget style)
-    // We don't await this to avoid blocking the request
-    processNotificationDelivery(notificationId)
-      .then(result => {
-        apiLogger.info(
-          {
-            notificationId,
-            emailsSent: result.emailsSent,
-            webhooksSent: result.webhooksSent,
-            pushesSent: result.pushesSent,
-          },
-          'Notification delivery processed'
-        );
-      })
-      .catch(error => {
+        if (!notificationId || typeof notificationId !== 'string') {
+          return NextResponse.json(
+            { error: 'notificationId is required' },
+            { status: 400 }
+          );
+        }
+
+        // Process notification delivery (fire-and-forget style)
+        // We don't await this to avoid blocking the request
+        // Note: Logs from this async task will still have the same traceId
+        processNotificationDelivery(notificationId)
+          .then(result => {
+            apiLogger.info(
+              {
+                notificationId,
+                emailsSent: result.emailsSent,
+                webhooksSent: result.webhooksSent,
+                pushesSent: result.pushesSent,
+              },
+              'Notification delivery processed'
+            );
+          })
+          .catch(error => {
+            apiLogger.error(
+              {
+                notificationId,
+                error: error instanceof Error ? error.message : String(error),
+              },
+              'Error processing notification delivery'
+            );
+          });
+
+        // Return immediately
+        return NextResponse.json({
+          success: true,
+          message: 'Notification delivery queued',
+        });
+      } catch (error) {
         apiLogger.error(
-          {
-            notificationId,
-            error: error instanceof Error ? error.message : String(error),
-          },
-          'Error processing notification delivery'
+          { error: error instanceof Error ? error.message : String(error) },
+          'Error in notification process route'
         );
-      });
-
-    // Return immediately
-    return NextResponse.json({
-      success: true,
-      message: 'Notification delivery queued',
-    });
-  } catch (error) {
-    apiLogger.error(
-      { error: error instanceof Error ? error.message : String(error) },
-      'Error in notification process route'
-    );
-    return NextResponse.json(
-      {
-        error: 'Failed to process notification',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
-  }
+        return NextResponse.json(
+          {
+            error: 'Failed to process notification',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          },
+          { status: 500 }
+        );
+      }
+    }
+  );
 }

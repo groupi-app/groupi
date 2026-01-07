@@ -10,6 +10,7 @@ import {
 import { isDEBUG_ENABLED } from './env';
 import { isLokiEnabled } from './loki-transport';
 import { sendToLoki, isLokiConfigured } from './loki-sender';
+import { getTraceId } from './request-context';
 
 /**
  * Logger Configuration with Grafana Cloud Loki Integration
@@ -39,6 +40,11 @@ const loggerConfig: pino.LoggerOptions = {
     level: label => {
       return { level: label.toUpperCase() };
     },
+  },
+  // Add traceId to every log entry if within a request context
+  mixin() {
+    const traceId = getTraceId();
+    return traceId ? { traceId } : {};
   },
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
 };
@@ -116,7 +122,7 @@ const createEffectLogger = (pinoLogger: pino.Logger, module?: string) =>
     if (Array.isArray(message)) {
       // Separate string parts from object parts
       const stringParts: string[] = [];
-      message.forEach((part, index) => {
+      message.forEach(part => {
         if (typeof part === 'string') {
           stringParts.push(part);
         } else if (typeof part === 'object' && part !== null) {
@@ -189,7 +195,7 @@ const createEffectLogger = (pinoLogger: pino.Logger, module?: string) =>
       annotations !== null
     ) {
       // Check if it's an Effect HashMap and has actual values
-      const annotationsObj = annotations as Record<string, unknown>;
+      const annotationsObj = annotations as unknown as Record<string, unknown>;
       if (annotationsObj._id === 'HashMap') {
         // Effect HashMap - check if it has values
         const values = annotationsObj.values;
