@@ -255,7 +255,7 @@ export const getEventNewPostPageData = async ({
     }
 
     if (eventData.memberships.length === 0) {
-      yield* Effect.logInfo('User not authorized to access event', {
+      yield* Effect.logDebug('User not authorized to access event', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -424,7 +424,7 @@ export const getEventAttendeesPageData = async ({
       m => m.personId === userId
     );
     if (!userMembership) {
-      yield* Effect.logInfo('User not authorized to access event', {
+      yield* Effect.logDebug('User not authorized to access event', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -1178,7 +1178,7 @@ export const leaveEvent = async ({
     );
 
     if (!membership) {
-      yield* Effect.logInfo('User not authorized to leave event', {
+      yield* Effect.logDebug('User not authorized to leave event', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -1194,7 +1194,7 @@ export const leaveEvent = async ({
 
     // Organizers cannot leave their own event
     if (membership.role === 'ORGANIZER') {
-      yield* Effect.logInfo('Organizer attempted to leave own event', {
+      yield* Effect.logDebug('Organizer attempted to leave own event', {
         userId,
         eventId,
         membershipId: membership.id,

@@ -131,7 +131,7 @@ export const getMemberListData = async ({
       m => m.person.id === userId
     );
     if (!userMembership) {
-      yield* Effect.logInfo('User not authorized to view member list', {
+      yield* Effect.logDebug('User not authorized to view member list', {
         userId,
         eventId,
         reason: 'not_member_of_event',
@@ -348,11 +348,14 @@ export const updateMemberRSVP = async ({
                 );
                 break;
               case 'NotFoundError':
-                yield* Effect.logInfo('Event not found for RSVP notification', {
-                  eventId,
-                  authorId: userId,
-                  notificationType: 'USER_RSVP',
-                });
+                yield* Effect.logDebug(
+                  'Event not found for RSVP notification',
+                  {
+                    eventId,
+                    authorId: userId,
+                    notificationType: 'USER_RSVP',
+                  }
+                );
                 break;
               default:
                 yield* Effect.logError(
@@ -562,7 +565,7 @@ export const updateMemberRole = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to update member role', {
+          yield* Effect.logDebug('User not authorized to update member role', {
             userId,
             membershipId,
             newRole: role,
@@ -822,7 +825,7 @@ export const removeMemberFromEvent = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to remove member', {
+          yield* Effect.logDebug('User not authorized to remove member', {
             userId,
             membershipId,
             reason: 'insufficient_permissions',

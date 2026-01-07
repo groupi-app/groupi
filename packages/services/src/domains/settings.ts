@@ -152,7 +152,7 @@ export const fetchUserSettings = async (
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('User settings not found', {
+          yield* Effect.logDebug('User settings not found', {
             userId,
             operation: 'fetchUserSettings',
           });
@@ -405,7 +405,7 @@ export const updateUserSettings = async (
         yield* Effect.void;
         // Check for specific error types
         if (err instanceof Error && err.message.includes('not found')) {
-          yield* Effect.logInfo('User settings not found', {
+          yield* Effect.logDebug('User settings not found', {
             userId,
             operation: 'updateUserSettings',
           });

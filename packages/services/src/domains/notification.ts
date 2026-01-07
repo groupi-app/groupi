@@ -313,7 +313,7 @@ export const markNotificationAsRead = async ({
 
     const result = { message: 'Notification marked as read' };
 
-    yield* Effect.logInfo('Notification marked as read successfully', {
+    yield* Effect.logDebug('Notification marked as read successfully', {
       userId, // Who performed the action
       notificationId,
       operation: 'update',
@@ -326,7 +326,7 @@ export const markNotificationAsRead = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Notification not found', {
+          yield* Effect.logDebug('Notification not found', {
             userId,
             notificationId,
             operation: 'markNotificationAsRead',
@@ -335,7 +335,7 @@ export const markNotificationAsRead = async ({
         }
 
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to update notification', {
+          yield* Effect.logDebug('User not authorized to update notification', {
             userId,
             notificationId,
             reason: 'not_owner',
@@ -462,7 +462,7 @@ export const markNotificationAsUnread = async ({
 
     const result = { message: 'Notification marked as unread' };
 
-    yield* Effect.logInfo('Notification marked as unread successfully', {
+    yield* Effect.logDebug('Notification marked as unread successfully', {
       userId, // Who performed the action
       notificationId,
       operation: 'update',
@@ -475,7 +475,7 @@ export const markNotificationAsUnread = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Notification not found', {
+          yield* Effect.logDebug('Notification not found', {
             userId,
             notificationId,
             operation: 'markNotificationAsUnread',
@@ -484,7 +484,7 @@ export const markNotificationAsUnread = async ({
         }
 
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to update notification', {
+          yield* Effect.logDebug('User not authorized to update notification', {
             userId,
             notificationId,
             reason: 'not_owner',
@@ -562,7 +562,7 @@ export const markAllNotificationsAsRead = async (
 
     const message = `Marked ${result.count} notifications as read`;
 
-    yield* Effect.logInfo('All notifications marked as read successfully', {
+    yield* Effect.logDebug('All notifications marked as read successfully', {
       userId, // Who performed the action
       count: result.count,
       operation: 'update',
@@ -648,7 +648,7 @@ export const markPostNotificationsAsRead = async ({
 
     const message = `Marked ${result.count} post notifications as read`;
 
-    yield* Effect.logInfo('Post notifications marked as read successfully', {
+    yield* Effect.logDebug('Post notifications marked as read successfully', {
       userId,
       postId,
       count: result.count,
@@ -755,7 +755,7 @@ export const markEventNotificationsAsRead = async ({
 
     const message = `Marked ${result.count} event notifications as read`;
 
-    yield* Effect.logInfo('Event notifications marked as read successfully', {
+    yield* Effect.logDebug('Event notifications marked as read successfully', {
       userId,
       eventId,
       count: result.count,
@@ -1081,7 +1081,7 @@ export const deleteNotification = async ({
         yield* Effect.void;
         // Log expected errors at info level
         if (err instanceof NotFoundError) {
-          yield* Effect.logInfo('Notification not found', {
+          yield* Effect.logDebug('Notification not found', {
             userId,
             notificationId,
             operation: 'deleteNotification',
@@ -1090,7 +1090,7 @@ export const deleteNotification = async ({
         }
 
         if (err instanceof UnauthorizedError) {
-          yield* Effect.logInfo('User not authorized to delete notification', {
+          yield* Effect.logDebug('User not authorized to delete notification', {
             userId,
             notificationId,
             reason: 'not_owner',
