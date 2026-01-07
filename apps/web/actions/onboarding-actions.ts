@@ -20,6 +20,7 @@ import type {
   UpdateProfileParams,
 } from '@groupi/schema/params';
 import { createLogger } from '@/lib/logger';
+import { withActionTrace } from '@/lib/action-trace';
 
 const logger = createLogger('onboarding-actions');
 
@@ -72,57 +73,62 @@ export async function completeOnboardingAction(input: {
   pronouns?: string;
   bio?: string;
 }): Promise<ResultTuple<OnboardingMutationError, { id: string }>> {
-  const [authError, userId] = await getUserId();
-  if (authError || !userId) {
-    return [
-      authError || new AuthenticationError({ message: 'Not authenticated' }),
-      undefined,
-    ];
-  }
-
-  logger.info({ userId, username: input.username }, 'Completing onboarding');
-
-  // Update username first
-  const [usernameError, usernameResult] = await updateAccountSettings({
-    username: input.username,
-  } as UpdateAccountSettingsParams);
-
-  if (usernameError) {
-    logger.error({ error: usernameError, userId }, 'Failed to set username');
-    return [usernameError, undefined];
-  }
-
-  // Update profile fields if provided
-  const profileUpdates: UpdateProfileParams = {};
-  if (input.displayName) {
-    profileUpdates.name = input.displayName;
-  }
-  if (input.pronouns) {
-    profileUpdates.pronouns = input.pronouns;
-  }
-  if (input.bio) {
-    profileUpdates.bio = input.bio;
-  }
-
-  if (Object.keys(profileUpdates).length > 0) {
-    const [profileError, profileResult] = await updateProfile(profileUpdates);
-
-    if (profileError) {
-      logger.error({ error: profileError, userId }, 'Failed to update profile');
-      // Don't fail onboarding if profile update fails, username is the critical part
-    } else if (profileResult) {
-      logger.info({ userId }, 'Profile updated during onboarding');
+  return withActionTrace('completeOnboarding', async () => {
+    const [authError, userId] = await getUserId();
+    if (authError || !userId) {
+      return [
+        authError || new AuthenticationError({ message: 'Not authenticated' }),
+        undefined,
+      ];
     }
-  }
 
-  // Invalidate user cache
-  updateTag(`user-${userId}`);
-  updateTag(`user-${userId}-settings`);
-  updateTag(`user-${userId}-account`);
+    logger.info({ userId, username: input.username }, 'Completing onboarding');
 
-  logger.info({ userId, username: input.username }, 'Onboarding completed');
+    // Update username first
+    const [usernameError, usernameResult] = await updateAccountSettings({
+      username: input.username,
+    } as UpdateAccountSettingsParams);
 
-  return [null, usernameResult!];
+    if (usernameError) {
+      logger.error({ error: usernameError, userId }, 'Failed to set username');
+      return [usernameError, undefined];
+    }
+
+    // Update profile fields if provided
+    const profileUpdates: UpdateProfileParams = {};
+    if (input.displayName) {
+      profileUpdates.name = input.displayName;
+    }
+    if (input.pronouns) {
+      profileUpdates.pronouns = input.pronouns;
+    }
+    if (input.bio) {
+      profileUpdates.bio = input.bio;
+    }
+
+    if (Object.keys(profileUpdates).length > 0) {
+      const [profileError, profileResult] = await updateProfile(profileUpdates);
+
+      if (profileError) {
+        logger.error(
+          { error: profileError, userId },
+          'Failed to update profile'
+        );
+        // Don't fail onboarding if profile update fails, username is the critical part
+      } else if (profileResult) {
+        logger.info({ userId }, 'Profile updated during onboarding');
+      }
+    }
+
+    // Invalidate user cache
+    updateTag(`user-${userId}`);
+    updateTag(`user-${userId}-settings`);
+    updateTag(`user-${userId}-account`);
+
+    logger.info({ userId, username: input.username }, 'Onboarding completed');
+
+    return [null, usernameResult!];
+  });
 }
 
 /**
@@ -132,9 +138,11 @@ export async function completeOnboardingAction(input: {
 export async function checkNeedsOnboardingAction(): Promise<
   ResultTuple<SerializedErrorWithMessage, boolean>
 > {
-  const { needsOnboarding } = await import('@groupi/services/server');
-  const result = await needsOnboarding();
+  return withActionTrace('checkNeedsOnboarding', async () => {
+    const { needsOnboarding } = await import('@groupi/services/server');
+    const result = await needsOnboarding();
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeErrorResult(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeErrorResult(result);
+  });
 }

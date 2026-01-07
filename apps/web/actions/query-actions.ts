@@ -27,6 +27,7 @@ import type {
   UserProfileData,
   MutualEventsData,
 } from '@groupi/schema/data';
+import { withActionTrace } from '@/lib/action-trace';
 
 // ============================================================================
 // QUERY ACTIONS (for React Query)
@@ -41,7 +42,9 @@ import type {
 export async function fetchEventHeaderAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, EventHeaderData>> {
-  return await getCachedEventHeaderData(eventId);
+  return withActionTrace('fetchEventHeader', async () => {
+    return await getCachedEventHeaderData(eventId);
+  });
 }
 
 /**
@@ -51,7 +54,9 @@ export async function fetchEventHeaderAction(
 export async function fetchUserEventsAction(): Promise<
   ResultTuple<SerializedError, UserDashboardData>
 > {
-  return await getCachedMyEventsData();
+  return withActionTrace('fetchUserEvents', async () => {
+    return await getCachedMyEventsData();
+  });
 }
 
 /**
@@ -61,7 +66,9 @@ export async function fetchUserEventsAction(): Promise<
 export async function fetchEventAttendeesAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, EventAttendeesPageData>> {
-  return await getCachedEventAttendeesData(eventId);
+  return withActionTrace('fetchEventAttendees', async () => {
+    return await getCachedEventAttendeesData(eventId);
+  });
 }
 
 /**
@@ -71,7 +78,9 @@ export async function fetchEventAttendeesAction(
 export async function fetchPostFeedAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, PostFeedData>> {
-  return await getCachedPostFeedData(eventId);
+  return withActionTrace('fetchPostFeed', async () => {
+    return await getCachedPostFeedData(eventId);
+  });
 }
 
 /**
@@ -81,7 +90,9 @@ export async function fetchPostFeedAction(
 export async function fetchPostDetailAction(
   postId: string
 ): Promise<ResultTuple<SerializedError, PostDetailPageData>> {
-  return await getCachedPostWithReplies(postId);
+  return withActionTrace('fetchPostDetail', async () => {
+    return await getCachedPostWithReplies(postId);
+  });
 }
 
 /**
@@ -91,7 +102,9 @@ export async function fetchPostDetailAction(
 export async function fetchMemberListAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, EventAttendeesPageData>> {
-  return await getCachedEventAttendeesData(eventId);
+  return withActionTrace('fetchMemberList', async () => {
+    return await getCachedEventAttendeesData(eventId);
+  });
 }
 
 /**
@@ -101,7 +114,9 @@ export async function fetchMemberListAction(
 export async function fetchEventInvitesAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, EventInvitePageData>> {
-  return await getCachedEventInviteData(eventId);
+  return withActionTrace('fetchEventInvites', async () => {
+    return await getCachedEventInviteData(eventId);
+  });
 }
 
 /**
@@ -111,7 +126,9 @@ export async function fetchEventInvitesAction(
 export async function fetchEventAvailabilityAction(
   eventId: string
 ): Promise<ResultTuple<SerializedError, AvailabilityPageData>> {
-  return await getCachedEventAvailabilityData(eventId);
+  return withActionTrace('fetchEventAvailability', async () => {
+    return await getCachedEventAvailabilityData(eventId);
+  });
 }
 
 /**
@@ -121,7 +138,9 @@ export async function fetchEventAvailabilityAction(
 export async function fetchNotificationsAction(
   cursor?: string
 ): Promise<ResultTuple<SerializedError, NotificationFeedData[]>> {
-  return await getCachedNotificationsForPerson({ cursor });
+  return withActionTrace('fetchNotifications', async () => {
+    return await getCachedNotificationsForPerson({ cursor });
+  });
 }
 
 /**
@@ -131,7 +150,9 @@ export async function fetchNotificationsAction(
 export async function fetchNotificationCountAction(): Promise<
   ResultTuple<SerializedError, NotificationCountData>
 > {
-  return await getCachedUnreadNotificationCount();
+  return withActionTrace('fetchNotificationCount', async () => {
+    return await getCachedUnreadNotificationCount();
+  });
 }
 
 /**
@@ -141,7 +162,9 @@ export async function fetchNotificationCountAction(): Promise<
 export async function fetchUserProfileAction(
   userId: string
 ): Promise<ResultTuple<SerializedError, UserProfileData>> {
-  return await getCachedUserProfileData(userId);
+  return withActionTrace('fetchUserProfile', async () => {
+    return await getCachedUserProfileData(userId);
+  });
 }
 
 /**
@@ -151,5 +174,7 @@ export async function fetchUserProfileAction(
 export async function fetchMutualEventsAction(
   otherUserId: string
 ): Promise<ResultTuple<SerializedError, MutualEventsData>> {
-  return await getCachedMutualEventsData(otherUserId);
+  return withActionTrace('fetchMutualEvents', async () => {
+    return await getCachedMutualEventsData(otherUserId);
+  });
 }

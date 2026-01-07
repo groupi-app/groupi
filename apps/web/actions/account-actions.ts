@@ -34,6 +34,7 @@ import type {
 } from '@groupi/schema';
 import { deleteUploadThingFile } from '@/lib/uploadthing-delete';
 import { createLogger } from '@/lib/logger';
+import { withActionTrace } from '@/lib/action-trace';
 
 const logger = createLogger('account-actions');
 
@@ -83,7 +84,9 @@ type AccountMutationError =
 export async function getAccountSettingsDataAction(): Promise<
   ResultTuple<AccountMutationError, AccountSettingsData>
 > {
-  return await getAccountSettingsData({});
+  return withActionTrace('getAccountSettingsData', async () => {
+    return await getAccountSettingsData({});
+  });
 }
 
 /**
@@ -93,7 +96,9 @@ export async function getAccountSettingsDataAction(): Promise<
 export async function checkUsernameAvailabilityAction(
   input: CheckUsernameAvailabilityParams
 ): Promise<ResultTuple<AccountMutationError, UsernameAvailabilityData>> {
-  return await checkUsernameAvailability(input);
+  return withActionTrace('checkUsernameAvailability', async () => {
+    return await checkUsernameAvailability(input);
+  });
 }
 
 /**
@@ -103,24 +108,26 @@ export async function checkUsernameAvailabilityAction(
 export async function updateAccountSettingsAction(
   input: UpdateAccountSettingsParams
 ): Promise<ResultTuple<AccountMutationError, { id: string }>> {
-  const result = await updateAccountSettings(input);
+  return withActionTrace('updateAccountSettings', async () => {
+    const result = await updateAccountSettings(input);
 
-  // Invalidate user cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}`);
-      updateTag(`user-${userId}-settings`);
-      updateTag(`user-${userId}-account`);
+    // Invalidate user cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}`);
+        updateTag(`user-${userId}-settings`);
+        updateTag(`user-${userId}-account`);
 
-      // Revalidate the layout to refresh session in profile dropdown
-      // This forces MainNavDynamicWrapper to re-fetch the session
-      const { revalidatePath } = await import('next/cache');
-      revalidatePath('/', 'layout');
+        // Revalidate the layout to refresh session in profile dropdown
+        // This forces MainNavDynamicWrapper to re-fetch the session
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/', 'layout');
+      }
     }
-  }
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -130,43 +137,45 @@ export async function updateAccountSettingsAction(
 export async function updateProfileAction(
   input: UpdateProfileParams
 ): Promise<ResultTuple<AccountMutationError, { id: string }>> {
-  const result = await updateProfile(input);
+  return withActionTrace('updateProfile', async () => {
+    const result = await updateProfile(input);
 
-  // Invalidate user cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}`);
-      updateTag(`user-${userId}-settings`);
+    // Invalidate user cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}`);
+        updateTag(`user-${userId}-settings`);
 
-      // Revalidate the layout to refresh session in profile dropdown
-      // This forces MainNavDynamicWrapper to re-fetch the session
-      const { revalidatePath } = await import('next/cache');
-      revalidatePath('/', 'layout');
-    }
+        // Revalidate the layout to refresh session in profile dropdown
+        // This forces MainNavDynamicWrapper to re-fetch the session
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/', 'layout');
+      }
 
-    // Handle old image deletion (non-blocking)
-    if (input.oldImageKey && input.oldImageKey !== input.imageKey) {
-      try {
-        await deleteUploadThingFile(input.oldImageKey);
-        logger.info(
-          {
-            userId,
-            oldImageKey: input.oldImageKey,
-          },
-          'Old profile image deleted'
-        );
-      } catch (error) {
-        // Log error but don't fail the update
-        logger.error(
-          { error, userId, oldImageKey: input.oldImageKey },
-          'Failed to delete old profile image'
-        );
+      // Handle old image deletion (non-blocking)
+      if (input.oldImageKey && input.oldImageKey !== input.imageKey) {
+        try {
+          await deleteUploadThingFile(input.oldImageKey);
+          logger.info(
+            {
+              userId,
+              oldImageKey: input.oldImageKey,
+            },
+            'Old profile image deleted'
+          );
+        } catch (error) {
+          // Log error but don't fail the update
+          logger.error(
+            { error, userId, oldImageKey: input.oldImageKey },
+            'Failed to delete old profile image'
+          );
+        }
       }
     }
-  }
 
-  return result;
+    return result;
+  });
 }
 
 /**
@@ -176,23 +185,25 @@ export async function updateProfileAction(
 export async function unlinkAccountAction(
   input: UnlinkAccountParams
 ): Promise<ResultTuple<SerializedErrorWithMessage, { message: string }>> {
-  const result = await unlinkAccount(input);
+  return withActionTrace('unlinkAccount', async () => {
+    const result = await unlinkAccount(input);
 
-  // Invalidate account cache on successful unlink
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}`);
-      updateTag(`user-${userId}-account`);
+    // Invalidate account cache on successful unlink
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}`);
+        updateTag(`user-${userId}-account`);
 
-      // Revalidate the account settings page to refresh the UI
-      const { revalidatePath } = await import('next/cache');
-      revalidatePath('/settings/account');
+        // Revalidate the account settings page to refresh the UI
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/settings/account');
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeErrorResult(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeErrorResult(result);
+  });
 }
 
 /**
@@ -203,23 +214,25 @@ export async function unlinkAccountAction(
 export async function deleteAccountAction(): Promise<
   ResultTuple<SerializedErrorWithMessage, { message: string }>
 > {
-  const result = await deleteAccount({});
+  return withActionTrace('deleteAccount', async () => {
+    const result = await deleteAccount({});
 
-  // If successful, sign out and redirect
-  if (!result[0]) {
-    // Sign out using Better Auth
-    try {
-      // Note: Better Auth signOut is typically called from client side
-      // For server-side logout, we could invalidate sessions directly
-      // For now, the client will handle the redirect after deletion
-    } catch (error) {
-      // Log error but don't fail the deletion
-      console.error('Error signing out after account deletion:', error);
+    // If successful, sign out and redirect
+    if (!result[0]) {
+      // Sign out using Better Auth
+      try {
+        // Note: Better Auth signOut is typically called from client side
+        // For server-side logout, we could invalidate sessions directly
+        // For now, the client will handle the redirect after deletion
+      } catch (error) {
+        // Log error but don't fail the deletion
+        logger.error({ error }, 'Error signing out after account deletion');
+      }
+
+      // Redirect will be handled by the client component after receiving success
     }
 
-    // Redirect will be handled by the client component after receiving success
-  }
-
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeErrorResult(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeErrorResult(result);
+  });
 }

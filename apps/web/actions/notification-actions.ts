@@ -16,6 +16,8 @@ import { pusherServer } from '@/lib/pusher-server';
 import type { ResultTuple, SerializedError } from '@groupi/schema';
 import { serializeResultTuple } from '@groupi/schema';
 import type { NotificationType } from '@prisma/client';
+import { withActionTrace } from '@/lib/action-trace';
+import { pusherLogger } from '@/lib/logger';
 // Error types removed - not currently used
 
 // ============================================================================
@@ -56,33 +58,35 @@ interface MarkNotificationAsReadByPostAndTypeInput {
 export async function markNotificationAsReadAction(
   input: MarkAsReadInput
 ): Promise<ResultTuple<SerializedError, { message: string }>> {
-  const result = await markNotificationAsRead({
-    notificationId: input.notificationId,
-  });
+  return withActionTrace('markNotificationAsRead', async () => {
+    const result = await markNotificationAsRead({
+      notificationId: input.notificationId,
+    });
 
-  // Invalidate notification cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { id: input.notificationId },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { id: input.notificationId },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -92,33 +96,35 @@ export async function markNotificationAsReadAction(
 export async function markNotificationAsUnreadAction(
   input: MarkAsUnreadInput
 ): Promise<ResultTuple<SerializedError, { message: string }>> {
-  const result = await markNotificationAsUnread({
-    notificationId: input.notificationId,
-  });
+  return withActionTrace('markNotificationAsUnread', async () => {
+    const result = await markNotificationAsUnread({
+      notificationId: input.notificationId,
+    });
 
-  // Invalidate notification cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { id: input.notificationId },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { id: input.notificationId },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -128,31 +134,33 @@ export async function markNotificationAsUnreadAction(
 export async function markAllNotificationsAsReadAction(): Promise<
   ResultTuple<SerializedError, { message: string }>
 > {
-  const result = await markAllNotificationsAsRead({});
+  return withActionTrace('markAllNotificationsAsRead', async () => {
+    const result = await markAllNotificationsAsRead({});
 
-  // Invalidate notification cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications (all updated)
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { allRead: true },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications (all updated)
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { allRead: true },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -162,33 +170,35 @@ export async function markAllNotificationsAsReadAction(): Promise<
 export async function deleteNotificationAction(
   input: DeleteNotificationInput
 ): Promise<ResultTuple<SerializedError, { message: string }>> {
-  const result = await deleteNotification({
-    notificationId: input.notificationId,
-  });
+  return withActionTrace('deleteNotification', async () => {
+    const result = await deleteNotification({
+      notificationId: input.notificationId,
+    });
 
-  // Invalidate notification cache on successful delete
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful delete
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'DELETE',
-          old: { id: input.notificationId },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'DELETE',
+            old: { id: input.notificationId },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -198,31 +208,33 @@ export async function deleteNotificationAction(
 export async function deleteAllNotificationsAction(): Promise<
   ResultTuple<SerializedError, { message: string }>
 > {
-  const result = await deleteAllNotifications({});
+  return withActionTrace('deleteAllNotifications', async () => {
+    const result = await deleteAllNotifications({});
 
-  // Invalidate notification cache on successful delete
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful delete
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications (all deleted)
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'DELETE',
-          old: { allDeleted: true },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications (all deleted)
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'DELETE',
+            old: { allDeleted: true },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -233,33 +245,35 @@ export async function deleteAllNotificationsAction(): Promise<
 export async function markPostNotificationsAsReadAction(
   input: MarkPostNotificationsAsReadInput
 ): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
-  const result = await markPostNotificationsAsRead({
-    postId: input.postId,
-  });
+  return withActionTrace('markPostNotificationsAsRead', async () => {
+    const result = await markPostNotificationsAsRead({
+      postId: input.postId,
+    });
 
-  // Invalidate notification cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { postId: input.postId, count: result[1]?.count },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { postId: input.postId, count: result[1]?.count },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -270,33 +284,35 @@ export async function markPostNotificationsAsReadAction(
 export async function markEventNotificationsAsReadAction(
   input: MarkEventNotificationsAsReadInput
 ): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
-  const result = await markEventNotificationsAsRead({
-    eventId: input.eventId,
-  });
+  return withActionTrace('markEventNotificationsAsRead', async () => {
+    const result = await markEventNotificationsAsRead({
+      eventId: input.eventId,
+    });
 
-  // Invalidate notification cache on successful update
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      updateTag(`user-${userId}-notifications`);
+    // Invalidate notification cache on successful update
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        updateTag(`user-${userId}-notifications`);
 
-      // Trigger Pusher event for user notifications
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { eventId: input.eventId, count: result[1]?.count },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+        // Trigger Pusher event for user notifications
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { eventId: input.eventId, count: result[1]?.count },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
 
 /**
@@ -307,30 +323,32 @@ export async function markEventNotificationsAsReadAction(
 export async function markNotificationAsReadByPostAndTypeAction(
   input: MarkNotificationAsReadByPostAndTypeInput
 ): Promise<ResultTuple<SerializedError, { message: string; count: number }>> {
-  const result = await markNotificationAsReadByPostAndType({
-    postId: input.postId,
-    type: input.type,
-  });
+  return withActionTrace('markNotificationAsReadByPostAndType', async () => {
+    const result = await markNotificationAsReadByPostAndType({
+      postId: input.postId,
+      type: input.type,
+    });
 
-  // Don't invalidate cache for real-time updates - rely on Pusher event
-  if (!result[0]) {
-    const [, userId] = await getUserId();
-    if (userId) {
-      // Trigger Pusher event for real-time UI updates
-      await pusherServer
-        .trigger(`user-${userId}-notifications`, 'notification-changed', {
-          type: 'UPDATE',
-          new: { postId: input.postId, notificationType: input.type },
-        })
-        .catch((err: unknown) => {
-          console.error(
-            '[Pusher] Failed to trigger notification-changed:',
-            err
-          );
-        });
+    // Don't invalidate cache for real-time updates - rely on Pusher event
+    if (!result[0]) {
+      const [, userId] = await getUserId();
+      if (userId) {
+        // Trigger Pusher event for real-time UI updates
+        await pusherServer
+          .trigger(`user-${userId}-notifications`, 'notification-changed', {
+            type: 'UPDATE',
+            new: { postId: input.postId, notificationType: input.type },
+          })
+          .catch((err: unknown) => {
+            pusherLogger.error(
+              { error: err instanceof Error ? err.message : String(err) },
+              '[Pusher] Failed to trigger notification-changed'
+            );
+          });
+      }
     }
-  }
 
-  // Serialize the result tuple to prevent Error object serialization issues
-  return serializeResultTuple(result);
+    // Serialize the result tuple to prevent Error object serialization issues
+    return serializeResultTuple(result);
+  });
 }
