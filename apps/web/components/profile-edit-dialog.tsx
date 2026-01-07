@@ -87,7 +87,7 @@ export function ProfileEditDialog({
 
   // Debug: Log state changes
   useEffect(() => {
-    logger.info(
+    logger.debug(
       { isPending, isUploading, isSubmitting, open },
       'State changed'
     );
@@ -198,35 +198,18 @@ export function ProfileEditDialog({
 
   // Prevent dialog from closing during submission or upload
   const handleOpenChange = (newOpen: boolean) => {
-    logger.info(
-      {
-        newOpen,
-        isUploading,
-        isPending,
-        isSubmitting,
-        willPrevent: !newOpen && (isUploading || isPending || isSubmitting),
-      },
-      'handleOpenChange called'
-    );
     // Prevent closing during upload, pending transition, or submission
     if (!newOpen && (isUploading || isPending || isSubmitting)) {
-      logger.info(
-        {},
-        'Preventing dialog close - upload, transition, or submission in progress'
-      );
       return;
     }
-    logger.info({}, 'Allowing dialog close');
     onOpenChange(newOpen);
   };
 
   const onSubmit = async (values: z.infer<typeof profileFormSchema>) => {
-    logger.info({ values, isPending, isUploading }, 'onSubmit called');
     setUpdateError(null);
     setIsSubmitting(true);
 
     startTransition(async () => {
-      logger.info({ isPending }, 'startTransition callback started');
       try {
         // Determine old image key - use current userInfo.imageKey if:
         // 1. A new image was uploaded (newImageKey exists and differs), OR
@@ -240,7 +223,6 @@ export function ProfileEditDialog({
           ? userInfo.imageKey || undefined
           : undefined;
 
-        logger.info({}, 'Calling updateProfileAction');
         const [error] = await updateProfileAction({
           name: values.name || undefined,
           pronouns: values.pronouns || undefined,
@@ -250,10 +232,8 @@ export function ProfileEditDialog({
           oldImageKey,
         });
 
-        logger.info({ error }, 'updateProfileAction completed');
-
         if (error) {
-          logger.info({ error }, 'Error occurred');
+          logger.warn({ error }, 'Profile update failed');
           setUpdateError(
             error instanceof Error ? error.message : 'Failed to update profile'
           );
@@ -263,7 +243,6 @@ export function ProfileEditDialog({
 
         // Success - clear the uploaded-but-not-saved flag, close dialog immediately
         // The layout will refresh in the background via revalidatePath, updating the dropdown
-        logger.info({}, 'Success - closing dialog');
         setUploadedButNotSaved(null);
         setIsSubmitting(false);
         handleOpenChange(false);
@@ -280,8 +259,6 @@ export function ProfileEditDialog({
   const initials = getInitialsFromName(userInfo.name, userInfo.email);
   // eslint-disable-next-line react-hooks/incompatible-library
   const currentImage = form.watch('image');
-
-  logger.info({ open, isPending, isUploading, isSubmitting }, 'Render');
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
