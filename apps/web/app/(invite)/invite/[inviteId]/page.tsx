@@ -42,15 +42,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Invite Page - Fully server-rendered
+ * Invite Page
  *
- * Auth and membership checks happen at the page level (not in Suspense)
- * so redirects are HTTP-level, not client-side Router navigations.
+ * - generateMetadata provides OG tags for social embeds
+ * - Streaming redirects for auth and membership checks
  */
 export default async function InvitePage({ params }: Props) {
   const { inviteId } = await params;
 
-  // Auth check - redirect to sign-in if not authenticated
+  // Auth check
   const [authError, userId] = await getUserId();
   if (authError || !userId) {
     redirect('/sign-in');
@@ -73,7 +73,7 @@ export default async function InvitePage({ params }: Props) {
     },
   });
 
-  // If already a member, redirect to the event page
+  // If already a member, redirect to event page
   if (invite?.event.memberships.length) {
     redirect(`/event/${invite.eventId}`);
   }
