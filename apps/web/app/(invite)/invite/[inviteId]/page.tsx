@@ -1,8 +1,6 @@
 import { InviteDetails } from './components/invite-details';
 import { getUserId, db, getCachedInviteData } from '@groupi/services/server';
 import { redirect } from 'next/navigation';
-import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
-import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
 type Props = {
@@ -43,31 +41,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function InvitePage(props: {
-  params: Promise<{ inviteId: string }>;
-}) {
-  return (
-    <div className='container max-w-4xl py-6'>
-      <Suspense fallback={<InviteDetailsSkeleton />}>
-        <InviteContent params={props.params} />
-      </Suspense>
-    </div>
-  );
-}
+/**
+ * Invite Page - Fully server-rendered
+ *
+ * Auth and membership checks happen at the page level (not in Suspense)
+ * so redirects are HTTP-level, not client-side Router navigations.
+ */
+export default async function InvitePage({ params }: Props) {
+  const { inviteId } = await params;
 
-async function InviteContent(props: { params: Promise<{ inviteId: string }> }) {
-  // Dynamic rendering - wrapped in Suspense boundary
-  const params = await props.params;
-  const { inviteId } = params;
-
-  // Auth check - getUserId() handles headers() internally with prerendering detection
+  // Auth check - redirect to sign-in if not authenticated
   const [authError, userId] = await getUserId();
-
   if (authError || !userId) {
     redirect('/sign-in');
   }
 
-  // Check if user is already a member of the event this invite is for
+  // Check if user is already a member of the event
   const invite = await db.invite.findUnique({
     where: { id: inviteId },
     select: {
@@ -84,11 +73,15 @@ async function InviteContent(props: { params: Promise<{ inviteId: string }> }) {
     },
   });
 
-  // If user is already a member, redirect to the event page
+  // If already a member, redirect to the event page
   if (invite?.event.memberships.length) {
     redirect(`/event/${invite.eventId}`);
   }
 
-  // InviteDetails fetches invite data and renders accept form
-  return <InviteDetails inviteId={inviteId} />;
+  // User is authenticated and not yet a member - show invite details
+  return (
+    <div className='container max-w-4xl py-6'>
+      <InviteDetails inviteId={inviteId} />
+    </div>
+  );
 }
