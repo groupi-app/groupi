@@ -2,8 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useActionState } from 'react';
 import { acceptInviteAndRedirectAction } from '@/actions/invite-actions';
 
 export function AcceptInviteForm({
@@ -13,34 +12,20 @@ export function AcceptInviteForm({
   inviteId: string;
   eventId: string;
 }) {
-  const [isPending, setIsPending] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsPending(true);
-
-    try {
-      const result = await acceptInviteAndRedirectAction(inviteId, eventId);
-
-      if (result.success) {
-        // Hard navigation to avoid Next.js Router hooks issues
-        window.location.href = result.redirectUrl;
-      } else {
-        setIsPending(false);
-        toast.error('Failed to accept invite', {
-          description: 'Please try again.',
-        });
-      }
-    } catch {
-      setIsPending(false);
-      toast.error('Failed to accept invite', {
-        description: 'An unexpected error occurred.',
-      });
-    }
-  };
+  const boundAction = acceptInviteAndRedirectAction.bind(
+    null,
+    inviteId,
+    eventId
+  );
+  const [state, formAction, isPending] = useActionState(boundAction, null);
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form action={formAction}>
+      {state?.error && (
+        <p className='text-destructive text-sm mb-2'>
+          Failed to accept invite. Please try again.
+        </p>
+      )}
       <Button type='submit' disabled={isPending}>
         {isPending ? (
           <>
