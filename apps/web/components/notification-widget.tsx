@@ -116,12 +116,13 @@ export function NotificationWidget({
     }
   }, [notifications, cursor, isLoading]);
 
-  // Real-time updates via Pusher
+  // Real-time updates via Pusher (only when authenticated)
   usePusherRealtime({
-    channel: userId ? `user-${userId}-notifications` : 'dummy',
+    channel: `user-${userId}-notifications`,
     event: 'notification-changed',
-    tags: userId ? [`user-${userId}-notifications`] : [],
+    tags: [`user-${userId}-notifications`],
     queryKey: qk.notifications.list(userId || 'anonymous'),
+    enabled: !!userId,
     onInsert: data => {
       const newNotification = data as NotificationFeedData;
       // Add to beginning of list

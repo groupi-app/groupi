@@ -10,6 +10,7 @@ interface PusherRealtimeConfig {
   event: string;
   tags: string[]; // Cache tags to invalidate on server-side cache
   queryKey: readonly unknown[]; // React Query key for this data
+  enabled?: boolean; // Whether to subscribe (defaults to true)
   onInsert?: (data: unknown) => void; // Optional custom handler (for backward compatibility)
   onUpdate?: (data: unknown) => void; // Optional custom handler (for backward compatibility)
   onDelete?: (data: unknown) => void; // Optional custom handler (for backward compatibility)
@@ -27,8 +28,16 @@ interface RecordWithId {
  */
 export function usePusherRealtime(config: PusherRealtimeConfig) {
   const queryClient = useQueryClient();
-  const { queryKey, tags, onInsert, onUpdate, onDelete, channel, event } =
-    config;
+  const {
+    queryKey,
+    tags,
+    onInsert,
+    onUpdate,
+    onDelete,
+    channel,
+    event,
+    enabled = true,
+  } = config;
 
   useEffect(() => {
     pusherLogger.debug(
@@ -159,11 +168,11 @@ export function usePusherRealtime(config: PusherRealtimeConfig) {
   );
 
   // Pass handler dependencies to usePusherEvent so it re-subscribes when handlers change
-  usePusherEvent(channel, event, handleEvent, [
-    queryKey,
-    tags,
-    onInsert,
-    onUpdate,
-    onDelete,
-  ]);
+  usePusherEvent(
+    channel,
+    event,
+    handleEvent,
+    [queryKey, tags, onInsert, onUpdate, onDelete],
+    enabled
+  );
 }
