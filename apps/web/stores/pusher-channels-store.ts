@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import type Pusher from 'pusher-js';
 import type { Channel } from 'pusher-js';
-import { pusherClient } from '@/lib/pusher-client';
+import { getPusherClient } from '@/lib/pusher-client';
 import { pusherLogger } from '@/lib/logger';
 import { logPusherEvent } from '@/lib/pusher-telemetry';
 import { useEffect } from 'react';
@@ -31,15 +31,18 @@ interface PusherChannelsStore {
   _setIsConnected: (connected: boolean) => void;
 }
 
-// Initialize singleton client
-let pusherClientInstance: Pusher | null = null;
-if (typeof window !== 'undefined') {
-  pusherClientInstance = pusherClient;
+// Lazy getter for the Pusher client - only connects when first accessed
+function getClient(): Pusher | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return getPusherClient();
 }
 
 export const usePusherChannelsStore = create<PusherChannelsStore>(
   (set, get) => ({
-    client: pusherClientInstance,
+    // Client is lazily initialized - null until first access via subscribe/bind
+    client: null,
     isConnected: false,
     connectionState: 'disconnected',
     channels: new Map(),
@@ -48,13 +51,19 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
     _setIsConnected: connected => set({ isConnected: connected }),
 
     subscribe: (channelName: string) => {
-      const { client, channels } = get();
+      const { channels } = get();
+      const client = getClient();
       if (!client) {
         pusherLogger.warn(
           { channelName },
-          'Cannot subscribe: Pusher client not available'
+          'Cannot subscribe: Pusher client not available (not in browser)'
         );
         return null;
+      }
+
+      // Store client reference in state if not already set
+      if (!get().client) {
+        set({ client });
       }
 
       if (channels.has(channelName)) {
@@ -105,11 +114,12 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
     },
 
     unsubscribe: (channelName: string) => {
-      const { client, channels } = get();
+      const { channels } = get();
+      const client = getClient();
       if (!client) {
         pusherLogger.warn(
           { channelName },
-          'Cannot unsubscribe: Pusher client not available'
+          'Cannot unsubscribe: Pusher client not available (not in browser)'
         );
         return;
       }
@@ -154,7 +164,8 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
       eventName: string,
       handler: (data: unknown) => void
     ) => {
-      const { client, channels } = get();
+      const { channels } = get();
+      const client = getClient();
       const ch =
         channels.get(channelName) ||
         (client ? client.subscribe(channelName) : null);
@@ -219,10 +230,11 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
 
 // Hook to initialize connection listeners
 export function usePusherChannelsInit() {
-  const { client, _setConnectionState, _setIsConnected } =
-    usePusherChannelsStore();
+  const { _setConnectionState, _setIsConnected } = usePusherChannelsStore();
 
   useEffect(() => {
+    // Lazily get the client - this is safe because the hook only runs in browser
+    const client = getClient();
     if (!client) {
       pusherLogger.warn(
         'Pusher client not available, skipping connection listeners'
@@ -340,7 +352,8 @@ export function usePusherChannelsInit() {
         );
       }
     };
-  }, [client, _setConnectionState, _setIsConnected]);
+    // Note: getClient() returns the same singleton, so no deps needed for client
+  }, [_setConnectionState, _setIsConnected]);
 }
 
 // Hook for backward compatibility
