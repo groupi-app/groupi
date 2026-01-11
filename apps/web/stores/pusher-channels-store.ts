@@ -232,6 +232,13 @@ export function usePusherChannelsInit() {
 
     pusherLogger.info('Initializing Pusher connection listeners');
 
+    // Disconnect on page unload to prevent zombie connections
+    const handleBeforeUnload = () => {
+      pusherLogger.debug('Page unloading, disconnecting Pusher');
+      client.disconnect();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     const handleConnected = () => {
       pusherLogger.info('Pusher connection established');
       _setIsConnected(true);
@@ -317,6 +324,7 @@ export function usePusherChannelsInit() {
 
     return () => {
       pusherLogger.debug('Cleaning up Pusher connection listeners');
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       try {
         client.connection.unbind('connected', handleConnected);
         client.connection.unbind('disconnected', handleDisconnected);
