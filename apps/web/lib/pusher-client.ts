@@ -5,12 +5,26 @@ import PusherClient from 'pusher-js';
 /**
  * Pusher Channels client instance.
  *
- * Simple singleton pattern - the client is created once and reused.
- * The 'use client' directive ensures this only runs in the browser.
+ * Lazily initialized singleton - the client is only created when first accessed.
+ * This prevents connections from being established on module import.
  */
-export const pusherClient = new PusherClient(
-  process.env.NEXT_PUBLIC_PUSHER_APP_KEY!,
-  {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER!,
+let pusherClientInstance: PusherClient | null = null;
+
+export function getPusherClient(): PusherClient {
+  if (!pusherClientInstance) {
+    pusherClientInstance = new PusherClient(
+      process.env.NEXT_PUBLIC_PUSHER_APP_KEY!,
+      {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER!,
+      }
+    );
   }
-);
+  return pusherClientInstance;
+}
+
+// For backward compatibility - but prefer getPusherClient() for lazy init
+export const pusherClient = {
+  get instance() {
+    return getPusherClient();
+  },
+};
