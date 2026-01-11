@@ -323,11 +323,21 @@ export function usePusherEvent(
   channelName: string,
   eventName: string,
   handler: (data: unknown) => void,
-  deps: React.DependencyList = []
+  deps: React.DependencyList = [],
+  enabled: boolean = true
 ) {
   const { subscribe, bind, unbind } = usePusherChannels();
 
   useEffect(() => {
+    // Skip subscription if disabled
+    if (!enabled) {
+      pusherLogger.debug(
+        { channelName, eventName },
+        'Pusher event listener disabled, skipping subscription'
+      );
+      return;
+    }
+
     pusherLogger.debug(
       { channelName, eventName },
       'Setting up Pusher event listener'
@@ -401,5 +411,5 @@ export function usePusherEvent(
       unbind(channelName, eventName, wrappedHandler);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelName, eventName, ...deps]);
+  }, [channelName, eventName, enabled, ...deps]);
 }

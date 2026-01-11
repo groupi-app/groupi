@@ -47,12 +47,13 @@ export function NotificationCount() {
     enabled: !!userId,
   });
 
-  // Real-time updates via Pusher
+  // Real-time updates via Pusher (only when authenticated)
   usePusherRealtime({
-    channel: userId ? `user-${userId}-notifications` : 'dummy',
+    channel: `user-${userId}-notifications`,
     event: 'notification-changed',
-    tags: userId ? [`user-${userId}-notifications-count`] : [],
+    tags: [`user-${userId}-notifications-count`],
     queryKey: qk.notifications.count(userId || 'anonymous'),
+    enabled: !!userId,
     onInsert: data => {
       const notification = data as NotificationFeedData;
 
