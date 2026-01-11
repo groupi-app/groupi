@@ -5,6 +5,7 @@ import type Pusher from 'pusher-js';
 import type { Channel } from 'pusher-js';
 import { pusherClient } from '@/lib/pusher-client';
 import { pusherLogger } from '@/lib/logger';
+import { logPusherEvent } from '@/lib/pusher-telemetry';
 import { useEffect } from 'react';
 import type React from 'react';
 
@@ -71,6 +72,11 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
         // Listen for subscription success
         ch.bind('pusher:subscription_succeeded', () => {
           pusherLogger.info({ channelName }, 'Channel subscription succeeded');
+          logPusherEvent({
+            event: 'subscribe',
+            channel: channelName,
+            socketId: client.connection.socket_id,
+          });
         });
 
         // Listen for subscription errors
@@ -126,6 +132,11 @@ export const usePusherChannelsStore = create<PusherChannelsStore>(
           { channelName, totalChannels: newChannels.size },
           'Channel unsubscribed successfully'
         );
+        logPusherEvent({
+          event: 'unsubscribe',
+          channel: channelName,
+          socketId: client.connection.socket_id,
+        });
       } catch (error) {
         pusherLogger.error(
           { channelName, error },
@@ -225,12 +236,20 @@ export function usePusherChannelsInit() {
       pusherLogger.info('Pusher connection established');
       _setIsConnected(true);
       _setConnectionState('connected');
+      logPusherEvent({
+        event: 'connected',
+        socketId: client.connection.socket_id,
+      });
     };
 
     const handleDisconnected = () => {
       pusherLogger.warn('Pusher connection disconnected');
       _setIsConnected(false);
       _setConnectionState('disconnected');
+      logPusherEvent({
+        event: 'disconnected',
+        socketId: client.connection.socket_id,
+      });
     };
 
     const handleStateChange = (states: {
@@ -245,6 +264,12 @@ export function usePusherChannelsInit() {
         'Pusher connection state changed'
       );
       _setConnectionState(states.current);
+      logPusherEvent({
+        event: 'state_change',
+        state: states.current,
+        previousState: states.previous,
+        socketId: client.connection.socket_id,
+      });
     };
 
     const handleError = (error: { error: { data: unknown; code: number } }) => {
@@ -255,6 +280,11 @@ export function usePusherChannelsInit() {
         },
         'Pusher connection error'
       );
+      logPusherEvent({
+        event: 'error',
+        error: String(error.error.data),
+        socketId: client.connection.socket_id,
+      });
     };
 
     const handleUnavailable = () => {
