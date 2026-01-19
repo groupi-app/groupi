@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "npx convex deploy --cmd 'pnpm --filter @groupi/web build'",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "outputDirectory": "packages/web/.next",
   "framework": "nextjs"
 }
