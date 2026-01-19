@@ -20,13 +20,13 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@groupi/ui": ["./packages/ui/src"],
+      "@groupi/shared": ["./packages/shared/src"],
       "@groupi/services": ["./packages/services/src"],
       "@groupi/schema": ["./packages/schema/src"],
       "@groupi/utils": ["./packages/utils/src"],
       "@groupi/hooks": ["./packages/hooks/src"]
     }
   },
-  "include": ["apps/**/*.ts", "apps/**/*.tsx", "**/.next/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".next", "packages"]
+  "include": ["packages/**/*.ts", "packages/**/*.tsx", "**/.next/types/**/*.ts"],
+  "exclude": ["node_modules", "dist", ".next"]
 }

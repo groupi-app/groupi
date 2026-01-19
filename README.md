@@ -1,143 +1,243 @@
-# Groupi
+# Groupi 🎉
 
-A modern event planning and group coordination platform built with Next.js, TypeScript, and a monorepo architecture.
+A modern, cross-platform event planning and group coordination application built with **Convex**, **Next.js**, and **React Native**.
 
-## Overview
+## ✨ Overview
 
-Groupi is a full-stack application for organizing events, managing group memberships, and facilitating real-time communication. The platform enables users to create events, invite members, coordinate availability, and engage in discussions through posts and replies.
+Groupi is a real-time, cross-platform application for organizing events, managing group memberships, and facilitating seamless communication. Built with a **client-only architecture** powered by Convex for lightning-fast real-time synchronization across web and mobile.
 
-### Key Features
+### 🚀 Key Features
 
-- **Event Management**: Create and manage events with date/time coordination
-- **Group Coordination**: Manage memberships, roles, and permissions
-- **Real-time Communication**: Posts, replies, and notifications with real-time updates
-- **Availability Tracking**: Coordinate member availability for events
-- **Cross-platform Ready**: Architecture designed for web and mobile (React Native)
+- **📅 Event Management**: Create and coordinate events with real-time updates
+- **👥 Group Coordination**: Manage memberships, roles, and permissions
+- **💬 Real-time Communication**: Posts, replies, and notifications with instant sync
+- **📱 Cross-Platform**: Single codebase for **Web** (Next.js) and **Mobile** (React Native + Expo)
+- **⚡ Real-time First**: All data syncs instantly across devices via Convex
+- **🎨 Beautiful UI**: Consistent design system with Tailwind CSS and Radix UI
 
-## Architecture
+## 🏗️ Architecture
 
-The project follows a monorepo structure with clear separation of concerns:
+**Modern Client-Only Architecture** with cross-platform business logic:
 
 ```
 groupi/
-├── apps/
-│   └── web/              # Next.js web application
 ├── packages/
-│   ├── schema/           # TypeScript types, DTOs, and validation schemas
-│   ├── services/         # Server-side business logic (Effect-based)
-│   └── ui/               # Shared UI components and utilities
-└── prisma/               # Database schema and migrations
+│   ├── web/              # Next.js web application (client-only)
+│   ├── mobile/           # React Native + Expo mobile app
+│   └── shared/           # Cross-platform business logic & hooks
+├── convex/               # Convex backend (real-time database)
+└── groupi.code-workspace # VS Code workspace configuration
 ```
 
-### Data Flow
+### 🔄 Data Flow
 
-1. **Schema** (`@groupi/schema`) - Defines types, DTOs, and validation schemas
-2. **Services** (`@groupi/services`) - Implements business logic using Effect for error handling
-3. **Web App** (`@groupi/web`) - Next.js application that orchestrates everything
-4. **UI** (`@groupi/ui`) - Shared components and utilities
+1. **Convex Backend** - Real-time database with built-in auth and subscriptions
+2. **Shared Package** - Platform-agnostic business logic hooks
+3. **Platform Adapters** - Navigation, storage, and UI abstractions
+4. **Apps** - Web (Next.js) and Mobile (React Native) consume shared logic
 
-## Development
+### 🎯 Benefits
+
+- ⚡ **Real-time Everything**: No manual cache invalidation needed
+- 📱 **True Cross-Platform**: 95% code reuse between web and mobile
+- 🚀 **Fast Development**: Client-only with hot reload everywhere
+- 🔒 **Type Safety**: End-to-end TypeScript with auto-generated types
+- 🎨 **Consistent UX**: Shared business logic, platform-specific UI
+
+## 🛠️ Development
 
 ### Prerequisites
 
-- Node.js 18+
-- pnpm 10.12.1+
-- PostgreSQL (via Supabase CLI for local development)
-- Environment variables configured (see `.env.example`)
+- **Node.js** 18+
+- **pnpm** 10.12.1+
+- **Convex CLI** (`npm install -g convex`)
+- **Expo CLI** for mobile development (`npm install -g @expo/cli`)
 
-### Quick Start
+### 🚀 Quick Start
 
 ```bash
 # Install dependencies
 pnpm install
 
-# Start development environment
+# Start Convex development server
+pnpm convex:dev
+
+# In another terminal - start web development
 pnpm dev
+
+# Optional: Start mobile development
+pnpm dev:mobile
+
+# Or start both web and mobile together
+pnpm dev:full
 ```
 
 This starts:
+- **Web App**: http://localhost:3000
+- **Mobile App**: Expo dev tools (scan QR code with Expo Go)
+- **Convex Dashboard**: Real-time database admin
+- **Hot Reload**: Instant updates across all platforms
 
-- Next.js web app (http://localhost:3000)
-- Prisma Studio (http://localhost:5555)
-- Database (Supabase local stack)
-- Package watch mode for hot reloading
-
-### Development Scripts
+### 📋 Development Scripts
 
 ```bash
-# Development
-pnpm dev              # Start web app with all services
-pnpm dev:prisma       # Start Prisma Studio
-pnpm dev:db           # Start local database (Supabase)
+# 🚀 Development
+pnpm dev              # Web app only
+pnpm dev:mobile       # Mobile app only
+pnpm dev:full         # Both web and mobile (recommended)
+pnpm convex:dev       # Convex backend
 
-# Building
-pnpm build            # Build all packages and apps
-pnpm build --filter=@groupi/web  # Build specific package/app
+# 🏗️ Building
+pnpm build            # Build all apps
+pnpm build:web        # Web app only
+pnpm build:mobile     # Mobile app only
 
-# Code Quality
+# ✅ Code Quality
+pnpm check            # Run all checks (lint + type + format)
 pnpm lint             # Lint all packages
 pnpm lint:fix         # Fix linting issues
-pnpm format           # Format code
-pnpm type-check       # Type check all packages
+pnpm format           # Format code with Prettier
+pnpm type-check       # TypeScript check all packages
 
-# Database
-pnpm migrate          # Run database migrations
-pnpm generate         # Generate Prisma client
-pnpm seed-users       # Seed test users
+# 🧹 Maintenance
+pnpm clean            # Clean all build artifacts
+pnpm clean:deps       # Clean and reinstall all dependencies
+
+# ⚡ Convex
+pnpm convex:dev       # Start Convex development server
+pnpm convex:deploy    # Deploy to production
 ```
 
-### Package Development
+### 💡 Development Tips
 
-When working on packages:
+1. **Open Workspace**: Use `groupi.code-workspace` in VS Code for best experience
+2. **Real-time Debugging**: Use Convex Dashboard to see data changes in real-time
+3. **Cross-Platform Testing**: Use `pnpm dev:full` to test both platforms simultaneously
+4. **Shared Logic**: All business logic lives in `packages/shared/` - no duplication!
 
-1. Make changes to source files in `packages/*/src/`
-2. Watch mode automatically rebuilds on file changes
-3. Next.js picks up changes and hot reloads
-4. TypeScript provides full type safety across packages
+## 📱 Cross-Platform Development
 
-## Production
+### Shared Business Logic
 
-### Building
+All core functionality is in `packages/shared/`:
 
+```typescript
+// Platform-agnostic hooks
+import { createEventHooks, createAuthHooks } from '@groupi/shared/hooks';
+
+// Cross-platform utilities
+import { formatDate, validateEmail } from '@groupi/shared';
+
+// Platform abstractions
+import { navigation, storage, toast } from '@groupi/shared/platform';
+```
+
+### Platform-Specific Implementation
+
+**Web App** (Next.js):
+```typescript
+// Uses Next.js router, localStorage, Sonner
+setupWebPlatformAdapters();
+const { useCurrentUser } = createAuthHooks(api);
+```
+
+**Mobile App** (React Native):
+```typescript
+// Uses React Navigation, Expo SecureStore, React Native Toast
+setupMobilePlatformAdapters();
+const { useCurrentUser } = createAuthHooks(api);  // Same hook!
+```
+
+## 📚 Tech Stack
+
+### Core
+- **Backend**: [Convex](https://convex.dev/) - Real-time database with built-in auth
+- **Web**: [Next.js 16](https://nextjs.org/) with App Router (client-only)
+- **Mobile**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/)
+- **Language**: [TypeScript](https://typescriptlang.org/) with strict mode
+- **Monorepo**: [Turborepo](https://turbo.build/) with pnpm workspaces
+
+### UI & Styling
+- **Web UI**: [Radix UI](https://radix-ui.com/) + [Tailwind CSS](https://tailwindcss.com/)
+- **Mobile UI**: [Uniwind](https://uniwind.dev/) (Tailwind for React Native)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Animations**: [Framer Motion](https://framer.com/motion/)
+
+### Development
+- **Package Manager**: [pnpm](https://pnpm.io/) with workspaces
+- **Linting**: [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)
+- **Git Hooks**: [Husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/okonet/lint-staged)
+- **VS Code**: Configured workspace with recommended extensions
+
+## 📂 Project Structure
+
+### Apps
+- **[`packages/web/`](./packages/web/)** - Next.js web application (client-only)
+- **[`packages/mobile/`](./packages/mobile/)** - React Native mobile app with Expo
+
+### Packages
+- **[`packages/shared/`](./packages/shared/)** - Cross-platform business logic
+- **[`packages/ui/`](./packages/ui/)** - Shared UI components and utilities
+
+### Backend
+- **[`convex/`](./convex/)** - Convex backend functions and schema
+
+## 🚀 Deployment
+
+### Web App (Vercel)
 ```bash
-# Build all packages and apps
-pnpm build
-
-# Start production server
-pnpm start
+# Build and deploy web app
+pnpm build:web
+# Deploy to Vercel (configured in project)
 ```
 
-### Environment Variables
-
-Ensure all required environment variables are set for production. See `.env.example` for reference.
-
-### Database Migrations
-
+### Mobile App (Expo + App Stores)
 ```bash
-# Deploy migrations to production
-pnpm prisma:migrate-deploy
+# Build for App Store / Play Store
+cd packages/mobile
+pnpm build:ios
+pnpm build:android
 ```
 
-## Tech Stack
+### Convex Backend
+```bash
+# Deploy backend
+pnpm convex:deploy
+```
 
-- **Framework**: Next.js 16 with App Router
-- **Language**: TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Better Auth
-- **Styling**: Tailwind CSS
-- **State Management**: TanStack Query
-- **Real-time**: Pusher
-- **Error Handling**: Effect.ts
-- **Monorepo**: Turborepo with pnpm workspaces
-- **Testing**: Cypress for E2E
+## 🤝 Contributing
 
-## Project Structure
+1. **Clone & Setup**:
+   ```bash
+   git clone <repo>
+   pnpm install
+   ```
 
-- [`apps/web`](./apps/web/README.md) - Next.js web application
-- [`packages/schema`](./packages/schema/README.md) - Types and validation schemas
-- [`packages/services`](./packages/services/README.md) - Business logic layer
-- [`packages/ui`](./packages/ui/README.md) - Shared UI components
+2. **Start Development**:
+   ```bash
+   pnpm convex:dev    # Terminal 1
+   pnpm dev:full      # Terminal 2
+   ```
 
-## Getting Help
+3. **Make Changes**:
+   - Business logic → `packages/shared/`
+   - Web UI → `packages/web/`
+   - Mobile UI → `packages/mobile/`
+   - Backend → `convex/`
 
-For detailed information about each package or app, see their respective README files in the directories above.
+4. **Test & Submit**:
+   ```bash
+   pnpm check        # Lint, type, format
+   git commit -m "feat: your changes"
+   ```
+
+## 📖 Learn More
+
+- **[Convex Docs](https://docs.convex.dev/)** - Real-time database
+- **[Next.js Docs](https://nextjs.org/docs)** - Web app framework
+- **[React Native Docs](https://reactnative.dev/docs/getting-started)** - Mobile development
+- **[Expo Docs](https://docs.expo.dev/)** - Mobile app platform
+
+---
+
+Built with ❤️ by the Groupi team

@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Membership" ALTER COLUMN "role" SET DEFAULT 'ATTENDEE',
-ALTER COLUMN "rsvpStatus" SET DEFAULT 'PENDING';
