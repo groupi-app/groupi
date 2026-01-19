@@ -4,7 +4,7 @@
 # - Preview: deploys to a consistent preview deployment based on branch name
 #
 # IMPORTANT: Do NOT set NEXT_PUBLIC_CONVEX_URL or NEXT_PUBLIC_CONVEX_SITE_URL
-# in Vercel env vars. Convex sets these automatically during the build.
+# in Vercel env vars. This script sets them automatically.
 #
 # You DO need to set these in Vercel:
 # - CONVEX_DEPLOY_KEY (for authentication)
@@ -22,9 +22,14 @@ echo "=== Convex + Vercel Build ==="
 echo "VERCEL_ENV: $VERCEL_ENV"
 echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
 
+# Build command - Convex sets NEXT_PUBLIC_CONVEX_URL, auth-server.ts derives the site URL
+BUILD_CMD='pnpm --filter @groupi/web build'
+
 if [ "$VERCEL_ENV" = "production" ]; then
   echo "Deploying to Convex production..."
-  npx convex deploy --cmd 'pnpm --filter @groupi/web build'
+  npx convex deploy \
+    --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
+    --cmd "$BUILD_CMD"
 else
   # Use branch name as preview name for consistent deployments
   PREVIEW_NAME="${VERCEL_GIT_COMMIT_REF:-preview}"
@@ -34,7 +39,10 @@ else
   echo "Deploying to Convex preview: $PREVIEW_NAME..."
   echo "(First deploy to a new branch will create a new preview deployment)"
   echo "(Subsequent deploys reuse the same preview deployment)"
-  npx convex deploy --preview-create "$PREVIEW_NAME" --cmd 'pnpm --filter @groupi/web build'
+  npx convex deploy \
+    --preview-create "$PREVIEW_NAME" \
+    --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
+    --cmd "$BUILD_CMD"
 fi
 
 echo "=== Build Complete ==="
