@@ -6,9 +6,15 @@ import Link from 'next/link';
 import { AttendeesServer } from './attendees-server';
 import { AttendeeListSkeleton } from '@/components/skeletons/attendee-list-skeleton';
 import React, { Suspense, use, useEffect } from 'react';
-import { useEventHeader, useEventMembers, useCurrentUser, useEventAvailabilityData } from '@/hooks/convex';
+import {
+  useEventHeader,
+  useEventMembers,
+  useCurrentUser,
+  useEventAvailabilityData,
+} from '@/hooks/convex';
 import { Id } from '@/convex/_generated/dataModel';
 import { useRouter } from 'next/navigation';
+import { isOrganizer } from '@/lib/event-permissions';
 
 /**
  * Attendees content component - Client-only architecture
@@ -23,26 +29,29 @@ export function AttendeesContent({
 }) {
   const { eventId } = use(params);
   const router = useRouter();
-  const eventData = useEventHeader(eventId as Id<"events">);
-  const memberData = useEventMembers(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
+  const memberData = useEventMembers(eventId as Id<'events'>);
   const currentUser = useCurrentUser();
-  const availabilityData = useEventAvailabilityData(eventId as Id<"events">);
+  const availabilityData = useEventAvailabilityData(eventId as Id<'events'>);
 
   // Check if user should be redirected to availability page
-  // Only redirects if there's an active poll (no chosen date) and user hasn't set availability
+  // Redirect if: poll active, not organizer, and hasn't set availability
   useEffect(() => {
     if (eventData && memberData && currentUser && availabilityData) {
       const event = eventData.event;
-      const userMembership = eventData.userMembership;
+      const userRole = eventData.userMembership?.role;
+      const hasPollActive = !event?.chosenDateTime;
+      const isUserOrganizer = userRole && isOrganizer(userRole);
 
-      // Only redirect if event has no chosen date (active poll) and user is a member
-      if (!event?.chosenDateTime && userMembership) {
+      if (hasPollActive && !isUserOrganizer) {
         const potentialDateTimes = availabilityData.potentialDateTimes || [];
         const userId = availabilityData.userId;
 
         // Check if user has set availability for at least one date option
         const hasSetAvailability = potentialDateTimes.some(
-          (dateTime: { availabilities?: Array<{ member?: { person?: { _id: string } } }> }) =>
+          (dateTime: {
+            availabilities?: Array<{ member?: { person?: { _id: string } } }>;
+          }) =>
             dateTime.availabilities?.some(
               (avail: { member?: { person?: { _id: string } } }) =>
                 avail.member?.person?._id === userId
@@ -51,7 +60,7 @@ export function AttendeesContent({
 
         // Redirect to availability page if poll is active and user hasn't responded
         if (potentialDateTimes.length > 0 && !hasSetAvailability) {
-          router.push(`/event/${eventId}/availability`);
+          router.replace(`/event/${eventId}/availability`);
         }
       }
     }

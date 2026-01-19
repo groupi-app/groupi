@@ -56,12 +56,14 @@ export const requestAddEmail = mutation({
     }
 
     // Create verification record
+    const now = Date.now();
     await ctx.db.insert('emailVerifications', {
       userId,
       email: normalizedEmail,
       token,
       expiresAt,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     // TODO: Send verification email via Better Auth or external service
@@ -195,6 +197,7 @@ export const resendVerificationEmail = mutation({
     await ctx.db.patch(existingVerification._id, {
       token,
       expiresAt,
+      updatedAt: Date.now(),
     });
 
     // TODO: Send verification email

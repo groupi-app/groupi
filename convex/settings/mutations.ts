@@ -79,6 +79,7 @@ export const saveNotificationSettings = mutation({
     if (!personSettings) {
       const settingsId = await ctx.db.insert('personSettings', {
         personId: person._id,
+        updatedAt: Date.now(),
       });
       personSettings = await ctx.db.get(settingsId);
       if (!personSettings) {
@@ -137,6 +138,7 @@ export const saveNotificationSettings = mutation({
           webhookFormat: method.webhookFormat,
           customTemplate: method.customTemplate,
           webhookHeaders,
+          updatedAt: Date.now(),
         });
       } else {
         // Create new method
@@ -149,6 +151,7 @@ export const saveNotificationSettings = mutation({
           webhookFormat: method.webhookFormat,
           customTemplate: method.customTemplate,
           webhookHeaders,
+          updatedAt: Date.now(),
         });
       }
 
@@ -170,6 +173,7 @@ export const saveNotificationSettings = mutation({
           // Update existing setting
           await ctx.db.patch(existing._id, {
             enabled: notification.enabled,
+            updatedAt: Date.now(),
           });
           existingSettingsMap.delete(notification.notificationType);
         } else {
@@ -178,6 +182,7 @@ export const saveNotificationSettings = mutation({
             methodId,
             notificationType: notification.notificationType,
             enabled: notification.enabled,
+            updatedAt: Date.now(),
           });
         }
       }

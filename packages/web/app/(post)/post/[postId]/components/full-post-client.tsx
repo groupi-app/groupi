@@ -26,6 +26,7 @@ import MemberIcon from '@/components/member-icon';
 import { MentionHandler } from './mention-handler';
 import { usePostDetail } from '@/hooks/convex';
 import { NotFoundError } from '@/components/error-display';
+import { useIsPostMuted } from '@/hooks/convex/use-muting';
 
 // Strip leading and trailing empty paragraph tags that BlockNote adds
 const stripEmptyParagraphs = (html: string): string => {
@@ -46,17 +47,15 @@ interface FullPostClientProps {
  * - Real-time updates via Convex subscriptions
  * - Loading states managed by component
  */
-export function FullPostClient({
-  postId,
-  postRef,
-}: FullPostClientProps) {
+export function FullPostClient({ postId, postRef }: FullPostClientProps) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isMobile = useMobile();
 
   // Use direct Convex hook for real-time post detail data
-  const postDetailData = usePostDetail(postId as Id<"posts">);
+  const postDetailData = usePostDetail(postId as Id<'posts'>);
+  const { isMuted } = useIsPostMuted(postId as Id<'posts'>);
 
   const handleMoreClick = useCallback(
     (e: React.MouseEvent) => {
@@ -83,11 +82,11 @@ export function FullPostClient({
   if (postDetailData === undefined) {
     return (
       <div className='pt-6 pb-0'>
-        <div className="animate-pulse">
-          <div className="h-4 bg-muted rounded w-1/4 mb-6"></div>
-          <div className="h-8 bg-muted rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
-          <div className="h-20 bg-muted rounded mb-4"></div>
+        <div className='animate-pulse'>
+          <div className='h-4 bg-muted rounded w-1/4 mb-6'></div>
+          <div className='h-8 bg-muted rounded w-3/4 mb-4'></div>
+          <div className='h-4 bg-muted rounded w-1/2 mb-2'></div>
+          <div className='h-20 bg-muted rounded mb-4'></div>
         </div>
       </div>
     );
@@ -98,7 +97,7 @@ export function FullPostClient({
     return (
       <div className='pt-6 pb-0'>
         <NotFoundError
-          resourceType="post"
+          resourceType='post'
           message="This post doesn't exist or may have been deleted."
           showBackButton={true}
           showHomeButton={true}
@@ -123,7 +122,9 @@ export function FullPostClient({
 
   // Find member for post author
   const getMemberForAuthor = () => {
-    return post.event.memberships?.find((m: { personId?: string }) => m.personId === post.authorId);
+    return post.event.memberships?.find(
+      (m: { personId?: string }) => m.personId === post.authorId
+    );
   };
 
   const authorMember = getMemberForAuthor();
@@ -246,7 +247,11 @@ export function FullPostClient({
                 userId={userId}
                 userRole={userMembership.role}
                 member={authorMember}
-                eventDateTime={post.event.chosenDateTime ? new Date(post.event.chosenDateTime) : null}
+                eventDateTime={
+                  post.event.chosenDateTime
+                    ? new Date(post.event.chosenDateTime)
+                    : null
+                }
                 align='start'
               />
             ) : (
@@ -262,17 +267,28 @@ export function FullPostClient({
               </p>
               <p className='text-xs text-muted-foreground'>
                 {new Date(post._creationTime).toLocaleString()}
-                {post.editedAt && post.editedAt !== post._creationTime && ' (edited)'}
+                {post.editedAt &&
+                  post.editedAt !== post._creationTime &&
+                  ' (edited)'}
               </p>
             </div>
           </div>
           <div className=''>
-            <h1 className='text-2xl font-bold mb-3'>{post.title}</h1>
+            <div className='flex items-center gap-2 mb-3'>
+              <h1 className='text-2xl font-bold'>{post.title}</h1>
+              {isMuted && (
+                <Icons.bellOff className='size-5 text-muted-foreground flex-shrink-0' />
+              )}
+            </div>
             <MentionHandler
               members={post.event.memberships || []}
               userId={userId}
               userRole={userMembership.role}
-              eventDateTime={post.event.chosenDateTime ? new Date(post.event.chosenDateTime) : null}
+              eventDateTime={
+                post.event.chosenDateTime
+                  ? new Date(post.event.chosenDateTime)
+                  : null
+              }
             >
               <div
                 className='prose prose-sm max-w-none py-2'

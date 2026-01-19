@@ -39,13 +39,15 @@ export const createPost = mutation({
     }
 
     // Create the post
+    const now = Date.now();
     const postId = await ctx.db.insert('posts', {
       title: title.trim(),
       content: content.trim(),
       authorId: person._id,
       eventId: eventId,
       membershipId: membership._id,
-      editedAt: Date.now(),
+      editedAt: now,
+      updatedAt: now,
     });
 
     // Get the created post with populated data
@@ -93,8 +95,10 @@ export const updatePost = mutation({
     }
 
     // Prepare update data
+    const now = Date.now();
     const updateData: Partial<Doc<'posts'>> = {
-      editedAt: Date.now(),
+      editedAt: now,
+      updatedAt: now,
     };
 
     if (title !== undefined) {
@@ -214,11 +218,13 @@ export const createReply = mutation({
     }
 
     // Create the reply
+    const now = Date.now();
     const replyId = await ctx.db.insert('replies', {
       text: text.trim(),
       authorId: person._id,
       postId: postId,
       membershipId: membership._id,
+      updatedAt: now,
     });
 
     // Get the created reply
@@ -279,6 +285,7 @@ export const updateReply = mutation({
     // Update the reply
     await ctx.db.patch(replyId, {
       text: text.trim(),
+      updatedAt: Date.now(),
     });
 
     // Get the updated reply

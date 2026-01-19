@@ -123,6 +123,7 @@ export const createEvent = mutation({
       eventId: eventId,
       role: 'ORGANIZER',
       rsvpStatus: 'YES', // Creator auto-accepts
+      updatedAt: now,
     });
 
     // Create potentialDateTimes records and default availabilities for the organizer
@@ -133,6 +134,7 @@ export const createEvent = mutation({
             eventId: eventId,
             dateTime: opt.start,
             endDateTime: opt.end,
+            updatedAt: now,
           });
         })
       );
@@ -144,6 +146,7 @@ export const createEvent = mutation({
             membershipId: membershipId,
             potentialDateTimeId: potentialDateTimeId,
             status: 'YES',
+            updatedAt: now,
           });
         })
       );
@@ -200,6 +203,7 @@ export const updateEvent = mutation({
     }
 
     // Update the event
+    updateData.updatedAt = Date.now();
     await ctx.db.patch(eventId, updateData);
 
     // Get the updated event
@@ -364,6 +368,7 @@ export const updateRSVP = mutation({
     // Update the RSVP status
     await ctx.db.patch(membership._id, {
       rsvpStatus: rsvpStatus,
+      updatedAt: Date.now(),
     });
 
     // Get the updated membership
@@ -422,6 +427,7 @@ export const updateMemberRole = mutation({
     // Update the role
     await ctx.db.patch(membershipId, {
       role: newRole,
+      updatedAt: Date.now(),
     });
 
     // Get the updated membership
@@ -614,6 +620,7 @@ export const chooseEventDate = mutation({
     await ctx.db.patch(eventId, {
       chosenDateTime: chosenDateTime,
       chosenEndDateTime: chosenEndDateTime ?? undefined,
+      updatedAt: Date.now(),
     });
 
     // Get the updated event
@@ -632,8 +639,9 @@ export const chooseEventDate = mutation({
 
     // Schedule reminder if requested
     if (reminderOffset) {
-      // @ts-ignore - Type instantiation depth issue with internal function reference
-      const scheduleReminderFn = internal.reminders.mutations.scheduleEventReminder;
+      // @ts-expect-error - Type instantiation depth issue with internal function reference
+      const scheduleReminderFn =
+        internal.reminders.mutations.scheduleEventReminder;
       await ctx.scheduler.runAfter(0, scheduleReminderFn, {
         eventId,
         reminderOffset,
@@ -668,6 +676,7 @@ export const resetEventDate = mutation({
     await ctx.db.patch(eventId, {
       chosenDateTime: undefined,
       chosenEndDateTime: undefined,
+      updatedAt: Date.now(),
     });
 
     // Get the updated event
@@ -743,12 +752,14 @@ export const banMember = mutation({
     }
 
     // Create ban record
+    const now = Date.now();
     await ctx.db.insert('eventBans', {
       personId: membership.personId,
       eventId: membership.eventId,
-      bannedAt: Date.now(),
+      bannedAt: now,
       bannedById: currentPerson._id,
       reason: reason,
+      updatedAt: now,
     });
 
     // Delete all availabilities for this membership
@@ -868,12 +879,14 @@ export const updatePotentialDateTimes = mutation({
     }
 
     // Create new potential date times
+    const now = Date.now();
     const newPotentialDateTimeIds = await Promise.all(
       dateTimeOptions.map(async opt => {
         return await ctx.db.insert('potentialDateTimes', {
           eventId: eventId,
           dateTime: opt.start,
           endDateTime: opt.end,
+          updatedAt: now,
         });
       })
     );
@@ -897,6 +910,7 @@ export const updatePotentialDateTimes = mutation({
             membershipId: organizerMembership._id,
             potentialDateTimeId: potentialDateTimeId,
             status: 'YES',
+            updatedAt: now,
           });
         })
       );
