@@ -219,6 +219,7 @@ export const migratePersons = internalMutation({
       const personId = await ctx.db.insert('persons', {
         userId: person.betterAuthUserId,
         bio: person.bio,
+        updatedAt: Date.now(),
       });
 
       mapping[person.clerkUserId] = personId;
@@ -247,6 +248,7 @@ export const migratePersonSettings = internalMutation({
     for (const setting of settings) {
       const settingsId = await ctx.db.insert('personSettings', {
         personId: setting.newPersonId as Id<'persons'>,
+        updatedAt: Date.now(),
       });
       mapping[setting.oldPersonId] = settingsId;
     }
@@ -325,6 +327,7 @@ export const migrateMemberships = internalMutation({
         eventId: membership.eventId as Id<'events'>,
         role: membership.role,
         rsvpStatus: membership.rsvpStatus,
+        updatedAt: Date.now(),
       });
 
       mapping[membership.oldId] = membershipId;
@@ -356,6 +359,7 @@ export const migratePotentialDateTimes = internalMutation({
       const pdtId = await ctx.db.insert('potentialDateTimes', {
         eventId: pdt.eventId as Id<'events'>,
         dateTime: pdt.dateTime,
+        updatedAt: Date.now(),
       });
 
       mapping[pdt.oldId] = pdtId;
@@ -386,6 +390,7 @@ export const migrateAvailabilities = internalMutation({
         potentialDateTimeId:
           availability.potentialDateTimeId as Id<'potentialDateTimes'>,
         status: availability.status,
+        updatedAt: Date.now(),
       });
     }
 
@@ -425,6 +430,7 @@ export const migratePosts = internalMutation({
         membershipId: post.membershipId
           ? (post.membershipId as Id<'memberships'>)
           : undefined,
+        updatedAt: post.editedAt,
       });
 
       mapping[post.oldId] = postId;
@@ -458,6 +464,7 @@ export const migrateReplies = internalMutation({
         membershipId: reply.membershipId
           ? (reply.membershipId as Id<'memberships'>)
           : undefined,
+        updatedAt: Date.now(),
       });
     }
 
@@ -493,6 +500,7 @@ export const migrateInvites = internalMutation({
         usesRemaining: invite.usesRemaining,
         maxUses: invite.maxUses,
         name: invite.name,
+        updatedAt: Date.now(),
       });
     }
 
@@ -536,6 +544,7 @@ export const migrateNotifications = internalMutation({
           : undefined,
         datetime: notification.datetime,
         rsvp: notification.rsvp,
+        updatedAt: Date.now(),
       });
     }
 
@@ -577,6 +586,7 @@ export const migrateNotificationMethods = internalMutation({
         customTemplate: method.customTemplate,
         webhookFormat: method.webhookFormat,
         webhookHeaders: method.webhookHeaders,
+        updatedAt: Date.now(),
       });
 
       mapping[method.oldId] = methodId;
@@ -606,6 +616,7 @@ export const migrateNotificationSettings = internalMutation({
         notificationType: setting.notificationType,
         methodId: setting.methodId as Id<'notificationMethods'>,
         enabled: setting.enabled,
+        updatedAt: Date.now(),
       });
     }
 

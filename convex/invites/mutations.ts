@@ -42,10 +42,12 @@ export const createInvite = mutation({
     const token = generateInviteToken();
 
     // Build the invite object with proper optional field handling
-    const inviteData: InviteCreateData = {
+    const now = Date.now();
+    const inviteData: InviteCreateData & { updatedAt: number } = {
       eventId: eventId,
       token: token,
       createdById: membership._id, // Use membership ID, not person ID
+      updatedAt: now,
     };
 
     // Only include optional fields if they have actual values
@@ -117,6 +119,7 @@ export const updateInvite = mutation({
     // Build update object with proper optional field handling
     const updateData: Partial<Doc<'invites'>> = {
       usesRemaining: newUsesRemaining,
+      updatedAt: Date.now(),
     };
 
     // Only include fields that are being updated
@@ -265,12 +268,14 @@ export const acceptInvite = mutation({
       eventId: invite.eventId,
       role: 'ATTENDEE',
       rsvpStatus: 'PENDING',
+      updatedAt: now,
     });
 
     // Decrement invite uses if limited
     if (invite.usesRemaining !== undefined) {
       await ctx.db.patch(invite._id, {
         usesRemaining: invite.usesRemaining - 1,
+        updatedAt: Date.now(),
       });
     }
 

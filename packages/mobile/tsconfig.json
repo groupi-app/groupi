@@ -26,16 +26,6 @@
       "@groupi/shared/*": ["../shared/src/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "App.tsx",
-    "app.json",
-    "babel.config.js",
-    "expo-env.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".expo"
-  ]
+  "include": ["src/**/*", "App.tsx", "app.json", "babel.config.js"],
+  "exclude": ["node_modules", "dist", ".expo"]
 }
