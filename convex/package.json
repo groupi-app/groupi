@@ -1,0 +1,33 @@
+{
+  "name": "@groupi/convex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Convex backend functions and tests for Groupi",
+  "scripts": {
+    "build": "cd .. && pnpx convex codegen",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "vitest run",
+    "test:run": "pnpm codegen && vitest run",
+    "test:watch": "pnpm codegen && vitest --watch",
+    "test:no-codegen": "vitest run",
+    "test:watch-no-codegen": "vitest --watch",
+    "dev": "cd .. && pnpx convex dev",
+    "codegen": "cd .. && pnpx convex codegen"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.4.9",
+    "@convex-dev/better-auth": "^0.10.10",
+    "@convex-dev/resend": "^0.2.3",
+    "better-auth": "^1.4.9",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex": "^1.31.4",
+    "convex-test": "^0.0.41",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.0"
+  }
+}
