@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd ../.. && ./node_modules/.bin/convex deploy --cmd 'pnpm run build:web'",
-  "outputDirectory": ".next",
   "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && npx convex deploy --cmd 'pnpm --filter @groupi/web build'",
+  "outputDirectory": ".next",
   "framework": "nextjs"
 }
