@@ -73,7 +73,7 @@
     "framer-motion": "^12.6.3",
     "install": "^0.13.0",
     "lucide-react": "^0.486.0",
-    "next": "15.2.4",
+    "next": "15.2.8",
     "ngrok": "^5.0.0-beta.2",
     "npm": "^10.2.4",
     "pino": "^9.7.0",
