@@ -593,7 +593,9 @@ export const ScreenTestHelpers = {
    */
   expectAlert: () => {
     // In testing environment, alerts should be mocked
-    const globalObj = globalThis as unknown as { alert?: ReturnType<typeof vi.fn> };
+    const globalObj = globalThis as unknown as {
+      alert?: ReturnType<typeof vi.fn>;
+    };
     if (globalObj.alert) {
       expect(globalObj.alert).toHaveBeenCalled();
     }
@@ -704,7 +706,9 @@ export const AuthMobileTestHelpers = {
   testLogoutFlow: async () => {
     await ScreenTestHelpers.pressButton('Logout');
     // May need to confirm in alert
-    const globalObj = globalThis as unknown as { alert?: ReturnType<typeof vi.fn> };
+    const globalObj = globalThis as unknown as {
+      alert?: ReturnType<typeof vi.fn>;
+    };
     if (globalObj.alert) {
       expect(globalObj.alert).toHaveBeenCalled();
     }

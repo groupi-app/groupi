@@ -31,7 +31,8 @@ import type { ConvexApi } from '@groupi/shared/hooks';
 // Placeholder API until Convex is integrated - returns empty hooks for now
 
 const mockApi = {} as ConvexApi;
-const { useEventHeader, useJoinEvent, useLeaveEvent } = createEventHooks(mockApi);
+const { useEventHeader, useJoinEvent, useLeaveEvent } =
+  createEventHooks(mockApi);
 
 type EventScreenRouteProp = RouteProp<RootStackParamList, 'Event'>;
 type EventScreenNavigationProp = NativeStackNavigationProp<
@@ -45,7 +46,9 @@ export function EventScreen() {
   const { eventId } = route.params;
 
   // Use shared hooks - cast eventId to ConvexId type
-  const event = useEventHeader(eventId as import('@groupi/shared/hooks').ConvexId<'events'>);
+  const event = useEventHeader(
+    eventId as import('@groupi/shared/hooks').ConvexId<'events'>
+  );
   const joinEventMutation = useJoinEvent();
   const leaveEventMutation = useLeaveEvent();
 
