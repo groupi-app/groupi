@@ -639,10 +639,10 @@ export const chooseEventDate = mutation({
 
     // Schedule reminder if requested
     if (reminderOffset) {
-      // @ts-expect-error - Type instantiation depth issue with internal function reference
-      const scheduleReminderFn =
-        internal.reminders.mutations.scheduleEventReminder;
-      await ctx.scheduler.runAfter(0, scheduleReminderFn, {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
+      const reminderFn = internal.reminders.mutations.scheduleEventReminder;
+      await ctx.scheduler.runAfter(0, reminderFn, {
         eventId,
         reminderOffset,
       });
