@@ -49,4 +49,4 @@ compose.yml
 supabase/.temp/
 
 *.turbo
-.turboapps/web/.env.sentry-build-plugin
+.turbo/packages/web/.env.sentry-build-plugin
