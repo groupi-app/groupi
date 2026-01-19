@@ -34,7 +34,7 @@ else
   echo "Deploying to Convex preview: $PREVIEW_NAME..."
   echo "(First deploy to a new branch will create a new preview deployment)"
   echo "(Subsequent deploys reuse the same preview deployment)"
-  npx convex deploy --preview-name "$PREVIEW_NAME" --cmd 'pnpm --filter @groupi/web build'
+  npx convex deploy --preview-create "$PREVIEW_NAME" --cmd 'pnpm --filter @groupi/web build'
 fi
 
 echo "=== Build Complete ==="
