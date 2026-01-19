@@ -22,18 +22,20 @@ import { useState, useCallback } from 'react';
 import { useIsPostMuted, useTogglePostMute } from '@/hooks/convex/use-muting';
 
 // Post data with related information
-type PostData = Doc<"posts"> & {
-  author: Doc<"persons"> & {
+type PostData = Doc<'posts'> & {
+  author: Doc<'persons'> & {
     user: User;
   };
-  event: Doc<"events"> & {
-    memberships: Array<Doc<"memberships"> & {
-      person: Doc<"persons"> & {
-        user: User;
-      };
-    }>;
+  event: Doc<'events'> & {
+    memberships: Array<
+      Doc<'memberships'> & {
+        person: Doc<'persons'> & {
+          user: User;
+        };
+      }
+    >;
   };
-  replies: Array<Doc<"replies">>;
+  replies: Array<Doc<'replies'>>;
   authorId: string;
 };
 
@@ -283,9 +285,14 @@ export function PostCard({
         <div className='w-full rounded-xl bg-card hover:bg-accent transition-colors pt-4 px-5 pb-2'>
           <div className='flex flex-col gap-1'>
             <div className='ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16'>
-              <span className='sm:text-xl font-heading text-card-foreground truncate overflow-hidden w-full'>
-                {title}
-              </span>
+              <div className='flex items-center gap-2'>
+                <span className='sm:text-xl font-heading text-card-foreground truncate overflow-hidden'>
+                  {title}
+                </span>
+                {isMuted && (
+                  <Icons.bellOff className='size-4 text-muted-foreground flex-shrink-0' />
+                )}
+              </div>
               <span className='text-sm text-muted-foreground'>
                 {author.user.name || author.user.email}
               </span>

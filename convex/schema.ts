@@ -24,6 +24,7 @@ export default defineSchema({
     token: v.string(),
     expiresAt: v.number(), // Unix timestamp
     createdAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_token', ['token'])
     .index('by_user', ['userId'])
@@ -39,10 +40,12 @@ export default defineSchema({
     pronouns: v.optional(v.string()),
     // Presence tracking
     lastSeen: v.optional(v.number()), // Unix timestamp of last activity
+    updatedAt: v.optional(v.number()), // Unix timestamp
   }).index('by_user_id', ['userId']),
 
   personSettings: defineTable({
     personId: v.id('persons'),
+    updatedAt: v.optional(v.number()), // Unix timestamp
     // Future settings can be added here
   }).index('by_person', ['personId']),
 
@@ -76,6 +79,7 @@ export default defineSchema({
       v.literal('NO'),
       v.literal('PENDING')
     ),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
@@ -87,6 +91,7 @@ export default defineSchema({
     // INVARIANT: endDateTime must be > dateTime when set
     dateTime: v.number(), // Unix timestamp for start time
     endDateTime: v.optional(v.number()), // Unix timestamp for end time (optional)
+    updatedAt: v.optional(v.number()), // Unix timestamp
   }).index('by_event', ['eventId']),
 
   availabilities: defineTable({
@@ -98,6 +103,7 @@ export default defineSchema({
       v.literal('NO'),
       v.literal('PENDING')
     ),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_membership', ['membershipId'])
     .index('by_potential_date', ['potentialDateTimeId'])
@@ -111,6 +117,7 @@ export default defineSchema({
     // Denormalized fields for efficient querying
     authorId: v.id('persons'),
     eventId: v.id('events'),
+    updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
     .index('by_event', ['eventId'])
     .index('by_author', ['authorId'])
@@ -119,6 +126,7 @@ export default defineSchema({
   replies: defineTable({
     text: v.string(),
     membershipId: v.optional(v.id('memberships')),
+    updatedAt: v.optional(v.number()), // Unix timestamp for last edit
     // Denormalized fields
     authorId: v.id('persons'),
     postId: v.id('posts'),
@@ -136,6 +144,7 @@ export default defineSchema({
     usesTotal: v.optional(v.number()), // Total number of uses
     name: v.optional(v.string()),
     token: v.string(), // Invite token for sharing
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_event', ['eventId'])
     .index('by_creator', ['createdById'])
@@ -171,6 +180,7 @@ export default defineSchema({
         v.literal('PENDING')
       )
     ),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
@@ -195,6 +205,7 @@ export default defineSchema({
         v.literal('CUSTOM')
       )
     ),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   }).index('by_settings', ['settingsId']),
 
   notificationSettings: defineTable({
@@ -215,6 +226,7 @@ export default defineSchema({
     ),
     methodId: v.id('notificationMethods'),
     enabled: v.boolean(),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_method', ['methodId'])
     .index('by_type_method', ['notificationType', 'methodId']),
@@ -226,6 +238,7 @@ export default defineSchema({
     personId: v.id('persons'),
     eventId: v.id('events'),
     mutedAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
@@ -235,6 +248,7 @@ export default defineSchema({
     personId: v.id('persons'),
     postId: v.id('posts'),
     mutedAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
     .index('by_post', ['postId'])
@@ -249,6 +263,7 @@ export default defineSchema({
     bannedAt: v.number(), // Unix timestamp
     bannedById: v.id('persons'),
     reason: v.optional(v.string()),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
@@ -272,6 +287,7 @@ export default defineSchema({
       v.literal('SENT'),
       v.literal('CANCELLED')
     ),
+    updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_event', ['eventId'])
     .index('by_status', ['status']),

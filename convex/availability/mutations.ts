@@ -55,6 +55,7 @@ export const submitAvailability = mutation({
           // Update existing availability
           await ctx.db.patch(existingAvailability._id, {
             status: status,
+            updatedAt: Date.now(),
           });
           return { potentialDateTimeId, status, action: 'updated' as const };
         } else {
@@ -63,6 +64,7 @@ export const submitAvailability = mutation({
             membershipId: membership._id,
             potentialDateTimeId: potentialDateTimeId,
             status: status,
+            updatedAt: Date.now(),
           });
           return { potentialDateTimeId, status, action: 'created' as const };
         }
@@ -121,6 +123,7 @@ export const updateSingleAvailability = mutation({
       // Update existing availability
       await ctx.db.patch(existingAvailability._id, {
         status: status,
+        updatedAt: Date.now(),
       });
       return {
         availabilityId: existingAvailability._id,
@@ -133,6 +136,7 @@ export const updateSingleAvailability = mutation({
         membershipId: membership._id,
         potentialDateTimeId: potentialDateTimeId,
         status: status,
+        updatedAt: Date.now(),
       });
       return {
         availabilityId,
@@ -198,11 +202,13 @@ export const addPotentialDateTimes = mutation({
     await requireEventRole(ctx, eventId, 'ORGANIZER');
 
     // Create new potential date times
+    const now = Date.now();
     const potentialDateTimeIds = await Promise.all(
       dateTimes.map(async timestamp => {
         return await ctx.db.insert('potentialDateTimes', {
           eventId: eventId,
           dateTime: timestamp,
+          updatedAt: now,
         });
       })
     );

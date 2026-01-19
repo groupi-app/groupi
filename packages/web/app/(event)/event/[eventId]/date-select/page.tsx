@@ -14,11 +14,11 @@ export default function EventDateSelectPage(props: {
   const [eventId, setEventId] = useState<string>('');
   const router = useRouter();
   // Skip query when eventId is not yet set
-  const eventData = useEventHeaderData(eventId as Id<"events">);
+  const eventData = useEventHeaderData(eventId as Id<'events'>);
 
   useEffect(() => {
     // Resolve params on client side
-    props.params.then((resolved) => {
+    props.params.then(resolved => {
       setEventId(resolved.eventId);
     });
   }, [props.params]);
@@ -33,13 +33,13 @@ export default function EventDateSelectPage(props: {
     }
 
     // Check if user should be redirected to availability page
-    // Attendees should vote on availability, not choose dates directly
+    // Only organizers can choose dates - moderators and attendees must vote
     const userRole = eventData.userMembership?.role;
-    const canChooseDate = userRole && ['ORGANIZER', 'MODERATOR'].includes(userRole);
+    const isUserOrganizer = userRole === 'ORGANIZER';
 
-    // Redirect attendees to availability page - they can't choose dates directly
-    if (!eventData.event.chosenDateTime && !canChooseDate) {
-      router.push(`/event/${eventId}/availability`);
+    // Redirect non-organizers to availability page - they can't choose dates directly
+    if (!eventData.event.chosenDateTime && !isUserOrganizer) {
+      router.replace(`/event/${eventId}/availability`);
       return;
     }
   }, [eventId, eventData, router]);
@@ -48,5 +48,5 @@ export default function EventDateSelectPage(props: {
     return <DateSelectSkeleton />;
   }
 
-  return <DateSelectContent eventId={eventId as Id<"events">} />;
+  return <DateSelectContent eventId={eventId as Id<'events'>} />;
 }

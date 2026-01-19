@@ -29,7 +29,10 @@ async function cancelExistingReminders(
         // Ignore - job may have already run
       }
     }
-    await ctx.db.patch(reminder._id, { status: 'CANCELLED' });
+    await ctx.db.patch(reminder._id, {
+      status: 'CANCELLED',
+      updatedAt: Date.now(),
+    });
   }
 
   return existingReminders.length;
@@ -96,6 +99,7 @@ export const scheduleEventReminder = internalMutation({
       reminderOffset: reminderOffset as ReminderOffset,
       scheduledFunctionId: scheduledId,
       status: 'SCHEDULED',
+      updatedAt: now,
     });
 
     console.log(
@@ -137,7 +141,10 @@ export const sendReminder = internalMutation({
       .first();
 
     if (reminder) {
-      await ctx.db.patch(reminder._id, { status: 'SENT' });
+      await ctx.db.patch(reminder._id, {
+        status: 'SENT',
+        updatedAt: Date.now(),
+      });
     }
 
     // Get all memberships for this event who RSVP'd YES or MAYBE

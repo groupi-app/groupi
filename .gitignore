@@ -30,6 +30,7 @@ launch.json
 # local env files
 .env*.local
 .env
+.env.preview.convex
 
 # vercel
 .vercel
@@ -50,3 +51,4 @@ supabase/.temp/
 
 *.turbo
 .turbo/packages/web/.env.sentry-build-plugin
+preview.env

@@ -78,9 +78,9 @@ const migratePlaintextToHtml = (text: string): string => {
 
 function ClickableAvatar({
   author,
-  isMe
+  isMe,
 }: {
-  author: Doc<"persons"> & {
+  author: Doc<'persons'> & {
     user: User;
   };
   isMe: boolean;
@@ -89,7 +89,10 @@ function ClickableAvatar({
 
   const user = author.user;
   const fullName = user?.name || user?.email || '';
-  const initials = getInitialsFromName(user?.name ?? undefined, user?.email ?? undefined);
+  const initials = getInitialsFromName(
+    user?.name ?? undefined,
+    user?.email ?? undefined
+  );
 
   return (
     <DropdownMenu>
@@ -260,26 +263,30 @@ export default function ReplyComponent({
     text: string;
     createdAt: Date;
     updatedAt: Date;
-    author: Doc<"persons"> & {
+    author: Doc<'persons'> & {
       user: User;
     };
   };
-  member: undefined | (Doc<"memberships"> & {
-    person: Doc<"persons"> & {
-      user: User;
-    };
-  });
+  member:
+    | undefined
+    | (Doc<'memberships'> & {
+        person: Doc<'persons'> & {
+          user: User;
+        };
+      });
   userId: string;
   userRole: string;
   eventDateTime: Date | null;
   postId: string;
-  post?: Doc<"posts"> & {
-    event: Doc<"events"> & {
-      memberships: Array<Doc<"memberships"> & {
-        person: Doc<"persons"> & {
-          user: User;
-        };
-      }>;
+  post?: Doc<'posts'> & {
+    event: Doc<'events'> & {
+      memberships: Array<
+        Doc<'memberships'> & {
+          person: Doc<'persons'> & {
+            user: User;
+          };
+        }
+      >;
     };
   };
   isEditing?: boolean;
@@ -289,7 +296,7 @@ export default function ReplyComponent({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const isMobile = useMobile();
-  const updateReply = useUpdateReply(postId as Id<"posts">);
+  const updateReply = useUpdateReply(postId as Id<'posts'>);
   const editorRef = useRef<BlockNoteInlineHandle>(null);
 
   // Migrate plaintext to HTML if needed
@@ -306,7 +313,7 @@ export default function ReplyComponent({
   const canDelete = reply.author
     ? canDeleteReply({
         userId,
-        userRole: userRole as "ORGANIZER" | "MODERATOR" | "ATTENDEE",
+        userRole: userRole as 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE',
         replyAuthorId: reply.author._id,
       })
     : false;
@@ -421,6 +428,9 @@ export default function ReplyComponent({
           <span className='text-sm font-medium'>{name}</span>
           <span className='text-xs text-muted-foreground'>
             {formatReplyDate(reply.createdAt)}
+            {reply.updatedAt &&
+              reply.updatedAt.getTime() !== reply.createdAt.getTime() &&
+              ' (edited)'}
           </span>
         </div>
 
@@ -554,7 +564,10 @@ export default function ReplyComponent({
           )}
         </DropdownMenu>
       </ReplyActionMenu>
-      <DeleteReplyDialog id={(reply._id || reply.id) as Id<"replies">} postId={postId as Id<"posts">} />
+      <DeleteReplyDialog
+        id={(reply._id || reply.id) as Id<'replies'>}
+        postId={postId as Id<'posts'>}
+      />
     </Dialog>
   );
 }

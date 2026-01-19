@@ -65,11 +65,12 @@ export const updateUserProfile = mutation({
     }
 
     // Update person record in our schema
-    const personUpdates: Record<string, string> = {};
+    const personUpdates: Record<string, string | number> = {};
     if (args.pronouns !== undefined) personUpdates.pronouns = args.pronouns;
     if (args.bio !== undefined) personUpdates.bio = args.bio;
 
     if (Object.keys(personUpdates).length > 0) {
+      personUpdates.updatedAt = Date.now();
       await ctx.db.patch(person._id, personUpdates);
     }
 
@@ -141,8 +142,10 @@ export const updateUserNotificationSettings = mutation({
       .first();
 
     if (!personSettings) {
+      const now = Date.now();
       const settingsId = await ctx.db.insert('personSettings', {
         personId: person._id,
+        updatedAt: now,
       });
       personSettings = await ctx.db.get(settingsId);
       if (!personSettings) {
@@ -174,10 +177,12 @@ export const updateUserNotificationSettings = mutation({
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
             webhookHeaders: methodData.webhookHeaders,
+            updatedAt: Date.now(),
           });
           methodId = existingMethod._id;
         } else {
           // Create new method
+          const now = Date.now();
           methodId = await ctx.db.insert('notificationMethods', {
             settingsId: personSettings._id,
             type: methodData.type,
@@ -187,6 +192,7 @@ export const updateUserNotificationSettings = mutation({
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
             webhookHeaders: methodData.webhookHeaders,
+            updatedAt: now,
           });
         }
 
@@ -206,6 +212,7 @@ export const updateUserNotificationSettings = mutation({
             // Update existing setting
             await ctx.db.patch(existingSetting._id, {
               enabled: notificationSetting.enabled,
+              updatedAt: Date.now(),
             });
           } else {
             // Create new setting
@@ -213,6 +220,7 @@ export const updateUserNotificationSettings = mutation({
               notificationType: notificationSetting.notificationType,
               methodId,
               enabled: notificationSetting.enabled,
+              updatedAt: Date.now(),
             });
           }
         }
@@ -285,11 +293,12 @@ export const completeOnboarding = mutation({
     }
 
     // Update person record if pronouns or bio provided
-    const personUpdates: Record<string, string> = {};
+    const personUpdates: Record<string, string | number> = {};
     if (pronouns !== undefined) personUpdates.pronouns = pronouns;
     if (bio !== undefined) personUpdates.bio = bio;
 
     if (Object.keys(personUpdates).length > 0) {
+      personUpdates.updatedAt = Date.now();
       await ctx.db.patch(person._id, personUpdates);
     }
 
@@ -361,7 +370,10 @@ export const deleteUserAccount = mutation({
             // Promote the first moderator, or first attendee if no moderators
             const newOrganizer =
               otherMembers.find(m => m.role === 'MODERATOR') || otherMembers[0];
-            await ctx.db.patch(newOrganizer._id, { role: 'ORGANIZER' });
+            await ctx.db.patch(newOrganizer._id, {
+              role: 'ORGANIZER',
+              updatedAt: Date.now(),
+            });
           } else {
             // No other members - delete the entire event
             await deleteEventAndRelatedData(ctx, membership.eventId);
