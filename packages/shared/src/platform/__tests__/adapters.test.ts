@@ -22,9 +22,15 @@ import {
 import { TestSetup, PlatformTestHelpers } from '../../test-helpers';
 
 // Helper to cast mock adapters - test file uses mock functions that don't match exact types
-const asMockNavAdapter = (adapter: ReturnType<typeof PlatformTestHelpers.createMockNavigationAdapter>) => adapter as any;
-const asMockStorageAdapter = (adapter: ReturnType<typeof PlatformTestHelpers.createMockStorageAdapter>) => adapter as any;
-const asMockToastAdapter = (adapter: ReturnType<typeof PlatformTestHelpers.createMockToastAdapter>) => adapter as any;
+const asMockNavAdapter = (
+  adapter: ReturnType<typeof PlatformTestHelpers.createMockNavigationAdapter>
+) => adapter as any;
+const asMockStorageAdapter = (
+  adapter: ReturnType<typeof PlatformTestHelpers.createMockStorageAdapter>
+) => adapter as any;
+const asMockToastAdapter = (
+  adapter: ReturnType<typeof PlatformTestHelpers.createMockToastAdapter>
+) => adapter as any;
 
 describe('Platform Adapters', () => {
   beforeEach(() => {
