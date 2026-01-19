@@ -1,0 +1,193 @@
+{
+  "folders": [
+    {
+      "name": "🏠 Root",
+      "path": "."
+    },
+    {
+      "name": "🌐 Web App",
+      "path": "./packages/web"
+    },
+    {
+      "name": "📱 Mobile App",
+      "path": "./packages/mobile"
+    },
+    {
+      "name": "📦 Shared Package",
+      "path": "./packages/shared"
+    },
+    {
+      "name": "⚡ Convex Backend",
+      "path": "./convex"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.preferTypeOnlyAutoImports": true,
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.workspaceSymbols.scope": "allOpenProjects",
+
+    "eslint.workingDirectories": [
+      "packages/web",
+      "packages/mobile",
+      "packages/shared"
+    ],
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ],
+
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    },
+
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/.turbo": true,
+      "**/actions-old": true,
+      "**/api-old": true,
+      "**/domains-old": true,
+      "**/cache-old": true,
+      "**/prisma-archive": true,
+      "**/supabase-archive": true
+    },
+
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/.turbo": true,
+      "**/actions-old": true,
+      "**/api-old": true,
+      "**/domains-old": true,
+      "**/cache-old": true,
+      "**/prisma-archive": true,
+      "**/supabase-archive": true
+    },
+
+    "emmet.includeLanguages": {
+      "typescript": "html",
+      "typescriptreact": "html"
+    },
+
+    "tailwindCSS.includeLanguages": {
+      "typescript": "html",
+      "typescriptreact": "html"
+    },
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+      ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+
+    "convex.deploymentUrl": "${CONVEX_DEPLOYMENT_URL}",
+
+    "terminal.integrated.env.osx": {
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
+    },
+    "terminal.integrated.env.linux": {
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
+    },
+    "terminal.integrated.env.windows": {
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-typescript-next",
+      "get-convex.convex",
+      "expo.vscode-expo-tools",
+      "ms-vscode.vscode-json",
+      "christian-kohler.path-intellisense",
+      "formulahendry.auto-rename-tag",
+      "ms-vscode.vscode-typescript-tslint-plugin"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start Development",
+        "type": "shell",
+        "command": "pnpm dev",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": ["$tsc"]
+      },
+      {
+        "label": "📱 Start Mobile Development",
+        "type": "shell",
+        "command": "pnpm dev:mobile",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "🔄 Full Stack Development",
+        "type": "shell",
+        "command": "pnpm dev:full",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "⚡ Start Convex",
+        "type": "shell",
+        "command": "pnpm convex:dev",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "🧹 Lint & Format",
+        "type": "shell",
+        "command": "pnpm check",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always"
+        }
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🌐 Debug Web App",
+        "type": "node",
+        "request": "attach",
+        "port": 9229,
+        "restart": true,
+        "localRoot": "${workspaceFolder}/packages/web",
+        "remoteRoot": "${workspaceFolder}/packages/web"
+      }
+    ]
+  }
+}
