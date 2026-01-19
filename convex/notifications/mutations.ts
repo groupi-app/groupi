@@ -30,7 +30,7 @@ export const markNotificationAsRead = mutation({
       throw new Error('Not authorized to modify this notification');
     }
 
-    await ctx.db.patch(notificationId, { read: true });
+    await ctx.db.patch(notificationId, { read: true, updatedAt: Date.now() });
     return { success: true };
   },
 });
@@ -56,7 +56,7 @@ export const markNotificationAsUnread = mutation({
       throw new Error('Not authorized to modify this notification');
     }
 
-    await ctx.db.patch(notificationId, { read: false });
+    await ctx.db.patch(notificationId, { read: false, updatedAt: Date.now() });
     return { success: true };
   },
 });
@@ -78,7 +78,10 @@ export const markAllNotificationsAsRead = mutation({
       .collect();
 
     for (const notification of notifications) {
-      await ctx.db.patch(notification._id, { read: true });
+      await ctx.db.patch(notification._id, {
+        read: true,
+        updatedAt: Date.now(),
+      });
     }
 
     return { success: true, count: notifications.length };
@@ -105,7 +108,10 @@ export const markEventNotificationsAsRead = mutation({
       .collect();
 
     for (const notification of notifications) {
-      await ctx.db.patch(notification._id, { read: true });
+      await ctx.db.patch(notification._id, {
+        read: true,
+        updatedAt: Date.now(),
+      });
     }
 
     return { success: true, count: notifications.length };
@@ -132,7 +138,10 @@ export const markPostNotificationsAsRead = mutation({
       .collect();
 
     for (const notification of notifications) {
-      await ctx.db.patch(notification._id, { read: true });
+      await ctx.db.patch(notification._id, {
+        read: true,
+        updatedAt: Date.now(),
+      });
     }
 
     return { success: true, count: notifications.length };
@@ -230,9 +239,11 @@ export const addNotificationMethod = mutation({
       .withIndex('by_person', q => q.eq('personId', person._id))
       .first();
 
+    const now = Date.now();
     if (!personSettings) {
       const settingsId = await ctx.db.insert('personSettings', {
         personId: person._id,
+        updatedAt: now,
       });
       personSettings = await ctx.db.get(settingsId);
       if (!personSettings) {
@@ -250,6 +261,7 @@ export const addNotificationMethod = mutation({
       webhookHeaders,
       customTemplate,
       webhookFormat,
+      updatedAt: now,
     });
 
     // Create default notification settings (all enabled)
@@ -274,6 +286,7 @@ export const addNotificationMethod = mutation({
           notificationType,
           methodId,
           enabled: true,
+          updatedAt: now,
         });
       })
     );
@@ -345,7 +358,9 @@ export const updateNotificationMethod = mutation({
     }
 
     // Prepare update data
-    const updateData: Partial<Doc<'notificationMethods'>> = {};
+    const updateData: Partial<Doc<'notificationMethods'>> = {
+      updatedAt: Date.now(),
+    };
     if (enabled !== undefined) updateData.enabled = enabled;
     if (name !== undefined) updateData.name = name;
     if (value !== undefined) updateData.value = value;
@@ -458,13 +473,17 @@ export const updateNotificationSetting = mutation({
 
     if (existingSetting) {
       // Update existing setting
-      await ctx.db.patch(existingSetting._id, { enabled });
+      await ctx.db.patch(existingSetting._id, {
+        enabled,
+        updatedAt: Date.now(),
+      });
     } else {
       // Create new setting
       await ctx.db.insert('notificationSettings', {
         notificationType,
         methodId,
         enabled,
+        updatedAt: Date.now(),
       });
     }
 

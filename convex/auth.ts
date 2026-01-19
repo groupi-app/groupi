@@ -86,13 +86,16 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
 
           if (!existingPerson) {
             // Create person record
+            const now = Date.now();
             const personId = await ctx.db.insert('persons', {
               userId: user._id.toString(),
+              updatedAt: now,
             });
 
             // Create default settings for the person
             await ctx.db.insert('personSettings', {
               personId,
+              updatedAt: now,
             });
 
             console.log(`Created person record for new user: ${user.email}`);
@@ -608,8 +611,10 @@ export async function ensurePersonRecord(ctx: MutationCtx, userId: string) {
 
   if (!person) {
     // Create new person record
+    const now = Date.now();
     const personId = await ctx.db.insert('persons', {
       userId: userId,
+      updatedAt: now,
     });
     person = await ctx.db.get(personId);
 
@@ -617,6 +622,7 @@ export async function ensurePersonRecord(ctx: MutationCtx, userId: string) {
     if (person) {
       await ctx.db.insert('personSettings', {
         personId: person._id,
+        updatedAt: now,
       });
     }
   }

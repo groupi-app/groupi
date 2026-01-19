@@ -13,17 +13,19 @@ export default function EventChangeDateSinglePage(props: {
   const { eventId } = use(props.params);
   const router = useRouter();
 
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
 
   // Check if user should be redirected to availability page
+  // Only organizers can choose dates - moderators and attendees must vote
   useEffect(() => {
     if (eventData) {
       const userRole = eventData.userMembership?.role;
       const hasChosenDate = !!eventData.event.chosenDateTime;
+      const isUserOrganizer = userRole === 'ORGANIZER';
 
-      // Only redirect if there's no chosen date and user is a member
-      if (!hasChosenDate && userRole && ['ORGANIZER', 'MODERATOR', 'ATTENDEE'].includes(userRole)) {
-        router.push(`/event/${eventId}/availability`);
+      // Redirect non-organizers to availability page
+      if (!hasChosenDate && !isUserOrganizer) {
+        router.replace(`/event/${eventId}/availability`);
       }
     }
   }, [eventData, eventId, router]);

@@ -44,6 +44,7 @@ export const createReply = mutation({
       text,
       authorId: person._id,
       membershipId: membership._id,
+      updatedAt: Date.now(),
     });
 
     return { replyId };
@@ -73,8 +74,8 @@ export const updateReply = mutation({
       throw new Error('You can only edit your own replies');
     }
 
-    // Update the reply
-    await ctx.db.patch(replyId, { text });
+    // Update the reply with updatedAt timestamp
+    await ctx.db.patch(replyId, { text, updatedAt: Date.now() });
 
     return { success: true };
   },

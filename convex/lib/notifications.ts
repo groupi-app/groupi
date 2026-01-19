@@ -105,6 +105,7 @@ export async function createNotification(
     datetime: data.datetime,
     rsvp: data.rsvp,
     read: false,
+    updatedAt: Date.now(),
   });
 }
 

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback, useMemo } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback, useMemo } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,7 +16,7 @@ let notificationMutations: any;
 function initApi() {
   if (!replyQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     replyQueries = api.replies?.queries ?? {};
     replyMutations = api.replies?.mutations ?? {};
     notificationMutations = api.notifications?.mutations ?? {};
@@ -29,7 +29,7 @@ initApi();
 /**
  * Get replies for a post with real-time updates
  */
-export function useRepliesByPost(postId: Id<"posts">) {
+export function useRepliesByPost(postId: Id<'posts'>) {
   return useQuery(replyQueries.getRepliesByPost, {
     postId,
   });
@@ -39,7 +39,7 @@ export function useRepliesByPost(postId: Id<"posts">) {
 
 // Type for current user data needed for optimistic updates
 export interface OptimisticUserData {
-  personId: Id<"persons">;
+  personId: Id<'persons'>;
   name?: string;
   email?: string;
   image?: string;
@@ -75,12 +75,12 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
       // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback, not during render
       const now = Date.now();
       const optimisticReply = {
-        _id: `optimistic_${now}` as unknown as Id<"replies">,
+        _id: `optimistic_${now}` as unknown as Id<'replies'>,
         _creationTime: now,
         postId: args.postId,
         text: args.text,
         authorId: currentUser.personId,
-        membershipId: `optimistic_membership` as unknown as Id<"memberships">,
+        membershipId: `optimistic_membership` as unknown as Id<'memberships'>,
         author: {
           person: {
             _id: currentUser.personId,
@@ -88,7 +88,7 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
             user: {
               _id: `optimistic_user`,
               name: currentUser.name,
-              email: currentUser.email || "",
+              email: currentUser.email || '',
               image: currentUser.image,
               username: currentUser.username,
             },
@@ -96,7 +96,7 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
           user: {
             _id: `optimistic_user`,
             name: currentUser.name,
-            email: currentUser.email || "",
+            email: currentUser.email || '',
             image: currentUser.image,
             username: currentUser.username,
           },
@@ -104,40 +104,47 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
       };
 
       // Add the optimistic reply to the cache
-      localStore.setQuery(replyQueries.getRepliesByPost, { postId: args.postId }, {
-        ...currentData,
-        replies: [...currentData.replies, optimisticReply],
-      });
+      localStore.setQuery(
+        replyQueries.getRepliesByPost,
+        { postId: args.postId },
+        {
+          ...currentData,
+          replies: [...currentData.replies, optimisticReply],
+        }
+      );
     });
   }, [baseMutation, currentUser]);
 
-  return useCallback(async (data: {
-    postId: Id<"posts">;
-    text: string; // HTML content with mention spans
-  }) => {
-    try {
-      const result = await createReply({
-        postId: data.postId,
-        text: data.text,
-      });
+  return useCallback(
+    async (data: {
+      postId: Id<'posts'>;
+      text: string; // HTML content with mention spans
+    }) => {
+      try {
+        const result = await createReply({
+          postId: data.postId,
+          text: data.text,
+        });
 
-      // No success toast - the reply appearing instantly is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add reply. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [createReply, toast]);
+        // No success toast - the reply appearing instantly is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to add reply. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [createReply, toast]
+  );
 }
 
 /**
  * Update an existing reply with optimistic updates
  */
-export function useUpdateReply(postId?: Id<"posts">) {
+export function useUpdateReply(postId?: Id<'posts'>) {
   const baseMutation = useMutation(replyMutations.updateReply);
   const { toast } = useToast();
 
@@ -157,46 +164,51 @@ export function useUpdateReply(postId?: Id<"posts">) {
       }
 
       // Update the reply in the cache
-      const updatedReplies = currentData.replies.map((reply: { _id: Id<"replies">; text: string }) =>
-        reply._id === args.replyId
-          ? { ...reply, text: args.text }
-          : reply
+      const updatedReplies = currentData.replies.map(
+        (reply: { _id: Id<'replies'>; text: string }) =>
+          reply._id === args.replyId
+            ? { ...reply, text: args.text, updatedAt: Date.now() }
+            : reply
       );
 
-      localStore.setQuery(replyQueries.getRepliesByPost, { postId }, {
-        ...currentData,
-        replies: updatedReplies,
-      });
+      localStore.setQuery(
+        replyQueries.getRepliesByPost,
+        { postId },
+        {
+          ...currentData,
+          replies: updatedReplies,
+        }
+      );
     });
   }, [baseMutation, postId]);
 
-  return useCallback(async (data: {
-    replyId: Id<"replies">;
-    text: string;
-  }) => {
-    try {
-      const result = await updateReply({
-        replyId: data.replyId,
-        text: data.text,
-      });
+  return useCallback(
+    async (data: { replyId: Id<'replies'>; text: string }) => {
+      try {
+        const result = await updateReply({
+          replyId: data.replyId,
+          text: data.text,
+        });
 
-      // No success toast - instant update is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update reply. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [updateReply, toast]);
+        // No success toast - instant update is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update reply. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updateReply, toast]
+  );
 }
 
 /**
  * Delete a reply with optimistic updates
  */
-export function useDeleteReply(postId?: Id<"posts">) {
+export function useDeleteReply(postId?: Id<'posts'>) {
   const baseMutation = useMutation(replyMutations.deleteReply);
   const { toast } = useToast();
 
@@ -217,31 +229,38 @@ export function useDeleteReply(postId?: Id<"posts">) {
 
       // Remove the reply from the cache
       const filteredReplies = currentData.replies.filter(
-        (reply: { _id: Id<"replies"> }) => reply._id !== args.replyId
+        (reply: { _id: Id<'replies'> }) => reply._id !== args.replyId
       );
 
-      localStore.setQuery(replyQueries.getRepliesByPost, { postId }, {
-        ...currentData,
-        replies: filteredReplies,
-      });
+      localStore.setQuery(
+        replyQueries.getRepliesByPost,
+        { postId },
+        {
+          ...currentData,
+          replies: filteredReplies,
+        }
+      );
     });
   }, [baseMutation, postId]);
 
-  return useCallback(async (replyId: Id<"replies">) => {
-    try {
-      const result = await deleteReply({ replyId });
+  return useCallback(
+    async (replyId: Id<'replies'>) => {
+      try {
+        const result = await deleteReply({ replyId });
 
-      // No success toast - instant removal is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete reply. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [deleteReply, toast]);
+        // No success toast - instant removal is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete reply. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [deleteReply, toast]
+  );
 }
 
 // ===== NOTIFICATION MUTATIONS =====
@@ -250,16 +269,21 @@ export function useDeleteReply(postId?: Id<"posts">) {
  * Mark post notifications as read
  */
 export function useMarkPostNotificationsAsRead() {
-  const markAsRead = useMutation(notificationMutations.markPostNotificationsAsRead);
+  const markAsRead = useMutation(
+    notificationMutations.markPostNotificationsAsRead
+  );
 
-  return useCallback(async (postId: Id<"posts">) => {
-    try {
-      await markAsRead({ postId });
-    } catch (error) {
-      // Silent fail for notification marking
-      console.warn("Failed to mark notifications as read:", error);
-    }
-  }, [markAsRead]);
+  return useCallback(
+    async (postId: Id<'posts'>) => {
+      try {
+        await markAsRead({ postId });
+      } catch (error) {
+        // Silent fail for notification marking
+        console.warn('Failed to mark notifications as read:', error);
+      }
+    },
+    [markAsRead]
+  );
 }
 
 // ===== COMBINED HOOKS =====
@@ -268,16 +292,22 @@ export function useMarkPostNotificationsAsRead() {
  * Complete reply management for a post with optimistic updates
  * Pass currentUser for instant optimistic UI updates
  */
-export function usePostReplies(postId: Id<"posts">, currentUser?: OptimisticUserData) {
+export function usePostReplies(
+  postId: Id<'posts'>,
+  currentUser?: OptimisticUserData
+) {
   const repliesData = useRepliesByPost(postId);
 
   const createReply = useCreateReply(currentUser);
   const updateReply = useUpdateReply(postId);
   const deleteReply = useDeleteReply(postId);
 
-  const createReplyWithPostId = useCallback(async (text: string) => {
-    return createReply({ postId, text });
-  }, [postId, createReply]);
+  const createReplyWithPostId = useCallback(
+    async (text: string) => {
+      return createReply({ postId, text });
+    },
+    [postId, createReply]
+  );
 
   return {
     // Data

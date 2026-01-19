@@ -51,10 +51,12 @@ export const muteEvent = mutation({
     }
 
     // Create mute record
+    const now = Date.now();
     const mutedEventId = await ctx.db.insert('mutedEvents', {
       personId: person._id,
       eventId,
-      mutedAt: Date.now(),
+      mutedAt: now,
+      updatedAt: now,
     });
 
     return { mutedEventId, alreadyMuted: false };
@@ -130,10 +132,12 @@ export const toggleEventMute = mutation({
       return { isMuted: false };
     } else {
       // Currently not muted - mute
+      const now = Date.now();
       await ctx.db.insert('mutedEvents', {
         personId: person._id,
         eventId,
-        mutedAt: Date.now(),
+        mutedAt: now,
+        updatedAt: now,
       });
       return { isMuted: true };
     }
@@ -182,10 +186,12 @@ export const mutePost = mutation({
     }
 
     // Create mute record
+    const now = Date.now();
     const mutedPostId = await ctx.db.insert('mutedPosts', {
       personId: person._id,
       postId,
-      mutedAt: Date.now(),
+      mutedAt: now,
+      updatedAt: now,
     });
 
     return { mutedPostId, alreadyMuted: false };
@@ -261,10 +267,12 @@ export const togglePostMute = mutation({
       return { isMuted: false };
     } else {
       // Currently not muted - mute
+      const now = Date.now();
       await ctx.db.insert('mutedPosts', {
         personId: person._id,
         postId,
-        mutedAt: Date.now(),
+        mutedAt: now,
+        updatedAt: now,
       });
       return { isMuted: true };
     }

@@ -2,7 +2,10 @@
 
 import Reply from './reply';
 import { LayoutGroup, motion } from 'framer-motion';
-import { usePostReplies, useMarkPostNotificationsAsRead } from '@/hooks/convex/use-replies';
+import {
+  usePostReplies,
+  useMarkPostNotificationsAsRead,
+} from '@/hooks/convex/use-replies';
 import { ReplyListSkeleton } from '@/components/skeletons';
 import { Id, Doc } from '@/convex/_generated/dataModel';
 import { useEffect, useRef, RefObject, useMemo } from 'react';
@@ -14,22 +17,24 @@ const item = {
 };
 
 // Type for membership with nested person and user (person is required, not null)
-type MembershipWithPerson = Doc<"memberships"> & {
-  person: Doc<"persons"> & {
+type MembershipWithPerson = Doc<'memberships'> & {
+  person: Doc<'persons'> & {
     user: User;
   };
 };
 
 // Type for post with event and memberships (from Convex, person can be null but we filter)
-type PostMembership = Doc<"memberships"> & {
-  person: (Doc<"persons"> & {
-    user: User;
-  }) | null;
+type PostMembership = Doc<'memberships'> & {
+  person:
+    | (Doc<'persons'> & {
+        user: User;
+      })
+    | null;
 };
 
 // Type for post with event and memberships
-type PostWithEvent = Doc<"posts"> & {
-  event: Doc<"events"> & {
+type PostWithEvent = Doc<'posts'> & {
+  event: Doc<'events'> & {
     memberships: PostMembership[];
   };
 };
@@ -59,14 +64,13 @@ export function ReplyFeedClient({
   onClearEditing?: () => void;
 }) {
   // Debounce timer for marking notifications as read
-  const markAsReadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markAsReadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const markPostNotificationsAsRead = useMarkPostNotificationsAsRead();
 
   // Use Convex hooks for real-time replies
-  const {
-    replies,
-    isLoading,
-  } = usePostReplies(postId as Id<'posts'>);
+  const { replies, isLoading } = usePostReplies(postId as Id<'posts'>);
 
   // Auto-mark NEW_REPLY notifications as read
   useEffect(() => {
@@ -124,17 +128,18 @@ export function ReplyFeedClient({
   }
 
   // Sort replies oldest first, newest last
-  const sortedReplies = [...replies].sort((a, b) =>
-    a._creationTime - b._creationTime
+  const sortedReplies = [...replies].sort(
+    (a, b) => a._creationTime - b._creationTime
   );
 
   // Get the newest reply (last in array)
-  const newestReply = sortedReplies.length > 0 ? sortedReplies[sortedReplies.length - 1] : null;
+  const newestReply =
+    sortedReplies.length > 0 ? sortedReplies[sortedReplies.length - 1] : null;
 
   return (
     <div className='flex flex-col'>
       <LayoutGroup>
-        {sortedReplies.map((reply) => {
+        {sortedReplies.map(reply => {
           const isNewest = newestReply && reply._id === newestReply._id;
 
           // Find the membership for this reply's author
@@ -157,7 +162,7 @@ export function ReplyFeedClient({
                   id: reply._id,
                   text: reply.text,
                   createdAt: new Date(reply._creationTime),
-                  updatedAt: new Date(reply._creationTime),
+                  updatedAt: new Date(reply.updatedAt ?? reply._creationTime),
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   author: reply.author?.person as any,
                 }}
