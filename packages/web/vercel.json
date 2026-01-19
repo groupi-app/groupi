@@ -1,6 +1,0 @@
-{
-  "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && npx convex deploy --cmd 'pnpm --filter @groupi/web build'",
-  "outputDirectory": ".next",
-  "framework": "nextjs"
-}
