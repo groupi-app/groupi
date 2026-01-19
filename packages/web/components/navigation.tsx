@@ -14,7 +14,7 @@ import {
   Authenticated,
   Unauthenticated,
   AuthLoading,
-  AdminOnly
+  AdminOnly,
 } from '@/components/auth/auth-wrappers';
 import { useQuery } from 'convex/react';
 import { isAdminRole } from '@/lib/constants';
@@ -25,7 +25,7 @@ let authQueries: any;
 function initApi() {
   if (!authQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     authQueries = api.auth?.queries ?? {};
   }
 }
@@ -56,6 +56,18 @@ export function Navigation({ items }: { items: NavItem[] }) {
         <MobileNavigation items={items} />
       </Authenticated>
 
+      <Unauthenticated>
+        <MobileNav
+          userInfo={{
+            name: undefined,
+            email: '',
+            image: undefined,
+            username: undefined,
+          }}
+          items={[]}
+        />
+      </Unauthenticated>
+
       <div className='ml-auto'>
         <Authenticated>
           <div className='hidden md:block'>
@@ -85,7 +97,7 @@ export function Navigation({ items }: { items: NavItem[] }) {
 
         <AuthLoading>
           <div className='hidden md:block'>
-            <div className="animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full"></div>
+            <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
           </div>
         </AuthLoading>
       </div>
@@ -157,7 +169,6 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- person available for future profile features
   const { user, person: _person } = userAndPerson;
 
   // Filter admin items for mobile nav too
@@ -165,7 +176,9 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
   const adminItems = items?.filter(item => item.href === '/admin') || [];
 
   // For now, include admin items if user is admin (mobile nav will handle display)
-  const allItems = isAdminRole(user.role) ? [...publicItems, ...adminItems] : publicItems;
+  const allItems = isAdminRole(user.role)
+    ? [...publicItems, ...adminItems]
+    : publicItems;
 
   return (
     <MobileNav
@@ -185,7 +198,9 @@ function UserProfile() {
 
   // Loading state - show spinner
   if (userAndPerson === undefined) {
-    return <div className="animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full"></div>;
+    return (
+      <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+    );
   }
 
   // User authenticated but no person record - redirect will happen via OnboardingRedirectWrapper
@@ -203,7 +218,6 @@ function UserProfile() {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- person available for future profile features
   const { user, person: _person } = userAndPerson;
 
   return (
