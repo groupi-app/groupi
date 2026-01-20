@@ -28,14 +28,30 @@ export type NotificationType =
   | 'EVENT_REMINDER'; // When an event is starting soon (scheduled reminder)
 
 // Reminder Offset Types (how far before the event to send reminder)
-export type ReminderOffset = '15_MINUTES' | '1_HOUR' | '1_DAY' | '1_WEEK';
+export type ReminderOffset =
+  | '30_MINUTES'
+  | '1_HOUR'
+  | '2_HOURS'
+  | '4_HOURS'
+  | '1_DAY'
+  | '2_DAYS'
+  | '3_DAYS'
+  | '1_WEEK'
+  | '2_WEEKS'
+  | '4_WEEKS';
 
 // Reminder offset values in milliseconds
 export const REMINDER_OFFSETS: Record<ReminderOffset, number> = {
-  '15_MINUTES': 15 * 60 * 1000,
+  '30_MINUTES': 30 * 60 * 1000,
   '1_HOUR': 60 * 60 * 1000,
+  '2_HOURS': 2 * 60 * 60 * 1000,
+  '4_HOURS': 4 * 60 * 60 * 1000,
   '1_DAY': 24 * 60 * 60 * 1000,
+  '2_DAYS': 2 * 24 * 60 * 60 * 1000,
+  '3_DAYS': 3 * 24 * 60 * 60 * 1000,
   '1_WEEK': 7 * 24 * 60 * 60 * 1000,
+  '2_WEEKS': 14 * 24 * 60 * 60 * 1000,
+  '4_WEEKS': 28 * 24 * 60 * 60 * 1000,
 };
 
 // Notification Method Types

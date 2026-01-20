@@ -11,6 +11,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -21,6 +28,37 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 import { Id } from '@/convex/_generated/dataModel';
+
+// Reminder offset type
+type ReminderOffset =
+  | '30_MINUTES'
+  | '1_HOUR'
+  | '2_HOURS'
+  | '4_HOURS'
+  | '1_DAY'
+  | '2_DAYS'
+  | '3_DAYS'
+  | '1_WEEK'
+  | '2_WEEKS'
+  | '4_WEEKS';
+
+// Reminder offset options with display labels
+const REMINDER_OPTIONS: Array<{
+  value: ReminderOffset | 'never';
+  label: string;
+}> = [
+  { value: 'never', label: 'Never' },
+  { value: '30_MINUTES', label: '30 minutes before' },
+  { value: '1_HOUR', label: '1 hour before' },
+  { value: '2_HOURS', label: '2 hours before' },
+  { value: '4_HOURS', label: '4 hours before' },
+  { value: '1_DAY', label: '1 day before' },
+  { value: '2_DAYS', label: '2 days before' },
+  { value: '3_DAYS', label: '3 days before' },
+  { value: '1_WEEK', label: '1 week before' },
+  { value: '2_WEEKS', label: '2 weeks before' },
+  { value: '4_WEEKS', label: '4 weeks before' },
+];
 
 const formSchema = z.object({
   title: z
@@ -35,19 +73,35 @@ const formSchema = z.object({
     .string()
     .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
+  reminderOffset: z
+    .enum([
+      'never',
+      '30_MINUTES',
+      '1_HOUR',
+      '2_HOURS',
+      '4_HOURS',
+      '1_DAY',
+      '2_DAYS',
+      '3_DAYS',
+      '1_WEEK',
+      '2_WEEKS',
+      '4_WEEKS',
+    ])
+    .optional(),
 });
 
 export default function EditEventInfo({
   eventData,
 }: {
   eventData: {
-    eventId: Id<"events">;
+    eventId: Id<'events'>;
     title: string;
     description: string;
     location: string;
+    reminderOffset?: ReminderOffset;
   };
 }) {
-  const { eventId, title, description, location } = eventData;
+  const { eventId, title, description, location, reminderOffset } = eventData;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
   const [isSaving, setIsSaving] = useState(false);
@@ -58,6 +112,7 @@ export default function EditEventInfo({
       title: title,
       description: description,
       location: location,
+      reminderOffset: reminderOffset ?? 'never',
     },
   });
 
@@ -69,6 +124,12 @@ export default function EditEventInfo({
     });
     router.push(`/event/${eventId}`);
 
+    // Convert "never" to null (which becomes undefined on backend)
+    const reminderOffsetValue =
+      data.reminderOffset === 'never'
+        ? null
+        : (data.reminderOffset as ReminderOffset | undefined);
+
     // Handle mutation in background
     try {
       await updateEvent({
@@ -76,6 +137,7 @@ export default function EditEventInfo({
         title: data.title,
         description: data.description,
         location: data.location,
+        reminderOffset: reminderOffsetValue,
       });
     } catch {
       // Rollback navigation and show error toast
@@ -137,7 +199,39 @@ export default function EditEventInfo({
             </FormItem>
           )}
         />
-        <Button type='submit' isLoading={isSaving} loadingText='Saving...'>Save Changes</Button>
+        <FormField
+          control={form.control}
+          name='reminderOffset'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Remind attendees</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || 'never'}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select when to remind attendees' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {REMINDER_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Send a reminder to attendees before the event starts.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type='submit' isLoading={isSaving} loadingText='Saving...'>
+          Save Changes
+        </Button>
       </form>
     </Form>
   );

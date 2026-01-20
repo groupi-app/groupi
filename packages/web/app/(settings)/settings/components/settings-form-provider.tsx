@@ -6,20 +6,36 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const notificationTypeSettingSchema = z.object({
-  notificationType: z.enum(["EVENT_EDITED", "NEW_POST", "NEW_REPLY", "DATE_CHOSEN", "DATE_CHANGED", "DATE_RESET", "USER_JOINED", "USER_LEFT", "USER_PROMOTED", "USER_DEMOTED", "USER_RSVP", "USER_MENTIONED"]),
+  notificationType: z.enum([
+    'EVENT_EDITED',
+    'NEW_POST',
+    'NEW_REPLY',
+    'DATE_CHOSEN',
+    'DATE_CHANGED',
+    'DATE_RESET',
+    'USER_JOINED',
+    'USER_LEFT',
+    'USER_PROMOTED',
+    'USER_DEMOTED',
+    'USER_RSVP',
+    'USER_MENTIONED',
+    'EVENT_REMINDER',
+  ]),
   enabled: z.boolean(),
 });
 
 export const notificationMethodFormSchema = z
   .object({
     id: z.string().optional(), // Convex Id for existing methods
-    type: z.enum(["EMAIL", "PUSH", "WEBHOOK"]),
+    type: z.enum(['EMAIL', 'PUSH', 'WEBHOOK']),
     value: z.string(),
     enabled: z.boolean(),
     name: z.string().optional(),
     notifications: z.array(notificationTypeSettingSchema),
     // Webhook-specific fields
-    webhookFormat: z.enum(["DISCORD", "SLACK", "TEAMS", "GENERIC", "CUSTOM"]).optional(),
+    webhookFormat: z
+      .enum(['DISCORD', 'SLACK', 'TEAMS', 'GENERIC', 'CUSTOM'])
+      .optional(),
     customTemplate: z.string().optional(),
     webhookHeaders: z.string().optional(),
   })
@@ -27,7 +43,7 @@ export const notificationMethodFormSchema = z
     // Validate value field based on type
     // EMAIL methods can have empty value (will be resolved from user account)
     // PUSH methods use userId as value (already set)
-    if (data.type === "PUSH") {
+    if (data.type === 'PUSH') {
       if (!data.value || data.value.trim() === '') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -37,7 +53,7 @@ export const notificationMethodFormSchema = z
       }
     }
 
-    if (data.type === "WEBHOOK") {
+    if (data.type === 'WEBHOOK') {
       // Webhook URL is always required
       if (!data.value || data.value.trim() === '') {
         ctx.addIssue({
@@ -68,7 +84,7 @@ export const notificationMethodFormSchema = z
       }
 
       // Custom template is required when webhook format is CUSTOM
-      if (data.webhookFormat === "CUSTOM") {
+      if (data.webhookFormat === 'CUSTOM') {
         if (!data.customTemplate || data.customTemplate.trim() === '') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
