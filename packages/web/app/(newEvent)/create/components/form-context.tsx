@@ -8,10 +8,24 @@ import {
   ReactNode,
 } from 'react';
 
+// Reminder offset options
+export type ReminderOffset =
+  | '30_MINUTES'
+  | '1_HOUR'
+  | '2_HOURS'
+  | '4_HOURS'
+  | '1_DAY'
+  | '2_DAYS'
+  | '3_DAYS'
+  | '1_WEEK'
+  | '2_WEEKS'
+  | '4_WEEKS';
+
 interface FormState {
   title: string;
   description?: string;
   location?: string;
+  reminderOffset?: ReminderOffset;
 }
 
 interface FormContextValue {
@@ -27,10 +41,16 @@ export function FormProvider({ children }: { children: ReactNode }) {
     title: '',
     description: undefined,
     location: undefined,
+    reminderOffset: undefined,
   });
 
   const reset = useCallback(() => {
-    setFormState({ title: '', description: undefined, location: undefined });
+    setFormState({
+      title: '',
+      description: undefined,
+      location: undefined,
+      reminderOffset: undefined,
+    });
   }, []);
 
   return (

@@ -25,6 +25,22 @@ const dateTimeOptionValidator = v.object({
 });
 
 /**
+ * Reminder offset validator - how far before the event to send reminders
+ */
+const reminderOffsetValidator = v.union(
+  v.literal('30_MINUTES'),
+  v.literal('1_HOUR'),
+  v.literal('2_HOURS'),
+  v.literal('4_HOURS'),
+  v.literal('1_DAY'),
+  v.literal('2_DAYS'),
+  v.literal('3_DAYS'),
+  v.literal('1_WEEK'),
+  v.literal('2_WEEKS'),
+  v.literal('4_WEEKS')
+);
+
+/**
  * Create a new event
  */
 export const createEvent = mutation({
@@ -38,6 +54,7 @@ export const createEvent = mutation({
     potentialDateTimeOptions: v.optional(v.array(dateTimeOptionValidator)),
     chosenDateTime: v.optional(v.string()), // ISO date string for single-date events
     chosenEndDateTime: v.optional(v.string()), // ISO date string for end time
+    reminderOffset: v.optional(reminderOffsetValidator), // How far before event to send reminder
     _traceId: v.optional(v.string()),
   },
   handler: async (
@@ -50,6 +67,7 @@ export const createEvent = mutation({
       potentialDateTimeOptions,
       chosenDateTime,
       chosenEndDateTime,
+      reminderOffset,
     }
   ) => {
     // Require authentication
@@ -115,6 +133,7 @@ export const createEvent = mutation({
       potentialDateTimes: dateTimeOptions.map(opt => opt.start), // Legacy array field
       chosenDateTime: chosenTimestamp,
       chosenEndDateTime: chosenEndTimestamp,
+      reminderOffset: reminderOffset,
     });
 
     // Create the creator's membership as ORGANIZER
@@ -172,9 +191,18 @@ export const updateEvent = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     location: v.optional(v.string()),
+    reminderOffset: v.optional(
+      v.union(
+        reminderOffsetValidator,
+        v.null() // Allow null to clear the reminder
+      )
+    ),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, title, description, location }) => {
+  handler: async (
+    ctx,
+    { eventId, title, description, location, reminderOffset }
+  ) => {
     // Require organizer or moderator role
     await requireEventRole(ctx, eventId, 'MODERATOR');
 
@@ -200,6 +228,12 @@ export const updateEvent = mutation({
 
     if (location !== undefined) {
       updateData.location = location.trim();
+    }
+
+    if (reminderOffset !== undefined) {
+      // If null is passed, clear the reminder; otherwise set it
+      updateData.reminderOffset =
+        reminderOffset === null ? undefined : reminderOffset;
     }
 
     // Update the event
@@ -585,21 +619,15 @@ export const leaveEvent = mutation({
  *
  * @param reminderOffset - Optional reminder timing. If provided, a reminder will be scheduled
  *                         for that amount of time before the event starts.
- *                         Options: '15_MINUTES', '1_HOUR', '1_DAY', '1_WEEK'
+ *                         Options: '30_MINUTES', '1_HOUR', '2_HOURS', '4_HOURS', '1_DAY',
+ *                                  '2_DAYS', '3_DAYS', '1_WEEK', '2_WEEKS', '4_WEEKS'
  */
 export const chooseEventDate = mutation({
   args: {
     eventId: v.id('events'),
     chosenDateTime: v.number(), // Unix timestamp
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end time
-    reminderOffset: v.optional(
-      v.union(
-        v.literal('15_MINUTES'),
-        v.literal('1_HOUR'),
-        v.literal('1_DAY'),
-        v.literal('1_WEEK')
-      )
-    ),
+    reminderOffset: v.optional(reminderOffsetValidator),
     _traceId: v.optional(v.string()),
   },
   handler: async (

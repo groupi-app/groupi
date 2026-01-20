@@ -65,6 +65,19 @@ export function useUserEvents() {
 
 // ===== EVENT MUTATIONS =====
 
+// Reminder offset type for events
+type ReminderOffset =
+  | '30_MINUTES'
+  | '1_HOUR'
+  | '2_HOURS'
+  | '4_HOURS'
+  | '1_DAY'
+  | '2_DAYS'
+  | '3_DAYS'
+  | '1_WEEK'
+  | '2_WEEKS'
+  | '4_WEEKS';
+
 /**
  * Create a new event with availability polling
  */
@@ -81,6 +94,7 @@ export function useCreateEvent() {
       potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
       chosenDateTime?: string; // ISO date string for single-date events
       chosenEndDateTime?: string; // ISO date string for end time
+      reminderOffset?: ReminderOffset; // When to remind attendees
     }) => {
       try {
         const result = await createEvent({
@@ -91,6 +105,7 @@ export function useCreateEvent() {
           potentialDateTimeOptions: data.potentialDateTimeOptions,
           chosenDateTime: data.chosenDateTime,
           chosenEndDateTime: data.chosenEndDateTime,
+          reminderOffset: data.reminderOffset,
         });
 
         toast({
@@ -125,6 +140,7 @@ export function useUpdateEvent() {
       title?: string;
       description?: string;
       location?: string;
+      reminderOffset?: ReminderOffset | null;
     }) => {
       try {
         const result = await updateEvent({
@@ -132,6 +148,7 @@ export function useUpdateEvent() {
           title: data.title,
           description: data.description,
           location: data.location,
+          reminderOffset: data.reminderOffset,
         });
 
         toast({
