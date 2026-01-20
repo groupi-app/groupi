@@ -11,29 +11,32 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useDeleteEvent } from '@/hooks/mutations/use-delete-event';
-import { useState } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function DeleteEventDialog({ eventId }: { eventId: Id<"events"> }) {
+export function DeleteEventDialog({ eventId }: { eventId: Id<'events'> }) {
   const router = useRouter();
   const deleteEvent = useDeleteEvent();
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteEvent(eventId);
-      toast.success('Event deleted', {
-        description: 'The event has been deleted.',
+  const handleDelete = () => {
+    // Start deletion first - this triggers the optimistic update immediately
+    // (synchronously removes event from cache before the promise resolves)
+    const deletePromise = deleteEvent(eventId);
+
+    // Navigate to events page - the optimistic update has already removed the event
+    router.push('/events');
+
+    // Handle mutation result in background
+    deletePromise
+      .then(() => {
+        toast.success('Event deleted', {
+          description: 'The event has been deleted.',
+        });
+      })
+      .catch(() => {
+        toast.error('Uh oh!', {
+          description: 'The event could not be deleted.',
+        });
       });
-      router.push(`/events`);
-    } catch {
-      toast.error('Uh oh!', {
-        description: 'The event could not be deleted.',
-      });
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   return (
@@ -48,18 +51,15 @@ export function DeleteEventDialog({ eventId }: { eventId: Id<"events"> }) {
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose className='grow' asChild>
-            <Button variant='ghost' disabled={isDeleting}>
-              Cancel
-            </Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose className='grow' asChild>
             <Button
               onClick={handleDelete}
               className='w-full'
               variant='destructive'
-              disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              Delete
             </Button>
           </DialogClose>
         </div>

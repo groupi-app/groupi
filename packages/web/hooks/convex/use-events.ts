@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback, useMemo } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,7 +17,7 @@ let userQueries: any;
 function initApi() {
   if (!eventQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     eventQueries = api.events?.queries ?? {};
     eventMutations = api.events?.mutations ?? {};
     userQueries = api.users?.queries ?? {};
@@ -30,14 +30,14 @@ initApi();
 /**
  * Get event header data (title, description, location)
  */
-export function useEventHeaderData(eventId: Id<"events">) {
+export function useEventHeaderData(eventId: Id<'events'>) {
   return useQuery(eventQueries.getEventHeader, { eventId });
 }
 
 /**
  * Get event attendees page data (full member list with availability)
  */
-export function useEventAttendeesData(eventId: Id<"events">) {
+export function useEventAttendeesData(eventId: Id<'events'>) {
   return useQuery(eventQueries.getEventAttendeesData, { eventId });
 }
 
@@ -45,7 +45,7 @@ export function useEventAttendeesData(eventId: Id<"events">) {
  * Get event new post page data (minimal event info for post creation)
  * Uses getEventHeader which provides the needed data
  */
-export function useEventNewPostPageData(eventId: Id<"events">) {
+export function useEventNewPostPageData(eventId: Id<'events'>) {
   return useQuery(eventQueries.getEventHeader, { eventId });
 }
 
@@ -72,41 +72,44 @@ export function useCreateEvent() {
   const createEvent = useMutation(eventMutations.createEvent);
   const { toast } = useToast();
 
-  return useCallback(async (data: {
-    title: string;
-    description?: string;
-    location?: string;
-    potentialDateTimes?: string[]; // ISO date strings for multi-date events (legacy)
-    potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
-    chosenDateTime?: string; // ISO date string for single-date events
-    chosenEndDateTime?: string; // ISO date string for end time
-  }) => {
-    try {
-      const result = await createEvent({
-        title: data.title,
-        description: data.description,
-        location: data.location,
-        potentialDateTimes: data.potentialDateTimes,
-        potentialDateTimeOptions: data.potentialDateTimeOptions,
-        chosenDateTime: data.chosenDateTime,
-        chosenEndDateTime: data.chosenEndDateTime,
-      });
+  return useCallback(
+    async (data: {
+      title: string;
+      description?: string;
+      location?: string;
+      potentialDateTimes?: string[]; // ISO date strings for multi-date events (legacy)
+      potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
+      chosenDateTime?: string; // ISO date string for single-date events
+      chosenEndDateTime?: string; // ISO date string for end time
+    }) => {
+      try {
+        const result = await createEvent({
+          title: data.title,
+          description: data.description,
+          location: data.location,
+          potentialDateTimes: data.potentialDateTimes,
+          potentialDateTimeOptions: data.potentialDateTimeOptions,
+          chosenDateTime: data.chosenDateTime,
+          chosenEndDateTime: data.chosenEndDateTime,
+        });
 
-      toast({
-        title: "Success",
-        description: "Event created successfully!",
-      });
+        toast({
+          title: 'Success',
+          description: 'Event created successfully!',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [createEvent, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to create event. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [createEvent, toast]
+  );
 }
 
 /**
@@ -116,63 +119,83 @@ export function useUpdateEvent() {
   const updateEvent = useMutation(eventMutations.updateEvent);
   const { toast } = useToast();
 
-  return useCallback(async (data: {
-    eventId: Id<"events">;
-    title?: string;
-    description?: string;
-    location?: string;
-  }) => {
-    try {
-      const result = await updateEvent({
-        eventId: data.eventId,
-        title: data.title,
-        description: data.description,
-        location: data.location,
-      });
+  return useCallback(
+    async (data: {
+      eventId: Id<'events'>;
+      title?: string;
+      description?: string;
+      location?: string;
+    }) => {
+      try {
+        const result = await updateEvent({
+          eventId: data.eventId,
+          title: data.title,
+          description: data.description,
+          location: data.location,
+        });
 
-      toast({
-        title: "Success",
-        description: "Event updated successfully!",
-      });
+        toast({
+          title: 'Success',
+          description: 'Event updated successfully!',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [updateEvent, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update event. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updateEvent, toast]
+  );
 }
 
 /**
- * Delete an event (organizer only)
+ * Delete an event (organizer only) with optimistic updates
  */
 export function useDeleteEvent() {
-  const deleteEvent = useMutation(eventMutations.deleteEvent);
+  const baseMutation = useMutation(eventMutations.deleteEvent);
   const { toast } = useToast();
 
-  return useCallback(async (eventId: Id<"events">) => {
-    try {
-      const result = await deleteEvent({ eventId });
+  // Create mutation with optimistic update
+  const deleteEvent = useMemo(() => {
+    return baseMutation.withOptimisticUpdate((localStore, args) => {
+      // Get the current user events list
+      const userEvents = localStore.getQuery(eventQueries.getUserEvents, {});
 
-      toast({
-        title: "Success",
-        description: "Event deleted successfully!",
-      });
+      if (userEvents && Array.isArray(userEvents)) {
+        // Filter out the deleted event
+        const filteredEvents = userEvents.filter(
+          (item: { event: { _id: Id<'events'> } }) =>
+            item.event._id !== args.eventId
+        );
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [deleteEvent, toast]);
+        localStore.setQuery(eventQueries.getUserEvents, {}, filteredEvents);
+      }
+    });
+  }, [baseMutation]);
+
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        const result = await deleteEvent({ eventId });
+
+        // No success toast here - the dialog handles it
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete event. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [deleteEvent, toast]
+  );
 }
 
 /**
@@ -182,25 +205,28 @@ export function useLeaveEvent() {
   const leaveEvent = useMutation(eventMutations.leaveEvent);
   const { toast } = useToast();
 
-  return useCallback(async (eventId: Id<"events">) => {
-    try {
-      const result = await leaveEvent({ eventId });
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        const result = await leaveEvent({ eventId });
 
-      toast({
-        title: "Success",
-        description: "Left event successfully!",
-      });
+        toast({
+          title: 'Success',
+          description: 'Left event successfully!',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to leave event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [leaveEvent, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to leave event. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [leaveEvent, toast]
+  );
 }
 
 /**
@@ -229,7 +255,7 @@ export function useUpdatePotentialDateTimes() {
 /**
  * Complete event management hook with all operations
  */
-export function useEventManagement(eventId: Id<"events">) {
+export function useEventManagement(eventId: Id<'events'>) {
   const eventHeader = useEventHeaderData(eventId);
   const eventAttendees = useEventAttendeesData(eventId);
 
@@ -237,13 +263,16 @@ export function useEventManagement(eventId: Id<"events">) {
   const deleteEvent = useDeleteEvent();
   const leaveEvent = useLeaveEvent();
 
-  const updateEventOptimistic = useCallback(async (data: {
-    title?: string;
-    description?: string;
-    location?: string;
-  }) => {
-    return updateEvent({ eventId, ...data });
-  }, [eventId, updateEvent]);
+  const updateEventOptimistic = useCallback(
+    async (data: {
+      title?: string;
+      description?: string;
+      location?: string;
+    }) => {
+      return updateEvent({ eventId, ...data });
+    },
+    [eventId, updateEvent]
+  );
 
   const deleteEventOptimistic = useCallback(async () => {
     return deleteEvent(eventId);
