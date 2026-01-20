@@ -11,29 +11,34 @@ import { Button } from '@/components/ui/button';
 import { useDeletePost } from '@/hooks/convex/use-posts';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function DeletePostDialog({ id, eventId }: { id: string; eventId?: Id<"events"> }) {
+export function DeletePostDialog({
+  id,
+  eventId,
+}: {
+  id: string;
+  eventId?: Id<'events'>;
+}) {
   const router = useRouter();
   const deletePost = useDeletePost(eventId);
 
-  const handleDeletePost = async () => {
-    try {
-      await deletePost(id as Id<'posts'>);
-      // Navigate to event page instead of router.back() to avoid
-      // going to unexpected pages (like new post page after creation)
-      if (eventId) {
-        router.push(`/event/${eventId}`);
-      } else {
-        router.back();
-      }
-      // No success toast - instant removal is feedback enough
-    } catch (error) {
+  const handleDeletePost = () => {
+    // Start deletion first - this triggers the optimistic update immediately
+    // (synchronously removes post from cache before the promise resolves)
+    const deletePromise = deletePost(id as Id<'posts'>);
+
+    // Navigate to event page - the optimistic update has already removed the post
+    if (eventId) {
+      router.push(`/event/${eventId}`);
+    } else {
+      router.back();
+    }
+
+    // Handle errors in background (success doesn't need toast - instant removal is feedback enough)
+    deletePromise.catch(error => {
       // Error toast is handled by the hook
       console.error('Failed to delete post:', error);
-    }
+    });
   };
-
-  // For now, we'll assume not loading (Convex hooks don't expose loading state the same way)
-  const isLoading = false;
 
   return (
     <DialogContent>
@@ -47,17 +52,11 @@ export function DeletePostDialog({ id, eventId }: { id: string; eventId?: Id<"ev
       <DialogFooter>
         <div className='flex items-center gap-2'>
           <DialogClose asChild>
-            <Button variant='ghost' disabled={isLoading}>
-              Cancel
-            </Button>
+            <Button variant='ghost'>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button
-              onClick={handleDeletePost}
-              disabled={isLoading}
-              variant='destructive'
-            >
-              {isLoading ? 'Deleting...' : 'Delete'}
+            <Button onClick={handleDeletePost} variant='destructive'>
+              Delete
             </Button>
           </DialogClose>
         </div>
