@@ -20,8 +20,14 @@ import {
   Trash as Delete,
   Download,
   Pencil as Edit,
+  Eye,
+  EyeOff,
+  File,
+  FileAudio,
+  FileVideo,
   Fingerprint,
   Heading2,
+  Image,
   Infinity as Infinite,
   Info,
   Key,
@@ -42,6 +48,7 @@ import {
   LucideProps,
   Menu,
   MoreHorizontal,
+  Paperclip,
   Users2 as People,
   Plus,
   QrCode,
@@ -148,6 +155,16 @@ export const Icons = {
   trash: Delete,
   x: X,
   sparkles: Sparkles,
+  paperclip: Paperclip,
+  attachment: Paperclip,
+  file: File,
+  fileAudio: FileAudio,
+  fileVideo: FileVideo,
+  image: Image,
+  eye: Eye,
+  eyeOff: EyeOff,
+  spoiler: EyeOff,
+  spoilerOff: Eye,
   discord: ({ ...props }: LucideProps) => (
     <svg
       viewBox='0 0 24 24'
@@ -241,7 +258,10 @@ export const Icons = {
       </g>
     </svg>
   ),
-  group: ({ color2 = 'fill-muted-foreground', ...props }: LucideProps & { color2?: string }) => (
+  group: ({
+    color2 = 'fill-muted-foreground',
+    ...props
+  }: LucideProps & { color2?: string }) => (
     <svg
       viewBox='0 0 553 298'
       fill='none'

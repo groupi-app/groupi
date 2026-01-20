@@ -29,8 +29,8 @@ import { Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { ReactNode } from 'react';
 
-type MemberWithPerson = Doc<"memberships"> & {
-  person: Doc<"persons"> & {
+type MemberWithPerson = Doc<'memberships'> & {
+  person: Doc<'persons'> & {
     user: User;
   };
 };
@@ -49,8 +49,12 @@ export function MentionHandler({
   eventDateTime: Date | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedMember, setSelectedMember] = useState<MemberWithPerson | null>(null);
-  const [mentionElement, setMentionElement] = useState<HTMLElement | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberWithPerson | null>(
+    null
+  );
+  const [mentionElement, setMentionElement] = useState<HTMLElement | null>(
+    null
+  );
   const [dialogAction, setDialogAction] = useState(MemberAction.KICK);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -105,7 +109,10 @@ export function MentionHandler({
 
   const user = selectedMember.person.user;
   const fullName = user?.name || user?.email || '';
-  const initials = getInitialsFromName(user?.name ?? undefined, user?.email ?? undefined);
+  const initials = getInitialsFromName(
+    user?.name ?? undefined,
+    user?.email ?? undefined
+  );
   const isMe = userId === selectedMember.person._id;
   const canKick =
     !isMe &&
@@ -315,9 +322,9 @@ export function MentionHandler({
         selectedMember &&
         mentionElement && (
           <DropdownMenu
-            open={!!selectedMember}
+            open={!!selectedMember && !profileDialogOpen && !dialogOpen}
             onOpenChange={open => {
-              if (!open) {
+              if (!open && !profileDialogOpen && !dialogOpen) {
                 setSelectedMember(null);
                 setMentionElement(null);
               }
@@ -342,7 +349,16 @@ export function MentionHandler({
           </DropdownMenu>
         )
       )}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={open => {
+          setDialogOpen(open);
+          if (!open) {
+            setSelectedMember(null);
+            setMentionElement(null);
+          }
+        }}
+      >
         {selectedMember && (
           <MemberActionDialog action={dialogAction} member={selectedMember} />
         )}
@@ -351,7 +367,13 @@ export function MentionHandler({
         <ProfileViewDialog
           userId={selectedMember.person.user._id}
           open={profileDialogOpen}
-          onOpenChange={setProfileDialogOpen}
+          onOpenChange={open => {
+            setProfileDialogOpen(open);
+            if (!open) {
+              setSelectedMember(null);
+              setMentionElement(null);
+            }
+          }}
         />
       )}
     </>

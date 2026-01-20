@@ -72,6 +72,23 @@ export const getPostDetail = query({
     // Get post author data - nest user inside person
     const postAuthorData = await getPersonWithUser(ctx, post.authorId);
 
+    // Get post attachments
+    const postAttachments = await ctx.db
+      .query('attachments')
+      .withIndex('by_post', q => q.eq('postId', post._id))
+      .collect();
+
+    // Get URLs for post attachments
+    const postAttachmentsWithUrls = await Promise.all(
+      postAttachments.map(async attachment => {
+        const url = await ctx.storage.getUrl(attachment.storageId);
+        return {
+          ...attachment,
+          url,
+        };
+      })
+    );
+
     // Get replies for this post
     const replies = await ctx.db
       .query('replies')
@@ -79,10 +96,28 @@ export const getPostDetail = query({
       .order('asc')
       .collect();
 
-    // Get user data for reply authors - nest user inside person
+    // Get user data for reply authors and attachments - nest user inside person
     const repliesWithAuthors = await Promise.all(
       replies.map(async reply => {
         const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
+
+        // Get attachments for this reply
+        const replyAttachments = await ctx.db
+          .query('attachments')
+          .withIndex('by_reply', q => q.eq('replyId', reply._id))
+          .collect();
+
+        // Get URLs for reply attachments
+        const replyAttachmentsWithUrls = await Promise.all(
+          replyAttachments.map(async attachment => {
+            const url = await ctx.storage.getUrl(attachment.storageId);
+            return {
+              ...attachment,
+              url,
+            };
+          })
+        );
+
         return {
           ...reply,
           author: replyAuthorData
@@ -94,6 +129,7 @@ export const getPostDetail = query({
                 user: replyAuthorData.user,
               }
             : null,
+          attachments: replyAttachmentsWithUrls,
         };
       })
     );
@@ -117,6 +153,7 @@ export const getPostDetail = query({
           ),
         },
         replies: repliesWithAuthors.filter(r => r.author !== null),
+        attachments: postAttachmentsWithUrls,
       },
       userMembership: {
         ...userMembership,
