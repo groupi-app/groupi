@@ -11,6 +11,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -18,8 +25,26 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import dynamic from 'next/dynamic';
-import { useFormContext } from './form-context';
+import { useFormContext, type ReminderOffset } from './form-context';
 import { Button } from '@/components/ui/button';
+
+// Reminder offset options with display labels
+const REMINDER_OPTIONS: Array<{
+  value: ReminderOffset | 'never';
+  label: string;
+}> = [
+  { value: 'never', label: 'Never' },
+  { value: '30_MINUTES', label: '30 minutes before' },
+  { value: '1_HOUR', label: '1 hour before' },
+  { value: '2_HOURS', label: '2 hours before' },
+  { value: '4_HOURS', label: '4 hours before' },
+  { value: '1_DAY', label: '1 day before' },
+  { value: '2_DAYS', label: '2 days before' },
+  { value: '3_DAYS', label: '3 days before' },
+  { value: '1_WEEK', label: '1 week before' },
+  { value: '2_WEEKS', label: '2 weeks before' },
+  { value: '4_WEEKS', label: '4 weeks before' },
+];
 
 const LocationInput = dynamic(
   () =>
@@ -48,6 +73,21 @@ const formSchema = z.object({
     .string()
     .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
+  reminderOffset: z
+    .enum([
+      'never',
+      '30_MINUTES',
+      '1_HOUR',
+      '2_HOURS',
+      '4_HOURS',
+      '1_DAY',
+      '2_DAYS',
+      '3_DAYS',
+      '1_WEEK',
+      '2_WEEKS',
+      '4_WEEKS',
+    ])
+    .optional(),
 });
 
 interface NewEventInfoProps {
@@ -63,6 +103,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
       title: formState.title,
       description: formState.description,
       location: formState.location,
+      reminderOffset: formState.reminderOffset ?? 'never',
     },
     mode: 'onChange',
   });
@@ -73,11 +114,26 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
       title: formState.title || '',
       description: formState.description || '',
       location: formState.location || '',
+      reminderOffset: formState.reminderOffset ?? 'never',
     });
-  }, [formState.title, formState.description, formState.location, form]);
+  }, [
+    formState.title,
+    formState.description,
+    formState.location,
+    formState.reminderOffset,
+    form,
+  ]);
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    setFormState(data);
+    // Convert "never" to undefined for the backend
+    const reminderOffset =
+      data.reminderOffset === 'never'
+        ? undefined
+        : (data.reminderOffset as ReminderOffset | undefined);
+    setFormState({
+      ...data,
+      reminderOffset,
+    });
     onNext();
   }
 
@@ -141,6 +197,36 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
                 </FormControl>
                 <FormDescription>
                   The location where your event is taking place.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='reminderOffset'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Remind attendees</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || 'never'}
+                >
+                  <FormControl>
+                    <SelectTrigger data-test='new-event-reminder'>
+                      <SelectValue placeholder='Select when to remind attendees' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {REMINDER_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Send a reminder to attendees before the event starts.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

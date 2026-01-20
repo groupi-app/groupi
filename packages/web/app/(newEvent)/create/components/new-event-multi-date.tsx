@@ -238,7 +238,7 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
 
   // Submit event
   async function onSubmit2(data: z.infer<typeof form2Schema>) {
-    const { title, description, location } = formState;
+    const { title, description, location, reminderOffset } = formState;
 
     isSubmittingRef.current = true;
     setIsSaving(true);
@@ -251,6 +251,7 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
           start: opt.start.toISOString(),
           end: opt.end?.toISOString(),
         })),
+        reminderOffset,
       });
       toast.success('The event was created successfully.');
       reset();
@@ -433,8 +434,8 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
 
                   {watchedDateTimeOptions.length === 0 ? (
                     <p className='text-muted-foreground text-sm text-center py-8'>
-                      Select dates from the calendar and click &quot;Add&quot; to create
-                      options
+                      Select dates from the calendar and click &quot;Add&quot;
+                      to create options
                     </p>
                   ) : (
                     <div className='divide-y divide-border'>

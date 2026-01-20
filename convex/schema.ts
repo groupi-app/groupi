@@ -63,6 +63,21 @@ export default defineSchema({
     updatedAt: v.number(), // Unix timestamp
     timezone: v.string(),
     potentialDateTimes: v.array(v.number()), // Array of Unix timestamps (deprecated, use potentialDateTimes table)
+    // Reminder offset - how far before the event to remind attendees (undefined = never)
+    reminderOffset: v.optional(
+      v.union(
+        v.literal('30_MINUTES'),
+        v.literal('1_HOUR'),
+        v.literal('2_HOURS'),
+        v.literal('4_HOURS'),
+        v.literal('1_DAY'),
+        v.literal('2_DAYS'),
+        v.literal('3_DAYS'),
+        v.literal('1_WEEK'),
+        v.literal('2_WEEKS'),
+        v.literal('4_WEEKS')
+      )
+    ),
   }).index('by_creator', ['creatorId']),
 
   memberships: defineTable({
@@ -307,10 +322,16 @@ export default defineSchema({
     eventId: v.id('events'),
     scheduledTime: v.number(), // When reminder should fire (Unix ms)
     reminderOffset: v.union(
-      v.literal('15_MINUTES'),
+      v.literal('30_MINUTES'),
       v.literal('1_HOUR'),
+      v.literal('2_HOURS'),
+      v.literal('4_HOURS'),
       v.literal('1_DAY'),
-      v.literal('1_WEEK')
+      v.literal('2_DAYS'),
+      v.literal('3_DAYS'),
+      v.literal('1_WEEK'),
+      v.literal('2_WEEKS'),
+      v.literal('4_WEEKS')
     ),
     scheduledFunctionId: v.optional(v.id('_scheduled_functions')), // Convex scheduler ID
     status: v.union(

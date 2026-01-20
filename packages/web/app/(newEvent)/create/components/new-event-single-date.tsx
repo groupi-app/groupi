@@ -100,7 +100,10 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
   // Use useWatch instead of form.watch() for React Compiler compatibility
   const watchedDate = useWatch({ control: form.control, name: 'date' });
   const watchedTime = useWatch({ control: form.control, name: 'time' });
-  const watchedHasEndTime = useWatch({ control: form.control, name: 'hasEndTime' });
+  const watchedHasEndTime = useWatch({
+    control: form.control,
+    name: 'hasEndTime',
+  });
   const watchedEndDate = useWatch({ control: form.control, name: 'endDate' });
   const watchedEndTime = useWatch({ control: form.control, name: 'endTime' });
 
@@ -135,7 +138,7 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
         endDateTime.setHours(endHours, endMinutes, 0, 0);
       }
 
-      const { title, description, location } = formState;
+      const { title, description, location, reminderOffset } = formState;
 
       setIsSaving(true);
       try {
@@ -145,6 +148,7 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
           location,
           chosenDateTime: dateTime.toISOString(),
           chosenEndDateTime: endDateTime?.toISOString(),
+          reminderOffset,
         });
         toast.success('The event was created successfully.');
         // Reset form context before navigation so it's fresh when user comes back
@@ -260,8 +264,13 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
                           mode='single'
                           className='rounded-md border border-border w-max mx-auto'
                           selected={field.value}
-                          onSelect={date => date && form.setValue('endDate', date)}
-                          disabled={date => startOfDay(date) < startOfDay(watchedDate || new Date())}
+                          onSelect={date =>
+                            date && form.setValue('endDate', date)
+                          }
+                          disabled={date =>
+                            startOfDay(date) <
+                            startOfDay(watchedDate || new Date())
+                          }
                           {...field}
                         />
                       </FormControl>

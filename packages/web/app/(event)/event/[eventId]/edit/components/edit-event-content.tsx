@@ -9,7 +9,7 @@ import { NewEventFormSkeleton } from '@/components/skeletons';
 import Link from 'next/link';
 
 export function EditEventContent({ eventId }: { eventId: string }) {
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
 
   if (!eventData) {
     return (
@@ -38,6 +38,7 @@ export function EditEventContent({ eventId }: { eventId: string }) {
           title: event.title,
           description: event.description || '',
           location: event.location || '',
+          reminderOffset: event.reminderOffset,
         }}
       />
     </div>

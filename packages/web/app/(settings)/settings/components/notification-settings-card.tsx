@@ -6,10 +6,8 @@ import {
   type WebhookFormat,
 } from '@/convex/types';
 
-// Re-export const objects for runtime use
-const NotificationMethodType = ConvexEnums.NotificationMethodType;
-const NotificationType = ConvexEnums.NotificationType;
-const WebhookFormat = ConvexEnums.WebhookFormat;
+// Runtime enum objects (renamed to avoid conflict with type imports)
+const NotificationTypeEnum = ConvexEnums.NotificationType;
 import { Checkbox } from '@/components/ui/checkbox';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -102,7 +100,7 @@ const notificationTypeLabels: Record<
   },
   EVENT_REMINDER: {
     label: 'Event Reminder',
-    description: 'an event I\'m attending is starting soon.',
+    description: "an event I'm attending is starting soon.",
   },
 };
 
@@ -443,22 +441,23 @@ export function NotificationSettingsCard({
 
               // Group notification types by category
               const eventUpdates: NotificationType[] = [
-                NotificationType.EVENT_EDITED,
-                NotificationType.DATE_CHOSEN,
-                NotificationType.DATE_CHANGED,
-                NotificationType.DATE_RESET,
+                NotificationTypeEnum.EVENT_EDITED,
+                NotificationTypeEnum.DATE_CHOSEN,
+                NotificationTypeEnum.DATE_CHANGED,
+                NotificationTypeEnum.DATE_RESET,
+                NotificationTypeEnum.EVENT_REMINDER,
               ];
               const postsAndReplies: NotificationType[] = [
-                NotificationType.NEW_POST,
-                NotificationType.NEW_REPLY,
-                NotificationType.USER_MENTIONED,
+                NotificationTypeEnum.NEW_POST,
+                NotificationTypeEnum.NEW_REPLY,
+                NotificationTypeEnum.USER_MENTIONED,
               ];
               const membership: NotificationType[] = [
-                NotificationType.USER_JOINED,
-                NotificationType.USER_LEFT,
-                NotificationType.USER_PROMOTED,
-                NotificationType.USER_DEMOTED,
-                NotificationType.USER_RSVP,
+                NotificationTypeEnum.USER_JOINED,
+                NotificationTypeEnum.USER_LEFT,
+                NotificationTypeEnum.USER_PROMOTED,
+                NotificationTypeEnum.USER_DEMOTED,
+                NotificationTypeEnum.USER_RSVP,
               ];
 
               // Helper to find notification by type

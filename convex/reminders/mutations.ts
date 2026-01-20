@@ -42,10 +42,16 @@ async function cancelExistingReminders(
  * Reminder offset validator matching the schema
  */
 const reminderOffsetValidator = v.union(
-  v.literal('15_MINUTES'),
+  v.literal('30_MINUTES'),
   v.literal('1_HOUR'),
+  v.literal('2_HOURS'),
+  v.literal('4_HOURS'),
   v.literal('1_DAY'),
-  v.literal('1_WEEK')
+  v.literal('2_DAYS'),
+  v.literal('3_DAYS'),
+  v.literal('1_WEEK'),
+  v.literal('2_WEEKS'),
+  v.literal('4_WEEKS')
 );
 
 /**
@@ -86,11 +92,13 @@ export const scheduleEventReminder = internalMutation({
     }
 
     // Schedule the reminder using Convex scheduler
-    const scheduledId = await ctx.scheduler.runAt(
-      reminderTime,
-      internal.reminders.mutations.sendReminder,
-      { eventId, reminderOffset }
-    );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
+    const reminderFn = internal.reminders.mutations.sendReminder;
+    const scheduledId = await ctx.scheduler.runAt(reminderTime, reminderFn, {
+      eventId,
+      reminderOffset,
+    });
 
     // Store the reminder record
     const reminderId = await ctx.db.insert('eventReminders', {
@@ -111,25 +119,39 @@ export const scheduleEventReminder = internalMutation({
 });
 
 /**
- * Send the reminder notification to all event members
+ * Send the reminder notification to event members
  * Called by Convex scheduler at the scheduled time
+ *
+ * Users who have RSVP'd YES/MAYBE receive a standard reminder.
+ * Users who are PENDING receive a reminder prompting them to RSVP.
+ * Users who RSVP'd NO are NOT notified (they've already declined).
  */
 export const sendReminder = internalMutation({
   args: {
     eventId: v.id('events'),
     reminderOffset: reminderOffsetValidator,
   },
-  returns: v.object({ sent: v.number(), skipped: v.number() }),
+  returns: v.object({
+    sent: v.number(),
+    skipped: v.number(),
+    sentToAttending: v.number(),
+    sentToNonRsvp: v.number(),
+  }),
   handler: async (
     ctx,
     { eventId, reminderOffset }
-  ): Promise<{ sent: number; skipped: number }> => {
+  ): Promise<{
+    sent: number;
+    skipped: number;
+    sentToAttending: number;
+    sentToNonRsvp: number;
+  }> => {
     const event = await ctx.db.get(eventId);
     if (!event?.chosenDateTime) {
       console.log(
         `[Reminders] Event ${eventId} no longer has a chosen date, skipping reminder`
       );
-      return { sent: 0, skipped: 0 };
+      return { sent: 0, skipped: 0, sentToAttending: 0, sentToNonRsvp: 0 };
     }
 
     // Update reminder status to SENT
@@ -147,21 +169,25 @@ export const sendReminder = internalMutation({
       });
     }
 
-    // Get all memberships for this event who RSVP'd YES or MAYBE
+    // Get all memberships for this event
     const memberships = await ctx.db
       .query('memberships')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect();
 
-    const attendingMembers = memberships.filter(
-      m => m.rsvpStatus === 'YES' || m.rsvpStatus === 'MAYBE'
-    );
-
     let sent = 0;
     let skipped = 0;
+    let sentToAttending = 0;
+    let sentToNonRsvp = 0;
 
-    // Create notification for each attending member (respecting mute settings)
-    for (const membership of attendingMembers) {
+    // Create notification for each member (respecting mute settings)
+    for (const membership of memberships) {
+      // Skip users who RSVP'd NO - they've already declined
+      if (membership.rsvpStatus === 'NO') {
+        skipped++;
+        continue;
+      }
+
       // Check if user has muted this event
       const shouldSkip = await shouldSkipNotificationDueToMute(
         ctx,
@@ -174,21 +200,35 @@ export const sendReminder = internalMutation({
         continue;
       }
 
+      const isAttending =
+        membership.rsvpStatus === 'YES' || membership.rsvpStatus === 'MAYBE';
+
       await createNotification(ctx, {
         personId: membership.personId,
         type: 'EVENT_REMINDER',
         eventId: eventId,
         datetime: event.chosenDateTime,
+        // Include RSVP status so the frontend can show different messages:
+        // - For YES/MAYBE: "Event starting soon"
+        // - For PENDING: "Event starting soon - don't forget to RSVP!"
+        rsvp: membership.rsvpStatus,
         // No authorId - this is a system-generated notification
       });
       sent++;
+
+      if (isAttending) {
+        sentToAttending++;
+      } else {
+        sentToNonRsvp++;
+      }
     }
 
     console.log(
-      `[Reminders] Sent ${sent} reminder notifications for event ${eventId} (${skipped} skipped due to muting)`
+      `[Reminders] Sent ${sent} reminder notifications for event ${eventId} ` +
+        `(${sentToAttending} attending, ${sentToNonRsvp} pending RSVP, ${skipped} skipped)`
     );
 
-    return { sent, skipped };
+    return { sent, skipped, sentToAttending, sentToNonRsvp };
   },
 });
 

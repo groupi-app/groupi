@@ -231,7 +231,7 @@ describe('Event Reminders', () => {
         internal.reminders.mutations.sendReminder,
         {
           eventId,
-          reminderOffset: '15_MINUTES',
+          reminderOffset: '30_MINUTES',
         }
       );
 
@@ -248,15 +248,17 @@ describe('Event Reminders', () => {
       expect(notifications[0].datetime).toBe(futureDate);
     });
 
-    it('skips members who have not RSVPd YES or MAYBE', async () => {
+    it('skips members who have RSVPd NO', async () => {
       const {
         organizer: _organizer,
-        attendee: _attendee,
+        attendee,
         eventId,
       } = await createTestEventWithMultipleUsers(t);
 
-      // Attendee has PENDING status (not attending)
-      // Organizer has YES status
+      // Update attendee to RSVP NO (declined)
+      await t.run(async ctx => {
+        await ctx.db.patch(attendee.membershipId, { rsvpStatus: 'NO' });
+      });
 
       // Set a chosen date
       const futureDate = Date.now() + 60 * 60 * 1000;
@@ -269,11 +271,14 @@ describe('Event Reminders', () => {
         internal.reminders.mutations.sendReminder,
         {
           eventId,
-          reminderOffset: '15_MINUTES',
+          reminderOffset: '30_MINUTES',
         }
       );
 
-      expect(result.sent).toBe(1); // Only organizer (who has YES)
+      // Only organizer (who has YES) should receive reminder
+      // Attendee who RSVPd NO should be skipped
+      expect(result.sent).toBe(1);
+      expect(result.skipped).toBe(1);
     });
 
     it('does not send if event no longer has a chosen date', async () => {
@@ -286,12 +291,14 @@ describe('Event Reminders', () => {
         internal.reminders.mutations.sendReminder,
         {
           eventId,
-          reminderOffset: '15_MINUTES',
+          reminderOffset: '30_MINUTES',
         }
       );
 
       expect(result.sent).toBe(0);
       expect(result.skipped).toBe(0);
+      expect(result.sentToAttending).toBe(0);
+      expect(result.sentToNonRsvp).toBe(0);
     });
   });
 
