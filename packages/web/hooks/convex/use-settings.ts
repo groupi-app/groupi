@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Id } from "@/convex/_generated/dataModel";
+import { useQuery, useMutation } from 'convex/react';
+import { useCallback } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { Id } from '@/convex/_generated/dataModel';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let settingsQueries: any;
@@ -13,7 +13,7 @@ let settingsMutations: any;
 function initApi() {
   if (!settingsQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     settingsQueries = api.settings?.queries ?? {};
     settingsMutations = api.settings?.mutations ?? {};
   }
@@ -22,22 +22,28 @@ initApi();
 
 // Types for notification settings
 export type NotificationType =
-  | "EVENT_EDITED"
-  | "NEW_POST"
-  | "NEW_REPLY"
-  | "DATE_CHOSEN"
-  | "DATE_CHANGED"
-  | "DATE_RESET"
-  | "USER_JOINED"
-  | "USER_LEFT"
-  | "USER_PROMOTED"
-  | "USER_DEMOTED"
-  | "USER_RSVP"
-  | "USER_MENTIONED";
+  | 'EVENT_EDITED'
+  | 'NEW_POST'
+  | 'NEW_REPLY'
+  | 'DATE_CHOSEN'
+  | 'DATE_CHANGED'
+  | 'DATE_RESET'
+  | 'USER_JOINED'
+  | 'USER_LEFT'
+  | 'USER_PROMOTED'
+  | 'USER_DEMOTED'
+  | 'USER_RSVP'
+  | 'USER_MENTIONED'
+  | 'EVENT_REMINDER';
 
-export type NotificationMethodType = "EMAIL" | "PUSH" | "WEBHOOK";
+export type NotificationMethodType = 'EMAIL' | 'PUSH' | 'WEBHOOK';
 
-export type WebhookFormat = "DISCORD" | "SLACK" | "TEAMS" | "GENERIC" | "CUSTOM";
+export type WebhookFormat =
+  | 'DISCORD'
+  | 'SLACK'
+  | 'TEAMS'
+  | 'GENERIC'
+  | 'CUSTOM';
 
 export interface NotificationSetting {
   notificationType: NotificationType;
@@ -76,8 +82,8 @@ export function useSaveNotificationSettings() {
         await saveSettings({ notificationMethods });
 
         toast({
-          title: "Settings Saved",
-          description: "Your notification settings have been updated.",
+          title: 'Settings Saved',
+          description: 'Your notification settings have been updated.',
         });
 
         return { success: true };
@@ -85,12 +91,12 @@ export function useSaveNotificationSettings() {
         const message =
           error instanceof Error
             ? error.message
-            : "Failed to save settings. Please try again.";
+            : 'Failed to save settings. Please try again.';
 
         toast({
-          title: "Error",
+          title: 'Error',
           description: message,
-          variant: "destructive",
+          variant: 'destructive',
         });
 
         return { success: false, error: message };
@@ -108,13 +114,13 @@ export function useDeleteNotificationMethod() {
   const { toast } = useToast();
 
   return useCallback(
-    async (methodId: Id<"notificationMethods">) => {
+    async (methodId: Id<'notificationMethods'>) => {
       try {
         await deleteMethod({ methodId });
 
         toast({
-          title: "Method Deleted",
-          description: "Notification method has been removed.",
+          title: 'Method Deleted',
+          description: 'Notification method has been removed.',
         });
 
         return { success: true };
@@ -122,12 +128,12 @@ export function useDeleteNotificationMethod() {
         const message =
           error instanceof Error
             ? error.message
-            : "Failed to delete method. Please try again.";
+            : 'Failed to delete method. Please try again.';
 
         toast({
-          title: "Error",
+          title: 'Error',
           description: message,
-          variant: "destructive",
+          variant: 'destructive',
         });
 
         return { success: false, error: message };
