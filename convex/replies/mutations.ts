@@ -1,6 +1,7 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
+import { notifyThreadParticipants } from '../lib/notifications';
 
 /**
  * Replies mutations for the Convex backend
@@ -45,6 +46,14 @@ export const createReply = mutation({
       authorId: person._id,
       membershipId: membership._id,
       updatedAt: Date.now(),
+    });
+
+    // Notify post author and other reply participants
+    await notifyThreadParticipants(ctx, {
+      postId,
+      eventId: post.eventId,
+      postAuthorId: post.authorId,
+      replyAuthorId: person._id,
     });
 
     return { replyId };
@@ -123,6 +132,17 @@ export const deleteReply = mutation({
 
     if (!canDelete) {
       throw new Error("You don't have permission to delete this reply");
+    }
+
+    // Delete reply attachments and storage files
+    const attachments = await ctx.db
+      .query('attachments')
+      .withIndex('by_reply', q => q.eq('replyId', replyId))
+      .collect();
+
+    for (const attachment of attachments) {
+      await ctx.storage.delete(attachment.storageId);
+      await ctx.db.delete(attachment._id);
     }
 
     await ctx.db.delete(replyId);

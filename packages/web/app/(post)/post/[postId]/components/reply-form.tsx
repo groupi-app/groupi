@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/refs */
+
 // Type cast needed for membership data transformation to BlockNoteInline component
 // Note: react-hooks/refs disabled because onSubmit accesses refs in event handler context, not during render
 
@@ -11,9 +11,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, ControllerRenderProps } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useMutation } from 'convex/react';
 import { useCreateReply, OptimisticUserData } from '@/hooks/convex/use-replies';
+import { useAttachments } from '@/hooks/convex/use-file-upload';
+import {
+  usePendingAttachments,
+  PendingAttachment,
+} from '@/contexts/pending-attachments-context';
+import { AttachmentButton, AttachmentPreview } from '@/components/attachments';
 import { BlockNoteInline, BlockNoteInlineHandle } from './blocknote-inline';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
@@ -21,34 +28,24 @@ import { useMobile } from '@/hooks/use-mobile';
 import { Id, Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 
-// Helper function to strip HTML tags and check if content is only whitespace
-const stripHtmlAndCheckWhitespace = (html: string): boolean => {
-  if (!html || html.trim().length === 0) return true;
+let attachmentMutations: any;
 
-  // Strip HTML tags using regex (works in all environments)
-  const textContent = html
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-    .replace(/&[a-z]+;/gi, '') // Remove other HTML entities
-    .trim();
-
-  // Check if text content is only whitespace after stripping HTML
-  return textContent.length === 0;
-};
+function initAttachmentApi() {
+  if (!attachmentMutations) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { api } = require('@/convex/_generated/api');
+    attachmentMutations = api.attachments?.mutations ?? {};
+  }
+}
+initAttachmentApi();
 
 const formSchema = z.object({
-  reply: z
-    .string()
-    .min(1, 'Reply must be at least 1 character')
-    .max(5000, 'Reply must be 5000 characters or less')
-    .refine(val => !stripHtmlAndCheckWhitespace(val), {
-      message: 'Reply cannot be only whitespace',
-    }),
+  reply: z.string().max(5000, 'Reply must be 5000 characters or less'),
 });
 
 // Type for userMembership prop
-type UserMembershipProp = Doc<"memberships"> & {
-  person: Doc<"persons"> & {
+type UserMembershipProp = Doc<'memberships'> & {
+  person: Doc<'persons'> & {
     user: User;
   };
 };
@@ -59,14 +56,14 @@ export default function ReplyForm({
   userMembership,
   onEditLastReply,
 }: {
-  postId: Id<"posts"> | string;
+  postId: Id<'posts'> | string;
   post: {
     event?: {
-      _id: Id<"events">;
+      _id: Id<'events'>;
       memberships?: Array<{
-        _id: Id<"memberships">;
+        _id: Id<'memberships'>;
         person?: {
-          _id: Id<"persons">;
+          _id: Id<'persons'>;
           user?: {
             _id: string;
             username?: string;
@@ -96,13 +93,45 @@ export default function ReplyForm({
   }, [userMembership]);
 
   const createReply = useCreateReply(currentUser);
+  const createAttachmentsBatch = useMutation(
+    attachmentMutations.createAttachmentsBatch
+  );
+  const { setPendingAttachments, clearPendingAttachments } =
+    usePendingAttachments();
+  const {
+    pendingUploads,
+    addFiles,
+    removeFile,
+    updateFile,
+    toggleSpoiler,
+    uploadAll,
+    clearAll,
+    isUploading,
+    canAddMore,
+    remainingSlots,
+  } = useAttachments();
+
   const formRef = useRef(null);
   const formRefForSubmit = useRef(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<BlockNoteInlineHandle>(null);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isMultiline, setIsMultiline] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useMobile();
+
+  // Handle file selection from attachment button
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const result = await addFiles(files);
+      if (result.errors.length > 0) {
+        toast.error('Some files could not be added', {
+          description: result.errors[0],
+        });
+      }
+    },
+    [addFiles]
+  );
 
   // Track editor height to determine if content is multiline
   useEffect(() => {
@@ -157,7 +186,8 @@ export default function ReplyForm({
 
       const currentValue = form.getValues('reply');
       // Check if field is empty - BlockNote may output empty string or minimal HTML
-      const isEmpty = !currentValue ||
+      const isEmpty =
+        !currentValue ||
         currentValue.trim() === '' ||
         currentValue === '<p></p>' ||
         currentValue === '<p><br></p>' ||
@@ -204,30 +234,158 @@ export default function ReplyForm({
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Clear form and editor optimistically (immediately), keeping focus
-    form.reset();
-    editorRef.current?.clear();
+    // Check if there's any content to submit
+    const hasText = values.reply && !isEmptyHtml(values.reply);
+    const hasAttachments = pendingUploads.length > 0;
+
+    if (!hasText && !hasAttachments) {
+      return; // Nothing to submit
+    }
+
+    setIsSubmitting(true);
+
+    // Generate a temporary ID for the pending attachments
+    // We'll use the real reply ID once we have it
+    const tempReplyId = `temp_${Date.now()}`;
 
     try {
-      await createReply({
-        text: values.reply,
-        postId: postId as import('@/convex/_generated/dataModel').Id<"posts">,
+      // Capture upload data BEFORE clearing form (we need it for later operations)
+      const capturedUploads = [...pendingUploads];
+
+      // Build pending attachments from uploads BEFORE uploading
+      // Store them in context so they persist across Convex data refreshes
+      if (hasAttachments) {
+        const pendingAttachmentData: PendingAttachment[] = capturedUploads.map(
+          (upload, index) => {
+            // Determine attachment type from MIME type
+            let type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' = 'FILE';
+            if (upload.file.type.startsWith('image/')) type = 'IMAGE';
+            else if (upload.file.type.startsWith('video/')) type = 'VIDEO';
+            else if (upload.file.type.startsWith('audio/')) type = 'AUDIO';
+
+            return {
+              _id: `pending_${tempReplyId}_${index}`,
+              type,
+              filename: upload.displayFilename,
+              size: upload.file.size,
+              mimeType: upload.file.type,
+              width: upload.width,
+              height: upload.height,
+              isSpoiler: upload.isSpoiler,
+              altText: upload.altText,
+              url: upload.preview || null,
+            };
+          }
+        );
+
+        // Store pending attachments with temp ID (we'll transfer to real ID after)
+        setPendingAttachments(tempReplyId, pendingAttachmentData);
+      }
+
+      // Build optimistic attachments for immediate display in Convex optimistic update
+      const optimisticAttachments = hasAttachments
+        ? capturedUploads.map(upload => ({
+            filename: upload.displayFilename,
+            size: upload.file.size,
+            mimeType: upload.file.type,
+            width: upload.width,
+            height: upload.height,
+            isSpoiler: upload.isSpoiler,
+            altText: upload.altText,
+            previewUrl: upload.preview,
+          }))
+        : undefined;
+
+      // Clear form and editor IMMEDIATELY for optimistic UX (before await)
+      form.reset();
+      editorRef.current?.clear();
+
+      // Create the reply with optimistic attachments
+      const result = await createReply({
+        text: hasText ? values.reply : '',
+        postId: postId as import('@/convex/_generated/dataModel').Id<'posts'>,
+        optimisticAttachments,
       });
-      // Form already cleared optimistically
+
+      // Transfer pending attachments from temp ID to real reply ID
+      if (hasAttachments && result?.replyId) {
+        const realReplyId = String(result.replyId);
+
+        // Rebuild pending attachments with real reply ID
+        const pendingAttachmentData: PendingAttachment[] = capturedUploads.map(
+          (upload, index) => {
+            let type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' = 'FILE';
+            if (upload.file.type.startsWith('image/')) type = 'IMAGE';
+            else if (upload.file.type.startsWith('video/')) type = 'VIDEO';
+            else if (upload.file.type.startsWith('audio/')) type = 'AUDIO';
+
+            return {
+              _id: `pending_${realReplyId}_${index}`,
+              type,
+              filename: upload.displayFilename,
+              size: upload.file.size,
+              mimeType: upload.file.type,
+              width: upload.width,
+              height: upload.height,
+              isSpoiler: upload.isSpoiler,
+              altText: upload.altText,
+              url: upload.preview || null,
+            };
+          }
+        );
+
+        // Store with real reply ID
+        setPendingAttachments(realReplyId, pendingAttachmentData);
+
+        // Clear temp ID
+        clearPendingAttachments(tempReplyId);
+
+        // Now upload attachments
+        const uploadedAttachments = await uploadAll();
+        if (uploadedAttachments.length > 0) {
+          await createAttachmentsBatch({
+            attachments: uploadedAttachments.map(a => ({
+              storageId: a.storageId,
+              filename: a.filename,
+              size: a.size,
+              mimeType: a.mimeType,
+              width: a.width,
+              height: a.height,
+              isSpoiler: a.isSpoiler,
+              altText: a.altText,
+            })),
+            replyId: result.replyId,
+          });
+        }
+
+        // Clear pending attachments - real ones now exist
+        clearPendingAttachments(realReplyId);
+      }
+
+      // Clear pending uploads
+      clearAll();
     } catch {
+      // Clear temp pending attachments on error
+      clearPendingAttachments(tempReplyId);
+
       toast.error('Failed to send reply', {
         description: 'The reply could not be sent. Please try again.',
       });
-      // Form is already cleared, user can retype if needed
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   const handleSubmit = async () => {
     const currentValue = form.getValues('reply');
-    // If there's no content, do nothing
-    if (!currentValue || isEmptyHtml(currentValue)) {
+    const hasText = currentValue && !isEmptyHtml(currentValue);
+    const hasAttachments = pendingUploads.length > 0;
+
+    // If there's no content and no attachments, do nothing
+    if (!hasText && !hasAttachments) {
       return;
     }
+
     const isValid = await form.trigger('reply');
     if (isValid) {
       form.handleSubmit(onSubmit)();
@@ -261,58 +419,96 @@ export default function ReplyForm({
               return (
                 <FormItem className='w-full'>
                   <FormControl>
-                    <div className='relative' ref={editorContainerRef}>
-                      <BlockNoteInline
-                        ref={editorRef}
-                        placeholder='Write a reply...'
-                        content={field.value}
-                        onChange={field.onChange}
-                        preventEnterSubmit={isMobile}
-                        growUpward={isMobile}
-                        eventId={post.event?._id}
-                        members={(post.event?.memberships as any) || []}
-                        isMobile={isMobile}
-                        onKeyDown={async e => {
-                          // On desktop: Enter sends, Shift+Enter newline
-                          // On mobile: Enter always creates newline (handled by preventEnterSubmit)
-                          if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            await handleSubmit();
-                          }
-                          // Up arrow when field is empty: edit last reply
-                          if (e.key === 'ArrowUp' && onEditLastReply) {
-                            const currentValue = form.getValues('reply');
-                            // Check if field is empty - BlockNote may output empty string or minimal HTML
-                            const isEmpty = !currentValue ||
-                              currentValue.trim() === '' ||
-                              isEmptyHtml(currentValue) ||
-                              currentValue === '<p></p>' ||
-                              currentValue === '<p><br></p>';
-                            if (isEmpty) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              onEditLastReply();
-                            }
-                          }
-                        }}
-                      />
-                      <Button
-                        type='button'
-                        onClick={handleSubmit}
-                        size='sm'
-                        className={cn(
-                          'absolute right-2 h-8 w-8 p-0',
-                          'bg-primary text-primary-foreground',
-                          'hover:bg-primary/90',
-                          'shadow-md',
-                          isMultiline
-                            ? 'bottom-2'
-                            : 'top-1/2 -translate-y-1/2'
-                        )}
-                        aria-label='Send reply'
-                      >
-                        <Icons.submit className='h-4 w-4' />
-                      </Button>
+                    <div className='space-y-2'>
+                      {/* Attachment Preview - hide when submitting */}
+                      {pendingUploads.length > 0 && !isSubmitting && (
+                        <AttachmentPreview
+                          uploads={pendingUploads}
+                          onRemove={removeFile}
+                          onToggleSpoiler={toggleSpoiler}
+                          onUpdate={updateFile}
+                          className='px-1'
+                        />
+                      )}
+
+                      {/* Editor with attachment button */}
+                      <div className='flex items-start gap-1'>
+                        {/* Attachment Button */}
+                        <AttachmentButton
+                          onFilesSelected={handleFilesSelected}
+                          disabled={!canAddMore || isSubmitting || isUploading}
+                          remainingSlots={remainingSlots}
+                          className='mt-2 flex-shrink-0'
+                        />
+
+                        {/* Editor Container */}
+                        <div
+                          className='relative flex-1'
+                          ref={editorContainerRef}
+                        >
+                          <BlockNoteInline
+                            ref={editorRef}
+                            placeholder='Write a reply...'
+                            content={field.value}
+                            onChange={field.onChange}
+                            preventEnterSubmit={isMobile}
+                            growUpward={isMobile}
+                            eventId={post.event?._id}
+                            members={(post.event?.memberships as any) || []}
+                            isMobile={isMobile}
+                            onKeyDown={async e => {
+                              // On desktop: Enter sends, Shift+Enter newline
+                              // On mobile: Enter always creates newline (handled by preventEnterSubmit)
+                              if (
+                                !isMobile &&
+                                e.key === 'Enter' &&
+                                !e.shiftKey
+                              ) {
+                                e.preventDefault();
+                                await handleSubmit();
+                              }
+                              // Up arrow when field is empty: edit last reply
+                              if (e.key === 'ArrowUp' && onEditLastReply) {
+                                const currentValue = form.getValues('reply');
+                                // Check if field is empty - BlockNote may output empty string or minimal HTML
+                                const isEmpty =
+                                  !currentValue ||
+                                  currentValue.trim() === '' ||
+                                  isEmptyHtml(currentValue) ||
+                                  currentValue === '<p></p>' ||
+                                  currentValue === '<p><br></p>';
+                                if (isEmpty && pendingUploads.length === 0) {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  onEditLastReply();
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type='button'
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || isUploading}
+                            size='sm'
+                            className={cn(
+                              'absolute right-2 h-8 w-8 p-0',
+                              'bg-primary text-primary-foreground',
+                              'hover:bg-primary/90',
+                              'shadow-md',
+                              isMultiline || pendingUploads.length > 0
+                                ? 'bottom-2'
+                                : 'top-1/2 -translate-y-1/2'
+                            )}
+                            aria-label='Send reply'
+                          >
+                            {isSubmitting || isUploading ? (
+                              <Icons.spinner className='h-4 w-4 animate-spin' />
+                            ) : (
+                              <Icons.submit className='h-4 w-4' />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </FormControl>
                 </FormItem>

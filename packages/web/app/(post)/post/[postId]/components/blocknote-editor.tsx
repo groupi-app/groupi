@@ -5,8 +5,12 @@ import {
   useCreateBlockNote,
   SuggestionMenuController,
   SuggestionMenuProps,
+  createReactInlineContentSpec,
+  getDefaultReactSlashMenuItems,
+  DefaultReactSuggestionItem,
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
+import { BlockNoteSchema, defaultInlineContentSpecs } from '@blocknote/core';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import '@blocknote/core/fonts/inter.css';
@@ -24,6 +28,53 @@ const stripEmptyParagraphs = (html: string): string => {
     .trim();
 };
 
+// Custom mention inline content spec
+const Mention = createReactInlineContentSpec(
+  {
+    type: 'mention',
+    propSchema: {
+      personId: { default: '' },
+      label: { default: '' },
+    },
+    content: 'none',
+  },
+  {
+    render: props => (
+      <span className='mention' data-id={props.inlineContent.props.personId}>
+        @{props.inlineContent.props.label}
+      </span>
+    ),
+  }
+);
+
+// Create schema with custom mention inline content
+const schema = BlockNoteSchema.create({
+  inlineContentSpecs: {
+    ...defaultInlineContentSpecs,
+    mention: Mention,
+  },
+});
+
+// Media block types to exclude from slash menu (handled separately as attachments)
+const EXCLUDED_SLASH_ITEMS = ['Image', 'Video', 'Audio', 'File'];
+
+// Filter function for slash menu items
+function filterSlashMenuItems(
+  items: DefaultReactSuggestionItem[],
+  query: string
+): DefaultReactSuggestionItem[] {
+  const lowerQuery = query.toLowerCase();
+  return items
+    .filter(item => !EXCLUDED_SLASH_ITEMS.includes(item.title))
+    .filter(
+      item =>
+        item.title.toLowerCase().includes(lowerQuery) ||
+        (item.subtext && item.subtext.toLowerCase().includes(lowerQuery)) ||
+        (item.aliases &&
+          item.aliases.some(alias => alias.toLowerCase().includes(lowerQuery)))
+    );
+}
+
 // Custom mention item type for @ mentions
 interface MentionItem {
   personId: Id<'persons'>;
@@ -34,8 +85,8 @@ interface MentionItem {
 
 const DEFAULT_MAX_LENGTH = 2000;
 
-type MemberWithPerson = Doc<"memberships"> & {
-  person: Doc<"persons"> & {
+type MemberWithPerson = Doc<'memberships'> & {
+  person: Doc<'persons'> & {
     user: User;
   };
 };
@@ -44,14 +95,14 @@ export function BlockNoteEditor({
   content,
   onChange,
   placeholder = "What's on your mind?",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   eventId: _eventId,
   className,
   maxLength = DEFAULT_MAX_LENGTH,
   onSubmit,
   disabled = false,
   onChangeCapture,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   resetKey: _resetKey,
   members = [],
   'data-test': dataTest,
@@ -59,7 +110,7 @@ export function BlockNoteEditor({
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
-  eventId: Id<"events">;
+  eventId: Id<'events'>;
   className?: string;
   maxLength?: number;
   onSubmit?: () => void;
@@ -77,8 +128,9 @@ export function BlockNoteEditor({
   // Track if we're currently setting initial content (to skip onChange)
   const isSettingInitialContent = useRef(false);
 
-  // Create the editor instance using the hook
+  // Create the editor instance using the hook with custom schema
   const editor = useCreateBlockNote({
+    schema,
     placeholders: {
       default: placeholder,
     },
@@ -110,7 +162,7 @@ export function BlockNoteEditor({
 
   // Build mention items from members
   const mentionItems = useMemo((): MentionItem[] => {
-    return members.map((member) => {
+    return members.map(member => {
       const user = member.person.user;
       const displayName = user.name || user.email || 'Unknown';
       const username = user.username || '';
@@ -130,9 +182,10 @@ export function BlockNoteEditor({
     async (query: string): Promise<MentionItem[]> => {
       const lowerQuery = query.toLowerCase();
       return mentionItems
-        .filter((item) =>
-          item.displayName.toLowerCase().includes(lowerQuery) ||
-          item.username.toLowerCase().includes(lowerQuery)
+        .filter(
+          item =>
+            item.displayName.toLowerCase().includes(lowerQuery) ||
+            item.username.toLowerCase().includes(lowerQuery)
         )
         .slice(0, 10); // Limit to 10 results
     },
@@ -182,7 +235,7 @@ export function BlockNoteEditor({
       data-test={dataTest}
       onKeyDown={handleKeyDown}
       // Prevent BlockNote toolbar buttons from submitting parent forms
-      onClickCapture={(e) => {
+      onClickCapture={e => {
         const target = e.target as HTMLElement;
         if (target.closest('button') && !target.closest('[type="submit"]')) {
           e.preventDefault();
@@ -190,77 +243,126 @@ export function BlockNoteEditor({
       }}
     >
       {/* BlockNote Editor */}
-      <div className="rounded-lg">
+      <div className='rounded-lg'>
         <BlockNoteView
           editor={editor}
           onChange={handleChange}
           editable={!disabled}
           theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+          slashMenu={false}
         >
-        {/* Mention Menu - triggered by @ */}
-        <SuggestionMenuController
-          triggerCharacter="@"
-          getItems={getMentionMenuItems}
-          suggestionMenuComponent={({
-            items,
-            onItemClick,
-            selectedIndex,
-          }: SuggestionMenuProps<MentionItem>) => (
-            <div className="bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px]">
-              {items.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">
-                  No members found
-                </div>
-              ) : (
-                items.map((item, index) => (
-                  <button
-                    key={item.personId}
-                    type="button"
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
-                      index === selectedIndex && 'bg-accent'
-                    )}
-                    onClick={() => onItemClick?.(item)}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={item.image} />
-                      <AvatarFallback className="text-xs">
-                        {getInitialsFromName(item.displayName, '')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium truncate">
-                        {item.displayName}
-                      </span>
-                      {item.username && (
-                        <span className="text-xs text-muted-foreground truncate">
-                          @{item.username}
-                        </span>
+          {/* Mention Menu - triggered by @ */}
+          <SuggestionMenuController
+            triggerCharacter='@'
+            getItems={getMentionMenuItems}
+            suggestionMenuComponent={({
+              items,
+              onItemClick,
+              selectedIndex,
+            }: SuggestionMenuProps<MentionItem>) => (
+              <div className='bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px]'>
+                {items.length === 0 ? (
+                  <div className='px-3 py-2 text-sm text-muted-foreground'>
+                    No members found
+                  </div>
+                ) : (
+                  items.map((item, index) => (
+                    <button
+                      key={item.personId}
+                      type='button'
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+                        index === selectedIndex && 'bg-accent'
                       )}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          onItemClick={(item: MentionItem) => {
-            // Insert mention text at cursor
-            editor.insertInlineContent([
-              {
-                type: 'text',
-                text: `@${item.username || item.displayName}`,
-                styles: { bold: true },
-              },
-              { type: 'text', text: ' ', styles: {} },
-            ]);
-          }}
-        />
+                      onClick={() => onItemClick?.(item)}
+                    >
+                      <Avatar className='h-8 w-8'>
+                        <AvatarImage src={item.image} />
+                        <AvatarFallback className='text-xs'>
+                          {getInitialsFromName(item.displayName, '')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex flex-col min-w-0'>
+                        <span className='text-sm font-medium truncate'>
+                          {item.displayName}
+                        </span>
+                        {item.username && (
+                          <span className='text-xs text-muted-foreground truncate'>
+                            @{item.username}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+            onItemClick={(item: MentionItem) => {
+              // Insert custom mention inline content with personId and label
+              editor.insertInlineContent([
+                {
+                  type: 'mention',
+                  props: {
+                    personId: item.personId,
+                    label: item.username || item.displayName,
+                  },
+                },
+                { type: 'text', text: ' ', styles: {} },
+              ]);
+            }}
+          />
+          {/* Slash Menu - triggered by / (excluding media blocks) */}
+          <SuggestionMenuController
+            triggerCharacter='/'
+            getItems={async query =>
+              filterSlashMenuItems(getDefaultReactSlashMenuItems(editor), query)
+            }
+            suggestionMenuComponent={({
+              items,
+              onItemClick,
+              selectedIndex,
+            }: SuggestionMenuProps<DefaultReactSuggestionItem>) => (
+              <div className='bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px] max-h-[300px] overflow-y-auto'>
+                {items.length === 0 ? (
+                  <div className='px-3 py-2 text-sm text-muted-foreground'>
+                    No commands found
+                  </div>
+                ) : (
+                  items.map((item, index) => (
+                    <button
+                      key={item.title}
+                      type='button'
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+                        index === selectedIndex && 'bg-accent'
+                      )}
+                      onClick={() => onItemClick?.(item)}
+                    >
+                      {item.icon && (
+                        <span className='text-lg'>{item.icon}</span>
+                      )}
+                      <div className='flex flex-col min-w-0'>
+                        <span className='text-sm font-medium truncate'>
+                          {item.title}
+                        </span>
+                        {item.subtext && (
+                          <span className='text-xs text-muted-foreground truncate'>
+                            {item.subtext}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          />
         </BlockNoteView>
       </div>
 
       {/* Character limit warning */}
       {isOverLimit && (
-        <div className="px-3 pb-2 text-sm text-red-500">
+        <div className='px-3 pb-2 text-sm text-red-500'>
           Content is too long
         </div>
       )}

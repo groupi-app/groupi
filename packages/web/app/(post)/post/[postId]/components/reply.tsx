@@ -6,17 +6,27 @@
 // - Membership data transformations between query results and component props
 
 import { useUpdateReply } from '@/hooks/convex/use-replies';
-import { formatReplyDate } from '@/lib/utils';
+import { formatReplyDate, getInitialsFromName } from '@/lib/utils';
 import { canDeleteReply } from '@/lib/event-permissions';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useMobile } from '@/hooks/use-mobile';
+import { useMutation } from 'convex/react';
+import { toast } from 'sonner';
 import { Doc, Id } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { DeleteReplyDialog } from './deleteReplyDialog';
 import { Icons } from '@/components/icons';
+import { AttachmentGallery } from '@/components/attachments';
+import { useMergedAttachments } from '@/contexts/pending-attachments-context';
 import MemberIcon from '@/components/member-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
@@ -44,7 +54,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitialsFromName } from '@/lib/utils';
+
+let attachmentMutations: any;
+
+function initAttachmentApi() {
+  if (!attachmentMutations) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { api } = require('@/convex/_generated/api');
+    attachmentMutations = api.attachments?.mutations ?? {};
+  }
+}
+initAttachmentApi();
 
 const formSchema = z.object({
   reply: z
@@ -266,6 +286,16 @@ export default function ReplyComponent({
     author: Doc<'persons'> & {
       user: User;
     };
+    attachments?: Array<{
+      _id: string;
+      type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
+      filename: string;
+      size: number;
+      mimeType: string;
+      width?: number;
+      height?: number;
+      url: string | null;
+    }>;
   };
   member:
     | undefined
@@ -295,9 +325,33 @@ export default function ReplyComponent({
   const [editMode, setEditMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [deletingAttachmentIds, setDeletingAttachmentIds] = useState<
+    Set<string>
+  >(new Set());
   const isMobile = useMobile();
   const updateReply = useUpdateReply(postId as Id<'posts'>);
+  const deleteAttachment = useMutation(attachmentMutations.deleteAttachment);
   const editorRef = useRef<BlockNoteInlineHandle>(null);
+
+  // Merge pending attachments with real attachments for optimistic rendering
+  // This keeps preview images visible until real attachment URLs are available
+  console.log(
+    '[Reply] reply._id:',
+    reply._id,
+    'reply.attachments:',
+    reply.attachments
+  );
+  const mergedAttachments = useMergedAttachments(
+    reply._id || reply.id,
+    reply.attachments
+  );
+  console.log('[Reply] mergedAttachments:', mergedAttachments);
+
+  // Filter out attachments that are being deleted (optimistic deletion)
+  const visibleAttachments = useMemo(
+    () => mergedAttachments.filter(a => !deletingAttachmentIds.has(a._id)),
+    [mergedAttachments, deletingAttachmentIds]
+  );
 
   // Migrate plaintext to HTML if needed
   const replyContent = migratePlaintextToHtml(reply.text);
@@ -377,6 +431,30 @@ export default function ReplyComponent({
       }
     },
     [isMobile]
+  );
+
+  // Handle attachment deletion (optimistic)
+  const handleDeleteAttachment = useCallback(
+    async (attachmentId: string) => {
+      // Optimistically remove from UI immediately
+      setDeletingAttachmentIds(prev => new Set(prev).add(attachmentId));
+
+      try {
+        await deleteAttachment({
+          attachmentId: attachmentId as Id<'attachments'>,
+        });
+        // Success - attachment is now deleted on server, Convex will update the cache
+      } catch {
+        // Failed - restore the attachment in the UI
+        setDeletingAttachmentIds(prev => {
+          const next = new Set(prev);
+          next.delete(attachmentId);
+          return next;
+        });
+        toast.error('Failed to remove attachment');
+      }
+    },
+    [deleteAttachment]
   );
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -490,17 +568,26 @@ export default function ReplyComponent({
             </form>
           </Form>
         ) : (
-          <MentionHandler
-            members={post?.event?.memberships || []}
-            userId={userId}
-            userRole={userRole}
-            eventDateTime={eventDateTime}
-          >
-            <div
-              className='prose prose-sm max-w-none text-foreground'
-              dangerouslySetInnerHTML={{ __html: replyContent }}
-            />
-          </MentionHandler>
+          <div className='space-y-2'>
+            <MentionHandler
+              members={post?.event?.memberships || []}
+              userId={userId}
+              userRole={userRole}
+              eventDateTime={eventDateTime}
+            >
+              <div
+                className='prose prose-sm max-w-none text-foreground'
+                dangerouslySetInnerHTML={{ __html: replyContent }}
+              />
+            </MentionHandler>
+            {/* Display attachments (merged with pending for optimistic rendering) */}
+            {visibleAttachments.length > 0 && (
+              <AttachmentGallery
+                attachments={visibleAttachments}
+                onDelete={isMe ? handleDeleteAttachment : undefined}
+              />
+            )}
+          </div>
         )}
       </div>
 

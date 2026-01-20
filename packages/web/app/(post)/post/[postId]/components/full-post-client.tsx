@@ -27,6 +27,7 @@ import { MentionHandler } from './mention-handler';
 import { usePostDetail } from '@/hooks/convex';
 import { NotFoundError } from '@/components/error-display';
 import { useIsPostMuted } from '@/hooks/convex/use-muting';
+import { AttachmentGallery } from '@/components/attachments';
 
 // Strip leading and trailing empty paragraph tags that BlockNote adds
 const stripEmptyParagraphs = (html: string): string => {
@@ -297,6 +298,13 @@ export function FullPostClient({ postId, postRef }: FullPostClientProps) {
                 }}
               />
             </MentionHandler>
+            {/* Display post attachments */}
+            {post.attachments && post.attachments.length > 0 && (
+              <AttachmentGallery
+                attachments={post.attachments}
+                className='mt-4'
+              />
+            )}
           </div>
         </div>
       </div>
