@@ -2,8 +2,26 @@
 
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+
+// ===== OPTIMISTIC ATTACHMENT TYPES =====
+
+/**
+ * Attachment data for optimistic rendering
+ * Uses preview URLs before real storage URLs are available
+ */
+export interface OptimisticAttachment {
+  filename: string;
+  size: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isSpoiler?: boolean;
+  altText?: string;
+  /** Preview URL (blob URL) for immediate display */
+  previewUrl?: string;
+}
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +72,10 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
   const baseMutation = useMutation(replyMutations.createReply);
   const { toast } = useToast();
 
+  // Ref to hold optimistic attachments for the current mutation
+  // This allows us to pass attachment data to the optimistic update
+  const pendingAttachmentsRef = useRef<OptimisticAttachment[]>([]);
+
   // Create mutation with optimistic update if user data is provided
   const createReply = useMemo(() => {
     if (!currentUser) {
@@ -74,6 +96,36 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
       // Using 'as unknown as' pattern for temporary optimistic data
       // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback, not during render
       const now = Date.now();
+
+      // Build optimistic attachments from the ref
+      console.log(
+        '[Optimistic Update] pendingAttachmentsRef.current:',
+        pendingAttachmentsRef.current
+      );
+      const optimisticAttachments = pendingAttachmentsRef.current.map(
+        (att, index) => {
+          // Determine attachment type from MIME type
+          let type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' = 'FILE';
+          if (att.mimeType.startsWith('image/')) type = 'IMAGE';
+          else if (att.mimeType.startsWith('video/')) type = 'VIDEO';
+          else if (att.mimeType.startsWith('audio/')) type = 'AUDIO';
+
+          return {
+            _id: `optimistic_attachment_${now}_${index}` as unknown as Id<'attachments'>,
+            type,
+            filename: att.filename,
+            size: att.size,
+            mimeType: att.mimeType,
+            width: att.width,
+            height: att.height,
+            isSpoiler: att.isSpoiler,
+            altText: att.altText,
+            // Use preview URL for immediate display
+            url: att.previewUrl || null,
+          };
+        }
+      );
+
       const optimisticReply = {
         _id: `optimistic_${now}` as unknown as Id<'replies'>,
         _creationTime: now,
@@ -101,6 +153,8 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
             username: currentUser.username,
           },
         },
+        // Include optimistic attachments
+        attachments: optimisticAttachments,
       };
 
       // Add the optimistic reply to the cache
@@ -119,16 +173,31 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
     async (data: {
       postId: Id<'posts'>;
       text: string; // HTML content with mention spans
+      /** Optional attachments for optimistic rendering */
+      optimisticAttachments?: OptimisticAttachment[];
     }) => {
       try {
+        // Store attachments in ref for the optimistic update to access
+        console.log(
+          '[createReply] data.optimisticAttachments:',
+          data.optimisticAttachments
+        );
+        pendingAttachmentsRef.current = data.optimisticAttachments || [];
+
         const result = await createReply({
           postId: data.postId,
           text: data.text,
         });
 
+        // Clear the ref after mutation completes
+        pendingAttachmentsRef.current = [];
+
         // No success toast - the reply appearing instantly is feedback enough
         return result;
       } catch (error) {
+        // Clear the ref on error too
+        pendingAttachmentsRef.current = [];
+
         toast({
           title: 'Error',
           description: 'Failed to add reply. Please try again.',

@@ -15,6 +15,8 @@ import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as admin_queryBuilder from "../admin/queryBuilder.js";
 import type * as ai_actions from "../ai/actions.js";
+import type * as attachments_mutations from "../attachments/mutations.js";
+import type * as attachments_queries from "../attachments/queries.js";
 import type * as auth from "../auth.js";
 import type * as auth_queries from "../auth/queries.js";
 import type * as availability_mutations from "../availability/mutations.js";
@@ -69,6 +71,8 @@ declare const fullApi: ApiFromModules<{
   "admin/queries": typeof admin_queries;
   "admin/queryBuilder": typeof admin_queryBuilder;
   "ai/actions": typeof ai_actions;
+  "attachments/mutations": typeof attachments_mutations;
+  "attachments/queries": typeof attachments_queries;
   auth: typeof auth;
   "auth/queries": typeof auth_queries;
   "availability/mutations": typeof availability_mutations;

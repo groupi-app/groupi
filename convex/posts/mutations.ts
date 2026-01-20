@@ -163,14 +163,36 @@ export const deletePost = mutation({
       throw new Error("You don't have permission to delete this post");
     }
 
-    // Delete all replies first
+    // Delete all replies and their attachments first
     const replies = await ctx.db
       .query('replies')
       .withIndex('by_post', q => q.eq('postId', postId))
       .collect();
 
     for (const reply of replies) {
+      // Delete reply attachments and storage files
+      const replyAttachments = await ctx.db
+        .query('attachments')
+        .withIndex('by_reply', q => q.eq('replyId', reply._id))
+        .collect();
+
+      for (const attachment of replyAttachments) {
+        await ctx.storage.delete(attachment.storageId);
+        await ctx.db.delete(attachment._id);
+      }
+
       await ctx.db.delete(reply._id);
+    }
+
+    // Delete post attachments and storage files
+    const postAttachments = await ctx.db
+      .query('attachments')
+      .withIndex('by_post', q => q.eq('postId', postId))
+      .collect();
+
+    for (const attachment of postAttachments) {
+      await ctx.storage.delete(attachment.storageId);
+      await ctx.db.delete(attachment._id);
     }
 
     // Delete any notifications related to this post
@@ -330,6 +352,17 @@ export const deleteReply = mutation({
 
     // Note: Notifications are tied to posts, not individual replies.
     // No notification cleanup needed for reply deletion.
+
+    // Delete reply attachments and storage files
+    const attachments = await ctx.db
+      .query('attachments')
+      .withIndex('by_reply', q => q.eq('replyId', replyId))
+      .collect();
+
+    for (const attachment of attachments) {
+      await ctx.storage.delete(attachment.storageId);
+      await ctx.db.delete(attachment._id);
+    }
 
     // Delete the reply
     await ctx.db.delete(replyId);

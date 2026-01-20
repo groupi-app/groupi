@@ -1,17 +1,32 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// Props defined for API compatibility but not yet used in implementation
-
-import React, { useCallback, useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { useCreateBlockNote } from '@blocknote/react';
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useMemo,
+} from 'react';
+import {
+  useCreateBlockNote,
+  SuggestionMenuController,
+  SuggestionMenuProps,
+  createReactInlineContentSpec,
+  getDefaultReactSlashMenuItems,
+  DefaultReactSuggestionItem,
+} from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
+import { BlockNoteSchema, defaultInlineContentSpecs } from '@blocknote/core';
 import { useTheme } from 'next-themes';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/shadcn/style.css';
 
-import { cn } from '@/lib/utils';
-import { Id } from '@/convex/_generated/dataModel';
+import { cn, getInitialsFromName } from '@/lib/utils';
+import { Id, Doc } from '@/convex/_generated/dataModel';
+import { User } from '@/convex/types';
 
 // Strip leading and trailing empty paragraph tags that BlockNote adds
 const stripEmptyParagraphs = (html: string): string => {
@@ -21,19 +36,167 @@ const stripEmptyParagraphs = (html: string): string => {
     .trim();
 };
 
-// Type definitions for members - simplified from the current Tiptap implementation
-type Member = {
-  personId: string;
-  person: {
-    user: {
-      id: string;
-      name?: string;
-      email: string;
-      image?: string;
-      username?: string;
-    } | null;
+// Custom mention inline content spec
+const Mention = createReactInlineContentSpec(
+  {
+    type: 'mention',
+    propSchema: {
+      personId: { default: '' },
+      label: { default: '' },
+    },
+    content: 'none',
+  },
+  {
+    render: props => (
+      <span className='mention' data-id={props.inlineContent.props.personId}>
+        @{props.inlineContent.props.label}
+      </span>
+    ),
+  }
+);
+
+// Create schema with custom mention inline content
+const schema = BlockNoteSchema.create({
+  inlineContentSpecs: {
+    ...defaultInlineContentSpecs,
+    mention: Mention,
+  },
+});
+
+// Custom mention item type for @ mentions
+interface MentionItem {
+  personId: Id<'persons'>;
+  displayName: string;
+  username: string;
+  image?: string;
+}
+
+type MemberWithPerson = Doc<'memberships'> & {
+  person: Doc<'persons'> & {
+    user: User;
   };
 };
+
+// Suggestion menu component that tracks visibility
+function MentionSuggestionMenu({
+  items,
+  onItemClick,
+  selectedIndex,
+  onVisibilityChange,
+}: SuggestionMenuProps<MentionItem> & {
+  onVisibilityChange: (visible: boolean) => void;
+}) {
+  useEffect(() => {
+    onVisibilityChange(true);
+    return () => onVisibilityChange(false);
+  }, [onVisibilityChange]);
+
+  return (
+    <div className='bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px]'>
+      {items.length === 0 ? (
+        <div className='px-3 py-2 text-sm text-muted-foreground'>
+          No members found
+        </div>
+      ) : (
+        items.map((item, index) => (
+          <button
+            key={item.personId}
+            type='button'
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+              index === selectedIndex && 'bg-accent'
+            )}
+            onClick={() => onItemClick?.(item)}
+          >
+            <Avatar className='h-8 w-8'>
+              <AvatarImage src={item.image} />
+              <AvatarFallback className='text-xs'>
+                {getInitialsFromName(item.displayName, '')}
+              </AvatarFallback>
+            </Avatar>
+            <div className='flex flex-col min-w-0'>
+              <span className='text-sm font-medium truncate'>
+                {item.displayName}
+              </span>
+              {item.username && (
+                <span className='text-xs text-muted-foreground truncate'>
+                  @{item.username}
+                </span>
+              )}
+            </div>
+          </button>
+        ))
+      )}
+    </div>
+  );
+}
+
+// Slash menu component that tracks visibility
+function SlashSuggestionMenu({
+  items,
+  onItemClick,
+  selectedIndex,
+  onVisibilityChange,
+}: SuggestionMenuProps<DefaultReactSuggestionItem> & {
+  onVisibilityChange: (visible: boolean) => void;
+}) {
+  useEffect(() => {
+    onVisibilityChange(true);
+    return () => onVisibilityChange(false);
+  }, [onVisibilityChange]);
+
+  return (
+    <div className='bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px] max-h-[300px] overflow-y-auto'>
+      {items.length === 0 ? (
+        <div className='px-3 py-2 text-sm text-muted-foreground'>
+          No commands found
+        </div>
+      ) : (
+        items.map((item, index) => (
+          <button
+            key={item.title}
+            type='button'
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+              index === selectedIndex && 'bg-accent'
+            )}
+            onClick={() => onItemClick?.(item)}
+          >
+            {item.icon && <span className='text-lg'>{item.icon}</span>}
+            <div className='flex flex-col min-w-0'>
+              <span className='text-sm font-medium truncate'>{item.title}</span>
+              {item.subtext && (
+                <span className='text-xs text-muted-foreground truncate'>
+                  {item.subtext}
+                </span>
+              )}
+            </div>
+          </button>
+        ))
+      )}
+    </div>
+  );
+}
+
+// Media block types to exclude from slash menu (handled separately as attachments)
+const EXCLUDED_SLASH_ITEMS = ['Image', 'Video', 'Audio', 'File'];
+
+// Simple filter function for slash menu items
+function filterSlashMenuItems(
+  items: DefaultReactSuggestionItem[],
+  query: string
+): DefaultReactSuggestionItem[] {
+  const lowerQuery = query.toLowerCase();
+  return items
+    .filter(item => !EXCLUDED_SLASH_ITEMS.includes(item.title))
+    .filter(
+      item =>
+        item.title.toLowerCase().includes(lowerQuery) ||
+        (item.subtext && item.subtext.toLowerCase().includes(lowerQuery)) ||
+        (item.aliases &&
+          item.aliases.some(alias => alias.toLowerCase().includes(lowerQuery)))
+    );
+}
 
 interface BlockNoteInlineProps {
   content: string;
@@ -43,7 +206,7 @@ interface BlockNoteInlineProps {
   preventEnterSubmit?: boolean;
   growUpward?: boolean;
   eventId?: Id<'events'>;
-  members?: Member[];
+  members?: MemberWithPerson[];
   isMobile?: boolean;
 }
 
@@ -52,47 +215,93 @@ export interface BlockNoteInlineHandle {
   focus: () => void;
 }
 
-function BlockNoteInlineComponent({
-  content,
-  placeholder,
-  onChange,
-  onKeyDown,
-  preventEnterSubmit = false,
-  growUpward = false,
-  eventId: _eventId,
-  members: _members = [],
-  isMobile: _isMobile = false,
-}: BlockNoteInlineProps, ref: React.ForwardedRef<BlockNoteInlineHandle>) {
-  const [_editorContent, setEditorContent] = useState(content);
+function BlockNoteInlineComponent(
+  {
+    content,
+    placeholder,
+    onChange,
+    onKeyDown,
+    preventEnterSubmit = false,
+    growUpward = false,
+    members = [],
+  }: BlockNoteInlineProps,
+  ref: React.ForwardedRef<BlockNoteInlineHandle>
+) {
+  const [, setEditorContent] = useState(content);
   const { resolvedTheme } = useTheme();
+
+  // Track if suggestion menu is open (to prevent Enter/Tab from submitting)
+  const suggestionMenuOpenRef = useRef(false);
+
+  // Callback to update suggestion menu visibility
+  const handleSuggestionMenuVisibility = useCallback((visible: boolean) => {
+    suggestionMenuOpenRef.current = visible;
+  }, []);
 
   // Track if initial content has been set
   const hasSetInitialContent = useRef(false);
   const isSettingInitialContent = useRef(false);
 
-  // Create the editor instance using the hook
+  // Create the editor instance using the hook with custom schema
   const editor = useCreateBlockNote({
+    schema,
     initialContent: undefined,
     placeholders: {
       default: placeholder || 'Write something...',
     },
   });
 
+  // Build mention items from members
+  const mentionItems = useMemo((): MentionItem[] => {
+    return members.map(member => {
+      const user = member.person.user;
+      const displayName = user.name || user.email || 'Unknown';
+      const username = user.username || '';
+      const image = user.image || undefined;
+
+      return {
+        personId: member.person._id,
+        displayName,
+        username,
+        image,
+      };
+    });
+  }, [members]);
+
+  // Get filtered mention suggestions based on query
+  const getMentionMenuItems = useCallback(
+    async (query: string): Promise<MentionItem[]> => {
+      const lowerQuery = query.toLowerCase();
+      return mentionItems
+        .filter(
+          item =>
+            item.displayName.toLowerCase().includes(lowerQuery) ||
+            item.username.toLowerCase().includes(lowerQuery)
+        )
+        .slice(0, 10); // Limit to 10 results
+    },
+    [mentionItems]
+  );
+
   // Expose imperative methods to parent
-  useImperativeHandle(ref, () => ({
-    clear: () => {
-      // Replace all blocks with a single empty paragraph
-      const emptyBlock = { type: 'paragraph' as const, content: [] };
-      editor.replaceBlocks(editor.document, [emptyBlock]);
-      // Reset the initial content flag so new content can be set
-      hasSetInitialContent.current = false;
-      // Notify parent that content is now empty
-      onChange('');
-    },
-    focus: () => {
-      editor.focus();
-    },
-  }), [editor, onChange]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      clear: () => {
+        // Replace all blocks with a single empty paragraph
+        const emptyBlock = { type: 'paragraph' as const, content: [] };
+        editor.replaceBlocks(editor.document, [emptyBlock]);
+        // Reset the initial content flag so new content can be set
+        hasSetInitialContent.current = false;
+        // Notify parent that content is now empty
+        onChange('');
+      },
+      focus: () => {
+        editor.focus();
+      },
+    }),
+    [editor, onChange]
+  );
 
   // Set initial content from HTML when editor is ready
   useEffect(() => {
@@ -138,6 +347,14 @@ function BlockNoteInlineComponent({
   // Handle keyboard events
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
+      // If suggestion menu is open, let BlockNote handle Enter and Tab for item selection
+      if (
+        suggestionMenuOpenRef.current &&
+        (event.key === 'Enter' || event.key === 'Tab')
+      ) {
+        return; // Let BlockNote handle these keys for the suggestion menu
+      }
+
       // Handle Enter key behavior
       if (event.key === 'Enter' && !event.shiftKey) {
         // If preventEnterSubmit is true (mobile), allow Enter to create newline
@@ -178,7 +395,50 @@ function BlockNoteInlineComponent({
           theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
           sideMenu={false}
           formattingToolbar={false}
-        />
+          slashMenu={false}
+        >
+          {/* Mention Menu - triggered by @ */}
+          <SuggestionMenuController
+            triggerCharacter='@'
+            getItems={getMentionMenuItems}
+            suggestionMenuComponent={(
+              props: SuggestionMenuProps<MentionItem>
+            ) => (
+              <MentionSuggestionMenu
+                {...props}
+                onVisibilityChange={handleSuggestionMenuVisibility}
+              />
+            )}
+            onItemClick={(item: MentionItem) => {
+              // Insert custom mention inline content with personId and label
+              editor.insertInlineContent([
+                {
+                  type: 'mention',
+                  props: {
+                    personId: item.personId,
+                    label: item.username || item.displayName,
+                  },
+                },
+                { type: 'text', text: ' ', styles: {} },
+              ]);
+            }}
+          />
+          {/* Slash Menu - triggered by / */}
+          <SuggestionMenuController
+            triggerCharacter='/'
+            getItems={async query =>
+              filterSlashMenuItems(getDefaultReactSlashMenuItems(editor), query)
+            }
+            suggestionMenuComponent={(
+              props: SuggestionMenuProps<DefaultReactSuggestionItem>
+            ) => (
+              <SlashSuggestionMenu
+                {...props}
+                onVisibilityChange={handleSuggestionMenuVisibility}
+              />
+            )}
+          />
+        </BlockNoteView>
       </div>
     </div>
   );

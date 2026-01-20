@@ -36,6 +36,7 @@ type PostData = Doc<'posts'> & {
     >;
   };
   replies: Array<Doc<'replies'>>;
+  replyCount?: number;
   authorId: string;
 };
 
@@ -67,6 +68,7 @@ export function PostCard({
     _creationTime: createdAt,
     editedAt,
     replies,
+    replyCount,
     authorId,
     event,
   } = postData;
@@ -313,7 +315,9 @@ export function PostCard({
               </div>
               <div className='text-muted-foreground flex items-center gap-1'>
                 <RepliesIcons replies={replies} />
-                <span className='text-sm'>{replies.length} replies</span>
+                <span className='text-sm'>
+                  {replyCount ?? replies.length} replies
+                </span>
               </div>
             </div>
           </div>
