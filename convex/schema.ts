@@ -231,6 +231,37 @@ export default defineSchema({
     .index('by_method', ['methodId'])
     .index('by_type_method', ['notificationType', 'methodId']),
 
+  // ===== ATTACHMENT TABLES =====
+  // Store file attachments for posts and replies (Discord-style)
+
+  attachments: defineTable({
+    storageId: v.id('_storage'), // Convex file storage reference
+    type: v.union(
+      v.literal('IMAGE'),
+      v.literal('VIDEO'),
+      v.literal('AUDIO'),
+      v.literal('FILE')
+    ),
+    filename: v.string(), // Original filename
+    size: v.number(), // File size in bytes
+    mimeType: v.string(), // MIME type (e.g., "image/png")
+    width: v.optional(v.number()), // Image/video width (for gallery layout)
+    height: v.optional(v.number()), // Image/video height (for gallery layout)
+    // Spoiler and description (Discord-style)
+    isSpoiler: v.optional(v.boolean()), // Mark as spoiler (blur until clicked)
+    altText: v.optional(v.string()), // Alt text / description for accessibility
+    // Parent reference (exactly one should be set)
+    postId: v.optional(v.id('posts')),
+    replyId: v.optional(v.id('replies')),
+    // Uploader reference
+    uploaderId: v.id('persons'),
+    createdAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
+  })
+    .index('by_post', ['postId'])
+    .index('by_reply', ['replyId'])
+    .index('by_uploader', ['uploaderId']),
+
   // ===== MUTING TABLES =====
   // Track muted events and posts to suppress notifications
 

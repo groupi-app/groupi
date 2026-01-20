@@ -45,10 +45,27 @@ export const getRepliesByPost = query({
       .order('asc')
       .collect();
 
-    // Enrich replies with author data - nest user inside person
+    // Enrich replies with author data and attachments
     const enrichedReplies = await Promise.all(
       replies.map(async reply => {
         const authorData = await getPersonWithUser(ctx, reply.authorId);
+
+        // Get attachments for this reply
+        const attachments = await ctx.db
+          .query('attachments')
+          .withIndex('by_reply', q => q.eq('replyId', reply._id))
+          .collect();
+
+        // Get URLs for each attachment
+        const attachmentsWithUrls = await Promise.all(
+          attachments.map(async attachment => {
+            const url = await ctx.storage.getUrl(attachment.storageId);
+            return {
+              ...attachment,
+              url,
+            };
+          })
+        );
 
         return {
           ...reply,
@@ -61,6 +78,7 @@ export const getRepliesByPost = query({
                 user: authorData.user,
               }
             : null,
+          attachments: attachmentsWithUrls,
         };
       })
     );
