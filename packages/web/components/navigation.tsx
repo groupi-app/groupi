@@ -169,7 +169,7 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
     );
   }
 
-  const { user, person: _person } = userAndPerson;
+  const { user } = userAndPerson;
 
   // Filter admin items for mobile nav too
   const publicItems = items?.filter(item => item.href !== '/admin') || [];
@@ -218,7 +218,7 @@ function UserProfile() {
     );
   }
 
-  const { user, person: _person } = userAndPerson;
+  const { user } = userAndPerson;
 
   return (
     <ProfileDropdown
