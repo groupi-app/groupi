@@ -127,7 +127,7 @@ export default defineSchema({
   posts: defineTable({
     title: v.string(),
     content: v.string(),
-    editedAt: v.number(), // Unix timestamp for last edit
+    editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
     authorId: v.id('persons'),
