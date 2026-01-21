@@ -6,6 +6,19 @@ import { useAcceptInvite } from '@/hooks/convex';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSession } from '@/lib/auth-client';
+import { useQuery } from 'convex/react';
+
+// Dynamic require to avoid deep type instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let userQueries: any;
+function initApi() {
+  if (!userQueries) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { api } = require('@/convex/_generated/api');
+    userQueries = api.users?.queries ?? {};
+  }
+}
+initApi();
 
 export function AcceptInviteForm({
   inviteId,
@@ -27,10 +40,20 @@ export function AcceptInviteForm({
   const isAuthenticated = !!session?.user;
   const actionParam = searchParams.get('action');
 
+  // Check if user needs onboarding - only query when authenticated
+  const needsOnboarding = useQuery(
+    userQueries.checkNeedsOnboarding,
+    isAuthenticated ? {} : 'skip'
+  );
+
+  // User is ready to accept when authenticated and onboarding is complete
+  const isReadyToAccept = isAuthenticated && needsOnboarding === false;
+
   // Auto-accept invite when user returns after authentication with action=accept
+  // Only trigger when fully ready (authenticated AND onboarded)
   useEffect(() => {
     if (
-      isAuthenticated &&
+      isReadyToAccept &&
       actionParam === 'accept' &&
       !isPending &&
       !autoAcceptTriggered.current
@@ -39,13 +62,19 @@ export function AcceptInviteForm({
       handleAccept();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, actionParam]);
+  }, [isReadyToAccept, actionParam]);
 
   const handleAccept = async () => {
     // If not authenticated, redirect to sign-in with redirect back to this page
     if (!isAuthenticated) {
       const redirectUrl = `${pathname}?action=accept`;
       router.push(`/sign-in?redirect=${encodeURIComponent(redirectUrl)}`);
+      return;
+    }
+
+    // If user needs onboarding, don't attempt accept - OnboardingRedirectWrapper will handle it
+    // The redirect param will bring them back here after onboarding
+    if (needsOnboarding === true) {
       return;
     }
 
@@ -69,8 +98,13 @@ export function AcceptInviteForm({
     }
   };
 
-  // Show loading state while checking session or auto-accepting
-  const isLoading = isPending || (isSessionPending && actionParam === 'accept');
+  // Show loading state while checking session, onboarding status, or auto-accepting
+  const isLoading =
+    isPending ||
+    (isSessionPending && actionParam === 'accept') ||
+    (isAuthenticated &&
+      needsOnboarding === undefined &&
+      actionParam === 'accept');
 
   return (
     <div>
