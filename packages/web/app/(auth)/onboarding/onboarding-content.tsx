@@ -27,7 +27,7 @@ let authQueries: any;
 function initApi() {
   if (!userMutations) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userMutations = api.users?.mutations ?? {};
     userQueries = api.users?.queries ?? {};
     authQueries = api.auth?.queries ?? {};
@@ -141,7 +141,6 @@ export function OnboardingContent() {
 
       toast.success('Welcome to Groupi!');
       router.push(redirectTo);
-      router.refresh();
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
