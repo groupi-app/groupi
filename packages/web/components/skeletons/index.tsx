@@ -6,11 +6,15 @@ export { AvailabilityFormSkeleton } from './availability-form-skeleton';
 export { NewEventFormSkeleton } from './new-event-form-skeleton';
 
 // Post skeletons
-export { PostCardSkeleton } from './post-card-skeleton';
-export { PostDetailSkeleton, PostFeedSkeleton, PostEditorSkeleton } from './post-detail-skeleton';
+export { PostCardSkeleton, PostFeedSkeleton } from './post-card-skeleton';
+export { PostDetailSkeleton, PostEditorSkeleton } from './post-detail-skeleton';
 
 // Reply skeletons
-export { ReplyListSkeleton, ReplySkeleton, ReplyFormSkeleton } from './reply-skeleton';
+export {
+  ReplyListSkeleton,
+  ReplySkeleton,
+  ReplyFormSkeleton,
+} from './reply-skeleton';
 
 // Notification skeletons
 export {
