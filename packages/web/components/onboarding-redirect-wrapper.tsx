@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { useSession } from '@/lib/auth-client';
@@ -11,7 +11,7 @@ let userQueries: any;
 function initApi() {
   if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userQueries = api.users?.queries ?? {};
   }
 }
@@ -27,6 +27,7 @@ initApi();
 export function OnboardingRedirectWrapper() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending: sessionPending } = useSession();
 
   // Check if user needs onboarding
@@ -49,7 +50,9 @@ export function OnboardingRedirectWrapper() {
 
     // Unauthenticated users trying to access onboarding should go to sign-in
     if (!session?.user && pathname?.startsWith('/onboarding')) {
-      console.log('[OnboardingRedirect] Unauthenticated user on onboarding, redirecting to sign-in');
+      console.log(
+        '[OnboardingRedirect] Unauthenticated user on onboarding, redirecting to sign-in'
+      );
       router.push('/sign-in');
       return;
     }
@@ -65,19 +68,40 @@ export function OnboardingRedirectWrapper() {
     }
 
     // If user needs onboarding and is NOT on onboarding page, redirect there
+    // Preserve current path as redirect parameter so user returns after onboarding
     if (needsOnboarding === true && !pathname?.startsWith('/onboarding')) {
-      console.log('[OnboardingRedirect] User needs onboarding, redirecting from', pathname);
-      router.push('/onboarding');
+      console.log(
+        '[OnboardingRedirect] User needs onboarding, redirecting from',
+        pathname
+      );
+      // Build redirect URL with current path and query params
+      const currentUrl = searchParams.toString()
+        ? `${pathname}?${searchParams.toString()}`
+        : pathname;
+      router.push(
+        `/onboarding?redirect=${encodeURIComponent(currentUrl || '/events')}`
+      );
       return;
     }
 
-    // If user completed onboarding and IS on onboarding page, redirect to events
+    // If user completed onboarding and IS on onboarding page, redirect to saved destination
     if (needsOnboarding === false && pathname?.startsWith('/onboarding')) {
-      console.log('[OnboardingRedirect] User completed onboarding, redirecting to events');
-      router.push('/events');
+      const redirectTo = searchParams.get('redirect') || '/events';
+      console.log(
+        '[OnboardingRedirect] User completed onboarding, redirecting to',
+        redirectTo
+      );
+      router.push(redirectTo);
       return;
     }
-  }, [pathname, router, needsOnboarding, session, sessionPending]);
+  }, [
+    pathname,
+    router,
+    searchParams,
+    needsOnboarding,
+    session,
+    sessionPending,
+  ]);
 
   return null;
 }
