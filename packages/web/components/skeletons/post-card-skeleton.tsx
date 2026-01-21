@@ -28,3 +28,13 @@ export function PostCardSkeleton() {
     </div>
   );
 }
+
+export function PostFeedSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <div className='space-y-4'>
+      {Array.from({ length: count }, (_, i) => (
+        <PostCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
