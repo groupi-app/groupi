@@ -39,15 +39,14 @@ export const createPost = mutation({
     }
 
     // Create the post
-    const now = Date.now();
+    // Note: Don't set editedAt on creation - only set it when editing
+    // This prevents the "edited" indicator from showing on new posts
     const postId = await ctx.db.insert('posts', {
       title: title.trim(),
       content: content.trim(),
       authorId: person._id,
       eventId: eventId,
       membershipId: membership._id,
-      editedAt: now,
-      updatedAt: now,
     });
 
     // Get the created post with populated data

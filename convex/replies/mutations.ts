@@ -40,12 +40,13 @@ export const createReply = mutation({
     }
 
     // Create the reply
+    // Note: Don't set updatedAt on creation - only set it when editing
+    // This prevents the "edited" indicator from showing on new replies
     const replyId = await ctx.db.insert('replies', {
       postId,
       text,
       authorId: person._id,
       membershipId: membership._id,
-      updatedAt: Date.now(),
     });
 
     // Notify post author and other reply participants
