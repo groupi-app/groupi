@@ -2,6 +2,7 @@ import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth, requireEventRole } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
+import { notifyEventModerators } from '../lib/notifications';
 
 /**
  * Type for invite creation data
@@ -278,6 +279,13 @@ export const acceptInvite = mutation({
         updatedAt: Date.now(),
       });
     }
+
+    // Notify organizers and moderators about the new member
+    await notifyEventModerators(ctx, {
+      eventId: invite.eventId,
+      type: 'USER_JOINED',
+      authorId: person._id,
+    });
 
     // Get the created membership
     const membership = await ctx.db.get(membershipId);
