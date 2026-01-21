@@ -151,9 +151,10 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
           reminderOffset,
         });
         toast.success('The event was created successfully.');
-        // Reset form context before navigation so it's fresh when user comes back
-        reset();
         router.push(`/event/${result.eventId}`);
+        // Reset form context after navigation starts so user doesn't see flash
+        // The setTimeout ensures the router navigation begins before the reset
+        setTimeout(() => reset(), 100);
       } catch {
         toast.error('The event was unable to be created.');
       } finally {
