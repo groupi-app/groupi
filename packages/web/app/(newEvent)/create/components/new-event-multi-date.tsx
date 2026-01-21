@@ -254,8 +254,9 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
         reminderOffset,
       });
       toast.success('The event was created successfully.');
-      reset();
       router.push(`/event/${result.eventId}`);
+      // Reset form context after navigation starts so user doesn't see flash
+      setTimeout(() => reset(), 100);
     } catch {
       toast.error('The event was unable to be created.');
     } finally {
