@@ -35,19 +35,32 @@ export function InviteLinkCard({
   selectedInvites,
   setSelectedInvites,
 }: {
-  invite: Doc<"invites">;
-  selectedInvites: Id<"invites">[];
-  setSelectedInvites: (invites: Id<"invites">[]) => void;
+  invite: Doc<'invites'>;
+  selectedInvites: Id<'invites'>[];
+  setSelectedInvites: (invites: Id<'invites'>[]) => void;
 }) {
   const [dialogType, setDialogType] = useState('view');
   const [isOpen, setIsOpen] = useState(false);
   const deleteInvites = useDeleteInvites(invite.eventId);
 
-  const { _id: id, name, usesRemaining, maxUses, expiresAt, _creationTime: createdAt, token } =
-    invite;
+  const {
+    _id: id,
+    name,
+    usesRemaining,
+    maxUses,
+    expiresAt,
+    _creationTime: createdAt,
+    token,
+  } = invite;
+
+  // Check if this is an optimistic (pending) invite
+  const isPending = token.startsWith('pending_');
 
   // Generate invite URL using the token (not the document ID)
-  const inviteUrl = getInviteUrl(token);
+  // For pending invites, use a placeholder
+  const inviteUrl = isPending
+    ? 'Generating invite link...'
+    : getInviteUrl(token);
 
   const handleDeleteInvite = async () => {
     try {
@@ -80,7 +93,7 @@ export function InviteLinkCard({
               setSelectedInvites([...selectedInvites, id]);
             } else {
               setSelectedInvites(
-                selectedInvites.filter((selected) => selected !== id)
+                selectedInvites.filter(selected => selected !== id)
               );
             }
           }}
@@ -105,14 +118,25 @@ export function InviteLinkCard({
                   <h1 className='text-2xl overflow-hidden text-ellipsis whitespace-nowrap'>
                     {name
                       ? name
-                      : `/invite/...${token.substring(token.length - 4)}`}
+                      : isPending
+                        ? 'Creating invite...'
+                        : `/invite/...${token.substring(token.length - 4)}`}
                   </h1>
                   <span className='text-sm text-muted-foreground'>
-                    Created:{' '}
-                    {new Date(createdAt).toLocaleString([], {
-                      dateStyle: 'short',
-                      timeStyle: 'short',
-                    })}
+                    {isPending ? (
+                      <span className='flex items-center gap-1'>
+                        <Icons.spinner className='size-3 animate-spin' />
+                        Generating link...
+                      </span>
+                    ) : (
+                      <>
+                        Created:{' '}
+                        {new Date(createdAt).toLocaleString([], {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className='flex items-center gap-4 md:gap-8 px-3'>
@@ -171,7 +195,13 @@ export function InviteLinkCard({
               </DialogTitle>
             </DialogHeader>
             <div className='p-4 bg-white w-max rounded-xl mx-auto my-4 border border-border shadow-md'>
-              <QRCode size={128} value={inviteUrl} />
+              {isPending ? (
+                <div className='size-[128px] flex items-center justify-center'>
+                  <Icons.spinner className='size-8 animate-spin text-muted-foreground' />
+                </div>
+              ) : (
+                <QRCode size={128} value={inviteUrl} />
+              )}
             </div>
             <div className='flex items-center gap-1'>
               <Input value={inviteUrl} readOnly />
@@ -184,6 +214,7 @@ export function InviteLinkCard({
                     }}
                     variant='outline'
                     size='icon'
+                    disabled={isPending}
                   >
                     <Icons.copy className='size-5' />
                   </Button>
