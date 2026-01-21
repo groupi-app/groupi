@@ -7,7 +7,7 @@ let notificationMutations: any;
 function initApi() {
   if (!notificationMutations) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("../../../convex/_generated/api");
+    const { api } = require('../../../convex/_generated/api');
     notificationMutations = api.notifications?.mutations ?? {};
   }
 }
@@ -25,7 +25,7 @@ import { ActionMenuButton } from '@/components/ui/action-menu-button';
 import { toast } from 'sonner';
 
 // Extended notification type with joined event/post/author data
-interface EnrichedNotification extends Doc<"notifications"> {
+interface EnrichedNotification extends Doc<'notifications'> {
   id: string; // Alias for _id
   createdAt: number; // Alias for _creationTime
   event?: { id: string; title: string };
@@ -53,8 +53,12 @@ export function NotificationSlate({
 
   // Convex mutations
   const markAsRead = useMutation(notificationMutations.markNotificationAsRead);
-  const markAsUnread = useMutation(notificationMutations.markNotificationAsUnread);
-  const deleteNotification = useMutation(notificationMutations.deleteNotification);
+  const markAsUnread = useMutation(
+    notificationMutations.markNotificationAsUnread
+  );
+  const deleteNotification = useMutation(
+    notificationMutations.deleteNotification
+  );
 
   const closeMenus = () => {
     setPopoverOpen(false);
@@ -149,15 +153,16 @@ export function NotificationSlate({
       case 'NEW_POST':
         return (
           <>
-            <strong>{authorName}</strong> posted in <strong>{eventTitle}</strong>:{' '}
-            <strong>{postTitle}</strong>
+            <strong>{authorName}</strong> posted in{' '}
+            <strong>{eventTitle}</strong>: <strong>{postTitle}</strong>
           </>
         );
 
       case 'NEW_REPLY':
         return (
           <>
-            New Reply to <strong>{postTitle}</strong>
+            <strong>{authorName}</strong> replied to{' '}
+            <strong>{postTitle}</strong>
           </>
         );
 

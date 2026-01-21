@@ -209,12 +209,43 @@ export const getEventPostFeed = query({
       posts.map(async post => {
         const authorData = await getPersonWithUser(ctx, post.authorId);
 
-        // Get reply count
-        const replyCount = await ctx.db
+        // Get replies with author data for preview
+        const replies = await ctx.db
           .query('replies')
           .withIndex('by_post', q => q.eq('postId', post._id))
-          .collect()
-          .then(replies => replies.length);
+          .order('desc')
+          .collect();
+
+        // Get unique recent reply authors (up to 3) for avatar preview
+        const seenAuthors = new Set<string>();
+        const recentReplyAuthors: Array<{
+          id: string;
+          _creationTime: number;
+          user: {
+            name: string | null;
+            email: string;
+            image: string | null;
+          } | null;
+        }> = [];
+
+        for (const reply of replies) {
+          if (seenAuthors.has(reply.authorId)) continue;
+          if (recentReplyAuthors.length >= 3) break;
+
+          const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
+          if (replyAuthorData?.user) {
+            seenAuthors.add(reply.authorId);
+            recentReplyAuthors.push({
+              id: reply.authorId,
+              _creationTime: reply._creationTime,
+              user: {
+                name: replyAuthorData.user.name ?? null,
+                email: replyAuthorData.user.email ?? '',
+                image: replyAuthorData.user.image ?? null,
+              },
+            });
+          }
+        }
 
         return {
           ...post,
@@ -227,7 +258,8 @@ export const getEventPostFeed = query({
                 user: authorData.user,
               }
             : null,
-          replyCount,
+          replyCount: replies.length,
+          recentReplyAuthors,
         };
       })
     );
