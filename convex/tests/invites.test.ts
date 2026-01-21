@@ -207,6 +207,34 @@ describe('Invites Domain', () => {
       await TestAssertions.assertMembershipCreated(t, personId, setup.eventId);
     });
 
+    test('should notify organizers when user joins', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithInvite(t);
+      const { userId } = await createTestUser(t, {
+        email: 'newuser@example.com',
+      });
+      const newUserAuth = createAuthenticatedUser(t, userId);
+
+      await newUserAuth.mutation(api.invites.mutations.acceptInvite, {
+        token: setup.inviteToken,
+      });
+
+      // Verify USER_JOINED notification was created for the organizer
+      const { notifications } = await t.run(async ctx => {
+        const notifications = await ctx.db
+          .query('notifications')
+          .withIndex('by_person', q => q.eq('personId', setup.personId))
+          .collect();
+        return { notifications };
+      });
+
+      const joinNotification = notifications.find(
+        n => n.type === 'USER_JOINED'
+      );
+      expect(joinNotification).toBeTruthy();
+      expect(joinNotification!.eventId).toBe(setup.eventId);
+    });
+
     test('should decrement usesRemaining', async () => {
       const t = createTestInstance();
       const setup = await createTestEventWithInvite(t, { usesTotal: 5 });
