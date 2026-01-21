@@ -34,11 +34,9 @@ interface PostFeedClientProps {
  * - Real-time updates via Convex subscriptions
  * - Optimistic updates handled by Convex mutations
  */
-export function PostFeedClient({
-  eventId,
-}: PostFeedClientProps) {
+export function PostFeedClient({ eventId }: PostFeedClientProps) {
   // Use direct Convex hook for real-time post data
-  const postFeedData = useEventPostFeed(eventId as Id<"events">);
+  const postFeedData = useEventPostFeed(eventId as Id<'events'>);
 
   // Loading state
   if (postFeedData === undefined) {
@@ -55,7 +53,9 @@ export function PostFeedClient({
   // Use personId directly from membership (more reliable than person._id from spread)
   const userId = userMembership.personId;
   const userRole = userMembership.role;
-  const eventDateTime = event?.chosenDateTime ? new Date(event.chosenDateTime) : null;
+  const eventDateTime = event?.chosenDateTime
+    ? new Date(event.chosenDateTime)
+    : null;
 
   return (
     <div>
@@ -70,7 +70,7 @@ export function PostFeedClient({
           <LayoutGroup>
             {[...posts]
               .sort((a, b) => b.editedAt - a.editedAt)
-              .map((post) => (
+              .map(post => (
                 <motion.div
                   layout
                   variants={item}
@@ -78,36 +78,60 @@ export function PostFeedClient({
                   className='w-full'
                 >
                   <PostCard
-                    postData={{
-                      ...post,
-                      author: post.author?.person ? {
-                        ...post.author.person,
-                        user: post.author.user,
-                      } : {
-                        _id: post.authorId,
-                        _creationTime: 0,
-                        userId: '' as any, // Fallback for missing person
-                        user: post.author?.user || {
-                          _id: '' as any,
-                          _creationTime: 0,
-                          name: null,
-                          email: '',
-                          image: null,
-                          twoFactorEnabled: false,
+                    postData={
+                      {
+                        ...post,
+                        author: post.author?.person
+                          ? {
+                              ...post.author.person,
+                              user: post.author.user,
+                            }
+                          : {
+                              _id: post.authorId,
+                              _creationTime: 0,
+                              userId: '' as any, // Fallback for missing person
+                              user: post.author?.user || {
+                                _id: '' as any,
+                                _creationTime: 0,
+                                name: null,
+                                email: '',
+                                image: null,
+                                twoFactorEnabled: false,
+                              },
+                            },
+                        replies: (post.recentReplyAuthors || []).map(
+                          (author: {
+                            id: string;
+                            _creationTime: number;
+                            user: {
+                              name: string | null;
+                              email: string;
+                              image: string | null;
+                            } | null;
+                          }) => ({
+                            _creationTime: author._creationTime,
+                            author: {
+                              id: author.id,
+                              user: author.user,
+                            },
+                          })
+                        ),
+                        event: {
+                          ...event,
+                          memberships: event.memberships
+                            .map((m: (typeof event.memberships)[0]) => ({
+                              ...m,
+                              person: m.person
+                                ? {
+                                    ...m.person,
+                                    user: m.user,
+                                  }
+                                : (null as any),
+                            }))
+                            .filter((m: { person: unknown }) => m.person),
                         },
-                      },
-                      replies: [], // Reply count handled separately via replyCount
-                      event: {
-                        ...event,
-                        memberships: event.memberships.map((m: typeof event.memberships[0]) => ({
-                          ...m,
-                          person: m.person ? {
-                            ...m.person,
-                            user: m.user,
-                          } : null as any,
-                        })).filter((m: { person: unknown }) => m.person),
-                      },
-                    } as any}
+                      } as any
+                    }
                     eventDateTime={eventDateTime}
                     userId={userId}
                     userRole={userRole}
