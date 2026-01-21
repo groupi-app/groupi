@@ -1,45 +1,58 @@
 import { Skeleton } from '../ui/skeleton';
-import { PostCardSkeleton } from './post-card-skeleton';
 import { ReplyListSkeleton, ReplyFormSkeleton } from './reply-skeleton';
+import { Icons } from '@/components/icons';
 
 export function PostDetailSkeleton() {
   return (
-    <div className='space-y-6 max-w-4xl mx-auto'>
-      {/* Post content */}
-      <PostCardSkeleton />
-
-      {/* Reply form */}
-      <div className='px-4'>
-        <div className='mb-4'>
-          <Skeleton className='h-5 w-20' />
+    <>
+      {/* Post section */}
+      <div className='pt-6 pb-0'>
+        {/* Back button and actions */}
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <Icons.back className='w-4 h-4' />
+            <Skeleton className='h-4 w-32' />
+          </div>
+          <Skeleton className='w-8 h-8 rounded-md' />
         </div>
-        <ReplyFormSkeleton />
-      </div>
 
-      {/* Replies list */}
-      <div className='px-4'>
-        <div className='flex items-center justify-between mb-4'>
-          <Skeleton className='h-5 w-32' />
-          <Skeleton className='h-4 w-16' />
+        {/* Post content */}
+        <div className='my-6 border-border rounded-lg'>
+          {/* Author info */}
+          <div className='flex items-center gap-3 mb-4'>
+            <Skeleton className='rounded-full size-10' />
+            <div className='flex-1 space-y-2'>
+              <Skeleton className='h-4 w-32' />
+              <Skeleton className='h-3 w-24' />
+            </div>
+          </div>
+
+          {/* Post title and content */}
+          <div>
+            <Skeleton className='h-8 w-3/4 mb-3' />
+            <div className='prose prose-sm max-w-none py-2 space-y-2'>
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-5/6' />
+            </div>
+          </div>
         </div>
-        <ReplyListSkeleton />
       </div>
 
-      {/* Load more button */}
-      <div className='flex justify-center pt-4'>
-        <Skeleton className='h-9 w-24' />
-      </div>
-    </div>
-  );
-}
+      {/* Replies section */}
+      <div className='flex flex-col mt-6'>
+        {/* Divider between post and replies */}
+        <div className='border-t border-border mb-6'></div>
+        <div className='flex flex-col gap-4 -mx-4 sm:mx-0'>
+          {/* Reply items */}
+          <ReplyListSkeleton />
 
-export function PostFeedSkeleton({ count = 5 }: { count?: number }) {
-  return (
-    <div className='space-y-4'>
-      {Array.from({ length: count }, (_, i) => (
-        <PostCardSkeleton key={i} />
-      ))}
-    </div>
+          {/* Reply form */}
+          <ReplyFormSkeleton />
+        </div>
+      </div>
+    </>
   );
 }
 

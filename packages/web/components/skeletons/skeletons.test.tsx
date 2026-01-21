@@ -10,7 +10,7 @@ import {
   NotificationWidgetSkeleton,
   NotificationDropdownSkeleton,
 } from './notification-skeleton';
-import { PostCardSkeleton } from './post-card-skeleton';
+import { PostCardSkeleton, PostFeedSkeleton } from './post-card-skeleton';
 import { EventHeaderSkeleton } from './event-header-skeleton';
 import { EventListSkeleton, EventCardSkeleton } from './event-list-skeleton';
 import { AttendeeListSkeleton } from './attendee-list-skeleton';
@@ -20,8 +20,12 @@ import { InviteDetailsSkeleton } from './invite-details-skeleton';
 import { AccountSettingsSkeleton } from './account-settings-skeleton';
 import { SettingsFormSkeleton } from './settings-form-skeleton';
 import { AdminDashboardSkeleton } from './admin-dashboard-skeleton';
-import { PostDetailSkeleton, PostFeedSkeleton } from './post-detail-skeleton';
-import { ReplyListSkeleton, ReplySkeleton, ReplyFormSkeleton } from './reply-skeleton';
+import { PostDetailSkeleton } from './post-detail-skeleton';
+import {
+  ReplyListSkeleton,
+  ReplySkeleton,
+  ReplyFormSkeleton,
+} from './reply-skeleton';
 import { NewEventFormSkeleton } from './new-event-form-skeleton';
 import { AvailabilityFormSkeleton } from './availability-form-skeleton';
 import {
@@ -40,7 +44,9 @@ describe('Notification Skeletons', () => {
 
   it('should render NotificationListSkeleton with multiple items', () => {
     const { container } = render(<NotificationListSkeleton />);
-    expect(container.querySelectorAll('.rounded-lg').length).toBeGreaterThanOrEqual(1);
+    expect(
+      container.querySelectorAll('.rounded-lg').length
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('should render NotificationWidgetSkeleton', () => {
