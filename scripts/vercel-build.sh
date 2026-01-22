@@ -33,7 +33,7 @@ else
   echo "(Preview env vars should be set via CLI: npx convex env set VAR value --preview-name $PREVIEW_NAME)"
 
   npx convex deploy \
-    --preview-name "$PREVIEW_NAME" \
+    --preview-create "$PREVIEW_NAME" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "$BUILD_CMD"
 fi
