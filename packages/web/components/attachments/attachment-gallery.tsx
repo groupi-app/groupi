@@ -450,6 +450,24 @@ export function AttachmentGallery({
                     <Icons.download className='h-3 w-3 text-muted-foreground flex-shrink-0' />
                   )}
                 </button>
+                {onDelete && (
+                  <button
+                    type='button'
+                    onClick={() => onDelete(attachment._id)}
+                    disabled={isDeleting}
+                    className={cn(
+                      'ml-1 p-1.5 rounded',
+                      'bg-muted border border-border',
+                      'hover:bg-destructive hover:text-destructive-foreground hover:border-destructive',
+                      'transition-colors',
+                      'focus:outline-none',
+                      'disabled:opacity-50'
+                    )}
+                    aria-label={`Remove ${attachment.filename}`}
+                  >
+                    <Icons.delete className='h-4 w-4' />
+                  </button>
+                )}
               </div>
             );
           })}
