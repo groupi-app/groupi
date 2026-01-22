@@ -79,6 +79,10 @@ export function AttachmentGallery({
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(
     new Set()
   );
+  // Track which files are currently being downloaded
+  const [downloadingFiles, setDownloadingFiles] = useState<Set<string>>(
+    new Set()
+  );
 
   const handleImageLoad = useCallback((id: string) => {
     setLoadedImages(prev => new Set(prev).add(id));
@@ -95,6 +99,25 @@ export function AttachmentGallery({
       setLightboxImage(attachment);
     },
     [revealedSpoilers]
+  );
+
+  const handleDownload = useCallback(
+    async (attachmentId: string, url: string, filename: string) => {
+      // Prevent double-clicks
+      if (downloadingFiles.has(attachmentId)) return;
+
+      setDownloadingFiles(prev => new Set(prev).add(attachmentId));
+      try {
+        await downloadFile(url, filename);
+      } finally {
+        setDownloadingFiles(prev => {
+          const next = new Set(prev);
+          next.delete(attachmentId);
+          return next;
+        });
+      }
+    },
+    [downloadingFiles]
   );
 
   if (!attachments || attachments.length === 0) return null;
@@ -389,51 +412,47 @@ export function AttachmentGallery({
       {/* File Downloads */}
       {files.length > 0 && (
         <div className='flex flex-wrap gap-2'>
-          {files.map(attachment => (
-            <div
-              key={attachment._id}
-              className='relative group flex items-center'
-            >
-              <button
-                type='button'
-                onClick={() =>
-                  downloadFile(attachment.url!, attachment.filename)
-                }
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-md',
-                  'bg-muted border border-border',
-                  'hover:bg-accent transition-colors',
-                  'text-sm'
-                )}
+          {files.map(attachment => {
+            const isDownloading = downloadingFiles.has(attachment._id);
+            return (
+              <div
+                key={attachment._id}
+                className='relative group flex items-center min-w-0 max-w-full'
               >
-                <Icons.file className='h-4 w-4 text-muted-foreground' />
-                <span className='max-w-[200px] truncate'>
-                  {attachment.filename}
-                </span>
-                <span className='text-muted-foreground text-xs'>
-                  {formatFileSize(attachment.size)}
-                </span>
-                <Icons.download className='h-3 w-3 text-muted-foreground' />
-              </button>
-              {onDelete && (
                 <button
                   type='button'
-                  onClick={() => onDelete(attachment._id)}
-                  disabled={isDeleting}
+                  onClick={() =>
+                    handleDownload(
+                      attachment._id,
+                      attachment.url!,
+                      attachment.filename
+                    )
+                  }
+                  disabled={isDownloading}
                   className={cn(
-                    'absolute top-1 right-1 p-1.5 rounded z-10',
-                    'bg-black/70 hover:bg-destructive text-white',
-                    'transition-colors',
-                    'focus:outline-none focus:ring-1 focus:ring-white',
-                    'disabled:opacity-50'
+                    'flex items-center gap-2 px-3 py-2 rounded-md min-w-0 max-w-full',
+                    'bg-muted border border-border',
+                    'hover:bg-accent transition-colors',
+                    'text-sm',
+                    'disabled:opacity-70 disabled:cursor-wait'
                   )}
-                  aria-label={`Remove ${attachment.filename}`}
                 >
-                  <Icons.delete className='h-4 w-4' />
+                  <Icons.file className='h-4 w-4 text-muted-foreground flex-shrink-0' />
+                  <span className='truncate min-w-0'>
+                    {attachment.filename}
+                  </span>
+                  <span className='text-muted-foreground text-xs whitespace-nowrap flex-shrink-0'>
+                    {formatFileSize(attachment.size)}
+                  </span>
+                  {isDownloading ? (
+                    <Icons.spinner className='h-3 w-3 text-muted-foreground animate-spin flex-shrink-0' />
+                  ) : (
+                    <Icons.download className='h-3 w-3 text-muted-foreground flex-shrink-0' />
+                  )}
                 </button>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -469,12 +488,23 @@ export function AttachmentGallery({
                   <button
                     type='button'
                     onClick={() =>
-                      downloadFile(lightboxImage.url!, lightboxImage.filename)
+                      handleDownload(
+                        lightboxImage._id,
+                        lightboxImage.url!,
+                        lightboxImage.filename
+                      )
                     }
-                    className='flex items-center gap-1 text-sm hover:underline flex-shrink-0 ml-2'
+                    disabled={downloadingFiles.has(lightboxImage._id)}
+                    className='flex items-center gap-1 text-sm hover:underline flex-shrink-0 ml-2 disabled:opacity-70 disabled:cursor-wait'
                   >
-                    <Icons.download className='h-4 w-4' />
-                    Download
+                    {downloadingFiles.has(lightboxImage._id) ? (
+                      <Icons.spinner className='h-4 w-4 animate-spin' />
+                    ) : (
+                      <Icons.download className='h-4 w-4' />
+                    )}
+                    {downloadingFiles.has(lightboxImage._id)
+                      ? 'Downloading...'
+                      : 'Download'}
                   </button>
                 </div>
               </div>
