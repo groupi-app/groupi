@@ -127,7 +127,7 @@ function getImageDimensions(
 }
 
 /**
- * Create a preview URL for an image file
+ * Create a preview URL for an image file (data URL)
  */
 function createImagePreview(file: File): Promise<string | undefined> {
   return new Promise(resolve => {
@@ -141,6 +141,16 @@ function createImagePreview(file: File): Promise<string | undefined> {
     reader.onerror = () => resolve(undefined);
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Create a blob URL for video/audio files for immediate playback preview
+ */
+function createMediaPreview(file: File): string | undefined {
+  if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
+    return undefined;
+  }
+  return URL.createObjectURL(file);
 }
 
 /**
@@ -263,10 +273,13 @@ export function useAttachments() {
           continue;
         }
 
-        const [preview, dimensions] = await Promise.all([
+        const [imagePreview, dimensions] = await Promise.all([
           createImagePreview(file),
           getImageDimensions(file),
         ]);
+
+        // Use image data URL preview for images, or blob URL for video/audio
+        const preview = imagePreview ?? createMediaPreview(file);
 
         newUploads.push({
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -294,7 +307,14 @@ export function useAttachments() {
    * Remove a pending upload by ID
    */
   const removeFile = useCallback((id: string) => {
-    setPendingUploads(prev => prev.filter(u => u.id !== id));
+    setPendingUploads(prev => {
+      const upload = prev.find(u => u.id === id);
+      // Revoke blob URL if it's a video/audio (starts with 'blob:')
+      if (upload?.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(upload.preview);
+      }
+      return prev.filter(u => u.id !== id);
+    });
   }, []);
 
   /**
@@ -427,8 +447,14 @@ export function useAttachments() {
    * Clear all pending uploads
    */
   const clearAll = useCallback(() => {
+    // Revoke all blob URLs to prevent memory leaks
+    pendingUploads.forEach(upload => {
+      if (upload.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(upload.preview);
+      }
+    });
     setPendingUploads([]);
-  }, []);
+  }, [pendingUploads]);
 
   /**
    * Check if there are any pending (not yet uploaded) files

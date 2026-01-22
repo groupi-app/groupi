@@ -7,6 +7,36 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * Download a file by fetching it as a blob and triggering a download.
+ * This is needed because cross-origin URLs (like Convex storage) ignore the
+ * HTML download attribute.
+ */
+async function downloadFile(url: string, filename: string): Promise<void> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Revoke the blob URL after a short delay to allow the download to start
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  } catch (error) {
+    console.error('Download failed:', error);
+    // Fallback: open in new tab if download fails
+    window.open(url, '_blank');
+  }
+}
+
 interface Attachment {
   _id: string;
   type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
@@ -364,11 +394,11 @@ export function AttachmentGallery({
               key={attachment._id}
               className='relative group flex items-center'
             >
-              <a
-                href={attachment.url!}
-                target='_blank'
-                rel='noopener noreferrer'
-                download={attachment.filename}
+              <button
+                type='button'
+                onClick={() =>
+                  downloadFile(attachment.url!, attachment.filename)
+                }
                 className={cn(
                   'flex items-center gap-2 px-3 py-2 rounded-md',
                   'bg-muted border border-border',
@@ -384,7 +414,7 @@ export function AttachmentGallery({
                   {formatFileSize(attachment.size)}
                 </span>
                 <Icons.download className='h-3 w-3 text-muted-foreground' />
-              </a>
+              </button>
               {onDelete && (
                 <button
                   type='button'
@@ -436,16 +466,16 @@ export function AttachmentGallery({
                       </span>
                     )}
                   </div>
-                  <a
-                    href={lightboxImage.url!}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    download={lightboxImage.filename}
+                  <button
+                    type='button'
+                    onClick={() =>
+                      downloadFile(lightboxImage.url!, lightboxImage.filename)
+                    }
                     className='flex items-center gap-1 text-sm hover:underline flex-shrink-0 ml-2'
                   >
                     <Icons.download className='h-4 w-4' />
                     Download
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
