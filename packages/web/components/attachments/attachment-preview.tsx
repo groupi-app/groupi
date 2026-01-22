@@ -83,9 +83,16 @@ export function AttachmentPreview({
 
   if (uploads.length === 0) return null;
 
-  // Separate images from other files
+  // Separate files by type for different preview rendering
   const images = uploads.filter(u => u.file.type.startsWith('image/'));
-  const otherFiles = uploads.filter(u => !u.file.type.startsWith('image/'));
+  const videos = uploads.filter(u => u.file.type.startsWith('video/'));
+  const audio = uploads.filter(u => u.file.type.startsWith('audio/'));
+  const otherFiles = uploads.filter(
+    u =>
+      !u.file.type.startsWith('image/') &&
+      !u.file.type.startsWith('video/') &&
+      !u.file.type.startsWith('audio/')
+  );
 
   const handleEditSave = (updates: {
     displayFilename: string;
@@ -144,6 +151,97 @@ export function AttachmentPreview({
                 )}
               </button>
               {/* X button to remove */}
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation();
+                  onRemove(upload.id);
+                }}
+                className={cn(
+                  'absolute -top-1.5 -right-1.5 size-6 rounded-full',
+                  'bg-background border border-border shadow-sm',
+                  'flex items-center justify-center',
+                  'hover:bg-muted transition-colors'
+                )}
+                aria-label={`Remove ${upload.displayFilename}`}
+              >
+                <Icons.close className='h-3.5 w-3.5' />
+              </button>
+            </div>
+          ))}
+
+          {/* Video thumbnails */}
+          {videos.map(upload => (
+            <div key={upload.id} className='relative'>
+              <button
+                type='button'
+                onClick={() => setDrawerUpload(upload)}
+                className={cn(
+                  'size-16 rounded-lg overflow-hidden bg-muted border border-border',
+                  'flex flex-col items-center justify-center gap-1',
+                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                )}
+              >
+                {upload.preview ? (
+                  <video
+                    src={upload.preview}
+                    className='w-full h-full object-cover'
+                    muted
+                  />
+                ) : (
+                  <Icons.fileVideo className='h-5 w-5 text-muted-foreground' />
+                )}
+                {upload.status === 'uploading' && (
+                  <div className='absolute inset-0 bg-background/60 flex items-center justify-center'>
+                    <Icons.spinner className='h-4 w-4 animate-spin text-primary' />
+                  </div>
+                )}
+                {/* Video indicator overlay */}
+                <div className='absolute bottom-0.5 right-0.5 p-0.5 rounded bg-black/70'>
+                  <Icons.fileVideo className='h-3 w-3 text-white' />
+                </div>
+              </button>
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation();
+                  onRemove(upload.id);
+                }}
+                className={cn(
+                  'absolute -top-1.5 -right-1.5 size-6 rounded-full',
+                  'bg-background border border-border shadow-sm',
+                  'flex items-center justify-center',
+                  'hover:bg-muted transition-colors'
+                )}
+                aria-label={`Remove ${upload.displayFilename}`}
+              >
+                <Icons.close className='h-3.5 w-3.5' />
+              </button>
+            </div>
+          ))}
+
+          {/* Audio thumbnails */}
+          {audio.map(upload => (
+            <div key={upload.id} className='relative'>
+              <button
+                type='button'
+                onClick={() => setDrawerUpload(upload)}
+                className={cn(
+                  'size-16 rounded-lg overflow-hidden bg-muted border border-border',
+                  'flex flex-col items-center justify-center gap-1',
+                  'focus:outline-none focus:ring-2 focus:ring-primary'
+                )}
+              >
+                <Icons.fileAudio className='h-5 w-5 text-muted-foreground' />
+                <span className='text-[10px] text-muted-foreground px-1 truncate max-w-full'>
+                  {upload.displayFilename.split('.').pop()?.toUpperCase()}
+                </span>
+                {upload.status === 'uploading' && (
+                  <div className='absolute inset-0 bg-background/60 flex items-center justify-center'>
+                    <Icons.spinner className='h-4 w-4 animate-spin text-primary' />
+                  </div>
+                )}
+              </button>
               <button
                 type='button'
                 onClick={e => {
@@ -262,23 +360,82 @@ export function AttachmentPreview({
                     </div>
                   )}
 
-                {/* Non-image file info */}
-                {!drawerUpload.file.type.startsWith('image/') && (
-                  <div className='flex items-center gap-3 p-4 rounded-lg bg-muted'>
-                    <FileIcon
-                      mimeType={drawerUpload.file.type}
-                      className='h-8 w-8 text-muted-foreground'
-                    />
-                    <div className='flex-1 min-w-0'>
-                      <p className='font-medium truncate'>
+                {/* Video preview in drawer */}
+                {drawerUpload.file.type.startsWith('video/') && (
+                  <div className='space-y-2'>
+                    {drawerUpload.preview ? (
+                      <video
+                        src={drawerUpload.preview}
+                        controls
+                        className='w-full max-h-48 rounded-lg'
+                        preload='metadata'
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                    ) : (
+                      <div className='flex items-center justify-center h-32 rounded-lg bg-muted'>
+                        <Icons.fileVideo className='h-8 w-8 text-muted-foreground' />
+                      </div>
+                    )}
+                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                      <Icons.fileVideo className='h-4 w-4' />
+                      <span className='truncate flex-1'>
                         {drawerUpload.displayFilename}
-                      </p>
-                      <p className='text-sm text-muted-foreground'>
-                        {formatFileSize(drawerUpload.file.size)}
-                      </p>
+                      </span>
+                      <span className='text-xs'>
+                        ({formatFileSize(drawerUpload.file.size)})
+                      </span>
                     </div>
                   </div>
                 )}
+
+                {/* Audio preview in drawer */}
+                {drawerUpload.file.type.startsWith('audio/') && (
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                      <Icons.fileAudio className='h-4 w-4' />
+                      <span className='truncate flex-1'>
+                        {drawerUpload.displayFilename}
+                      </span>
+                      <span className='text-xs'>
+                        ({formatFileSize(drawerUpload.file.size)})
+                      </span>
+                    </div>
+                    {drawerUpload.preview ? (
+                      <audio
+                        src={drawerUpload.preview}
+                        controls
+                        className='w-full'
+                      >
+                        Your browser does not support audio playback.
+                      </audio>
+                    ) : (
+                      <div className='text-sm text-muted-foreground p-4 rounded-lg bg-muted text-center'>
+                        Audio preview unavailable
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Other file info (non-image, non-video, non-audio) */}
+                {!drawerUpload.file.type.startsWith('image/') &&
+                  !drawerUpload.file.type.startsWith('video/') &&
+                  !drawerUpload.file.type.startsWith('audio/') && (
+                    <div className='flex items-center gap-3 p-4 rounded-lg bg-muted'>
+                      <FileIcon
+                        mimeType={drawerUpload.file.type}
+                        className='h-8 w-8 text-muted-foreground'
+                      />
+                      <div className='flex-1 min-w-0'>
+                        <p className='font-medium truncate'>
+                          {drawerUpload.displayFilename}
+                        </p>
+                        <p className='text-sm text-muted-foreground'>
+                          {formatFileSize(drawerUpload.file.size)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Options */}
                 <div className='rounded-lg border border-border divide-y divide-border'>
@@ -523,6 +680,135 @@ export function AttachmentPreview({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Video previews */}
+        {videos.length > 0 && (
+          <div className='space-y-2'>
+            {videos.map(upload => (
+              <div
+                key={upload.id}
+                className='relative group rounded-md overflow-hidden bg-muted max-w-md'
+              >
+                {upload.preview ? (
+                  <video
+                    src={upload.preview}
+                    controls
+                    className='w-full max-h-48'
+                    preload='metadata'
+                  >
+                    Your browser does not support video playback.
+                  </video>
+                ) : (
+                  <div className='flex items-center justify-center h-32 bg-muted'>
+                    <Icons.fileVideo className='h-8 w-8 text-muted-foreground' />
+                  </div>
+                )}
+                <div className='px-3 py-2 text-sm text-muted-foreground flex items-center gap-2'>
+                  <Icons.fileVideo className='h-4 w-4' />
+                  <span className='truncate flex-1'>
+                    {upload.displayFilename}
+                  </span>
+                  <span className='text-xs'>
+                    ({formatFileSize(upload.file.size)})
+                  </span>
+                  {upload.status === 'uploading' && (
+                    <Icons.spinner className='h-3.5 w-3.5 animate-spin' />
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type='button'
+                        onClick={() => setEditingUpload(upload)}
+                        className='p-1 rounded hover:bg-accent transition-colors focus:outline-none'
+                        aria-label={`Edit ${upload.displayFilename}`}
+                      >
+                        <Icons.edit className='h-3.5 w-3.5' />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side='bottom'>
+                      Edit attachment
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type='button'
+                        onClick={() => onRemove(upload.id)}
+                        className='p-1 rounded hover:bg-destructive hover:text-destructive-foreground transition-colors focus:outline-none'
+                        aria-label={`Remove ${upload.displayFilename}`}
+                      >
+                        <Icons.delete className='h-3.5 w-3.5' />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side='bottom'>Remove</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Audio previews */}
+        {audio.length > 0 && (
+          <div className='space-y-2'>
+            {audio.map(upload => (
+              <div
+                key={upload.id}
+                className='relative group rounded-md bg-muted p-3 max-w-md'
+              >
+                <div className='flex items-center gap-2 mb-2 text-sm text-muted-foreground'>
+                  <Icons.fileAudio className='h-4 w-4' />
+                  <span className='truncate flex-1'>
+                    {upload.displayFilename}
+                  </span>
+                  <span className='text-xs'>
+                    ({formatFileSize(upload.file.size)})
+                  </span>
+                  {upload.status === 'uploading' && (
+                    <Icons.spinner className='h-3.5 w-3.5 animate-spin' />
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type='button'
+                        onClick={() => setEditingUpload(upload)}
+                        className='p-1 rounded hover:bg-accent transition-colors focus:outline-none'
+                        aria-label={`Edit ${upload.displayFilename}`}
+                      >
+                        <Icons.edit className='h-3.5 w-3.5' />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side='bottom'>
+                      Edit attachment
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type='button'
+                        onClick={() => onRemove(upload.id)}
+                        className='p-1 rounded hover:bg-destructive hover:text-destructive-foreground transition-colors focus:outline-none'
+                        aria-label={`Remove ${upload.displayFilename}`}
+                      >
+                        <Icons.delete className='h-3.5 w-3.5' />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side='bottom'>Remove</TooltipContent>
+                  </Tooltip>
+                </div>
+                {upload.preview ? (
+                  <audio src={upload.preview} controls className='w-full'>
+                    Your browser does not support audio playback.
+                  </audio>
+                ) : (
+                  <div className='text-sm text-muted-foreground'>
+                    Audio preview unavailable
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
