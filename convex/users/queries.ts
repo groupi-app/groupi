@@ -340,13 +340,14 @@ export const checkNeedsOnboarding = query({
     try {
       authUser = await authComponent.getAuthUser(ctx);
     } catch {
-      // Not authenticated - don't redirect to onboarding
-      return false;
+      // Not authenticated - return null to indicate "unknown" state
+      // This prevents premature redirects while auth is syncing
+      return null;
     }
 
     if (!authUser) {
-      // Not authenticated - don't redirect to onboarding
-      return false;
+      // Not authenticated - return null to indicate "unknown" state
+      return null;
     }
 
     // User is authenticated - check if they have a person record
