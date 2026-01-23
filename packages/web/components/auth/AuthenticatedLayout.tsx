@@ -84,7 +84,11 @@ export function AuthenticatedLayout({
   }
 
   // Show loading spinner while checking onboarding status
-  if (!skipOnboardingCheck && needsOnboarding === undefined) {
+  // null = auth not synced with Convex yet, undefined = query loading
+  if (
+    !skipOnboardingCheck &&
+    (needsOnboarding === undefined || needsOnboarding === null)
+  ) {
     return <AuthLoadingSpinner />;
   }
 

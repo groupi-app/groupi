@@ -10,7 +10,7 @@ let userQueries: any;
 function initApi() {
   if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userQueries = api.users?.queries ?? {};
   }
 }
@@ -36,8 +36,8 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
   // Show loading while checking session
   if (sessionPending) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
+      <div className='flex items-center justify-center min-h-screen'>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
@@ -45,17 +45,18 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
   // Not authenticated - OnboardingRedirectWrapper will handle redirect
   if (!session?.user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
+      <div className='flex items-center justify-center min-h-screen'>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
 
-  // Still loading onboarding check
-  if (needsOnboarding === undefined) {
+  // Still loading onboarding check or auth not synced yet
+  // null = auth not synced with Convex, undefined = query loading
+  if (needsOnboarding === undefined || needsOnboarding === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
+      <div className='flex items-center justify-center min-h-screen'>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
@@ -63,8 +64,8 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
   // User doesn't need onboarding - OnboardingRedirectWrapper will redirect
   if (needsOnboarding === false) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
+      <div className='flex items-center justify-center min-h-screen'>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
