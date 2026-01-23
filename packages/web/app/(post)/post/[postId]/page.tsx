@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense } from 'react';
 import { Icons } from '@/components/icons';
-import { PostDetailPageClient } from './components/post-detail-page-client';
+import { PostDetailPage as PostDetail } from './components/post-detail-page';
 import { Replies } from './components/replies';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -21,7 +21,7 @@ export default async function PostDetailPage(props: {
   return (
     <div className='container max-w-4xl'>
       <Suspense fallback={<PostDetailSkeleton />}>
-        <PostDetailPageClient postId={postId as Id<'posts'>} />
+        <PostDetail postId={postId as Id<'posts'>} />
         <Replies postId={postId as Id<'posts'>} />
       </Suspense>
     </div>

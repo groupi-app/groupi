@@ -1,21 +1,17 @@
 'use client';
 
-import { FullPostClient } from './full-post-client';
+import { FullPost } from './full-post';
 import { PostStickyHeader } from './post-sticky-header';
 import { useRef, useEffect } from 'react';
 import { usePostDetail } from '@/hooks/convex/use-posts';
 import { useMarkPostNotificationsAsRead } from '@/hooks/convex/use-replies';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function PostDetailPageClient({
-  postId,
-}: {
-  postId: string;
-}) {
+export function PostDetailPage({ postId }: { postId: string }) {
   const postRef = useRef<HTMLDivElement>(null);
 
   // Fetch post data with real-time updates using Convex
-  const postData = usePostDetail(postId as Id<"posts">);
+  const postData = usePostDetail(postId as Id<'posts'>);
   const markPostNotificationsAsRead = useMarkPostNotificationsAsRead();
 
   const postTitle = postData?.post?.title || '';
@@ -24,7 +20,7 @@ export function PostDetailPageClient({
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        await markPostNotificationsAsRead(postId as Id<"posts">);
+        await markPostNotificationsAsRead(postId as Id<'posts'>);
       } catch (err) {
         // Silently fail - don't block page rendering
         console.error('Failed to mark post notifications as read:', err);
@@ -36,10 +32,7 @@ export function PostDetailPageClient({
   return (
     <>
       <PostStickyHeader postTitle={postTitle} postRef={postRef} />
-      <FullPostClient
-        postId={postId}
-        postRef={postRef}
-      />
+      <FullPost postId={postId} postRef={postRef} />
     </>
   );
 }

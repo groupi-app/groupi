@@ -12,13 +12,15 @@ import { User } from '@/convex/types';
 import { useEventMembers } from '@/hooks/convex';
 
 // Match the Member type expected by MemberIcon
-type Membership = Doc<"memberships"> & {
-  person: (Doc<"persons"> & {
-    user: User;
-  }) | null;
+type Membership = Doc<'memberships'> & {
+  person:
+    | (Doc<'persons'> & {
+        user: User;
+      })
+    | null;
 };
 
-interface MemberListClientProps {
+interface MemberListProps {
   eventId: string;
 }
 
@@ -28,16 +30,14 @@ interface MemberListClientProps {
  * - Real-time updates via Convex subscriptions
  * - Loading states managed by component
  */
-export function MemberListClient({
-  eventId,
-}: MemberListClientProps) {
+export function MemberList({ eventId }: MemberListProps) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const ref = useRef<HTMLDivElement>(null);
   const [visibleIcons, setVisibleIcons] = useState(100);
   const pathname = usePathname();
 
   // Use direct Convex hook for real-time member data
-  const eventAttendeesData = useEventMembers(eventId as Id<"events">);
+  const eventAttendeesData = useEventMembers(eventId as Id<'events'>);
 
   // useLayoutEffect must be called unconditionally
   useLayoutEffect(() => {
@@ -62,15 +62,18 @@ export function MemberListClient({
   if (eventAttendeesData === undefined) {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-xl font-heading font-medium">Attendees</h2>
-          <div className="rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground">
-            <div className="h-4 w-6 bg-muted rounded animate-pulse"></div>
+        <div className='flex items-center gap-2 mb-4'>
+          <h2 className='text-xl font-heading font-medium'>Attendees</h2>
+          <div className='rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground'>
+            <div className='h-4 w-6 bg-muted rounded animate-pulse'></div>
           </div>
         </div>
-        <div className="flex items-center p-2 -space-x-2 h-[54px]">
+        <div className='flex items-center p-2 -space-x-2 h-[54px]'>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 w-10 rounded-full bg-muted animate-pulse"></div>
+            <div
+              key={i}
+              className='h-10 w-10 rounded-full bg-muted animate-pulse'
+            ></div>
           ))}
         </div>
       </div>
@@ -80,7 +83,9 @@ export function MemberListClient({
   const { event, userMembership, userId } = eventAttendeesData;
   const members = event.memberships;
   const userRole = userMembership.role;
-  const eventDateTime = event.chosenDateTime ? new Date(event.chosenDateTime) : null;
+  const eventDateTime = event.chosenDateTime
+    ? new Date(event.chosenDateTime)
+    : null;
 
   const container = {
     hidden: { opacity: 0 },
