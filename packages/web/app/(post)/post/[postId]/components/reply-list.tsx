@@ -44,7 +44,7 @@ type PostWithEvent = Doc<'posts'> & {
  * - Uses Convex hooks for real-time data with automatic updates
  * - No need for React Query or Pusher - Convex handles everything
  */
-export function ReplyFeedClient({
+export function ReplyList({
   userId,
   postId,
   userRole,

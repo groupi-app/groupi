@@ -9,7 +9,7 @@ import { Search } from 'lucide-react';
 import { useEventMembers } from '@/hooks/convex';
 import { AttendeeListSkeleton } from '@/components/skeletons';
 
-interface AttendeesClientProps {
+interface AttendeesProps {
   eventId: string;
 }
 
@@ -20,13 +20,17 @@ const roleOrder: Record<string, number> = {
   ATTENDEE: 1,
 };
 
-type MemberWithDetails = Doc<"memberships"> & {
-  person: (Doc<"persons"> & {
-    user: User;
-  }) | null;
-  availabilities: Array<Doc<"availabilities"> & {
-    potentialDateTime: Doc<"potentialDateTimes"> | null;
-  }>;
+type MemberWithDetails = Doc<'memberships'> & {
+  person:
+    | (Doc<'persons'> & {
+        user: User;
+      })
+    | null;
+  availabilities: Array<
+    Doc<'availabilities'> & {
+      potentialDateTime: Doc<'potentialDateTimes'> | null;
+    }
+  >;
 };
 
 /**
@@ -35,14 +39,12 @@ type MemberWithDetails = Doc<"memberships"> & {
  * - Real-time updates via Convex subscriptions
  * - Loading states managed by component
  */
-export function AttendeesClient({
-  eventId,
-}: AttendeesClientProps) {
+export function Attendees({ eventId }: AttendeesProps) {
   // All hooks must be called unconditionally at the top
   const [searchQuery, setSearchQuery] = useState('');
 
   // Use direct Convex hook for real-time member data
-  const eventAttendeesData = useEventMembers(eventId as Id<"events">);
+  const eventAttendeesData = useEventMembers(eventId as Id<'events'>);
 
   // Extract data from query result (may be undefined during loading)
   const userId = eventAttendeesData?.userId;
@@ -99,16 +101,18 @@ export function AttendeesClient({
         />
       </div>
       <div className='flex flex-col gap-2 divide-y'>
-        {filteredAndSortedMembers.map((member: typeof filteredAndSortedMembers[0]) => (
-          <AttendeeSlate
-            key={member._id}
-            userId={userId || ''}
-            userRole={userRole}
-            member={member}
-            itemKey={member._id}
-            eventDateTime={eventDateTime ? new Date(eventDateTime) : null}
-          />
-        ))}
+        {filteredAndSortedMembers.map(
+          (member: (typeof filteredAndSortedMembers)[0]) => (
+            <AttendeeSlate
+              key={member._id}
+              userId={userId || ''}
+              userRole={userRole}
+              member={member}
+              itemKey={member._id}
+              eventDateTime={eventDateTime ? new Date(eventDateTime) : null}
+            />
+          )
+        )}
       </div>
     </div>
   );

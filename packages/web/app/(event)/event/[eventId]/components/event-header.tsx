@@ -22,13 +22,17 @@ import {
 } from '@/components/ui/drawer';
 import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useMobile } from '@/hooks/use-mobile';
-import { useEventManagement, useEventHeader, useMarkEventNotificationsAsRead } from '@/hooks/convex';
+import {
+  useEventManagement,
+  useEventHeader,
+  useMarkEventNotificationsAsRead,
+} from '@/hooks/convex';
 import { useIsEventMuted, useToggleEventMute } from '@/hooks/convex/use-muting';
 import { EventHeaderSkeleton } from '@/components/skeletons';
 import { NotFoundError, AccessDeniedError } from '@/components/error-display';
 import { Id } from '@/convex/_generated/dataModel';
 
-interface EventHeaderClientProps {
+interface EventHeaderProps {
   eventId: string;
 }
 
@@ -38,9 +42,7 @@ interface EventHeaderClientProps {
  * - Real-time updates via Convex subscriptions
  * - Loading states managed by component
  */
-export function EventHeaderClient({
-  eventId,
-}: EventHeaderClientProps) {
+export function EventHeader({ eventId }: EventHeaderProps) {
   // Use the eventId prop directly for hooks
   const eventIdTyped = eventId as Id<'events'>;
 
@@ -124,7 +126,7 @@ export function EventHeaderClient({
   if (eventData === null || !event) {
     return (
       <NotFoundError
-        resourceType="event"
+        resourceType='event'
         message="This event doesn't exist or may have been deleted."
         showBackButton={true}
         showHomeButton={true}

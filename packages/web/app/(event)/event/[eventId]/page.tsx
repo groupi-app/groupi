@@ -1,9 +1,9 @@
 'use client';
 
 import { use } from 'react';
-import { EventHeaderClient } from './components/event-header-client';
-import { MemberListClient } from './components/member-list-client';
-import { PostFeedClient } from './components/post-feed-client';
+import { EventHeader } from './components/event-header';
+import { MemberList } from './components/member-list';
+import { PostFeed } from './components/post-feed';
 import { NewPostButton } from '@/components/new-post-button';
 
 /**
@@ -21,10 +21,10 @@ export default function EventPage(props: {
   return (
     <>
       <div className='container pt-6 pb-24 space-y-5'>
-        <EventHeaderClient eventId={eventId} />
+        <EventHeader eventId={eventId} />
         <div className='max-w-4xl mx-auto flex flex-col gap-4'>
-          <MemberListClient eventId={eventId} />
-          <PostFeedClient eventId={eventId} />
+          <MemberList eventId={eventId} />
+          <PostFeed eventId={eventId} />
         </div>
       </div>
       <NewPostButton />

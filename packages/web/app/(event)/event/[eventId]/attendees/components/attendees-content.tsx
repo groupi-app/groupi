@@ -3,7 +3,7 @@
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { AttendeesServer } from './attendees-server';
+import { Attendees } from './attendees';
 import { AttendeeListSkeleton } from '@/components/skeletons/attendee-list-skeleton';
 import React, { Suspense, use, useEffect } from 'react';
 import {
@@ -111,7 +111,7 @@ export function AttendeesContent({
       <div className='py-4'>
         <h1 className='text-2xl font-bold mb-4'>Attendees</h1>
         <Suspense fallback={<AttendeeListSkeleton />}>
-          <AttendeesServer eventId={eventId} />
+          <Attendees eventId={eventId} />
         </Suspense>
       </div>
     </div>

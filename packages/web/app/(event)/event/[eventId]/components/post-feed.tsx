@@ -24,7 +24,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-interface PostFeedClientProps {
+interface PostFeedProps {
   eventId: string;
 }
 
@@ -34,7 +34,7 @@ interface PostFeedClientProps {
  * - Real-time updates via Convex subscriptions
  * - Optimistic updates handled by Convex mutations
  */
-export function PostFeedClient({ eventId }: PostFeedClientProps) {
+export function PostFeed({ eventId }: PostFeedProps) {
   // Use direct Convex hook for real-time post data
   const postFeedData = useEventPostFeed(eventId as Id<'events'>);
 
