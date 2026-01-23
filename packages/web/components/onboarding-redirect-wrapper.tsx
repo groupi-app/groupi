@@ -58,8 +58,9 @@ export function OnboardingRedirectWrapper() {
       return;
     }
 
-    // If query is still loading, don't redirect yet
-    if (needsOnboarding === undefined) {
+    // If query is still loading or auth hasn't synced yet, don't redirect
+    // null = not authenticated (auth syncing), undefined = query loading
+    if (needsOnboarding === undefined || needsOnboarding === null) {
       return;
     }
 
