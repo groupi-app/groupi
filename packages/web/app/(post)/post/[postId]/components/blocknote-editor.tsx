@@ -271,10 +271,14 @@ export function BlockNoteEditor({
                       key={item.personId}
                       type='button'
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent active:bg-accent transition-colors',
                         index === selectedIndex && 'bg-accent'
                       )}
-                      onClick={() => onItemClick?.(item)}
+                      // Use onMouseDown instead of onClick for better mobile touch support
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        onItemClick?.(item);
+                      }}
                     >
                       <Avatar className='h-8 w-8'>
                         <AvatarImage src={item.image} />
@@ -333,10 +337,14 @@ export function BlockNoteEditor({
                       key={item.title}
                       type='button'
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent active:bg-accent transition-colors',
                         index === selectedIndex && 'bg-accent'
                       )}
-                      onClick={() => onItemClick?.(item)}
+                      // Use onMouseDown instead of onClick for better mobile touch support
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        onItemClick?.(item);
+                      }}
                     >
                       {item.icon && (
                         <span className='text-lg'>{item.icon}</span>
