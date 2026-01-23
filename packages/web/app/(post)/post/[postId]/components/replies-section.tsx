@@ -1,6 +1,6 @@
 'use client';
 
-import { ReplyFeedClient } from './reply-feed-client';
+import { ReplyList } from './reply-list';
 import ReplyForm from './reply-form';
 import { usePostDetail } from '@/hooks/convex/use-posts';
 import { Id } from '@/convex/_generated/dataModel';
@@ -15,8 +15,8 @@ type Reply_Type = ConvexPostDetailData['post']['replies'][0];
 type UserMembership = ConvexPostDetailData['userMembership'];
 type Post = ConvexPostDetailData['post'];
 
-interface RepliesClientProps {
-  postId: Id<"posts">;
+interface RepliesSectionProps {
+  postId: Id<'posts'>;
   userId: string;
   replies: Reply_Type[];
   userMembership: UserMembership;
@@ -24,16 +24,16 @@ interface RepliesClientProps {
 }
 
 /**
- * Client wrapper that connects ReplyForm and ReplyFeedClient
+ * Client wrapper that connects ReplyForm and ReplyList
  * Realtime sync handles all updates automatically
  */
-export function RepliesClient({
+export function RepliesSection({
   postId,
   userId,
   replies: initialReplies,
   userMembership,
   post,
-}: RepliesClientProps) {
+}: RepliesSectionProps) {
   const newestReplyRef = useRef<HTMLDivElement>(null);
   const [showJumpToPresent, setShowJumpToPresent] = useState(false);
   const [buttonRight, setButtonRight] = useState<number | undefined>(undefined);
@@ -306,11 +306,15 @@ export function RepliesClient({
       {/* Divider between post and replies */}
       <div className='border-t border-border mb-6'></div>
       <div className='flex flex-col gap-4 -mx-4 sm:mx-0'>
-        <ReplyFeedClient
+        <ReplyList
           userId={userId}
           postId={postId}
           userRole={userMembership.role}
-          eventDateTime={post.event?.chosenDateTime ? new Date(post.event.chosenDateTime) : null}
+          eventDateTime={
+            post.event?.chosenDateTime
+              ? new Date(post.event.chosenDateTime)
+              : null
+          }
           newestReplyRef={newestReplyRef}
           post={post}
           editingReplyId={editingReplyId}
