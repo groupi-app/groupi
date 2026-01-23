@@ -8,8 +8,19 @@ import {
   createReactInlineContentSpec,
   getDefaultReactSlashMenuItems,
   DefaultReactSuggestionItem,
+  FormattingToolbarController,
+  BasicTextStyleButton,
+  TextAlignButton,
+  ColorStyleButton,
+  NestBlockButton,
+  UnnestBlockButton,
+  CreateLinkButton,
+  useBlockNoteEditor,
+  useSelectedBlocks,
+  useComponentsContext,
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
+import { FormattingToolbar } from '@blocknote/react';
 import { BlockNoteSchema, defaultInlineContentSpecs } from '@blocknote/core';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +30,23 @@ import '@blocknote/shadcn/style.css';
 import { cn, getInitialsFromName } from '@/lib/utils';
 import { Id, Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Icons } from '@/components/icons';
+import {
+  Pilcrow,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  ListChecks,
+  TextQuote,
+} from 'lucide-react';
 
 // Strip leading and trailing empty paragraph tags that BlockNote adds
 const stripEmptyParagraphs = (html: string): string => {
@@ -81,6 +109,111 @@ interface MentionItem {
   displayName: string;
   username: string;
   image?: string;
+}
+
+// Block type options for the custom block type selector
+interface BlockTypeOption {
+  type: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  props?: { level?: number };
+}
+
+const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
+  { type: 'paragraph', label: 'Paragraph', icon: Pilcrow },
+  { type: 'heading', label: 'Heading 1', icon: Heading1, props: { level: 1 } },
+  { type: 'heading', label: 'Heading 2', icon: Heading2, props: { level: 2 } },
+  { type: 'heading', label: 'Heading 3', icon: Heading3, props: { level: 3 } },
+  { type: 'bulletListItem', label: 'Bullet List', icon: List },
+  { type: 'numberedListItem', label: 'Numbered List', icon: ListOrdered },
+  { type: 'checkListItem', label: 'Check List', icon: ListChecks },
+  { type: 'quote', label: 'Quote', icon: TextQuote },
+];
+
+/**
+ * Custom touch-friendly block type selector
+ * Replaces the default BlockTypeSelect dropdown which has touch issues on mobile
+ */
+function TouchBlockTypeSelect() {
+  const editor = useBlockNoteEditor();
+  const Components = useComponentsContext();
+  const selectedBlocks = useSelectedBlocks();
+  const [open, setOpen] = useState(false);
+
+  // Get current block type
+  const currentBlock = selectedBlocks[0];
+  const currentType = currentBlock?.type || 'paragraph';
+  const currentLevel =
+    currentBlock?.type === 'heading'
+      ? (currentBlock.props as { level?: number })?.level
+      : undefined;
+
+  // Find current label
+  const currentOption = BLOCK_TYPE_OPTIONS.find(opt => {
+    if (opt.type !== currentType) return false;
+    if (opt.type === 'heading' && opt.props?.level !== currentLevel)
+      return false;
+    return true;
+  });
+  const currentLabel = currentOption?.label || 'Paragraph';
+
+  const handleSelect = (type: string, props?: { level?: number }) => {
+    setOpen(false);
+    editor.focus();
+
+    // Update all selected blocks
+    for (const block of selectedBlocks) {
+      editor.updateBlock(block, {
+        type: type as 'paragraph',
+        props: props as Record<string, unknown>,
+      });
+    }
+  };
+
+  if (!Components) return null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='h-7 px-2 text-xs gap-1'
+          onMouseDown={e => {
+            e.preventDefault();
+            setOpen(!open);
+          }}
+        >
+          {currentLabel}
+          <Icons.down size={14} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className='w-44 p-1'
+        align='start'
+        onOpenAutoFocus={e => e.preventDefault()}
+      >
+        {BLOCK_TYPE_OPTIONS.map(option => (
+          <button
+            key={option.label}
+            type='button'
+            className={cn(
+              'w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded',
+              'hover:bg-accent active:bg-accent transition-colors text-left',
+              currentLabel === option.label && 'bg-accent'
+            )}
+            onMouseDown={e => {
+              e.preventDefault();
+              handleSelect(option.type, option.props);
+            }}
+          >
+            <option.icon size={16} className='shrink-0' />
+            {option.label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 const DEFAULT_MAX_LENGTH = 2000;
@@ -250,7 +383,47 @@ export function BlockNoteEditor({
           editable={!disabled}
           theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
           slashMenu={false}
+          formattingToolbar={false}
         >
+          {/* Custom Formatting Toolbar with touch-friendly block type selector */}
+          <FormattingToolbarController
+            formattingToolbar={() => (
+              <FormattingToolbar>
+                <TouchBlockTypeSelect key='blockTypeSelect' />
+
+                <BasicTextStyleButton
+                  basicTextStyle='bold'
+                  key='boldStyleButton'
+                />
+                <BasicTextStyleButton
+                  basicTextStyle='italic'
+                  key='italicStyleButton'
+                />
+                <BasicTextStyleButton
+                  basicTextStyle='underline'
+                  key='underlineStyleButton'
+                />
+                <BasicTextStyleButton
+                  basicTextStyle='strike'
+                  key='strikeStyleButton'
+                />
+                <BasicTextStyleButton
+                  basicTextStyle='code'
+                  key='codeStyleButton'
+                />
+
+                <TextAlignButton textAlignment='left' key='textAlignLeft' />
+                <TextAlignButton textAlignment='center' key='textAlignCenter' />
+                <TextAlignButton textAlignment='right' key='textAlignRight' />
+
+                <ColorStyleButton key='colorStyleButton' />
+                <NestBlockButton key='nestBlockButton' />
+                <UnnestBlockButton key='unnestBlockButton' />
+                <CreateLinkButton key='createLinkButton' />
+              </FormattingToolbar>
+            )}
+          />
+
           {/* Mention Menu - triggered by @ */}
           <SuggestionMenuController
             triggerCharacter='@'
