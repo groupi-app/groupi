@@ -70,7 +70,7 @@ export default function EventInvitePage(props: {
           <span>Back to Event</span>
         </Button>
       </Link>
-      <InviteCardList eventId={eventId} />
+      <InviteCardList eventId={eventId as Id<'events'>} />
     </div>
   );
 }

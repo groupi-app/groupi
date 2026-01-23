@@ -2,7 +2,7 @@
 
 import { usePostDetail, useCurrentUser, usePostReplies } from '@/hooks/convex';
 import { Id } from '@/convex/_generated/dataModel';
-import { RepliesClient } from './replies-client';
+import { RepliesSection } from './replies-section';
 import { ReplyListSkeleton, ReplyFormSkeleton } from '@/components/skeletons';
 
 /**
@@ -10,10 +10,14 @@ import { ReplyListSkeleton, ReplyFormSkeleton } from '@/components/skeletons';
  */
 export function Replies({ postId }: { postId: string }) {
   const user = useCurrentUser();
-  const postData = usePostDetail(postId as Id<"posts">);
-  const repliesData = usePostReplies(postId as Id<"posts">);
+  const postData = usePostDetail(postId as Id<'posts'>);
+  const repliesData = usePostReplies(postId as Id<'posts'>);
 
-  if (user === undefined || postData === undefined || repliesData === undefined) {
+  if (
+    user === undefined ||
+    postData === undefined ||
+    repliesData === undefined
+  ) {
     return (
       <div className='space-y-6'>
         <ReplyFormSkeleton />
@@ -39,8 +43,8 @@ export function Replies({ postId }: { postId: string }) {
   const { replies } = repliesData;
 
   return (
-    <RepliesClient
-      postId={postId as Id<"posts">}
+    <RepliesSection
+      postId={postId as Id<'posts'>}
       userId={user.person.id}
       replies={replies}
       userMembership={userMembership}

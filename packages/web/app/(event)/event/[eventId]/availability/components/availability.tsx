@@ -7,7 +7,7 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-interface AvailabilityClientProps {
+interface AvailabilityProps {
   eventId: string;
 }
 
@@ -17,20 +17,18 @@ interface AvailabilityClientProps {
  * - Real-time updates via Convex subscriptions
  * - Loading states managed by component
  */
-export function AvailabilityClient({
-  eventId,
-}: AvailabilityClientProps) {
+export function Availability({ eventId }: AvailabilityProps) {
   // Use direct Convex hook for real-time availability data
-  const availabilityData = useEventAvailability(eventId as Id<"events">);
+  const availabilityData = useEventAvailability(eventId as Id<'events'>);
 
   // Loading state
   if (availabilityData === undefined) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 bg-muted rounded w-48"></div>
-        <div className="space-y-3">
+      <div className='animate-pulse space-y-4'>
+        <div className='h-6 bg-muted rounded w-48'></div>
+        <div className='space-y-3'>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 bg-muted rounded"></div>
+            <div key={i} className='h-20 bg-muted rounded'></div>
           ))}
         </div>
       </div>
