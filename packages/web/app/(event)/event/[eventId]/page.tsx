@@ -1,38 +1,32 @@
-import { EventPageContent } from './components/event-page-content';
+'use client';
+
+import { use } from 'react';
+import { EventHeaderClient } from './components/event-header-client';
+import { MemberListClient } from './components/member-list-client';
+import { PostFeedClient } from './components/post-feed-client';
 import { NewPostButton } from '@/components/new-post-button';
-import { EventHeaderSkeleton } from '@/components/skeletons/event-header-skeleton';
-import { MemberListSkeleton } from '@/components/skeletons/member-list-skeleton';
-import { PostFeedSkeleton } from './components/post-feed-skeleton';
-import { Suspense } from 'react';
 
 /**
- * Event Detail Page - Static root for instant skeleton rendering
- * - Page root is static (no async operations) for optimal PPR
- * - All checks and redirects happen inside Suspense boundary
- * - Skeletons show immediately while checks complete
- * - EventHeaderServer fetches cached header data (5 min TTL)
- * - MemberListServer fetches cached member data (2 min TTL)
- * - PostFeedServer fetches cached posts (30 sec TTL)
- * - Each component wrapped in Suspense for granular loading states
+ * Event Detail Page - Client-only architecture
+ * - Auth and onboarding checks handled by AuthenticatedLayout
+ * - Event membership check handled by layout
+ * - Each component handles its own loading state with skeleton
+ * - Real-time updates via Convex subscriptions
  */
 export default function EventPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
+  const { eventId } = use(props.params);
+
   return (
     <>
-      <Suspense
-        fallback={
-          <div className='container pt-6 pb-24 space-y-5'>
-            <EventHeaderSkeleton />
-            <div className='mx-auto flex flex-col gap-4 max-w-4xl'>
-              <MemberListSkeleton />
-              <PostFeedSkeleton />
-            </div>
-          </div>
-        }
-      >
-        <EventPageContent params={props.params} />
-      </Suspense>
+      <div className='container pt-6 pb-24 space-y-5'>
+        <EventHeaderClient eventId={eventId} />
+        <div className='max-w-4xl mx-auto flex flex-col gap-4'>
+          <MemberListClient eventId={eventId} />
+          <PostFeedClient eventId={eventId} />
+        </div>
+      </div>
       <NewPostButton />
     </>
   );
