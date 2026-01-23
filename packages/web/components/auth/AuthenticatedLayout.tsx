@@ -3,20 +3,33 @@
 import { useSession } from '@/lib/auth-client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from 'convex/react';
+import { Loader2 } from 'lucide-react';
+
+// Dynamic require to avoid deep type instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let userQueries: any;
+function initApi() {
+  if (!userQueries) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { api } = require('@/convex/_generated/api');
+    userQueries = api.users?.queries ?? {};
+  }
+}
+initApi();
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
-  /**
-   * Custom skeleton to show while authenticating.
-   * Defaults to a full-page skeleton.
-   */
-  skeleton?: React.ReactNode;
   /**
    * Where to redirect if not authenticated.
    * Defaults to /sign-in
    */
   redirectTo?: string;
+  /**
+   * Skip onboarding check. Use this for layouts that should render
+   * even if onboarding is incomplete (e.g., the onboarding page itself).
+   */
+  skipOnboardingCheck?: boolean;
 }
 
 /**
@@ -36,14 +49,21 @@ interface AuthenticatedLayoutProps {
  */
 export function AuthenticatedLayout({
   children,
-  skeleton,
   redirectTo = '/sign-in',
+  skipOnboardingCheck = false,
 }: AuthenticatedLayoutProps) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
   const isAuthenticated = !!session?.user;
+
+  // Check onboarding status for authenticated users (unless skipped)
+  const needsOnboarding = useQuery(
+    userQueries.checkNeedsOnboarding,
+    // Only run the query if authenticated and not skipping the check
+    isAuthenticated && !skipOnboardingCheck ? {} : 'skip'
+  );
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) {
@@ -53,59 +73,38 @@ export function AuthenticatedLayout({
     }
   }, [isAuthenticated, isPending, router, redirectTo, pathname]);
 
+  // Show loading spinner while checking auth status
   if (isPending) {
-    return skeleton ?? <AuthenticatedLayoutSkeleton />;
+    return <AuthLoadingSpinner />;
   }
 
+  // Show loading spinner while redirecting to sign-in
   if (!isAuthenticated) {
-    // Show skeleton while redirecting
-    return skeleton ?? <AuthenticatedLayoutSkeleton />;
+    return <AuthLoadingSpinner />;
+  }
+
+  // Show loading spinner while checking onboarding status
+  if (!skipOnboardingCheck && needsOnboarding === undefined) {
+    return <AuthLoadingSpinner />;
+  }
+
+  // Show loading spinner while redirecting to onboarding
+  // (OnboardingRedirectWrapper handles the actual redirect)
+  if (!skipOnboardingCheck && needsOnboarding === true) {
+    return <AuthLoadingSpinner />;
   }
 
   return <>{children}</>;
 }
 
 /**
- * Default full-page skeleton for authenticated layouts.
- * Shows a realistic page structure while auth is loading.
+ * Simple centered loading spinner for auth checks.
+ * Used during authentication and onboarding status checks.
  */
-export function AuthenticatedLayoutSkeleton() {
+function AuthLoadingSpinner() {
   return (
-    <div className="container max-w-4xl py-8 space-y-6">
-      {/* Page title */}
-      <Skeleton className="h-10 w-64" />
-
-      {/* Content area */}
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/6" />
-      </div>
-
-      {/* Card-like content */}
-      <div className="border rounded-lg p-6 space-y-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-        <div className="flex gap-2 pt-4">
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-24" />
-        </div>
-      </div>
-
-      {/* List items */}
-      <div className="space-y-3">
-        {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="border rounded-lg p-4 flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
-            </div>
-            <Skeleton className="h-8 w-20" />
-          </div>
-        ))}
-      </div>
+    <div className='flex items-center justify-center min-h-[50vh]'>
+      <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
     </div>
   );
 }
