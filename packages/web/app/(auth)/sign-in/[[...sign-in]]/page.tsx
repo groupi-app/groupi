@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn, sendMagicLinkWithEmailOrUsername, authClient } from '@/lib/auth-client';
+import {
+  signIn,
+  sendMagicLinkWithEmailOrUsername,
+  authClient,
+} from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +21,10 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/events';
   // Build callback URL that includes the redirect parameter for onboarding
-  const callbackURL = redirectTo !== '/events' ? `/onboarding?redirect=${encodeURIComponent(redirectTo)}` : '/onboarding';
+  const callbackURL =
+    redirectTo !== '/events'
+      ? `/onboarding?redirect=${encodeURIComponent(redirectTo)}`
+      : '/onboarding';
   const [identifier, setIdentifier] = useState(''); // Email or username
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -38,9 +44,11 @@ export default function SignInPage() {
         return;
       }
       try {
-        const available = await PublicKeyCredential.isConditionalMediationAvailable?.();
+        const available =
+          await PublicKeyCredential.isConditionalMediationAvailable?.();
         // Also check for platform authenticator
-        const platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const platformAvailable =
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         setPasskeySupported(available || platformAvailable);
       } catch {
         setPasskeySupported(false);
@@ -106,7 +114,8 @@ export default function SignInPage() {
       // Success - redirect to onboarding with redirect parameter
       router.push(callbackURL);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Passkey authentication failed';
+      const message =
+        err instanceof Error ? err.message : 'Passkey authentication failed';
       const lowerMessage = message.toLowerCase();
       // Handle user cancellation gracefully
       if (
@@ -357,12 +366,9 @@ export default function SignInPage() {
               </Button>
             </form>
 
-            <div className='text-center text-sm text-muted-foreground'>
-              Don&apos;t have an account?{' '}
-              <Link href='/sign-up' className='underline'>
-                Sign up
-              </Link>
-            </div>
+            <p className='text-center text-sm text-muted-foreground'>
+              New users will be automatically registered
+            </p>
           </CardContent>
         </Card>
       </div>
