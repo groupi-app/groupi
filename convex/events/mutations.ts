@@ -665,14 +665,16 @@ export const chooseEventDate = mutation({
       datetime: chosenDateTime,
     });
 
-    // Schedule reminder if requested
-    if (reminderOffset) {
+    // Schedule reminder if requested (use passed value, or fall back to event's stored value)
+    const effectiveReminderOffset =
+      reminderOffset ?? updatedEvent?.reminderOffset;
+    if (effectiveReminderOffset) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
       const reminderFn = internal.reminders.mutations.scheduleEventReminder;
       await ctx.scheduler.runAfter(0, reminderFn, {
         eventId,
-        reminderOffset,
+        reminderOffset: effectiveReminderOffset,
       });
     }
 
