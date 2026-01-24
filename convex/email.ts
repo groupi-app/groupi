@@ -1,14 +1,10 @@
-// import { components } from "./_generated/api";
-// import { Resend } from "@convex-dev/resend";
+import { Resend } from 'resend';
 import { internalMutation } from './_generated/server';
 import { v } from 'convex/values';
 
-// TODO: Re-enable after Resend component is deployed
-// export const resend = new Resend(components.resend, {
-//   testMode: process.env.NODE_ENV !== "production",
-// });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const resend = {} as any;
+// Initialize Resend client for email sending
+const resendApiKey = process.env.RESEND_API_KEY;
+const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Send magic link email (used by Better Auth)
 export const sendMagicLinkEmail = internalMutation({
@@ -16,7 +12,7 @@ export const sendMagicLinkEmail = internalMutation({
     email: v.string(),
     url: v.string(),
   },
-  handler: async (ctx, { email, url }) => {
+  handler: async (_ctx, { email, url }) => {
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     // In development, log magic link URL if debug logging is enabled
@@ -29,9 +25,16 @@ export const sendMagicLinkEmail = internalMutation({
       return;
     }
 
-    // In production, send email using Resend component
-    await resend.sendEmail(ctx, {
-      from: 'Groupi <noreply@groupi.gg>',
+    // In production, send email using Resend
+    if (!resendClient) {
+      console.warn(
+        'RESEND_API_KEY not configured, cannot send magic link email'
+      );
+      return;
+    }
+
+    await resendClient.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Groupi <noreply@groupi.gg>',
       to: email,
       subject: 'Sign in to Groupi',
       html: `
@@ -70,12 +73,25 @@ export const sendNotificationEmail = internalMutation({
     subject: v.string(),
     html: v.string(),
   },
-  handler: async (ctx, args) => {
-    await resend.sendEmail(ctx, {
-      from: 'Groupi <notifications@groupi.gg>',
-      to: args.to,
-      subject: args.subject,
-      html: args.html,
-    });
+  handler: async (_ctx, args) => {
+    if (!resendClient) {
+      console.warn(
+        'RESEND_API_KEY not configured, cannot send notification email'
+      );
+      return;
+    }
+
+    try {
+      await resendClient.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL || 'Groupi <notifications@groupi.gg>',
+        to: args.to,
+        subject: args.subject,
+        html: args.html,
+      });
+      console.log(`Notification email sent to ${args.to}`);
+    } catch (error) {
+      console.error('Failed to send notification email:', error);
+    }
   },
 });
