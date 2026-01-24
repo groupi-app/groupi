@@ -254,6 +254,27 @@ export const updateEvent = mutation({
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
 
+    // Handle reminder reschedule/cancel when reminderOffset changes
+    if (reminderOffset !== undefined) {
+      if (reminderOffset === null) {
+        // Clear reminder - cancel any scheduled reminders
+        await ctx.scheduler.runAfter(
+          0,
+          internal.reminders.mutations.cancelEventReminders,
+          { eventId }
+        );
+      } else if (updatedEvent?.chosenDateTime) {
+        // Reminder offset changed and event has a date - reschedule reminder
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Type instantiation is excessively deep (TS2589)
+        const reminderFn = internal.reminders.mutations.scheduleEventReminder;
+        await ctx.scheduler.runAfter(0, reminderFn, {
+          eventId,
+          reminderOffset,
+        });
+      }
+    }
+
     // Get the current user's person ID for the notification author
     const { person } = await requireAuth(ctx);
 
@@ -960,6 +981,14 @@ export const updatePotentialDateTimes = mutation({
     // Get the updated potential date times
     const updatedPotentialDates = await Promise.all(
       newPotentialDateTimeIds.map(id => ctx.db.get(id))
+    );
+
+    // Cancel any scheduled reminders since we're starting a new poll
+    // (the chosen date will likely change, so any existing reminder is invalid)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.reminders.mutations.cancelEventReminders,
+      { eventId }
     );
 
     // Notify all members about new date options (using DATE_CHANGED type)
