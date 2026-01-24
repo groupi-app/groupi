@@ -174,6 +174,17 @@ export const createEvent = mutation({
     // Get the created event
     const event = await ctx.db.get(eventId);
 
+    // Schedule reminder if event was created with both a date and reminder offset
+    if (chosenTimestamp && reminderOffset) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
+      const reminderFn = internal.reminders.mutations.scheduleEventReminder;
+      await ctx.scheduler.runAfter(0, reminderFn, {
+        eventId,
+        reminderOffset,
+      });
+    }
+
     return {
       eventId,
       membershipId,
