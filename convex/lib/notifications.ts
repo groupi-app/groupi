@@ -88,6 +88,98 @@ export type NotificationType =
 export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 
 /**
+ * Extract person IDs from mentions in HTML content
+ * Mentions are formatted as: <span class="mention" data-id="personId">@label</span>
+ */
+export function extractMentionedPersonIds(content: string): string[] {
+  // Match data-id attributes in mention spans
+  const mentionRegex = /data-id=["']([^"']+)["']/g;
+  const personIds: string[] = [];
+  let match;
+
+  while ((match = mentionRegex.exec(content)) !== null) {
+    const personId = match[1];
+    if (personId && !personIds.includes(personId)) {
+      personIds.push(personId);
+    }
+  }
+
+  return personIds;
+}
+
+/**
+ * Notify mentioned users in a post or reply
+ * Skips the author and users who have muted the event/post
+ */
+export async function notifyMentionedUsers(
+  ctx: MutationCtx,
+  data: {
+    content: string;
+    authorId: Id<'persons'>;
+    eventId: Id<'events'>;
+    postId: Id<'posts'>;
+  }
+): Promise<{ sent: number; skipped: number }> {
+  const mentionedPersonIds = extractMentionedPersonIds(data.content);
+
+  let sent = 0;
+  let skipped = 0;
+
+  for (const personIdStr of mentionedPersonIds) {
+    const personId = personIdStr as Id<'persons'>;
+
+    // Skip if the author mentioned themselves
+    if (personId === data.authorId) {
+      continue;
+    }
+
+    // Check if this person exists and is a member of the event
+    const person = await ctx.db.get(personId);
+    if (!person) {
+      skipped++;
+      continue;
+    }
+
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', personId).eq('eventId', data.eventId)
+      )
+      .first();
+
+    if (!membership) {
+      skipped++;
+      continue;
+    }
+
+    // Check if user has muted this event or post
+    const shouldSkip = await shouldSkipNotificationDueToMute(
+      ctx,
+      personId,
+      data.eventId,
+      data.postId
+    );
+
+    if (shouldSkip) {
+      skipped++;
+      continue;
+    }
+
+    // Create the mention notification
+    await createNotification(ctx, {
+      personId,
+      type: 'USER_MENTIONED',
+      authorId: data.authorId,
+      eventId: data.eventId,
+      postId: data.postId,
+    });
+    sent++;
+  }
+
+  return { sent, skipped };
+}
+
+/**
  * Get enabled email addresses for a person and notification type
  * Returns an array of email addresses that should receive this notification
  */
