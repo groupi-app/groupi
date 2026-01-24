@@ -9,7 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { Dialog } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -220,6 +226,9 @@ export function MentionHandler({
       {isMobile ? (
         <Drawer open={sheetOpen} onOpenChange={setSheetOpen} modal={true}>
           <DrawerContent>
+            <VisuallyHidden>
+              <DrawerTitle>Member: {fullName}</DrawerTitle>
+            </VisuallyHidden>
             <DrawerHeader className='text-left'>
               <div className='flex items-center gap-3 mb-4'>
                 <Avatar>
