@@ -5,6 +5,7 @@ import {
   notifyEventMembers,
   notifyPerson,
   notifyThreadParticipants,
+  notifyMentionedUsers,
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
 
@@ -57,6 +58,14 @@ export const createPost = mutation({
       eventId,
       type: 'NEW_POST',
       authorId: person._id,
+      postId,
+    });
+
+    // Notify mentioned users (separate from general post notification)
+    await notifyMentionedUsers(ctx, {
+      content,
+      authorId: person._id,
+      eventId,
       postId,
     });
 
@@ -258,6 +267,14 @@ export const createReply = mutation({
       eventId: post.eventId,
       postAuthorId: post.authorId,
       replyAuthorId: person._id,
+    });
+
+    // Notify mentioned users (separate from thread participant notification)
+    await notifyMentionedUsers(ctx, {
+      content: text,
+      authorId: person._id,
+      eventId: post.eventId,
+      postId: post._id,
     });
 
     return { replyId, reply };
