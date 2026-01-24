@@ -424,15 +424,333 @@ async function sendEmailNotifications(
 
   for (const email of emails) {
     try {
-      await resendClient.emails.send({
+      const result = await resendClient.emails.send({
         from: fromEmail,
         to: email,
         subject,
         html,
       });
-      console.log(`Notification email sent to ${email}`);
+
+      if (result.error) {
+        console.error(
+          `Resend API error for ${email}:`,
+          result.error.message,
+          result.error
+        );
+      } else {
+        console.log(
+          `Notification email sent to ${email}, id: ${result.data?.id}`
+        );
+      }
     } catch (error) {
       console.error(`Failed to send notification email to ${email}:`, error);
+    }
+  }
+}
+
+type WebhookFormat = 'DISCORD' | 'SLACK' | 'TEAMS' | 'GENERIC' | 'CUSTOM';
+
+interface WebhookMethod {
+  url: string;
+  format: WebhookFormat;
+  headers?: Record<string, string>;
+  customTemplate?: string;
+}
+
+/**
+ * Get enabled webhook methods for a person and notification type
+ */
+async function getEnabledWebhooksForNotification(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  notificationType: NotificationType
+): Promise<WebhookMethod[]> {
+  const settings = await ctx.db
+    .query('personSettings')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .first();
+
+  if (!settings) {
+    return [];
+  }
+
+  const methods = await ctx.db
+    .query('notificationMethods')
+    .withIndex('by_settings', q => q.eq('settingsId', settings._id))
+    .collect();
+
+  const webhookMethods = methods.filter(m => m.type === 'WEBHOOK' && m.enabled);
+
+  if (webhookMethods.length === 0) {
+    return [];
+  }
+
+  const enabledWebhooks: WebhookMethod[] = [];
+
+  for (const method of webhookMethods) {
+    const typeSetting = await ctx.db
+      .query('notificationSettings')
+      .withIndex('by_type_method', q =>
+        q.eq('notificationType', notificationType).eq('methodId', method._id)
+      )
+      .first();
+
+    const isEnabled = typeSetting ? typeSetting.enabled : true;
+
+    if (isEnabled) {
+      enabledWebhooks.push({
+        url: method.value,
+        format: (method.webhookFormat as WebhookFormat) || 'GENERIC',
+        headers: method.webhookHeaders as Record<string, string> | undefined,
+        customTemplate: method.customTemplate,
+      });
+    }
+  }
+
+  return enabledWebhooks;
+}
+
+/**
+ * Format webhook payload based on webhook format
+ */
+function formatWebhookPayload(
+  format: WebhookFormat,
+  data: {
+    type: NotificationType;
+    eventTitle?: string;
+    authorName?: string;
+    message: string;
+  },
+  customTemplate?: string
+): object {
+  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+
+  switch (format) {
+    case 'DISCORD':
+      return {
+        embeds: [
+          {
+            title: data.eventTitle || 'Groupi Notification',
+            description: data.message,
+            color: 0x2563eb, // Blue color
+            footer: {
+              text: 'Groupi',
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case 'SLACK':
+      return {
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*${data.eventTitle || 'Groupi'}*\n${data.message}`,
+            },
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'View on Groupi',
+                },
+                url: siteUrl,
+              },
+            ],
+          },
+        ],
+      };
+
+    case 'TEAMS':
+      return {
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        themeColor: '2563eb',
+        summary: data.message,
+        sections: [
+          {
+            activityTitle: data.eventTitle || 'Groupi Notification',
+            text: data.message,
+          },
+        ],
+        potentialAction: [
+          {
+            '@type': 'OpenUri',
+            name: 'View on Groupi',
+            targets: [{ os: 'default', uri: siteUrl }],
+          },
+        ],
+      };
+
+    case 'CUSTOM':
+      if (customTemplate) {
+        try {
+          // Simple template replacement
+          let payload = customTemplate;
+          payload = payload.replace(/\{\{type\}\}/g, data.type);
+          payload = payload.replace(/\{\{message\}\}/g, data.message);
+          payload = payload.replace(
+            /\{\{eventTitle\}\}/g,
+            data.eventTitle || ''
+          );
+          payload = payload.replace(
+            /\{\{authorName\}\}/g,
+            data.authorName || ''
+          );
+          payload = payload.replace(
+            /\{\{timestamp\}\}/g,
+            new Date().toISOString()
+          );
+          return JSON.parse(payload);
+        } catch {
+          console.error('Failed to parse custom webhook template');
+        }
+      }
+    // Fall through to GENERIC if custom template fails
+
+    case 'GENERIC':
+    default:
+      return {
+        type: data.type,
+        message: data.message,
+        eventTitle: data.eventTitle,
+        authorName: data.authorName,
+        timestamp: new Date().toISOString(),
+        source: 'groupi',
+      };
+  }
+}
+
+/**
+ * Get a human-readable message for the notification type
+ */
+function getNotificationMessage(
+  type: NotificationType,
+  authorName?: string
+): string {
+  switch (type) {
+    case 'NEW_POST':
+      return authorName
+        ? `${authorName} created a new post`
+        : 'A new post was created';
+    case 'NEW_REPLY':
+      return authorName
+        ? `${authorName} replied to a thread`
+        : 'There is a new reply in a thread';
+    case 'EVENT_EDITED':
+      return 'The event details have been updated';
+    case 'DATE_CHOSEN':
+      return 'A date has been chosen for the event';
+    case 'DATE_CHANGED':
+      return 'The event date has been changed';
+    case 'DATE_RESET':
+      return 'The event date has been reset';
+    case 'USER_JOINED':
+      return authorName
+        ? `${authorName} joined the event`
+        : 'A new attendee joined';
+    case 'USER_LEFT':
+      return authorName
+        ? `${authorName} left the event`
+        : 'An attendee left the event';
+    case 'USER_PROMOTED':
+      return 'You have been promoted';
+    case 'USER_DEMOTED':
+      return 'Your role has been changed';
+    case 'USER_RSVP':
+      return authorName
+        ? `${authorName} updated their RSVP`
+        : 'An RSVP was updated';
+    case 'USER_MENTIONED':
+      return authorName ? `${authorName} mentioned you` : 'You were mentioned';
+    case 'EVENT_REMINDER':
+      return 'Your event is coming up soon!';
+    default:
+      return 'You have a new notification';
+  }
+}
+
+/**
+ * Send webhook notifications for a notification
+ */
+async function sendWebhookNotifications(
+  ctx: MutationCtx,
+  data: {
+    personId: Id<'persons'>;
+    type: NotificationType;
+    authorId?: Id<'persons'>;
+    eventId?: Id<'events'>;
+  }
+): Promise<void> {
+  const webhooks = await getEnabledWebhooksForNotification(
+    ctx,
+    data.personId,
+    data.type
+  );
+
+  if (webhooks.length === 0) {
+    return;
+  }
+
+  // Get event title if we have an event
+  let eventTitle: string | undefined;
+  if (data.eventId) {
+    const event = await ctx.db.get(data.eventId);
+    eventTitle = event?.title;
+  }
+
+  // Get author name if we have an author
+  let authorName: string | undefined;
+  if (data.authorId) {
+    const authorPerson = await ctx.db.get(data.authorId);
+    if (authorPerson) {
+      const authorUser = await authComponent.getAnyUserById(
+        ctx,
+        authorPerson.userId as AuthUserId
+      );
+      authorName = authorUser?.name || authorUser?.email || undefined;
+    }
+  }
+
+  const message = getNotificationMessage(data.type, authorName);
+
+  for (const webhook of webhooks) {
+    try {
+      const payload = formatWebhookPayload(
+        webhook.format,
+        { type: data.type, eventTitle, authorName, message },
+        webhook.customTemplate
+      );
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...webhook.headers,
+      };
+
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        console.log(`Webhook notification sent to ${webhook.url}`);
+      } else {
+        console.error(
+          `Webhook notification failed for ${webhook.url}: ${response.status} ${response.statusText}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Failed to send webhook notification to ${webhook.url}:`,
+        error
+      );
     }
   }
 }
@@ -466,8 +784,16 @@ export async function createNotification(
     updatedAt: Date.now(),
   });
 
-  // Send email notifications (async, won't block)
+  // Send email notifications
   await sendEmailNotifications(ctx, {
+    personId: data.personId,
+    type: data.type,
+    authorId: data.authorId,
+    eventId: data.eventId,
+  });
+
+  // Send webhook notifications
+  await sendWebhookNotifications(ctx, {
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
