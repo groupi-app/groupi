@@ -1,6 +1,12 @@
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { presence } from '../presence';
+import { authComponent, AuthUserId } from '../auth';
+import { Resend } from 'resend';
+
+// Initialize Resend client for email sending
+const resendApiKey = process.env.RESEND_API_KEY;
+const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
 
 /**
  * Check if a person has muted an event
@@ -82,7 +88,266 @@ export type NotificationType =
 export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 
 /**
+ * Get enabled email addresses for a person and notification type
+ * Returns an array of email addresses that should receive this notification
+ */
+async function getEnabledEmailsForNotification(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  notificationType: NotificationType
+): Promise<string[]> {
+  // Get person's settings
+  const settings = await ctx.db
+    .query('personSettings')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .first();
+
+  if (!settings) {
+    return [];
+  }
+
+  // Get all notification methods for this person
+  const methods = await ctx.db
+    .query('notificationMethods')
+    .withIndex('by_settings', q => q.eq('settingsId', settings._id))
+    .collect();
+
+  // Filter to enabled EMAIL methods
+  const emailMethods = methods.filter(m => m.type === 'EMAIL' && m.enabled);
+
+  if (emailMethods.length === 0) {
+    return [];
+  }
+
+  // Check if notification type is enabled for each email method
+  const enabledEmails: string[] = [];
+
+  for (const method of emailMethods) {
+    // Check if there's a specific setting for this notification type
+    const typeSetting = await ctx.db
+      .query('notificationSettings')
+      .withIndex('by_type_method', q =>
+        q.eq('notificationType', notificationType).eq('methodId', method._id)
+      )
+      .first();
+
+    // If there's a setting, use it; otherwise default to enabled
+    const isEnabled = typeSetting ? typeSetting.enabled : true;
+
+    if (isEnabled) {
+      enabledEmails.push(method.value);
+    }
+  }
+
+  return enabledEmails;
+}
+
+/**
+ * Generate email subject for a notification type
+ */
+function getNotificationEmailSubject(
+  type: NotificationType,
+  eventTitle?: string
+): string {
+  const prefix = eventTitle ? `[${eventTitle}] ` : '';
+
+  switch (type) {
+    case 'NEW_POST':
+      return `${prefix}New post`;
+    case 'NEW_REPLY':
+      return `${prefix}New reply`;
+    case 'EVENT_EDITED':
+      return `${prefix}Event updated`;
+    case 'DATE_CHOSEN':
+      return `${prefix}Event date chosen`;
+    case 'DATE_CHANGED':
+      return `${prefix}Event date changed`;
+    case 'DATE_RESET':
+      return `${prefix}Event date reset`;
+    case 'USER_JOINED':
+      return `${prefix}New attendee`;
+    case 'USER_LEFT':
+      return `${prefix}Attendee left`;
+    case 'USER_PROMOTED':
+      return `${prefix}You were promoted`;
+    case 'USER_DEMOTED':
+      return `${prefix}Role changed`;
+    case 'USER_RSVP':
+      return `${prefix}RSVP update`;
+    case 'USER_MENTIONED':
+      return `${prefix}You were mentioned`;
+    case 'EVENT_REMINDER':
+      return `${prefix}Event reminder`;
+    default:
+      return `${prefix}Notification`;
+  }
+}
+
+/**
+ * Generate email HTML body for a notification
+ */
+function getNotificationEmailHtml(
+  type: NotificationType,
+  eventTitle?: string,
+  authorName?: string
+): string {
+  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+
+  let message = '';
+  switch (type) {
+    case 'NEW_POST':
+      message = authorName
+        ? `${authorName} created a new post`
+        : 'A new post was created';
+      break;
+    case 'NEW_REPLY':
+      message = authorName
+        ? `${authorName} replied to a thread`
+        : 'There is a new reply in a thread';
+      break;
+    case 'EVENT_EDITED':
+      message = 'The event details have been updated';
+      break;
+    case 'DATE_CHOSEN':
+      message = 'A date has been chosen for the event';
+      break;
+    case 'DATE_CHANGED':
+      message = 'The event date has been changed';
+      break;
+    case 'DATE_RESET':
+      message = 'The event date has been reset';
+      break;
+    case 'USER_JOINED':
+      message = authorName
+        ? `${authorName} joined the event`
+        : 'A new attendee joined';
+      break;
+    case 'USER_LEFT':
+      message = authorName
+        ? `${authorName} left the event`
+        : 'An attendee left the event';
+      break;
+    case 'USER_PROMOTED':
+      message = 'You have been promoted';
+      break;
+    case 'USER_DEMOTED':
+      message = 'Your role has been changed';
+      break;
+    case 'USER_RSVP':
+      message = authorName
+        ? `${authorName} updated their RSVP`
+        : 'An RSVP was updated';
+      break;
+    case 'USER_MENTIONED':
+      message = authorName
+        ? `${authorName} mentioned you`
+        : 'You were mentioned';
+      break;
+    case 'EVENT_REMINDER':
+      message = 'Your event is coming up soon!';
+      break;
+    default:
+      message = 'You have a new notification';
+  }
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2563eb;">${eventTitle || 'Groupi'}</h1>
+        <p style="font-size: 16px;">${message}</p>
+        <div style="margin: 30px 0;">
+          <a href="${siteUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            View on Groupi
+          </a>
+        </div>
+        <p style="color: #999; font-size: 12px; margin-top: 40px;">
+          You received this email because you have email notifications enabled on Groupi.
+          <br/>
+          <a href="${siteUrl}/settings/notifications" style="color: #666;">Manage notification preferences</a>
+        </p>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Send email notifications for a notification if the user has email enabled
+ */
+async function sendEmailNotifications(
+  ctx: MutationCtx,
+  data: {
+    personId: Id<'persons'>;
+    type: NotificationType;
+    authorId?: Id<'persons'>;
+    eventId?: Id<'events'>;
+  }
+): Promise<void> {
+  // Get enabled emails for this notification type
+  const emails = await getEnabledEmailsForNotification(
+    ctx,
+    data.personId,
+    data.type
+  );
+
+  if (emails.length === 0) {
+    return;
+  }
+
+  // Get event title if we have an event
+  let eventTitle: string | undefined;
+  if (data.eventId) {
+    const event = await ctx.db.get(data.eventId);
+    eventTitle = event?.title;
+  }
+
+  // Get author name if we have an author
+  let authorName: string | undefined;
+  if (data.authorId) {
+    const authorPerson = await ctx.db.get(data.authorId);
+    if (authorPerson) {
+      const authorUser = await authComponent.getAnyUserById(
+        ctx,
+        authorPerson.userId as AuthUserId
+      );
+      authorName = authorUser?.name || authorUser?.email || undefined;
+    }
+  }
+
+  // Generate email content
+  const subject = getNotificationEmailSubject(data.type, eventTitle);
+  const html = getNotificationEmailHtml(data.type, eventTitle, authorName);
+
+  // Send email for each email address
+  if (!resendClient) {
+    return;
+  }
+
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL || 'Groupi <notifications@groupi.gg>';
+
+  for (const email of emails) {
+    try {
+      await resendClient.emails.send({
+        from: fromEmail,
+        to: email,
+        subject,
+        html,
+      });
+      console.log(`Notification email sent to ${email}`);
+    } catch (error) {
+      console.error(`Failed to send notification email to ${email}:`, error);
+    }
+  }
+}
+
+/**
  * Create a notification for a single recipient
+ * Also sends email notification if the user has email enabled for this notification type
  */
 export async function createNotification(
   ctx: MutationCtx,
@@ -96,7 +361,8 @@ export async function createNotification(
     rsvp?: RsvpStatus;
   }
 ) {
-  return await ctx.db.insert('notifications', {
+  // Insert the notification into the database
+  const notificationId = await ctx.db.insert('notifications', {
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
@@ -107,6 +373,16 @@ export async function createNotification(
     read: false,
     updatedAt: Date.now(),
   });
+
+  // Send email notifications (async, won't block)
+  await sendEmailNotifications(ctx, {
+    personId: data.personId,
+    type: data.type,
+    authorId: data.authorId,
+    eventId: data.eventId,
+  });
+
+  return notificationId;
 }
 
 /**
