@@ -39,7 +39,7 @@
     "check": "pnpm lint && pnpm type-check && pnpm format:check",
     "convex:dev": "pnpx convex dev",
     "convex:deploy": "pnpx convex deploy",
-    "convex:codegen": "pnpx convex codegen",
+    "generate": "pnpx convex codegen",
     "prepare": "husky"
   },
   "dependencies": {
