@@ -59,7 +59,7 @@ export function NotificationMethodsList({
 
   // Get existing email methods to determine what's already added
   const existingEmailMethods = methods.filter(
-    (m: NewNotificationMethod) => m.type === NotificationMethodType.EMAIL
+    (m: NewNotificationMethod) => m.type === NotificationMethodTypeValues.EMAIL
   );
   const usedEmails = new Set(existingEmailMethods.map(m => m.value));
 
@@ -110,7 +110,7 @@ export function NotificationMethodsList({
               <DropdownMenuItem
                 onSelect={() =>
                   handleAppend({
-                    type: NotificationMethodType.EMAIL,
+                    type: NotificationMethodTypeValues.EMAIL,
                     value: primaryEmail,
                     name: 'Primary Email',
                     enabled: true,
@@ -139,7 +139,7 @@ export function NotificationMethodsList({
                   key={email}
                   onSelect={() =>
                     handleAppend({
-                      type: NotificationMethodType.EMAIL,
+                      type: NotificationMethodTypeValues.EMAIL,
                       value: email,
                       name: `Email ${index + 2}`,
                       enabled: true,
@@ -176,7 +176,7 @@ export function NotificationMethodsList({
           <DropdownMenuItem
             onSelect={() =>
               handleAppend({
-                type: NotificationMethodType.WEBHOOK,
+                type: NotificationMethodTypeValues.WEBHOOK,
                 value: '',
                 name: '',
                 enabled: true, // Start enabled since URL is required anyway
