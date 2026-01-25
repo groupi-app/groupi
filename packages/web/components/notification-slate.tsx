@@ -450,8 +450,18 @@ export function NotificationSlate({
   const notificationContent = (
     <div className='relative group'>
       <Link
-        onClick={() => {
+        onClick={async () => {
           closeMenus();
+          // Mark as read when clicking to navigate
+          if (!read) {
+            try {
+              await markAsRead({
+                notificationId: notification.id as Id<'notifications'>,
+              });
+            } catch {
+              // Silently fail - navigation is more important
+            }
+          }
         }}
         href={getNotificationLink()}
         className='hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
