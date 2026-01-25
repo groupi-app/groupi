@@ -1,12 +1,8 @@
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
+import { internal } from '../_generated/api';
 import { presence } from '../presence';
 import { authComponent, AuthUserId } from '../auth';
-import { Resend } from 'resend';
-
-// Initialize Resend client for email sending
-const resendApiKey = process.env.RESEND_API_KEY;
-const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
 
 /**
  * Check if a person has muted an event
@@ -368,9 +364,9 @@ function getNotificationEmailHtml(
 }
 
 /**
- * Send email notifications for a notification if the user has email enabled
+ * Collect email data for a notification (to be sent via action)
  */
-async function sendEmailNotifications(
+async function collectEmailData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
@@ -378,7 +374,7 @@ async function sendEmailNotifications(
     authorId?: Id<'persons'>;
     eventId?: Id<'events'>;
   }
-): Promise<void> {
+): Promise<Array<{ to: string; subject: string; html: string }>> {
   // Get enabled emails for this notification type
   const emails = await getEnabledEmailsForNotification(
     ctx,
@@ -387,7 +383,7 @@ async function sendEmailNotifications(
   );
 
   if (emails.length === 0) {
-    return;
+    return [];
   }
 
   // Get event title if we have an event
@@ -414,38 +410,12 @@ async function sendEmailNotifications(
   const subject = getNotificationEmailSubject(data.type, eventTitle);
   const html = getNotificationEmailHtml(data.type, eventTitle, authorName);
 
-  // Send email for each email address
-  if (!resendClient) {
-    return;
-  }
-
-  const fromEmail =
-    process.env.RESEND_FROM_EMAIL || 'Groupi <notifications@groupi.gg>';
-
-  for (const email of emails) {
-    try {
-      const result = await resendClient.emails.send({
-        from: fromEmail,
-        to: email,
-        subject,
-        html,
-      });
-
-      if (result.error) {
-        console.error(
-          `Resend API error for ${email}:`,
-          result.error.message,
-          result.error
-        );
-      } else {
-        console.log(
-          `Notification email sent to ${email}, id: ${result.data?.id}`
-        );
-      }
-    } catch (error) {
-      console.error(`Failed to send notification email to ${email}:`, error);
-    }
-  }
+  // Return email data for each email address
+  return emails.map(email => ({
+    to: email,
+    subject,
+    html,
+  }));
 }
 
 type WebhookFormat = 'DISCORD' | 'SLACK' | 'TEAMS' | 'GENERIC' | 'CUSTOM';
@@ -677,9 +647,9 @@ function getNotificationMessage(
 }
 
 /**
- * Send webhook notifications for a notification
+ * Collect webhook data for a notification (to be sent via action)
  */
-async function sendWebhookNotifications(
+async function collectWebhookData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
@@ -687,7 +657,13 @@ async function sendWebhookNotifications(
     authorId?: Id<'persons'>;
     eventId?: Id<'events'>;
   }
-): Promise<void> {
+): Promise<
+  Array<{
+    url: string;
+    payload: string;
+    headers?: Record<string, string>;
+  }>
+> {
   const webhooks = await getEnabledWebhooksForNotification(
     ctx,
     data.personId,
@@ -695,7 +671,7 @@ async function sendWebhookNotifications(
   );
 
   if (webhooks.length === 0) {
-    return;
+    return [];
   }
 
   // Get event title if we have an event
@@ -720,44 +696,25 @@ async function sendWebhookNotifications(
 
   const message = getNotificationMessage(data.type, authorName);
 
-  for (const webhook of webhooks) {
-    try {
-      const payload = formatWebhookPayload(
-        webhook.format,
-        { type: data.type, eventTitle, authorName, message },
-        webhook.customTemplate
-      );
+  // Return webhook data for each webhook
+  return webhooks.map(webhook => {
+    const payload = formatWebhookPayload(
+      webhook.format,
+      { type: data.type, eventTitle, authorName, message },
+      webhook.customTemplate
+    );
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...webhook.headers,
-      };
-
-      const response = await fetch(webhook.url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        console.log(`Webhook notification sent to ${webhook.url}`);
-      } else {
-        console.error(
-          `Webhook notification failed for ${webhook.url}: ${response.status} ${response.statusText}`
-        );
-      }
-    } catch (error) {
-      console.error(
-        `Failed to send webhook notification to ${webhook.url}:`,
-        error
-      );
-    }
-  }
+    return {
+      url: webhook.url,
+      payload: JSON.stringify(payload),
+      headers: webhook.headers,
+    };
+  });
 }
 
 /**
  * Create a notification for a single recipient
- * Also sends email notification if the user has email enabled for this notification type
+ * Also schedules email and webhook notifications via action if the user has them enabled
  */
 export async function createNotification(
   ctx: MutationCtx,
@@ -784,21 +741,25 @@ export async function createNotification(
     updatedAt: Date.now(),
   });
 
-  // Send email notifications
-  await sendEmailNotifications(ctx, {
+  // Collect email and webhook data
+  const notificationData = {
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
     eventId: data.eventId,
-  });
+  };
 
-  // Send webhook notifications
-  await sendWebhookNotifications(ctx, {
-    personId: data.personId,
-    type: data.type,
-    authorId: data.authorId,
-    eventId: data.eventId,
-  });
+  const [emails, webhooks] = await Promise.all([
+    collectEmailData(ctx, notificationData),
+    collectWebhookData(ctx, notificationData),
+  ]);
+
+  // Schedule action to send external notifications if there are any
+  if (emails.length > 0 || webhooks.length > 0) {
+    // @ts-expect-error - Type instantiation is excessively deep (TS2589)
+    const sendAction = internal.notifications.actions.sendExternalNotifications;
+    await ctx.scheduler.runAfter(0, sendAction, { emails, webhooks });
+  }
 
   return notificationId;
 }
