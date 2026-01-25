@@ -41,6 +41,7 @@ import type * as migration_index from "../migration/index.js";
 import type * as migration_mutations from "../migration/mutations.js";
 import type * as muting_mutations from "../muting/mutations.js";
 import type * as muting_queries from "../muting/queries.js";
+import type * as notifications_actions from "../notifications/actions.js";
 import type * as notifications_mutations from "../notifications/mutations.js";
 import type * as notifications_queries from "../notifications/queries.js";
 import type * as posts_mutations from "../posts/mutations.js";
@@ -97,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   "migration/mutations": typeof migration_mutations;
   "muting/mutations": typeof muting_mutations;
   "muting/queries": typeof muting_queries;
+  "notifications/actions": typeof notifications_actions;
   "notifications/mutations": typeof notifications_mutations;
   "notifications/queries": typeof notifications_queries;
   "posts/mutations": typeof posts_mutations;
