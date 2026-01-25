@@ -1,7 +1,9 @@
 # Groupi Architecture Rules for Cursor AI
 
 ## Project Overview
+
 This is a cross-platform event planning application using:
+
 - **Backend**: Convex (real-time database with built-in auth)
 - **Web**: Next.js 16 (client-only with App Router)
 - **Mobile**: React Native with Expo
@@ -10,16 +12,19 @@ This is a cross-platform event planning application using:
 ## Architecture Principles
 
 ### 1. Real-Time First
+
 - Use Convex useQuery for all data fetching (never useState + useEffect)
 - All mutations use Convex useMutation with optimistic updates
 - Never manually manage cache - Convex handles real-time subscriptions
 
 ### 2. Cross-Platform Design
+
 - 95% of business logic is shared between web and mobile
 - Use factory pattern for dependency injection: `createDomainHooks(api: ConvexApi)`
 - Platform differences are abstracted through adapters
 
 ### 3. Client-Only Architecture
+
 - No server-side rendering or API routes in Next.js
 - No server actions or middleware
 - Pure client applications consuming Convex backend
@@ -27,7 +32,9 @@ This is a cross-platform event planning application using:
 ## Package Structure & Rules
 
 ### `/convex/` - Backend Functions
+
 **Rules:**
+
 - Define all schemas in `convex/schema.ts`
 - Organize by domain: `convex/users/queries.ts`, `convex/users/mutations.ts`
 - Always use `convex/values` for validation
@@ -35,6 +42,7 @@ This is a cross-platform event planning application using:
 - Use `console.log` for logging (official Convex method)
 
 **Example:**
+
 ```typescript
 // convex/events/mutations.ts
 export const createEvent = mutation({
@@ -44,7 +52,7 @@ export const createEvent = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-    return await ctx.db.insert("events", {
+    return await ctx.db.insert('events', {
       ...args,
       creatorId: user._id,
       createdAt: Date.now(),
@@ -54,19 +62,23 @@ export const createEvent = mutation({
 ```
 
 ### `/packages/shared/` - Cross-Platform Business Logic
+
 **Critical Rules:**
+
 - **NEVER** import platform-specific modules (`react-native`, `next/*`, `expo-*`)
 - **ALWAYS** use factory pattern for hooks
 - **ALL** business logic must work on both web and mobile
 - Use platform abstractions for navigation, storage, notifications
 
 **Structure:**
+
 - `hooks/use{Domain}Data.ts` - Data fetching hooks
 - `hooks/use{Domain}Actions.ts` - Action hooks with error handling
 - `platform/` - Platform abstractions
 - `utils/` - Cross-platform utilities
 
 **Example:**
+
 ```typescript
 // packages/shared/src/hooks/useEventActions.ts
 export function createEventActionHooks(api: ConvexApi) {
@@ -91,14 +103,18 @@ export function createEventActionHooks(api: ConvexApi) {
 ```
 
 ### `/apps/web/` - Next.js Web Application
+
 **Rules:**
+
 - Use shared hooks: `const { useEventData } = createEventHooks(api)`
 - Set up platform adapters in `lib/platform.ts`
 - Use App Router in `app/` directory
 - Style with Tailwind CSS and shadcn/ui components
 
 ### `/apps/mobile/` - React Native Mobile Application
+
 **Rules:**
+
 - Use same shared hooks as web: `const { useEventData } = createEventHooks(api)`
 - Set up platform adapters in `lib/platform-setup.ts`
 - Use React Native components and StyleSheet
@@ -107,6 +123,7 @@ export function createEventActionHooks(api: ConvexApi) {
 ## Feature Development Process
 
 ### Required Order:
+
 1. **Backend First**: Define schema → queries → mutations
 2. **Shared Logic**: Create hooks in packages/shared
 3. **Platform UI**: Implement web and mobile components
@@ -114,38 +131,41 @@ export function createEventActionHooks(api: ConvexApi) {
 ### Example: Adding Comments Feature
 
 #### Step 1: Backend (Convex)
+
 ```typescript
 // convex/schema.ts
 comments: defineTable({
   content: v.string(),
-  authorId: v.id("users"),
-  postId: v.id("posts"),
-}).index("by_post", ["postId"])
+  authorId: v.id('users'),
+  postId: v.id('posts'),
+}).index('by_post', ['postId']);
 
 // convex/comments/queries.ts
 export const getCommentsByPost = query({
-  args: { postId: v.id("posts") },
+  args: { postId: v.id('posts') },
   handler: async (ctx, { postId }) => {
-    return await ctx.db.query("comments")
-      .withIndex("by_post", q => q.eq("postId", postId))
+    return await ctx.db
+      .query('comments')
+      .withIndex('by_post', q => q.eq('postId', postId))
       .collect();
-  }
+  },
 });
 
 // convex/comments/mutations.ts
 export const createComment = mutation({
-  args: { content: v.string(), postId: v.id("posts") },
+  args: { content: v.string(), postId: v.id('posts') },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-    return await ctx.db.insert("comments", {
+    return await ctx.db.insert('comments', {
       ...args,
       authorId: user._id,
     });
-  }
+  },
 });
 ```
 
 #### Step 2: Shared Business Logic
+
 ```typescript
 // packages/shared/src/hooks/useCommentData.ts
 export function createCommentDataHooks(api: ConvexApi) {
@@ -175,6 +195,7 @@ export function createCommentActionHooks(api: ConvexApi) {
 ```
 
 #### Step 3: Platform UI Implementation
+
 ```typescript
 // Web: apps/web/src/components/CommentList.tsx
 import { createCommentDataHooks } from '@groupi/shared/hooks';
@@ -214,6 +235,7 @@ export function CommentList({ postId }: { postId: string }) {
 ## Code Quality Standards
 
 ### Error Handling
+
 ```typescript
 // ✅ Always handle errors in action hooks
 function useCreateEvent() {
@@ -240,6 +262,7 @@ function useBadCreateEvent() {
 ```
 
 ### Platform Abstraction
+
 ```typescript
 // ✅ Use platform abstractions in shared code
 import { navigation, storage, toast } from '@groupi/shared/platform';
@@ -256,6 +279,7 @@ import { useNavigation } from '@react-navigation/native'; // Only works on mobil
 ```
 
 ### Import Patterns
+
 ```typescript
 // ✅ Correct imports for shared package
 import { createEventHooks } from '@groupi/shared/hooks';
@@ -276,12 +300,14 @@ import { useRouter } from 'next/navigation'; // In packages/shared/ - FORBIDDEN
 ## File Organization
 
 ### Naming Conventions
+
 - Hooks: `use{Domain}Data.ts`, `use{Domain}Actions.ts`
 - Components: `PascalCase.tsx`
 - Utilities: `camelCase.ts`
 - Convex functions: `domain/queries.ts`, `domain/mutations.ts`
 
 ### Directory Structure
+
 ```
 /convex/               # Backend functions and schema
   schema.ts           # Database schema
@@ -309,18 +335,23 @@ import { useRouter } from 'next/navigation'; // In packages/shared/ - FORBIDDEN
 ## Development Workflow
 
 ### Daily Development
+
 1. `pnpm convex:dev` - Start Convex backend
-2. `pnpm dev:full` - Start both web and mobile development
+2. `pnpm dev` - Start web development (or `pnpm dev:all` for web + mobile)
 3. Make changes to shared business logic first
 4. Implement platform-specific UI
-5. Test on both platforms
-6. `pnpm check` - Run all quality checks
+5. `pnpm generate` - Regenerate types after schema changes
+6. Test on both platforms
+7. `pnpm check` - Run all quality checks
 
 ### Common Tasks
+
 - **Adding new feature**: Backend → Shared → Web UI → Mobile UI
 - **Fixing bug**: Identify if it's in shared logic or platform-specific
 - **Performance**: Use Convex indexes and avoid manual cache management
 - **Styling**: Web uses Tailwind, Mobile uses StyleSheet
+
+For complete documentation of all available scripts, see [scripts.md](./scripts.md).
 
 ## Anti-Patterns to Avoid
 
