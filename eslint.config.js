@@ -171,7 +171,8 @@ const eslintConfig = [
           patterns: [
             {
               group: ['react-native', 'expo-*', 'next/*'],
-              message: 'Platform-specific imports not allowed in shared package. Use platform adapters instead.',
+              message:
+                'Platform-specific imports not allowed in shared package. Use platform adapters instead.',
             },
           ],
         },

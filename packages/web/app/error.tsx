@@ -21,7 +21,11 @@ export default function GlobalError({
   // Parse error to get user-friendly message
   const parsedError = error
     ? parseError(error, 'general')
-    : { type: 'generic' as const, title: 'Something Went Wrong', message: 'An unexpected error occurred.' };
+    : {
+        type: 'generic' as const,
+        title: 'Something Went Wrong',
+        message: 'An unexpected error occurred.',
+      };
 
   return (
     <div className='container pt-6 pb-24'>

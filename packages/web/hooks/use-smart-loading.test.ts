@@ -22,7 +22,9 @@ describe('useConvexQuery', () => {
     it('should return isLoading true when result is undefined', () => {
       mockUseQuery.mockReturnValue(undefined);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isLoading).toBe(true);
@@ -35,7 +37,9 @@ describe('useConvexQuery', () => {
       const mockData = { id: '1', name: 'Test' };
       mockUseQuery.mockReturnValue(mockData);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isLoading).toBe(false);
@@ -49,7 +53,9 @@ describe('useConvexQuery', () => {
     it('should return isError true when result is null', () => {
       mockUseQuery.mockReturnValue(null);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isError).toBe(true);
@@ -65,7 +71,9 @@ describe('useConvexQuery', () => {
       const mockData = [{ id: '1' }, { id: '2' }];
       mockUseQuery.mockReturnValue(mockData);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toEqual(mockData);
@@ -76,7 +84,9 @@ describe('useConvexQuery', () => {
     it('should return empty array correctly', () => {
       mockUseQuery.mockReturnValue([]);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toEqual([]);
@@ -88,7 +98,9 @@ describe('useConvexQuery', () => {
       const mockData = { name: 'Test Event', date: '2025-01-17' };
       mockUseQuery.mockReturnValue(mockData);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toEqual(mockData);
@@ -97,7 +109,9 @@ describe('useConvexQuery', () => {
     it('should return primitive data correctly', () => {
       mockUseQuery.mockReturnValue(42);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toBe(42);
@@ -107,7 +121,9 @@ describe('useConvexQuery', () => {
     it('should return string data correctly', () => {
       mockUseQuery.mockReturnValue('test string');
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toBe('test string');
@@ -116,7 +132,9 @@ describe('useConvexQuery', () => {
     it('should return boolean false correctly (not as error)', () => {
       mockUseQuery.mockReturnValue(false);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toBe(false);
@@ -127,7 +145,9 @@ describe('useConvexQuery', () => {
     it('should return boolean true correctly', () => {
       mockUseQuery.mockReturnValue(true);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.data).toBe(true);
@@ -139,7 +159,9 @@ describe('useConvexQuery', () => {
     it('should pass query and args to useQuery', () => {
       mockUseQuery.mockReturnValue({ id: '1' });
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const mockArgs = { eventId: 'event123' };
 
       renderHook(() => useConvexQuery(mockQuery, mockArgs));
@@ -150,7 +172,9 @@ describe('useConvexQuery', () => {
     it('should handle undefined args', () => {
       mockUseQuery.mockReturnValue({ id: '1' });
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
 
       renderHook(() => useConvexQuery(mockQuery));
 
@@ -160,7 +184,9 @@ describe('useConvexQuery', () => {
     it('should handle empty args object', () => {
       mockUseQuery.mockReturnValue({ id: '1' });
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
 
       renderHook(() => useConvexQuery(mockQuery, {}));
 
@@ -170,7 +196,9 @@ describe('useConvexQuery', () => {
     it('should handle complex args', () => {
       mockUseQuery.mockReturnValue([]);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const complexArgs = {
         filters: { status: 'active', type: 'event' },
         pagination: { limit: 10, cursor: 'abc123' },
@@ -186,7 +214,9 @@ describe('useConvexQuery', () => {
     it('should update when query result changes', () => {
       mockUseQuery.mockReturnValue(undefined);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result, rerender } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isLoading).toBe(true);
@@ -202,7 +232,9 @@ describe('useConvexQuery', () => {
     it('should transition from loading to error', () => {
       mockUseQuery.mockReturnValue(undefined);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result, rerender } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isLoading).toBe(true);
@@ -219,7 +251,9 @@ describe('useConvexQuery', () => {
     it('should transition from error back to data', () => {
       mockUseQuery.mockReturnValue(null);
 
-      const mockQuery = 'test.query' as unknown as Parameters<typeof useConvexQuery>[0];
+      const mockQuery = 'test.query' as unknown as Parameters<
+        typeof useConvexQuery
+      >[0];
       const { result, rerender } = renderHook(() => useConvexQuery(mockQuery));
 
       expect(result.current.isError).toBe(true);

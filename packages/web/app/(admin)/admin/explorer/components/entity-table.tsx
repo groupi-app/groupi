@@ -45,17 +45,17 @@ function SortableHeader({
   const isActive = currentField === field;
   return (
     <TableHead
-      className="cursor-pointer hover:bg-muted/50 select-none"
+      className='cursor-pointer hover:bg-muted/50 select-none'
       onClick={() => onSort(field)}
     >
-      <div className="flex items-center gap-1">
+      <div className='flex items-center gap-1'>
         {label}
         {isActive && (
-          <span className="ml-1">
+          <span className='ml-1'>
             {direction === 'asc' ? (
-              <Icons.up className="h-3 w-3" />
+              <Icons.up className='h-3 w-3' />
             ) : (
-              <Icons.down className="h-3 w-3" />
+              <Icons.down className='h-3 w-3' />
             )}
           </span>
         )}
@@ -79,7 +79,10 @@ function getInitials(name: string | null | undefined): string {
     .slice(0, 2);
 }
 
-function truncate(text: string | null | undefined, maxLength: number = 50): string {
+function truncate(
+  text: string | null | undefined,
+  maxLength: number = 50
+): string {
   if (!text) return '-';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
@@ -102,7 +105,7 @@ export function EntityTable({
 
   if (data.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className='text-center py-12 text-muted-foreground'>
         No {entityType} found.
       </div>
     );
@@ -166,11 +169,11 @@ export function EntityTable({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border overflow-hidden">{renderTable()}</div>
+    <div className='space-y-4'>
+      <div className='rounded-md border overflow-hidden'>{renderTable()}</div>
       {hasMore && (
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={onLoadMore}>
+        <div className='flex justify-center'>
+          <Button variant='outline' onClick={onLoadMore}>
             Load More
           </Button>
         </div>
@@ -199,23 +202,23 @@ function UsersTable({
         <TableRow>
           <TableHead>User</TableHead>
           <SortableHeader
-            field="email"
-            label="Email"
+            field='email'
+            label='Email'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
           />
           <SortableHeader
-            field="role"
-            label="Role"
+            field='role'
+            label='Role'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
           />
           <TableHead>Events</TableHead>
           <SortableHeader
-            field="createdAt"
-            label="Joined"
+            field='createdAt'
+            label='Joined'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -226,7 +229,7 @@ function UsersTable({
         {data.map((user: Record<string, unknown>) => (
           <TableRow
             key={user.personId as string}
-            className="cursor-pointer hover:bg-muted/50"
+            className='cursor-pointer hover:bg-muted/50'
             onClick={() =>
               onRelationClick(
                 { type: 'user', id: user.personId as string },
@@ -235,35 +238,41 @@ function UsersTable({
             }
           >
             <TableCell>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
+              <div className='flex items-center gap-3'>
+                <Avatar className='h-8 w-8'>
                   <AvatarImage src={(user.image as string) || undefined} />
                   <AvatarFallback>
                     {getInitials(user.name as string)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">
+                  <div className='font-medium'>
                     {(user.name as string) || 'No name'}
                   </div>
                   {user.username ? (
-                    <div className="text-sm text-muted-foreground">
+                    <div className='text-sm text-muted-foreground'>
                       @{String(user.username)}
                     </div>
                   ) : null}
                 </div>
               </div>
             </TableCell>
-            <TableCell className="text-sm">{user.email as string}</TableCell>
+            <TableCell className='text-sm'>{user.email as string}</TableCell>
             <TableCell>
-              <Badge variant={(user.role as string) === 'admin' ? 'default' : 'secondary'}>
+              <Badge
+                variant={
+                  (user.role as string) === 'admin' ? 'default' : 'secondary'
+                }
+              >
                 {(user.role as string) || 'user'}
               </Badge>
             </TableCell>
             <TableCell>
               <RelationLink
-                count={((user._count as Record<string, number>)?.memberships) || 0}
-                label="events"
+                count={
+                  (user._count as Record<string, number>)?.memberships || 0
+                }
+                label='events'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
@@ -273,7 +282,7 @@ function UsersTable({
                 }}
               />
             </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
+            <TableCell className='text-sm text-muted-foreground'>
               {formatDate(user.createdAt as number)}
             </TableCell>
           </TableRow>
@@ -302,8 +311,8 @@ function EventsTable({
       <TableHeader>
         <TableRow>
           <SortableHeader
-            field="title"
-            label="Title"
+            field='title'
+            label='Title'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -312,8 +321,8 @@ function EventsTable({
           <TableHead>Members</TableHead>
           <TableHead>Posts</TableHead>
           <SortableHeader
-            field="createdAt"
-            label="Created"
+            field='createdAt'
+            label='Created'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -324,7 +333,7 @@ function EventsTable({
         {data.map((event: Record<string, unknown>) => (
           <TableRow
             key={event.id as string}
-            className="cursor-pointer hover:bg-muted/50"
+            className='cursor-pointer hover:bg-muted/50'
             onClick={() =>
               onRelationClick(
                 { type: 'event', id: event.id as string },
@@ -334,24 +343,26 @@ function EventsTable({
           >
             <TableCell>
               <div>
-                <div className="font-medium">{event.title as string}</div>
+                <div className='font-medium'>{event.title as string}</div>
                 {event.location ? (
-                  <div className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Icons.location className="h-3 w-3" />
+                  <div className='text-sm text-muted-foreground flex items-center gap-1'>
+                    <Icons.location className='h-3 w-3' />
                     {String(truncate(event.location as string, 30))}
                   </div>
                 ) : null}
               </div>
             </TableCell>
-            <TableCell className="text-sm">
-              {((event.organizer as Record<string, string>)?.name) ||
-                ((event.organizer as Record<string, string>)?.email) ||
+            <TableCell className='text-sm'>
+              {(event.organizer as Record<string, string>)?.name ||
+                (event.organizer as Record<string, string>)?.email ||
                 '-'}
             </TableCell>
             <TableCell>
               <RelationLink
-                count={((event._count as Record<string, number>)?.memberships) || 0}
-                label="members"
+                count={
+                  (event._count as Record<string, number>)?.memberships || 0
+                }
+                label='members'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
@@ -363,8 +374,8 @@ function EventsTable({
             </TableCell>
             <TableCell>
               <RelationLink
-                count={((event._count as Record<string, number>)?.posts) || 0}
-                label="posts"
+                count={(event._count as Record<string, number>)?.posts || 0}
+                label='posts'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
@@ -374,7 +385,7 @@ function EventsTable({
                 }}
               />
             </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
+            <TableCell className='text-sm text-muted-foreground'>
               {formatDate(event.createdAt as number)}
             </TableCell>
           </TableRow>
@@ -403,8 +414,8 @@ function PostsTable({
       <TableHeader>
         <TableRow>
           <SortableHeader
-            field="title"
-            label="Title"
+            field='title'
+            label='Title'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -413,8 +424,8 @@ function PostsTable({
           <TableHead>Event</TableHead>
           <TableHead>Replies</TableHead>
           <SortableHeader
-            field="createdAt"
-            label="Created"
+            field='createdAt'
+            label='Created'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -425,7 +436,7 @@ function PostsTable({
         {data.map((post: Record<string, unknown>) => (
           <TableRow
             key={post.id as string}
-            className="cursor-pointer hover:bg-muted/50"
+            className='cursor-pointer hover:bg-muted/50'
             onClick={() =>
               onRelationClick(
                 { type: 'post', id: post.id as string },
@@ -434,32 +445,34 @@ function PostsTable({
             }
           >
             <TableCell>
-              <div className="font-medium">{truncate(post.title as string, 40)}</div>
+              <div className='font-medium'>
+                {truncate(post.title as string, 40)}
+              </div>
             </TableCell>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
                     { type: 'user', id: post.authorId as string },
-                    ((post.author as Record<string, string>)?.name) || 'Author'
+                    (post.author as Record<string, string>)?.name || 'Author'
                   );
                 }}
               >
-                {((post.author as Record<string, string>)?.name) ||
-                  ((post.author as Record<string, string>)?.email) ||
+                {(post.author as Record<string, string>)?.name ||
+                  (post.author as Record<string, string>)?.email ||
                   '-'}
               </button>
             </TableCell>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
                     { type: 'event', id: post.eventId as string },
-                    ((post.event as Record<string, string>)?.title) || 'Event'
+                    (post.event as Record<string, string>)?.title || 'Event'
                   );
                 }}
               >
@@ -468,8 +481,8 @@ function PostsTable({
             </TableCell>
             <TableCell>
               <RelationLink
-                count={((post._count as Record<string, number>)?.replies) || 0}
-                label="replies"
+                count={(post._count as Record<string, number>)?.replies || 0}
+                label='replies'
                 onClick={e => {
                   e.stopPropagation();
                   onRelationClick(
@@ -479,7 +492,7 @@ function PostsTable({
                 }}
               />
             </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
+            <TableCell className='text-sm text-muted-foreground'>
               {formatDate(post.createdAt as number)}
             </TableCell>
           </TableRow>
@@ -508,8 +521,8 @@ function RepliesTable({
       <TableHeader>
         <TableRow>
           <SortableHeader
-            field="text"
-            label="Content"
+            field='text'
+            label='Content'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -518,8 +531,8 @@ function RepliesTable({
           <TableHead>Post</TableHead>
           <TableHead>Event</TableHead>
           <SortableHeader
-            field="createdAt"
-            label="Created"
+            field='createdAt'
+            label='Created'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -530,42 +543,46 @@ function RepliesTable({
         {data.map((reply: Record<string, unknown>) => (
           <TableRow key={reply.id as string}>
             <TableCell>
-              <div className="max-w-[300px] truncate">
-                {truncate((reply.text as string) || (reply.content as string), 50)}
+              <div className='max-w-[300px] truncate'>
+                {truncate(
+                  (reply.text as string) || (reply.content as string),
+                  50
+                )}
               </div>
             </TableCell>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={() =>
                   onRelationClick(
                     { type: 'user', id: reply.authorId as string },
-                    ((reply.author as Record<string, string>)?.name) || 'Author'
+                    (reply.author as Record<string, string>)?.name || 'Author'
                   )
                 }
               >
-                {((reply.author as Record<string, string>)?.name) ||
-                  ((reply.author as Record<string, string>)?.email) ||
+                {(reply.author as Record<string, string>)?.name ||
+                  (reply.author as Record<string, string>)?.email ||
                   '-'}
               </button>
             </TableCell>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={() =>
                   onRelationClick(
                     { type: 'post', id: reply.postId as string },
-                    ((reply.post as Record<string, string>)?.title) || 'Post'
+                    (reply.post as Record<string, string>)?.title || 'Post'
                   )
                 }
               >
                 {truncate((reply.post as Record<string, string>)?.title, 25)}
               </button>
             </TableCell>
-            <TableCell className="text-sm">
-              {((reply.post as Record<string, Record<string, string>>)?.event?.title) || '-'}
+            <TableCell className='text-sm'>
+              {(reply.post as Record<string, Record<string, string>>)?.event
+                ?.title || '-'}
             </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
+            <TableCell className='text-sm text-muted-foreground'>
               {formatDate(reply.createdAt as number)}
             </TableCell>
           </TableRow>
@@ -596,15 +613,15 @@ function MembershipsTable({
           <TableHead>Person</TableHead>
           <TableHead>Event</TableHead>
           <SortableHeader
-            field="role"
-            label="Role"
+            field='role'
+            label='Role'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
           />
           <SortableHeader
-            field="rsvpStatus"
-            label="RSVP"
+            field='rsvpStatus'
+            label='RSVP'
             currentField={sortField}
             direction={sortDirection}
             onSort={onSort}
@@ -614,32 +631,37 @@ function MembershipsTable({
       <TableBody>
         {data.map((membership: Record<string, unknown>) => (
           <TableRow key={membership.id as string}>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={() =>
                   onRelationClick(
                     { type: 'user', id: membership.personId as string },
-                    ((membership.person as Record<string, string>)?.name) || 'Person'
+                    (membership.person as Record<string, string>)?.name ||
+                      'Person'
                   )
                 }
               >
-                {((membership.person as Record<string, string>)?.name) ||
-                  ((membership.person as Record<string, string>)?.email) ||
+                {(membership.person as Record<string, string>)?.name ||
+                  (membership.person as Record<string, string>)?.email ||
                   '-'}
               </button>
             </TableCell>
-            <TableCell className="text-sm">
+            <TableCell className='text-sm'>
               <button
-                className="text-primary hover:underline"
+                className='text-primary hover:underline'
                 onClick={() =>
                   onRelationClick(
                     { type: 'event', id: membership.eventId as string },
-                    ((membership.event as Record<string, string>)?.title) || 'Event'
+                    (membership.event as Record<string, string>)?.title ||
+                      'Event'
                   )
                 }
               >
-                {truncate((membership.event as Record<string, string>)?.title, 30)}
+                {truncate(
+                  (membership.event as Record<string, string>)?.title,
+                  30
+                )}
               </button>
             </TableCell>
             <TableCell>
@@ -679,13 +701,13 @@ function MembershipsTable({
 function TableSkeleton({ entityType }: { entityType: EntityType }) {
   const columnCount = entityType === 'memberships' ? 4 : 5;
   return (
-    <div className="rounded-md border">
+    <div className='rounded-md border'>
       <Table>
         <TableHeader>
           <TableRow>
             {Array.from({ length: columnCount }).map((_, i) => (
               <TableHead key={i}>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className='h-4 w-24' />
               </TableHead>
             ))}
           </TableRow>
@@ -695,7 +717,7 @@ function TableSkeleton({ entityType }: { entityType: EntityType }) {
             <TableRow key={i}>
               {Array.from({ length: columnCount }).map((_, j) => (
                 <TableCell key={j}>
-                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className='h-4 w-full' />
                 </TableCell>
               ))}
             </TableRow>

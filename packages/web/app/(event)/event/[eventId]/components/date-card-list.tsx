@@ -32,11 +32,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function DateCardList({
-  eventId,
-}: {
-  eventId: Id<"events">;
-}) {
+export function DateCardList({ eventId }: { eventId: Id<'events'> }) {
   const [sortBy, setSortBy] = useState<'rank' | 'date'>('rank');
 
   // Use Convex hook for real-time availability data
@@ -45,11 +41,11 @@ export function DateCardList({
   // Loading state
   if (availabilityData === undefined) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 bg-muted rounded w-48"></div>
-        <div className="space-y-3">
+      <div className='animate-pulse space-y-4'>
+        <div className='h-8 bg-muted rounded w-48'></div>
+        <div className='space-y-3'>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 bg-muted rounded"></div>
+            <div key={i} className='h-24 bg-muted rounded'></div>
           ))}
         </div>
       </div>
@@ -63,17 +59,11 @@ export function DateCardList({
   // Calculate ranks for sorting - getRanks returns items with rank property
   const rankedDates = getRanks(potentialDateTimes);
 
-  const sort = (
-    a: typeof rankedDates[0],
-    b: typeof rankedDates[0]
-  ) => {
+  const sort = (a: (typeof rankedDates)[0], b: (typeof rankedDates)[0]) => {
     switch (sortBy) {
       case 'rank':
         // sort by rank, then by date if ranks are equal
-        return (
-          a.rank - b.rank ||
-          a.dateTime - b.dateTime
-        );
+        return a.rank - b.rank || a.dateTime - b.dateTime;
       case 'date':
         // sort by date (dateTime is a number timestamp)
         return a.dateTime - b.dateTime;
@@ -106,14 +96,12 @@ export function DateCardList({
         className='flex flex-col gap-3'
       >
         <LayoutGroup>
-          {rankedDates
-            .sort(sort)
-            .map(pdt => (
-              <motion.div layout variants={item} key={pdt._id}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <DateCard pdt={pdt as any} userId={userId} userRole={userRole} />
-              </motion.div>
-            ))}
+          {rankedDates.sort(sort).map(pdt => (
+            <motion.div layout variants={item} key={pdt._id}>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <DateCard pdt={pdt as any} userId={userId} userRole={userRole} />
+            </motion.div>
+          ))}
         </LayoutGroup>
       </motion.div>
     </>

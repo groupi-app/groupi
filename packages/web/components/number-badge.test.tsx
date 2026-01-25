@@ -64,7 +64,9 @@ describe('NumberBadge', () => {
       </NumberBadge>
     );
 
-    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Click me' })
+    ).toBeInTheDocument();
     expect(screen.getByText('10')).toBeInTheDocument();
   });
 

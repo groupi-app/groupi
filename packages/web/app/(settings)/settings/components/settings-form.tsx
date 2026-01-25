@@ -28,17 +28,19 @@ export function SettingsForm({ children }: { children: React.ReactNode }) {
     componentLogger.info('SettingsForm', 'Updating user settings', { data });
 
     // Transform form data to match Convex mutation schema
-    const notificationMethods = (data.notificationMethods || []).map((method) => ({
-      id: method.id,
-      type: method.type,
-      enabled: method.enabled,
-      name: method.name,
-      value: method.value,
-      webhookFormat: method.webhookFormat,
-      customTemplate: method.customTemplate,
-      webhookHeaders: method.webhookHeaders,
-      notifications: method.notifications,
-    }));
+    const notificationMethods = (data.notificationMethods || []).map(
+      method => ({
+        id: method.id,
+        type: method.type,
+        enabled: method.enabled,
+        name: method.name,
+        value: method.value,
+        webhookFormat: method.webhookFormat,
+        customTemplate: method.customTemplate,
+        webhookHeaders: method.webhookHeaders,
+        notifications: method.notifications,
+      })
+    );
 
     await saveNotificationSettings(notificationMethods);
     methods.reset(data); // Reset form state after successful save

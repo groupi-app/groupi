@@ -2,24 +2,24 @@
   "folders": [
     {
       "name": "🏠 Root",
-      "path": "."
+      "path": ".",
     },
     {
       "name": "🌐 Web App",
-      "path": "./packages/web"
+      "path": "./packages/web",
     },
     {
       "name": "📱 Mobile App",
-      "path": "./packages/mobile"
+      "path": "./packages/mobile",
     },
     {
       "name": "📦 Shared Package",
-      "path": "./packages/shared"
+      "path": "./packages/shared",
     },
     {
       "name": "⚡ Convex Backend",
-      "path": "./convex"
-    }
+      "path": "./convex",
+    },
   ],
   "settings": {
     "typescript.preferences.preferTypeOnlyAutoImports": true,
@@ -31,20 +31,20 @@
     "eslint.workingDirectories": [
       "packages/web",
       "packages/mobile",
-      "packages/shared"
+      "packages/shared",
     ],
     "eslint.validate": [
       "javascript",
       "javascriptreact",
       "typescript",
-      "typescriptreact"
+      "typescriptreact",
     ],
 
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit",
-      "source.organizeImports": "explicit"
+      "source.organizeImports": "explicit",
     },
 
     "files.exclude": {
@@ -57,7 +57,7 @@
       "**/domains-old": true,
       "**/cache-old": true,
       "**/prisma-archive": true,
-      "**/supabase-archive": true
+      "**/supabase-archive": true,
     },
 
     "search.exclude": {
@@ -70,34 +70,34 @@
       "**/domains-old": true,
       "**/cache-old": true,
       "**/prisma-archive": true,
-      "**/supabase-archive": true
+      "**/supabase-archive": true,
     },
 
     "emmet.includeLanguages": {
       "typescript": "html",
-      "typescriptreact": "html"
+      "typescriptreact": "html",
     },
 
     "tailwindCSS.includeLanguages": {
       "typescript": "html",
-      "typescriptreact": "html"
+      "typescriptreact": "html",
     },
     "tailwindCSS.experimental.classRegex": [
       ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-      ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+      ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
     ],
 
     "convex.deploymentUrl": "${CONVEX_DEPLOYMENT_URL}",
 
     "terminal.integrated.env.osx": {
-      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}",
     },
     "terminal.integrated.env.linux": {
-      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}",
     },
     "terminal.integrated.env.windows": {
-      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}"
-    }
+      "CONVEX_DEPLOYMENT_URL": "${CONVEX_DEPLOYMENT_URL}",
+    },
   },
   "extensions": {
     "recommendations": [
@@ -110,8 +110,8 @@
       "ms-vscode.vscode-json",
       "christian-kohler.path-intellisense",
       "formulahendry.auto-rename-tag",
-      "ms-vscode.vscode-typescript-tslint-plugin"
-    ]
+      "ms-vscode.vscode-typescript-tslint-plugin",
+    ],
   },
   "tasks": {
     "version": "2.0.0",
@@ -124,9 +124,9 @@
         "presentation": {
           "echo": true,
           "reveal": "always",
-          "panel": "new"
+          "panel": "new",
         },
-        "problemMatcher": ["$tsc"]
+        "problemMatcher": ["$tsc"],
       },
       {
         "label": "📱 Start Mobile Development",
@@ -136,8 +136,8 @@
         "presentation": {
           "echo": true,
           "reveal": "always",
-          "panel": "new"
-        }
+          "panel": "new",
+        },
       },
       {
         "label": "🔄 Full Stack Development",
@@ -145,13 +145,13 @@
         "command": "pnpm dev:full",
         "group": {
           "kind": "build",
-          "isDefault": true
+          "isDefault": true,
         },
         "presentation": {
           "echo": true,
           "reveal": "always",
-          "panel": "new"
-        }
+          "panel": "new",
+        },
       },
       {
         "label": "⚡ Start Convex",
@@ -161,8 +161,8 @@
         "presentation": {
           "echo": true,
           "reveal": "always",
-          "panel": "new"
-        }
+          "panel": "new",
+        },
       },
       {
         "label": "🧹 Lint & Format",
@@ -171,10 +171,10 @@
         "group": "test",
         "presentation": {
           "echo": true,
-          "reveal": "always"
-        }
-      }
-    ]
+          "reveal": "always",
+        },
+      },
+    ],
   },
   "launch": {
     "version": "0.2.0",
@@ -186,8 +186,8 @@
         "port": 9229,
         "restart": true,
         "localRoot": "${workspaceFolder}/packages/web",
-        "remoteRoot": "${workspaceFolder}/packages/web"
-      }
-    ]
-  }
+        "remoteRoot": "${workspaceFolder}/packages/web",
+      },
+    ],
+  },
 }

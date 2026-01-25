@@ -20,15 +20,15 @@ export function OnboardingNav() {
   };
 
   return (
-    <div className="ml-auto flex items-center">
+    <div className='ml-auto flex items-center'>
       <Button
-        variant="ghost"
-        size="sm"
+        variant='ghost'
+        size='sm'
         onClick={handleSignOut}
-        className="flex items-center gap-2"
+        className='flex items-center gap-2'
       >
         <span>Sign Out</span>
-        <Icons.signOut className="size-4" />
+        <Icons.signOut className='size-4' />
       </Button>
     </div>
   );

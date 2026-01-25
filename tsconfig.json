@@ -27,6 +27,10 @@
       "@groupi/hooks": ["./packages/hooks/src"]
     }
   },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx", "**/.next/types/**/*.ts"],
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "**/.next/types/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", ".next"]
 }

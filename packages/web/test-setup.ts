@@ -1,24 +1,24 @@
-import "@testing-library/jest-dom";
-import { beforeEach, vi } from "vitest";
+import '@testing-library/jest-dom';
+import { beforeEach, vi } from 'vitest';
 
 // Mock environment variables
 beforeEach(() => {
-  process.env.CONVEX_URL = "https://test-convex.convex.cloud";
-  process.env.NEXT_PUBLIC_CONVEX_URL = "https://test-convex.convex.cloud";
-  process.env.SITE_URL = "http://localhost:3000";
-  process.env.GOOGLE_CLIENT_ID = "test-google-client-id";
-  process.env.GOOGLE_CLIENT_SECRET = "test-google-client-secret";
-  process.env.DISCORD_CLIENT_ID = "test-discord-client-id";
-  process.env.DISCORD_CLIENT_SECRET = "test-discord-client-secret";
+  process.env.CONVEX_URL = 'https://test-convex.convex.cloud';
+  process.env.NEXT_PUBLIC_CONVEX_URL = 'https://test-convex.convex.cloud';
+  process.env.SITE_URL = 'http://localhost:3000';
+  process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+  process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
+  process.env.DISCORD_CLIENT_ID = 'test-discord-client-id';
+  process.env.DISCORD_CLIENT_SECRET = 'test-discord-client-secret';
 
   // BetterAuth required environment variables
-  process.env.BETTER_AUTH_SECRET = "test-secret-key-32-chars-minimum";
-  process.env.BETTER_AUTH_URL = "http://localhost:3000";
+  process.env.BETTER_AUTH_SECRET = 'test-secret-key-32-chars-minimum';
+  process.env.BETTER_AUTH_URL = 'http://localhost:3000';
   // NODE_ENV is already set to 'test' by vitest
 });
 
 // Mock Next.js router
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
@@ -26,12 +26,12 @@ vi.mock("next/navigation", () => ({
     forward: vi.fn(),
     replace: vi.fn(),
   }),
-  usePathname: () => "/test",
+  usePathname: () => '/test',
   useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock Convex client for component tests
-vi.mock("convex/react", () => ({
+vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
   usePaginatedQuery: vi.fn(),
@@ -40,21 +40,21 @@ vi.mock("convex/react", () => ({
 }));
 
 // Mock Convex generated API for components that use require()
-vi.mock("@/convex/_generated/api", () => ({
+vi.mock('@/convex/_generated/api', () => ({
   api: {
     notifications: {
       queries: {
-        fetchNotificationsForPerson: "fetchNotificationsForPerson",
-        getUnreadNotificationCount: "getUnreadNotificationCount",
-        fetchUserNotificationSettings: "fetchUserNotificationSettings",
+        fetchNotificationsForPerson: 'fetchNotificationsForPerson',
+        getUnreadNotificationCount: 'getUnreadNotificationCount',
+        fetchUserNotificationSettings: 'fetchUserNotificationSettings',
       },
       mutations: {
-        markNotificationAsRead: "markNotificationAsRead",
-        markNotificationAsUnread: "markNotificationAsUnread",
-        deleteNotification: "deleteNotification",
-        markAllNotificationsAsRead: "markAllNotificationsAsRead",
-        deleteAllNotifications: "deleteAllNotifications",
-        markEventNotificationsAsRead: "markEventNotificationsAsRead",
+        markNotificationAsRead: 'markNotificationAsRead',
+        markNotificationAsUnread: 'markNotificationAsUnread',
+        deleteNotification: 'deleteNotification',
+        markAllNotificationsAsRead: 'markAllNotificationsAsRead',
+        deleteAllNotifications: 'deleteAllNotifications',
+        markEventNotificationsAsRead: 'markEventNotificationsAsRead',
       },
     },
     events: {
@@ -67,23 +67,24 @@ vi.mock("@/convex/_generated/api", () => ({
     },
     users: {
       queries: {
-        getCurrentUserProfile: "users.queries.getCurrentUserProfile",
-        getUserByUsername: "users.queries.getUserByUsername",
-        getUserProfile: "users.queries.getUserProfile",
+        getCurrentUserProfile: 'users.queries.getCurrentUserProfile',
+        getUserByUsername: 'users.queries.getUserByUsername',
+        getUserProfile: 'users.queries.getUserProfile',
       },
       mutations: {
-        updateUserProfile: "users.mutations.updateUserProfile",
-        updateUserNotificationSettings: "users.mutations.updateUserNotificationSettings",
-        deleteUserAccount: "users.mutations.deleteUserAccount",
+        updateUserProfile: 'users.mutations.updateUserProfile',
+        updateUserNotificationSettings:
+          'users.mutations.updateUserNotificationSettings',
+        deleteUserAccount: 'users.mutations.deleteUserAccount',
       },
     },
     settings: {
       queries: {
-        getNotificationSettings: "settings.queries.getNotificationSettings",
+        getNotificationSettings: 'settings.queries.getNotificationSettings',
       },
       mutations: {
-        saveNotificationSettings: "settings.mutations.saveNotificationSettings",
-        deleteNotificationMethod: "settings.mutations.deleteNotificationMethod",
+        saveNotificationSettings: 'settings.mutations.saveNotificationSettings',
+        deleteNotificationMethod: 'settings.mutations.deleteNotificationMethod',
       },
     },
     availability: {
@@ -114,13 +115,13 @@ vi.mock("@/convex/_generated/api", () => ({
 }));
 
 // Mock Convex generated dataModel
-vi.mock("@/convex/_generated/dataModel", () => ({
+vi.mock('@/convex/_generated/dataModel', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Id: (value: any) => value,
 }));
 
 // Mock Better Auth client
-vi.mock("@/lib/auth-client", () => ({
+vi.mock('@/lib/auth-client', () => ({
   authClient: {
     signIn: vi.fn(),
     signOut: vi.fn(),
@@ -133,9 +134,9 @@ vi.mock("@/lib/auth-client", () => ({
   useSession: () => ({
     data: {
       user: {
-        id: "test-user-id",
-        name: "Test User",
-        email: "test@example.com",
+        id: 'test-user-id',
+        name: 'Test User',
+        email: 'test@example.com',
       },
     },
   }),

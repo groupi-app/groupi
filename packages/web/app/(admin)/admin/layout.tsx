@@ -71,7 +71,7 @@ function AdminContent({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className='flex-1 p-4 space-y-1'>
-          {adminNavItems.map((item) => {
+          {adminNavItems.map(item => {
             const isActive = pathname === item.href;
             return (
               <Link

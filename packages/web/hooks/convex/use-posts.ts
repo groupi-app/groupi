@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback, useMemo } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback, useMemo } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // Type for current user data needed for optimistic updates
 export interface OptimisticPostUserData {
-  personId: Id<"persons">;
+  personId: Id<'persons'>;
   name?: string;
   email?: string;
   image?: string;
@@ -23,7 +23,7 @@ let postMutations: any;
 function initApi() {
   if (!postQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     postQueries = api.posts?.queries ?? {};
     postMutations = api.posts?.mutations ?? {};
   }
@@ -35,21 +35,21 @@ initApi();
 /**
  * Get event post feed with real-time updates
  */
-export function useEventPostFeed(eventId: Id<"events">) {
+export function useEventPostFeed(eventId: Id<'events'>) {
   return useQuery(postQueries.getEventPostFeed, { eventId });
 }
 
 /**
  * Get single post with details
  */
-export function usePost(postId: Id<"posts">) {
+export function usePost(postId: Id<'posts'>) {
   return useQuery(postQueries.getPost, { postId });
 }
 
 /**
  * Get post detail page data (post + replies)
  */
-export function usePostDetail(postId: Id<"posts">) {
+export function usePostDetail(postId: Id<'posts'>) {
   return useQuery(postQueries.getPostDetail, { postId });
 }
 
@@ -57,7 +57,7 @@ export function usePostDetail(postId: Id<"posts">) {
  * Paginated post feed hook - uses standard query
  * Note: The query handles pagination internally via limit/cursor
  */
-export function usePaginatedEventPosts(eventId: Id<"events">) {
+export function usePaginatedEventPosts(eventId: Id<'events'>) {
   return useQuery(postQueries.getEventPostFeed, { eventId });
 }
 
@@ -90,7 +90,7 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
       // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback, not during render
       const now = Date.now();
       const optimisticPost = {
-        _id: `optimistic_${now}` as unknown as Id<"posts">,
+        _id: `optimistic_${now}` as unknown as Id<'posts'>,
         _creationTime: now,
         eventId: args.eventId,
         title: args.title,
@@ -103,7 +103,7 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
             user: {
               _id: `optimistic_user`,
               name: currentUser.name,
-              email: currentUser.email || "",
+              email: currentUser.email || '',
               image: currentUser.image,
               username: currentUser.username,
             },
@@ -111,7 +111,7 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
           user: {
             _id: `optimistic_user`,
             name: currentUser.name,
-            email: currentUser.email || "",
+            email: currentUser.email || '',
             image: currentUser.image,
             username: currentUser.username,
           },
@@ -120,45 +120,48 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
       };
 
       // Add optimistic post to the beginning of the feed
-      localStore.setQuery(postQueries.getEventPostFeed, { eventId: args.eventId }, {
-        ...currentData,
-        event: {
-          ...currentData.event,
-          posts: [optimisticPost, ...(currentData.event.posts || [])],
-        },
-      });
+      localStore.setQuery(
+        postQueries.getEventPostFeed,
+        { eventId: args.eventId },
+        {
+          ...currentData,
+          event: {
+            ...currentData.event,
+            posts: [optimisticPost, ...(currentData.event.posts || [])],
+          },
+        }
+      );
     });
   }, [baseMutation, currentUser]);
 
-  return useCallback(async (data: {
-    eventId: Id<"events">;
-    title: string;
-    content: string;
-  }) => {
-    try {
-      const result = await createPost({
-        eventId: data.eventId,
-        title: data.title,
-        content: data.content,
-      });
+  return useCallback(
+    async (data: { eventId: Id<'events'>; title: string; content: string }) => {
+      try {
+        const result = await createPost({
+          eventId: data.eventId,
+          title: data.title,
+          content: data.content,
+        });
 
-      // No success toast - instant appearance is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create post. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [createPost, toast]);
+        // No success toast - instant appearance is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to create post. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [createPost, toast]
+  );
 }
 
 /**
  * Update post with optimistic updates
  */
-export function useUpdatePost(eventId?: Id<"events">) {
+export function useUpdatePost(eventId?: Id<'events'>) {
   const baseMutation = useMutation(postMutations.updatePost);
   const { toast } = useToast();
 
@@ -178,19 +181,24 @@ export function useUpdatePost(eventId?: Id<"events">) {
       });
 
       if (feedData?.event?.posts) {
-        const updatedPosts = feedData.event.posts.map((post: { _id: Id<"posts">; title: string; content: string }) =>
-          post._id === args.postId
-            ? { ...post, title: args.title, content: args.content, editedAt }
-            : post
+        const updatedPosts = feedData.event.posts.map(
+          (post: { _id: Id<'posts'>; title: string; content: string }) =>
+            post._id === args.postId
+              ? { ...post, title: args.title, content: args.content, editedAt }
+              : post
         );
 
-        localStore.setQuery(postQueries.getEventPostFeed, { eventId }, {
-          ...feedData,
-          event: {
-            ...feedData.event,
-            posts: updatedPosts,
-          },
-        });
+        localStore.setQuery(
+          postQueries.getEventPostFeed,
+          { eventId },
+          {
+            ...feedData,
+            event: {
+              ...feedData.event,
+              posts: updatedPosts,
+            },
+          }
+        );
       }
 
       // Update in the post detail view
@@ -199,48 +207,51 @@ export function useUpdatePost(eventId?: Id<"events">) {
       });
 
       if (detailData?.post) {
-        localStore.setQuery(postQueries.getPostDetail, { postId: args.postId }, {
-          ...detailData,
-          post: {
-            ...detailData.post,
-            title: args.title,
-            content: args.content,
-            editedAt,
-          },
-        });
+        localStore.setQuery(
+          postQueries.getPostDetail,
+          { postId: args.postId },
+          {
+            ...detailData,
+            post: {
+              ...detailData.post,
+              title: args.title,
+              content: args.content,
+              editedAt,
+            },
+          }
+        );
       }
     });
   }, [baseMutation, eventId]);
 
-  return useCallback(async (data: {
-    postId: Id<"posts">;
-    title: string;
-    content: string;
-  }) => {
-    try {
-      const result = await updatePost({
-        postId: data.postId,
-        title: data.title,
-        content: data.content,
-      });
+  return useCallback(
+    async (data: { postId: Id<'posts'>; title: string; content: string }) => {
+      try {
+        const result = await updatePost({
+          postId: data.postId,
+          title: data.title,
+          content: data.content,
+        });
 
-      // No success toast - instant update is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update post. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [updatePost, toast]);
+        // No success toast - instant update is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update post. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updatePost, toast]
+  );
 }
 
 /**
  * Delete post with optimistic updates
  */
-export function useDeletePost(eventId?: Id<"events">) {
+export function useDeletePost(eventId?: Id<'events'>) {
   const baseMutation = useMutation(postMutations.deletePost);
   const { toast } = useToast();
 
@@ -257,35 +268,42 @@ export function useDeletePost(eventId?: Id<"events">) {
 
       if (feedData?.event?.posts) {
         const filteredPosts = feedData.event.posts.filter(
-          (post: { _id: Id<"posts"> }) => post._id !== args.postId
+          (post: { _id: Id<'posts'> }) => post._id !== args.postId
         );
 
-        localStore.setQuery(postQueries.getEventPostFeed, { eventId }, {
-          ...feedData,
-          event: {
-            ...feedData.event,
-            posts: filteredPosts,
-          },
-        });
+        localStore.setQuery(
+          postQueries.getEventPostFeed,
+          { eventId },
+          {
+            ...feedData,
+            event: {
+              ...feedData.event,
+              posts: filteredPosts,
+            },
+          }
+        );
       }
     });
   }, [baseMutation, eventId]);
 
-  return useCallback(async (postId: Id<"posts">) => {
-    try {
-      const result = await deletePost({ postId });
+  return useCallback(
+    async (postId: Id<'posts'>) => {
+      try {
+        const result = await deletePost({ postId });
 
-      // No success toast - instant removal is feedback enough
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [deletePost, toast]);
+        // No success toast - instant removal is feedback enough
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete post. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [deletePost, toast]
+  );
 }
 
 // ===== COMBINED HOOKS =====
@@ -294,7 +312,10 @@ export function useDeletePost(eventId?: Id<"events">) {
  * Complete post management for an event with optimistic updates
  * Pass currentUser for instant optimistic UI updates
  */
-export function useEventPosts(eventId: Id<"events">, currentUser?: OptimisticPostUserData) {
+export function useEventPosts(
+  eventId: Id<'events'>,
+  currentUser?: OptimisticPostUserData
+) {
   const feedData = useEventPostFeed(eventId);
   const posts = feedData?.event?.posts ?? [];
 
@@ -302,12 +323,12 @@ export function useEventPosts(eventId: Id<"events">, currentUser?: OptimisticPos
   const updatePost = useUpdatePost(eventId);
   const deletePost = useDeletePost(eventId);
 
-  const createPostWithEventId = useCallback(async (data: {
-    title: string;
-    content: string;
-  }) => {
-    return createPost({ eventId, ...data });
-  }, [eventId, createPost]);
+  const createPostWithEventId = useCallback(
+    async (data: { title: string; content: string }) => {
+      return createPost({ eventId, ...data });
+    },
+    [eventId, createPost]
+  );
 
   return {
     posts,

@@ -73,6 +73,7 @@ pnpm dev:full
 ```
 
 This starts:
+
 - **Web App**: http://localhost:3000
 - **Mobile App**: Expo dev tools (scan QR code with Expo Go)
 - **Convex Dashboard**: Real-time database admin
@@ -135,6 +136,7 @@ import { navigation, storage, toast } from '@groupi/shared/platform';
 ### Platform-Specific Implementation
 
 **Web App** (Next.js):
+
 ```typescript
 // Uses Next.js router, localStorage, Sonner
 setupWebPlatformAdapters();
@@ -142,15 +144,17 @@ const { useCurrentUser } = createAuthHooks(api);
 ```
 
 **Mobile App** (React Native):
+
 ```typescript
 // Uses React Navigation, Expo SecureStore, React Native Toast
 setupMobilePlatformAdapters();
-const { useCurrentUser } = createAuthHooks(api);  // Same hook!
+const { useCurrentUser } = createAuthHooks(api); // Same hook!
 ```
 
 ## 📚 Tech Stack
 
 ### Core
+
 - **Backend**: [Convex](https://convex.dev/) - Real-time database with built-in auth
 - **Web**: [Next.js 16](https://nextjs.org/) with App Router (client-only)
 - **Mobile**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/)
@@ -158,12 +162,14 @@ const { useCurrentUser } = createAuthHooks(api);  // Same hook!
 - **Monorepo**: [Turborepo](https://turbo.build/) with pnpm workspaces
 
 ### UI & Styling
+
 - **Web UI**: [Radix UI](https://radix-ui.com/) + [Tailwind CSS](https://tailwindcss.com/)
 - **Mobile UI**: [Uniwind](https://uniwind.dev/) (Tailwind for React Native)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Animations**: [Framer Motion](https://framer.com/motion/)
 
 ### Development
+
 - **Package Manager**: [pnpm](https://pnpm.io/) with workspaces
 - **Linting**: [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)
 - **Git Hooks**: [Husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/okonet/lint-staged)
@@ -172,19 +178,23 @@ const { useCurrentUser } = createAuthHooks(api);  // Same hook!
 ## 📂 Project Structure
 
 ### Apps
+
 - **[`packages/web/`](./packages/web/)** - Next.js web application (client-only)
 - **[`packages/mobile/`](./packages/mobile/)** - React Native mobile app with Expo
 
 ### Packages
+
 - **[`packages/shared/`](./packages/shared/)** - Cross-platform business logic
 - **[`packages/ui/`](./packages/ui/)** - Shared UI components and utilities
 
 ### Backend
+
 - **[`convex/`](./convex/)** - Convex backend functions and schema
 
 ## 🚀 Deployment
 
 ### Web App (Vercel)
+
 ```bash
 # Build and deploy web app
 pnpm build:web
@@ -192,6 +202,7 @@ pnpm build:web
 ```
 
 ### Mobile App (Expo + App Stores)
+
 ```bash
 # Build for App Store / Play Store
 cd packages/mobile
@@ -200,6 +211,7 @@ pnpm build:android
 ```
 
 ### Convex Backend
+
 ```bash
 # Deploy backend
 pnpm convex:deploy
@@ -208,12 +220,14 @@ pnpm convex:deploy
 ## 🤝 Contributing
 
 1. **Clone & Setup**:
+
    ```bash
    git clone <repo>
    pnpm install
    ```
 
 2. **Start Development**:
+
    ```bash
    pnpm convex:dev    # Terminal 1
    pnpm dev:full      # Terminal 2

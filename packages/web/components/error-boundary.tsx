@@ -14,7 +14,10 @@ interface ErrorBoundaryProps {
   fallback?: (error: Error) => ReactNode;
 }
 
-export class QueryErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class QueryErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -37,15 +40,15 @@ export class QueryErrorBoundary extends Component<ErrorBoundaryProps, ErrorBound
       }
 
       return (
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-          <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-4">
+        <div className='flex flex-col items-center justify-center p-8 text-center'>
+          <AlertTriangle className='w-12 h-12 text-destructive mb-4' />
+          <h2 className='text-lg font-semibold mb-2'>Something went wrong</h2>
+          <p className='text-muted-foreground mb-4'>
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           <Button
             onClick={() => this.setState({ hasError: false })}
-            variant="outline"
+            variant='outline'
           >
             Try again
           </Button>

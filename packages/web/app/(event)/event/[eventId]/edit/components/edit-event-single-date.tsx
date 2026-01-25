@@ -64,7 +64,6 @@ export function EditEventSingleDate({
   });
 
   const getDateTime = () => {
-     
     const date = form.watch('date');
     const time = form.watch('time');
 
@@ -93,7 +92,7 @@ export function EditEventSingleDate({
     dateTime.setHours(hours, minutes, 0, 0);
 
     try {
-      await chooseDateTime(eventId as Id<"events">, dateTime);
+      await chooseDateTime(eventId as Id<'events'>, dateTime);
       router.push(`/event/${eventId}`);
     } catch {
       toast.error('Failed to update date/time', {

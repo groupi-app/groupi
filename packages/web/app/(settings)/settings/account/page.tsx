@@ -4,7 +4,11 @@ import { AccountSettingsContent } from '../components/account-settings-content';
 import { AccountSettingsSkeleton } from '@/components/skeletons/account-settings-skeleton';
 import { AccountFormProvider } from '../components/account-form-provider';
 import { AccountFormWithGuard } from '../components/account-form-with-guard';
-import { Authenticated, Unauthenticated, AuthLoading } from '@/components/auth/auth-wrappers';
+import {
+  Authenticated,
+  Unauthenticated,
+  AuthLoading,
+} from '@/components/auth/auth-wrappers';
 import { useQuery } from 'convex/react';
 import Link from 'next/link';
 import { useLinkedAccounts } from '@/hooks/convex/use-accounts';
@@ -15,7 +19,7 @@ let authQueries: any;
 function initApi() {
   if (!authQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     authQueries = api.auth?.queries ?? {};
   }
 }
@@ -40,7 +44,9 @@ export default function AccountSettings() {
           <h1 className='text-2xl font-heading mb-4'>Account Settings</h1>
           <div className='text-center py-8'>
             <h2 className='text-xl font-bold'>Authentication Required</h2>
-            <p className='mt-2 mb-6'>Please sign in to access your account settings.</p>
+            <p className='mt-2 mb-6'>
+              Please sign in to access your account settings.
+            </p>
             <Link href='/sign-in'>
               <Button>Sign In</Button>
             </Link>
@@ -68,7 +74,6 @@ function AuthenticatedAccountSettings() {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- person available for future profile features
   const { user, person: _person } = userAndPerson;
 
   // Transform user data to form defaults

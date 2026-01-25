@@ -8,36 +8,36 @@ import { cn } from '@/lib/utils';
  * Loading screen tips - witty advice for event planning and social life
  */
 const LOADING_TIPS = [
-  "Free food is a great way to make friends.",
+  'Free food is a great way to make friends.',
   "It's your party. You can cry if you want to.",
-  "Always pet the dog.",
-  "The best time to RSVP was yesterday. The second best time is now.",
+  'Always pet the dog.',
+  'The best time to RSVP was yesterday. The second best time is now.',
   "If you're early, you're on time. If you're on time, you're late. If you're late, bring snacks.",
-  "The aux cord is a sacred responsibility.",
+  'The aux cord is a sacred responsibility.',
   "Friends don't let friends plan parties alone.",
   "You miss 100% of the hangouts you don't RSVP to.",
   "You can't cancel plans if you never make them. Wait, no—",
   "Rain is just nature's way of suggesting board games.",
-  "Good hosts always have backup snacks.",
-  "The best parties have at least one person who knows the WiFi password.",
-  "If in doubt, add more cheese.",
-  "Did you drink water today? Do that.",
-  "Trust the person bringing dessert.",
+  'Good hosts always have backup snacks.',
+  'The best parties have at least one person who knows the WiFi password.',
+  'If in doubt, add more cheese.',
+  'Did you drink water today? Do that.',
+  'Trust the person bringing dessert.',
   "Every great adventure starts with 'we should hang out sometime.'",
-  "Naps before parties are strategically valid.",
+  'Naps before parties are strategically valid.',
   "You don't need a reason to celebrate. Make one up.",
-  "Nobody has ever regretted bringing too many appetizers.",
-  "The secret ingredient is always butter. Or showing up.",
-  "A watched group chat never pings.",
-  "Be the friend who remembers dietary restrictions.",
-  "Comfortable shoes are an underrated party essential.",
-  "The best conversations happen in the kitchen.",
+  'Nobody has ever regretted bringing too many appetizers.',
+  'The secret ingredient is always butter. Or showing up.',
+  'A watched group chat never pings.',
+  'Be the friend who remembers dietary restrictions.',
+  'Comfortable shoes are an underrated party essential.',
+  'The best conversations happen in the kitchen.',
   "Sometimes 'maybe' means 'convince me.'",
-  "Bringing a plus one? A bottle of wine also counts.",
-  "The early bird gets the good parking.",
-  "No one ever remembers who brought the veggie tray. Be brave.",
-  "Karaoke confidence is temporary. The videos are forever.",
-  "When in doubt, blame it on traffic.",
+  'Bringing a plus one? A bottle of wine also counts.',
+  'The early bird gets the good parking.',
+  'No one ever remembers who brought the veggie tray. Be brave.',
+  'Karaoke confidence is temporary. The videos are forever.',
+  'When in doubt, blame it on traffic.',
 ];
 
 interface LogoLoaderProps {
@@ -100,13 +100,18 @@ export function LogoLoader({
   }, [variant, resolvedTheme]);
 
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-3',
+        className
+      )}
+    >
       <svg
         width={size}
         height={size * (viewBoxHeight / viewBoxWidth)}
         viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+        fill='none'
+        xmlns='http://www.w3.org/2000/svg'
         className={colorClass}
       >
         <defs>
@@ -131,27 +136,27 @@ export function LogoLoader({
 
         {/* Head - static */}
         <path
-          d="M62.4375 111.375C93.1929 111.375 118.125 86.4429 118.125 55.6875C118.125 24.9321 93.1929 0 62.4375 0C31.6821 0 6.75 24.9321 6.75 55.6875C6.75 86.4429 31.6821 111.375 62.4375 111.375Z"
-          fill="currentColor"
+          d='M62.4375 111.375C93.1929 111.375 118.125 86.4429 118.125 55.6875C118.125 24.9321 93.1929 0 62.4375 0C31.6821 0 6.75 24.9321 6.75 55.6875C6.75 86.4429 31.6821 111.375 62.4375 111.375Z'
+          fill='currentColor'
         />
 
         {/* Body - static */}
         <path
-          d="M0 162.562C0 128.079 27.9542 100.125 62.4375 100.125C96.9208 100.125 124.875 128.079 124.875 162.562V225H0V162.562Z"
-          fill="currentColor"
+          d='M0 162.562C0 128.079 27.9542 100.125 62.4375 100.125C96.9208 100.125 124.875 128.079 124.875 162.562V225H0V162.562Z'
+          fill='currentColor'
         />
 
         {/* Arm - animated with waving motion */}
         <path
-          className="waving-arm"
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M183.022 42.0739C172.613 34.3539 157.916 36.5342 150.196 46.9438L107.263 104.833C121.956 114.28 131.906 129.83 134.24 147.243L187.892 74.9004C195.612 64.4908 193.432 49.7939 183.022 42.0739Z"
-          fill="currentColor"
+          className='waving-arm'
+          fillRule='evenodd'
+          clipRule='evenodd'
+          d='M183.022 42.0739C172.613 34.3539 157.916 36.5342 150.196 46.9438L107.263 104.833C121.956 114.28 131.906 129.83 134.24 147.243L187.892 74.9004C195.612 64.4908 193.432 49.7939 183.022 42.0739Z'
+          fill='currentColor'
         />
       </svg>
       {displayTip && (
-        <p className="text-sm text-muted-foreground text-center italic max-w-xs">
+        <p className='text-sm text-muted-foreground text-center italic max-w-xs'>
           {displayTip}
         </p>
       )}

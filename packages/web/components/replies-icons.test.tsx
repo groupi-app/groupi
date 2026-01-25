@@ -8,15 +8,23 @@ import RepliesIcons from './replies-icons';
 
 // Mock the Avatar components
 vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <div data-testid="avatar" className={className}>{children}</div>
+  Avatar: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div data-testid='avatar' className={className}>
+      {children}
+    </div>
   ),
   AvatarImage: ({ src, alt }: { src?: string; alt?: string }) => (
     // eslint-disable-next-line @next/next/no-img-element -- Test mock, not production code
-    <img data-testid="avatar-image" src={src || ''} alt={alt || ''} />
+    <img data-testid='avatar-image' src={src || ''} alt={alt || ''} />
   ),
   AvatarFallback: ({ children }: { children: React.ReactNode }) => (
-    <span data-testid="avatar-fallback">{children}</span>
+    <span data-testid='avatar-fallback'>{children}</span>
   ),
 }));
 
@@ -24,7 +32,9 @@ describe('RepliesIcons', () => {
   it('should render nothing for empty replies array', () => {
     const { container } = render(<RepliesIcons replies={[]} />);
 
-    expect(container.querySelectorAll('[data-testid="avatar"]')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-testid="avatar"]')).toHaveLength(
+      0
+    );
   });
 
   it('should render single author avatar', () => {
@@ -86,23 +96,38 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: new Date('2025-01-17T10:00:00Z'),
-        author: { id: 'a1', user: { name: 'User 1', email: 'u1@test.com', image: null } },
+        author: {
+          id: 'a1',
+          user: { name: 'User 1', email: 'u1@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T11:00:00Z'),
-        author: { id: 'a2', user: { name: 'User 2', email: 'u2@test.com', image: null } },
+        author: {
+          id: 'a2',
+          user: { name: 'User 2', email: 'u2@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T12:00:00Z'),
-        author: { id: 'a3', user: { name: 'User 3', email: 'u3@test.com', image: null } },
+        author: {
+          id: 'a3',
+          user: { name: 'User 3', email: 'u3@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T13:00:00Z'),
-        author: { id: 'a4', user: { name: 'User 4', email: 'u4@test.com', image: null } },
+        author: {
+          id: 'a4',
+          user: { name: 'User 4', email: 'u4@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T14:00:00Z'),
-        author: { id: 'a5', user: { name: 'User 5', email: 'u5@test.com', image: null } },
+        author: {
+          id: 'a5',
+          user: { name: 'User 5', email: 'u5@test.com', image: null },
+        },
       },
     ];
 
@@ -115,15 +140,24 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: new Date('2025-01-17T10:00:00Z'),
-        author: { id: 'author-1', user: { name: 'John', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John', email: 'john@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T11:00:00Z'),
-        author: { id: 'author-1', user: { name: 'John', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John', email: 'john@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T12:00:00Z'),
-        author: { id: 'author-2', user: { name: 'Jane', email: 'jane@test.com', image: null } },
+        author: {
+          id: 'author-2',
+          user: { name: 'Jane', email: 'jane@test.com', image: null },
+        },
       },
     ];
 
@@ -144,7 +178,10 @@ describe('RepliesIcons', () => {
       },
       {
         createdAt: new Date('2025-01-17T12:00:00Z'),
-        author: { id: 'author-1', user: { name: 'John', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John', email: 'john@test.com', image: null },
+        },
       },
     ];
 
@@ -157,7 +194,10 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         _creationTime: Date.now(),
-        author: { id: 'author-1', user: { name: 'John', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John', email: 'john@test.com', image: null },
+        },
       },
     ];
 
@@ -170,7 +210,10 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: Date.now(),
-        author: { id: 'author-1', user: { name: 'John', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John', email: 'john@test.com', image: null },
+        },
       },
     ];
 
@@ -183,11 +226,17 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: new Date('2025-01-17T10:00:00Z'),
-        author: { id: 'old-author', user: { name: 'Old', email: 'old@test.com', image: null } },
+        author: {
+          id: 'old-author',
+          user: { name: 'Old', email: 'old@test.com', image: null },
+        },
       },
       {
         createdAt: new Date('2025-01-17T15:00:00Z'),
-        author: { id: 'new-author', user: { name: 'New', email: 'new@test.com', image: null } },
+        author: {
+          id: 'new-author',
+          user: { name: 'New', email: 'new@test.com', image: null },
+        },
       },
     ];
 
@@ -203,7 +252,10 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: new Date(),
-        author: { id: 'author-1', user: { name: 'John Doe', email: 'john@test.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: 'John Doe', email: 'john@test.com', image: null },
+        },
       },
     ];
 
@@ -216,7 +268,10 @@ describe('RepliesIcons', () => {
     const replies = [
       {
         createdAt: new Date(),
-        author: { id: 'author-1', user: { name: null, email: 'test@example.com', image: null } },
+        author: {
+          id: 'author-1',
+          user: { name: null, email: 'test@example.com', image: null },
+        },
       },
     ];
 

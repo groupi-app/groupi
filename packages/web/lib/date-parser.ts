@@ -1,4 +1,4 @@
-import * as chrono from "chrono-node";
+import * as chrono from 'chrono-node';
 
 export interface ParsedDateRange {
   start: Date;
@@ -105,8 +105,8 @@ export function parseNaturalDate(
 
     // If chrono returned an end date, validate it makes sense
     // If end is more than 24 hours after start, chrono likely misinterpreted a time range
-    const hasValidChronoEnd = chronoEnd &&
-      (chronoEnd.getTime() - start.getTime()) <= 24 * 60 * 60 * 1000;
+    const hasValidChronoEnd =
+      chronoEnd && chronoEnd.getTime() - start.getTime() <= 24 * 60 * 60 * 1000;
 
     if (hasValidChronoEnd) {
       end = chronoEnd;
@@ -118,16 +118,16 @@ export function parseNaturalDate(
 
       if (timeRangeMatch) {
         const endHour = parseInt(timeRangeMatch[3]);
-        const endMinutes = parseInt(timeRangeMatch[4] || "0");
+        const endMinutes = parseInt(timeRangeMatch[4] || '0');
         const meridiem = timeRangeMatch[5]?.toLowerCase();
 
         end = new Date(start);
         let adjustedHour = endHour;
 
         // Handle PM
-        if (meridiem === "pm" && endHour < 12) {
+        if (meridiem === 'pm' && endHour < 12) {
           adjustedHour = endHour + 12;
-        } else if (meridiem === "am" && endHour === 12) {
+        } else if (meridiem === 'am' && endHour === 12) {
           adjustedHour = 0;
         }
 
@@ -146,7 +146,7 @@ export function parseNaturalDate(
       text: result.text,
     };
   } catch (error) {
-    console.error("Error parsing date:", text, error);
+    console.error('Error parsing date:', text, error);
     return null;
   }
 }
@@ -164,13 +164,13 @@ export function parseRawDateInput(
   try {
     const results = customChrono.parse(text, ref, { forwardDate: true });
 
-    return results.map((result) => ({
+    return results.map(result => ({
       start: result.start.date(),
       end: result.end?.date(),
       text: result.text,
     }));
   } catch (error) {
-    console.error("Error parsing raw date input:", error);
+    console.error('Error parsing raw date input:', error);
     return [];
   }
 }
@@ -182,18 +182,18 @@ export function parseRawDateInput(
 export function validateParsedDates(
   dates: ParsedDateRange[]
 ): { isValid: boolean; errors: string[] }[] {
-  return dates.map((date) => {
+  return dates.map(date => {
     const errors: string[] = [];
 
     // Check if end is before start
     if (date.end && date.end <= date.start) {
-      errors.push("End time must be after start time");
+      errors.push('End time must be after start time');
     }
 
     // Check if date is in the past (only for start time)
     const now = new Date();
     if (date.start < now) {
-      errors.push("Date is in the past");
+      errors.push('Date is in the past');
     }
 
     return {
@@ -208,11 +208,11 @@ export function validateParsedDates(
  */
 export function formatParsedDateRange(date: ParsedDateRange): string {
   const options: Intl.DateTimeFormatOptions = {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   };
 
   const startStr = date.start.toLocaleString(undefined, options);
@@ -229,8 +229,8 @@ export function formatParsedDateRange(date: ParsedDateRange): string {
 
   if (sameDay) {
     const endTimeStr = date.end.toLocaleString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
+      hour: 'numeric',
+      minute: '2-digit',
     });
     return `${startStr} - ${endTimeStr}`;
   }

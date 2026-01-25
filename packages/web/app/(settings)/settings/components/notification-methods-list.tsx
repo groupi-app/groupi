@@ -8,10 +8,10 @@ import {
   type WebhookFormat,
 } from '@/convex/types';
 
-// Re-export const objects for runtime use
-const NotificationMethodType = ConvexEnums.NotificationMethodType;
-const NotificationType = ConvexEnums.NotificationType;
-const WebhookFormat = ConvexEnums.WebhookFormat;
+// Runtime enum values for iteration and validation
+const NotificationMethodTypeValues = ConvexEnums.NotificationMethodType;
+const NotificationTypeValues = ConvexEnums.NotificationType;
+const WebhookFormatValues = ConvexEnums.WebhookFormat;
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +75,7 @@ export function NotificationMethodsList({
 
   // Helper: get all notification types as array of { notificationType, enabled: true }
   const getDefaultNotifications = () =>
-    Object.values(NotificationType).map(type => ({
+    Object.values(NotificationTypeValues).map(type => ({
       notificationType: type,
       enabled: true,
     }));
@@ -102,7 +102,7 @@ export function NotificationMethodsList({
         <DropdownMenuContent align='start'>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Icons.mail className="mr-2 h-4 w-4" />
+              <Icons.mail className='mr-2 h-4 w-4' />
               Email
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -119,13 +119,17 @@ export function NotificationMethodsList({
                 }
                 disabled={usedEmails.has(primaryEmail)}
               >
-                <Icons.mail className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
+                <Icons.mail className='mr-2 h-4 w-4' />
+                <div className='flex flex-col'>
                   <span>Primary Email</span>
-                  <span className="text-xs text-muted-foreground">{primaryEmail}</span>
+                  <span className='text-xs text-muted-foreground'>
+                    {primaryEmail}
+                  </span>
                 </div>
                 {usedEmails.has(primaryEmail) && (
-                  <span className="ml-auto text-xs text-muted-foreground">(added)</span>
+                  <span className='ml-auto text-xs text-muted-foreground'>
+                    (added)
+                  </span>
                 )}
               </DropdownMenuItem>
 
@@ -144,13 +148,17 @@ export function NotificationMethodsList({
                   }
                   disabled={usedEmails.has(email)}
                 >
-                  <Icons.mail className="mr-2 h-4 w-4" />
-                  <div className="flex flex-col">
+                  <Icons.mail className='mr-2 h-4 w-4' />
+                  <div className='flex flex-col'>
                     <span>Email {index + 2}</span>
-                    <span className="text-xs text-muted-foreground">{email}</span>
+                    <span className='text-xs text-muted-foreground'>
+                      {email}
+                    </span>
                   </div>
                   {usedEmails.has(email) && (
-                    <span className="ml-auto text-xs text-muted-foreground">(added)</span>
+                    <span className='ml-auto text-xs text-muted-foreground'>
+                      (added)
+                    </span>
                   )}
                 </DropdownMenuItem>
               ))}
@@ -159,7 +167,7 @@ export function NotificationMethodsList({
               <DropdownMenuItem
                 onSelect={() => router.push('/settings/account#emails')}
               >
-                <Icons.plus className="mr-2 h-4 w-4" />
+                <Icons.plus className='mr-2 h-4 w-4' />
                 Add new email
               </DropdownMenuItem>
             </DropdownMenuSubContent>
@@ -173,11 +181,11 @@ export function NotificationMethodsList({
                 name: '',
                 enabled: true, // Start enabled since URL is required anyway
                 notifications: getDefaultNotifications(),
-                webhookFormat: WebhookFormat.GENERIC, // Default webhook format to satisfy validation
+                webhookFormat: WebhookFormatValues.GENERIC, // Default webhook format to satisfy validation
               })
             }
           >
-            <Icons.webhook className="mr-2 h-4 w-4" />
+            <Icons.webhook className='mr-2 h-4 w-4' />
             Webhook
           </DropdownMenuItem>
         </DropdownMenuContent>

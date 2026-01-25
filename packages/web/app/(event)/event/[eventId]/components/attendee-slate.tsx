@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Doc } from "../../../../../../../convex/_generated/dataModel";
-import { User } from "@/convex/types";
+import { Doc } from '../../../../../../../convex/_generated/dataModel';
+import { User } from '@/convex/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
@@ -29,13 +29,17 @@ export function AttendeeSlate({
 }: {
   userId: string;
   userRole: string;
-  member: Doc<"memberships"> & {
-    person: (Doc<"persons"> & {
-      user: User;
-    }) | null;
-    availabilities: Array<Doc<"availabilities"> & {
-      potentialDateTime: Doc<"potentialDateTimes"> | null;
-    }>;
+  member: Doc<'memberships'> & {
+    person:
+      | (Doc<'persons'> & {
+          user: User;
+        })
+      | null;
+    availabilities: Array<
+      Doc<'availabilities'> & {
+        potentialDateTime: Doc<'potentialDateTimes'> | null;
+      }
+    >;
   };
   itemKey: string;
   eventDateTime: Date | null;
@@ -44,7 +48,8 @@ export function AttendeeSlate({
 
   const [availabilitiesOpen, setAvailabilitiesOpen] = useState(false);
 
-  const fullName = member.person?.user?.name || member.person?.user?.email || '';
+  const fullName =
+    member.person?.user?.name || member.person?.user?.email || '';
 
   const isMe = userId === member.person?._id;
 
@@ -67,8 +72,8 @@ export function AttendeeSlate({
               member={member}
               userId={userId}
               userRole={userRole}
-              className=""
-              align="start"
+              className=''
+              align='start'
               eventDateTime={eventDateTime}
             />
             <div>

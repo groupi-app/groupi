@@ -9,17 +9,20 @@ export function MemberSlate({
   eventDateTime,
   itemKey,
 }: {
-  member: Doc<"memberships"> & {
-    person: (Doc<"persons"> & {
-      user: User;
-    }) | null;
+  member: Doc<'memberships'> & {
+    person:
+      | (Doc<'persons'> & {
+          user: User;
+        })
+      | null;
   };
   userId: string;
   userRole: string;
   eventDateTime: Date | null;
   itemKey: string;
 }) {
-  const fullName = member.person?.user?.name || member.person?.user?.email || '';
+  const fullName =
+    member.person?.user?.name || member.person?.user?.email || '';
 
   return (
     <div className='flex items-center gap-3 py-2'>

@@ -7,18 +7,22 @@ import { z } from 'zod';
 import { AvailabilityCard } from './availability-card';
 import { Icons } from '@/components/icons';
 // Use simpler Convex generated types to avoid deep type issues
-import { Doc, Id } from "../../../../../../../convex/_generated/dataModel";
-import { User } from "@/convex/types";
+import { Doc, Id } from '../../../../../../../convex/_generated/dataModel';
+import { User } from '@/convex/types';
 
 // Match the actual Convex query return type structure
-type PotentialDateTime = Doc<"potentialDateTimes"> & {
-  availabilities: Array<Doc<"availabilities"> & {
-    member: (Doc<"memberships"> & {
-      person: (Doc<"persons"> & {
-        user: User;
-      }) | null;
-    });
-  }>;
+type PotentialDateTime = Doc<'potentialDateTimes'> & {
+  availabilities: Array<
+    Doc<'availabilities'> & {
+      member: Doc<'memberships'> & {
+        person:
+          | (Doc<'persons'> & {
+              user: User;
+            })
+          | null;
+      };
+    }
+  >;
 };
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
@@ -30,14 +34,16 @@ export function AvailabilityForm({
   userId,
 }: {
   potentialDateTimes: PotentialDateTime[];
-  userId: Id<"persons">;
+  userId: Id<'persons'>;
 }) {
   const eventId = potentialDateTimes[0].eventId;
   const router = useRouter();
   const submitAvailability = useSubmitAvailability();
   const [isSaving, setIsSaving] = useState(false);
 
-  const answerMap = (status: "YES" | "MAYBE" | "NO" | "PENDING" | undefined) => {
+  const answerMap = (
+    status: 'YES' | 'MAYBE' | 'NO' | 'PENDING' | undefined
+  ) => {
     // Convert status to lowercase for form
     switch (status) {
       case 'YES':
@@ -82,7 +88,9 @@ export function AvailabilityForm({
     const newIds = new Set(potentialDateTimes.map(pdt => pdt._id as string));
 
     // Check if there are new potential date times
-    const hasNewDates = potentialDateTimes.some(pdt => !currentIds.has(pdt._id as string));
+    const hasNewDates = potentialDateTimes.some(
+      pdt => !currentIds.has(pdt._id as string)
+    );
     const hasRemovedDates = currentAnswers.some(
       a => !newIds.has(a.potentialDateTimeId)
     );
@@ -138,7 +146,8 @@ export function AvailabilityForm({
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
     const responses = data.formAnswers.map(answer => ({
-      potentialDateTimeId: answer.potentialDateTimeId as Id<"potentialDateTimes">,
+      potentialDateTimeId:
+        answer.potentialDateTimeId as Id<'potentialDateTimes'>,
       status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
     }));
 
@@ -215,7 +224,6 @@ export function AvailabilityForm({
                     <AvailabilityCard
                       key={pdt._id}
                       pdt={pdt}
-                       
                       formAnswers={form.watch('formAnswers')}
                       setFormAnswer={toggleFormValue}
                       index={i}

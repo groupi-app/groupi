@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { NotificationWidget } from './notification-widget';
 import { NotificationCount } from './notification-count';
 
-export function ProfileSlate({ userInfo }: {
+export function ProfileSlate({
+  userInfo,
+}: {
   userInfo: {
     name?: string;
     email: string;

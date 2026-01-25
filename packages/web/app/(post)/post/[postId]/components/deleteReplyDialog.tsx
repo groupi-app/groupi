@@ -12,7 +12,13 @@ import { useDeleteReply } from '@/hooks/convex/use-replies';
 import { useState } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function DeleteReplyDialog({ id, postId }: { id: Id<"replies">; postId?: Id<"posts"> }) {
+export function DeleteReplyDialog({
+  id,
+  postId,
+}: {
+  id: Id<'replies'>;
+  postId?: Id<'posts'>;
+}) {
   const deleteReply = useDeleteReply(postId);
   const [isLoading, setIsLoading] = useState(false);
 

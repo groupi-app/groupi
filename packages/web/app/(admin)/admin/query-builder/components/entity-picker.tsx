@@ -54,9 +54,7 @@ export function EntityPicker({
   // Search for entities
   const searchResults = useQuery(
     api.admin.queryBuilder.searchEntities,
-    search.length >= 1
-      ? { entityType, search, limit: 10 }
-      : 'skip'
+    search.length >= 1 ? { entityType, search, limit: 10 } : 'skip'
   ) as SearchResult[] | undefined;
 
   // Update display label when selectedLabel prop changes
@@ -70,7 +68,10 @@ export function EntityPicker({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         if (value && displayLabel) {
           setSearch('');
@@ -108,11 +109,13 @@ export function EntityPicker({
   const getEntityIcon = () => {
     switch (entityType) {
       case 'user':
-        return <Icons.users className="h-4 w-4 text-muted-foreground" />;
+        return <Icons.users className='h-4 w-4 text-muted-foreground' />;
       case 'event':
-        return <Icons.calendar className="h-4 w-4 text-muted-foreground" />;
+        return <Icons.calendar className='h-4 w-4 text-muted-foreground' />;
       case 'post':
-        return <Icons.messageSquare className="h-4 w-4 text-muted-foreground" />;
+        return (
+          <Icons.messageSquare className='h-4 w-4 text-muted-foreground' />
+        );
     }
   };
 
@@ -130,14 +133,14 @@ export function EntityPicker({
 
   return (
     <div ref={containerRef} className={cn('relative min-w-[200px]', className)}>
-      <div className="relative flex items-center">
-        <div className="absolute left-2 pointer-events-none">
+      <div className='relative flex items-center'>
+        <div className='absolute left-2 pointer-events-none'>
           {getEntityIcon()}
         </div>
         <input
           ref={inputRef}
-          type="text"
-          className="flex h-10 w-full min-w-[180px] rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          type='text'
+          className='flex h-10 w-full min-w-[180px] rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
           placeholder={getPlaceholder()}
           value={isOpen ? search : displayLabel || search}
           onChange={handleInputChange}
@@ -145,40 +148,42 @@ export function EntityPicker({
         />
         {(value || displayLabel) && (
           <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-1 h-6 w-6 p-0"
+            type='button'
+            variant='ghost'
+            size='sm'
+            className='absolute right-1 h-6 w-6 p-0'
             onClick={handleClear}
           >
-            <Icons.x className="h-3 w-3" />
+            <Icons.x className='h-3 w-3' />
           </Button>
         )}
       </div>
 
       {/* Dropdown */}
       {isOpen && search.length >= 1 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className='absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto'>
           {searchResults === undefined ? (
-            <div className="p-2 text-sm text-muted-foreground text-center">
+            <div className='p-2 text-sm text-muted-foreground text-center'>
               Searching...
             </div>
           ) : searchResults.length === 0 ? (
-            <div className="p-2 text-sm text-muted-foreground text-center">
+            <div className='p-2 text-sm text-muted-foreground text-center'>
               No results found
             </div>
           ) : (
             searchResults.map(result => (
               <button
                 key={result.id}
-                type="button"
-                className="w-full px-3 py-2 text-left hover:bg-muted transition-colors flex items-start gap-2"
+                type='button'
+                className='w-full px-3 py-2 text-left hover:bg-muted transition-colors flex items-start gap-2'
                 onClick={() => handleSelect(result)}
               >
-                <div className="mt-0.5">{getEntityIcon()}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{result.label}</div>
-                  <div className="text-xs text-muted-foreground truncate">
+                <div className='mt-0.5'>{getEntityIcon()}</div>
+                <div className='flex-1 min-w-0'>
+                  <div className='text-sm font-medium truncate'>
+                    {result.label}
+                  </div>
+                  <div className='text-xs text-muted-foreground truncate'>
                     {result.sublabel}
                   </div>
                 </div>

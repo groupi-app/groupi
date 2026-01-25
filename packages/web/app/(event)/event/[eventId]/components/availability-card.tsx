@@ -5,18 +5,22 @@ import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Doc } from "../../../../../../../convex/_generated/dataModel";
-import { User } from "@/convex/types";
+import { Doc } from '../../../../../../../convex/_generated/dataModel';
+import { User } from '@/convex/types';
 
 // Match the actual Convex query return type structure
-type PotentialDateTime = Doc<"potentialDateTimes"> & {
-  availabilities: Array<Doc<"availabilities"> & {
-    member: (Doc<"memberships"> & {
-      person: (Doc<"persons"> & {
-        user: User;
-      }) | null;
-    });
-  }>;
+type PotentialDateTime = Doc<'potentialDateTimes'> & {
+  availabilities: Array<
+    Doc<'availabilities'> & {
+      member: Doc<'memberships'> & {
+        person:
+          | (Doc<'persons'> & {
+              user: User;
+            })
+          | null;
+      };
+    }
+  >;
 };
 
 export function AvailabilityCard({
@@ -26,8 +30,14 @@ export function AvailabilityCard({
   index,
 }: {
   pdt: PotentialDateTime;
-  formAnswers: Array<{ potentialDateTimeId: string; answer: 'yes' | 'maybe' | 'no' }>;
-  setFormAnswer: (index: number, value: { potentialDateTimeId: string; answer: 'yes' | 'maybe' | 'no' }) => void;
+  formAnswers: Array<{
+    potentialDateTimeId: string;
+    answer: 'yes' | 'maybe' | 'no';
+  }>;
+  setFormAnswer: (
+    index: number,
+    value: { potentialDateTimeId: string; answer: 'yes' | 'maybe' | 'no' }
+  ) => void;
   index: number;
 }) {
   const [listOpen, setListOpen] = useState(false);
@@ -148,7 +158,9 @@ export function AvailabilityCard({
       </div>
       {listOpen && (
         <div className='flex flex-col gap-2 py-1'>
-          {pdt.availabilities.filter(a => a.status === 'YES' && a.member !== null).length > 0 && (
+          {pdt.availabilities.filter(
+            a => a.status === 'YES' && a.member !== null
+          ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
                 <Icons.check className='size-6 text-green-500' />
@@ -160,31 +172,33 @@ export function AvailabilityCard({
                   .map(a => {
                     const member = a.member; // Non-null assertion after filter
                     return (
-                    <div
-                      key={member._id + pdt._id}
-                      className='flex items-center gap-2 py-2'
-                    >
-                      <Avatar className='size-6'>
-                        <AvatarFallback>
-                          {(
-                            member.person?.user?.name?.[0] || ''
-                          ).toUpperCase()}
-                        </AvatarFallback>
-                        <AvatarImage
-                          src={member.person?.user?.image || undefined}
-                        />
-                      </Avatar>
-                      <span>
-                        {member.person?.user?.name ||
-                          member.person?.user?.email}
-                      </span>
-                    </div>
-                  );
+                      <div
+                        key={member._id + pdt._id}
+                        className='flex items-center gap-2 py-2'
+                      >
+                        <Avatar className='size-6'>
+                          <AvatarFallback>
+                            {(
+                              member.person?.user?.name?.[0] || ''
+                            ).toUpperCase()}
+                          </AvatarFallback>
+                          <AvatarImage
+                            src={member.person?.user?.image || undefined}
+                          />
+                        </Avatar>
+                        <span>
+                          {member.person?.user?.name ||
+                            member.person?.user?.email}
+                        </span>
+                      </div>
+                    );
                   })}
               </div>
             </div>
           )}
-          {pdt.availabilities.filter(a => a.status === 'MAYBE' && a.member !== null).length > 0 && (
+          {pdt.availabilities.filter(
+            a => a.status === 'MAYBE' && a.member !== null
+          ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
                 <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
@@ -198,32 +212,34 @@ export function AvailabilityCard({
                   .map(a => {
                     const member = a.member; // Non-null assertion after filter
                     return (
-                    <div
-                      key={member._id + pdt._id}
-                      className='flex items-center gap-2 py-2'
-                    >
-                      <Avatar className='size-6'>
-                        <AvatarFallback>
-                          {getInitialsFromName(
-                            member.person?.user?.name ?? undefined,
-                            member.person?.user?.email ?? undefined
-                          )}
-                        </AvatarFallback>
-                        <AvatarImage
-                          src={member.person?.user?.image || undefined}
-                        />
-                      </Avatar>
-                      <span>
-                        {member.person?.user?.name ||
-                          member.person?.user?.email}
-                      </span>
-                    </div>
-                  );
+                      <div
+                        key={member._id + pdt._id}
+                        className='flex items-center gap-2 py-2'
+                      >
+                        <Avatar className='size-6'>
+                          <AvatarFallback>
+                            {getInitialsFromName(
+                              member.person?.user?.name ?? undefined,
+                              member.person?.user?.email ?? undefined
+                            )}
+                          </AvatarFallback>
+                          <AvatarImage
+                            src={member.person?.user?.image || undefined}
+                          />
+                        </Avatar>
+                        <span>
+                          {member.person?.user?.name ||
+                            member.person?.user?.email}
+                        </span>
+                      </div>
+                    );
                   })}
               </div>
             </div>
           )}
-          {pdt.availabilities.filter(a => a.status === 'NO' && a.member !== null).length > 0 && (
+          {pdt.availabilities.filter(
+            a => a.status === 'NO' && a.member !== null
+          ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
                 <Icons.close className='size-6 text-red-500' />
@@ -235,27 +251,27 @@ export function AvailabilityCard({
                   .map(a => {
                     const member = a.member; // Non-null assertion after filter
                     return (
-                    <div
-                      key={member._id + pdt._id}
-                      className='flex items-center gap-2 py-2'
-                    >
-                      <Avatar className='size-6'>
-                        <AvatarFallback>
-                          {getInitialsFromName(
-                            member.person?.user?.name ?? undefined,
-                            member.person?.user?.email ?? undefined
-                          )}
-                        </AvatarFallback>
-                        <AvatarImage
-                          src={member.person?.user?.image || undefined}
-                        />
-                      </Avatar>
-                      <span>
-                        {member.person?.user?.name ||
-                          member.person?.user?.email}
-                      </span>
-                    </div>
-                  );
+                      <div
+                        key={member._id + pdt._id}
+                        className='flex items-center gap-2 py-2'
+                      >
+                        <Avatar className='size-6'>
+                          <AvatarFallback>
+                            {getInitialsFromName(
+                              member.person?.user?.name ?? undefined,
+                              member.person?.user?.email ?? undefined
+                            )}
+                          </AvatarFallback>
+                          <AvatarImage
+                            src={member.person?.user?.image || undefined}
+                          />
+                        </Avatar>
+                        <span>
+                          {member.person?.user?.name ||
+                            member.person?.user?.email}
+                        </span>
+                      </div>
+                    );
                   })}
               </div>
             </div>
