@@ -756,7 +756,8 @@ export async function createNotification(
 
   // Schedule action to send external notifications if there are any
   if (emails.length > 0 || webhooks.length > 0) {
-    // @ts-expect-error - Type instantiation is excessively deep (TS2589)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - Type instantiation is excessively deep (TS2589) - varies by environment
     const sendAction = internal.notifications.actions.sendExternalNotifications;
     await ctx.scheduler.runAfter(0, sendAction, { emails, webhooks });
   }
