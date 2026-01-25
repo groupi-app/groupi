@@ -12,7 +12,7 @@ let userQueries: any;
 function initApi() {
   if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userQueries = api.users?.queries ?? {};
   }
 }
@@ -47,7 +47,11 @@ export function NavigationWrapper({ items }: { items: NavItem[] }) {
   }
 
   // If we're on the onboarding page and still loading the check, show minimal nav
-  if (pathname?.startsWith('/onboarding') && session?.user && needsOnboarding === undefined) {
+  if (
+    pathname?.startsWith('/onboarding') &&
+    session?.user &&
+    needsOnboarding === undefined
+  ) {
     return <OnboardingNav />;
   }
 

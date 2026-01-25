@@ -22,7 +22,12 @@ Sentry.init({
   beforeSend(event, hint) {
     const error = hint.originalException;
     // ResponseAborted occurs when client disconnects before response completes (e.g., navigation)
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ResponseAborted') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'name' in error &&
+      error.name === 'ResponseAborted'
+    ) {
       return null;
     }
     return event;

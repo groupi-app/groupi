@@ -8,11 +8,11 @@ import { Analytics } from './analytics';
 
 // Mock Vercel analytics
 vi.mock('@vercel/analytics/react', () => ({
-  Analytics: () => <div data-testid="vercel-analytics" />,
+  Analytics: () => <div data-testid='vercel-analytics' />,
 }));
 
 vi.mock('@vercel/speed-insights/next', () => ({
-  SpeedInsights: () => <div data-testid="speed-insights" />,
+  SpeedInsights: () => <div data-testid='speed-insights' />,
 }));
 
 describe('Analytics', () => {

@@ -23,7 +23,12 @@ function getApi() {
   return _api;
 }
 
-export type EntityType = 'users' | 'events' | 'posts' | 'replies' | 'memberships';
+export type EntityType =
+  | 'users'
+  | 'events'
+  | 'posts'
+  | 'replies'
+  | 'memberships';
 
 export type FilterCondition = {
   id: string;
@@ -92,10 +97,7 @@ export function QueryBuilder() {
       }
     : 'skip';
 
-  const queryResult = useQuery(
-    api.admin.queryBuilder.executeQuery,
-    queryArgs
-  );
+  const queryResult = useQuery(api.admin.queryBuilder.executeQuery, queryArgs);
 
   // Reset cursor when query parameters change
   // Use JSON.stringify for filterGroups to ensure stable dependency comparison
@@ -142,14 +144,17 @@ export function QueryBuilder() {
   }, [entityFields]);
 
   // Handler for updating a filter group
-  const handleUpdateFilterGroup = useCallback((groupId: string, data: Partial<FilterGroupData>) => {
-    setQueryState(prev => ({
-      ...prev,
-      filterGroups: prev.filterGroups.map(g =>
-        g.id === groupId ? { ...g, ...data } : g
-      ),
-    }));
-  }, []);
+  const handleUpdateFilterGroup = useCallback(
+    (groupId: string, data: Partial<FilterGroupData>) => {
+      setQueryState(prev => ({
+        ...prev,
+        filterGroups: prev.filterGroups.map(g =>
+          g.id === groupId ? { ...g, ...data } : g
+        ),
+      }));
+    },
+    []
+  );
 
   // Handler for removing a filter group
   const handleRemoveFilterGroup = useCallback((groupId: string) => {
@@ -160,13 +165,16 @@ export function QueryBuilder() {
   }, []);
 
   // Handler for sort change
-  const handleSortChange = useCallback((field: string, direction: 'asc' | 'desc') => {
-    setQueryState(prev => ({
-      ...prev,
-      sortField: field,
-      sortDirection: direction,
-    }));
-  }, []);
+  const handleSortChange = useCallback(
+    (field: string, direction: 'asc' | 'desc') => {
+      setQueryState(prev => ({
+        ...prev,
+        sortField: field,
+        sortDirection: direction,
+      }));
+    },
+    []
+  );
 
   // Handler for executing query
   const handleExecute = useCallback(() => {
@@ -190,56 +198,67 @@ export function QueryBuilder() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Entity Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Select Entity</CardTitle>
+          <CardTitle className='text-lg'>Select Entity</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={queryState.entity} onValueChange={v => handleEntityChange(v as EntityType)}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Icons.users className="h-4 w-4" />
-                <span className="hidden sm:inline">Users</span>
+          <Tabs
+            value={queryState.entity}
+            onValueChange={v => handleEntityChange(v as EntityType)}
+          >
+            <TabsList className='grid w-full grid-cols-5'>
+              <TabsTrigger value='users' className='flex items-center gap-2'>
+                <Icons.users className='h-4 w-4' />
+                <span className='hidden sm:inline'>Users</span>
               </TabsTrigger>
-              <TabsTrigger value="events" className="flex items-center gap-2">
-                <Icons.calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Events</span>
+              <TabsTrigger value='events' className='flex items-center gap-2'>
+                <Icons.calendar className='h-4 w-4' />
+                <span className='hidden sm:inline'>Events</span>
               </TabsTrigger>
-              <TabsTrigger value="posts" className="flex items-center gap-2">
-                <Icons.messageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Posts</span>
+              <TabsTrigger value='posts' className='flex items-center gap-2'>
+                <Icons.messageSquare className='h-4 w-4' />
+                <span className='hidden sm:inline'>Posts</span>
               </TabsTrigger>
-              <TabsTrigger value="replies" className="flex items-center gap-2">
-                <Icons.reply className="h-4 w-4" />
-                <span className="hidden sm:inline">Replies</span>
+              <TabsTrigger value='replies' className='flex items-center gap-2'>
+                <Icons.reply className='h-4 w-4' />
+                <span className='hidden sm:inline'>Replies</span>
               </TabsTrigger>
-              <TabsTrigger value="memberships" className="flex items-center gap-2">
-                <Icons.people className="h-4 w-4" />
-                <span className="hidden sm:inline">Memberships</span>
+              <TabsTrigger
+                value='memberships'
+                className='flex items-center gap-2'
+              >
+                <Icons.people className='h-4 w-4' />
+                <span className='hidden sm:inline'>Memberships</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
         {/* Query Configuration */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className='lg:col-span-2 space-y-6'>
           {/* Filters */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg">Filters</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleAddFilterGroup}>
-                <Icons.plus className="h-4 w-4 mr-2" />
+            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+              <CardTitle className='text-lg'>Filters</CardTitle>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleAddFilterGroup}
+              >
+                <Icons.plus className='h-4 w-4 mr-2' />
                 Add Filter Group
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className='space-y-4'>
               {queryState.filterGroups.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No filters applied. Click &quot;Add Filter Group&quot; to start filtering.
+                <div className='text-center py-8 text-muted-foreground'>
+                  No filters applied. Click &quot;Add Filter Group&quot; to
+                  start filtering.
                 </div>
               ) : (
                 queryState.filterGroups.map(group => (
@@ -252,14 +271,13 @@ export function QueryBuilder() {
                   />
                 ))
               )}
-
             </CardContent>
           </Card>
 
           {/* Sort */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Sort</CardTitle>
+              <CardTitle className='text-lg'>Sort</CardTitle>
             </CardHeader>
             <CardContent>
               <SortConfig
@@ -272,20 +290,20 @@ export function QueryBuilder() {
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
-            <Button onClick={handleExecute} className="flex-1">
-              <Icons.search className="h-4 w-4 mr-2" />
+          <div className='flex items-center gap-4'>
+            <Button onClick={handleExecute} className='flex-1'>
+              <Icons.search className='h-4 w-4 mr-2' />
               Execute Query
             </Button>
-            <Button variant="outline" onClick={handleClear}>
-              <Icons.x className="h-4 w-4 mr-2" />
+            <Button variant='outline' onClick={handleClear}>
+              <Icons.x className='h-4 w-4 mr-2' />
               Clear
             </Button>
           </div>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {/* Query Preview */}
           <QueryPreview queryState={queryState} />
 

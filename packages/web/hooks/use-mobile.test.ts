@@ -14,7 +14,8 @@ describe('useMobile', () => {
   beforeEach(() => {
     // Store originals
     originalInnerWidth = window.innerWidth;
-    originalOntouchstart = (window as unknown as { ontouchstart?: unknown }).ontouchstart;
+    originalOntouchstart = (window as unknown as { ontouchstart?: unknown })
+      .ontouchstart;
     originalMaxTouchPoints = navigator.maxTouchPoints;
 
     // Clear touch detection
@@ -34,7 +35,8 @@ describe('useMobile', () => {
       writable: true,
     });
     if (originalOntouchstart !== undefined) {
-      (window as unknown as { ontouchstart?: unknown }).ontouchstart = originalOntouchstart;
+      (window as unknown as { ontouchstart?: unknown }).ontouchstart =
+        originalOntouchstart;
     }
     Object.defineProperty(navigator, 'maxTouchPoints', {
       value: originalMaxTouchPoints,
@@ -111,7 +113,10 @@ describe('useMobile', () => {
     const { unmount } = renderHook(() => useMobile());
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
   });
 
   it('should detect maxTouchPoints for touch devices', () => {

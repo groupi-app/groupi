@@ -22,6 +22,7 @@ This document provides comprehensive guidance on writing tests for the Groupi ap
 ## Testing Framework Overview
 
 All packages use **Vitest** as the primary testing framework with the following supporting libraries:
+
 - `@testing-library/react` - React component testing
 - `@testing-library/jest-dom` - DOM assertions
 - `@testing-library/user-event` - User interaction simulation
@@ -34,12 +35,14 @@ All packages use **Vitest** as the primary testing framework with the following 
 **Environment**: `jsdom` (browser simulation)
 
 **Test Locations**:
+
 - `hooks/**/*.test.ts` - Hook tests
 - `components/**/*.test.tsx` - Component tests
 - `lib/**/*.test.ts` - Utility function tests
 - `__tests__/**/*.test.ts` - General tests
 
 **Running Tests**:
+
 ```bash
 pnpm test:web           # Run web tests
 pnpm --filter @groupi/web test -- --watch  # Watch mode
@@ -52,6 +55,7 @@ pnpm --filter @groupi/web test -- --watch  # Watch mode
 **Test Location**: `convex/tests/*.test.ts`
 
 **Running Tests**:
+
 ```bash
 pnpm test:convex        # Run convex tests
 ```
@@ -63,6 +67,7 @@ pnpm test:convex        # Run convex tests
 **Test Location**: `packages/shared/src/**/*.test.ts`
 
 **Running Tests**:
+
 ```bash
 pnpm test:shared        # Run shared tests
 ```
@@ -74,6 +79,7 @@ pnpm test:shared        # Run shared tests
 **Test Location**: `packages/mobile/src/**/*.test.ts`
 
 **Running Tests**:
+
 ```bash
 pnpm test:mobile        # Run mobile tests
 ```
@@ -312,11 +318,11 @@ When a component uses `require()` for dynamic imports, mock using the relative p
 ```typescript
 // If component uses: require("../../../convex/_generated/api")
 // Mock with the SAME relative path from the test file:
-vi.mock("../../../convex/_generated/api", () => ({
+vi.mock('../../../convex/_generated/api', () => ({
   api: {
     myModule: {
       mutations: {
-        myMutation: "myMutation",
+        myMutation: 'myMutation',
       },
     },
   },
@@ -404,10 +410,12 @@ Choose the helper that matches your test needs:
 const { userId, personId, auth } = await TestScenarios.simpleUser(t);
 
 // Single Event Scenario - for post creation, event queries, basic operations
-const { userId, personId, eventId, membershipId, auth } = await TestScenarios.singleEvent(t);
+const { userId, personId, eventId, membershipId, auth } =
+  await TestScenarios.singleEvent(t);
 
 // Multi-User Event - for permissions, notifications, user interactions
-const { organizer, attendee, eventId, organizerAuth, attendeeAuth } = await TestScenarios.multiUser(t);
+const { organizer, attendee, eventId, organizerAuth, attendeeAuth } =
+  await TestScenarios.multiUser(t);
 
 // Permission Testing - for testing unauthorized access, security boundaries
 const { eventId, outsiderAuth } = await TestScenarios.outsiderUser(t);
@@ -420,19 +428,19 @@ For specific requirements, use granular helpers:
 ```typescript
 // Custom user
 const { userId, personId } = await createTestUser(t, {
-  email: "specific@example.com",
-  username: "specificuser",
-  name: "Specific Name",
-  bio: "Custom bio"
+  email: 'specific@example.com',
+  username: 'specificuser',
+  name: 'Specific Name',
+  bio: 'Custom bio',
 });
 
 // Custom event with specific settings
 const setup = await createTestEventWithUser(t, {
-  userEmail: "organizer@company.com",
-  eventTitle: "Company Meetup",
-  eventLocation: "Office",
-  userRole: "MODERATOR",
-  rsvpStatus: "YES"
+  userEmail: 'organizer@company.com',
+  eventTitle: 'Company Meetup',
+  eventLocation: 'Office',
+  userRole: 'MODERATOR',
+  rsvpStatus: 'YES',
 });
 ```
 
@@ -441,42 +449,42 @@ const setup = await createTestEventWithUser(t, {
 When manually setting up test data in `t.run()`:
 
 ```typescript
-const { userId, personId, eventId, membershipId } = await t.run(async (ctx) => {
+const { userId, personId, eventId, membershipId } = await t.run(async ctx => {
   // 1. Create user (authentication identity)
-  const userId = await ctx.db.insert("users", {
-    email: "test@example.com",
+  const userId = await ctx.db.insert('users', {
+    email: 'test@example.com',
     emailVerified: false,
     banned: false,
     twoFactorEnabled: false,
-    username: "testuser",
-    name: "Test User",
+    username: 'testuser',
+    name: 'Test User',
   });
 
   // 2. Create person (app profile linked to user)
-  const personId = await ctx.db.insert("persons", {
+  const personId = await ctx.db.insert('persons', {
     userId: userId, // Required reference
-    bio: "Test user bio",
+    bio: 'Test user bio',
   });
 
   // 3. Create event (user creates events)
-  const eventId = await ctx.db.insert("events", {
-    title: "Test Event",
-    description: "A test event",
+  const eventId = await ctx.db.insert('events', {
+    title: 'Test Event',
+    description: 'A test event',
     creatorId: personId, // Required reference
-    location: "Test Location",
+    location: 'Test Location',
     potentialDateTimes: [],
     chosenDateTime: undefined,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    timezone: "UTC",
+    timezone: 'UTC',
   });
 
   // 4. Create membership (user joins event)
-  const membershipId = await ctx.db.insert("memberships", {
+  const membershipId = await ctx.db.insert('memberships', {
     personId: personId,
     eventId: eventId,
-    role: "ATTENDEE",
-    rsvpStatus: "YES",
+    role: 'ATTENDEE',
+    rsvpStatus: 'YES',
   });
 
   return { userId, personId, eventId, membershipId };
@@ -499,9 +507,9 @@ await expect(
 ### Verifying Database State
 
 ```typescript
-const { post, posts } = await t.run(async (ctx) => {
+const { post, posts } = await t.run(async ctx => {
   const post = await ctx.db.get(postId);
-  const posts = await ctx.db.query("posts").collect();
+  const posts = await ctx.db.query('posts').collect();
   return { post, posts };
 });
 
@@ -509,13 +517,13 @@ expect(post).toBeTruthy();
 expect(posts).toHaveLength(1);
 
 // Verify notifications were created
-const { notifications } = await t.run(async (ctx) => {
-  const notifications = await ctx.db.query("notifications").collect();
+const { notifications } = await t.run(async ctx => {
+  const notifications = await ctx.db.query('notifications').collect();
   return { notifications };
 });
 
 expect(notifications).toHaveLength(1);
-expect(notifications[0].type).toBe("NEW_POST");
+expect(notifications[0].type).toBe('NEW_POST');
 ```
 
 ## Advanced Testing Patterns
@@ -523,63 +531,68 @@ expect(notifications[0].type).toBe("NEW_POST");
 ### Permission Testing
 
 ```typescript
-test("should enforce event membership", async () => {
+test('should enforce event membership', async () => {
   const t = createTestInstance();
   const { eventId, outsiderAuth } = await TestScenarios.outsiderUser(t);
 
   await expect(
     outsiderAuth.mutation(api.posts.mutations.createPost, {
       eventId,
-      title: "Unauthorized",
-      content: "Should fail"
+      title: 'Unauthorized',
+      content: 'Should fail',
     })
-  ).rejects.toThrow("Access denied");
+  ).rejects.toThrow('Access denied');
 });
 
-test("should allow organizer to moderate posts", async () => {
+test('should allow organizer to moderate posts', async () => {
   const t = createTestInstance();
   const { organizer, attendee, eventId, organizerAuth, attendeeAuth } =
     await TestScenarios.multiUser(t);
 
   // Attendee creates content
   const resource = await attendeeAuth.mutation(api.posts.mutations.createPost, {
-    eventId, title: "User Post", content: "Original content"
+    eventId,
+    title: 'User Post',
+    content: 'Original content',
   });
 
   // Organizer can moderate it
   const result = await organizerAuth.mutation(api.posts.mutations.updatePost, {
     postId: resource.id,
-    content: "Moderated content"
+    content: 'Moderated content',
   });
 
-  expect(result.post.content).toBe("Moderated content");
+  expect(result.post.content).toBe('Moderated content');
 });
 ```
 
 ### Testing Cascade Operations
 
 ```typescript
-test("should cascade delete related data", async () => {
+test('should cascade delete related data', async () => {
   const t = createTestInstance();
   const { eventId, auth } = await TestScenarios.singleEvent(t);
 
   // Create post and replies
   const post = await auth.mutation(api.posts.mutations.createPost, {
-    eventId, title: "Main Post", content: "Content"
+    eventId,
+    title: 'Main Post',
+    content: 'Content',
   });
 
   await auth.mutation(api.replies.mutations.create, {
-    postId: post.id, text: "Reply 1"
+    postId: post.id,
+    text: 'Reply 1',
   });
 
   // Delete post should cascade to replies
   await auth.mutation(api.posts.mutations.deletePost, {
-    postId: post.id
+    postId: post.id,
   });
 
   // Verify cascade worked
-  const { replies } = await t.run(async (ctx) => {
-    const replies = await ctx.db.query("replies").collect();
+  const { replies } = await t.run(async ctx => {
+    const replies = await ctx.db.query('replies').collect();
     return { replies };
   });
 
@@ -590,24 +603,25 @@ test("should cascade delete related data", async () => {
 ### Testing Notifications
 
 ```typescript
-test("should create notifications", async () => {
+test('should create notifications', async () => {
   const t = createTestInstance();
-  const { organizer, attendee, eventId, organizerAuth } = await TestScenarios.multiUser(t);
+  const { organizer, attendee, eventId, organizerAuth } =
+    await TestScenarios.multiUser(t);
 
   await organizerAuth.mutation(api.posts.mutations.createPost, {
     eventId,
-    title: "Team Update",
-    content: "Important news!"
+    title: 'Team Update',
+    content: 'Important news!',
   });
 
   // Verify notification was created for attendee
-  const { notifications } = await t.run(async (ctx) => {
-    const notifications = await ctx.db.query("notifications").collect();
+  const { notifications } = await t.run(async ctx => {
+    const notifications = await ctx.db.query('notifications').collect();
     return { notifications };
   });
 
   expect(notifications).toHaveLength(1);
-  expect(notifications[0].type).toBe("NEW_POST");
+  expect(notifications[0].type).toBe('NEW_POST');
 });
 ```
 
@@ -777,12 +791,12 @@ Use descriptive names that explain what is being tested:
 
 ```typescript
 // Good
-it('should display error message when email is invalid')
-it('prevents non-organizers from deleting events')
+it('should display error message when email is invalid');
+it('prevents non-organizers from deleting events');
 
 // Bad
-it('works')
-it('test 1')
+it('works');
+it('test 1');
 ```
 
 ### 3. Arrange-Act-Assert Pattern
@@ -821,11 +835,11 @@ Prefer accessible queries that reflect how users interact:
 
 ```typescript
 // Preferred order:
-screen.getByRole('button', { name: /submit/i })
-screen.getByLabelText('Email')
-screen.getByPlaceholderText('Enter email')
-screen.getByText('Submit')
-screen.getByTestId('submit-button') // Last resort
+screen.getByRole('button', { name: /submit/i });
+screen.getByLabelText('Email');
+screen.getByPlaceholderText('Enter email');
+screen.getByText('Submit');
+screen.getByTestId('submit-button'); // Last resort
 ```
 
 ### 6. Mock at the Right Level
@@ -855,14 +869,15 @@ describe('UserList', () => {
 
 ## Coverage Requirements
 
-| Package | Branches | Functions | Lines | Statements |
-|---------|----------|-----------|-------|------------|
-| Web     | 70%      | 70%       | 70%   | 70%        |
-| Shared  | 80%      | 80%       | 80%   | 80%        |
-| Mobile  | 70%      | 70%       | 70%   | 70%        |
+| Package | Branches               | Functions | Lines | Statements |
+| ------- | ---------------------- | --------- | ----- | ---------- |
+| Web     | 70%                    | 70%       | 70%   | 70%        |
+| Shared  | 80%                    | 80%       | 80%   | 80%        |
+| Mobile  | 70%                    | 70%       | 70%   | 70%        |
 | Convex  | No threshold (backend) |
 
 Run coverage reports:
+
 ```bash
 pnpm test:coverage
 ```

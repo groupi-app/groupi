@@ -67,7 +67,7 @@ export function AddInvite({ eventId }: { eventId: string }) {
   });
 
   const [isOpen, setIsOpen] = useState(false);
-  const createInvite = useCreateInvite(eventId as Id<"events">);
+  const createInvite = useCreateInvite(eventId as Id<'events'>);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const expiresAt = calculateExpirationDate(values.expiresIn);
@@ -78,32 +78,34 @@ export function AddInvite({ eventId }: { eventId: string }) {
 
     createInvite({
       name: values.name,
-      eventId: eventId as Id<"events">,
+      eventId: eventId as Id<'events'>,
       expiresAt: expiresAt ?? undefined,
       usesTotal: values.maxUses ?? undefined,
-    }).then(() => {
-      toast.success('The invite has been successfully created.');
-    }).catch((error: unknown) => {
-      // Reopen dialog on error so user can try again
-      setIsOpen(true);
+    })
+      .then(() => {
+        toast.success('The invite has been successfully created.');
+      })
+      .catch((error: unknown) => {
+        // Reopen dialog on error so user can try again
+        setIsOpen(true);
 
-      // Handle specific error types
-      const err = error as { _tag?: string };
-      if (err._tag === 'UnauthorizedError') {
-        toast.error('Permission denied', {
-          description:
-            'You do not have permission to create invites for this event.',
-        });
-      } else if (err._tag === 'ValidationError') {
-        toast.error('Invalid input', {
-          description: 'Please check your invite details and try again.',
-        });
-      } else {
-        toast.error('Failed to create invite', {
-          description: 'The invite could not be created. Please try again.',
-        });
-      }
-    });
+        // Handle specific error types
+        const err = error as { _tag?: string };
+        if (err._tag === 'UnauthorizedError') {
+          toast.error('Permission denied', {
+            description:
+              'You do not have permission to create invites for this event.',
+          });
+        } else if (err._tag === 'ValidationError') {
+          toast.error('Invalid input', {
+            description: 'Please check your invite details and try again.',
+          });
+        } else {
+          toast.error('Failed to create invite', {
+            description: 'The invite could not be created. Please try again.',
+          });
+        }
+      });
   }
 
   return (

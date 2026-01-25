@@ -5,7 +5,13 @@ import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -55,7 +61,7 @@ export function ApiKeysSettings() {
       const result = await authClient.apiKey.list();
       if (result.data) {
         setKeys(
-          result.data.map((key) => ({
+          result.data.map(key => ({
             id: key.id,
             name: key.name ?? null,
             start: key.start ?? key.id.slice(0, 8),
@@ -96,7 +102,8 @@ export function ApiKeysSettings() {
         await loadKeys();
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create API key';
+      const message =
+        error instanceof Error ? error.message : 'Failed to create API key';
       toast.error(message);
     } finally {
       setIsCreating(false);
@@ -120,7 +127,8 @@ export function ApiKeysSettings() {
       setSelectedKeyId(null);
       await loadKeys();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete API key';
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete API key';
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -184,14 +192,16 @@ export function ApiKeysSettings() {
           ) : (
             <>
               <div className='space-y-3'>
-                {keys.map((key) => (
+                {keys.map(key => (
                   <div
                     key={key.id}
                     className='flex items-center justify-between p-4 rounded-lg border'
                   >
                     <div className='space-y-1'>
                       <div className='flex items-center gap-2'>
-                        <p className='font-medium'>{key.name || 'Unnamed Key'}</p>
+                        <p className='font-medium'>
+                          {key.name || 'Unnamed Key'}
+                        </p>
                         {isExpired(key.expiresAt) && (
                           <span className='text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 px-2 py-0.5 rounded'>
                             Expired
@@ -258,7 +268,7 @@ export function ApiKeysSettings() {
                   id='key-name'
                   placeholder='e.g., My Integration'
                   value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
+                  onChange={e => setNewKeyName(e.target.value)}
                 />
               </div>
               <div className='space-y-2'>
@@ -306,8 +316,8 @@ export function ApiKeysSettings() {
               </div>
               <div className='bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'>
                 <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                  <strong>Important:</strong> This is the only time you will see this key.
-                  Make sure to copy and store it securely.
+                  <strong>Important:</strong> This is the only time you will see
+                  this key. Make sure to copy and store it securely.
                 </p>
               </div>
               <DialogFooter>
@@ -324,8 +334,8 @@ export function ApiKeysSettings() {
           <DialogHeader>
             <DialogTitle>Delete API Key</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this API key? Any applications using
-              this key will no longer be able to authenticate.
+              Are you sure you want to delete this API key? Any applications
+              using this key will no longer be able to authenticate.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

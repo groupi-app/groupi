@@ -6,17 +6,17 @@ This document outlines the optimized approach for logging and error tracking wit
 
 ### **Two-Tier Logging Architecture**
 
-| Layer | Tool | Purpose | History | Real-time |
-|-------|------|---------|---------|-----------|
-| **Next.js** | Pino + Loki Transport | Server actions, API routes | ✅ Long-term | ⚠️ Batched |
-| **Convex** | Simple console.* + Optional Loki | Function execution | ✅ Dashboard + Optional Loki | ✅ Real-time |
+| Layer       | Tool                              | Purpose                    | History                      | Real-time    |
+| ----------- | --------------------------------- | -------------------------- | ---------------------------- | ------------ |
+| **Next.js** | Pino + Loki Transport             | Server actions, API routes | ✅ Long-term                 | ⚠️ Batched   |
+| **Convex**  | Simple console.\* + Optional Loki | Function execution         | ✅ Dashboard + Optional Loki | ✅ Real-time |
 
 ### **Error Tracking**
 
-| Component | Method | Pro Feature |
-|-----------|--------|-------------|
-| **Next.js** | Existing Sentry setup | ✅ Continues working |
-| **Convex** | Native Sentry integration | ✅ Pro plan required |
+| Component   | Method                    | Pro Feature          |
+| ----------- | ------------------------- | -------------------- |
+| **Next.js** | Existing Sentry setup     | ✅ Continues working |
+| **Convex**  | Native Sentry integration | ✅ Pro plan required |
 
 ---
 
@@ -52,30 +52,30 @@ NEXT_PUBLIC_SENTRY_DSN=https://90d0f3dd02d7a97c2fafca08eacf6d14@o450963496560230
 Use the new simplified logging patterns:
 
 ```typescript
-import { createLoggingContext, extractTraceId } from "../lib/logging";
-import { withErrorHandling } from "../lib/error-handling";
+import { createLoggingContext, extractTraceId } from '../lib/logging';
+import { withErrorHandling } from '../lib/error-handling';
 
 export const createPost = mutation({
   args: {
     title: v.string(),
     content: v.string(),
-    eventId: v.id("events"),
+    eventId: v.id('events'),
     _traceId: v.optional(v.string()), // For request correlation
   },
   handler: async (ctx, { title, content, eventId, _traceId }) => {
     return withErrorHandling(
       async () => {
         const traceId = extractTraceId({ _traceId });
-        const logger = createLoggingContext("posts", traceId);
+        const logger = createLoggingContext('posts', traceId);
 
-        logger.info("Creating post", { title: title.slice(0, 50), eventId });
+        logger.info('Creating post', { title: title.slice(0, 50), eventId });
 
         // Your business logic here...
 
-        logger.info("Post created successfully", { postId });
+        logger.info('Post created successfully', { postId });
         return result;
       },
-      { module: "posts", traceId, operation: "createPost" }
+      { module: 'posts', traceId, operation: 'createPost' }
     );
   },
 });
@@ -87,13 +87,13 @@ Update your React components to pass trace IDs:
 
 ```typescript
 // hooks/use-trace-id.ts
-import { headers } from "next/headers";
+import { headers } from 'next/headers';
 
 export function useTraceId() {
   // In server components
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     const headersList = headers();
-    return headersList.get("x-trace-id") || undefined;
+    return headersList.get('x-trace-id') || undefined;
   }
 
   // In client components, get from a context or generate
@@ -105,7 +105,7 @@ export function CreatePostForm() {
   const traceId = useTraceId();
   const createPost = useMutation(api.posts.mutations.createPost);
 
-  const handleSubmit = async (data) => {
+  const handleSubmit = async data => {
     await createPost({
       ...data,
       _traceId: traceId, // Pass to Convex
@@ -130,11 +130,13 @@ export function CreatePostForm() {
 ### **Loki (Optional Streaming)**
 
 Query in Grafana:
+
 ```logql
 {service="groupi", source="convex"} | json | traceId="abc123"
 ```
 
 Sample log entry:
+
 ```json
 {
   "timestamp": 1703123456789,
@@ -149,6 +151,7 @@ Sample log entry:
 ### **Sentry (Automatic via Convex Pro)**
 
 Convex automatically adds these tags to errors:
+
 - `func`: Function name ("posts/mutations:createPost")
 - `func_type`: "mutation"
 - `environment`: "dev"/"prod"
@@ -183,11 +186,11 @@ Convex automatically adds these tags to errors:
 
 ### **Logging Volume Estimates**
 
-| Source | Logs/Day | Cost Impact |
-|--------|----------|-------------|
-| **Convex Dashboard** | All | ✅ Free (short retention) |
-| **Loki Streaming** | Important only | 💰 Grafana Cloud rates |
-| **Sentry Errors** | Errors only | 💰 Sentry error budget |
+| Source               | Logs/Day       | Cost Impact               |
+| -------------------- | -------------- | ------------------------- |
+| **Convex Dashboard** | All            | ✅ Free (short retention) |
+| **Loki Streaming**   | Important only | 💰 Grafana Cloud rates    |
+| **Sentry Errors**    | Errors only    | 💰 Sentry error budget    |
 
 ### **Optimization Tips**
 
@@ -203,13 +206,13 @@ Convex automatically adds these tags to errors:
 ### **Expected Errors (ConvexError)**
 
 ```typescript
-import { createPermissionError } from "../lib/error-handling";
+import { createPermissionError } from '../lib/error-handling';
 
-if (membership.role !== "ORGANIZER") {
+if (membership.role !== 'ORGANIZER') {
   throw createPermissionError(
-    "Only organizers can delete events",
-    { module: "events", traceId, operation: "deleteEvent" },
-    { requiredRole: "ORGANIZER", userRole: membership.role }
+    'Only organizers can delete events',
+    { module: 'events', traceId, operation: 'deleteEvent' },
+    { requiredRole: 'ORGANIZER', userRole: membership.role }
   );
 }
 ```
@@ -217,7 +220,7 @@ if (membership.role !== "ORGANIZER") {
 ### **Unexpected Errors (Auto-handled)**
 
 ```typescript
-import { withErrorHandling } from "../lib/error-handling";
+import { withErrorHandling } from '../lib/error-handling';
 
 export const riskyOperation = mutation({
   handler: async (ctx, args) => {
@@ -227,7 +230,7 @@ export const riskyOperation = mutation({
         await externalApiCall(); // If this fails, auto-handled
         return result;
       },
-      { module: "external", traceId, operation: "riskyOperation" }
+      { module: 'external', traceId, operation: 'riskyOperation' }
     );
   },
 });
@@ -250,16 +253,19 @@ export const riskyOperation = mutation({
 ## 🏆 **BENEFITS ACHIEVED**
 
 ### **Simplified Architecture**
+
 - ❌ No Pino overhead in Convex functions
 - ✅ Native Convex logging (fast, built-in)
 - ✅ Consistent error handling patterns
 
 ### **Better Developer Experience**
+
 - ✅ Beautiful logs in Convex dashboard
 - ✅ Automatic Sentry tagging
 - ✅ Request correlation with trace IDs
 
 ### **Production Ready**
+
 - ✅ Long-term retention via Loki
 - ✅ Error alerting via Sentry
 - ✅ Performance monitoring via both

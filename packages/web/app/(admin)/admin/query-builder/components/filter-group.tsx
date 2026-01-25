@@ -78,7 +78,10 @@ function getOperatorsForField(fieldName: string, fields: FieldDefinition[]) {
   return field?.type === 'number' ? numberOperators : stringOperators;
 }
 
-function getFieldDefinition(fieldName: string, fields: FieldDefinition[]): FieldDefinition | undefined {
+function getFieldDefinition(
+  fieldName: string,
+  fields: FieldDefinition[]
+): FieldDefinition | undefined {
   return fields.find(f => f.name === fieldName);
 }
 
@@ -105,7 +108,10 @@ export function FilterGroup({
     });
   };
 
-  const handleUpdateCondition = (conditionId: string, data: Partial<FilterCondition>) => {
+  const handleUpdateCondition = (
+    conditionId: string,
+    data: Partial<FilterCondition>
+  ) => {
     onUpdate({
       conditions: group.conditions.map(c =>
         c.id === conditionId ? { ...c, ...data } : c
@@ -152,25 +158,27 @@ export function FilterGroup({
   };
 
   return (
-    <Card className="border-dashed">
-      <CardContent className="pt-4 space-y-3">
+    <Card className='border-dashed'>
+      <CardContent className='pt-4 space-y-3'>
         {/* Group Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
-              className="text-xs h-6 font-mono"
+              variant='outline'
+              size='sm'
+              className='text-xs h-6 font-mono'
               onClick={handleLogicChange}
             >
               {group.logic}
             </Button>
             {showGroupLabel && (
-              <span className="text-sm text-muted-foreground">Filter Group</span>
+              <span className='text-sm text-muted-foreground'>
+                Filter Group
+              </span>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={onRemove}>
-            <Icons.x className="h-4 w-4" />
+          <Button variant='ghost' size='sm' onClick={onRemove}>
+            <Icons.x className='h-4 w-4' />
           </Button>
         </div>
 
@@ -182,26 +190,26 @@ export function FilterGroup({
           const operators = getOperatorsForField(condition.field, fields);
 
           return (
-            <div key={condition.id} className="flex items-center gap-2">
+            <div key={condition.id} className='flex items-center gap-2'>
               {index > 0 && (
-                <span className="text-xs text-muted-foreground w-10 text-center font-mono">
+                <span className='text-xs text-muted-foreground w-10 text-center font-mono'>
                   {group.logic}
                 </span>
               )}
-              {index === 0 && <span className="w-10" />}
+              {index === 0 && <span className='w-10' />}
 
               {/* Field Select with optgroups for regular vs relationship */}
               <Select
                 value={condition.field}
                 onValueChange={value => handleFieldChange(condition.id, value)}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select field" />
+                <SelectTrigger className='w-[180px]'>
+                  <SelectValue placeholder='Select field' />
                 </SelectTrigger>
                 <SelectContent>
                   {regularFields.length > 0 && (
                     <>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
                         Fields
                       </div>
                       {regularFields.map(field => (
@@ -213,13 +221,13 @@ export function FilterGroup({
                   )}
                   {relationshipFields.length > 0 && (
                     <>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2'>
                         Relationships
                       </div>
                       {relationshipFields.map(field => (
                         <SelectItem key={field.name} value={field.name}>
-                          <div className="flex items-center gap-2">
-                            <Icons.link className="h-3 w-3" />
+                          <div className='flex items-center gap-2'>
+                            <Icons.link className='h-3 w-3' />
                             {field.label}
                           </div>
                         </SelectItem>
@@ -236,8 +244,8 @@ export function FilterGroup({
                   handleUpdateCondition(condition.id, { operator: value })
                 }
               >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Operator" />
+                <SelectTrigger className='w-[140px]'>
+                  <SelectValue placeholder='Operator' />
                 </SelectTrigger>
                 <SelectContent>
                   {operators.map(op => (
@@ -249,8 +257,8 @@ export function FilterGroup({
               </Select>
 
               {/* Value Input - EntityPicker for relationships, datetime picker for dates, Input for others */}
-              {!['is_empty', 'is_not_empty'].includes(condition.operator) && (
-                isRelationship && fieldDef?.entityType ? (
+              {!['is_empty', 'is_not_empty'].includes(condition.operator) &&
+                (isRelationship && fieldDef?.entityType ? (
                   <EntityPicker
                     entityType={fieldDef.entityType}
                     value={String(condition.value || '')}
@@ -261,51 +269,61 @@ export function FilterGroup({
                         valueLabel: label,
                       })
                     }
-                    className="flex-1"
+                    className='flex-1'
                   />
                 ) : isDatetime ? (
                   <input
-                    type="datetime-local"
-                    className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    type='datetime-local'
+                    className='flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                     value={
                       condition.value
-                        ? new Date(Number(condition.value)).toISOString().slice(0, 16)
+                        ? new Date(Number(condition.value))
+                            .toISOString()
+                            .slice(0, 16)
                         : ''
                     }
                     onChange={e =>
                       handleUpdateCondition(condition.id, {
-                        value: e.target.value ? new Date(e.target.value).getTime() : '',
+                        value: e.target.value
+                          ? new Date(e.target.value).getTime()
+                          : '',
                       })
                     }
                   />
                 ) : (
                   <Input
-                    className="flex-1"
-                    placeholder="Value"
+                    className='flex-1'
+                    placeholder='Value'
                     value={String(condition.value || '')}
                     onChange={e =>
-                      handleUpdateCondition(condition.id, { value: e.target.value })
+                      handleUpdateCondition(condition.id, {
+                        value: e.target.value,
+                      })
                     }
                   />
-                )
-              )}
+                ))}
 
               {/* Remove Button */}
               <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
+                variant='ghost'
+                size='sm'
+                className='h-8 w-8 p-0'
                 onClick={() => handleRemoveCondition(condition.id)}
               >
-                <Icons.x className="h-4 w-4" />
+                <Icons.x className='h-4 w-4' />
               </Button>
             </div>
           );
         })}
 
         {/* Add Condition */}
-        <Button variant="ghost" size="sm" className="w-full" onClick={handleAddCondition}>
-          <Icons.plus className="h-4 w-4 mr-2" />
+        <Button
+          variant='ghost'
+          size='sm'
+          className='w-full'
+          onClick={handleAddCondition}
+        >
+          <Icons.plus className='h-4 w-4 mr-2' />
           Add Condition
         </Button>
       </CardContent>

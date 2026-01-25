@@ -39,9 +39,13 @@ export function LinkedAccountsList({
   linkedAccounts: LinkedAccount[];
   userEmail: string;
 }) {
-  const [unlinkingAccountId, setUnlinkingAccountId] = useState<string | null>(null);
+  const [unlinkingAccountId, setUnlinkingAccountId] = useState<string | null>(
+    null
+  );
   const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
-  const [pendingUnlinkAccountId, setPendingUnlinkAccountId] = useState<string | null>(null);
+  const [pendingUnlinkAccountId, setPendingUnlinkAccountId] = useState<
+    string | null
+  >(null);
   const router = useRouter();
 
   // Use Convex mutation for unlinking accounts
@@ -219,7 +223,9 @@ export function LinkedAccountsList({
   ].filter(provider => !provider.linked);
 
   const pendingAccount = pendingUnlinkAccountId
-    ? linkedAccounts.find((acc: LinkedAccount) => acc.id === pendingUnlinkAccountId)
+    ? linkedAccounts.find(
+        (acc: LinkedAccount) => acc.id === pendingUnlinkAccountId
+      )
     : null;
   const pendingProviderName = pendingAccount
     ? getProviderDisplayName(pendingAccount.providerId)
@@ -227,7 +233,9 @@ export function LinkedAccountsList({
 
   // Get remaining linked accounts (excluding the one being unlinked)
   const remainingAccounts = pendingUnlinkAccountId
-    ? linkedAccounts.filter((acc: LinkedAccount) => acc.id !== pendingUnlinkAccountId)
+    ? linkedAccounts.filter(
+        (acc: LinkedAccount) => acc.id !== pendingUnlinkAccountId
+      )
     : [];
 
   // Build the list of remaining auth methods

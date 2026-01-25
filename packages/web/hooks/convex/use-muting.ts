@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback, useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback, useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mutingQueries: any;
@@ -13,7 +13,7 @@ let mutingMutations: any;
 function initApi() {
   if (!mutingQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     mutingQueries = api.muting?.queries ?? {};
     mutingMutations = api.muting?.mutations ?? {};
   }
@@ -25,7 +25,7 @@ initApi();
 /**
  * Check if an event is muted by the current user (with optimistic updates)
  */
-export function useIsEventMuted(eventId: Id<"events">) {
+export function useIsEventMuted(eventId: Id<'events'>) {
   const serverState = useQuery(mutingQueries.isEventMuted, { eventId });
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
 
@@ -38,7 +38,10 @@ export function useIsEventMuted(eventId: Id<"events">) {
   }, [serverState?.isMuted]);
 
   // Return optimistic state if set, otherwise server state
-  const isMuted = optimisticState !== null ? optimisticState : serverState?.isMuted ?? false;
+  const isMuted =
+    optimisticState !== null
+      ? optimisticState
+      : (serverState?.isMuted ?? false);
 
   return {
     isMuted,
@@ -50,7 +53,7 @@ export function useIsEventMuted(eventId: Id<"events">) {
 /**
  * Check if a post is muted by the current user (with optimistic updates)
  */
-export function useIsPostMuted(postId: Id<"posts">) {
+export function useIsPostMuted(postId: Id<'posts'>) {
   const serverState = useQuery(mutingQueries.isPostMuted, { postId });
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
 
@@ -63,7 +66,10 @@ export function useIsPostMuted(postId: Id<"posts">) {
   }, [serverState?.isMuted]);
 
   // Return optimistic state if set, otherwise server state
-  const isMuted = optimisticState !== null ? optimisticState : serverState?.isMuted ?? false;
+  const isMuted =
+    optimisticState !== null
+      ? optimisticState
+      : (serverState?.isMuted ?? false);
 
   return {
     isMuted,
@@ -95,37 +101,40 @@ export function useToggleEventMute() {
   const toggleMute = useMutation(mutingMutations.toggleEventMute);
   const { toast } = useToast();
 
-  return useCallback(async (
-    eventId: Id<"events">,
-    currentMuted: boolean,
-    setOptimisticMuted?: (value: boolean | null) => void
-  ) => {
-    // Optimistically update the UI
-    const newMutedState = !currentMuted;
-    setOptimisticMuted?.(newMutedState);
+  return useCallback(
+    async (
+      eventId: Id<'events'>,
+      currentMuted: boolean,
+      setOptimisticMuted?: (value: boolean | null) => void
+    ) => {
+      // Optimistically update the UI
+      const newMutedState = !currentMuted;
+      setOptimisticMuted?.(newMutedState);
 
-    try {
-      const result = await toggleMute({ eventId });
+      try {
+        const result = await toggleMute({ eventId });
 
-      toast({
-        title: result.isMuted ? "Event muted" : "Event unmuted",
-        description: result.isMuted
-          ? "You won't receive notifications for this event"
-          : "You'll now receive notifications for this event",
-      });
+        toast({
+          title: result.isMuted ? 'Event muted' : 'Event unmuted',
+          description: result.isMuted
+            ? "You won't receive notifications for this event"
+            : "You'll now receive notifications for this event",
+        });
 
-      return result;
-    } catch (error) {
-      // Revert optimistic update on error
-      setOptimisticMuted?.(null);
-      toast({
-        title: "Error",
-        description: "Failed to update mute settings. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [toggleMute, toast]);
+        return result;
+      } catch (error) {
+        // Revert optimistic update on error
+        setOptimisticMuted?.(null);
+        toast({
+          title: 'Error',
+          description: 'Failed to update mute settings. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [toggleMute, toast]
+  );
 }
 
 /**
@@ -135,37 +144,40 @@ export function useTogglePostMute() {
   const toggleMute = useMutation(mutingMutations.togglePostMute);
   const { toast } = useToast();
 
-  return useCallback(async (
-    postId: Id<"posts">,
-    currentMuted: boolean,
-    setOptimisticMuted?: (value: boolean | null) => void
-  ) => {
-    // Optimistically update the UI
-    const newMutedState = !currentMuted;
-    setOptimisticMuted?.(newMutedState);
+  return useCallback(
+    async (
+      postId: Id<'posts'>,
+      currentMuted: boolean,
+      setOptimisticMuted?: (value: boolean | null) => void
+    ) => {
+      // Optimistically update the UI
+      const newMutedState = !currentMuted;
+      setOptimisticMuted?.(newMutedState);
 
-    try {
-      const result = await toggleMute({ postId });
+      try {
+        const result = await toggleMute({ postId });
 
-      toast({
-        title: result.isMuted ? "Post muted" : "Post unmuted",
-        description: result.isMuted
-          ? "You won't receive notifications for this post"
-          : "You'll now receive notifications for this post",
-      });
+        toast({
+          title: result.isMuted ? 'Post muted' : 'Post unmuted',
+          description: result.isMuted
+            ? "You won't receive notifications for this post"
+            : "You'll now receive notifications for this post",
+        });
 
-      return result;
-    } catch (error) {
-      // Revert optimistic update on error
-      setOptimisticMuted?.(null);
-      toast({
-        title: "Error",
-        description: "Failed to update mute settings. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [toggleMute, toast]);
+        return result;
+      } catch (error) {
+        // Revert optimistic update on error
+        setOptimisticMuted?.(null);
+        toast({
+          title: 'Error',
+          description: 'Failed to update mute settings. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [toggleMute, toast]
+  );
 }
 
 /**
@@ -175,27 +187,30 @@ export function useMuteEvent() {
   const muteEvent = useMutation(mutingMutations.muteEvent);
   const { toast } = useToast();
 
-  return useCallback(async (eventId: Id<"events">) => {
-    try {
-      const result = await muteEvent({ eventId });
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        const result = await muteEvent({ eventId });
 
-      if (!result.alreadyMuted) {
+        if (!result.alreadyMuted) {
+          toast({
+            title: 'Event muted',
+            description: "You won't receive notifications for this event",
+          });
+        }
+
+        return result;
+      } catch (error) {
         toast({
-          title: "Event muted",
-          description: "You won't receive notifications for this event",
+          title: 'Error',
+          description: 'Failed to mute event. Please try again.',
+          variant: 'destructive',
         });
+        throw error;
       }
-
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mute event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [muteEvent, toast]);
+    },
+    [muteEvent, toast]
+  );
 }
 
 /**
@@ -205,27 +220,30 @@ export function useUnmuteEvent() {
   const unmuteEvent = useMutation(mutingMutations.unmuteEvent);
   const { toast } = useToast();
 
-  return useCallback(async (eventId: Id<"events">) => {
-    try {
-      const result = await unmuteEvent({ eventId });
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        const result = await unmuteEvent({ eventId });
 
-      if (result.unmuted) {
+        if (result.unmuted) {
+          toast({
+            title: 'Event unmuted',
+            description: "You'll now receive notifications for this event",
+          });
+        }
+
+        return result;
+      } catch (error) {
         toast({
-          title: "Event unmuted",
-          description: "You'll now receive notifications for this event",
+          title: 'Error',
+          description: 'Failed to unmute event. Please try again.',
+          variant: 'destructive',
         });
+        throw error;
       }
-
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to unmute event. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [unmuteEvent, toast]);
+    },
+    [unmuteEvent, toast]
+  );
 }
 
 /**
@@ -235,27 +253,30 @@ export function useMutePost() {
   const mutePost = useMutation(mutingMutations.mutePost);
   const { toast } = useToast();
 
-  return useCallback(async (postId: Id<"posts">) => {
-    try {
-      const result = await mutePost({ postId });
+  return useCallback(
+    async (postId: Id<'posts'>) => {
+      try {
+        const result = await mutePost({ postId });
 
-      if (!result.alreadyMuted) {
+        if (!result.alreadyMuted) {
+          toast({
+            title: 'Post muted',
+            description: "You won't receive notifications for this post",
+          });
+        }
+
+        return result;
+      } catch (error) {
         toast({
-          title: "Post muted",
-          description: "You won't receive notifications for this post",
+          title: 'Error',
+          description: 'Failed to mute post. Please try again.',
+          variant: 'destructive',
         });
+        throw error;
       }
-
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mute post. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [mutePost, toast]);
+    },
+    [mutePost, toast]
+  );
 }
 
 /**
@@ -265,25 +286,28 @@ export function useUnmutePost() {
   const unmutePost = useMutation(mutingMutations.unmutePost);
   const { toast } = useToast();
 
-  return useCallback(async (postId: Id<"posts">) => {
-    try {
-      const result = await unmutePost({ postId });
+  return useCallback(
+    async (postId: Id<'posts'>) => {
+      try {
+        const result = await unmutePost({ postId });
 
-      if (result.unmuted) {
+        if (result.unmuted) {
+          toast({
+            title: 'Post unmuted',
+            description: "You'll now receive notifications for this post",
+          });
+        }
+
+        return result;
+      } catch (error) {
         toast({
-          title: "Post unmuted",
-          description: "You'll now receive notifications for this post",
+          title: 'Error',
+          description: 'Failed to unmute post. Please try again.',
+          variant: 'destructive',
         });
+        throw error;
       }
-
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to unmute post. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [unmutePost, toast]);
+    },
+    [unmutePost, toast]
+  );
 }

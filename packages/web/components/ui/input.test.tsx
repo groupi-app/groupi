@@ -15,14 +15,14 @@ describe('Input', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Input data-testid="input" />);
+    render(<Input data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toHaveAttribute('data-slot', 'input');
   });
 
   it('should apply base styling', () => {
-    render(<Input data-testid="input" />);
+    render(<Input data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toHaveClass('flex');
@@ -33,14 +33,14 @@ describe('Input', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Input className="custom-input" data-testid="input" />);
+    render(<Input className='custom-input' data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toHaveClass('custom-input');
   });
 
   it('should render with text type by default', () => {
-    render(<Input data-testid="input" />);
+    render(<Input data-testid='input' />);
 
     const input = screen.getByTestId('input');
     // Default type is undefined (which browsers treat as text)
@@ -48,35 +48,35 @@ describe('Input', () => {
   });
 
   it('should render with specified type', () => {
-    render(<Input type="password" data-testid="input" />);
+    render(<Input type='password' data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toHaveAttribute('type', 'password');
   });
 
   it('should render email input', () => {
-    render(<Input type="email" data-testid="input" />);
+    render(<Input type='email' data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toHaveAttribute('type', 'email');
   });
 
   it('should render number input', () => {
-    render(<Input type="number" />);
+    render(<Input type='number' />);
 
     const input = screen.getByRole('spinbutton');
     expect(input).toBeInTheDocument();
   });
 
   it('should accept placeholder', () => {
-    render(<Input placeholder="Enter your name" />);
+    render(<Input placeholder='Enter your name' />);
 
     expect(screen.getByPlaceholderText('Enter your name')).toBeInTheDocument();
   });
 
   it('should handle value changes', async () => {
     const user = userEvent.setup();
-    render(<Input data-testid="input" />);
+    render(<Input data-testid='input' />);
 
     const input = screen.getByTestId('input');
     await user.type(input, 'Hello World');
@@ -87,7 +87,7 @@ describe('Input', () => {
   it('should call onChange handler', async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<Input onChange={handleChange} data-testid="input" />);
+    render(<Input onChange={handleChange} data-testid='input' />);
 
     const input = screen.getByTestId('input');
     await user.type(input, 'a');
@@ -96,21 +96,23 @@ describe('Input', () => {
   });
 
   it('should support disabled state', () => {
-    render(<Input disabled data-testid="input" />);
+    render(<Input disabled data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toBeDisabled();
   });
 
   it('should support required attribute', () => {
-    render(<Input required data-testid="input" />);
+    render(<Input required data-testid='input' />);
 
     const input = screen.getByTestId('input');
     expect(input).toBeRequired();
   });
 
   it('should pass through additional attributes', () => {
-    render(<Input id="my-input" name="username" maxLength={10} data-testid="input" />);
+    render(
+      <Input id='my-input' name='username' maxLength={10} data-testid='input' />
+    );
 
     const input = screen.getByTestId('input');
     expect(input).toHaveAttribute('id', 'my-input');

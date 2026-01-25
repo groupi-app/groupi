@@ -30,7 +30,10 @@ interface PresetManagerProps {
   onLoadPreset: (preset: QueryPreset) => void;
 }
 
-export function PresetManager({ currentQuery, onLoadPreset }: PresetManagerProps) {
+export function PresetManager({
+  currentQuery,
+  onLoadPreset,
+}: PresetManagerProps) {
   const [presets, setPresets] = useState<QueryPreset[]>([]);
   const [newPresetName, setNewPresetName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -93,12 +96,12 @@ export function PresetManager({ currentQuery, onLoadPreset }: PresetManagerProps
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg">Saved Presets</CardTitle>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <CardTitle className='text-lg'>Saved Presets</CardTitle>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Icons.save className="h-4 w-4 mr-2" />
+            <Button variant='outline' size='sm'>
+              <Icons.save className='h-4 w-4 mr-2' />
               Save
             </Button>
           </DialogTrigger>
@@ -109,19 +112,22 @@ export function PresetManager({ currentQuery, onLoadPreset }: PresetManagerProps
                 Save the current query configuration for quick access later.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
+            <div className='py-4'>
               <Input
-                placeholder="Preset name..."
+                placeholder='Preset name...'
                 value={newPresetName}
                 onChange={e => setNewPresetName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSavePreset()}
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button variant='outline' onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSavePreset} disabled={!newPresetName.trim()}>
+              <Button
+                onClick={handleSavePreset}
+                disabled={!newPresetName.trim()}
+              >
                 Save Preset
               </Button>
             </DialogFooter>
@@ -130,22 +136,22 @@ export function PresetManager({ currentQuery, onLoadPreset }: PresetManagerProps
       </CardHeader>
       <CardContent>
         {presets.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">
+          <div className='text-center py-6 text-muted-foreground text-sm'>
             No saved presets yet
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {presets.map(preset => (
               <div
                 key={preset.id}
-                className="flex items-center justify-between p-2 rounded-md border hover:bg-muted/50"
+                className='flex items-center justify-between p-2 rounded-md border hover:bg-muted/50'
               >
                 <button
-                  className="flex-1 text-left"
+                  className='flex-1 text-left'
                   onClick={() => onLoadPreset(preset)}
                 >
-                  <div className="font-medium text-sm">{preset.name}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className='font-medium text-sm'>{preset.name}</div>
+                  <div className='text-xs text-muted-foreground'>
                     {getEntityLabel(preset.query.entity)}
                     {preset.query.filterGroups.length > 0 &&
                       ` - ${preset.query.filterGroups.reduce(
@@ -155,12 +161,12 @@ export function PresetManager({ currentQuery, onLoadPreset }: PresetManagerProps
                   </div>
                 </button>
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
+                  variant='ghost'
+                  size='sm'
+                  className='h-8 w-8 p-0'
                   onClick={() => handleDeletePreset(preset.id)}
                 >
-                  <Icons.x className="h-4 w-4" />
+                  <Icons.x className='h-4 w-4' />
                 </Button>
               </div>
             ))}

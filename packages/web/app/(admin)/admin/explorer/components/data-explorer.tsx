@@ -21,7 +21,12 @@ function getApi() {
   return _api;
 }
 
-export type EntityType = 'users' | 'events' | 'posts' | 'replies' | 'memberships';
+export type EntityType =
+  | 'users'
+  | 'events'
+  | 'posts'
+  | 'replies'
+  | 'memberships';
 
 export type DetailTarget = {
   type: 'user' | 'event' | 'post';
@@ -74,20 +79,23 @@ export function DataExplorer() {
   );
 
   // Handle breadcrumb navigation
-  const handleBreadcrumbClick = useCallback((index: number) => {
-    if (index === -1) {
-      // Clicked on "All" - close detail panel
-      setBreadcrumbs([]);
-      setDetailTarget(null);
-    } else {
-      // Clicked on a specific breadcrumb
-      const crumb = breadcrumbs[index];
-      setBreadcrumbs(prev => prev.slice(0, index + 1));
-      if (crumb) {
-        setDetailTarget(crumb.target);
+  const handleBreadcrumbClick = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        // Clicked on "All" - close detail panel
+        setBreadcrumbs([]);
+        setDetailTarget(null);
+      } else {
+        // Clicked on a specific breadcrumb
+        const crumb = breadcrumbs[index];
+        setBreadcrumbs(prev => prev.slice(0, index + 1));
+        if (crumb) {
+          setDetailTarget(crumb.target);
+        }
       }
-    }
-  }, [breadcrumbs]);
+    },
+    [breadcrumbs]
+  );
 
   // Handle detail panel close
   const handleDetailClose = useCallback(() => {
@@ -144,17 +152,13 @@ export function DataExplorer() {
   const getCurrentData = () => {
     switch (activeTab) {
       case 'users':
-        return usersData
-          ? { items: usersData.users, ...usersData }
-          : undefined;
+        return usersData ? { items: usersData.users, ...usersData } : undefined;
       case 'events':
         return eventsData
           ? { items: eventsData.events, ...eventsData }
           : undefined;
       case 'posts':
-        return postsData
-          ? { items: postsData.posts, ...postsData }
-          : undefined;
+        return postsData ? { items: postsData.posts, ...postsData } : undefined;
       case 'replies':
         return repliesData
           ? { items: repliesData.replies, ...repliesData }
@@ -172,24 +176,24 @@ export function DataExplorer() {
   const isLoading = currentData === undefined;
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <EntityTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className='pt-6'>
           {/* Search */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Icons.search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className='flex items-center gap-4 mb-4'>
+            <div className='relative flex-1 max-w-sm'>
+              <Icons.search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder={`Search ${activeTab}...`}
                 value={search}
                 onChange={e => handleSearchChange(e.target.value)}
-                className="pl-9"
+                className='pl-9'
               />
             </div>
             {currentData && (
-              <span className="text-sm text-muted-foreground">
+              <span className='text-sm text-muted-foreground'>
                 {currentData.totalCount} total
               </span>
             )}

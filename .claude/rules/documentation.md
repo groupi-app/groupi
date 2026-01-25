@@ -72,7 +72,7 @@ function example() {
 Use tables for structured data comparison:
 
 | Column A | Column B | Column C |
-|----------|----------|----------|
+| -------- | -------- | -------- |
 | Value 1  | Value 2  | Value 3  |
 
 ### Emphasis
@@ -109,6 +109,7 @@ Use tables for structured data comparison:
 ## Quick Reference Section
 
 For longer documents, include a "Quick Reference" section at the end with:
+
 - Common commands
 - Key patterns
 - Important links
@@ -118,6 +119,7 @@ For longer documents, include a "Quick Reference" section at the end with:
 ### `/docs/` Directory
 
 Human-readable documentation for developers:
+
 - `architecture.md` - System architecture overview
 - `auth-architecture.md` - Authentication system details
 - `state-management.md` - State management patterns
@@ -127,6 +129,7 @@ Human-readable documentation for developers:
 ### `/.claude/rules/` Directory
 
 AI agent instructions (more directive, rule-focused):
+
 - `architecture.md` - Architecture rules for code generation
 - `testing.md` - Testing rules and patterns
 - `documentation.md` - This style guide

@@ -14,7 +14,7 @@ import { useLeaveEvent } from '@/hooks/mutations/use-leave-event';
 import { useState } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function LeaveEventDialog({ eventId }: { eventId: Id<"events"> }) {
+export function LeaveEventDialog({ eventId }: { eventId: Id<'events'> }) {
   const router = useRouter();
   const leaveEvent = useLeaveEvent();
   const [isLeaving, setIsLeaving] = useState(false);

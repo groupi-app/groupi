@@ -189,7 +189,9 @@ describe('useActionMenu', () => {
       rerender();
 
       // Functions should be memoized and maintain same reference
-      expect(result.current.handleContextMenu).toBe(firstRender.handleContextMenu);
+      expect(result.current.handleContextMenu).toBe(
+        firstRender.handleContextMenu
+      );
       expect(result.current.handleClick).toBe(firstRender.handleClick);
       expect(result.current.handleMoreClick).toBe(firstRender.handleMoreClick);
     });
@@ -210,9 +212,13 @@ describe('useActionMenu', () => {
       rerender();
 
       // Functions should have new references due to dependency change
-      expect(result.current.handleContextMenu).not.toBe(desktopHandlers.handleContextMenu);
+      expect(result.current.handleContextMenu).not.toBe(
+        desktopHandlers.handleContextMenu
+      );
       expect(result.current.handleClick).not.toBe(desktopHandlers.handleClick);
-      expect(result.current.handleMoreClick).not.toBe(desktopHandlers.handleMoreClick);
+      expect(result.current.handleMoreClick).not.toBe(
+        desktopHandlers.handleMoreClick
+      );
     });
   });
 });

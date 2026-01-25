@@ -23,14 +23,18 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
-type PotentialDateWithRank = Doc<"potentialDateTimes"> & {
-  availabilities: Array<Doc<"availabilities"> & {
-    member: Doc<"memberships"> & {
-      person: (Doc<"persons"> & {
-        user: User;
-      }) | null;
-    };
-  }>;
+type PotentialDateWithRank = Doc<'potentialDateTimes'> & {
+  availabilities: Array<
+    Doc<'availabilities'> & {
+      member: Doc<'memberships'> & {
+        person:
+          | (Doc<'persons'> & {
+              user: User;
+            })
+          | null;
+      };
+    }
+  >;
   rank: number;
 };
 
@@ -41,7 +45,7 @@ export function DateCard({
 }: {
   pdt: PotentialDateWithRank;
   userId: string;
-  userRole: "ORGANIZER" | "MODERATOR" | "ATTENDEE";
+  userRole: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
 }) {
   const yesAmount = pdt.availabilities.filter(a => a.status === 'YES').length;
   const maybeAmount = pdt.availabilities.filter(
@@ -96,29 +100,39 @@ export function DateCard({
                 })}
               </h1>
               <span className='text-sm text-muted-foreground'>
-                {pdt.endDateTime && !isSameDay(pdt.dateTime, pdt.endDateTime) ? (
+                {pdt.endDateTime &&
+                !isSameDay(pdt.dateTime, pdt.endDateTime) ? (
                   // Multi-day event: show date range
                   <>
-                    {new Date(pdt.dateTime).toLocaleTimeString([], { timeStyle: 'short' })}
+                    {new Date(pdt.dateTime).toLocaleTimeString([], {
+                      timeStyle: 'short',
+                    })}
                     {' - '}
                     {new Date(pdt.endDateTime).toLocaleDateString([], {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
+                    })}{' '}
+                    {new Date(pdt.endDateTime).toLocaleTimeString([], {
+                      timeStyle: 'short',
                     })}
-                    {' '}
-                    {new Date(pdt.endDateTime).toLocaleTimeString([], { timeStyle: 'short' })}
                   </>
                 ) : pdt.endDateTime ? (
                   // Same-day event with end time
                   <>
-                    {new Date(pdt.dateTime).toLocaleTimeString([], { timeStyle: 'short' })}
+                    {new Date(pdt.dateTime).toLocaleTimeString([], {
+                      timeStyle: 'short',
+                    })}
                     {' - '}
-                    {new Date(pdt.endDateTime).toLocaleTimeString([], { timeStyle: 'short' })}
+                    {new Date(pdt.endDateTime).toLocaleTimeString([], {
+                      timeStyle: 'short',
+                    })}
                   </>
                 ) : (
                   // No end time
-                  new Date(pdt.dateTime).toLocaleTimeString([], { timeStyle: 'short' })
+                  new Date(pdt.dateTime).toLocaleTimeString([], {
+                    timeStyle: 'short',
+                  })
                 )}
               </span>
             </div>
@@ -183,17 +197,18 @@ export function DateCard({
                   month: 'long',
                   day: 'numeric',
                 })}
-                {pdt.endDateTime && !isSameDay(pdt.dateTime, pdt.endDateTime) && (
-                  <>
-                    {' - '}
-                    {new Date(pdt.endDateTime).toLocaleDateString([], {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </>
-                )}
+                {pdt.endDateTime &&
+                  !isSameDay(pdt.dateTime, pdt.endDateTime) && (
+                    <>
+                      {' - '}
+                      {new Date(pdt.endDateTime).toLocaleDateString([], {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </>
+                  )}
               </DialogTitle>
               <h2 className='text-muted-foreground text-lg'>
                 {new Date(pdt.dateTime).toLocaleTimeString([], {

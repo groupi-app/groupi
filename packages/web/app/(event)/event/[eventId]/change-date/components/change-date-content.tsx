@@ -8,7 +8,7 @@ import { ChangeDateTypeSkeleton } from '@/components/skeletons';
 import Link from 'next/link';
 
 export function ChangeDateContent({ eventId }: { eventId: string }) {
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
 
   if (!eventData) {
     return <ChangeDateTypeSkeleton />;

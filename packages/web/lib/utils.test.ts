@@ -214,7 +214,9 @@ describe('Utils', () => {
 
     it('should return Unknown for null/undefined', () => {
       expect(formatRoleName(null as unknown as 'ATTENDEE')).toBe('Unknown');
-      expect(formatRoleName(undefined as unknown as 'ATTENDEE')).toBe('Unknown');
+      expect(formatRoleName(undefined as unknown as 'ATTENDEE')).toBe(
+        'Unknown'
+      );
     });
   });
 
@@ -232,8 +234,14 @@ describe('Utils', () => {
     });
 
     it('should merge objects with custom predicate', () => {
-      const a = [{ id: 1, name: 'a' }, { id: 2, name: 'b' }];
-      const b = [{ id: 2, name: 'b2' }, { id: 3, name: 'c' }];
+      const a = [
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ];
+      const b = [
+        { id: 2, name: 'b2' },
+        { id: 3, name: 'c' },
+      ];
       const result = merge(a, b, (x, y) => x.id === y.id);
 
       expect(result).toHaveLength(3);
@@ -252,29 +260,41 @@ describe('Utils', () => {
 
   describe('getRanks', () => {
     // Helper to create properly typed test data - uses any cast to bypass strict Convex Id types
-    const createTestPdt = (id: string, dateTime: number, eventId: string, availabilities: Array<{ status: 'YES' | 'NO' | 'MAYBE' }>) => ({
-      _id: id,
-      _creationTime: 123,
-      dateTime,
-      eventId,
-      availabilities,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any;
+    const createTestPdt = (
+      id: string,
+      dateTime: number,
+      eventId: string,
+      availabilities: Array<{ status: 'YES' | 'NO' | 'MAYBE' }>
+    ) =>
+      ({
+        _id: id,
+        _creationTime: 123,
+        dateTime,
+        eventId,
+        availabilities,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any;
 
     it('should rank potential date times by score', () => {
       const pdts = [
-        createTestPdt('pdt1', new Date('2025-01-20T10:00:00Z').getTime(), 'event1', [
-          { status: 'YES' },
-          { status: 'YES' },
-        ]),
-        createTestPdt('pdt2', new Date('2025-01-21T10:00:00Z').getTime(), 'event1', [
-          { status: 'YES' },
-          { status: 'MAYBE' },
-        ]),
-        createTestPdt('pdt3', new Date('2025-01-22T10:00:00Z').getTime(), 'event1', [
-          { status: 'NO' },
-          { status: 'NO' },
-        ]),
+        createTestPdt(
+          'pdt1',
+          new Date('2025-01-20T10:00:00Z').getTime(),
+          'event1',
+          [{ status: 'YES' }, { status: 'YES' }]
+        ),
+        createTestPdt(
+          'pdt2',
+          new Date('2025-01-21T10:00:00Z').getTime(),
+          'event1',
+          [{ status: 'YES' }, { status: 'MAYBE' }]
+        ),
+        createTestPdt(
+          'pdt3',
+          new Date('2025-01-22T10:00:00Z').getTime(),
+          'event1',
+          [{ status: 'NO' }, { status: 'NO' }]
+        ),
       ];
 
       const ranked = getRanks(pdts);
@@ -289,12 +309,18 @@ describe('Utils', () => {
 
     it('should handle ties with same rank', () => {
       const pdts = [
-        createTestPdt('pdt1', new Date('2025-01-20T10:00:00Z').getTime(), 'event1', [
-          { status: 'YES' },
-        ]),
-        createTestPdt('pdt2', new Date('2025-01-21T10:00:00Z').getTime(), 'event1', [
-          { status: 'YES' },
-        ]),
+        createTestPdt(
+          'pdt1',
+          new Date('2025-01-20T10:00:00Z').getTime(),
+          'event1',
+          [{ status: 'YES' }]
+        ),
+        createTestPdt(
+          'pdt2',
+          new Date('2025-01-21T10:00:00Z').getTime(),
+          'event1',
+          [{ status: 'YES' }]
+        ),
       ];
 
       const ranked = getRanks(pdts);
@@ -305,7 +331,12 @@ describe('Utils', () => {
 
     it('should handle empty availabilities', () => {
       const pdts = [
-        createTestPdt('pdt1', new Date('2025-01-20T10:00:00Z').getTime(), 'event1', []),
+        createTestPdt(
+          'pdt1',
+          new Date('2025-01-20T10:00:00Z').getTime(),
+          'event1',
+          []
+        ),
       ];
 
       const ranked = getRanks(pdts);

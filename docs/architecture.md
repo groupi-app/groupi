@@ -193,16 +193,16 @@ packages/mobile/
 
 Groupi uses Convex for data storage with the following key tables:
 
-| Table | Purpose |
-|-------|---------|
-| `persons` | App-specific user data, links to Better Auth users |
-| `events` | Event planning core entity |
-| `memberships` | User participation in events (role, RSVP) |
-| `posts` | Discussion posts within events |
-| `replies` | Responses to posts |
-| `invites` | Event invite tokens |
-| `notifications` | User notifications |
-| `availabilities` | User availability for potential dates |
+| Table            | Purpose                                            |
+| ---------------- | -------------------------------------------------- |
+| `persons`        | App-specific user data, links to Better Auth users |
+| `events`         | Event planning core entity                         |
+| `memberships`    | User participation in events (role, RSVP)          |
+| `posts`          | Discussion posts within events                     |
+| `replies`        | Responses to posts                                 |
+| `invites`        | Event invite tokens                                |
+| `notifications`  | User notifications                                 |
+| `availabilities` | User availability for potential dates              |
 
 ### User Data Architecture
 
@@ -257,7 +257,7 @@ export type ExtendedAuthUser = {
 import { getCurrentPerson, authComponent, AuthUserId } from '../auth';
 
 export const myQuery = query({
-  handler: async (ctx) => {
+  handler: async ctx => {
     // Get the current person (our app's user record)
     const currentPerson = await getCurrentPerson(ctx);
     if (!currentPerson) {
@@ -300,7 +300,7 @@ export function createEventHooks(api: ConvexApi) {
       // This automatically subscribes to real-time updates
       // When data changes on the server, the component re-renders
       return useQuery(api.events.queries.getEvent, { eventId });
-    }
+    },
   };
 }
 
@@ -324,12 +324,13 @@ export function createEventActionHooks(api: ConvexApi) {
           navigation.push(`/event/${result}`);
           return { success: true, data: result };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'An error occurred';
+          const message =
+            error instanceof Error ? error.message : 'An error occurred';
           toast.error(`Failed to create event: ${message}`);
           return { success: false, error: message };
         }
       };
-    }
+    },
   };
 }
 ```
@@ -405,10 +406,12 @@ export const updatePresenceData = mutation({
   args: {
     roomId: v.string(),
     userId: v.string(),
-    data: v.optional(v.object({
-      isTyping: v.optional(v.boolean()),
-      lastActivity: v.optional(v.number()),
-    })),
+    data: v.optional(
+      v.object({
+        isTyping: v.optional(v.boolean()),
+        lastActivity: v.optional(v.number()),
+      })
+    ),
   },
   handler: async (ctx, { roomId, userId, data }) => {
     return await presence.updateRoomUser(ctx, roomId, userId, data);
@@ -532,6 +535,7 @@ export function CommentList({ postId }: { postId: string }) {
 ### Data Layer (Convex)
 
 **DO:**
+
 ```typescript
 export const createEvent = mutation({
   args: {
@@ -541,14 +545,14 @@ export const createEvent = mutation({
   handler: async (ctx, args) => {
     // Always check auth
     const person = await getCurrentPerson(ctx);
-    if (!person) throw new Error("Not authenticated");
+    if (!person) throw new Error('Not authenticated');
 
     // Validate inputs
     if (args.title.length < 3) {
-      throw new Error("Title must be at least 3 characters");
+      throw new Error('Title must be at least 3 characters');
     }
 
-    return await ctx.db.insert("events", {
+    return await ctx.db.insert('events', {
       ...args,
       creatorId: person._id,
       createdAt: Date.now(),
@@ -559,12 +563,13 @@ export const createEvent = mutation({
 ```
 
 **DON'T:**
+
 ```typescript
 export const createEvent = mutation({
-  args: { data: v.any() },  // ❌ No validation
+  args: { data: v.any() }, // ❌ No validation
   handler: async (ctx, { data }) => {
     // ❌ No auth check
-    return await ctx.db.insert("events", data);
+    return await ctx.db.insert('events', data);
   },
 });
 ```
@@ -572,6 +577,7 @@ export const createEvent = mutation({
 ### Shared Business Logic
 
 **DO:**
+
 ```typescript
 // Use factory pattern for dependency injection
 export function createEventHooks(api: ConvexApi) {
@@ -596,13 +602,14 @@ export function createEventHooks(api: ConvexApi) {
 ```
 
 **DON'T:**
+
 ```typescript
 // ❌ Don't import platform-specific modules
-import { useRouter } from 'next/navigation';  // Web-only!
-import { toast } from 'sonner';  // Web-only!
+import { useRouter } from 'next/navigation'; // Web-only!
+import { toast } from 'sonner'; // Web-only!
 
 export function useCreateEvent() {
-  const router = useRouter();  // Won't work on mobile
+  const router = useRouter(); // Won't work on mobile
   // ...
 }
 ```
@@ -610,6 +617,7 @@ export function useCreateEvent() {
 ### Component Architecture
 
 **DO:**
+
 ```typescript
 // Separate data fetching from UI
 function EventPage({ eventId }: { eventId: string }) {
@@ -631,13 +639,14 @@ function EventUI({ event }: { event: Event }) {
 ```
 
 **DON'T:**
+
 ```typescript
 // ❌ Don't use manual state for server data
 function EventPage({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState(null);
 
   useEffect(() => {
-    fetchEvent(eventId).then(setEvent);  // ❌ Manual fetching
+    fetchEvent(eventId).then(setEvent); // ❌ Manual fetching
   }, [eventId]);
 
   // ...
@@ -655,7 +664,8 @@ return async (data: Input) => {
     toast.success('Success!');
     return { success: true, data: result };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'An error occurred';
+    const message =
+      error instanceof Error ? error.message : 'An error occurred';
     toast.error(message);
     return { success: false, error: message };
   }

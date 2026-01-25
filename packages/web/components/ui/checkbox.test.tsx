@@ -15,14 +15,14 @@ describe('Checkbox', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Checkbox data-testid="checkbox" />);
+    render(<Checkbox data-testid='checkbox' />);
 
     const checkbox = screen.getByTestId('checkbox');
     expect(checkbox).toHaveAttribute('data-slot', 'checkbox');
   });
 
   it('should apply base styling', () => {
-    render(<Checkbox data-testid="checkbox" />);
+    render(<Checkbox data-testid='checkbox' />);
 
     const checkbox = screen.getByTestId('checkbox');
     expect(checkbox).toHaveClass('h-4');
@@ -33,7 +33,7 @@ describe('Checkbox', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Checkbox className="mr-2" data-testid="checkbox" />);
+    render(<Checkbox className='mr-2' data-testid='checkbox' />);
 
     const checkbox = screen.getByTestId('checkbox');
     expect(checkbox).toHaveClass('mr-2');
@@ -94,7 +94,7 @@ describe('Checkbox', () => {
   });
 
   it('should pass through id attribute', () => {
-    render(<Checkbox id="terms-checkbox" />);
+    render(<Checkbox id='terms-checkbox' />);
 
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).toHaveAttribute('id', 'terms-checkbox');
@@ -102,11 +102,11 @@ describe('Checkbox', () => {
 
   it('should accept name prop without error', () => {
     // Radix UI handles name internally for form submission
-    expect(() => render(<Checkbox name="accept-terms" />)).not.toThrow();
+    expect(() => render(<Checkbox name='accept-terms' />)).not.toThrow();
   });
 
   it('should support value attribute', () => {
-    render(<Checkbox value="yes" data-testid="checkbox" />);
+    render(<Checkbox value='yes' data-testid='checkbox' />);
 
     const checkbox = screen.getByTestId('checkbox');
     expect(checkbox).toHaveAttribute('value', 'yes');
@@ -115,8 +115,8 @@ describe('Checkbox', () => {
   it('should work with label', () => {
     render(
       <>
-        <Checkbox id="terms" />
-        <label htmlFor="terms">Accept terms</label>
+        <Checkbox id='terms' />
+        <label htmlFor='terms'>Accept terms</label>
       </>
     );
 

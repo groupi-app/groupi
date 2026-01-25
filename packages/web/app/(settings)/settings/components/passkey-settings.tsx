@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +33,9 @@ export function PasskeySettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedPasskeyId, setSelectedPasskeyId] = useState<string | null>(null);
+  const [selectedPasskeyId, setSelectedPasskeyId] = useState<string | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -45,7 +53,8 @@ export function PasskeySettings() {
       }
 
       try {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const available =
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         setIsSupported(available);
       } catch {
         setIsSupported(false);
@@ -68,7 +77,7 @@ export function PasskeySettings() {
       const result = await authClient.passkey.listUserPasskeys();
       if (result.data) {
         setPasskeys(
-          result.data.map((pk) => ({
+          result.data.map(pk => ({
             id: pk.id,
             name: pk.name ?? null,
             createdAt: new Date(pk.createdAt),
@@ -97,7 +106,8 @@ export function PasskeySettings() {
       toast.success('Passkey added successfully');
       await loadPasskeys();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add passkey';
+      const message =
+        error instanceof Error ? error.message : 'Failed to add passkey';
       // Handle user cancellation gracefully
       if (message.includes('cancel') || message.includes('abort')) {
         return;
@@ -127,7 +137,8 @@ export function PasskeySettings() {
       setSelectedPasskeyId(null);
       await loadPasskeys();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete passkey';
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete passkey';
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -154,7 +165,8 @@ export function PasskeySettings() {
       toast.success('Passkey renamed');
       await loadPasskeys();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update passkey';
+      const message =
+        error instanceof Error ? error.message : 'Failed to update passkey';
       toast.error(message);
     } finally {
       setEditingId(null);
@@ -185,8 +197,9 @@ export function PasskeySettings() {
         </CardHeader>
         <CardContent>
           <p className='text-sm text-muted-foreground'>
-            Passkeys are not supported on this device or browser.
-            Try using a modern browser like Chrome, Safari, or Edge on a device with biometric authentication.
+            Passkeys are not supported on this device or browser. Try using a
+            modern browser like Chrome, Safari, or Edge on a device with
+            biometric authentication.
           </p>
         </CardContent>
       </Card>
@@ -213,7 +226,8 @@ export function PasskeySettings() {
           ) : passkeys.length === 0 ? (
             <div className='text-center py-6'>
               <p className='text-muted-foreground mb-4'>
-                No passkeys yet. Add one to sign in faster with Face ID, Touch ID, or Windows Hello.
+                No passkeys yet. Add one to sign in faster with Face ID, Touch
+                ID, or Windows Hello.
               </p>
               <Button
                 onClick={addPasskey}
@@ -227,7 +241,7 @@ export function PasskeySettings() {
           ) : (
             <>
               <div className='space-y-3'>
-                {passkeys.map((passkey) => (
+                {passkeys.map(passkey => (
                   <div
                     key={passkey.id}
                     className='flex items-center justify-between p-4 rounded-lg border'
@@ -241,10 +255,10 @@ export function PasskeySettings() {
                           <div className='flex items-center gap-2'>
                             <Input
                               value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
+                              onChange={e => setEditName(e.target.value)}
                               className='h-8 w-40'
                               autoFocus
-                              onKeyDown={(e) => {
+                              onKeyDown={e => {
                                 if (e.key === 'Enter') {
                                   updatePasskeyName(passkey.id);
                                 } else if (e.key === 'Escape') {
@@ -305,8 +319,8 @@ export function PasskeySettings() {
           <DialogHeader>
             <DialogTitle>Delete Passkey</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this passkey? You won&apos;t be able to
-              use it to sign in anymore.
+              Are you sure you want to delete this passkey? You won&apos;t be
+              able to use it to sign in anymore.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

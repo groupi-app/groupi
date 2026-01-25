@@ -1,5 +1,5 @@
-import { handler } from "@/lib/auth-server";
-import { NextRequest } from "next/server";
+import { handler } from '@/lib/auth-server';
+import { NextRequest } from 'next/server';
 
 /**
  * Next.js route handler for Better Auth
@@ -21,7 +21,10 @@ async function wrappedHandler(req: NextRequest) {
     try {
       const clonedReq = req.clone();
       const body = await clonedReq.text();
-      console.log(`[Auth] ${req.method} ${pathname} body:`, body.substring(0, 500));
+      console.log(
+        `[Auth] ${req.method} ${pathname} body:`,
+        body.substring(0, 500)
+      );
     } catch {
       console.log(`[Auth] ${req.method} ${pathname} (could not read body)`);
     }
@@ -37,7 +40,10 @@ async function wrappedHandler(req: NextRequest) {
       try {
         const clonedRes = result.clone();
         const resBody = await clonedRes.text();
-        console.error(`[Auth] ${req.method} ${pathname} error response:`, resBody.substring(0, 500));
+        console.error(
+          `[Auth] ${req.method} ${pathname} error response:`,
+          resBody.substring(0, 500)
+        );
       } catch {
         // Ignore
       }

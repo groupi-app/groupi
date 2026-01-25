@@ -21,9 +21,9 @@ export function DeleteInvites({
   setSelectedInvites,
   eventId,
 }: {
-  selectedInvites: Id<"invites">[];
-  setSelectedInvites: (invites: Id<"invites">[]) => void;
-  eventId: Id<"events">;
+  selectedInvites: Id<'invites'>[];
+  setSelectedInvites: (invites: Id<'invites'>[]) => void;
+  eventId: Id<'events'>;
 }) {
   const deleteInvites = useDeleteInvites(eventId);
   const [isOpen, setIsOpen] = useState(false);

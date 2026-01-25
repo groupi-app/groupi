@@ -21,15 +21,15 @@ Groupi uses the **Better Auth Convex Component** for authentication. This is a f
 
 ### Key Documentation Links
 
-| Resource | URL |
-|----------|-----|
-| Better Auth Convex Component | https://labs.convex.dev/better-auth |
-| Framework Guide (Next.js) | https://labs.convex.dev/better-auth/framework-guides/next |
-| Component Client API | https://labs.convex.dev/better-auth/api/component-client |
-| Convex Plugin | https://labs.convex.dev/better-auth/api/convex-plugin |
-| Type Utilities | https://labs.convex.dev/better-auth/api/type-utilities |
-| Better Auth Core Docs | https://www.better-auth.com/docs |
-| Convex Components | https://docs.convex.dev/components |
+| Resource                     | URL                                                       |
+| ---------------------------- | --------------------------------------------------------- |
+| Better Auth Convex Component | https://labs.convex.dev/better-auth                       |
+| Framework Guide (Next.js)    | https://labs.convex.dev/better-auth/framework-guides/next |
+| Component Client API         | https://labs.convex.dev/better-auth/api/component-client  |
+| Convex Plugin                | https://labs.convex.dev/better-auth/api/convex-plugin     |
+| Type Utilities               | https://labs.convex.dev/better-auth/api/type-utilities    |
+| Better Auth Core Docs        | https://www.better-auth.com/docs                          |
+| Convex Components            | https://docs.convex.dev/components                        |
 
 ### Architectural Principles
 
@@ -85,15 +85,15 @@ TypeScript should infer types from Convex's generated types. If you find yoursel
 
 ```typescript
 // ✅ CORRECT: Import types from Convex generated files
-import { Id } from "../_generated/dataModel";
-import { QueryCtx, MutationCtx } from "../_generated/server";
+import { Id } from '../_generated/dataModel';
+import { QueryCtx, MutationCtx } from '../_generated/server';
 
 // ✅ CORRECT: Let TypeScript infer from function returns
 const person = await ctx.db.get(personId);
 // TypeScript knows person is Doc<"persons"> | null
 
 // ✅ CORRECT: Use the AuthUser type from auth.ts
-import { AuthUser } from "../auth";
+import { AuthUser } from '../auth';
 
 // ❌ WRONG: Manual type definitions
 interface User {
@@ -126,11 +126,11 @@ If TypeScript cannot infer a type:
 //    If calling ctx.db.get(), it returns Doc<TableName> | null
 
 // 2. If the function IS typed but complex, use Convex type utilities
-import type { Doc } from "../_generated/dataModel";
-const person: Doc<"persons"> | null = await ctx.db.get(personId);
+import type { Doc } from '../_generated/dataModel';
+const person: Doc<'persons'> | null = await ctx.db.get(personId);
 
 // 3. For component types, use the exported AuthUser type
-import { AuthUser } from "../auth";
+import { AuthUser } from '../auth';
 
 // 4. For function return types, use ReturnType utility
 type PersonResult = Awaited<ReturnType<typeof getCurrentPerson>>;
@@ -164,10 +164,10 @@ packages/web/
 ### Component Registration (`convex/convex.config.ts`)
 
 ```typescript
-import { defineApp } from "convex/server";
-import presence from "@convex-dev/presence/convex.config.js";
-import betterAuth from "@convex-dev/better-auth/convex.config";
-import resend from "@convex-dev/resend/convex.config.js";
+import { defineApp } from 'convex/server';
+import presence from '@convex-dev/presence/convex.config.js';
+import betterAuth from '@convex-dev/better-auth/convex.config';
+import resend from '@convex-dev/resend/convex.config.js';
 
 const app = defineApp();
 app.use(presence);
@@ -180,8 +180,8 @@ export default app;
 ### Auth Configuration (`convex/auth.config.ts`)
 
 ```typescript
-import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
-import type { AuthConfig } from "convex/server";
+import { getAuthConfigProvider } from '@convex-dev/better-auth/auth-config';
+import type { AuthConfig } from 'convex/server';
 
 export default {
   providers: [getAuthConfigProvider()],
@@ -191,8 +191,8 @@ export default {
 ### HTTP Router (`convex/http.ts`)
 
 ```typescript
-import { httpRouter } from "convex/server";
-import { authComponent, createAuth } from "./auth";
+import { httpRouter } from 'convex/server';
+import { authComponent, createAuth } from './auth';
 
 const http = httpRouter();
 
@@ -211,22 +211,22 @@ export default http;
 The component client is created from the registered component:
 
 ```typescript
-import { createClient } from "@convex-dev/better-auth";
-import { components } from "./_generated/api";
-import { DataModel } from "./_generated/dataModel";
+import { createClient } from '@convex-dev/better-auth';
+import { components } from './_generated/api';
+import { DataModel } from './_generated/dataModel';
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 ```
 
 ### Component Client Methods
 
-| Method | Purpose | Returns |
-|--------|---------|---------|
-| `authComponent.getAuthUser(ctx)` | Get current authenticated user | `User \| null` (throws if unauthenticated) |
-| `authComponent.getAnyUserById(ctx, userId)` | Look up any user by ID | `User \| null` |
-| `authComponent.adapter(ctx)` | Get database adapter for Better Auth | `DatabaseAdapter` |
-| `authComponent.registerRoutes(http, createAuth)` | Register HTTP routes | `void` |
-| `authComponent.getAuth(createAuth, ctx)` | Get auth instance with headers | `{ auth, headers }` |
+| Method                                           | Purpose                              | Returns                                    |
+| ------------------------------------------------ | ------------------------------------ | ------------------------------------------ |
+| `authComponent.getAuthUser(ctx)`                 | Get current authenticated user       | `User \| null` (throws if unauthenticated) |
+| `authComponent.getAnyUserById(ctx, userId)`      | Look up any user by ID               | `User \| null`                             |
+| `authComponent.adapter(ctx)`                     | Get database adapter for Better Auth | `DatabaseAdapter`                          |
+| `authComponent.registerRoutes(http, createAuth)` | Register HTTP routes                 | `void`                                     |
+| `authComponent.getAuth(createAuth, ctx)`         | Get auth instance with headers       | `{ auth, headers }`                        |
 
 ### Helper Functions in `auth.ts`
 
@@ -234,35 +234,37 @@ export const authComponent = createClient<DataModel>(components.betterAuth);
 
 ```typescript
 // Get current authenticated person (returns null if not auth'd)
-export async function getCurrentPerson(ctx: AuthCtx): Promise<Doc<"persons"> | null>
+export async function getCurrentPerson(
+  ctx: AuthCtx
+): Promise<Doc<'persons'> | null>;
 
 // Get both user and person (returns null if not auth'd)
 export async function getCurrentUserAndPerson(ctx: AuthCtx): Promise<{
   user: AuthUser;
-  person: Doc<"persons">;
-} | null>
+  person: Doc<'persons'>;
+} | null>;
 
 // Require authentication (throws ConvexError if not auth'd)
 export async function requireAuth(ctx: AuthCtx): Promise<{
   user: AuthUser;
-  person: Doc<"persons">;
-}>
+  person: Doc<'persons'>;
+}>;
 
 // Require and return only person
-export async function requirePerson(ctx: AuthCtx): Promise<Doc<"persons">>
+export async function requirePerson(ctx: AuthCtx): Promise<Doc<'persons'>>;
 
 // Require and return only user
-export async function requireUser(ctx: AuthCtx): Promise<AuthUser>
+export async function requireUser(ctx: AuthCtx): Promise<AuthUser>;
 ```
 
 #### Admin Checks
 
 ```typescript
 // Check if current user is admin
-export async function isAdmin(ctx: AuthCtx): Promise<boolean>
+export async function isAdmin(ctx: AuthCtx): Promise<boolean>;
 
 // Require admin privileges (throws if not admin)
-export async function requireAdmin(ctx: AuthCtx): Promise<AuthUser>
+export async function requireAdmin(ctx: AuthCtx): Promise<AuthUser>;
 ```
 
 #### Event Permission Checks
@@ -272,27 +274,27 @@ export async function requireAdmin(ctx: AuthCtx): Promise<AuthUser>
 export async function getEventMembership(
   ctx: AuthCtx,
   eventId: string
-): Promise<Doc<"memberships"> | null>
+): Promise<Doc<'memberships'> | null>;
 
 // Require event membership (throws if not member)
 export async function requireEventMembership(
   ctx: AuthCtx,
   eventId: string
-): Promise<Doc<"memberships">>
+): Promise<Doc<'memberships'>>;
 
 // Check if user has specific role
 export async function hasEventRole(
   ctx: AuthCtx,
   eventId: string,
-  role: "ORGANIZER" | "MODERATOR" | "ATTENDEE"
-): Promise<boolean>
+  role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
+): Promise<boolean>;
 
 // Require specific role (throws if insufficient)
 export async function requireEventRole(
   ctx: AuthCtx,
   eventId: string,
-  role: "ORGANIZER" | "MODERATOR" | "ATTENDEE"
-): Promise<Doc<"memberships">>
+  role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
+): Promise<Doc<'memberships'>>;
 ```
 
 #### User Lookup
@@ -303,23 +305,23 @@ export async function getPersonWithUser(
   ctx: AuthCtx,
   personId: string | { toString(): string }
 ): Promise<{
-  person: Doc<"persons">;
-  user: { _id: string; name: string | null; email: string | null; /* ... */ };
-} | null>
+  person: Doc<'persons'>;
+  user: { _id: string; name: string | null; email: string | null /* ... */ };
+} | null>;
 
 // Ensure person record exists for user
 export async function ensurePersonRecord(
   ctx: MutationCtx,
   userId: string
-): Promise<Doc<"persons"> | null>
+): Promise<Doc<'persons'> | null>;
 ```
 
 ### Using Auth in Mutations
 
 ```typescript
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
-import { requireAuth, authComponent, createAuth } from "../auth";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
+import { requireAuth, authComponent, createAuth } from '../auth';
 
 export const updateProfile = mutation({
   args: {
@@ -352,12 +354,12 @@ export const updateProfile = mutation({
 ### Using Auth in Queries
 
 ```typescript
-import { query } from "../_generated/server";
-import { getCurrentPerson, authComponent } from "../auth";
+import { query } from '../_generated/server';
+import { getCurrentPerson, authComponent } from '../auth';
 
 export const getMyProfile = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const person = await getCurrentPerson(ctx);
     if (!person) return null;
 
@@ -366,12 +368,14 @@ export const getMyProfile = query({
 
     return {
       person,
-      user: user ? {
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        username: (user as any).username,
-      } : null,
+      user: user
+        ? {
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            username: (user as any).username,
+          }
+        : null,
     };
   },
 });
@@ -386,9 +390,14 @@ export const getMyProfile = query({
 ```typescript
 'use client';
 
-import { createAuthClient } from "better-auth/react";
-import { convexClient } from "@convex-dev/better-auth/client/plugins";
-import { usernameClient, magicLinkClient, twoFactorClient, oneTapClient } from "better-auth/client/plugins";
+import { createAuthClient } from 'better-auth/react';
+import { convexClient } from '@convex-dev/better-auth/client/plugins';
+import {
+  usernameClient,
+  magicLinkClient,
+  twoFactorClient,
+  oneTapClient,
+} from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
   plugins: [
@@ -409,16 +418,16 @@ export const { signIn, signUp, signOut, useSession } = authClient;
 ### Server Utilities (`packages/web/lib/auth-server.ts`)
 
 ```typescript
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+import { convexBetterAuthNextJs } from '@convex-dev/better-auth/nextjs';
 
 export const {
-  handler,           // Next.js route handler
-  preloadAuthQuery,  // Preload queries with auth
-  isAuthenticated,   // Check if user is authenticated
-  getToken,          // Get auth token
-  fetchAuthQuery,    // Fetch query with auth
+  handler, // Next.js route handler
+  preloadAuthQuery, // Preload queries with auth
+  isAuthenticated, // Check if user is authenticated
+  getToken, // Get auth token
+  fetchAuthQuery, // Fetch query with auth
   fetchAuthMutation, // Execute mutation with auth
-  fetchAuthAction,   // Execute action with auth
+  fetchAuthAction, // Execute action with auth
 } = convexBetterAuthNextJs({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
@@ -428,7 +437,7 @@ export const {
 ### Route Handler (`packages/web/app/api/auth/[...all]/route.ts`)
 
 ```typescript
-import { handler } from "@/lib/auth-server";
+import { handler } from '@/lib/auth-server';
 
 export const { GET, POST } = handler;
 ```
@@ -521,18 +530,18 @@ The `userId` in `persons` is stored as a `string`, not `v.id("user")` because:
 
 ### Summary Table
 
-| Plugin | Backend | Client | UI | Status |
-|--------|---------|--------|-----|--------|
-| OAuth (Google/Discord) | ✅ | ✅ | ✅ | **Fully Implemented** |
-| Username | ✅ | ✅ | ✅ | **Fully Implemented** |
-| Magic Link | ⚠️ | ✅ | ✅ | UI done, backend needs real email |
-| Email Verification | ✅ | ✅ | ✅ | **Fully Implemented** |
-| Email/Password | ✅ | ✅ | ❌ | Backend only, no UI |
-| Two-Factor (2FA) | ✅ | ✅ | ❌ | Backend only, no UI |
-| API Key | ✅ | ❌ | ❌ | Backend only, no UI |
-| Admin | ✅ | ❌ | ⚠️ | Stub page during migration |
-| Google One Tap | ⚠️ | ⚠️ | ⚠️ | Conditional, auto-rendering |
-| Password Reset | ❌ | ❌ | ❌ | **Not Implemented** |
+| Plugin                 | Backend | Client | UI  | Status                            |
+| ---------------------- | ------- | ------ | --- | --------------------------------- |
+| OAuth (Google/Discord) | ✅      | ✅     | ✅  | **Fully Implemented**             |
+| Username               | ✅      | ✅     | ✅  | **Fully Implemented**             |
+| Magic Link             | ⚠️      | ✅     | ✅  | UI done, backend needs real email |
+| Email Verification     | ✅      | ✅     | ✅  | **Fully Implemented**             |
+| Email/Password         | ✅      | ✅     | ❌  | Backend only, no UI               |
+| Two-Factor (2FA)       | ✅      | ✅     | ❌  | Backend only, no UI               |
+| API Key                | ✅      | ❌     | ❌  | Backend only, no UI               |
+| Admin                  | ✅      | ❌     | ⚠️  | Stub page during migration        |
+| Google One Tap         | ⚠️      | ⚠️     | ⚠️  | Conditional, auto-rendering       |
+| Password Reset         | ❌      | ❌     | ❌  | **Not Implemented**               |
 
 ---
 
@@ -543,27 +552,30 @@ The `userId` in `persons` is stored as a `string`, not `v.id("user")` because:
 **Status**: ✅ Complete implementation with full UI
 
 **Files:**
+
 - Sign In: `packages/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 - Sign Up: `packages/web/app/(auth)/sign-up/[[...sign-up]]/page.tsx`
 - Account Linking: `packages/web/app/(settings)/settings/components/linked-accounts-list.tsx`
 
 **Features:**
+
 - Discord and Google OAuth buttons on sign-in/sign-up
 - Link/unlink social accounts in settings
 - Display all linked OAuth accounts with provider names
 
 **Usage:**
+
 ```typescript
-import { signIn } from "@/lib/auth-client";
+import { signIn } from '@/lib/auth-client';
 
 // Sign in with Google
-signIn.social({ provider: "google" });
+signIn.social({ provider: 'google' });
 
 // Sign in with Discord
-signIn.social({ provider: "discord" });
+signIn.social({ provider: 'discord' });
 
 // Link account (in settings)
-authClient.linkSocial({ provider: "google" });
+authClient.linkSocial({ provider: 'google' });
 ```
 
 See: https://www.better-auth.com/docs/authentication/social-sign-in
@@ -575,11 +587,13 @@ See: https://www.better-auth.com/docs/authentication/social-sign-in
 **Status**: ✅ Complete implementation with full UI
 
 **Files:**
+
 - Onboarding: `packages/web/app/(auth)/onboarding/onboarding-content.tsx`
 - Sign In: `packages/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 - Settings: `packages/web/app/(settings)/settings/components/username-field.tsx`
 
 **Features:**
+
 - Username field on onboarding with real-time availability checking
 - Username or email accepted for magic link sign-in
 - Edit username in account settings with validation
@@ -587,8 +601,9 @@ See: https://www.better-auth.com/docs/authentication/social-sign-in
 - Visual indicators: spinner, check mark, X icon
 
 **Usage:**
+
 ```typescript
-import { usernameClient } from "better-auth/client/plugins";
+import { usernameClient } from 'better-auth/client/plugins';
 
 // Client setup includes username plugin
 const authClient = createAuthClient({
@@ -609,9 +624,11 @@ See: https://www.better-auth.com/docs/plugins/username
 **Status**: ⚠️ UI complete, backend needs real email sending
 
 **Files:**
+
 - Sign In: `packages/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 
 **Features:**
+
 - Email or username input for magic link
 - "Send Magic Link" button
 - Success message after sending
@@ -619,6 +636,7 @@ See: https://www.better-auth.com/docs/plugins/username
 - Auto-clears countdown display
 
 **Current Backend (needs improvement):**
+
 ```typescript
 // convex/auth.ts - currently only logs in development
 magicLink({
@@ -631,6 +649,7 @@ magicLink({
 ```
 
 **To implement real email sending:**
+
 ```typescript
 import { Resend } from "resend";
 
@@ -656,10 +675,12 @@ See: https://www.better-auth.com/docs/plugins/magic-link
 **Status**: ✅ Complete implementation with full UI
 
 **Files:**
+
 - Verification Page: `packages/web/app/verify-email/page.tsx`
 - Email Management: `packages/web/app/(settings)/settings/components/email-management.tsx`
 
 **Features:**
+
 - Handles verification token from URL
 - Auto-verifies on page load if token valid
 - Shows status messages for valid/invalid/expired tokens
@@ -671,8 +692,9 @@ See: https://www.better-auth.com/docs/plugins/magic-link
 - Expiration time display for pending verifications
 
 **Usage:**
+
 ```typescript
-import { authClient } from "@/lib/auth-client";
+import { authClient } from '@/lib/auth-client';
 
 // Send verification email
 await authClient.sendVerificationEmail({ email });
@@ -702,12 +724,13 @@ emailAndPassword: {
 ```
 
 **To implement UI:**
+
 1. Add email + password form to sign-in page
 2. Add email + password + password confirm to sign-up page
 3. Use `signIn.email()` and `signUp.email()` methods
 
 ```typescript
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn, signUp } from '@/lib/auth-client';
 
 // Sign in with email/password
 await signIn.email({ email, password });
@@ -733,6 +756,7 @@ twoFactorClient(),
 ```
 
 **Missing UI components:**
+
 - Enable 2FA flow with QR code
 - TOTP code entry during sign-in
 - Backup/recovery codes display and management
@@ -741,8 +765,9 @@ twoFactorClient(),
 **To implement:**
 
 1. **Enable 2FA Settings Page:**
+
 ```typescript
-import { authClient } from "@/lib/auth-client";
+import { authClient } from '@/lib/auth-client';
 
 // Generate TOTP setup
 const { data } = await authClient.twoFactor.getTotpUri();
@@ -753,12 +778,14 @@ await authClient.twoFactor.enable({ code: userEnteredCode });
 ```
 
 2. **Sign-in with 2FA:**
+
 ```typescript
 // After primary auth, if 2FA required
 await authClient.twoFactor.verify({ code: totpCode });
 ```
 
 3. **Backup Codes:**
+
 ```typescript
 // Generate backup codes
 const { data } = await authClient.twoFactor.generateBackupCodes();
@@ -779,17 +806,19 @@ apiKey(),
 ```
 
 **Missing:**
+
 - API key generation UI
 - Key management panel (list, revoke)
 - Copy key functionality
 
 **To implement:**
+
 ```typescript
-import { authClient } from "@/lib/auth-client";
+import { authClient } from '@/lib/auth-client';
 
 // Create API key
 const { data } = await authClient.apiKey.create({
-  name: "My API Key",
+  name: 'My API Key',
   expiresIn: 60 * 60 * 24 * 30, // 30 days
 });
 
@@ -816,24 +845,27 @@ admin(),
 ```
 
 **Current UI:**
+
 - Location: `packages/web/app/(admin)/admin/page.tsx`
 - Content: Placeholder message stating "Admin functionality is temporarily unavailable during the Convex migration"
 
 **Missing:**
+
 - User list with management options
 - Role assignment (promote to admin)
 - User suspension/ban functionality
 - Admin dashboard
 
 **To implement:**
+
 ```typescript
-import { authClient } from "@/lib/auth-client";
+import { authClient } from '@/lib/auth-client';
 
 // List users (admin only)
 const { data } = await authClient.admin.listUsers();
 
 // Set user role
-await authClient.admin.setRole({ userId, role: "admin" });
+await authClient.admin.setRole({ userId, role: 'admin' });
 
 // Ban user
 await authClient.admin.banUser({ userId });
@@ -860,11 +892,13 @@ if (process.env.GOOGLE_CLIENT_ID) {
 ```
 
 **Required setup:**
+
 1. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env vars
 2. Set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` for client
 3. Configure Google Cloud Console OAuth consent screen
 
 **Notes:**
+
 - Google One Tap may render automatically if properly configured
 - No explicit component needed - the plugin handles rendering
 - Check if it's actually appearing in production
@@ -884,6 +918,7 @@ This is a critical missing feature. Users cannot reset their password if they fo
 **To implement:**
 
 1. **Add forgot password flow to backend:**
+
 ```typescript
 // convex/auth.ts - already have emailAndPassword enabled
 // Need to implement sendResetPassword callback:
@@ -907,8 +942,9 @@ emailAndPassword: {
    - Create `/reset-password` page to handle reset token
 
 3. **Usage:**
+
 ```typescript
-import { authClient } from "@/lib/auth-client";
+import { authClient } from '@/lib/auth-client';
 
 // Request password reset
 await authClient.forgetPassword({ email });
@@ -923,12 +959,12 @@ See: https://www.better-auth.com/docs/authentication/email-password#password-res
 
 ### Plugins Not Yet Added
 
-| Plugin | Docs | Description |
-|--------|------|-------------|
-| `organization` | https://www.better-auth.com/docs/plugins/organization | Multi-tenant organizations |
-| `passkey` | https://www.better-auth.com/docs/plugins/passkey | WebAuthn/FIDO2 passwordless |
-| `bearer` | https://www.better-auth.com/docs/plugins/bearer | Bearer token auth for APIs |
-| `openAPI` | https://www.better-auth.com/docs/plugins/open-api | OpenAPI spec generation |
+| Plugin         | Docs                                                  | Description                 |
+| -------------- | ----------------------------------------------------- | --------------------------- |
+| `organization` | https://www.better-auth.com/docs/plugins/organization | Multi-tenant organizations  |
+| `passkey`      | https://www.better-auth.com/docs/plugins/passkey      | WebAuthn/FIDO2 passwordless |
+| `bearer`       | https://www.better-auth.com/docs/plugins/bearer       | Bearer token auth for APIs  |
+| `openAPI`      | https://www.better-auth.com/docs/plugins/open-api     | OpenAPI spec generation     |
 
 ---
 
@@ -938,15 +974,15 @@ This section provides a prioritized implementation plan for completing all auth 
 
 ### Priority Order
 
-| Priority | Feature | Complexity | Reason |
-|----------|---------|------------|--------|
-| **P0** | Password Reset | Medium | Critical security feature - users locked out without it |
-| **P0** | Magic Link Email Sending | Low | Required for current sign-in flow to work in production |
-| **P1** | Two-Factor Authentication UI | High | Security feature, enhances account protection |
-| **P1** | Email/Password Sign-In UI | Medium | Alternative auth method for users who prefer passwords |
-| **P2** | Admin Dashboard | High | User management, moderation tools |
-| **P2** | API Key Management UI | Medium | Developer features for integrations |
-| **P3** | Google One Tap Verification | Low | Verify it works, may already be functional |
+| Priority | Feature                      | Complexity | Reason                                                  |
+| -------- | ---------------------------- | ---------- | ------------------------------------------------------- |
+| **P0**   | Password Reset               | Medium     | Critical security feature - users locked out without it |
+| **P0**   | Magic Link Email Sending     | Low        | Required for current sign-in flow to work in production |
+| **P1**   | Two-Factor Authentication UI | High       | Security feature, enhances account protection           |
+| **P1**   | Email/Password Sign-In UI    | Medium     | Alternative auth method for users who prefer passwords  |
+| **P2**   | Admin Dashboard              | High       | User management, moderation tools                       |
+| **P2**   | API Key Management UI        | Medium     | Developer features for integrations                     |
+| **P3**   | Google One Tap Verification  | Low        | Verify it works, may already be functional              |
 
 ---
 
@@ -1167,6 +1203,7 @@ export default function ResetPasswordPage() {
 **File**: `packages/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
 
 Add below the magic link form:
+
 ```typescript
 <Link href="/forgot-password" className="text-sm text-muted-foreground hover:underline">
   Forgot your password?
@@ -1219,6 +1256,7 @@ magicLink({
 #### Step 2: Environment Setup
 
 Ensure these are set in production:
+
 ```bash
 RESEND_API_KEY=re_xxxxx
 ```
@@ -1737,7 +1775,7 @@ Allow users to generate and manage API keys.
 **File**: `packages/web/lib/auth-client.ts`
 
 ```typescript
-import { apiKeyClient } from "better-auth/client/plugins";
+import { apiKeyClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
   plugins: [
@@ -1910,6 +1948,7 @@ Verify One Tap is working correctly.
 #### Verification Steps
 
 1. **Check environment variables are set:**
+
    ```bash
    GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=xxx
@@ -1945,12 +1984,14 @@ useEffect(() => {
 Use this checklist when implementing auth features:
 
 ### Pre-Implementation
+
 - [ ] Read the relevant Better Auth docs
 - [ ] Check if backend plugin is already configured
 - [ ] Check if client plugin needs to be added
 - [ ] Plan the UI components needed
 
 ### During Implementation
+
 - [ ] No `any` types - use proper TypeScript
 - [ ] Handle loading states
 - [ ] Handle error states with user-friendly messages
@@ -1958,6 +1999,7 @@ Use this checklist when implementing auth features:
 - [ ] Follow existing code patterns in the codebase
 
 ### Post-Implementation
+
 - [ ] Test happy path
 - [ ] Test error cases
 - [ ] Test on mobile viewport
@@ -1971,13 +2013,13 @@ Use this checklist when implementing auth features:
 ### Pattern: Protected Mutation
 
 ```typescript
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
-import { requireAuth } from "../auth";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
+import { requireAuth } from '../auth';
 
 export const createPost = mutation({
   args: {
-    eventId: v.id("events"),
+    eventId: v.id('events'),
     title: v.string(),
     content: v.string(),
   },
@@ -1986,10 +2028,10 @@ export const createPost = mutation({
     const { person } = await requireAuth(ctx);
 
     // 2. Your business logic
-    const postId = await ctx.db.insert("posts", {
+    const postId = await ctx.db.insert('posts', {
       ...args,
       authorId: person._id,
-      membershipId: undefined,  // Can be set later
+      membershipId: undefined, // Can be set later
     });
 
     return { postId };
@@ -2000,15 +2042,15 @@ export const createPost = mutation({
 ### Pattern: Role-Based Access
 
 ```typescript
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
-import { requireEventRole } from "../auth";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
+import { requireEventRole } from '../auth';
 
 export const deleteEvent = mutation({
-  args: { eventId: v.id("events") },
+  args: { eventId: v.id('events') },
   handler: async (ctx, { eventId }) => {
     // Require ORGANIZER role
-    await requireEventRole(ctx, eventId.toString(), "ORGANIZER");
+    await requireEventRole(ctx, eventId.toString(), 'ORGANIZER');
 
     // Only organizers reach here
     await ctx.db.delete(eventId);
@@ -2020,38 +2062,40 @@ export const deleteEvent = mutation({
 ### Pattern: Looking Up Other Users
 
 ```typescript
-import { query } from "../_generated/server";
-import { v } from "convex/values";
-import { authComponent } from "../auth";
+import { query } from '../_generated/server';
+import { v } from 'convex/values';
+import { authComponent } from '../auth';
 
 export const getEventMembers = query({
-  args: { eventId: v.id("events") },
+  args: { eventId: v.id('events') },
   handler: async (ctx, { eventId }) => {
     const memberships = await ctx.db
-      .query("memberships")
-      .withIndex("by_event", q => q.eq("eventId", eventId))
+      .query('memberships')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect();
 
     // Look up user data for each member
     const members = await Promise.all(
-      memberships.map(async (membership) => {
+      memberships.map(async membership => {
         const person = await ctx.db.get(membership.personId);
         if (!person) return null;
 
         // Use getAnyUserById to look up any user
         const user = await authComponent.getAnyUserById(
           ctx,
-          person.userId as any  // Known limitation - userId is string
+          person.userId as any // Known limitation - userId is string
         );
 
         return {
           membership,
           person,
-          user: user ? {
-            name: user.name,
-            email: user.email,
-            image: user.image,
-          } : null,
+          user: user
+            ? {
+                name: user.name,
+                email: user.email,
+                image: user.image,
+              }
+            : null,
         };
       })
     );
@@ -2066,9 +2110,9 @@ export const getEventMembers = query({
 When you need to update fields managed by Better Auth (name, email, image, etc.):
 
 ```typescript
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
-import { requireAuth, authComponent, createAuth } from "../auth";
+import { mutation } from '../_generated/server';
+import { v } from 'convex/values';
+import { requireAuth, authComponent, createAuth } from '../auth';
 
 export const updateUserProfile = mutation({
   args: {
@@ -2113,16 +2157,16 @@ Tests use `convex-test` which doesn't register the Better Auth component. The au
 ### Creating Test Users
 
 ```typescript
-import { createTestInstance, createTestUser } from "./test_helpers";
+import { createTestInstance, createTestUser } from './test_helpers';
 
-test("should do something", async () => {
+test('should do something', async () => {
   const t = createTestInstance();
 
   // Create a test user (creates person record with mock userId)
   const { userId, personId } = await createTestUser(t, {
-    email: "test@example.com",
-    username: "testuser",
-    name: "Test User",
+    email: 'test@example.com',
+    username: 'testuser',
+    name: 'Test User',
   });
 
   // Authenticate as the user
@@ -2131,8 +2175,8 @@ test("should do something", async () => {
   // Now call mutations as authenticated user
   const result = await asUser.mutation(api.posts.mutations.createPost, {
     eventId,
-    title: "Test Post",
-    content: "Content",
+    title: 'Test Post',
+    content: 'Content',
   });
 });
 ```
@@ -2140,18 +2184,18 @@ test("should do something", async () => {
 ### Testing Admin Functions
 
 ```typescript
-test("should allow admin access", async () => {
+test('should allow admin access', async () => {
   const t = createTestInstance();
 
   const { userId } = await createTestUser(t, {
-    email: "admin@example.com",
-    role: "admin",
+    email: 'admin@example.com',
+    role: 'admin',
   });
 
   // Pass role in identity for test fallback
   const asAdmin = t.withIdentity({
     subject: userId,
-    role: "admin",  // Important: role must be in identity
+    role: 'admin', // Important: role must be in identity
   } as any);
 
   // Now isAdmin() will return true
@@ -2181,7 +2225,7 @@ try {
   // ...
 } catch (error) {
   const msg = error instanceof Error ? error.message : String(error);
-  if (msg.includes("not registered")) {
+  if (msg.includes('not registered')) {
     // Fallback for tests
     const identity = await ctx.auth.getUserIdentity();
     // ...
@@ -2190,11 +2234,12 @@ try {
 }
 ```
 
-### Error: "Cannot find module '@/convex/_generated/api'"
+### Error: "Cannot find module '@/convex/\_generated/api'"
 
 **Cause**: Path alias not configured or Convex types not generated.
 
 **Fix**:
+
 1. Run `npx convex dev` to generate types
 2. Check `tsconfig.json` has proper path mapping
 
@@ -2208,11 +2253,11 @@ try {
 // If auth is optional:
 const person = await getCurrentPerson(ctx);
 if (!person) {
-  return null;  // Or handle unauthenticated case
+  return null; // Or handle unauthenticated case
 }
 
 // If auth is required:
-const { person } = await requireAuth(ctx);  // Throws if not auth'd
+const { person } = await requireAuth(ctx); // Throws if not auth'd
 ```
 
 ### Error: "Property 'username' does not exist"
@@ -2223,7 +2268,7 @@ const { person } = await requireAuth(ctx);  // Throws if not auth'd
 
 ```typescript
 const user = await authComponent.getAuthUser(ctx);
-const username = (user as any).username;  // Custom field from username plugin
+const username = (user as any).username; // Custom field from username plugin
 ```
 
 **Better fix**: Create a typed helper:
@@ -2234,7 +2279,7 @@ type ExtendedUser = AuthUser & {
   role?: string;
 };
 
-const user = await authComponent.getAuthUser(ctx) as ExtendedUser | null;
+const user = (await authComponent.getAuthUser(ctx)) as ExtendedUser | null;
 ```
 
 ### TypeScript: "Type instantiation is excessively deep"
@@ -2245,13 +2290,13 @@ const user = await authComponent.getAuthUser(ctx) as ExtendedUser | null;
 
 ```typescript
 // Instead of:
-import { api } from "@/convex/_generated/api";
+import { api } from '@/convex/_generated/api';
 
 // Use:
 let api: any;
 function initApi() {
   if (!api) {
-    api = require("@/convex/_generated/api").api;
+    api = require('@/convex/_generated/api').api;
   }
 }
 ```
@@ -2330,24 +2375,30 @@ import {
   authComponent,
   createAuth,
   type AuthUser,
-} from "../auth";
+} from '../auth';
 
 // Convex types
-import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Id, Doc } from "../_generated/dataModel";
+import { QueryCtx, MutationCtx } from '../_generated/server';
+import { Id, Doc } from '../_generated/dataModel';
 
 // Client-side auth
-import { authClient, signIn, signUp, signOut, useSession } from "@/lib/auth-client";
+import {
+  authClient,
+  signIn,
+  signUp,
+  signOut,
+  useSession,
+} from '@/lib/auth-client';
 ```
 
 ### Function Quick Reference
 
-| Need | Function |
-|------|----------|
-| Get current person (optional) | `getCurrentPerson(ctx)` |
-| Require auth | `requireAuth(ctx)` |
-| Check admin | `isAdmin(ctx)` |
-| Check event role | `hasEventRole(ctx, eventId, "ORGANIZER")` |
-| Look up any user | `authComponent.getAnyUserById(ctx, userId)` |
-| Update user fields | `authComponent.getAuth(createAuth, ctx)` then `auth.api.updateUser()` |
-| Create person for user | `ensurePersonRecord(ctx, userId)` |
+| Need                          | Function                                                              |
+| ----------------------------- | --------------------------------------------------------------------- |
+| Get current person (optional) | `getCurrentPerson(ctx)`                                               |
+| Require auth                  | `requireAuth(ctx)`                                                    |
+| Check admin                   | `isAdmin(ctx)`                                                        |
+| Check event role              | `hasEventRole(ctx, eventId, "ORGANIZER")`                             |
+| Look up any user              | `authComponent.getAnyUserById(ctx, userId)`                           |
+| Update user fields            | `authComponent.getAuth(createAuth, ctx)` then `auth.api.updateUser()` |
+| Create person for user        | `ensurePersonRecord(ctx, userId)`                                     |
