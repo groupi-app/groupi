@@ -247,6 +247,15 @@ export function EventHeader({ eventId }: EventHeaderProps) {
   return (
     <>
       <header className='flex flex-col md:my-5 max-w-4xl mx-auto gap-3'>
+        {event.imageUrl && (
+          <div className='w-full max-h-[300px] overflow-hidden rounded-xl mb-3'>
+            <img
+              src={event.imageUrl}
+              alt={`Cover image for ${title}`}
+              className='w-full h-full object-cover'
+            />
+          </div>
+        )}
         <div className='flex justify-between flex-col-reverse gap-3 md:flex-row'>
           <div className='flex items-center gap-3'>
             <h1

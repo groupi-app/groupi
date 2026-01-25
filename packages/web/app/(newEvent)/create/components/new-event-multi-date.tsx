@@ -238,7 +238,8 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
 
   // Submit event
   async function onSubmit2(data: z.infer<typeof form2Schema>) {
-    const { title, description, location, reminderOffset } = formState;
+    const { title, description, location, reminderOffset, imageStorageId } =
+      formState;
 
     isSubmittingRef.current = true;
     setIsSaving(true);
@@ -252,6 +253,7 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
           end: opt.end?.toISOString(),
         })),
         reminderOffset,
+        imageStorageId,
       });
       toast.success('The event was created successfully.');
       router.push(`/event/${result.eventId}`);

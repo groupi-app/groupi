@@ -90,6 +90,7 @@ export function useCreateEvent() {
       title: string;
       description?: string;
       location?: string;
+      imageStorageId?: string; // Optional cover image storage ID
       potentialDateTimes?: string[]; // ISO date strings for multi-date events (legacy)
       potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
       chosenDateTime?: string; // ISO date string for single-date events
@@ -101,6 +102,7 @@ export function useCreateEvent() {
           title: data.title,
           description: data.description,
           location: data.location,
+          imageStorageId: data.imageStorageId as Id<'_storage'> | undefined,
           potentialDateTimes: data.potentialDateTimes,
           potentialDateTimeOptions: data.potentialDateTimeOptions,
           chosenDateTime: data.chosenDateTime,
@@ -140,6 +142,7 @@ export function useUpdateEvent() {
       title?: string;
       description?: string;
       location?: string;
+      imageStorageId?: string | null; // Optional cover image storage ID (null to remove)
       reminderOffset?: ReminderOffset | null;
     }) => {
       try {
@@ -148,6 +151,10 @@ export function useUpdateEvent() {
           title: data.title,
           description: data.description,
           location: data.location,
+          imageStorageId:
+            data.imageStorageId === null
+              ? null
+              : (data.imageStorageId as Id<'_storage'> | undefined),
           reminderOffset: data.reminderOffset,
         });
 
