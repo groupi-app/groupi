@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -104,6 +105,13 @@ export function EventScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
+        {event.imageUrl && (
+          <Image
+            source={{ uri: event.imageUrl }}
+            style={styles.heroImage}
+            resizeMode='cover'
+          />
+        )}
         <Text style={styles.title} {...createHeadingA11yProps(event.title, 1)}>
           {event.title}
         </Text>
@@ -166,6 +174,12 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  heroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,

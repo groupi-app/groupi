@@ -26,6 +26,7 @@ interface FormState {
   description?: string;
   location?: string;
   reminderOffset?: ReminderOffset;
+  imageStorageId?: string;
 }
 
 interface FormContextValue {
@@ -42,6 +43,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
     description: undefined,
     location: undefined,
     reminderOffset: undefined,
+    imageStorageId: undefined,
   });
 
   const reset = useCallback(() => {
@@ -50,6 +52,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
       description: undefined,
       location: undefined,
       reminderOffset: undefined,
+      imageStorageId: undefined,
     });
   }, []);
 

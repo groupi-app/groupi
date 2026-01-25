@@ -48,6 +48,7 @@ export const createEvent = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     location: v.optional(v.string()),
+    imageStorageId: v.optional(v.id('_storage')), // Optional cover image
     // Legacy: array of ISO date strings (backward compatible)
     potentialDateTimes: v.optional(v.array(v.string())),
     // New: array of objects with start/end times
@@ -63,6 +64,7 @@ export const createEvent = mutation({
       title,
       description,
       location,
+      imageStorageId,
       potentialDateTimes,
       potentialDateTimeOptions,
       chosenDateTime,
@@ -126,6 +128,7 @@ export const createEvent = mutation({
       title: title.trim(),
       description: description?.trim() || '',
       location: location?.trim() || '',
+      imageStorageId: imageStorageId,
       creatorId: person._id,
       createdAt: now,
       updatedAt: now,
@@ -202,6 +205,12 @@ export const updateEvent = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     location: v.optional(v.string()),
+    imageStorageId: v.optional(
+      v.union(
+        v.id('_storage'),
+        v.null() // Allow null to remove the image
+      )
+    ),
     reminderOffset: v.optional(
       v.union(
         reminderOffsetValidator,
@@ -212,7 +221,7 @@ export const updateEvent = mutation({
   },
   handler: async (
     ctx,
-    { eventId, title, description, location, reminderOffset }
+    { eventId, title, description, location, imageStorageId, reminderOffset }
   ) => {
     // Require organizer or moderator role
     await requireEventRole(ctx, eventId, 'MODERATOR');
@@ -239,6 +248,21 @@ export const updateEvent = mutation({
 
     if (location !== undefined) {
       updateData.location = location.trim();
+    }
+
+    // Handle image updates
+    if (imageStorageId !== undefined) {
+      // Delete old image from storage if it exists
+      if (event.imageStorageId) {
+        try {
+          await ctx.storage.delete(event.imageStorageId);
+        } catch {
+          // Ignore errors - file may already be deleted
+        }
+      }
+      // Set new image or clear if null
+      updateData.imageStorageId =
+        imageStorageId === null ? undefined : imageStorageId;
     }
 
     if (reminderOffset !== undefined) {
@@ -300,6 +324,21 @@ export const deleteEvent = mutation({
   handler: async (ctx, { eventId }) => {
     // Require organizer role only
     await requireEventRole(ctx, eventId, 'ORGANIZER');
+
+    // Get the event to check for image
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Delete cover image from storage if it exists
+    if (event.imageStorageId) {
+      try {
+        await ctx.storage.delete(event.imageStorageId);
+      } catch {
+        // Ignore errors - file may already be deleted
+      }
+    }
 
     // Delete all related data in order (to avoid foreign key issues)
 
