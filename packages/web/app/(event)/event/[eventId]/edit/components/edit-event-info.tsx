@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 import { Id } from '@/convex/_generated/dataModel';
+import { EventImageUpload } from '@/components/event-image-upload';
 
 // Reminder offset type
 type ReminderOffset =
@@ -99,12 +100,31 @@ export default function EditEventInfo({
     description: string;
     location: string;
     reminderOffset?: ReminderOffset;
+    imageUrl?: string | null;
+    imageStorageId?: Id<'_storage'>;
   };
 }) {
-  const { eventId, title, description, location, reminderOffset } = eventData;
+  const {
+    eventId,
+    title,
+    description,
+    location,
+    reminderOffset,
+    imageUrl,
+    imageStorageId: initialImageStorageId,
+  } = eventData;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
   const [isSaving, setIsSaving] = useState(false);
+  const [imageStorageId, setImageStorageId] = useState<Id<'_storage'> | null>(
+    initialImageStorageId ?? null
+  );
+  const [hasImageChanged, setHasImageChanged] = useState(false);
+
+  const handleImageChange = (newStorageId: Id<'_storage'> | null) => {
+    setImageStorageId(newStorageId);
+    setHasImageChanged(true);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -138,6 +158,10 @@ export default function EditEventInfo({
         description: data.description,
         location: data.location,
         reminderOffset: reminderOffsetValue,
+        // Only include imageStorageId if it changed
+        ...(hasImageChanged && {
+          imageStorageId: imageStorageId,
+        }),
       });
     } catch {
       // Rollback navigation and show error toast
@@ -199,6 +223,19 @@ export default function EditEventInfo({
             </FormItem>
           )}
         />
+        <div className='space-y-2'>
+          <label className='text-sm font-medium leading-none'>
+            Cover Image
+          </label>
+          <EventImageUpload
+            imageUrl={hasImageChanged ? undefined : imageUrl}
+            imageStorageId={imageStorageId}
+            onImageChange={handleImageChange}
+          />
+          <p className='text-sm text-muted-foreground'>
+            Add an optional cover image for your event.
+          </p>
+        </div>
         <FormField
           control={form.control}
           name='reminderOffset'

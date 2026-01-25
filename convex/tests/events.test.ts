@@ -132,5 +132,26 @@ describe('Events Operations', () => {
       expect(event?.potentialDateTimes[0]).toBe(tomorrow.getTime());
       expect(event?.potentialDateTimes[1]).toBe(dayAfter.getTime());
     });
+
+    test('should create event without imageStorageId', async () => {
+      const t = createTestInstance();
+
+      const { userId } = await createTestUser(t, {
+        email: 'test@example.com',
+        username: 'testuser',
+        name: 'Test User',
+      });
+
+      const asUser = t.withIdentity({ subject: userId });
+      const result = await asUser.mutation(api.events.mutations.createEvent, {
+        title: 'Event Without Image',
+      });
+
+      const event = await t.run(async ctx => {
+        return await ctx.db.get(result.eventId);
+      });
+
+      expect(event?.imageStorageId).toBeUndefined();
+    });
   });
 });
