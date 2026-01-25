@@ -22,7 +22,7 @@ describe('Badge', () => {
   });
 
   it('should apply secondary variant styling', () => {
-    render(<Badge variant="secondary">Secondary</Badge>);
+    render(<Badge variant='secondary'>Secondary</Badge>);
 
     const badge = screen.getByText('Secondary');
     expect(badge).toHaveClass('bg-secondary');
@@ -30,7 +30,7 @@ describe('Badge', () => {
   });
 
   it('should apply destructive variant styling', () => {
-    render(<Badge variant="destructive">Destructive</Badge>);
+    render(<Badge variant='destructive'>Destructive</Badge>);
 
     const badge = screen.getByText('Destructive');
     expect(badge).toHaveClass('bg-destructive');
@@ -38,7 +38,7 @@ describe('Badge', () => {
   });
 
   it('should apply outline variant styling', () => {
-    render(<Badge variant="outline">Outline</Badge>);
+    render(<Badge variant='outline'>Outline</Badge>);
 
     const badge = screen.getByText('Outline');
     expect(badge).toHaveClass('text-foreground');
@@ -46,7 +46,7 @@ describe('Badge', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Badge className="custom-class">Custom</Badge>);
+    render(<Badge className='custom-class'>Custom</Badge>);
 
     const badge = screen.getByText('Custom');
     expect(badge).toHaveClass('custom-class');
@@ -54,7 +54,11 @@ describe('Badge', () => {
   });
 
   it('should pass through additional HTML attributes', () => {
-    render(<Badge data-testid="my-badge" id="badge-1">Attrs</Badge>);
+    render(
+      <Badge data-testid='my-badge' id='badge-1'>
+        Attrs
+      </Badge>
+    );
 
     const badge = screen.getByTestId('my-badge');
     expect(badge).toHaveAttribute('id', 'badge-1');

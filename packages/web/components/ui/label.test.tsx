@@ -14,14 +14,14 @@ describe('Label', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Label data-testid="label">Username</Label>);
+    render(<Label data-testid='label'>Username</Label>);
 
     const label = screen.getByTestId('label');
     expect(label).toHaveAttribute('data-slot', 'label');
   });
 
   it('should apply base styling', () => {
-    render(<Label data-testid="label">Field Label</Label>);
+    render(<Label data-testid='label'>Field Label</Label>);
 
     const label = screen.getByTestId('label');
     expect(label).toHaveClass('text-sm');
@@ -30,7 +30,11 @@ describe('Label', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Label className="text-red-500" data-testid="label">Error Label</Label>);
+    render(
+      <Label className='text-red-500' data-testid='label'>
+        Error Label
+      </Label>
+    );
 
     const label = screen.getByTestId('label');
     expect(label).toHaveClass('text-red-500');
@@ -38,14 +42,18 @@ describe('Label', () => {
   });
 
   it('should support htmlFor attribute', () => {
-    render(<Label htmlFor="email-input">Email</Label>);
+    render(<Label htmlFor='email-input'>Email</Label>);
 
     const label = screen.getByText('Email');
     expect(label).toHaveAttribute('for', 'email-input');
   });
 
   it('should pass through additional attributes', () => {
-    render(<Label id="username-label" data-testid="label">Username</Label>);
+    render(
+      <Label id='username-label' data-testid='label'>
+        Username
+      </Label>
+    );
 
     const label = screen.getByTestId('label');
     expect(label).toHaveAttribute('id', 'username-label');
@@ -53,11 +61,13 @@ describe('Label', () => {
 
   it('should support suppressHydrationWarning', () => {
     // This should not throw
-    expect(() => render(<Label suppressHydrationWarning>Safe Label</Label>)).not.toThrow();
+    expect(() =>
+      render(<Label suppressHydrationWarning>Safe Label</Label>)
+    ).not.toThrow();
   });
 
   it('should render as label element', () => {
-    render(<Label data-testid="label">Field</Label>);
+    render(<Label data-testid='label'>Field</Label>);
 
     const label = screen.getByTestId('label');
     expect(label.tagName).toBe('LABEL');
@@ -66,8 +76,8 @@ describe('Label', () => {
   it('should associate with input via htmlFor', () => {
     render(
       <>
-        <Label htmlFor="test-input">Test Field</Label>
-        <input id="test-input" />
+        <Label htmlFor='test-input'>Test Field</Label>
+        <input id='test-input' />
       </>
     );
 

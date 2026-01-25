@@ -15,14 +15,14 @@ describe('Textarea', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Textarea data-testid="textarea" />);
+    render(<Textarea data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveAttribute('data-slot', 'textarea');
   });
 
   it('should apply base styling', () => {
-    render(<Textarea data-testid="textarea" />);
+    render(<Textarea data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveClass('flex');
@@ -33,21 +33,23 @@ describe('Textarea', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Textarea className="h-40" data-testid="textarea" />);
+    render(<Textarea className='h-40' data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveClass('h-40');
   });
 
   it('should accept placeholder', () => {
-    render(<Textarea placeholder="Enter description..." />);
+    render(<Textarea placeholder='Enter description...' />);
 
-    expect(screen.getByPlaceholderText('Enter description...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Enter description...')
+    ).toBeInTheDocument();
   });
 
   it('should handle value changes', async () => {
     const user = userEvent.setup();
-    render(<Textarea data-testid="textarea" />);
+    render(<Textarea data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     await user.type(textarea, 'This is a multi-line\ntext input');
@@ -58,7 +60,7 @@ describe('Textarea', () => {
   it('should call onChange handler', async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<Textarea onChange={handleChange} data-testid="textarea" />);
+    render(<Textarea onChange={handleChange} data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     await user.type(textarea, 'a');
@@ -67,35 +69,35 @@ describe('Textarea', () => {
   });
 
   it('should support disabled state', () => {
-    render(<Textarea disabled data-testid="textarea" />);
+    render(<Textarea disabled data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toBeDisabled();
   });
 
   it('should support required attribute', () => {
-    render(<Textarea required data-testid="textarea" />);
+    render(<Textarea required data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toBeRequired();
   });
 
   it('should support rows attribute', () => {
-    render(<Textarea rows={5} data-testid="textarea" />);
+    render(<Textarea rows={5} data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveAttribute('rows', '5');
   });
 
   it('should support maxLength attribute', () => {
-    render(<Textarea maxLength={500} data-testid="textarea" />);
+    render(<Textarea maxLength={500} data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveAttribute('maxLength', '500');
   });
 
   it('should pass through additional attributes', () => {
-    render(<Textarea id="description" name="bio" data-testid="textarea" />);
+    render(<Textarea id='description' name='bio' data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea).toHaveAttribute('id', 'description');
@@ -103,7 +105,7 @@ describe('Textarea', () => {
   });
 
   it('should render as textarea element', () => {
-    render(<Textarea data-testid="textarea" />);
+    render(<Textarea data-testid='textarea' />);
 
     const textarea = screen.getByTestId('textarea');
     expect(textarea.tagName).toBe('TEXTAREA');

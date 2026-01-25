@@ -15,21 +15,25 @@ describe('Toggle', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Toggle data-testid="toggle">Toggle</Toggle>);
+    render(<Toggle data-testid='toggle'>Toggle</Toggle>);
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveAttribute('data-slot', 'toggle');
   });
 
   it('should apply default variant styling', () => {
-    render(<Toggle data-testid="toggle">Toggle</Toggle>);
+    render(<Toggle data-testid='toggle'>Toggle</Toggle>);
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('bg-transparent');
   });
 
   it('should apply outline variant styling', () => {
-    render(<Toggle variant="outline" data-testid="toggle">Toggle</Toggle>);
+    render(
+      <Toggle variant='outline' data-testid='toggle'>
+        Toggle
+      </Toggle>
+    );
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('border');
@@ -37,7 +41,7 @@ describe('Toggle', () => {
   });
 
   it('should apply default size styling', () => {
-    render(<Toggle data-testid="toggle">Toggle</Toggle>);
+    render(<Toggle data-testid='toggle'>Toggle</Toggle>);
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('h-10');
@@ -45,7 +49,11 @@ describe('Toggle', () => {
   });
 
   it('should apply sm size styling', () => {
-    render(<Toggle size="sm" data-testid="toggle">Toggle</Toggle>);
+    render(
+      <Toggle size='sm' data-testid='toggle'>
+        Toggle
+      </Toggle>
+    );
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('h-9');
@@ -53,7 +61,11 @@ describe('Toggle', () => {
   });
 
   it('should apply lg size styling', () => {
-    render(<Toggle size="lg" data-testid="toggle">Toggle</Toggle>);
+    render(
+      <Toggle size='lg' data-testid='toggle'>
+        Toggle
+      </Toggle>
+    );
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('h-11');
@@ -93,7 +105,11 @@ describe('Toggle', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Toggle className="custom-class" data-testid="toggle">Toggle</Toggle>);
+    render(
+      <Toggle className='custom-class' data-testid='toggle'>
+        Toggle
+      </Toggle>
+    );
 
     const toggle = screen.getByTestId('toggle');
     expect(toggle).toHaveClass('custom-class');

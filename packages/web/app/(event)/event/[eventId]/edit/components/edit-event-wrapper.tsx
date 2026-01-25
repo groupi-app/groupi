@@ -15,7 +15,7 @@ interface EditEventWrapperProps {
  * - Renders edit content when data is ready
  */
 export function EditEventWrapper({ eventId }: EditEventWrapperProps) {
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
   const currentUser = useCurrentUser();
 
   // Loading state

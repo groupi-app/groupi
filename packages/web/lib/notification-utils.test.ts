@@ -8,11 +8,15 @@ import { getNotificationTypeDisplayName } from './notification-utils';
 describe('Notification Utils', () => {
   describe('getNotificationTypeDisplayName', () => {
     it('should return display name for EVENT_EDITED', () => {
-      expect(getNotificationTypeDisplayName('EVENT_EDITED')).toBe('Event Edited');
+      expect(getNotificationTypeDisplayName('EVENT_EDITED')).toBe(
+        'Event Edited'
+      );
     });
 
     it('should return display name for DATE_CHANGED', () => {
-      expect(getNotificationTypeDisplayName('DATE_CHANGED')).toBe('Date Changed');
+      expect(getNotificationTypeDisplayName('DATE_CHANGED')).toBe(
+        'Date Changed'
+      );
     });
 
     it('should return display name for DATE_CHOSEN', () => {
@@ -32,11 +36,15 @@ describe('Notification Utils', () => {
     });
 
     it('should return display name for USER_PROMOTED', () => {
-      expect(getNotificationTypeDisplayName('USER_PROMOTED')).toBe('User Promoted');
+      expect(getNotificationTypeDisplayName('USER_PROMOTED')).toBe(
+        'User Promoted'
+      );
     });
 
     it('should return display name for USER_DEMOTED', () => {
-      expect(getNotificationTypeDisplayName('USER_DEMOTED')).toBe('User Demoted');
+      expect(getNotificationTypeDisplayName('USER_DEMOTED')).toBe(
+        'User Demoted'
+      );
     });
 
     it('should return display name for USER_RSVP', () => {
@@ -52,7 +60,9 @@ describe('Notification Utils', () => {
     });
 
     it('should return display name for USER_MENTIONED', () => {
-      expect(getNotificationTypeDisplayName('USER_MENTIONED')).toBe('Mentioned');
+      expect(getNotificationTypeDisplayName('USER_MENTIONED')).toBe(
+        'Mentioned'
+      );
     });
 
     it('should return raw type for unknown types', () => {

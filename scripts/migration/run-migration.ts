@@ -39,7 +39,9 @@ async function main() {
   console.log(`  - ${parsedData.persons.length} persons`);
   console.log(`  - ${parsedData.events.length} events`);
   console.log(`  - ${parsedData.memberships.length} memberships`);
-  console.log(`  - ${parsedData.potentialDateTimes.length} potential date times`);
+  console.log(
+    `  - ${parsedData.potentialDateTimes.length} potential date times`
+  );
   console.log(`  - ${parsedData.availabilities.length} availabilities`);
   console.log(`  - ${parsedData.posts.length} posts`);
   console.log(`  - ${parsedData.replies.length} replies`);
@@ -47,7 +49,9 @@ async function main() {
   console.log(`  - ${parsedData.notifications.length} notifications`);
 
   if (clearFirst) {
-    console.log('\n⚠️  WARNING: --clear flag set. Existing data will be deleted.');
+    console.log(
+      '\n⚠️  WARNING: --clear flag set. Existing data will be deleted.'
+    );
   }
 
   console.log('\n\nTo run the migration:');
@@ -61,19 +65,28 @@ async function main() {
   console.log('\nAlternatively, use the Convex CLI:');
   console.log('');
   console.log('  npx convex run migration/actions:runMigration \\');
-  console.log(`    --args '{"data": <contents of parsed-data.json>, "clearFirst": ${clearFirst}}'`);
+  console.log(
+    `    --args '{"data": <contents of parsed-data.json>, "clearFirst": ${clearFirst}}'`
+  );
   console.log('');
-  console.log('Note: The data is too large for command line. Use the dashboard instead.');
+  console.log(
+    'Note: The data is too large for command line. Use the dashboard instead.'
+  );
 
   // Create a smaller test file with just a few records for testing
   const testData = {
     persons: parsedData.persons.slice(0, 3),
     events: parsedData.events.slice(0, 2),
     memberships: parsedData.memberships.filter((m: { eventId: string }) =>
-      parsedData.events.slice(0, 2).some((e: { id: string }) => e.id === m.eventId)
+      parsedData.events
+        .slice(0, 2)
+        .some((e: { id: string }) => e.id === m.eventId)
     ),
-    potentialDateTimes: parsedData.potentialDateTimes.filter((pdt: { eventId: string }) =>
-      parsedData.events.slice(0, 2).some((e: { id: string }) => e.id === pdt.eventId)
+    potentialDateTimes: parsedData.potentialDateTimes.filter(
+      (pdt: { eventId: string }) =>
+        parsedData.events
+          .slice(0, 2)
+          .some((e: { id: string }) => e.id === pdt.eventId)
     ),
     availabilities: [],
     posts: [],

@@ -7,7 +7,7 @@ import { PostEditorSkeleton } from '@/components/skeletons';
 
 export function NewPostContent({ eventId }: { eventId: string }) {
   const user = useCurrentUser();
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
 
   if (user === undefined || eventData === undefined) {
     return (

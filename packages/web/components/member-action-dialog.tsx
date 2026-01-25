@@ -26,10 +26,12 @@ export function MemberActionDialog({
   member,
   action,
 }: {
-  member: Doc<"memberships"> & {
-    person: (Doc<"persons"> & {
-      user: User;
-    }) | null;
+  member: Doc<'memberships'> & {
+    person:
+      | (Doc<'persons'> & {
+          user: User;
+        })
+      | null;
   };
   action: MemberAction;
 }) {
@@ -49,8 +51,7 @@ export function MemberActionDialog({
       } else if (action === MemberAction.DEMOTE) {
         await updateMemberRole(member._id, 'ATTENDEE');
         toast.success('Moderator demoted', {
-          description:
-            'The moderator has been demoted to a normal attendee.',
+          description: 'The moderator has been demoted to a normal attendee.',
         });
       } else if (action === MemberAction.PROMOTE) {
         await updateMemberRole(member._id, 'MODERATOR');
@@ -66,23 +67,19 @@ export function MemberActionDialog({
     } catch {
       if (action === MemberAction.KICK) {
         toast.error('Failed to kick member', {
-          description:
-            'The attendee could not be kicked. Please try again.',
+          description: 'The attendee could not be kicked. Please try again.',
         });
       } else if (action === MemberAction.DEMOTE) {
         toast.error('Failed to demote moderator', {
-          description:
-            'The moderator could not be demoted. Please try again.',
+          description: 'The moderator could not be demoted. Please try again.',
         });
       } else if (action === MemberAction.PROMOTE) {
         toast.error('Failed to promote attendee', {
-          description:
-            'The attendee could not be promoted. Please try again.',
+          description: 'The attendee could not be promoted. Please try again.',
         });
       } else if (action === MemberAction.BAN) {
         toast.error('Failed to ban member', {
-          description:
-            'The member could not be banned. Please try again.',
+          description: 'The member could not be banned. Please try again.',
         });
       }
     } finally {

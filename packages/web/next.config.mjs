@@ -26,9 +26,7 @@ import './env.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: [
-    '@groupi/shared',
-  ],
+  transpilePackages: ['@groupi/shared'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Exclude server-only modules from client bundle
@@ -83,7 +81,8 @@ export default withSentryConfig(nextConfig, {
 
   // Disable sourcemap uploads for preview deployments to avoid errors
   // Sourcemaps are only needed for production deployments
-  disable: process.env.VERCEL_ENV === 'preview' || !process.env.SENTRY_AUTH_TOKEN,
+  disable:
+    process.env.VERCEL_ENV === 'preview' || !process.env.SENTRY_AUTH_TOKEN,
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

@@ -10,15 +10,20 @@ interface RelationLinkProps {
   className?: string;
 }
 
-export function RelationLink({ count, label, onClick, className }: RelationLinkProps) {
+export function RelationLink({
+  count,
+  label,
+  onClick,
+  className,
+}: RelationLinkProps) {
   if (count === 0) {
-    return <span className="text-muted-foreground text-sm">0 {label}</span>;
+    return <span className='text-muted-foreground text-sm'>0 {label}</span>;
   }
 
   return (
     <Button
-      variant="link"
-      size="sm"
+      variant='link'
+      size='sm'
       className={cn('h-auto p-0 text-primary', className)}
       onClick={onClick}
     >

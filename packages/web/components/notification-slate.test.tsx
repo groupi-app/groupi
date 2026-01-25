@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Test file uses 'any' types for test data and mocking flexibility
 
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { expect, test, describe, beforeEach, vi } from "vitest";
-import { NotificationSlate } from "./notification-slate";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { expect, test, describe, beforeEach, vi } from 'vitest';
+import { NotificationSlate } from './notification-slate';
 
 // Mock Convex mutations
 const mockMarkAsRead = vi.fn();
@@ -13,31 +13,31 @@ const mockDeleteNotification = vi.fn();
 
 // Mock convex generated API - must be before component import
 // Use relative path to match the require() in notification-slate.tsx
-vi.mock("../../../convex/_generated/api", () => ({
+vi.mock('../../../convex/_generated/api', () => ({
   api: {
     notifications: {
       mutations: {
-        markNotificationAsRead: "markNotificationAsRead",
-        markNotificationAsUnread: "markNotificationAsUnread",
-        deleteNotification: "deleteNotification",
+        markNotificationAsRead: 'markNotificationAsRead',
+        markNotificationAsUnread: 'markNotificationAsUnread',
+        deleteNotification: 'deleteNotification',
       },
     },
   },
 }));
 
-vi.mock("convex/react", () => ({
+vi.mock('convex/react', () => ({
   useMutation: () => vi.fn(),
 }));
 
 // Mock other dependencies
-vi.mock("@/stores/notification-close-store", () => ({
+vi.mock('@/stores/notification-close-store', () => ({
   useNotificationCloseStore: () => ({
     setPopoverOpen: vi.fn(),
     setSheetOpen: vi.fn(),
   }),
 }));
 
-vi.mock("@/hooks/use-action-menu", () => ({
+vi.mock('@/hooks/use-action-menu', () => ({
   useActionMenu: () => ({
     sheetOpen: false,
     setSheetOpen: vi.fn(),
@@ -48,7 +48,7 @@ vi.mock("@/hooks/use-action-menu", () => ({
   }),
 }));
 
-vi.mock("@/convex/_generated/dataModel", () => ({
+vi.mock('@/convex/_generated/dataModel', () => ({
   Id: (value: string) => value,
 }));
 
@@ -56,7 +56,7 @@ vi.mock("@/convex/_generated/dataModel", () => ({
 type TestId<T extends string> = string & { __tableName: T };
 
 // Mock toast
-vi.mock("sonner", () => ({
+vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -64,7 +64,7 @@ vi.mock("sonner", () => ({
 }));
 
 // Mock Next.js components
-vi.mock("next/link", () => {
+vi.mock('next/link', () => {
   return {
     default: ({ children, href, ...props }: any) => (
       <a href={href} {...props}>
@@ -74,30 +74,30 @@ vi.mock("next/link", () => {
   };
 });
 
-describe("NotificationSlate", () => {
+describe('NotificationSlate', () => {
   const mockNotification = {
     // Convex Doc fields
-    _id: "notification-123" as TestId<"notifications">,
+    _id: 'notification-123' as TestId<'notifications'>,
     _creationTime: Date.now(),
-    personId: "person-123" as TestId<"persons">,
+    personId: 'person-123' as TestId<'persons'>,
     // EnrichedNotification fields
-    id: "notification-123",
+    id: 'notification-123',
     createdAt: Date.now(),
-    type: "NEW_POST" as const,
+    type: 'NEW_POST' as const,
     read: false,
     event: {
-      id: "event-123",
-      title: "Test Event",
+      id: 'event-123',
+      title: 'Test Event',
     },
     post: {
-      id: "post-123",
-      title: "Test Post",
+      id: 'post-123',
+      title: 'Test Post',
     },
     author: {
-      id: "user-123",
+      id: 'user-123',
       user: {
-        name: "Test User",
-        email: "testuser@example.com",
+        name: 'Test User',
+        email: 'testuser@example.com',
       },
     },
   };
@@ -106,16 +106,16 @@ describe("NotificationSlate", () => {
     vi.clearAllMocks();
   });
 
-  test("should render notification content correctly", () => {
+  test('should render notification content correctly', () => {
     render(<NotificationSlate notification={mockNotification} />);
 
-    expect(screen.getByText("Test Event")).toBeInTheDocument();
-    expect(screen.getByText("Test Post")).toBeInTheDocument();
-    expect(screen.getByText("Test User")).toBeInTheDocument();
+    expect(screen.getByText('Test Event')).toBeInTheDocument();
+    expect(screen.getByText('Test Post')).toBeInTheDocument();
+    expect(screen.getByText('Test User')).toBeInTheDocument();
     expect(screen.getByText(/posted in/)).toBeInTheDocument();
   });
 
-  test("should show unread state for unread notification", () => {
+  test('should show unread state for unread notification', () => {
     const unreadNotification = { ...mockNotification, read: false };
 
     render(<NotificationSlate notification={unreadNotification} />);
@@ -125,7 +125,7 @@ describe("NotificationSlate", () => {
     // In a real implementation, you'd verify the visual styling for unread state
   });
 
-  test("should show read state for read notification", () => {
+  test('should show read state for read notification', () => {
     const readNotification = { ...mockNotification, read: true };
 
     render(<NotificationSlate notification={readNotification} />);
@@ -134,7 +134,7 @@ describe("NotificationSlate", () => {
     // Note: This test assumes the component has proper data-testid attributes
   });
 
-  test("should call markAsRead when mark as read is clicked", async () => {
+  test('should call markAsRead when mark as read is clicked', async () => {
     mockMarkAsRead.mockResolvedValue({});
 
     render(<NotificationSlate notification={mockNotification} />);
@@ -144,8 +144,8 @@ describe("NotificationSlate", () => {
     expect(mockMarkAsRead).not.toHaveBeenCalled();
   });
 
-  test("should handle mark as read error gracefully", async () => {
-    mockMarkAsRead.mockRejectedValue(new Error("Failed to mark as read"));
+  test('should handle mark as read error gracefully', async () => {
+    mockMarkAsRead.mockRejectedValue(new Error('Failed to mark as read'));
 
     render(<NotificationSlate notification={mockNotification} />);
 
@@ -153,7 +153,7 @@ describe("NotificationSlate", () => {
     // The error should be caught and a toast shown
   });
 
-  test("should call markAsUnread when mark as unread is clicked", async () => {
+  test('should call markAsUnread when mark as unread is clicked', async () => {
     const readNotification = { ...mockNotification, read: true };
     mockMarkAsUnread.mockResolvedValue({});
 
@@ -163,7 +163,7 @@ describe("NotificationSlate", () => {
     expect(mockMarkAsUnread).not.toHaveBeenCalled();
   });
 
-  test("should call deleteNotification when delete is clicked", async () => {
+  test('should call deleteNotification when delete is clicked', async () => {
     mockDeleteNotification.mockResolvedValue({});
 
     render(<NotificationSlate notification={mockNotification} />);
@@ -172,42 +172,42 @@ describe("NotificationSlate", () => {
     expect(mockDeleteNotification).not.toHaveBeenCalled();
   });
 
-  test("should generate correct notification link based on type", () => {
+  test('should generate correct notification link based on type', () => {
     render(<NotificationSlate notification={mockNotification} />);
 
     // Should generate link to the post for NEW_POST notifications
-    const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/post/post-123");
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/post/post-123');
   });
 
-  test("should handle different notification types", () => {
+  test('should handle different notification types', () => {
     const mentionNotification = {
       ...mockNotification,
-      type: "USER_MENTIONED" as const,
+      type: 'USER_MENTIONED' as const,
     };
 
     render(<NotificationSlate notification={mentionNotification} />);
 
     // Should render mention notification with author name
-    expect(screen.getByText("Test User")).toBeInTheDocument();
+    expect(screen.getByText('Test User')).toBeInTheDocument();
     expect(screen.getByText(/mentioned you in/)).toBeInTheDocument();
-    expect(screen.getByText("Test Post")).toBeInTheDocument();
+    expect(screen.getByText('Test Post')).toBeInTheDocument();
   });
 
-  test("should handle event-only notifications", () => {
+  test('should handle event-only notifications', () => {
     const eventNotification = {
       ...mockNotification,
-      type: "EVENT_EDITED" as const,
+      type: 'EVENT_EDITED' as const,
       post: undefined,
     };
 
     render(<NotificationSlate notification={eventNotification} />);
 
     // Should handle notifications without post data
-    expect(screen.getByText("Test Event")).toBeInTheDocument();
+    expect(screen.getByText('Test Event')).toBeInTheDocument();
   });
 
-  test("should format date correctly", () => {
+  test('should format date correctly', () => {
     const notification = {
       ...mockNotification,
       createdAt: Date.now() - 1000 * 60 * 2, // 2 minutes ago

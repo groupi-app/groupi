@@ -82,7 +82,10 @@ describe('useIsOverflowing', () => {
 
     renderHook(() => useIsOverflowing());
 
-    expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
   });
 
   it('should remove resize event listener on unmount', () => {
@@ -91,7 +94,10 @@ describe('useIsOverflowing', () => {
     const { unmount } = renderHook(() => useIsOverflowing());
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
   });
 
   it('should handle null ref gracefully', () => {

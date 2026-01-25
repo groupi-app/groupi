@@ -14,7 +14,7 @@ export function AvailabilityContent({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = use(params);
-  const availabilityData = useEventAvailability(eventId as Id<"events">);
+  const availabilityData = useEventAvailability(eventId as Id<'events'>);
   const currentUser = useCurrentUser();
 
   const getTimezoneString = () => {

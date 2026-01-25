@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useAction } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { useCallback, useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let accountQueries: any;
@@ -12,7 +12,7 @@ let accountMutations: any;
 function initApi() {
   if (!accountQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     accountQueries = api.accounts?.queries ?? {};
     accountMutations = api.accounts?.mutations ?? {};
   }
@@ -32,9 +32,13 @@ type LinkedAccount = {
  * Uses an action to fetch Discord usernames from Discord API
  */
 export function useLinkedAccounts() {
-  const [accounts, setAccounts] = useState<LinkedAccount[] | undefined>(undefined);
+  const [accounts, setAccounts] = useState<LinkedAccount[] | undefined>(
+    undefined
+  );
   const [isLoading, setIsLoading] = useState(true);
-  const fetchAccounts = useAction(accountQueries.getLinkedAccountsWithUsernames);
+  const fetchAccounts = useAction(
+    accountQueries.getLinkedAccountsWithUsernames
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +51,7 @@ export function useLinkedAccounts() {
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Failed to fetch linked accounts:", error);
+        console.error('Failed to fetch linked accounts:', error);
         if (!cancelled) {
           setAccounts([]);
           setIsLoading(false);
@@ -86,8 +90,8 @@ export function useUnlinkAccount() {
         await unlinkAccount({ accountId });
 
         toast({
-          title: "Account Unlinked",
-          description: "The account has been successfully unlinked.",
+          title: 'Account Unlinked',
+          description: 'The account has been successfully unlinked.',
         });
 
         return { success: true };
@@ -95,12 +99,12 @@ export function useUnlinkAccount() {
         const message =
           error instanceof Error
             ? error.message
-            : "Failed to unlink account. Please try again.";
+            : 'Failed to unlink account. Please try again.';
 
         toast({
-          title: "Error",
+          title: 'Error',
           description: message,
-          variant: "destructive",
+          variant: 'destructive',
         });
 
         return { success: false, error: message };

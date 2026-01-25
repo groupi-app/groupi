@@ -11,7 +11,13 @@ vi.mock('@/env.mjs', () => ({
   },
 }));
 
-import { getBaseUrl, getInviteUrl, getEventUrl, getUserUrl, getAbsoluteUrl } from './urls';
+import {
+  getBaseUrl,
+  getInviteUrl,
+  getEventUrl,
+  getUserUrl,
+  getAbsoluteUrl,
+} from './urls';
 
 describe('URL Utils', () => {
   describe('getBaseUrl', () => {

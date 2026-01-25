@@ -68,7 +68,9 @@ export function createUserEmailMap(users: ClerkUser[]): Record<string, string> {
 // Run if executed directly
 const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
-  const csvPath = process.argv[2] || '/Users/tsurette/Downloads/ins_2gkgKffk4yzRi8mUP2nizXuZReH.csv';
+  const csvPath =
+    process.argv[2] ||
+    '/Users/tsurette/Downloads/ins_2gkgKffk4yzRi8mUP2nizXuZReH.csv';
 
   if (!fs.existsSync(csvPath)) {
     console.error(`File not found: ${csvPath}`);
@@ -81,7 +83,9 @@ if (isMainModule) {
   // Show first few users
   console.log('Sample users:');
   users.slice(0, 5).forEach(u => {
-    console.log(`  ${u.id}: ${u.email} (${u.firstName} ${u.lastName}, @${u.username})`);
+    console.log(
+      `  ${u.id}: ${u.email} (${u.firstName} ${u.lastName}, @${u.username})`
+    );
   });
 
   // Save to JSON

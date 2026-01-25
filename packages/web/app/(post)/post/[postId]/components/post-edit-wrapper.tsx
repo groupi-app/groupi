@@ -5,12 +5,8 @@ import { usePostDetail, useCurrentUser } from '@/hooks/convex';
 import { PostEditorSkeleton } from '@/components/skeletons';
 import { Id } from '@/convex/_generated/dataModel';
 
-export function PostEditWrapper({
-  postId,
-}: {
-  postId: string;
-}) {
-  const postData = usePostDetail(postId as Id<"posts">);
+export function PostEditWrapper({ postId }: { postId: string }) {
+  const postData = usePostDetail(postId as Id<'posts'>);
   const currentUser = useCurrentUser();
 
   // Loading state

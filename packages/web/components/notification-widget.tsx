@@ -25,9 +25,7 @@ import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useActionMenu } from '@/hooks/use-action-menu';
 import { ActionMenuButton } from '@/components/ui/action-menu-button';
 import { Icons } from '@/components/icons';
-import {
-  useNotificationManagement,
-} from '@/hooks/convex/use-notifications';
+import { useNotificationManagement } from '@/hooks/convex/use-notifications';
 import { NotificationListSkeleton } from '@/components/skeletons';
 
 interface NotificationWidgetProps {
@@ -55,12 +53,8 @@ export function NotificationWidget({
   } = useActionMenu();
 
   // Use Convex hooks for notification management
-  const {
-    notifications,
-    isLoading,
-    markAllAsRead,
-    deleteAllNotifications,
-  } = useNotificationManagement();
+  const { notifications, isLoading, markAllAsRead, deleteAllNotifications } =
+    useNotificationManagement();
 
   // Delete all notifications using the Convex mutation
   const handleDeleteAll = useCallback(async () => {
@@ -214,11 +208,12 @@ export function NotificationWidget({
             filteredNotifications.map(notification => (
               <NotificationSlate
                 key={notification._id}
-                 
-                notification={{
-                  ...notification,
-                  id: notification._id,
-                } as any}
+                notification={
+                  {
+                    ...notification,
+                    id: notification._id,
+                  } as any
+                }
               />
             ))
           )}

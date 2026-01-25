@@ -25,11 +25,15 @@ export function OnboardingRedirect() {
     }
 
     // Check if user needs onboarding (missing required fields)
-    const needsOnboarding = !user.user.username || user.user.username.trim() === '';
+    const needsOnboarding =
+      !user.user.username || user.user.username.trim() === '';
 
     if (needsOnboarding) {
       // Pass current path so user returns here after completing onboarding
-      const redirectUrl = pathname && pathname !== '/' ? `/onboarding?redirect=${encodeURIComponent(pathname)}` : '/onboarding';
+      const redirectUrl =
+        pathname && pathname !== '/'
+          ? `/onboarding?redirect=${encodeURIComponent(pathname)}`
+          : '/onboarding';
       router.push(redirectUrl);
     }
   }, [user, router, pathname]);

@@ -5,6 +5,7 @@ This directory contains scripts and instructions to migrate data from the old Su
 ## Overview
 
 The migration creates actual Better Auth users and preserves all data relationships:
+
 - **Better Auth Users** → Created with email, username, and name from Clerk export
 - **Persons** → Linked directly to Better Auth users (users can sign in immediately)
 - **Events** → Migrated with creator determined from ORGANIZER membership
@@ -28,6 +29,7 @@ npx tsx scripts/migration/parse-sql-dump.ts
 ```
 
 This:
+
 - Reads the Supabase SQL dump
 - Merges with Clerk CSV to get email addresses
 - Creates `parsed-data.json` with all the extracted data
@@ -45,6 +47,7 @@ This deploys the migration functions to your Convex deployment.
 The migration runs as a Convex action. You can run it via the Convex dashboard.
 
 **Via Convex Dashboard**
+
 1. Go to your Convex dashboard: https://dashboard.convex.dev
 2. Navigate to Functions → migration/actions → runMigration
 3. Click "Run Function"
@@ -52,6 +55,7 @@ The migration runs as a Convex action. You can run it via the Convex dashboard.
 5. Set `clearFirst: true` if you want to clear existing data first
 
 The migration will:
+
 1. Create Better Auth users with email/username/name
 2. Create person records linked to those users
 3. Migrate all events, memberships, posts, etc. with proper relationships
@@ -59,6 +63,7 @@ The migration will:
 ## Post-Migration
 
 After migration, users can sign in immediately using:
+
 - Their email address (magic link)
 - OAuth (Google, Discord) if they used the same email
 
@@ -69,6 +74,7 @@ No account claiming required - the migration creates real Better Auth users.
 ### User Records
 
 Old Clerk format:
+
 ```
 id: "user_2iclMU63hXRNSSAtVCEhusch9Yu"
 email: "tsurette111@gmail.com"
@@ -78,6 +84,7 @@ lastName: "Surette"
 ```
 
 New Better Auth format:
+
 ```
 _id: "abc123..."  (Convex ID)
 email: "tsurette111@gmail.com"

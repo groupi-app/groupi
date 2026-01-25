@@ -21,14 +21,14 @@ describe('Card', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Card data-testid="card">Content</Card>);
+    render(<Card data-testid='card'>Content</Card>);
 
     const card = screen.getByTestId('card');
     expect(card).toHaveAttribute('data-slot', 'card');
   });
 
   it('should apply base styling', () => {
-    render(<Card data-testid="card">Content</Card>);
+    render(<Card data-testid='card'>Content</Card>);
 
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('rounded-lg');
@@ -38,14 +38,18 @@ describe('Card', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Card className="shadow-lg" data-testid="card">Content</Card>);
+    render(
+      <Card className='shadow-lg' data-testid='card'>
+        Content
+      </Card>
+    );
 
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('shadow-lg');
   });
 
   it('should render as div element', () => {
-    render(<Card data-testid="card">Content</Card>);
+    render(<Card data-testid='card'>Content</Card>);
 
     const card = screen.getByTestId('card');
     expect(card.tagName).toBe('DIV');
@@ -60,14 +64,14 @@ describe('CardHeader', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<CardHeader data-testid="header">Header</CardHeader>);
+    render(<CardHeader data-testid='header'>Header</CardHeader>);
 
     const header = screen.getByTestId('header');
     expect(header).toHaveAttribute('data-slot', 'card-header');
   });
 
   it('should apply base styling', () => {
-    render(<CardHeader data-testid="header">Header</CardHeader>);
+    render(<CardHeader data-testid='header'>Header</CardHeader>);
 
     const header = screen.getByTestId('header');
     expect(header).toHaveClass('flex');
@@ -77,7 +81,11 @@ describe('CardHeader', () => {
   });
 
   it('should merge custom className', () => {
-    render(<CardHeader className="pb-2" data-testid="header">Header</CardHeader>);
+    render(
+      <CardHeader className='pb-2' data-testid='header'>
+        Header
+      </CardHeader>
+    );
 
     const header = screen.getByTestId('header');
     expect(header).toHaveClass('pb-2');
@@ -92,21 +100,21 @@ describe('CardTitle', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<CardTitle data-testid="title">Title</CardTitle>);
+    render(<CardTitle data-testid='title'>Title</CardTitle>);
 
     const title = screen.getByTestId('title');
     expect(title).toHaveAttribute('data-slot', 'card-title');
   });
 
   it('should render as h3 element', () => {
-    render(<CardTitle data-testid="title">Title</CardTitle>);
+    render(<CardTitle data-testid='title'>Title</CardTitle>);
 
     const title = screen.getByTestId('title');
     expect(title.tagName).toBe('H3');
   });
 
   it('should apply base styling', () => {
-    render(<CardTitle data-testid="title">Title</CardTitle>);
+    render(<CardTitle data-testid='title'>Title</CardTitle>);
 
     const title = screen.getByTestId('title');
     expect(title).toHaveClass('text-2xl');
@@ -116,7 +124,11 @@ describe('CardTitle', () => {
   });
 
   it('should merge custom className', () => {
-    render(<CardTitle className="text-primary" data-testid="title">Title</CardTitle>);
+    render(
+      <CardTitle className='text-primary' data-testid='title'>
+        Title
+      </CardTitle>
+    );
 
     const title = screen.getByTestId('title');
     expect(title).toHaveClass('text-primary');
@@ -131,21 +143,21 @@ describe('CardDescription', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<CardDescription data-testid="desc">Description</CardDescription>);
+    render(<CardDescription data-testid='desc'>Description</CardDescription>);
 
     const desc = screen.getByTestId('desc');
     expect(desc).toHaveAttribute('data-slot', 'card-description');
   });
 
   it('should render as p element', () => {
-    render(<CardDescription data-testid="desc">Description</CardDescription>);
+    render(<CardDescription data-testid='desc'>Description</CardDescription>);
 
     const desc = screen.getByTestId('desc');
     expect(desc.tagName).toBe('P');
   });
 
   it('should apply base styling', () => {
-    render(<CardDescription data-testid="desc">Description</CardDescription>);
+    render(<CardDescription data-testid='desc'>Description</CardDescription>);
 
     const desc = screen.getByTestId('desc');
     expect(desc).toHaveClass('text-sm');
@@ -153,7 +165,11 @@ describe('CardDescription', () => {
   });
 
   it('should merge custom className', () => {
-    render(<CardDescription className="mt-2" data-testid="desc">Description</CardDescription>);
+    render(
+      <CardDescription className='mt-2' data-testid='desc'>
+        Description
+      </CardDescription>
+    );
 
     const desc = screen.getByTestId('desc');
     expect(desc).toHaveClass('mt-2');
@@ -168,14 +184,14 @@ describe('CardContent', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<CardContent data-testid="content">Content</CardContent>);
+    render(<CardContent data-testid='content'>Content</CardContent>);
 
     const content = screen.getByTestId('content');
     expect(content).toHaveAttribute('data-slot', 'card-content');
   });
 
   it('should apply base styling', () => {
-    render(<CardContent data-testid="content">Content</CardContent>);
+    render(<CardContent data-testid='content'>Content</CardContent>);
 
     const content = screen.getByTestId('content');
     expect(content).toHaveClass('p-6');
@@ -183,7 +199,11 @@ describe('CardContent', () => {
   });
 
   it('should merge custom className', () => {
-    render(<CardContent className="space-y-4" data-testid="content">Content</CardContent>);
+    render(
+      <CardContent className='space-y-4' data-testid='content'>
+        Content
+      </CardContent>
+    );
 
     const content = screen.getByTestId('content');
     expect(content).toHaveClass('space-y-4');
@@ -198,14 +218,14 @@ describe('CardFooter', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<CardFooter data-testid="footer">Footer</CardFooter>);
+    render(<CardFooter data-testid='footer'>Footer</CardFooter>);
 
     const footer = screen.getByTestId('footer');
     expect(footer).toHaveAttribute('data-slot', 'card-footer');
   });
 
   it('should apply base styling', () => {
-    render(<CardFooter data-testid="footer">Footer</CardFooter>);
+    render(<CardFooter data-testid='footer'>Footer</CardFooter>);
 
     const footer = screen.getByTestId('footer');
     expect(footer).toHaveClass('flex');
@@ -215,7 +235,11 @@ describe('CardFooter', () => {
   });
 
   it('should merge custom className', () => {
-    render(<CardFooter className="justify-between" data-testid="footer">Footer</CardFooter>);
+    render(
+      <CardFooter className='justify-between' data-testid='footer'>
+        Footer
+      </CardFooter>
+    );
 
     const footer = screen.getByTestId('footer');
     expect(footer).toHaveClass('justify-between');
@@ -225,7 +249,7 @@ describe('CardFooter', () => {
 describe('Card composition', () => {
   it('should render complete card with all parts', () => {
     render(
-      <Card data-testid="card">
+      <Card data-testid='card'>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
           <CardDescription>Manage your account settings</CardDescription>
@@ -241,7 +265,9 @@ describe('Card composition', () => {
 
     expect(screen.getByTestId('card')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText('Manage your account settings')).toBeInTheDocument();
+    expect(
+      screen.getByText('Manage your account settings')
+    ).toBeInTheDocument();
     expect(screen.getByText('Card body content')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });

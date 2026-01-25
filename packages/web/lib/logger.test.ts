@@ -58,7 +58,9 @@ describe('logger', () => {
 
     it('should log error with extra data', () => {
       logger.error('Error occurred', { code: 'ERR_001' });
-      expect(console.error).toHaveBeenCalledWith('Error occurred {"code":"ERR_001"}');
+      expect(console.error).toHaveBeenCalledWith(
+        'Error occurred {"code":"ERR_001"}'
+      );
     });
 
     it('should log debug with extra data', () => {
@@ -77,7 +79,9 @@ describe('logger', () => {
     it('should include trace ID with extra data', () => {
       setTraceId('trace-456');
       logger.info('Test message', { key: 'value' });
-      expect(console.info).toHaveBeenCalledWith('[trace-456] Test message {"key":"value"}');
+      expect(console.info).toHaveBeenCalledWith(
+        '[trace-456] Test message {"key":"value"}'
+      );
     });
 
     it('should clear trace ID', () => {
@@ -119,21 +123,29 @@ describe('logger', () => {
 
       expect(console.info).toHaveBeenCalledWith('[TestComponent] Info message');
       expect(console.warn).toHaveBeenCalledWith('[TestComponent] Warn message');
-      expect(console.error).toHaveBeenCalledWith('[TestComponent] Error message');
-      expect(console.debug).toHaveBeenCalledWith('[TestComponent] Debug message');
+      expect(console.error).toHaveBeenCalledWith(
+        '[TestComponent] Error message'
+      );
+      expect(console.debug).toHaveBeenCalledWith(
+        '[TestComponent] Debug message'
+      );
     });
 
     it('should include extra data with component prefix', () => {
       const myLogger = createLogger('DataComponent');
       myLogger.info('Message with data', { userId: 123 });
-      expect(console.info).toHaveBeenCalledWith('[DataComponent] Message with data {"userId":123}');
+      expect(console.info).toHaveBeenCalledWith(
+        '[DataComponent] Message with data {"userId":123}'
+      );
     });
 
     it('should combine trace ID and component prefix', () => {
       setTraceId('trace-combo');
       const myLogger = createLogger('ComboComponent');
       myLogger.info('Combined message');
-      expect(console.info).toHaveBeenCalledWith('[trace-combo] [ComboComponent] Combined message');
+      expect(console.info).toHaveBeenCalledWith(
+        '[trace-combo] [ComboComponent] Combined message'
+      );
     });
   });
 
@@ -160,7 +172,9 @@ describe('logger', () => {
 
     it('should include extra data', () => {
       componentLogger.info('Button', 'Clicked', { id: 'submit-btn' });
-      expect(console.info).toHaveBeenCalledWith('[Button] Clicked {"id":"submit-btn"}');
+      expect(console.info).toHaveBeenCalledWith(
+        '[Button] Clicked {"id":"submit-btn"}'
+      );
     });
 
     it('should combine trace ID with component', () => {
@@ -184,7 +198,9 @@ describe('logger', () => {
       const duration = timer.end();
 
       expect(duration).toBe(100);
-      expect(console.info).toHaveBeenCalledWith('Performance: render {"duration":"100.00ms"}');
+      expect(console.info).toHaveBeenCalledWith(
+        'Performance: render {"duration":"100.00ms"}'
+      );
     });
 
     it('should format duration with 2 decimal places', () => {
@@ -194,7 +210,9 @@ describe('logger', () => {
 
       timer.end();
 
-      expect(console.info).toHaveBeenCalledWith('Performance: api-call {"duration":"123.46ms"}');
+      expect(console.info).toHaveBeenCalledWith(
+        'Performance: api-call {"duration":"123.46ms"}'
+      );
     });
 
     it('should handle zero duration', () => {
@@ -206,7 +224,9 @@ describe('logger', () => {
       const duration = timer.end();
 
       expect(duration).toBe(0);
-      expect(console.info).toHaveBeenCalledWith('Performance: instant {"duration":"0.00ms"}');
+      expect(console.info).toHaveBeenCalledWith(
+        'Performance: instant {"duration":"0.00ms"}'
+      );
     });
 
     it('should return the numeric duration', () => {

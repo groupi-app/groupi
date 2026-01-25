@@ -12,7 +12,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ## Core Tables
 
 ### `users`
+
 **Authentication and user profile data**
+
 ```typescript
 {
   // Better Auth fields
@@ -40,7 +42,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ```
 
 ### `persons`
+
 **1:1 relationship with users for app-specific data**
+
 ```typescript
 {
   userId: Id<"users">, // Required reference
@@ -50,7 +54,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ```
 
 ### `events`
+
 **Event planning core entity**
+
 ```typescript
 {
   title: string,
@@ -66,7 +72,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ```
 
 ### `memberships`
+
 **User participation in events**
+
 ```typescript
 {
   personId: Id<"persons">, // Required reference
@@ -78,7 +86,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ```
 
 ### `posts`
+
 **Discussion posts within events**
+
 ```typescript
 {
   title?: string,
@@ -91,7 +101,9 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ```
 
 ### `replies`
+
 **Responses to posts**
+
 ```typescript
 {
   authorId: Id<"persons">, // Required reference
@@ -103,83 +115,88 @@ This document outlines the Convex database schema for Groupi. Use this reference
 ## Test Data Patterns
 
 ### Minimal Setup for Tests
+
 ```typescript
 // 1. User (authentication)
-const userId = await ctx.db.insert("users", {
-  email: "test@example.com",
+const userId = await ctx.db.insert('users', {
+  email: 'test@example.com',
   emailVerified: false,
   banned: false,
   twoFactorEnabled: false,
 });
 
 // 2. Person (app profile)
-const personId = await ctx.db.insert("persons", {
+const personId = await ctx.db.insert('persons', {
   userId: userId,
 });
 
 // 3. Event
-const eventId = await ctx.db.insert("events", {
-  title: "Test Event",
+const eventId = await ctx.db.insert('events', {
+  title: 'Test Event',
   creatorId: personId,
-  location: "Test Location",
+  location: 'Test Location',
   potentialDateTimes: [],
   chosenDateTime: undefined,
   createdAt: Date.now(),
   updatedAt: Date.now(),
-  timezone: "UTC",
+  timezone: 'UTC',
 });
 
 // 4. Membership
-const membershipId = await ctx.db.insert("memberships", {
+const membershipId = await ctx.db.insert('memberships', {
   personId: personId,
   eventId: eventId,
-  role: "ATTENDEE",
-  rsvpStatus: "YES",
+  role: 'ATTENDEE',
+  rsvpStatus: 'YES',
   // ❌ Don't add joinedAt - field doesn't exist!
 });
 ```
 
 ### Authentication in Tests
+
 ```typescript
 // ✅ Correct auth setup
 const asUser = t.withIdentity({ subject: userId });
 const result = await asUser.mutation(api.posts.mutations.createPost, {
   eventId,
-  title: "Test Post",
-  content: "Test content"
+  title: 'Test Post',
+  content: 'Test content',
 });
 ```
 
 ## Common Test Mistakes
 
 ### ❌ Missing Required Fields
+
 ```typescript
 // Wrong - missing required creatorId
-await ctx.db.insert("events", {
-  title: "Test Event",
-  location: "Test Location",
+await ctx.db.insert('events', {
+  title: 'Test Event',
+  location: 'Test Location',
   // Missing: creatorId, createdAt, updatedAt, timezone
 });
 
 // Wrong - userId as string instead of Id
-await ctx.db.insert("persons", {
-  userId: "string-id", // Should be Id<"users">
+await ctx.db.insert('persons', {
+  userId: 'string-id', // Should be Id<"users">
 });
 ```
 
 ### ❌ Non-existent Fields
+
 ```typescript
 // Wrong - joinedAt doesn't exist on memberships
-await ctx.db.insert("memberships", {
+await ctx.db.insert('memberships', {
   personId,
   eventId,
-  role: "ATTENDEE",
-  rsvpStatus: "YES",
+  role: 'ATTENDEE',
+  rsvpStatus: 'YES',
   joinedAt: Date.now(), // ❌ Field doesn't exist!
 });
 ```
 
 ### ❌ Wrong API Pattern
+
 ```typescript
 // Wrong - old direct db access pattern
 const userId = await t.db.insert("users", { ... });

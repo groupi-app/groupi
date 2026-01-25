@@ -261,7 +261,10 @@ function parseInteger(val: string): number | null {
   return parseInt(val, 10);
 }
 
-export function parseSqlDump(filePath: string, clerkCsvPath?: string): ParsedData {
+export function parseSqlDump(
+  filePath: string,
+  clerkCsvPath?: string
+): ParsedData {
   const sql = fs.readFileSync(filePath, 'utf-8');
 
   // Parse Clerk CSV if provided to get emails
@@ -285,8 +288,14 @@ export function parseSqlDump(filePath: string, clerkCsvPath?: string): ParsedDat
   const inviteRows = parseInsertStatement(sql, 'Invite');
   const notificationRows = parseInsertStatement(sql, 'Notification');
   const personSettingsRows = parseInsertStatement(sql, 'PersonSettings');
-  const notificationMethodRows = parseInsertStatement(sql, 'NotificationMethod');
-  const notificationSettingRows = parseInsertStatement(sql, 'NotificationSetting');
+  const notificationMethodRows = parseInsertStatement(
+    sql,
+    'NotificationMethod'
+  );
+  const notificationSettingRows = parseInsertStatement(
+    sql,
+    'NotificationSetting'
+  );
 
   console.log(`Parsed ${personRows.length} persons`);
   console.log(`Parsed ${eventRows.length} events`);
@@ -308,7 +317,8 @@ export function parseSqlDump(filePath: string, clerkCsvPath?: string): ParsedDat
     const clerkUser = clerkUserMap[clerkId];
 
     // Use Clerk data for name if available
-    const firstName = clerkUser?.firstName || (row[3] === 'NULL' ? null : row[3]);
+    const firstName =
+      clerkUser?.firstName || (row[3] === 'NULL' ? null : row[3]);
     const lastName = clerkUser?.lastName || (row[4] === 'NULL' ? null : row[4]);
 
     return {
@@ -342,11 +352,13 @@ export function parseSqlDump(filePath: string, clerkCsvPath?: string): ParsedDat
     rsvpStatus: row[4] as 'YES' | 'MAYBE' | 'NO' | 'PENDING',
   }));
 
-  const potentialDateTimes: OldPotentialDateTime[] = potentialDateTimeRows.map(row => ({
-    id: row[0],
-    eventId: row[1],
-    dateTime: parseTimestamp(row[2])!,
-  }));
+  const potentialDateTimes: OldPotentialDateTime[] = potentialDateTimeRows.map(
+    row => ({
+      id: row[0],
+      eventId: row[1],
+      dateTime: parseTimestamp(row[2])!,
+    })
+  );
 
   const availabilities: OldAvailability[] = availabilityRows.map(row => ({
     membershipId: row[0],
@@ -406,26 +418,28 @@ export function parseSqlDump(filePath: string, clerkCsvPath?: string): ParsedDat
     personId: row[3],
   }));
 
-  const notificationMethods: OldNotificationMethod[] = notificationMethodRows.map(row => ({
-    id: row[0],
-    createdAt: parseTimestamp(row[1])!,
-    updatedAt: parseTimestamp(row[2])!,
-    settingsId: row[3],
-    type: row[4] as 'EMAIL' | 'PUSH' | 'WEBHOOK',
-    enabled: parseBoolean(row[5]),
-    name: row[6] === 'NULL' ? null : row[6],
-    value: row[7],
-    customTemplate: row[8] === 'NULL' ? null : row[8],
-    webhookFormat: row[9] === 'NULL' ? null : row[9],
-    webhookHeaders: row[10] === 'NULL' ? null : row[10],
-  }));
+  const notificationMethods: OldNotificationMethod[] =
+    notificationMethodRows.map(row => ({
+      id: row[0],
+      createdAt: parseTimestamp(row[1])!,
+      updatedAt: parseTimestamp(row[2])!,
+      settingsId: row[3],
+      type: row[4] as 'EMAIL' | 'PUSH' | 'WEBHOOK',
+      enabled: parseBoolean(row[5]),
+      name: row[6] === 'NULL' ? null : row[6],
+      value: row[7],
+      customTemplate: row[8] === 'NULL' ? null : row[8],
+      webhookFormat: row[9] === 'NULL' ? null : row[9],
+      webhookHeaders: row[10] === 'NULL' ? null : row[10],
+    }));
 
-  const notificationSettings: OldNotificationSetting[] = notificationSettingRows.map(row => ({
-    id: row[0],
-    notificationType: row[1],
-    methodId: row[2],
-    enabled: parseBoolean(row[3]),
-  }));
+  const notificationSettings: OldNotificationSetting[] =
+    notificationSettingRows.map(row => ({
+      id: row[0],
+      notificationType: row[1],
+      methodId: row[2],
+      enabled: parseBoolean(row[3]),
+    }));
 
   return {
     persons,
@@ -450,7 +464,8 @@ if (isMainModule) {
   const dumpPath = path.join(__dirname, '../../supabase-backup-data.sql');
 
   // Use Clerk CSV from Downloads folder
-  const clerkCsvPath = '/Users/tsurette/Downloads/ins_2gkgKffk4yzRi8mUP2nizXuZReH.csv';
+  const clerkCsvPath =
+    '/Users/tsurette/Downloads/ins_2gkgKffk4yzRi8mUP2nizXuZReH.csv';
 
   console.log('Parsing SQL dump with Clerk user data...');
   const data = parseSqlDump(dumpPath, clerkCsvPath);
@@ -458,7 +473,9 @@ if (isMainModule) {
   // Check for users without emails
   const usersWithoutEmail = data.persons.filter(p => !p.email);
   if (usersWithoutEmail.length > 0) {
-    console.log(`\nWarning: ${usersWithoutEmail.length} users without email addresses:`);
+    console.log(
+      `\nWarning: ${usersWithoutEmail.length} users without email addresses:`
+    );
     usersWithoutEmail.forEach(p => {
       console.log(`  - ${p.id} (${p.username})`);
     });

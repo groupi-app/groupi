@@ -9,20 +9,19 @@
 // Some destructured options are defined for API compatibility but not yet used in implementation
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { vi, type MockedFunction } from 'vitest';
-import type { RenderOptions, RenderResult } from '@testing-library/react';
-
-// Re-export commonly used testing utilities
-export {
+import {
   render,
   screen,
   fireEvent,
   waitFor,
   within,
-  userEvent,
-};
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi, type MockedFunction } from 'vitest';
+import type { RenderOptions, RenderResult } from '@testing-library/react';
+
+// Re-export commonly used testing utilities
+export { render, screen, fireEvent, waitFor, within, userEvent };
 
 /**
  * Mock types for Convex integration
@@ -95,11 +94,7 @@ export function renderWithProviders(
 
   // Create wrapper with all providers
   const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <div data-theme={theme}>
-        {children}
-      </div>
-    );
+    return <div data-theme={theme}>{children}</div>;
   };
 
   return render(ui, {
@@ -153,7 +148,8 @@ export const WebTestDataFactory = {
   createPost: (overrides: Partial<any> = {}) => ({
     id: 'post_123',
     title: 'Project Update',
-    content: 'Here is an update on our current project status. We have made significant progress this week.',
+    content:
+      'Here is an update on our current project status. We have made significant progress this week.',
     authorId: 'user_123',
     eventId: 'event_123',
     createdAt: new Date('2024-06-15T10:00:00.000Z').getTime(),
@@ -251,11 +247,16 @@ export const RouterTestHelpers = {
   /**
    * Mock useRouter hook
    */
-  mockUseRouter: (router: ReturnType<typeof RouterTestHelpers.createMockRouter>) => {
+  mockUseRouter: (
+    router: ReturnType<typeof RouterTestHelpers.createMockRouter>
+  ) => {
     vi.mock('next/navigation', () => ({
       useRouter: () => router,
       usePathname: () => router.pathname,
-      useSearchParams: () => new URLSearchParams(Object.entries(router.query).map(([k, v]) => [k, String(v)])),
+      useSearchParams: () =>
+        new URLSearchParams(
+          Object.entries(router.query).map(([k, v]) => [k, String(v)])
+        ),
     }));
   },
 };
@@ -267,10 +268,13 @@ export const ConvexTestHelpers = {
   /**
    * Creates mock Convex query hook
    */
-  createMockUseQuery: <T = any>(data?: T, options: {
-    isLoading?: boolean;
-    error?: Error;
-  } = {}) => {
+  createMockUseQuery: <T = any,>(
+    data?: T,
+    options: {
+      isLoading?: boolean;
+      error?: Error;
+    } = {}
+  ) => {
     return vi.fn().mockReturnValue({
       data: options.isLoading ? undefined : data,
       isLoading: options.isLoading ?? false,
@@ -281,10 +285,13 @@ export const ConvexTestHelpers = {
   /**
    * Creates mock Convex mutation hook
    */
-  createMockUseMutation: <T = any>(result?: T, options: {
-    shouldReject?: boolean;
-    error?: Error;
-  } = {}) => {
+  createMockUseMutation: <T = any,>(
+    result?: T,
+    options: {
+      shouldReject?: boolean;
+      error?: Error;
+    } = {}
+  ) => {
     const mockMutation = options.shouldReject
       ? vi.fn().mockRejectedValue(options.error ?? new Error('Mutation failed'))
       : vi.fn().mockResolvedValue(result ?? { success: true });
@@ -322,7 +329,9 @@ export const AuthTestHelpers = {
   /**
    * Mock Better Auth hooks
    */
-  mockAuthHooks: (authState: ReturnType<typeof AuthTestHelpers.createMockAuthState>) => {
+  mockAuthHooks: (
+    authState: ReturnType<typeof AuthTestHelpers.createMockAuthState>
+  ) => {
     vi.mock('@/lib/auth-client', () => ({
       useSession: vi.fn().mockReturnValue({
         data: authState.isAuthenticated ? { user: authState.user } : null,
@@ -358,7 +367,9 @@ export const FormTestHelpers = {
    */
   submitForm: async (buttonText: string = 'Submit') => {
     const user = userEvent.setup();
-    const submitButton = screen.getByRole('button', { name: new RegExp(buttonText, 'i') });
+    const submitButton = screen.getByRole('button', {
+      name: new RegExp(buttonText, 'i'),
+    });
     await user.click(submitButton);
   },
 
@@ -377,7 +388,9 @@ export const FormTestHelpers = {
   expectFormSuccess: async (successMessage?: string) => {
     if (successMessage) {
       await waitFor(() => {
-        expect(screen.getByText(new RegExp(successMessage, 'i'))).toBeInTheDocument();
+        expect(
+          screen.getByText(new RegExp(successMessage, 'i'))
+        ).toBeInTheDocument();
       });
     }
   },
@@ -392,7 +405,9 @@ export const InteractionTestHelpers = {
    */
   clickButton: async (buttonText: string) => {
     const user = userEvent.setup();
-    const button = screen.getByRole('button', { name: new RegExp(buttonText, 'i') });
+    const button = screen.getByRole('button', {
+      name: new RegExp(buttonText, 'i'),
+    });
     await user.click(button);
     return button;
   },
@@ -448,7 +463,9 @@ export const InteractionTestHelpers = {
     const select = screen.getByLabelText(new RegExp(selectLabel, 'i'));
     await user.click(select);
 
-    const option = await screen.findByRole('option', { name: new RegExp(optionText, 'i') });
+    const option = await screen.findByRole('option', {
+      name: new RegExp(optionText, 'i'),
+    });
     await user.click(option);
   },
 
@@ -469,7 +486,7 @@ export const ApiTestHelpers = {
   /**
    * Creates mock API response for successful operations
    */
-  createSuccessResponse: <T = any>(data: T) => ({
+  createSuccessResponse: <T = any,>(data: T) => ({
     success: true,
     data,
     message: 'Operation completed successfully',
@@ -494,11 +511,13 @@ export const ApiTestHelpers = {
       text: vi.fn().mockResolvedValue(JSON.stringify(response)),
     };
 
-    global.fetch = vi.fn().mockImplementation(() =>
-      options.shouldReject
-        ? Promise.reject(new Error('Network error'))
-        : Promise.resolve(mockResponse)
-    );
+    global.fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        options.shouldReject
+          ? Promise.reject(new Error('Network error'))
+          : Promise.resolve(mockResponse)
+      );
   },
 };
 
@@ -518,9 +537,13 @@ export const StateTestHelpers = {
    */
   expectErrorState: (errorMessage?: string) => {
     if (errorMessage) {
-      expect(screen.getByText(new RegExp(errorMessage, 'i'))).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(errorMessage, 'i'))
+      ).toBeInTheDocument();
     } else {
-      expect(screen.getByText(/error|something went wrong/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/error|something went wrong/i)
+      ).toBeInTheDocument();
     }
   },
 
@@ -529,7 +552,9 @@ export const StateTestHelpers = {
    */
   expectEmptyState: (emptyMessage?: string) => {
     if (emptyMessage) {
-      expect(screen.getByText(new RegExp(emptyMessage, 'i'))).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(emptyMessage, 'i'))
+      ).toBeInTheDocument();
     } else {
       expect(screen.getByText(/no.*found|empty|nothing/i)).toBeInTheDocument();
     }
@@ -541,7 +566,9 @@ export const StateTestHelpers = {
   expectSuccessState: async (successMessage?: string) => {
     if (successMessage) {
       await waitFor(() => {
-        expect(screen.getByText(new RegExp(successMessage, 'i'))).toBeInTheDocument();
+        expect(
+          screen.getByText(new RegExp(successMessage, 'i'))
+        ).toBeInTheDocument();
       });
     }
   },

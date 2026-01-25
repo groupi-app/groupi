@@ -25,11 +25,13 @@ import { generateTraceId } from './use-trace-context';
  * await createEvent({ title: "My Event" });
  * ```
  */
-export function useTracedMutation<
-  Args extends Record<string, unknown>,
-  Result
->(
-  mutationRef: FunctionReference<"mutation", "public", Args & { _traceId?: string }, Result>
+export function useTracedMutation<Args extends Record<string, unknown>, Result>(
+  mutationRef: FunctionReference<
+    'mutation',
+    'public',
+    Args & { _traceId?: string },
+    Result
+  >
 ) {
   const mutation = useMutation(mutationRef);
 
@@ -42,7 +44,7 @@ export function useTracedMutation<
       }
 
       try {
-          // Type cast required due to generic constraint limitations with Convex mutation types
+        // Type cast required due to generic constraint limitations with Convex mutation types
         const result = await mutation({
           ...args,
           _traceId: traceId,
@@ -71,9 +73,14 @@ export function useTracedMutation<
  */
 export function useTracedMutationWithRaw<
   Args extends Record<string, unknown>,
-  Result
+  Result,
 >(
-  mutationRef: FunctionReference<"mutation", "public", Args & { _traceId?: string }, Result>
+  mutationRef: FunctionReference<
+    'mutation',
+    'public',
+    Args & { _traceId?: string },
+    Result
+  >
 ) {
   const rawMutation = useMutation(mutationRef);
   const tracedMutation = useTracedMutation(mutationRef);

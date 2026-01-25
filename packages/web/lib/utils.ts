@@ -207,7 +207,7 @@ export {
   isEventPast,
 } from '@groupi/shared/utils';
 
-export function formatRoleName(role: Doc<"memberships">["role"]) {
+export function formatRoleName(role: Doc<'memberships'>['role']) {
   if (!role) {
     return 'Unknown';
   }
@@ -223,7 +223,7 @@ export function formatRoleName(role: Doc<"memberships">["role"]) {
   }
 }
 
-export function formatRoleBadge(role: Doc<"memberships">["role"]) {
+export function formatRoleBadge(role: Doc<'memberships'>['role']) {
   if (!role) {
     return 'Unknown';
   }
@@ -253,9 +253,11 @@ export function merge<T>(
 }
 
 // Generic type for potential date times with availabilities that have a status
-type WithStatus = { status: "YES" | "MAYBE" | "NO" | "PENDING" };
+type WithStatus = { status: 'YES' | 'MAYBE' | 'NO' | 'PENDING' };
 
-export function getRanks<T extends Doc<"potentialDateTimes"> & { availabilities: WithStatus[] }>(pdts: T[]) {
+export function getRanks<
+  T extends Doc<'potentialDateTimes'> & { availabilities: WithStatus[] },
+>(pdts: T[]) {
   // Calculate scores for each potential date time
   const scoreMap = pdts.map(pdt => {
     const score = pdt.availabilities.reduce((acc, availability) => {
