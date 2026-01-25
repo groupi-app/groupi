@@ -8,14 +8,14 @@ import { Avatar, AvatarImage, AvatarFallback } from './avatar';
 
 describe('Avatar', () => {
   it('should render with data-slot attribute', () => {
-    render(<Avatar data-testid="avatar" />);
+    render(<Avatar data-testid='avatar' />);
 
     const avatar = screen.getByTestId('avatar');
     expect(avatar).toHaveAttribute('data-slot', 'avatar');
   });
 
   it('should apply base styling', () => {
-    render(<Avatar data-testid="avatar" />);
+    render(<Avatar data-testid='avatar' />);
 
     const avatar = screen.getByTestId('avatar');
     expect(avatar).toHaveClass('relative');
@@ -27,7 +27,7 @@ describe('Avatar', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Avatar className="h-12 w-12" data-testid="avatar" />);
+    render(<Avatar className='h-12 w-12' data-testid='avatar' />);
 
     const avatar = screen.getByTestId('avatar');
     expect(avatar).toHaveClass('h-12');
@@ -37,7 +37,7 @@ describe('Avatar', () => {
   it('should render children', () => {
     render(
       <Avatar>
-        <span data-testid="child">Child</span>
+        <span data-testid='child'>Child</span>
       </Avatar>
     );
 
@@ -49,7 +49,7 @@ describe('AvatarFallback', () => {
   it('should render with data-slot attribute', () => {
     render(
       <Avatar>
-        <AvatarFallback data-testid="avatar-fallback">JD</AvatarFallback>
+        <AvatarFallback data-testid='avatar-fallback'>JD</AvatarFallback>
       </Avatar>
     );
 
@@ -60,7 +60,7 @@ describe('AvatarFallback', () => {
   it('should apply base styling', () => {
     render(
       <Avatar>
-        <AvatarFallback data-testid="avatar-fallback">AB</AvatarFallback>
+        <AvatarFallback data-testid='avatar-fallback'>AB</AvatarFallback>
       </Avatar>
     );
 
@@ -87,7 +87,9 @@ describe('AvatarFallback', () => {
   it('should merge custom className', () => {
     render(
       <Avatar>
-        <AvatarFallback className="bg-primary" data-testid="avatar-fallback">ZZ</AvatarFallback>
+        <AvatarFallback className='bg-primary' data-testid='avatar-fallback'>
+          ZZ
+        </AvatarFallback>
       </Avatar>
     );
 
@@ -99,8 +101,8 @@ describe('AvatarFallback', () => {
 describe('Avatar composition', () => {
   it('should render complete avatar with fallback', () => {
     render(
-      <Avatar data-testid="avatar">
-        <AvatarImage src="https://example.com/user.jpg" alt="User" />
+      <Avatar data-testid='avatar'>
+        <AvatarImage src='https://example.com/user.jpg' alt='User' />
         <AvatarFallback>US</AvatarFallback>
       </Avatar>
     );
@@ -111,7 +113,7 @@ describe('Avatar composition', () => {
   });
 
   it('should render avatar without children', () => {
-    render(<Avatar data-testid="empty-avatar" />);
+    render(<Avatar data-testid='empty-avatar' />);
 
     expect(screen.getByTestId('empty-avatar')).toBeInTheDocument();
   });

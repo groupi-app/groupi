@@ -18,7 +18,9 @@ import { Icons } from '@/components/icons';
 import { ProfileEditDialog } from '@/components/profile-edit-dialog';
 import { User } from 'lucide-react';
 
-export function ProfileDropdown({ userInfo }: {
+export function ProfileDropdown({
+  userInfo,
+}: {
   userInfo: {
     name?: string;
     email: string;
@@ -54,9 +56,7 @@ export function ProfileDropdown({ userInfo }: {
                 </span>
               )}
               <span className='text-muted-foreground'>
-                {userInfo.username
-                  ? `@${userInfo.username}`
-                  : userInfo.email}
+                {userInfo.username ? `@${userInfo.username}` : userInfo.email}
               </span>
             </div>
           </DropdownMenuLabel>

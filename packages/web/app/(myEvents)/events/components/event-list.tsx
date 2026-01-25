@@ -35,7 +35,6 @@ interface EventListProps {
  * - No need for React Query or Pusher - Convex handles everything
  */
 export function EventList({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- userId available for future filtering
   userId: _userId,
   sortBy = 'createdat',
   filter = 'all',
@@ -62,7 +61,7 @@ export function EventList({
   const { events: membershipsArray } = userEventsData;
   const memberships = membershipsArray || [];
   type OrganizerData = {
-    person: Doc<"persons">;
+    person: Doc<'persons'>;
     user: {
       id: string;
       name?: string | null;
@@ -70,7 +69,11 @@ export function EventList({
       image?: string | null;
     };
   } | null;
-  type EventMembership = { event: Doc<"events"> & { memberCount: number; chosenDateTime?: number }; membership: Doc<"memberships">; organizer: OrganizerData };
+  type EventMembership = {
+    event: Doc<'events'> & { memberCount: number; chosenDateTime?: number };
+    membership: Doc<'memberships'>;
+    organizer: OrganizerData;
+  };
 
   type EventListItem = {
     id: string;
@@ -82,15 +85,19 @@ export function EventList({
     updatedAt: Date;
   };
 
-  const events = memberships.map((m: EventMembership): EventListItem => ({
-    id: m.event._id,
-    title: m.event.title,
-    description: m.event.description || '',
-    location: m.event.location || '',
-    chosenDateTime: m.event.chosenDateTime ? new Date(m.event.chosenDateTime) : null,
-    createdAt: new Date(m.event._creationTime),
-    updatedAt: new Date(m.event._creationTime),
-  }));
+  const events = memberships.map(
+    (m: EventMembership): EventListItem => ({
+      id: m.event._id,
+      title: m.event.title,
+      description: m.event.description || '',
+      location: m.event.location || '',
+      chosenDateTime: m.event.chosenDateTime
+        ? new Date(m.event.chosenDateTime)
+        : null,
+      createdAt: new Date(m.event._creationTime),
+      updatedAt: new Date(m.event._creationTime),
+    })
+  );
 
   const sort = (a: EventListItem, b: EventListItem) => {
     switch (sortBy) {
@@ -164,7 +171,7 @@ export function EventList({
                 key={event.id}
               >
                 <EventCard
-                  event={membershipData.event as Doc<"events">}
+                  event={membershipData.event as Doc<'events'>}
                   userRole={membershipData.membership.role || 'ATTENDEE'}
                   eventId={membershipData.event._id}
                   organizer={membershipData.organizer}
@@ -206,8 +213,10 @@ export function EventList({
                         key={event.id}
                       >
                         <EventCard
-                          event={membershipData.event as Doc<"events">}
-                          userRole={membershipData.membership.role || 'ATTENDEE'}
+                          event={membershipData.event as Doc<'events'>}
+                          userRole={
+                            membershipData.membership.role || 'ATTENDEE'
+                          }
                           eventId={membershipData.event._id}
                           organizer={membershipData.organizer}
                         />

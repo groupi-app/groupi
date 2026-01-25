@@ -5,7 +5,7 @@ import { DateCardList } from '../../components/date-card-list';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-export function DateSelectContent({ eventId }: { eventId: Id<"events"> }) {
+export function DateSelectContent({ eventId }: { eventId: Id<'events'> }) {
   return (
     <div className='container max-w-5xl py-4 flex flex-col'>
       <div className='w-max my-2'>

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // ===== API REFERENCES =====
 // Import api dynamically to avoid deep type instantiation issues
@@ -17,7 +17,7 @@ function initApi() {
   if (!notificationQueries) {
     // Dynamic require avoids type inference at module load time
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     notificationQueries = api.notifications?.queries ?? {};
     notificationMutations = api.notifications?.mutations ?? {};
   }
@@ -29,19 +29,19 @@ initApi();
 // ===== TYPES =====
 
 export interface EnrichedNotification {
-  id: Id<"notifications">;
-  _id: Id<"notifications">;
+  id: Id<'notifications'>;
+  _id: Id<'notifications'>;
   _creationTime: number;
   createdAt: number;
   type: string;
   read: boolean;
-  eventId: Id<"events"> | null;
-  postId: Id<"posts"> | null;
-  personId: Id<"persons">;
-  event: { id: Id<"events">; title: string } | null;
-  post: { id: Id<"posts">; title: string } | null;
+  eventId: Id<'events'> | null;
+  postId: Id<'posts'> | null;
+  personId: Id<'persons'>;
+  event: { id: Id<'events'>; title: string } | null;
+  post: { id: Id<'posts'>; title: string } | null;
   author: {
-    id: Id<"persons">;
+    id: Id<'persons'>;
     user: {
       name: string | null;
       email: string;
@@ -49,7 +49,7 @@ export interface EnrichedNotification {
       username: string | null;
     };
   } | null;
-  recipientId: Id<"persons">;
+  recipientId: Id<'persons'>;
   rsvpStatus?: string;
   rsvpNewStatus?: string;
 }
@@ -59,10 +59,15 @@ export interface EnrichedNotification {
 /**
  * Get paginated notifications for current user with real-time updates
  */
-export function useNotifications(limit = 20, cursor?: string): {
-  notifications: EnrichedNotification[];
-  nextCursor: string | null;
-} | undefined {
+export function useNotifications(
+  limit = 20,
+  cursor?: string
+):
+  | {
+      notifications: EnrichedNotification[];
+      nextCursor: string | null;
+    }
+  | undefined {
   return useQuery(notificationQueries.fetchNotificationsForPerson, {
     limit,
     cursor,
@@ -87,10 +92,15 @@ export function useNotificationSettings() {
  * Paginated notifications hook - uses custom cursor-based pagination
  * Note: Use cursor from result.nextCursor for subsequent pages
  */
-export function usePaginatedNotifications(limit = 20, cursor?: string): {
-  notifications: EnrichedNotification[];
-  nextCursor: string | null;
-} | undefined {
+export function usePaginatedNotifications(
+  limit = 20,
+  cursor?: string
+):
+  | {
+      notifications: EnrichedNotification[];
+      nextCursor: string | null;
+    }
+  | undefined {
   return useQuery(notificationQueries.fetchNotificationsForPerson, {
     limit,
     cursor,
@@ -102,66 +112,82 @@ export function usePaginatedNotifications(limit = 20, cursor?: string): {
 /**
  * Mark single notification as read
  */
-export function useMarkNotificationAsRead(): (notificationId: Id<"notifications">) => Promise<void> {
-  const markAsReadMutation = useMutation(notificationMutations.markNotificationAsRead);
+export function useMarkNotificationAsRead(): (
+  notificationId: Id<'notifications'>
+) => Promise<void> {
+  const markAsReadMutation = useMutation(
+    notificationMutations.markNotificationAsRead
+  );
   const { toast } = useToast();
 
-  return useCallback(async (notificationId: Id<"notifications">) => {
-    try {
-      await markAsReadMutation({ notificationId });
-      // Success toast not needed - this is a quiet action
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mark notification as read.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [markAsReadMutation, toast]);
+  return useCallback(
+    async (notificationId: Id<'notifications'>) => {
+      try {
+        await markAsReadMutation({ notificationId });
+        // Success toast not needed - this is a quiet action
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to mark notification as read.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [markAsReadMutation, toast]
+  );
 }
 
 /**
  * Mark single notification as unread
  */
-export function useMarkNotificationAsUnread(): (notificationId: Id<"notifications">) => Promise<void> {
-  const markAsUnread = useMutation(notificationMutations.markNotificationAsUnread);
+export function useMarkNotificationAsUnread(): (
+  notificationId: Id<'notifications'>
+) => Promise<void> {
+  const markAsUnread = useMutation(
+    notificationMutations.markNotificationAsUnread
+  );
   const { toast } = useToast();
 
-  return useCallback(async (notificationId: Id<"notifications">) => {
-    try {
-      await markAsUnread({ notificationId });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mark notification as unread.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [markAsUnread, toast]);
+  return useCallback(
+    async (notificationId: Id<'notifications'>) => {
+      try {
+        await markAsUnread({ notificationId });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to mark notification as unread.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [markAsUnread, toast]
+  );
 }
 
 /**
  * Mark all notifications as read
  */
 export function useMarkAllNotificationsAsRead() {
-  const markAllAsRead = useMutation(notificationMutations.markAllNotificationsAsRead);
+  const markAllAsRead = useMutation(
+    notificationMutations.markAllNotificationsAsRead
+  );
   const { toast } = useToast();
 
   return useCallback(async () => {
     try {
       const result = await markAllAsRead({});
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Marked ${result.count} notifications as read.`,
       });
       return result;
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to mark all notifications as read.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to mark all notifications as read.',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -172,63 +198,75 @@ export function useMarkAllNotificationsAsRead() {
  * Mark event notifications as read
  */
 export function useMarkEventNotificationsAsRead() {
-  const markEventAsRead = useMutation(notificationMutations.markEventNotificationsAsRead);
+  const markEventAsRead = useMutation(
+    notificationMutations.markEventNotificationsAsRead
+  );
 
-  return useCallback(async (eventId: Id<"events">) => {
-    try {
-      await markEventAsRead({ eventId });
-      // Quiet action - no success toast needed
-    } catch (error) {
-      console.error("Failed to mark event notifications as read:", error);
-    }
-  }, [markEventAsRead]);
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        await markEventAsRead({ eventId });
+        // Quiet action - no success toast needed
+      } catch (error) {
+        console.error('Failed to mark event notifications as read:', error);
+      }
+    },
+    [markEventAsRead]
+  );
 }
 
 /**
  * Delete single notification
  */
 export function useDeleteNotification() {
-  const deleteNotification = useMutation(notificationMutations.deleteNotification);
+  const deleteNotification = useMutation(
+    notificationMutations.deleteNotification
+  );
   const { toast } = useToast();
 
-  return useCallback(async (notificationId: Id<"notifications">) => {
-    try {
-      await deleteNotification({ notificationId });
-      toast({
-        title: "Success",
-        description: "Notification deleted.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete notification.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [deleteNotification, toast]);
+  return useCallback(
+    async (notificationId: Id<'notifications'>) => {
+      try {
+        await deleteNotification({ notificationId });
+        toast({
+          title: 'Success',
+          description: 'Notification deleted.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete notification.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [deleteNotification, toast]
+  );
 }
 
 /**
  * Delete all notifications
  */
 export function useDeleteAllNotifications() {
-  const deleteAllNotifications = useMutation(notificationMutations.deleteAllNotifications);
+  const deleteAllNotifications = useMutation(
+    notificationMutations.deleteAllNotifications
+  );
   const { toast } = useToast();
 
   return useCallback(async () => {
     try {
       const result = await deleteAllNotifications({});
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Deleted ${result.count} notifications.`,
       });
       return result;
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete notifications.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete notifications.',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -256,7 +294,8 @@ export function useNotificationManagement() {
 
   return {
     // Data
-    notifications: (notifications?.notifications ?? []) as EnrichedNotification[],
+    notifications: (notifications?.notifications ??
+      []) as EnrichedNotification[],
     unreadCount: unreadCount?.count || 0,
     settings,
 

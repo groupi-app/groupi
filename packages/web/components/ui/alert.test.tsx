@@ -17,7 +17,7 @@ describe('Alert', () => {
   });
 
   it('should render with destructive variant', () => {
-    render(<Alert variant="destructive">Error alert</Alert>);
+    render(<Alert variant='destructive'>Error alert</Alert>);
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('border-destructive/50');
@@ -38,7 +38,7 @@ describe('Alert', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Alert className="custom-alert">Custom styled</Alert>);
+    render(<Alert className='custom-alert'>Custom styled</Alert>);
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('custom-alert');
@@ -46,7 +46,11 @@ describe('Alert', () => {
   });
 
   it('should pass through additional props', () => {
-    render(<Alert id="my-alert" data-testid="test-alert">With props</Alert>);
+    render(
+      <Alert id='my-alert' data-testid='test-alert'>
+        With props
+      </Alert>
+    );
 
     const alert = screen.getByTestId('test-alert');
     expect(alert).toHaveAttribute('id', 'my-alert');
@@ -78,7 +82,7 @@ describe('AlertTitle', () => {
   });
 
   it('should merge custom className', () => {
-    render(<AlertTitle className="text-lg">Large Title</AlertTitle>);
+    render(<AlertTitle className='text-lg'>Large Title</AlertTitle>);
 
     const title = screen.getByText('Large Title');
     expect(title).toHaveClass('text-lg');
@@ -86,7 +90,7 @@ describe('AlertTitle', () => {
   });
 
   it('should pass through additional props', () => {
-    render(<AlertTitle id="title-id">Props Title</AlertTitle>);
+    render(<AlertTitle id='title-id'>Props Title</AlertTitle>);
 
     const title = screen.getByText('Props Title');
     expect(title).toHaveAttribute('id', 'title-id');
@@ -116,7 +120,7 @@ describe('AlertDescription', () => {
   });
 
   it('should merge custom className', () => {
-    render(<AlertDescription className="mt-2">Custom Desc</AlertDescription>);
+    render(<AlertDescription className='mt-2'>Custom Desc</AlertDescription>);
 
     const desc = screen.getByText('Custom Desc');
     expect(desc).toHaveClass('mt-2');
@@ -153,7 +157,7 @@ describe('Alert composition', () => {
 
   it('should render destructive alert with all parts', () => {
     render(
-      <Alert variant="destructive">
+      <Alert variant='destructive'>
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>Something went wrong.</AlertDescription>
       </Alert>

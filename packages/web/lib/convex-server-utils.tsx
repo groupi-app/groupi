@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Server utilities use 'any' for flexible Convex query/error handling
 
-import { preloadQuery } from "convex/nextjs";
+import { preloadQuery } from 'convex/nextjs';
 import { redirect } from 'next/navigation';
 
 /**
@@ -23,11 +23,13 @@ export async function safePreloadQuery<T>(
   } = {}
 ): Promise<T> {
   try {
-    return await preloadQuery(query, args) as T;
+    return (await preloadQuery(query, args)) as T;
   } catch (error: any) {
     // Handle Convex errors consistently
-    if (error.message?.includes('Authentication required') ||
-        error.message?.includes('Unauthenticated')) {
+    if (
+      error.message?.includes('Authentication required') ||
+      error.message?.includes('Unauthenticated')
+    ) {
       if (options.redirectOnAuth !== false) {
         redirect('/sign-in');
       }
@@ -38,9 +40,14 @@ export async function safePreloadQuery<T>(
       throw new Error(options.notFoundMessage || 'Resource not found');
     }
 
-    if (error.message?.includes('not a member') ||
-        error.message?.includes('Unauthorized')) {
-      throw new Error(options.unauthorizedMessage || 'You are not authorized to access this resource');
+    if (
+      error.message?.includes('not a member') ||
+      error.message?.includes('Unauthorized')
+    ) {
+      throw new Error(
+        options.unauthorizedMessage ||
+          'You are not authorized to access this resource'
+      );
     }
 
     throw error;
@@ -52,7 +59,7 @@ export async function safePreloadQuery<T>(
  */
 export function ServerErrorComponent({
   error,
-  fallback
+  fallback,
 }: {
   error: any;
   fallback?: React.ReactNode;
@@ -62,11 +69,15 @@ export function ServerErrorComponent({
   }
 
   if (error.message?.includes('not found')) {
-    return <div className="text-center py-8">Resource not found</div>;
+    return <div className='text-center py-8'>Resource not found</div>;
   }
 
   if (error.message?.includes('not authorized')) {
-    return <div className="text-center py-8">You are not authorized to access this resource</div>;
+    return (
+      <div className='text-center py-8'>
+        You are not authorized to access this resource
+      </div>
+    );
   }
 
   if (fallback) {
@@ -74,5 +85,5 @@ export function ServerErrorComponent({
   }
 
   console.error('Server component error:', error);
-  return <div className="text-center py-8">An unexpected error occurred</div>;
+  return <div className='text-center py-8'>An unexpected error occurred</div>;
 }

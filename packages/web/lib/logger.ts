@@ -21,7 +21,9 @@ export function clearTraceId() {
 
 function formatMessage(message: string, extra?: any) {
   const prefix = currentTraceId ? `[${currentTraceId}] ` : '';
-  return extra ? `${prefix}${message} ${JSON.stringify(extra)}` : `${prefix}${message}`;
+  return extra
+    ? `${prefix}${message} ${JSON.stringify(extra)}`
+    : `${prefix}${message}`;
 }
 
 // Logger interface compatible with previous implementation
@@ -45,10 +47,14 @@ export default logger;
 // Legacy exports for compatibility
 export function createLogger(component: string) {
   return {
-    info: (message: string, extra?: any) => logger.info(`[${component}] ${message}`, extra),
-    warn: (message: string, extra?: any) => logger.warn(`[${component}] ${message}`, extra),
-    error: (message: string, extra?: any) => logger.error(`[${component}] ${message}`, extra),
-    debug: (message: string, extra?: any) => logger.debug(`[${component}] ${message}`, extra),
+    info: (message: string, extra?: any) =>
+      logger.info(`[${component}] ${message}`, extra),
+    warn: (message: string, extra?: any) =>
+      logger.warn(`[${component}] ${message}`, extra),
+    error: (message: string, extra?: any) =>
+      logger.error(`[${component}] ${message}`, extra),
+    debug: (message: string, extra?: any) =>
+      logger.debug(`[${component}] ${message}`, extra),
   };
 }
 
@@ -70,8 +76,10 @@ export function createPerformanceTimer(label: string) {
   return {
     end: () => {
       const duration = performance.now() - start;
-      logger.info(`Performance: ${label}`, { duration: `${duration.toFixed(2)}ms` });
+      logger.info(`Performance: ${label}`, {
+        duration: `${duration.toFixed(2)}ms`,
+      });
       return duration;
-    }
+    },
   };
 }

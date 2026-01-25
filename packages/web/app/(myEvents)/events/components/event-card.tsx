@@ -18,7 +18,7 @@ import { ActionMenuButton } from '@/components/ui/action-menu-button';
 import { useIsEventMuted, useToggleEventMute } from '@/hooks/convex/use-muting';
 
 type OrganizerData = {
-  person: Doc<"persons">;
+  person: Doc<'persons'>;
   user: {
     id: string;
     name?: string | null;
@@ -33,9 +33,9 @@ export function EventCard({
   eventId,
   organizer,
 }: {
-  event: Doc<"events">;
+  event: Doc<'events'>;
   userRole: string;
-  eventId: Id<"events">;
+  eventId: Id<'events'>;
   organizer: OrganizerData;
 }) {
   const {
@@ -297,9 +297,14 @@ export function EventCard({
               {organizer && (
                 <div className='flex items-center gap-2'>
                   <Avatar className='size-6'>
-                    <AvatarImage src={organizer.user.image || undefined} alt={organizer.user.name || organizer.user.email} />
+                    <AvatarImage
+                      src={organizer.user.image || undefined}
+                      alt={organizer.user.name || organizer.user.email}
+                    />
                     <AvatarFallback className='text-xs'>
-                      {(organizer.user.name || organizer.user.email).slice(0, 2).toUpperCase()}
+                      {(organizer.user.name || organizer.user.email)
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className='text-sm text-muted-foreground'>

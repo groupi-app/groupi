@@ -15,14 +15,14 @@ describe('Switch', () => {
   });
 
   it('should have data-slot attribute', () => {
-    render(<Switch data-testid="switch" />);
+    render(<Switch data-testid='switch' />);
 
     const switchEl = screen.getByTestId('switch');
     expect(switchEl).toHaveAttribute('data-slot', 'switch');
   });
 
   it('should apply base styling', () => {
-    render(<Switch data-testid="switch" />);
+    render(<Switch data-testid='switch' />);
 
     const switchEl = screen.getByTestId('switch');
     expect(switchEl).toHaveClass('inline-flex');
@@ -30,7 +30,7 @@ describe('Switch', () => {
   });
 
   it('should merge custom className', () => {
-    render(<Switch className="mt-2" data-testid="switch" />);
+    render(<Switch className='mt-2' data-testid='switch' />);
 
     const switchEl = screen.getByTestId('switch');
     expect(switchEl).toHaveClass('mt-2');
@@ -80,14 +80,16 @@ describe('Switch', () => {
   });
 
   it('should render thumb element', () => {
-    render(<Switch data-testid="switch" />);
+    render(<Switch data-testid='switch' />);
 
-    const thumb = screen.getByTestId('switch').querySelector('[data-slot="switch-thumb"]');
+    const thumb = screen
+      .getByTestId('switch')
+      .querySelector('[data-slot="switch-thumb"]');
     expect(thumb).toBeInTheDocument();
   });
 
   it('should pass through id attribute', () => {
-    render(<Switch id="notifications-switch" />);
+    render(<Switch id='notifications-switch' />);
 
     const switchEl = screen.getByRole('switch');
     expect(switchEl).toHaveAttribute('id', 'notifications-switch');
@@ -95,6 +97,6 @@ describe('Switch', () => {
 
   it('should accept name prop without error', () => {
     // Radix UI handles name internally for form submission
-    expect(() => render(<Switch name="notifications" />)).not.toThrow();
+    expect(() => render(<Switch name='notifications' />)).not.toThrow();
   });
 });

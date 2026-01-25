@@ -7,7 +7,13 @@ import { authClient } from '@/lib/auth-client';
 // Use dynamic require to avoid deep type instantiation issues
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
 const { api } = require('@/convex/_generated/api') as { api: any };
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -49,7 +55,9 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [actionType, setActionType] = useState<'ban' | 'unban' | 'promote' | 'demote' | 'delete' | null>(null);
+  const [actionType, setActionType] = useState<
+    'ban' | 'unban' | 'promote' | 'demote' | 'delete' | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Debounce search
@@ -83,7 +91,9 @@ export default function AdminUsersPage() {
             userId: selectedUser.id,
             role: 'admin',
           });
-          toast.success(`${selectedUser.name || selectedUser.email} promoted to admin`);
+          toast.success(
+            `${selectedUser.name || selectedUser.email} promoted to admin`
+          );
           break;
 
         case 'demote':
@@ -92,7 +102,9 @@ export default function AdminUsersPage() {
             userId: selectedUser.id,
             role: 'user',
           });
-          toast.success(`${selectedUser.name || selectedUser.email} demoted to user`);
+          toast.success(
+            `${selectedUser.name || selectedUser.email} demoted to user`
+          );
           break;
 
         case 'ban':
@@ -100,7 +112,9 @@ export default function AdminUsersPage() {
           await authClient.admin.banUser({
             userId: selectedUser.id,
           });
-          toast.success(`${selectedUser.name || selectedUser.email} has been banned`);
+          toast.success(
+            `${selectedUser.name || selectedUser.email} has been banned`
+          );
           break;
 
         case 'unban':
@@ -108,13 +122,17 @@ export default function AdminUsersPage() {
           await authClient.admin.unbanUser({
             userId: selectedUser.id,
           });
-          toast.success(`${selectedUser.name || selectedUser.email} has been unbanned`);
+          toast.success(
+            `${selectedUser.name || selectedUser.email} has been unbanned`
+          );
           break;
 
         case 'delete':
           // Delete person and all related data via Convex
           await deletePerson({ personId: selectedUser.personId });
-          toast.success(`${selectedUser.name || selectedUser.email} has been deleted`);
+          toast.success(
+            `${selectedUser.name || selectedUser.email} has been deleted`
+          );
           break;
       }
     } catch (error) {
@@ -131,7 +149,7 @@ export default function AdminUsersPage() {
     if (name) {
       return name
         .split(' ')
-        .map((n) => n[0])
+        .map(n => n[0])
         .join('')
         .toUpperCase()
         .slice(0, 2);
@@ -193,9 +211,7 @@ export default function AdminUsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Search Users</CardTitle>
-          <CardDescription>
-            Search by name, email, or username
-          </CardDescription>
+          <CardDescription>Search by name, email, or username</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='flex gap-2'>
@@ -204,7 +220,7 @@ export default function AdminUsersPage() {
               <Input
                 placeholder='Search users...'
                 value={search}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={e => handleSearch(e.target.value)}
                 className='pl-9'
               />
             </div>
@@ -249,9 +265,7 @@ export default function AdminUsersPage() {
                     </Avatar>
                     <div>
                       <div className='flex items-center gap-2'>
-                        <p className='font-medium'>
-                          {user.name || 'No name'}
-                        </p>
+                        <p className='font-medium'>{user.name || 'No name'}</p>
                         {user.role === 'admin' && (
                           <Badge variant='default' className='text-xs'>
                             Admin
@@ -337,7 +351,7 @@ export default function AdminUsersPage() {
       {/* Confirmation Dialog */}
       <Dialog
         open={!!selectedUser && !!actionType}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setSelectedUser(null);
             setActionType(null);

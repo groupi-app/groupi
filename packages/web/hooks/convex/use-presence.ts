@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useMemo } from "react";
-import { useQuery, useConvex } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import usePresence from "@convex-dev/presence/react";
+import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useQuery, useConvex } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import usePresence from '@convex-dev/presence/react';
 
 // ===== CONSTANTS =====
 const DEFAULT_HEARTBEAT_INTERVAL = 10000; // 10 seconds
@@ -17,7 +17,7 @@ let _api: any;
 function getPresenceApi() {
   if (!_presenceApi) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _api = require("@/convex/_generated/api").api;
+    _api = require('@/convex/_generated/api').api;
     _presenceApi = _api.presence;
   }
   return _presenceApi;
@@ -26,7 +26,7 @@ function getPresenceApi() {
 function getApi() {
   if (!_api) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _api = require("@/convex/_generated/api").api;
+    _api = require('@/convex/_generated/api').api;
     _presenceApi = _api.presence;
   }
   return _api;
@@ -44,7 +44,7 @@ export interface PresenceUser {
 }
 
 export interface TypingUser {
-  personId: Id<"persons">;
+  personId: Id<'persons'>;
   name: string;
   image?: string;
 }
@@ -56,11 +56,11 @@ export interface TypingUser {
  * Call this on post detail pages to mark user as present
  */
 export function usePostPresence(
-  postId: Id<"posts"> | undefined,
-  personId: Id<"persons"> | undefined
+  postId: Id<'posts'> | undefined,
+  personId: Id<'persons'> | undefined
 ) {
-  const roomId = postId ? `post:${postId}` : "";
-  const userId = personId ?? "";
+  const roomId = postId ? `post:${postId}` : '';
+  const userId = personId ?? '';
   const isEnabled = !!postId && !!personId;
 
   // Use the Convex presence hook
@@ -83,11 +83,11 @@ export function usePostPresence(
  * Call this on event pages to mark user as present
  */
 export function useEventPresence(
-  eventId: Id<"events"> | undefined,
-  personId: Id<"persons"> | undefined
+  eventId: Id<'events'> | undefined,
+  personId: Id<'persons'> | undefined
 ) {
-  const roomId = eventId ? `event:${eventId}` : "";
-  const userId = personId ?? "";
+  const roomId = eventId ? `event:${eventId}` : '';
+  const userId = personId ?? '';
   const isEnabled = !!eventId && !!personId;
 
   const presenceState = usePresence(
@@ -106,14 +106,14 @@ export function useEventPresence(
 /**
  * Get list of users currently viewing a post
  */
-export function usePostViewers(postId: Id<"posts"> | undefined) {
-  const roomId = postId ? `post:${postId}` : "";
+export function usePostViewers(postId: Id<'posts'> | undefined) {
+  const roomId = postId ? `post:${postId}` : '';
 
   // Using usePresence with empty userId to just observe without sending heartbeats
   const presenceState = usePresence(
     getPresenceApi(),
     roomId,
-    "", // Empty user ID - we're just observing
+    '', // Empty user ID - we're just observing
     0 // No heartbeats - just observing
   );
 
@@ -124,10 +124,12 @@ export function usePostViewers(postId: Id<"posts"> | undefined) {
  * Get typing indicators for a room
  * Requires a roomToken obtained from the usePresence hook
  */
-export function useTypingIndicators(roomToken: string | undefined): TypingUser[] {
+export function useTypingIndicators(
+  roomToken: string | undefined
+): TypingUser[] {
   const result = useQuery(
     getApi().presence.getTypingUsers,
-    roomToken ? { roomToken } : "skip"
+    roomToken ? { roomToken } : 'skip'
   );
 
   return (result ?? []) as TypingUser[];
@@ -138,11 +140,11 @@ export function useTypingIndicators(roomToken: string | undefined): TypingUser[]
  * Returns a function to set typing state
  */
 export function useTypingState(
-  postId: Id<"posts"> | undefined,
-  personId: Id<"persons"> | undefined
+  postId: Id<'posts'> | undefined,
+  personId: Id<'persons'> | undefined
 ) {
-  const roomId = useMemo(() => postId ? `post:${postId}` : "", [postId]);
-  const userId = personId ?? "";
+  const roomId = useMemo(() => (postId ? `post:${postId}` : ''), [postId]);
+  const userId = personId ?? '';
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
   const isEnabled = !!postId && !!personId;
@@ -244,13 +246,13 @@ export function useUpdateLastSeen() {
  * Global presence tracking - marks user as online in the app
  * Call this at the app root level
  */
-export function useAppPresence(personId: Id<"persons"> | undefined) {
-  const userId = personId ?? "";
+export function useAppPresence(personId: Id<'persons'> | undefined) {
+  const userId = personId ?? '';
   const isEnabled = !!personId;
 
   const presenceState = usePresence(
     getPresenceApi(),
-    "app",
+    'app',
     userId,
     isEnabled ? DEFAULT_HEARTBEAT_INTERVAL : 0
   );
@@ -265,9 +267,12 @@ export function useAppPresence(personId: Id<"persons"> | undefined) {
     updateLastSeen();
 
     // Update every 5 minutes while active
-    const interval = setInterval(() => {
-      updateLastSeen();
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        updateLastSeen();
+      },
+      5 * 60 * 1000
+    );
 
     return () => clearInterval(interval);
   }, [personId, updateLastSeen]);

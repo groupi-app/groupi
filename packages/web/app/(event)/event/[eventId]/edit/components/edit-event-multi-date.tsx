@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useResetEventDate, useUpdatePotentialDateTimes } from '@/hooks/convex/use-events';
+import {
+  useResetEventDate,
+  useUpdatePotentialDateTimes,
+} from '@/hooks/convex/use-events';
 import { Id } from '@/convex/_generated/dataModel';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -58,7 +61,7 @@ export function EditEventMultiDate({
   eventId,
   dates,
 }: {
-  eventId: Id<"events">;
+  eventId: Id<'events'>;
   dates: Date[] | undefined;
 }) {
   const router = useRouter();
@@ -237,7 +240,7 @@ export function EditEventMultiDate({
                           onClick={() => {
                             form2.setValue(
                               'dateTimes',
-                               
+
                               form2
                                 .watch('dateTimes')
                                 .filter((_, index) => index !== i)

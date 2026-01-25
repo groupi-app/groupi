@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCurrentUserProfile } from "@/hooks/convex/use-users";
-import { useAppPresence } from "@/hooks/convex/use-presence";
-import { Id } from "@/convex/_generated/dataModel";
+import { useCurrentUserProfile } from '@/hooks/convex/use-users';
+import { useAppPresence } from '@/hooks/convex/use-presence';
+import { Id } from '@/convex/_generated/dataModel';
 
 /**
  * Global presence tracker component
@@ -14,7 +14,7 @@ import { Id } from "@/convex/_generated/dataModel";
  */
 export function GlobalPresenceTracker() {
   const profile = useCurrentUserProfile();
-  const personId = profile?.person?.id as Id<"persons"> | undefined;
+  const personId = profile?.person?.id as Id<'persons'> | undefined;
 
   // This hook handles:
   // 1. Sending heartbeats to the presence system

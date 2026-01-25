@@ -25,11 +25,5 @@ export function EventListWrapper() {
   const { userId } = userEventsData;
 
   // EventList fetches its own data via useUserEvents
-  return (
-    <EventList
-      userId={userId}
-      sortBy={sortBy}
-      filter={filter}
-    />
-  );
+  return <EventList userId={userId} sortBy={sortBy} filter={filter} />;
 }

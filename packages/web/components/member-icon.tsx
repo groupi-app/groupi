@@ -41,10 +41,12 @@ import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { Button } from '@/components/ui/button';
 
 // Use Convex generated types - person can be null if the person record is deleted
-type Member = Doc<"memberships"> & {
-  person: (Doc<"persons"> & {
-    user: User;
-  }) | null;
+type Member = Doc<'memberships'> & {
+  person:
+    | (Doc<'persons'> & {
+        user: User;
+      })
+    | null;
 };
 
 const item = {
@@ -146,7 +148,13 @@ function ActionMenu({
                         <span
                           className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
                         />
-                        <span className={presence.isOnline ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
+                        <span
+                          className={
+                            presence.isOnline
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-muted-foreground'
+                          }
+                        >
                           {presence.text}
                         </span>
                       </div>
@@ -287,7 +295,13 @@ function ActionMenu({
                     <span
                       className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
                     />
-                    <span className={presence.isOnline ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
+                    <span
+                      className={
+                        presence.isOnline
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-muted-foreground'
+                      }
+                    >
                       {presence.text}
                     </span>
                   </div>
@@ -439,7 +453,10 @@ export default function MemberIcon({
   const role = member.role;
 
   const fullName = user?.name || user?.email || '';
-  const initials = getInitialsFromName(user?.name ?? undefined, user?.email ?? undefined);
+  const initials = getInitialsFromName(
+    user?.name ?? undefined,
+    user?.email ?? undefined
+  );
 
   componentLogger.debug('MemberIcon', 'Rendering member icon', {
     fullName,

@@ -1,18 +1,18 @@
 'use client';
 
-import { createAuthClient } from "better-auth/react";
-import { convexClient } from "@convex-dev/better-auth/client/plugins";
+import { createAuthClient } from 'better-auth/react';
+import { convexClient } from '@convex-dev/better-auth/client/plugins';
 
 // Import your existing plugins
-import { usernameClient } from "better-auth/client/plugins";
-import { magicLinkClient } from "better-auth/client/plugins";
-import { oneTapClient } from "better-auth/client/plugins";
-import { adminClient } from "better-auth/client/plugins";
-import { apiKeyClient } from "better-auth/client/plugins";
-import { passkeyClient } from "@better-auth/passkey/client";
+import { usernameClient } from 'better-auth/client/plugins';
+import { magicLinkClient } from 'better-auth/client/plugins';
+import { oneTapClient } from 'better-auth/client/plugins';
+import { adminClient } from 'better-auth/client/plugins';
+import { apiKeyClient } from 'better-auth/client/plugins';
+import { passkeyClient } from '@better-auth/passkey/client';
 
 // Import Convex client for username lookup
-import { convex } from "./convex";
+import { convex } from './convex';
 
 // Lazy-load API to avoid deep type instantiation issues
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,7 +20,7 @@ let authQueries: any;
 function initAuthApi() {
   if (!authQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     authQueries = api.auth?.queries ?? {};
   }
 }

@@ -5,12 +5,8 @@ import { Id } from '@/convex/_generated/dataModel';
 import { EditEventSingleDate } from '../../../edit/components/edit-event-single-date';
 import { ChangeDateSingleSkeleton } from '@/components/skeletons';
 
-export function ChangeDateSingleContent({
-  eventId,
-}: {
-  eventId: string;
-}) {
-  const eventData = useEventHeader(eventId as Id<"events">);
+export function ChangeDateSingleContent({ eventId }: { eventId: string }) {
+  const eventData = useEventHeader(eventId as Id<'events'>);
 
   if (eventData === undefined) {
     return <ChangeDateSingleSkeleton />;
@@ -27,7 +23,9 @@ export function ChangeDateSingleContent({
 
   const { event } = eventData;
   // Convert timestamp to Date for the component
-  const datetime = event.chosenDateTime ? new Date(event.chosenDateTime) : undefined;
+  const datetime = event.chosenDateTime
+    ? new Date(event.chosenDateTime)
+    : undefined;
 
   return (
     <div className='container max-w-4xl'>

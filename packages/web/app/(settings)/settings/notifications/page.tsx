@@ -6,7 +6,11 @@ import { SettingsFormWithGuard } from '../components/settings-form-with-guard';
 import { SettingsContent } from '../components/settings-content';
 import { useNotificationMethodSettings } from '@/hooks/convex/use-settings';
 import { useCurrentUserProfile } from '@/hooks/convex/use-users';
-import { Authenticated, Unauthenticated, AuthLoading } from '@/components/auth/auth-wrappers';
+import {
+  Authenticated,
+  Unauthenticated,
+  AuthLoading,
+} from '@/components/auth/auth-wrappers';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -25,7 +29,9 @@ export default function NotificationSettings() {
           <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
           <div className='text-center py-8'>
             <h2 className='text-xl font-bold'>Authentication Required</h2>
-            <p className='mt-2 mb-6'>Please sign in to access your notification settings.</p>
+            <p className='mt-2 mb-6'>
+              Please sign in to access your notification settings.
+            </p>
             <Link href='/sign-in'>
               <Button>Sign In</Button>
             </Link>
@@ -72,20 +78,44 @@ function AuthenticatedNotificationSettings() {
 
   // Transform Convex data to form format
   const defaultValues = {
-    notificationMethods: (settings.notificationMethods || []).map((method: ConvexMethod) => ({
-      id: method.id,
-      type: method.type as "EMAIL" | "PUSH" | "WEBHOOK",
-      enabled: method.enabled,
-      name: method.name || '',
-      value: method.value,
-      webhookFormat: method.webhookFormat as "DISCORD" | "SLACK" | "TEAMS" | "GENERIC" | "CUSTOM" | undefined,
-      customTemplate: method.customTemplate || '',
-      webhookHeaders: method.webhookHeaders ? JSON.stringify(method.webhookHeaders) : '',
-      notifications: method.notifications.map((n: { notificationType: string; enabled: boolean }) => ({
-        notificationType: n.notificationType as "EVENT_EDITED" | "NEW_POST" | "NEW_REPLY" | "DATE_CHOSEN" | "DATE_CHANGED" | "DATE_RESET" | "USER_JOINED" | "USER_LEFT" | "USER_PROMOTED" | "USER_DEMOTED" | "USER_RSVP" | "USER_MENTIONED",
-        enabled: n.enabled,
-      })),
-    })),
+    notificationMethods: (settings.notificationMethods || []).map(
+      (method: ConvexMethod) => ({
+        id: method.id,
+        type: method.type as 'EMAIL' | 'PUSH' | 'WEBHOOK',
+        enabled: method.enabled,
+        name: method.name || '',
+        value: method.value,
+        webhookFormat: method.webhookFormat as
+          | 'DISCORD'
+          | 'SLACK'
+          | 'TEAMS'
+          | 'GENERIC'
+          | 'CUSTOM'
+          | undefined,
+        customTemplate: method.customTemplate || '',
+        webhookHeaders: method.webhookHeaders
+          ? JSON.stringify(method.webhookHeaders)
+          : '',
+        notifications: method.notifications.map(
+          (n: { notificationType: string; enabled: boolean }) => ({
+            notificationType: n.notificationType as
+              | 'EVENT_EDITED'
+              | 'NEW_POST'
+              | 'NEW_REPLY'
+              | 'DATE_CHOSEN'
+              | 'DATE_CHANGED'
+              | 'DATE_RESET'
+              | 'USER_JOINED'
+              | 'USER_LEFT'
+              | 'USER_PROMOTED'
+              | 'USER_DEMOTED'
+              | 'USER_RSVP'
+              | 'USER_MENTIONED',
+            enabled: n.enabled,
+          })
+        ),
+      })
+    ),
   };
 
   // Get all user emails for the settings content

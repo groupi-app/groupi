@@ -25,11 +25,7 @@ const formSchema = z.object({
   rsvp: z.enum(['YES', 'NO', 'MAYBE', 'PENDING']),
 });
 
-export function EventRSVP({
-  eventId,
-}: {
-  eventId: Id<"events">;
-}) {
+export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -60,8 +56,8 @@ export function EventRSVP({
   // Loading state - AFTER all hooks are called
   if (eventHeaderData === undefined) {
     return (
-      <div className="animate-pulse">
-        <div className="h-8 bg-muted rounded w-32"></div>
+      <div className='animate-pulse'>
+        <div className='h-8 bg-muted rounded w-32'></div>
       </div>
     );
   }
@@ -83,8 +79,7 @@ export function EventRSVP({
       toast.success('Your RSVP status has been successfully updated');
     } catch {
       toast.error('Failed to update RSVP', {
-        description:
-          'Your RSVP status could not be updated. Please try again.',
+        description: 'Your RSVP status could not be updated. Please try again.',
       });
     } finally {
       setIsSaving(false);
@@ -215,7 +210,6 @@ export function EventRSVP({
                 disabled={
                   isSaving ||
                   !form.formState.isValid ||
-                   
                   form.watch('rsvp') === 'PENDING'
                 }
                 isLoading={isSaving}

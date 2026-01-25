@@ -39,7 +39,7 @@ type UserInfo = {
 export function MobileNav({
   items,
   children,
-  userInfo
+  userInfo,
 }: {
   items: NavItem[];
   children?: React.ReactNode;

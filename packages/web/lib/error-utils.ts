@@ -10,7 +10,10 @@ interface ParsedError {
  * Parse an error and return user-friendly error information.
  * Technical details are stripped out and replaced with helpful messages.
  */
-export function parseError(error: Error, context: 'event' | 'post' | 'invite' | 'general' = 'general'): ParsedError {
+export function parseError(
+  error: Error,
+  context: 'event' | 'post' | 'invite' | 'general' = 'general'
+): ParsedError {
   const errorMessage = error.message || '';
 
   // Check for Convex validation errors (invalid ID format)
@@ -55,7 +58,7 @@ export function parseError(error: Error, context: 'event' | 'post' | 'invite' | 
     errorMessage.includes('Not found') ||
     errorMessage.includes('not found') ||
     errorMessage.includes('does not exist') ||
-    errorMessage.includes('doesn\'t exist')
+    errorMessage.includes("doesn't exist")
   ) {
     return getNotFoundError(context);
   }
@@ -70,7 +73,8 @@ export function parseError(error: Error, context: 'event' | 'post' | 'invite' | 
     return {
       type: 'generic',
       title: 'Connection Error',
-      message: 'Unable to connect to the server. Please check your internet connection and try again.',
+      message:
+        'Unable to connect to the server. Please check your internet connection and try again.',
     };
   }
 
@@ -88,25 +92,27 @@ function getNotFoundError(context: string): ParsedError {
       return {
         type: 'not-found',
         title: 'Event Not Found',
-        message: 'This event doesn\'t exist or may have been deleted.',
+        message: "This event doesn't exist or may have been deleted.",
       };
     case 'post':
       return {
         type: 'not-found',
         title: 'Post Not Found',
-        message: 'This post doesn\'t exist or may have been deleted.',
+        message: "This post doesn't exist or may have been deleted.",
       };
     case 'invite':
       return {
         type: 'expired',
         title: 'Invalid Invite',
-        message: 'This invite link is invalid, expired, or has already been used.',
+        message:
+          'This invite link is invalid, expired, or has already been used.',
       };
     default:
       return {
         type: 'not-found',
         title: 'Not Found',
-        message: 'The page you\'re looking for doesn\'t exist or may have been removed.',
+        message:
+          "The page you're looking for doesn't exist or may have been removed.",
       };
   }
 }
@@ -114,13 +120,13 @@ function getNotFoundError(context: string): ParsedError {
 function getAccessDeniedMessage(context: string): string {
   switch (context) {
     case 'event':
-      return 'You don\'t have permission to access this event. You may need an invite link to join.';
+      return "You don't have permission to access this event. You may need an invite link to join.";
     case 'post':
-      return 'You don\'t have permission to view this post.';
+      return "You don't have permission to view this post.";
     case 'invite':
-      return 'You don\'t have permission to use this invite.';
+      return "You don't have permission to use this invite.";
     default:
-      return 'You don\'t have permission to access this page.';
+      return "You don't have permission to access this page.";
   }
 }
 

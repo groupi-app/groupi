@@ -10,7 +10,7 @@ let userQueries: any;
 function initApi() {
   if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userQueries = api.users?.queries ?? {};
   }
 }
@@ -38,7 +38,7 @@ export function UsernameField() {
   const username = watch('username');
   const usernameAvailability = useQuery(
     userQueries.checkUsernameAvailability,
-    usernameToCheck ? { username: usernameToCheck } : "skip"
+    usernameToCheck ? { username: usernameToCheck } : 'skip'
   );
 
   // Store original username on mount

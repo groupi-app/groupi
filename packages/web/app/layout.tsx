@@ -118,39 +118,39 @@ export default function RootLayout({
                   <GlobalPresenceTracker />
                 </Suspense>
                 <div className='flex flex-col min-h-screen'>
-                    {/* Static header shell - renders immediately */}
-                    <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-                      <MainNavStatic
-                        dynamicContent={
-                          <Suspense fallback={<MainNavDynamicSkeleton />}>
-                            <NavigationWrapper items={navConfig.mainNav} />
-                          </Suspense>
-                        }
-                      />
-                    </header>
-                    {/* Static main content area */}
-                    <main className='grow'>{children}</main>
-                    {/* Static footer */}
-                    <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
-                      <div className='container mx-auto py-4 flex gap-8 items-center'>
-                        <ModeToggle />
-                        <div className='flex flex-col gap-2'>
-                          <p>
-                            Built by{' '}
-                            <Link
-                              className='underline font-medium'
-                              href='https://tsurette.com'
-                            >
-                              Theia
-                            </Link>
-                          </p>
-                          <FooterCopyright />
-                        </div>
+                  {/* Static header shell - renders immediately */}
+                  <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+                    <MainNavStatic
+                      dynamicContent={
+                        <Suspense fallback={<MainNavDynamicSkeleton />}>
+                          <NavigationWrapper items={navConfig.mainNav} />
+                        </Suspense>
+                      }
+                    />
+                  </header>
+                  {/* Static main content area */}
+                  <main className='grow'>{children}</main>
+                  {/* Static footer */}
+                  <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+                    <div className='container mx-auto py-4 flex gap-8 items-center'>
+                      <ModeToggle />
+                      <div className='flex flex-col gap-2'>
+                        <p>
+                          Built by{' '}
+                          <Link
+                            className='underline font-medium'
+                            href='https://tsurette.com'
+                          >
+                            Theia
+                          </Link>
+                        </p>
+                        <FooterCopyright />
                       </div>
-                    </footer>
-                  </div>
-                </NavigationGuardProvider>
-              </TooltipProvider>
+                    </div>
+                  </footer>
+                </div>
+              </NavigationGuardProvider>
+            </TooltipProvider>
           </ConvexClientProvider>
           <AppProviders />
         </ThemeProvider>

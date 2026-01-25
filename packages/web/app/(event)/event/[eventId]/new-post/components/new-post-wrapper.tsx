@@ -15,7 +15,7 @@ interface NewPostWrapperProps {
  * - Renders new post content when data is ready
  */
 export function NewPostWrapper({ eventId }: NewPostWrapperProps) {
-  const eventData = useEventHeader(eventId as Id<"events">);
+  const eventData = useEventHeader(eventId as Id<'events'>);
   const currentUser = useCurrentUser();
 
   // Loading state

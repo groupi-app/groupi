@@ -83,7 +83,9 @@ describe('Error Classes', () => {
 
       expect(error).toBeInstanceOf(AppError);
       expect(error).toBeInstanceOf(UnauthorizedError);
-      expect(error.message).toBe('You are not authorized to access this resource');
+      expect(error.message).toBe(
+        'You are not authorized to access this resource'
+      );
       expect(error.code).toBe('UNAUTHORIZED');
       expect(error.statusCode).toBe(403);
       expect(error.name).toBe('UnauthorizedError');

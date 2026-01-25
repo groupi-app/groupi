@@ -34,7 +34,7 @@ export function MutualEventsDialog({
   const isLoading = mutualEventsData === undefined;
   // Type annotation to avoid implicit any
   interface MutualEvent {
-    id: Id<"events">;
+    id: Id<'events'>;
     title: string;
     location?: string | null;
     chosenDateTime?: number | null;

@@ -57,7 +57,9 @@ export function DeleteAccountModal({
       router.push('/sign-in');
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete account');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete account'
+      );
       setDeleting(false);
     }
   };

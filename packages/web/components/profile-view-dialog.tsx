@@ -48,7 +48,7 @@ export function ProfileViewDialog({
   const userProfile = profileData?.user;
   // Type annotation to avoid implicit any
   interface MutualEvent {
-    id: Id<"events">;
+    id: Id<'events'>;
     title: string;
     location?: string | null;
     chosenDateTime?: number | null;
@@ -139,7 +139,13 @@ export function ProfileViewDialog({
                           <span
                             className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
                           />
-                          <span className={presence.isOnline ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
+                          <span
+                            className={
+                              presence.isOnline
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-muted-foreground'
+                            }
+                          >
                             {presence.text}
                           </span>
                         </div>

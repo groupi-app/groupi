@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useConvexAuth } from 'convex/react';
+import { Id } from '@/convex/_generated/dataModel';
+import { useCallback } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,7 +14,7 @@ let userMutations: any;
 function initApi() {
   if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     userQueries = api.users?.queries ?? {};
     userMutations = api.users?.mutations ?? {};
   }
@@ -54,64 +54,72 @@ export function useUpdateUserProfile() {
   const updateProfile = useMutation(userMutations.updateUserProfile);
   const { toast } = useToast();
 
-  return useCallback(async (data: {
-    name?: string;
-    username?: string;
-    pronouns?: string;
-    bio?: string;
-    image?: string;
-    imageStorageId?: Id<"_storage">;
-    clearImage?: boolean;
-  }) => {
-    try {
-      const result = await updateProfile(data);
+  return useCallback(
+    async (data: {
+      name?: string;
+      username?: string;
+      pronouns?: string;
+      bio?: string;
+      image?: string;
+      imageStorageId?: Id<'_storage'>;
+      clearImage?: boolean;
+    }) => {
+      try {
+        const result = await updateProfile(data);
 
-      toast({
-        title: "Success",
-        description: "Profile updated successfully!",
-      });
+        toast({
+          title: 'Success',
+          description: 'Profile updated successfully!',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [updateProfile, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update profile. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updateProfile, toast]
+  );
 }
 
 /**
  * Update user's notification settings
  */
 export function useUpdateUserNotificationSettings() {
-  const updateSettings = useMutation(userMutations.updateUserNotificationSettings);
+  const updateSettings = useMutation(
+    userMutations.updateUserNotificationSettings
+  );
   const { toast } = useToast();
 
-  return useCallback(async (data: {
-    emailNotifications?: boolean;
-    pushNotifications?: boolean;
-  }) => {
-    try {
-      const result = await updateSettings(data);
+  return useCallback(
+    async (data: {
+      emailNotifications?: boolean;
+      pushNotifications?: boolean;
+    }) => {
+      try {
+        const result = await updateSettings(data);
 
-      toast({
-        title: "Success",
-        description: "Notification settings updated successfully!",
-      });
+        toast({
+          title: 'Success',
+          description: 'Notification settings updated successfully!',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update notification settings.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [updateSettings, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update notification settings.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updateSettings, toast]
+  );
 }
 
 /**
@@ -121,26 +129,29 @@ export function useDeleteUserAccount() {
   const deleteAccount = useMutation(userMutations.deleteUserAccount);
   const { toast } = useToast();
 
-  return useCallback(async (confirmation: string) => {
-    try {
-      const result = await deleteAccount({ confirmation });
+  return useCallback(
+    async (confirmation: string) => {
+      try {
+        const result = await deleteAccount({ confirmation });
 
-      toast({
-        title: "Account Deletion Initiated",
-        description: "Your account deletion request has been processed.",
-        variant: "destructive",
-      });
+        toast({
+          title: 'Account Deletion Initiated',
+          description: 'Your account deletion request has been processed.',
+          variant: 'destructive',
+        });
 
-      return result;
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete account. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  }, [deleteAccount, toast]);
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete account. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [deleteAccount, toast]
+  );
 }
 
 // ===== COMBINED HOOKS =====
@@ -183,13 +194,17 @@ export const useCurrentUser = useCurrentUserProfile;
  * sign-in when refreshing the page while authenticated.
  */
 export function useAuthState() {
-  const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
+  const {
+    isLoading: isConvexAuthLoading,
+    isAuthenticated: isConvexAuthenticated,
+  } = useConvexAuth();
   const user = useCurrentUserProfile();
 
   // Consider loading if either:
   // 1. Convex auth is still loading (validating token)
   // 2. Convex auth says authenticated but user profile query is still in-flight
-  const isLoading = isConvexAuthLoading || (isConvexAuthenticated && user === undefined);
+  const isLoading =
+    isConvexAuthLoading || (isConvexAuthenticated && user === undefined);
 
   return {
     isAuthenticated: isConvexAuthenticated && !!user?.user,

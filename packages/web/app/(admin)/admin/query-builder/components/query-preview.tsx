@@ -51,7 +51,10 @@ export function QueryPreview({ queryState }: QueryPreviewProps) {
           const displayValue = c.valueLabel || c.value;
           // For relationship fields, show a friendlier label
           const fieldLabel = c.field.startsWith('rel_')
-            ? c.field.replace('rel_', '').replace(/([A-Z])/g, ' $1').toLowerCase()
+            ? c.field
+                .replace('rel_', '')
+                .replace(/([A-Z])/g, ' $1')
+                .toLowerCase()
             : c.field;
           return `${fieldLabel} ${op} "${displayValue}"`;
         });
@@ -75,12 +78,12 @@ export function QueryPreview({ queryState }: QueryPreviewProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Query Preview</CardTitle>
+        <CardTitle className='text-lg'>Query Preview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="bg-muted rounded-md p-4 font-mono text-sm space-y-1">
+        <div className='bg-muted rounded-md p-4 font-mono text-sm space-y-1'>
           {queryLines.map((line, index) => (
-            <div key={index} className="text-muted-foreground">
+            <div key={index} className='text-muted-foreground'>
               {line}
             </div>
           ))}

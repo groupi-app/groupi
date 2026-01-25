@@ -50,7 +50,8 @@ describe('postPatchSchema', () => {
     it('should accept HTML content', () => {
       const result = postPatchSchema.safeParse({
         title: 'Post',
-        content: '<h1>Heading</h1><p>Paragraph with <strong>bold</strong> text.</p>',
+        content:
+          '<h1>Heading</h1><p>Paragraph with <strong>bold</strong> text.</p>',
         authorId: 'author-123',
       });
 

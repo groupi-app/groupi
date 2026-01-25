@@ -1,7 +1,13 @@
 'use client';
 
 import { useQuery } from 'convex/react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 
 // Dynamic require to avoid deep type instantiation
@@ -10,7 +16,7 @@ let adminQueries: any;
 function initApi() {
   if (!adminQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require("@/convex/_generated/api");
+    const { api } = require('@/convex/_generated/api');
     adminQueries = api.admin?.queries ?? {};
   }
 }
@@ -63,7 +69,7 @@ export default function AdminDashboardPage() {
 
       {/* Stats Grid */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        {stats.map((stat) => (
+        {stats.map(stat => (
           <Card key={stat.title}>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
               <CardTitle className='text-sm font-medium text-muted-foreground'>
@@ -75,9 +81,13 @@ export default function AdminDashboardPage() {
               {isLoading ? (
                 <div className='h-8 w-16 animate-pulse rounded bg-muted' />
               ) : (
-                <div className='text-2xl font-bold'>{stat.value.toLocaleString()}</div>
+                <div className='text-2xl font-bold'>
+                  {stat.value.toLocaleString()}
+                </div>
               )}
-              <p className='text-xs text-muted-foreground'>{stat.description}</p>
+              <p className='text-xs text-muted-foreground'>
+                {stat.description}
+              </p>
             </CardContent>
           </Card>
         ))}

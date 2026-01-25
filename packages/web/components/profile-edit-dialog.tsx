@@ -63,7 +63,9 @@ export function ProfileEditDialog({
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [pendingImageBlob, setPendingImageBlob] = useState<Blob | null>(null); // Store blob until save
-  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null); // Blob URL for preview
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(
+    null
+  ); // Blob URL for preview
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,7 +86,12 @@ export function ProfileEditDialog({
 
   // Debug: Log state changes
   useEffect(() => {
-    logger.debug('State changed', { isPending, isUploading, isSubmitting, open });
+    logger.debug('State changed', {
+      isPending,
+      isUploading,
+      isSubmitting,
+      open,
+    });
   }, [isPending, isUploading, isSubmitting, open]);
 
   // Ref to track pending preview URL for cleanup (avoids stale closure issues)
@@ -182,7 +189,7 @@ export function ProfileEditDialog({
         const isClearing = !values.image && userInfo.image;
 
         // Upload pending image blob if exists
-        let imageStorageId: Id<"_storage"> | undefined;
+        let imageStorageId: Id<'_storage'> | undefined;
         if (pendingImageBlob) {
           const filename = `avatar-${Date.now()}.jpg`;
           const file = new File([pendingImageBlob], filename, {

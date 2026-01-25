@@ -22,7 +22,10 @@ export function GoogleOneTap() {
   useEffect(() => {
     if (pendingRedirectRef.current && session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
-      console.log('[GoogleOneTap] Session established, redirecting to:', pendingRedirectRef.current);
+      console.log(
+        '[GoogleOneTap] Session established, redirecting to:',
+        pendingRedirectRef.current
+      );
       router.push(pendingRedirectRef.current);
     }
   }, [session, router]);
@@ -54,11 +57,14 @@ export function GoogleOneTap() {
         const result = await authClient.oneTap({
           fetchOptions: {
             onSuccess: async () => {
-              console.log('[GoogleOneTap] Login successful, waiting for session...');
+              console.log(
+                '[GoogleOneTap] Login successful, waiting for session...'
+              );
               // Build redirect URL
-              const redirectUrl = pathname && pathname !== '/'
-                ? `/onboarding?redirect=${encodeURIComponent(pathname)}`
-                : '/onboarding';
+              const redirectUrl =
+                pathname && pathname !== '/'
+                  ? `/onboarding?redirect=${encodeURIComponent(pathname)}`
+                  : '/onboarding';
 
               // Store pending redirect in ref - the effect above will handle it once session is ready
               pendingRedirectRef.current = redirectUrl;
@@ -69,7 +75,7 @@ export function GoogleOneTap() {
               // Also do a full page refresh as fallback to ensure cookies are read
               router.refresh();
             },
-            onError: (ctx) => {
+            onError: ctx => {
               console.error('[GoogleOneTap] Auth error:', ctx.error);
             },
           },
