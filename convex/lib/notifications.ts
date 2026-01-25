@@ -346,7 +346,62 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
 }
 
 /**
- * Generate plain text message (no HTML) for webhooks
+ * Generate markdown message for webhooks (Discord, Slack)
+ * Uses **bold** for emphasis
+ */
+function getNotificationMessageMarkdown(
+  ctx: NotificationMessageContext
+): string {
+  const { type, eventTitle, authorName, postTitle, rsvp } = ctx;
+  const author = authorName ? `**${authorName}**` : 'Someone';
+  const event = eventTitle ? `**${eventTitle}**` : 'an event';
+  const post = postTitle ? `**${postTitle}**` : 'a post';
+
+  switch (type) {
+    case 'NEW_POST':
+      return postTitle
+        ? `${author} created a new post, ${post}, in ${event}`
+        : `${author} created a new post in ${event}`;
+    case 'NEW_REPLY':
+      return postTitle
+        ? `${author} replied to ${post} in ${event}`
+        : `${author} replied to a thread in ${event}`;
+    case 'EVENT_EDITED':
+      return `The event ${event} has been updated`;
+    case 'DATE_CHOSEN':
+      return `A date has been chosen for ${event}`;
+    case 'DATE_CHANGED':
+      return `The date for ${event} has been changed`;
+    case 'DATE_RESET':
+      return `The date poll for ${event} has been reopened`;
+    case 'USER_JOINED':
+      return `${author} joined ${event}`;
+    case 'USER_LEFT':
+      return `${author} left ${event}`;
+    case 'USER_PROMOTED':
+      return `You have been promoted to moderator of ${event}`;
+    case 'USER_DEMOTED':
+      return `Your moderator role has been removed from ${event}`;
+    case 'USER_RSVP':
+      if (rsvp) {
+        const rsvpText =
+          rsvp === 'YES' ? 'Yes' : rsvp === 'NO' ? 'No' : 'Maybe';
+        return `${author} RSVP'd **${rsvpText}** to ${event}`;
+      }
+      return `${author} updated their RSVP to ${event}`;
+    case 'USER_MENTIONED':
+      return postTitle
+        ? `${author} mentioned you in ${post} in ${event}`
+        : `${author} mentioned you in ${event}`;
+    case 'EVENT_REMINDER':
+      return `Reminder: ${event} is coming up soon!`;
+    default:
+      return 'You have a new notification';
+  }
+}
+
+/**
+ * Generate plain text message (no formatting) for webhooks that don't support markdown
  */
 function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
   const { type, eventTitle, authorName, postTitle, rsvp } = ctx;
@@ -606,7 +661,8 @@ function formatWebhookPayload(
   customTemplate?: string
 ): object {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
-  const message = getNotificationMessagePlain(ctx);
+  const markdownMessage = getNotificationMessageMarkdown(ctx);
+  const plainMessage = getNotificationMessagePlain(ctx);
   const url = ctx.notificationUrl || siteUrl;
 
   switch (format) {
@@ -615,7 +671,7 @@ function formatWebhookPayload(
         embeds: [
           {
             title: ctx.eventTitle || 'Groupi Notification',
-            description: message,
+            description: `${markdownMessage}\n\n[View on Groupi](${url})`,
             url: url,
             color: 0x2563eb, // Blue color
             footer: {
@@ -633,7 +689,7 @@ function formatWebhookPayload(
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*${ctx.eventTitle || 'Groupi'}*\n${message}`,
+              text: `*${ctx.eventTitle || 'Groupi'}*\n${markdownMessage}`,
             },
           },
           {
@@ -657,11 +713,11 @@ function formatWebhookPayload(
         '@type': 'MessageCard',
         '@context': 'http://schema.org/extensions',
         themeColor: '2563eb',
-        summary: message,
+        summary: plainMessage,
         sections: [
           {
             activityTitle: ctx.eventTitle || 'Groupi Notification',
-            text: message,
+            text: plainMessage,
           },
         ],
         potentialAction: [
@@ -676,10 +732,15 @@ function formatWebhookPayload(
     case 'CUSTOM':
       if (customTemplate) {
         try {
-          // Simple template replacement
+          // Simple template replacement - uses plain message by default
+          // Custom templates can use {{markdownMessage}} for markdown formatting
           let payload = customTemplate;
           payload = payload.replace(/\{\{type\}\}/g, ctx.type);
-          payload = payload.replace(/\{\{message\}\}/g, message);
+          payload = payload.replace(/\{\{message\}\}/g, plainMessage);
+          payload = payload.replace(
+            /\{\{markdownMessage\}\}/g,
+            markdownMessage
+          );
           payload = payload.replace(
             /\{\{eventTitle\}\}/g,
             ctx.eventTitle || ''
@@ -705,7 +766,7 @@ function formatWebhookPayload(
     default:
       return {
         type: ctx.type,
-        message: message,
+        message: plainMessage,
         eventTitle: ctx.eventTitle,
         postTitle: ctx.postTitle,
         authorName: ctx.authorName,
