@@ -231,19 +231,33 @@ async function getEnabledEmailsForNotification(
 }
 
 /**
+ * Context data for generating notification messages
+ */
+interface NotificationMessageContext {
+  type: NotificationType;
+  eventTitle?: string;
+  authorName?: string;
+  postTitle?: string;
+  rsvp?: RsvpStatus;
+  notificationUrl?: string;
+}
+
+/**
  * Generate email subject for a notification type
  */
-function getNotificationEmailSubject(
-  type: NotificationType,
-  eventTitle?: string
-): string {
+function getNotificationEmailSubject(ctx: NotificationMessageContext): string {
+  const { type, eventTitle, authorName, postTitle } = ctx;
   const prefix = eventTitle ? `[${eventTitle}] ` : '';
 
   switch (type) {
     case 'NEW_POST':
-      return `${prefix}New post`;
+      return postTitle
+        ? `${prefix}${authorName || 'Someone'} posted "${postTitle}"`
+        : `${prefix}New post`;
     case 'NEW_REPLY':
-      return `${prefix}New reply`;
+      return postTitle
+        ? `${prefix}${authorName || 'Someone'} replied to "${postTitle}"`
+        : `${prefix}New reply`;
     case 'EVENT_EDITED':
       return `${prefix}Event updated`;
     case 'DATE_CHOSEN':
@@ -253,17 +267,25 @@ function getNotificationEmailSubject(
     case 'DATE_RESET':
       return `${prefix}Event date reset`;
     case 'USER_JOINED':
-      return `${prefix}New attendee`;
+      return authorName
+        ? `${prefix}${authorName} joined`
+        : `${prefix}New attendee`;
     case 'USER_LEFT':
-      return `${prefix}Attendee left`;
+      return authorName
+        ? `${prefix}${authorName} left`
+        : `${prefix}Attendee left`;
     case 'USER_PROMOTED':
-      return `${prefix}You were promoted`;
+      return `${prefix}You were promoted to moderator`;
     case 'USER_DEMOTED':
-      return `${prefix}Role changed`;
+      return `${prefix}Your moderator role was removed`;
     case 'USER_RSVP':
-      return `${prefix}RSVP update`;
+      return authorName
+        ? `${prefix}${authorName} updated their RSVP`
+        : `${prefix}RSVP update`;
     case 'USER_MENTIONED':
-      return `${prefix}You were mentioned`;
+      return postTitle
+        ? `${prefix}${authorName || 'Someone'} mentioned you in "${postTitle}"`
+        : `${prefix}You were mentioned`;
     case 'EVENT_REMINDER':
       return `${prefix}Event reminder`;
     default:
@@ -272,71 +294,117 @@ function getNotificationEmailSubject(
 }
 
 /**
- * Generate email HTML body for a notification
+ * Generate descriptive message for a notification (used in email body and webhooks)
  */
-function getNotificationEmailHtml(
-  type: NotificationType,
-  eventTitle?: string,
-  authorName?: string
-): string {
-  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+function getNotificationMessage(ctx: NotificationMessageContext): string {
+  const { type, eventTitle, authorName, postTitle, rsvp } = ctx;
+  const author = authorName ? `<strong>${authorName}</strong>` : 'Someone';
+  const event = eventTitle ? `<strong>${eventTitle}</strong>` : 'an event';
+  const post = postTitle ? `<strong>${postTitle}</strong>` : 'a post';
 
-  let message = '';
   switch (type) {
     case 'NEW_POST':
-      message = authorName
-        ? `${authorName} created a new post`
-        : 'A new post was created';
-      break;
+      return postTitle
+        ? `${author} created a new post, ${post}, in ${event}`
+        : `${author} created a new post in ${event}`;
     case 'NEW_REPLY':
-      message = authorName
-        ? `${authorName} replied to a thread`
-        : 'There is a new reply in a thread';
-      break;
+      return postTitle
+        ? `${author} replied to ${post} in ${event}`
+        : `${author} replied to a thread in ${event}`;
     case 'EVENT_EDITED':
-      message = 'The event details have been updated';
-      break;
+      return `The event ${event} has been updated`;
     case 'DATE_CHOSEN':
-      message = 'A date has been chosen for the event';
-      break;
+      return `A date has been chosen for ${event}`;
     case 'DATE_CHANGED':
-      message = 'The event date has been changed';
-      break;
+      return `The date for ${event} has been changed`;
     case 'DATE_RESET':
-      message = 'The event date has been reset';
-      break;
+      return `The date poll for ${event} has been reopened`;
     case 'USER_JOINED':
-      message = authorName
-        ? `${authorName} joined the event`
-        : 'A new attendee joined';
-      break;
+      return `${author} joined ${event}`;
     case 'USER_LEFT':
-      message = authorName
-        ? `${authorName} left the event`
-        : 'An attendee left the event';
-      break;
+      return `${author} left ${event}`;
     case 'USER_PROMOTED':
-      message = 'You have been promoted';
-      break;
+      return `You have been promoted to moderator of ${event}`;
     case 'USER_DEMOTED':
-      message = 'Your role has been changed';
-      break;
+      return `Your moderator role has been removed from ${event}`;
     case 'USER_RSVP':
-      message = authorName
-        ? `${authorName} updated their RSVP`
-        : 'An RSVP was updated';
-      break;
+      if (rsvp) {
+        const rsvpText =
+          rsvp === 'YES' ? 'Yes' : rsvp === 'NO' ? 'No' : 'Maybe';
+        return `${author} RSVP'd <strong>${rsvpText}</strong> to ${event}`;
+      }
+      return `${author} updated their RSVP to ${event}`;
     case 'USER_MENTIONED':
-      message = authorName
-        ? `${authorName} mentioned you`
-        : 'You were mentioned';
-      break;
+      return postTitle
+        ? `${author} mentioned you in ${post} in ${event}`
+        : `${author} mentioned you in ${event}`;
     case 'EVENT_REMINDER':
-      message = 'Your event is coming up soon!';
-      break;
+      return `Reminder: ${event} is coming up soon!`;
     default:
-      message = 'You have a new notification';
+      return 'You have a new notification';
   }
+}
+
+/**
+ * Generate plain text message (no HTML) for webhooks
+ */
+function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
+  const { type, eventTitle, authorName, postTitle, rsvp } = ctx;
+  const author = authorName || 'Someone';
+  const event = eventTitle || 'an event';
+  const post = postTitle || 'a post';
+
+  switch (type) {
+    case 'NEW_POST':
+      return postTitle
+        ? `${author} created a new post, "${post}", in ${event}`
+        : `${author} created a new post in ${event}`;
+    case 'NEW_REPLY':
+      return postTitle
+        ? `${author} replied to "${post}" in ${event}`
+        : `${author} replied to a thread in ${event}`;
+    case 'EVENT_EDITED':
+      return `The event "${event}" has been updated`;
+    case 'DATE_CHOSEN':
+      return `A date has been chosen for "${event}"`;
+    case 'DATE_CHANGED':
+      return `The date for "${event}" has been changed`;
+    case 'DATE_RESET':
+      return `The date poll for "${event}" has been reopened`;
+    case 'USER_JOINED':
+      return `${author} joined "${event}"`;
+    case 'USER_LEFT':
+      return `${author} left "${event}"`;
+    case 'USER_PROMOTED':
+      return `You have been promoted to moderator of "${event}"`;
+    case 'USER_DEMOTED':
+      return `Your moderator role has been removed from "${event}"`;
+    case 'USER_RSVP':
+      if (rsvp) {
+        const rsvpText =
+          rsvp === 'YES' ? 'Yes' : rsvp === 'NO' ? 'No' : 'Maybe';
+        return `${author} RSVP'd ${rsvpText} to "${event}"`;
+      }
+      return `${author} updated their RSVP to "${event}"`;
+    case 'USER_MENTIONED':
+      return postTitle
+        ? `${author} mentioned you in "${post}" in "${event}"`
+        : `${author} mentioned you in "${event}"`;
+    case 'EVENT_REMINDER':
+      return `Reminder: "${event}" is coming up soon!`;
+    default:
+      return 'You have a new notification';
+  }
+}
+
+/**
+ * Generate email HTML body for a notification
+ */
+function getNotificationEmailHtml(ctx: NotificationMessageContext): string {
+  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+  const { eventTitle, notificationUrl } = ctx;
+  const message = getNotificationMessage(ctx);
+  const viewUrl = notificationUrl || siteUrl;
 
   return `
     <!DOCTYPE html>
@@ -349,7 +417,7 @@ function getNotificationEmailHtml(
         <h1 style="color: #2563eb;">${eventTitle || 'Groupi'}</h1>
         <p style="font-size: 16px;">${message}</p>
         <div style="margin: 30px 0;">
-          <a href="${siteUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${viewUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             View on Groupi
           </a>
         </div>
@@ -364,6 +432,29 @@ function getNotificationEmailHtml(
 }
 
 /**
+ * Build notification URL based on notification type and IDs
+ */
+function buildNotificationUrl(
+  type: NotificationType,
+  eventId?: string,
+  postId?: string
+): string {
+  const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+
+  // Post-related notifications link to the post
+  if (postId && ['NEW_POST', 'NEW_REPLY', 'USER_MENTIONED'].includes(type)) {
+    return `${siteUrl}/post/${postId}`;
+  }
+
+  // Event-related notifications link to the event
+  if (eventId) {
+    return `${siteUrl}/event/${eventId}`;
+  }
+
+  return siteUrl;
+}
+
+/**
  * Collect email data for a notification (to be sent via action)
  */
 async function collectEmailData(
@@ -373,6 +464,8 @@ async function collectEmailData(
     type: NotificationType;
     authorId?: Id<'persons'>;
     eventId?: Id<'events'>;
+    postId?: Id<'posts'>;
+    rsvp?: RsvpStatus;
   }
 ): Promise<Array<{ to: string; subject: string; html: string }>> {
   // Get enabled emails for this notification type
@@ -393,6 +486,13 @@ async function collectEmailData(
     eventTitle = event?.title;
   }
 
+  // Get post title if we have a post
+  let postTitle: string | undefined;
+  if (data.postId) {
+    const post = await ctx.db.get(data.postId);
+    postTitle = post?.title;
+  }
+
   // Get author name if we have an author
   let authorName: string | undefined;
   if (data.authorId) {
@@ -406,9 +506,26 @@ async function collectEmailData(
     }
   }
 
+  // Build notification URL
+  const notificationUrl = buildNotificationUrl(
+    data.type,
+    data.eventId as string | undefined,
+    data.postId as string | undefined
+  );
+
+  // Build message context
+  const messageContext: NotificationMessageContext = {
+    type: data.type,
+    eventTitle,
+    authorName,
+    postTitle,
+    rsvp: data.rsvp,
+    notificationUrl,
+  };
+
   // Generate email content
-  const subject = getNotificationEmailSubject(data.type, eventTitle);
-  const html = getNotificationEmailHtml(data.type, eventTitle, authorName);
+  const subject = getNotificationEmailSubject(messageContext);
+  const html = getNotificationEmailHtml(messageContext);
 
   // Return email data for each email address
   return emails.map(email => ({
@@ -485,23 +602,21 @@ async function getEnabledWebhooksForNotification(
  */
 function formatWebhookPayload(
   format: WebhookFormat,
-  data: {
-    type: NotificationType;
-    eventTitle?: string;
-    authorName?: string;
-    message: string;
-  },
+  ctx: NotificationMessageContext,
   customTemplate?: string
 ): object {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+  const message = getNotificationMessagePlain(ctx);
+  const url = ctx.notificationUrl || siteUrl;
 
   switch (format) {
     case 'DISCORD':
       return {
         embeds: [
           {
-            title: data.eventTitle || 'Groupi Notification',
-            description: data.message,
+            title: ctx.eventTitle || 'Groupi Notification',
+            description: message,
+            url: url,
             color: 0x2563eb, // Blue color
             footer: {
               text: 'Groupi',
@@ -518,7 +633,7 @@ function formatWebhookPayload(
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*${data.eventTitle || 'Groupi'}*\n${data.message}`,
+              text: `*${ctx.eventTitle || 'Groupi'}*\n${message}`,
             },
           },
           {
@@ -530,7 +645,7 @@ function formatWebhookPayload(
                   type: 'plain_text',
                   text: 'View on Groupi',
                 },
-                url: siteUrl,
+                url: url,
               },
             ],
           },
@@ -542,18 +657,18 @@ function formatWebhookPayload(
         '@type': 'MessageCard',
         '@context': 'http://schema.org/extensions',
         themeColor: '2563eb',
-        summary: data.message,
+        summary: message,
         sections: [
           {
-            activityTitle: data.eventTitle || 'Groupi Notification',
-            text: data.message,
+            activityTitle: ctx.eventTitle || 'Groupi Notification',
+            text: message,
           },
         ],
         potentialAction: [
           {
             '@type': 'OpenUri',
             name: 'View on Groupi',
-            targets: [{ os: 'default', uri: siteUrl }],
+            targets: [{ os: 'default', uri: url }],
           },
         ],
       };
@@ -563,16 +678,18 @@ function formatWebhookPayload(
         try {
           // Simple template replacement
           let payload = customTemplate;
-          payload = payload.replace(/\{\{type\}\}/g, data.type);
-          payload = payload.replace(/\{\{message\}\}/g, data.message);
+          payload = payload.replace(/\{\{type\}\}/g, ctx.type);
+          payload = payload.replace(/\{\{message\}\}/g, message);
           payload = payload.replace(
             /\{\{eventTitle\}\}/g,
-            data.eventTitle || ''
+            ctx.eventTitle || ''
           );
           payload = payload.replace(
             /\{\{authorName\}\}/g,
-            data.authorName || ''
+            ctx.authorName || ''
           );
+          payload = payload.replace(/\{\{postTitle\}\}/g, ctx.postTitle || '');
+          payload = payload.replace(/\{\{url\}\}/g, url);
           payload = payload.replace(
             /\{\{timestamp\}\}/g,
             new Date().toISOString()
@@ -587,62 +704,15 @@ function formatWebhookPayload(
     case 'GENERIC':
     default:
       return {
-        type: data.type,
-        message: data.message,
-        eventTitle: data.eventTitle,
-        authorName: data.authorName,
+        type: ctx.type,
+        message: message,
+        eventTitle: ctx.eventTitle,
+        postTitle: ctx.postTitle,
+        authorName: ctx.authorName,
+        url: url,
         timestamp: new Date().toISOString(),
         source: 'groupi',
       };
-  }
-}
-
-/**
- * Get a human-readable message for the notification type
- */
-function getNotificationMessage(
-  type: NotificationType,
-  authorName?: string
-): string {
-  switch (type) {
-    case 'NEW_POST':
-      return authorName
-        ? `${authorName} created a new post`
-        : 'A new post was created';
-    case 'NEW_REPLY':
-      return authorName
-        ? `${authorName} replied to a thread`
-        : 'There is a new reply in a thread';
-    case 'EVENT_EDITED':
-      return 'The event details have been updated';
-    case 'DATE_CHOSEN':
-      return 'A date has been chosen for the event';
-    case 'DATE_CHANGED':
-      return 'The event date has been changed';
-    case 'DATE_RESET':
-      return 'The event date has been reset';
-    case 'USER_JOINED':
-      return authorName
-        ? `${authorName} joined the event`
-        : 'A new attendee joined';
-    case 'USER_LEFT':
-      return authorName
-        ? `${authorName} left the event`
-        : 'An attendee left the event';
-    case 'USER_PROMOTED':
-      return 'You have been promoted';
-    case 'USER_DEMOTED':
-      return 'Your role has been changed';
-    case 'USER_RSVP':
-      return authorName
-        ? `${authorName} updated their RSVP`
-        : 'An RSVP was updated';
-    case 'USER_MENTIONED':
-      return authorName ? `${authorName} mentioned you` : 'You were mentioned';
-    case 'EVENT_REMINDER':
-      return 'Your event is coming up soon!';
-    default:
-      return 'You have a new notification';
   }
 }
 
@@ -656,6 +726,8 @@ async function collectWebhookData(
     type: NotificationType;
     authorId?: Id<'persons'>;
     eventId?: Id<'events'>;
+    postId?: Id<'posts'>;
+    rsvp?: RsvpStatus;
   }
 ): Promise<
   Array<{
@@ -681,6 +753,13 @@ async function collectWebhookData(
     eventTitle = event?.title;
   }
 
+  // Get post title if we have a post
+  let postTitle: string | undefined;
+  if (data.postId) {
+    const post = await ctx.db.get(data.postId);
+    postTitle = post?.title;
+  }
+
   // Get author name if we have an author
   let authorName: string | undefined;
   if (data.authorId) {
@@ -694,13 +773,28 @@ async function collectWebhookData(
     }
   }
 
-  const message = getNotificationMessage(data.type, authorName);
+  // Build notification URL
+  const notificationUrl = buildNotificationUrl(
+    data.type,
+    data.eventId as string | undefined,
+    data.postId as string | undefined
+  );
+
+  // Build message context
+  const messageContext: NotificationMessageContext = {
+    type: data.type,
+    eventTitle,
+    authorName,
+    postTitle,
+    rsvp: data.rsvp,
+    notificationUrl,
+  };
 
   // Return webhook data for each webhook
   return webhooks.map(webhook => {
     const payload = formatWebhookPayload(
       webhook.format,
-      { type: data.type, eventTitle, authorName, message },
+      messageContext,
       webhook.customTemplate
     );
 
@@ -747,6 +841,8 @@ export async function createNotification(
     type: data.type,
     authorId: data.authorId,
     eventId: data.eventId,
+    postId: data.postId,
+    rsvp: data.rsvp,
   };
 
   const [emails, webhooks] = await Promise.all([
