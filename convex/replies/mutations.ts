@@ -1,7 +1,10 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth } from '../auth';
-import { notifyThreadParticipants } from '../lib/notifications';
+import { requireAuth, hasEventRole } from '../auth';
+import {
+  notifyThreadParticipants,
+  notifyMentionedUsers,
+} from '../lib/notifications';
 
 /**
  * Replies mutations for the Convex backend
@@ -57,6 +60,14 @@ export const createReply = mutation({
       replyAuthorId: person._id,
     });
 
+    // Notify mentioned users (separate from thread participant notification)
+    await notifyMentionedUsers(ctx, {
+      content: text,
+      authorId: person._id,
+      eventId: post.eventId,
+      postId,
+    });
+
     return { replyId };
   },
 });
@@ -79,15 +90,30 @@ export const updateReply = mutation({
       throw new Error('Reply not found');
     }
 
-    // Verify ownership
-    if (reply.authorId !== person._id) {
-      throw new Error('You can only edit your own replies');
+    // Get the post to check event permissions
+    const post = await ctx.db.get(reply.postId);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Check if user can edit this reply
+    // User can edit if they are the author OR have moderator/organizer role
+    const isAuthor = reply.authorId === person._id;
+    const hasModeratorRole = await hasEventRole(ctx, post.eventId, 'MODERATOR');
+
+    if (!isAuthor && !hasModeratorRole) {
+      throw new Error("You don't have permission to edit this reply");
+    }
+
+    // Validate input
+    if (!text.trim()) {
+      throw new Error('Reply text cannot be empty');
     }
 
     // Update the reply with updatedAt timestamp
-    await ctx.db.patch(replyId, { text, updatedAt: Date.now() });
+    await ctx.db.patch(replyId, { text: text.trim(), updatedAt: Date.now() });
 
-    return { success: true };
+    return { reply: await ctx.db.get(replyId) };
   },
 });
 

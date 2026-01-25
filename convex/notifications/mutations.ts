@@ -278,6 +278,7 @@ export const addNotificationMethod = mutation({
       'USER_DEMOTED',
       'USER_RSVP',
       'USER_MENTIONED',
+      'EVENT_REMINDER',
     ] as const;
 
     await Promise.all(
