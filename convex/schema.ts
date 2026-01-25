@@ -53,6 +53,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     location: v.optional(v.string()),
+    imageStorageId: v.optional(v.id('_storage')), // Optional cover image
     // Date/time range for the event (must be updated together to stay in sync)
     // INVARIANT: chosenEndDateTime can only be set if chosenDateTime is set
     // INVARIANT: chosenEndDateTime must be > chosenDateTime when both are set

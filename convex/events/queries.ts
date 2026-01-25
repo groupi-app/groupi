@@ -40,9 +40,15 @@ export const getEventHeader = query({
       throw new Error('You are not a member of this event');
     }
 
+    // Get image URL if event has an image
+    const imageUrl = event.imageStorageId
+      ? await ctx.storage.getUrl(event.imageStorageId)
+      : null;
+
     return {
       event: {
         ...event,
+        imageUrl,
         chosenDateTime: event.chosenDateTime,
       },
       userMembership: {
@@ -182,9 +188,15 @@ export const getUserEvents = query({
         // Get the organizer (creator) data
         const organizerData = await getPersonWithUser(ctx, event.creatorId);
 
+        // Get image URL if event has an image
+        const imageUrl = event.imageStorageId
+          ? await ctx.storage.getUrl(event.imageStorageId)
+          : null;
+
         return {
           event: {
             ...event,
+            imageUrl,
             chosenDateTime: event.chosenDateTime,
             memberCount,
           },
@@ -245,7 +257,15 @@ export const getEvent = query({
       }
     }
 
-    return event;
+    // Get image URL if event has an image
+    const imageUrl = event.imageStorageId
+      ? await ctx.storage.getUrl(event.imageStorageId)
+      : null;
+
+    return {
+      ...event,
+      imageUrl,
+    };
   },
 });
 

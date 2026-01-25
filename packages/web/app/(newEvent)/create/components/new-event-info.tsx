@@ -20,13 +20,15 @@ import {
 } from '@/components/ui/select';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import dynamic from 'next/dynamic';
 import { useFormContext, type ReminderOffset } from './form-context';
 import { Button } from '@/components/ui/button';
+import { EventImageUpload } from '@/components/event-image-upload';
+import { Id } from '@/convex/_generated/dataModel';
 
 // Reminder offset options with display labels
 const REMINDER_OPTIONS: Array<{
@@ -96,6 +98,11 @@ interface NewEventInfoProps {
 
 export default function NewEventInfo({ onNext }: NewEventInfoProps) {
   const { formState, setFormState } = useFormContext();
+  const [imageStorageId, setImageStorageId] = useState<Id<'_storage'> | null>(
+    formState.imageStorageId
+      ? (formState.imageStorageId as Id<'_storage'>)
+      : null
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -133,6 +140,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
     setFormState({
       ...data,
       reminderOffset,
+      imageStorageId: imageStorageId ?? undefined,
     });
     onNext();
   }
@@ -186,6 +194,18 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
               </FormItem>
             )}
           />
+          <div className='space-y-2'>
+            <label className='text-sm font-medium leading-none'>
+              Cover Image
+            </label>
+            <EventImageUpload
+              imageStorageId={imageStorageId}
+              onImageChange={setImageStorageId}
+            />
+            <p className='text-sm text-muted-foreground'>
+              Add an optional cover image for your event.
+            </p>
+          </div>
           <FormField
             control={form.control}
             name='location'
