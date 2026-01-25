@@ -17,6 +17,7 @@ const eslintConfig = [
       '**/.next/**',
       '**/build/**',
       '**/.expo/**',
+      '**/_generated/**',
     ],
   },
 
