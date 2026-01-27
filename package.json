@@ -34,6 +34,8 @@
     "test:coverage:web": "turbo test:coverage --filter=@groupi/web",
     "test:coverage:mobile": "turbo test:coverage --filter=@groupi/mobile",
     "test:coverage:shared": "turbo test:coverage --filter=@groupi/shared",
+    "e2e": "pnpm --filter @groupi/web e2e",
+    "e2e:ui": "pnpm --filter @groupi/web e2e:ui",
     "clean": "turbo clean && rm -rf node_modules && pnpm install",
     "clean:deps": "find . -name node_modules -type d -exec rm -rf {} + && pnpm install",
     "check": "pnpm lint && pnpm type-check && pnpm format:check",

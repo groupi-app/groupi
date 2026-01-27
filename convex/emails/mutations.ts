@@ -3,6 +3,10 @@ import { v } from 'convex/values';
 import { requireAuth } from '../auth';
 import { ConvexError } from 'convex/values';
 
+// Use require to avoid deep type instantiation errors with internal references
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const internalApi: any = require('../_generated/api').internal;
+
 /**
  * Email management mutations for the Convex backend
  *
@@ -66,12 +70,11 @@ export const requestAddEmail = mutation({
       updatedAt: now,
     });
 
-    // TODO: Send verification email via Better Auth or external service
-    if (process.env.DEBUG_EMAIL_VERIFICATION === 'true') {
-      const verificationUrl = `${process.env.SITE_URL}/verify-email?token=${token}`;
-      console.log(`📧 EMAIL VERIFICATION - URL: ${verificationUrl}`);
-      console.log(`   (Copy this URL to verify the email: ${normalizedEmail})`);
-    }
+    // Send verification email
+    await ctx.runMutation(internalApi.email.sendEmailVerificationEmail, {
+      email: normalizedEmail,
+      token,
+    });
 
     return {
       success: true,
@@ -200,11 +203,11 @@ export const resendVerificationEmail = mutation({
       updatedAt: Date.now(),
     });
 
-    // TODO: Send verification email
-    if (process.env.DEBUG_EMAIL_VERIFICATION === 'true') {
-      const verificationUrl = `${process.env.SITE_URL}/verify-email?token=${token}`;
-      console.log(`📧 EMAIL VERIFICATION RESENT - URL: ${verificationUrl}`);
-    }
+    // Send verification email
+    await ctx.runMutation(internalApi.email.sendEmailVerificationEmail, {
+      email: normalizedEmail,
+      token,
+    });
 
     return {
       success: true,

@@ -28,7 +28,6 @@ import dynamic from 'next/dynamic';
 import { useFormContext, type ReminderOffset } from './form-context';
 import { Button } from '@/components/ui/button';
 import { EventImageUpload } from '@/components/event-image-upload';
-import { Id } from '@/convex/_generated/dataModel';
 
 // Reminder offset options with display labels
 const REMINDER_OPTIONS: Array<{
@@ -98,10 +97,8 @@ interface NewEventInfoProps {
 
 export default function NewEventInfo({ onNext }: NewEventInfoProps) {
   const { formState, setFormState } = useFormContext();
-  const [imageStorageId, setImageStorageId] = useState<Id<'_storage'> | null>(
-    formState.imageStorageId
-      ? (formState.imageStorageId as Id<'_storage'>)
-      : null
+  const [imageFile, setImageFile] = useState<File | null>(
+    formState.imageFile ?? null
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -140,7 +137,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
     setFormState({
       ...data,
       reminderOffset,
-      imageStorageId: imageStorageId ?? undefined,
+      imageFile: imageFile ?? undefined,
     });
     onNext();
   }
@@ -198,10 +195,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
             <label className='text-sm font-medium leading-none'>
               Cover Image
             </label>
-            <EventImageUpload
-              imageStorageId={imageStorageId}
-              onImageChange={setImageStorageId}
-            />
+            <EventImageUpload file={imageFile} onFileChange={setImageFile} />
             <p className='text-sm text-muted-foreground'>
               Add an optional cover image for your event.
             </p>

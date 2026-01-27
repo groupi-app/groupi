@@ -1,62 +1,71 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  useFileUpload,
-  ALLOWED_MIME_TYPES,
-} from '@/hooks/convex/use-file-upload';
-import { Id } from '@/convex/_generated/dataModel';
+import { ALLOWED_MIME_TYPES } from '@/hooks/convex/use-file-upload';
 
 interface EventImageUploadProps {
+  /** Existing image URL (for edit mode) */
   imageUrl?: string | null;
-  imageStorageId?: Id<'_storage'> | null;
-  onImageChange: (storageId: Id<'_storage'> | null) => void;
+  /** File object for pending upload */
+  file?: File | null;
+  /** Called when a file is selected or removed */
+  onFileChange: (file: File | null) => void;
+  /** Called when an existing image should be removed (edit mode) */
+  onRemoveExisting?: () => void;
   disabled?: boolean;
+}
+
+// Module-level cache for blob URLs to avoid creating duplicates
+const blobUrlCache = new WeakMap<File, string>();
+
+function getOrCreateBlobUrl(file: File | null | undefined): string | null {
+  if (!file) return null;
+
+  let url = blobUrlCache.get(file);
+  if (!url) {
+    url = URL.createObjectURL(file);
+    blobUrlCache.set(file, url);
+  }
+  return url;
 }
 
 export function EventImageUpload({
   imageUrl,
-  onImageChange,
+  file,
+  onFileChange,
+  onRemoveExisting,
   disabled = false,
 }: EventImageUploadProps) {
-  const { uploadFile, isUploading } = useFileUpload();
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Get or create blob URL - useMemo ensures we don't recreate on every render
+  // WeakMap cache ensures same File always gets same URL
+  // Blob URLs are automatically cleaned up when File is garbage collected
+  const blobUrl = useMemo(() => getOrCreateBlobUrl(file), [file]);
+
   const handleFileSelect = useCallback(
-    async (file: File) => {
-      if (!ALLOWED_MIME_TYPES.IMAGE.includes(file.type)) {
+    (selectedFile: File) => {
+      if (!ALLOWED_MIME_TYPES.IMAGE.includes(selectedFile.type)) {
         return;
       }
-
-      // Create preview immediately
-      const reader = new FileReader();
-      reader.onload = e => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // Upload file
-      const result = await uploadFile(file);
-      if (result) {
-        onImageChange(result.storageId);
-      } else {
-        // Upload failed, clear preview
-        setPreviewUrl(null);
-      }
+      onFileChange(selectedFile);
     },
-    [uploadFile, onImageChange]
+    [onFileChange]
   );
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        handleFileSelect(file);
+      const selectedFile = e.target.files?.[0];
+      if (selectedFile) {
+        handleFileSelect(selectedFile);
+      }
+      // Reset input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     },
     [handleFileSelect]
@@ -84,21 +93,20 @@ export function EventImageUpload({
 
       if (disabled) return;
 
-      const file = e.dataTransfer.files?.[0];
-      if (file && ALLOWED_MIME_TYPES.IMAGE.includes(file.type)) {
-        handleFileSelect(file);
+      const droppedFile = e.dataTransfer.files?.[0];
+      if (droppedFile && ALLOWED_MIME_TYPES.IMAGE.includes(droppedFile.type)) {
+        handleFileSelect(droppedFile);
       }
     },
     [disabled, handleFileSelect]
   );
 
   const handleRemove = useCallback(() => {
-    setPreviewUrl(null);
-    onImageChange(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    onFileChange(null);
+    if (onRemoveExisting) {
+      onRemoveExisting();
     }
-  }, [onImageChange]);
+  }, [onFileChange, onRemoveExisting]);
 
   const handleClick = useCallback(() => {
     if (!disabled && fileInputRef.current) {
@@ -106,7 +114,8 @@ export function EventImageUpload({
     }
   }, [disabled]);
 
-  const displayUrl = previewUrl || imageUrl;
+  // Display blob URL (new file) or existing image URL
+  const displayUrl = blobUrl || imageUrl;
 
   return (
     <div className='space-y-2'>
@@ -115,34 +124,41 @@ export function EventImageUpload({
         type='file'
         accept={ALLOWED_MIME_TYPES.IMAGE.join(',')}
         onChange={handleInputChange}
-        disabled={disabled || isUploading}
+        disabled={disabled}
         className='hidden'
       />
 
       {displayUrl ? (
-        <div className='relative group'>
-          <div className='relative aspect-video w-full max-w-md overflow-hidden rounded-lg border'>
+        <div className='flex flex-col gap-2 max-w-md'>
+          <div
+            onClick={handleClick}
+            className={cn(
+              'relative aspect-video w-full overflow-hidden rounded-lg border cursor-pointer',
+              'hover:opacity-90 transition-opacity',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+          >
             <img
               src={displayUrl}
               alt='Event cover image preview'
               className='w-full h-full object-cover'
             />
-            {isUploading && (
-              <div className='absolute inset-0 bg-background/80 flex items-center justify-center'>
-                <Icons.spinner className='size-8 animate-spin' />
+            <div className='absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors'>
+              <div className='opacity-0 hover:opacity-100 transition-opacity'>
+                <Icons.image className='size-8 text-white drop-shadow-lg' />
               </div>
-            )}
+            </div>
           </div>
           <Button
             type='button'
-            variant='destructive'
+            variant='ghost'
             size='sm'
-            className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity'
+            className='text-muted-foreground hover:text-destructive w-fit'
             onClick={handleRemove}
-            disabled={disabled || isUploading}
+            disabled={disabled}
           >
             <Icons.x className='size-4 mr-1' />
-            Remove
+            Remove image
           </Button>
         </div>
       ) : (
@@ -161,22 +177,13 @@ export function EventImageUpload({
             disabled && 'opacity-50 cursor-not-allowed'
           )}
         >
-          {isUploading ? (
-            <>
-              <Icons.spinner className='size-8 animate-spin text-muted-foreground' />
-              <p className='text-sm text-muted-foreground'>Uploading...</p>
-            </>
-          ) : (
-            <>
-              <Icons.image className='size-10 text-muted-foreground' />
-              <div className='text-center'>
-                <p className='text-sm font-medium'>Add a cover image</p>
-                <p className='text-xs text-muted-foreground'>
-                  Drag and drop or click to upload
-                </p>
-              </div>
-            </>
-          )}
+          <Icons.image className='size-10 text-muted-foreground' />
+          <div className='text-center'>
+            <p className='text-sm font-medium'>Add a cover image</p>
+            <p className='text-xs text-muted-foreground'>
+              Drag and drop or click to upload
+            </p>
+          </div>
         </div>
       )}
     </div>

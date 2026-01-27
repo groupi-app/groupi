@@ -2,11 +2,15 @@
   "mcpServers": {
     "next-devtools": {
       "command": "pnpx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": ["next-devtools-mcp@latest"]
+    },
+    "convex": {
+      "command": "pnpx",
+      "args": ["convex@latest", "mcp", "start"]
+    },
+    "playwright": {
+      "command": "pnpx",
+      "args": ["@playwright/mcp@latest"]
     }
-  },
-  "convex": {
-    "command": "pnpx",
-    "args": ["-y", "convex@latest", "mcp", "start"]
   }
 }
