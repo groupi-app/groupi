@@ -1,13 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EventImageUpload } from './event-image-upload';
-import { Id } from '@/convex/_generated/dataModel';
 
 // Mock the file upload hook
-const mockUploadFile = vi.fn();
 vi.mock('@/hooks/convex/use-file-upload', () => ({
   useFileUpload: () => ({
-    uploadFile: mockUploadFile,
+    uploadFile: vi.fn(),
     isUploading: false,
   }),
   ALLOWED_MIME_TYPES: {
@@ -16,7 +14,8 @@ vi.mock('@/hooks/convex/use-file-upload', () => ({
 }));
 
 describe('EventImageUpload', () => {
-  const mockOnImageChange = vi.fn();
+  const mockOnFileChange = vi.fn();
+  const mockOnRemoveExisting = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -24,7 +23,7 @@ describe('EventImageUpload', () => {
 
   describe('empty state', () => {
     it('renders upload placeholder when no image', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       expect(screen.getByText('Add a cover image')).toBeInTheDocument();
       expect(
@@ -33,7 +32,7 @@ describe('EventImageUpload', () => {
     });
 
     it('has clickable upload area', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       // The upload area with cursor-pointer is the parent of the text
       const uploadArea = screen
@@ -43,7 +42,7 @@ describe('EventImageUpload', () => {
     });
 
     it('shows disabled state when disabled prop is true', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} disabled />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} disabled />);
 
       // When disabled, the area should have opacity-50 and cursor-not-allowed
       const uploadArea = screen
@@ -53,12 +52,12 @@ describe('EventImageUpload', () => {
     });
   });
 
-  describe('with existing image', () => {
+  describe('with existing image URL', () => {
     it('renders image preview when imageUrl is provided', () => {
       render(
         <EventImageUpload
           imageUrl='https://example.com/image.jpg'
-          onImageChange={mockOnImageChange}
+          onFileChange={mockOnFileChange}
         />
       );
 
@@ -67,11 +66,11 @@ describe('EventImageUpload', () => {
       expect(image).toHaveAttribute('src', 'https://example.com/image.jpg');
     });
 
-    it('shows remove button on hover', () => {
+    it('shows remove button', () => {
       render(
         <EventImageUpload
           imageUrl='https://example.com/image.jpg'
-          onImageChange={mockOnImageChange}
+          onFileChange={mockOnFileChange}
         />
       );
 
@@ -79,24 +78,26 @@ describe('EventImageUpload', () => {
       expect(removeButton).toBeInTheDocument();
     });
 
-    it('calls onImageChange with null when remove is clicked', () => {
+    it('calls onFileChange with null and onRemoveExisting when remove is clicked', () => {
       render(
         <EventImageUpload
           imageUrl='https://example.com/image.jpg'
-          onImageChange={mockOnImageChange}
+          onFileChange={mockOnFileChange}
+          onRemoveExisting={mockOnRemoveExisting}
         />
       );
 
       const removeButton = screen.getByRole('button', { name: /remove/i });
       fireEvent.click(removeButton);
 
-      expect(mockOnImageChange).toHaveBeenCalledWith(null);
+      expect(mockOnFileChange).toHaveBeenCalledWith(null);
+      expect(mockOnRemoveExisting).toHaveBeenCalled();
     });
   });
 
   describe('file input', () => {
     it('has hidden file input', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       const fileInput = document.querySelector('input[type="file"]');
       expect(fileInput).toBeInTheDocument();
@@ -104,7 +105,7 @@ describe('EventImageUpload', () => {
     });
 
     it('accepts image mime types', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       const fileInput = document.querySelector('input[type="file"]');
       expect(fileInput).toHaveAttribute(
@@ -116,7 +117,7 @@ describe('EventImageUpload', () => {
 
   describe('drag and drop', () => {
     it('shows drag state on drag over', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       // Find the drop zone (the clickable area)
       const uploadArea = screen
@@ -129,7 +130,7 @@ describe('EventImageUpload', () => {
     });
 
     it('removes drag state on drag leave', () => {
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       const uploadArea = screen
         .getByText('Add a cover image')
@@ -142,12 +143,9 @@ describe('EventImageUpload', () => {
     });
   });
 
-  describe('upload flow', () => {
-    it('calls uploadFile when file is selected', async () => {
-      const mockStorageId = 'test-storage-id' as Id<'_storage'>;
-      mockUploadFile.mockResolvedValue({ storageId: mockStorageId });
-
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+  describe('file selection', () => {
+    it('calls onFileChange when file is selected', async () => {
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       const fileInput = document.querySelector(
         'input[type="file"]'
@@ -160,22 +158,16 @@ describe('EventImageUpload', () => {
 
       fireEvent.change(fileInput);
 
-      // Wait for the upload to be called
-      await vi.waitFor(() => {
-        expect(mockUploadFile).toHaveBeenCalledWith(file);
-      });
+      expect(mockOnFileChange).toHaveBeenCalledWith(file);
     });
 
-    it('calls onImageChange with storageId after successful upload', async () => {
-      const mockStorageId = 'test-storage-id' as Id<'_storage'>;
-      mockUploadFile.mockResolvedValue({ storageId: mockStorageId });
-
-      render(<EventImageUpload onImageChange={mockOnImageChange} />);
+    it('does not call onFileChange for non-image files', async () => {
+      render(<EventImageUpload onFileChange={mockOnFileChange} />);
 
       const fileInput = document.querySelector(
         'input[type="file"]'
       ) as HTMLInputElement;
-      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const file = new File(['test'], 'test.txt', { type: 'text/plain' });
 
       Object.defineProperty(fileInput, 'files', {
         value: [file],
@@ -183,9 +175,43 @@ describe('EventImageUpload', () => {
 
       fireEvent.change(fileInput);
 
-      await vi.waitFor(() => {
-        expect(mockOnImageChange).toHaveBeenCalledWith(mockStorageId);
-      });
+      // Should not be called because the file type is not allowed
+      expect(mockOnFileChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with file prop', () => {
+    it('shows blob URL preview when file is provided', () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+
+      // Mock URL.createObjectURL
+      const mockBlobUrl = 'blob:http://localhost/test-blob-id';
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobUrl);
+
+      render(<EventImageUpload file={file} onFileChange={mockOnFileChange} />);
+
+      const image = screen.getByAltText('Event cover image preview');
+      expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute('src', mockBlobUrl);
+    });
+
+    it('prefers blob URL over imageUrl when both are provided', () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+
+      // Mock URL.createObjectURL
+      const mockBlobUrl = 'blob:http://localhost/test-blob-id';
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobUrl);
+
+      render(
+        <EventImageUpload
+          imageUrl='https://example.com/image.jpg'
+          file={file}
+          onFileChange={mockOnFileChange}
+        />
+      );
+
+      const image = screen.getByAltText('Event cover image preview');
+      expect(image).toHaveAttribute('src', mockBlobUrl);
     });
   });
 });

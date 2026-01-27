@@ -13,7 +13,12 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test --config=e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
+    "e2e:debug": "playwright test --config=e2e/playwright.config.ts --debug",
+    "e2e:codegen": "playwright codegen localhost:3000",
+    "e2e:report": "playwright show-report e2e/playwright-report"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.4.9",
@@ -104,7 +109,9 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
     "@edge-runtime/vm": "^5.0.0",
+    "@playwright/test": "^1.50.0",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
@@ -112,6 +119,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.17",
     "convex-test": "^0.0.41",
+    "dotenv": "^17.2.3",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.8",
     "jsdom": "^27.4.0",

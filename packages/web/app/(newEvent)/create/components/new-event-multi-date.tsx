@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useCreateEvent } from '@/hooks/mutations/use-create-event';
+import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { SmartDateInput } from '@/components/smart-date-input';
 
 // Types for date time options with optional end times
@@ -111,6 +112,7 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
   const { formState, reset } = useFormContext();
   const router = useRouter();
   const createEvent = useCreateEvent();
+  const { uploadFile } = useFileUpload();
   const isSubmittingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -238,12 +240,23 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
 
   // Submit event
   async function onSubmit2(data: z.infer<typeof form2Schema>) {
-    const { title, description, location, reminderOffset, imageStorageId } =
+    const { title, description, location, reminderOffset, imageFile } =
       formState;
 
     isSubmittingRef.current = true;
     setIsSaving(true);
     try {
+      // Upload image file if present
+      let imageStorageId: string | undefined;
+      if (imageFile) {
+        const uploadResult = await uploadFile(imageFile);
+        if (!uploadResult) {
+          toast.error('Failed to upload image.');
+          return;
+        }
+        imageStorageId = uploadResult.storageId;
+      }
+
       const result = await createEvent({
         title,
         description,

@@ -23,6 +23,7 @@ import type * as availability_mutations from "../availability/mutations.js";
 import type * as availability_queries from "../availability/queries.js";
 import type * as convex__generated_api from "../convex/_generated/api.js";
 import type * as convex__generated_server from "../convex/_generated/server.js";
+import type * as e2e_mutations from "../e2e/mutations.js";
 import type * as email from "../email.js";
 import type * as emails_mutations from "../emails/mutations.js";
 import type * as emails_queries from "../emails/queries.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "availability/queries": typeof availability_queries;
   "convex/_generated/api": typeof convex__generated_api;
   "convex/_generated/server": typeof convex__generated_server;
+  "e2e/mutations": typeof e2e_mutations;
   email: typeof email;
   "emails/mutations": typeof emails_mutations;
   "emails/queries": typeof emails_queries;
