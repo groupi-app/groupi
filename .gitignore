@@ -52,3 +52,8 @@ supabase/.temp/
 *.turbo
 .turbo/packages/web/.env.sentry-build-plugin
 preview.env
+
+# Playwright
+packages/web/e2e/playwright-report/
+packages/web/e2e/test-results/
+packages/web/e2e/playwright/.auth/

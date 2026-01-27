@@ -27,6 +27,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
+import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { Id } from '@/convex/_generated/dataModel';
 import { EventImageUpload } from '@/components/event-image-upload';
 
@@ -104,26 +105,29 @@ export default function EditEventInfo({
     imageStorageId?: Id<'_storage'>;
   };
 }) {
-  const {
-    eventId,
-    title,
-    description,
-    location,
-    reminderOffset,
-    imageUrl,
-    imageStorageId: initialImageStorageId,
-  } = eventData;
+  const { eventId, title, description, location, reminderOffset, imageUrl } =
+    eventData;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
+  const { uploadFile } = useFileUpload();
   const [isSaving, setIsSaving] = useState(false);
-  const [imageStorageId, setImageStorageId] = useState<Id<'_storage'> | null>(
-    initialImageStorageId ?? null
-  );
-  const [hasImageChanged, setHasImageChanged] = useState(false);
 
-  const handleImageChange = (newStorageId: Id<'_storage'> | null) => {
-    setImageStorageId(newStorageId);
-    setHasImageChanged(true);
+  // Track new file to upload (local file, not yet uploaded)
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  // Track if user wants to remove the existing image
+  const [removeExisting, setRemoveExisting] = useState(false);
+
+  const handleFileChange = (file: File | null) => {
+    setImageFile(file);
+    // If a new file is selected, we don't need to remove existing (it will be replaced)
+    if (file) {
+      setRemoveExisting(false);
+    }
+  };
+
+  const handleRemoveExisting = () => {
+    setRemoveExisting(true);
+    setImageFile(null);
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -138,11 +142,6 @@ export default function EditEventInfo({
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    // Show toast and redirect immediately (optimistic)
-    toast.success('Event updated', {
-      description: 'Event details have been updated.',
-    });
-    router.push(`/event/${eventId}`);
 
     // Convert "never" to null (which becomes undefined on backend)
     const reminderOffsetValue =
@@ -150,8 +149,24 @@ export default function EditEventInfo({
         ? null
         : (data.reminderOffset as ReminderOffset | undefined);
 
-    // Handle mutation in background
     try {
+      // Handle image upload/removal
+      let imageStorageId: Id<'_storage'> | null | undefined = undefined;
+
+      if (imageFile) {
+        // Upload new file
+        const uploadResult = await uploadFile(imageFile);
+        if (!uploadResult) {
+          toast.error('Failed to upload image.');
+          return;
+        }
+        imageStorageId = uploadResult.storageId as Id<'_storage'>;
+      } else if (removeExisting) {
+        // Remove existing image
+        imageStorageId = null;
+      }
+      // If neither, imageStorageId stays undefined (no change)
+
       await updateEvent({
         eventId: eventId,
         title: data.title,
@@ -159,13 +174,16 @@ export default function EditEventInfo({
         location: data.location,
         reminderOffset: reminderOffsetValue,
         // Only include imageStorageId if it changed
-        ...(hasImageChanged && {
+        ...(imageStorageId !== undefined && {
           imageStorageId: imageStorageId,
         }),
       });
+
+      toast.success('Event updated', {
+        description: 'Event details have been updated.',
+      });
+      router.push(`/event/${eventId}`);
     } catch {
-      // Rollback navigation and show error toast
-      router.push(`/event/${eventId}/edit`);
       toast.error('Error editing event', {
         description: 'Failed to edit event details.',
       });
@@ -228,9 +246,10 @@ export default function EditEventInfo({
             Cover Image
           </label>
           <EventImageUpload
-            imageUrl={hasImageChanged ? undefined : imageUrl}
-            imageStorageId={imageStorageId}
-            onImageChange={handleImageChange}
+            imageUrl={removeExisting ? undefined : imageUrl}
+            file={imageFile}
+            onFileChange={handleFileChange}
+            onRemoveExisting={handleRemoveExisting}
           />
           <p className='text-sm text-muted-foreground'>
             Add an optional cover image for your event.

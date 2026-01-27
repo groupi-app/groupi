@@ -33,7 +33,8 @@ vi.mock('./use-notifications', () => ({
   useDeleteNotification: () => mockDeleteNotification,
   useMarkAllNotificationsAsRead: () => mockMarkAllNotificationsAsRead,
   useDeleteAllNotifications: () => mockDeleteAllNotifications,
-  useNotificationManagement: () => mockNotificationManagement,
+  // useNotificationManagement returns an object, not a function, so call the mock
+  useNotificationManagement: () => mockNotificationManagement(),
 }));
 
 describe('useNotifications hooks', () => {
@@ -230,6 +231,119 @@ describe('useNotifications hooks', () => {
     });
   });
 
-  // Note: useNotificationManagement tests temporarily removed due to complex mock setup
-  // TODO: Add proper tests for useNotificationManagement hook
+  describe('useNotificationManagement', () => {
+    test('returns loading state when notifications are undefined', async () => {
+      mockNotificationManagement.mockReturnValue({
+        notifications: [],
+        unreadCount: 0,
+        settings: undefined,
+        isLoading: true,
+        isUnreadCountLoading: true,
+        isSettingsLoading: true,
+        hasMore: false,
+        nextCursor: null,
+        markAsRead: mockMarkNotificationAsRead,
+        markAllAsRead: mockMarkAllNotificationsAsRead,
+        deleteNotification: mockDeleteNotification,
+        deleteAllNotifications: mockDeleteAllNotifications,
+      });
+
+      const { useNotificationManagement } = await import('./use-notifications');
+      const { result } = renderHook(() => useNotificationManagement());
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.notifications).toEqual([]);
+    });
+
+    test('returns combined data when fully loaded', async () => {
+      const mockNotification = {
+        _id: 'notif-1' as any,
+        id: 'notif-1' as any,
+        _creationTime: Date.now(),
+        createdAt: Date.now(),
+        type: 'NEW_POST' as const,
+        read: false,
+        eventId: 'event-1' as any,
+        postId: 'post-1' as any,
+        personId: 'person-1' as any,
+        recipientId: 'person-2' as any,
+        event: { id: 'event-1' as any, title: 'Test Event' },
+        post: { id: 'post-1' as any, title: 'Test Post' },
+        author: null,
+      };
+
+      mockNotificationManagement.mockReturnValue({
+        notifications: [mockNotification],
+        unreadCount: 5,
+        settings: { emailEnabled: true },
+        isLoading: false,
+        isUnreadCountLoading: false,
+        isSettingsLoading: false,
+        hasMore: true,
+        nextCursor: 'cursor-123',
+        markAsRead: mockMarkNotificationAsRead,
+        markAllAsRead: mockMarkAllNotificationsAsRead,
+        deleteNotification: mockDeleteNotification,
+        deleteAllNotifications: mockDeleteAllNotifications,
+      });
+
+      const { useNotificationManagement } = await import('./use-notifications');
+      const { result } = renderHook(() => useNotificationManagement());
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.notifications).toHaveLength(1);
+      expect(result.current.unreadCount).toBe(5);
+      expect(result.current.hasMore).toBe(true);
+      expect(result.current.nextCursor).toBe('cursor-123');
+    });
+
+    test('provides action methods', async () => {
+      mockNotificationManagement.mockReturnValue({
+        notifications: [],
+        unreadCount: 0,
+        settings: {},
+        isLoading: false,
+        isUnreadCountLoading: false,
+        isSettingsLoading: false,
+        hasMore: false,
+        nextCursor: null,
+        markAsRead: mockMarkNotificationAsRead,
+        markAllAsRead: mockMarkAllNotificationsAsRead,
+        deleteNotification: mockDeleteNotification,
+        deleteAllNotifications: mockDeleteAllNotifications,
+      });
+
+      const { useNotificationManagement } = await import('./use-notifications');
+      const { result } = renderHook(() => useNotificationManagement());
+
+      expect(typeof result.current.markAsRead).toBe('function');
+      expect(typeof result.current.markAllAsRead).toBe('function');
+      expect(typeof result.current.deleteNotification).toBe('function');
+      expect(typeof result.current.deleteAllNotifications).toBe('function');
+    });
+
+    test('handles empty notification list', async () => {
+      mockNotificationManagement.mockReturnValue({
+        notifications: [],
+        unreadCount: 0,
+        settings: { emailEnabled: false },
+        isLoading: false,
+        isUnreadCountLoading: false,
+        isSettingsLoading: false,
+        hasMore: false,
+        nextCursor: null,
+        markAsRead: mockMarkNotificationAsRead,
+        markAllAsRead: mockMarkAllNotificationsAsRead,
+        deleteNotification: mockDeleteNotification,
+        deleteAllNotifications: mockDeleteAllNotifications,
+      });
+
+      const { useNotificationManagement } = await import('./use-notifications');
+      const { result } = renderHook(() => useNotificationManagement());
+
+      expect(result.current.notifications).toEqual([]);
+      expect(result.current.unreadCount).toBe(0);
+      expect(result.current.hasMore).toBe(false);
+    });
+  });
 });
