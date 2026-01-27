@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useCreateEvent } from '@/hooks/mutations/use-create-event';
+import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { formatDateTimeRangeShort } from '@/lib/utils';
 
 // Helper to parse time string to hours and minutes
@@ -79,6 +80,7 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
   const { formState, reset } = useFormContext();
   const router = useRouter();
   const createEvent = useCreateEvent();
+  const { uploadFile } = useFileUpload();
   const [isSaving, setIsSaving] = useState(false);
 
   const currentTime = new Date().toLocaleTimeString([], {
@@ -138,11 +140,22 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
         endDateTime.setHours(endHours, endMinutes, 0, 0);
       }
 
-      const { title, description, location, reminderOffset, imageStorageId } =
+      const { title, description, location, reminderOffset, imageFile } =
         formState;
 
       setIsSaving(true);
       try {
+        // Upload image file if present
+        let imageStorageId: string | undefined;
+        if (imageFile) {
+          const uploadResult = await uploadFile(imageFile);
+          if (!uploadResult) {
+            toast.error('Failed to upload image.');
+            return;
+          }
+          imageStorageId = uploadResult.storageId;
+        }
+
         const result = await createEvent({
           title,
           description,
@@ -163,7 +176,7 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
         setIsSaving(false);
       }
     },
-    [formState, createEvent, reset, router]
+    [formState, createEvent, uploadFile, reset, router]
   );
 
   // In wizard mode, redirect is handled by parent
