@@ -312,7 +312,9 @@ export function EventCard({
                   </span>
                 </div>
               )}
-              <p className='text-muted-foreground'>{description}</p>
+              <p className='text-muted-foreground line-clamp-3'>
+                {description}
+              </p>
             </div>
             <div className='flex flex-col md:w-1/2 justify-between gap-2'>
               <div className='flex flex-col gap-2'>
