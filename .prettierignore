@@ -12,6 +12,9 @@ dist/
 # Generated files
 .nuxt
 .vuepress/dist
+convex/_generated/
+convex/betterAuth/_generated/
+convex/convex/_generated/
 
 # Serverless directories
 .serverless/

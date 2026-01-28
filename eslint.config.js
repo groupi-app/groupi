@@ -9,6 +9,18 @@ import nextPlugin from '@next/eslint-plugin-next';
 import globals from 'globals';
 
 const eslintConfig = [
+  // Global ignores - must be first
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/build/**',
+      '**/.expo/**',
+      '**/_generated/**',
+    ],
+  },
+
   // Base JavaScript recommended rules
   js.configs.recommended,
 
@@ -76,6 +88,7 @@ const eslintConfig = [
     plugins: {
       prettier,
       '@typescript-eslint': typescriptEslint,
+      'react-hooks': reactHooks,
     },
     languageOptions: {
       globals: {
@@ -99,11 +112,72 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      'no-console': 'warn', // Prefer structured logging with Pino
+      'no-console': 'warn', // Use structured logging or remove for production
       '@typescript-eslint/no-explicit-any': 'warn', // Allow any but warn
       '@typescript-eslint/no-empty-object-type': 'warn',
       'no-undef': 'off', // TypeScript handles this
       'no-fallthrough': 'error',
+    },
+  },
+  // Server components can return JSX from try/catch
+  {
+    files: ['**/*-server.tsx', '**/*-server.ts'],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'react-hooks/error-boundaries': 'off', // Server components can return JSX from try/catch
+    },
+  },
+
+  // React Native specific rules
+  {
+    files: ['packages/mobile/**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        // React Native globals
+        __DEV__: 'readonly',
+        fetch: 'readonly',
+        FormData: 'readonly',
+        navigator: 'readonly',
+        XMLHttpRequest: 'readonly',
+      },
+    },
+    rules: {
+      // React Native doesn't have DOM, but uses console for development
+      'no-console': 'off',
+      // React Native uses different import patterns
+      'import/no-unresolved': 'off',
+    },
+  },
+
+  // Convex functions - allow console logging (official Convex logging method)
+  {
+    files: ['**/convex/**/*.{js,ts}'],
+    rules: {
+      'no-console': 'off', // console.* is the official logging method for Convex functions
+    },
+  },
+
+  // Shared package - platform agnostic rules
+  {
+    files: ['packages/shared/**/*.{js,ts,tsx}'],
+    rules: {
+      'no-console': 'warn', // Shared code should use platform adapters for logging
+      // Ensure no platform-specific imports leak in
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react-native', 'expo-*', 'next/*'],
+              message:
+                'Platform-specific imports not allowed in shared package. Use platform adapters instead.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

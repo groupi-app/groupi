@@ -1,0 +1,13 @@
+# Completely ignore the tests directory
+tests
+
+# Test file patterns
+*.test.ts
+*.test.js
+test_helpers.*
+
+# Vitest configuration
+vitest.config.ts
+
+# Documentation
+README.md
