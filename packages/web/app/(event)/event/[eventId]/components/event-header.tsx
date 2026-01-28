@@ -249,6 +249,7 @@ export function EventHeader({ eventId }: EventHeaderProps) {
       <header className='flex flex-col md:my-5 max-w-4xl mx-auto gap-3'>
         {event.imageUrl && (
           <div className='w-full max-h-[300px] overflow-hidden rounded-xl mb-3'>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}
             <img
               src={event.imageUrl}
               alt={`Cover image for ${title}`}

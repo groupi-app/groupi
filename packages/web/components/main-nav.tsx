@@ -45,7 +45,11 @@ export function MainNav({ items }: { items: NavItem[] }) {
   return (
     <div className='container flex items-center justify-between h-20 py-6'>
       <div className='flex md:gap-10 w-full'>
-        <Link href='/' className='items-center hidden space-x-2 md:flex'>
+        <Link
+          href='/'
+          aria-label={`${siteConfig.name} home`}
+          className='items-center hidden space-x-2 md:flex'
+        >
           <Icons.logo width='26' height='23' viewBox='0 0 197 225' />
           <span className='hidden text-xl font-bold font-heading sm:inline-block'>
             {siteConfig.name}
@@ -160,7 +164,7 @@ function AuthenticatedMobileNav({ items }: { items?: MainNavItem[] }) {
     );
   }
 
-  const { user, person: _person } = userAndPerson;
+  const { user } = userAndPerson;
 
   // Filter admin items for mobile nav too
   const publicItems = items?.filter(item => item.href !== '/admin') || [];
@@ -193,7 +197,7 @@ function AuthenticatedProfileDropdown() {
     );
   }
 
-  const { user, person: _person } = userAndPerson;
+  const { user } = userAndPerson;
 
   return (
     <ProfileDropdown

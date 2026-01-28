@@ -42,14 +42,16 @@ export class ConvexSeeder {
 
   /**
    * Create a test session with user, person, and session token.
+   * @param skipPerson - If true, skips creating person record (for onboarding tests)
    */
   async createTestSession(userData: {
     email: string;
     name?: string;
     username?: string;
+    skipPerson?: boolean;
   }): Promise<{
     userId: string;
-    personId: string;
+    personId: string | null;
     sessionToken: string;
   }> {
     const result = await this.client.mutation(
@@ -59,26 +61,49 @@ export class ConvexSeeder {
         email: userData.email,
         name: userData.name || 'Test User',
         username: userData.username || userData.email.split('@')[0],
+        skipPerson: userData.skipPerson || false,
       }
     );
 
     this.createdIds.users.push(result.userId);
-    this.createdIds.persons.push(result.personId);
+    if (result.personId) {
+      this.createdIds.persons.push(result.personId);
+    }
 
     return result;
   }
 
   /**
    * Get the last magic link sent to an email (for testing).
+   * Returns null if no verification found.
    */
-  async getLastMagicLink(email: string): Promise<string> {
+  async getLastMagicLink(email: string): Promise<string | null> {
     const result = await this.client.query(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:getLastMagicLink' as any,
       { email }
     );
 
-    return result.url;
+    return result?.url ?? null;
+  }
+
+  /**
+   * Poll for magic link with retries.
+   * Waits for verification record to be created and returns the URL.
+   */
+  async waitForMagicLink(
+    email: string,
+    maxAttempts: number = 15,
+    delayMs: number = 500
+  ): Promise<string | null> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const url = await this.getLastMagicLink(email);
+      if (url) {
+        return url;
+      }
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    return null;
   }
 
   /**

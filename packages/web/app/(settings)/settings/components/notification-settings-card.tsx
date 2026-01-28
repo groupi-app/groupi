@@ -289,7 +289,7 @@ export function NotificationSettingsCard({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger aria-label='Webhook format'>
                           <SelectValue placeholder='Select format' />
                         </SelectTrigger>
                       </FormControl>
