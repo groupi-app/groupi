@@ -28,6 +28,19 @@ interface OldEvent {
   description: string;
   location: string;
   chosenDateTime: string | null;
+  chosenEndDateTime: string | null;
+  reminderOffset:
+    | '30_MINUTES'
+    | '1_HOUR'
+    | '2_HOURS'
+    | '4_HOURS'
+    | '1_DAY'
+    | '2_DAYS'
+    | '3_DAYS'
+    | '1_WEEK'
+    | '2_WEEKS'
+    | '4_WEEKS'
+    | null;
 }
 
 interface OldMembership {
@@ -42,6 +55,7 @@ interface OldPotentialDateTime {
   id: string;
   eventId: string;
   dateTime: string;
+  endDateTime: string | null;
 }
 
 interface OldAvailability {
@@ -78,6 +92,7 @@ interface OldInvite {
   expiresAt: string | null;
   usesRemaining: number | null;
   maxUses: number | null;
+  usesTotal: number | null;
   name: string | null;
 }
 
@@ -166,6 +181,8 @@ export const runMigration = internalAction({
     // Step 1: Clear data if requested
     if (clearFirst) {
       console.log('\n[1] Clearing existing data...');
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Known Convex type instantiation depth issue with internal API in web tsconfig
       await ctx.runMutation(internal.migration.mutations.clearAllData, {});
     }
 
@@ -252,10 +269,12 @@ export const runMigration = internalAction({
         description: e.description || undefined,
         location: e.location || undefined,
         chosenDateTime: timestampToMs(e.chosenDateTime),
+        chosenEndDateTime: timestampToMs(e.chosenEndDateTime),
         creatorId: creatorId as string,
         createdAt: timestampToMs(e.createdAt) || Date.now(),
         updatedAt: timestampToMs(e.updatedAt) || Date.now(),
         timezone: 'America/New_York',
+        reminderOffset: e.reminderOffset || undefined,
       };
     });
     const eventMappings = await ctx.runMutation(
@@ -288,6 +307,7 @@ export const runMigration = internalAction({
         oldId: pdt.id,
         eventId: mappings.events[pdt.eventId] as string,
         dateTime: timestampToMs(pdt.dateTime) || Date.now(),
+        endDateTime: timestampToMs(pdt.endDateTime),
       }))
       .filter(pdt => pdt.eventId);
     const pdtMappings = await ctx.runMutation(
@@ -388,6 +408,7 @@ export const runMigration = internalAction({
         expiresAt: timestampToMs(i.expiresAt),
         usesRemaining: i.usesRemaining || undefined,
         maxUses: i.maxUses || undefined,
+        usesTotal: i.usesTotal || undefined,
         name: i.name || undefined,
       }))
       .filter(i => i.eventId && i.createdById);
@@ -438,7 +459,9 @@ export const runMigration = internalAction({
           ? (mappings.persons[n.authorId] as string)
           : undefined,
         datetime: timestampToMs(n.datetime),
-        rsvp: n.rsvp as 'YES' | 'MAYBE' | 'NO' | 'PENDING' | undefined,
+        rsvp: n.rsvp
+          ? (n.rsvp as 'YES' | 'MAYBE' | 'NO' | 'PENDING')
+          : undefined,
       }))
       .filter(n => n.personId);
 
