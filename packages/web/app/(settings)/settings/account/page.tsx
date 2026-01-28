@@ -74,7 +74,7 @@ function AuthenticatedAccountSettings() {
     );
   }
 
-  const { user, person: _person } = userAndPerson;
+  const { user } = userAndPerson;
 
   // Transform user data to form defaults
   const defaultValues = {

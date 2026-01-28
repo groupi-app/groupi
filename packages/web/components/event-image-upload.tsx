@@ -138,6 +138,7 @@ export function EventImageUpload({
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element -- Blob URLs for upload preview require native img */}
             <img
               src={displayUrl}
               alt='Event cover image preview'

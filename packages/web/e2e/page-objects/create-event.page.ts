@@ -26,22 +26,17 @@ export class CreateEventPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.titleInput = page.getByLabel(/title|event name/i);
-    this.descriptionInput = page.getByLabel(/description/i);
-    this.locationInput = page.getByLabel(/location|where/i);
-    this.singleDateOption = page.getByRole('button', {
-      name: /single date|one date/i,
-    });
-    this.multiDateOption = page.getByRole('button', {
-      name: /multi|multiple|vote|poll/i,
-    });
+    // Use data-test attributes for reliable element selection
+    this.titleInput = page.getByTestId('new-event-title');
+    this.descriptionInput = page.getByTestId('new-event-description');
+    this.locationInput = page.getByTestId('new-event-location');
+    this.singleDateOption = page.getByTestId('single-date-button');
+    this.multiDateOption = page.getByTestId('multi-date-button');
     this.dateInput = page.getByLabel(/date/i);
     this.timeInput = page.getByLabel(/time/i);
-    this.nextButton = page.getByRole('button', { name: /next|continue/i });
-    this.backButton = page.getByRole('button', { name: /back|previous/i });
-    this.createButton = page.getByRole('button', {
-      name: /create event|submit/i,
-    });
+    this.nextButton = page.getByTestId('new-event-next-button');
+    this.backButton = page.getByRole('button', { name: /back/i });
+    this.createButton = page.getByTestId('create-event-button');
   }
 
   /**

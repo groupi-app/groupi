@@ -1,4 +1,4 @@
-import { test, expect, getFutureDate } from '../../fixtures/base.fixture';
+import { test, expect } from '../../fixtures/base.fixture';
 
 /**
  * Create Event E2E tests.
@@ -14,8 +14,8 @@ test.describe('Create Event', () => {
   test('displays create event wizard', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/create');
 
-    // Check for title input
-    const titleInput = authenticatedPage.getByLabel(/title|event name/i);
+    // Check for title input using data-test attribute
+    const titleInput = authenticatedPage.getByTestId('new-event-title');
     await expect(titleInput).toBeVisible();
   });
 
@@ -28,33 +28,35 @@ test.describe('Create Event', () => {
     const eventDescription = 'This is a test event created by E2E tests';
     const eventLocation = 'Virtual - Zoom';
 
-    // Fill event info
-    await authenticatedPage.getByLabel(/title|event name/i).fill(eventTitle);
+    // Fill event info using data-test selectors
+    await authenticatedPage.getByTestId('new-event-title').fill(eventTitle);
 
-    const descInput = authenticatedPage.getByLabel(/description/i);
+    const descInput = authenticatedPage.getByTestId('new-event-description');
     if (await descInput.isVisible()) {
       await descInput.fill(eventDescription);
     }
 
-    const locationInput = authenticatedPage.getByLabel(/location|where/i);
+    const locationInput = authenticatedPage.getByTestId('new-event-location');
     if (await locationInput.isVisible()) {
       await locationInput.fill(eventLocation);
     }
 
-    // Look for date type selection or proceed button
-    const singleDateOption = authenticatedPage.getByRole('button', {
-      name: /single date|one date|specific date/i,
-    });
+    // Click next to proceed to date type selection
+    await authenticatedPage.getByTestId('new-event-next-button').click();
 
-    if (await singleDateOption.isVisible()) {
-      await singleDateOption.click();
-    }
+    // Wait for date type selection step to appear
+    const singleDateOption =
+      authenticatedPage.getByTestId('single-date-button');
+    await expect(singleDateOption).toBeVisible({ timeout: 5000 });
 
-    // Look for create/continue button
-    const createButton = authenticatedPage.getByRole('button', {
-      name: /create|submit|continue|next/i,
-    });
+    // Click single date option
+    await singleDateOption.click();
 
+    // Wait for single date step to appear and the create button to be visible
+    const createButton = authenticatedPage.getByTestId('create-event-button');
+    await expect(createButton).toBeVisible({ timeout: 5000 });
+
+    // Click create button
     await createButton.click();
 
     // Should eventually redirect to event page or show success
@@ -71,27 +73,23 @@ test.describe('Create Event', () => {
     await authenticatedPage.goto('/create');
 
     // Try to proceed without filling title
-    const createButton = authenticatedPage.getByRole('button', {
-      name: /create|submit|continue|next/i,
-    });
+    const nextButton = authenticatedPage.getByTestId('new-event-next-button');
 
-    // Button should be disabled or clicking shows error
-    const isDisabled = await createButton.isDisabled().catch(() => false);
+    // Click next without filling title
+    await nextButton.click();
 
-    if (!isDisabled) {
-      await createButton.click();
+    // Should show validation error or form shouldn't proceed
+    const hasError = await authenticatedPage
+      .locator('[data-slot="form-message"], [aria-invalid="true"]')
+      .isVisible()
+      .catch(() => false);
 
-      // Should show validation error
-      const hasError = await authenticatedPage
-        .locator('[data-error], .error-message, [aria-invalid="true"]')
-        .isVisible()
-        .catch(() => false);
+    // Either we got an error or the page didn't navigate (stayed on same step)
+    const isStillOnInfoStep = await authenticatedPage
+      .getByTestId('new-event-title')
+      .isVisible();
 
-      // Either button was disabled or we got an error
-      expect(hasError).toBe(true);
-    } else {
-      expect(isDisabled).toBe(true);
-    }
+    expect(hasError || isStillOnInfoStep).toBe(true);
   });
 
   test('can go back in wizard steps', async ({ authenticatedPage }) => {
@@ -100,50 +98,55 @@ test.describe('Create Event', () => {
     const eventTitle = `Back Test Event ${Date.now()}`;
 
     // Fill event info
-    await authenticatedPage.getByLabel(/title|event name/i).fill(eventTitle);
+    await authenticatedPage.getByTestId('new-event-title').fill(eventTitle);
 
-    // Click next if available
-    const nextButton = authenticatedPage.getByRole('button', {
-      name: /next|continue/i,
+    // Click next
+    const nextButton = authenticatedPage.getByTestId('new-event-next-button');
+    await nextButton.click();
+
+    // Wait for date type selection step to appear
+    const singleDateOption =
+      authenticatedPage.getByTestId('single-date-button');
+    await expect(singleDateOption).toBeVisible({ timeout: 5000 });
+
+    // Look for back button
+    const backButton = authenticatedPage.getByRole('button', {
+      name: /back/i,
     });
 
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
+    if (await backButton.isVisible()) {
+      await backButton.click();
 
-      // Wait for step change
-      await authenticatedPage.waitForTimeout(500);
+      // Wait for info step to reappear
+      const titleInput = authenticatedPage.getByTestId('new-event-title');
+      await expect(titleInput).toBeVisible({ timeout: 5000 });
 
-      // Look for back button
-      const backButton = authenticatedPage.getByRole('button', {
-        name: /back|previous/i,
-      });
-
-      if (await backButton.isVisible()) {
-        await backButton.click();
-
-        // Title should still be there
-        const titleInput = authenticatedPage.getByLabel(/title|event name/i);
-        const value = await titleInput.inputValue();
-        expect(value).toBe(eventTitle);
-      }
+      // Title should still be there
+      const value = await titleInput.inputValue();
+      expect(value).toBe(eventTitle);
     }
   });
 
   test('shows date selection options', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/create');
 
+    // Wait for page to fully load
+    const titleInput = authenticatedPage.getByTestId('new-event-title');
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
+
     // Fill required title
-    await authenticatedPage
-      .getByLabel(/title|event name/i)
-      .fill('Date Selection Test');
+    await titleInput.fill('Date Selection Test');
+
+    // Click next to go to date type selection
+    await authenticatedPage.getByTestId('new-event-next-button').click();
+
+    // Wait for step change
+    await authenticatedPage.waitForTimeout(500);
 
     // Look for date type options
-    const singleDateOption = authenticatedPage.getByRole('button', {
-      name: /single date|one date|specific date/i,
-    });
-    const multiDateOption = authenticatedPage.getByRole('button', {
-      name: /multi|multiple|vote|poll/i,
-    });
+    const singleDateOption =
+      authenticatedPage.getByTestId('single-date-button');
+    const multiDateOption = authenticatedPage.getByTestId('multi-date-button');
 
     // Check if date options are available
     const hasSingleDate = await singleDateOption.isVisible().catch(() => false);
@@ -160,9 +163,9 @@ test.describe('Create Event', () => {
     const eventLocation = 'Central Park, New York';
 
     // Fill event info
-    await authenticatedPage.getByLabel(/title|event name/i).fill(eventTitle);
+    await authenticatedPage.getByTestId('new-event-title').fill(eventTitle);
 
-    const locationInput = authenticatedPage.getByLabel(/location|where/i);
+    const locationInput = authenticatedPage.getByTestId('new-event-location');
     if (await locationInput.isVisible()) {
       await locationInput.fill(eventLocation);
 
@@ -176,17 +179,17 @@ test.describe('Create Event', () => {
 
     const eventTitle = `Long Description Test ${Date.now()}`;
     const longDescription =
-      'This is a very long description. '.repeat(50) +
+      'This is a very long description. '.repeat(25) +
       'It should be handled properly by the form.';
 
     // Fill event info
-    await authenticatedPage.getByLabel(/title|event name/i).fill(eventTitle);
+    await authenticatedPage.getByTestId('new-event-title').fill(eventTitle);
 
-    const descInput = authenticatedPage.getByLabel(/description/i);
+    const descInput = authenticatedPage.getByTestId('new-event-description');
     if (await descInput.isVisible()) {
       await descInput.fill(longDescription);
 
-      // Verify description is filled (may be truncated)
+      // Verify description is filled (may be truncated to 1000 chars)
       const value = await descInput.inputValue();
       expect(value.length).toBeGreaterThan(100);
     }

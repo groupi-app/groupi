@@ -8,7 +8,8 @@ import { FullConfig } from '@playwright/test';
  * - Generate reports
  * - Reset shared state
  */
-async function globalTeardown(_: FullConfig): Promise<void> {
+
+async function globalTeardown(_config: FullConfig): Promise<void> {
   console.log(`\n📋 E2E Test Teardown`);
   console.log(`   ✅ Tests completed`);
 

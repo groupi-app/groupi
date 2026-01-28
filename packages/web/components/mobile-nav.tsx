@@ -59,10 +59,13 @@ export function MobileNav({
     <div className='md:hidden w-full'>
       <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className='flex items-center justify-between'>
-          <Link href='/'>
+          <Link href='/' aria-label={`${siteConfig.name} home`}>
             <Icons.logo width='36' height='36' viewBox='0 0 197 225' />
           </Link>
-          <SheetTrigger className='relative flex items-center justify-center size-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground'>
+          <SheetTrigger
+            aria-label='Open menu'
+            className='relative flex items-center justify-center size-12 transition-colors rounded-md md:hidden hover:bg-foreground/5 text-primary-foreground dark:text-foreground'
+          >
             <Icons.menu className='size-8' />
             <NotificationCount />
           </SheetTrigger>

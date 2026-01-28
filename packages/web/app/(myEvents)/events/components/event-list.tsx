@@ -35,7 +35,6 @@ interface EventListProps {
  * - No need for React Query or Pusher - Convex handles everything
  */
 export function EventList({
-  userId: _userId,
   sortBy = 'createdat',
   filter = 'all',
 }: EventListProps = {}) {
