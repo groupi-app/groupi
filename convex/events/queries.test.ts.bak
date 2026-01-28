@@ -1,0 +1,62 @@
+import { convexTest } from "convex-test";
+import { expect, test, describe } from "vitest";
+import schema from "../schema";
+
+// Import modules for convex-test
+import * as eventsQueries from "../events/queries";
+import * as eventsMutations from "../events/mutations";
+import * as authModule from "../auth";
+
+describe("Events queries", () => {
+  test("should initialize convex test environment", async () => {
+    // Provide modules explicitly since _generated detection is failing
+    const modules = {
+      "events/queries.js": eventsQueries,
+      "events/mutations.js": eventsMutations,
+      "auth.js": authModule,
+    };
+    const t = convexTest(schema, modules);
+
+    // Simple test to verify convex-test is working
+    const result = await t.run(async (ctx) => {
+      // Just verify we can access the database context
+      const events = await ctx.db.query("events").collect();
+      return events.length;
+    });
+
+    // Should start with empty database
+    expect(result).toBe(0);
+  });
+
+  test("should be able to insert and query events", async () => {
+    const modules = {
+      "events/queries.js": eventsQueries,
+      "events/mutations.js": eventsMutations,
+      "auth.js": authModule,
+    };
+    const t = convexTest(schema, modules);
+
+    // Test basic database operations
+    const eventId = await t.run(async (ctx) => {
+      return await ctx.db.insert("events", {
+        title: "Test Event",
+        description: "A test event",
+        creatorId: "test-creator-id" as any,
+        location: "Test Location",
+        potentialDateTimes: [],
+        chosenDateTime: undefined,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        timezone: "UTC",
+      });
+    });
+
+    // Query the event back
+    const event = await t.run(async (ctx) => {
+      return await ctx.db.get(eventId);
+    });
+
+    expect(event).toBeTruthy();
+    expect(event!.title).toBe("Test Event");
+  });
+});

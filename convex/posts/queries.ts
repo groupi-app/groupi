@@ -1,0 +1,400 @@
+import { query } from '../_generated/server';
+import { v } from 'convex/values';
+import { getCurrentPerson, requireAuth, getPersonWithUser } from '../auth';
+
+/**
+ * Posts queries for the Convex backend
+ *
+ * These functions replace the old React Query + Prisma patterns
+ * with Convex real-time subscriptions and optimized database queries.
+ */
+
+/**
+ * Get detailed post information with all related data
+ * Equivalent to the old fetchPostDetail function
+ */
+export const getPostDetail = query({
+  args: {
+    postId: v.id('posts'),
+    _traceId: v.optional(v.string()), // For logging/debugging
+  },
+  handler: async (ctx, { postId }) => {
+    // Require authentication
+    const { person: currentPerson, user: currentUser } = await requireAuth(ctx);
+
+    // Get the post - return null if not found (e.g., after deletion)
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      return null;
+    }
+
+    // Get the event - return null if not found
+    const event = await ctx.db.get(post.eventId);
+    if (!event) {
+      return null;
+    }
+
+    // Check if user is a member of the event
+    const userMembership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', event._id)
+      )
+      .first();
+
+    if (!userMembership) {
+      throw new Error('You are not a member of this event');
+    }
+
+    // Get all event memberships for context
+    const eventMemberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_event', q => q.eq('eventId', event._id))
+      .collect();
+
+    // Get user data for all members - nest user inside person AND at top level for compatibility
+    const membershipsWithUsers = await Promise.all(
+      eventMemberships.map(async membership => {
+        const memberData = await getPersonWithUser(ctx, membership.personId);
+        return {
+          ...membership,
+          person: memberData
+            ? {
+                ...memberData.person,
+                user: memberData.user,
+              }
+            : null,
+          user: memberData?.user || null,
+        };
+      })
+    );
+
+    // Get post author data - nest user inside person
+    const postAuthorData = await getPersonWithUser(ctx, post.authorId);
+
+    // Get post attachments
+    const postAttachments = await ctx.db
+      .query('attachments')
+      .withIndex('by_post', q => q.eq('postId', post._id))
+      .collect();
+
+    // Get URLs for post attachments
+    const postAttachmentsWithUrls = await Promise.all(
+      postAttachments.map(async attachment => {
+        const url = await ctx.storage.getUrl(attachment.storageId);
+        return {
+          ...attachment,
+          url,
+        };
+      })
+    );
+
+    // Get replies for this post
+    const replies = await ctx.db
+      .query('replies')
+      .withIndex('by_post', q => q.eq('postId', post._id))
+      .order('asc')
+      .collect();
+
+    // Get user data for reply authors and attachments - nest user inside person
+    const repliesWithAuthors = await Promise.all(
+      replies.map(async reply => {
+        const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
+
+        // Get attachments for this reply
+        const replyAttachments = await ctx.db
+          .query('attachments')
+          .withIndex('by_reply', q => q.eq('replyId', reply._id))
+          .collect();
+
+        // Get URLs for reply attachments
+        const replyAttachmentsWithUrls = await Promise.all(
+          replyAttachments.map(async attachment => {
+            const url = await ctx.storage.getUrl(attachment.storageId);
+            return {
+              ...attachment,
+              url,
+            };
+          })
+        );
+
+        return {
+          ...reply,
+          author: replyAuthorData
+            ? {
+                person: {
+                  ...replyAuthorData.person,
+                  user: replyAuthorData.user,
+                },
+                user: replyAuthorData.user,
+              }
+            : null,
+          attachments: replyAttachmentsWithUrls,
+        };
+      })
+    );
+
+    return {
+      post: {
+        ...post,
+        author: postAuthorData
+          ? {
+              person: {
+                ...postAuthorData.person,
+                user: postAuthorData.user,
+              },
+              user: postAuthorData.user,
+            }
+          : null,
+        event: {
+          ...event,
+          memberships: membershipsWithUsers.filter(
+            m => m.person && m.person.user
+          ),
+        },
+        replies: repliesWithAuthors.filter(r => r.author !== null),
+        attachments: postAttachmentsWithUrls,
+      },
+      userMembership: {
+        ...userMembership,
+        person: {
+          ...currentPerson,
+          user: currentUser,
+        },
+      },
+    };
+  },
+});
+
+/**
+ * Get posts for an event feed (paginated)
+ * Used for event post lists
+ */
+export const getEventPostFeed = query({
+  args: {
+    eventId: v.id('events'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { eventId }) => {
+    // Require authentication and event membership
+    const { person: currentPerson } = await requireAuth(ctx);
+
+    // Check event membership
+    const userMembership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', eventId)
+      )
+      .first();
+
+    if (!userMembership) {
+      throw new Error('You are not a member of this event');
+    }
+
+    // Get event
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Get all posts for this event
+    const posts = await ctx.db
+      .query('posts')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .order('desc') // Most recent first
+      .collect();
+
+    // Get author data for all posts - nest user inside person
+    const postsWithAuthors = await Promise.all(
+      posts.map(async post => {
+        const authorData = await getPersonWithUser(ctx, post.authorId);
+
+        // Get replies with author data for preview
+        const replies = await ctx.db
+          .query('replies')
+          .withIndex('by_post', q => q.eq('postId', post._id))
+          .order('desc')
+          .collect();
+
+        // Get unique recent reply authors (up to 3) for avatar preview
+        const seenAuthors = new Set<string>();
+        const recentReplyAuthors: Array<{
+          id: string;
+          _creationTime: number;
+          user: {
+            name: string | null;
+            email: string;
+            image: string | null;
+          } | null;
+        }> = [];
+
+        for (const reply of replies) {
+          if (seenAuthors.has(reply.authorId)) continue;
+          if (recentReplyAuthors.length >= 3) break;
+
+          const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
+          if (replyAuthorData?.user) {
+            seenAuthors.add(reply.authorId);
+            recentReplyAuthors.push({
+              id: reply.authorId,
+              _creationTime: reply._creationTime,
+              user: {
+                name: replyAuthorData.user.name ?? null,
+                email: replyAuthorData.user.email ?? '',
+                image: replyAuthorData.user.image ?? null,
+              },
+            });
+          }
+        }
+
+        return {
+          ...post,
+          author: authorData
+            ? {
+                person: {
+                  ...authorData.person,
+                  user: authorData.user,
+                },
+                user: authorData.user,
+              }
+            : null,
+          replyCount: replies.length,
+          recentReplyAuthors,
+        };
+      })
+    );
+
+    // Get event memberships - nest user inside person
+    const eventMemberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+
+    const membershipsWithUsers = await Promise.all(
+      eventMemberships.map(async membership => {
+        const memberData = await getPersonWithUser(ctx, membership.personId);
+        return {
+          ...membership,
+          // Include user at top level AND nested in person for component compatibility
+          person: memberData
+            ? {
+                ...memberData.person,
+                user: memberData.user,
+              }
+            : null,
+          user: memberData?.user || null,
+        };
+      })
+    );
+
+    return {
+      event: {
+        ...event,
+        posts: postsWithAuthors.filter(p => p.author !== null),
+        memberships: membershipsWithUsers.filter(
+          m => m.person && m.person.user
+        ),
+      },
+      userMembership: {
+        ...userMembership,
+        person: currentPerson,
+      },
+    };
+  },
+});
+
+/**
+ * Get a single post with minimal data
+ * Used for quick lookups and optimistic updates
+ */
+export const getPost = query({
+  args: {
+    postId: v.id('posts'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { postId }) => {
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Check if current user has access to this post's event
+    const currentPerson = await getCurrentPerson(ctx);
+    if (currentPerson) {
+      const membership = await ctx.db
+        .query('memberships')
+        .withIndex('by_person_event', q =>
+          q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+        )
+        .first();
+
+      if (!membership) {
+        throw new Error('Access denied to this post');
+      }
+    }
+
+    return post;
+  },
+});
+
+/**
+ * Get replies for a specific post
+ * Used by the replies components
+ */
+export const getPostReplies = query({
+  args: {
+    postId: v.id('posts'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { postId }) => {
+    // Verify access to the post
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    const currentPerson = await getCurrentPerson(ctx);
+    if (currentPerson) {
+      const membership = await ctx.db
+        .query('memberships')
+        .withIndex('by_person_event', q =>
+          q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+        )
+        .first();
+
+      if (!membership) {
+        throw new Error('Access denied to this post');
+      }
+    }
+
+    // Get all replies
+    const replies = await ctx.db
+      .query('replies')
+      .withIndex('by_post', q => q.eq('postId', postId))
+      .order('asc') // Chronological order
+      .collect();
+
+    // Get author data for all replies - nest user inside person
+    const repliesWithAuthors = await Promise.all(
+      replies.map(async reply => {
+        const authorData = await getPersonWithUser(ctx, reply.authorId);
+        return {
+          ...reply,
+          author: authorData
+            ? {
+                person: {
+                  ...authorData.person,
+                  user: authorData.user,
+                },
+                user: authorData.user,
+              }
+            : null,
+        };
+      })
+    );
+
+    return {
+      replies: repliesWithAuthors.filter(r => r.author !== null),
+    };
+  },
+});

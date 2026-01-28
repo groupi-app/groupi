@@ -1,0 +1,263 @@
+name: Comprehensive Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  # Global test environment variables
+  CONVEX_URL: 'https://test.convex.cloud'
+  NEXT_PUBLIC_CONVEX_URL: 'https://test.convex.cloud'
+  SITE_URL: 'http://localhost:3000'
+  BETTER_AUTH_SECRET: 'test-secret-key-32-chars-minimum'
+  BETTER_AUTH_URL: 'http://localhost:3000'
+  NODE_ENV: 'test'
+
+jobs:
+  # Shared Package Tests
+  test-shared:
+    name: Test Shared Package
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type checking - Shared
+        run: |
+          cd packages/shared
+          pnpm type-check
+
+      - name: Run shared package tests with coverage
+        run: |
+          cd packages/shared
+          pnpm test:coverage
+
+      - name: Upload shared coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == 20
+        with:
+          file: ./packages/shared/coverage/lcov.info
+          flags: shared
+          name: shared-coverage
+          fail_ci_if_error: false
+
+  # Web Package Tests
+  test-web:
+    name: Test Web Package
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type checking - Web
+        run: |
+          cd packages/web
+          pnpm type-check
+
+      - name: Lint - Web
+        run: |
+          cd packages/web
+          pnpm lint
+
+      - name: Run web package tests with coverage
+        run: |
+          cd packages/web
+          pnpm test:coverage
+
+      - name: Upload web coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == 20
+        with:
+          file: ./packages/web/coverage/lcov.info
+          flags: web
+          name: web-coverage
+          fail_ci_if_error: false
+
+  # Mobile Package Tests
+  test-mobile:
+    name: Test Mobile Package
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type checking - Mobile
+        run: |
+          cd packages/mobile
+          pnpm type-check
+
+      - name: Lint - Mobile
+        run: |
+          cd packages/mobile
+          pnpm lint
+
+      - name: Run mobile package tests with coverage
+        run: |
+          cd packages/mobile
+          pnpm test:coverage
+
+      - name: Upload mobile coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == 20
+        with:
+          file: ./packages/mobile/coverage/lcov.info
+          flags: mobile
+          name: mobile-coverage
+          fail_ci_if_error: false
+
+  # Build Tests
+  test-builds:
+    name: Test Builds
+    runs-on: ubuntu-latest
+    needs: [test-shared, test-web, test-mobile]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: |
+          cd packages/shared
+          pnpm build
+
+      - name: Build web application
+        run: |
+          cd packages/web
+          pnpm build
+        env:
+          # Additional build-time environment variables
+          GOOGLE_CLIENT_ID: 'test-client-id'
+          DISCORD_CLIENT_ID: 'test-discord-id'
+
+  # Quality Checks
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    needs: [test-shared, test-web, test-mobile]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run all lint checks
+        run: pnpm lint
+
+      - name: Run all type checks
+        run: pnpm type-check
+
+      - name: Format check
+        run: pnpm format:check
+
+  # Summary Job
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-shared, test-web, test-mobile, test-builds, quality-checks]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "Shared tests: ${{ needs.test-shared.result }}"
+          echo "Web tests: ${{ needs.test-web.result }}"
+          echo "Mobile tests: ${{ needs.test-mobile.result }}"
+          echo "Build tests: ${{ needs.test-builds.result }}"
+          echo "Quality checks: ${{ needs.quality-checks.result }}"
+
+          if [[ "${{ needs.test-shared.result }}" != "success" || \
+                "${{ needs.test-web.result }}" != "success" || \
+                "${{ needs.test-mobile.result }}" != "success" || \
+                "${{ needs.test-builds.result }}" != "success" || \
+                "${{ needs.quality-checks.result }}" != "success" ]]; then
+            echo "❌ Some tests failed!"
+            exit 1
+          else
+            echo "✅ All tests passed!"
+          fi

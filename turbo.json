@@ -1,0 +1,64 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "DEBUG",
+        "NEXT_PUBLIC_BASE_URL",
+        "NEXT_PUBLIC_CONVEX_URL",
+        "NEXT_PUBLIC_CONVEX_SITE_URL",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "DISCORD_CLIENT_ID",
+        "DISCORD_CLIENT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_API_KEY",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+        "NEXT_PUBLIC_GOOGLE_API_KEY",
+        "RESEND_API_KEY",
+        "UPLOADTHING_TOKEN",
+        "NEXT_PUBLIC_LOG_CACHE",
+        "SENTRY_AUTH_TOKEN",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "LOKI_ENABLED",
+        "LOKI_URL",
+        "LOKI_INSTANCE_ID",
+        "LOKI_TOKEN",
+        "LOKI_SERVICE",
+        "VERCEL_URL"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "type-check": {
+      "cache": false
+    },
+    "lint": {},
+    "lint:fix": {},
+    "format": {},
+    "format:check": {},
+    "test": {
+      "cache": false
+    },
+    "test:run": {
+      "outputs": ["coverage/**"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:coverage": {
+      "outputs": ["coverage/**"]
+    },
+    "start": {
+      "dependsOn": ["^build"],
+      "cache": false
+    }
+  }
+}
