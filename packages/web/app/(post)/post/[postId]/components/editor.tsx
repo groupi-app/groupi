@@ -77,7 +77,7 @@ export function Editor({
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Reset key for TipTap - incremented to force content sync
-  const [_editorResetKey, setEditorResetKey] = useState(0);
+  const [, setEditorResetKey] = useState(0);
 
   const backUrl = postData ? `/post/${postData.id}` : `/event/${eventId}`;
   const title = postData?.title || '';

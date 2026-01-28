@@ -2,9 +2,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, test, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, test, develop]
 
 # Cancel in-progress runs for the same branch
 concurrency:
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: e2e # Only run after main tests pass
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test')
 
     strategy:
       fail-fast: false

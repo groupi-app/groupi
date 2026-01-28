@@ -37,6 +37,7 @@ export function DateTypeSelection({
           <span>Choose a date myself</span>
         </Button>
         <Button
+          data-test='multi-date-button'
           size='lg'
           variant='outline'
           className='py-12 text-xl w-full max-w-md flex items-center justify-center gap-3'

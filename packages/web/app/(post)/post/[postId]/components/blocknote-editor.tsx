@@ -228,15 +228,11 @@ export function BlockNoteEditor({
   content,
   onChange,
   placeholder = "What's on your mind?",
-
-  eventId: _eventId,
   className,
   maxLength = DEFAULT_MAX_LENGTH,
   onSubmit,
   disabled = false,
   onChangeCapture,
-
-  resetKey: _resetKey,
   members = [],
   'data-test': dataTest,
 }: {

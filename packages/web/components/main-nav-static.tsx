@@ -15,7 +15,11 @@ export function MainNavStatic({ dynamicContent }: MainNavStaticProps) {
   return (
     <div className='container flex items-center justify-between h-20 py-6'>
       <div className='flex md:gap-10 w-full'>
-        <Link href='/' className='items-center hidden space-x-2 md:flex'>
+        <Link
+          href='/'
+          aria-label={`${siteConfig.name} home`}
+          className='items-center hidden space-x-2 md:flex'
+        >
           <Icons.logo width='26' height='23' viewBox='0 0 197 225' />
           <span className='hidden text-xl font-bold font-heading sm:inline-block'>
             {siteConfig.name}

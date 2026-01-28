@@ -24,50 +24,167 @@ function assertE2EEnabled() {
 
 /**
  * Create a test user session.
- * Creates a user, person record, and returns a session token.
+ * Creates a real Better Auth user, session, and person record.
+ * @param skipPerson - If true, skips creating person record (for onboarding tests)
  */
 export const createTestSession = mutation({
   args: {
     email: v.string(),
     name: v.string(),
     username: v.string(),
+    skipPerson: v.optional(v.boolean()),
   },
-  handler: async (ctx, _args) => {
+  handler: async (ctx, args) => {
     assertE2EEnabled();
 
     const now = Date.now();
 
-    // Create a mock user ID (in production this would come from Better Auth)
-    const userId = `e2e_user_${now}_${Math.random().toString(36).slice(2)}`;
+    // Check if user already exists
+    const existingUser = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: 'user',
+        where: [{ field: 'email', operator: 'eq', value: args.email }],
+      }
+    );
 
-    // Create person record
-    const personId = await ctx.db.insert('persons', {
-      userId,
-      bio: 'E2E Test User',
-      updatedAt: now,
+    let userId: string;
+
+    if (existingUser) {
+      userId = existingUser._id as string;
+    } else {
+      // Create a real Better Auth user using the adapter
+      const userResult = await ctx.runMutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'user',
+            data: {
+              email: args.email,
+              name: args.name,
+              username: args.username,
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+      userId = userResult._id as string;
+    }
+
+    let personId: string | null = null;
+
+    // Only create person record if not skipping (default behavior)
+    if (!args.skipPerson) {
+      // Check if person already exists for this user
+      const existingPerson = await ctx.db
+        .query('persons')
+        .filter(q => q.eq(q.field('userId'), userId))
+        .first();
+
+      let personIdRaw: Id<'persons'>;
+
+      if (existingPerson) {
+        personIdRaw = existingPerson._id;
+      } else {
+        // Create person record
+        personIdRaw = await ctx.db.insert('persons', {
+          userId,
+          bio: 'E2E Test User',
+          updatedAt: now,
+        });
+
+        // Create person settings
+        await ctx.db.insert('personSettings', {
+          personId: personIdRaw,
+          updatedAt: now,
+        });
+      }
+      personId = personIdRaw.toString();
+    }
+
+    // Generate a real session token
+    const sessionToken = `e2e_${now}_${Math.random().toString(36).slice(2, 11)}`;
+
+    // Delete any existing sessions for this user (clean slate)
+    const existingSessions = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'session',
+        where: [{ field: 'userId', operator: 'eq', value: userId }],
+        paginationOpts: { cursor: null, numItems: 100 },
+      }
+    );
+
+    if (existingSessions.page) {
+      for (const session of existingSessions.page) {
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'session',
+            where: [
+              { field: '_id', operator: 'eq', value: session._id as string },
+            ],
+          },
+        });
+      }
+    }
+
+    // Create a real Better Auth session
+    await ctx.runMutation(components.betterAuth.adapter.create, {
+      input: {
+        model: 'session',
+        data: {
+          userId,
+          token: sessionToken,
+          expiresAt: now + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+          createdAt: now,
+          updatedAt: now,
+          ipAddress: '127.0.0.1',
+          userAgent: 'Playwright E2E Test',
+        },
+      },
     });
-
-    // Create person settings
-    await ctx.db.insert('personSettings', {
-      personId,
-      updatedAt: now,
-    });
-
-    // Generate a mock session token
-    // In production, this would be a real Better Auth session token
-    const sessionToken = `e2e_session_${now}_${Math.random().toString(36).slice(2)}`;
 
     return {
       userId,
-      personId: personId.toString(),
+      personId,
       sessionToken,
     };
   },
 });
 
 /**
+ * Debug query to inspect verification records.
+ */
+export const debugVerifications = query({
+  args: {},
+  handler: async ctx => {
+    assertE2EEnabled();
+
+    const result = await ctx.runQuery(components.betterAuth.adapter.findMany, {
+      model: 'verification' as const,
+      where: [],
+      paginationOpts: {
+        cursor: null,
+        numItems: 10,
+      },
+    });
+
+    const verifications = Array.isArray(result) ? result : (result?.page ?? []);
+    return verifications;
+  },
+});
+
+/**
  * Get the last magic link sent to an email (for testing).
  * Queries the Better Auth verification table to find the most recent token.
+ *
+ * Structure of Better Auth verification records:
+ * - identifier: Random token string used for lookup
+ * - value: JSON string like '{"email":"user@example.com"}'
+ * - expiresAt: Expiration timestamp
+ * - createdAt: Creation timestamp
  */
 export const getLastMagicLink = query({
   args: {
@@ -76,34 +193,59 @@ export const getLastMagicLink = query({
   handler: async (ctx, { email }) => {
     assertE2EEnabled();
 
-    // Query Better Auth component's verification table
+    // Query all recent verifications
     const result = await ctx.runQuery(components.betterAuth.adapter.findMany, {
       model: 'verification' as const,
-      where: [{ field: 'identifier', operator: 'eq' as const, value: email }],
+      where: [],
       paginationOpts: {
         cursor: null,
-        numItems: 10, // Get recent entries
+        numItems: 50,
       },
     });
 
     const verifications = Array.isArray(result) ? result : (result?.page ?? []);
 
-    // Find most recent non-expired verification
+    // Find verification matching the email
     const now = Date.now();
-    const valid = verifications
-      .filter((v: { expiresAt: number }) => v.expiresAt > now)
-      .sort(
-        (a: { createdAt: number }, b: { createdAt: number }) =>
-          b.createdAt - a.createdAt
-      )[0] as { value: string } | undefined;
+    type VerificationRecord = {
+      identifier: string;
+      value: string;
+      expiresAt: number;
+      createdAt: number;
+    };
 
-    if (!valid) {
+    const matchingVerifications = verifications
+      .filter((v: VerificationRecord) => {
+        // Check if not expired
+        if (v.expiresAt <= now) return false;
+
+        // Parse the value field to extract email
+        try {
+          const parsed = JSON.parse(v.value);
+          return parsed.email === email;
+        } catch {
+          return false;
+        }
+      })
+      .sort(
+        (a: VerificationRecord, b: VerificationRecord) =>
+          b.createdAt - a.createdAt
+      );
+
+    if (matchingVerifications.length === 0) {
+      console.log(`No valid verification found for ${email}`);
       return null;
     }
 
+    const valid = matchingVerifications[0] as VerificationRecord;
+    console.log(
+      `Found verification for ${email} with identifier: ${valid.identifier}`
+    );
+
+    // The verification token is the 'identifier' field, not 'value'
     const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
     return {
-      url: `${baseUrl}/api/auth/magic-link/verify?token=${valid.value}`,
+      url: `${baseUrl}/api/auth/magic-link/verify?token=${valid.identifier}`,
     };
   },
 });

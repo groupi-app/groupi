@@ -483,12 +483,13 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
           <Icons.back className='text-sm' />
         </Button>
         <Button
+          data-test='create-event-button'
           disabled={watchedDateTimeOptions.length < 2}
           type='submit'
           form='form2'
           isLoading={isSaving}
         >
-          Submit
+          Create Event
         </Button>
       </div>
     </div>

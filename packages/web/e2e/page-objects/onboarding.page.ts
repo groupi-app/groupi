@@ -19,11 +19,12 @@ export class OnboardingPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.usernameInput = page.getByLabel(/username/i);
-    this.nameInput = page.getByLabel(/^name$|display name/i);
-    this.bioInput = page.getByLabel(/bio|about/i);
+    // Use id-based selectors for form inputs (more reliable than label matching)
+    this.usernameInput = page.locator('#username');
+    this.nameInput = page.locator('#displayName');
+    this.bioInput = page.locator('#bio');
     this.continueButton = page.getByRole('button', {
-      name: /continue|next|save|complete/i,
+      name: /complete setup/i,
     });
     this.skipButton = page.getByRole('button', { name: /skip/i });
   }

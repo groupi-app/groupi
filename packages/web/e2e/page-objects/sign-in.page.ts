@@ -21,9 +21,10 @@ export class SignInPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.emailInput = page.getByLabel(/email|identifier/i);
+    // Use id-based selectors for form inputs (more reliable than label matching)
+    this.emailInput = page.locator('#identifier');
     this.magicLinkButton = page.getByRole('button', {
-      name: /magic link|send link|continue with email/i,
+      name: /send magic link/i,
     });
     this.discordButton = page.getByRole('button', {
       name: /discord/i,
@@ -31,9 +32,10 @@ export class SignInPage extends BasePage {
     this.googleButton = page.getByRole('button', {
       name: /google/i,
     });
-    this.successMessage = page.getByText(/check your email|link sent/i);
+    this.successMessage = page.getByText(/check your email/i);
+    // Use a more specific locator to avoid matching dev tools or route announcer
     this.errorMessage = page.locator(
-      '[data-error], .error-message, [role="alert"]'
+      'form [data-error="true"], form .error-message, [data-slot="form-message"]'
     );
   }
 
