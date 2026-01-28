@@ -38,11 +38,6 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @groupi/web exec playwright install --with-deps chromium
 
-      - name: Generate Convex types
-        run: pnpm generate
-        env:
-          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
-
       - name: Start dev server
         run: |
           pnpm dev:web &
@@ -110,11 +105,6 @@ jobs:
 
       - name: Install Playwright browsers
         run: pnpm --filter @groupi/web exec playwright install --with-deps ${{ matrix.browser }}
-
-      - name: Generate Convex types
-        run: pnpm generate
-        env:
-          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
 
       - name: Start dev server
         run: |
