@@ -22,8 +22,6 @@ initApi();
 
 export function AcceptInviteForm({
   inviteId,
-
-  eventId: _eventId,
 }: {
   inviteId: string;
   eventId: string;

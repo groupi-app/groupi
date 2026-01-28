@@ -56,6 +56,9 @@ export default defineConfig({
     // Base URL for all tests
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
 
+    // Use data-test attribute for getByTestId (default is data-testid)
+    testIdAttribute: 'data-test',
+
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
 

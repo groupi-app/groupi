@@ -359,11 +359,11 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
               <Icons.back className='text-sm' />
             </Button>
             <Button
-              data-test='new-event-single-submit'
+              data-test='create-event-button'
               type='submit'
               isLoading={isSaving}
             >
-              Submit
+              Create Event
             </Button>
           </div>
         </div>

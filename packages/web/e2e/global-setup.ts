@@ -37,7 +37,7 @@ async function globalSetup(config: FullConfig): Promise<void> {
     } else {
       console.log(`   ✅ Server is accessible`);
     }
-  } catch (_error) {
+  } catch {
     console.error(`   ❌ Cannot connect to ${baseURL}`);
     console.error(`   Make sure the dev server is running: pnpm dev`);
     throw new Error(`Dev server not accessible at ${baseURL}`);

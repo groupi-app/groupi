@@ -45,7 +45,7 @@ export function FilterSortControls() {
           value={sortBy}
           onValueChange={value => setSortBy(value as SortBy)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label='Sort events by'>
             <SelectValue placeholder='Sort By' />
           </SelectTrigger>
           <SelectContent>
