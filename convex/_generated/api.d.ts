@@ -59,6 +59,7 @@ import type * as migration_actions from "../migration/actions.js";
 import type * as migration_claim from "../migration/claim.js";
 import type * as migration_index from "../migration/index.js";
 import type * as migration_mutations from "../migration/mutations.js";
+import type * as migration_uploadAndMigrate from "../migration/uploadAndMigrate.js";
 import type * as muting_mutations from "../muting/mutations.js";
 import type * as muting_queries from "../muting/queries.js";
 import type * as notifications_actions from "../notifications/actions.js";
@@ -136,6 +137,7 @@ declare const fullApi: ApiFromModules<{
   "migration/claim": typeof migration_claim;
   "migration/index": typeof migration_index;
   "migration/mutations": typeof migration_mutations;
+  "migration/uploadAndMigrate": typeof migration_uploadAndMigrate;
   "muting/mutations": typeof muting_mutations;
   "muting/queries": typeof muting_queries;
   "notifications/actions": typeof notifications_actions;

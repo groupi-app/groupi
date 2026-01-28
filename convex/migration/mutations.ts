@@ -157,41 +157,270 @@ export const createAuthUsers = internalMutation({
   },
 });
 
+// Type for reminder offset
+const reminderOffsetValidator = v.union(
+  v.literal('30_MINUTES'),
+  v.literal('1_HOUR'),
+  v.literal('2_HOURS'),
+  v.literal('4_HOURS'),
+  v.literal('1_DAY'),
+  v.literal('2_DAYS'),
+  v.literal('3_DAYS'),
+  v.literal('1_WEEK'),
+  v.literal('2_WEEKS'),
+  v.literal('4_WEEKS')
+);
+
 /**
- * Clear all existing data from tables.
- * Use with caution - this deletes all data!
+ * Clear a batch of app tables (split to avoid timeout).
  */
-export const clearAllData = internalMutation({
+export const clearAppTablesBatch1 = internalMutation({
   args: {},
   handler: async ctx => {
-    // Delete in reverse dependency order
-    const tables = [
-      'availabilities',
-      'notificationSettings',
-      'notificationMethods',
-      'notifications',
-      'replies',
-      'posts',
-      'invites',
-      'potentialDateTimes',
-      'memberships',
-      'personSettings',
-      'events',
-      'persons',
-      'mutedEvents',
-      'mutedPosts',
-      'eventBans',
-      'eventReminders',
-    ] as const;
-
-    for (const table of tables) {
-      const docs = await ctx.db.query(table).collect();
+    const clearTable = async (
+      tableName:
+        | 'availabilities'
+        | 'notificationSettings'
+        | 'notificationMethods'
+        | 'notifications'
+    ) => {
+      const docs = await ctx.db.query(tableName).collect();
       for (const doc of docs) {
         await ctx.db.delete(doc._id);
       }
-      console.log(`Cleared ${docs.length} records from ${table}`);
+      console.log(`Cleared ${docs.length} records from ${tableName}`);
+      return docs.length;
+    };
+
+    let total = 0;
+    total += await clearTable('availabilities');
+    total += await clearTable('notificationSettings');
+    total += await clearTable('notificationMethods');
+    total += await clearTable('notifications');
+    return { cleared: total };
+  },
+});
+
+/**
+ * Clear a batch of app tables (split to avoid timeout).
+ */
+export const clearAppTablesBatch2 = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const clearTable = async (
+      tableName:
+        | 'attachments'
+        | 'replies'
+        | 'posts'
+        | 'invites'
+        | 'potentialDateTimes'
+    ) => {
+      const docs = await ctx.db.query(tableName).collect();
+      for (const doc of docs) {
+        await ctx.db.delete(doc._id);
+      }
+      console.log(`Cleared ${docs.length} records from ${tableName}`);
+      return docs.length;
+    };
+
+    let total = 0;
+    total += await clearTable('attachments');
+    total += await clearTable('replies');
+    total += await clearTable('posts');
+    total += await clearTable('invites');
+    total += await clearTable('potentialDateTimes');
+    return { cleared: total };
+  },
+});
+
+/**
+ * Clear a batch of app tables (split to avoid timeout).
+ */
+export const clearAppTablesBatch3 = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const clearTable = async (
+      tableName:
+        | 'memberships'
+        | 'personSettings'
+        | 'events'
+        | 'persons'
+        | 'mutedEvents'
+        | 'mutedPosts'
+        | 'eventBans'
+        | 'eventReminders'
+        | 'emailVerifications'
+    ) => {
+      const docs = await ctx.db.query(tableName).collect();
+      for (const doc of docs) {
+        await ctx.db.delete(doc._id);
+      }
+      console.log(`Cleared ${docs.length} records from ${tableName}`);
+      return docs.length;
+    };
+
+    let total = 0;
+    total += await clearTable('memberships');
+    total += await clearTable('personSettings');
+    total += await clearTable('events');
+    total += await clearTable('persons');
+    total += await clearTable('mutedEvents');
+    total += await clearTable('mutedPosts');
+    total += await clearTable('eventBans');
+    total += await clearTable('eventReminders');
+    total += await clearTable('emailVerifications');
+    return { cleared: total };
+  },
+});
+
+/**
+ * Clear Better Auth users (batched to avoid timeout).
+ */
+export const clearBetterAuthUsers = internalMutation({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 50 }) => {
+    const allUsersResult = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'user' as const,
+        where: [],
+        paginationOpts: { cursor: null, numItems: limit },
+      }
+    );
+
+    let deleted = 0;
+    if (allUsersResult?.page && allUsersResult.page.length > 0) {
+      for (const user of allUsersResult.page) {
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'user' as const,
+            where: [{ field: '_id', operator: 'eq' as const, value: user._id }],
+          },
+        });
+        deleted++;
+      }
+      console.log(`Deleted ${deleted} Better Auth users`);
     }
 
+    return { deleted, hasMore: deleted === limit };
+  },
+});
+
+/**
+ * Clear Better Auth sessions.
+ */
+export const clearBetterAuthSessions = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const allSessionsResult = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'session' as const,
+        where: [],
+        paginationOpts: { cursor: null, numItems: 1000 },
+      }
+    );
+
+    let deleted = 0;
+    if (allSessionsResult?.page && allSessionsResult.page.length > 0) {
+      for (const session of allSessionsResult.page) {
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'session' as const,
+            where: [
+              { field: '_id', operator: 'eq' as const, value: session._id },
+            ],
+          },
+        });
+        deleted++;
+      }
+      console.log(`Deleted ${deleted} Better Auth sessions`);
+    }
+
+    return { deleted };
+  },
+});
+
+/**
+ * Clear Better Auth accounts and verifications.
+ */
+export const clearBetterAuthOther = internalMutation({
+  args: {},
+  handler: async ctx => {
+    let deleted = 0;
+
+    const allAccountsResult = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'account' as const,
+        where: [],
+        paginationOpts: { cursor: null, numItems: 1000 },
+      }
+    );
+    if (allAccountsResult?.page && allAccountsResult.page.length > 0) {
+      for (const account of allAccountsResult.page) {
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'account' as const,
+            where: [
+              { field: '_id', operator: 'eq' as const, value: account._id },
+            ],
+          },
+        });
+        deleted++;
+      }
+      console.log(
+        `Deleted ${allAccountsResult.page.length} Better Auth accounts`
+      );
+    }
+
+    const allVerificationsResult = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'verification' as const,
+        where: [],
+        paginationOpts: { cursor: null, numItems: 1000 },
+      }
+    );
+    if (
+      allVerificationsResult?.page &&
+      allVerificationsResult.page.length > 0
+    ) {
+      for (const verification of allVerificationsResult.page) {
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'verification' as const,
+            where: [
+              {
+                field: '_id',
+                operator: 'eq' as const,
+                value: verification._id,
+              },
+            ],
+          },
+        });
+        deleted++;
+      }
+      console.log(
+        `Deleted ${allVerificationsResult.page.length} Better Auth verifications`
+      );
+    }
+
+    return { deleted };
+  },
+});
+
+/**
+ * Clear all existing data from tables (kept for backwards compatibility).
+ * Note: This may timeout with large datasets. Use the batched versions instead.
+ */
+export const clearAllData = internalMutation({
+  args: {},
+  handler: async () => {
+    // This is now a no-op - use the action that calls batched mutations instead
+    console.log(
+      'clearAllData called - use clearAllDataForMigration action instead'
+    );
     return { success: true };
   },
 });
@@ -271,10 +500,12 @@ export const migrateEvents = internalMutation({
         description: v.optional(v.string()),
         location: v.optional(v.string()),
         chosenDateTime: v.optional(v.number()),
+        chosenEndDateTime: v.optional(v.number()),
         creatorId: v.string(), // New Convex person ID
         createdAt: v.number(),
         updatedAt: v.number(),
         timezone: v.string(),
+        reminderOffset: v.optional(reminderOffsetValidator),
       })
     ),
   },
@@ -287,11 +518,13 @@ export const migrateEvents = internalMutation({
         description: event.description || '',
         location: event.location || '',
         chosenDateTime: event.chosenDateTime,
+        chosenEndDateTime: event.chosenEndDateTime,
         creatorId: event.creatorId as Id<'persons'>,
         createdAt: event.createdAt,
         updatedAt: event.updatedAt,
         timezone: event.timezone,
         potentialDateTimes: [], // Will be populated from potentialDateTimes table
+        reminderOffset: event.reminderOffset,
       });
 
       mapping[event.oldId] = eventId;
@@ -349,6 +582,7 @@ export const migratePotentialDateTimes = internalMutation({
         oldId: v.string(),
         eventId: v.string(), // New Convex event ID
         dateTime: v.number(),
+        endDateTime: v.optional(v.number()),
       })
     ),
   },
@@ -359,6 +593,7 @@ export const migratePotentialDateTimes = internalMutation({
       const pdtId = await ctx.db.insert('potentialDateTimes', {
         eventId: pdt.eventId as Id<'events'>,
         dateTime: pdt.dateTime,
+        endDateTime: pdt.endDateTime,
         updatedAt: Date.now(),
       });
 
@@ -486,6 +721,7 @@ export const migrateInvites = internalMutation({
         expiresAt: v.optional(v.number()),
         usesRemaining: v.optional(v.number()),
         maxUses: v.optional(v.number()),
+        usesTotal: v.optional(v.number()),
         name: v.optional(v.string()),
       })
     ),
@@ -499,6 +735,7 @@ export const migrateInvites = internalMutation({
         expiresAt: invite.expiresAt,
         usesRemaining: invite.usesRemaining,
         maxUses: invite.maxUses,
+        usesTotal: invite.usesTotal,
         name: invite.name,
         updatedAt: Date.now(),
       });
