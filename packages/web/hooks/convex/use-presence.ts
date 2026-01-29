@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useQuery, useConvex } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import usePresence from '@convex-dev/presence/react';
@@ -79,6 +79,94 @@ export function usePostPresence(
 }
 
 /**
+ * Track user presence in a post thread with roomToken exposed
+ * This is needed for typing indicators to work
+ *
+ * Note: This hook manages its own heartbeats instead of using usePresence
+ * to avoid creating duplicate sessions and to expose the roomToken
+ */
+export function usePostPresenceWithToken(
+  postId: Id<'posts'> | undefined,
+  personId: Id<'persons'> | undefined
+) {
+  const roomId = useMemo(() => (postId ? `post:${postId}` : ''), [postId]);
+  const userId = personId ?? '';
+  const isEnabled = !!postId && !!personId;
+  const convex = useConvex();
+
+  // Track roomToken from heartbeat
+  const roomTokenRef = useRef<string | null>(null);
+  const [roomTokenState, setRoomTokenState] = useState<string | null>(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const sessionTokenRef = useRef<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear roomToken when disabled
+  const roomToken = isEnabled ? roomTokenState : null;
+
+  // Send heartbeats to get the roomToken
+  // We manage our own heartbeats instead of using usePresence to:
+  // 1. Expose the roomToken (usePresence doesn't expose it)
+  // 2. Avoid creating duplicate sessions
+  useEffect(() => {
+    if (!isEnabled) {
+      // Clear refs but don't call setState
+      roomTokenRef.current = null;
+      return;
+    }
+
+    let isMounted = true;
+
+    const sendHeartbeat = async () => {
+      try {
+        const result = await convex.mutation(getApi().presence.heartbeat, {
+          roomId,
+          userId,
+          sessionId,
+          interval: DEFAULT_HEARTBEAT_INTERVAL,
+        });
+        if (isMounted) {
+          roomTokenRef.current = result.roomToken;
+          setRoomTokenState(result.roomToken);
+          sessionTokenRef.current = result.sessionToken;
+        }
+      } catch {
+        // Silently fail - heartbeat is not critical
+      }
+    };
+
+    // Send initial heartbeat
+    void sendHeartbeat();
+
+    // Set up interval
+    intervalRef.current = setInterval(
+      sendHeartbeat,
+      DEFAULT_HEARTBEAT_INTERVAL
+    );
+
+    // Cleanup
+    return () => {
+      isMounted = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // Disconnect session
+      if (sessionTokenRef.current) {
+        void convex.mutation(getApi().presence.disconnect, {
+          sessionToken: sessionTokenRef.current,
+        });
+      }
+    };
+  }, [isEnabled, roomId, userId, sessionId, convex]);
+
+  return {
+    roomToken,
+    isTracking: isEnabled,
+  };
+}
+
+/**
  * Track user presence in an event
  * Call this on event pages to mark user as present
  */
@@ -135,9 +223,16 @@ export function useTypingIndicators(
   return (result ?? []) as TypingUser[];
 }
 
+// Typing auto-clear timeout in milliseconds
+const TYPING_TIMEOUT = 5000; // 5 seconds
+
 /**
  * Hook to manage typing state
  * Returns a function to set typing state
+ *
+ * Note: This hook does NOT manage its own presence session.
+ * The presence session should be managed by usePostPresenceWithToken
+ * in the parent component to avoid duplicate sessions.
  */
 export function useTypingState(
   postId: Id<'posts'> | undefined,
@@ -149,14 +244,6 @@ export function useTypingState(
   const isTypingRef = useRef(false);
   const isEnabled = !!postId && !!personId;
   const convex = useConvex();
-
-  // Use presence for tracking
-  const presenceState = usePresence(
-    getPresenceApi(),
-    roomId,
-    userId,
-    isEnabled ? DEFAULT_HEARTBEAT_INTERVAL : 0
-  );
 
   const setTyping = useCallback(
     async (isTyping: boolean) => {
@@ -188,7 +275,7 @@ export function useTypingState(
       }
 
       if (isTyping) {
-        // Auto-clear typing after 3 seconds of no activity
+        // Auto-clear typing after timeout of no activity
         typingTimeoutRef.current = setTimeout(async () => {
           if (isTypingRef.current) {
             isTypingRef.current = false;
@@ -205,7 +292,7 @@ export function useTypingState(
               // Silently fail
             }
           }
-        }, 3000);
+        }, TYPING_TIMEOUT);
       }
     },
     [isEnabled, roomId, userId, convex]
@@ -222,7 +309,6 @@ export function useTypingState(
 
   return {
     setTyping,
-    presenceState,
   };
 }
 

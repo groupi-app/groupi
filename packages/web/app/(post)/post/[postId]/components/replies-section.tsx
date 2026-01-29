@@ -4,10 +4,15 @@ import { ReplyList } from './reply-list';
 import ReplyForm from './reply-form';
 import { usePostDetail } from '@/hooks/convex/use-posts';
 import { Id } from '@/convex/_generated/dataModel';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import {
+  usePostPresenceWithToken,
+  useTypingIndicators,
+} from '@/hooks/convex/use-presence';
+import { TypingIndicator } from '@/components/typing-indicator';
 
 // Using Convex generated types
 type ConvexPostDetailData = NonNullable<ReturnType<typeof usePostDetail>>;
@@ -51,6 +56,19 @@ export function RepliesSection({
 
   const currentReplies = postDetailData?.post?.replies || initialReplies;
   const currentReplyCount = currentReplies.length;
+
+  // Get the current user's personId for presence tracking
+  const personId = userMembership?.personId as Id<'persons'> | undefined;
+
+  // Track presence in this post (for getting roomToken)
+  const { roomToken } = usePostPresenceWithToken(postId, personId);
+
+  // Get typing users for this post, filtering out current user
+  const allTypingUsers = useTypingIndicators(roomToken ?? undefined);
+  const typingUsers = useMemo(
+    () => allTypingUsers.filter(user => user.personId !== personId),
+    [allTypingUsers, personId]
+  );
 
   // Find and edit the user's last reply (triggered by up arrow in reply form)
   const handleEditLastReply = useCallback(() => {
@@ -320,6 +338,8 @@ export function RepliesSection({
           editingReplyId={editingReplyId}
           onClearEditing={handleClearEditing}
         />
+        {/* Typing indicator - shown between replies and form */}
+        <TypingIndicator typingUsers={typingUsers} className='px-2' />
         <ReplyForm
           postId={postId}
           post={post}
