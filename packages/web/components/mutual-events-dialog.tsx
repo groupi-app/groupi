@@ -60,7 +60,7 @@ export function MutualEventsDialog({
             </p>
           </div>
         ) : (
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             {events.map(event => (
               <Link
                 key={event.id}

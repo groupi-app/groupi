@@ -188,7 +188,7 @@ export function ProfileViewDialog({
                 </p>
               </div>
             ) : (
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 {mutualEvents.map(event => (
                   <Link
                     key={event.id}

@@ -44,8 +44,8 @@ export function AvailabilityCard({
   const answer = formAnswers[index]?.answer;
 
   return (
-    <div className='w-full sm:max-w-md border border-border shadow-md rounded-md py-2 px-3 h-max'>
-      <div className='flex flex-col sm:flex-row  justify-between gap-2 flex-wrap'>
+    <div className='w-full sm:max-w-md border border-border shadow-md rounded-md py-4 px-4 h-max'>
+      <div className='flex flex-col sm:flex-row  justify-between gap-4 flex-wrap'>
         <div className='flex flex-col justify-between '>
           <div>
             <h1>
@@ -63,7 +63,7 @@ export function AvailabilityCard({
             </h2>
           </div>
         </div>
-        <div className='flex items-center gap-1 py-2'>
+        <div className='flex items-center gap-2 py-3'>
           <Button
             type='button'
             size='icon'
@@ -166,7 +166,7 @@ export function AvailabilityCard({
                 <Icons.check className='size-6 text-green-500' />
                 <span>Yes</span>
               </div>
-              <div className='flex flex-col divide-y ml-3'>
+              <div className='flex flex-col divide-y ml-6'>
                 {pdt.availabilities
                   .filter(a => a.status === 'YES' && a.member !== null)
                   .map(a => {
@@ -174,7 +174,7 @@ export function AvailabilityCard({
                     return (
                       <div
                         key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-2'
+                        className='flex items-center gap-2 py-3'
                       >
                         <Avatar className='size-6'>
                           <AvatarFallback>
@@ -206,7 +206,7 @@ export function AvailabilityCard({
                 </span>
                 <span>Maybe</span>
               </div>
-              <div className='flex flex-col divide-y ml-3'>
+              <div className='flex flex-col divide-y ml-6'>
                 {pdt.availabilities
                   .filter(a => a.status === 'MAYBE' && a.member !== null)
                   .map(a => {
@@ -214,7 +214,7 @@ export function AvailabilityCard({
                     return (
                       <div
                         key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-2'
+                        className='flex items-center gap-2 py-3'
                       >
                         <Avatar className='size-6'>
                           <AvatarFallback>
@@ -245,7 +245,7 @@ export function AvailabilityCard({
                 <Icons.close className='size-6 text-red-500' />
                 <span>No</span>
               </div>
-              <div className='flex flex-col divide-y ml-3'>
+              <div className='flex flex-col divide-y ml-6'>
                 {pdt.availabilities
                   .filter(a => a.status === 'NO' && a.member !== null)
                   .map(a => {
@@ -253,7 +253,7 @@ export function AvailabilityCard({
                     return (
                       <div
                         key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-2'
+                        className='flex items-center gap-2 py-3'
                       >
                         <Avatar className='size-6'>
                           <AvatarFallback>

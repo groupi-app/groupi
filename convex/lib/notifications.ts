@@ -1,7 +1,6 @@
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
-import { presence } from '../presence';
 import { authComponent, AuthUserId } from '../auth';
 
 /**
@@ -1093,7 +1092,11 @@ export async function isUserPresentInPost(
 ): Promise<boolean> {
   try {
     const roomId = `post:${postId}`;
-    const roomData = await presence.listRoom(ctx, roomId, true); // onlineOnly = true
+    // Use internal API to call the presence listRoom query from mutation context
+    const roomData = await ctx.runQuery(internal.presence.listRoom, {
+      roomId,
+      onlineOnly: true,
+    });
     return roomData.some(user => user.userId === (personId as string));
   } catch {
     // If presence check fails, assume user is not present
@@ -1127,7 +1130,11 @@ export async function notifyThreadParticipants(
   let presentUsers: string[] = [];
   try {
     const roomId = `post:${data.postId}`;
-    const roomData = await presence.listRoom(ctx, roomId, true); // onlineOnly = true
+    // Use internal API to call the presence listRoom query from mutation context
+    const roomData = await ctx.runQuery(internal.presence.listRoom, {
+      roomId,
+      onlineOnly: true,
+    });
     presentUsers = roomData.map(user => user.userId);
   } catch {
     // If presence check fails, continue without it

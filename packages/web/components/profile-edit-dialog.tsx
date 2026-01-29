@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import { useQuery } from 'convex/react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,18 @@ import { createLogger } from '@/lib/logger';
 import { useUpdateUserProfile } from '@/hooks/convex/use-users';
 import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { Id } from '@/convex/_generated/dataModel';
+
+// Dynamic require to avoid deep type instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let usersQueries: any;
+function initApi() {
+  if (!usersQueries) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { api } = require('@/convex/_generated/api');
+    usersQueries = api.users?.queries ?? {};
+  }
+}
+initApi();
 
 const logger = createLogger('profile-edit-dialog');
 
@@ -71,12 +84,15 @@ export function ProfileEditDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch current user profile to get pronouns and bio from person record
+  const userProfile = useQuery(usersQueries.getCurrentUserProfile, {});
+
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: userInfo.name || '',
-      pronouns: '',
-      bio: '',
+      pronouns: userProfile?.person?.pronouns || '',
+      bio: userProfile?.person?.bio || '',
       image: userInfo.image || '',
     },
   });
@@ -109,8 +125,8 @@ export function ProfileEditDialog({
     if (justOpened && userInfo) {
       form.reset({
         name: userInfo.name || '',
-        pronouns: '',
-        bio: '',
+        pronouns: userProfile?.person?.pronouns || '',
+        bio: userProfile?.person?.bio || '',
         image: userInfo.image || '',
       });
       // Clean up any previous blob URL to avoid memory leaks
@@ -121,7 +137,7 @@ export function ProfileEditDialog({
       setPendingImagePreview(null);
       setUpdateError(null);
     }
-  }, [userInfo, open, form]);
+  }, [userInfo, open, form, userProfile]);
 
   useEffect(() => {
     return () => {

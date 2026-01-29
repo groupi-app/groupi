@@ -178,7 +178,7 @@ export function AvailabilityForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className='flex items-center gap-2 my-2'>
+        <div className='flex items-center gap-2 my-4'>
           <Button
             type='button'
             onClick={() => setFormAnswers('yes')}
@@ -219,7 +219,7 @@ export function AvailabilityForm({
           render={() => (
             <FormItem>
               <FormControl>
-                <div className='flex flex-wrap gap-2'>
+                <div className='flex flex-wrap gap-4'>
                   {potentialDateTimes.map((pdt, i) => (
                     <AvailabilityCard
                       key={pdt._id}
@@ -246,7 +246,7 @@ export function AvailabilityForm({
               form.watch('formAnswers').length
             )
           }
-          className='my-2'
+          className='my-4'
           isLoading={isSaving}
           loadingText='Submitting...'
         >
