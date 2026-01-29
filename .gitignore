@@ -57,6 +57,7 @@ preview.env
 packages/web/e2e/playwright-report/
 packages/web/e2e/test-results/
 packages/web/e2e/playwright/.auth/
+packages/web/test-results/
 
 # Supabase dumps
 supabase_prod_*.sql

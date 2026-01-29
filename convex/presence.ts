@@ -1,4 +1,4 @@
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalQuery } from './_generated/server';
 import { components } from './_generated/api';
 import { v } from 'convex/values';
 import { Presence } from '@convex-dev/presence';
@@ -62,6 +62,21 @@ export const list = query({
   args: { roomToken: v.string() },
   handler: async (ctx, { roomToken }) => {
     return await presence.list(ctx, roomToken);
+  },
+});
+
+/**
+ * List all users present in a room by room ID
+ * Internal query for server-side use (e.g., from mutations for notification skipping)
+ * Does not require a roomToken, directly queries by roomId
+ */
+export const listRoom = internalQuery({
+  args: {
+    roomId: v.string(),
+    onlineOnly: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { roomId, onlineOnly = false }) => {
+    return await presence.listRoom(ctx, roomId, onlineOnly);
   },
 });
 

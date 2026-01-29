@@ -87,8 +87,8 @@ export function DateCard({
           setDialogType('overview');
         }}
       >
-        <div className='w-full md:max-w-md border border-border shadow-md rounded-md py-2 px-3 hover:bg-accent transition-all cursor-pointer'>
-          <div className='flex items-center gap-4'>
+        <div className='w-full md:max-w-lg border border-border shadow-md rounded-md py-4 px-4 hover:bg-accent transition-all cursor-pointer'>
+          <div className='flex items-start gap-4'>
             <h1 className='font-semibold text-2xl'>#{pdt.rank}</h1>
             <div className='flex flex-col'>
               <h1>
@@ -137,18 +137,18 @@ export function DateCard({
               </span>
             </div>
           </div>
-          <div className='flex items-center gap-2 mt-2'>
-            <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-2 mt-4'>
+            <div className='flex items-center gap-2'>
               <Icons.check className='size-6 rounded-full  text-green-500' />
               <span>{yesAmount}</span>
             </div>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-2'>
               <div className='rounded-full size-6 text-center font-semibold text-yellow-500 cursor-default'>
                 <span>?</span>
               </div>
               <span>{maybeAmount}</span>
             </div>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-2'>
               <Icons.close className='size-6 rounded-full text-red-500' />
 
               <span>{noAmount}</span>

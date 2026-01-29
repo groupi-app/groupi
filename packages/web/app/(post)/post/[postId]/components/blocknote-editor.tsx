@@ -21,7 +21,12 @@ import {
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { FormattingToolbar } from '@blocknote/react';
-import { BlockNoteSchema, defaultInlineContentSpecs } from '@blocknote/core';
+import {
+  BlockNoteSchema,
+  defaultInlineContentSpecs,
+  BlockNoteEditor as BlockNoteEditorCore,
+  PartialBlock,
+} from '@blocknote/core';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import '@blocknote/core/fonts/inter.css';
@@ -84,7 +89,18 @@ const schema = BlockNoteSchema.create({
 });
 
 // Media block types to exclude from slash menu (handled separately as attachments)
-const EXCLUDED_SLASH_ITEMS = ['Image', 'Video', 'Audio', 'File'];
+// Toggle blocks are also excluded because they require JavaScript event listeners
+// to function, but posts/replies render content as static HTML via dangerouslySetInnerHTML
+const EXCLUDED_SLASH_ITEMS = [
+  'Image',
+  'Video',
+  'Audio',
+  'File',
+  'Toggle List',
+  'Toggle Heading 1',
+  'Toggle Heading 2',
+  'Toggle Heading 3',
+];
 
 // Filter function for slash menu items
 function filterSlashMenuItems(
@@ -224,18 +240,23 @@ type MemberWithPerson = Doc<'memberships'> & {
   };
 };
 
-export function BlockNoteEditor({
-  content,
-  onChange,
-  placeholder = "What's on your mind?",
-  className,
-  maxLength = DEFAULT_MAX_LENGTH,
-  onSubmit,
-  disabled = false,
-  onChangeCapture,
-  members = [],
-  'data-test': dataTest,
-}: {
+// Type alias for blocks
+type BlockType = PartialBlock<
+  typeof schema.blockSchema,
+  typeof schema.inlineContentSchema,
+  typeof schema.styleSchema
+>;
+
+// Helper to parse HTML to blocks using a temporary editor
+async function parseHtmlToBlocks(html: string): Promise<BlockType[]> {
+  // Create a temporary editor just for parsing
+  const tempEditor = BlockNoteEditorCore.create({ schema });
+  const blocks = await tempEditor.tryParseHTMLToBlocks(html);
+  return blocks;
+}
+
+// Props interface for editor components
+interface BlockNoteEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
@@ -248,46 +269,73 @@ export function BlockNoteEditor({
   resetKey?: string;
   members?: MemberWithPerson[];
   'data-test'?: string;
-}) {
+}
+
+// Wrapper component that handles HTML parsing before rendering the editor
+export function BlockNoteEditor(props: BlockNoteEditorProps) {
+  const { content, className } = props;
+  const [initialBlocks, setInitialBlocks] = useState<BlockType[] | null>(null);
+  const [isReady, setIsReady] = useState(!content); // Ready immediately if no content
+  const hasInitialized = useRef(false);
+
+  // Parse HTML content on mount (only once)
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    if (content) {
+      parseHtmlToBlocks(content)
+        .then(blocks => {
+          setInitialBlocks(blocks);
+          setIsReady(true);
+        })
+        .catch(error => {
+          console.error('Failed to parse initial HTML content:', error);
+          setIsReady(true); // Continue with empty editor on error
+        });
+    }
+  }, [content]);
+
+  // Show loading state while parsing
+  if (!isReady) {
+    return (
+      <div
+        className={cn(
+          'relative min-h-[120px] rounded-lg animate-pulse bg-muted/50',
+          className
+        )}
+      />
+    );
+  }
+
+  // Render the actual editor once parsing is complete
+  return <BlockNoteEditorInner {...props} initialBlocks={initialBlocks} />;
+}
+
+// Inner component that creates the actual editor with initialContent
+function BlockNoteEditorInner({
+  onChange,
+  placeholder = "What's on your mind?",
+  className,
+  maxLength = DEFAULT_MAX_LENGTH,
+  onSubmit,
+  disabled = false,
+  onChangeCapture,
+  members = [],
+  'data-test': dataTest,
+  initialBlocks,
+}: BlockNoteEditorProps & { initialBlocks: BlockType[] | null }) {
   const [isOverLimit, setIsOverLimit] = useState(false);
   const { resolvedTheme } = useTheme();
 
-  // Track if initial content has been set
-  const hasSetInitialContent = useRef(false);
-  // Track if we're currently setting initial content (to skip onChange)
-  const isSettingInitialContent = useRef(false);
-
-  // Create the editor instance using the hook with custom schema
+  // Create the editor instance with initial content
   const editor = useCreateBlockNote({
     schema,
     placeholders: {
       default: placeholder,
     },
+    initialContent: initialBlocks ?? undefined,
   });
-
-  // Set initial content from HTML when editor is ready and content is provided
-  useEffect(() => {
-    if (editor && content && !hasSetInitialContent.current) {
-      const setInitialContent = async () => {
-        try {
-          isSettingInitialContent.current = true;
-          const blocks = await editor.tryParseHTMLToBlocks(content);
-          if (blocks && blocks.length > 0) {
-            editor.replaceBlocks(editor.document, blocks);
-            hasSetInitialContent.current = true;
-          }
-          // Small delay to ensure onChange from replaceBlocks completes before we stop ignoring
-          setTimeout(() => {
-            isSettingInitialContent.current = false;
-          }, 50);
-        } catch (error) {
-          console.error('Failed to parse initial HTML content:', error);
-          isSettingInitialContent.current = false;
-        }
-      };
-      setInitialContent();
-    }
-  }, [editor, content]);
 
   // Build mention items from members
   const mentionItems = useMemo((): MentionItem[] => {
@@ -323,11 +371,6 @@ export function BlockNoteEditor({
 
   // Handle content changes
   const handleChange = useCallback(async () => {
-    // Skip onChange during initial content setup to avoid false "edited" state
-    if (isSettingInitialContent.current) {
-      return;
-    }
-
     // Use BlockNote's built-in HTML conversion for proper rendering
     const rawHtml = await editor.blocksToHTMLLossy(editor.document);
     const html = stripEmptyParagraphs(rawHtml);

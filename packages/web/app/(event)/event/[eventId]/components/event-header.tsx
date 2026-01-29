@@ -145,18 +145,58 @@ export function EventHeader({ eventId }: EventHeaderProps) {
     );
   }
 
-  const { title, location, chosenDateTime, description } = event;
+  const { title, location, chosenDateTime, chosenEndDateTime, description } =
+    event;
+
+  // Format combined date string with start and optional end time
+  const formatEventDateRange = (
+    startTimestamp: number,
+    endTimestamp?: number
+  ): string => {
+    const startDate = new Date(startTimestamp);
+
+    const dateFormatOptions: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    };
+
+    const timeOnlyOptions: Intl.DateTimeFormatOptions = {
+      hour: 'numeric',
+      minute: '2-digit',
+    };
+
+    const startStr = startDate.toLocaleString([], dateFormatOptions);
+
+    if (!endTimestamp) {
+      return startStr;
+    }
+
+    const endDate = new Date(endTimestamp);
+
+    // Check if same day (compare year, month, day)
+    const isSameDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getDate() === endDate.getDate();
+
+    if (isSameDay) {
+      // Same day: "Monday, 1/15/2024, 2:00 PM - 5:00 PM"
+      const endTimeStr = endDate.toLocaleString([], timeOnlyOptions);
+      return `${startStr} - ${endTimeStr}`;
+    } else {
+      // Different days: "Monday, 1/15/2024, 2:00 PM - Tuesday, 1/16/2024, 5:00 PM"
+      const endStr = endDate.toLocaleString([], dateFormatOptions);
+      return `${startStr} - ${endStr}`;
+    }
+  };
 
   const eventDateStr =
     chosenDateTime != null
-      ? new Date(chosenDateTime).toLocaleString([], {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        })
+      ? formatEventDateRange(chosenDateTime, chosenEndDateTime)
       : null;
 
   const menuItems =

@@ -4,6 +4,8 @@ import {
   authComponent,
   getCurrentUserAndPerson as getAuthUserAndPerson,
   isAdmin,
+  AuthUserId,
+  ExtendedAuthUser,
 } from '../auth';
 
 /**
@@ -62,13 +64,25 @@ export const getEmailForUsername = query({
     username: v.string(),
     _traceId: v.optional(v.string()),
   },
-  handler: async (_ctx, { username }) => {
-    // Better Auth component doesn't expose user lookup by username
-    // This must be implemented via Better Auth's client-side username plugin
-    // Return null to indicate lookup must happen client-side
-    console.log(
-      `Username lookup for "${username}" must be done via Better Auth client`
-    );
+  handler: async (ctx, { username }) => {
+    const searchUsername = username.toLowerCase();
+
+    // Get all persons and find the one with matching username
+    const persons = await ctx.db.query('persons').collect();
+
+    for (const person of persons) {
+      const user = await authComponent.getAnyUserById(
+        ctx,
+        person.userId as AuthUserId
+      );
+      if (
+        user &&
+        (user as ExtendedAuthUser).username?.toLowerCase() === searchUsername
+      ) {
+        return { email: user.email };
+      }
+    }
+
     return null;
   },
 });
