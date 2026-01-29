@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { useMobile } from '@/hooks/use-mobile';
 import { Id, Doc } from '@/convex/_generated/dataModel';
+import { useTypingState } from '@/hooks/convex/use-presence';
 import { User } from '@/convex/types';
 
 let attachmentMutations: any;
@@ -119,6 +120,36 @@ export default function ReplyForm({
   const [isMultiline, setIsMultiline] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useMobile();
+
+  // Get personId from userMembership for typing state
+  const personId = userMembership?.personId as Id<'persons'> | undefined;
+
+  // Track typing state for this post
+  const { setTyping } = useTypingState(postId as Id<'posts'>, personId);
+
+  // Track typing status when editor content changes
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      // Check if there's actual content (not just empty HTML)
+      const hasContent = Boolean(
+        value &&
+          value.trim() !== '' &&
+          value !== '<p></p>' &&
+          value !== '<p><br></p>'
+      );
+
+      // Set typing status based on whether there's content
+      setTyping(hasContent);
+    },
+    [setTyping]
+  );
+
+  // Clear typing status on unmount or when form is submitted
+  useEffect(() => {
+    return () => {
+      setTyping(false);
+    };
+  }, [setTyping]);
 
   // Handle file selection from attachment button
   const handleFilesSelected = useCallback(
@@ -241,6 +272,9 @@ export default function ReplyForm({
     if (!hasText && !hasAttachments) {
       return; // Nothing to submit
     }
+
+    // Clear typing indicator immediately when submitting
+    setTyping(false);
 
     setIsSubmitting(true);
 
@@ -450,7 +484,10 @@ export default function ReplyForm({
                             ref={editorRef}
                             placeholder='Write a reply...'
                             content={field.value}
-                            onChange={field.onChange}
+                            onChange={value => {
+                              field.onChange(value);
+                              handleEditorChange(value);
+                            }}
                             preventEnterSubmit={isMobile}
                             growUpward={isMobile}
                             eventId={post.event?._id}
