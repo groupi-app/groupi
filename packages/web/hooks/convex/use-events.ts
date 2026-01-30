@@ -78,6 +78,12 @@ type ReminderOffset =
   | '2_WEEKS'
   | '4_WEEKS';
 
+// Focal point type for image cropping
+interface FocalPoint {
+  x: number;
+  y: number;
+}
+
 /**
  * Create a new event with availability polling
  */
@@ -91,6 +97,7 @@ export function useCreateEvent() {
       description?: string;
       location?: string;
       imageStorageId?: string; // Optional cover image storage ID
+      imageFocalPoint?: FocalPoint; // Optional focal point for image cropping
       potentialDateTimes?: string[]; // ISO date strings for multi-date events (legacy)
       potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
       chosenDateTime?: string; // ISO date string for single-date events
@@ -103,6 +110,7 @@ export function useCreateEvent() {
           description: data.description,
           location: data.location,
           imageStorageId: data.imageStorageId as Id<'_storage'> | undefined,
+          imageFocalPoint: data.imageFocalPoint,
           potentialDateTimes: data.potentialDateTimes,
           potentialDateTimeOptions: data.potentialDateTimeOptions,
           chosenDateTime: data.chosenDateTime,
@@ -143,6 +151,7 @@ export function useUpdateEvent() {
       description?: string;
       location?: string;
       imageStorageId?: string | null; // Optional cover image storage ID (null to remove)
+      imageFocalPoint?: FocalPoint | null; // Optional focal point (null to clear)
       reminderOffset?: ReminderOffset | null;
     }) => {
       try {
@@ -155,6 +164,7 @@ export function useUpdateEvent() {
             data.imageStorageId === null
               ? null
               : (data.imageStorageId as Id<'_storage'> | undefined),
+          imageFocalPoint: data.imageFocalPoint,
           reminderOffset: data.reminderOffset,
         });
 
