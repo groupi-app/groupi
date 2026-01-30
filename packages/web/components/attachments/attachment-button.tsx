@@ -16,17 +16,21 @@ interface AttachmentButtonProps {
   disabled?: boolean;
   remainingSlots?: number;
   className?: string;
+  /** Optional label text to display next to the button - makes entire area clickable */
+  label?: string;
 }
 
 /**
  * A button for adding file attachments
  * Displays a + icon that opens a file picker
+ * Optionally shows a label that is also part of the clickable area
  */
 export function AttachmentButton({
   onFilesSelected,
   disabled = false,
   remainingSlots = 10,
   className,
+  label,
 }: AttachmentButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +51,43 @@ export function AttachmentButton({
   const acceptTypes = Object.values(ALLOWED_MIME_TYPES).flat().join(',');
 
   const isDisabled = disabled || remainingSlots <= 0;
+
+  // If label is provided, render button with label as a single clickable element
+  if (label) {
+    return (
+      <>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type='button'
+              variant='ghost'
+              onClick={handleClick}
+              disabled={isDisabled}
+              className={cn('h-8 gap-2 px-2', className)}
+              aria-label='Add attachment'
+            >
+              <Icons.plus className='h-4 w-4' />
+              <span className='text-sm text-muted-foreground'>{label}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side='top'>
+            {isDisabled
+              ? 'Maximum attachments reached'
+              : `Add attachment (${remainingSlots} remaining)`}
+          </TooltipContent>
+        </Tooltip>
+        <input
+          ref={inputRef}
+          type='file'
+          multiple
+          accept={acceptTypes}
+          onChange={handleChange}
+          className='hidden'
+          aria-hidden='true'
+        />
+      </>
+    );
+  }
 
   return (
     <>

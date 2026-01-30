@@ -204,6 +204,8 @@ export function Editor({
               mimeType: a.mimeType,
               width: a.width,
               height: a.height,
+              isSpoiler: a.isSpoiler,
+              altText: a.altText,
             })),
             postId: result.postId,
           });
@@ -231,6 +233,8 @@ export function Editor({
               mimeType: a.mimeType,
               width: a.width,
               height: a.height,
+              isSpoiler: a.isSpoiler,
+              altText: a.altText,
             })),
             postId: postData.id as Id<'posts'>,
           });
@@ -350,16 +354,12 @@ export function Editor({
 
             {/* Attachments Section */}
             <div className='space-y-3'>
-              <div className='flex items-center gap-2'>
-                <AttachmentButton
-                  onFilesSelected={handleFilesSelected}
-                  disabled={!canAddMore || isSaving || isUploading}
-                  remainingSlots={remainingSlots}
-                />
-                <span className='text-sm text-muted-foreground'>
-                  Add images, videos, or files
-                </span>
-              </div>
+              <AttachmentButton
+                onFilesSelected={handleFilesSelected}
+                disabled={!canAddMore || isSaving || isUploading}
+                remainingSlots={remainingSlots}
+                label='Add images, videos, or files'
+              />
               {pendingUploads.length > 0 && (
                 <AttachmentPreview
                   uploads={pendingUploads}
