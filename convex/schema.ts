@@ -54,6 +54,12 @@ export default defineSchema({
     description: v.optional(v.string()),
     location: v.optional(v.string()),
     imageStorageId: v.optional(v.id('_storage')), // Optional cover image
+    imageFocalPoint: v.optional(
+      v.object({
+        x: v.number(), // 0-1 normalized (0.5 = center)
+        y: v.number(), // 0-1 normalized (0.5 = center)
+      })
+    ), // Focal point for cropping cover image
     // Date/time range for the event (must be updated together to stay in sync)
     // INVARIANT: chosenEndDateTime can only be set if chosenDateTime is set
     // INVARIANT: chosenEndDateTime must be > chosenDateTime when both are set

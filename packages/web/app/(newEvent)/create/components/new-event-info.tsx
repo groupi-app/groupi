@@ -27,7 +27,10 @@ import { Icons } from '@/components/icons';
 import dynamic from 'next/dynamic';
 import { useFormContext, type ReminderOffset } from './form-context';
 import { Button } from '@/components/ui/button';
-import { EventImageUpload } from '@/components/event-image-upload';
+import {
+  EventImageUpload,
+  type FocalPoint,
+} from '@/components/event-image-upload';
 
 // Reminder offset options with display labels
 const REMINDER_OPTIONS: Array<{
@@ -100,6 +103,13 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
   const [imageFile, setImageFile] = useState<File | null>(
     formState.imageFile ?? null
   );
+  const [focalPoint, setFocalPoint] = useState<FocalPoint | null>(
+    formState.imageFocalPoint ?? null
+  );
+
+  const handleFocalPointChange = (newFocalPoint: FocalPoint | null) => {
+    setFocalPoint(newFocalPoint);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -138,6 +148,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
       ...data,
       reminderOffset,
       imageFile: imageFile ?? undefined,
+      imageFocalPoint: focalPoint ?? undefined,
     });
     onNext();
   }
@@ -195,7 +206,12 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
             <label className='text-sm font-medium leading-none'>
               Cover Image
             </label>
-            <EventImageUpload file={imageFile} onFileChange={setImageFile} />
+            <EventImageUpload
+              file={imageFile}
+              onFileChange={setImageFile}
+              focalPoint={focalPoint}
+              onFocalPointChange={handleFocalPointChange}
+            />
             <p className='text-sm text-muted-foreground'>
               Add an optional cover image for your event.
             </p>

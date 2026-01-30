@@ -21,12 +21,18 @@ export type ReminderOffset =
   | '2_WEEKS'
   | '4_WEEKS';
 
+interface FocalPoint {
+  x: number;
+  y: number;
+}
+
 interface FormState {
   title: string;
   description?: string;
   location?: string;
   reminderOffset?: ReminderOffset;
   imageFile?: File;
+  imageFocalPoint?: FocalPoint;
 }
 
 interface FormContextValue {
@@ -44,6 +50,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
     location: undefined,
     reminderOffset: undefined,
     imageFile: undefined,
+    imageFocalPoint: undefined,
   });
 
   const reset = useCallback(() => {
@@ -53,6 +60,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
       location: undefined,
       reminderOffset: undefined,
       imageFile: undefined,
+      imageFocalPoint: undefined,
     });
   }, []);
 
