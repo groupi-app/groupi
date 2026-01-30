@@ -319,179 +319,197 @@ export function AttachmentPreview({
               </DrawerTitle>
             </DrawerHeader>
 
-            {drawerUpload && (
-              <div className='px-4 pb-4 space-y-4'>
-                {/* Full image preview */}
-                {drawerUpload.file.type.startsWith('image/') &&
-                  drawerUpload.preview && (
-                    <div className='flex justify-center'>
-                      <div className='relative rounded-lg overflow-hidden bg-muted max-h-64'>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={drawerUpload.preview}
-                          alt={
-                            drawerUpload.altText || drawerUpload.displayFilename
-                          }
-                          className={cn(
-                            'max-h-64 w-auto object-contain',
-                            drawerUpload.isSpoiler &&
-                              !revealedSpoilers.has(drawerUpload.id) &&
-                              'blur-xl'
-                          )}
-                        />
-                        {/* Spoiler overlay in drawer */}
-                        {drawerUpload.isSpoiler &&
-                          !revealedSpoilers.has(drawerUpload.id) && (
-                            <button
-                              type='button'
-                              onClick={() =>
-                                setRevealedSpoilers(prev =>
-                                  new Set(prev).add(drawerUpload.id)
-                                )
+            {drawerUpload &&
+              (() => {
+                // Get the current upload from the uploads array to ensure we have the latest state
+                const currentUpload =
+                  uploads.find(u => u.id === drawerUpload.id) || drawerUpload;
+                return (
+                  <div className='px-4 pb-4 space-y-4'>
+                    {/* Full image preview */}
+                    {currentUpload.file.type.startsWith('image/') &&
+                      currentUpload.preview && (
+                        <div className='flex justify-center'>
+                          <div className='relative rounded-lg overflow-hidden bg-muted max-h-64'>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={currentUpload.preview}
+                              alt={
+                                currentUpload.altText ||
+                                currentUpload.displayFilename
                               }
-                              className='absolute inset-0 flex items-center justify-center bg-black/20'
-                            >
-                              <span className='bg-black/80 text-white text-sm font-semibold px-4 py-2 rounded-full'>
-                                Tap to reveal
-                              </span>
-                            </button>
-                          )}
-                      </div>
-                    </div>
-                  )}
+                              className={cn(
+                                'max-h-64 w-auto object-contain',
+                                currentUpload.isSpoiler &&
+                                  !revealedSpoilers.has(currentUpload.id) &&
+                                  'blur-xl'
+                              )}
+                            />
+                            {/* Spoiler overlay in drawer */}
+                            {currentUpload.isSpoiler &&
+                              !revealedSpoilers.has(currentUpload.id) && (
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    setRevealedSpoilers(prev =>
+                                      new Set(prev).add(currentUpload.id)
+                                    )
+                                  }
+                                  className='absolute inset-0 flex items-center justify-center bg-black/20'
+                                >
+                                  <span className='bg-black/80 text-white text-sm font-semibold px-4 py-2 rounded-full'>
+                                    Tap to reveal
+                                  </span>
+                                </button>
+                              )}
+                          </div>
+                        </div>
+                      )}
 
-                {/* Video preview in drawer */}
-                {drawerUpload.file.type.startsWith('video/') && (
-                  <div className='space-y-2'>
-                    {drawerUpload.preview ? (
-                      <video
-                        src={drawerUpload.preview}
-                        controls
-                        className='w-full max-h-48 rounded-lg'
-                        preload='metadata'
-                      >
-                        Your browser does not support video playback.
-                      </video>
-                    ) : (
-                      <div className='flex items-center justify-center h-32 rounded-lg bg-muted'>
-                        <Icons.fileVideo className='h-8 w-8 text-muted-foreground' />
-                      </div>
-                    )}
-                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                      <Icons.fileVideo className='h-4 w-4' />
-                      <span className='truncate flex-1'>
-                        {drawerUpload.displayFilename}
-                      </span>
-                      <span className='text-xs'>
-                        ({formatFileSize(drawerUpload.file.size)})
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Audio preview in drawer */}
-                {drawerUpload.file.type.startsWith('audio/') && (
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                      <Icons.fileAudio className='h-4 w-4' />
-                      <span className='truncate flex-1'>
-                        {drawerUpload.displayFilename}
-                      </span>
-                      <span className='text-xs'>
-                        ({formatFileSize(drawerUpload.file.size)})
-                      </span>
-                    </div>
-                    {drawerUpload.preview ? (
-                      <audio
-                        src={drawerUpload.preview}
-                        controls
-                        className='w-full'
-                      >
-                        Your browser does not support audio playback.
-                      </audio>
-                    ) : (
-                      <div className='text-sm text-muted-foreground p-4 rounded-lg bg-muted text-center'>
-                        Audio preview unavailable
+                    {/* Video preview in drawer */}
+                    {currentUpload.file.type.startsWith('video/') && (
+                      <div className='space-y-2'>
+                        {currentUpload.preview ? (
+                          <video
+                            src={currentUpload.preview}
+                            controls
+                            className='w-full max-h-48 rounded-lg'
+                            preload='metadata'
+                          >
+                            Your browser does not support video playback.
+                          </video>
+                        ) : (
+                          <div className='flex items-center justify-center h-32 rounded-lg bg-muted'>
+                            <Icons.fileVideo className='h-8 w-8 text-muted-foreground' />
+                          </div>
+                        )}
+                        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                          <Icons.fileVideo className='h-4 w-4' />
+                          <span className='truncate flex-1'>
+                            {currentUpload.displayFilename}
+                          </span>
+                          <span className='text-xs'>
+                            ({formatFileSize(currentUpload.file.size)})
+                          </span>
+                        </div>
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Other file info (non-image, non-video, non-audio) */}
-                {!drawerUpload.file.type.startsWith('image/') &&
-                  !drawerUpload.file.type.startsWith('video/') &&
-                  !drawerUpload.file.type.startsWith('audio/') && (
-                    <div className='flex items-center gap-3 p-4 rounded-lg bg-muted'>
-                      <FileIcon
-                        mimeType={drawerUpload.file.type}
-                        className='h-8 w-8 text-muted-foreground'
-                      />
-                      <div className='flex-1 min-w-0'>
-                        <p className='font-medium truncate'>
-                          {drawerUpload.displayFilename}
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                          {formatFileSize(drawerUpload.file.size)}
-                        </p>
+                    {/* Audio preview in drawer */}
+                    {currentUpload.file.type.startsWith('audio/') && (
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                          <Icons.fileAudio className='h-4 w-4' />
+                          <span className='truncate flex-1'>
+                            {currentUpload.displayFilename}
+                          </span>
+                          <span className='text-xs'>
+                            ({formatFileSize(currentUpload.file.size)})
+                          </span>
+                        </div>
+                        {currentUpload.preview ? (
+                          <audio
+                            src={currentUpload.preview}
+                            controls
+                            className='w-full'
+                          >
+                            Your browser does not support audio playback.
+                          </audio>
+                        ) : (
+                          <div className='text-sm text-muted-foreground p-4 rounded-lg bg-muted text-center'>
+                            Audio preview unavailable
+                          </div>
+                        )}
                       </div>
+                    )}
+
+                    {/* Other file info (non-image, non-video, non-audio) */}
+                    {!currentUpload.file.type.startsWith('image/') &&
+                      !currentUpload.file.type.startsWith('video/') &&
+                      !currentUpload.file.type.startsWith('audio/') && (
+                        <div className='flex items-center gap-3 p-4 rounded-lg bg-muted'>
+                          <FileIcon
+                            mimeType={currentUpload.file.type}
+                            className='h-8 w-8 text-muted-foreground'
+                          />
+                          <div className='flex-1 min-w-0'>
+                            <p className='font-medium truncate'>
+                              {currentUpload.displayFilename}
+                            </p>
+                            <p className='text-sm text-muted-foreground'>
+                              {formatFileSize(currentUpload.file.size)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Options */}
+                    <div className='rounded-lg border border-border divide-y divide-border'>
+                      {/* Image Description option */}
+                      {currentUpload.file.type.startsWith('image/') && (
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setDrawerUpload(null);
+                            setEditingUpload(currentUpload);
+                          }}
+                          className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors'
+                        >
+                          <Icons.image className='h-5 w-5 text-muted-foreground' />
+                          <span className='flex-1 text-left'>
+                            Image Description
+                          </span>
+                          <Icons.forward className='h-4 w-4 text-muted-foreground' />
+                        </button>
+                      )}
+
+                      {/* Rename option for non-images */}
+                      {!currentUpload.file.type.startsWith('image/') && (
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setDrawerUpload(null);
+                            setEditingUpload(currentUpload);
+                          }}
+                          className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors'
+                        >
+                          <Icons.edit className='h-5 w-5 text-muted-foreground' />
+                          <span className='flex-1 text-left'>Rename</span>
+                          <Icons.forward className='h-4 w-4 text-muted-foreground' />
+                        </button>
+                      )}
+
+                      {/* Mark as spoiler toggle - only for images */}
+                      {currentUpload.file.type.startsWith('image/') && (
+                        <div
+                          role='button'
+                          tabIndex={0}
+                          onClick={() => onToggleSpoiler(currentUpload.id)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              onToggleSpoiler(currentUpload.id);
+                            }
+                          }}
+                          className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors cursor-pointer'
+                        >
+                          <Icons.spoiler className='h-5 w-5 text-muted-foreground' />
+                          <span className='flex-1 text-left'>
+                            Mark as spoiler
+                          </span>
+                          <Checkbox
+                            checked={currentUpload.isSpoiler}
+                            onCheckedChange={() =>
+                              onToggleSpoiler(currentUpload.id)
+                            }
+                            className='pointer-events-none'
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-
-                {/* Options */}
-                <div className='rounded-lg border border-border divide-y divide-border'>
-                  {/* Image Description option */}
-                  {drawerUpload.file.type.startsWith('image/') && (
-                    <button
-                      type='button'
-                      onClick={() => {
-                        setDrawerUpload(null);
-                        setEditingUpload(drawerUpload);
-                      }}
-                      className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors'
-                    >
-                      <Icons.image className='h-5 w-5 text-muted-foreground' />
-                      <span className='flex-1 text-left'>
-                        Image Description
-                      </span>
-                      <Icons.forward className='h-4 w-4 text-muted-foreground' />
-                    </button>
-                  )}
-
-                  {/* Rename option for non-images */}
-                  {!drawerUpload.file.type.startsWith('image/') && (
-                    <button
-                      type='button'
-                      onClick={() => {
-                        setDrawerUpload(null);
-                        setEditingUpload(drawerUpload);
-                      }}
-                      className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors'
-                    >
-                      <Icons.edit className='h-5 w-5 text-muted-foreground' />
-                      <span className='flex-1 text-left'>Rename</span>
-                      <Icons.forward className='h-4 w-4 text-muted-foreground' />
-                    </button>
-                  )}
-
-                  {/* Mark as spoiler toggle - only for images */}
-                  {drawerUpload.file.type.startsWith('image/') && (
-                    <button
-                      type='button'
-                      onClick={() => onToggleSpoiler(drawerUpload.id)}
-                      className='w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors'
-                    >
-                      <Icons.spoiler className='h-5 w-5 text-muted-foreground' />
-                      <span className='flex-1 text-left'>Mark as spoiler</span>
-                      <Checkbox
-                        checked={drawerUpload.isSpoiler}
-                        onCheckedChange={() => onToggleSpoiler(drawerUpload.id)}
-                        className='pointer-events-none'
-                      />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+                  </div>
+                );
+              })()}
 
             <DrawerFooter>
               <Button

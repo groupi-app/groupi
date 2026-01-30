@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
 import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
 import { LeaveEventDialog } from './leaveEventDialog';
 import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +37,7 @@ import { useIsEventMuted, useToggleEventMute } from '@/hooks/convex/use-muting';
 import { EventHeaderSkeleton } from '@/components/skeletons';
 import { NotFoundError, AccessDeniedError } from '@/components/error-display';
 import { Id } from '@/convex/_generated/dataModel';
+import { calculateObjectPosition } from '@/components/image-focal-point-picker';
 
 interface EventHeaderProps {
   eventId: string;
@@ -51,6 +58,16 @@ export function EventHeader({ eventId }: EventHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageNaturalSize, setImageNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [coverContainerSize, setCoverContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const coverContainerRef = useRef<HTMLButtonElement>(null);
 
   // Platform hook
   const isMobile = useMobile();
@@ -96,6 +113,38 @@ export function EventHeader({ eventId }: EventHeaderProps) {
     [isMobile]
   );
 
+  // Handle cover image load to get natural dimensions
+  const handleCoverImageLoad = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      setImageNaturalSize({
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
+      if (coverContainerRef.current) {
+        setCoverContainerSize({
+          width: coverContainerRef.current.offsetWidth,
+          height: coverContainerRef.current.offsetHeight,
+        });
+      }
+    },
+    []
+  );
+
+  // Update cover container size on window resize
+  useEffect(() => {
+    const updateCoverContainerSize = () => {
+      if (coverContainerRef.current) {
+        setCoverContainerSize({
+          width: coverContainerRef.current.offsetWidth,
+          height: coverContainerRef.current.offsetHeight,
+        });
+      }
+    };
+    window.addEventListener('resize', updateCoverContainerSize);
+    return () => window.removeEventListener('resize', updateCoverContainerSize);
+  }, []);
+
   useEffect(() => {
     if (!eventId) return;
 
@@ -113,6 +162,23 @@ export function EventHeader({ eventId }: EventHeaderProps) {
   // Extract data from query result
   const event = eventData?.event;
   const userMembership = eventData?.userMembership;
+
+  // Calculate correct object-position that centers the focal point
+  const coverObjectPosition = useMemo(() => {
+    const focalPoint = event?.imageFocalPoint;
+    if (!focalPoint || !imageNaturalSize || !coverContainerSize) {
+      return undefined;
+    }
+    const pos = calculateObjectPosition(
+      focalPoint.x,
+      focalPoint.y,
+      imageNaturalSize.width,
+      imageNaturalSize.height,
+      coverContainerSize.width,
+      coverContainerSize.height
+    );
+    return `${pos.x}% ${pos.y}%`;
+  }, [event?.imageFocalPoint, imageNaturalSize, coverContainerSize]);
 
   // Check loading state (undefined = still loading)
   const isLoading = eventData === undefined;
@@ -288,14 +354,26 @@ export function EventHeader({ eventId }: EventHeaderProps) {
     <>
       <header className='flex flex-col md:my-5 max-w-4xl mx-auto gap-3'>
         {event.imageUrl && (
-          <div className='w-full max-h-[300px] overflow-hidden rounded-xl mb-3'>
+          <button
+            ref={coverContainerRef}
+            type='button'
+            onClick={() => setLightboxOpen(true)}
+            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-xl mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            style={{ touchAction: 'manipulation' }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}
             <img
               src={event.imageUrl}
               alt={`Cover image for ${title}`}
-              className='w-full h-full object-cover'
+              className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+              style={
+                coverObjectPosition
+                  ? { objectPosition: coverObjectPosition }
+                  : undefined
+              }
+              onLoad={handleCoverImageLoad}
             />
-          </div>
+          </button>
         )}
         <div className='flex justify-between flex-col-reverse gap-3 md:flex-row'>
           <div className='flex items-center gap-3'>
@@ -460,6 +538,21 @@ export function EventHeader({ eventId }: EventHeaderProps) {
       ) : (
         <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
           <LeaveEventDialog eventId={eventIdTyped} />
+        </Dialog>
+      )}
+      {event.imageUrl && (
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          <DialogContent className='max-w-4xl max-h-[90vh] p-0 overflow-hidden'>
+            <VisuallyHidden>
+              <DialogTitle>Event Cover Image</DialogTitle>
+            </VisuallyHidden>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}
+            <img
+              src={event.imageUrl}
+              alt={`Cover image for ${title}`}
+              className='w-full h-auto max-h-[85vh] object-contain'
+            />
+          </DialogContent>
         </Dialog>
       )}
     </>
