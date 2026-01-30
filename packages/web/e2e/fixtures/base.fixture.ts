@@ -68,6 +68,7 @@ export const test = base.extend<GroupiFixtures>({
   },
 
   // Seeder - auto-cleanup after each test
+
   // eslint-disable-next-line no-empty-pattern
   seeder: async ({}, use) => {
     const seeder = new ConvexSeeder();

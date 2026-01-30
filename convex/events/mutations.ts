@@ -49,6 +49,12 @@ export const createEvent = mutation({
     description: v.optional(v.string()),
     location: v.optional(v.string()),
     imageStorageId: v.optional(v.id('_storage')), // Optional cover image
+    imageFocalPoint: v.optional(
+      v.object({
+        x: v.number(), // 0-1 normalized (0.5 = center)
+        y: v.number(), // 0-1 normalized (0.5 = center)
+      })
+    ), // Focal point for cropping cover image
     // Legacy: array of ISO date strings (backward compatible)
     potentialDateTimes: v.optional(v.array(v.string())),
     // New: array of objects with start/end times
@@ -65,6 +71,7 @@ export const createEvent = mutation({
       description,
       location,
       imageStorageId,
+      imageFocalPoint,
       potentialDateTimes,
       potentialDateTimeOptions,
       chosenDateTime,
@@ -129,6 +136,7 @@ export const createEvent = mutation({
       description: description?.trim() || '',
       location: location?.trim() || '',
       imageStorageId: imageStorageId,
+      imageFocalPoint: imageFocalPoint,
       creatorId: person._id,
       createdAt: now,
       updatedAt: now,
@@ -211,6 +219,15 @@ export const updateEvent = mutation({
         v.null() // Allow null to remove the image
       )
     ),
+    imageFocalPoint: v.optional(
+      v.union(
+        v.object({
+          x: v.number(),
+          y: v.number(),
+        }),
+        v.null() // Allow null to clear the focal point
+      )
+    ),
     reminderOffset: v.optional(
       v.union(
         reminderOffsetValidator,
@@ -221,7 +238,15 @@ export const updateEvent = mutation({
   },
   handler: async (
     ctx,
-    { eventId, title, description, location, imageStorageId, reminderOffset }
+    {
+      eventId,
+      title,
+      description,
+      location,
+      imageStorageId,
+      imageFocalPoint,
+      reminderOffset,
+    }
   ) => {
     // Require organizer or moderator role
     await requireEventRole(ctx, eventId, 'MODERATOR');
@@ -263,6 +288,16 @@ export const updateEvent = mutation({
       // Set new image or clear if null
       updateData.imageStorageId =
         imageStorageId === null ? undefined : imageStorageId;
+      // If image is being removed, also clear the focal point
+      if (imageStorageId === null) {
+        updateData.imageFocalPoint = undefined;
+      }
+    }
+
+    // Handle focal point updates
+    if (imageFocalPoint !== undefined) {
+      updateData.imageFocalPoint =
+        imageFocalPoint === null ? undefined : imageFocalPoint;
     }
 
     if (reminderOffset !== undefined) {

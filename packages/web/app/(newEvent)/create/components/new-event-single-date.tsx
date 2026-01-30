@@ -140,8 +140,14 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
         endDateTime.setHours(endHours, endMinutes, 0, 0);
       }
 
-      const { title, description, location, reminderOffset, imageFile } =
-        formState;
+      const {
+        title,
+        description,
+        location,
+        reminderOffset,
+        imageFile,
+        imageFocalPoint,
+      } = formState;
 
       setIsSaving(true);
       try {
@@ -164,6 +170,7 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
           chosenEndDateTime: endDateTime?.toISOString(),
           reminderOffset,
           imageStorageId,
+          imageFocalPoint,
         });
         toast.success('The event was created successfully.');
         router.push(`/event/${result.eventId}`);

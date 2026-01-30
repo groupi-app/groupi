@@ -29,7 +29,10 @@ import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { Id } from '@/convex/_generated/dataModel';
-import { EventImageUpload } from '@/components/event-image-upload';
+import {
+  EventImageUpload,
+  type FocalPoint,
+} from '@/components/event-image-upload';
 
 // Reminder offset type
 type ReminderOffset =
@@ -103,10 +106,18 @@ export default function EditEventInfo({
     reminderOffset?: ReminderOffset;
     imageUrl?: string | null;
     imageStorageId?: Id<'_storage'>;
+    imageFocalPoint?: FocalPoint | null;
   };
 }) {
-  const { eventId, title, description, location, reminderOffset, imageUrl } =
-    eventData;
+  const {
+    eventId,
+    title,
+    description,
+    location,
+    reminderOffset,
+    imageUrl,
+    imageFocalPoint: initialFocalPoint,
+  } = eventData;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
   const { uploadFile } = useFileUpload();
@@ -116,6 +127,12 @@ export default function EditEventInfo({
   const [imageFile, setImageFile] = useState<File | null>(null);
   // Track if user wants to remove the existing image
   const [removeExisting, setRemoveExisting] = useState(false);
+  // Track focal point changes
+  const [focalPoint, setFocalPoint] = useState<FocalPoint | null>(
+    initialFocalPoint ?? null
+  );
+  // Track if focal point was changed (to know whether to include in update)
+  const [focalPointChanged, setFocalPointChanged] = useState(false);
 
   const handleFileChange = (file: File | null) => {
     setImageFile(file);
@@ -128,6 +145,14 @@ export default function EditEventInfo({
   const handleRemoveExisting = () => {
     setRemoveExisting(true);
     setImageFile(null);
+    // Also clear focal point when removing image
+    setFocalPoint(null);
+    setFocalPointChanged(true);
+  };
+
+  const handleFocalPointChange = (newFocalPoint: FocalPoint | null) => {
+    setFocalPoint(newFocalPoint);
+    setFocalPointChanged(true);
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -176,6 +201,10 @@ export default function EditEventInfo({
         // Only include imageStorageId if it changed
         ...(imageStorageId !== undefined && {
           imageStorageId: imageStorageId,
+        }),
+        // Only include imageFocalPoint if it changed
+        ...(focalPointChanged && {
+          imageFocalPoint: focalPoint,
         }),
       });
 
@@ -250,6 +279,8 @@ export default function EditEventInfo({
             file={imageFile}
             onFileChange={handleFileChange}
             onRemoveExisting={handleRemoveExisting}
+            focalPoint={focalPoint}
+            onFocalPointChange={handleFocalPointChange}
           />
           <p className='text-sm text-muted-foreground'>
             Add an optional cover image for your event.
