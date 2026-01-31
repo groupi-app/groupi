@@ -157,6 +157,16 @@ function generateThemeBlock(): string {
   lines.push('  --color-brand-accent-hover: var(--brand-accent-hover);');
   lines.push('');
 
+  // Status colors (generic - work with bg-, text-, border-)
+  lines.push(
+    '  /* Status colors (work with bg-success, text-success, etc.) */'
+  );
+  lines.push('  --color-success: var(--bg-success);');
+  lines.push('  --color-warning: var(--bg-warning);');
+  lines.push('  --color-error: var(--bg-error);');
+  lines.push('  --color-info: var(--bg-info);');
+  lines.push('');
+
   // Background colors
   lines.push('  /* Background colors */');
   lines.push('  --color-bg-page: var(--bg-page);');
