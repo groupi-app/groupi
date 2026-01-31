@@ -185,7 +185,7 @@ export function EventList({
           {/* Past events collapsible section */}
           {pastEvents.length > 0 && (
             <Collapsible open={pastEventsOpen} onOpenChange={setPastEventsOpen}>
-              <CollapsibleTrigger className='flex items-center gap-2 w-full py-4 px-2 hover:bg-accent rounded-md transition-all cursor-pointer'>
+              <CollapsibleTrigger className='flex items-center gap-2 w-full py-4 px-2 hover:bg-accent/80 rounded-md transition-all cursor-pointer'>
                 <Icons.forward
                   className={`size-4 transition-transform duration-200 ${
                     pastEventsOpen ? 'rotate-90' : ''

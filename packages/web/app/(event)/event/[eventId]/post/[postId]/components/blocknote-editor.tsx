@@ -215,7 +215,7 @@ function TouchBlockTypeSelect() {
             type='button'
             className={cn(
               'w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded',
-              'hover:bg-accent active:bg-accent transition-colors text-left',
+              'hover:bg-accent/80 active:bg-accent/80 transition-colors text-left',
               currentLabel === option.label && 'bg-accent'
             )}
             onMouseDown={e => {
@@ -483,7 +483,7 @@ function BlockNoteEditorInner({
                       key={item.personId}
                       type='button'
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent active:bg-accent transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent/80 active:bg-accent/80 transition-colors',
                         index === selectedIndex && 'bg-accent'
                       )}
                       // Use onMouseDown instead of onClick for better mobile touch support
@@ -549,7 +549,7 @@ function BlockNoteEditorInner({
                       key={item.title}
                       type='button'
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent active:bg-accent transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent/80 active:bg-accent/80 transition-colors',
                         index === selectedIndex && 'bg-accent'
                       )}
                       // Use onMouseDown instead of onClick for better mobile touch support

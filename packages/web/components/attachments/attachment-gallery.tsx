@@ -432,7 +432,7 @@ export function AttachmentGallery({
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 rounded-md min-w-0 max-w-full',
                     'bg-muted border border-border',
-                    'hover:bg-accent transition-colors',
+                    'hover:bg-accent/80 transition-colors',
                     'text-sm',
                     'disabled:opacity-70 disabled:cursor-wait'
                   )}

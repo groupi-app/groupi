@@ -108,7 +108,7 @@ export function InviteLinkCard({
         >
           <div
             className={cn(
-              'cursor-pointer border border-border shadow-floating rounded-lg py-3 px-6 hover:bg-accent transition-all z-lifted overflow-hidden',
+              'cursor-pointer border border-border shadow-floating rounded-lg py-3 px-6 hover:bg-accent/80 transition-all z-lifted overflow-hidden',
               selectedInvites.includes(id) ? 'bg-primary/30' : 'bg-card'
             )}
           >

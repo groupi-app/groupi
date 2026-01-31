@@ -3,6 +3,22 @@
  *
  * This file is generated from @groupi/shared/design/themes
  * Run: pnpm generate:tokens
+ *
+ * Available themes:
+ * - :root (default: groupi-light)
+ * - .dark (legacy: groupi-dark)
+ * - .theme-groupi-light
+ * - .theme-groupi-dark
+ * - .theme-oled-dark
+ * - .theme-ocean-light
+ * - .theme-ocean-dark
+ * - .theme-transcend-light
+ * - .theme-transcend-dark
+ * - .theme-sunset-light
+ * - .theme-sunset-dark
+ * - .theme-forest-light
+ * - .theme-forest-dark
+ * - .theme-synthwave-dark
  */
 
 @theme {
@@ -365,105 +381,1442 @@
      ========================================================================== */
 
   /* Legacy tokens (shadcn/ui) */
-  --background: hsl(264 71% 6%);
-  --foreground: hsl(213 31% 91%);
-  --muted: hsl(223 47% 11%);
-  --muted-foreground: hsl(215.4, 16.3%, 56.9%);
-  --popover: hsl(264 71% 6%);
-  --popover-foreground: hsl(215, 20.2%, 65.1%);
-  --card: hsl(264 71% 6%);
-  --card-foreground: hsl(213 31% 91%);
-  --border: hsl(216 34% 17%);
+  --background: hsl(270 45% 7%);
+  --foreground: hsl(270 20% 94%);
+  --muted: hsl(270 38% 13%);
+  --muted-foreground: hsl(270 15% 55%);
+  --popover: hsl(270 35% 15%);
+  --popover-foreground: hsl(270 18% 72%);
+  --card: hsl(270 40% 11%);
+  --card-foreground: hsl(270 20% 94%);
+  --border: hsl(270 30% 20%);
   --border2: var(--border);
-  --input: hsl(216 34% 17%);
-  --primary: hsl(285 100% 50%);
+  --input: hsl(270 30% 20%);
+  --primary: hsl(280 85% 60%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(222.2, 47.4%, 11.2%);
-  --secondary-foreground: hsl(210 40% 98%);
-  --accent: hsl(273 34% 16%);
-  --accent-foreground: hsl(260 40% 98%);
+  --secondary: hsl(270 38% 13%);
+  --secondary-foreground: hsl(270 20% 94%);
+  --accent: hsl(280 35% 18%);
+  --accent-foreground: hsl(280 25% 95%);
   --accent2: var(--accent);
   --accent-foreground2: var(--accent-foreground);
-  --destructive: hsl(0 63% 45%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --ring: hsl(285 100% 50%);
+  --destructive: hsl(0 65% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(280 85% 60%);
   --radius: 0.5rem;
 
   /* Brand colors */
-  --brand-primary: hsl(285 100% 50%);
-  --brand-primary-hover: hsl(285 100% 58%);
-  --brand-primary-active: hsl(285 100% 45%);
-  --brand-primary-subtle: hsl(285 60% 15%);
-  --brand-secondary: hsl(210 100% 60%);
-  --brand-secondary-hover: hsl(210 100% 68%);
-  --brand-accent: hsl(330 100% 65%);
-  --brand-accent-hover: hsl(330 100% 72%);
+  --brand-primary: hsl(280 85% 60%);
+  --brand-primary-hover: hsl(280 85% 68%);
+  --brand-primary-active: hsl(280 85% 52%);
+  --brand-primary-subtle: hsl(280 40% 15%);
+  --brand-secondary: hsl(210 90% 62%);
+  --brand-secondary-hover: hsl(210 90% 70%);
+  --brand-accent: hsl(330 85% 62%);
+  --brand-accent-hover: hsl(330 85% 70%);
 
   /* Background colors */
-  --bg-page: hsl(264 71% 6%);
-  --bg-surface: hsl(264 50% 10%);
-  --bg-elevated: hsl(264 40% 14%);
-  --bg-sunken: hsl(264 80% 4%);
-  --bg-overlay: hsl(0, 0%, 0%, 0.7);
-  --bg-interactive: hsl(264 40% 14%);
-  --bg-interactive-hover: hsl(264 35% 20%);
-  --bg-interactive-active: hsl(264 30% 25%);
-  --bg-success: hsl(145 80% 35%);
-  --bg-success-subtle: hsl(145 50% 12%);
-  --bg-warning: hsl(35 100% 45%);
-  --bg-warning-subtle: hsl(35 50% 12%);
-  --bg-error: hsl(0 70% 45%);
-  --bg-error-subtle: hsl(0 50% 12%);
-  --bg-info: hsl(210 100% 45%);
-  --bg-info-subtle: hsl(210 50% 12%);
+  --bg-page: hsl(270 45% 7%);
+  --bg-surface: hsl(270 40% 11%);
+  --bg-elevated: hsl(270 35% 15%);
+  --bg-sunken: hsl(270 50% 5%);
+  --bg-overlay: hsla(270, 45%, 4%, 0.85);
+  --bg-interactive: hsl(270 38% 13%);
+  --bg-interactive-hover: hsl(270 35% 19%);
+  --bg-interactive-active: hsl(270 32% 23%);
+  --bg-success: hsl(145 70% 38%);
+  --bg-success-subtle: hsl(145 40% 14%);
+  --bg-warning: hsl(38 92% 50%);
+  --bg-warning-subtle: hsl(38 40% 14%);
+  --bg-error: hsl(0 65% 50%);
+  --bg-error-subtle: hsl(0 40% 14%);
+  --bg-info: hsl(210 90% 52%);
+  --bg-info-subtle: hsl(210 40% 14%);
 
   /* Text colors */
-  --text-primary: hsl(213 31% 91%);
-  --text-secondary: hsl(215 20% 65%);
-  --text-tertiary: hsl(215 16% 55%);
-  --text-muted: hsl(215.4, 16.3%, 56.9%);
-  --text-disabled: hsl(215 14% 40%);
-  --text-heading: hsl(213 31% 95%);
-  --text-body: hsl(213 31% 91%);
-  --text-caption: hsl(215 20% 65%);
+  --text-primary: hsl(270 20% 94%);
+  --text-secondary: hsl(270 18% 72%);
+  --text-tertiary: hsl(270 15% 60%);
+  --text-muted: hsl(270 15% 55%);
+  --text-disabled: hsl(270 12% 40%);
+  --text-heading: hsl(270 25% 97%);
+  --text-body: hsl(270 20% 92%);
+  --text-caption: hsl(270 18% 68%);
   --text-on-primary: hsl(0 0% 100%);
-  --text-on-surface: hsl(213 31% 91%);
+  --text-on-surface: hsl(0 0% 95%);
   --text-on-error: hsl(0 0% 100%);
-  --text-link: hsl(285 100% 70%);
-  --text-link-hover: hsl(285 100% 80%);
-  --text-success: hsl(145 80% 55%);
-  --text-warning: hsl(35 100% 60%);
-  --text-error: hsl(0 70% 60%);
+  --text-link: hsl(280 85% 70%);
+  --text-link-hover: hsl(280 85% 78%);
+  --text-success: hsl(145 70% 58%);
+  --text-warning: hsl(38 92% 62%);
+  --text-error: hsl(0 65% 62%);
 
   /* Border colors */
-  --border-default: hsl(216 34% 17%);
-  --border-strong: hsl(216 30% 25%);
-  --border-subtle: hsl(216 40% 12%);
-  --border-focus: hsl(285 100% 50%);
-  --border-error: hsl(0 70% 45%);
-  --border-success: hsl(145 80% 35%);
+  --border-default: hsl(270 30% 20%);
+  --border-strong: hsl(270 28% 28%);
+  --border-subtle: hsl(270 35% 14%);
+  --border-focus: hsl(280 85% 60%);
+  --border-error: hsl(0 65% 50%);
+  --border-success: hsl(145 70% 38%);
 
   /* State colors */
-  --state-focus-ring: hsl(285, 100%, 50%, 0.5);
-  --state-selection: hsl(285, 100%, 50%, 0.2);
-  --state-highlight: hsl(45, 100%, 50%, 0.15);
+  --state-focus-ring: hsl(280, 85%, 60%, 0.5);
+  --state-selection: hsl(280, 85%, 60%, 0.25);
+  --state-highlight: hsl(45, 100%, 50%, 0.12);
 
   /* Fun/celebration colors */
-  --fun-celebration: hsl(45 100% 55%);
-  --fun-achievement: hsl(145 80% 50%);
-  --fun-streak: hsl(25 100% 60%);
-  --fun-party: hsl(330 100% 65%);
+  --fun-celebration: hsl(45 100% 58%);
+  --fun-achievement: hsl(145 70% 52%);
+  --fun-streak: hsl(25 95% 58%);
+  --fun-party: hsl(330 85% 62%);
 
   /* Shadow tokens (dark mode) */
   --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
   --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
   --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.3);
-  --shadow-glow: 0 0 20px 0 hsl(285 100% 50% / 0.4);
-  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.3);
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 20px 0 hsl(280 85% 60% / 0.35);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
+}
+
+.theme-groupi-light {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2, 47.4%, 11.2%);
+  --muted: hsl(210, 40%, 96.1%);
+  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2, 47.4%, 11.2%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2, 47.4%, 11.2%);
+  --border: hsl(214.3, 31.8%, 91.4%);
+  --border2: var(--border);
+  --input: hsl(214.3, 31.8%, 91.4%);
+  --primary: hsl(285 100% 34%);
+  --primary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(210, 40%, 96.1%);
+  --secondary-foreground: hsl(222.2, 47.4%, 11.2%);
+  --accent: hsl(260, 40%, 96.1%);
+  --accent-foreground: hsl(273.2, 47.4%, 11.2%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 85% 55%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --ring: hsl(215, 20.2%, 65.1%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(285 100% 34%);
+  --brand-primary-hover: hsl(285 100% 28%);
+  --brand-primary-active: hsl(285 100% 24%);
+  --brand-primary-subtle: hsl(285 100% 94%);
+  --brand-secondary: hsl(210 100% 50%);
+  --brand-secondary-hover: hsl(210 100% 42%);
+  --brand-accent: hsl(330 100% 60%);
+  --brand-accent-hover: hsl(330 100% 50%);
+
+  /* Background colors */
+  --bg-page: hsl(0 0% 100%);
+  --bg-surface: hsl(0 0% 100%);
+  --bg-elevated: hsl(0 0% 100%);
+  --bg-sunken: hsl(220 14% 96%);
+  --bg-overlay: hsl(0, 0%, 0%, 0.5);
+  --bg-interactive: hsl(220 14% 96%);
+  --bg-interactive-hover: hsl(220 13% 91%);
+  --bg-interactive-active: hsl(218 12% 83%);
+  --bg-success: hsl(145 80% 45%);
+  --bg-success-subtle: hsl(145 80% 90%);
+  --bg-warning: hsl(35 100% 55%);
+  --bg-warning-subtle: hsl(35 100% 90%);
+  --bg-error: hsl(0 85% 55%);
+  --bg-error-subtle: hsl(0 85% 93%);
+  --bg-info: hsl(210 100% 50%);
+  --bg-info-subtle: hsl(210 100% 94%);
+
+  /* Text colors */
+  --text-primary: hsl(222.2, 47.4%, 11.2%);
+  --text-secondary: hsl(217 9% 40%);
+  --text-tertiary: hsl(217 10% 50%);
+  --text-muted: hsl(215.4, 16.3%, 46.9%);
+  --text-disabled: hsl(217 10% 65%);
+  --text-heading: hsl(222.2, 47.4%, 11.2%);
+  --text-body: hsl(222.2, 47.4%, 11.2%);
+  --text-caption: hsl(217 9% 40%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(222.2, 47.4%, 11.2%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(285 100% 34%);
+  --text-link-hover: hsl(285 100% 28%);
+  --text-success: hsl(145 80% 28%);
+  --text-warning: hsl(35 100% 36%);
+  --text-error: hsl(0 85% 46%);
+
+  /* Border colors */
+  --border-default: hsl(214.3, 31.8%, 91.4%);
+  --border-strong: hsl(218 12% 83%);
+  --border-subtle: hsl(220 13% 95%);
+  --border-focus: hsl(285 100% 34%);
+  --border-error: hsl(0 85% 55%);
+  --border-success: hsl(145 80% 45%);
+
+  /* State colors */
+  --state-focus-ring: hsl(285, 100%, 34%, 0.4);
+  --state-selection: hsl(285, 100%, 34%, 0.15);
+  --state-highlight: hsl(45, 100%, 50%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 50%);
+  --fun-achievement: hsl(145 80% 45%);
+  --fun-streak: hsl(25 100% 55%);
+  --fun-party: hsl(330 100% 60%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 20px 0 hsl(285 100% 34% / 0.3);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.1);
+}
+
+.theme-groupi-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(270 45% 7%);
+  --foreground: hsl(270 20% 94%);
+  --muted: hsl(270 38% 13%);
+  --muted-foreground: hsl(270 15% 55%);
+  --popover: hsl(270 35% 15%);
+  --popover-foreground: hsl(270 18% 72%);
+  --card: hsl(270 40% 11%);
+  --card-foreground: hsl(270 20% 94%);
+  --border: hsl(270 30% 20%);
+  --border2: var(--border);
+  --input: hsl(270 30% 20%);
+  --primary: hsl(280 85% 60%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(270 38% 13%);
+  --secondary-foreground: hsl(270 20% 94%);
+  --accent: hsl(280 35% 18%);
+  --accent-foreground: hsl(280 25% 95%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 65% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(280 85% 60%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(280 85% 60%);
+  --brand-primary-hover: hsl(280 85% 68%);
+  --brand-primary-active: hsl(280 85% 52%);
+  --brand-primary-subtle: hsl(280 40% 15%);
+  --brand-secondary: hsl(210 90% 62%);
+  --brand-secondary-hover: hsl(210 90% 70%);
+  --brand-accent: hsl(330 85% 62%);
+  --brand-accent-hover: hsl(330 85% 70%);
+
+  /* Background colors */
+  --bg-page: hsl(270 45% 7%);
+  --bg-surface: hsl(270 40% 11%);
+  --bg-elevated: hsl(270 35% 15%);
+  --bg-sunken: hsl(270 50% 5%);
+  --bg-overlay: hsla(270, 45%, 4%, 0.85);
+  --bg-interactive: hsl(270 38% 13%);
+  --bg-interactive-hover: hsl(270 35% 19%);
+  --bg-interactive-active: hsl(270 32% 23%);
+  --bg-success: hsl(145 70% 38%);
+  --bg-success-subtle: hsl(145 40% 14%);
+  --bg-warning: hsl(38 92% 50%);
+  --bg-warning-subtle: hsl(38 40% 14%);
+  --bg-error: hsl(0 65% 50%);
+  --bg-error-subtle: hsl(0 40% 14%);
+  --bg-info: hsl(210 90% 52%);
+  --bg-info-subtle: hsl(210 40% 14%);
+
+  /* Text colors */
+  --text-primary: hsl(270 20% 94%);
+  --text-secondary: hsl(270 18% 72%);
+  --text-tertiary: hsl(270 15% 60%);
+  --text-muted: hsl(270 15% 55%);
+  --text-disabled: hsl(270 12% 40%);
+  --text-heading: hsl(270 25% 97%);
+  --text-body: hsl(270 20% 92%);
+  --text-caption: hsl(270 18% 68%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(0 0% 95%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(280 85% 70%);
+  --text-link-hover: hsl(280 85% 78%);
+  --text-success: hsl(145 70% 58%);
+  --text-warning: hsl(38 92% 62%);
+  --text-error: hsl(0 65% 62%);
+
+  /* Border colors */
+  --border-default: hsl(270 30% 20%);
+  --border-strong: hsl(270 28% 28%);
+  --border-subtle: hsl(270 35% 14%);
+  --border-focus: hsl(280 85% 60%);
+  --border-error: hsl(0 65% 50%);
+  --border-success: hsl(145 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(280, 85%, 60%, 0.5);
+  --state-selection: hsl(280, 85%, 60%, 0.25);
+  --state-highlight: hsl(45, 100%, 50%, 0.12);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 58%);
+  --fun-achievement: hsl(145 70% 52%);
+  --fun-streak: hsl(25 95% 58%);
+  --fun-party: hsl(330 85% 62%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 20px 0 hsl(280 85% 60% / 0.35);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
+}
+
+.theme-oled-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/oled-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(0 0% 98%);
+  --muted: hsl(0 0% 8%);
+  --muted-foreground: hsl(0 0% 50%);
+  --popover: hsl(0 0% 6%);
+  --popover-foreground: hsl(0 0% 72%);
+  --card: hsl(0 0% 6%);
+  --card-foreground: hsl(0 0% 98%);
+  --border: hsl(0 0% 16%);
+  --border2: var(--border);
+  --input: hsl(0 0% 16%);
+  --primary: hsl(280 90% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(0 0% 10%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --accent: hsl(280 40% 15%);
+  --accent-foreground: hsl(280 40% 95%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 70% 52%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --ring: hsl(280 90% 65%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(280 90% 65%);
+  --brand-primary-hover: hsl(280 90% 72%);
+  --brand-primary-active: hsl(280 90% 58%);
+  --brand-primary-subtle: hsl(280 50% 12%);
+  --brand-secondary: hsl(210 95% 65%);
+  --brand-secondary-hover: hsl(210 95% 72%);
+  --brand-accent: hsl(330 90% 65%);
+  --brand-accent-hover: hsl(330 90% 72%);
+
+  /* Background colors */
+  --bg-page: hsl(0 0% 0%);
+  --bg-surface: hsl(0 0% 6%);
+  --bg-elevated: hsl(0 0% 10%);
+  --bg-sunken: hsl(0 0% 0%);
+  --bg-overlay: hsla(0, 0%, 0%, 0.85);
+  --bg-interactive: hsl(0 0% 8%);
+  --bg-interactive-hover: hsl(0 0% 14%);
+  --bg-interactive-active: hsl(0 0% 18%);
+  --bg-success: hsl(145 75% 40%);
+  --bg-success-subtle: hsl(145 50% 10%);
+  --bg-warning: hsl(38 95% 52%);
+  --bg-warning-subtle: hsl(38 50% 10%);
+  --bg-error: hsl(0 70% 52%);
+  --bg-error-subtle: hsl(0 50% 10%);
+  --bg-info: hsl(210 95% 55%);
+  --bg-info-subtle: hsl(210 50% 10%);
+
+  /* Text colors */
+  --text-primary: hsl(0 0% 98%);
+  --text-secondary: hsl(0 0% 72%);
+  --text-tertiary: hsl(0 0% 58%);
+  --text-muted: hsl(0 0% 50%);
+  --text-disabled: hsl(0 0% 35%);
+  --text-heading: hsl(0 0% 100%);
+  --text-body: hsl(0 0% 96%);
+  --text-caption: hsl(0 0% 65%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(0 0% 98%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(280 90% 72%);
+  --text-link-hover: hsl(280 90% 80%);
+  --text-success: hsl(145 75% 60%);
+  --text-warning: hsl(38 95% 65%);
+  --text-error: hsl(0 70% 65%);
+
+  /* Border colors */
+  --border-default: hsl(0 0% 16%);
+  --border-strong: hsl(0 0% 24%);
+  --border-subtle: hsl(0 0% 10%);
+  --border-focus: hsl(280 90% 65%);
+  --border-error: hsl(0 70% 52%);
+  --border-success: hsl(145 75% 40%);
+
+  /* State colors */
+  --state-focus-ring: hsl(280, 90%, 65%, 0.5);
+  --state-selection: hsl(280, 90%, 65%, 0.3);
+  --state-highlight: hsl(45, 100%, 50%, 0.15);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 60%);
+  --fun-achievement: hsl(145 75% 55%);
+  --fun-streak: hsl(25 100% 60%);
+  --fun-party: hsl(330 90% 65%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-floating: 0 4px 8px -2px rgb(0 0 0 / 0.6);
+  --shadow-overlay: 0 16px 32px -8px rgb(0 0 0 / 0.7);
+  --shadow-popup: 0 8px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 3px 0 0 rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 0 24px 0 hsl(280 90% 65% / 0.4);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.5);
+}
+
+.theme-ocean-light {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/ocean-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(200 30% 99%);
+  --foreground: hsl(200 35% 15%);
+  --muted: hsl(200 25% 96%);
+  --muted-foreground: hsl(200 12% 50%);
+  --popover: hsl(200 20% 100%);
+  --popover-foreground: hsl(200 35% 15%);
+  --card: hsl(200 20% 100%);
+  --card-foreground: hsl(200 35% 15%);
+  --border: hsl(200 25% 88%);
+  --border2: var(--border);
+  --input: hsl(200 25% 88%);
+  --primary: hsl(200 85% 40%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(200 25% 96%);
+  --secondary-foreground: hsl(200 35% 15%);
+  --accent: hsl(170 30% 95%);
+  --accent-foreground: hsl(170 40% 15%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 75% 55%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --ring: hsl(200 25% 65%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(200 85% 40%);
+  --brand-primary-hover: hsl(200 85% 34%);
+  --brand-primary-active: hsl(200 85% 30%);
+  --brand-primary-subtle: hsl(200 85% 94%);
+  --brand-secondary: hsl(180 70% 40%);
+  --brand-secondary-hover: hsl(180 70% 34%);
+  --brand-accent: hsl(170 80% 45%);
+  --brand-accent-hover: hsl(170 80% 38%);
+
+  /* Background colors */
+  --bg-page: hsl(200 30% 99%);
+  --bg-surface: hsl(200 20% 100%);
+  --bg-elevated: hsl(200 25% 100%);
+  --bg-sunken: hsl(200 25% 96%);
+  --bg-overlay: hsl(200, 30%, 10%, 0.5);
+  --bg-interactive: hsl(200 20% 96%);
+  --bg-interactive-hover: hsl(200 22% 91%);
+  --bg-interactive-active: hsl(200 18% 85%);
+  --bg-success: hsl(160 75% 42%);
+  --bg-success-subtle: hsl(160 75% 92%);
+  --bg-warning: hsl(38 95% 52%);
+  --bg-warning-subtle: hsl(38 95% 92%);
+  --bg-error: hsl(0 75% 55%);
+  --bg-error-subtle: hsl(0 75% 94%);
+  --bg-info: hsl(200 85% 50%);
+  --bg-info-subtle: hsl(200 85% 94%);
+
+  /* Text colors */
+  --text-primary: hsl(200 35% 15%);
+  --text-secondary: hsl(200 20% 40%);
+  --text-tertiary: hsl(200 15% 50%);
+  --text-muted: hsl(200 12% 50%);
+  --text-disabled: hsl(200 10% 65%);
+  --text-heading: hsl(200 40% 12%);
+  --text-body: hsl(200 35% 15%);
+  --text-caption: hsl(200 20% 40%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(200 35% 15%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(200 85% 40%);
+  --text-link-hover: hsl(200 85% 30%);
+  --text-success: hsl(160 75% 28%);
+  --text-warning: hsl(38 95% 36%);
+  --text-error: hsl(0 75% 46%);
+
+  /* Border colors */
+  --border-default: hsl(200 25% 88%);
+  --border-strong: hsl(200 20% 78%);
+  --border-subtle: hsl(200 30% 94%);
+  --border-focus: hsl(200 85% 40%);
+  --border-error: hsl(0 75% 55%);
+  --border-success: hsl(160 75% 42%);
+
+  /* State colors */
+  --state-focus-ring: hsl(200, 85%, 40%, 0.4);
+  --state-selection: hsl(200, 85%, 40%, 0.15);
+  --state-highlight: hsl(170, 80%, 45%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 50%);
+  --fun-achievement: hsl(160 75% 42%);
+  --fun-streak: hsl(25 100% 55%);
+  --fun-party: hsl(170 80% 45%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 hsl(200 30% 20% / 0.08), 0 1px 2px -1px hsl(200 30% 20% / 0.08);
+  --shadow-floating:
+    0 4px 6px -1px hsl(200 30% 20% / 0.08),
+    0 2px 4px -2px hsl(200 30% 20% / 0.08);
+  --shadow-overlay:
+    0 20px 25px -5px hsl(200 30% 20% / 0.1),
+    0 8px 10px -6px hsl(200 30% 20% / 0.08);
+  --shadow-popup:
+    0 10px 15px -3px hsl(200 30% 20% / 0.08),
+    0 4px 6px -4px hsl(200 30% 20% / 0.08);
+  --shadow-pop: 0 4px 0 0 hsl(200 30% 20% / 0.08);
+  --shadow-glow: 0 0 20px 0 hsl(200 85% 40% / 0.3);
+  --shadow-bounce: 0 2px 0 0 hsl(200 30% 20% / 0.08);
+}
+
+.theme-ocean-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/ocean-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(210 50% 6%);
+  --foreground: hsl(200 25% 92%);
+  --muted: hsl(210 40% 12%);
+  --muted-foreground: hsl(200 12% 58%);
+  --popover: hsl(210 50% 6%);
+  --popover-foreground: hsl(200 18% 68%);
+  --card: hsl(210 50% 6%);
+  --card-foreground: hsl(200 25% 92%);
+  --border: hsl(210 35% 18%);
+  --border2: var(--border);
+  --input: hsl(210 35% 18%);
+  --primary: hsl(200 85% 55%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 40% 14%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --accent: hsl(200 35% 16%);
+  --accent-foreground: hsl(170 40% 95%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 60% 48%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(200 85% 55%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(200 85% 55%);
+  --brand-primary-hover: hsl(200 85% 62%);
+  --brand-primary-active: hsl(200 85% 48%);
+  --brand-primary-subtle: hsl(200 60% 15%);
+  --brand-secondary: hsl(180 70% 50%);
+  --brand-secondary-hover: hsl(180 70% 58%);
+  --brand-accent: hsl(170 80% 50%);
+  --brand-accent-hover: hsl(170 80% 58%);
+
+  /* Background colors */
+  --bg-page: hsl(210 50% 6%);
+  --bg-surface: hsl(210 45% 10%);
+  --bg-elevated: hsl(210 40% 14%);
+  --bg-sunken: hsl(210 55% 4%);
+  --bg-overlay: hsl(210, 50%, 5%, 0.7);
+  --bg-interactive: hsl(210 40% 14%);
+  --bg-interactive-hover: hsl(210 35% 20%);
+  --bg-interactive-active: hsl(210 30% 25%);
+  --bg-success: hsl(160 70% 38%);
+  --bg-success-subtle: hsl(160 50% 12%);
+  --bg-warning: hsl(38 90% 48%);
+  --bg-warning-subtle: hsl(38 50% 12%);
+  --bg-error: hsl(0 65% 48%);
+  --bg-error-subtle: hsl(0 45% 12%);
+  --bg-info: hsl(200 85% 48%);
+  --bg-info-subtle: hsl(200 50% 12%);
+
+  /* Text colors */
+  --text-primary: hsl(200 25% 92%);
+  --text-secondary: hsl(200 18% 68%);
+  --text-tertiary: hsl(200 14% 58%);
+  --text-muted: hsl(200 12% 58%);
+  --text-disabled: hsl(200 10% 42%);
+  --text-heading: hsl(200 30% 96%);
+  --text-body: hsl(200 25% 92%);
+  --text-caption: hsl(200 18% 68%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(200 25% 92%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(200 85% 65%);
+  --text-link-hover: hsl(200 85% 75%);
+  --text-success: hsl(160 70% 55%);
+  --text-warning: hsl(38 90% 62%);
+  --text-error: hsl(0 65% 62%);
+
+  /* Border colors */
+  --border-default: hsl(210 35% 18%);
+  --border-strong: hsl(210 30% 26%);
+  --border-subtle: hsl(210 40% 12%);
+  --border-focus: hsl(200 85% 55%);
+  --border-error: hsl(0 65% 48%);
+  --border-success: hsl(160 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(200, 85%, 55%, 0.5);
+  --state-selection: hsl(200, 85%, 55%, 0.2);
+  --state-highlight: hsl(170, 80%, 50%, 0.15);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 55%);
+  --fun-achievement: hsl(160 70% 50%);
+  --fun-streak: hsl(25 100% 60%);
+  --fun-party: hsl(170 80% 55%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 hsl(210 50% 5% / 0.3), 0 1px 2px -1px hsl(210 50% 5% / 0.3);
+  --shadow-floating:
+    0 4px 6px -1px hsl(210 50% 5% / 0.4), 0 2px 4px -2px hsl(210 50% 5% / 0.3);
+  --shadow-overlay:
+    0 20px 25px -5px hsl(210 50% 5% / 0.4),
+    0 8px 10px -6px hsl(210 50% 5% / 0.3);
+  --shadow-popup:
+    0 10px 15px -3px hsl(210 50% 5% / 0.4), 0 4px 6px -4px hsl(210 50% 5% / 0.3);
+  --shadow-pop: 0 4px 0 0 hsl(210 50% 5% / 0.3);
+  --shadow-glow: 0 0 20px 0 hsl(200 85% 55% / 0.4);
+  --shadow-bounce: 0 2px 0 0 hsl(210 50% 5% / 0.3);
+}
+
+.theme-transcend-light {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/transcend-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(348 50% 98%);
+  --foreground: hsl(260 30% 15%);
+  --muted: hsl(197 50% 95%);
+  --muted-foreground: hsl(260 12% 55%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(260 20% 35%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(260 30% 15%);
+  --border: hsl(197 30% 82%);
+  --border2: var(--border);
+  --input: hsl(197 30% 82%);
+  --primary: hsl(348 70% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(197 50% 95%);
+  --secondary-foreground: hsl(197 80% 40%);
+  --accent: hsl(197 55% 92%);
+  --accent-foreground: hsl(197 80% 40%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 70% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(197 80% 50%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(348 70% 65%);
+  --brand-primary-hover: hsl(348 70% 58%);
+  --brand-primary-active: hsl(348 70% 52%);
+  --brand-primary-subtle: hsl(348 79% 92%);
+  --brand-secondary: hsl(197 80% 50%);
+  --brand-secondary-hover: hsl(197 80% 45%);
+  --brand-accent: hsl(197 80% 50%);
+  --brand-accent-hover: hsl(197 80% 45%);
+
+  /* Background colors */
+  --bg-page: hsl(348 50% 98%);
+  --bg-surface: hsl(0 0% 100%);
+  --bg-elevated: hsl(0 0% 100%);
+  --bg-sunken: hsl(348 40% 95%);
+  --bg-overlay: hsl(260, 25%, 10%, 0.6);
+  --bg-interactive: hsl(197 50% 95%);
+  --bg-interactive-hover: hsl(197 55% 90%);
+  --bg-interactive-active: hsl(197 60% 85%);
+  --bg-success: hsl(160 70% 38%);
+  --bg-success-subtle: hsl(160 50% 92%);
+  --bg-warning: hsl(38 90% 50%);
+  --bg-warning-subtle: hsl(38 70% 92%);
+  --bg-error: hsl(0 70% 50%);
+  --bg-error-subtle: hsl(0 60% 94%);
+  --bg-info: hsl(197 80% 50%);
+  --bg-info-subtle: hsl(197 70% 92%);
+
+  /* Text colors */
+  --text-primary: hsl(260 30% 15%);
+  --text-secondary: hsl(260 20% 35%);
+  --text-tertiary: hsl(260 15% 50%);
+  --text-muted: hsl(260 12% 55%);
+  --text-disabled: hsl(260 8% 65%);
+  --text-heading: hsl(260 35% 12%);
+  --text-body: hsl(260 25% 18%);
+  --text-caption: hsl(260 15% 45%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(260 30% 15%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(197 80% 40%);
+  --text-link-hover: hsl(197 80% 32%);
+  --text-success: hsl(160 70% 30%);
+  --text-warning: hsl(38 90% 35%);
+  --text-error: hsl(0 70% 45%);
+
+  /* Border colors */
+  --border-default: hsl(197 30% 82%);
+  --border-strong: hsl(197 35% 70%);
+  --border-subtle: hsl(348 30% 90%);
+  --border-focus: hsl(197 80% 50%);
+  --border-error: hsl(0 70% 50%);
+  --border-success: hsl(160 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(197, 80%, 50%, 0.5);
+  --state-selection: hsl(197, 94%, 67%, 0.2);
+  --state-highlight: hsl(348, 79%, 81%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(197 94% 67%);
+  --fun-achievement: hsl(160 80% 45%);
+  --fun-streak: hsl(348 79% 81%);
+  --fun-party: hsl(348 79% 81%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-pop: 0 4px 0 0 hsl(348 60% 75% / 0.4);
+  --shadow-glow: 0 0 25px 3px hsl(348 79% 81% / 0.35);
+  --shadow-bounce: 0 2px 0 0 hsl(348 60% 75% / 0.4);
+}
+
+.theme-transcend-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/transcend-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(260 25% 10%);
+  --foreground: hsl(197 30% 95%);
+  --muted: hsl(197 40% 15%);
+  --muted-foreground: hsl(260 15% 55%);
+  --popover: hsl(260 20% 18%);
+  --popover-foreground: hsl(197 25% 75%);
+  --card: hsl(260 22% 14%);
+  --card-foreground: hsl(197 30% 95%);
+  --border: hsl(197 30% 25%);
+  --border2: var(--border);
+  --input: hsl(197 30% 25%);
+  --primary: hsl(348 79% 81%);
+  --primary-foreground: hsl(260 30% 15%);
+  --secondary: hsl(197 40% 15%);
+  --secondary-foreground: hsl(197 94% 75%);
+  --accent: hsl(197 50% 18%);
+  --accent-foreground: hsl(197 94% 75%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 70% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(197 94% 67%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(348 79% 81%);
+  --brand-primary-hover: hsl(348 79% 88%);
+  --brand-primary-active: hsl(348 79% 75%);
+  --brand-primary-subtle: hsl(348 50% 20%);
+  --brand-secondary: hsl(197 94% 67%);
+  --brand-secondary-hover: hsl(197 94% 75%);
+  --brand-accent: hsl(197 94% 67%);
+  --brand-accent-hover: hsl(197 94% 75%);
+
+  /* Background colors */
+  --bg-page: hsl(260 25% 10%);
+  --bg-surface: hsl(260 22% 14%);
+  --bg-elevated: hsl(260 20% 18%);
+  --bg-sunken: hsl(260 30% 7%);
+  --bg-overlay: hsl(260, 25%, 6%, 0.9);
+  --bg-interactive: hsl(197 40% 15%);
+  --bg-interactive-hover: hsl(197 45% 20%);
+  --bg-interactive-active: hsl(197 50% 25%);
+  --bg-success: hsl(160 70% 38%);
+  --bg-success-subtle: hsl(160 40% 14%);
+  --bg-warning: hsl(38 90% 48%);
+  --bg-warning-subtle: hsl(38 40% 14%);
+  --bg-error: hsl(0 70% 50%);
+  --bg-error-subtle: hsl(0 45% 14%);
+  --bg-info: hsl(197 94% 50%);
+  --bg-info-subtle: hsl(197 60% 16%);
+
+  /* Text colors */
+  --text-primary: hsl(197 30% 95%);
+  --text-secondary: hsl(197 25% 75%);
+  --text-tertiary: hsl(260 15% 62%);
+  --text-muted: hsl(260 15% 55%);
+  --text-disabled: hsl(260 10% 40%);
+  --text-heading: hsl(197 40% 97%);
+  --text-body: hsl(197 30% 93%);
+  --text-caption: hsl(197 25% 70%);
+  --text-on-primary: hsl(260 30% 15%);
+  --text-on-surface: hsl(197 30% 95%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(197 94% 72%);
+  --text-link-hover: hsl(197 94% 80%);
+  --text-success: hsl(160 70% 55%);
+  --text-warning: hsl(38 90% 62%);
+  --text-error: hsl(0 70% 62%);
+
+  /* Border colors */
+  --border-default: hsl(197 30% 25%);
+  --border-strong: hsl(197 35% 35%);
+  --border-subtle: hsl(260 20% 18%);
+  --border-focus: hsl(197 94% 67%);
+  --border-error: hsl(0 70% 50%);
+  --border-success: hsl(160 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(197, 94%, 67%, 0.6);
+  --state-selection: hsl(197, 94%, 67%, 0.3);
+  --state-highlight: hsl(348, 79%, 81%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(197 94% 67%);
+  --fun-achievement: hsl(160 80% 52%);
+  --fun-streak: hsl(348 79% 81%);
+  --fun-party: hsl(348 79% 81%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 4px 0 0 hsl(197 80% 40% / 0.5);
+  --shadow-glow: 0 0 30px 5px hsl(197 94% 67% / 0.4);
+  --shadow-bounce: 0 2px 0 0 hsl(197 80% 40% / 0.5);
+}
+
+.theme-sunset-light {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/sunset-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(30 40% 98%);
+  --foreground: hsl(20 25% 15%);
+  --muted: hsl(30 30% 94%);
+  --muted-foreground: hsl(20 10% 55%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(20 15% 40%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(20 25% 15%);
+  --border: hsl(30 20% 85%);
+  --border2: var(--border);
+  --input: hsl(30 20% 85%);
+  --primary: hsl(15 85% 55%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(30 30% 94%);
+  --secondary-foreground: hsl(20 25% 15%);
+  --accent: hsl(15 50% 94%);
+  --accent-foreground: hsl(15 60% 30%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 70% 52%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(15 85% 55%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(15 85% 55%);
+  --brand-primary-hover: hsl(15 85% 48%);
+  --brand-primary-active: hsl(15 85% 42%);
+  --brand-primary-subtle: hsl(15 70% 94%);
+  --brand-secondary: hsl(340 75% 55%);
+  --brand-secondary-hover: hsl(340 75% 48%);
+  --brand-accent: hsl(45 95% 50%);
+  --brand-accent-hover: hsl(45 95% 42%);
+
+  /* Background colors */
+  --bg-page: hsl(30 40% 98%);
+  --bg-surface: hsl(0 0% 100%);
+  --bg-elevated: hsl(0 0% 100%);
+  --bg-sunken: hsl(30 35% 94%);
+  --bg-overlay: hsl(30, 30%, 20%, 0.5);
+  --bg-interactive: hsl(30 30% 96%);
+  --bg-interactive-hover: hsl(30 30% 92%);
+  --bg-interactive-active: hsl(30 30% 88%);
+  --bg-success: hsl(145 65% 42%);
+  --bg-success-subtle: hsl(145 60% 92%);
+  --bg-warning: hsl(38 95% 50%);
+  --bg-warning-subtle: hsl(38 80% 92%);
+  --bg-error: hsl(0 70% 52%);
+  --bg-error-subtle: hsl(0 70% 94%);
+  --bg-info: hsl(200 80% 50%);
+  --bg-info-subtle: hsl(200 70% 94%);
+
+  /* Text colors */
+  --text-primary: hsl(20 25% 15%);
+  --text-secondary: hsl(20 15% 40%);
+  --text-tertiary: hsl(20 12% 50%);
+  --text-muted: hsl(20 10% 55%);
+  --text-disabled: hsl(20 8% 65%);
+  --text-heading: hsl(20 30% 12%);
+  --text-body: hsl(20 25% 18%);
+  --text-caption: hsl(20 15% 45%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(20 25% 15%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(15 85% 45%);
+  --text-link-hover: hsl(15 85% 35%);
+  --text-success: hsl(145 70% 32%);
+  --text-warning: hsl(30 90% 38%);
+  --text-error: hsl(0 75% 42%);
+
+  /* Border colors */
+  --border-default: hsl(30 20% 85%);
+  --border-strong: hsl(30 20% 75%);
+  --border-subtle: hsl(30 25% 92%);
+  --border-focus: hsl(15 85% 55%);
+  --border-error: hsl(0 70% 52%);
+  --border-success: hsl(145 65% 42%);
+
+  /* State colors */
+  --state-focus-ring: hsl(15, 85%, 55%, 0.4);
+  --state-selection: hsl(15, 85%, 55%, 0.15);
+  --state-highlight: hsl(45, 95%, 50%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 95% 50%);
+  --fun-achievement: hsl(145 65% 45%);
+  --fun-streak: hsl(25 100% 55%);
+  --fun-party: hsl(340 75% 55%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 hsl(20 30% 15% / 0.08), 0 1px 2px -1px hsl(20 30% 15% / 0.08);
+  --shadow-floating:
+    0 4px 6px -1px hsl(20 30% 15% / 0.1), 0 2px 4px -2px hsl(20 30% 15% / 0.08);
+  --shadow-overlay:
+    0 20px 25px -5px hsl(20 30% 15% / 0.12),
+    0 8px 10px -6px hsl(20 30% 15% / 0.08);
+  --shadow-popup:
+    0 10px 15px -3px hsl(20 30% 15% / 0.1),
+    0 4px 6px -4px hsl(20 30% 15% / 0.08);
+  --shadow-pop: 0 4px 0 0 hsl(20 30% 15% / 0.1);
+  --shadow-glow: 0 0 15px 0 hsl(15 85% 55% / 0.25);
+  --shadow-bounce: 0 2px 0 0 hsl(20 30% 15% / 0.1);
+}
+
+.theme-sunset-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/sunset-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(15 40% 7%);
+  --foreground: hsl(30 30% 94%);
+  --muted: hsl(15 32% 13%);
+  --muted-foreground: hsl(30 12% 55%);
+  --popover: hsl(15 30% 15%);
+  --popover-foreground: hsl(30 20% 72%);
+  --card: hsl(15 35% 11%);
+  --card-foreground: hsl(30 30% 94%);
+  --border: hsl(15 28% 20%);
+  --border2: var(--border);
+  --input: hsl(15 28% 20%);
+  --primary: hsl(15 85% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(15 32% 13%);
+  --secondary-foreground: hsl(30 30% 94%);
+  --accent: hsl(15 35% 18%);
+  --accent-foreground: hsl(15 30% 95%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 65% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(15 85% 58%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(15 85% 58%);
+  --brand-primary-hover: hsl(15 85% 65%);
+  --brand-primary-active: hsl(15 85% 50%);
+  --brand-primary-subtle: hsl(15 45% 16%);
+  --brand-secondary: hsl(340 75% 62%);
+  --brand-secondary-hover: hsl(340 75% 70%);
+  --brand-accent: hsl(45 95% 55%);
+  --brand-accent-hover: hsl(45 95% 62%);
+
+  /* Background colors */
+  --bg-page: hsl(15 40% 7%);
+  --bg-surface: hsl(15 35% 11%);
+  --bg-elevated: hsl(15 30% 15%);
+  --bg-sunken: hsl(15 45% 5%);
+  --bg-overlay: hsl(15, 40%, 4%, 0.85);
+  --bg-interactive: hsl(15 32% 13%);
+  --bg-interactive-hover: hsl(15 28% 19%);
+  --bg-interactive-active: hsl(15 25% 23%);
+  --bg-success: hsl(145 70% 38%);
+  --bg-success-subtle: hsl(145 40% 14%);
+  --bg-warning: hsl(38 92% 50%);
+  --bg-warning-subtle: hsl(38 40% 14%);
+  --bg-error: hsl(0 65% 50%);
+  --bg-error-subtle: hsl(0 40% 14%);
+  --bg-info: hsl(200 85% 52%);
+  --bg-info-subtle: hsl(200 40% 14%);
+
+  /* Text colors */
+  --text-primary: hsl(30 30% 94%);
+  --text-secondary: hsl(30 20% 72%);
+  --text-tertiary: hsl(30 15% 60%);
+  --text-muted: hsl(30 12% 55%);
+  --text-disabled: hsl(30 10% 40%);
+  --text-heading: hsl(30 35% 97%);
+  --text-body: hsl(30 30% 92%);
+  --text-caption: hsl(30 20% 68%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(30 30% 94%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(15 85% 68%);
+  --text-link-hover: hsl(15 85% 76%);
+  --text-success: hsl(145 70% 58%);
+  --text-warning: hsl(38 92% 62%);
+  --text-error: hsl(0 65% 62%);
+
+  /* Border colors */
+  --border-default: hsl(15 28% 20%);
+  --border-strong: hsl(15 25% 28%);
+  --border-subtle: hsl(15 32% 14%);
+  --border-focus: hsl(15 85% 58%);
+  --border-error: hsl(0 65% 50%);
+  --border-success: hsl(145 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(15, 85%, 58%, 0.5);
+  --state-selection: hsl(15, 85%, 58%, 0.25);
+  --state-highlight: hsl(45, 95%, 55%, 0.12);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 95% 58%);
+  --fun-achievement: hsl(145 70% 52%);
+  --fun-streak: hsl(25 100% 58%);
+  --fun-party: hsl(340 75% 62%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 20px 0 hsl(15 85% 58% / 0.35);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
+}
+
+.theme-forest-light {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/forest-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(90 20% 97%);
+  --foreground: hsl(150 25% 15%);
+  --muted: hsl(90 15% 93%);
+  --muted-foreground: hsl(150 6% 55%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(150 12% 40%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(150 25% 15%);
+  --border: hsl(90 12% 82%);
+  --border2: var(--border);
+  --input: hsl(90 12% 82%);
+  --primary: hsl(150 55% 38%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(90 15% 93%);
+  --secondary-foreground: hsl(150 25% 15%);
+  --accent: hsl(150 40% 92%);
+  --accent-foreground: hsl(150 50% 25%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 70% 52%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(150 55% 38%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(150 55% 38%);
+  --brand-primary-hover: hsl(150 55% 32%);
+  --brand-primary-active: hsl(150 55% 28%);
+  --brand-primary-subtle: hsl(150 45% 92%);
+  --brand-secondary: hsl(35 80% 45%);
+  --brand-secondary-hover: hsl(35 80% 38%);
+  --brand-accent: hsl(85 50% 45%);
+  --brand-accent-hover: hsl(85 50% 38%);
+
+  /* Background colors */
+  --bg-page: hsl(90 20% 97%);
+  --bg-surface: hsl(0 0% 100%);
+  --bg-elevated: hsl(0 0% 100%);
+  --bg-sunken: hsl(90 18% 93%);
+  --bg-overlay: hsl(150, 30%, 15%, 0.5);
+  --bg-interactive: hsl(90 15% 95%);
+  --bg-interactive-hover: hsl(90 15% 91%);
+  --bg-interactive-active: hsl(90 15% 87%);
+  --bg-success: hsl(145 65% 42%);
+  --bg-success-subtle: hsl(145 55% 92%);
+  --bg-warning: hsl(38 95% 50%);
+  --bg-warning-subtle: hsl(38 80% 92%);
+  --bg-error: hsl(0 70% 52%);
+  --bg-error-subtle: hsl(0 65% 94%);
+  --bg-info: hsl(200 80% 50%);
+  --bg-info-subtle: hsl(200 65% 94%);
+
+  /* Text colors */
+  --text-primary: hsl(150 25% 15%);
+  --text-secondary: hsl(150 12% 40%);
+  --text-tertiary: hsl(150 8% 50%);
+  --text-muted: hsl(150 6% 55%);
+  --text-disabled: hsl(150 5% 65%);
+  --text-heading: hsl(150 30% 12%);
+  --text-body: hsl(150 25% 18%);
+  --text-caption: hsl(150 12% 45%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(150 25% 15%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(150 55% 32%);
+  --text-link-hover: hsl(150 55% 25%);
+  --text-success: hsl(145 70% 32%);
+  --text-warning: hsl(30 90% 38%);
+  --text-error: hsl(0 75% 42%);
+
+  /* Border colors */
+  --border-default: hsl(90 12% 82%);
+  --border-strong: hsl(90 12% 72%);
+  --border-subtle: hsl(90 15% 90%);
+  --border-focus: hsl(150 55% 38%);
+  --border-error: hsl(0 70% 52%);
+  --border-success: hsl(145 65% 42%);
+
+  /* State colors */
+  --state-focus-ring: hsl(150, 55%, 38%, 0.4);
+  --state-selection: hsl(150, 55%, 38%, 0.15);
+  --state-highlight: hsl(35, 80%, 45%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(35 85% 50%);
+  --fun-achievement: hsl(150 55% 40%);
+  --fun-streak: hsl(25 95% 55%);
+  --fun-party: hsl(85 50% 48%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 hsl(150 30% 15% / 0.08), 0 1px 2px -1px hsl(150 30% 15% / 0.08);
+  --shadow-floating:
+    0 4px 6px -1px hsl(150 30% 15% / 0.1),
+    0 2px 4px -2px hsl(150 30% 15% / 0.08);
+  --shadow-overlay:
+    0 20px 25px -5px hsl(150 30% 15% / 0.12),
+    0 8px 10px -6px hsl(150 30% 15% / 0.08);
+  --shadow-popup:
+    0 10px 15px -3px hsl(150 30% 15% / 0.1),
+    0 4px 6px -4px hsl(150 30% 15% / 0.08);
+  --shadow-pop: 0 4px 0 0 hsl(150 30% 15% / 0.1);
+  --shadow-glow: 0 0 15px 0 hsl(150 55% 38% / 0.25);
+  --shadow-bounce: 0 2px 0 0 hsl(150 30% 15% / 0.1);
+}
+
+.theme-forest-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/forest-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(150 35% 7%);
+  --foreground: hsl(90 20% 94%);
+  --muted: hsl(150 28% 13%);
+  --muted-foreground: hsl(90 8% 55%);
+  --popover: hsl(150 25% 15%);
+  --popover-foreground: hsl(90 15% 72%);
+  --card: hsl(150 30% 11%);
+  --card-foreground: hsl(90 20% 94%);
+  --border: hsl(150 25% 20%);
+  --border2: var(--border);
+  --input: hsl(150 25% 20%);
+  --primary: hsl(150 55% 45%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(150 28% 13%);
+  --secondary-foreground: hsl(90 20% 94%);
+  --accent: hsl(150 30% 18%);
+  --accent-foreground: hsl(150 30% 95%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 65% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(150 55% 45%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(150 55% 45%);
+  --brand-primary-hover: hsl(150 55% 52%);
+  --brand-primary-active: hsl(150 55% 38%);
+  --brand-primary-subtle: hsl(150 35% 15%);
+  --brand-secondary: hsl(35 80% 52%);
+  --brand-secondary-hover: hsl(35 80% 60%);
+  --brand-accent: hsl(85 55% 52%);
+  --brand-accent-hover: hsl(85 55% 60%);
+
+  /* Background colors */
+  --bg-page: hsl(150 35% 7%);
+  --bg-surface: hsl(150 30% 11%);
+  --bg-elevated: hsl(150 25% 15%);
+  --bg-sunken: hsl(150 40% 5%);
+  --bg-overlay: hsl(150, 35%, 4%, 0.85);
+  --bg-interactive: hsl(150 28% 13%);
+  --bg-interactive-hover: hsl(150 24% 19%);
+  --bg-interactive-active: hsl(150 20% 23%);
+  --bg-success: hsl(145 70% 38%);
+  --bg-success-subtle: hsl(145 40% 14%);
+  --bg-warning: hsl(38 92% 50%);
+  --bg-warning-subtle: hsl(38 40% 14%);
+  --bg-error: hsl(0 65% 50%);
+  --bg-error-subtle: hsl(0 40% 14%);
+  --bg-info: hsl(200 85% 52%);
+  --bg-info-subtle: hsl(200 40% 14%);
+
+  /* Text colors */
+  --text-primary: hsl(90 20% 94%);
+  --text-secondary: hsl(90 15% 72%);
+  --text-tertiary: hsl(90 10% 60%);
+  --text-muted: hsl(90 8% 55%);
+  --text-disabled: hsl(90 6% 40%);
+  --text-heading: hsl(90 25% 97%);
+  --text-body: hsl(90 20% 92%);
+  --text-caption: hsl(90 15% 68%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(90 20% 94%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(150 55% 55%);
+  --text-link-hover: hsl(150 55% 65%);
+  --text-success: hsl(145 70% 58%);
+  --text-warning: hsl(38 92% 62%);
+  --text-error: hsl(0 65% 62%);
+
+  /* Border colors */
+  --border-default: hsl(150 25% 20%);
+  --border-strong: hsl(150 22% 28%);
+  --border-subtle: hsl(150 28% 14%);
+  --border-focus: hsl(150 55% 45%);
+  --border-error: hsl(0 65% 50%);
+  --border-success: hsl(145 70% 38%);
+
+  /* State colors */
+  --state-focus-ring: hsl(150, 55%, 45%, 0.5);
+  --state-selection: hsl(150, 55%, 45%, 0.25);
+  --state-highlight: hsl(35, 80%, 52%, 0.12);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(35 85% 55%);
+  --fun-achievement: hsl(150 55% 48%);
+  --fun-streak: hsl(25 95% 58%);
+  --fun-party: hsl(85 55% 55%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 20px 0 hsl(150 55% 45% / 0.35);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
+}
+
+.theme-synthwave-dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/synthwave-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(260 50% 6%);
+  --foreground: hsl(180 20% 94%);
+  --muted: hsl(260 42% 12%);
+  --muted-foreground: hsl(260 12% 55%);
+  --popover: hsl(260 40% 14%);
+  --popover-foreground: hsl(180 15% 72%);
+  --card: hsl(260 45% 10%);
+  --card-foreground: hsl(180 20% 94%);
+  --border: hsl(260 35% 22%);
+  --border2: var(--border);
+  --input: hsl(260 35% 22%);
+  --primary: hsl(320 95% 60%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(260 42% 12%);
+  --secondary-foreground: hsl(180 20% 94%);
+  --accent: hsl(270 45% 20%);
+  --accent-foreground: hsl(270 50% 92%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 75% 52%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --ring: hsl(320 95% 60%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(320 95% 60%);
+  --brand-primary-hover: hsl(320 95% 68%);
+  --brand-primary-active: hsl(320 95% 52%);
+  --brand-primary-subtle: hsl(320 50% 18%);
+  --brand-secondary: hsl(180 100% 50%);
+  --brand-secondary-hover: hsl(180 100% 58%);
+  --brand-accent: hsl(270 90% 65%);
+  --brand-accent-hover: hsl(270 90% 72%);
+
+  /* Background colors */
+  --bg-page: hsl(260 50% 6%);
+  --bg-surface: hsl(260 45% 10%);
+  --bg-elevated: hsl(260 40% 14%);
+  --bg-sunken: hsl(260 55% 4%);
+  --bg-overlay: hsl(260, 50%, 3%, 0.9);
+  --bg-interactive: hsl(260 42% 12%);
+  --bg-interactive-hover: hsl(260 38% 18%);
+  --bg-interactive-active: hsl(260 35% 22%);
+  --bg-success: hsl(160 80% 40%);
+  --bg-success-subtle: hsl(160 45% 14%);
+  --bg-warning: hsl(45 100% 50%);
+  --bg-warning-subtle: hsl(45 50% 14%);
+  --bg-error: hsl(0 75% 52%);
+  --bg-error-subtle: hsl(0 45% 14%);
+  --bg-info: hsl(180 100% 45%);
+  --bg-info-subtle: hsl(180 50% 14%);
+
+  /* Text colors */
+  --text-primary: hsl(180 20% 94%);
+  --text-secondary: hsl(180 15% 72%);
+  --text-tertiary: hsl(180 10% 60%);
+  --text-muted: hsl(260 12% 55%);
+  --text-disabled: hsl(260 10% 40%);
+  --text-heading: hsl(180 25% 98%);
+  --text-body: hsl(180 20% 92%);
+  --text-caption: hsl(180 15% 68%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(180 20% 94%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(320 95% 70%);
+  --text-link-hover: hsl(320 95% 80%);
+  --text-success: hsl(160 80% 55%);
+  --text-warning: hsl(45 100% 60%);
+  --text-error: hsl(0 75% 65%);
+
+  /* Border colors */
+  --border-default: hsl(260 35% 22%);
+  --border-strong: hsl(260 32% 30%);
+  --border-subtle: hsl(260 40% 14%);
+  --border-focus: hsl(320 95% 60%);
+  --border-error: hsl(0 75% 52%);
+  --border-success: hsl(160 80% 40%);
+
+  /* State colors */
+  --state-focus-ring: hsl(320, 95%, 60%, 0.5);
+  --state-selection: hsl(270, 90%, 65%, 0.25);
+  --state-highlight: hsl(180, 100%, 50%, 0.15);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 55%);
+  --fun-achievement: hsl(160 80% 50%);
+  --fun-streak: hsl(25 100% 58%);
+  --fun-party: hsl(320 95% 62%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 0 30px 5px hsl(320 95% 60% / 0.4);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.5);
+}
+
+/* Dark mode indicator for shadcn/ui compatibility */
+.theme-groupi-dark,
+.theme-oled-dark,
+.theme-ocean-dark,
+.theme-transcend-dark,
+.theme-sunset-dark,
+.theme-forest-dark,
+.theme-synthwave-dark,
+.dark {
+  color-scheme: dark;
 }

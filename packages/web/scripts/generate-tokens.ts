@@ -4,6 +4,11 @@
  * Reads design tokens from @groupi/shared and generates CSS custom properties.
  * This ensures the TypeScript token files are the single source of truth.
  *
+ * Generates CSS for all base themes with class selectors:
+ * - :root (default light theme)
+ * - .theme-groupi-light, .theme-groupi-dark, .theme-ocean-light, .theme-ocean-dark
+ * - .dark (legacy - maps to default dark theme)
+ *
  * Usage: npx tsx scripts/generate-tokens.ts
  */
 
@@ -15,10 +20,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import {
-  groupiDark,
-  groupiLight,
+  baseThemes,
   sharedTokens,
+  DEFAULT_LIGHT_THEME_ID,
+  DEFAULT_DARK_THEME_ID,
 } from '@groupi/shared/design/themes';
+import type { BaseTheme } from '@groupi/shared/design/themes';
 
 // Helper to format HSL values consistently
 function formatValue(value: string | number): string {
@@ -337,14 +344,15 @@ function generateThemeBlock(): string {
   return lines.join('\n');
 }
 
-// Generate :root CSS variables from light theme
-function generateRootVars(): string {
+// Generate CSS variables for a theme
+function generateThemeVars(theme: BaseTheme, selector: string): string {
+  const tokens = theme.tokens;
   const lines: string[] = [];
 
-  lines.push(':root {');
+  lines.push(`${selector} {`);
   lines.push(
     '  /* ==========================================================================',
-    '     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-light',
+    `     AUTO-GENERATED FROM @groupi/shared/design/themes/${theme.id}`,
     '     Do not edit directly. Run: pnpm generate:tokens',
     '     ========================================================================== */'
   );
@@ -352,389 +360,230 @@ function generateRootVars(): string {
 
   // Legacy tokens (shadcn/ui compatibility)
   lines.push('  /* Legacy tokens (shadcn/ui) */');
-  lines.push(`  --background: ${formatValue(groupiLight.legacy.background)};`);
-  lines.push(`  --foreground: ${formatValue(groupiLight.legacy.foreground)};`);
-  lines.push(`  --muted: ${formatValue(groupiLight.legacy.muted)};`);
+  lines.push(`  --background: ${formatValue(tokens.legacy.background)};`);
+  lines.push(`  --foreground: ${formatValue(tokens.legacy.foreground)};`);
+  lines.push(`  --muted: ${formatValue(tokens.legacy.muted)};`);
   lines.push(
-    `  --muted-foreground: ${formatValue(groupiLight.legacy.mutedForeground)};`
+    `  --muted-foreground: ${formatValue(tokens.legacy.mutedForeground)};`
   );
-  lines.push(`  --popover: ${formatValue(groupiLight.legacy.popover)};`);
+  lines.push(`  --popover: ${formatValue(tokens.legacy.popover)};`);
   lines.push(
-    `  --popover-foreground: ${formatValue(groupiLight.legacy.popoverForeground)};`
+    `  --popover-foreground: ${formatValue(tokens.legacy.popoverForeground)};`
   );
-  lines.push(`  --card: ${formatValue(groupiLight.legacy.card)};`);
+  lines.push(`  --card: ${formatValue(tokens.legacy.card)};`);
   lines.push(
-    `  --card-foreground: ${formatValue(groupiLight.legacy.cardForeground)};`
+    `  --card-foreground: ${formatValue(tokens.legacy.cardForeground)};`
   );
-  lines.push(`  --border: ${formatValue(groupiLight.legacy.border)};`);
+  lines.push(`  --border: ${formatValue(tokens.legacy.border)};`);
   lines.push('  --border2: var(--border);');
-  lines.push(`  --input: ${formatValue(groupiLight.legacy.input)};`);
-  lines.push(`  --primary: ${formatValue(groupiLight.legacy.primary)};`);
+  lines.push(`  --input: ${formatValue(tokens.legacy.input)};`);
+  lines.push(`  --primary: ${formatValue(tokens.legacy.primary)};`);
   lines.push(
-    `  --primary-foreground: ${formatValue(groupiLight.legacy.primaryForeground)};`
+    `  --primary-foreground: ${formatValue(tokens.legacy.primaryForeground)};`
   );
-  lines.push(`  --secondary: ${formatValue(groupiLight.legacy.secondary)};`);
+  lines.push(`  --secondary: ${formatValue(tokens.legacy.secondary)};`);
   lines.push(
-    `  --secondary-foreground: ${formatValue(groupiLight.legacy.secondaryForeground)};`
+    `  --secondary-foreground: ${formatValue(tokens.legacy.secondaryForeground)};`
   );
-  lines.push(`  --accent: ${formatValue(groupiLight.legacy.accent)};`);
+  lines.push(`  --accent: ${formatValue(tokens.legacy.accent)};`);
   lines.push(
-    `  --accent-foreground: ${formatValue(groupiLight.legacy.accentForeground)};`
+    `  --accent-foreground: ${formatValue(tokens.legacy.accentForeground)};`
   );
   lines.push('  --accent2: var(--accent);');
   lines.push('  --accent-foreground2: var(--accent-foreground);');
+  lines.push(`  --destructive: ${formatValue(tokens.legacy.destructive)};`);
   lines.push(
-    `  --destructive: ${formatValue(groupiLight.legacy.destructive)};`
+    `  --destructive-foreground: ${formatValue(tokens.legacy.destructiveForeground)};`
   );
-  lines.push(
-    `  --destructive-foreground: ${formatValue(groupiLight.legacy.destructiveForeground)};`
-  );
-  lines.push(`  --ring: ${formatValue(groupiLight.legacy.ring)};`);
-  lines.push(`  --radius: ${formatValue(groupiLight.legacy.radius)};`);
+  lines.push(`  --ring: ${formatValue(tokens.legacy.ring)};`);
+  lines.push(`  --radius: ${formatValue(tokens.legacy.radius)};`);
   lines.push('');
 
   // Brand colors
   lines.push('  /* Brand colors */');
-  lines.push(`  --brand-primary: ${formatValue(groupiLight.brand.primary)};`);
+  lines.push(`  --brand-primary: ${formatValue(tokens.brand.primary)};`);
   lines.push(
-    `  --brand-primary-hover: ${formatValue(groupiLight.brand.primaryHover)};`
+    `  --brand-primary-hover: ${formatValue(tokens.brand.primaryHover)};`
   );
   lines.push(
-    `  --brand-primary-active: ${formatValue(groupiLight.brand.primaryActive)};`
+    `  --brand-primary-active: ${formatValue(tokens.brand.primaryActive)};`
   );
   lines.push(
-    `  --brand-primary-subtle: ${formatValue(groupiLight.brand.primarySubtle)};`
+    `  --brand-primary-subtle: ${formatValue(tokens.brand.primarySubtle)};`
   );
+  lines.push(`  --brand-secondary: ${formatValue(tokens.brand.secondary)};`);
   lines.push(
-    `  --brand-secondary: ${formatValue(groupiLight.brand.secondary)};`
+    `  --brand-secondary-hover: ${formatValue(tokens.brand.secondaryHover)};`
   );
+  lines.push(`  --brand-accent: ${formatValue(tokens.brand.accent)};`);
   lines.push(
-    `  --brand-secondary-hover: ${formatValue(groupiLight.brand.secondaryHover)};`
-  );
-  lines.push(`  --brand-accent: ${formatValue(groupiLight.brand.accent)};`);
-  lines.push(
-    `  --brand-accent-hover: ${formatValue(groupiLight.brand.accentHover)};`
+    `  --brand-accent-hover: ${formatValue(tokens.brand.accentHover)};`
   );
   lines.push('');
 
   // Background colors
   lines.push('  /* Background colors */');
-  lines.push(`  --bg-page: ${formatValue(groupiLight.background.page)};`);
-  lines.push(`  --bg-surface: ${formatValue(groupiLight.background.surface)};`);
+  lines.push(`  --bg-page: ${formatValue(tokens.background.page)};`);
+  lines.push(`  --bg-surface: ${formatValue(tokens.background.surface)};`);
+  lines.push(`  --bg-elevated: ${formatValue(tokens.background.elevated)};`);
+  lines.push(`  --bg-sunken: ${formatValue(tokens.background.sunken)};`);
+  lines.push(`  --bg-overlay: ${formatValue(tokens.background.overlay)};`);
   lines.push(
-    `  --bg-elevated: ${formatValue(groupiLight.background.elevated)};`
-  );
-  lines.push(`  --bg-sunken: ${formatValue(groupiLight.background.sunken)};`);
-  lines.push(`  --bg-overlay: ${formatValue(groupiLight.background.overlay)};`);
-  lines.push(
-    `  --bg-interactive: ${formatValue(groupiLight.background.interactive)};`
+    `  --bg-interactive: ${formatValue(tokens.background.interactive)};`
   );
   lines.push(
-    `  --bg-interactive-hover: ${formatValue(groupiLight.background.interactiveHover)};`
+    `  --bg-interactive-hover: ${formatValue(tokens.background.interactiveHover)};`
   );
   lines.push(
-    `  --bg-interactive-active: ${formatValue(groupiLight.background.interactiveActive)};`
+    `  --bg-interactive-active: ${formatValue(tokens.background.interactiveActive)};`
   );
-  lines.push(`  --bg-success: ${formatValue(groupiLight.background.success)};`);
+  lines.push(`  --bg-success: ${formatValue(tokens.background.success)};`);
   lines.push(
-    `  --bg-success-subtle: ${formatValue(groupiLight.background.successSubtle)};`
+    `  --bg-success-subtle: ${formatValue(tokens.background.successSubtle)};`
   );
-  lines.push(`  --bg-warning: ${formatValue(groupiLight.background.warning)};`);
+  lines.push(`  --bg-warning: ${formatValue(tokens.background.warning)};`);
   lines.push(
-    `  --bg-warning-subtle: ${formatValue(groupiLight.background.warningSubtle)};`
+    `  --bg-warning-subtle: ${formatValue(tokens.background.warningSubtle)};`
   );
-  lines.push(`  --bg-error: ${formatValue(groupiLight.background.error)};`);
+  lines.push(`  --bg-error: ${formatValue(tokens.background.error)};`);
   lines.push(
-    `  --bg-error-subtle: ${formatValue(groupiLight.background.errorSubtle)};`
+    `  --bg-error-subtle: ${formatValue(tokens.background.errorSubtle)};`
   );
-  lines.push(`  --bg-info: ${formatValue(groupiLight.background.info)};`);
+  lines.push(`  --bg-info: ${formatValue(tokens.background.info)};`);
   lines.push(
-    `  --bg-info-subtle: ${formatValue(groupiLight.background.infoSubtle)};`
+    `  --bg-info-subtle: ${formatValue(tokens.background.infoSubtle)};`
   );
   lines.push('');
 
   // Text colors
   lines.push('  /* Text colors */');
-  lines.push(`  --text-primary: ${formatValue(groupiLight.text.primary)};`);
-  lines.push(`  --text-secondary: ${formatValue(groupiLight.text.secondary)};`);
-  lines.push(`  --text-tertiary: ${formatValue(groupiLight.text.tertiary)};`);
-  lines.push(`  --text-muted: ${formatValue(groupiLight.text.muted)};`);
-  lines.push(`  --text-disabled: ${formatValue(groupiLight.text.disabled)};`);
-  lines.push(`  --text-heading: ${formatValue(groupiLight.text.heading)};`);
-  lines.push(`  --text-body: ${formatValue(groupiLight.text.body)};`);
-  lines.push(`  --text-caption: ${formatValue(groupiLight.text.caption)};`);
-  lines.push(
-    `  --text-on-primary: ${formatValue(groupiLight.text.onPrimary)};`
-  );
-  lines.push(
-    `  --text-on-surface: ${formatValue(groupiLight.text.onSurface)};`
-  );
-  lines.push(`  --text-on-error: ${formatValue(groupiLight.text.onError)};`);
-  lines.push(`  --text-link: ${formatValue(groupiLight.text.link)};`);
-  lines.push(
-    `  --text-link-hover: ${formatValue(groupiLight.text.linkHover)};`
-  );
-  lines.push(`  --text-success: ${formatValue(groupiLight.text.success)};`);
-  lines.push(`  --text-warning: ${formatValue(groupiLight.text.warning)};`);
-  lines.push(`  --text-error: ${formatValue(groupiLight.text.error)};`);
+  lines.push(`  --text-primary: ${formatValue(tokens.text.primary)};`);
+  lines.push(`  --text-secondary: ${formatValue(tokens.text.secondary)};`);
+  lines.push(`  --text-tertiary: ${formatValue(tokens.text.tertiary)};`);
+  lines.push(`  --text-muted: ${formatValue(tokens.text.muted)};`);
+  lines.push(`  --text-disabled: ${formatValue(tokens.text.disabled)};`);
+  lines.push(`  --text-heading: ${formatValue(tokens.text.heading)};`);
+  lines.push(`  --text-body: ${formatValue(tokens.text.body)};`);
+  lines.push(`  --text-caption: ${formatValue(tokens.text.caption)};`);
+  lines.push(`  --text-on-primary: ${formatValue(tokens.text.onPrimary)};`);
+  lines.push(`  --text-on-surface: ${formatValue(tokens.text.onSurface)};`);
+  lines.push(`  --text-on-error: ${formatValue(tokens.text.onError)};`);
+  lines.push(`  --text-link: ${formatValue(tokens.text.link)};`);
+  lines.push(`  --text-link-hover: ${formatValue(tokens.text.linkHover)};`);
+  lines.push(`  --text-success: ${formatValue(tokens.text.success)};`);
+  lines.push(`  --text-warning: ${formatValue(tokens.text.warning)};`);
+  lines.push(`  --text-error: ${formatValue(tokens.text.error)};`);
   lines.push('');
 
   // Border colors
   lines.push('  /* Border colors */');
-  lines.push(`  --border-default: ${formatValue(groupiLight.border.default)};`);
-  lines.push(`  --border-strong: ${formatValue(groupiLight.border.strong)};`);
-  lines.push(`  --border-subtle: ${formatValue(groupiLight.border.subtle)};`);
-  lines.push(`  --border-focus: ${formatValue(groupiLight.border.focus)};`);
-  lines.push(`  --border-error: ${formatValue(groupiLight.border.error)};`);
-  lines.push(`  --border-success: ${formatValue(groupiLight.border.success)};`);
+  lines.push(`  --border-default: ${formatValue(tokens.border.default)};`);
+  lines.push(`  --border-strong: ${formatValue(tokens.border.strong)};`);
+  lines.push(`  --border-subtle: ${formatValue(tokens.border.subtle)};`);
+  lines.push(`  --border-focus: ${formatValue(tokens.border.focus)};`);
+  lines.push(`  --border-error: ${formatValue(tokens.border.error)};`);
+  lines.push(`  --border-success: ${formatValue(tokens.border.success)};`);
   lines.push('');
 
   // State colors
   lines.push('  /* State colors */');
-  lines.push(
-    `  --state-focus-ring: ${formatValue(groupiLight.state.focusRing)};`
-  );
-  lines.push(
-    `  --state-selection: ${formatValue(groupiLight.state.selection)};`
-  );
-  lines.push(
-    `  --state-highlight: ${formatValue(groupiLight.state.highlight)};`
-  );
+  lines.push(`  --state-focus-ring: ${formatValue(tokens.state.focusRing)};`);
+  lines.push(`  --state-selection: ${formatValue(tokens.state.selection)};`);
+  lines.push(`  --state-highlight: ${formatValue(tokens.state.highlight)};`);
   lines.push('');
 
   // Fun colors
   lines.push('  /* Fun/celebration colors */');
-  lines.push(
-    `  --fun-celebration: ${formatValue(groupiLight.fun.celebration)};`
-  );
-  lines.push(
-    `  --fun-achievement: ${formatValue(groupiLight.fun.achievement)};`
-  );
-  lines.push(`  --fun-streak: ${formatValue(groupiLight.fun.streak)};`);
-  lines.push(`  --fun-party: ${formatValue(groupiLight.fun.party)};`);
+  lines.push(`  --fun-celebration: ${formatValue(tokens.fun.celebration)};`);
+  lines.push(`  --fun-achievement: ${formatValue(tokens.fun.achievement)};`);
+  lines.push(`  --fun-streak: ${formatValue(tokens.fun.streak)};`);
+  lines.push(`  --fun-party: ${formatValue(tokens.fun.party)};`);
   lines.push('');
 
   // Shadow tokens
-  lines.push('  /* Shadow tokens */');
-  lines.push(`  --shadow-raised: ${groupiLight.shadow.raised};`);
-  lines.push(`  --shadow-floating: ${groupiLight.shadow.floating};`);
-  lines.push(`  --shadow-overlay: ${groupiLight.shadow.overlay};`);
-  lines.push(`  --shadow-popup: ${groupiLight.shadow.popup};`);
-  lines.push(`  --shadow-pop: ${groupiLight.shadow.pop};`);
-  lines.push(`  --shadow-glow: ${groupiLight.shadow.glow};`);
-  lines.push(`  --shadow-bounce: ${groupiLight.shadow.bounce};`);
+  lines.push(
+    `  /* Shadow tokens${theme.mode === 'dark' ? ' (dark mode)' : ''} */`
+  );
+  lines.push(`  --shadow-raised: ${tokens.shadow.raised};`);
+  lines.push(`  --shadow-floating: ${tokens.shadow.floating};`);
+  lines.push(`  --shadow-overlay: ${tokens.shadow.overlay};`);
+  lines.push(`  --shadow-popup: ${tokens.shadow.popup};`);
+  lines.push(`  --shadow-pop: ${tokens.shadow.pop};`);
+  lines.push(`  --shadow-glow: ${tokens.shadow.glow};`);
+  lines.push(`  --shadow-bounce: ${tokens.shadow.bounce};`);
 
   lines.push('}');
 
   return lines.join('\n');
 }
 
-// Generate .dark CSS variables from dark theme
-function generateDarkVars(): string {
-  const lines: string[] = [];
+// Generate dark mode indicator for shadcn/ui
+function generateDarkModeIndicators(): string {
+  const darkThemes = baseThemes.filter(t => t.mode === 'dark');
+  const selectors = darkThemes.map(t => `.theme-${t.id}`).join(',\n');
 
-  lines.push('.dark {');
-  lines.push(
-    '  /* ==========================================================================',
-    '     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-dark',
-    '     Do not edit directly. Run: pnpm generate:tokens',
-    '     ========================================================================== */'
-  );
-  lines.push('');
-
-  // Legacy tokens (shadcn/ui compatibility)
-  lines.push('  /* Legacy tokens (shadcn/ui) */');
-  lines.push(`  --background: ${formatValue(groupiDark.legacy.background)};`);
-  lines.push(`  --foreground: ${formatValue(groupiDark.legacy.foreground)};`);
-  lines.push(`  --muted: ${formatValue(groupiDark.legacy.muted)};`);
-  lines.push(
-    `  --muted-foreground: ${formatValue(groupiDark.legacy.mutedForeground)};`
-  );
-  lines.push(`  --popover: ${formatValue(groupiDark.legacy.popover)};`);
-  lines.push(
-    `  --popover-foreground: ${formatValue(groupiDark.legacy.popoverForeground)};`
-  );
-  lines.push(`  --card: ${formatValue(groupiDark.legacy.card)};`);
-  lines.push(
-    `  --card-foreground: ${formatValue(groupiDark.legacy.cardForeground)};`
-  );
-  lines.push(`  --border: ${formatValue(groupiDark.legacy.border)};`);
-  lines.push('  --border2: var(--border);');
-  lines.push(`  --input: ${formatValue(groupiDark.legacy.input)};`);
-  lines.push(`  --primary: ${formatValue(groupiDark.legacy.primary)};`);
-  lines.push(
-    `  --primary-foreground: ${formatValue(groupiDark.legacy.primaryForeground)};`
-  );
-  lines.push(`  --secondary: ${formatValue(groupiDark.legacy.secondary)};`);
-  lines.push(
-    `  --secondary-foreground: ${formatValue(groupiDark.legacy.secondaryForeground)};`
-  );
-  lines.push(`  --accent: ${formatValue(groupiDark.legacy.accent)};`);
-  lines.push(
-    `  --accent-foreground: ${formatValue(groupiDark.legacy.accentForeground)};`
-  );
-  lines.push('  --accent2: var(--accent);');
-  lines.push('  --accent-foreground2: var(--accent-foreground);');
-  lines.push(`  --destructive: ${formatValue(groupiDark.legacy.destructive)};`);
-  lines.push(
-    `  --destructive-foreground: ${formatValue(groupiDark.legacy.destructiveForeground)};`
-  );
-  lines.push(`  --ring: ${formatValue(groupiDark.legacy.ring)};`);
-  lines.push(`  --radius: ${formatValue(groupiDark.legacy.radius)};`);
-  lines.push('');
-
-  // Brand colors
-  lines.push('  /* Brand colors */');
-  lines.push(`  --brand-primary: ${formatValue(groupiDark.brand.primary)};`);
-  lines.push(
-    `  --brand-primary-hover: ${formatValue(groupiDark.brand.primaryHover)};`
-  );
-  lines.push(
-    `  --brand-primary-active: ${formatValue(groupiDark.brand.primaryActive)};`
-  );
-  lines.push(
-    `  --brand-primary-subtle: ${formatValue(groupiDark.brand.primarySubtle)};`
-  );
-  lines.push(
-    `  --brand-secondary: ${formatValue(groupiDark.brand.secondary)};`
-  );
-  lines.push(
-    `  --brand-secondary-hover: ${formatValue(groupiDark.brand.secondaryHover)};`
-  );
-  lines.push(`  --brand-accent: ${formatValue(groupiDark.brand.accent)};`);
-  lines.push(
-    `  --brand-accent-hover: ${formatValue(groupiDark.brand.accentHover)};`
-  );
-  lines.push('');
-
-  // Background colors
-  lines.push('  /* Background colors */');
-  lines.push(`  --bg-page: ${formatValue(groupiDark.background.page)};`);
-  lines.push(`  --bg-surface: ${formatValue(groupiDark.background.surface)};`);
-  lines.push(
-    `  --bg-elevated: ${formatValue(groupiDark.background.elevated)};`
-  );
-  lines.push(`  --bg-sunken: ${formatValue(groupiDark.background.sunken)};`);
-  lines.push(`  --bg-overlay: ${formatValue(groupiDark.background.overlay)};`);
-  lines.push(
-    `  --bg-interactive: ${formatValue(groupiDark.background.interactive)};`
-  );
-  lines.push(
-    `  --bg-interactive-hover: ${formatValue(groupiDark.background.interactiveHover)};`
-  );
-  lines.push(
-    `  --bg-interactive-active: ${formatValue(groupiDark.background.interactiveActive)};`
-  );
-  lines.push(`  --bg-success: ${formatValue(groupiDark.background.success)};`);
-  lines.push(
-    `  --bg-success-subtle: ${formatValue(groupiDark.background.successSubtle)};`
-  );
-  lines.push(`  --bg-warning: ${formatValue(groupiDark.background.warning)};`);
-  lines.push(
-    `  --bg-warning-subtle: ${formatValue(groupiDark.background.warningSubtle)};`
-  );
-  lines.push(`  --bg-error: ${formatValue(groupiDark.background.error)};`);
-  lines.push(
-    `  --bg-error-subtle: ${formatValue(groupiDark.background.errorSubtle)};`
-  );
-  lines.push(`  --bg-info: ${formatValue(groupiDark.background.info)};`);
-  lines.push(
-    `  --bg-info-subtle: ${formatValue(groupiDark.background.infoSubtle)};`
-  );
-  lines.push('');
-
-  // Text colors
-  lines.push('  /* Text colors */');
-  lines.push(`  --text-primary: ${formatValue(groupiDark.text.primary)};`);
-  lines.push(`  --text-secondary: ${formatValue(groupiDark.text.secondary)};`);
-  lines.push(`  --text-tertiary: ${formatValue(groupiDark.text.tertiary)};`);
-  lines.push(`  --text-muted: ${formatValue(groupiDark.text.muted)};`);
-  lines.push(`  --text-disabled: ${formatValue(groupiDark.text.disabled)};`);
-  lines.push(`  --text-heading: ${formatValue(groupiDark.text.heading)};`);
-  lines.push(`  --text-body: ${formatValue(groupiDark.text.body)};`);
-  lines.push(`  --text-caption: ${formatValue(groupiDark.text.caption)};`);
-  lines.push(`  --text-on-primary: ${formatValue(groupiDark.text.onPrimary)};`);
-  lines.push(`  --text-on-surface: ${formatValue(groupiDark.text.onSurface)};`);
-  lines.push(`  --text-on-error: ${formatValue(groupiDark.text.onError)};`);
-  lines.push(`  --text-link: ${formatValue(groupiDark.text.link)};`);
-  lines.push(`  --text-link-hover: ${formatValue(groupiDark.text.linkHover)};`);
-  lines.push(`  --text-success: ${formatValue(groupiDark.text.success)};`);
-  lines.push(`  --text-warning: ${formatValue(groupiDark.text.warning)};`);
-  lines.push(`  --text-error: ${formatValue(groupiDark.text.error)};`);
-  lines.push('');
-
-  // Border colors
-  lines.push('  /* Border colors */');
-  lines.push(`  --border-default: ${formatValue(groupiDark.border.default)};`);
-  lines.push(`  --border-strong: ${formatValue(groupiDark.border.strong)};`);
-  lines.push(`  --border-subtle: ${formatValue(groupiDark.border.subtle)};`);
-  lines.push(`  --border-focus: ${formatValue(groupiDark.border.focus)};`);
-  lines.push(`  --border-error: ${formatValue(groupiDark.border.error)};`);
-  lines.push(`  --border-success: ${formatValue(groupiDark.border.success)};`);
-  lines.push('');
-
-  // State colors
-  lines.push('  /* State colors */');
-  lines.push(
-    `  --state-focus-ring: ${formatValue(groupiDark.state.focusRing)};`
-  );
-  lines.push(
-    `  --state-selection: ${formatValue(groupiDark.state.selection)};`
-  );
-  lines.push(
-    `  --state-highlight: ${formatValue(groupiDark.state.highlight)};`
-  );
-  lines.push('');
-
-  // Fun colors
-  lines.push('  /* Fun/celebration colors */');
-  lines.push(
-    `  --fun-celebration: ${formatValue(groupiDark.fun.celebration)};`
-  );
-  lines.push(
-    `  --fun-achievement: ${formatValue(groupiDark.fun.achievement)};`
-  );
-  lines.push(`  --fun-streak: ${formatValue(groupiDark.fun.streak)};`);
-  lines.push(`  --fun-party: ${formatValue(groupiDark.fun.party)};`);
-  lines.push('');
-
-  // Shadow tokens (dark mode)
-  lines.push('  /* Shadow tokens (dark mode) */');
-  lines.push(`  --shadow-raised: ${groupiDark.shadow.raised};`);
-  lines.push(`  --shadow-floating: ${groupiDark.shadow.floating};`);
-  lines.push(`  --shadow-overlay: ${groupiDark.shadow.overlay};`);
-  lines.push(`  --shadow-popup: ${groupiDark.shadow.popup};`);
-  lines.push(`  --shadow-pop: ${groupiDark.shadow.pop};`);
-  lines.push(`  --shadow-glow: ${groupiDark.shadow.glow};`);
-  lines.push(`  --shadow-bounce: ${groupiDark.shadow.bounce};`);
-
-  lines.push('}');
-
-  return lines.join('\n');
+  return `/* Dark mode indicator for shadcn/ui compatibility */
+${selectors},
+.dark {
+  color-scheme: dark;
+}`;
 }
 
 // Main function
 function main() {
   const outputPath = path.join(__dirname, '../styles/_generated-tokens.css');
 
-  const content = `/**
+  // Find default themes
+  const defaultLightTheme = baseThemes.find(
+    t => t.id === DEFAULT_LIGHT_THEME_ID
+  );
+  const defaultDarkTheme = baseThemes.find(t => t.id === DEFAULT_DARK_THEME_ID);
+
+  if (!defaultLightTheme || !defaultDarkTheme) {
+    console.error('Error: Default themes not found');
+    process.exit(1);
+  }
+
+  // Generate CSS blocks
+  const blocks: string[] = [
+    `/**
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * This file is generated from @groupi/shared/design/themes
  * Run: pnpm generate:tokens
- */
+ *
+ * Available themes:
+ * - :root (default: ${DEFAULT_LIGHT_THEME_ID})
+ * - .dark (legacy: ${DEFAULT_DARK_THEME_ID})
+${baseThemes.map(t => ` * - .theme-${t.id}`).join('\n')}
+ */`,
+  ];
 
-${generateDefaultsDisabledBlock()}
+  // Add defaults disabled block
+  blocks.push(generateDefaultsDisabledBlock());
 
-${generateThemeBlock()}
+  // Add @theme inline block
+  blocks.push(generateThemeBlock());
 
-${generateRootVars()}
+  // Add :root (default light theme)
+  blocks.push(generateThemeVars(defaultLightTheme, ':root'));
 
-${generateDarkVars()}
-`;
+  // Add .dark (legacy dark theme support)
+  blocks.push(generateThemeVars(defaultDarkTheme, '.dark'));
+
+  // Add each theme with its class selector
+  for (const theme of baseThemes) {
+    blocks.push(generateThemeVars(theme, `.theme-${theme.id}`));
+  }
+
+  // Add dark mode indicators
+  blocks.push(generateDarkModeIndicators());
+
+  const content = blocks.join('\n\n');
 
   fs.writeFileSync(outputPath, content, 'utf-8');
   console.log(`✓ Generated tokens at ${outputPath}`);
+  console.log(`  Themes: ${baseThemes.map(t => t.id).join(', ')}`);
 }
 
 main();

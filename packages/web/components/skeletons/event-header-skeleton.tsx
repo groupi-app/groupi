@@ -9,7 +9,7 @@ export function EventHeaderSkeleton() {
       <div className='flex justify-between flex-col-reverse gap-3 md:flex-row'>
         <Skeleton className='h-12 w-96' />
         <DropdownMenu>
-          <DropdownMenuTrigger className='size-12 hover:bg-accent transition-all rounded-md flex items-center justify-center'>
+          <DropdownMenuTrigger className='size-12 hover:bg-accent/80 transition-all rounded-md flex items-center justify-center'>
             <Icons.more className='size-8' />
           </DropdownMenuTrigger>
         </DropdownMenu>

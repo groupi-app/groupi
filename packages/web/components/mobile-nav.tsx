@@ -92,7 +92,7 @@ export function MobileNav({
                   <Link
                     href={item.disabled ? '#' : item.href}
                     className={cn(
-                      'flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground',
+                      'flex w-full items-center rounded-md p-2 text-sm font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground',
                       item.disabled && 'cursor-not-allowed opacity-60'
                     )}
                   >
@@ -103,7 +103,7 @@ export function MobileNav({
               <div className='mt-6'>
                 <ProfileSlate userInfo={userInfo} />
                 <div className='flex flex-col mt-2'>
-                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
+                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <button
                       onClick={() => {
                         setSheetOpen(false);
@@ -115,7 +115,7 @@ export function MobileNav({
                       <span>My Profile</span>
                     </button>
                   </div>
-                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
+                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <SheetClose asChild>
                       <Link
                         href='/settings'
@@ -126,7 +126,7 @@ export function MobileNav({
                       </Link>
                     </SheetClose>
                   </div>
-                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
+                  <div className='w-full rounded-md p-2 text-sm font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer'>
                     <SheetClose asChild>
                       <Button
                         variant='ghost'
@@ -148,7 +148,7 @@ export function MobileNav({
           {!userInfo.email && (
             <SheetClose asChild>
               <Link href='/sign-in'>
-                <div className='flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4'>
+                <div className='flex items-center gap-2 w-full rounded-md p-2 text-sm font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground cursor-pointer mt-4'>
                   <Icons.signIn className='size-4' />
                   <span>Sign In</span>
                 </div>

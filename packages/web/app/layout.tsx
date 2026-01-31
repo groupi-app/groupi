@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 import { MainNavStatic } from '@/components/main-nav-static';
 import { NavigationWrapper } from '@/components/navigation-wrapper';
-import { ModeToggle } from '@/components/mode-toggle';
 import { AppProviders } from '@/components/app-providers';
 import { FooterCopyright } from '@/components/footer-copyright';
 import { navConfig } from '@/config/nav';
@@ -25,6 +24,7 @@ import { GlobalNavigationGuard } from '@/components/global-navigation-guard';
 import { OnboardingRedirectWrapper } from '@/components/onboarding-redirect-wrapper';
 import { GoogleOneTap } from '@/components/google-one-tap';
 import { GlobalPresenceTracker } from '@/components/global-presence-tracker';
+import { ThemeSync } from '@/components/theme-sync';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -89,6 +89,22 @@ export const metadata = {
   manifest: '/manifest.json',
 };
 
+// Inline script to apply custom theme CSS before React hydrates
+// This prevents flash of default theme on page load
+const customThemeScript = `
+(function() {
+  try {
+    var css = localStorage.getItem('groupi-custom-theme-css');
+    if (css) {
+      var style = document.createElement('style');
+      style.id = 'custom-theme-overrides-preload';
+      style.textContent = css;
+      document.head.appendChild(style);
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -96,6 +112,9 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning lang='en'>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: customThemeScript }} />
+      </head>
       <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
@@ -121,9 +140,12 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                       <GlobalPresenceTracker />
                     </Suspense>
+                    <Suspense fallback={null}>
+                      <ThemeSync />
+                    </Suspense>
                     <div className='flex flex-col min-h-screen'>
                       {/* Static header shell - renders immediately */}
-                      <header className='z-sticky w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+                      <header className='z-sticky w-full bg-primary text-primary-foreground'>
                         <MainNavStatic
                           dynamicContent={
                             <Suspense fallback={<MainNavDynamicSkeleton />}>
@@ -135,9 +157,8 @@ export default function RootLayout({
                       {/* Static main content area */}
                       <main className='grow'>{children}</main>
                       {/* Static footer */}
-                      <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+                      <footer className='bg-primary text-primary-foreground h-24'>
                         <div className='container mx-auto py-4 flex gap-8 items-center'>
-                          <ModeToggle />
                           <div className='flex flex-col gap-2'>
                             <p>
                               Built by{' '}
