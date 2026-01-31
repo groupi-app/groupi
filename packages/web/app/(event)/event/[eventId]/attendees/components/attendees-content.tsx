@@ -4,42 +4,35 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Attendees } from './attendees';
-import { AttendeeListSkeleton } from '@/components/skeletons/attendee-list-skeleton';
-import React, { Suspense, use, useEffect } from 'react';
-import {
-  useEventHeader,
-  useEventMembers,
-  useCurrentUser,
-  useEventAvailabilityData,
-} from '@/hooks/convex';
-import { Id } from '@/convex/_generated/dataModel';
+import { AttendeeListSkeleton } from '@/components/skeletons';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isOrganizer } from '@/lib/event-permissions';
+import { useEventData } from '../../context';
 
 /**
- * Attendees content component - Client-only architecture
+ * Attendees content component - receives data from context
+ * - Data is pre-loaded by EventDataProvider in layout
  * - Handles availability redirect logic client-side
- * - Uses Convex hooks to check if user needs to set availability
- * - Real-time updates via Convex subscriptions
+ * - No loading state needed for core data - only for redirect check
  */
-export function AttendeesContent({
-  params,
-}: {
-  params: Promise<{ eventId: string }>;
-}) {
-  const { eventId } = use(params);
+export function AttendeesContent() {
   const router = useRouter();
-  const eventData = useEventHeader(eventId as Id<'events'>);
-  const memberData = useEventMembers(eventId as Id<'events'>);
-  const currentUser = useCurrentUser();
-  const availabilityData = useEventAvailabilityData(eventId as Id<'events'>);
+  const {
+    eventId,
+    headerData,
+    membersData,
+    currentUser,
+    availabilityData,
+    isLoading,
+  } = useEventData();
 
   // Check if user should be redirected to availability page
   // Redirect if: poll active, not organizer, and hasn't set availability
   useEffect(() => {
-    if (eventData && memberData && currentUser && availabilityData) {
-      const event = eventData.event;
-      const userRole = eventData.userMembership?.role;
+    if (headerData && membersData && currentUser && availabilityData) {
+      const event = headerData.event;
+      const userRole = headerData.userMembership?.role;
       const hasPollActive = !event?.chosenDateTime;
       const isUserOrganizer = userRole && isOrganizer(userRole);
 
@@ -64,10 +57,10 @@ export function AttendeesContent({
         }
       }
     }
-  }, [eventData, memberData, currentUser, eventId, router, availabilityData]);
+  }, [headerData, membersData, currentUser, eventId, router, availabilityData]);
 
-  // Loading state
-  if (!eventData || !memberData || !currentUser) {
+  // Loading state - only while core data is loading
+  if (isLoading || !headerData || !membersData || !currentUser) {
     return (
       <div className='container max-w-4xl py-4'>
         <div className='w-max'>
@@ -87,11 +80,11 @@ export function AttendeesContent({
   }
 
   // Handle case where event not found (userMembership would be null)
-  if (!eventData.userMembership) {
+  if (!headerData.userMembership) {
     return (
       <div className='container max-w-4xl py-4'>
         <div className='text-center py-8'>
-          <h1 className='text-2xl font-bold text-red-600'>Event not found</h1>
+          <h1 className='text-2xl font-bold text-error'>Event not found</h1>
         </div>
       </div>
     );
@@ -110,9 +103,7 @@ export function AttendeesContent({
       </div>
       <div className='py-4'>
         <h1 className='text-2xl font-bold mb-4'>Attendees</h1>
-        <Suspense fallback={<AttendeeListSkeleton />}>
-          <Attendees eventId={eventId} />
-        </Suspense>
+        <Attendees data={membersData} />
       </div>
     </div>
   );

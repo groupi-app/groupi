@@ -84,19 +84,19 @@ export function NotificationSlate({
 
       case 'NEW_POST':
         if (post) {
-          return `/post/${post.id}`;
+          return `/event/${eventId}/post/${post.id}`;
         }
         return `/event/${eventId}`;
 
       case 'NEW_REPLY':
         if (post) {
-          return `/post/${post.id}`;
+          return `/event/${eventId}/post/${post.id}`;
         }
         return `/event/${eventId}`;
 
       case 'USER_MENTIONED':
         if (post) {
-          return `/post/${post.id}`;
+          return `/event/${eventId}/post/${post.id}`;
         }
         return `/event/${eventId}`;
 

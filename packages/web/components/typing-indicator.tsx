@@ -114,10 +114,10 @@ export function TypingIndicator({
             key={user.personId}
             className={cn(
               'h-6 w-6 border-2 border-background',
-              // Add z-index so first avatar is on top
-              index === 0 && 'z-30',
-              index === 1 && 'z-20',
-              index === 2 && 'z-10'
+              // Add z-index so first avatar is on top (local stacking)
+              index === 0 && 'z-top',
+              index === 1 && 'z-float',
+              index === 2 && 'z-lifted'
             )}
           >
             <AvatarImage src={user.image || undefined} alt={user.name} />

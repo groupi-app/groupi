@@ -87,7 +87,7 @@ export function DateCard({
           setDialogType('overview');
         }}
       >
-        <div className='w-full md:max-w-lg border border-border shadow-md rounded-md py-4 px-4 hover:bg-accent transition-all cursor-pointer'>
+        <div className='w-full md:max-w-lg border border-border shadow-floating rounded-md py-4 px-4 hover:bg-accent transition-all cursor-pointer'>
           <div className='flex items-start gap-4'>
             <h1 className='font-semibold text-2xl'>#{pdt.rank}</h1>
             <div className='flex flex-col'>
@@ -139,17 +139,17 @@ export function DateCard({
           </div>
           <div className='flex items-center gap-2 mt-4'>
             <div className='flex items-center gap-2'>
-              <Icons.check className='size-6 rounded-full  text-green-500' />
+              <Icons.check className='size-6 rounded-full  text-success' />
               <span>{yesAmount}</span>
             </div>
             <div className='flex items-center gap-2'>
-              <div className='rounded-full size-6 text-center font-semibold text-yellow-500 cursor-default'>
+              <div className='rounded-full size-6 text-center font-semibold text-warning cursor-default'>
                 <span>?</span>
               </div>
               <span>{maybeAmount}</span>
             </div>
             <div className='flex items-center gap-2'>
-              <Icons.close className='size-6 rounded-full text-red-500' />
+              <Icons.close className='size-6 rounded-full text-error' />
 
               <span>{noAmount}</span>
             </div>
@@ -157,7 +157,7 @@ export function DateCard({
           <div className='w-full rounded-full border border-border h-4 flex items-center'>
             <div
               className={cn(
-                'h-full bg-green-500 rounded-l-full',
+                'h-full bg-success rounded-l-full',
                 maybeAmount === 0 && noAmount === 0 ? 'rounded-r-full' : ''
               )}
               style={{
@@ -166,7 +166,7 @@ export function DateCard({
             />
             <div
               className={cn(
-                'h-full bg-yellow-500',
+                'h-full bg-warning',
                 yesAmount === 0 ? 'rounded-l-full' : '',
                 noAmount === 0 ? 'rounded-r-full' : ''
               )}
@@ -176,7 +176,7 @@ export function DateCard({
             />
             <div
               className={cn(
-                ' h-full bg-red-500 rounded-r-full',
+                ' h-full bg-error rounded-r-full',
                 yesAmount === 0 && maybeAmount === 0 ? 'rounded-l-full' : ''
               )}
               style={{

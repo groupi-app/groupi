@@ -108,15 +108,15 @@ export function AttendeeSlate({
             <div className='flex items-center gap-1 text-muted-foreground'>
               <span>RSVP: </span>
               {member.rsvpStatus === 'YES' && (
-                <Icons.check className='text-green-500' />
+                <Icons.check className='text-success' />
               )}
               {member.rsvpStatus === 'MAYBE' && (
-                <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                <span className='font-semibold w-6 text-xl text-warning text-center'>
                   ?
                 </span>
               )}
               {member.rsvpStatus === 'NO' && (
-                <Icons.close className='text-red-500' />
+                <Icons.close className='text-error' />
               )}
               <span className='text-foreground'>{member.rsvpStatus}</span>
             </div>
@@ -226,15 +226,15 @@ export function AttendeeSlate({
                         </div>
                         <div className='flex items-center gap-1'>
                           {availability.status === 'YES' && (
-                            <Icons.check className='size-6 text-green-500' />
+                            <Icons.check className='size-6 text-success' />
                           )}
                           {availability.status === 'MAYBE' && (
-                            <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                            <span className='font-semibold w-6 text-xl text-warning text-center'>
                               ?
                             </span>
                           )}
                           {availability.status === 'NO' && (
-                            <Icons.close className='size-6 text-red-500' />
+                            <Icons.close className='size-6 text-error' />
                           )}
                           <span>{availability.status}</span>
                         </div>

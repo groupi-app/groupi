@@ -2,21 +2,8 @@
 
 import { Navigation } from './navigation';
 import { OnboardingNav } from './onboarding-nav';
-import { useQuery } from 'convex/react';
-import { useSession } from '@/lib/auth-client';
+import { useGlobalUser } from '@/context/global-user-context';
 import { usePathname } from 'next/navigation';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userQueries: any;
-function initApi() {
-  if (!userQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    userQueries = api.users?.queries ?? {};
-  }
-}
-initApi();
 
 type NavItem = {
   href: string;
@@ -30,13 +17,12 @@ type NavItem = {
  */
 export function NavigationWrapper({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
-  const { data: session, isPending: sessionPending } = useSession();
 
-  // Check if user needs onboarding (authenticated but missing username)
-  const needsOnboarding = useQuery(userQueries.checkNeedsOnboarding, {});
+  // Use global user context instead of direct queries
+  const { session, isSessionPending, needsOnboarding } = useGlobalUser();
 
   // If session is loading, show nothing (will be replaced quickly)
-  if (sessionPending) {
+  if (isSessionPending) {
     return null;
   }
 

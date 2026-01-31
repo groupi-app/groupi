@@ -1,16 +1,18 @@
 'use client';
 
 import { AttendeeSlate } from '../../components/attendee-slate';
-import { Doc, Id } from '@/convex/_generated/dataModel';
+import { Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { useEventMembers } from '@/hooks/convex';
-import { AttendeeListSkeleton } from '@/components/skeletons';
+import { useEventAttendeesData } from '@/hooks/convex';
+
+// Type for the data prop (inferred from useEventAttendeesData return type)
+type AttendeesDataType = NonNullable<ReturnType<typeof useEventAttendeesData>>;
 
 interface AttendeesProps {
-  eventId: string;
+  data: AttendeesDataType;
 }
 
 // Role hierarchy: ORGANIZER > MODERATOR > ATTENDEE
@@ -34,27 +36,23 @@ type MemberWithDetails = Doc<'memberships'> & {
 };
 
 /**
- * Client component with direct Convex hooks - Client-only pattern
- * - Uses useEventMembers hook for real-time attendee data
- * - Real-time updates via Convex subscriptions
- * - Loading states managed by component
+ * Attendees list component - receives data from context
+ * - Data is pre-loaded by EventDataProvider in layout
+ * - Real-time updates still work via Convex subscriptions in provider
+ * - No loading state needed - data is guaranteed
  */
-export function Attendees({ eventId }: AttendeesProps) {
+export function Attendees({ data }: AttendeesProps) {
   // All hooks must be called unconditionally at the top
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Use direct Convex hook for real-time member data
-  const eventAttendeesData = useEventMembers(eventId as Id<'events'>);
-
-  // Extract data from query result (may be undefined during loading)
-  const userId = eventAttendeesData?.userId;
-  const userRole = eventAttendeesData?.userMembership.role;
-  const eventDateTime = eventAttendeesData?.event.chosenDateTime;
+  // Extract data from props (guaranteed to be present)
+  const userId = data.userId;
+  const userRole = data.userMembership.role;
+  const eventDateTime = data.event.chosenDateTime;
 
   // Filter and sort members - useMemo called unconditionally
-  // Note: members initialization moved inside useMemo to satisfy exhaustive-deps
   const filteredAndSortedMembers = useMemo(() => {
-    const members = eventAttendeesData?.event.memberships ?? [];
+    const members = data.event.memberships ?? [];
     // Filter by search query
     const filtered = members.filter((member: MemberWithDetails) => {
       const name = member.person?.user?.name || '';
@@ -79,14 +77,10 @@ export function Attendees({ eventId }: AttendeesProps) {
       const nameB = b.person?.user?.name || b.person?.user?.email || '';
       return nameA.localeCompare(nameB);
     });
-  }, [eventAttendeesData?.event.memberships, searchQuery]);
+  }, [data.event.memberships, searchQuery]);
 
-  // Handle loading state after all hooks are called
-  if (!eventAttendeesData) {
-    return <AttendeeListSkeleton />;
-  }
-
-  // Convex provides real-time updates automatically - no manual sync needed
+  // Data is guaranteed by parent - no loading checks needed
+  // Convex provides real-time updates automatically via provider
 
   return (
     <div className='flex flex-col gap-4'>

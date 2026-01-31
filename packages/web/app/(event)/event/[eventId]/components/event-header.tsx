@@ -30,28 +30,29 @@ import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useMobile } from '@/hooks/use-mobile';
 import {
   useEventManagement,
-  useEventHeader,
   useMarkEventNotificationsAsRead,
+  useEventHeaderData,
 } from '@/hooks/convex';
 import { useIsEventMuted, useToggleEventMute } from '@/hooks/convex/use-muting';
-import { EventHeaderSkeleton } from '@/components/skeletons';
-import { NotFoundError, AccessDeniedError } from '@/components/error-display';
-import { Id } from '@/convex/_generated/dataModel';
 import { calculateObjectPosition } from '@/components/image-focal-point-picker';
 
+// Type for the data prop (inferred from useEventHeaderData return type)
+type EventHeaderDataType = NonNullable<ReturnType<typeof useEventHeaderData>>;
+
 interface EventHeaderProps {
-  eventId: string;
+  data: EventHeaderDataType;
 }
 
 /**
- * Client component with direct Convex hooks - Client-only pattern
- * - Uses useEventHeader hook for real-time event data
- * - Real-time updates via Convex subscriptions
- * - Loading states managed by component
+ * Event header component - receives data from context
+ * - Data is pre-loaded by EventDataProvider in layout
+ * - Still uses hooks for mutations (muting, notifications)
+ * - No loading state needed - data is guaranteed
  */
-export function EventHeader({ eventId }: EventHeaderProps) {
-  // Use the eventId prop directly for hooks
-  const eventIdTyped = eventId as Id<'events'>;
+export function EventHeader({ data }: EventHeaderProps) {
+  // Extract eventId from data for hooks and links
+  const eventIdTyped = data.event._id;
+  const eventId = data.event._id as string;
 
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   // State hooks
@@ -71,9 +72,6 @@ export function EventHeader({ eventId }: EventHeaderProps) {
 
   // Platform hook
   const isMobile = useMobile();
-
-  // Use direct Convex hook for real-time event data
-  const eventData = useEventHeader(eventIdTyped);
 
   // Use management hooks for mutations
   // Note: Currently used for event/membership context that feeds into sub-components
@@ -146,8 +144,6 @@ export function EventHeader({ eventId }: EventHeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!eventId) return;
-
     const timer = setTimeout(async () => {
       try {
         await markEventNotificationsAsRead(eventIdTyped);
@@ -157,11 +153,10 @@ export function EventHeader({ eventId }: EventHeaderProps) {
       }
     }, 100);
     return () => clearTimeout(timer);
-  }, [eventId, eventIdTyped, markEventNotificationsAsRead]);
+  }, [eventIdTyped, markEventNotificationsAsRead]);
 
-  // Extract data from query result
-  const event = eventData?.event;
-  const userMembership = eventData?.userMembership;
+  // Extract data from props (guaranteed to be present)
+  const { event, userMembership } = data;
 
   // Calculate correct object-position that centers the focal point
   const coverObjectPosition = useMemo(() => {
@@ -180,36 +175,7 @@ export function EventHeader({ eventId }: EventHeaderProps) {
     return `${pos.x}% ${pos.y}%`;
   }, [event?.imageFocalPoint, imageNaturalSize, coverContainerSize]);
 
-  // Check loading state (undefined = still loading)
-  const isLoading = eventData === undefined;
-
-  // Loading state - AFTER all hooks are called
-  if (isLoading) {
-    return <EventHeaderSkeleton />;
-  }
-
-  // Event not found (null = not found, or data loaded but event missing)
-  if (eventData === null || !event) {
-    return (
-      <NotFoundError
-        resourceType='event'
-        message="This event doesn't exist or may have been deleted."
-        showBackButton={true}
-        showHomeButton={true}
-      />
-    );
-  }
-
-  // User is not a member of this event (access denied)
-  if (!userMembership) {
-    return (
-      <AccessDeniedError
-        message="You don't have access to this event. You may need an invite link to join."
-        showBackButton={true}
-        showHomeButton={true}
-      />
-    );
-  }
+  // Data is guaranteed by parent - no loading/error checks needed
 
   const { title, location, chosenDateTime, chosenEndDateTime, description } =
     event;
@@ -358,7 +324,7 @@ export function EventHeader({ eventId }: EventHeaderProps) {
             ref={coverContainerRef}
             type='button'
             onClick={() => setLightboxOpen(true)}
-            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-xl mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-card mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             style={{ touchAction: 'manipulation' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}

@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Id, Doc } from '@/convex/_generated/dataModel';
+import { Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
-import { useEventMembers } from '@/hooks/convex';
+import { useEventAttendeesData } from '@/hooks/convex';
 
 // Match the Member type expected by MemberIcon
 type Membership = Doc<'memberships'> & {
@@ -20,24 +20,26 @@ type Membership = Doc<'memberships'> & {
     | null;
 };
 
+// Type for the data prop (inferred from useEventAttendeesData return type)
+type MemberListDataType = NonNullable<ReturnType<typeof useEventAttendeesData>>;
+
 interface MemberListProps {
-  eventId: string;
+  data: MemberListDataType;
 }
 
 /**
- * Client component with direct Convex hooks - Client-only pattern
- * - Uses useEventMembers hook for real-time member data
- * - Real-time updates via Convex subscriptions
- * - Loading states managed by component
+ * Member list component - receives data from context
+ * - Data is pre-loaded by EventDataProvider in layout
+ * - No loading state needed - data is guaranteed
  */
-export function MemberList({ eventId }: MemberListProps) {
+export function MemberList({ data }: MemberListProps) {
+  // Extract eventId from data for links
+  const eventId = data.event._id as string;
+
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const ref = useRef<HTMLDivElement>(null);
   const [visibleIcons, setVisibleIcons] = useState(100);
   const pathname = usePathname();
-
-  // Use direct Convex hook for real-time member data
-  const eventAttendeesData = useEventMembers(eventId as Id<'events'>);
 
   // useLayoutEffect must be called unconditionally
   useLayoutEffect(() => {
@@ -58,29 +60,8 @@ export function MemberList({ eventId }: MemberListProps) {
     };
   }, [pathname]);
 
-  // Loading state - AFTER all hooks are called
-  if (eventAttendeesData === undefined) {
-    return (
-      <div>
-        <div className='flex items-center gap-2 mb-4'>
-          <h2 className='text-xl font-heading font-medium'>Attendees</h2>
-          <div className='rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground'>
-            <div className='h-4 w-6 bg-muted rounded animate-pulse'></div>
-          </div>
-        </div>
-        <div className='flex items-center p-2 -space-x-2 h-[54px]'>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className='h-10 w-10 rounded-full bg-muted animate-pulse'
-            ></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const { event, userMembership, userId } = eventAttendeesData;
+  // Data is guaranteed by parent - no loading checks needed
+  const { event, userMembership, userId } = data;
   const members = event.memberships;
   const userRole = userMembership.role;
   const eventDateTime = event.chosenDateTime
@@ -154,7 +135,7 @@ export function MemberList({ eventId }: MemberListProps) {
                   i === visibleIcons - 1 && (
                     <motion.div variants={item} layout key={i}>
                       <Link href={`${pathname}/attendees`}>
-                        <Button className='rounded-full z-30' key={i}>
+                        <Button className='rounded-full z-top' key={i}>
                           +{members.length - visibleIcons + 1}
                         </Button>
                       </Link>
@@ -166,7 +147,7 @@ export function MemberList({ eventId }: MemberListProps) {
         </LayoutGroup>
       </motion.div>
       <Link href={`${pathname}/attendees`}>
-        <span className='rounded-full z-30 text-primary hover:underline'>
+        <span className='rounded-full z-top text-primary hover:underline'>
           View All
         </span>
       </Link>

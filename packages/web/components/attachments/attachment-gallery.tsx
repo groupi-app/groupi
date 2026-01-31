@@ -188,7 +188,7 @@ export function AttachmentGallery({
             }}
             disabled={isDeleting}
             className={cn(
-              'absolute top-1 right-1 p-1.5 rounded z-10',
+              'absolute top-1 right-1 p-1.5 rounded z-lifted',
               'bg-black/70 hover:bg-destructive text-white',
               'opacity-0 group-hover/tile:opacity-100 transition-opacity',
               'focus:outline-none focus:ring-1 focus:ring-white',
@@ -383,7 +383,7 @@ export function AttachmentGallery({
                   onClick={() => onDelete(attachment._id)}
                   disabled={isDeleting}
                   className={cn(
-                    'absolute top-1 right-1 p-1.5 rounded z-10',
+                    'absolute top-1 right-1 p-1.5 rounded z-lifted',
                     'bg-black/70 hover:bg-destructive text-white',
                     'transition-colors',
                     'focus:outline-none focus:ring-1 focus:ring-white',

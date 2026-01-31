@@ -9,6 +9,7 @@ pnpm check      # Validate code (lint + types + format) - USE THIS
 pnpm generate   # Regenerate Convex types after schema changes
 pnpm test:run   # Run all tests
 pnpm lint:fix   # Auto-fix linting issues
+pnpm lint:tokens # Check design token usage
 pnpm format     # Format code
 ```
 
@@ -103,9 +104,25 @@ pnpm test:web          # Web only
 
 Convex tests use `convex-test` with `t.withIdentity({ subject: userId })` for auth.
 
+## Design Tokens
+
+Use design tokens instead of hardcoded Tailwind classes:
+
+| Avoid        | Use Instead                         |
+| ------------ | ----------------------------------- |
+| `bg-red-*`   | `bg-error`, `bg-error-subtle`       |
+| `bg-green-*` | `bg-success`, `bg-success-subtle`   |
+| `bg-gray-*`  | `bg-muted`, `bg-surface`            |
+| `shadow-lg`  | `shadow-floating`, `shadow-overlay` |
+| `rounded-xl` | `rounded-card`, `rounded-modal`     |
+| `z-50`       | `z-popover`, `z-modal`              |
+
+Run `pnpm lint:tokens` to check for violations. See `.claude/rules/design-tokens.md` for details.
+
 ## Detailed Rules
 
 - Architecture: `.claude/rules/architecture.md`
 - Scripts: `.claude/rules/scripts.md`
 - Testing: `.claude/rules/testing.md`
+- Design Tokens: `.claude/rules/design-tokens.md`
 - Documentation: `.claude/rules/documentation.md`

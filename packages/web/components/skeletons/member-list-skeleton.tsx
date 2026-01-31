@@ -22,7 +22,7 @@ export function MemberListSkeleton() {
       </div>
 
       {/* View All link */}
-      <span className='rounded-full z-30 text-primary hover:underline mt-1'>
+      <span className='rounded-full z-top text-primary hover:underline mt-1'>
         View All
       </span>
     </div>

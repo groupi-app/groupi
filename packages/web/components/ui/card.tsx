@@ -10,7 +10,8 @@ export function Card({
     <div
       data-slot='card'
       className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-xs',
+        // Dramatically rounded card with semantic tokens (Duolingo-style)
+        'rounded-card border bg-card text-card-foreground shadow-raised transition-shadow duration-fast hover:shadow-floating',
         className
       )}
       {...props}
@@ -25,7 +26,7 @@ export function CardHeader({
   return (
     <div
       data-slot='card-header'
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn('flex flex-col gap-1.5 p-6', className)}
       {...props}
     />
   );
@@ -39,7 +40,7 @@ export function CardTitle({
     <h3
       data-slot='card-title'
       className={cn(
-        'text-2xl font-semibold leading-none tracking-tight',
+        'text-xl font-semibold leading-none tracking-tight',
         className
       )}
       {...props}

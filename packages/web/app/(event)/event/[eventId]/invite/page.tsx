@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEventHeaderData, useEventAvailabilityData } from '@/hooks/convex';
 import { Id } from '@/convex/_generated/dataModel';
-import { Icons } from '@/components/icons';
-import { Button } from '@/components/ui/button';
 import { InviteCardList } from '../components/invite-card-list';
-import { InvitePageSkeleton } from '@/components/skeletons';
-import Link from 'next/link';
 import { isOrganizer } from '@/lib/event-permissions';
+import { FormPageTemplate } from '@/components/templates';
+import { useEventData } from '../context';
 
+/**
+ * Invite Page - Client-only architecture
+ * - Uses use() to unwrap params promise
+ * - Uses EventDataProvider context for data (pre-fetched at layout level)
+ */
 export default function EventInvitePage(props: {
   params: Promise<{ eventId: string }>;
 }) {
-  const [eventId, setEventId] = useState<string>('');
+  const { eventId } = use(props.params);
   const router = useRouter();
 
-  useEffect(() => {
-    props.params.then(p => setEventId(p.eventId));
-  }, [props.params]);
-
-  const eventData = useEventHeaderData(eventId as Id<'events'>);
-  const availabilityData = useEventAvailabilityData(eventId as Id<'events'>);
+  // Use context data (pre-fetched at layout level)
+  const { headerData: eventData, availabilityData } = useEventData();
 
   // Check if user should be redirected to availability page
   // Redirect if: poll active, not organizer, and hasn't set availability
@@ -55,22 +53,16 @@ export default function EventInvitePage(props: {
     }
   }, [eventData, availabilityData, eventId, router]);
 
-  if (!eventId) {
-    return <InvitePageSkeleton />;
-  }
-
-  // Note: InviteCardList handles authorization checks internally
+  // Note: InviteCardList handles authorization checks and loading states internally
   // Only ORGANIZER and MODERATOR roles can manage invites
 
   return (
-    <div className='container max-w-5xl py-4'>
-      <Link href={`/event/${eventId}`}>
-        <Button variant={'ghost'} className='flex items-center gap-1 pl-2'>
-          <Icons.back />
-          <span>Back to Event</span>
-        </Button>
-      </Link>
+    <FormPageTemplate
+      backHref={`/event/${eventId}`}
+      backLabel='Back to Event'
+      maxWidth='lg'
+    >
       <InviteCardList eventId={eventId as Id<'events'>} />
-    </div>
+    </FormPageTemplate>
   );
 }

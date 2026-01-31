@@ -4,9 +4,8 @@ import { AvailabilityForm } from '../../components/availability-form';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useEventAvailability, useCurrentUser } from '@/hooks/convex';
-import { Id } from '@/convex/_generated/dataModel';
 import { use } from 'react';
+import { useEventData } from '../../context';
 
 export function AvailabilityContent({
   params,
@@ -14,8 +13,9 @@ export function AvailabilityContent({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = use(params);
-  const availabilityData = useEventAvailability(eventId as Id<'events'>);
-  const currentUser = useCurrentUser();
+
+  // Use context data (pre-fetched at layout level)
+  const { availabilityData, currentUser } = useEventData();
 
   const getTimezoneString = () => {
     return `${Intl.DateTimeFormat().resolvedOptions().timeZone} (UTC${

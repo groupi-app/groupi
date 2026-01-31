@@ -1,20 +1,15 @@
-import { AvailabilityPageContent } from './components/availability-page-content';
-import React, { Suspense } from 'react';
-import { AvailabilityFormSkeleton } from '@/components/skeletons/availability-form-skeleton';
+'use client';
+
+import { AvailabilityContent } from './components/availability-content';
 
 /**
- * Availability Page - Static root for instant skeleton rendering
- * - Page root is static (no async operations) for optimal PPR
- * - All checks and redirects happen inside Suspense boundary
- * - Skeletons show immediately while checks complete
- * - Dynamic content: Auth + cached data + realtime sync wrapped in Suspense
+ * Availability Page - Client-only architecture
+ * - Authentication handled at layout level
+ * - Content component handles loading state via Convex hooks
+ * - Real-time updates via Convex subscriptions
  */
 export default function EventAvailabilityPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
-  return (
-    <Suspense fallback={<AvailabilityFormSkeleton />}>
-      <AvailabilityPageContent params={props.params} />
-    </Suspense>
-  );
+  return <AvailabilityContent params={props.params} />;
 }

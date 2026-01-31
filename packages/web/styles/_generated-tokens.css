@@ -1,0 +1,463 @@
+/**
+ * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
+ *
+ * This file is generated from @groupi/shared/design/themes
+ * Run: pnpm generate:tokens
+ */
+
+@theme {
+  /* ==========================================================================
+     DISABLE TAILWIND DEFAULTS - Only design tokens should be used
+     This prevents classes like bg-red-500, shadow-lg, etc. from working.
+     Use design tokens instead (bg-primary, shadow-raised, etc.)
+     ========================================================================== */
+
+  /* Disable default color palette (red, blue, green, etc.) */
+  --color-red-*: initial;
+  --color-orange-*: initial;
+  --color-amber-*: initial;
+  --color-yellow-*: initial;
+  --color-lime-*: initial;
+  --color-green-*: initial;
+  --color-emerald-*: initial;
+  --color-teal-*: initial;
+  --color-cyan-*: initial;
+  --color-sky-*: initial;
+  --color-blue-*: initial;
+  --color-indigo-*: initial;
+  --color-violet-*: initial;
+  --color-purple-*: initial;
+  --color-fuchsia-*: initial;
+  --color-pink-*: initial;
+  --color-rose-*: initial;
+  --color-slate-*: initial;
+  --color-gray-*: initial;
+  --color-zinc-*: initial;
+  --color-neutral-*: initial;
+  --color-stone-*: initial;
+
+  /* Disable default shadows (use shadow-raised, shadow-floating, etc.) */
+  --shadow-xs: initial;
+  --shadow-sm: initial;
+  --shadow: initial;
+  --shadow-md: initial;
+  --shadow-lg: initial;
+  --shadow-xl: initial;
+  --shadow-2xl: initial;
+  --shadow-inner: initial;
+  --shadow-none: initial;
+
+  /* Disable default border radius (use radius-button, radius-card, etc.) */
+  --radius-none: initial;
+  --radius-xs: initial;
+  --radius-full: initial;
+  --radius-xl: initial;
+  --radius-2xl: initial;
+  --radius-3xl: initial;
+  --radius-4xl: initial;
+
+  /* Disable default z-index (use z-modal, z-popover, etc.) */
+  --z-index-0: initial;
+  --z-index-10: initial;
+  --z-index-20: initial;
+  --z-index-30: initial;
+  --z-index-40: initial;
+  --z-index-50: initial;
+
+  /* Keep: black, white, transparent, current, inherit */
+}
+
+@theme inline {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy color tokens (for shadcn/ui compatibility) */
+  --color-border: var(--border);
+  --color-border2: var(--border2);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent2: var(--accent2);
+  --color-accent2-foreground: var(--accent-foreground2);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Semantic color tokens */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-primary-active: var(--brand-primary-active);
+  --color-brand-primary-subtle: var(--brand-primary-subtle);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-hover: var(--brand-secondary-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+
+  /* Background colors */
+  --color-bg-page: var(--bg-page);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-bg-overlay: var(--bg-overlay);
+  --color-bg-interactive: var(--bg-interactive);
+  --color-bg-interactive-hover: var(--bg-interactive-hover);
+  --color-bg-success: var(--bg-success);
+  --color-bg-success-subtle: var(--bg-success-subtle);
+  --color-bg-warning: var(--bg-warning);
+  --color-bg-warning-subtle: var(--bg-warning-subtle);
+  --color-bg-error: var(--bg-error);
+  --color-bg-error-subtle: var(--bg-error-subtle);
+  --color-bg-info: var(--bg-info);
+  --color-bg-info-subtle: var(--bg-info-subtle);
+
+  /* Text colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-heading: var(--text-heading);
+  --color-text-body: var(--text-body);
+  --color-text-caption: var(--text-caption);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-surface: var(--text-on-surface);
+  --color-text-on-error: var(--text-on-error);
+  --color-text-link: var(--text-link);
+  --color-text-link-hover: var(--text-link-hover);
+  --color-text-success: var(--text-success);
+  --color-text-warning: var(--text-warning);
+  --color-text-error: var(--text-error);
+
+  /* Border colors */
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-focus: var(--border-focus);
+  --color-border-error: var(--border-error);
+  --color-border-success: var(--border-success);
+
+  /* State colors */
+  --color-state-focus-ring: var(--state-focus-ring);
+  --color-state-selection: var(--state-selection);
+  --color-state-highlight: var(--state-highlight);
+
+  /* Fun/celebration colors */
+  --color-fun-celebration: var(--fun-celebration);
+  --color-fun-achievement: var(--fun-achievement);
+  --color-fun-streak: var(--fun-streak);
+  --color-fun-party: var(--fun-party);
+
+  /* Radius tokens */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-subtle: 0.5rem;
+  --radius-soft: 1rem;
+  --radius-rounded: 1.25rem;
+  --radius-pill: 9999px;
+  --radius-button: 1rem;
+  --radius-card: 1.25rem;
+  --radius-input: 0.75rem;
+  --radius-badge: 9999px;
+  --radius-avatar: 50%;
+  --radius-modal: 1.5rem;
+  --radius-tooltip: 0.75rem;
+  --radius-dropdown: 1rem;
+  --radius-sheet: 1.5rem;
+
+  /* Shadow tokens */
+  --shadow-raised: var(--shadow-raised);
+  --shadow-floating: var(--shadow-floating);
+  --shadow-overlay: var(--shadow-overlay);
+  --shadow-popup: var(--shadow-popup);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-bounce: var(--shadow-bounce);
+
+  /* Duration tokens */
+  --duration-instant: 0ms;
+  --duration-micro: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* Easing tokens */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Z-index tokens */
+  /* Local stacking (within components) */
+  --z-index-lifted: 1;
+  --z-index-float: 2;
+  --z-index-top: 3;
+  /* Global stacking (overlays, fixed elements) */
+  --z-index-base: 0;
+  --z-index-sticky: 40;
+  --z-index-dropdown: 60;
+  --z-index-popover: 50;
+  --z-index-modal: 70;
+  --z-index-toast: 80;
+  --z-index-tooltip: 90;
+  --z-index-overlay: 100;
+
+  /* Typography */
+  --font-sans:
+    var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-heading:
+    var(--font-heading), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-mono:
+    'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  /* Animation tokens */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-bounce-in: bounce-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-pop: pop 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-wiggle: wiggle 300ms ease-in-out;
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-slide-up: slide-up 200ms ease-out;
+  --animate-scale-in: scale-in 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-light
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2, 47.4%, 11.2%);
+  --muted: hsl(210, 40%, 96.1%);
+  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2, 47.4%, 11.2%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2, 47.4%, 11.2%);
+  --border: hsl(214.3, 31.8%, 91.4%);
+  --border2: var(--border);
+  --input: hsl(214.3, 31.8%, 91.4%);
+  --primary: hsl(285 100% 34%);
+  --primary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(210, 40%, 96.1%);
+  --secondary-foreground: hsl(222.2, 47.4%, 11.2%);
+  --accent: hsl(260, 40%, 96.1%);
+  --accent-foreground: hsl(273.2, 47.4%, 11.2%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 85% 55%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --ring: hsl(215, 20.2%, 65.1%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(285 100% 34%);
+  --brand-primary-hover: hsl(285 100% 28%);
+  --brand-primary-active: hsl(285 100% 24%);
+  --brand-primary-subtle: hsl(285 100% 94%);
+  --brand-secondary: hsl(210 100% 50%);
+  --brand-secondary-hover: hsl(210 100% 42%);
+  --brand-accent: hsl(330 100% 60%);
+  --brand-accent-hover: hsl(330 100% 50%);
+
+  /* Background colors */
+  --bg-page: hsl(0 0% 100%);
+  --bg-surface: hsl(0 0% 100%);
+  --bg-elevated: hsl(0 0% 100%);
+  --bg-sunken: hsl(220 14% 96%);
+  --bg-overlay: hsl(0, 0%, 0%, 0.5);
+  --bg-interactive: hsl(220 14% 96%);
+  --bg-interactive-hover: hsl(220 13% 91%);
+  --bg-interactive-active: hsl(218 12% 83%);
+  --bg-success: hsl(145 80% 45%);
+  --bg-success-subtle: hsl(145 80% 90%);
+  --bg-warning: hsl(35 100% 55%);
+  --bg-warning-subtle: hsl(35 100% 90%);
+  --bg-error: hsl(0 85% 55%);
+  --bg-error-subtle: hsl(0 85% 93%);
+  --bg-info: hsl(210 100% 50%);
+  --bg-info-subtle: hsl(210 100% 94%);
+
+  /* Text colors */
+  --text-primary: hsl(222.2, 47.4%, 11.2%);
+  --text-secondary: hsl(217 9% 40%);
+  --text-tertiary: hsl(217 10% 50%);
+  --text-muted: hsl(215.4, 16.3%, 46.9%);
+  --text-disabled: hsl(217 10% 65%);
+  --text-heading: hsl(222.2, 47.4%, 11.2%);
+  --text-body: hsl(222.2, 47.4%, 11.2%);
+  --text-caption: hsl(217 9% 40%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(222.2, 47.4%, 11.2%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(285 100% 34%);
+  --text-link-hover: hsl(285 100% 28%);
+  --text-success: hsl(145 80% 28%);
+  --text-warning: hsl(35 100% 36%);
+  --text-error: hsl(0 85% 46%);
+
+  /* Border colors */
+  --border-default: hsl(214.3, 31.8%, 91.4%);
+  --border-strong: hsl(218 12% 83%);
+  --border-subtle: hsl(220 13% 95%);
+  --border-focus: hsl(285 100% 34%);
+  --border-error: hsl(0 85% 55%);
+  --border-success: hsl(145 80% 45%);
+
+  /* State colors */
+  --state-focus-ring: hsl(285, 100%, 34%, 0.4);
+  --state-selection: hsl(285, 100%, 34%, 0.15);
+  --state-highlight: hsl(45, 100%, 50%, 0.2);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 50%);
+  --fun-achievement: hsl(145 80% 45%);
+  --fun-streak: hsl(25 100% 55%);
+  --fun-party: hsl(330 100% 60%);
+
+  /* Shadow tokens */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 20px 0 hsl(285 100% 34% / 0.3);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.1);
+}
+
+.dark {
+  /* ==========================================================================
+     AUTO-GENERATED FROM @groupi/shared/design/themes/groupi-dark
+     Do not edit directly. Run: pnpm generate:tokens
+     ========================================================================== */
+
+  /* Legacy tokens (shadcn/ui) */
+  --background: hsl(264 71% 6%);
+  --foreground: hsl(213 31% 91%);
+  --muted: hsl(223 47% 11%);
+  --muted-foreground: hsl(215.4, 16.3%, 56.9%);
+  --popover: hsl(264 71% 6%);
+  --popover-foreground: hsl(215, 20.2%, 65.1%);
+  --card: hsl(264 71% 6%);
+  --card-foreground: hsl(213 31% 91%);
+  --border: hsl(216 34% 17%);
+  --border2: var(--border);
+  --input: hsl(216 34% 17%);
+  --primary: hsl(285 100% 50%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(222.2, 47.4%, 11.2%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --accent: hsl(273 34% 16%);
+  --accent-foreground: hsl(260 40% 98%);
+  --accent2: var(--accent);
+  --accent-foreground2: var(--accent-foreground);
+  --destructive: hsl(0 63% 45%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --ring: hsl(285 100% 50%);
+  --radius: 0.5rem;
+
+  /* Brand colors */
+  --brand-primary: hsl(285 100% 50%);
+  --brand-primary-hover: hsl(285 100% 58%);
+  --brand-primary-active: hsl(285 100% 45%);
+  --brand-primary-subtle: hsl(285 60% 15%);
+  --brand-secondary: hsl(210 100% 60%);
+  --brand-secondary-hover: hsl(210 100% 68%);
+  --brand-accent: hsl(330 100% 65%);
+  --brand-accent-hover: hsl(330 100% 72%);
+
+  /* Background colors */
+  --bg-page: hsl(264 71% 6%);
+  --bg-surface: hsl(264 50% 10%);
+  --bg-elevated: hsl(264 40% 14%);
+  --bg-sunken: hsl(264 80% 4%);
+  --bg-overlay: hsl(0, 0%, 0%, 0.7);
+  --bg-interactive: hsl(264 40% 14%);
+  --bg-interactive-hover: hsl(264 35% 20%);
+  --bg-interactive-active: hsl(264 30% 25%);
+  --bg-success: hsl(145 80% 35%);
+  --bg-success-subtle: hsl(145 50% 12%);
+  --bg-warning: hsl(35 100% 45%);
+  --bg-warning-subtle: hsl(35 50% 12%);
+  --bg-error: hsl(0 70% 45%);
+  --bg-error-subtle: hsl(0 50% 12%);
+  --bg-info: hsl(210 100% 45%);
+  --bg-info-subtle: hsl(210 50% 12%);
+
+  /* Text colors */
+  --text-primary: hsl(213 31% 91%);
+  --text-secondary: hsl(215 20% 65%);
+  --text-tertiary: hsl(215 16% 55%);
+  --text-muted: hsl(215.4, 16.3%, 56.9%);
+  --text-disabled: hsl(215 14% 40%);
+  --text-heading: hsl(213 31% 95%);
+  --text-body: hsl(213 31% 91%);
+  --text-caption: hsl(215 20% 65%);
+  --text-on-primary: hsl(0 0% 100%);
+  --text-on-surface: hsl(213 31% 91%);
+  --text-on-error: hsl(0 0% 100%);
+  --text-link: hsl(285 100% 70%);
+  --text-link-hover: hsl(285 100% 80%);
+  --text-success: hsl(145 80% 55%);
+  --text-warning: hsl(35 100% 60%);
+  --text-error: hsl(0 70% 60%);
+
+  /* Border colors */
+  --border-default: hsl(216 34% 17%);
+  --border-strong: hsl(216 30% 25%);
+  --border-subtle: hsl(216 40% 12%);
+  --border-focus: hsl(285 100% 50%);
+  --border-error: hsl(0 70% 45%);
+  --border-success: hsl(145 80% 35%);
+
+  /* State colors */
+  --state-focus-ring: hsl(285, 100%, 50%, 0.5);
+  --state-selection: hsl(285, 100%, 50%, 0.2);
+  --state-highlight: hsl(45, 100%, 50%, 0.15);
+
+  /* Fun/celebration colors */
+  --fun-celebration: hsl(45 100% 55%);
+  --fun-achievement: hsl(145 80% 50%);
+  --fun-streak: hsl(25 100% 60%);
+  --fun-party: hsl(330 100% 65%);
+
+  /* Shadow tokens (dark mode) */
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+  --shadow-popup:
+    0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.3);
+  --shadow-glow: 0 0 20px 0 hsl(285 100% 50% / 0.4);
+  --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.3);
+}

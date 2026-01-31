@@ -6,7 +6,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const navigationMenuTriggerStyle = cva(
-  'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50'
+  'group inline-flex h-10 w-max items-center justify-center rounded-subtle bg-background px-6 py-2 text-sm font-medium transition-all duration-fast hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50'
 );
 
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
@@ -48,7 +48,7 @@ export function NavigationMenu({
     <NavigationMenuPrimitive.Root
       data-slot='navigation-menu'
       className={cn(
-        'relative z-10 flex max-w-max flex-1 items-center justify-center',
+        'relative z-lifted flex max-w-max flex-1 items-center justify-center',
         className
       )}
       {...props}
@@ -117,12 +117,13 @@ export function NavigationMenuViewport({
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
   return (
     <div
-      data-slot='navigation-menu-viewport'
+      data-slot='navigation-menu-viewport-wrapper'
       className={cn('absolute left-0 top-full flex justify-center')}
     >
       <NavigationMenuPrimitive.Viewport
+        data-slot='navigation-menu-viewport'
         className={cn(
-          'origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]',
+          'origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-dropdown border bg-popover text-popover-foreground shadow-floating data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]',
           className
         )}
         {...props}
@@ -144,7 +145,7 @@ export function NavigationMenuIndicator({
       )}
       {...props}
     >
-      <div className='relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-md' />
+      <div className='relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-floating' />
     </NavigationMenuPrimitive.Indicator>
   );
 }

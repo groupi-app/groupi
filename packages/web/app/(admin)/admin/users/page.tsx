@@ -323,7 +323,7 @@ export default function AdminUsersPage() {
                             setSelectedUser(user as User);
                             setActionType('ban');
                           }}
-                          className='text-orange-600'
+                          className='text-warning'
                         >
                           <Icons.ban className='h-4 w-4 mr-2' />
                           Ban User
@@ -333,7 +333,7 @@ export default function AdminUsersPage() {
                             setSelectedUser(user as User);
                             setActionType('delete');
                           }}
-                          className='text-red-600'
+                          className='text-destructive'
                         >
                           <Icons.trash className='h-4 w-4 mr-2' />
                           Delete User

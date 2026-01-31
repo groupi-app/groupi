@@ -183,22 +183,22 @@ export function OnboardingContent() {
                   )}
                   {availabilityStatus === 'available' && (
                     <div className='absolute right-3 top-1/2 -translate-y-1/2'>
-                      <Icons.check className='size-4 text-green-600' />
+                      <Icons.check className='size-4 text-success' />
                     </div>
                   )}
                   {availabilityStatus === 'taken' && (
                     <div className='absolute right-3 top-1/2 -translate-y-1/2'>
-                      <Icons.close className='size-4 text-red-600' />
+                      <Icons.close className='size-4 text-error' />
                     </div>
                   )}
                 </div>
                 {availabilityStatus === 'available' && (
-                  <p className='text-sm text-green-600 mt-1'>
+                  <p className='text-sm text-success mt-1'>
                     Username is available
                   </p>
                 )}
                 {availabilityStatus === 'taken' && (
-                  <p className='text-sm text-red-600 mt-1'>
+                  <p className='text-sm text-error mt-1'>
                     Username is already taken
                   </p>
                 )}

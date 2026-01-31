@@ -1,30 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEventHeaderData } from '@/hooks/convex';
 import { Id } from '@/convex/_generated/dataModel';
 import { DateSelectContent } from './components/date-select-content';
 import { DateSelectSkeleton } from '@/components/skeletons';
+import { useEventData } from '../context';
 
+/**
+ * Date Select Page - Client-only architecture
+ * - Uses use() to unwrap params promise
+ * - Uses EventDataProvider context for data (pre-fetched at layout level)
+ */
 export default function EventDateSelectPage(props: {
   params: Promise<{ eventId: string }>;
 }) {
-  // Note: In client components, we need to use React state for async params
-  const [eventId, setEventId] = useState<string>('');
+  const { eventId } = use(props.params);
   const router = useRouter();
-  // Skip query when eventId is not yet set
-  const eventData = useEventHeaderData(eventId as Id<'events'>);
+
+  // Use context data (pre-fetched at layout level)
+  const { headerData: eventData } = useEventData();
 
   useEffect(() => {
-    // Resolve params on client side
-    props.params.then(resolved => {
-      setEventId(resolved.eventId);
-    });
-  }, [props.params]);
-
-  useEffect(() => {
-    if (!eventId || !eventData) return;
+    if (!eventData) return;
 
     // If event already has a chosen date, redirect to event page
     if (eventData.event?.chosenDateTime) {
@@ -44,7 +42,7 @@ export default function EventDateSelectPage(props: {
     }
   }, [eventId, eventData, router]);
 
-  if (!eventId || !eventData) {
+  if (!eventData) {
     return <DateSelectSkeleton />;
   }
 

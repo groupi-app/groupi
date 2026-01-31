@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useIsActive } from '@/providers/visibility-provider';
 
 // ===== API REFERENCES =====
 // Import api dynamically to avoid deep type instantiation issues
@@ -57,7 +58,8 @@ export interface EnrichedNotification {
 // ===== NOTIFICATION QUERIES =====
 
 /**
- * Get paginated notifications for current user with real-time updates
+ * Get paginated notifications for current user with real-time updates.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function useNotifications(
   limit = 20,
@@ -68,17 +70,51 @@ export function useNotifications(
       nextCursor: string | null;
     }
   | undefined {
-  return useQuery(notificationQueries.fetchNotificationsForPerson, {
-    limit,
-    cursor,
-  });
+  const isActive = useIsActive();
+  const cachedRef = useRef<
+    | {
+        notifications: EnrichedNotification[];
+        nextCursor: string | null;
+      }
+    | undefined
+  >(undefined);
+
+  const result = useQuery(
+    notificationQueries.fetchNotificationsForPerson,
+    isActive ? { limit, cursor } : 'skip'
+  );
+
+  // Cache the result when we get data
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // Return cached data when hidden
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 /**
- * Get unread notification count with real-time updates
+ * Get unread notification count with real-time updates.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function useUnreadNotificationCount(): { count: number } | undefined {
-  return useQuery(notificationQueries.getUnreadNotificationCount, {});
+  const isActive = useIsActive();
+  const cachedRef = useRef<{ count: number } | undefined>(undefined);
+
+  const result = useQuery(
+    notificationQueries.getUnreadNotificationCount,
+    isActive ? {} : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 /**
@@ -89,8 +125,9 @@ export function useNotificationSettings() {
 }
 
 /**
- * Paginated notifications hook - uses custom cursor-based pagination
- * Note: Use cursor from result.nextCursor for subsequent pages
+ * Paginated notifications hook - uses custom cursor-based pagination.
+ * Note: Use cursor from result.nextCursor for subsequent pages.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function usePaginatedNotifications(
   limit = 20,
@@ -101,10 +138,27 @@ export function usePaginatedNotifications(
       nextCursor: string | null;
     }
   | undefined {
-  return useQuery(notificationQueries.fetchNotificationsForPerson, {
-    limit,
-    cursor,
-  });
+  const isActive = useIsActive();
+  const cachedRef = useRef<
+    | {
+        notifications: EnrichedNotification[];
+        nextCursor: string | null;
+      }
+    | undefined
+  >(undefined);
+
+  const result = useQuery(
+    notificationQueries.fetchNotificationsForPerson,
+    isActive ? { limit, cursor } : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 // ===== NOTIFICATION MUTATIONS =====

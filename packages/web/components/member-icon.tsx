@@ -146,12 +146,12 @@ function ActionMenu({
                     return (
                       <div className='flex items-center gap-1.5 text-sm mt-1'>
                         <span
-                          className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
+                          className={`size-2 rounded-full ${presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'}`}
                         />
                         <span
                           className={
                             presence.isOnline
-                              ? 'text-green-600 dark:text-green-400'
+                              ? 'text-success'
                               : 'text-muted-foreground'
                           }
                         >
@@ -174,15 +174,15 @@ function ActionMenu({
                 <div className='flex items-center gap-2 text-muted-foreground'>
                   <span>RSVP: </span>
                   {member.rsvpStatus === 'YES' && (
-                    <Icons.check className='text-green-500' />
+                    <Icons.check className='text-success' />
                   )}
                   {member.rsvpStatus === 'MAYBE' && (
-                    <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                    <span className='font-semibold w-6 text-xl text-warning text-center'>
                       ?
                     </span>
                   )}
                   {member.rsvpStatus === 'NO' && (
-                    <Icons.close className='text-red-500' />
+                    <Icons.close className='text-error' />
                   )}
                   <span className='text-foreground'>{member.rsvpStatus}</span>
                 </div>
@@ -293,12 +293,12 @@ function ActionMenu({
                 return (
                   <div className='flex items-center gap-1.5 text-sm mt-1'>
                     <span
-                      className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
+                      className={`size-2 rounded-full ${presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'}`}
                     />
                     <span
                       className={
                         presence.isOnline
-                          ? 'text-green-600 dark:text-green-400'
+                          ? 'text-success'
                           : 'text-muted-foreground'
                       }
                     >
@@ -325,15 +325,15 @@ function ActionMenu({
               <div className='flex items-center gap-1 text-muted-foreground'>
                 <span>RSVP: </span>
                 {member.rsvpStatus === 'YES' && (
-                  <Icons.check className='text-green-500' />
+                  <Icons.check className='text-success' />
                 )}
                 {member.rsvpStatus === 'MAYBE' && (
-                  <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                  <span className='font-semibold w-6 text-xl text-warning text-center'>
                     ?
                   </span>
                 )}
                 {member.rsvpStatus === 'NO' && (
-                  <Icons.close className='text-red-500' />
+                  <Icons.close className='text-error' />
                 )}
                 <span className='text-foreground'>{member.rsvpStatus}</span>
               </div>
@@ -519,7 +519,7 @@ export default function MemberIcon({
       variants={item}
       initial='show'
       className={cn(
-        'flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-10',
+        'flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-lifted',
         className
       )}
       key={itemKey}

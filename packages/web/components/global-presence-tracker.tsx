@@ -1,6 +1,6 @@
 'use client';
 
-import { useCurrentUserProfile } from '@/hooks/convex/use-users';
+import { useGlobalUser } from '@/context/global-user-context';
 import { useAppPresence } from '@/hooks/convex/use-presence';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -13,8 +13,9 @@ import { Id } from '@/convex/_generated/dataModel';
  * It runs silently in the background and doesn't render anything.
  */
 export function GlobalPresenceTracker() {
-  const profile = useCurrentUserProfile();
-  const personId = profile?.person?.id as Id<'persons'> | undefined;
+  // Use global user context instead of direct query
+  const { person } = useGlobalUser();
+  const personId = person?._id as Id<'persons'> | undefined;
 
   // This hook handles:
   // 1. Sending heartbeats to the presence system

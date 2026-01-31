@@ -29,7 +29,7 @@ export function ConfirmAccountSettings({
     <Fragment>
       <Card
         className={cn(
-          'mx-auto md:left-[175px] fixed z-40 bottom-20 right-0 left-0 w-full max-w-md transition-colors duration-300',
+          'mx-auto md:left-[175px] fixed z-sticky bottom-20 right-0 left-0 w-full max-w-md transition-colors duration-300',
           shouldFlash && 'border-destructive bg-destructive'
         )}
       >

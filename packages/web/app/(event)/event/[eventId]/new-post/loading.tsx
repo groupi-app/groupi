@@ -1,5 +1,5 @@
 import { Icons } from '@/components/icons';
-import { ToolbarSkeleton } from '@/app/(post)/post/[postId]/components/toolbar-skeleton';
+import { ToolbarSkeleton } from '../post/[postId]/components/toolbar-skeleton';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
