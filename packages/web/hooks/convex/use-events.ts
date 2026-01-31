@@ -51,9 +51,21 @@ export function useEventNewPostPageData(eventId: Id<'events'>) {
 
 /**
  * Get mutual events between current user and another user
+ * @param otherUserId - The other user's ID to find mutual events with
+ * @param options - Optional configuration
+ * @param options.enabled - Whether to run the query (default: true). Set to false to skip.
  */
-export function useMutualEvents(otherUserId: string) {
-  return useQuery(userQueries.fetchMutualEventsByUserId, { otherUserId });
+export function useMutualEvents(
+  otherUserId: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled ?? true;
+  const shouldSkip = !enabled || !otherUserId;
+
+  return useQuery(
+    userQueries.fetchMutualEventsByUserId,
+    shouldSkip ? 'skip' : { otherUserId }
+  );
 }
 
 /**

@@ -19,7 +19,10 @@ import { useActionMenu } from '@/hooks/use-action-menu';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ActionMenuButton } from '@/components/ui/action-menu-button';
 import { useState, useCallback } from 'react';
-import { useIsPostMuted, useTogglePostMute } from '@/hooks/convex/use-muting';
+import {
+  useIsPostMutedFromContext,
+  useTogglePostMute,
+} from '@/hooks/convex/use-muting';
 
 // Post data with related information
 type PostData = Doc<'posts'> & {
@@ -81,8 +84,8 @@ export function PostCard({
       })
     : false;
 
-  // Muting state (with optimistic updates)
-  const { isMuted, setOptimisticMuted } = useIsPostMuted(id);
+  // Muting state (uses bulk context to avoid per-post queries)
+  const { isMuted, setOptimisticMuted } = useIsPostMutedFromContext(id);
   const toggleMute = useTogglePostMute();
 
   const handleToggleMute = async () => {
@@ -134,7 +137,7 @@ export function PostCard({
       </Button>
       {isMe && (
         <Button variant='ghost' className='w-full justify-start' asChild>
-          <Link href={`/post/${id}/edit`}>
+          <Link href={`/event/${event._id}/post/${id}/edit`}>
             <Icons.edit className='size-4 mr-2' />
             Edit
           </Link>
@@ -182,7 +185,7 @@ export function PostCard({
       </ContextMenuItem>
       {isMe && (
         <ContextMenuItem className='cursor-pointer' asChild>
-          <Link href={`/post/${id}/edit`}>
+          <Link href={`/event/${event._id}/post/${id}/edit`}>
             <div className='flex items-center gap-1'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
@@ -233,7 +236,7 @@ export function PostCard({
       </DropdownMenuItem>
       {isMe && (
         <DropdownMenuItem className='cursor-pointer' asChild>
-          <Link href={`/post/${id}/edit`}>
+          <Link href={`/event/${event._id}/post/${id}/edit`}>
             <div className='flex items-center gap-1'>
               <Icons.edit className='size-4' />
               <span>Edit</span>
@@ -259,7 +262,7 @@ export function PostCard({
   );
 
   const cardContent = (
-    <div className='rounded-xl border border-border w-full relative shadow-md z-10 group'>
+    <div className='rounded-card border border-border w-full relative shadow-floating z-lifted group'>
       <div className='absolute top-4 left-3'>
         {member ? (
           <MemberIcon
@@ -278,13 +281,17 @@ export function PostCard({
       <ActionMenuButton
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
-        className='absolute z-20 size-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center'
+        className='absolute z-float size-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center'
         dropdownContent={dropdownContent}
       >
         <Icons.more className='size-4' />
       </ActionMenuButton>
-      <Link data-test='post-card' href={`/post/${id}`} className='w-full z-10'>
-        <div className='w-full rounded-xl bg-card hover:bg-accent transition-colors pt-4 px-5 pb-2'>
+      <Link
+        data-test='post-card'
+        href={`/event/${event._id}/post/${id}`}
+        className='w-full z-lifted'
+      >
+        <div className='w-full rounded-card bg-card hover:bg-accent transition-colors pt-4 px-5 pb-2'>
           <div className='flex flex-col gap-1'>
             <div className='ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16'>
               <div className='flex items-center gap-2'>
@@ -346,7 +353,7 @@ export function PostCard({
 
 export function PostCardSkeleton() {
   return (
-    <div className='rounded-xl border border-border w-full relative shadow-md max-w-4xl'>
+    <div className='rounded-card border border-border w-full relative shadow-floating max-w-4xl'>
       <div className='w-full transition-all pt-4 px-5 pb-2'>
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-2 mb-1'>
