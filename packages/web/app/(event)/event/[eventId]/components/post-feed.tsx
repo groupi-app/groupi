@@ -5,9 +5,8 @@
 
 import { PostCard } from '@/components/post-card';
 import { LayoutGroup, motion } from 'framer-motion';
-import { PostFeedSkeleton } from '@/components/skeletons';
-import { Id } from '@/convex/_generated/dataModel';
 import { useEventPostFeed } from '@/hooks/convex';
+import { MutedPostsProvider } from '@/hooks/convex/use-muting';
 
 const container = {
   hidden: { opacity: 0 },
@@ -24,31 +23,22 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+// Type for the data prop (inferred from useEventPostFeed return type)
+type PostFeedDataType = NonNullable<ReturnType<typeof useEventPostFeed>>;
+
 interface PostFeedProps {
-  eventId: string;
+  data: PostFeedDataType;
 }
 
 /**
- * Client component with direct Convex hooks - Client-only pattern
- * - Uses useEventPostFeed hook for real-time post data
- * - Real-time updates via Convex subscriptions
- * - Optimistic updates handled by Convex mutations
+ * Post feed component - receives data from context
+ * - Data is pre-loaded by EventDataProvider in layout
+ * - Real-time updates still work via Convex subscriptions in provider
+ * - No loading state needed - data is guaranteed
  */
-export function PostFeed({ eventId }: PostFeedProps) {
-  // Use direct Convex hook for real-time post data
-  const postFeedData = useEventPostFeed(eventId as Id<'events'>);
-
-  // Loading state
-  if (postFeedData === undefined) {
-    return (
-      <div>
-        <h2 className='text-xl font-heading font-medium'>Posts</h2>
-        <PostFeedSkeleton count={3} />
-      </div>
-    );
-  }
-
-  const { event, userMembership } = postFeedData;
+export function PostFeed({ data }: PostFeedProps) {
+  // Data is guaranteed by parent - no loading checks needed
+  const { event, userMembership } = data;
   const posts = event?.posts || [];
   // Use personId directly from membership (more reliable than person._id from spread)
   const userId = userMembership.personId;
@@ -58,91 +48,93 @@ export function PostFeed({ eventId }: PostFeedProps) {
     : null;
 
   return (
-    <div>
-      <h2 className='text-xl font-heading font-medium'>Posts</h2>
-      {posts.length > 0 ? (
-        <motion.div
-          variants={container}
-          initial='hidden'
-          animate='show'
-          className='w-full flex flex-col items-center gap-3 py-2'
-        >
-          <LayoutGroup>
-            {[...posts]
-              .sort((a, b) => b.editedAt - a.editedAt)
-              .map(post => (
-                <motion.div
-                  layout
-                  variants={item}
-                  key={post._id}
-                  className='w-full'
-                >
-                  <PostCard
-                    postData={
-                      {
-                        ...post,
-                        author: post.author?.person
-                          ? {
-                              ...post.author.person,
-                              user: post.author.user,
-                            }
-                          : {
-                              _id: post.authorId,
-                              _creationTime: 0,
-                              userId: '' as any, // Fallback for missing person
-                              user: post.author?.user || {
-                                _id: '' as any,
+    <MutedPostsProvider>
+      <div>
+        <h2 className='text-xl font-heading font-medium'>Posts</h2>
+        {posts.length > 0 ? (
+          <motion.div
+            variants={container}
+            initial='hidden'
+            animate='show'
+            className='w-full flex flex-col items-center gap-3 py-2'
+          >
+            <LayoutGroup>
+              {[...posts]
+                .sort((a, b) => b.editedAt - a.editedAt)
+                .map(post => (
+                  <motion.div
+                    layout
+                    variants={item}
+                    key={post._id}
+                    className='w-full'
+                  >
+                    <PostCard
+                      postData={
+                        {
+                          ...post,
+                          author: post.author?.person
+                            ? {
+                                ...post.author.person,
+                                user: post.author.user,
+                              }
+                            : {
+                                _id: post.authorId,
                                 _creationTime: 0,
-                                name: null,
-                                email: '',
-                                image: null,
-                                twoFactorEnabled: false,
+                                userId: '' as any, // Fallback for missing person
+                                user: post.author?.user || {
+                                  _id: '' as any,
+                                  _creationTime: 0,
+                                  name: null,
+                                  email: '',
+                                  image: null,
+                                  twoFactorEnabled: false,
+                                },
                               },
-                            },
-                        replies: (post.recentReplyAuthors || []).map(
-                          (author: {
-                            id: string;
-                            _creationTime: number;
-                            user: {
-                              name: string | null;
-                              email: string;
-                              image: string | null;
-                            } | null;
-                          }) => ({
-                            _creationTime: author._creationTime,
-                            author: {
-                              id: author.id,
-                              user: author.user,
-                            },
-                          })
-                        ),
-                        event: {
-                          ...event,
-                          memberships: event.memberships
-                            .map((m: (typeof event.memberships)[0]) => ({
-                              ...m,
-                              person: m.person
-                                ? {
-                                    ...m.person,
-                                    user: m.user,
-                                  }
-                                : (null as any),
-                            }))
-                            .filter((m: { person: unknown }) => m.person),
-                        },
-                      } as any
-                    }
-                    eventDateTime={eventDateTime}
-                    userId={userId}
-                    userRole={userRole}
-                  />
-                </motion.div>
-              ))}
-          </LayoutGroup>
-        </motion.div>
-      ) : (
-        <h1 className='font-heading text-lg mt-4'>No posts yet!</h1>
-      )}
-    </div>
+                          replies: (post.recentReplyAuthors || []).map(
+                            (author: {
+                              id: string;
+                              _creationTime: number;
+                              user: {
+                                name: string | null;
+                                email: string;
+                                image: string | null;
+                              } | null;
+                            }) => ({
+                              _creationTime: author._creationTime,
+                              author: {
+                                id: author.id,
+                                user: author.user,
+                              },
+                            })
+                          ),
+                          event: {
+                            ...event,
+                            memberships: event.memberships
+                              .map((m: (typeof event.memberships)[0]) => ({
+                                ...m,
+                                person: m.person
+                                  ? {
+                                      ...m.person,
+                                      user: m.user,
+                                    }
+                                  : (null as any),
+                              }))
+                              .filter((m: { person: unknown }) => m.person),
+                          },
+                        } as any
+                      }
+                      eventDateTime={eventDateTime}
+                      userId={userId}
+                      userRole={userRole}
+                    />
+                  </motion.div>
+                ))}
+            </LayoutGroup>
+          </motion.div>
+        ) : (
+          <h1 className='font-heading text-lg mt-4'>No posts yet!</h1>
+        )}
+      </div>
+    </MutedPostsProvider>
   );
 }

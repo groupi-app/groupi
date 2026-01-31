@@ -85,7 +85,11 @@ export function ProfileEditDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch current user profile to get pronouns and bio from person record
-  const userProfile = useQuery(usersQueries.getCurrentUserProfile, {});
+  // Only fetch when dialog is open to avoid unnecessary queries
+  const userProfile = useQuery(
+    usersQueries.getCurrentUserProfile,
+    open ? {} : 'skip'
+  );
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),

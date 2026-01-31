@@ -3,20 +3,8 @@
 import { useSession } from '@/lib/auth-client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { useQuery } from 'convex/react';
 import { Loader2 } from 'lucide-react';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userQueries: any;
-function initApi() {
-  if (!userQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    userQueries = api.users?.queries ?? {};
-  }
-}
-initApi();
+import { useNeedsOnboardingFromContext } from '@/context/global-user-context';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -58,12 +46,8 @@ export function AuthenticatedLayout({
 
   const isAuthenticated = !!session?.user;
 
-  // Check onboarding status for authenticated users (unless skipped)
-  const needsOnboarding = useQuery(
-    userQueries.checkNeedsOnboarding,
-    // Only run the query if authenticated and not skipping the check
-    isAuthenticated && !skipOnboardingCheck ? {} : 'skip'
-  );
+  // Use global context for onboarding status (avoids duplicate queries)
+  const { data: needsOnboarding } = useNeedsOnboardingFromContext();
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) {

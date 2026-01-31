@@ -13,6 +13,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { MutedEventsProvider } from '@/hooks/convex/use-muting';
 
 const item = {
   hidden: { opacity: 0, y: 15 },
@@ -150,84 +151,86 @@ export function EventList({
   });
 
   return (
-    <LayoutGroup>
-      <div className='flex flex-col gap-4'>
-        {/* Upcoming events */}
-        <AnimatePresence mode='popLayout'>
-          {upcomingEvents.sort(sort).map((event: EventListItem) => {
-            const membershipData = memberships.find(
-              (m: EventMembership) => m.event._id === event.id
-            );
-            if (!membershipData) return null;
-            return (
-              <motion.div
-                layout
-                layoutId={event.id}
-                variants={isMounted ? item : undefined}
-                initial={isMounted ? 'hidden' : undefined}
-                animate={isMounted ? 'show' : undefined}
-                {...(isMounted && { exit: 'exit' })}
-                key={event.id}
-              >
-                <EventCard
-                  event={membershipData.event as Doc<'events'>}
-                  userRole={membershipData.membership.role || 'ATTENDEE'}
-                  eventId={membershipData.event._id}
-                  organizer={membershipData.organizer}
-                />
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+    <MutedEventsProvider>
+      <LayoutGroup>
+        <div className='flex flex-col gap-4'>
+          {/* Upcoming events */}
+          <AnimatePresence mode='popLayout'>
+            {upcomingEvents.sort(sort).map((event: EventListItem) => {
+              const membershipData = memberships.find(
+                (m: EventMembership) => m.event._id === event.id
+              );
+              if (!membershipData) return null;
+              return (
+                <motion.div
+                  layout
+                  layoutId={event.id}
+                  variants={isMounted ? item : undefined}
+                  initial={isMounted ? 'hidden' : undefined}
+                  animate={isMounted ? 'show' : undefined}
+                  {...(isMounted && { exit: 'exit' })}
+                  key={event.id}
+                >
+                  <EventCard
+                    event={membershipData.event as Doc<'events'>}
+                    userRole={membershipData.membership.role || 'ATTENDEE'}
+                    eventId={membershipData.event._id}
+                    organizer={membershipData.organizer}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
-        {/* Past events collapsible section */}
-        {pastEvents.length > 0 && (
-          <Collapsible open={pastEventsOpen} onOpenChange={setPastEventsOpen}>
-            <CollapsibleTrigger className='flex items-center gap-2 w-full py-4 px-2 hover:bg-accent rounded-md transition-all cursor-pointer'>
-              <Icons.forward
-                className={`size-4 transition-transform duration-200 ${
-                  pastEventsOpen ? 'rotate-90' : ''
-                }`}
-              />
-              <span className='text-muted-foreground'>
-                Past Events ({pastEvents.length})
-              </span>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className='flex flex-col gap-4 pt-2'>
-                <AnimatePresence mode='popLayout'>
-                  {pastEvents.sort(sort).map((event: EventListItem) => {
-                    const membershipData = memberships.find(
-                      (m: EventMembership) => m.event._id === event.id
-                    );
-                    if (!membershipData) return null;
-                    return (
-                      <motion.div
-                        layout
-                        layoutId={`past-${event.id}`}
-                        variants={isMounted ? item : undefined}
-                        initial={isMounted ? 'hidden' : undefined}
-                        animate={isMounted ? 'show' : undefined}
-                        {...(isMounted && { exit: 'exit' })}
-                        key={event.id}
-                      >
-                        <EventCard
-                          event={membershipData.event as Doc<'events'>}
-                          userRole={
-                            membershipData.membership.role || 'ATTENDEE'
-                          }
-                          eventId={membershipData.event._id}
-                          organizer={membershipData.organizer}
-                        />
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-      </div>
-    </LayoutGroup>
+          {/* Past events collapsible section */}
+          {pastEvents.length > 0 && (
+            <Collapsible open={pastEventsOpen} onOpenChange={setPastEventsOpen}>
+              <CollapsibleTrigger className='flex items-center gap-2 w-full py-4 px-2 hover:bg-accent rounded-md transition-all cursor-pointer'>
+                <Icons.forward
+                  className={`size-4 transition-transform duration-200 ${
+                    pastEventsOpen ? 'rotate-90' : ''
+                  }`}
+                />
+                <span className='text-muted-foreground'>
+                  Past Events ({pastEvents.length})
+                </span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className='flex flex-col gap-4 pt-2'>
+                  <AnimatePresence mode='popLayout'>
+                    {pastEvents.sort(sort).map((event: EventListItem) => {
+                      const membershipData = memberships.find(
+                        (m: EventMembership) => m.event._id === event.id
+                      );
+                      if (!membershipData) return null;
+                      return (
+                        <motion.div
+                          layout
+                          layoutId={`past-${event.id}`}
+                          variants={isMounted ? item : undefined}
+                          initial={isMounted ? 'hidden' : undefined}
+                          animate={isMounted ? 'show' : undefined}
+                          {...(isMounted && { exit: 'exit' })}
+                          key={event.id}
+                        >
+                          <EventCard
+                            event={membershipData.event as Doc<'events'>}
+                            userRole={
+                              membershipData.membership.role || 'ATTENDEE'
+                            }
+                            eventId={membershipData.event._id}
+                            organizer={membershipData.organizer}
+                          />
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </div>
+      </LayoutGroup>
+    </MutedEventsProvider>
   );
 }
