@@ -104,25 +104,59 @@ pnpm test:web          # Web only
 
 Convex tests use `convex-test` with `t.withIdentity({ subject: userId })` for auth.
 
-## Design Tokens
+## UI & Design System
 
-Use design tokens instead of hardcoded Tailwind classes:
+Groupi uses a **Duolingo-inspired** design philosophy with dramatically rounded corners, bouncy animations, and semantic color tokens. The UI is built on two foundational pillars:
 
-| Avoid        | Use Instead                         |
-| ------------ | ----------------------------------- |
-| `bg-red-*`   | `bg-error`, `bg-error-subtle`       |
-| `bg-green-*` | `bg-success`, `bg-success-subtle`   |
-| `bg-gray-*`  | `bg-muted`, `bg-surface`            |
-| `shadow-lg`  | `shadow-floating`, `shadow-overlay` |
-| `rounded-xl` | `rounded-card`, `rounded-modal`     |
-| `z-50`       | `z-popover`, `z-modal`              |
+### Design Tokens
 
-Run `pnpm lint:tokens` to check for violations. See `.claude/rules/design-tokens.md` for details.
+A three-layer token system ensures visual consistency:
+
+| Layer      | Purpose                         | Example                          |
+| ---------- | ------------------------------- | -------------------------------- |
+| Primitives | Raw values (never use directly) | `purple.700`, `spacing.4`        |
+| Semantic   | Purpose-based tokens            | `bg-success`, `shadow-raised`    |
+| Component  | Component-specific tokens       | `rounded-button`, `rounded-card` |
+
+**Always use semantic tokens, never hardcoded Tailwind classes:**
+
+| Avoid        | Use Instead                          |
+| ------------ | ------------------------------------ |
+| `bg-red-*`   | `bg-error`, `bg-bg-error-subtle`     |
+| `bg-green-*` | `bg-success`, `bg-bg-success-subtle` |
+| `bg-gray-*`  | `bg-muted`, `bg-bg-surface`          |
+| `shadow-lg`  | `shadow-floating`, `shadow-overlay`  |
+| `rounded-xl` | `rounded-card`, `rounded-modal`      |
+| `z-50`       | `z-popover`, `z-modal`               |
+
+Run `pnpm lint:tokens` to check for violations.
+
+### Atomic Component Architecture
+
+Components are organized by complexity:
+
+| Level     | Purpose                   | Location                | Examples                             |
+| --------- | ------------------------- | ----------------------- | ------------------------------------ |
+| Atoms     | Smallest elements         | `components/atoms/`     | StatusDot, PresenceIndicator         |
+| Molecules | Simple combinations       | `components/molecules/` | UserInfoCard, RsvpStatus             |
+| Organisms | Complex sections          | `components/organisms/` | PostCard, MemberIcon                 |
+| Templates | Page layouts              | `components/templates/` | DetailPageTemplate, ListPageTemplate |
+| UI        | shadcn/ui base components | `components/ui/`        | Button, Card, Dialog                 |
+
+**Key rules:**
+
+- Atoms: Pure presentation, no data fetching, no business logic
+- Molecules: Compose 2-3 atoms, minimal logic
+- Organisms: Feature-specific, may have business logic and data
+- Templates: Define layout structure, no data fetching
+
+See `docs/ui-design-system.md` for comprehensive documentation.
 
 ## Detailed Rules
 
 - Architecture: `.claude/rules/architecture.md`
 - Scripts: `.claude/rules/scripts.md`
 - Testing: `.claude/rules/testing.md`
-- Design Tokens: `.claude/rules/design-tokens.md`
+- UI Design System: `.claude/rules/ui-design-system.md`
+- Presence System: `.claude/rules/presence.md`
 - Documentation: `.claude/rules/documentation.md`
