@@ -4,6 +4,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useIsActive } from '@/providers/visibility-provider';
 
 // ===== OPTIMISTIC ATTACHMENT TYPES =====
 
@@ -45,12 +46,50 @@ initApi();
 // ===== REPLY QUERIES =====
 
 /**
- * Get replies for a post with real-time updates
+ * Get replies for a post with real-time updates.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function useRepliesByPost(postId: Id<'posts'>) {
-  return useQuery(replyQueries.getRepliesByPost, {
-    postId,
-  });
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    replyQueries.getRepliesByPost,
+    isActive ? { postId } : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
+}
+
+/**
+ * Get replies with skip support for conditional fetching.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
+ */
+export function useRepliesByPostWithSkip(postId: Id<'posts'> | null) {
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const shouldSkip = !postId || !isActive;
+  const result = useQuery(
+    replyQueries.getRepliesByPost,
+    shouldSkip ? 'skip' : { postId }
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 // ===== REPLY MUTATIONS =====

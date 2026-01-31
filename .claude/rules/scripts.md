@@ -66,6 +66,7 @@ pnpm generate           # Regenerate Convex types after schema changes
 | `pnpm test:convex` | Run Convex backend tests                    |
 | `pnpm test:shared` | Run shared package tests                    |
 | `pnpm lint:fix`    | Auto-fix linting issues                     |
+| `pnpm lint:tokens` | Check for non-token Tailwind class usage    |
 | `pnpm format`      | Format code with Prettier                   |
 
 ## Table of Contents

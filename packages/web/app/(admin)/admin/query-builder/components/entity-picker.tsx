@@ -161,7 +161,7 @@ export function EntityPicker({
 
       {/* Dropdown */}
       {isOpen && search.length >= 1 && (
-        <div className='absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto'>
+        <div className='absolute z-popover w-full mt-1 bg-popover border rounded-md shadow-overlay max-h-60 overflow-auto'>
           {searchResults === undefined ? (
             <div className='p-2 text-sm text-muted-foreground text-center'>
               Searching...

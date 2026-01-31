@@ -79,6 +79,7 @@ export const runMigrationFromStorage = action({
     // Run the internal migration action
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Known Convex type instantiation depth issue with internal API in web tsconfig
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const migrationAction = internal.migration.actions.runMigration as any;
     const result: MigrationResult = await ctx.runAction(migrationAction, {
       data,

@@ -44,7 +44,7 @@ export function AvailabilityCard({
   const answer = formAnswers[index]?.answer;
 
   return (
-    <div className='w-full sm:max-w-md border border-border shadow-md rounded-md py-4 px-4 h-max'>
+    <div className='w-full sm:max-w-md border border-border shadow-floating rounded-md py-4 px-4 h-max'>
       <div className='flex flex-col sm:flex-row  justify-between gap-4 flex-wrap'>
         <div className='flex flex-col justify-between '>
           <div>
@@ -71,7 +71,7 @@ export function AvailabilityCard({
             className={cn(
               'text-muted-foreground',
               answer === 'yes' &&
-                'bg-green-500 hover:bg-green-500 text-primary-foreground'
+                'bg-success hover:bg-success text-primary-foreground'
             )}
             onClick={() =>
               setFormAnswer(index, {
@@ -89,7 +89,7 @@ export function AvailabilityCard({
             className={cn(
               'text-muted-foreground',
               answer === 'maybe' &&
-                'bg-yellow-500 hover:bg-yellow-500 text-primary-foreground'
+                'bg-warning hover:bg-warning text-primary-foreground'
             )}
             onClick={() =>
               setFormAnswer(index, {
@@ -107,7 +107,7 @@ export function AvailabilityCard({
             className={cn(
               'text-muted-foreground',
               answer === 'no' &&
-                'bg-red-500 hover:bg-red-500 text-primary-foreground'
+                'bg-error hover:bg-error text-primary-foreground'
             )}
             onClick={() =>
               setFormAnswer(index, {
@@ -126,7 +126,7 @@ export function AvailabilityCard({
       >
         <div className='flex items-center gap-2 text-xs'>
           <div className='flex items-center gap-1'>
-            <Icons.check className='size-4 text-green-500' />
+            <Icons.check className='size-4 text-success' />
             <span>
               {pdt.availabilities
                 .filter(a => a.status === 'YES' && a.member !== null)
@@ -134,7 +134,7 @@ export function AvailabilityCard({
             </span>
           </div>
           <div className='flex items-center gap-1'>
-            <span className='text-sm text-yellow-500'>?</span>
+            <span className='text-sm text-warning'>?</span>
             <span>
               {pdt.availabilities
                 .filter(a => a.status === 'MAYBE' && a.member !== null)
@@ -142,7 +142,7 @@ export function AvailabilityCard({
             </span>
           </div>
           <div className='flex items-center gap-1'>
-            <Icons.close className='size-4 text-red-500' />
+            <Icons.close className='size-4 text-error' />
             <span>
               {pdt.availabilities
                 .filter(a => a.status === 'NO' && a.member !== null)
@@ -163,7 +163,7 @@ export function AvailabilityCard({
           ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
-                <Icons.check className='size-6 text-green-500' />
+                <Icons.check className='size-6 text-success' />
                 <span>Yes</span>
               </div>
               <div className='flex flex-col divide-y ml-6'>
@@ -201,7 +201,7 @@ export function AvailabilityCard({
           ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
-                <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                <span className='font-semibold w-6 text-xl text-warning text-center'>
                   ?
                 </span>
                 <span>Maybe</span>
@@ -242,7 +242,7 @@ export function AvailabilityCard({
           ).length > 0 && (
             <div>
               <div className='flex items-center gap-1'>
-                <Icons.close className='size-6 text-red-500' />
+                <Icons.close className='size-6 text-error' />
                 <span>No</span>
               </div>
               <div className='flex flex-col divide-y ml-6'>

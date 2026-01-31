@@ -39,6 +39,7 @@
     "clean": "turbo clean && rm -rf node_modules && pnpm install",
     "clean:deps": "find . -name node_modules -type d -exec rm -rf {} + && pnpm install",
     "check": "pnpm lint && pnpm type-check && pnpm format:check",
+    "lint:tokens": "pnpm --filter @groupi/web lint:tokens",
     "convex:dev": "pnpx convex dev",
     "convex:deploy": "pnpx convex deploy",
     "generate": "pnpx convex codegen",

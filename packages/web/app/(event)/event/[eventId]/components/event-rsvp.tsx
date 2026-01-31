@@ -17,8 +17,9 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { useEventHeaderData, useUpdateRSVP } from '@/hooks/convex/use-events';
+import { useUpdateRSVP } from '@/hooks/convex/use-events';
 import { Id } from '@/convex/_generated/dataModel';
+import { useEventData } from '../context';
 
 // Form schema defined outside component for stability
 const formSchema = z.object({
@@ -31,8 +32,8 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const updateRSVP = useUpdateRSVP();
 
-  // Use Convex hook for real-time event header data
-  const eventHeaderData = useEventHeaderData(eventId);
+  // Use context data (pre-fetched at layout level)
+  const { headerData: eventHeaderData } = useEventData();
 
   // Form hook - must be called unconditionally
   // Use undefined-safe default values since data may not be loaded yet
@@ -100,11 +101,11 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
               <span className='text-primary font-semibold'>RSVP:</span>
               <div className='flex items-center gap-1'>
                 {userMembership.rsvpStatus === 'YES' ? (
-                  <Icons.check className='text-green-500' />
+                  <Icons.check className='text-success' />
                 ) : userMembership.rsvpStatus === 'NO' ? (
-                  <Icons.close className='text-red-500' />
+                  <Icons.close className='text-error' />
                 ) : (
-                  <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                  <span className='font-semibold w-6 text-xl text-warning text-center'>
                     ?
                   </span>
                 )}
@@ -169,7 +170,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
                       onClick={() => field.onChange('YES')}
                     >
                       <div className='flex items-center gap-1 pr-2'>
-                        <Icons.check className='text-green-500' />
+                        <Icons.check className='text-success' />
                         <span>Yes</span>
                       </div>
                     </Button>
@@ -181,7 +182,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
                       onClick={() => field.onChange('MAYBE')}
                     >
                       <div className='flex items-center gap-1 pr-2'>
-                        <span className='font-semibold w-6 text-xl text-yellow-500 text-center'>
+                        <span className='font-semibold w-6 text-xl text-warning text-center'>
                           ?
                         </span>
                         <span>Maybe</span>
@@ -195,7 +196,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
                       onClick={() => field.onChange('NO')}
                     >
                       <div className='flex items-center gap-1 pr-2'>
-                        <Icons.close className='text-red-500' />
+                        <Icons.close className='text-error' />
                         <span>No</span>
                       </div>
                     </Button>

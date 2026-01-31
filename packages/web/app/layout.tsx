@@ -18,6 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConvexClientProvider } from '@/providers/convex-provider';
+import { VisibilityProvider } from '@/providers/visibility-provider';
+import { GlobalUserProvider } from '@/context/global-user-context';
 import { NavigationGuardProvider } from '@/app/(settings)/settings/components/navigation-guard-context';
 import { GlobalNavigationGuard } from '@/components/global-navigation-guard';
 import { OnboardingRedirectWrapper } from '@/components/onboarding-redirect-wrapper';
@@ -103,54 +105,58 @@ export default function RootLayout({
       >
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <ConvexClientProvider>
-            <TooltipProvider>
-              <NavigationGuardProvider>
-                <Suspense fallback={null}>
-                  <GlobalNavigationGuard />
-                </Suspense>
-                <Suspense fallback={null}>
-                  <OnboardingRedirectWrapper />
-                </Suspense>
-                <Suspense fallback={null}>
-                  <GoogleOneTap />
-                </Suspense>
-                <Suspense fallback={null}>
-                  <GlobalPresenceTracker />
-                </Suspense>
-                <div className='flex flex-col min-h-screen'>
-                  {/* Static header shell - renders immediately */}
-                  <header className='z-40 w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
-                    <MainNavStatic
-                      dynamicContent={
-                        <Suspense fallback={<MainNavDynamicSkeleton />}>
-                          <NavigationWrapper items={navConfig.mainNav} />
-                        </Suspense>
-                      }
-                    />
-                  </header>
-                  {/* Static main content area */}
-                  <main className='grow'>{children}</main>
-                  {/* Static footer */}
-                  <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
-                    <div className='container mx-auto py-4 flex gap-8 items-center'>
-                      <ModeToggle />
-                      <div className='flex flex-col gap-2'>
-                        <p>
-                          Built by{' '}
-                          <Link
-                            className='underline font-medium'
-                            href='https://tsurette.com'
-                          >
-                            Theia
-                          </Link>
-                        </p>
-                        <FooterCopyright />
-                      </div>
+            <VisibilityProvider>
+              <GlobalUserProvider>
+                <TooltipProvider>
+                  <NavigationGuardProvider>
+                    <Suspense fallback={null}>
+                      <GlobalNavigationGuard />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <OnboardingRedirectWrapper />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <GoogleOneTap />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <GlobalPresenceTracker />
+                    </Suspense>
+                    <div className='flex flex-col min-h-screen'>
+                      {/* Static header shell - renders immediately */}
+                      <header className='z-sticky w-full bg-primary text-primary-foreground dark:bg-background dark:text-foreground'>
+                        <MainNavStatic
+                          dynamicContent={
+                            <Suspense fallback={<MainNavDynamicSkeleton />}>
+                              <NavigationWrapper items={navConfig.mainNav} />
+                            </Suspense>
+                          }
+                        />
+                      </header>
+                      {/* Static main content area */}
+                      <main className='grow'>{children}</main>
+                      {/* Static footer */}
+                      <footer className='bg-primary text-primary-foreground dark:border-t dark:border-border dark:bg-background dark:text-foreground h-24'>
+                        <div className='container mx-auto py-4 flex gap-8 items-center'>
+                          <ModeToggle />
+                          <div className='flex flex-col gap-2'>
+                            <p>
+                              Built by{' '}
+                              <Link
+                                className='underline font-medium'
+                                href='https://tsurette.com'
+                              >
+                                Theia
+                              </Link>
+                            </p>
+                            <FooterCopyright />
+                          </div>
+                        </div>
+                      </footer>
                     </div>
-                  </footer>
-                </div>
-              </NavigationGuardProvider>
-            </TooltipProvider>
+                  </NavigationGuardProvider>
+                </TooltipProvider>
+              </GlobalUserProvider>
+            </VisibilityProvider>
           </ConvexClientProvider>
           <AppProviders />
         </ThemeProvider>

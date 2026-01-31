@@ -6,5 +6,8 @@
 // Design tokens
 export * from './tokens';
 
+// Theme definitions (single source of truth for token values)
+export * from './themes';
+
 // Utility functions
 export * from './utils';

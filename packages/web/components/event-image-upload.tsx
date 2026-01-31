@@ -238,7 +238,7 @@ export function EventImageUpload({
             />
             <div className='absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors'>
               <div className='opacity-0 hover:opacity-100 transition-opacity'>
-                <Icons.image className='size-8 text-white drop-shadow-lg' />
+                <Icons.image className='size-8 text-white drop-shadow-overlay' />
               </div>
             </div>
           </div>

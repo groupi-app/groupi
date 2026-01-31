@@ -13,30 +13,36 @@ import {
 } from '@/components/auth/auth-wrappers';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { SettingsPageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components/molecules';
+import { Lock } from 'lucide-react';
 
 export default function NotificationSettings() {
   return (
     <>
       <AuthLoading>
-        <div className='md:container max-w-2xl mx-auto py-8'>
-          <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
-          <SettingsFormSkeleton />
-        </div>
+        <SettingsPageTemplate
+          title='Notification Settings'
+          isLoading
+          loadingContent={<SettingsFormSkeleton />}
+        >
+          <div />
+        </SettingsPageTemplate>
       </AuthLoading>
 
       <Unauthenticated>
-        <div className='md:container max-w-2xl mx-auto py-8'>
-          <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
-          <div className='text-center py-8'>
-            <h2 className='text-xl font-bold'>Authentication Required</h2>
-            <p className='mt-2 mb-6'>
-              Please sign in to access your notification settings.
-            </p>
-            <Link href='/sign-in'>
-              <Button>Sign In</Button>
-            </Link>
-          </div>
-        </div>
+        <SettingsPageTemplate title='Notification Settings'>
+          <EmptyState
+            icon={<Lock className='h-10 w-10' />}
+            message='Authentication Required'
+            description='Please sign in to access your notification settings.'
+            action={
+              <Link href='/sign-in'>
+                <Button>Sign In</Button>
+              </Link>
+            }
+          />
+        </SettingsPageTemplate>
       </Unauthenticated>
 
       <Authenticated>
@@ -53,13 +59,14 @@ function AuthenticatedNotificationSettings() {
   // Show skeleton while loading
   if (settings === undefined || userProfile === undefined) {
     return (
-      <div className='md:container max-w-2xl mx-auto py-8'>
-        <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
-        <p className='mb-6 text-muted-foreground'>
-          Manage your notification preferences.
-        </p>
-        <SettingsFormSkeleton />
-      </div>
+      <SettingsPageTemplate
+        title='Notification Settings'
+        description='Manage your notification preferences.'
+        isLoading
+        loadingContent={<SettingsFormSkeleton />}
+      >
+        <div />
+      </SettingsPageTemplate>
     );
   }
 
@@ -124,16 +131,15 @@ function AuthenticatedNotificationSettings() {
   const allEmails = [primaryEmail, ...additionalEmails];
 
   return (
-    <div className='md:container max-w-2xl mx-auto py-8'>
-      <h1 className='text-2xl font-heading mb-4'>Notification Settings</h1>
-      <p className='mb-6 text-muted-foreground'>
-        Manage your notification preferences.
-      </p>
+    <SettingsPageTemplate
+      title='Notification Settings'
+      description='Manage your notification preferences.'
+    >
       <SettingsFormProvider defaultValues={defaultValues}>
         <SettingsFormWithGuard>
           <SettingsContent emails={allEmails} />
         </SettingsFormWithGuard>
       </SettingsFormProvider>
-    </div>
+    </SettingsPageTemplate>
   );
 }

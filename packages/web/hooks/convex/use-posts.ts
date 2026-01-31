@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useIsActive } from '@/providers/visibility-provider';
 
 // Type for current user data needed for optimistic updates
 export interface OptimisticPostUserData {
@@ -33,32 +34,117 @@ initApi();
 // ===== POST QUERIES =====
 
 /**
- * Get event post feed with real-time updates
+ * Get event post feed with real-time updates.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function useEventPostFeed(eventId: Id<'events'>) {
-  return useQuery(postQueries.getEventPostFeed, { eventId });
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    postQueries.getEventPostFeed,
+    isActive ? { eventId } : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 /**
- * Get single post with details
+ * Get single post with details.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function usePost(postId: Id<'posts'>) {
-  return useQuery(postQueries.getPost, { postId });
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(postQueries.getPost, isActive ? { postId } : 'skip');
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 /**
- * Get post detail page data (post + replies)
+ * Get post detail page data (post + replies).
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function usePostDetail(postId: Id<'posts'>) {
-  return useQuery(postQueries.getPostDetail, { postId });
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    postQueries.getPostDetail,
+    isActive ? { postId } : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 /**
- * Paginated post feed hook - uses standard query
- * Note: The query handles pagination internally via limit/cursor
+ * Get post detail with skip support for conditional fetching.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
+ */
+export function usePostDetailWithSkip(postId: Id<'posts'> | null) {
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const shouldSkip = !postId || !isActive;
+  const result = useQuery(
+    postQueries.getPostDetail,
+    shouldSkip ? 'skip' : { postId }
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
+}
+
+/**
+ * Paginated post feed hook - uses standard query.
+ * Note: The query handles pagination internally via limit/cursor.
+ * Pauses subscription when tab is hidden to reduce bandwidth.
  */
 export function usePaginatedEventPosts(eventId: Id<'events'>) {
-  return useQuery(postQueries.getEventPostFeed, { eventId });
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    postQueries.getEventPostFeed,
+    isActive ? { eventId } : 'skip'
+  );
+
+  if (result !== undefined) {
+    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+    cachedRef.current = result;
+  }
+
+  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  return isActive ? result : cachedRef.current;
 }
 
 // ===== POST MUTATIONS =====

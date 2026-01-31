@@ -35,6 +35,11 @@
       "types": "./dist/design/index.d.ts",
       "import": "./dist/design/index.mjs",
       "require": "./dist/design/index.js"
+    },
+    "./design/themes": {
+      "types": "./dist/design/themes/index.d.ts",
+      "import": "./dist/design/themes/index.mjs",
+      "require": "./dist/design/themes/index.js"
     }
   },
   "files": [

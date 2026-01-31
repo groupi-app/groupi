@@ -68,7 +68,7 @@ export function PostEditorSkeleton() {
       {/* Content editor */}
       <div className='space-y-2'>
         <Skeleton className='h-5 w-16' />
-        <Skeleton className='h-64 w-full rounded-lg' />
+        <Skeleton className='h-64 w-full rounded-card' />
       </div>
 
       {/* Action buttons */}

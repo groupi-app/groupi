@@ -8,7 +8,7 @@ import { Icons } from '@/components/icons';
 export function NewPostButton() {
   const pathname = usePathname();
   return (
-    <div className='fixed right-4 bottom-24 lg:right-24 xl:right-48 2xl:right-1/4 z-30'>
+    <div className='fixed right-4 bottom-24 lg:right-24 xl:right-48 2xl:right-1/4 z-sticky'>
       <Link data-test='new-post-button' href={`${pathname}/new-post`}>
         <Button className='rounded-full flex items-center gap-1'>
           <Icons.plus />

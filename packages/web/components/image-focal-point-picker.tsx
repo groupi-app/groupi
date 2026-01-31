@@ -280,7 +280,7 @@ function FocalPointPickerContent({
           {/* Crosshair marker - positioned relative to image using state */}
           {imageBounds && (
             <div
-              className='absolute pointer-events-none z-10'
+              className='absolute pointer-events-none z-lifted'
               style={{
                 left: imageBounds.left + imageBounds.width * focalPoint.x,
                 top: imageBounds.top + imageBounds.height * focalPoint.y,
@@ -289,14 +289,14 @@ function FocalPointPickerContent({
             >
               {/* Outer ring */}
               <div
-                className='absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-lg'
+                className='absolute w-12 h-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-overlay'
                 style={{
                   boxShadow:
                     '0 0 0 2px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.3)',
                 }}
               />
               {/* Inner dot */}
-              <div className='absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary border-2 border-white shadow-lg' />
+              <div className='absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary border-2 border-white shadow-overlay' />
             </div>
           )}
         </div>

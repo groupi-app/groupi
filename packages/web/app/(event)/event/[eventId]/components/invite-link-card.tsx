@@ -97,7 +97,7 @@ export function InviteLinkCard({
               );
             }
           }}
-          className='size-6 z-20 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto hover:bg-primary transition-all'
+          className='size-6 z-float absolute left-4 top-4 md:top-0 md:bottom-0 my-auto hover:bg-primary transition-all'
         />
         <DialogTrigger
           onClick={() => {
@@ -108,7 +108,7 @@ export function InviteLinkCard({
         >
           <div
             className={cn(
-              'cursor-pointer border border-border shadow-md rounded-lg py-3 px-6 hover:bg-accent transition-all z-10 overflow-hidden',
+              'cursor-pointer border border-border shadow-floating rounded-lg py-3 px-6 hover:bg-accent transition-all z-lifted overflow-hidden',
               selectedInvites.includes(id) ? 'bg-primary/30' : 'bg-card'
             )}
           >
@@ -166,7 +166,7 @@ export function InviteLinkCard({
         </DialogTrigger>
         <DialogTrigger asChild>
           <Button
-            className='hover:bg-destructive hover:text-destructive-foreground z-20 absolute right-4 top-3 md:top-0 md:bottom-0 my-auto'
+            className='hover:bg-destructive hover:text-destructive-foreground z-float absolute right-4 top-3 md:top-0 md:bottom-0 my-auto'
             onClick={() => {
               setDialogType('delete');
               setIsOpen(true);
@@ -194,7 +194,7 @@ export function InviteLinkCard({
                 {name ? name : 'Invite'}
               </DialogTitle>
             </DialogHeader>
-            <div className='p-4 bg-white w-max rounded-xl mx-auto my-4 border border-border shadow-md'>
+            <div className='p-4 bg-white w-max rounded-card mx-auto my-4 border border-border shadow-floating'>
               {isPending ? (
                 <div className='size-[128px] flex items-center justify-center'>
                   <Icons.spinner className='size-8 animate-spin text-muted-foreground' />

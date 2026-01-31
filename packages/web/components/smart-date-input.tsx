@@ -223,7 +223,7 @@ export function SmartDateInput({
                     Parsed from: &quot;{date.text}&quot;
                   </div>
                   {date.validationErrors.length > 0 && (
-                    <div className='text-xs text-yellow-600 mt-1'>
+                    <div className='text-xs text-warning mt-1'>
                       {date.validationErrors.join(', ')}
                     </div>
                   )}

@@ -177,7 +177,7 @@ describe('NotificationSlate', () => {
 
     // Should generate link to the post for NEW_POST notifications
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/post/post-123');
+    expect(link).toHaveAttribute('href', '/event/event-123/post/post-123');
   });
 
   test('should handle different notification types', () => {

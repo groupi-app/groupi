@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  CircleAlert,
   Clock,
   Code,
   Copy,
@@ -34,6 +35,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   MoreVertical,
+  RefreshCw,
   TriangleAlert as Warning,
   UserPlus as Invite,
   Italic,
@@ -106,6 +108,7 @@ export const Icons = {
   account: Account,
   people: People,
   users: People, // Alias for people
+  user: Account, // Alias for account
   party: Party,
   delete: Delete,
   download: Download,
@@ -114,6 +117,8 @@ export const Icons = {
   search: Search,
   settings: Settings,
   undo: Undo,
+  refresh: RefreshCw,
+  alertCircle: CircleAlert,
   submit: Submit,
   back: ChevronLeft,
   forward: ChevronRight,

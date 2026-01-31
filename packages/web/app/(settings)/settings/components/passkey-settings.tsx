@@ -292,7 +292,7 @@ export function PasskeySettings() {
                         setSelectedPasskeyId(passkey.id);
                         setShowDeleteDialog(true);
                       }}
-                      className='text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950'
+                      className='text-destructive hover:text-destructive/90 hover:bg-destructive/10 dark:hover:bg-destructive/20'
                     >
                       <Icons.trash className='h-4 w-4' />
                     </Button>

@@ -10,6 +10,7 @@ import { FullConfig } from '@playwright/test';
  */
 
 async function globalTeardown(_config: FullConfig): Promise<void> {
+  void _config; // Parameter required by Playwright but not used
   console.log(`\n📋 E2E Test Teardown`);
   console.log(`   ✅ Tests completed`);
 

@@ -42,6 +42,8 @@
     "../../convex/**/*.test.ts",
     "../../convex/**/*.test.tsx",
     "**/test-helpers.tsx",
-    "e2e/**/*"
+    "e2e/**/*",
+    "stories/**/*",
+    ".storybook/**/*"
   ]
 }

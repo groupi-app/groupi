@@ -2,20 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useQuery } from 'convex/react';
-import { useSession } from '@/lib/auth-client';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userQueries: any;
-function initApi() {
-  if (!userQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    userQueries = api.users?.queries ?? {};
-  }
-}
-initApi();
+import { useGlobalUser } from '@/context/global-user-context';
 
 /**
  * Client component that enforces onboarding completion
@@ -28,14 +15,13 @@ export function OnboardingRedirectWrapper() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, isPending: sessionPending } = useSession();
 
-  // Check if user needs onboarding
-  const needsOnboarding = useQuery(userQueries.checkNeedsOnboarding, {});
+  // Use global user context instead of direct queries
+  const { session, isSessionPending, needsOnboarding } = useGlobalUser();
 
   useEffect(() => {
     // Wait for session to load
-    if (sessionPending) {
+    if (isSessionPending) {
       return;
     }
 
@@ -97,7 +83,7 @@ export function OnboardingRedirectWrapper() {
     searchParams,
     needsOnboarding,
     session,
-    sessionPending,
+    isSessionPending,
   ]);
 
   return null;

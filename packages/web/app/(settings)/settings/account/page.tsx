@@ -12,6 +12,10 @@ import {
 import { useQuery } from 'convex/react';
 import Link from 'next/link';
 import { useLinkedAccounts } from '@/hooks/convex/use-accounts';
+import { SettingsPageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components/molecules';
+import { Button } from '@/components/ui/button';
+import { Lock } from 'lucide-react';
 
 // Dynamic require to avoid deep type instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +28,6 @@ function initApi() {
   }
 }
 initApi();
-import { Button } from '@/components/ui/button';
 
 /**
  * Account Settings Page - Uses Convex authentication components
@@ -33,25 +36,28 @@ export default function AccountSettings() {
   return (
     <>
       <AuthLoading>
-        <div className='md:container max-w-2xl mx-auto py-8'>
-          <h1 className='text-2xl font-heading mb-4'>Account Settings</h1>
-          <AccountSettingsSkeleton />
-        </div>
+        <SettingsPageTemplate
+          title='Account Settings'
+          isLoading
+          loadingContent={<AccountSettingsSkeleton />}
+        >
+          <div />
+        </SettingsPageTemplate>
       </AuthLoading>
 
       <Unauthenticated>
-        <div className='md:container max-w-2xl mx-auto py-8'>
-          <h1 className='text-2xl font-heading mb-4'>Account Settings</h1>
-          <div className='text-center py-8'>
-            <h2 className='text-xl font-bold'>Authentication Required</h2>
-            <p className='mt-2 mb-6'>
-              Please sign in to access your account settings.
-            </p>
-            <Link href='/sign-in'>
-              <Button>Sign In</Button>
-            </Link>
-          </div>
-        </div>
+        <SettingsPageTemplate title='Account Settings'>
+          <EmptyState
+            icon={<Lock className='h-10 w-10' />}
+            message='Authentication Required'
+            description='Please sign in to access your account settings.'
+            action={
+              <Link href='/sign-in'>
+                <Button>Sign In</Button>
+              </Link>
+            }
+          />
+        </SettingsPageTemplate>
       </Unauthenticated>
 
       <Authenticated>
@@ -67,10 +73,13 @@ function AuthenticatedAccountSettings() {
 
   if (!userAndPerson) {
     return (
-      <div className='md:container max-w-2xl mx-auto py-8'>
-        <h1 className='text-2xl font-heading mb-4'>Account Settings</h1>
-        <AccountSettingsSkeleton />
-      </div>
+      <SettingsPageTemplate
+        title='Account Settings'
+        isLoading
+        loadingContent={<AccountSettingsSkeleton />}
+      >
+        <div />
+      </SettingsPageTemplate>
     );
   }
 
@@ -93,11 +102,10 @@ function AuthenticatedAccountSettings() {
   };
 
   return (
-    <div className='md:container max-w-2xl mx-auto py-8'>
-      <h1 className='text-2xl font-heading mb-4'>Account Settings</h1>
-      <p className='mb-6 text-muted-foreground'>
-        Manage your account information and authentication methods.
-      </p>
+    <SettingsPageTemplate
+      title='Account Settings'
+      description='Manage your account information and authentication methods.'
+    >
       <AccountFormProvider defaultValues={defaultValues}>
         <div className='relative'>
           <AccountFormWithGuard>
@@ -105,6 +113,6 @@ function AuthenticatedAccountSettings() {
           </AccountFormWithGuard>
         </div>
       </AccountFormProvider>
-    </div>
+    </SettingsPageTemplate>
   );
 }

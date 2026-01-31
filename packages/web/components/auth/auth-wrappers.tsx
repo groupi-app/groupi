@@ -65,7 +65,7 @@ function AdminContent({
     }
     return (
       <div className='flex items-center justify-center p-4'>
-        <div className='animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+        <div className='animate-spin h-4 w-4 border-2 border-border border-t-foreground rounded-full'></div>
         <span className='ml-2'>Checking permissions...</span>
       </div>
     );
@@ -132,7 +132,7 @@ function EventMemberContent({
     // Loading state
     return (
       <div className='flex items-center justify-center p-4'>
-        <div className='animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+        <div className='animate-spin h-4 w-4 border-2 border-border border-t-foreground rounded-full'></div>
         <span className='ml-2'>Loading event...</span>
       </div>
     );
