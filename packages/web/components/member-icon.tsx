@@ -507,11 +507,23 @@ export default function MemberIcon({
     [isMobile]
   );
 
+  // Get online status for avatar indicator
+  const presence = formatLastSeen(member.person?.lastSeen);
+
   const avatarElement = (
-    <Avatar>
-      <AvatarImage src={user?.image || undefined} />
-      <AvatarFallback>{initials}</AvatarFallback>
-    </Avatar>
+    <div className='relative'>
+      <Avatar>
+        <AvatarImage src={user?.image || undefined} />
+        <AvatarFallback>{initials}</AvatarFallback>
+      </Avatar>
+      {/* Online indicator dot */}
+      <span
+        className={cn(
+          'absolute bottom-0 right-0 size-3 rounded-full border-2 border-background',
+          presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'
+        )}
+      />
+    </div>
   );
 
   return (
