@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 function MockListItem({ title }: { title: string }) {
   return (
-    <div className='p-4 border rounded-lg hover:bg-accent transition-colors'>
+    <div className='p-4 border rounded-lg hover:bg-accent/80 transition-colors'>
       <h3 className='font-medium'>{title}</h3>
       <p className='text-sm text-muted-foreground'>Event description...</p>
     </div>

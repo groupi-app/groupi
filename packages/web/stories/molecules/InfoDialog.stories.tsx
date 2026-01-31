@@ -39,15 +39,15 @@ function InfoDialogDemo({
         {...props}
       >
         <div className='flex flex-col gap-2'>
-          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent'>
+          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent/80'>
             <h3 className='font-medium'>Team Offsite 2024</h3>
             <span className='text-xs text-muted-foreground'>Jan 15</span>
           </div>
-          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent'>
+          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent/80'>
             <h3 className='font-medium'>Product Launch Party</h3>
             <span className='text-xs text-muted-foreground'>Feb 20</span>
           </div>
-          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent'>
+          <div className='flex items-center gap-3 border p-2 rounded-md hover:bg-accent/80'>
             <h3 className='font-medium'>Q1 Planning</h3>
             <span className='text-xs text-muted-foreground'>Mar 5</span>
           </div>

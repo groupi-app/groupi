@@ -6,7 +6,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const navigationMenuTriggerStyle = cva(
-  'group inline-flex h-10 w-max items-center justify-center rounded-subtle bg-background px-6 py-2 text-sm font-medium transition-all duration-fast hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50'
+  'group inline-flex h-10 w-max items-center justify-center rounded-subtle bg-background px-6 py-2 text-sm font-medium transition-all duration-fast hover:bg-accent/80 hover:text-accent-foreground focus:bg-accent/80 focus:text-accent-foreground focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50'
 );
 
 const NavigationMenuItem = NavigationMenuPrimitive.Item;

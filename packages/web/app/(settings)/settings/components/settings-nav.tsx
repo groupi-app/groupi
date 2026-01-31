@@ -58,7 +58,7 @@ export function SettingsNav() {
               href={item.href}
               onClick={() => setOpen(false)}
               className={cn(
-                'w-full rounded-md hover:bg-accent transition-all p-2',
+                'w-full rounded-md hover:bg-accent/80 transition-all p-2',
                 currentPath === item.href ? 'bg-accent' : ''
               )}
             >

@@ -87,7 +87,7 @@ export function DateCard({
           setDialogType('overview');
         }}
       >
-        <div className='w-full md:max-w-lg border border-border shadow-floating rounded-md py-4 px-4 hover:bg-accent transition-all cursor-pointer'>
+        <div className='w-full md:max-w-lg border border-border shadow-floating rounded-md py-4 px-4 hover:bg-accent/80 transition-all cursor-pointer'>
           <div className='flex items-start gap-4'>
             <h1 className='font-semibold text-2xl'>#{pdt.rank}</h1>
             <div className='flex flex-col'>

@@ -464,7 +464,7 @@ export function NotificationSlate({
           }
         }}
         href={getNotificationLink()}
-        className='hover:bg-accent flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
+        className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
       >
         {!read && <div className='size-2 rounded-full bg-primary' />}
         <div className='flex flex-col gap-1 px-2'>

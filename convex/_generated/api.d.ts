@@ -75,6 +75,8 @@ import type * as replies_queries from "../replies/queries.js";
 import type * as settings_mutations from "../settings/mutations.js";
 import type * as settings_queries from "../settings/queries.js";
 import type * as tests_test_helpers from "../tests/test_helpers.js";
+import type * as themes_mutations from "../themes/mutations.js";
+import type * as themes_queries from "../themes/queries.js";
 import type * as types from "../types.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
@@ -153,6 +155,8 @@ declare const fullApi: ApiFromModules<{
   "settings/mutations": typeof settings_mutations;
   "settings/queries": typeof settings_queries;
   "tests/test_helpers": typeof tests_test_helpers;
+  "themes/mutations": typeof themes_mutations;
+  "themes/queries": typeof themes_queries;
   types: typeof types;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;

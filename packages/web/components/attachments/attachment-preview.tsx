@@ -739,7 +739,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => setEditingUpload(upload)}
-                        className='p-1 rounded hover:bg-accent transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-accent/80 transition-colors focus:outline-none'
                         aria-label={`Edit ${upload.displayFilename}`}
                       >
                         <Icons.edit className='h-3.5 w-3.5' />
@@ -754,7 +754,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => onRemove(upload.id)}
-                        className='p-1 rounded hover:bg-destructive hover:text-destructive-foreground transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground transition-colors focus:outline-none'
                         aria-label={`Remove ${upload.displayFilename}`}
                       >
                         <Icons.delete className='h-3.5 w-3.5' />
@@ -792,7 +792,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => setEditingUpload(upload)}
-                        className='p-1 rounded hover:bg-accent transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-accent/80 transition-colors focus:outline-none'
                         aria-label={`Edit ${upload.displayFilename}`}
                       >
                         <Icons.edit className='h-3.5 w-3.5' />
@@ -807,7 +807,7 @@ export function AttachmentPreview({
                       <button
                         type='button'
                         onClick={() => onRemove(upload.id)}
-                        className='p-1 rounded hover:bg-destructive hover:text-destructive-foreground transition-colors focus:outline-none'
+                        className='p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground transition-colors focus:outline-none'
                         aria-label={`Remove ${upload.displayFilename}`}
                       >
                         <Icons.delete className='h-3.5 w-3.5' />
@@ -865,7 +865,7 @@ export function AttachmentPreview({
                       type='button'
                       onClick={() => setEditingUpload(upload)}
                       className={cn(
-                        'p-1 rounded hover:bg-accent flex-shrink-0',
+                        'p-1 rounded hover:bg-accent/80 flex-shrink-0',
                         'transition-colors',
                         'focus:outline-none'
                       )}
@@ -884,7 +884,7 @@ export function AttachmentPreview({
                       type='button'
                       onClick={() => onRemove(upload.id)}
                       className={cn(
-                        'p-1 rounded hover:bg-destructive hover:text-destructive-foreground flex-shrink-0',
+                        'p-1 rounded hover:bg-destructive/80 hover:text-destructive-foreground flex-shrink-0',
                         'transition-colors',
                         'focus:outline-none'
                       )}
