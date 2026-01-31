@@ -15,7 +15,7 @@ export function NotificationListSkeleton() {
 
 export function NotificationSkeleton() {
   return (
-    <div className='flex items-start gap-3 p-3 border border-border rounded-lg'>
+    <div className='flex items-start gap-3 p-3 border border-border rounded-dropdown'>
       <Skeleton className='size-10 rounded-full' />
       <div className='flex-1 space-y-2'>
         <div className='flex items-center justify-between'>

@@ -143,7 +143,7 @@ function VerifyEmailContent() {
         <Card className='max-w-md w-full'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Icons.clock className='h-5 w-5 text-orange-500' />
+              <Icons.clock className='h-5 w-5 text-warning' />
               Link Expired
             </CardTitle>
           </CardHeader>
@@ -177,7 +177,7 @@ function VerifyEmailContent() {
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
               {isSuccess ? (
-                <Icons.check className='h-5 w-5 text-green-500' />
+                <Icons.check className='h-5 w-5 text-success' />
               ) : (
                 <Icons.x className='h-5 w-5 text-destructive' />
               )}

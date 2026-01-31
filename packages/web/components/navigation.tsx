@@ -16,20 +16,8 @@ import {
   AuthLoading,
   AdminOnly,
 } from '@/components/auth/auth-wrappers';
-import { useQuery } from 'convex/react';
+import { useGlobalUser } from '@/context/global-user-context';
 import { isAdminRole } from '@/lib/constants';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authQueries: any;
-function initApi() {
-  if (!authQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    authQueries = api.auth?.queries ?? {};
-  }
-}
-initApi();
 
 /**
  * Main navigation bar using Convex authentication components
@@ -97,7 +85,7 @@ export function Navigation({ items }: { items: NavItem[] }) {
 
         <AuthLoading>
           <div className='hidden md:block'>
-            <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+            <div className='animate-spin h-6 w-6 border-2 border-border border-t-foreground rounded-full'></div>
           </div>
         </AuthLoading>
       </div>
@@ -153,9 +141,10 @@ function NavigationLinks({ items }: { items?: MainNavItem[] }) {
 }
 
 function MobileNavigation({ items }: { items?: MainNavItem[] }) {
-  const userAndPerson = useQuery(authQueries.getCurrentUserAndPerson, {});
+  // Use global user context instead of direct query
+  const { user } = useGlobalUser();
 
-  if (!userAndPerson) {
+  if (!user) {
     return (
       <MobileNav
         userInfo={{
@@ -168,8 +157,6 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
       />
     );
   }
-
-  const { user } = userAndPerson;
 
   // Filter admin items for mobile nav too
   const publicItems = items?.filter(item => item.href !== '/admin') || [];
@@ -194,18 +181,19 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
 }
 
 function UserProfile() {
-  const userAndPerson = useQuery(authQueries.getCurrentUserAndPerson, {});
+  // Use global user context instead of direct query
+  const { userAndPerson, isLoading, user } = useGlobalUser();
 
   // Loading state - show spinner
-  if (userAndPerson === undefined) {
+  if (isLoading || userAndPerson === undefined) {
     return (
-      <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+      <div className='animate-spin h-6 w-6 border-2 border-border border-t-foreground rounded-full'></div>
     );
   }
 
   // User authenticated but no person record - redirect will happen via OnboardingRedirectWrapper
   // Show minimal profile in the meantime
-  if (userAndPerson === null) {
+  if (userAndPerson === null || !user) {
     return (
       <ProfileDropdown
         userInfo={{
@@ -217,8 +205,6 @@ function UserProfile() {
       />
     );
   }
-
-  const { user } = userAndPerson;
 
   return (
     <ProfileDropdown

@@ -53,7 +53,7 @@ export function UserListSkeleton({ count = 5 }: { count?: number }) {
 
 export function UserListItemSkeleton() {
   return (
-    <div className='flex items-center gap-3 p-3 border border-border rounded-lg'>
+    <div className='flex items-center gap-3 p-3 border border-border rounded-dropdown'>
       <Skeleton className='size-10 rounded-full' />
       <div className='flex-1 space-y-2'>
         <Skeleton className='h-4 w-32' />
@@ -69,7 +69,7 @@ export function UserListItemSkeleton() {
 
 export function UserCardSkeleton() {
   return (
-    <div className='border border-border rounded-lg p-4 space-y-4'>
+    <div className='border border-border rounded-card p-4 space-y-4'>
       <div className='flex items-center gap-3'>
         <Skeleton className='size-12 rounded-full' />
         <div className='space-y-2'>

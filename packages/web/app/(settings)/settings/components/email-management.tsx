@@ -150,16 +150,16 @@ export function EmailManagement() {
                   email.isPrimary
                     ? 'bg-primary/5 border-primary/20'
                     : email.status === 'pending'
-                      ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+                      ? 'bg-bg-warning-subtle border-border dark:bg-bg-warning-subtle'
                       : 'bg-muted/30'
                 )}
               >
                 <div className='flex-1 min-w-0'>
                   <div className='flex items-center gap-2'>
                     {email.status === 'verified' ? (
-                      <Icons.mail className='h-4 w-4 text-green-600' />
+                      <Icons.mail className='h-4 w-4 text-success' />
                     ) : (
-                      <Icons.clock className='h-4 w-4 text-orange-600' />
+                      <Icons.clock className='h-4 w-4 text-warning' />
                     )}
                     <span className='font-medium truncate'>
                       {email.address}
@@ -180,7 +180,7 @@ export function EmailManagement() {
                       <>
                         <Badge
                           variant='outline'
-                          className='text-xs text-orange-600'
+                          className='text-xs text-warning'
                         >
                           Verification Pending
                         </Badge>

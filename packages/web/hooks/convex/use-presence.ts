@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useQuery, useConvex } from 'convex/react';
+import { useDebouncedCallback } from 'use-debounce';
 import { Id } from '@/convex/_generated/dataModel';
 import usePresence from '@convex-dev/presence/react';
+import { useIsActive } from '@/providers/visibility-provider';
 
 // ===== CONSTANTS =====
-const DEFAULT_HEARTBEAT_INTERVAL = 10000; // 10 seconds
+// Increased from 10s to 30s to reduce function calls by 3x
+// The presence component considers users offline after 2x the interval (60s)
+const DEFAULT_HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 // Lazy-load the presence API to avoid deep type instantiation issues
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +58,8 @@ export interface TypingUser {
 /**
  * Track user presence in a post thread
  * Call this on post detail pages to mark user as present
+ *
+ * Note: Heartbeats are paused when the tab is hidden to reduce function calls.
  */
 export function usePostPresence(
   postId: Id<'posts'> | undefined,
@@ -61,10 +67,11 @@ export function usePostPresence(
 ) {
   const roomId = postId ? `post:${postId}` : '';
   const userId = personId ?? '';
-  const isEnabled = !!postId && !!personId;
+  const isActive = useIsActive();
+  const isEnabled = !!postId && !!personId && isActive;
 
   // Use the Convex presence hook
-  // When roomId or userId is empty, the hook will effectively not track
+  // When roomId or userId is empty, or tab is hidden, the hook will not send heartbeats
   const presenceState = usePresence(
     getPresenceApi(),
     roomId,
@@ -83,7 +90,8 @@ export function usePostPresence(
  * This is needed for typing indicators to work
  *
  * Note: This hook manages its own heartbeats instead of using usePresence
- * to avoid creating duplicate sessions and to expose the roomToken
+ * to avoid creating duplicate sessions and to expose the roomToken.
+ * Heartbeats are paused when the tab is hidden to reduce function calls.
  */
 export function usePostPresenceWithToken(
   postId: Id<'posts'> | undefined,
@@ -91,7 +99,8 @@ export function usePostPresenceWithToken(
 ) {
   const roomId = useMemo(() => (postId ? `post:${postId}` : ''), [postId]);
   const userId = personId ?? '';
-  const isEnabled = !!postId && !!personId;
+  const isActive = useIsActive();
+  const isEnabled = !!postId && !!personId && isActive;
   const convex = useConvex();
 
   // Track roomToken from heartbeat
@@ -167,31 +176,6 @@ export function usePostPresenceWithToken(
 }
 
 /**
- * Track user presence in an event
- * Call this on event pages to mark user as present
- */
-export function useEventPresence(
-  eventId: Id<'events'> | undefined,
-  personId: Id<'persons'> | undefined
-) {
-  const roomId = eventId ? `event:${eventId}` : '';
-  const userId = personId ?? '';
-  const isEnabled = !!eventId && !!personId;
-
-  const presenceState = usePresence(
-    getPresenceApi(),
-    roomId,
-    userId,
-    isEnabled ? DEFAULT_HEARTBEAT_INTERVAL : 0
-  );
-
-  return {
-    presenceState,
-    isTracking: isEnabled,
-  };
-}
-
-/**
  * Get list of users currently viewing a post
  */
 export function usePostViewers(postId: Id<'posts'> | undefined) {
@@ -225,10 +209,16 @@ export function useTypingIndicators(
 
 // Typing auto-clear timeout in milliseconds
 const TYPING_TIMEOUT = 5000; // 5 seconds
+// Debounce delay for typing indicator updates (reduces mutations by ~90%)
+const TYPING_DEBOUNCE_MS = 300;
 
 /**
- * Hook to manage typing state
+ * Hook to manage typing state with debouncing
  * Returns a function to set typing state
+ *
+ * Optimization: Debounces "isTyping: true" updates with 300ms delay to batch
+ * rapid keystrokes. "isTyping: false" updates are immediate to ensure the
+ * indicator clears promptly when the user stops typing or deletes content.
  *
  * Note: This hook does NOT manage its own presence session.
  * The presence session should be managed by usePostPresenceWithToken
@@ -245,11 +235,12 @@ export function useTypingState(
   const isEnabled = !!postId && !!personId;
   const convex = useConvex();
 
-  const setTyping = useCallback(
+  // Core function that actually sends the mutation
+  const updateTypingState = useCallback(
     async (isTyping: boolean) => {
       if (!isEnabled) return;
 
-      // Clear existing timeout
+      // Clear existing auto-clear timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -298,14 +289,42 @@ export function useTypingState(
     [isEnabled, roomId, userId, convex]
   );
 
+  // Debounced version for "start typing" events
+  // This batches rapid keystrokes, reducing mutations by ~90%
+  const debouncedSetTyping = useDebouncedCallback(
+    () => {
+      void updateTypingState(true);
+    },
+    TYPING_DEBOUNCE_MS,
+    { leading: false, trailing: true }
+  );
+
+  // Public API: Debounce "typing" state, immediate "stopped typing"
+  const setTyping = useCallback(
+    (isTyping: boolean) => {
+      if (!isEnabled) return;
+
+      if (isTyping) {
+        // Debounced - batch rapid keystrokes
+        debouncedSetTyping();
+      } else {
+        // Immediately clear typing state
+        debouncedSetTyping.cancel();
+        void updateTypingState(false);
+      }
+    },
+    [isEnabled, debouncedSetTyping, updateTypingState]
+  );
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      debouncedSetTyping.cancel();
     };
-  }, []);
+  }, [debouncedSetTyping]);
 
   return {
     setTyping,
@@ -331,28 +350,86 @@ export function useUpdateLastSeen() {
 /**
  * Global presence tracking - marks user as online in the app
  * Call this at the app root level
+ *
+ * Note: Heartbeats are paused when the tab is hidden to reduce function calls.
+ * The lastSeen update is also paused when the tab is hidden.
+ *
+ * This hook manages its own heartbeats instead of using the usePresence library
+ * to avoid subscribing to the presence:list query (we don't need the list for
+ * app-level presence, just the heartbeat to show the user is online).
  */
 export function useAppPresence(personId: Id<'persons'> | undefined) {
   const userId = personId ?? '';
-  const isEnabled = !!personId;
+  const isActive = useIsActive();
+  const isEnabled = !!personId && isActive;
+  const convex = useConvex();
 
-  const presenceState = usePresence(
-    getPresenceApi(),
-    'app',
-    userId,
-    isEnabled ? DEFAULT_HEARTBEAT_INTERVAL : 0
-  );
+  // Session management
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const sessionTokenRef = useRef<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Also update last seen periodically
+  // Update last seen periodically
   const updateLastSeen = useUpdateLastSeen();
 
+  // Send heartbeats to mark user as online in the app
   useEffect(() => {
-    if (!personId) return;
+    if (!isEnabled) {
+      return;
+    }
 
-    // Update last seen on mount
+    let isMounted = true;
+
+    const sendHeartbeat = async () => {
+      try {
+        const result = await convex.mutation(getApi().presence.heartbeat, {
+          roomId: 'app',
+          userId,
+          sessionId,
+          interval: DEFAULT_HEARTBEAT_INTERVAL,
+        });
+        if (isMounted) {
+          sessionTokenRef.current = result.sessionToken;
+        }
+      } catch {
+        // Silently fail - heartbeat is not critical
+      }
+    };
+
+    // Send initial heartbeat
+    void sendHeartbeat();
+
+    // Set up interval for heartbeats
+    intervalRef.current = setInterval(
+      sendHeartbeat,
+      DEFAULT_HEARTBEAT_INTERVAL
+    );
+
+    // Cleanup
+    return () => {
+      isMounted = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // Disconnect session on unmount
+      if (sessionTokenRef.current) {
+        void convex.mutation(getApi().presence.disconnect, {
+          sessionToken: sessionTokenRef.current,
+        });
+      }
+    };
+  }, [isEnabled, userId, sessionId, convex]);
+
+  // Update lastSeen in person record (separate from presence heartbeats)
+  useEffect(() => {
+    // Only update lastSeen when active (visible and not away)
+    if (!personId || !isActive) return;
+
+    // Update last seen on mount/visibility change
     updateLastSeen();
 
-    // Update every 5 minutes while active
+    // Update every 5 minutes while active and visible
     const interval = setInterval(
       () => {
         updateLastSeen();
@@ -361,7 +438,39 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
     );
 
     return () => clearInterval(interval);
-  }, [personId, updateLastSeen]);
+  }, [personId, isActive, updateLastSeen]);
+}
 
-  return presenceState;
+// ===== CONVENIENCE HOOKS WITH GLOBAL USER CONTEXT =====
+
+// Lazy-load global user context to avoid circular dependencies
+function usePersonIdFromContext(): Id<'persons'> | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useGlobalUser } = require('@/context/global-user-context');
+  const { person } = useGlobalUser();
+  return person?._id as Id<'persons'> | undefined;
+}
+
+/**
+ * Track presence in a post using the current user from global context.
+ * Convenience wrapper around usePostPresenceWithToken.
+ *
+ * @param postId - The post to track presence in
+ * @returns { roomToken, isTracking } - roomToken for typing indicators
+ */
+export function useCurrentUserPostPresence(postId: Id<'posts'> | undefined) {
+  const personId = usePersonIdFromContext();
+  return usePostPresenceWithToken(postId, personId);
+}
+
+/**
+ * Manage typing state for the current user using global context.
+ * Convenience wrapper around useTypingState.
+ *
+ * @param postId - The post to track typing state in
+ * @returns { setTyping } - Function to update typing state (debounced)
+ */
+export function useCurrentUserTypingState(postId: Id<'posts'> | undefined) {
+  const personId = usePersonIdFromContext();
+  return useTypingState(postId, personId);
 }

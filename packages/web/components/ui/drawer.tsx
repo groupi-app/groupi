@@ -28,7 +28,11 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/80', className)}
+    data-slot='drawer-overlay'
+    className={cn(
+      'fixed inset-0 z-modal bg-black/50 backdrop-blur-sm',
+      className
+    )}
     {...props}
   />
 ));
@@ -42,13 +46,14 @@ const DrawerContent = React.forwardRef<
     <DrawerOverlay />
     <DrawerPrimitive.Content
       ref={ref}
+      data-slot='drawer-content'
       className={cn(
-        'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background',
+        'fixed inset-x-0 bottom-0 z-modal mt-24 flex h-auto flex-col rounded-t-modal border bg-background shadow-overlay',
         className
       )}
       {...props}
     >
-      <div className='mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted' />
+      <div className='mx-auto mt-4 h-2 w-[100px] rounded-pill bg-muted' />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>
@@ -60,7 +65,7 @@ const DrawerHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('grid gap-1.5 p-4 text-center sm:text-left', className)}
+    className={cn('grid gap-2 p-6 text-center sm:text-left', className)}
     {...props}
   />
 );
@@ -71,7 +76,7 @@ const DrawerFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('mt-auto flex flex-col gap-2 p-4', className)}
+    className={cn('mt-auto flex flex-col gap-2 p-6', className)}
     {...props}
   />
 );
@@ -83,6 +88,7 @@ const DrawerTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Title
     ref={ref}
+    data-slot='drawer-title'
     className={cn(
       'text-lg font-semibold leading-none tracking-tight',
       className
@@ -98,6 +104,7 @@ const DrawerDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Description
     ref={ref}
+    data-slot='drawer-description'
     className={cn('text-sm text-muted-foreground', className)}
     {...props}
   />

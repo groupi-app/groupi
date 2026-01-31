@@ -17,20 +17,8 @@ import {
   AuthLoading,
   AdminOnly,
 } from '@/components/auth/auth-wrappers';
-import { useQuery } from 'convex/react';
+import { useGlobalUser } from '@/context/global-user-context';
 import { isAdminRole } from '@/lib/constants';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authQueries: any;
-function initApi() {
-  if (!authQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    authQueries = api.auth?.queries ?? {};
-  }
-}
-initApi();
 
 type NavItem = {
   href: string;
@@ -93,7 +81,7 @@ export function MainNav({ items }: { items: NavItem[] }) {
 
       <AuthLoading>
         <div className='hidden md:block'>
-          <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+          <div className='animate-spin h-6 w-6 border-2 border-border border-t-foreground rounded-full'></div>
         </div>
       </AuthLoading>
     </div>
@@ -148,9 +136,10 @@ function AuthenticatedNav({ items }: { items?: MainNavItem[] }) {
 }
 
 function AuthenticatedMobileNav({ items }: { items?: MainNavItem[] }) {
-  const userAndPerson = useQuery(authQueries.getCurrentUserAndPerson, {});
+  // Use global user context instead of direct query
+  const { user } = useGlobalUser();
 
-  if (!userAndPerson) {
+  if (!user) {
     return (
       <MobileNav
         userInfo={{
@@ -163,8 +152,6 @@ function AuthenticatedMobileNav({ items }: { items?: MainNavItem[] }) {
       />
     );
   }
-
-  const { user } = userAndPerson;
 
   // Filter admin items for mobile nav too
   const publicItems = items?.filter(item => item.href !== '/admin') || [];
@@ -189,15 +176,14 @@ function AuthenticatedMobileNav({ items }: { items?: MainNavItem[] }) {
 }
 
 function AuthenticatedProfileDropdown() {
-  const userAndPerson = useQuery(authQueries.getCurrentUserAndPerson, {});
+  // Use global user context instead of direct query
+  const { user, isLoading } = useGlobalUser();
 
-  if (!userAndPerson) {
+  if (isLoading || !user) {
     return (
-      <div className='animate-spin h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full'></div>
+      <div className='animate-spin h-6 w-6 border-2 border-border border-t-foreground rounded-full'></div>
     );
   }
-
-  const { user } = userAndPerson;
 
   return (
     <ProfileDropdown

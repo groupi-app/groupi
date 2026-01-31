@@ -39,7 +39,7 @@ const errorConfigs: Record<ErrorType, ErrorConfig> = {
   },
   expired: {
     icon: 'time',
-    iconClassName: 'text-amber-500',
+    iconClassName: 'text-warning',
     title: 'Expired',
     defaultMessage: 'This link has expired and is no longer valid.',
   },

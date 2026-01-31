@@ -1,8 +1,5 @@
 'use client';
 import { DateCard } from './date-card';
-import { useEventAvailabilityData } from '@/hooks/convex/use-availability';
-import { Id } from '@/convex/_generated/dataModel';
-
 import {
   Select,
   SelectContent,
@@ -16,6 +13,7 @@ import { getRanks } from '@/lib/utils';
 
 import { LayoutGroup, motion } from 'framer-motion';
 import { useState } from 'react';
+import { useEventData } from '../context';
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,11 +30,11 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function DateCardList({ eventId }: { eventId: Id<'events'> }) {
+export function DateCardList() {
   const [sortBy, setSortBy] = useState<'rank' | 'date'>('rank');
 
-  // Use Convex hook for real-time availability data
-  const availabilityData = useEventAvailabilityData(eventId);
+  // Use context data (pre-fetched at layout level)
+  const { availabilityData } = useEventData();
 
   // Loading state
   if (availabilityData === undefined) {

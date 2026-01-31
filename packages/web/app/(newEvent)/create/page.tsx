@@ -2,7 +2,7 @@
 
 import { CreateWizard } from './components/create-wizard';
 import { NewEventFormBlank } from './components/new-event-form-blank';
-import { Suspense } from 'react';
+import { FormPageTemplate } from '@/components/templates';
 
 /**
  * New Event Page - Client-only architecture
@@ -11,11 +11,8 @@ import { Suspense } from 'react';
  */
 export default function Page() {
   return (
-    <div className='container max-w-4xl mt-10'>
-      <h1 className='text-4xl font-heading mb-4'>New Event</h1>
-      <Suspense fallback={<NewEventFormBlank />}>
-        <CreateWizard />
-      </Suspense>
-    </div>
+    <FormPageTemplate title='New Event' skeleton={<NewEventFormBlank />}>
+      <CreateWizard />
+    </FormPageTemplate>
   );
 }

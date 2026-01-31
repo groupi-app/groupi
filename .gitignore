@@ -59,6 +59,9 @@ packages/web/e2e/test-results/
 packages/web/e2e/playwright/.auth/
 packages/web/test-results/
 
+# Storybook
+packages/web/storybook-static/
+
 # Supabase dumps
 supabase_prod_*.sql
 

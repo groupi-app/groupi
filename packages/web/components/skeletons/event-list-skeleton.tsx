@@ -17,7 +17,7 @@ export function EventListSkeleton() {
 
 export function EventCardSkeleton() {
   return (
-    <div className='flex flex-col gap-2 border border-border shadow-md p-4 px-6 rounded-md'>
+    <div className='flex flex-col gap-2 border border-border shadow-raised p-4 px-6 rounded-card'>
       <div className='flex flex-col md:flex-row gap-2 md:gap-8'>
         {/* Title and description */}
         <div className='flex flex-col grow gap-2 md:w-1/2'>

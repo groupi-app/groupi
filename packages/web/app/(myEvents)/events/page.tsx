@@ -2,6 +2,7 @@
 
 import { EventList } from './components/event-list';
 import { FilterSortControls } from './components/filter-sort-controls';
+import { ListPageTemplate } from '@/components/templates';
 
 /**
  * My Events Page - Client-only architecture
@@ -12,12 +13,8 @@ import { FilterSortControls } from './components/filter-sort-controls';
  */
 export default function MyEventsPage() {
   return (
-    <div className='container py-6 max-w-4xl'>
-      <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-4'>
-        <h1 className='text-5xl font-heading font-medium'>My Events</h1>
-        <FilterSortControls />
-      </div>
+    <ListPageTemplate title='My Events' controls={<FilterSortControls />}>
       <EventList />
-    </div>
+    </ListPageTemplate>
   );
 }

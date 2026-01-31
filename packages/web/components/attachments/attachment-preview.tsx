@@ -159,7 +159,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-sm',
+                  'bg-background border border-border shadow-raised',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -209,7 +209,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-sm',
+                  'bg-background border border-border shadow-raised',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -250,7 +250,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-sm',
+                  'bg-background border border-border shadow-raised',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}
@@ -295,7 +295,7 @@ export function AttachmentPreview({
                 }}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 size-6 rounded-full',
-                  'bg-background border border-border shadow-sm',
+                  'bg-background border border-border shadow-raised',
                   'flex items-center justify-center',
                   'hover:bg-muted transition-colors'
                 )}

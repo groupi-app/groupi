@@ -1,15 +1,19 @@
 'use client';
 
-import { useEventHeader, useCurrentUser } from '@/hooks/convex';
-import { Id } from '@/convex/_generated/dataModel';
-import { Editor } from '../../../../../(post)/post/[postId]/components/editor';
+import { Editor } from '../../post/[postId]/components/editor';
 import { PostEditorSkeleton } from '@/components/skeletons';
+import { useEventData } from '../../context';
 
 export function NewPostContent({ eventId }: { eventId: string }) {
-  const user = useCurrentUser();
-  const eventData = useEventHeader(eventId as Id<'events'>);
+  // Use context data (pre-fetched at layout level)
+  const {
+    currentUser: user,
+    headerData: eventData,
+    isCurrentUserLoading,
+    isHeaderLoading,
+  } = useEventData();
 
-  if (user === undefined || eventData === undefined) {
+  if (isCurrentUserLoading || isHeaderLoading) {
     return (
       <div className='container pt-6'>
         <PostEditorSkeleton />
@@ -21,7 +25,7 @@ export function NewPostContent({ eventId }: { eventId: string }) {
     return <div>Please sign in to create posts</div>;
   }
 
-  if (eventData === null) {
+  if (eventData === null || eventData === undefined) {
     return <div>Event not found</div>;
   }
 

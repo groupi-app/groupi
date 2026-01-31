@@ -8,6 +8,7 @@ export default defineConfig({
     'types/index': 'src/types/index.ts',
     'platform/index': 'src/platform/index.ts',
     'design/index': 'src/design/index.ts',
+    'design/themes/index': 'src/design/themes/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: {

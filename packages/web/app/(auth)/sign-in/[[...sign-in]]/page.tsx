@@ -313,21 +313,19 @@ export default function SignInPage() {
               </div>
 
               {success && (
-                <Alert className='border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800'>
-                  <Icons.mail className='h-4 w-4 text-green-600 dark:text-green-400' />
-                  <AlertTitle className='text-green-900 dark:text-green-100'>
-                    Check your email!
-                  </AlertTitle>
-                  <AlertDescription className='text-green-800 dark:text-green-200'>
+                <Alert variant='success'>
+                  <Icons.mail className='h-4 w-4' />
+                  <AlertTitle>Check your email!</AlertTitle>
+                  <AlertDescription>
                     We&apos;ve sent you a magic link to sign in. Click the link
                     in the email to continue.
                     {lastSentIdentifier && (
-                      <div className='mt-3 pt-3 border-t border-green-200 dark:border-green-800'>
+                      <div className='mt-3 pt-3 border-t border-border-success'>
                         <p className='text-sm mb-2'>
                           Didn&apos;t receive the email?
                         </p>
                         {cooldownSeconds > 0 ? (
-                          <p className='text-sm text-green-700 dark:text-green-300'>
+                          <p className='text-sm text-text-success'>
                             Resend available in {cooldownSeconds} second
                             {cooldownSeconds !== 1 ? 's' : ''}
                           </p>
@@ -336,7 +334,7 @@ export default function SignInPage() {
                             type='button'
                             onClick={handleResend}
                             disabled={loading}
-                            className='text-sm font-medium text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100 underline disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='text-sm font-medium text-text-success hover:text-text-success/80 underline disabled:opacity-50 disabled:cursor-not-allowed'
                           >
                             Resend magic link
                           </button>
@@ -348,7 +346,7 @@ export default function SignInPage() {
               )}
 
               {error && (
-                <div className='rounded-lg bg-red-50 p-4 text-red-800 border border-red-200'>
+                <div className='rounded-lg bg-bg-error-subtle p-4 text-text-error border border-border-error'>
                   <p className='text-sm'>{error}</p>
                 </div>
               )}

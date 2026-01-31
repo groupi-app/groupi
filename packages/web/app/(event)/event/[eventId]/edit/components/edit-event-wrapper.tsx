@@ -1,9 +1,8 @@
 'use client';
 
 import { EditEventContent } from './edit-event-content';
-import { useEventHeader, useCurrentUser } from '@/hooks/convex';
 import { NewEventFormSkeleton } from '@/components/skeletons';
-import { Id } from '@/convex/_generated/dataModel';
+import { useEventData } from '../../context';
 
 interface EditEventWrapperProps {
   eventId: string;
@@ -11,15 +10,20 @@ interface EditEventWrapperProps {
 
 /**
  * Edit Event Wrapper - Client-only architecture
- * - Uses Convex hooks for real-time data
+ * - Uses EventDataProvider context for data (pre-fetched at layout level)
  * - Renders edit content when data is ready
  */
 export function EditEventWrapper({ eventId }: EditEventWrapperProps) {
-  const eventData = useEventHeader(eventId as Id<'events'>);
-  const currentUser = useCurrentUser();
+  // Use context data (pre-fetched at layout level)
+  const {
+    headerData: eventData,
+    currentUser,
+    isHeaderLoading,
+    isCurrentUserLoading,
+  } = useEventData();
 
   // Loading state
-  if (!eventData || !currentUser) {
+  if (isHeaderLoading || isCurrentUserLoading || !eventData || !currentUser) {
     return (
       <div className='container max-w-4xl mt-10'>
         <NewEventFormSkeleton />

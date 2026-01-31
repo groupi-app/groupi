@@ -203,7 +203,7 @@ export function ApiKeysSettings() {
                           {key.name || 'Unnamed Key'}
                         </p>
                         {isExpired(key.expiresAt) && (
-                          <span className='text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 px-2 py-0.5 rounded'>
+                          <span className='text-xs bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive px-2 py-0.5 rounded'>
                             Expired
                           </span>
                         )}
@@ -228,7 +228,7 @@ export function ApiKeysSettings() {
                         setSelectedKeyId(key.id);
                         setShowDeleteDialog(true);
                       }}
-                      className='text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950'
+                      className='text-destructive hover:text-destructive/90 hover:bg-destructive/10 dark:hover:bg-destructive/20'
                     >
                       <Icons.trash className='h-4 w-4' />
                     </Button>
@@ -314,8 +314,8 @@ export function ApiKeysSettings() {
                   </Button>
                 </div>
               </div>
-              <div className='bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'>
-                <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+              <div className='bg-bg-warning-subtle border border-border rounded-lg p-3'>
+                <p className='text-sm text-text-warning'>
                   <strong>Important:</strong> This is the only time you will see
                   this key. Make sure to copy and store it securely.
                 </p>

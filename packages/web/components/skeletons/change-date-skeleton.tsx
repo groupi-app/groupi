@@ -18,8 +18,8 @@ export function ChangeDateTypeSkeleton() {
 
       {/* Option buttons */}
       <div className='flex my-12 gap-4 justify-center flex-col md:flex-row items-center'>
-        <Skeleton className='h-24 w-full max-w-md rounded-lg' />
-        <Skeleton className='h-24 w-full max-w-md rounded-lg' />
+        <Skeleton className='h-24 w-full max-w-md rounded-card' />
+        <Skeleton className='h-24 w-full max-w-md rounded-card' />
       </div>
     </div>
   );
@@ -42,7 +42,7 @@ export function ChangeDateSingleSkeleton() {
           <Skeleton className='h-4 w-48 mx-auto mt-2' />
         </div>
         {/* Selected date display */}
-        <Skeleton className='h-16 w-80 mx-auto rounded-lg' />
+        <Skeleton className='h-16 w-80 mx-auto rounded-card' />
         {/* Buttons */}
         <div className='flex justify-between mt-2'>
           <Skeleton className='h-10 w-20' />
@@ -103,7 +103,7 @@ export function DateSelectSkeleton() {
       {/* Date cards list */}
       <div className='flex flex-col gap-4'>
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className='border rounded-lg p-4'>
+          <div key={i} className='border rounded-card p-4'>
             <div className='flex justify-between items-start'>
               <div className='space-y-2'>
                 <Skeleton className='h-6 w-48' />
@@ -140,7 +140,7 @@ export function InvitePageSkeleton() {
       {/* Invite cards */}
       <div className='grid gap-4 md:grid-cols-2'>
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className='border rounded-lg p-4 space-y-3'>
+          <div key={i} className='border rounded-card p-4 space-y-3'>
             <div className='flex justify-between items-center'>
               <Skeleton className='h-5 w-32' />
               <Skeleton className='h-8 w-8 rounded' />

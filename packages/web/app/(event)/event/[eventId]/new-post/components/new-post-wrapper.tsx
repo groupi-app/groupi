@@ -1,9 +1,8 @@
 'use client';
 
 import { NewPostContent } from './new-post-content';
-import { useEventHeader, useCurrentUser } from '@/hooks/convex';
 import { PostEditorSkeleton } from '@/components/skeletons';
-import { Id } from '@/convex/_generated/dataModel';
+import { useEventData } from '../../context';
 
 interface NewPostWrapperProps {
   eventId: string;
@@ -11,15 +10,20 @@ interface NewPostWrapperProps {
 
 /**
  * New Post Wrapper - Client-only architecture
- * - Uses Convex hooks for real-time data
+ * - Uses EventDataProvider context for data (pre-fetched at layout level)
  * - Renders new post content when data is ready
  */
 export function NewPostWrapper({ eventId }: NewPostWrapperProps) {
-  const eventData = useEventHeader(eventId as Id<'events'>);
-  const currentUser = useCurrentUser();
+  // Use context data (pre-fetched at layout level)
+  const {
+    headerData: eventData,
+    currentUser,
+    isHeaderLoading,
+    isCurrentUserLoading,
+  } = useEventData();
 
   // Loading state
-  if (!eventData || !currentUser) {
+  if (isHeaderLoading || isCurrentUserLoading || !eventData || !currentUser) {
     return (
       <div className='container pt-6'>
         <PostEditorSkeleton />

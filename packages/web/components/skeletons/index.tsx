@@ -1,5 +1,6 @@
 // Event skeletons
 export { EventHeaderSkeleton } from './event-header-skeleton';
+export { EventPageSkeleton } from './event-page-skeleton';
 export { EventListSkeleton, EventCardSkeleton } from './event-list-skeleton';
 export { AttendeeListSkeleton } from './attendee-list-skeleton';
 export { AvailabilityFormSkeleton } from './availability-form-skeleton';

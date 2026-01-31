@@ -24,13 +24,13 @@ export function SettingsNav() {
         }}
         size='icon'
         variant='outline'
-        className='z-10 md:hidden mb-2 ml-0'
+        className='z-lifted md:hidden mb-2 ml-0'
       >
         <Icons.sidebar />
       </Button>
       <div
         className={cn(
-          'fixed w-full md:sticky top-[5rem] border-r border-border duration-300 h-[calc(100vh-6rem-5rem)] z-30 bg-background md:bg-transparent',
+          'fixed w-full md:sticky top-[5rem] border-r border-border duration-300 h-[calc(100vh-6rem-5rem)] z-top bg-background md:bg-transparent',
           open ? 'left-0' : 'left-[calc(-100vw)] md:left-0',
           hasTransition ? 'transition-all ease-in-out' : 'transition-none'
         )}
@@ -51,7 +51,7 @@ export function SettingsNav() {
             <Icons.close />
           </Button>
         </div>
-        <div className='flex flex-col p-2 gap-2 z-40'>
+        <div className='flex flex-col p-2 gap-2 z-sticky'>
           {settingsConfig.settingsNav.map(item => (
             <Link
               key={item.href}
