@@ -33,12 +33,14 @@ export function ProfileViewDialog({
   const [viewMode, setViewMode] = useState<ViewMode>('profile');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id as string | undefined;
-
-  // Use Convex hooks for real-time data
-  const profileData = useUserProfile(userId);
-  const mutualEventsData = useMutualEvents(userId);
-
   const isOwnProfile = currentUserId === userId;
+
+  // Use Convex hooks for real-time data - only fetch when dialog is open
+  const profileData = useUserProfile(userId, { enabled: open });
+  // Only fetch mutual events when the dialog is open and viewing someone else's profile
+  const mutualEventsData = useMutualEvents(userId, {
+    enabled: open && !isOwnProfile,
+  });
 
   // Loading states
   const isLoading = profileData === undefined;
@@ -137,12 +139,12 @@ export function ProfileViewDialog({
                       return (
                         <div className='flex items-center gap-1.5 text-sm'>
                           <span
-                            className={`size-2 rounded-full ${presence.isOnline ? 'bg-green-500' : 'bg-muted-foreground/50'}`}
+                            className={`size-2 rounded-full ${presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'}`}
                           />
                           <span
                             className={
                               presence.isOnline
-                                ? 'text-green-600 dark:text-green-400'
+                                ? 'text-success'
                                 : 'text-muted-foreground'
                             }
                           >
@@ -195,7 +197,7 @@ export function ProfileViewDialog({
                     href={`/event/${event.id}`}
                     onClick={() => handleOpenChange(false)}
                   >
-                    <div className='flex items-center gap-3 border border-border shadow-sm p-2 hover:bg-accent transition-all cursor-pointer rounded-md'>
+                    <div className='flex items-center gap-3 border border-border shadow-raised p-2 hover:bg-accent transition-all cursor-pointer rounded-md'>
                       <h3 className='font-heading text-sm shrink-0 min-w-0 flex-1 truncate'>
                         {event.title}
                       </h3>

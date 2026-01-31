@@ -40,9 +40,21 @@ export function useUserByUsername(username: string) {
 
 /**
  * Get user profile by user ID
+ * @param userId - The user ID to fetch profile for
+ * @param options - Optional configuration
+ * @param options.enabled - Whether to run the query (default: true). Set to false to skip.
  */
-export function useUserProfile(userId: string) {
-  return useQuery(userQueries.getUserProfileByUserId, { userId });
+export function useUserProfile(
+  userId: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled ?? true;
+  const shouldSkip = !enabled || !userId;
+
+  return useQuery(
+    userQueries.getUserProfileByUserId,
+    shouldSkip ? 'skip' : { userId }
+  );
 }
 
 // ===== USER MUTATIONS =====
