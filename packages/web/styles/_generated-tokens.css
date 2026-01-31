@@ -107,6 +107,12 @@
   --color-brand-accent: var(--brand-accent);
   --color-brand-accent-hover: var(--brand-accent-hover);
 
+  /* Status colors (work with bg-success, text-success, etc.) */
+  --color-success: var(--bg-success);
+  --color-warning: var(--bg-warning);
+  --color-error: var(--bg-error);
+  --color-info: var(--bg-info);
+
   /* Background colors */
   --color-bg-page: var(--bg-page);
   --color-bg-surface: var(--bg-surface);

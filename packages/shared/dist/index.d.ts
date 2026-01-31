@@ -3,6 +3,7 @@ export { AccessibilityProps, AccessibilityRole, AccessibilityState, Announcement
 export { AsyncState, BaseEntity, DeviceInfo, Dimensions, Event, FormField, LayoutInfo, Membership, NavigationState, PlatformType, Post, Reply, User, ValidationResult } from './types/index.js';
 export { getNavigationAdapter, getStorageAdapter, getToastAdapter, navigation, setNavigationAdapter, setStorageAdapter, setToastAdapter, storage, toast, useNavigation, useStorage, useToast } from './platform/index.js';
 export { N as NavigationAdapter, P as Platform, a as PlatformConfig, S as StorageAdapter, b as ToastAdapter, T as ToastOptions } from './types-DwU5YVHx.js';
-export { animations, borderRadius, breakpoints, cn, colors, shadows, spacing, typography } from './design/index.js';
+export { AnimationDuration, AnimationEasing, BackgroundColor, BorderColor, BrandColor, Breakpoints, ComponentRadius, Components, ElevationShadow, FunShadow, InlineSpacing, InsetSpacing, PrimitiveColor, Primitives, Semantic, SemanticColor, ShapeRadius, StackSpacing, TextColor, animations, borderRadius, breakpoints, cn, colors, components, primitives, semantic, shadows, spacing, typography } from './design/index.js';
+export { GroupiDarkTheme, GroupiLightTheme, SharedTokens, Theme, groupiDark, groupiLight, sharedTokens, themes, tokens } from './design/themes/index.js';
 import 'convex/react';
 import 'clsx';
