@@ -281,7 +281,7 @@ export function PostCard({
       <ActionMenuButton
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center'
+        className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
         dropdownContent={dropdownContent}
       >
         <Icons.more className='size-4' />
@@ -291,7 +291,7 @@ export function PostCard({
         href={`/event/${event._id}/post/${id}`}
         className='w-full z-lifted'
       >
-        <div className='w-full rounded-card bg-card hover:bg-accent transition-colors pt-4 px-5 pb-2'>
+        <div className='w-full rounded-card bg-card hover:bg-accent/80 transition-colors pt-4 px-5 pb-2'>
           <div className='flex flex-col gap-1'>
             <div className='ml-12 mb-2 flex flex-col -space-y-1 w-full pr-16'>
               <div className='flex items-center gap-2'>

@@ -6,7 +6,6 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import { siteConfig } from '@/config/site';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { MobileNav } from './mobile-nav';
 import { NotificationsDesktop } from './notifications-desktop';
@@ -63,20 +62,13 @@ export function MainNav({ items }: { items: NavItem[] }) {
       </Authenticated>
 
       <Unauthenticated>
-        <div
-          className={
-            'hidden md:block px-2 py-2 transition-colors hover:bg-primary-foreground/10 dark:hover:bg-accent rounded-md font-semibold cursor-pointer'
-          }
+        <Link
+          href='/sign-in'
+          className='hidden md:flex items-center gap-2 h-10 px-4 text-sm font-semibold rounded-button transition-all duration-fast hover:bg-accent hover:text-accent-foreground'
         >
-          <Link href='/sign-in'>
-            <Button variant='ghost' size='sm'>
-              <div className='flex items-center gap-1'>
-                <span className='whitespace-nowrap'>Sign In</span>
-                <Icons.signIn className='size-5' />
-              </div>
-            </Button>
-          </Link>
-        </div>
+          Sign In
+          <Icons.signIn className='size-5' />
+        </Link>
       </Unauthenticated>
 
       <AuthLoading>
@@ -104,7 +96,7 @@ function AuthenticatedNav({ items }: { items?: MainNavItem[] }) {
               <NavigationMenuItem key={i}>
                 <NavigationMenuLink
                   className={
-                    'px-2 py-2 transition-colors dark:hover:bg-accent rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
+                    'px-2 py-2 transition-colors dark:hover:bg-accent/80 rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
                   }
                   href={item.href}
                 >
@@ -119,7 +111,7 @@ function AuthenticatedNav({ items }: { items?: MainNavItem[] }) {
                 <NavigationMenuItem key={`admin-${i}`}>
                   <NavigationMenuLink
                     className={
-                      'px-2 py-2 transition-colors dark:hover:bg-accent rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
+                      'px-2 py-2 transition-colors dark:hover:bg-accent/80 rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
                     }
                     href={item.href}
                   >

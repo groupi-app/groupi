@@ -358,7 +358,7 @@ export function EventHeader({ data }: EventHeaderProps) {
               <Button
                 variant='ghost'
                 size='icon'
-                className='size-12 hover:bg-accent transition-all rounded-md'
+                className='size-12 hover:bg-accent/80 transition-all rounded-md'
                 onClick={handleMoreClick}
                 onContextMenu={handleContextMenu}
                 style={{ touchAction: 'manipulation' }}
@@ -393,7 +393,7 @@ export function EventHeader({ data }: EventHeaderProps) {
             </>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger className='size-12 hover:bg-accent transition-all rounded-md flex items-center justify-center'>
+              <DropdownMenuTrigger className='size-12 hover:bg-accent/80 transition-all rounded-md flex items-center justify-center'>
                 <Icons.more className='size-8' />
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>

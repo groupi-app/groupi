@@ -8,5 +8,9 @@ export const settingsConfig = {
       title: 'Account',
       href: '/settings/account',
     },
+    {
+      title: 'Appearance',
+      href: '/settings/appearance',
+    },
   ],
 };

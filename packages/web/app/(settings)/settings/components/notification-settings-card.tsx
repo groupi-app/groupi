@@ -143,7 +143,7 @@ export function NotificationSettingsCard({
   return (
     <Card className={cn(!enabled && 'bg-muted text-muted-foreground')}>
       <CardHeader
-        className='flex gap-2 flex-row items-center justify-between cursor-pointer transition-colors hover:bg-accent'
+        className='flex gap-2 flex-row items-center justify-between cursor-pointer transition-colors hover:bg-accent/80'
         onClick={() => setExpanded(v => !v)}
       >
         <div className='flex flex-col w-full overflow-hidden'>

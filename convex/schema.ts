@@ -350,4 +350,68 @@ export default defineSchema({
   })
     .index('by_event', ['eventId'])
     .index('by_status', ['status']),
+
+  // ===== THEME TABLES =====
+  // Store custom themes and user theme preferences
+
+  customThemes: defineTable({
+    personId: v.id('persons'),
+    name: v.string(),
+    description: v.optional(v.string()),
+    baseThemeId: v.string(), // Which base theme this extends (e.g., 'groupi-light')
+    mode: v.union(v.literal('light'), v.literal('dark')), // Inherited from base theme
+    // Token overrides - only stores values that differ from base theme
+    tokenOverrides: v.object({
+      brand: v.optional(
+        v.object({
+          primary: v.optional(v.string()),
+          secondary: v.optional(v.string()),
+          accent: v.optional(v.string()),
+        })
+      ),
+      background: v.optional(
+        v.object({
+          page: v.optional(v.string()),
+          surface: v.optional(v.string()),
+          elevated: v.optional(v.string()),
+          sunken: v.optional(v.string()),
+        })
+      ),
+      text: v.optional(
+        v.object({
+          primary: v.optional(v.string()),
+          secondary: v.optional(v.string()),
+          heading: v.optional(v.string()),
+          muted: v.optional(v.string()),
+        })
+      ),
+      status: v.optional(
+        v.object({
+          success: v.optional(v.string()),
+          warning: v.optional(v.string()),
+          error: v.optional(v.string()),
+          info: v.optional(v.string()),
+        })
+      ),
+      shadow: v.optional(
+        v.object({
+          raised: v.optional(v.string()),
+          floating: v.optional(v.string()),
+        })
+      ),
+    }),
+    createdAt: v.number(), // Unix timestamp
+    updatedAt: v.number(), // Unix timestamp
+  }).index('by_person', ['personId']),
+
+  themePreferences: defineTable({
+    personId: v.id('persons'),
+    selectedThemeType: v.union(v.literal('base'), v.literal('custom')),
+    selectedThemeId: v.string(), // Base theme ID (e.g., 'groupi-light')
+    selectedCustomThemeId: v.optional(v.id('customThemes')), // If type is 'custom'
+    useSystemPreference: v.boolean(), // Whether to auto-switch based on OS setting
+    systemLightThemeId: v.string(), // Base theme for light mode
+    systemDarkThemeId: v.string(), // Base theme for dark mode
+    updatedAt: v.number(), // Unix timestamp
+  }).index('by_person', ['personId']),
 });

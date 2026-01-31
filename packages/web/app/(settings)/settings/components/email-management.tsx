@@ -30,7 +30,6 @@ export function EmailManagement() {
   );
 
   // Queries
-  // @ts-expect-error - Type instantiation is excessively deep, but query works correctly at runtime
   const emails = useQuery(api.emails.queries.getCurrentUserEmails, {});
   const emailAvailability = useQuery(
     api.emails.queries.checkEmailAvailability,

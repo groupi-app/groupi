@@ -117,7 +117,7 @@ export function UserInfoCard({
         data-slot='user-info-card'
         onClick={onClick}
         className={cn(
-          'flex items-center w-full text-left rounded-subtle p-2 -m-2 transition-colors duration-fast hover:bg-accent',
+          'flex items-center w-full text-left rounded-subtle p-2 -m-2 transition-colors duration-fast hover:bg-accent/80',
           config.gap,
           className
         )}

@@ -116,7 +116,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
           </DialogTrigger>
         ) : (
           <DialogTrigger asChild>
-            <Alert className='hover:bg-accent transition-all cursor-pointer group'>
+            <Alert className='hover:bg-accent/80 transition-all cursor-pointer group'>
               <div className='flex items-center justify-between'>
                 <div>
                   <AlertTitle className='flex items-center gap-1'>

@@ -197,7 +197,7 @@ export function ProfileViewDialog({
                     href={`/event/${event.id}`}
                     onClick={() => handleOpenChange(false)}
                   >
-                    <div className='flex items-center gap-3 border border-border shadow-raised p-2 hover:bg-accent transition-all cursor-pointer rounded-md'>
+                    <div className='flex items-center gap-3 border border-border shadow-raised p-2 hover:bg-accent/80 transition-all cursor-pointer rounded-md'>
                       <h3 className='font-heading text-sm shrink-0 min-w-0 flex-1 truncate'>
                         {event.title}
                       </h3>

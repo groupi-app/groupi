@@ -122,7 +122,7 @@ export function AvailabilityCard({
       </div>
       <div
         onClick={() => setListOpen(!listOpen)}
-        className='flex items-center py-1 px-2 hover:bg-accent rounded-md justify-between w-max gap-2 cursor-pointer'
+        className='flex items-center py-1 px-2 hover:bg-accent/80 rounded-md justify-between w-max gap-2 cursor-pointer'
       >
         <div className='flex items-center gap-2 text-xs'>
           <div className='flex items-center gap-1'>

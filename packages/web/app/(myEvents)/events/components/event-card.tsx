@@ -282,13 +282,13 @@ export function EventCard({
       <ActionMenuButton
         onClick={handleMoreClick}
         onContextMenu={handleContextMenu}
-        className='absolute z-float size-8 hover:bg-accent transition-all rounded-md top-2 right-2 flex items-center justify-center'
+        className='absolute z-float size-8 hover:bg-accent/80 transition-all rounded-md top-2 right-2 flex items-center justify-center'
         dropdownContent={dropdownContent}
       >
         <Icons.more className='size-4' />
       </ActionMenuButton>
       <Link href={`/event/${id}`}>
-        <div className='flex flex-col gap-2 border border-border shadow-floating p-4 px-6 hover:bg-accent transition-all cursor-pointer rounded-md'>
+        <div className='flex flex-col gap-2 border border-border bg-card shadow-floating p-4 px-6 hover:bg-accent/80 transition-all cursor-pointer rounded-card'>
           <div className='flex flex-col md:flex-row gap-2 md:gap-8'>
             <div className='flex flex-col grow gap-2 md:w-1/2'>
               <div className='flex items-center gap-2'>

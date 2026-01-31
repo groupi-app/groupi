@@ -1,4 +1,313 @@
 /**
+ * Theme System Type Definitions
+ *
+ * Defines the structure for base themes and custom themes.
+ * This is the single source of truth for theme-related types.
+ */
+/**
+ * Brand color tokens - Primary identity colors
+ */
+interface BrandTokens {
+    primary: string;
+    primaryHover: string;
+    primaryActive: string;
+    primarySubtle: string;
+    secondary: string;
+    secondaryHover: string;
+    accent: string;
+    accentHover: string;
+}
+/**
+ * Background color tokens - Surface and container colors
+ */
+interface BackgroundTokens {
+    page: string;
+    surface: string;
+    elevated: string;
+    sunken: string;
+    overlay: string;
+    interactive: string;
+    interactiveHover: string;
+    interactiveActive: string;
+    success: string;
+    successSubtle: string;
+    warning: string;
+    warningSubtle: string;
+    error: string;
+    errorSubtle: string;
+    info: string;
+    infoSubtle: string;
+}
+/**
+ * Text color tokens - Typography colors
+ */
+interface TextTokens {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    muted: string;
+    disabled: string;
+    heading: string;
+    body: string;
+    caption: string;
+    onPrimary: string;
+    onSurface: string;
+    onError: string;
+    link: string;
+    linkHover: string;
+    success: string;
+    warning: string;
+    error: string;
+}
+/**
+ * Border color tokens
+ */
+interface BorderTokens {
+    default: string;
+    strong: string;
+    subtle: string;
+    focus: string;
+    error: string;
+    success: string;
+}
+/**
+ * State color tokens - Interactive states
+ */
+interface StateTokens {
+    focusRing: string;
+    selection: string;
+    highlight: string;
+}
+/**
+ * Fun/celebration color tokens - Gamification (Duolingo-inspired)
+ */
+interface FunTokens {
+    celebration: string;
+    achievement: string;
+    streak: string;
+    party: string;
+}
+/**
+ * Shadow tokens - Elevation levels
+ */
+interface ShadowTokens {
+    raised: string;
+    floating: string;
+    overlay: string;
+    popup: string;
+    pop: string;
+    glow: string;
+    bounce: string;
+}
+/**
+ * Legacy tokens for shadcn/ui backwards compatibility
+ */
+interface LegacyTokens {
+    background: string;
+    foreground: string;
+    muted: string;
+    mutedForeground: string;
+    popover: string;
+    popoverForeground: string;
+    card: string;
+    cardForeground: string;
+    border: string;
+    input: string;
+    primary: string;
+    primaryForeground: string;
+    secondary: string;
+    secondaryForeground: string;
+    accent: string;
+    accentForeground: string;
+    destructive: string;
+    destructiveForeground: string;
+    ring: string;
+    radius: string;
+}
+/**
+ * Complete theme tokens structure
+ */
+interface ThemeTokens {
+    brand: BrandTokens;
+    background: BackgroundTokens;
+    text: TextTokens;
+    border: BorderTokens;
+    state: StateTokens;
+    fun: FunTokens;
+    shadow: ShadowTokens;
+    legacy: LegacyTokens;
+}
+/**
+ * Theme mode - used for system preference matching
+ */
+type ThemeMode = 'light' | 'dark';
+/**
+ * Preview colors for theme picker cards
+ */
+interface ThemePreview {
+    /** Primary brand color */
+    primary: string;
+    /** Page background color */
+    background: string;
+    /** Accent color */
+    accent: string;
+}
+/**
+ * Base theme definition - pre-built themes shipped with the app
+ */
+interface BaseTheme {
+    /** Unique identifier (e.g., 'groupi-light', 'ocean-dark') */
+    id: string;
+    /** Display name (e.g., 'Groupi Light') */
+    name: string;
+    /** Brief description */
+    description: string;
+    /** Light or dark mode for system preference matching */
+    mode: ThemeMode;
+    /** Preview colors for theme picker cards */
+    preview: ThemePreview;
+    /** Full theme token values */
+    tokens: ThemeTokens;
+}
+/**
+ * Theme registry - all available base themes
+ */
+type ThemeRegistry = Record<string, BaseTheme>;
+/**
+ * Editable token categories for custom themes
+ * These are a curated subset of tokens that users can customize
+ */
+interface EditableBrandTokens {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+}
+interface EditableBackgroundTokens {
+    page?: string;
+    surface?: string;
+    elevated?: string;
+    sunken?: string;
+}
+interface EditableTextTokens {
+    primary?: string;
+    secondary?: string;
+    heading?: string;
+    muted?: string;
+}
+interface EditableStatusTokens {
+    success?: string;
+    warning?: string;
+    error?: string;
+    info?: string;
+}
+interface EditableShadowTokens {
+    raised?: string;
+    floating?: string;
+}
+/**
+ * Token overrides for custom themes
+ * Only stores the tokens that differ from the base theme
+ */
+interface ThemeTokenOverrides {
+    brand?: EditableBrandTokens;
+    background?: EditableBackgroundTokens;
+    text?: EditableTextTokens;
+    status?: EditableStatusTokens;
+    shadow?: EditableShadowTokens;
+}
+/**
+ * Custom theme definition - user-created themes stored in database
+ */
+interface CustomTheme {
+    /** Database ID */
+    id: string;
+    /** Owner's person ID */
+    personId: string;
+    /** Display name */
+    name: string;
+    /** Optional description */
+    description?: string;
+    /** Base theme this extends */
+    baseThemeId: string;
+    /** Light or dark mode (inherited from base) */
+    mode: ThemeMode;
+    /** Token overrides (only stores differences from base) */
+    tokenOverrides: ThemeTokenOverrides;
+    /** Creation timestamp */
+    createdAt: number;
+    /** Last update timestamp */
+    updatedAt: number;
+}
+/**
+ * Theme selection type
+ */
+type ThemeSelectionType = 'base' | 'custom';
+/**
+ * User theme preferences stored in database
+ */
+interface ThemePreferences {
+    /** Type of selected theme */
+    selectedThemeType: ThemeSelectionType;
+    /** Selected base theme ID */
+    selectedThemeId: string;
+    /** Selected custom theme ID (if type is 'custom') */
+    selectedCustomThemeId?: string;
+    /** Whether to use system preference for auto-switching */
+    useSystemPreference: boolean;
+    /** Base theme to use when system is in light mode */
+    systemLightThemeId: string;
+    /** Base theme to use when system is in dark mode */
+    systemDarkThemeId: string;
+}
+/**
+ * Theme editor state for undo/redo
+ */
+interface ThemeEditorState {
+    /** Base theme being extended */
+    baseThemeId: string;
+    /** Current token overrides */
+    tokenOverrides: ThemeTokenOverrides;
+    /** History for undo */
+    history: ThemeTokenOverrides[];
+    /** Current position in history */
+    historyIndex: number;
+    /** Whether there are unsaved changes */
+    isDirty: boolean;
+}
+/**
+ * Editable token category names
+ */
+type EditableTokenCategory = 'brand' | 'background' | 'text' | 'status' | 'fun' | 'shadow';
+/**
+ * Token definition for the editor
+ */
+interface EditableTokenDef {
+    /** Token key within category */
+    key: string;
+    /** Display label */
+    label: string;
+    /** Help text */
+    description?: string;
+    /** CSS variable name */
+    cssVar: string;
+}
+/**
+ * Category definition for the editor
+ */
+interface EditableTokenCategoryDef {
+    /** Category key */
+    key: EditableTokenCategory;
+    /** Display label */
+    label: string;
+    /** User-friendly name */
+    friendlyName: string;
+    /** Category description */
+    description: string;
+    /** Tokens in this category */
+    tokens: EditableTokenDef[];
+}
+
+/**
  * Groupi Light Theme
  *
  * All design token values for the light theme.
@@ -240,110 +549,305 @@ type SharedTokens = typeof sharedTokens;
  */
 declare const groupiDark: {
     readonly brand: {
-        readonly primary: "hsl(285, 100%, 50%)";
-        readonly primaryHover: "hsl(285, 100%, 58%)";
-        readonly primaryActive: "hsl(285, 100%, 45%)";
-        readonly primarySubtle: "hsl(285, 60%, 15%)";
-        readonly secondary: "hsl(210, 100%, 60%)";
-        readonly secondaryHover: "hsl(210, 100%, 68%)";
-        readonly accent: "hsl(330, 100%, 65%)";
-        readonly accentHover: "hsl(330, 100%, 72%)";
+        readonly primary: "hsl(280, 85%, 60%)";
+        readonly primaryHover: "hsl(280, 85%, 68%)";
+        readonly primaryActive: "hsl(280, 85%, 52%)";
+        readonly primarySubtle: "hsl(280, 40%, 15%)";
+        readonly secondary: "hsl(210, 90%, 62%)";
+        readonly secondaryHover: "hsl(210, 90%, 70%)";
+        readonly accent: "hsl(330, 85%, 62%)";
+        readonly accentHover: "hsl(330, 85%, 70%)";
     };
     readonly background: {
-        readonly page: "hsl(264, 71%, 6%)";
-        readonly surface: "hsl(264, 50%, 10%)";
-        readonly elevated: "hsl(264, 40%, 14%)";
-        readonly sunken: "hsl(264, 80%, 4%)";
-        readonly overlay: "hsl(0, 0%, 0%, 0.7)";
-        readonly interactive: "hsl(264, 40%, 14%)";
-        readonly interactiveHover: "hsl(264, 35%, 20%)";
-        readonly interactiveActive: "hsl(264, 30%, 25%)";
-        readonly success: "hsl(145, 80%, 35%)";
-        readonly successSubtle: "hsl(145, 50%, 12%)";
-        readonly warning: "hsl(35, 100%, 45%)";
-        readonly warningSubtle: "hsl(35, 50%, 12%)";
-        readonly error: "hsl(0, 70%, 45%)";
-        readonly errorSubtle: "hsl(0, 50%, 12%)";
-        readonly info: "hsl(210, 100%, 45%)";
-        readonly infoSubtle: "hsl(210, 50%, 12%)";
+        readonly page: "hsl(270, 45%, 7%)";
+        readonly surface: "hsl(270, 40%, 11%)";
+        readonly elevated: "hsl(270, 35%, 15%)";
+        readonly sunken: "hsl(270, 50%, 5%)";
+        readonly overlay: "hsla(270, 45%, 4%, 0.85)";
+        readonly interactive: "hsl(270, 38%, 13%)";
+        readonly interactiveHover: "hsl(270, 35%, 19%)";
+        readonly interactiveActive: "hsl(270, 32%, 23%)";
+        readonly success: "hsl(145, 70%, 38%)";
+        readonly successSubtle: "hsl(145, 40%, 14%)";
+        readonly warning: "hsl(38, 92%, 50%)";
+        readonly warningSubtle: "hsl(38, 40%, 14%)";
+        readonly error: "hsl(0, 65%, 50%)";
+        readonly errorSubtle: "hsl(0, 40%, 14%)";
+        readonly info: "hsl(210, 90%, 52%)";
+        readonly infoSubtle: "hsl(210, 40%, 14%)";
     };
     readonly text: {
-        readonly primary: "hsl(213, 31%, 91%)";
-        readonly secondary: "hsl(215, 20%, 65%)";
-        readonly tertiary: "hsl(215, 16%, 55%)";
-        readonly muted: "hsl(215.4, 16.3%, 56.9%)";
-        readonly disabled: "hsl(215, 14%, 40%)";
-        readonly heading: "hsl(213, 31%, 95%)";
-        readonly body: "hsl(213, 31%, 91%)";
-        readonly caption: "hsl(215, 20%, 65%)";
+        readonly primary: "hsl(270, 20%, 94%)";
+        readonly secondary: "hsl(270, 18%, 72%)";
+        readonly tertiary: "hsl(270, 15%, 60%)";
+        readonly muted: "hsl(270, 15%, 55%)";
+        readonly disabled: "hsl(270, 12%, 40%)";
+        readonly heading: "hsl(270, 25%, 97%)";
+        readonly body: "hsl(270, 20%, 92%)";
+        readonly caption: "hsl(270, 18%, 68%)";
         readonly onPrimary: "hsl(0, 0%, 100%)";
-        readonly onSurface: "hsl(213, 31%, 91%)";
+        readonly onSurface: "hsl(0, 0%, 95%)";
         readonly onError: "hsl(0, 0%, 100%)";
-        readonly link: "hsl(285, 100%, 70%)";
-        readonly linkHover: "hsl(285, 100%, 80%)";
-        readonly success: "hsl(145, 80%, 55%)";
-        readonly warning: "hsl(35, 100%, 60%)";
-        readonly error: "hsl(0, 70%, 60%)";
+        readonly link: "hsl(280, 85%, 70%)";
+        readonly linkHover: "hsl(280, 85%, 78%)";
+        readonly success: "hsl(145, 70%, 58%)";
+        readonly warning: "hsl(38, 92%, 62%)";
+        readonly error: "hsl(0, 65%, 62%)";
     };
     readonly border: {
-        readonly default: "hsl(216, 34%, 17%)";
-        readonly strong: "hsl(216, 30%, 25%)";
-        readonly subtle: "hsl(216, 40%, 12%)";
-        readonly focus: "hsl(285, 100%, 50%)";
-        readonly error: "hsl(0, 70%, 45%)";
-        readonly success: "hsl(145, 80%, 35%)";
+        readonly default: "hsl(270, 30%, 20%)";
+        readonly strong: "hsl(270, 28%, 28%)";
+        readonly subtle: "hsl(270, 35%, 14%)";
+        readonly focus: "hsl(280, 85%, 60%)";
+        readonly error: "hsl(0, 65%, 50%)";
+        readonly success: "hsl(145, 70%, 38%)";
     };
     readonly state: {
-        readonly focusRing: "hsl(285, 100%, 50%, 0.5)";
-        readonly selection: "hsl(285, 100%, 50%, 0.2)";
-        readonly highlight: "hsl(45, 100%, 50%, 0.15)";
+        readonly focusRing: "hsl(280, 85%, 60%, 0.5)";
+        readonly selection: "hsl(280, 85%, 60%, 0.25)";
+        readonly highlight: "hsl(45, 100%, 50%, 0.12)";
     };
     readonly fun: {
-        readonly celebration: "hsl(45, 100%, 55%)";
-        readonly achievement: "hsl(145, 80%, 50%)";
-        readonly streak: "hsl(25, 100%, 60%)";
-        readonly party: "hsl(330, 100%, 65%)";
+        readonly celebration: "hsl(45, 100%, 58%)";
+        readonly achievement: "hsl(145, 70%, 52%)";
+        readonly streak: "hsl(25, 95%, 58%)";
+        readonly party: "hsl(330, 85%, 62%)";
     };
     readonly shadow: {
-        readonly raised: "0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3)";
-        readonly floating: "0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3)";
-        readonly overlay: "0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3)";
-        readonly popup: "0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3)";
-        readonly pop: "0 4px 0 0 rgb(0 0 0 / 0.3)";
-        readonly glow: "0 0 20px 0 hsl(285 100% 50% / 0.4)";
-        readonly bounce: "0 2px 0 0 rgb(0 0 0 / 0.3)";
+        readonly raised: "0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4)";
+        readonly floating: "0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4)";
+        readonly overlay: "0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4)";
+        readonly popup: "0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4)";
+        readonly pop: "0 4px 0 0 rgb(0 0 0 / 0.4)";
+        readonly glow: "0 0 20px 0 hsl(280 85% 60% / 0.35)";
+        readonly bounce: "0 2px 0 0 rgb(0 0 0 / 0.4)";
     };
     readonly legacy: {
-        readonly background: "hsl(264, 71%, 6%)";
-        readonly foreground: "hsl(213, 31%, 91%)";
-        readonly muted: "hsl(223, 47%, 11%)";
-        readonly mutedForeground: "hsl(215.4, 16.3%, 56.9%)";
-        readonly popover: "hsl(264, 71%, 6%)";
-        readonly popoverForeground: "hsl(215, 20.2%, 65.1%)";
-        readonly card: "hsl(264, 71%, 6%)";
-        readonly cardForeground: "hsl(213, 31%, 91%)";
-        readonly border: "hsl(216, 34%, 17%)";
-        readonly input: "hsl(216, 34%, 17%)";
-        readonly primary: "hsl(285, 100%, 50%)";
+        readonly background: "hsl(270, 45%, 7%)";
+        readonly foreground: "hsl(270, 20%, 94%)";
+        readonly muted: "hsl(270, 38%, 13%)";
+        readonly mutedForeground: "hsl(270, 15%, 55%)";
+        readonly popover: "hsl(270, 35%, 15%)";
+        readonly popoverForeground: "hsl(270, 18%, 72%)";
+        readonly card: "hsl(270, 40%, 11%)";
+        readonly cardForeground: "hsl(270, 20%, 94%)";
+        readonly border: "hsl(270, 30%, 20%)";
+        readonly input: "hsl(270, 30%, 20%)";
+        readonly primary: "hsl(280, 85%, 60%)";
         readonly primaryForeground: "hsl(0, 0%, 100%)";
-        readonly secondary: "hsl(222.2, 47.4%, 11.2%)";
-        readonly secondaryForeground: "hsl(210, 40%, 98%)";
-        readonly accent: "hsl(273, 34%, 16%)";
-        readonly accentForeground: "hsl(260, 40%, 98%)";
-        readonly destructive: "hsl(0, 63%, 45%)";
-        readonly destructiveForeground: "hsl(210, 40%, 98%)";
-        readonly ring: "hsl(285, 100%, 50%)";
+        readonly secondary: "hsl(270, 38%, 13%)";
+        readonly secondaryForeground: "hsl(270, 20%, 94%)";
+        readonly accent: "hsl(280, 35%, 18%)";
+        readonly accentForeground: "hsl(280, 25%, 95%)";
+        readonly destructive: "hsl(0, 65%, 50%)";
+        readonly destructiveForeground: "hsl(0, 0%, 98%)";
+        readonly ring: "hsl(280, 85%, 60%)";
         readonly radius: "0.5rem";
     };
 };
 type GroupiDarkTheme = typeof groupiDark;
 
 /**
- * Groupi Design Themes
+ * OLED Dark Theme
  *
- * Exports all theme definitions and shared tokens.
+ * True black backgrounds optimized for OLED screens.
+ * Pure blacks (#000) save battery and provide stunning contrast.
+ * Vibrant accents pop beautifully against the deep black.
  */
 
+declare const oledDark: ThemeTokens;
+type OledDarkTheme = typeof oledDark;
+
+/**
+ * Ocean Light Theme
+ *
+ * A calm, blue-focused light theme inspired by the ocean.
+ * Uses cool blues, teals, and aqua tones for a refreshing feel.
+ */
+
+declare const oceanLight: ThemeTokens;
+type OceanLightTheme = typeof oceanLight;
+
+/**
+ * Ocean Dark Theme
+ *
+ * A calm, blue-focused dark theme inspired by the deep ocean.
+ * Uses deep blues with bright cyan/teal accents for a modern feel.
+ */
+
+declare const oceanDark: ThemeTokens;
+type OceanDarkTheme = typeof oceanDark;
+
+/**
+ * Transcend Light Theme
+ *
+ * A trans pride inspired light theme using the official trans flag colors.
+ * Pink: #F5A9B8, Blue: #5BCEFA
+ */
+
+declare const transcendLight: ThemeTokens;
+type TranscendLightTheme = typeof transcendLight;
+
+/**
+ * Transcend Dark Theme
+ *
+ * A trans pride inspired dark theme using the official trans flag colors.
+ * Pink: #F5A9B8, Blue: #5BCEFA
+ */
+
+declare const transcendDark: ThemeTokens;
+type TranscendDarkTheme = typeof transcendDark;
+
+/**
+ * Sunset Light Theme
+ *
+ * A warm, coral-focused light theme inspired by golden hour sunsets.
+ * Uses warm oranges, corals, and soft pinks.
+ */
+
+declare const sunsetLight: ThemeTokens;
+type SunsetLightTheme = typeof sunsetLight;
+
+/**
+ * Sunset Dark Theme
+ *
+ * A warm, coral-focused dark theme inspired by sunset skies.
+ * Uses warm oranges, corals, and soft pinks on deep warm backgrounds.
+ */
+
+declare const sunsetDark: ThemeTokens;
+type SunsetDarkTheme = typeof sunsetDark;
+
+/**
+ * Forest Light Theme
+ *
+ * An earthy, nature-inspired light theme with forest greens and warm ambers.
+ * Evokes peaceful woodland vibes.
+ */
+
+declare const forestLight: ThemeTokens;
+type ForestLightTheme = typeof forestLight;
+
+/**
+ * Forest Dark Theme
+ *
+ * An earthy, nature-inspired dark theme with forest greens and warm ambers.
+ * Deep woodland atmosphere with glowing accents.
+ */
+
+declare const forestDark: ThemeTokens;
+type ForestDarkTheme = typeof forestDark;
+
+/**
+ * Synthwave Dark Theme
+ *
+ * An 80s retro-inspired dark theme with hot pinks, electric cyans, and neon purples.
+ * Nostalgic vibes with vibrant, glowing colors.
+ */
+
+declare const synthwaveDark: ThemeTokens;
+type SynthwaveDarkTheme = typeof synthwaveDark;
+
+/**
+ * Groupi Design Themes
+ *
+ * Exports all theme definitions, shared tokens, and theme registry.
+ * This is the central hub for all theme-related exports.
+ */
+
+/**
+ * Groupi Light - Default light theme
+ * The original purple-focused Groupi identity
+ */
+declare const groupiLightTheme: BaseTheme;
+/**
+ * Groupi Dark - Default dark theme
+ * The original purple-focused Groupi identity in dark mode
+ */
+declare const groupiDarkTheme: BaseTheme;
+/**
+ * OLED Dark - True black theme for OLED screens
+ * Pure black backgrounds with vibrant accents
+ */
+declare const oledDarkTheme: BaseTheme;
+/**
+ * Ocean Light - Blue-focused light theme
+ * A calm, refreshing ocean-inspired theme
+ */
+declare const oceanLightTheme: BaseTheme;
+/**
+ * Ocean Dark - Blue-focused dark theme
+ * Deep ocean vibes with bright cyan accents
+ */
+declare const oceanDarkTheme: BaseTheme;
+/**
+ * Transcend Light - Trans pride inspired light theme
+ * Vibrant pinks and blues on soft backgrounds
+ */
+declare const transcendLightTheme: BaseTheme;
+/**
+ * Transcend Dark - Trans pride inspired theme
+ * Vibrant pinks and blues on deep purple
+ */
+declare const transcendDarkTheme: BaseTheme;
+/**
+ * Sunset Light - Warm coral and orange light theme
+ * Golden hour warmth
+ */
+declare const sunsetLightTheme: BaseTheme;
+/**
+ * Sunset Dark - Warm coral and orange dark theme
+ * Cozy sunset vibes
+ */
+declare const sunsetDarkTheme: BaseTheme;
+/**
+ * Forest Light - Earthy green light theme
+ * Nature-inspired tranquility
+ */
+declare const forestLightTheme: BaseTheme;
+/**
+ * Forest Dark - Earthy green dark theme
+ * Deep woodland atmosphere
+ */
+declare const forestDarkTheme: BaseTheme;
+/**
+ * Synthwave Dark - 80s retro neon theme
+ * Hot pinks, electric cyans, nostalgic vibes
+ */
+declare const synthwaveDarkTheme: BaseTheme;
+/**
+ * All available base themes indexed by ID
+ */
+declare const baseThemeRegistry: ThemeRegistry;
+/**
+ * All base themes as an array (useful for iteration)
+ */
+declare const baseThemes: BaseTheme[];
+/**
+ * Light themes only
+ */
+declare const lightThemes: BaseTheme[];
+/**
+ * Dark themes only
+ */
+declare const darkThemes: BaseTheme[];
+/**
+ * Default theme IDs
+ */
+declare const DEFAULT_LIGHT_THEME_ID = "groupi-light";
+declare const DEFAULT_DARK_THEME_ID = "groupi-dark";
+/**
+ * Get a base theme by ID
+ */
+declare function getBaseTheme(id: string): BaseTheme | undefined;
+/**
+ * Get the paired theme (light → dark, dark → light)
+ * For themes in the same family (e.g., groupi-light → groupi-dark)
+ */
+declare function getPairedTheme(id: string): BaseTheme | undefined;
+/**
+ * @deprecated Use baseThemeRegistry instead
+ */
 declare const themes: {
     readonly light: {
         readonly brand: {
@@ -445,103 +949,107 @@ declare const themes: {
     };
     readonly dark: {
         readonly brand: {
-            readonly primary: "hsl(285, 100%, 50%)";
-            readonly primaryHover: "hsl(285, 100%, 58%)";
-            readonly primaryActive: "hsl(285, 100%, 45%)";
-            readonly primarySubtle: "hsl(285, 60%, 15%)";
-            readonly secondary: "hsl(210, 100%, 60%)";
-            readonly secondaryHover: "hsl(210, 100%, 68%)";
-            readonly accent: "hsl(330, 100%, 65%)";
-            readonly accentHover: "hsl(330, 100%, 72%)";
+            readonly primary: "hsl(280, 85%, 60%)";
+            readonly primaryHover: "hsl(280, 85%, 68%)";
+            readonly primaryActive: "hsl(280, 85%, 52%)";
+            readonly primarySubtle: "hsl(280, 40%, 15%)";
+            readonly secondary: "hsl(210, 90%, 62%)";
+            readonly secondaryHover: "hsl(210, 90%, 70%)";
+            readonly accent: "hsl(330, 85%, 62%)";
+            readonly accentHover: "hsl(330, 85%, 70%)";
         };
         readonly background: {
-            readonly page: "hsl(264, 71%, 6%)";
-            readonly surface: "hsl(264, 50%, 10%)";
-            readonly elevated: "hsl(264, 40%, 14%)";
-            readonly sunken: "hsl(264, 80%, 4%)";
-            readonly overlay: "hsl(0, 0%, 0%, 0.7)";
-            readonly interactive: "hsl(264, 40%, 14%)";
-            readonly interactiveHover: "hsl(264, 35%, 20%)";
-            readonly interactiveActive: "hsl(264, 30%, 25%)";
-            readonly success: "hsl(145, 80%, 35%)";
-            readonly successSubtle: "hsl(145, 50%, 12%)";
-            readonly warning: "hsl(35, 100%, 45%)";
-            readonly warningSubtle: "hsl(35, 50%, 12%)";
-            readonly error: "hsl(0, 70%, 45%)";
-            readonly errorSubtle: "hsl(0, 50%, 12%)";
-            readonly info: "hsl(210, 100%, 45%)";
-            readonly infoSubtle: "hsl(210, 50%, 12%)";
+            readonly page: "hsl(270, 45%, 7%)";
+            readonly surface: "hsl(270, 40%, 11%)";
+            readonly elevated: "hsl(270, 35%, 15%)";
+            readonly sunken: "hsl(270, 50%, 5%)";
+            readonly overlay: "hsla(270, 45%, 4%, 0.85)";
+            readonly interactive: "hsl(270, 38%, 13%)";
+            readonly interactiveHover: "hsl(270, 35%, 19%)";
+            readonly interactiveActive: "hsl(270, 32%, 23%)";
+            readonly success: "hsl(145, 70%, 38%)";
+            readonly successSubtle: "hsl(145, 40%, 14%)";
+            readonly warning: "hsl(38, 92%, 50%)";
+            readonly warningSubtle: "hsl(38, 40%, 14%)";
+            readonly error: "hsl(0, 65%, 50%)";
+            readonly errorSubtle: "hsl(0, 40%, 14%)";
+            readonly info: "hsl(210, 90%, 52%)";
+            readonly infoSubtle: "hsl(210, 40%, 14%)";
         };
         readonly text: {
-            readonly primary: "hsl(213, 31%, 91%)";
-            readonly secondary: "hsl(215, 20%, 65%)";
-            readonly tertiary: "hsl(215, 16%, 55%)";
-            readonly muted: "hsl(215.4, 16.3%, 56.9%)";
-            readonly disabled: "hsl(215, 14%, 40%)";
-            readonly heading: "hsl(213, 31%, 95%)";
-            readonly body: "hsl(213, 31%, 91%)";
-            readonly caption: "hsl(215, 20%, 65%)";
+            readonly primary: "hsl(270, 20%, 94%)";
+            readonly secondary: "hsl(270, 18%, 72%)";
+            readonly tertiary: "hsl(270, 15%, 60%)";
+            readonly muted: "hsl(270, 15%, 55%)";
+            readonly disabled: "hsl(270, 12%, 40%)";
+            readonly heading: "hsl(270, 25%, 97%)";
+            readonly body: "hsl(270, 20%, 92%)";
+            readonly caption: "hsl(270, 18%, 68%)";
             readonly onPrimary: "hsl(0, 0%, 100%)";
-            readonly onSurface: "hsl(213, 31%, 91%)";
+            readonly onSurface: "hsl(0, 0%, 95%)";
             readonly onError: "hsl(0, 0%, 100%)";
-            readonly link: "hsl(285, 100%, 70%)";
-            readonly linkHover: "hsl(285, 100%, 80%)";
-            readonly success: "hsl(145, 80%, 55%)";
-            readonly warning: "hsl(35, 100%, 60%)";
-            readonly error: "hsl(0, 70%, 60%)";
+            readonly link: "hsl(280, 85%, 70%)";
+            readonly linkHover: "hsl(280, 85%, 78%)";
+            readonly success: "hsl(145, 70%, 58%)";
+            readonly warning: "hsl(38, 92%, 62%)";
+            readonly error: "hsl(0, 65%, 62%)";
         };
         readonly border: {
-            readonly default: "hsl(216, 34%, 17%)";
-            readonly strong: "hsl(216, 30%, 25%)";
-            readonly subtle: "hsl(216, 40%, 12%)";
-            readonly focus: "hsl(285, 100%, 50%)";
-            readonly error: "hsl(0, 70%, 45%)";
-            readonly success: "hsl(145, 80%, 35%)";
+            readonly default: "hsl(270, 30%, 20%)";
+            readonly strong: "hsl(270, 28%, 28%)";
+            readonly subtle: "hsl(270, 35%, 14%)";
+            readonly focus: "hsl(280, 85%, 60%)";
+            readonly error: "hsl(0, 65%, 50%)";
+            readonly success: "hsl(145, 70%, 38%)";
         };
         readonly state: {
-            readonly focusRing: "hsl(285, 100%, 50%, 0.5)";
-            readonly selection: "hsl(285, 100%, 50%, 0.2)";
-            readonly highlight: "hsl(45, 100%, 50%, 0.15)";
+            readonly focusRing: "hsl(280, 85%, 60%, 0.5)";
+            readonly selection: "hsl(280, 85%, 60%, 0.25)";
+            readonly highlight: "hsl(45, 100%, 50%, 0.12)";
         };
         readonly fun: {
-            readonly celebration: "hsl(45, 100%, 55%)";
-            readonly achievement: "hsl(145, 80%, 50%)";
-            readonly streak: "hsl(25, 100%, 60%)";
-            readonly party: "hsl(330, 100%, 65%)";
+            readonly celebration: "hsl(45, 100%, 58%)";
+            readonly achievement: "hsl(145, 70%, 52%)";
+            readonly streak: "hsl(25, 95%, 58%)";
+            readonly party: "hsl(330, 85%, 62%)";
         };
         readonly shadow: {
-            readonly raised: "0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3)";
-            readonly floating: "0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3)";
-            readonly overlay: "0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3)";
-            readonly popup: "0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3)";
-            readonly pop: "0 4px 0 0 rgb(0 0 0 / 0.3)";
-            readonly glow: "0 0 20px 0 hsl(285 100% 50% / 0.4)";
-            readonly bounce: "0 2px 0 0 rgb(0 0 0 / 0.3)";
+            readonly raised: "0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4)";
+            readonly floating: "0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4)";
+            readonly overlay: "0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4)";
+            readonly popup: "0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4)";
+            readonly pop: "0 4px 0 0 rgb(0 0 0 / 0.4)";
+            readonly glow: "0 0 20px 0 hsl(280 85% 60% / 0.35)";
+            readonly bounce: "0 2px 0 0 rgb(0 0 0 / 0.4)";
         };
         readonly legacy: {
-            readonly background: "hsl(264, 71%, 6%)";
-            readonly foreground: "hsl(213, 31%, 91%)";
-            readonly muted: "hsl(223, 47%, 11%)";
-            readonly mutedForeground: "hsl(215.4, 16.3%, 56.9%)";
-            readonly popover: "hsl(264, 71%, 6%)";
-            readonly popoverForeground: "hsl(215, 20.2%, 65.1%)";
-            readonly card: "hsl(264, 71%, 6%)";
-            readonly cardForeground: "hsl(213, 31%, 91%)";
-            readonly border: "hsl(216, 34%, 17%)";
-            readonly input: "hsl(216, 34%, 17%)";
-            readonly primary: "hsl(285, 100%, 50%)";
+            readonly background: "hsl(270, 45%, 7%)";
+            readonly foreground: "hsl(270, 20%, 94%)";
+            readonly muted: "hsl(270, 38%, 13%)";
+            readonly mutedForeground: "hsl(270, 15%, 55%)";
+            readonly popover: "hsl(270, 35%, 15%)";
+            readonly popoverForeground: "hsl(270, 18%, 72%)";
+            readonly card: "hsl(270, 40%, 11%)";
+            readonly cardForeground: "hsl(270, 20%, 94%)";
+            readonly border: "hsl(270, 30%, 20%)";
+            readonly input: "hsl(270, 30%, 20%)";
+            readonly primary: "hsl(280, 85%, 60%)";
             readonly primaryForeground: "hsl(0, 0%, 100%)";
-            readonly secondary: "hsl(222.2, 47.4%, 11.2%)";
-            readonly secondaryForeground: "hsl(210, 40%, 98%)";
-            readonly accent: "hsl(273, 34%, 16%)";
-            readonly accentForeground: "hsl(260, 40%, 98%)";
-            readonly destructive: "hsl(0, 63%, 45%)";
-            readonly destructiveForeground: "hsl(210, 40%, 98%)";
-            readonly ring: "hsl(285, 100%, 50%)";
+            readonly secondary: "hsl(270, 38%, 13%)";
+            readonly secondaryForeground: "hsl(270, 20%, 94%)";
+            readonly accent: "hsl(280, 35%, 18%)";
+            readonly accentForeground: "hsl(280, 25%, 95%)";
+            readonly destructive: "hsl(0, 65%, 50%)";
+            readonly destructiveForeground: "hsl(0, 0%, 98%)";
+            readonly ring: "hsl(280, 85%, 60%)";
             readonly radius: "0.5rem";
         };
     };
 };
+/**
+ * Shared tokens (spacing, radius, duration, etc.)
+ * These are the same across all themes
+ */
 declare const tokens: {
     readonly spacing: {
         readonly inset: {
@@ -669,6 +1177,9 @@ declare const tokens: {
         };
     };
 };
+/**
+ * @deprecated Use ThemeTokens type instead
+ */
 type Theme = typeof groupiLight | typeof groupiDark;
 
-export { type GroupiDarkTheme, type GroupiLightTheme, type SharedTokens, type Theme, groupiDark, groupiLight, sharedTokens, themes, tokens };
+export { type BackgroundTokens, type BaseTheme, type BorderTokens, type BrandTokens, type CustomTheme, DEFAULT_DARK_THEME_ID, DEFAULT_LIGHT_THEME_ID, type EditableBackgroundTokens, type EditableBrandTokens, type EditableShadowTokens, type EditableStatusTokens, type EditableTextTokens, type EditableTokenCategory, type EditableTokenCategoryDef, type EditableTokenDef, type ForestDarkTheme, type ForestLightTheme, type FunTokens, type GroupiDarkTheme, type GroupiLightTheme, type LegacyTokens, type OceanDarkTheme, type OceanLightTheme, type OledDarkTheme, type ShadowTokens, type SharedTokens, type StateTokens, type SunsetDarkTheme, type SunsetLightTheme, type SynthwaveDarkTheme, type TextTokens, type Theme, type ThemeEditorState, type ThemeMode, type ThemePreferences, type ThemePreview, type ThemeRegistry, type ThemeSelectionType, type ThemeTokenOverrides, type ThemeTokens, type TranscendDarkTheme, type TranscendLightTheme, baseThemeRegistry, baseThemes, darkThemes, forestDark, forestDarkTheme, forestLight, forestLightTheme, getBaseTheme, getPairedTheme, groupiDark, groupiDarkTheme, groupiLight, groupiLightTheme, lightThemes, oceanDark, oceanDarkTheme, oceanLight, oceanLightTheme, oledDark, oledDarkTheme, sharedTokens, sunsetDark, sunsetDarkTheme, sunsetLight, sunsetLightTheme, synthwaveDark, synthwaveDarkTheme, themes, tokens, transcendDark, transcendDarkTheme, transcendLight, transcendLightTheme };
