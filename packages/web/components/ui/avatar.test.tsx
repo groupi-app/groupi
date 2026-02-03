@@ -22,7 +22,7 @@ describe('Avatar', () => {
     expect(avatar).toHaveClass('flex');
     expect(avatar).toHaveClass('h-10');
     expect(avatar).toHaveClass('w-10');
-    expect(avatar).toHaveClass('rounded-full');
+    expect(avatar).toHaveClass('rounded-avatar');
     expect(avatar).toHaveClass('overflow-hidden');
   });
 
@@ -70,7 +70,7 @@ describe('AvatarFallback', () => {
     expect(fallback).toHaveClass('w-full');
     expect(fallback).toHaveClass('items-center');
     expect(fallback).toHaveClass('justify-center');
-    expect(fallback).toHaveClass('rounded-full');
+    expect(fallback).toHaveClass('rounded-avatar');
     expect(fallback).toHaveClass('bg-muted');
   });
 

@@ -28,7 +28,7 @@ describe('Input', () => {
     expect(input).toHaveClass('flex');
     expect(input).toHaveClass('h-10');
     expect(input).toHaveClass('w-full');
-    expect(input).toHaveClass('rounded-md');
+    expect(input).toHaveClass('rounded-input');
     expect(input).toHaveClass('border');
   });
 

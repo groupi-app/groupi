@@ -25,7 +25,7 @@ describe('Skeleton', () => {
     render(<Skeleton data-testid='skeleton' />);
 
     const skeleton = screen.getByTestId('skeleton');
-    expect(skeleton).toHaveClass('rounded-md');
+    expect(skeleton).toHaveClass('rounded-soft');
   });
 
   it('should apply muted background', () => {

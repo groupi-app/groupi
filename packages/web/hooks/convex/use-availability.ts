@@ -32,6 +32,18 @@ export function useEventAvailabilityData(eventId: Id<'events'>) {
 }
 
 /**
+ * Get availability data with skip support for conditional fetching.
+ * Use this when you want to skip the query entirely (e.g., on non-availability pages).
+ */
+export function useEventAvailabilityDataWithSkip(eventId: Id<'events'> | null) {
+  const shouldSkip = !eventId;
+  return useQuery(
+    availabilityQueries.getEventAvailabilityData,
+    shouldSkip ? 'skip' : { eventId }
+  );
+}
+
+/**
  * Get potential date times for an event (simpler version)
  */
 export function useEventPotentialDates(eventId: Id<'events'>) {
