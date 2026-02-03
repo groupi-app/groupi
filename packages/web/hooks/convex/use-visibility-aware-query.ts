@@ -1,12 +1,14 @@
 'use client';
 
+/* eslint-disable react-hooks/refs -- Intentional stale-while-revalidate caching pattern */
+
 import { useRef } from 'react';
 import { useQuery } from 'convex/react';
 import { useIsActive } from '@/providers/visibility-provider';
 import type { FunctionReference, FunctionArgs } from 'convex/server';
 
 /**
- * An activity-aware wrapper around Convex's useQuery.
+ * An activity-aware wrapper around Convex's useQuery with stale-while-revalidate.
  *
  * When the tab is hidden or user is away (idle), this hook:
  * 1. Skips the Convex subscription to save bandwidth and function calls
@@ -14,10 +16,12 @@ import type { FunctionReference, FunctionArgs } from 'convex/server';
  *
  * When the tab becomes visible and user is active again:
  * 1. Re-subscribes to the query automatically
- * 2. Updates with fresh data from the server
+ * 2. Returns cached data immediately (no loading flash!)
+ * 3. Updates with fresh data when server responds
  *
  * This significantly reduces bandwidth usage for apps that users leave
- * open in background tabs or walk away from.
+ * open in background tabs or walk away from, AND prevents loading flashes
+ * when users tab back in.
  *
  * @example
  * ```tsx
@@ -30,7 +34,7 @@ import type { FunctionReference, FunctionArgs } from 'convex/server';
  *
  * @param query - The Convex query function reference
  * @param args - The query arguments, or "skip" to disable
- * @returns The query result, or cached result if tab is hidden or user is away
+ * @returns The query result, or cached result while loading/hidden
  */
 export function useVisibilityAwareQuery<
   Query extends FunctionReference<'query'>,
@@ -47,16 +51,16 @@ export function useVisibilityAwareQuery<
 
   const result = useQuery(query, effectiveArgs);
 
-  // Update cache when we get a real result
+  // Update cache when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedResultRef.current = result;
   }
 
-  // Return cached result if not active and we have cached data
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  if (!isActive && cachedResultRef.current !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
+  // Stale-while-revalidate: Return cached result when query returns undefined
+  // This prevents loading flashes when:
+  // 1. User tabs back in and query is re-subscribing
+  // 2. User is inactive and we have cached data
+  if (result === undefined && cachedResultRef.current !== undefined) {
     return cachedResultRef.current;
   }
 

@@ -16,6 +16,7 @@ import { Doc, Id } from '@/convex/_generated/dataModel';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { useNotificationCloseStore } from '@/stores/notification-close-store';
+import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ContextMenuItem } from '@/components/ui/context-menu';
@@ -50,6 +51,7 @@ export function NotificationSlate({
 
   const { setPopoverOpen, setSheetOpen: setNotificationSheetOpen } =
     useNotificationCloseStore();
+  const openFriendsDialog = useFriendsDialogStore(state => state.openDialog);
 
   // Convex mutations
   const markAsRead = useMutation(notificationMutations.markNotificationAsRead);
@@ -63,6 +65,18 @@ export function NotificationSlate({
   const closeMenus = () => {
     setPopoverOpen(false);
     setNotificationSheetOpen(false);
+  };
+
+  // Get optional action for notifications that should trigger UI instead of navigation
+  const getNotificationAction = (): (() => void) | null => {
+    switch (type) {
+      case 'FRIEND_REQUEST_RECEIVED':
+        return () => openFriendsDialog('requests');
+      case 'FRIEND_REQUEST_ACCEPTED':
+        return () => openFriendsDialog('friends');
+      default:
+        return null;
+    }
   };
 
   const getNotificationLink = (): string => {
@@ -221,6 +235,20 @@ export function NotificationSlate({
           </>
         );
       }
+
+      case 'FRIEND_REQUEST_RECEIVED':
+        return (
+          <>
+            <strong>{authorName}</strong> sent you a friend request
+          </>
+        );
+
+      case 'FRIEND_REQUEST_ACCEPTED':
+        return (
+          <>
+            <strong>{authorName}</strong> accepted your friend request
+          </>
+        );
 
       default:
         return (
@@ -393,12 +421,9 @@ export function NotificationSlate({
             }
           }}
           className='cursor-pointer'
-          asChild
         >
-          <div className='flex items-center gap-1'>
-            <Icons.unread className='size-4' />
-            <span>Mark as unread</span>
-          </div>
+          <Icons.unread className='size-4' />
+          <span>Mark as unread</span>
         </DropdownMenuItem>
       ) : (
         <DropdownMenuItem
@@ -416,12 +441,9 @@ export function NotificationSlate({
             }
           }}
           className='cursor-pointer'
-          asChild
         >
-          <div className='flex items-center gap-1'>
-            <Icons.read className='size-4' />
-            <span>Mark as read</span>
-          </div>
+          <Icons.read className='size-4' />
+          <span>Mark as read</span>
         </DropdownMenuItem>
       )}
       <DropdownMenuItem
@@ -439,41 +461,64 @@ export function NotificationSlate({
         }}
         className='focus:bg-destructive focus:text-destructive-foreground cursor-pointer'
       >
-        <div className='flex items-center gap-1'>
-          <Icons.delete className='size-4' />
-          <span>Delete</span>
-        </div>
+        <Icons.delete className='size-4' />
+        <span>Delete</span>
       </DropdownMenuItem>
+    </>
+  );
+
+  const action = getNotificationAction();
+
+  const handleNotificationClick = async () => {
+    closeMenus();
+    // Mark as read when clicking
+    if (!read) {
+      try {
+        await markAsRead({
+          notificationId: notification.id as Id<'notifications'>,
+        });
+      } catch {
+        // Silently fail - action/navigation is more important
+      }
+    }
+    // If there's an action, execute it
+    if (action) {
+      action();
+    }
+  };
+
+  const notificationInner = (
+    <>
+      {!read && <div className='size-2 rounded-full bg-primary' />}
+      <div className='flex flex-col gap-1 px-2'>
+        <p className='text-sm'>{getNotificationMessage()}</p>
+        <span className='text-xs text-muted-foreground'>
+          {formatDate(createdAt)}
+        </span>
+      </div>
     </>
   );
 
   const notificationContent = (
     <div className='relative group'>
-      <Link
-        onClick={async () => {
-          closeMenus();
-          // Mark as read when clicking to navigate
-          if (!read) {
-            try {
-              await markAsRead({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-            } catch {
-              // Silently fail - navigation is more important
-            }
-          }
-        }}
-        href={getNotificationLink()}
-        className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
-      >
-        {!read && <div className='size-2 rounded-full bg-primary' />}
-        <div className='flex flex-col gap-1 px-2'>
-          <p className='text-sm'>{getNotificationMessage()}</p>
-          <span className='text-xs text-muted-foreground'>
-            {formatDate(createdAt)}
-          </span>
-        </div>
-      </Link>
+      {action ? (
+        // Use a button/div for action-based notifications
+        <button
+          onClick={handleNotificationClick}
+          className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all w-full text-left'
+        >
+          {notificationInner}
+        </button>
+      ) : (
+        // Use Link for navigation-based notifications
+        <Link
+          onClick={handleNotificationClick}
+          href={getNotificationLink()}
+          className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
+        >
+          {notificationInner}
+        </Link>
+      )}
 
       <ActionMenuButton
         onClick={handleMoreClick}

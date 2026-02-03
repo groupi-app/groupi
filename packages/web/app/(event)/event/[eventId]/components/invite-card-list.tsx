@@ -8,6 +8,8 @@ import { InviteLinkCard } from './invite-link-card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useEventInvites } from '@/hooks/convex/use-invites';
 import { Doc, Id } from '@/convex/_generated/dataModel';
+import { EmailInvitesDialog } from '@/components/email-invites-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,15 +35,47 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
   // Use Convex hook for real-time invite data
   const inviteData = useEventInvites(eventId);
 
-  // Loading state
+  // Loading state - show actual structure with skeleton placeholders
   if (inviteData === undefined) {
     return (
-      <div className='animate-pulse'>
-        <div className='h-8 bg-muted rounded w-32 mb-4'></div>
-        <div className='space-y-2'>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className='h-16 bg-muted rounded'></div>
-          ))}
+      <div>
+        {/* Header - actual title with skeleton action buttons */}
+        <div className='flex items-center mt-4 gap-4 flex-wrap'>
+          <h1 className='font-heading font-medium text-4xl'>Invites</h1>
+          <div className='flex items-center gap-2'>
+            <Skeleton className='h-10 w-32 rounded-button' />
+            <Skeleton className='h-10 w-10 rounded-button' />
+            <Skeleton className='h-10 w-10 rounded-button' />
+          </div>
+        </div>
+
+        {/* Valid section header */}
+        <div className='flex items-center gap-2 ml-2 mt-4'>
+          <Skeleton className='size-6 rounded-md' />
+          <div className='flex items-center gap-1'>
+            <h1 className='font-heading text-2xl text-muted-foreground'>
+              Valid
+            </h1>
+            <Skeleton className='size-6' />
+          </div>
+        </div>
+
+        {/* Invite card skeletons */}
+        <div className='flex flex-col gap-2 py-4'>
+          <InviteCardSkeleton />
+          <InviteCardSkeleton />
+          <InviteCardSkeleton />
+        </div>
+
+        {/* Expired section header */}
+        <div className='flex items-center gap-2 ml-2 mt-4'>
+          <Skeleton className='size-6 rounded-md' />
+          <div className='flex items-center gap-1'>
+            <h1 className='font-heading text-2xl text-muted-foreground'>
+              Expired
+            </h1>
+            <Skeleton className='size-6' />
+          </div>
         </div>
       </div>
     );
@@ -71,6 +105,7 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
         <h1 className='font-heading font-medium text-4xl'>Invites</h1>
         <div className='flex items-center gap-2'>
           <AddInvite eventId={eventId} />
+          <EmailInvitesDialog eventId={eventId} />
           <DeleteInvites
             selectedInvites={selectedInvites}
             setSelectedInvites={setSelectedInvites}
@@ -219,6 +254,50 @@ export function InviteCardList({ eventId }: { eventId: Id<'events'> }) {
           </LayoutGroup>
         </motion.div>
       )}
+    </div>
+  );
+}
+
+/**
+ * InviteCardSkeleton - Skeleton for a single invite card
+ * Matches InviteLinkCard: checkbox, name/created, time, uses, delete button
+ */
+function InviteCardSkeleton() {
+  return (
+    <div className='relative max-w-3xl'>
+      {/* Checkbox placeholder */}
+      <Skeleton className='size-6 absolute left-4 top-4 md:top-0 md:bottom-0 my-auto rounded-md' />
+
+      {/* Card body */}
+      <div className='border border-border shadow-floating rounded-lg py-3 px-6 bg-card'>
+        <div className='flex items-center md:pl-8'>
+          <div className='flex md:items-center gap-2 md:gap-8 flex-col md:flex-row w-full'>
+            {/* Name and created date */}
+            <div className='pl-8 md:pl-0 pr-8 md:pr-0 md:w-2/5'>
+              <Skeleton className='h-7 w-48 mb-1' />
+              <Skeleton className='h-4 w-32' />
+            </div>
+
+            {/* Time and uses */}
+            <div className='flex items-center gap-4 md:gap-8 px-3'>
+              {/* Time until expiry */}
+              <div className='flex items-center gap-1'>
+                <Skeleton className='size-8 rounded-full' />
+                <Skeleton className='h-5 w-16' />
+              </div>
+
+              {/* Uses remaining */}
+              <div className='flex items-center gap-1'>
+                <Skeleton className='size-8 rounded-full' />
+                <Skeleton className='h-5 w-12' />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete button placeholder */}
+      <Skeleton className='size-10 absolute right-4 top-3 md:top-0 md:bottom-0 my-auto rounded-button' />
     </div>
   );
 }

@@ -267,7 +267,7 @@ export function FullPost({ data, postRef }: FullPostProps) {
               }
             >
               <div
-                className='prose prose-sm max-w-none py-2'
+                className='prose prose-sm dark:prose-invert max-w-none py-2'
                 dangerouslySetInnerHTML={{
                   __html: stripEmptyParagraphs(post.content),
                 }}

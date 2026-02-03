@@ -55,6 +55,13 @@ export function MainNav({ items }: { items: NavItem[] }) {
       <Authenticated>
         <div className='hidden md:block'>
           <div className='flex items-center gap-3'>
+            <Link
+              href='/create'
+              className='flex items-center gap-1.5 h-9 px-3 text-sm font-semibold rounded-button bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+            >
+              <Icons.plus className='size-4' />
+              <span>Create</span>
+            </Link>
             <NotificationsDesktop />
             <AuthenticatedProfileDropdown />
           </div>
@@ -81,8 +88,13 @@ export function MainNav({ items }: { items: NavItem[] }) {
 }
 
 function AuthenticatedNav({ items }: { items?: MainNavItem[] }) {
-  // Filter navigation items - admin items will be conditionally shown by AdminOnly wrapper
-  const publicItems = items?.filter(item => item.href !== '/admin');
+  // Filter navigation items - remove My Events, New Event, and admin items
+  const publicItems = items?.filter(
+    item =>
+      item.href !== '/admin' &&
+      item.title !== 'My Events' &&
+      item.title !== 'New Event'
+  );
   const adminItems = items?.filter(item => item.href === '/admin');
 
   return (
