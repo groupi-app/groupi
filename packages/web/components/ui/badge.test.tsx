@@ -50,7 +50,7 @@ describe('Badge', () => {
 
     const badge = screen.getByText('Custom');
     expect(badge).toHaveClass('custom-class');
-    expect(badge).toHaveClass('rounded-full');
+    expect(badge).toHaveClass('rounded-badge');
   });
 
   it('should pass through additional HTML attributes', () => {
@@ -104,8 +104,8 @@ describe('badgeVariants', () => {
     const defaultClasses = badgeVariants({});
     const secondaryClasses = badgeVariants({ variant: 'secondary' });
 
-    expect(defaultClasses).toContain('rounded-full');
-    expect(secondaryClasses).toContain('rounded-full');
+    expect(defaultClasses).toContain('rounded-badge');
+    expect(secondaryClasses).toContain('rounded-badge');
     expect(defaultClasses).toContain('inline-flex');
     expect(secondaryClasses).toContain('inline-flex');
   });

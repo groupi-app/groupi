@@ -79,7 +79,7 @@ describe('NumberBadge', () => {
 
     const badge = screen.getByText('5');
     expect(badge).toHaveClass('absolute');
-    expect(badge).toHaveClass('bg-red-600');
+    expect(badge).toHaveClass('bg-destructive');
     expect(badge).toHaveClass('rounded-full');
   });
 });

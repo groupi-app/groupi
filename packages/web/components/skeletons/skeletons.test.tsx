@@ -45,7 +45,7 @@ describe('Notification Skeletons', () => {
   it('should render NotificationListSkeleton with multiple items', () => {
     const { container } = render(<NotificationListSkeleton />);
     expect(
-      container.querySelectorAll('.rounded-lg').length
+      container.querySelectorAll('.animate-pulse').length
     ).toBeGreaterThanOrEqual(1);
   });
 
@@ -64,7 +64,7 @@ describe('Post Skeletons', () => {
   it('should render PostCardSkeleton', () => {
     const { container } = render(<PostCardSkeleton />);
     expect(container.firstChild).toBeInTheDocument();
-    expect(container.querySelector('.rounded-xl')).toBeInTheDocument();
+    expect(container.querySelector('.rounded-card')).toBeInTheDocument();
   });
 
   it('should render PostDetailSkeleton', () => {
