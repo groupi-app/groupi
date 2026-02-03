@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Popover,
   PopoverContent,
@@ -214,6 +214,14 @@ export function ColorPicker({
     };
   }, [value]);
 
+  // Local state for hex input to allow typing partial values
+  const [hexInputValue, setHexInputValue] = useState(hex);
+
+  // Sync local state when prop-derived hex changes (e.g., from color picker or quick colors)
+  useEffect(() => {
+    setHexInputValue(hex);
+  }, [hex]);
+
   const handleColorChange = useCallback(
     (newHexValue: string) => {
       if (/^#[0-9A-Fa-f]{6}$/i.test(newHexValue)) {
@@ -240,9 +248,10 @@ export function ColorPicker({
       if (!newValue.startsWith('#')) {
         newValue = '#' + newValue;
       }
-      // Only update if it looks like a valid hex (partial or complete)
+      // Only update local state if it looks like a valid hex (partial or complete)
       if (/^#[0-9A-Fa-f]{0,6}$/i.test(newValue)) {
-        // For partial values, we need local state - but only emit when complete
+        setHexInputValue(newValue);
+        // Emit to parent only when we have a complete valid hex
         if (newValue.length === 7) {
           handleColorChange(newValue);
         }
@@ -250,6 +259,13 @@ export function ColorPicker({
     },
     [handleColorChange]
   );
+
+  const handleInputBlur = useCallback(() => {
+    // On blur, if the value is not a valid 7-character hex, reset to last valid value
+    if (!/^#[0-9A-Fa-f]{6}$/i.test(hexInputValue)) {
+      setHexInputValue(hex);
+    }
+  }, [hexInputValue, hex]);
 
   // Display color with opacity
   const displayColor =
@@ -297,8 +313,9 @@ export function ColorPicker({
                 style={{ padding: 0 }}
               />
               <Input
-                value={hex}
+                value={hexInputValue}
                 onChange={handleInputChange}
+                onBlur={handleInputBlur}
                 className='flex-1 font-mono'
                 placeholder='#000000'
                 maxLength={7}

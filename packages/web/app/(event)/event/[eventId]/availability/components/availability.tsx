@@ -6,6 +6,7 @@ import { useEventAvailability } from '@/hooks/convex';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AvailabilityProps {
   eventId: string;
@@ -21,15 +22,28 @@ export function Availability({ eventId }: AvailabilityProps) {
   // Use direct Convex hook for real-time availability data
   const availabilityData = useEventAvailability(eventId as Id<'events'>);
 
-  // Loading state
+  // Loading state - show actual structure with skeleton placeholders
   if (availabilityData === undefined) {
     return (
-      <div className='animate-pulse space-y-4'>
-        <div className='h-6 bg-muted rounded w-48'></div>
-        <div className='space-y-3'>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className='h-20 bg-muted rounded'></div>
-          ))}
+      <div>
+        <div className='my-2'>
+          <h2 className='font-heading text-4xl'>When are you around?</h2>
+          <p className='text-muted-foreground text-lg'>
+            Don&apos;t worry. You can update this later.
+          </p>
+        </div>
+        <div className='py-4 w-full'>
+          <span className='text-sm italic text-muted-foreground'>
+            Current timezone:{' '}
+            <Skeleton className='h-4 w-48 inline-block align-baseline' />
+          </span>
+          {/* Availability form skeleton */}
+          <div className='space-y-3 mt-4'>
+            <AvailabilityCardSkeleton />
+            <AvailabilityCardSkeleton />
+            <AvailabilityCardSkeleton />
+            <AvailabilityCardSkeleton />
+          </div>
         </div>
       </div>
     );
@@ -102,6 +116,32 @@ export function Availability({ eventId }: AvailabilityProps) {
           potentialDateTimes={potentialDateTimes}
           userId={availabilityData.userId}
         />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * AvailabilityCardSkeleton - Skeleton for a single availability card
+ * Matches AvailabilityCard: date, time, yes/maybe/no buttons
+ */
+function AvailabilityCardSkeleton() {
+  return (
+    <div className='w-full sm:max-w-md border border-border shadow-floating rounded-md py-4 px-4 bg-card'>
+      <div className='flex flex-col sm:flex-row justify-between gap-4 flex-wrap'>
+        {/* Date and time */}
+        <div className='flex flex-col justify-between'>
+          <div>
+            <Skeleton className='h-6 w-48 mb-1' />
+            <Skeleton className='h-4 w-20' />
+          </div>
+        </div>
+        {/* Yes/Maybe/No buttons */}
+        <div className='flex items-center gap-2 py-3'>
+          <Skeleton className='size-10 rounded-button' />
+          <Skeleton className='size-10 rounded-button' />
+          <Skeleton className='size-10 rounded-button' />
+        </div>
       </div>
     </div>
   );

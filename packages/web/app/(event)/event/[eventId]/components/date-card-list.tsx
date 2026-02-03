@@ -14,6 +14,7 @@ import { getRanks } from '@/lib/utils';
 import { LayoutGroup, motion } from 'framer-motion';
 import { useState } from 'react';
 import { useEventData } from '../context';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const container = {
   hidden: { opacity: 0 },
@@ -36,17 +37,33 @@ export function DateCardList() {
   // Use context data (pre-fetched at layout level)
   const { availabilityData } = useEventData();
 
-  // Loading state
+  // Loading state - show actual controls with skeleton data
   if (availabilityData === undefined) {
     return (
-      <div className='animate-pulse space-y-4'>
-        <div className='h-8 bg-muted rounded w-48'></div>
-        <div className='space-y-3'>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className='h-24 bg-muted rounded'></div>
-          ))}
+      <>
+        <div className='w-36 my-2'>
+          <Select
+            value={sortBy}
+            onValueChange={value => setSortBy(value as 'rank' | 'date')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Sort By' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Sort By</SelectLabel>
+                <SelectItem value='rank'>Rank</SelectItem>
+                <SelectItem value='date'>Date</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+        <div className='flex flex-col gap-3'>
+          <DateCardSkeleton />
+          <DateCardSkeleton />
+          <DateCardSkeleton />
+        </div>
+      </>
     );
   }
 
@@ -103,5 +120,43 @@ export function DateCardList() {
         </LayoutGroup>
       </motion.div>
     </>
+  );
+}
+
+/**
+ * DateCardSkeleton - Skeleton for a single date card
+ * Matches DateCard: rank, date, time, yes/maybe/no counts, progress bar
+ */
+function DateCardSkeleton() {
+  return (
+    <div className='w-full md:max-w-lg border border-border shadow-floating rounded-md py-4 px-4 bg-card'>
+      <div className='flex items-start gap-4'>
+        {/* Rank */}
+        <Skeleton className='h-8 w-8' />
+        <div className='flex flex-col gap-1'>
+          {/* Date */}
+          <Skeleton className='h-6 w-48' />
+          {/* Time range */}
+          <Skeleton className='h-4 w-32' />
+        </div>
+      </div>
+      {/* Yes/Maybe/No counts */}
+      <div className='flex items-center gap-4 mt-4'>
+        <div className='flex items-center gap-2'>
+          <Skeleton className='size-6 rounded-full' />
+          <Skeleton className='h-4 w-4' />
+        </div>
+        <div className='flex items-center gap-2'>
+          <Skeleton className='size-6 rounded-full' />
+          <Skeleton className='h-4 w-4' />
+        </div>
+        <div className='flex items-center gap-2'>
+          <Skeleton className='size-6 rounded-full' />
+          <Skeleton className='h-4 w-4' />
+        </div>
+      </div>
+      {/* Progress bar */}
+      <Skeleton className='w-full h-4 rounded-full mt-2' />
+    </div>
   );
 }

@@ -63,6 +63,60 @@ export async function shouldSkipNotificationDueToMute(
 }
 
 /**
+ * Check if a person has Do Not Disturb status enabled
+ * DND suppresses all in-app notifications
+ */
+export async function isPersonInDndMode(
+  ctx: MutationCtx | QueryCtx,
+  personId: Id<'persons'>
+): Promise<boolean> {
+  const person = await ctx.db.get(personId);
+  if (!person) return false;
+
+  // Check if status is DND
+  if (person.status !== 'DO_NOT_DISTURB') return false;
+
+  // Check if status has expired
+  const now = Date.now();
+  if (person.statusExpiresAt && now >= person.statusExpiresAt) {
+    // Status expired, not in DND mode
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Check if notification should be skipped due to DND or muting
+ * Combines both checks for convenience
+ */
+export async function shouldSkipNotification(
+  ctx: MutationCtx | QueryCtx,
+  personId: Id<'persons'>,
+  eventId?: Id<'events'>,
+  postId?: Id<'posts'>
+): Promise<{ skip: boolean; reason?: 'dnd' | 'muted' }> {
+  // Check DND first
+  const isInDnd = await isPersonInDndMode(ctx, personId);
+  if (isInDnd) {
+    return { skip: true, reason: 'dnd' };
+  }
+
+  // Check muting
+  const isMuted = await shouldSkipNotificationDueToMute(
+    ctx,
+    personId,
+    eventId,
+    postId
+  );
+  if (isMuted) {
+    return { skip: true, reason: 'muted' };
+  }
+
+  return { skip: false };
+}
+
+/**
  * Notification types matching the schema
  */
 export type NotificationType =
@@ -78,7 +132,9 @@ export type NotificationType =
   | 'USER_DEMOTED'
   | 'USER_RSVP'
   | 'USER_MENTIONED'
-  | 'EVENT_REMINDER';
+  | 'EVENT_REMINDER'
+  | 'FRIEND_REQUEST_RECEIVED'
+  | 'FRIEND_REQUEST_ACCEPTED';
 
 export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 
@@ -287,6 +343,14 @@ function getNotificationEmailSubject(ctx: NotificationMessageContext): string {
         : `${prefix}You were mentioned`;
     case 'EVENT_REMINDER':
       return `${prefix}Event reminder`;
+    case 'FRIEND_REQUEST_RECEIVED':
+      return authorName
+        ? `${authorName} sent you a friend request`
+        : 'New friend request';
+    case 'FRIEND_REQUEST_ACCEPTED':
+      return authorName
+        ? `${authorName} accepted your friend request`
+        : 'Friend request accepted';
     default:
       return `${prefix}Notification`;
   }
@@ -339,6 +403,10 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
         : `${author} mentioned you in ${event}`;
     case 'EVENT_REMINDER':
       return `Reminder: ${event} is coming up soon!`;
+    case 'FRIEND_REQUEST_RECEIVED':
+      return `${author} wants to be your friend`;
+    case 'FRIEND_REQUEST_ACCEPTED':
+      return `${author} accepted your friend request. You're now friends!`;
     default:
       return 'You have a new notification';
   }
@@ -394,6 +462,10 @@ function getNotificationMessageMarkdown(
         : `${author} mentioned you in ${event}`;
     case 'EVENT_REMINDER':
       return `Reminder: ${event} is coming up soon!`;
+    case 'FRIEND_REQUEST_RECEIVED':
+      return `${author} wants to be your friend`;
+    case 'FRIEND_REQUEST_ACCEPTED':
+      return `${author} accepted your friend request. You're now friends!`;
     default:
       return 'You have a new notification';
   }
@@ -446,6 +518,10 @@ function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
         : `${author} mentioned you in "${event}"`;
     case 'EVENT_REMINDER':
       return `Reminder: "${event}" is coming up soon!`;
+    case 'FRIEND_REQUEST_RECEIVED':
+      return `${author} wants to be your friend`;
+    case 'FRIEND_REQUEST_ACCEPTED':
+      return `${author} accepted your friend request. You're now friends!`;
     default:
       return 'You have a new notification';
   }
@@ -494,6 +570,14 @@ function buildNotificationUrl(
   postId?: string
 ): string {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+
+  // Friend-related notifications link to the friends page
+  if (
+    type === 'FRIEND_REQUEST_RECEIVED' ||
+    type === 'FRIEND_REQUEST_ACCEPTED'
+  ) {
+    return `${siteUrl}/friends`;
+  }
 
   // Post-related notifications link to the post
   if (postId && ['NEW_POST', 'NEW_REPLY', 'USER_MENTIONED'].includes(type)) {
@@ -869,6 +953,8 @@ async function collectWebhookData(
 /**
  * Create a notification for a single recipient
  * Also schedules email and webhook notifications via action if the user has them enabled
+ * Note: DND status is checked at the calling site (notifyEventMembers, notifyPerson, etc.)
+ * to allow counting skipped notifications. This function always creates the notification.
  */
 export async function createNotification(
   ctx: MutationCtx,
@@ -882,7 +968,11 @@ export async function createNotification(
     rsvp?: RsvpStatus;
   }
 ) {
-  // Insert the notification into the database
+  // Check if user is in DND mode - if so, still create the notification but don't send external alerts
+  const isInDnd = await isPersonInDndMode(ctx, data.personId);
+
+  // Insert the notification into the database (always, even in DND mode)
+  // This allows users to see missed notifications when they come back online
   const notificationId = await ctx.db.insert('notifications', {
     personId: data.personId,
     type: data.type,
@@ -894,6 +984,11 @@ export async function createNotification(
     read: false,
     updatedAt: Date.now(),
   });
+
+  // Skip external notifications if in DND mode
+  if (isInDnd) {
+    return notificationId;
+  }
 
   // Collect email and webhook data
   const notificationData = {

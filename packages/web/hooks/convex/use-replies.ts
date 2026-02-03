@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
+
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
@@ -59,13 +61,18 @@ export function useRepliesByPost(postId: Id<'posts'>) {
     isActive ? { postId } : 'skip'
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 /**
@@ -83,13 +90,18 @@ export function useRepliesByPostWithSkip(postId: Id<'posts'> | null) {
     shouldSkip ? 'skip' : { postId }
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 // ===== REPLY MUTATIONS =====

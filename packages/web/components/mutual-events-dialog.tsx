@@ -27,8 +27,8 @@ export function MutualEventsDialog({
   const { data: session } = useSession();
   const currentUserId = session?.user?.id as string | undefined;
 
-  // Use Convex hook for real-time mutual events data
-  const mutualEventsData = useMutualEvents(userId);
+  // Only fetch when dialog is open to avoid spamming queries
+  const mutualEventsData = useMutualEvents(userId, { enabled: open });
 
   // Loading state
   const isLoading = mutualEventsData === undefined;

@@ -318,3 +318,175 @@ export function useAcceptInvite() {
     [acceptInvite, toast]
   );
 }
+
+// ===== EMAIL INVITE HOOKS =====
+
+/**
+ * Create multiple email invites for an event
+ */
+export function useCreateEmailInvites(eventId: Id<'events'>) {
+  const baseMutation = useMutation(inviteMutations.createEmailInvites);
+  const { toast } = useToast();
+
+  // Create mutation with optimistic update
+  const createEmailInvites = useMemo(() => {
+    return baseMutation.withOptimisticUpdate((localStore, args) => {
+      const currentData = localStore.getQuery(inviteQueries.getEventInvites, {
+        eventId: args.eventId,
+      });
+
+      if (currentData === undefined) {
+        return;
+      }
+
+      // Create optimistic invites
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback
+      const now = Date.now();
+      const optimisticInvites = args.invites.map(
+        (
+          invite: { email: string; recipientName?: string; plusOnes?: number },
+          index: number
+        ) => ({
+          _id: `optimistic_email_${now}_${index}` as unknown as Id<'invites'>,
+          _creationTime: now,
+          eventId: args.eventId,
+          name: invite.recipientName || invite.email,
+          email: invite.email.toLowerCase(),
+          recipientName: invite.recipientName,
+          customMessage: args.customMessage,
+          token: `pending_email_${now}_${index}`,
+          usesTotal: 1 + (invite.plusOnes || 0),
+          usesRemaining: 1 + (invite.plusOnes || 0),
+          expiresAt: args.expiresAt,
+          createdById: `optimistic_membership` as unknown as Id<'memberships'>,
+          hasEmail: true,
+          emailStatus: 'pending' as const,
+        })
+      );
+
+      // Add optimistic invites to the beginning of the list
+      localStore.setQuery(
+        inviteQueries.getEventInvites,
+        { eventId: args.eventId },
+        {
+          ...currentData,
+          invites: [...optimisticInvites, ...(currentData.invites || [])],
+          pendingEmailCount:
+            (currentData.pendingEmailCount || 0) + optimisticInvites.length,
+        }
+      );
+    });
+  }, [baseMutation]);
+
+  return useCallback(
+    async (data: {
+      invites: Array<{
+        email: string;
+        recipientName?: string;
+        plusOnes?: number;
+      }>;
+      customMessage?: string;
+      expiresAt?: Date;
+    }) => {
+      try {
+        const result = await createEmailInvites({
+          eventId,
+          invites: data.invites,
+          customMessage: data.customMessage,
+          expiresAt: data.expiresAt?.getTime(),
+        });
+
+        if (result.createdCount > 0) {
+          toast({
+            title: 'Invites added',
+            description: `Added ${result.createdCount} invite${result.createdCount !== 1 ? 's' : ''} to the list`,
+          });
+        }
+
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to add invites. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [createEmailInvites, eventId, toast]
+  );
+}
+
+/**
+ * Send pending email invites for an event
+ */
+export function useSendEmailInvites(eventId: Id<'events'>) {
+  const baseMutation = useMutation(inviteMutations.sendPendingEmailInvites);
+  const { toast } = useToast();
+
+  // Create mutation with optimistic update
+  const sendEmailInvites = useMemo(() => {
+    return baseMutation.withOptimisticUpdate((localStore, args) => {
+      const currentData = localStore.getQuery(inviteQueries.getEventInvites, {
+        eventId: args.eventId,
+      });
+
+      if (currentData === undefined) {
+        return;
+      }
+
+      // Update all pending invites to sent status
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in mutation callback
+      const now = Date.now();
+      const updatedInvites = currentData.invites.map(
+        (invite: { email?: string; emailStatus?: string | null }) => {
+          if (invite.email && invite.emailStatus === 'pending') {
+            return {
+              ...invite,
+              emailSentAt: now,
+              emailStatus: 'sent' as const,
+            };
+          }
+          return invite;
+        }
+      );
+
+      localStore.setQuery(
+        inviteQueries.getEventInvites,
+        { eventId: args.eventId },
+        {
+          ...currentData,
+          invites: updatedInvites,
+          pendingEmailCount: 0,
+        }
+      );
+    });
+  }, [baseMutation]);
+
+  return useCallback(async () => {
+    try {
+      const result = await sendEmailInvites({ eventId });
+
+      if (result.sentCount > 0) {
+        toast({
+          title: 'Emails sent',
+          description: `Sent ${result.sentCount} invite email${result.sentCount !== 1 ? 's' : ''}`,
+        });
+      } else {
+        toast({
+          title: 'No emails to send',
+          description: 'All invites have already been sent.',
+        });
+      }
+
+      return result;
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send emails. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [sendEmailInvites, eventId, toast]);
+}

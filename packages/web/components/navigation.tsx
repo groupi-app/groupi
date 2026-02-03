@@ -1,14 +1,9 @@
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from '@/components/ui/navigation-menu';
 import Link from 'next/link';
 import { MobileNav } from './mobile-nav';
 import { NotificationsDesktop } from './notifications-desktop';
 import { ProfileDropdown } from './profile-dropdown';
 import { Icons } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import {
   Authenticated,
   Unauthenticated,
@@ -29,16 +24,9 @@ type NavItem = {
   disabled?: boolean;
 };
 
-// Alias for backwards compatibility
-type MainNavItem = NavItem;
-
 export function Navigation({ items }: { items: NavItem[] }) {
   return (
     <>
-      <Authenticated>
-        <NavigationLinks items={items} />
-      </Authenticated>
-
       <Authenticated>
         <MobileNavigation items={items} />
       </Authenticated>
@@ -59,6 +47,21 @@ export function Navigation({ items }: { items: NavItem[] }) {
         <Authenticated>
           <div className='hidden md:block'>
             <div className='flex items-center gap-3'>
+              <Button variant='outline-primary' size='sm' asChild>
+                <Link href='/create'>
+                  <Icons.plus className='size-4' />
+                  <span>Create</span>
+                </Link>
+              </Button>
+              <AdminOnly fallback={null}>
+                <Link
+                  href='/admin'
+                  className='flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-button transition-colors hover:bg-accent hover:text-accent-foreground'
+                >
+                  <Icons.shield className='size-4' />
+                  <span>Admin</span>
+                </Link>
+              </AdminOnly>
               <NotificationsDesktop />
               <UserProfile />
             </div>
@@ -85,54 +88,7 @@ export function Navigation({ items }: { items: NavItem[] }) {
   );
 }
 
-function NavigationLinks({ items }: { items?: MainNavItem[] }) {
-  // Filter navigation items - admin items will be conditionally shown by AdminOnly wrapper
-  const publicItems = items?.filter(item => item.href !== '/admin');
-  const adminItems = items?.filter(item => item.href === '/admin');
-
-  return (
-    <>
-      {publicItems?.length ? (
-        <NavigationMenu>
-          <NavigationMenuList
-            className={'hidden gap-4 font-semibold text-sm md:flex'}
-          >
-            {publicItems.map((item, i) => (
-              <NavigationMenuItem key={i}>
-                <NavigationMenuLink
-                  className={
-                    'px-2 py-2 transition-colors dark:hover:bg-accent/80 rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
-                  }
-                  href={item.href}
-                >
-                  {item.title}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-
-            {/* Admin-only navigation items */}
-            <AdminOnly fallback={null}>
-              {adminItems?.map((item, i) => (
-                <NavigationMenuItem key={`admin-${i}`}>
-                  <NavigationMenuLink
-                    className={
-                      'px-2 py-2 transition-colors dark:hover:bg-accent/80 rounded-md dark:text-popover-foreground dark:hover:text-accent-foreground hover:bg-accent/10'
-                    }
-                    href={item.href}
-                  >
-                    {item.title}
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              ))}
-            </AdminOnly>
-          </NavigationMenuList>
-        </NavigationMenu>
-      ) : null}
-    </>
-  );
-}
-
-function MobileNavigation({ items }: { items?: MainNavItem[] }) {
+function MobileNavigation({ items }: { items?: NavItem[] }) {
   // Use global user context instead of direct query
   const { user } = useGlobalUser();
 
@@ -150,14 +106,8 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
     );
   }
 
-  // Filter admin items for mobile nav too
+  // Filter out admin items - admin link is shown in profile section
   const publicItems = items?.filter(item => item.href !== '/admin') || [];
-  const adminItems = items?.filter(item => item.href === '/admin') || [];
-
-  // For now, include admin items if user is admin (mobile nav will handle display)
-  const allItems = isAdminRole(user.role)
-    ? [...publicItems, ...adminItems]
-    : publicItems;
 
   return (
     <MobileNav
@@ -167,7 +117,8 @@ function MobileNavigation({ items }: { items?: MainNavItem[] }) {
         image: user.image || undefined,
         username: user.username || undefined,
       }}
-      items={allItems}
+      items={publicItems}
+      isAdmin={isAdminRole(user.role)}
     />
   );
 }

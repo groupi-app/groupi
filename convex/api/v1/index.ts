@@ -9,6 +9,7 @@ import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
 import { createMemberRoutes } from './routes/members';
 import { createAvailabilityRoutes } from './routes/availability';
+import { createFriendRoutes } from './routes/friends';
 
 /**
  * REST API v1 Entry Point
@@ -124,6 +125,7 @@ All errors return a consistent JSON format:
       { name: 'Replies', description: 'Post replies' },
       { name: 'Members', description: 'Event member management' },
       { name: 'Availability', description: 'Date availability voting' },
+      { name: 'Friends', description: 'Friend management' },
     ],
   });
 
@@ -141,6 +143,7 @@ All errors return a consistent JSON format:
   app.route('/', createReplyRoutes());
   app.route('/', createMemberRoutes());
   app.route('/', createAvailabilityRoutes());
+  app.route('/', createFriendRoutes());
 
   // Register OpenAPI security scheme
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {

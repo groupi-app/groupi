@@ -181,6 +181,54 @@ describe('Invites Domain', () => {
 
       expect(result).toBeNull();
     });
+
+    test('should return isAlreadyMember=true when user is a member', async () => {
+      const t = createTestInstance();
+      const { inviteToken, userId } = await createTestEventWithInvite(t);
+      const auth = createAuthenticatedUser(t, userId);
+
+      // The organizer is already a member of the event
+      const result = await auth.query(api.invites.queries.getInviteByToken, {
+        token: inviteToken,
+      });
+
+      expect(result).toBeTruthy();
+      expect(result!.isAlreadyMember).toBe(true);
+    });
+
+    test('should return isAlreadyMember=false when user is not a member', async () => {
+      const t = createTestInstance();
+      const { inviteToken } = await createTestEventWithInvite(t);
+
+      // Create a different user who is not a member
+      const { userId: newUserId } = await createTestUser(t, {
+        email: 'newuser@example.com',
+      });
+      const newUserAuth = createAuthenticatedUser(t, newUserId);
+
+      const result = await newUserAuth.query(
+        api.invites.queries.getInviteByToken,
+        {
+          token: inviteToken,
+        }
+      );
+
+      expect(result).toBeTruthy();
+      expect(result!.isAlreadyMember).toBe(false);
+    });
+
+    test('should return isAlreadyMember=false when user is not authenticated', async () => {
+      const t = createTestInstance();
+      const { inviteToken } = await createTestEventWithInvite(t);
+
+      // Query without authentication
+      const result = await t.query(api.invites.queries.getInviteByToken, {
+        token: inviteToken,
+      });
+
+      expect(result).toBeTruthy();
+      expect(result!.isAlreadyMember).toBe(false);
+    });
   });
 
   describe('acceptInvite', () => {
@@ -431,6 +479,402 @@ describe('Invites Domain', () => {
           inviteIds: [createResult.invite.id],
         })
       ).rejects.toThrow();
+    });
+  });
+
+  describe('createEmailInvites', () => {
+    test('should create multiple email invites with unique tokens', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      const result = await auth.mutation(
+        api.invites.mutations.createEmailInvites,
+        {
+          eventId,
+          invites: [
+            { email: 'user1@example.com', recipientName: 'User One' },
+            { email: 'user2@example.com', recipientName: 'User Two' },
+            { email: 'user3@example.com' },
+          ],
+        }
+      );
+
+      expect(result.createdCount).toBe(3);
+      expect(result.inviteIds).toHaveLength(3);
+
+      // Verify invites in database
+      const { invites } = await t.run(async ctx => {
+        const invites = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+        return { invites };
+      });
+
+      expect(invites).toHaveLength(3);
+
+      // Check email is lowercase
+      const emails = invites.map(i => i.email);
+      expect(emails).toContain('user1@example.com');
+      expect(emails).toContain('user2@example.com');
+      expect(emails).toContain('user3@example.com');
+
+      // Check tokens are unique
+      const tokens = invites.map(i => i.token);
+      expect(new Set(tokens).size).toBe(3);
+
+      // Check emailSentAt is undefined (pending)
+      for (const invite of invites) {
+        expect(invite.emailSentAt).toBeUndefined();
+      }
+    });
+
+    test('should skip duplicate emails for the same event', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create first invite
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'duplicate@example.com' }],
+      });
+
+      // Try to create duplicate
+      const result = await auth.mutation(
+        api.invites.mutations.createEmailInvites,
+        {
+          eventId,
+          invites: [
+            { email: 'duplicate@example.com' },
+            { email: 'new@example.com' },
+          ],
+        }
+      );
+
+      // Only the new email should be created
+      expect(result.createdCount).toBe(1);
+
+      // Verify only 2 invites exist
+      const { invites } = await t.run(async ctx => {
+        const invites = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+        return { invites };
+      });
+
+      expect(invites).toHaveLength(2);
+    });
+
+    test('should set usesTotal based on plusOnes', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [
+          { email: 'no-plus@example.com' },
+          { email: 'one-plus@example.com', plusOnes: 1 },
+          { email: 'three-plus@example.com', plusOnes: 3 },
+        ],
+      });
+
+      // Verify usesTotal
+      const { invites } = await t.run(async ctx => {
+        const invites = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+        return { invites };
+      });
+
+      const noPlus = invites.find(i => i.email === 'no-plus@example.com');
+      const onePlus = invites.find(i => i.email === 'one-plus@example.com');
+      const threePlus = invites.find(i => i.email === 'three-plus@example.com');
+
+      expect(noPlus!.usesTotal).toBe(1);
+      expect(onePlus!.usesTotal).toBe(2);
+      expect(threePlus!.usesTotal).toBe(4);
+    });
+
+    test('should store custom message on invites', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'test@example.com' }],
+        customMessage: 'Looking forward to seeing you!',
+      });
+
+      const { invite } = await t.run(async ctx => {
+        const invite = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .first();
+        return { invite };
+      });
+
+      expect(invite!.customMessage).toBe('Looking forward to seeing you!');
+    });
+
+    test('should reject custom message over 480 characters', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      const longMessage = 'a'.repeat(481);
+
+      await expect(
+        auth.mutation(api.invites.mutations.createEmailInvites, {
+          eventId,
+          invites: [{ email: 'test@example.com' }],
+          customMessage: longMessage,
+        })
+      ).rejects.toThrow('Custom message must be 480 characters or less');
+    });
+
+    test('should require MODERATOR or higher role', async () => {
+      const t = createTestInstance();
+      const { eventId, attendeeAuth } = await TestScenarios.multiUser(t);
+
+      await expect(
+        attendeeAuth.mutation(api.invites.mutations.createEmailInvites, {
+          eventId,
+          invites: [{ email: 'test@example.com' }],
+        })
+      ).rejects.toThrow();
+    });
+
+    test('should normalize email to lowercase', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'TEST@EXAMPLE.COM' }],
+      });
+
+      const { invite } = await t.run(async ctx => {
+        const invite = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .first();
+        return { invite };
+      });
+
+      expect(invite!.email).toBe('test@example.com');
+    });
+  });
+
+  describe('sendPendingEmailInvites', () => {
+    // Note: These tests may produce "Write outside of transaction" errors
+    // due to ctx.scheduler.runAfter not being fully supported in convex-test.
+    // The scheduler-triggered action is tested via integration tests.
+    // The core functionality (marking invites as sent) is still verified.
+
+    test('should mark pending invites as sent', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create email invites
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [
+          { email: 'user1@example.com' },
+          { email: 'user2@example.com' },
+        ],
+      });
+
+      // Verify they are pending
+      const { pendingBefore } = await t.run(async ctx => {
+        const invites = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+        return { pendingBefore: invites.filter(i => !i.emailSentAt).length };
+      });
+      expect(pendingBefore).toBe(2);
+
+      // Send emails
+      const result = await auth.mutation(
+        api.invites.mutations.sendPendingEmailInvites,
+        { eventId }
+      );
+
+      expect(result.sentCount).toBe(2);
+
+      // Verify they are now marked as sent
+      const { invites } = await t.run(async ctx => {
+        const invites = await ctx.db
+          .query('invites')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+        return { invites };
+      });
+
+      for (const invite of invites) {
+        expect(invite.emailSentAt).toBeDefined();
+        expect(invite.emailSentAt).toBeGreaterThan(0);
+      }
+    });
+
+    test('should return 0 when no pending invites', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create email invite and mark as sent
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'test@example.com' }],
+      });
+
+      // Send first time
+      await auth.mutation(api.invites.mutations.sendPendingEmailInvites, {
+        eventId,
+      });
+
+      // Try to send again
+      const result = await auth.mutation(
+        api.invites.mutations.sendPendingEmailInvites,
+        { eventId }
+      );
+
+      expect(result.sentCount).toBe(0);
+    });
+
+    test('should only send invites with email set', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create a regular invite (no email)
+      await auth.mutation(api.invites.mutations.createInvite, {
+        eventId,
+        name: 'Link Invite',
+      });
+
+      // Create an email invite
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'test@example.com' }],
+      });
+
+      // Send emails
+      const result = await auth.mutation(
+        api.invites.mutations.sendPendingEmailInvites,
+        { eventId }
+      );
+
+      // Only the email invite should be sent
+      expect(result.sentCount).toBe(1);
+    });
+
+    test('should require MODERATOR or higher role', async () => {
+      const t = createTestInstance();
+      const { eventId, attendeeAuth } = await TestScenarios.multiUser(t);
+
+      await expect(
+        attendeeAuth.mutation(api.invites.mutations.sendPendingEmailInvites, {
+          eventId,
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('getEventInvites with email status', () => {
+    test('should return hasEmail and emailStatus for invites', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create a regular invite
+      await auth.mutation(api.invites.mutations.createInvite, {
+        eventId,
+        name: 'Link Invite',
+      });
+
+      // Create an email invite
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'test@example.com' }],
+      });
+
+      // Query invites
+      const result = await auth.query(api.invites.queries.getEventInvites, {
+        eventId,
+      });
+
+      expect(result.invites).toHaveLength(2);
+
+      const linkInvite = result.invites.find(i => i.name === 'Link Invite');
+      const emailInvite = result.invites.find(
+        i => i.email === 'test@example.com'
+      );
+
+      expect(linkInvite!.hasEmail).toBe(false);
+      expect(linkInvite!.emailStatus).toBeNull();
+
+      expect(emailInvite!.hasEmail).toBe(true);
+      expect(emailInvite!.emailStatus).toBe('pending');
+    });
+
+    test('should return pendingEmailCount', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create email invites
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [
+          { email: 'user1@example.com' },
+          { email: 'user2@example.com' },
+          { email: 'user3@example.com' },
+        ],
+      });
+
+      const result = await auth.query(api.invites.queries.getEventInvites, {
+        eventId,
+      });
+
+      expect(result.pendingEmailCount).toBe(3);
+
+      // Send one invite manually by patching
+      const firstInvite = result.invites[0];
+      await t.run(async ctx => {
+        await ctx.db.patch(firstInvite._id, { emailSentAt: Date.now() });
+      });
+
+      const resultAfter = await auth.query(
+        api.invites.queries.getEventInvites,
+        {
+          eventId,
+        }
+      );
+
+      expect(resultAfter.pendingEmailCount).toBe(2);
+    });
+
+    test('should show sent status after sending emails', async () => {
+      const t = createTestInstance();
+      const { eventId, auth } = await TestScenarios.singleEvent(t);
+
+      // Create and send email invite
+      await auth.mutation(api.invites.mutations.createEmailInvites, {
+        eventId,
+        invites: [{ email: 'test@example.com' }],
+      });
+
+      await auth.mutation(api.invites.mutations.sendPendingEmailInvites, {
+        eventId,
+      });
+
+      const result = await auth.query(api.invites.queries.getEventInvites, {
+        eventId,
+      });
+
+      const emailInvite = result.invites.find(
+        i => i.email === 'test@example.com'
+      );
+      expect(emailInvite!.emailStatus).toBe('sent');
+      expect(result.pendingEmailCount).toBe(0);
     });
   });
 });

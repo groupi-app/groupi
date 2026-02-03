@@ -22,15 +22,22 @@ export function ChangeDateSingleContent({ eventId }: { eventId: string }) {
   }
 
   const { event } = eventData;
-  // Convert timestamp to Date for the component
+  // Convert timestamps to Date for the component
   const datetime = event.chosenDateTime
     ? new Date(event.chosenDateTime)
+    : undefined;
+  const endDatetime = event.chosenEndDateTime
+    ? new Date(event.chosenEndDateTime)
     : undefined;
 
   return (
     <div className='container max-w-4xl'>
       <h1 className='text-4xl font-heading mt-10'>Event Date/Time</h1>
-      <EditEventSingleDate eventId={eventId} datetime={datetime} />
+      <EditEventSingleDate
+        eventId={eventId}
+        datetime={datetime}
+        endDatetime={endDatetime}
+      />
     </div>
   );
 }

@@ -20,9 +20,14 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/events';
-  // Build callback URL that includes the redirect parameter for onboarding
-  const callbackURL =
-    redirectTo !== '/events'
+  const isAddAccountMode = searchParams.get('mode') === 'add-account';
+
+  // Build callback URL based on mode
+  // For add-account mode, go directly to events (they're already onboarded)
+  // For regular sign-in, go through onboarding flow
+  const callbackURL = isAddAccountMode
+    ? redirectTo
+    : redirectTo !== '/events'
       ? `/onboarding?redirect=${encodeURIComponent(redirectTo)}`
       : '/onboarding';
   const [identifier, setIdentifier] = useState(''); // Email or username
@@ -238,7 +243,15 @@ export default function SignInPage() {
       <div className='flex justify-center'>
         <Card className='w-full max-w-md'>
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
+            <CardTitle>
+              {isAddAccountMode ? 'Add Another Account' : 'Sign In'}
+            </CardTitle>
+            {isAddAccountMode && (
+              <p className='text-sm text-muted-foreground'>
+                Sign in with a different account. Your current session will
+                remain active.
+              </p>
+            )}
           </CardHeader>
           <CardContent className='space-y-4'>
             {/* Social Sign In */}
@@ -365,7 +378,9 @@ export default function SignInPage() {
             </form>
 
             <p className='text-center text-sm text-muted-foreground'>
-              New users will be automatically registered
+              {isAddAccountMode
+                ? 'You can switch between accounts anytime'
+                : 'New users will be automatically registered'}
             </p>
           </CardContent>
         </Card>
