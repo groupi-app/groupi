@@ -9,6 +9,7 @@ import { magicLinkClient } from 'better-auth/client/plugins';
 import { oneTapClient } from 'better-auth/client/plugins';
 import { adminClient } from 'better-auth/client/plugins';
 import { apiKeyClient } from 'better-auth/client/plugins';
+import { multiSessionClient } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 
 // Import Convex client for username lookup
@@ -32,7 +33,7 @@ initAuthApi();
  * This replaces the previous Better Auth setup with the official Convex component.
  * The 'use client' directive ensures this only runs in the browser.
  */
-export const authClient = createAuthClient({
+const baseAuthClient = createAuthClient({
   plugins: [
     convexClient(),
     usernameClient(),
@@ -40,6 +41,7 @@ export const authClient = createAuthClient({
     adminClient(),
     apiKeyClient(),
     passkeyClient(),
+    multiSessionClient(),
     // Conditionally add Google One Tap if client ID is configured
     ...(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       ? [
@@ -50,6 +52,67 @@ export const authClient = createAuthClient({
       : []),
   ],
 });
+
+// Type-assert the auth client to include all plugin methods
+// This is needed because TypeScript has trouble inferring complex plugin types
+export const authClient = baseAuthClient as typeof baseAuthClient & {
+  signIn: typeof baseAuthClient.signIn & {
+    magicLink: (options: {
+      email: string;
+      callbackURL?: string;
+    }) => Promise<{ error?: { message: string } }>;
+  };
+  admin: {
+    setRole: (options: {
+      userId: string;
+      role: string;
+    }) => Promise<{ error?: { message: string } }>;
+    banUser: (options: { userId: string }) => Promise<{
+      error?: { message: string };
+    }>;
+    unbanUser: (options: { userId: string }) => Promise<{
+      error?: { message: string };
+    }>;
+  };
+  apiKey: {
+    list: () => Promise<{
+      data?: Array<{
+        id: string;
+        name?: string | null;
+        start?: string;
+        createdAt: string;
+        expiresAt?: string | null;
+      }>;
+      error?: { message: string };
+    }>;
+    create: (options: { name: string; expiresIn?: number }) => Promise<{
+      data?: { key: string };
+      error?: { message: string };
+    }>;
+    delete: (options: { keyId: string }) => Promise<{
+      error?: { message: string };
+    }>;
+  };
+  passkey: {
+    addPasskey: (options?: { name?: string }) => Promise<{
+      error?: { message: string };
+    }>;
+    listUserPasskeys: () => Promise<{
+      data?: Array<{
+        id: string;
+        name?: string | null;
+        createdAt: string;
+      }>;
+      error?: { message: string };
+    }>;
+    deletePasskey: (options: { id: string }) => Promise<{
+      error?: { message: string };
+    }>;
+    updatePasskey: (options: { id: string; name: string }) => Promise<{
+      error?: { message: string };
+    }>;
+  };
+};
 
 // Export commonly used functions (matching your current exports)
 export const { signIn, signUp, signOut, useSession } = authClient;

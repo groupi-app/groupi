@@ -120,19 +120,33 @@ export function ProfileEditDialog({
 
   // Track previous open state to detect dialog open transition
   const wasOpenRef = useRef(false);
+  // Track if we've already populated the form with userProfile data
+  const hasPopulatedProfileRef = useRef(false);
 
   // Reset form only when dialog transitions from closed to open
   useEffect(() => {
     const justOpened = open && !wasOpenRef.current;
     wasOpenRef.current = open;
 
+    // Reset the populated flag when dialog closes
+    if (!open) {
+      hasPopulatedProfileRef.current = false;
+      return;
+    }
+
     if (justOpened && userInfo) {
+      // Initial reset with userInfo data (name, image)
+      // Pronouns and bio will be populated once userProfile loads
       form.reset({
         name: userInfo.name || '',
         pronouns: userProfile?.person?.pronouns || '',
         bio: userProfile?.person?.bio || '',
         image: userInfo.image || '',
       });
+      // Mark as populated if userProfile is already available
+      if (userProfile !== undefined) {
+        hasPopulatedProfileRef.current = true;
+      }
       // Clean up any previous blob URL to avoid memory leaks
       if (pendingImagePreviewRef.current) {
         URL.revokeObjectURL(pendingImagePreviewRef.current);
@@ -140,6 +154,15 @@ export function ProfileEditDialog({
       setPendingImageBlob(null);
       setPendingImagePreview(null);
       setUpdateError(null);
+    }
+
+    // If dialog is open and userProfile just loaded, update the form fields
+    // This handles the case where userProfile was undefined when dialog first opened
+    if (open && userProfile !== undefined && !hasPopulatedProfileRef.current) {
+      hasPopulatedProfileRef.current = true;
+      // Only update pronouns and bio, preserve other fields the user may have edited
+      form.setValue('pronouns', userProfile.person?.pronouns || '');
+      form.setValue('bio', userProfile.person?.bio || '');
     }
   }, [userInfo, open, form, userProfile]);
 
@@ -256,6 +279,7 @@ export function ProfileEditDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className='sm:max-w-[500px]'
+        preventOverlayClose={isUploading || isPending || isSubmitting}
         onInteractOutside={e => {
           // Prevent closing during upload, pending transition, or submission
           if (isUploading || isPending || isSubmitting) {

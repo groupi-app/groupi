@@ -13,8 +13,11 @@ const tokenOverridesValidator = v.object({
   brand: v.optional(
     v.object({
       primary: v.optional(v.string()),
+      primaryHover: v.optional(v.string()),
       secondary: v.optional(v.string()),
+      secondaryHover: v.optional(v.string()),
       accent: v.optional(v.string()),
+      accentHover: v.optional(v.string()),
     })
   ),
   background: v.optional(
