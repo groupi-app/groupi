@@ -32,7 +32,7 @@ export function PostEditWrapper() {
     return <div>You are not a member of this event</div>;
   }
 
-  const { post } = postData;
+  const { post, attachments } = postData;
   const { title, content, _id: id, author, event } = post;
 
   if (!author || author.user?._id !== currentUser.user.id) {
@@ -48,7 +48,11 @@ export function PostEditWrapper() {
 
   return (
     <div className='container pt-6'>
-      <Editor eventId={event._id} postData={{ title, content, id }} />
+      <Editor
+        eventId={event._id}
+        postData={{ title, content, id }}
+        existingAttachments={attachments}
+      />
     </div>
   );
 }

@@ -1,9 +1,12 @@
 'use client';
 
+/* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
+
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useIsActive } from '@/providers/visibility-provider';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,9 +73,28 @@ export function useMutualEvents(
 
 /**
  * Get current user's events (memberships)
+ * Uses stale-while-revalidate caching to prevent skeleton flashing on tab switch.
+ * Returns cached data while re-subscribing after tab becomes visible again.
  */
 export function useUserEvents() {
-  return useQuery(eventQueries.getUserEvents, {});
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(eventQueries.getUserEvents, isActive ? {} : 'skip');
+
+  // Cache the result when we get fresh data
+  if (result !== undefined) {
+    cachedRef.current = result;
+  }
+
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 // ===== EVENT MUTATIONS =====

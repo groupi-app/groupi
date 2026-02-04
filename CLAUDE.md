@@ -11,6 +11,8 @@ pnpm test:run   # Run all tests
 pnpm lint:fix   # Auto-fix linting issues
 pnpm lint:tokens # Check design token usage
 pnpm format     # Format code
+pnpm changeset  # Create a changeset for your changes
+pnpm commit     # Interactive conventional commit
 ```
 
 **NEVER run:** `pnpm dev*`, `pnpm build*`, `pnpm start`, `pnpm convex:dev`, `pnpm convex:deploy`

@@ -5,13 +5,10 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { useGroupiTheme } from '@/providers/theme-provider';
-import {
-  generateCustomThemeCSS,
-  saveCustomThemeCSSToStorage,
-  clearCustomThemeCSSFromStorage,
-} from '@/components/theme-sync';
+import { generateCompleteCustomThemeCSS } from '@/components/theme-sync';
+import { baseThemeRegistry } from '@groupi/shared/design/themes';
 import { SettingsPageTemplate } from '@/components/templates';
-import { SettingsFormSkeleton } from '@/components/skeletons/settings-form-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ConfirmationDialog } from '@/components/molecules';
 import { Dialog } from '@/components/ui/dialog';
 import {
@@ -50,10 +47,9 @@ export default function AppearanceSettings() {
       <AuthLoading>
         <SettingsPageTemplate
           title='Appearance'
-          isLoading
-          loadingContent={<SettingsFormSkeleton />}
+          description='Customize how Groupi looks.'
         >
-          <div />
+          <AppearanceSettingsSkeleton />
         </SettingsPageTemplate>
       </AuthLoading>
 
@@ -85,9 +81,9 @@ function AuthenticatedAppearanceSettings() {
     baseThemes,
     lightThemes,
     darkThemes,
-    setThemeById,
-    applyCustomThemeCSS,
-    clearCustomThemeCSS,
+    setBaseTheme,
+    setCustomTheme,
+    setSystemPreference,
   } = useGroupiTheme();
 
   // Convex queries - using variable assignment to break deep type inference
@@ -138,32 +134,27 @@ function AuthenticatedAppearanceSettings() {
   // Handle theme mode change
   const handleModeChange = useCallback(
     async (mode: 'system' | 'light' | 'dark') => {
-      // Determine which theme to apply
-      let themeId: string;
+      const systemLightId = lightThemes[0]?.id || 'groupi-light';
+      const systemDarkId = darkThemes[0]?.id || 'groupi-dark';
+
       if (mode === 'system') {
-        const isDark = window.matchMedia(
-          '(prefers-color-scheme: dark)'
-        ).matches;
-        themeId = isDark
-          ? darkThemes[0]?.id || 'groupi-dark'
-          : lightThemes[0]?.id || 'groupi-light';
+        // Apply system preference mode
+        setSystemPreference(systemLightId, systemDarkId);
       } else {
-        themeId =
+        // Determine which theme to apply
+        const themeId =
           mode === 'dark'
             ? themePreferences?.selectedThemeId &&
               darkThemes.find(t => t.id === themePreferences.selectedThemeId)
               ? themePreferences.selectedThemeId
-              : darkThemes[0]?.id || 'groupi-dark'
+              : systemDarkId
             : themePreferences?.selectedThemeId &&
                 lightThemes.find(t => t.id === themePreferences.selectedThemeId)
               ? themePreferences.selectedThemeId
-              : lightThemes[0]?.id || 'groupi-light';
-      }
+              : systemLightId;
 
-      // Apply immediately (optimistic UI)
-      setThemeById(themeId);
-      clearCustomThemeCSS();
-      clearCustomThemeCSSFromStorage();
+        setBaseTheme(themeId);
+      }
 
       // Save to database in background
       setIsSaving(true);
@@ -171,18 +162,31 @@ function AuthenticatedAppearanceSettings() {
         if (mode === 'system') {
           await savePreference({
             selectedThemeType: 'base',
-            selectedThemeId: lightThemes[0]?.id || 'groupi-light',
+            selectedThemeId: systemLightId,
             useSystemPreference: true,
-            systemLightThemeId: lightThemes[0]?.id || 'groupi-light',
-            systemDarkThemeId: darkThemes[0]?.id || 'groupi-dark',
+            systemLightThemeId: systemLightId,
+            systemDarkThemeId: systemDarkId,
           });
         } else {
+          const themeId =
+            mode === 'dark'
+              ? themePreferences?.selectedThemeId &&
+                darkThemes.find(t => t.id === themePreferences.selectedThemeId)
+                ? themePreferences.selectedThemeId
+                : systemDarkId
+              : themePreferences?.selectedThemeId &&
+                  lightThemes.find(
+                    t => t.id === themePreferences.selectedThemeId
+                  )
+                ? themePreferences.selectedThemeId
+                : systemLightId;
+
           await savePreference({
             selectedThemeType: 'base',
             selectedThemeId: themeId,
             useSystemPreference: false,
-            systemLightThemeId: lightThemes[0]?.id || 'groupi-light',
-            systemDarkThemeId: darkThemes[0]?.id || 'groupi-dark',
+            systemLightThemeId: systemLightId,
+            systemDarkThemeId: systemDarkId,
           });
         }
         toast.success('Theme preference saved');
@@ -195,8 +199,8 @@ function AuthenticatedAppearanceSettings() {
     },
     [
       savePreference,
-      setThemeById,
-      clearCustomThemeCSS,
+      setBaseTheme,
+      setSystemPreference,
       lightThemes,
       darkThemes,
       themePreferences,
@@ -209,10 +213,8 @@ function AuthenticatedAppearanceSettings() {
       const theme = baseThemes.find(t => t.id === themeId);
       if (!theme) return;
 
-      // Apply immediately (optimistic UI)
-      setThemeById(themeId);
-      clearCustomThemeCSS();
-      clearCustomThemeCSSFromStorage();
+      // Apply immediately (optimistic UI) - handles DOM + localStorage
+      setBaseTheme(themeId);
 
       // Save to database in background
       setIsSaving(true);
@@ -240,8 +242,7 @@ function AuthenticatedAppearanceSettings() {
     },
     [
       savePreference,
-      setThemeById,
-      clearCustomThemeCSS,
+      setBaseTheme,
       baseThemes,
       themePreferences,
       lightThemes,
@@ -282,7 +283,7 @@ function AuthenticatedAppearanceSettings() {
           '(prefers-color-scheme: dark)'
         ).matches;
         if ((type === 'dark' && isDark) || (type === 'light' && !isDark)) {
-          setThemeById(themeId);
+          setBaseTheme(themeId);
         }
         toast.success('Theme preference saved');
       } catch (error) {
@@ -292,7 +293,7 @@ function AuthenticatedAppearanceSettings() {
         setIsSaving(false);
       }
     },
-    [savePreference, setThemeById, themePreferences, lightThemes, darkThemes]
+    [savePreference, setBaseTheme, themePreferences, lightThemes, darkThemes]
   );
 
   // Handle custom theme deletion - opens confirmation dialog
@@ -341,22 +342,22 @@ function AuthenticatedAppearanceSettings() {
       const theme = customThemes?.find(t => t._id === themeId);
       if (!theme) return;
 
-      // Apply the theme immediately (optimistic UI)
-      setThemeById(theme.baseThemeId);
+      // Get the base theme to generate complete CSS
+      const baseTheme = baseThemeRegistry[theme.baseThemeId];
+      if (!baseTheme) {
+        toast.error('Base theme not found');
+        return;
+      }
 
-      // Apply custom CSS overrides immediately
-      const css = generateCustomThemeCSS(
-        theme.baseThemeId,
+      // Generate complete CSS for the custom theme
+      const css = generateCompleteCustomThemeCSS(
+        theme._id,
+        baseTheme,
         theme.tokenOverrides as ThemeTokenOverrides
       );
-      if (css) {
-        applyCustomThemeCSS(css);
-        // Persist to localStorage for instant load on refresh
-        saveCustomThemeCSSToStorage(css);
-      } else {
-        clearCustomThemeCSS();
-        clearCustomThemeCSSFromStorage();
-      }
+
+      // Apply immediately (optimistic UI) - handles DOM + localStorage
+      setCustomTheme(theme._id, css);
 
       // Save preference to database in background
       setIsSaving(true);
@@ -386,25 +387,21 @@ function AuthenticatedAppearanceSettings() {
     [
       customThemes,
       savePreference,
-      setThemeById,
-      applyCustomThemeCSS,
-      clearCustomThemeCSS,
+      setCustomTheme,
       themePreferences,
       lightThemes,
       darkThemes,
     ]
   );
 
-  // Loading state
+  // Loading state - show actual structure with skeleton content
   if (themePreferences === undefined || customThemes === undefined) {
     return (
       <SettingsPageTemplate
         title='Appearance'
         description='Customize how Groupi looks.'
-        isLoading
-        loadingContent={<SettingsFormSkeleton />}
       >
-        <div />
+        <AppearanceSettingsSkeleton />
       </SettingsPageTemplate>
     );
   }
@@ -554,11 +551,8 @@ function AuthenticatedAppearanceSettings() {
                 key={theme._id}
                 name={theme.name}
                 mode={theme.mode}
-                previewColors={{
-                  primary: theme.tokenOverrides?.brand?.primary,
-                  background: theme.tokenOverrides?.background?.page,
-                  accent: theme.tokenOverrides?.brand?.accent,
-                }}
+                baseThemeId={theme.baseThemeId}
+                tokenOverrides={theme.tokenOverrides as ThemeTokenOverrides}
                 isSelected={
                   themePreferences?.selectedThemeType === 'custom' &&
                   themePreferences?.selectedCustomThemeId === theme._id
@@ -656,5 +650,93 @@ function ThemeModeOption({
         <p className='text-sm text-muted-foreground'>{description}</p>
       </div>
     </button>
+  );
+}
+
+/**
+ * ThemeModeOptionSkeleton - Skeleton for theme mode option
+ * Matches ThemeModeOption: radio, icon, title, description
+ */
+function ThemeModeOptionSkeleton() {
+  return (
+    <div className='flex items-center gap-3 rounded-card border-2 border-border p-4 bg-card'>
+      {/* Radio indicator */}
+      <Skeleton className='size-5 rounded-full' />
+      {/* Icon */}
+      <Skeleton className='size-5' />
+      {/* Text */}
+      <div className='flex-1 space-y-1'>
+        <Skeleton className='h-5 w-40' />
+        <Skeleton className='h-4 w-64' />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ThemeCardSkeleton - Skeleton for theme preview card
+ * Matches ThemeCard: color preview, name, mode
+ */
+function ThemeCardSkeleton() {
+  return (
+    <div className='relative flex flex-col gap-2 rounded-card border-2 border-border p-3 bg-card'>
+      {/* Color preview */}
+      <Skeleton className='h-16 w-full rounded-rounded' />
+      {/* Theme info */}
+      <div className='flex items-center justify-between'>
+        <div className='space-y-1'>
+          <Skeleton className='h-4 w-24' />
+          <Skeleton className='h-3 w-16' />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * AppearanceSettingsSkeleton - Full skeleton for the appearance settings page
+ * Shows actual section titles with skeleton content
+ */
+function AppearanceSettingsSkeleton() {
+  return (
+    <div className='space-y-8'>
+      {/* Theme Mode Section */}
+      <section className='space-y-4'>
+        <h3 className='text-lg font-semibold text-foreground'>Theme Mode</h3>
+        <div className='grid gap-3'>
+          <ThemeModeOptionSkeleton />
+          <ThemeModeOptionSkeleton />
+          <ThemeModeOptionSkeleton />
+        </div>
+      </section>
+
+      {/* Base Themes Section */}
+      <section className='space-y-4'>
+        <h3 className='text-lg font-semibold text-foreground'>Base Themes</h3>
+        <p className='text-sm text-muted-foreground'>
+          Choose from our pre-designed themes.
+        </p>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <ThemeCardSkeleton />
+          <ThemeCardSkeleton />
+          <ThemeCardSkeleton />
+          <ThemeCardSkeleton />
+        </div>
+      </section>
+
+      {/* Custom Themes Section */}
+      <section className='space-y-4'>
+        <h3 className='text-lg font-semibold text-foreground'>
+          My Custom Themes
+        </h3>
+        <p className='text-sm text-muted-foreground'>
+          Create and manage your personalized themes.
+        </p>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <ThemeCardSkeleton />
+          <Skeleton className='aspect-[3/2] rounded-card border-2 border-dashed border-border' />
+        </div>
+      </section>
+    </div>
   );
 }

@@ -1,0 +1,73 @@
+# Bug-related
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+- name: security
+  color: ee0701
+  description: Security vulnerability
+
+# Feature-related
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+- name: documentation
+  color: '0075ca'
+  description: Improvements or additions to documentation
+
+# Status
+- name: triage
+  color: ededed
+  description: Needs triage
+- name: confirmed
+  color: 0e8a16
+  description: Issue confirmed
+- name: wontfix
+  color: ffffff
+  description: This will not be worked on
+- name: duplicate
+  color: cfd3d7
+  description: This issue or pull request already exists
+- name: stale
+  color: fef2c0
+  description: No recent activity
+
+# Priority
+- name: 'priority: critical'
+  color: b60205
+  description: Critical priority
+- name: 'priority: high'
+  color: d93f0b
+  description: High priority
+- name: 'priority: medium'
+  color: fbca04
+  description: Medium priority
+- name: 'priority: low'
+  color: 0e8a16
+  description: Low priority
+
+# Contribution
+- name: 'good first issue'
+  color: 7057ff
+  description: Good for newcomers
+- name: 'help wanted'
+  color: '008672'
+  description: Extra attention is needed
+
+# Platform
+- name: 'platform: web'
+  color: 1d76db
+  description: Web application
+- name: 'platform: mobile'
+  color: 5319e7
+  description: Mobile application
+- name: 'platform: backend'
+  color: e99695
+  description: Convex backend
+
+# CI/Dependencies
+- name: dependencies
+  color: '0366d6'
+  description: Pull requests that update a dependency
+- name: ci
+  color: '006b75'
+  description: CI/CD related

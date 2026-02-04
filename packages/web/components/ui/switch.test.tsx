@@ -26,7 +26,7 @@ describe('Switch', () => {
 
     const switchEl = screen.getByTestId('switch');
     expect(switchEl).toHaveClass('inline-flex');
-    expect(switchEl).toHaveClass('rounded-full');
+    expect(switchEl).toHaveClass('rounded-pill');
   });
 
   it('should merge custom className', () => {

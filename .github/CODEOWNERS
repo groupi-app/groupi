@@ -1,0 +1,16 @@
+# Default owners for everything
+* @TheiaSurette
+
+# Package-specific owners
+/packages/web/ @TheiaSurette
+/packages/mobile/ @TheiaSurette
+/packages/shared/ @TheiaSurette
+/convex/ @TheiaSurette
+
+# Documentation
+/docs/ @TheiaSurette
+*.md @TheiaSurette
+
+# CI/CD and configuration
+/.github/ @TheiaSurette
+/.changeset/ @TheiaSurette

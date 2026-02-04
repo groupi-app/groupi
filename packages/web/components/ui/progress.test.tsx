@@ -29,7 +29,7 @@ describe('Progress', () => {
     expect(progress).toHaveClass('h-4');
     expect(progress).toHaveClass('w-full');
     expect(progress).toHaveClass('overflow-hidden');
-    expect(progress).toHaveClass('rounded-full');
+    expect(progress).toHaveClass('rounded-pill');
     expect(progress).toHaveClass('bg-secondary');
   });
 

@@ -16,7 +16,7 @@ export function PostCardContent({ content }: { content: string }) {
   return (
     <>
       <div
-        className='prose prose-sm max-w-none max-h-[120px] overflow-hidden whitespace-pre-wrap'
+        className='prose prose-sm dark:prose-invert max-w-none max-h-[120px] overflow-hidden whitespace-pre-wrap'
         ref={ref}
         dangerouslySetInnerHTML={{
           __html: cleanContent,

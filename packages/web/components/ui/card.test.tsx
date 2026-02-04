@@ -31,7 +31,7 @@ describe('Card', () => {
     render(<Card data-testid='card'>Content</Card>);
 
     const card = screen.getByTestId('card');
-    expect(card).toHaveClass('rounded-lg');
+    expect(card).toHaveClass('rounded-card');
     expect(card).toHaveClass('border');
     expect(card).toHaveClass('bg-card');
     expect(card).toHaveClass('text-card-foreground');
@@ -76,7 +76,7 @@ describe('CardHeader', () => {
     const header = screen.getByTestId('header');
     expect(header).toHaveClass('flex');
     expect(header).toHaveClass('flex-col');
-    expect(header).toHaveClass('space-y-1.5');
+    expect(header).toHaveClass('gap-1.5');
     expect(header).toHaveClass('p-6');
   });
 
@@ -117,7 +117,7 @@ describe('CardTitle', () => {
     render(<CardTitle data-testid='title'>Title</CardTitle>);
 
     const title = screen.getByTestId('title');
-    expect(title).toHaveClass('text-2xl');
+    expect(title).toHaveClass('text-xl');
     expect(title).toHaveClass('font-semibold');
     expect(title).toHaveClass('leading-none');
     expect(title).toHaveClass('tracking-tight');
