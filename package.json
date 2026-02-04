@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.12.1",
   "scripts": {
-    "dev": "turbo dev --filter=@groupi/web --filter=@groupi/convex --filter=@groupi/shared",
+    "dev": "turbo dev --filter=@groupi/web --filter=@groupi/convex",
     "dev:web": "turbo dev --filter=@groupi/web",
     "dev:convex": "turbo dev --filter=@groupi/convex",
     "dev:shared": "turbo dev --filter=@groupi/shared",
