@@ -40,11 +40,20 @@ test.describe('Sign-In Page', () => {
   test('shows success message after requesting magic link', async ({
     signInPage,
   }) => {
+    // Intercept magic link API to prevent real email sending
+    await signInPage.page.route('**/api/auth/magic-link/**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
     await signInPage.goto();
 
     const testEmail = generateTestEmail('magic-link-test');
 
-    // Request magic link
+    // Request magic link (intercepted, no real email sent)
     await signInPage.sendMagicLink(testEmail);
 
     // Wait for success message
@@ -55,6 +64,16 @@ test.describe('Sign-In Page', () => {
   });
 
   test('shows error for invalid email format', async ({ signInPage }) => {
+    // Intercept magic link API to prevent real email sending
+    await signInPage.page.route('**/api/auth/magic-link/**', async route => {
+      // Return an error for invalid email
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Invalid email format' }),
+      });
+    });
+
     await signInPage.goto();
 
     // Enter invalid email (the input accepts any text, validation happens on submit)
@@ -62,7 +81,7 @@ test.describe('Sign-In Page', () => {
     await signInPage.magicLinkButton.click();
 
     // Wait for server response
-    await signInPage.page.waitForTimeout(2000);
+    await signInPage.page.waitForLoadState('networkidle').catch(() => {});
 
     // Check various outcomes - the app may handle invalid email differently
     const hasError = (await signInPage.getErrorMessage()) !== null;

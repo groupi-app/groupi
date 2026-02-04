@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ConvexHttpClient } from 'convex/browser';
 
 /**
  * E2E Test Login Endpoint
  *
- * This endpoint is ONLY for E2E testing. It creates a proper authenticated session
- * by calling Better Auth's internal API, which ensures the session cookie is properly signed.
+ * This endpoint is ONLY for E2E testing. It creates a magic link token directly
+ * in Convex WITHOUT sending any email, then verifies it to establish a session.
  *
  * SECURITY: This endpoint should only be available when E2E_TESTING is enabled.
  */
@@ -28,29 +29,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Step 1: Request a magic link via Better Auth
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const magicLinkResponse = await fetch(
-      `${baseUrl}/api/auth/sign-in/magic-link`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, callbackURL }),
-      }
-    );
-
-    if (!magicLinkResponse.ok) {
-      const error = await magicLinkResponse.text();
-      return NextResponse.json(
-        { error: `Failed to request magic link: ${error}` },
-        { status: 500 }
-      );
-    }
-
-    // Step 2: Query the verification token from Convex
-    // We need to poll for the verification record
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!convexUrl) {
       return NextResponse.json(
@@ -59,42 +37,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Import dynamically to avoid issues
-    const { ConvexHttpClient } = await import('convex/browser');
     const client = new ConvexHttpClient(convexUrl);
 
-    let magicLinkUrl: string | null = null;
-    let attempts = 0;
-    const maxAttempts = 10;
+    // Create a magic link token directly in Convex (bypasses email sending)
+    const tokenResult = await client.mutation(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      'e2e/mutations:createMagicLinkToken' as any,
+      { email }
+    );
 
-    while (!magicLinkUrl && attempts < maxAttempts) {
-      try {
-        const result = await client.query(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          'e2e/mutations:getLastMagicLink' as any,
-          { email }
-        );
-        if (result?.url) {
-          magicLinkUrl = result.url;
-        }
-      } catch {
-        // Retry
-      }
-      if (!magicLinkUrl) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        attempts++;
-      }
-    }
-
-    if (!magicLinkUrl) {
+    if (!tokenResult?.url) {
       return NextResponse.json(
-        { error: 'Could not retrieve magic link verification token' },
+        { error: 'Failed to create magic link token' },
         { status: 500 }
       );
     }
 
-    // Step 3: Navigate to the magic link to complete authentication
-    // and capture the Set-Cookie header
+    const magicLinkUrl = tokenResult.url;
+
+    // Verify the magic link to get the session cookie
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const verifyResponse = await fetch(magicLinkUrl, {
       method: 'GET',
       redirect: 'manual', // Don't follow redirects, we want the cookies
@@ -104,6 +66,35 @@ export async function POST(request: NextRequest) {
     const setCookieHeader = verifyResponse.headers.get('set-cookie');
 
     if (!setCookieHeader) {
+      // The magic link might redirect without setting a cookie directly
+      // Try to follow the redirect and get cookies from there
+      const location = verifyResponse.headers.get('location');
+      if (location) {
+        const fullUrl = location.startsWith('/')
+          ? `${baseUrl}${location}`
+          : location;
+        const followResponse = await fetch(fullUrl, {
+          method: 'GET',
+          redirect: 'manual',
+        });
+        const followCookies = followResponse.headers.get('set-cookie');
+        if (followCookies) {
+          const sessionMatch = followCookies.match(
+            /better-auth\.session_token=([^;]+)/
+          );
+          if (sessionMatch) {
+            const response = NextResponse.json({
+              success: true,
+              sessionToken: sessionMatch[1],
+              magicLinkUrl,
+              callbackURL,
+            });
+            response.headers.set('Set-Cookie', followCookies);
+            return response;
+          }
+        }
+      }
+
       return NextResponse.json(
         { error: 'No session cookie returned from verification' },
         { status: 500 }
@@ -128,6 +119,7 @@ export async function POST(request: NextRequest) {
       success: true,
       sessionToken,
       magicLinkUrl,
+      callbackURL,
     });
 
     // Forward the Set-Cookie header
@@ -135,6 +127,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('E2E login error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
