@@ -1,60 +1,55 @@
 # @groupi/web
 
-The Next.js web application for Groupi, providing the user interface and orchestrating all application layers.
+The Next.js web application for Groupi, providing the user interface for event planning and group coordination.
 
 ## Overview
 
-This is the main web application built with Next.js 16 App Router. It serves as the entry point for users and coordinates between the schema, services, and UI packages to deliver a complete event planning and group coordination experience.
+This is the main web application built with Next.js 16 App Router. It's a **client-only** application that uses Convex for real-time data synchronization and Better Auth for authentication.
 
 ## Architecture
 
 ### Application Structure
 
 ```
-apps/web/
+packages/web/
 ├── app/                    # Next.js App Router pages and layouts
-│   ├── (post)/            # Post-related routes
 │   ├── (auth)/            # Authentication routes
+│   ├── (main)/            # Main application routes
 │   └── ...
-├── actions/                # Server actions (legacy, migrating to tRPC)
 ├── components/             # React components
+│   ├── atoms/             # Smallest UI elements
+│   ├── molecules/         # Simple component combinations
+│   ├── organisms/         # Complex feature components
+│   ├── templates/         # Page layout templates
+│   ├── ui/                # shadcn/ui base components
 │   └── providers/         # React context providers
 ├── hooks/                  # Custom React hooks
-├── lib/                    # Utility functions and client setup
+│   └── convex/            # Convex-specific hooks
+├── lib/                    # Utility functions and setup
 ├── stores/                 # Zustand state stores
-└── types/                  # TypeScript types
+└── context/               # React contexts
 ```
 
-### Key Responsibilities
+### Key Principles
 
-1. **Routing**: Handles all application routes using Next.js App Router
-2. **Server Actions**: Provides server-side actions for data mutations (legacy pattern)
-3. **UI Components**: Renders user interface using shared UI components
-4. **Real-time**: Integrates Pusher for real-time updates
-5. **Authentication**: Manages user authentication via Better Auth
-6. **State Management**: Uses TanStack Query for server state, Zustand for client state
+1. **Client-Only**: No SSR, no API routes, no server actions
+2. **Real-Time First**: All data via Convex subscriptions (`useQuery`/`useMutation`)
+3. **Cross-Platform**: Uses shared hooks from `@groupi/shared`
+4. **Type-Safe**: Full TypeScript with Convex type inference
 
 ### Data Flow
 
 ```
 User Interaction
     ↓
-React Component (apps/web)
+React Component (packages/web)
     ↓
-Server Action / tRPC Hook (apps/web)
+Convex Hook (useQuery/useMutation)
     ↓
-Service Layer (@groupi/services)
+Convex Backend (convex/)
     ↓
-Schema Validation (@groupi/schema)
-    ↓
-Database (Prisma)
+Real-time sync back to UI
 ```
-
-### Integration Points
-
-- **@groupi/schema**: Imports types, DTOs, and validation schemas
-- **@groupi/services**: Uses service functions for business logic
-- **@groupi/shared**: Uses shared utilities, design tokens, and cross-platform logic
 
 ## Development
 
@@ -65,64 +60,122 @@ Database (Prisma)
 pnpm dev
 
 # Or specifically
-pnpm dev --filter=@groupi/web
+pnpm --filter @groupi/web dev
 ```
 
 The app runs on http://localhost:3000
 
-### Building
+### Validation
 
 ```bash
-pnpm build --filter=@groupi/web
+pnpm check              # Lint + type-check + format
+pnpm test:web           # Run web tests
+pnpm lint:tokens        # Check design token usage
 ```
 
 ### Environment Variables
 
-Required environment variables are defined in `env.mjs`. See root `.env.example` for all required variables.
+Required environment variables are defined in the root `.env.example`. Copy to `.env.local` and fill in your values.
 
 ## Key Features
 
-### Server Components
+### Real-Time Data
 
-The app uses Next.js Server Components by default, with Client Components (`'use client'`) only where needed for interactivity.
+All data operations use Convex for automatic real-time synchronization:
 
-### Real-time Updates
+```typescript
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
-Real-time functionality is provided via Pusher:
+// Data automatically updates when it changes
+const events = useQuery(api.events.queries.list);
 
-- Push notifications (Pusher Beams)
-- Channel subscriptions for live updates
-- Automatic cache invalidation via TanStack Query
+// Mutations with optimistic updates
+const createEvent = useMutation(api.events.mutations.create);
+```
 
 ### Authentication
 
-Authentication is handled by Better Auth with:
+Authentication is handled by Better Auth with Convex integration:
 
+- OAuth providers (Google, Discord)
+- Email/password authentication
 - Session management
 - Protected routes
-- Server-side auth checks
 
-### Error Handling
+### Design System
 
-- Sentry integration for error tracking
-- Effect-based error handling in services
-- User-friendly error boundaries
+Uses a Duolingo-inspired design with semantic tokens:
+
+- **Atoms**: StatusDot, PresenceIndicator
+- **Molecules**: UserInfoCard, RsvpStatus
+- **Organisms**: PostCard, MemberIcon
+- **Templates**: DetailPageTemplate, ListPageTemplate
+
+See the [UI Design System documentation](../../docs/ui-design-system.md) for details.
+
+### Presence System
+
+Real-time presence tracking for users:
+
+- Online/offline status
+- Typing indicators
+- Room-based presence (who's viewing what)
+
+## Component Patterns
+
+### Using Convex Hooks
+
+```typescript
+'use client';
+
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+
+export function EventList() {
+  const events = useQuery(api.events.queries.list);
+
+  if (events === undefined) {
+    return <LoadingSkeleton />;
+  }
+
+  return (
+    <ul>
+      {events.map(event => (
+        <EventCard key={event._id} event={event} />
+      ))}
+    </ul>
+  );
+}
+```
+
+### Using Shared Hooks
+
+```typescript
+import { useGlobalUser } from '@/context/global-user-context';
+
+export function ProfileSection() {
+  const { person, isLoading } = useGlobalUser();
+
+  if (isLoading) return <LoadingSkeleton />;
+  if (!person) return <SignInPrompt />;
+
+  return <ProfileCard person={person} />;
+}
+```
 
 ## Provider Architecture
 
 The app uses a provider hierarchy in `components/providers/`:
 
+- `ConvexClientProvider` - Convex connection and auth
 - `ThemeProvider` - Dark/light mode
-- `TooltipProvider` - Radix UI tooltips
-- `PusherBeamsProvider` - Push notifications
-- `NotificationCloseContextProvider` - Notification UI state
+- `GlobalUserProvider` - Current user context
+- `VisibilityProvider` - Tab visibility tracking
 
-See `components/providers/README.md` for details.
+## Related Documentation
 
-## Migration Notes
-
-The application is in transition:
-
-- **Legacy**: Server actions in `actions/` directory
-- **Future**: tRPC procedures (planned migration)
-- **Current**: Mix of both patterns
+- [Architecture Rules](../../.claude/rules/architecture.md)
+- [UI Design System](../../.claude/rules/ui-design-system.md)
+- [Presence System](../../.claude/rules/presence.md)
+- [Testing Guide](../../.claude/rules/testing.md)
