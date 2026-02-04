@@ -1,29 +1,50 @@
 'use client';
 
 import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
+import { useEventHeaderData, useEventAttendeesData } from '@/hooks/convex';
+import { useEventAvailabilityDataWithSkip } from '@/hooks/convex/use-availability';
 import {
-  useEventHeaderData,
-  useEventAttendeesData,
-  useEventAvailabilityData,
-  useEventPostFeed,
-  useCurrentUser,
-} from '@/hooks/convex';
-import { usePostDetail, usePostDetailWithSkip } from '@/hooks/convex/use-posts';
+  usePostDetail,
+  usePostDetailWithSkip,
+  useEventPostFeedWithSkip,
+} from '@/hooks/convex/use-posts';
 import {
   useRepliesByPost,
   useRepliesByPostWithSkip,
 } from '@/hooks/convex/use-replies';
+import { useGlobalUser } from '@/context/global-user-context';
 
 // ===== Types =====
 
 // Infer types from hook return values
 type EventHeaderData = ReturnType<typeof useEventHeaderData>;
 type EventMembersData = ReturnType<typeof useEventAttendeesData>;
-type EventAvailabilityData = ReturnType<typeof useEventAvailabilityData>;
-type EventPostFeedData = ReturnType<typeof useEventPostFeed>;
-type CurrentUserData = ReturnType<typeof useCurrentUser>;
+type EventAvailabilityData = ReturnType<
+  typeof useEventAvailabilityDataWithSkip
+>;
+type EventPostFeedData = ReturnType<typeof useEventPostFeedWithSkip>;
+// CurrentUserData is derived from GlobalUserContext to avoid duplicate query
+// Include 'id' aliases for backward compatibility with components that expect id instead of _id
+type CurrentUserData =
+  | {
+      user: {
+        _id: string;
+        id: string; // Alias for _id
+        email: string;
+        name: string | null;
+        image: string | null;
+        username: string | null;
+        role: string;
+      };
+      person: {
+        _id: string;
+        id: string; // Alias for _id
+        bio: string | null;
+      } | null;
+    }
+  | undefined;
 // These types are inferred from hooks but we use direct useQuery with skip pattern
 type PostDetailData = ReturnType<typeof usePostDetail>;
 type RepliesData = ReturnType<typeof useRepliesByPost>;
@@ -81,18 +102,58 @@ export function EventDataProvider({
 
   // Detect if we're on a post page by checking URL params
   const params = useParams();
+  const pathname = usePathname();
   const postId = (params?.postId as string) || null;
   const postIdTyped = postId ? (postId as Id<'posts'>) : null;
 
   // Fetch all event-related data at the provider level
   const headerData = useEventHeaderData(eventIdTyped);
   const membersData = useEventAttendeesData(eventIdTyped);
-  const availabilityData = useEventAvailabilityData(eventIdTyped);
-  const postFeedData = useEventPostFeed(eventIdTyped);
-  const currentUser = useCurrentUser();
 
-  // Try to derive post detail data from the already-loaded feed
-  // This provides instant rendering when clicking a post from the feed
+  // Only fetch availability data on pages that need it
+  // (availability page and change-date pages)
+  const needsAvailabilityData =
+    pathname?.includes('/availability') || pathname?.includes('/change-date');
+  const availabilityData = useEventAvailabilityDataWithSkip(
+    needsAvailabilityData ? eventIdTyped : null
+  );
+
+  // Skip post feed query when on a post detail page
+  // The post detail query already fetches the needed post data
+  const isPostDetailPage = !!postIdTyped;
+  const postFeedData = useEventPostFeedWithSkip(
+    isPostDetailPage ? null : eventIdTyped
+  );
+
+  // Use GlobalUserContext instead of separate useCurrentUser query
+  // This eliminates 1 duplicate query since GlobalUserProvider already fetches user data
+  const {
+    user: globalUser,
+    person: globalPerson,
+    isLoading: isGlobalUserLoading,
+  } = useGlobalUser();
+
+  // Map GlobalUserContext data to expected CurrentUserData shape
+  // Include 'id' aliases for backward compatibility with components that expect id instead of _id
+  const currentUser = useMemo<CurrentUserData>(() => {
+    if (!globalUser) return undefined;
+    return {
+      user: {
+        ...globalUser,
+        id: globalUser._id, // Alias for backward compatibility
+      },
+      person: globalPerson
+        ? {
+            ...globalPerson,
+            id: globalPerson._id, // Alias for backward compatibility
+          }
+        : null,
+    };
+  }, [globalUser, globalPerson]);
+
+  // Try to derive post detail data from the already-loaded feed (if available)
+  // Note: Since we skip post feed on post detail pages, this will usually return null
+  // unless feed data was previously cached from navigating through the event page
   const postFromFeed = useMemo(() => {
     if (!postIdTyped || !postFeedData?.event?.posts) return null;
 
@@ -150,7 +211,8 @@ export function EventDataProvider({
   const isMembersLoading = membersData === undefined;
   const isAvailabilityLoading = availabilityData === undefined;
   const isPostFeedLoading = postFeedData === undefined;
-  const isCurrentUserLoading = currentUser === undefined;
+  // Use GlobalUserContext loading state instead of checking currentUser === undefined
+  const isCurrentUserLoading = isGlobalUserLoading;
   // Post is loading only if we don't have feed data AND the full query is loading
   const isPostLoading = postId
     ? !postFromFeed && fullPostDetailData === undefined

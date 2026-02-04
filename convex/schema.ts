@@ -41,6 +41,21 @@ export default defineSchema({
     // Presence tracking
     lastSeen: v.optional(v.number()), // Unix timestamp of last activity
     updatedAt: v.optional(v.number()), // Unix timestamp
+    // Discord-style status system
+    status: v.optional(
+      v.union(
+        v.literal('ONLINE'),
+        v.literal('IDLE'),
+        v.literal('DO_NOT_DISTURB'),
+        v.literal('INVISIBLE')
+      )
+    ),
+    statusExpiresAt: v.optional(v.number()), // Unix timestamp when status should revert to ONLINE
+    statusSetAt: v.optional(v.number()), // When status was manually set
+    autoIdleEnabled: v.optional(v.boolean()), // Default true - whether to auto-set IDLE on AFK
+    statusVisibility: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NONE'))
+    ),
   }).index('by_user_id', ['userId']),
 
   personSettings: defineTable({
@@ -167,10 +182,16 @@ export default defineSchema({
     name: v.optional(v.string()),
     token: v.string(), // Invite token for sharing
     updatedAt: v.optional(v.number()), // Unix timestamp
+    // Email invite fields
+    email: v.optional(v.string()), // Recipient email address
+    recipientName: v.optional(v.string()), // Recipient name (from CSV/manual)
+    emailSentAt: v.optional(v.number()), // Unix timestamp when email was sent (null = pending)
+    customMessage: v.optional(v.string()), // Custom message for email (max 480 chars)
   })
     .index('by_event', ['eventId'])
     .index('by_creator', ['createdById'])
-    .index('by_token', ['token']),
+    .index('by_token', ['token'])
+    .index('by_event_email', ['eventId', 'email']),
 
   notifications: defineTable({
     personId: v.id('persons'),
@@ -188,7 +209,9 @@ export default defineSchema({
       v.literal('USER_DEMOTED'),
       v.literal('USER_RSVP'),
       v.literal('USER_MENTIONED'),
-      v.literal('EVENT_REMINDER')
+      v.literal('EVENT_REMINDER'),
+      v.literal('FRIEND_REQUEST_RECEIVED'),
+      v.literal('FRIEND_REQUEST_ACCEPTED')
     ),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
@@ -244,7 +267,9 @@ export default defineSchema({
       v.literal('USER_DEMOTED'),
       v.literal('USER_RSVP'),
       v.literal('USER_MENTIONED'),
-      v.literal('EVENT_REMINDER')
+      v.literal('EVENT_REMINDER'),
+      v.literal('FRIEND_REQUEST_RECEIVED'),
+      v.literal('FRIEND_REQUEST_ACCEPTED')
     ),
     methodId: v.id('notificationMethods'),
     enabled: v.boolean(),
@@ -365,8 +390,11 @@ export default defineSchema({
       brand: v.optional(
         v.object({
           primary: v.optional(v.string()),
+          primaryHover: v.optional(v.string()),
           secondary: v.optional(v.string()),
+          secondaryHover: v.optional(v.string()),
           accent: v.optional(v.string()),
+          accentHover: v.optional(v.string()),
         })
       ),
       background: v.optional(
@@ -414,4 +442,23 @@ export default defineSchema({
     systemDarkThemeId: v.string(), // Base theme for dark mode
     updatedAt: v.number(), // Unix timestamp
   }).index('by_person', ['personId']),
+
+  // ===== FRIENDSHIP TABLES =====
+  // Track friend relationships between users
+
+  friendships: defineTable({
+    requesterId: v.id('persons'), // Who sent the friend request
+    addresseeId: v.id('persons'), // Who received the friend request
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED')
+    ),
+    createdAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
+  })
+    .index('by_requester', ['requesterId'])
+    .index('by_addressee', ['addresseeId'])
+    .index('by_requester_addressee', ['requesterId', 'addresseeId'])
+    .index('by_addressee_status', ['addresseeId', 'status']),
 });

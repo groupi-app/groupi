@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
+
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
@@ -47,13 +49,48 @@ export function useEventPostFeed(eventId: Id<'events'>) {
     isActive ? { eventId } : 'skip'
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
+}
+
+/**
+ * Get event post feed with skip support for conditional fetching.
+ * Use this when you want to skip the query entirely (e.g., on post detail pages).
+ * Pauses subscription when tab is hidden to reduce bandwidth.
+ */
+export function useEventPostFeedWithSkip(eventId: Id<'events'> | null) {
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const shouldSkip = !eventId || !isActive;
+  const result = useQuery(
+    postQueries.getEventPostFeed,
+    shouldSkip ? 'skip' : { eventId }
+  );
+
+  // Cache the result when we get fresh data
+  if (result !== undefined) {
+    cachedRef.current = result;
+  }
+
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 /**
@@ -67,13 +104,18 @@ export function usePost(postId: Id<'posts'>) {
 
   const result = useQuery(postQueries.getPost, isActive ? { postId } : 'skip');
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 /**
@@ -90,13 +132,18 @@ export function usePostDetail(postId: Id<'posts'>) {
     isActive ? { postId } : 'skip'
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 /**
@@ -114,13 +161,18 @@ export function usePostDetailWithSkip(postId: Id<'posts'> | null) {
     shouldSkip ? 'skip' : { postId }
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 /**
@@ -138,13 +190,18 @@ export function usePaginatedEventPosts(eventId: Id<'events'>) {
     isActive ? { eventId } : 'skip'
   );
 
+  // Cache the result when we get fresh data
   if (result !== undefined) {
-    // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
     cachedRef.current = result;
   }
 
-  // eslint-disable-next-line react-hooks/refs -- Intentional caching pattern for visibility optimization
-  return isActive ? result : cachedRef.current;
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
 }
 
 // ===== POST MUTATIONS =====

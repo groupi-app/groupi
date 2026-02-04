@@ -180,6 +180,7 @@ export function InviteLinkCard({
       </div>
 
       <DialogContent
+        preventOverlayClose={dialogType === 'delete'}
         onInteractOutside={e => {
           // Prevent closing when clicking outside during delete
           if (dialogType === 'delete') {

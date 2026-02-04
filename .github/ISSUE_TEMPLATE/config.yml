@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and Discussions
+    url: https://github.com/groupi-app/groupi/discussions
+    about: Ask questions and discuss ideas here
+  - name: Security Issues
+    url: https://github.com/groupi-app/groupi/security/advisories/new
+    about: Report security vulnerabilities privately

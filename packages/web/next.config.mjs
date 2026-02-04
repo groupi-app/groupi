@@ -26,6 +26,10 @@ import './env.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable React StrictMode to prevent double-invocation of effects in development
+  // This reduces duplicate Convex function calls (queries, mutations, heartbeats)
+  // StrictMode is useful for catching bugs but causes 2x the function calls
+  reactStrictMode: false,
   transpilePackages: ['@groupi/shared'],
   webpack: (config, { isServer }) => {
     if (!isServer) {

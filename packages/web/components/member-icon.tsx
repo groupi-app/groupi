@@ -4,6 +4,7 @@ import {
   formatRoleName,
   getInitialsFromName,
   formatLastSeen,
+  UserStatusType,
 } from '@/lib/utils';
 import { Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
@@ -28,8 +29,14 @@ import {
 
 import { MemberAction, MemberActionDialog } from './member-action-dialog';
 import { ProfileViewDialog } from './profile-view-dialog';
+import { StatusIndicator } from '@/components/atoms';
 import { useState, useCallback } from 'react';
+import { Id } from '@/convex/_generated/dataModel';
 import { useMobile } from '@/hooks/use-mobile';
+import {
+  useFriendActions,
+  type FriendshipStatus,
+} from '@/hooks/convex/use-friends';
 import {
   Drawer,
   DrawerContent,
@@ -70,10 +77,18 @@ type ActionMenuProps = {
   canKick: boolean;
   canBan: boolean;
   canPromote: boolean;
+  isMe: boolean;
+  personId: Id<'persons'> | undefined;
   setDialogAction: (action: MemberAction) => void;
   setDialogOpen: (open: boolean) => void;
   setProfileDialogOpen: (open: boolean) => void;
   align?: 'start' | 'center' | 'end';
+  // Friend action props
+  friendStatus: FriendshipStatus;
+  friendIsLoading: boolean;
+  onSendFriendRequest: () => void;
+  onAcceptFriendRequest: () => void;
+  onCancelFriendRequest: () => void;
 };
 
 function ActionMenu({
@@ -92,10 +107,17 @@ function ActionMenu({
   canKick,
   canBan,
   canPromote,
+  isMe,
+  personId,
   setDialogAction,
   setDialogOpen,
   setProfileDialogOpen,
   align,
+  friendStatus,
+  friendIsLoading,
+  onSendFriendRequest,
+  onAcceptFriendRequest,
+  onCancelFriendRequest,
 }: ActionMenuProps) {
   if (isMobile) {
     // No Tooltip wrapper on mobile - just the clickable element and drawer
@@ -142,11 +164,17 @@ function ActionMenu({
                   </DrawerDescription>
                   {/* Last seen status */}
                   {(() => {
-                    const presence = formatLastSeen(member.person?.lastSeen);
+                    const presence = formatLastSeen(
+                      member.person?.lastSeen,
+                      member.person?.status as UserStatusType | undefined,
+                      member.person?.statusExpiresAt
+                    );
                     return (
                       <div className='flex items-center gap-1.5 text-sm mt-1'>
-                        <span
-                          className={`size-2 rounded-full ${presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'}`}
+                        <StatusIndicator
+                          status={presence.displayStatus}
+                          size='sm'
+                          showBorder={false}
                         />
                         <span
                           className={
@@ -200,6 +228,59 @@ function ActionMenu({
                 <Icons.account className='size-4 mr-2' />
                 View Profile
               </Button>
+              {/* Friend action - only show if not self */}
+              {!isMe && personId && friendStatus === 'none' && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start'
+                  onClick={() => {
+                    setSheetOpen(false);
+                    onSendFriendRequest();
+                  }}
+                  disabled={friendIsLoading}
+                >
+                  <Icons.invite className='size-4 mr-2' />
+                  Add Friend
+                </Button>
+              )}
+              {!isMe && personId && friendStatus === 'pending_sent' && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start text-muted-foreground'
+                  onClick={() => {
+                    setSheetOpen(false);
+                    onCancelFriendRequest();
+                  }}
+                  disabled={friendIsLoading}
+                >
+                  <Icons.clock className='size-4 mr-2' />
+                  Cancel Request
+                </Button>
+              )}
+              {!isMe && personId && friendStatus === 'pending_received' && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start'
+                  onClick={() => {
+                    setSheetOpen(false);
+                    onAcceptFriendRequest();
+                  }}
+                  disabled={friendIsLoading}
+                >
+                  <Icons.check className='size-4 mr-2' />
+                  Accept Friend Request
+                </Button>
+              )}
+              {!isMe && personId && friendStatus === 'friends' && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start text-muted-foreground'
+                  disabled
+                >
+                  <Icons.people className='size-4 mr-2' />
+                  Friends
+                </Button>
+              )}
               {(canKick || canBan || canPromote) && (
                 <>
                   {canPromote && (
@@ -289,11 +370,17 @@ function ActionMenu({
               </span>
               {/* Last seen status */}
               {(() => {
-                const presence = formatLastSeen(member.person?.lastSeen);
+                const presence = formatLastSeen(
+                  member.person?.lastSeen,
+                  member.person?.status as UserStatusType | undefined,
+                  member.person?.statusExpiresAt
+                );
                 return (
                   <div className='flex items-center gap-1.5 text-sm mt-1'>
-                    <span
-                      className={`size-2 rounded-full ${presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'}`}
+                    <StatusIndicator
+                      status={presence.displayStatus}
+                      size='sm'
+                      showBorder={false}
                     />
                     <span
                       className={
@@ -351,6 +438,44 @@ function ActionMenu({
             <Icons.account className='size-4 mr-2' />
             <span>View Profile</span>
           </DropdownMenuItem>
+
+          {/* Friend action - only show if not self */}
+          {!isMe && personId && friendStatus === 'none' && (
+            <DropdownMenuItem
+              onClick={onSendFriendRequest}
+              disabled={friendIsLoading}
+              className='cursor-pointer'
+            >
+              <Icons.invite className='size-4 mr-2' />
+              <span>Add Friend</span>
+            </DropdownMenuItem>
+          )}
+          {!isMe && personId && friendStatus === 'pending_sent' && (
+            <DropdownMenuItem
+              onClick={onCancelFriendRequest}
+              disabled={friendIsLoading}
+              className='cursor-pointer text-muted-foreground'
+            >
+              <Icons.clock className='size-4 mr-2' />
+              <span>Cancel Request</span>
+            </DropdownMenuItem>
+          )}
+          {!isMe && personId && friendStatus === 'pending_received' && (
+            <DropdownMenuItem
+              onClick={onAcceptFriendRequest}
+              disabled={friendIsLoading}
+              className='cursor-pointer'
+            >
+              <Icons.check className='size-4 mr-2' />
+              <span>Accept Request</span>
+            </DropdownMenuItem>
+          )}
+          {!isMe && personId && friendStatus === 'friends' && (
+            <DropdownMenuItem disabled className='text-muted-foreground'>
+              <Icons.people className='size-4 mr-2' />
+              <span>Friends</span>
+            </DropdownMenuItem>
+          )}
 
           {(canKick || canBan || canPromote) && <DropdownMenuSeparator />}
 
@@ -486,6 +611,28 @@ export default function MemberIcon({
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const isMobile = useMobile();
 
+  // Friend actions
+  const personId = member.person?._id as Id<'persons'> | undefined;
+  const {
+    status: friendStatus,
+    isLoading: friendIsLoading,
+    sendRequest,
+    acceptRequest,
+    cancelRequest,
+  } = useFriendActions(personId);
+
+  const handleSendFriendRequest = useCallback(async () => {
+    await sendRequest();
+  }, [sendRequest]);
+
+  const handleAcceptFriendRequest = useCallback(async () => {
+    await acceptRequest();
+  }, [acceptRequest]);
+
+  const handleCancelFriendRequest = useCallback(async () => {
+    await cancelRequest();
+  }, [cancelRequest]);
+
   const handleContextMenu = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (!isMobile) return;
@@ -508,7 +655,11 @@ export default function MemberIcon({
   );
 
   // Get online status for avatar indicator
-  const presence = formatLastSeen(member.person?.lastSeen);
+  const presence = formatLastSeen(
+    member.person?.lastSeen,
+    member.person?.status as UserStatusType | undefined,
+    member.person?.statusExpiresAt
+  );
 
   const avatarElement = (
     <div className='relative'>
@@ -516,12 +667,11 @@ export default function MemberIcon({
         <AvatarImage src={user?.image || undefined} />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
-      {/* Online indicator dot */}
-      <span
-        className={cn(
-          'absolute bottom-0 right-0 size-3 rounded-full border-2 border-background',
-          presence.isOnline ? 'bg-success' : 'bg-muted-foreground/50'
-        )}
+      {/* Status indicator */}
+      <StatusIndicator
+        status={presence.displayStatus}
+        size='md'
+        className='absolute bottom-0 right-0'
       />
     </div>
   );
@@ -531,7 +681,7 @@ export default function MemberIcon({
       variants={item}
       initial='show'
       className={cn(
-        'flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-lifted',
+        'flex items-center rounded-full border-2 border-background hover:border-primary transition-colors z-lifted cursor-pointer',
         className
       )}
       key={itemKey}
@@ -552,10 +702,17 @@ export default function MemberIcon({
           canKick={canKick}
           canBan={canBan}
           canPromote={canPromote}
+          isMe={isMe}
+          personId={personId}
           setDialogAction={setDialogAction}
           setDialogOpen={setDialogOpen}
           setProfileDialogOpen={setProfileDialogOpen}
           align={align}
+          friendStatus={friendStatus as FriendshipStatus}
+          friendIsLoading={friendIsLoading}
+          onSendFriendRequest={handleSendFriendRequest}
+          onAcceptFriendRequest={handleAcceptFriendRequest}
+          onCancelFriendRequest={handleCancelFriendRequest}
         >
           {avatarElement}
         </ActionMenu>

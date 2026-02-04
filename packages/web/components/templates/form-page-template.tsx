@@ -56,7 +56,7 @@ export function FormPageTemplate({
   className,
 }: FormPageTemplateProps) {
   const content = (
-    <div className={cn('container pt-6 pb-8', className)}>
+    <div className={cn('container pt-6 pb-24', className)}>
       <div className={cn('mx-auto', maxWidthClasses[maxWidth])}>
         {(backHref || title) && (
           <div className='flex items-center gap-4 mb-6'>
@@ -83,7 +83,7 @@ export function FormPageTemplate({
     return (
       <Suspense
         fallback={
-          <div className={cn('container pt-6 pb-8', className)}>
+          <div className={cn('container pt-6 pb-24', className)}>
             <div className={cn('mx-auto', maxWidthClasses[maxWidth])}>
               {(backHref || title) && (
                 <div className='flex items-center gap-4 mb-6'>

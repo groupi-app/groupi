@@ -24,7 +24,7 @@ export default function ReplyFeed({ postId }: { postId: string }) {
     return <ReplyListSkeleton />;
   }
 
-  if (user === null) {
+  if (!user) {
     return (
       <div className='text-center py-8 text-muted-foreground'>
         Please sign in to view replies

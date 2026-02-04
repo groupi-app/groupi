@@ -42,7 +42,7 @@ describe('Alert', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('custom-alert');
-    expect(alert).toHaveClass('rounded-lg');
+    expect(alert).toHaveClass('rounded-card');
   });
 
   it('should pass through additional props', () => {
@@ -76,7 +76,7 @@ describe('AlertTitle', () => {
     render(<AlertTitle>Styled Title</AlertTitle>);
 
     const title = screen.getByText('Styled Title');
-    expect(title).toHaveClass('font-medium');
+    expect(title).toHaveClass('font-semibold');
     expect(title).toHaveClass('leading-none');
     expect(title).toHaveClass('tracking-tight');
   });
@@ -86,7 +86,7 @@ describe('AlertTitle', () => {
 
     const title = screen.getByText('Large Title');
     expect(title).toHaveClass('text-lg');
-    expect(title).toHaveClass('font-medium');
+    expect(title).toHaveClass('font-semibold');
   });
 
   it('should pass through additional props', () => {

@@ -1,6 +1,6 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireEventRole } from '../auth';
+import { requireEventRole, getCurrentPerson } from '../auth';
 
 /**
  * Invites queries for the Convex backend
@@ -35,9 +35,26 @@ export const getEventInvites = query({
       .order('desc')
       .collect();
 
+    // Enhance invites with email status
+    const enhancedInvites = invites.map(invite => ({
+      ...invite,
+      hasEmail: !!invite.email,
+      emailStatus: invite.email
+        ? invite.emailSentAt
+          ? ('sent' as const)
+          : ('pending' as const)
+        : null,
+    }));
+
+    // Count pending email invites
+    const pendingEmailCount = enhancedInvites.filter(
+      i => i.emailStatus === 'pending'
+    ).length;
+
     // Return invites with Convex types
     return {
-      invites,
+      invites: enhancedInvites,
+      pendingEmailCount,
       userRole: 'ORGANIZER' as const, // Will be determined by auth check
     };
   },
@@ -82,6 +99,19 @@ export const getInviteByToken = query({
       return null; // Event was deleted
     }
 
+    // Check if current user is already a member of this event
+    let isAlreadyMember = false;
+    const person = await getCurrentPerson(ctx);
+    if (person) {
+      const existingMembership = await ctx.db
+        .query('memberships')
+        .withIndex('by_person_event', q =>
+          q.eq('personId', person._id).eq('eventId', invite.eventId)
+        )
+        .first();
+      isAlreadyMember = !!existingMembership;
+    }
+
     return {
       invite: {
         id: invite._id,
@@ -100,6 +130,7 @@ export const getInviteByToken = query({
         chosenDateTime: event.chosenDateTime ?? null,
         chosenEndDateTime: event.chosenEndDateTime ?? null,
       },
+      isAlreadyMember,
     };
   },
 });

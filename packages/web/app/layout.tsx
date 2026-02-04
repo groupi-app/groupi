@@ -89,19 +89,76 @@ export const metadata = {
   manifest: '/manifest.json',
 };
 
-// Inline script to apply custom theme CSS before React hydrates
-// This prevents flash of default theme on page load
+// Inline script to apply theme before React hydrates
+// This prevents flash of default theme on page load by:
+// 1. Checking for custom theme (standalone) or base theme
+// 2. Injecting custom theme CSS if present (complete theme, not overlay)
+// 3. Applying the correct theme class to <html>
+// 4. Syncing next-themes' localStorage key
 const customThemeScript = `
 (function() {
   try {
-    var css = localStorage.getItem('groupi-custom-theme-css');
-    if (css) {
+    console.log('[Theme Preload] Script executing...');
+    var startTime = performance.now();
+
+    var html = document.documentElement;
+
+    // Debug: Log all theme-related localStorage keys
+    var themeType = localStorage.getItem('groupi-theme-type');
+    var themeId = localStorage.getItem('groupi-theme-id');
+    var customThemeClass = localStorage.getItem('groupi-custom-theme-class');
+    var customThemeCSS = localStorage.getItem('groupi-custom-theme-css');
+
+    console.log('[Theme Preload] localStorage state:', {
+      themeType: themeType,
+      themeId: themeId,
+      hasCustomClass: !!customThemeClass,
+      customClass: customThemeClass,
+      hasCss: !!customThemeCSS,
+      cssLength: customThemeCSS ? customThemeCSS.length : 0
+    });
+
+    // Apply custom theme if we have both class and CSS cached
+    if (customThemeClass && customThemeCSS) {
+      console.log('[Theme Preload] Applying custom theme from cache');
+
+      // Mark that a custom theme is active
+      html.setAttribute('data-custom-theme', 'true');
+
+      // Inject complete CSS
       var style = document.createElement('style');
       style.id = 'custom-theme-overrides-preload';
-      style.textContent = css;
+      style.textContent = customThemeCSS;
       document.head.appendChild(style);
+
+      // Apply custom theme class
+      var classes = html.className.split(' ').filter(function(c) {
+        return !c.startsWith('theme-');
+      });
+      classes.push(customThemeClass);
+      html.className = classes.join(' ').trim();
+
+      console.log('[Theme Preload] Custom theme applied:', customThemeClass, 'CSS length:', customThemeCSS.length);
+      localStorage.setItem('theme', customThemeClass);
+    } else if (themeId) {
+      // Base theme: apply theme class from stored ID
+      console.log('[Theme Preload] Applying base theme:', themeId);
+      var themeClass = 'theme-' + themeId;
+
+      var classes = html.className.split(' ').filter(function(c) {
+        return !c.startsWith('theme-');
+      });
+      classes.push(themeClass);
+      html.className = classes.join(' ').trim();
+      localStorage.setItem('theme', themeClass);
+    } else {
+      console.log('[Theme Preload] No theme found in localStorage');
     }
-  } catch (e) {}
+
+    console.log('[Theme Preload] Complete in', (performance.now() - startTime).toFixed(2) + 'ms');
+  } catch (e) {
+    console.error('[Theme Preload] Error:', e);
+  }
 })();
 `;
 
@@ -122,7 +179,7 @@ export default function RootLayout({
           fontHeading.variable
         )}
       >
-        <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+        <ThemeProvider>
           <ConvexClientProvider>
             <VisibilityProvider>
               <GlobalUserProvider>

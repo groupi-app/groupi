@@ -5,7 +5,13 @@ import { useQuery, useConvex } from 'convex/react';
 import { useDebouncedCallback } from 'use-debounce';
 import { Id } from '@/convex/_generated/dataModel';
 import usePresence from '@convex-dev/presence/react';
-import { useIsActive } from '@/providers/visibility-provider';
+import {
+  useIsActive,
+  useShouldPauseHeartbeats,
+  useIsOffline,
+  useIsAway,
+  useLastActivityTime,
+} from '@/providers/visibility-provider';
 
 // ===== CONSTANTS =====
 // Increased from 10s to 30s to reduce function calls by 3x
@@ -59,7 +65,8 @@ export interface TypingUser {
  * Track user presence in a post thread
  * Call this on post detail pages to mark user as present
  *
- * Note: Heartbeats are paused when the tab is hidden to reduce function calls.
+ * Note: Heartbeats are paused when the tab is hidden (after grace period)
+ * or when user is idle to reduce function calls.
  */
 export function usePostPresence(
   postId: Id<'posts'> | undefined,
@@ -67,8 +74,8 @@ export function usePostPresence(
 ) {
   const roomId = postId ? `post:${postId}` : '';
   const userId = personId ?? '';
-  const isActive = useIsActive();
-  const isEnabled = !!postId && !!personId && isActive;
+  const shouldPauseHeartbeats = useShouldPauseHeartbeats();
+  const isEnabled = !!postId && !!personId && !shouldPauseHeartbeats;
 
   // Use the Convex presence hook
   // When roomId or userId is empty, or tab is hidden, the hook will not send heartbeats
@@ -91,7 +98,8 @@ export function usePostPresence(
  *
  * Note: This hook manages its own heartbeats instead of using usePresence
  * to avoid creating duplicate sessions and to expose the roomToken.
- * Heartbeats are paused when the tab is hidden to reduce function calls.
+ * Heartbeats are paused when the tab is hidden (after grace period)
+ * or when user is idle to reduce function calls.
  */
 export function usePostPresenceWithToken(
   postId: Id<'posts'> | undefined,
@@ -99,8 +107,8 @@ export function usePostPresenceWithToken(
 ) {
   const roomId = useMemo(() => (postId ? `post:${postId}` : ''), [postId]);
   const userId = personId ?? '';
-  const isActive = useIsActive();
-  const isEnabled = !!postId && !!personId && isActive;
+  const shouldPauseHeartbeats = useShouldPauseHeartbeats();
+  const isEnabled = !!postId && !!personId && !shouldPauseHeartbeats;
   const convex = useConvex();
 
   // Track roomToken from heartbeat
@@ -351,8 +359,12 @@ export function useUpdateLastSeen() {
  * Global presence tracking - marks user as online in the app
  * Call this at the app root level
  *
- * Note: Heartbeats are paused when the tab is hidden to reduce function calls.
- * The lastSeen update is also paused when the tab is hidden.
+ * Features:
+ * - Sends heartbeats to mark user as online
+ * - Updates lastSeen timestamp periodically
+ * - Handles auto-idle status when user becomes away/returns
+ * - 30 second grace period for tab switches before pausing
+ * - Stops heartbeats entirely when user is offline (idle for 15+ min)
  *
  * This hook manages its own heartbeats instead of using the usePresence library
  * to avoid subscribing to the presence:list query (we don't need the list for
@@ -360,21 +372,35 @@ export function useUpdateLastSeen() {
  */
 export function useAppPresence(personId: Id<'persons'> | undefined) {
   const userId = personId ?? '';
-  const isActive = useIsActive();
-  const isEnabled = !!personId && isActive;
+  const shouldPauseHeartbeats = useShouldPauseHeartbeats();
+  const isOffline = useIsOffline();
+  const isAway = useIsAway();
+  const lastActivityTime = useLastActivityTime();
+  const isActive = useIsActive(); // For lastSeen updates
   const convex = useConvex();
+
+  // Heartbeats are enabled if we have a personId and shouldn't pause and aren't offline
+  const heartbeatsEnabled = !!personId && !shouldPauseHeartbeats && !isOffline;
 
   // Session management
   const [sessionId] = useState(() => crypto.randomUUID());
   const sessionTokenRef = useRef<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Track previous away state for auto-idle
+  const prevIsAwayRef = useRef(isAway);
+
   // Update last seen periodically
   const updateLastSeen = useUpdateLastSeen();
 
   // Send heartbeats to mark user as online in the app
   useEffect(() => {
-    if (!isEnabled) {
+    if (!heartbeatsEnabled) {
+      // Clear interval when disabled
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
@@ -419,15 +445,50 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
         });
       }
     };
-  }, [isEnabled, userId, sessionId, convex]);
+  }, [heartbeatsEnabled, userId, sessionId, convex]);
 
-  // Update lastSeen in person record (separate from presence heartbeats)
+  // Handle auto-idle status changes
   useEffect(() => {
-    // Only update lastSeen when active (visible and not away)
-    if (!personId || !isActive) return;
+    if (!personId) return;
 
-    // Update last seen on mount/visibility change
-    updateLastSeen();
+    // Check if away state changed
+    if (prevIsAwayRef.current !== isAway) {
+      prevIsAwayRef.current = isAway;
+
+      // Call setAutoIdle mutation when away state changes
+      void convex.mutation(getApi().presence.setAutoIdle, {
+        isIdle: isAway,
+      });
+    }
+  }, [personId, isAway, convex]);
+
+  // Track if we've already called updateLastSeen in this active session
+  // This prevents duplicate calls when multiple dependencies change simultaneously
+  const hasUpdatedInSessionRef = useRef(false);
+  const lastActiveStateRef = useRef(isActive);
+
+  // Combined effect for updating lastSeen in person record
+  // Handles: initial mount, becoming active, and periodic updates
+  useEffect(() => {
+    if (!personId || !isActive) {
+      // Reset session tracking when becoming inactive
+      if (!isActive && lastActiveStateRef.current) {
+        hasUpdatedInSessionRef.current = false;
+      }
+      lastActiveStateRef.current = isActive;
+      return;
+    }
+
+    // Only call updateLastSeen once per active session
+    // This prevents duplicate calls from:
+    // 1. Mount + visibility change happening together
+    // 2. lastActivityTime changing right after mount
+    if (!hasUpdatedInSessionRef.current) {
+      hasUpdatedInSessionRef.current = true;
+      updateLastSeen();
+    }
+
+    lastActiveStateRef.current = isActive;
 
     // Update every 5 minutes while active and visible
     const interval = setInterval(
@@ -438,7 +499,7 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
     );
 
     return () => clearInterval(interval);
-  }, [personId, isActive, updateLastSeen]);
+  }, [personId, isActive, lastActivityTime, updateLastSeen]);
 }
 
 // ===== CONVENIENCE HOOKS WITH GLOBAL USER CONTEXT =====

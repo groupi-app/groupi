@@ -28,7 +28,7 @@ describe('Checkbox', () => {
     expect(checkbox).toHaveClass('h-4');
     expect(checkbox).toHaveClass('w-4');
     expect(checkbox).toHaveClass('rounded-sm');
-    expect(checkbox).toHaveClass('border');
+    expect(checkbox).toHaveClass('border-2');
     expect(checkbox).toHaveClass('border-primary');
   });
 
