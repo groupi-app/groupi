@@ -9,6 +9,7 @@ Thank you for your interest in contributing to Groupi! This guide will help you 
 - [Development Setup](#development-setup)
 - [Making Changes](#making-changes)
 - [Commit Guidelines](#commit-guidelines)
+- [Changesets](#changesets)
 - [Pull Request Process](#pull-request-process)
 - [Reporting Bugs](#reporting-bugs)
 - [Requesting Features](#requesting-features)
@@ -143,31 +144,79 @@ chore(deps): update convex to v1.32
 
 Use `pnpm commit` for an interactive commit helper that guides you through the format.
 
-## Pull Request Process
+## Changesets
 
-1. **Create a changeset** for your changes:
+We use [Changesets](https://github.com/changesets/changesets) to manage versions and changelogs. A changeset is a file that describes what changed and how it affects the version.
+
+### When to Create a Changeset
+
+| Change Type                  | Needs Changeset? |
+| ---------------------------- | ---------------- |
+| New feature                  | ✅ Yes           |
+| Bug fix                      | ✅ Yes           |
+| Breaking change              | ✅ Yes           |
+| Refactoring (no user impact) | ❌ No            |
+| Documentation only           | ❌ No            |
+| CI/tooling changes           | ❌ No            |
+| Dependency updates           | ⚠️ Maybe         |
+
+### Creating a Changeset
+
+1. Run the changeset command:
 
    ```bash
    pnpm changeset
    ```
 
-2. **Ensure all checks pass:**
+2. Select which packages changed (use space to select)
+
+3. Choose the semver bump type:
+   - `patch` - Bug fixes, minor changes (0.0.X)
+   - `minor` - New features, backwards compatible (0.X.0)
+   - `major` - Breaking changes (X.0.0)
+
+4. Write a summary (this appears in the CHANGELOG)
+
+5. Commit the generated `.changeset/*.md` file with your PR
+
+### Skipping Changesets
+
+For PRs that don't need a changeset (docs, CI, refactoring), add the `skip-changeset` label to your PR. The CI check will pass automatically.
+
+### How Releases Work
+
+1. You create a PR with a changeset file
+2. PR gets merged to `main`
+3. GitHub Action creates a "Version Packages" PR automatically
+4. When that PR is merged, versions bump and CHANGELOG updates
+
+## Pull Request Process
+
+1. **Make your changes** on a feature branch
+
+2. **Create a changeset** (if needed):
+
+   ```bash
+   pnpm changeset
+   ```
+
+3. **Ensure all checks pass:**
 
    ```bash
    pnpm check
    pnpm test:run
    ```
 
-3. **Push your branch** and create a PR on GitHub
+4. **Push your branch** and create a PR on GitHub
 
-4. **Fill out the PR template** completely
+5. **Fill out the PR template** completely
 
-5. **Wait for review** from maintainers
+6. **Wait for review** from maintainers
 
 ### PR Requirements
 
 - All CI checks must pass
-- Changeset added (for user-facing changes)
+- Changeset added (for user-facing changes) or `skip-changeset` label
 - Tests added or updated (when applicable)
 - Documentation updated (when applicable)
 - Self-reviewed for code quality
