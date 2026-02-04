@@ -29,7 +29,7 @@ import { FriendsDialog } from './friends-dialog';
 import { usePendingRequests } from '@/hooks/convex/use-friends';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 import { Badge } from '@/components/ui/badge';
-import { AccountSwitcher } from '@/components/molecules';
+import { AccountSwitcher, MobileStatusPicker } from '@/components/molecules';
 
 // Navigation item type
 type NavItem = {
@@ -107,6 +107,9 @@ export function MobileNav({
               <div className='bg-card rounded-card p-4'>
                 <ProfileSlate userInfo={userInfo} />
                 <div className='mt-4 border-t border-border/50 pt-4'>
+                  <MobileStatusPicker />
+                </div>
+                <div className='mt-4 border-t border-border/50 pt-4'>
                   <Collapsible
                     open={accountsExpanded}
                     onOpenChange={setAccountsExpanded}
@@ -172,16 +175,6 @@ export function MobileNav({
                 <button
                   onClick={() => {
                     setSheetOpen(false);
-                    setProfileDialogOpen(true);
-                  }}
-                  className='flex items-center gap-3 w-full p-4 text-lg font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground border-b border-border/50'
-                >
-                  <Icons.account className='size-6' />
-                  <span>My Profile</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setSheetOpen(false);
                     openFriendsDialog();
                   }}
                   className='flex items-center gap-3 w-full p-4 text-lg font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground border-b border-border/50'
@@ -196,6 +189,16 @@ export function MobileNav({
                       {pendingCount}
                     </Badge>
                   )}
+                </button>
+                <button
+                  onClick={() => {
+                    setSheetOpen(false);
+                    setProfileDialogOpen(true);
+                  }}
+                  className='flex items-center gap-3 w-full p-4 text-lg font-medium hover:bg-accent/80 transition-colors text-popover-foreground hover:text-accent-foreground border-b border-border/50'
+                >
+                  <Icons.account className='size-6' />
+                  <span>My Profile</span>
                 </button>
                 <SheetClose asChild>
                   <Link

@@ -14,6 +14,7 @@ export * from './event-tab-filter';
 export * from './info-dialog';
 export * from './loading-state';
 export * from './menu-item-content';
+export * from './mobile-status-picker';
 export * from './multi-date-time-selector';
 export * from './role-badge';
 export * from './rsvp-status';
