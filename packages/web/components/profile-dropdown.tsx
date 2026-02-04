@@ -87,49 +87,7 @@ export function ProfileDropdown({
           {/* 2. Status picker */}
           <StatusPicker />
 
-          {/* 3. Friends */}
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onSelect={() => openFriendsDialog()}
-          >
-            <div className='flex items-center gap-2 w-full'>
-              <Icons.people className='size-4' />
-              <span>Friends</span>
-              {pendingCount > 0 && (
-                <Badge
-                  variant='destructive'
-                  className='ml-auto size-5 p-0 flex items-center justify-center text-xs'
-                >
-                  {pendingCount}
-                </Badge>
-              )}
-            </div>
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          {/* 4. My Profile */}
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onSelect={() => setProfileDialogOpen(true)}
-          >
-            <div className='flex items-center gap-2 w-full'>
-              <User className='size-4' />
-              <span>My Profile</span>
-            </div>
-          </DropdownMenuItem>
-
-          {/* 5. Settings */}
-          <DropdownMenuItem asChild className='cursor-pointer'>
-            <Link href='/settings' className='flex items-center gap-2 w-full'>
-              <Icons.settings className='size-4' />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          {/* 6. Switch Account (collapsible) */}
+          {/* 3. Switch Account (collapsible) */}
           <div className='px-2 py-1'>
             <Collapsible
               open={accountsExpanded}
@@ -149,6 +107,48 @@ export function ProfileDropdown({
               </CollapsibleContent>
             </Collapsible>
           </div>
+
+          <DropdownMenuSeparator />
+
+          {/* 4. Friends */}
+          <DropdownMenuItem
+            className='cursor-pointer'
+            onSelect={() => openFriendsDialog()}
+          >
+            <div className='flex items-center gap-2 w-full'>
+              <Icons.people className='size-4' />
+              <span>Friends</span>
+              {pendingCount > 0 && (
+                <Badge
+                  variant='destructive'
+                  className='ml-auto size-5 p-0 flex items-center justify-center text-xs'
+                >
+                  {pendingCount}
+                </Badge>
+              )}
+            </div>
+          </DropdownMenuItem>
+
+          {/* 5. My Profile */}
+          <DropdownMenuItem
+            className='cursor-pointer'
+            onSelect={() => setProfileDialogOpen(true)}
+          >
+            <div className='flex items-center gap-2 w-full'>
+              <User className='size-4' />
+              <span>My Profile</span>
+            </div>
+          </DropdownMenuItem>
+
+          {/* 6. Settings */}
+          <DropdownMenuItem asChild className='cursor-pointer'>
+            <Link href='/settings' className='flex items-center gap-2 w-full'>
+              <Icons.settings className='size-4' />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
 
           {/* 7. Sign Out */}
           <DropdownMenuItem className='cursor-pointer' onClick={handleSignOut}>
