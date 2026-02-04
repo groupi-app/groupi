@@ -57,6 +57,11 @@ export default function Home() {
           <span>Get Started!</span>
         </Button>
       </Link>
+      <div className='text-sm text-muted-foreground'>
+        <Link href='/changelog' className='underline hover:text-foreground'>
+          View Changelog
+        </Link>
+      </div>
     </div>
   );
 }
