@@ -71,3 +71,8 @@
 - name: ci
   color: '006b75'
   description: CI/CD related
+
+# Workflow
+- name: skip-changeset
+  color: fef2c0
+  description: Skip changeset requirement for this PR
