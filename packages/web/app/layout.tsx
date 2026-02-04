@@ -215,7 +215,7 @@ export default function RootLayout({
                       <main className='grow'>{children}</main>
                       {/* Static footer */}
                       <footer className='bg-primary text-primary-foreground h-24'>
-                        <div className='container mx-auto py-4 flex gap-8 items-center'>
+                        <div className='container mx-auto py-4 flex gap-8 items-center justify-between'>
                           <div className='flex flex-col gap-2'>
                             <p>
                               Built by{' '}
@@ -227,6 +227,14 @@ export default function RootLayout({
                               </Link>
                             </p>
                             <FooterCopyright />
+                          </div>
+                          <div className='flex gap-4 text-sm'>
+                            <Link
+                              href='/changelog'
+                              className='underline hover:text-primary-foreground/80'
+                            >
+                              Changelog
+                            </Link>
                           </div>
                         </div>
                       </footer>
