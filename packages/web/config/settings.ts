@@ -12,5 +12,9 @@ export const settingsConfig = {
       title: 'Appearance',
       href: '/settings/appearance',
     },
+    {
+      title: 'Changelog',
+      href: '/changelog',
+    },
   ],
 };
