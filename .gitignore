@@ -31,6 +31,9 @@ launch.json
 .env*.local
 .env
 .env.preview.convex
+.env.local.backup
+.env.example.backup
+*.backup
 
 # vercel
 .vercel
