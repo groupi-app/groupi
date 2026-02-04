@@ -68,6 +68,8 @@ pnpm generate           # Regenerate Convex types after schema changes
 | `pnpm lint:fix`    | Auto-fix linting issues                     |
 | `pnpm lint:tokens` | Check for non-token Tailwind class usage    |
 | `pnpm format`      | Format code with Prettier                   |
+| `pnpm changeset`   | Create a changeset for user-facing changes  |
+| `pnpm commit`      | Interactive conventional commit helper      |
 
 ## Table of Contents
 
@@ -76,6 +78,7 @@ pnpm generate           # Regenerate Convex types after schema changes
 - [Convex Scripts](#convex-scripts)
 - [Testing Scripts](#testing-scripts)
 - [Code Quality Scripts](#code-quality-scripts)
+- [Versioning Scripts](#versioning-scripts)
 - [Utility Scripts](#utility-scripts)
 - [Quick Reference](#quick-reference)
 
@@ -377,6 +380,60 @@ Runs all code quality checks in sequence: linting, type checking, and format ver
 
 **Use when:** Before committing or pushing changes. This is the comprehensive quality gate.
 
+## Versioning Scripts
+
+### `pnpm changeset`
+
+**Command:** `changeset`
+
+Creates a changeset file describing what changed. Changesets are used to:
+
+- Track changes for the CHANGELOG
+- Determine version bumps (patch/minor/major)
+- Generate release notes
+
+**Use when:** After completing a user-facing feature or bug fix.
+
+**AI Agent Note:** Do NOT run this automatically. After completing user-facing work, remind the user to run `pnpm changeset` to document their changes.
+
+### When to Create a Changeset
+
+| Change Type                  | Needs Changeset? |
+| ---------------------------- | ---------------- |
+| New feature                  | ✅ Yes           |
+| Bug fix                      | ✅ Yes           |
+| Breaking change              | ✅ Yes           |
+| Refactoring (no user impact) | ❌ No            |
+| Docs/comments only           | ❌ No            |
+| CI/tooling changes           | ❌ No            |
+
+### `pnpm commit`
+
+**Command:** `cz`
+
+Runs Commitizen for interactive conventional commit creation. Guides you through:
+
+- Commit type (feat, fix, docs, etc.)
+- Scope (web, mobile, shared, convex)
+- Description
+- Breaking changes
+
+**Use when:** Creating commits to ensure conventional commit format.
+
+### `pnpm changeset:version`
+
+**Command:** `changeset version`
+
+Consumes changesets and updates package versions and CHANGELOGs. Typically run by CI, not manually.
+
+### `pnpm changeset:status`
+
+**Command:** `changeset status`
+
+Shows pending changesets and what versions would be bumped.
+
+**Use when:** Checking what changes are queued for the next release.
+
 ## Utility Scripts
 
 ### `pnpm clean`
@@ -416,6 +473,8 @@ Sets up Husky git hooks. Runs automatically after `pnpm install`.
 | Run quality checks      | `pnpm check`         |
 | Fix linting issues      | `pnpm lint:fix`      |
 | Format code             | `pnpm format`        |
+| Create changeset        | `pnpm changeset`     |
+| Interactive commit      | `pnpm commit`        |
 | Build for production    | `pnpm build`         |
 | Deploy Convex           | `pnpm convex:deploy` |
 | Clean and reinstall     | `pnpm clean`         |
@@ -442,6 +501,16 @@ pnpm generate     # Regenerate Convex types
 pnpm check        # Run lint, type-check, and format verification
 pnpm test:run     # Run all tests
 ```
+
+### Before Creating a PR
+
+```bash
+pnpm check        # Validate code
+pnpm test:run     # Run tests
+pnpm changeset    # Create changeset (if user-facing changes)
+```
+
+**Note:** PRs without a changeset will fail CI unless labeled with `skip-changeset`.
 
 ### Fixing Code Quality Issues
 
