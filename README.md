@@ -1,4 +1,8 @@
-# Groupi 🎉
+# Groupi
+
+[![CI](https://github.com/TheiaSurette/groupi/workflows/Test/badge.svg)](https://github.com/TheiaSurette/groupi/actions)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 A modern, cross-platform event planning and group coordination application built with **Convex**, **Next.js**, and **React Native**.
 
@@ -50,8 +54,8 @@ groupi/
 
 - **Node.js** 18+
 - **pnpm** 10.12.1+
-- **Convex CLI** (`npm install -g convex`)
-- **Expo CLI** for mobile development (`npm install -g @expo/cli`)
+- **Convex CLI** (`pnpm add -g convex`)
+- **Expo CLI** for mobile development (`pnpm add -g @expo/cli`)
 
 ### 🚀 Quick Start
 
@@ -217,33 +221,28 @@ pnpm build:android
 pnpm convex:deploy
 ```
 
-## 🤝 Contributing
+## Contributing
 
-1. **Clone & Setup**:
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
 
-   ```bash
-   git clone <repo>
-   pnpm install
-   ```
+- Setting up your development environment
+- Our coding standards and commit conventions
+- The pull request process
 
-2. **Start Development**:
+Quick start for contributors:
 
-   ```bash
-   pnpm convex:dev    # Terminal 1
-   pnpm dev:full      # Terminal 2
-   ```
+```bash
+git clone https://github.com/TheiaSurette/groupi.git
+cd groupi
+pnpm install
+cp .env.example .env.local
+pnpm convex:dev    # Terminal 1
+pnpm dev           # Terminal 2
+```
 
-3. **Make Changes**:
-   - Business logic → `packages/shared/`
-   - Web UI → `packages/web/`
-   - Mobile UI → `packages/mobile/`
-   - Backend → `convex/`
+## Security
 
-4. **Test & Submit**:
-   ```bash
-   pnpm check        # Lint, type, format
-   git commit -m "feat: your changes"
-   ```
+For security issues, please see our [Security Policy](SECURITY.md). Do not create public issues for security vulnerabilities.
 
 ## 📖 Learn More
 
@@ -252,6 +251,14 @@ pnpm convex:deploy
 - **[React Native Docs](https://reactnative.dev/docs/getting-started)** - Mobile development
 - **[Expo Docs](https://docs.expo.dev/)** - Mobile app platform
 
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Code of Conduct
+
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
 ---
 
-Built with ❤️ by the Groupi team
+Built with care by the Groupi team

@@ -4,5 +4,8 @@
  * Examples: indicators, icons, basic status elements
  */
 
+export * from './event-date-badge';
+export * from './hosting-badge';
 export * from './presence-indicator';
+export * from './status-indicator';
 export * from './unread-indicator';

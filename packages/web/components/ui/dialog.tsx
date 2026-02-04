@@ -28,14 +28,16 @@ const DialogPortal = DialogPrimitive.Portal;
 
 export function DialogOverlay({
   className,
+  onClick,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
       data-slot='dialog-overlay'
+      onClick={onClick}
       className={cn(
-        // Overlay with semantic background
-        'fixed inset-0 z-modal bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        // Overlay with semantic background - cursor-pointer for clickable dismiss
+        'fixed inset-0 z-modal bg-black/50 backdrop-blur-sm cursor-pointer data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         className
       )}
       {...props}
@@ -43,14 +45,27 @@ export function DialogOverlay({
   );
 }
 
+export interface DialogContentProps
+  extends React.ComponentProps<typeof DialogPrimitive.Content> {
+  /** When true, clicking the overlay will not close the dialog */
+  preventOverlayClose?: boolean;
+}
+
 export function DialogContent({
   className,
   children,
+  preventOverlayClose = false,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: DialogContentProps) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      {preventOverlayClose ? (
+        <DialogOverlay />
+      ) : (
+        <DialogPrimitive.Close asChild>
+          <DialogOverlay />
+        </DialogPrimitive.Close>
+      )}
       <DialogPrimitive.Content
         data-slot='dialog-content'
         className={cn(

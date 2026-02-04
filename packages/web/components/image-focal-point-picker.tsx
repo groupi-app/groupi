@@ -238,12 +238,12 @@ function FocalPointPickerContent({
   };
 
   return (
-    <>
-      <DialogHeader>
+    <div className='flex flex-col min-h-0 flex-1'>
+      <DialogHeader className='shrink-0'>
         <DialogTitle>Adjust Image Position</DialogTitle>
       </DialogHeader>
 
-      <div className='space-y-4'>
+      <div className='flex-1 min-h-0 overflow-y-auto space-y-4 py-4'>
         {/* Instructions */}
         <p className='text-sm text-muted-foreground'>
           Click or drag to set the focal point. This determines which part of
@@ -257,7 +257,7 @@ function FocalPointPickerContent({
             'relative w-full flex items-center justify-center bg-muted/50 rounded-lg border overflow-hidden',
             isDragging ? 'cursor-grabbing' : 'cursor-crosshair'
           )}
-          style={{ minHeight: '200px', maxHeight: '400px' }}
+          style={{ minHeight: '120px', maxHeight: '35dvh' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -271,7 +271,7 @@ function FocalPointPickerContent({
             ref={imageRef}
             src={imageUrl}
             alt='Click to set focal point'
-            className='max-w-full max-h-[400px] object-contain select-none'
+            className='max-w-full max-h-[35dvh] object-contain select-none'
             draggable={false}
             style={{ pointerEvents: 'none' }}
             onLoad={handleImageLoad}
@@ -321,7 +321,7 @@ function FocalPointPickerContent({
         </div>
       </div>
 
-      <DialogFooter className='flex-col sm:flex-row gap-2'>
+      <DialogFooter className='shrink-0 flex-col sm:flex-row gap-2 pt-4 border-t'>
         <Button
           type='button'
           variant='ghost'
@@ -338,7 +338,7 @@ function FocalPointPickerContent({
           Save Position
         </Button>
       </DialogFooter>
-    </>
+    </div>
   );
 }
 
@@ -368,7 +368,7 @@ export function ImageFocalPointPicker({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className='max-w-2xl'>
+      <DialogContent className='max-w-2xl !top-4 !bottom-4 !translate-y-0 flex flex-col overflow-hidden !gap-0'>
         {open && (
           <FocalPointPickerContent
             key={mountKey}

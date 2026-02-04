@@ -57,10 +57,12 @@ export function Attendees({ data }: AttendeesProps) {
     const filtered = members.filter((member: MemberWithDetails) => {
       const name = member.person?.user?.name || '';
       const email = member.person?.user?.email || '';
+      const username = member.person?.user?.username || '';
       const searchLower = searchQuery.toLowerCase();
       return (
         name.toLowerCase().includes(searchLower) ||
-        email.toLowerCase().includes(searchLower)
+        email.toLowerCase().includes(searchLower) ||
+        username.toLowerCase().includes(searchLower)
       );
     });
 

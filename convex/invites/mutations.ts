@@ -3,6 +3,7 @@ import { v } from 'convex/values';
 import { requireAuth, requireEventRole } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
+import { internal } from '../_generated/api';
 
 /**
  * Type for invite creation data
@@ -321,3 +322,149 @@ function generateInviteToken(): string {
   }
   return result;
 }
+
+/**
+ * Create multiple email invites for an event
+ * Creates invites with unique tokens, to be sent later via sendPendingEmailInvites
+ */
+export const createEmailInvites = mutation({
+  args: {
+    eventId: v.id('events'),
+    invites: v.array(
+      v.object({
+        email: v.string(),
+        recipientName: v.optional(v.string()),
+        plusOnes: v.optional(v.number()),
+      })
+    ),
+    customMessage: v.optional(v.string()),
+    expiresAt: v.optional(v.number()), // Unix timestamp
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { eventId, invites, customMessage, expiresAt }) => {
+    // Require organizer or moderator role
+    const membership = await requireEventRole(ctx, eventId, 'MODERATOR');
+
+    // Validate custom message length (max 480 chars)
+    if (customMessage && customMessage.length > 480) {
+      throw new Error('Custom message must be 480 characters or less');
+    }
+
+    const now = Date.now();
+    const createdInviteIds: Id<'invites'>[] = [];
+
+    for (const inviteData of invites) {
+      // Check if an invite with this email already exists for this event
+      const existingInvite = await ctx.db
+        .query('invites')
+        .withIndex('by_event_email', q =>
+          q.eq('eventId', eventId).eq('email', inviteData.email.toLowerCase())
+        )
+        .first();
+
+      if (existingInvite) {
+        // Skip duplicates (don't create another invite)
+        continue;
+      }
+
+      // Generate unique invite token
+      const token = generateInviteToken();
+
+      // Calculate uses (1 base + plusOnes)
+      const usesTotal = 1 + (inviteData.plusOnes || 0);
+
+      // Create the invite
+      const inviteId = await ctx.db.insert('invites', {
+        eventId,
+        token,
+        createdById: membership._id,
+        name: inviteData.recipientName || inviteData.email,
+        email: inviteData.email.toLowerCase(),
+        recipientName: inviteData.recipientName,
+        customMessage,
+        usesTotal,
+        usesRemaining: usesTotal,
+        expiresAt,
+        updatedAt: now,
+        // emailSentAt is intentionally undefined (pending)
+      });
+
+      createdInviteIds.push(inviteId);
+    }
+
+    return {
+      createdCount: createdInviteIds.length,
+      inviteIds: createdInviteIds,
+    };
+  },
+});
+
+/**
+ * Send pending email invites for an event
+ * Finds all invites with email set but emailSentAt null, and sends them
+ */
+export const sendPendingEmailInvites = mutation({
+  args: {
+    eventId: v.id('events'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { eventId }) => {
+    // Require organizer or moderator role
+    await requireEventRole(ctx, eventId, 'MODERATOR');
+
+    // Get the event details
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Find all pending email invites (email set, emailSentAt not set)
+    const allInvites = await ctx.db
+      .query('invites')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+
+    const pendingInvites = allInvites.filter(
+      invite => invite.email && invite.emailSentAt === undefined
+    );
+
+    if (pendingInvites.length === 0) {
+      return { sentCount: 0 };
+    }
+
+    // Mark all pending invites as sent (optimistically)
+    const now = Date.now();
+    for (const invite of pendingInvites) {
+      await ctx.db.patch(invite._id, {
+        emailSentAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Prepare email data for the action
+    const emailInviteData = pendingInvites.map(invite => ({
+      inviteId: invite._id,
+      email: invite.email!,
+      recipientName: invite.recipientName,
+      token: invite.token,
+      customMessage: invite.customMessage,
+      plusOnes: (invite.usesTotal || 1) - 1,
+    }));
+
+    // Schedule the email sending action
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - Type instantiation is excessively deep (TS2589)
+    const sendAction = internal.invites.actions.sendInviteEmails;
+    await ctx.scheduler.runAfter(0, sendAction, {
+      eventId,
+      eventTitle: event.title,
+      eventDescription: event.description,
+      eventLocation: event.location,
+      eventDateTime: event.chosenDateTime,
+      eventEndDateTime: event.chosenEndDateTime,
+      invites: emailInviteData,
+    });
+
+    return { sentCount: pendingInvites.length };
+  },
+});

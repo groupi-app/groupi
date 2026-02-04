@@ -29,7 +29,7 @@ import { AttachmentGallery } from '@/components/attachments';
 import { useMergedAttachments } from '@/contexts/pending-attachments-context';
 import MemberIcon from '@/components/member-icon';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -592,7 +592,7 @@ export default function ReplyComponent({
       </div>
 
       {canDelete && !editMode && (
-        <>
+        <DropdownMenu>
           <DropdownMenuTrigger className='absolute z-float size-8 transition-all rounded-md hover:bg-muted top-2 right-2 flex items-center justify-center opacity-0 group-hover:opacity-100'>
             <Icons.more />
           </DropdownMenuTrigger>
@@ -601,7 +601,6 @@ export default function ReplyComponent({
               <DropdownMenuItem
                 onClick={() => setEditMode(true)}
                 className='cursor-pointer'
-                asChild
               >
                 <div className='flex items-center gap-1'>
                   <Icons.edit className='size-4' />
@@ -611,18 +610,16 @@ export default function ReplyComponent({
             )}
 
             <DropdownMenuItem
-              asChild
+              onClick={() => setDeleteDialogOpen(true)}
               className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
             >
-              <DialogTrigger asChild>
-                <div className='flex items-center gap-1'>
-                  <Icons.delete className='size-4' />
-                  <span>Delete</span>
-                </div>
-              </DialogTrigger>
+              <div className='flex items-center gap-1'>
+                <Icons.delete className='size-4' />
+                <span>Delete</span>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </>
+        </DropdownMenu>
       )}
     </div>
   );
@@ -641,15 +638,11 @@ export default function ReplyComponent({
         setEditMode={setEditMode}
         setDeleteDialogOpen={setDeleteDialogOpen}
       >
-        <DropdownMenu>
-          {isMobile ? (
-            <div onContextMenu={handleContextMenu}>{replyContentElement}</div>
-          ) : (
-            <ContextMenuTrigger asChild>
-              {replyContentElement}
-            </ContextMenuTrigger>
-          )}
-        </DropdownMenu>
+        {isMobile ? (
+          <div onContextMenu={handleContextMenu}>{replyContentElement}</div>
+        ) : (
+          <ContextMenuTrigger asChild>{replyContentElement}</ContextMenuTrigger>
+        )}
       </ReplyActionMenu>
       <DeleteReplyDialog
         id={(reply._id || reply.id) as Id<'replies'>}

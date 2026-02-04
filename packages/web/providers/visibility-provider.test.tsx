@@ -155,6 +155,11 @@ describe('VisibilityProvider', () => {
         document.dispatchEvent(new Event('visibilitychange'));
       });
 
+      // Advance past the visibility debounce (150ms)
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
       expect(result.current.isVisible).toBe(true);
     });
 
@@ -187,6 +192,11 @@ describe('VisibilityProvider', () => {
           get: () => 'visible',
         });
         document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      // Advance past the visibility debounce (150ms)
+      act(() => {
+        vi.advanceTimersByTime(200);
       });
 
       // Should reset away status

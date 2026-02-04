@@ -18,6 +18,8 @@ export const buttonVariants = cva(
           'bg-destructive text-destructive-foreground shadow-raised hover:bg-destructive/90',
         outline:
           'border border-input bg-background hover:bg-accent/80 hover:text-accent-foreground',
+        'outline-primary':
+          'border border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary',
         secondary:
           'bg-secondary text-secondary-foreground shadow-raised hover:bg-secondary/80',
         ghost: 'hover:bg-accent/80 hover:text-accent-foreground',
@@ -25,6 +27,7 @@ export const buttonVariants = cva(
       },
       size: {
         default: 'h-10 py-2 px-4',
+        xs: 'h-7 px-2 text-xs rounded-input',
         sm: 'h-9 px-3 text-xs rounded-input',
         lg: 'h-11 px-8 text-base',
         icon: 'h-10 w-10 rounded-input',

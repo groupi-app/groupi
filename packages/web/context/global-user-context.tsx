@@ -1,8 +1,11 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useRef } from 'react';
 import { useQuery, useConvexAuth } from 'convex/react';
 import { useSession } from '@/lib/auth-client';
+import { useIsActive } from '@/providers/visibility-provider';
+
+/* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
 
 // Dynamic require to avoid deep type instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,17 +97,50 @@ export function GlobalUserProvider({ children }: GlobalUserProviderProps) {
     isAuthenticated: isConvexAuthenticated,
   } = useConvexAuth();
 
-  // Fetch user data - this is the main query that was duplicated
-  const userAndPerson = useQuery(
-    authQueries.getCurrentUserAndPerson,
-    isConvexAuthenticated ? {} : 'skip'
+  // Visibility-aware caching to prevent skeleton flashing on tab switch
+  const isActive = useIsActive();
+  const cachedUserAndPersonRef = useRef<UserAndPerson | null | undefined>(
+    undefined
+  );
+  const cachedNeedsOnboardingRef = useRef<boolean | null | undefined>(
+    undefined
   );
 
-  // Check if user needs onboarding
-  const needsOnboarding = useQuery(
-    userQueries.checkNeedsOnboarding,
-    isConvexAuthenticated ? {} : 'skip'
+  // Fetch user data - visibility-aware to prevent re-subscription flash
+  // When tab is hidden, we skip the query but return cached data
+  const userAndPersonResult = useQuery(
+    authQueries.getCurrentUserAndPerson,
+    isConvexAuthenticated && isActive ? {} : 'skip'
   );
+
+  // Cache the result when we get fresh data
+  if (userAndPersonResult !== undefined) {
+    cachedUserAndPersonRef.current = userAndPersonResult;
+  }
+
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  const userAndPerson =
+    userAndPersonResult === undefined
+      ? cachedUserAndPersonRef.current
+      : userAndPersonResult;
+
+  // Check if user needs onboarding - also visibility-aware
+  const needsOnboardingResult = useQuery(
+    userQueries.checkNeedsOnboarding,
+    isConvexAuthenticated && isActive ? {} : 'skip'
+  );
+
+  // Cache the onboarding result
+  if (needsOnboardingResult !== undefined) {
+    cachedNeedsOnboardingRef.current = needsOnboardingResult;
+  }
+
+  // Stale-while-revalidate: return cached data when result is undefined
+  const needsOnboarding =
+    needsOnboardingResult === undefined
+      ? cachedNeedsOnboardingRef.current
+      : needsOnboardingResult;
 
   // Compute loading state
   // Loading if:

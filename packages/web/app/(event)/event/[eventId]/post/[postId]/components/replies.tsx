@@ -33,7 +33,7 @@ export function Replies({ postId }: { postId: string }) {
     );
   }
 
-  if (user === null) {
+  if (!user || !user.person) {
     return (
       <div className='text-center py-8'>
         <p className='text-muted-foreground'>Please sign in to view replies</p>

@@ -77,6 +77,9 @@ export function OnboardingRedirectWrapper() {
       router.push(redirectTo);
       return;
     }
+
+    // Note: Home page redirect is handled directly in app/(home)/page.tsx
+    // to prevent flash of marketing content before redirect
   }, [
     pathname,
     router,

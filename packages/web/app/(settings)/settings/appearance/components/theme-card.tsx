@@ -2,7 +2,11 @@
 
 import { cn } from '@/lib/utils';
 import { Check, Palette } from 'lucide-react';
-import type { BaseTheme } from '@groupi/shared/design/themes';
+import {
+  type BaseTheme,
+  type ThemeTokenOverrides,
+  baseThemeRegistry,
+} from '@groupi/shared/design/themes';
 import { useActionMenu } from '@/hooks/use-action-menu';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ActionMenuButton } from '@/components/ui/action-menu-button';
@@ -10,6 +14,57 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
+
+/**
+ * Extract preview colors from token overrides with smart fallbacks.
+ * Tries multiple token paths before falling back to base theme colors.
+ */
+function getPreviewColorsFromOverrides(
+  tokenOverrides: ThemeTokenOverrides | undefined,
+  baseThemeId: string | undefined,
+  mode: 'light' | 'dark'
+): { primary: string; background: string; accent: string } {
+  // Get base theme for fallback colors
+  const baseTheme = baseThemeId ? baseThemeRegistry[baseThemeId] : undefined;
+
+  // Mode-aware default fallbacks (used only if base theme is also unavailable)
+  const modeDefaults =
+    mode === 'dark'
+      ? {
+          primary: '#8b5cf6', // purple
+          background: '#1a1a2e', // dark bg
+          accent: '#06b6d4', // cyan
+        }
+      : {
+          primary: '#8b5cf6', // purple
+          background: '#ffffff', // white
+          accent: '#06b6d4', // cyan
+        };
+
+  // Try to extract primary color from overrides
+  const primary =
+    tokenOverrides?.brand?.primary ||
+    tokenOverrides?.brand?.secondary ||
+    baseTheme?.preview.primary ||
+    modeDefaults.primary;
+
+  // Try to extract background color from overrides
+  const background =
+    tokenOverrides?.background?.page ||
+    tokenOverrides?.background?.surface ||
+    baseTheme?.preview.background ||
+    modeDefaults.background;
+
+  // Try to extract accent color from overrides
+  const accent =
+    tokenOverrides?.brand?.accent ||
+    tokenOverrides?.status?.info ||
+    tokenOverrides?.status?.success ||
+    baseTheme?.preview.accent ||
+    modeDefaults.accent;
+
+  return { primary, background, accent };
+}
 
 interface ThemeCardProps {
   theme: BaseTheme;
@@ -84,11 +139,10 @@ export function ThemeCard({
 interface CustomThemeCardProps {
   name: string;
   mode: 'light' | 'dark';
-  previewColors?: {
-    primary?: string;
-    background?: string;
-    accent?: string;
-  };
+  /** Base theme ID this custom theme extends */
+  baseThemeId: string;
+  /** Token overrides from the custom theme */
+  tokenOverrides?: ThemeTokenOverrides;
   isSelected: boolean;
   onSelect: () => void;
   onEdit?: () => void;
@@ -103,13 +157,20 @@ interface CustomThemeCardProps {
 export function CustomThemeCard({
   name,
   mode,
-  previewColors,
+  baseThemeId,
+  tokenOverrides,
   isSelected,
   onSelect,
   onEdit,
   onDelete,
   disabled = false,
 }: CustomThemeCardProps) {
+  // Get preview colors with smart fallbacks
+  const previewColors = getPreviewColorsFromOverrides(
+    tokenOverrides,
+    baseThemeId,
+    mode
+  );
   const {
     sheetOpen,
     setSheetOpen,
@@ -265,7 +326,7 @@ export function CustomThemeCard({
         <div
           className='flex-[3] rounded-l-rounded flex items-center justify-center'
           style={{
-            backgroundColor: previewColors?.primary || '#8b5cf6',
+            backgroundColor: previewColors.primary,
           }}
         >
           <Palette className='h-6 w-6 text-white/80' />
@@ -273,13 +334,13 @@ export function CustomThemeCard({
         <div
           className='flex-[2]'
           style={{
-            backgroundColor: previewColors?.background || '#ffffff',
+            backgroundColor: previewColors.background,
           }}
         />
         <div
           className='flex-1 rounded-r-rounded'
           style={{
-            backgroundColor: previewColors?.accent || '#06b6d4',
+            backgroundColor: previewColors.accent,
           }}
         />
       </div>

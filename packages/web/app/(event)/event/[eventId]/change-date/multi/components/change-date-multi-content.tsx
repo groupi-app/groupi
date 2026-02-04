@@ -12,12 +12,17 @@ export function ChangeDateMultiContent({ eventId }: { eventId: string }) {
     return <ChangeDateMultiSkeleton />;
   }
 
-  const dates = undefined;
+  // TODO: Fetch existing potential date times with end times from the backend
+  // For now, we start with an empty list since users are creating a new poll
+  const initialOptions = undefined;
 
   return (
     <div className='container max-w-4xl'>
       <h1 className='text-4xl font-heading mt-10'>Event Date/Time Options</h1>
-      <EditEventMultiDate eventId={eventId as Id<'events'>} dates={dates} />
+      <EditEventMultiDate
+        eventId={eventId as Id<'events'>}
+        initialOptions={initialOptions}
+      />
     </div>
   );
 }

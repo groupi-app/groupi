@@ -48,6 +48,8 @@ import {
   admin,
   apiKey,
   oneTap,
+  multiSession,
+  openAPI,
 } from 'better-auth/plugins';
 import { passkey } from '@better-auth/passkey';
 
@@ -240,6 +242,10 @@ export const createAuthOptions = (
       }) as BetterAuthPlugin,
       admin() as BetterAuthPlugin,
       apiKey() as BetterAuthPlugin,
+      multiSession({
+        maximumSessions: 5,
+      }),
+      openAPI(),
     ],
 
     // Additional user fields (matching your current schema)

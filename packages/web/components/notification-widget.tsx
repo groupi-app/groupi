@@ -27,6 +27,7 @@ import { ActionMenuButton } from '@/components/ui/action-menu-button';
 import { Icons } from '@/components/icons';
 import { useNotificationManagement } from '@/hooks/convex/use-notifications';
 import { NotificationListSkeleton } from '@/components/skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface NotificationWidgetProps {
   maxHeight?: string;
@@ -88,7 +89,29 @@ export function NotificationWidget({
   }
 
   if (isLoading) {
-    return <NotificationListSkeleton />;
+    return (
+      <div className='flex flex-col'>
+        {/* Actual tabs - functional during loading */}
+        <div className='border-b p-2'>
+          <div className='flex items-center gap-2'>
+            <Tabs
+              value={filter}
+              onValueChange={value => setFilter(value as 'all' | 'unread')}
+              className='flex-1'
+            >
+              <TabsList className='grid w-full grid-cols-2'>
+                <TabsTrigger value='all'>All</TabsTrigger>
+                <TabsTrigger value='unread'>Unread</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Skeleton className='size-8 rounded-md' />
+          </div>
+        </div>
+        <ScrollArea style={{ height: maxHeight }} className='min-h-0'>
+          <NotificationListSkeleton />
+        </ScrollArea>
+      </div>
+    );
   }
 
   if (notifications.length === 0) {

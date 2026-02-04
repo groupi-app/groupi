@@ -28,7 +28,7 @@ describe('Textarea', () => {
     expect(textarea).toHaveClass('flex');
     expect(textarea).toHaveClass('min-h-[80px]');
     expect(textarea).toHaveClass('w-full');
-    expect(textarea).toHaveClass('rounded-md');
+    expect(textarea).toHaveClass('rounded-input');
     expect(textarea).toHaveClass('border');
   });
 

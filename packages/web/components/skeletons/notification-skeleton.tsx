@@ -1,33 +1,42 @@
 import { Skeleton } from '../ui/skeleton';
 
+/**
+ * NotificationListSkeleton - Skeleton for the notification list
+ *
+ * Note: The NotificationWidget uses a custom inline skeleton that includes
+ * actual interactive tabs. This component is for the list items only.
+ */
 export function NotificationListSkeleton() {
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col'>
       <NotificationSkeleton />
+      <NotificationSkeleton hasUnreadDot />
       <NotificationSkeleton />
-      <NotificationSkeleton />
-      <NotificationSkeleton />
-      <NotificationSkeleton />
+      <NotificationSkeleton hasUnreadDot />
       <NotificationSkeleton />
     </div>
   );
 }
 
-export function NotificationSkeleton() {
+/**
+ * NotificationSkeleton - Skeleton for a single notification item
+ * Matches NotificationSlate: unread dot, message, timestamp
+ */
+export function NotificationSkeleton({
+  hasUnreadDot = false,
+}: {
+  hasUnreadDot?: boolean;
+}) {
   return (
-    <div className='flex items-start gap-3 p-3 border border-border rounded-dropdown'>
-      <Skeleton className='size-10 rounded-full' />
-      <div className='flex-1 space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Skeleton className='h-4 w-3/4' />
-          <Skeleton className='h-3 w-12' />
-        </div>
-        <Skeleton className='h-3 w-full' />
-        <Skeleton className='h-3 w-5/6' />
-        <div className='flex items-center gap-2 pt-1'>
-          <Skeleton className='h-3 w-16' />
-          <Skeleton className='h-3 w-20' />
-        </div>
+    <div className='flex items-center gap-3 p-2 pr-10'>
+      {/* Unread indicator dot - show on some items for visual variety */}
+      {hasUnreadDot && <Skeleton className='size-2 rounded-full shrink-0' />}
+      <div className='flex flex-col gap-1 px-2 flex-1'>
+        {/* Message text */}
+        <Skeleton className='h-4 w-full' />
+        <Skeleton className='h-4 w-3/4' />
+        {/* Timestamp */}
+        <Skeleton className='h-3 w-24' />
       </div>
     </div>
   );

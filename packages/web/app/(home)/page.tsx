@@ -1,9 +1,34 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { HomeHeader } from './components/home-header';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useGlobalUser } from '@/context/global-user-context';
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, needsOnboarding } = useGlobalUser();
+
+  useEffect(() => {
+    // Redirect authenticated users who don't need onboarding to events
+    if (!isLoading && isAuthenticated && needsOnboarding === false) {
+      router.replace('/events');
+    }
+  }, [isLoading, isAuthenticated, needsOnboarding, router]);
+
+  // Show nothing while checking auth or if user will be redirected
+  if (isLoading || (isAuthenticated && needsOnboarding === false)) {
+    return (
+      <div className='container max-w-3xl py-8 flex items-center justify-center min-h-[50vh]'>
+        <Icons.spinner className='size-8 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  // Show marketing page for unauthenticated users or those needing onboarding
   return (
     <div className='container max-w-3xl py-8 flex flex-col gap-8'>
       <div className=''>
