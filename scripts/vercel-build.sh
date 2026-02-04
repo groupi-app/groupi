@@ -16,7 +16,9 @@ echo "=== Convex + Vercel Build ==="
 echo "VERCEL_ENV: $VERCEL_ENV"
 echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
 
-BUILD_CMD='pnpm --filter @groupi/web build'
+# Build command that also captures the Convex URL for E2E tests
+# The URL is written to a static file that can be fetched by the E2E workflow
+BUILD_CMD='pnpm --filter @groupi/web build && mkdir -p packages/web/public/.well-known && echo "{\"convexUrl\": \"$NEXT_PUBLIC_CONVEX_URL\", \"branch\": \"$VERCEL_GIT_COMMIT_REF\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > packages/web/public/.well-known/e2e-config.json'
 
 if [ "$VERCEL_ENV" = "production" ]; then
   echo "Deploying to Convex production..."
