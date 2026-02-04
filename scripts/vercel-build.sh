@@ -32,12 +32,15 @@ else
   PREVIEW_NAME=$(echo "$PREVIEW_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
 
   echo "Deploying to Convex preview: $PREVIEW_NAME..."
-  echo "(Preview env vars should be set via CLI: npx convex env set VAR value --preview-name $PREVIEW_NAME)"
 
   npx convex deploy \
     --preview-create "$PREVIEW_NAME" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "$BUILD_CMD"
+
+  # Enable E2E testing functions on preview deployments
+  echo "Enabling E2E testing on preview: $PREVIEW_NAME..."
+  npx convex env set E2E_TESTING true --preview-name "$PREVIEW_NAME" || echo "Warning: Could not set E2E_TESTING env var"
 fi
 
 echo "=== Build Complete ==="
