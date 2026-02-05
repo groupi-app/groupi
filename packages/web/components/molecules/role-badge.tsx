@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 
 export type MemberRole = 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
@@ -15,6 +14,7 @@ export interface RoleBadgeProps {
   className?: string;
 }
 
+// Sticker journal aesthetic - solid colored badges with white borders
 const roleConfig: Record<
   MemberRole,
   {
@@ -28,20 +28,22 @@ const roleConfig: Record<
     icon: <Icons.crown className='size-3.5' />,
     label: 'Organizer',
     abbreviation: 'ORG',
-    colorClass: 'text-fun-streak bg-fun-streak/10 border-fun-streak/20',
+    colorClass:
+      'bg-warning text-white border-2 border-white shadow-raised hover:opacity-90',
   },
   MODERATOR: {
     icon: <Icons.shield className='size-3.5' />,
     label: 'Moderator',
     abbreviation: 'MOD',
     colorClass:
-      'text-brand-secondary bg-brand-secondary/10 border-brand-secondary/20',
+      'bg-info text-white border-2 border-white shadow-raised hover:opacity-90',
   },
   ATTENDEE: {
     icon: <Icons.user className='size-3.5' />,
     label: 'Attendee',
     abbreviation: 'ATT',
-    colorClass: 'text-muted-foreground bg-muted border-border',
+    colorClass:
+      'bg-muted text-muted-foreground border-2 border-white shadow-raised',
   },
 };
 
@@ -86,12 +88,12 @@ export function RoleBadge({
 
   const text = variant === 'abbreviated' ? config.abbreviation : config.label;
 
+  // Sticker journal aesthetic - use solid badges instead of outline
   return (
-    <Badge
+    <span
       data-slot='role-badge'
-      variant='outline'
       className={cn(
-        'inline-flex items-center gap-1 font-medium',
+        'inline-flex items-center gap-1 font-medium rounded-badge',
         sizeClass,
         config.colorClass,
         className
@@ -99,6 +101,6 @@ export function RoleBadge({
     >
       {config.icon}
       <span>{text}</span>
-    </Badge>
+    </span>
   );
 }

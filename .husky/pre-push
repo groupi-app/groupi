@@ -1,0 +1,81 @@
+#!/usr/bin/env sh
+
+# Pre-push hook: Checks that a changeset exists for user-facing changes
+#
+# Skip methods:
+#   1. SKIP_CHANGESET=1 git push
+#   2. git push --no-verify
+#   3. Branch names containing: release, version, chore/release, dependabot
+#
+# The check compares against origin/main to detect new changes.
+
+# Skip if SKIP_CHANGESET environment variable is set
+if [ "$SKIP_CHANGESET" = "1" ]; then
+  echo "⏭️  Changeset check skipped (SKIP_CHANGESET=1)"
+  exit 0
+fi
+
+# Get current branch name
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Skip for release/version branches and dependabot
+case "$BRANCH" in
+  *release* | *version* | chore/release* | dependabot/*)
+    echo "⏭️  Changeset check skipped (release/dependabot branch)"
+    exit 0
+    ;;
+esac
+
+# Skip if pushing to a non-main branch that hasn't diverged from main
+if [ "$BRANCH" = "main" ]; then
+  echo "⏭️  Changeset check skipped (pushing to main directly)"
+  exit 0
+fi
+
+# Check if origin/main exists (might not in a fresh clone)
+if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+  echo "⏭️  Changeset check skipped (origin/main not found)"
+  exit 0
+fi
+
+# Check if there are any commits ahead of main
+COMMITS_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo "0")
+
+if [ "$COMMITS_AHEAD" = "0" ]; then
+  echo "⏭️  Changeset check skipped (no new commits)"
+  exit 0
+fi
+
+# Check for changes in source code directories (excluding docs, config, etc.)
+SOURCE_CHANGES=$(git diff --name-only origin/main...HEAD 2>/dev/null | grep -E "^(packages/|convex/)" | grep -v "\.test\." | grep -v "__tests__" | head -1)
+
+if [ -z "$SOURCE_CHANGES" ]; then
+  echo "⏭️  Changeset check skipped (no source code changes)"
+  exit 0
+fi
+
+# Check if there are any changeset files (excluding config and README)
+CHANGESET_FILES=$(find .changeset -name "*.md" ! -name "README.md" 2>/dev/null | head -1)
+
+if [ -z "$CHANGESET_FILES" ]; then
+  echo ""
+  echo "⚠️  No changeset found!"
+  echo ""
+  echo "You have source code changes but no changeset file."
+  echo "If this is a user-facing change, please create a changeset:"
+  echo ""
+  echo "    pnpm changeset"
+  echo ""
+  echo "If this change doesn't affect users (refactoring, docs, CI), skip with:"
+  echo ""
+  echo "    SKIP_CHANGESET=1 git push"
+  echo "    # or"
+  echo "    git push --no-verify"
+  echo ""
+  echo "See docs/changesets.md for more information."
+  echo ""
+  exit 1
+fi
+
+echo "✅ Changeset found, proceeding with push"
+exit 0

@@ -10,8 +10,8 @@ export function Card({
     <div
       data-slot='card'
       className={cn(
-        // Dramatically rounded card with semantic tokens (Duolingo-style)
-        'rounded-card border bg-card text-card-foreground shadow-raised transition-shadow duration-fast hover:shadow-floating',
+        // Clean elevated surface - sticker effect reserved for accents (buttons, badges, avatars)
+        'rounded-card bg-card text-card-foreground border border-border shadow-raised transition-shadow duration-fast hover:shadow-floating',
         className
       )}
       {...props}

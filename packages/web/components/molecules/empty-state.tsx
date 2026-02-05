@@ -71,7 +71,13 @@ export function EmptyState({
       )}
     >
       {icon && (
-        <div className={cn('text-muted-foreground mb-3', sizes.icon)}>
+        <div
+          className={cn(
+            // Sticker journal aesthetic - icon in sticker container
+            'bg-muted rounded-full p-4 border-[3px] border-white shadow-raised mb-4 text-muted-foreground',
+            sizes.icon
+          )}
+        >
           {icon}
         </div>
       )}

@@ -180,7 +180,7 @@ export function FriendRequestButton({
               size={variant === 'sm' ? 'sm' : 'icon'}
               onClick={handleDeclineRequest}
               disabled={isActioning}
-              className='text-destructive hover:text-destructive hover:bg-destructive/10'
+              className='hover:bg-destructive hover:text-destructive-foreground'
             >
               <Icons.close className='size-4' />
             </Button>
