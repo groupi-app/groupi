@@ -317,7 +317,7 @@ export function ProfileEditDialog({
                     </div>
                   ) : (
                     <Avatar className='h-20 w-20'>
-                      <AvatarImage src={currentImage || ''} />
+                      <AvatarImage src={currentImage || undefined} />
                       <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                   )}
