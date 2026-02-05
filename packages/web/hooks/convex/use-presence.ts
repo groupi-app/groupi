@@ -388,7 +388,8 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track previous away state for auto-idle
-  const prevIsAwayRef = useRef(isAway);
+  // Initialize as null to skip the first effect run and avoid race conditions
+  const prevIsAwayRef = useRef<boolean | null>(null);
 
   // Update last seen periodically
   const updateLastSeen = useUpdateLastSeen();
@@ -451,7 +452,14 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
   useEffect(() => {
     if (!personId) return;
 
-    // Check if away state changed
+    // On first run, just record the initial state without calling the mutation
+    // This prevents race conditions during mount from triggering unwanted status changes
+    if (prevIsAwayRef.current === null) {
+      prevIsAwayRef.current = isAway;
+      return;
+    }
+
+    // Check if away state actually changed from a known previous state
     if (prevIsAwayRef.current !== isAway) {
       prevIsAwayRef.current = isAway;
 
