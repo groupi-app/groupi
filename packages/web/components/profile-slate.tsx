@@ -26,7 +26,7 @@ export function ProfileSlate({
     <div>
       <div className='flex items-center gap-3'>
         <Avatar>
-          <AvatarImage src={userInfo.image || ''} />
+          <AvatarImage src={userInfo.image || undefined} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className='flex flex-col items-start'>

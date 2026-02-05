@@ -58,7 +58,7 @@ export function ProfileDropdown({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger className='rounded-full relative cursor-pointer'>
           <Avatar>
-            <AvatarImage src={userInfo.image || ''} />
+            <AvatarImage src={userInfo.image || undefined} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           {pendingCount > 0 && (
