@@ -13,8 +13,8 @@ export function Avatar({
     <AvatarPrimitive.Root
       data-slot='avatar'
       className={cn(
-        // Circular avatar with semantic tokens
-        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-avatar',
+        // Clean avatar - subtle border for definition
+        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-avatar border border-border/50 shadow-sm',
         className
       )}
       {...props}

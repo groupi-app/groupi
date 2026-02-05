@@ -382,6 +382,24 @@ Runs all code quality checks in sequence: linting, type checking, and format ver
 
 ## Versioning Scripts
 
+See `docs/changesets.md` for comprehensive changeset documentation.
+
+### Changeset Enforcement
+
+Changesets are enforced at two levels:
+
+| Level        | Mechanism             | Skip Method                                  |
+| ------------ | --------------------- | -------------------------------------------- |
+| Local (push) | `.husky/pre-push`     | `SKIP_CHANGESET=1 git push` or `--no-verify` |
+| CI (PR)      | `changeset-check.yml` | Add `skip-changeset` label to PR             |
+
+The pre-push hook:
+
+- Compares your branch against `origin/main`
+- Checks for source code changes in `packages/` or `convex/`
+- Blocks push if source changes exist but no changeset file is present
+- Auto-skips for release branches, dependabot, and direct pushes to main
+
 ### `pnpm changeset`
 
 **Command:** `changeset`

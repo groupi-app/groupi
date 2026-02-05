@@ -107,7 +107,7 @@ export function EventCard({
           </Button>
           <Button
             variant='ghost'
-            className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
             onClick={() => {
               setSheetOpen(false);
               setDeleteDialogOpen(true);
@@ -120,7 +120,7 @@ export function EventCard({
       ) : (
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setSheetOpen(false);
             setLeaveDialogOpen(true);

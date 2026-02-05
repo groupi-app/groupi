@@ -60,9 +60,12 @@ export function LoadingState({
         className
       )}
     >
-      <Loader2
-        className={cn('animate-spin text-muted-foreground', sizes.spinner)}
-      />
+      {/* Sticker journal aesthetic - spinner in sticker container */}
+      <div className='bg-muted rounded-full p-3 border-[3px] border-white shadow-raised'>
+        <Loader2
+          className={cn('animate-spin text-muted-foreground', sizes.spinner)}
+        />
+      </div>
       {message && (
         <p
           className={cn(

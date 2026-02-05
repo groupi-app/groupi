@@ -217,7 +217,7 @@ function ReplyActionMenu({
             )}
             <Button
               variant='ghost'
-              className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+              className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
               onClick={() => {
                 setSheetOpen(false);
                 setDeleteDialogOpen(true);

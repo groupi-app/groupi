@@ -28,8 +28,8 @@ SheetClose.displayName = SheetPrimitive.Close.displayName;
 const SheetPortal = SheetPrimitive.Portal;
 
 const sheetVariants = cva(
-  // Base sheet styles with semantic tokens
-  'fixed z-modal gap-4 bg-background p-6 shadow-overlay transition ease-bounce data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
+  // Clean elevated sheet - sticker effect reserved for accents inside
+  'fixed z-modal gap-4 bg-background p-6 shadow-overlay border border-border transition ease-bounce data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
   {
     variants: {
       side: {

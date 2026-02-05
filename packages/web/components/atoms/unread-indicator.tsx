@@ -37,7 +37,8 @@ export function UnreadIndicator({
       <span
         data-slot='unread-indicator'
         className={cn(
-          'inline-block size-2 rounded-full bg-destructive shrink-0',
+          // Sticker journal aesthetic - dot with white border
+          'inline-block size-2 rounded-full bg-destructive shrink-0 border-2 border-white shadow-raised',
           className
         )}
         aria-label='Unread'
@@ -52,7 +53,8 @@ export function UnreadIndicator({
     <span
       data-slot='unread-indicator'
       className={cn(
-        'inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-badge text-xs font-semibold bg-destructive text-destructive-foreground',
+        // Sticker journal aesthetic - count badge with white border
+        'inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-badge text-xs font-semibold bg-destructive text-destructive-foreground border-2 border-white shadow-raised',
         className
       )}
       aria-label={`${count} unread`}

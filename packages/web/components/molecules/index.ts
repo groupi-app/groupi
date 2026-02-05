@@ -20,5 +20,7 @@ export * from './role-badge';
 export * from './rsvp-status';
 export * from './single-date-time-selector';
 export * from './status-picker';
+export * from './step-item';
+export * from './sticker-card';
 export * from './timestamp-badge';
 export * from './user-info-card';

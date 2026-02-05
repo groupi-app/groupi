@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
+import { LogoSticker } from '@/components/atoms';
 import { cn } from '@/lib/utils';
 import { createLogger } from '@/lib/logger';
 
@@ -117,8 +118,12 @@ export function ErrorPageTemplate({
   return (
     <div className={cn('container pt-6 pb-24', className)}>
       <div className='max-w-md mx-auto text-center py-12'>
-        <div className='flex justify-center mb-4'>
-          {icon ?? <Icons.alertCircle className='h-16 w-16 text-destructive' />}
+        <div className='flex justify-center mb-6'>
+          {icon ?? (
+            <div className='bg-bg-error-subtle rounded-full p-6 border-[3px] border-white shadow-raised'>
+              <LogoSticker color='error' size='lg' showArm={false} />
+            </div>
+          )}
         </div>
         <h1 className='text-2xl font-heading font-medium mb-2'>
           {displayTitle}
