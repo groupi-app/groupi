@@ -43,8 +43,9 @@ export function StepItem({
         // Card styles
         'flex items-start gap-4',
         'bg-card rounded-card p-5',
-        // Sticker effect
-        'shadow-raised border-[3px] border-white',
+        // Shadow for depth
+        'shadow-raised',
+        // Ring for subtle definition
         'ring-1 ring-border/30',
         className
       )}
