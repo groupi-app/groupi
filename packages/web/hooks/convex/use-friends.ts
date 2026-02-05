@@ -342,10 +342,24 @@ export function useDeclineFriendRequest() {
 }
 
 /**
- * Cancel a sent friend request
+ * Cancel a sent friend request (optimistic)
  */
 export function useCancelFriendRequest() {
-  const cancelRequest = useMutation(friendMutations.cancelFriendRequest);
+  const cancelRequest = useMutation(
+    friendMutations.cancelFriendRequest
+  ).withOptimisticUpdate((localStore, { friendshipId }) => {
+    // Optimistically remove from sent requests
+    const sentRequests = localStore.getQuery(friendQueries.getSentRequests, {});
+    if (sentRequests) {
+      localStore.setQuery(
+        friendQueries.getSentRequests,
+        {},
+        sentRequests.filter(
+          (req: FriendRequest) => req.friendshipId !== friendshipId
+        )
+      );
+    }
+  });
   const { toast } = useToast();
 
   return useCallback(
