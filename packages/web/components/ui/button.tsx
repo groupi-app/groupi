@@ -12,16 +12,19 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Solid variants with sticker aesthetic (white border, shadow)
         default:
-          'bg-primary text-primary-foreground shadow-raised hover:bg-primary/90 hover:shadow-floating',
+          'bg-primary text-primary-foreground border-2 border-white shadow-raised hover:bg-primary/90 hover:shadow-floating',
         destructive:
-          'bg-destructive text-destructive-foreground shadow-raised hover:bg-destructive/90',
+          'bg-destructive text-destructive-foreground border-2 border-white shadow-raised hover:bg-destructive/90 hover:shadow-floating',
+        secondary:
+          'bg-secondary text-secondary-foreground border-2 border-white shadow-raised hover:bg-secondary/80 hover:shadow-floating',
+        // Outline variants - subtle, no sticker effect
         outline:
-          'border border-input bg-background hover:bg-accent/80 hover:text-accent-foreground',
+          'border border-border bg-background hover:bg-accent/80 hover:text-accent-foreground',
         'outline-primary':
           'border border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary',
-        secondary:
-          'bg-secondary text-secondary-foreground shadow-raised hover:bg-secondary/80',
+        // Minimal variants (no sticker effect)
         ghost: 'hover:bg-accent/80 hover:text-accent-foreground',
         link: 'underline-offset-4 hover:underline text-primary hover:scale-100 active:scale-100',
       },

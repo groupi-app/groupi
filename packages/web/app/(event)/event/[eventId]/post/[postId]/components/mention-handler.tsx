@@ -296,7 +296,7 @@ export function MentionHandler({
                     {canPromote && selectedMember.role === 'MODERATOR' && (
                       <Button
                         variant='ghost'
-                        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
                         onClick={() => {
                           setDialogAction(MemberAction.DEMOTE);
                           setSheetOpen(false);
@@ -310,7 +310,7 @@ export function MentionHandler({
                     {canKick && (
                       <Button
                         variant='ghost'
-                        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
                         onClick={() => {
                           setDialogAction(MemberAction.KICK);
                           setSheetOpen(false);

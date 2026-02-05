@@ -53,9 +53,7 @@ export function ActionMenuButton({
           {children}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='z-modal'>
-        {dropdownContent}
-      </DropdownMenuContent>
+      <DropdownMenuContent align='end'>{dropdownContent}</DropdownMenuContent>
     </DropdownMenu>
   );
 }

@@ -6,6 +6,9 @@
 
 export * from './event-date-badge';
 export * from './hosting-badge';
+export * from './logo-sticker';
 export * from './presence-indicator';
 export * from './status-indicator';
+export * from './step-badge';
+export * from './sticker-icon';
 export * from './unread-indicator';

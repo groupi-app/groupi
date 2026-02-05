@@ -99,7 +99,7 @@ import { navigation, toast } from '@groupi/shared/platform';
 
 ## Changesets (Versioning)
 
-Changesets track what changed for the CHANGELOG and version bumps. Create one per feature/fix, not per commit.
+Changesets track what changed for the CHANGELOG and version bumps. Create one per feature/fix, not per commit. See `docs/changesets.md` for comprehensive documentation.
 
 ### When to Create a Changeset
 
@@ -125,6 +125,20 @@ This prompts for:
 3. Summary for CHANGELOG
 
 Commit the generated `.changeset/*.md` file with your code.
+
+### Enforcement
+
+Changesets are enforced at two levels:
+
+1. **Pre-push hook** - Blocks push if source code changed without a changeset
+2. **CI check** - Fails PR if no changeset (unless `skip-changeset` label is added)
+
+**Skipping the check** (for non-user-facing changes):
+
+```bash
+SKIP_CHANGESET=1 git push   # Skip pre-push hook
+git push --no-verify        # Skip all hooks
+```
 
 ### AI Agent Rule
 

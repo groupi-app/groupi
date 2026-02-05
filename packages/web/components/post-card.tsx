@@ -146,7 +146,7 @@ export function PostCard({
       {canDelete && (
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setSheetOpen(false);
             setDeleteDialogOpen(true);
@@ -262,7 +262,7 @@ export function PostCard({
   );
 
   const cardContent = (
-    <div className='rounded-card border border-border w-full relative shadow-floating z-lifted group'>
+    <div className='rounded-card border border-border w-full relative shadow-raised hover:shadow-floating z-lifted group transition-shadow duration-fast'>
       <div className='absolute top-4 left-3'>
         {member ? (
           <MemberIcon
@@ -353,7 +353,7 @@ export function PostCard({
 
 export function PostCardSkeleton() {
   return (
-    <div className='rounded-card border border-border w-full relative shadow-floating max-w-4xl'>
+    <div className='rounded-card border border-border w-full relative shadow-raised max-w-4xl'>
       <div className='w-full transition-all pt-4 px-5 pb-2'>
         <div className='flex flex-col gap-1'>
           <div className='flex items-center gap-2 mb-1'>
