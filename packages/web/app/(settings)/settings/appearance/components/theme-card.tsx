@@ -118,12 +118,7 @@ export function ThemeCard({
 
       {/* Theme info */}
       <div className='flex items-center justify-between'>
-        <div className='text-left'>
-          <p className='text-sm font-medium text-foreground'>{theme.name}</p>
-          <p className='text-xs text-muted-foreground capitalize'>
-            {theme.mode} mode
-          </p>
-        </div>
+        <p className='text-sm font-medium text-foreground'>{theme.name}</p>
 
         {/* Selected indicator */}
         {isSelected && (
@@ -347,20 +342,13 @@ export function CustomThemeCard({
 
       {/* Theme info and selected indicator */}
       <div className='flex items-center justify-between'>
-        <div className='text-left'>
-          <p className='text-sm font-medium text-foreground'>{name}</p>
-          <p className='text-xs text-muted-foreground capitalize'>
-            {mode} mode
-          </p>
-        </div>
+        <p className='text-sm font-medium text-foreground'>{name}</p>
 
-        <div className='flex items-center gap-1'>
-          {isSelected && (
-            <div className='flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'>
-              <Check className='h-4 w-4' />
-            </div>
-          )}
-        </div>
+        {isSelected && (
+          <div className='flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'>
+            <Check className='h-4 w-4' />
+          </div>
+        )}
       </div>
     </div>
   );

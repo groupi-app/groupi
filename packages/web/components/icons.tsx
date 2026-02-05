@@ -37,6 +37,7 @@ import {
   Lock,
   MessageSquare,
   MoreVertical,
+  Palette,
   RefreshCw,
   TriangleAlert as Warning,
   UserPlus as Invite,
@@ -174,6 +175,8 @@ export const Icons = {
   spoilerOff: Eye,
   heart: Heart,
   lock: Lock,
+  palette: Palette,
+  appearance: Palette, // Alias for palette
   discord: ({ ...props }: LucideProps) => (
     <svg
       viewBox='0 0 24 24'
