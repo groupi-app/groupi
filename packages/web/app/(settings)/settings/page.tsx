@@ -54,20 +54,26 @@ export default function SettingsPage() {
       showMobileBack={false}
     >
       <nav className='flex flex-col gap-2'>
-        {settingsConfig.settingsNav.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              'flex items-center justify-between w-full rounded-card p-4',
-              'bg-card hover:bg-accent/80 transition-colors',
-              'border border-border'
-            )}
-          >
-            <span className='font-medium'>{item.title}</span>
-            <Icons.forward className='h-5 w-5 text-muted-foreground' />
-          </Link>
-        ))}
+        {settingsConfig.settingsNav.map(item => {
+          const Icon = Icons[item.icon];
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex items-center justify-between w-full rounded-card p-4',
+                'bg-card hover:bg-accent/80 transition-colors',
+                'border border-border'
+              )}
+            >
+              <div className='flex items-center gap-3'>
+                <Icon className='h-5 w-5 text-muted-foreground' />
+                <span className='font-medium'>{item.title}</span>
+              </div>
+              <Icons.forward className='h-5 w-5 text-muted-foreground' />
+            </Link>
+          );
+        })}
       </nav>
     </SettingsPageTemplate>
   );

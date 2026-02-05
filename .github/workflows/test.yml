@@ -2,9 +2,9 @@ name: Comprehensive Test Suite
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, test, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, test, develop]
 
 env:
   # Global test environment variables
@@ -23,7 +23,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20]
+        # Vite 7.x and Vitest 4.x require Node 20+
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code
@@ -69,7 +70,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20]
+        # Vite 7.x and Vitest 4.x require Node 20+
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code
@@ -120,7 +122,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20]
+        # Vite 7.x and Vitest 4.x require Node 20+
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code

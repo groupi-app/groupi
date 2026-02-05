@@ -222,7 +222,7 @@ export function FriendListItem({
                 size='icon'
                 onClick={onRemove}
                 disabled={isLoading}
-                className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                className='hover:bg-destructive hover:text-destructive-foreground'
               >
                 <Icons.close className='size-4' />
               </Button>
@@ -267,7 +267,7 @@ export function FriendListItem({
             disabled={isLoading}
             isLoading={isLoading}
             icon={<Icons.close className='size-4' />}
-            className='text-destructive hover:text-destructive hover:bg-destructive/10'
+            className='hover:bg-destructive hover:text-destructive-foreground'
           >
             Cancel
           </Button>

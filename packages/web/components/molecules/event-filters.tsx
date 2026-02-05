@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export type TimeFilter = 'upcoming' | 'past';
 export type SortBy = 'title' | 'createdat' | 'eventdate' | 'lastactivity';
@@ -38,47 +39,6 @@ export interface EventFiltersProps {
   className?: string;
 }
 
-interface FilterButtonProps {
-  isSelected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  count?: number;
-}
-
-function FilterButton({
-  isSelected,
-  onClick,
-  children,
-  count,
-}: FilterButtonProps) {
-  return (
-    <button
-      role='tab'
-      aria-selected={isSelected}
-      onClick={onClick}
-      className={cn(
-        'px-3 py-1.5 rounded-button text-sm font-medium transition-all',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        isSelected
-          ? 'bg-background text-foreground shadow-raised'
-          : 'text-muted-foreground hover:text-foreground'
-      )}
-    >
-      {children}
-      {count !== undefined && count > 0 && (
-        <span
-          className={cn(
-            'ml-1.5 text-xs',
-            isSelected ? 'text-muted-foreground' : ''
-          )}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
-
 /**
  * EventFilters - Time filter tabs and ownership toggle
  *
@@ -97,27 +57,41 @@ export function EventFilters({
 }: EventFiltersProps) {
   return (
     <div className={cn('flex flex-wrap items-center gap-4', className)}>
-      {/* Time filter */}
-      <div
-        className='inline-flex gap-1 p-1 rounded-button bg-muted'
-        role='tablist'
-        aria-label='Filter by time'
+      {/* Time filter with animated tabs */}
+      <Tabs
+        value={timeFilter}
+        onValueChange={value => onTimeFilterChange(value as TimeFilter)}
+        layoutId='event-time-filter'
       >
-        <FilterButton
-          isSelected={timeFilter === 'upcoming'}
-          onClick={() => onTimeFilterChange('upcoming')}
-          count={counts?.upcoming}
-        >
-          Upcoming
-        </FilterButton>
-        <FilterButton
-          isSelected={timeFilter === 'past'}
-          onClick={() => onTimeFilterChange('past')}
-          count={counts?.past}
-        >
-          Attended
-        </FilterButton>
-      </div>
+        <TabsList aria-label='Filter by time'>
+          <TabsTrigger value='upcoming'>
+            Upcoming
+            {counts?.upcoming !== undefined && counts.upcoming > 0 && (
+              <span
+                className={cn(
+                  'ml-1.5 text-xs',
+                  timeFilter === 'upcoming' ? 'text-muted-foreground' : ''
+                )}
+              >
+                {counts.upcoming}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value='past'>
+            Attended
+            {counts?.past !== undefined && counts.past > 0 && (
+              <span
+                className={cn(
+                  'ml-1.5 text-xs',
+                  timeFilter === 'past' ? 'text-muted-foreground' : ''
+                )}
+              >
+                {counts.past}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Ownership toggle */}
       <div className='flex items-center gap-2'>

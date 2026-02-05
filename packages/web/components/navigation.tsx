@@ -4,6 +4,7 @@ import { NotificationsDesktop } from './notifications-desktop';
 import { ProfileDropdown } from './profile-dropdown';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Authenticated,
   Unauthenticated,
@@ -80,7 +81,7 @@ export function Navigation({ items }: { items: NavItem[] }) {
 
         <AuthLoading>
           <div className='hidden md:block'>
-            <div className='animate-spin h-6 w-6 border-2 border-border border-t-foreground rounded-full'></div>
+            <Skeleton className='h-10 w-24 rounded-button' />
           </div>
         </AuthLoading>
       </div>

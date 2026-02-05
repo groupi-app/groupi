@@ -16,7 +16,9 @@ echo "=== Convex + Vercel Build ==="
 echo "VERCEL_ENV: $VERCEL_ENV"
 echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
 
-BUILD_CMD='pnpm --filter @groupi/web build'
+# Build command that also captures the Convex URL for E2E tests
+# The URL is written to a static file that can be fetched by the E2E workflow
+BUILD_CMD='pnpm --filter @groupi/web build && mkdir -p packages/web/public/.well-known && echo "{\"convexUrl\": \"$NEXT_PUBLIC_CONVEX_URL\", \"branch\": \"$VERCEL_GIT_COMMIT_REF\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > packages/web/public/.well-known/e2e-config.json'
 
 if [ "$VERCEL_ENV" = "production" ]; then
   echo "Deploying to Convex production..."
@@ -30,12 +32,15 @@ else
   PREVIEW_NAME=$(echo "$PREVIEW_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
 
   echo "Deploying to Convex preview: $PREVIEW_NAME..."
-  echo "(Preview env vars should be set via CLI: npx convex env set VAR value --preview-name $PREVIEW_NAME)"
 
   npx convex deploy \
     --preview-create "$PREVIEW_NAME" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "$BUILD_CMD"
+
+  # Enable E2E testing functions on preview deployments
+  echo "Enabling E2E testing on preview: $PREVIEW_NAME..."
+  npx convex env set E2E_TESTING true --preview-name "$PREVIEW_NAME" || echo "Warning: Could not set E2E_TESTING env var"
 fi
 
 echo "=== Build Complete ==="

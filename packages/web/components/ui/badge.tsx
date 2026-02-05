@@ -4,23 +4,23 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  // Pill-shaped badge with semantic tokens (Duolingo-style)
-  'inline-flex items-center rounded-badge border px-2 py-0.5 text-xs font-semibold transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  // Sticker journal aesthetic - pill badges with white border
+  'inline-flex items-center rounded-badge px-2 py-0.5 text-xs font-semibold transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
+          'bg-primary text-primary-foreground border-2 border-white shadow-raised hover:bg-primary/80',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'bg-secondary text-secondary-foreground border-2 border-white shadow-raised hover:bg-secondary/80',
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground border-border',
+          'bg-destructive text-destructive-foreground border-2 border-white shadow-raised hover:bg-destructive/80',
+        outline: 'text-foreground border border-border',
         success:
-          'border-transparent bg-bg-success text-text-on-primary hover:opacity-80',
+          'bg-bg-success text-text-on-primary border-2 border-white shadow-raised hover:opacity-80',
         warning:
-          'border-transparent bg-bg-warning text-text-primary hover:opacity-80',
-        info: 'border-transparent bg-bg-info text-text-on-primary hover:opacity-80',
+          'bg-bg-warning text-text-primary border-2 border-white shadow-raised hover:opacity-80',
+        info: 'bg-bg-info text-text-on-primary border-2 border-white shadow-raised hover:opacity-80',
       },
     },
     defaultVariants: {

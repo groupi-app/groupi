@@ -57,6 +57,88 @@ type GroupiFixtures = {
 };
 
 /**
+ * Helper to set up page error handling to prevent hanging tests.
+ */
+function setupPageErrorHandler(page: Page): void {
+  page.on('pageerror', error => {
+    // Log but don't throw - let the test continue
+    // eslint-disable-next-line no-console
+    console.warn('[Page Error]', error.message);
+  });
+}
+
+/**
+ * Helper to authenticate via the E2E login endpoint or magic link fallback.
+ * Returns true if authentication was successful.
+ */
+async function authenticateUser(
+  page: Page,
+  baseURL: string,
+  email: string,
+  seeder: ConvexSeeder,
+  targetUrl: string = '/events'
+): Promise<boolean> {
+  setupPageErrorHandler(page);
+
+  try {
+    // Try the fast E2E login endpoint first
+    const response = await page.request.post(`${baseURL}/api/auth/e2e-login`, {
+      data: {
+        email,
+        callbackURL: targetUrl,
+      },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok()) {
+      const result = await response.json();
+
+      if (result.magicLinkUrl) {
+        await page.goto(result.magicLinkUrl);
+        // Wait for navigation to complete - use domcontentloaded instead of networkidle
+        await page.waitForURL(/\/(events|onboarding|create|settings)/, {
+          timeout: 10000,
+          waitUntil: 'domcontentloaded',
+        });
+        return true;
+      }
+    }
+
+    // Fallback: Create magic link token directly (bypasses email sending)
+    const magicLinkUrl = await seeder.createMagicLinkToken(email);
+
+    if (magicLinkUrl) {
+      await page.goto(magicLinkUrl);
+      // Wait for redirect after magic link verification
+      await page.waitForURL(/\/(events|onboarding|create|settings|sign-in)/, {
+        timeout: 10000,
+        waitUntil: 'domcontentloaded',
+      });
+
+      // If still on sign-in, navigate to target
+      if (page.url().includes('/sign-in')) {
+        await page.goto(`${baseURL}${targetUrl}`);
+        await page.waitForURL(/\/(events|onboarding|create|settings)/, {
+          timeout: 5000,
+          waitUntil: 'domcontentloaded',
+        });
+      }
+      return true;
+    }
+
+    // eslint-disable-next-line no-console
+    console.warn(`Failed to create magic link token for ${email}`);
+    return false;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Authentication setup error:', error);
+    return false;
+  }
+}
+
+/**
  * Extended test with Groupi-specific fixtures.
  */
 export const test = base.extend<GroupiFixtures>({
@@ -68,7 +150,8 @@ export const test = base.extend<GroupiFixtures>({
   },
 
   // Seeder - auto-cleanup after each test
-  seeder: async (_, use) => {
+  // eslint-disable-next-line no-empty-pattern
+  seeder: async ({}, use) => {
     const seeder = new ConvexSeeder();
     await use(seeder);
     await seeder.cleanup();
@@ -127,84 +210,8 @@ export const test = base.extend<GroupiFixtures>({
     const page = await context.newPage();
     const seeder = new ConvexSeeder();
 
-    try {
-      // Use the E2E login endpoint which handles the full magic link flow
-      // and returns the signed session cookie
-      const response = await page.request.post(
-        `${baseURL}/api/auth/e2e-login`,
-        {
-          data: {
-            email: authenticatedUser.email,
-            callbackURL: '/events',
-          },
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok()) {
-        const result = await response.json();
-
-        // Navigate to a protected page to establish the session
-        if (result.magicLinkUrl) {
-          await page.goto(result.magicLinkUrl);
-          await page.waitForURL(/\/(events|onboarding|create)/, {
-            timeout: 15000,
-          });
-        }
-      } else {
-        // Fallback: Try UI-based magic link flow
-        await page.goto(`${baseURL}/sign-in`);
-        await page.locator('#identifier').fill(authenticatedUser.email);
-        await page.getByRole('button', { name: /send magic link/i }).click();
-
-        // Wait a bit for the magic link to be sent and verification record created
-        await page.waitForTimeout(1500);
-
-        // Poll for the magic link verification record with retries
-        const magicLinkUrl = await seeder.waitForMagicLink(
-          authenticatedUser.email,
-          25, // 25 attempts
-          400 // 400ms between attempts (10 seconds total)
-        );
-
-        if (magicLinkUrl) {
-          // Navigate to magic link to verify and establish session
-          await page.goto(magicLinkUrl);
-
-          // Wait for the verification to complete
-          // The magic link might redirect or might stay on the verification page
-          await page.waitForTimeout(2000);
-
-          // Now navigate to a protected page to verify authentication worked
-          await page.goto(`${baseURL}/events`);
-
-          // Wait for either events page or onboarding redirect
-          try {
-            await page.waitForURL(/\/(events|onboarding|create)/, {
-              timeout: 10000,
-            });
-          } catch {
-            // If we're still on sign-in, authentication failed
-            const currentUrl = page.url();
-            if (currentUrl.includes('/sign-in')) {
-              console.warn(
-                `Magic link verification failed - still on sign-in page`
-              );
-            }
-          }
-        } else {
-          console.warn(
-            `Failed to get magic link for ${authenticatedUser.email}`
-          );
-        }
-      }
-    } catch (error) {
-      console.warn('Authentication setup error:', error);
-    } finally {
-      await page.close();
-    }
+    await authenticateUser(page, baseURL!, authenticatedUser.email, seeder);
+    await page.close();
 
     await use(context);
     await context.close();
@@ -213,6 +220,7 @@ export const test = base.extend<GroupiFixtures>({
   // Page with auth already set up
   authenticatedPage: async ({ authenticatedContext }, use) => {
     const page = await authenticatedContext.newPage();
+    setupPageErrorHandler(page);
     await use(page);
     await page.close();
   },
@@ -239,54 +247,14 @@ export const test = base.extend<GroupiFixtures>({
     const page = await context.newPage();
     const seeder = new ConvexSeeder();
 
-    try {
-      // Use UI-based magic link flow for unonboarded users
-      await page.goto(`${baseURL}/sign-in`);
-      await page.locator('#identifier').fill(unonboardedUser.email);
-      await page.getByRole('button', { name: /send magic link/i }).click();
-
-      // Wait for the magic link to be sent
-      await page.waitForTimeout(2000);
-
-      // Poll for the magic link with more retries for mobile browsers
-      const magicLinkUrl = await seeder.waitForMagicLink(
-        unonboardedUser.email,
-        30,
-        500
-      );
-
-      if (magicLinkUrl) {
-        await page.goto(magicLinkUrl);
-
-        // Wait for magic link verification to complete
-        // On mobile browsers, this can take longer
-        await page.waitForTimeout(3000);
-
-        // Navigate to onboarding and wait for it to fully load
-        await page.goto(`${baseURL}/onboarding`);
-
-        // Wait for either the onboarding form or redirect
-        try {
-          await page.waitForURL(/\/(onboarding|events)/, { timeout: 10000 });
-        } catch {
-          // If still on sign-in, the auth failed - log for debugging
-          const currentUrl = page.url();
-          if (currentUrl.includes('/sign-in')) {
-            console.warn(
-              `Unonboarded auth failed - still on sign-in page for ${unonboardedUser.email}`
-            );
-          }
-        }
-      } else {
-        console.warn(
-          `Failed to get magic link for unonboarded user ${unonboardedUser.email}`
-        );
-      }
-    } catch (error) {
-      console.warn('Unonboarded auth setup error:', error);
-    } finally {
-      await page.close();
-    }
+    await authenticateUser(
+      page,
+      baseURL!,
+      unonboardedUser.email,
+      seeder,
+      '/onboarding'
+    );
+    await page.close();
 
     await use(context);
     await context.close();
@@ -295,6 +263,7 @@ export const test = base.extend<GroupiFixtures>({
   // Page for unonboarded user
   unonboardedPage: async ({ unonboardedContext }, use) => {
     const page = await unonboardedContext.newPage();
+    setupPageErrorHandler(page);
     await use(page);
     await page.close();
   },

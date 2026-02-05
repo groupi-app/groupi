@@ -1,14 +1,19 @@
 name: E2E Tests
 
 on:
-  push:
-    branches: [main, test, develop]
-  pull_request:
-    branches: [main, test, develop]
+  # Trigger on Vercel deployment success
+  deployment_status:
+  # Also allow manual trigger for debugging
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Vercel deployment URL to test'
+        required: true
+        type: string
 
-# Cancel in-progress runs for the same branch
+# Cancel in-progress runs for the same deployment
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: e2e-${{ github.event.deployment.id || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -17,82 +22,174 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # Only run on successful Vercel deployments (filter by vercel.app URL)
+    # Or on manual workflow_dispatch
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' &&
+       github.event.deployment_status.state == 'success' &&
+       contains(github.event.deployment_status.target_url, 'vercel.app'))
+
+    env:
+      BETTER_AUTH_SECRET: 'test-secret-key-32-chars-minimum'
+      E2E_TESTING: 'true'
+
     steps:
+      - name: Get deployment URL
+        id: deployment
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DEPLOYMENT_URL="${{ github.event.inputs.deployment_url }}"
+          else
+            DEPLOYMENT_URL="${{ github.event.deployment_status.target_url }}"
+          fi
+
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "🚀 Deployment URL: $DEPLOYMENT_URL"
+
+      - name: Fetch E2E config from deployment
+        id: e2e-config
+        run: |
+          DEPLOYMENT_URL="${{ steps.deployment.outputs.deployment_url }}"
+          CONFIG_URL="${DEPLOYMENT_URL}/.well-known/e2e-config.json"
+
+          echo "Fetching E2E config from: $CONFIG_URL"
+
+          # Wait a bit for the deployment to be fully ready
+          sleep 10
+
+          # Fetch the config with retries
+          for i in 1 2 3 4 5; do
+            HTTP_CODE=$(curl -s -o /tmp/e2e-config.json -w "%{http_code}" "$CONFIG_URL" || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Successfully fetched E2E config"
+              cat /tmp/e2e-config.json
+
+              # Extract Convex URL from JSON
+              CONVEX_URL=$(cat /tmp/e2e-config.json | jq -r '.convexUrl // empty')
+
+              if [ -n "$CONVEX_URL" ]; then
+                echo "convex_url=$CONVEX_URL" >> $GITHUB_OUTPUT
+                echo "✅ Convex URL: $CONVEX_URL"
+                exit 0
+              else
+                echo "⚠️ E2E config found but convexUrl is missing"
+              fi
+            else
+              echo "Attempt $i: Got HTTP $HTTP_CODE, retrying in 10s..."
+              sleep 10
+            fi
+          done
+
+          echo "::warning::Could not fetch E2E config from deployment. The /.well-known/e2e-config.json endpoint may not exist."
+          echo "This happens on deployments before the build script was updated."
+          echo "skip=true" >> $GITHUB_OUTPUT
+
+      - name: Skip notice
+        if: steps.e2e-config.outputs.skip == 'true'
+        run: |
+          echo "::warning::E2E tests skipped - Could not get Convex URL from deployment"
+          echo "The deployment may be missing the /.well-known/e2e-config.json file."
+          echo "This file is created during Vercel build to expose the Convex URL for E2E tests."
+
       - name: Checkout code
+        if: steps.e2e-config.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        if: steps.e2e-config.outputs.skip != 'true'
+        uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.12.1
 
       - name: Setup Node.js
+        if: steps.e2e-config.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: steps.e2e-config.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
+        if: steps.e2e-config.outputs.skip != 'true'
         run: pnpm --filter @groupi/web exec playwright install --with-deps chromium
 
-      - name: Start dev server
-        run: |
-          pnpm dev:web &
-          echo "Waiting for dev server to start..."
-        env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
-
-      - name: Wait for server
-        run: |
-          # Wait for the dev server to be ready
-          npx wait-on http://localhost:3000 --timeout 60000
-
       - name: Run E2E tests
-        run: pnpm e2e --project=chromium
+        if: steps.e2e-config.outputs.skip != 'true'
         env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
-          E2E_TESTING: 'true'
+          E2E_BASE_URL: ${{ steps.deployment.outputs.deployment_url }}
+          SITE_URL: ${{ steps.deployment.outputs.deployment_url }}
+          BETTER_AUTH_URL: ${{ steps.deployment.outputs.deployment_url }}
+          CONVEX_URL: ${{ steps.e2e-config.outputs.convex_url }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ steps.e2e-config.outputs.convex_url }}
+        run: |
+          echo "🧪 Running E2E tests"
+          echo "   Base URL: $E2E_BASE_URL"
+          echo "   Convex URL: $CONVEX_URL"
+          pnpm e2e --project=chromium
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.e2e-config.outputs.skip != 'true'
         with:
-          name: playwright-report
+          name: playwright-report-${{ github.event.deployment.id || github.run_id }}
           path: packages/web/e2e/playwright-report/
           retention-days: 30
 
-      - name: Upload test artifacts
+      - name: Upload test artifacts on failure
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() && steps.e2e-config.outputs.skip != 'true'
         with:
-          name: test-results
+          name: test-results-${{ github.event.deployment.id || github.run_id }}
           path: packages/web/e2e/test-results/
           retention-days: 7
 
-  # Optional: Run on multiple browsers in a matrix
+  # Multi-browser tests only on main/test branches after primary tests pass
   e2e-multi-browser:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: e2e # Only run after main tests pass
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/test')
+    needs: e2e
+    if: |
+      needs.e2e.result == 'success' &&
+      github.event_name == 'deployment_status' &&
+      (contains(github.event.deployment_status.environment, 'Production') ||
+       contains(github.event.deployment_status.environment, 'test'))
 
     strategy:
       fail-fast: false
       matrix:
         browser: [firefox, webkit]
 
+    env:
+      BETTER_AUTH_SECRET: 'test-secret-key-32-chars-minimum'
+      E2E_TESTING: 'true'
+
     steps:
+      - name: Get deployment URL
+        id: deployment
+        run: |
+          DEPLOYMENT_URL="${{ github.event.deployment_status.target_url }}"
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Fetch E2E config
+        id: e2e-config
+        run: |
+          CONFIG_URL="${{ steps.deployment.outputs.deployment_url }}/.well-known/e2e-config.json"
+          CONVEX_URL=$(curl -s "$CONFIG_URL" | jq -r '.convexUrl // empty')
+          echo "convex_url=$CONVEX_URL" >> $GITHUB_OUTPUT
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.12.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -106,25 +203,19 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @groupi/web exec playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Start dev server
-        run: |
-          pnpm dev:web &
-        env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
-
-      - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 60000
-
       - name: Run E2E tests
-        run: pnpm e2e --project=${{ matrix.browser }}
         env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
-          E2E_TESTING: 'true'
+          E2E_BASE_URL: ${{ steps.deployment.outputs.deployment_url }}
+          SITE_URL: ${{ steps.deployment.outputs.deployment_url }}
+          BETTER_AUTH_URL: ${{ steps.deployment.outputs.deployment_url }}
+          CONVEX_URL: ${{ steps.e2e-config.outputs.convex_url }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ steps.e2e-config.outputs.convex_url }}
+        run: pnpm e2e --project=${{ matrix.browser }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-${{ matrix.browser }}-${{ github.event.deployment.id }}
           path: packages/web/e2e/playwright-report/
           retention-days: 30

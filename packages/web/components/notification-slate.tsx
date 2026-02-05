@@ -309,7 +309,7 @@ export function NotificationSlate({
       )}
       <Button
         variant='ghost'
-        className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
         onClick={async () => {
           setSheetOpen(false);
           try {
@@ -505,7 +505,7 @@ export function NotificationSlate({
         // Use a button/div for action-based notifications
         <button
           onClick={handleNotificationClick}
-          className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all w-full text-left'
+          className='hover:bg-accent/80 hover:shadow-raised flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast w-full text-left rounded-card'
         >
           {notificationInner}
         </button>
@@ -514,7 +514,7 @@ export function NotificationSlate({
         <Link
           onClick={handleNotificationClick}
           href={getNotificationLink()}
-          className='hover:bg-accent/80 flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all'
+          className='hover:bg-accent/80 hover:shadow-raised flex items-center text-card-foreground gap-3 p-2 pr-10 transition-all duration-fast rounded-card'
         >
           {notificationInner}
         </Link>

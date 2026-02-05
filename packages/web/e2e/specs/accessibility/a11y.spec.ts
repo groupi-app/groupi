@@ -18,7 +18,7 @@ test.describe('Accessibility', () => {
       await page.goto('/sign-in');
 
       // Wait for page to load
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -37,7 +37,7 @@ test.describe('Accessibility', () => {
     }) => {
       await page.goto('/');
 
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa'])
@@ -57,7 +57,7 @@ test.describe('Accessibility', () => {
     }) => {
       await authenticatedPage.goto('/events');
 
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({
         page: authenticatedPage,
@@ -77,7 +77,7 @@ test.describe('Accessibility', () => {
     }) => {
       await authenticatedPage.goto('/create');
 
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({
         page: authenticatedPage,
@@ -97,7 +97,7 @@ test.describe('Accessibility', () => {
     }) => {
       await authenticatedPage.goto('/settings');
 
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({
         page: authenticatedPage,
@@ -263,7 +263,7 @@ test.describe('Accessibility', () => {
     test('sign-in page meets color contrast requirements', async ({ page }) => {
       await page.goto('/sign-in');
 
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2aa'])
@@ -274,6 +274,7 @@ test.describe('Accessibility', () => {
 
       // Log violations for debugging
       if (accessibilityScanResults.violations.length > 0) {
+        // eslint-disable-next-line no-console
         console.log(
           'Color contrast violations:',
           JSON.stringify(accessibilityScanResults.violations, null, 2)
