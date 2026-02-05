@@ -43,8 +43,8 @@ export function StickerCard({
       className={cn(
         // Card base styles
         'bg-card rounded-card p-6',
-        // Shadow and border for sticker effect
-        'shadow-raised border-[3px] border-white',
+        // Shadow for depth
+        'shadow-raised',
         // Ring for subtle definition
         'ring-1 ring-border/40',
         className
