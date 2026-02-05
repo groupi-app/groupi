@@ -47,10 +47,9 @@ export function ProfileDropdown({
   const openFriendsDialog = useFriendsDialogStore(state => state.openDialog);
 
   const handleSignOut = async () => {
-    // Navigate to homepage first to prevent auth errors on the current page
-    router.push('/');
-    // Then sign out and refresh
+    // Sign out first, then navigate to homepage
     await signOut();
+    router.push('/');
     router.refresh();
   };
 
