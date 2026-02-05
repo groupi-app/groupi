@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { HostingBadge } from '@/components/atoms';
+import { HostingBadge, StickerIcon } from '@/components/atoms';
 import { Icons } from '@/components/icons';
 import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { Doc, Id } from '@/convex/_generated/dataModel';
@@ -131,7 +131,7 @@ export function VisualEventCard({
           </Button>
           <Button
             variant='ghost'
-            className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
             onClick={() => {
               setSheetOpen(false);
               setDeleteDialogOpen(true);
@@ -144,7 +144,7 @@ export function VisualEventCard({
       ) : (
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setSheetOpen(false);
             setLeaveDialogOpen(true);
@@ -382,8 +382,8 @@ export function VisualEventCard({
             )}
 
             {/* Date/Time */}
-            <div className='flex items-center gap-1.5 text-sm'>
-              <Icons.date className='size-4 text-primary shrink-0' />
+            <div className='flex items-center gap-2 text-sm'>
+              <StickerIcon icon={Icons.date} size='xs' color='primary' />
               <span className='text-muted-foreground'>
                 {event.chosenDateTime
                   ? formatDateTimeRangeShort(
@@ -396,8 +396,8 @@ export function VisualEventCard({
 
             {/* Location */}
             {event.location && (
-              <div className='flex items-center gap-1.5 text-sm'>
-                <Icons.location className='size-4 text-primary shrink-0' />
+              <div className='flex items-center gap-2 text-sm'>
+                <StickerIcon icon={Icons.location} size='xs' color='primary' />
                 <span className='text-muted-foreground line-clamp-1'>
                   {event.location}
                 </span>

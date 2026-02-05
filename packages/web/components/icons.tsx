@@ -28,13 +28,16 @@ import {
   FileVideo,
   Fingerprint,
   Heading2,
+  Heart,
   Image,
   Infinity as Infinite,
   Info,
   Key,
   LayoutDashboard,
+  Lock,
   MessageSquare,
   MoreVertical,
+  Palette,
   RefreshCw,
   TriangleAlert as Warning,
   UserPlus as Invite,
@@ -170,6 +173,10 @@ export const Icons = {
   eyeOff: EyeOff,
   spoiler: EyeOff,
   spoilerOff: Eye,
+  heart: Heart,
+  lock: Lock,
+  palette: Palette,
+  appearance: Palette, // Alias for palette
   discord: ({ ...props }: LucideProps) => (
     <svg
       viewBox='0 0 24 24'

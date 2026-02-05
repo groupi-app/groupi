@@ -18,16 +18,19 @@ import {
 } from '@/components/auth/auth-wrappers';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Check, Lock, Monitor, Moon, Sun } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  Lock,
+  Palette,
+  SplitSquareHorizontal,
+} from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   ThemeCard,
   CustomThemeCard,
@@ -124,77 +127,67 @@ function AuthenticatedAppearanceSettings() {
     null
   );
 
-  // Derive current mode settings
-  const themeMode = useMemo(() => {
-    if (themePreferences?.useSystemPreference) return 'system';
-    const currentTheme = baseThemes.find(t => t.id === currentThemeId);
-    return currentTheme?.mode === 'dark' ? 'dark' : 'light';
-  }, [themePreferences, currentThemeId, baseThemes]);
+  // Expandable system theme picker state
+  const [lightThemeExpanded, setLightThemeExpanded] = useState(false);
+  const [darkThemeExpanded, setDarkThemeExpanded] = useState(false);
 
-  // Handle theme mode change
+  // Simplified mode: 'single' or 'system'
+  const themeMode = useMemo(() => {
+    return themePreferences?.useSystemPreference ? 'system' : 'single';
+  }, [themePreferences]);
+
+  // Handle switching between single theme and match system modes
   const handleModeChange = useCallback(
-    async (mode: 'system' | 'light' | 'dark') => {
-      const systemLightId = lightThemes[0]?.id || 'groupi-light';
-      const systemDarkId = darkThemes[0]?.id || 'groupi-dark';
+    async (mode: 'single' | 'system') => {
+      const defaultLightId = lightThemes[0]?.id || 'groupi-light';
+      const defaultDarkId = darkThemes[0]?.id || 'groupi-dark';
 
       if (mode === 'system') {
-        // Apply system preference mode
+        // Switch to system preference mode
+        const systemLightId =
+          themePreferences?.systemLightThemeId || defaultLightId;
+        const systemDarkId =
+          themePreferences?.systemDarkThemeId || defaultDarkId;
         setSystemPreference(systemLightId, systemDarkId);
-      } else {
-        // Determine which theme to apply
-        const themeId =
-          mode === 'dark'
-            ? themePreferences?.selectedThemeId &&
-              darkThemes.find(t => t.id === themePreferences.selectedThemeId)
-              ? themePreferences.selectedThemeId
-              : systemDarkId
-            : themePreferences?.selectedThemeId &&
-                lightThemes.find(t => t.id === themePreferences.selectedThemeId)
-              ? themePreferences.selectedThemeId
-              : systemLightId;
 
-        setBaseTheme(themeId);
-      }
-
-      // Save to database in background
-      setIsSaving(true);
-      try {
-        if (mode === 'system') {
+        setIsSaving(true);
+        try {
           await savePreference({
             selectedThemeType: 'base',
-            selectedThemeId: systemLightId,
+            selectedThemeId: currentThemeId,
             useSystemPreference: true,
             systemLightThemeId: systemLightId,
             systemDarkThemeId: systemDarkId,
           });
-        } else {
-          const themeId =
-            mode === 'dark'
-              ? themePreferences?.selectedThemeId &&
-                darkThemes.find(t => t.id === themePreferences.selectedThemeId)
-                ? themePreferences.selectedThemeId
-                : systemDarkId
-              : themePreferences?.selectedThemeId &&
-                  lightThemes.find(
-                    t => t.id === themePreferences.selectedThemeId
-                  )
-                ? themePreferences.selectedThemeId
-                : systemLightId;
+          toast.success('Switched to match system preference');
+        } catch (error) {
+          console.error('Failed to save theme preference:', error);
+          toast.error('Failed to save theme preference');
+        } finally {
+          setIsSaving(false);
+        }
+      } else {
+        // Switch to single theme mode - use currently active theme
+        setBaseTheme(currentThemeId);
 
+        setIsSaving(true);
+        try {
           await savePreference({
             selectedThemeType: 'base',
-            selectedThemeId: themeId,
+            selectedThemeId: currentThemeId,
             useSystemPreference: false,
-            systemLightThemeId: systemLightId,
-            systemDarkThemeId: systemDarkId,
+            systemLightThemeId:
+              themePreferences?.systemLightThemeId || defaultLightId,
+            systemDarkThemeId:
+              themePreferences?.systemDarkThemeId || defaultDarkId,
           });
+          toast.success('Switched to single theme mode');
+        } catch (error) {
+          console.error('Failed to save theme preference:', error);
+          toast.error('Failed to save theme preference');
+        } finally {
+          setIsSaving(false);
         }
-        toast.success('Theme preference saved');
-      } catch (error) {
-        console.error('Failed to save theme preference:', error);
-        toast.error('Failed to save theme preference');
-      } finally {
-        setIsSaving(false);
       }
     },
     [
@@ -204,6 +197,7 @@ function AuthenticatedAppearanceSettings() {
       lightThemes,
       darkThemes,
       themePreferences,
+      currentThemeId,
     ]
   );
 
@@ -250,42 +244,45 @@ function AuthenticatedAppearanceSettings() {
     ]
   );
 
-  // Handle system theme selection
+  // Handle system theme selection - allows ANY theme for either preference
   const handleSystemThemeChange = useCallback(
     async (type: 'light' | 'dark', themeId: string) => {
+      const defaultLightId = lightThemes[0]?.id || 'groupi-light';
+      const defaultDarkId = darkThemes[0]?.id || 'groupi-dark';
+
+      const newLightId =
+        type === 'light'
+          ? themeId
+          : themePreferences?.systemLightThemeId || defaultLightId;
+      const newDarkId =
+        type === 'dark'
+          ? themeId
+          : themePreferences?.systemDarkThemeId || defaultDarkId;
+
+      // Apply system preference with new theme mapping
+      setSystemPreference(newLightId, newDarkId);
+
+      // Collapse the card after selection
+      if (type === 'light') {
+        setLightThemeExpanded(false);
+      } else {
+        setDarkThemeExpanded(false);
+      }
+
       setIsSaving(true);
       try {
-        const updates = {
-          selectedThemeType: 'base' as const,
-          selectedThemeId:
-            themePreferences?.selectedThemeId ||
-            lightThemes[0]?.id ||
-            'groupi-light',
+        await savePreference({
+          selectedThemeType: 'base',
+          selectedThemeId: themePreferences?.selectedThemeId || defaultLightId,
           useSystemPreference: true,
-          systemLightThemeId:
-            type === 'light'
-              ? themeId
-              : themePreferences?.systemLightThemeId ||
-                lightThemes[0]?.id ||
-                'groupi-light',
-          systemDarkThemeId:
-            type === 'dark'
-              ? themeId
-              : themePreferences?.systemDarkThemeId ||
-                darkThemes[0]?.id ||
-                'groupi-dark',
-        };
+          systemLightThemeId: newLightId,
+          systemDarkThemeId: newDarkId,
+        });
 
-        await savePreference(updates);
-
-        // Apply the theme if current system matches
-        const isDark = window.matchMedia(
-          '(prefers-color-scheme: dark)'
-        ).matches;
-        if ((type === 'dark' && isDark) || (type === 'light' && !isDark)) {
-          setBaseTheme(themeId);
-        }
-        toast.success('Theme preference saved');
+        const theme = baseThemes.find(t => t.id === themeId);
+        toast.success(
+          `${type === 'light' ? 'Light' : 'Dark'} system theme set to ${theme?.name || themeId}`
+        );
       } catch (error) {
         console.error('Failed to save theme preference:', error);
         toast.error('Failed to save theme preference');
@@ -293,8 +290,30 @@ function AuthenticatedAppearanceSettings() {
         setIsSaving(false);
       }
     },
-    [savePreference, setBaseTheme, themePreferences, lightThemes, darkThemes]
+    [
+      savePreference,
+      setSystemPreference,
+      themePreferences,
+      lightThemes,
+      darkThemes,
+      baseThemes,
+    ]
   );
+
+  // Get current system theme names for card headers
+  const currentLightThemeName = useMemo(() => {
+    const themeId =
+      themePreferences?.systemLightThemeId ||
+      lightThemes[0]?.id ||
+      'groupi-light';
+    return baseThemes.find(t => t.id === themeId)?.name || themeId;
+  }, [themePreferences, baseThemes, lightThemes]);
+
+  const currentDarkThemeName = useMemo(() => {
+    const themeId =
+      themePreferences?.systemDarkThemeId || darkThemes[0]?.id || 'groupi-dark';
+    return baseThemes.find(t => t.id === themeId)?.name || themeId;
+  }, [themePreferences, baseThemes, darkThemes]);
 
   // Handle custom theme deletion - opens confirmation dialog
   const handleDeleteCustomTheme = useCallback((themeId: Id<'customThemes'>) => {
@@ -412,163 +431,283 @@ function AuthenticatedAppearanceSettings() {
       description='Customize how Groupi looks.'
     >
       <div className='space-y-8'>
-        {/* Theme Mode Section */}
+        {/* Theme Mode Section - Two options: Single Theme or Match System */}
         <section className='space-y-4'>
           <h3 className='text-lg font-semibold text-foreground'>Theme Mode</h3>
-          <div className='grid gap-3'>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <ThemeModeOption
+              mode='single'
+              currentMode={themeMode}
+              onSelect={() => handleModeChange('single')}
+              icon={<Palette className='h-5 w-5' />}
+              title='Single Theme'
+              description='Use one theme regardless of system settings'
+              disabled={isSaving}
+            />
             <ThemeModeOption
               mode='system'
               currentMode={themeMode}
               onSelect={() => handleModeChange('system')}
-              icon={<Monitor className='h-5 w-5' />}
-              title='Use system preference'
-              description='Automatically switch between light and dark themes'
-              disabled={isSaving}
-            />
-            <ThemeModeOption
-              mode='light'
-              currentMode={themeMode}
-              onSelect={() => handleModeChange('light')}
-              icon={<Sun className='h-5 w-5' />}
-              title='Always light'
-              description='Use light theme regardless of system settings'
-              disabled={isSaving}
-            />
-            <ThemeModeOption
-              mode='dark'
-              currentMode={themeMode}
-              onSelect={() => handleModeChange('dark')}
-              icon={<Moon className='h-5 w-5' />}
-              title='Always dark'
-              description='Use dark theme regardless of system settings'
+              icon={<SplitSquareHorizontal className='h-5 w-5' />}
+              title='Match System'
+              description='Use different themes for light and dark modes'
               disabled={isSaving}
             />
           </div>
         </section>
 
-        {/* System Theme Selectors (only show when using system preference) */}
+        {/* System Theme Pickers (only show when using system preference) */}
         {themeMode === 'system' && (
-          <section className='space-y-4 p-4 rounded-card bg-bg-surface border border-border'>
-            <h4 className='text-sm font-medium text-foreground'>
-              System Theme Selection
-            </h4>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='light-theme'
-                  className='text-sm text-muted-foreground'
-                >
-                  Light mode theme
-                </Label>
-                <Select
-                  value={
-                    themePreferences?.systemLightThemeId || lightThemes[0]?.id
-                  }
-                  onValueChange={value =>
-                    handleSystemThemeChange('light', value)
-                  }
-                  disabled={isSaving}
-                >
-                  <SelectTrigger id='light-theme'>
-                    <SelectValue placeholder='Select light theme' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lightThemes.map(theme => (
-                      <SelectItem key={theme.id} value={theme.id}>
-                        {theme.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <section className='space-y-4'>
+            <h3 className='text-lg font-semibold text-foreground'>
+              System Theme Mapping
+            </h3>
+            <p className='text-sm text-muted-foreground'>
+              Choose which theme to use when your system is in light or dark
+              mode.
+            </p>
 
-              <div className='space-y-2'>
-                <Label
-                  htmlFor='dark-theme'
-                  className='text-sm text-muted-foreground'
+            {/* When system is light - expandable card */}
+            <Collapsible
+              open={lightThemeExpanded}
+              onOpenChange={setLightThemeExpanded}
+            >
+              <CollapsibleTrigger asChild disabled={isSaving}>
+                <button
+                  type='button'
+                  className={cn(
+                    'w-full flex items-center justify-between gap-3 rounded-card border-2 p-4 text-left transition-all duration-fast',
+                    'hover:shadow-raised hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                    'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
+                    lightThemeExpanded
+                      ? 'border-primary bg-bg-surface shadow-raised'
+                      : 'border-border bg-card hover:bg-bg-surface/50'
+                  )}
                 >
-                  Dark mode theme
-                </Label>
-                <Select
-                  value={
-                    themePreferences?.systemDarkThemeId || darkThemes[0]?.id
-                  }
-                  onValueChange={value =>
-                    handleSystemThemeChange('dark', value)
-                  }
-                  disabled={isSaving}
-                >
-                  <SelectTrigger id='dark-theme'>
-                    <SelectValue placeholder='Select dark theme' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {darkThemes.map(theme => (
-                      <SelectItem key={theme.id} value={theme.id}>
-                        {theme.name}
-                      </SelectItem>
+                  <div className='flex-1'>
+                    <span className='text-sm text-muted-foreground'>
+                      When system is light
+                    </span>
+                    <p className='font-medium text-foreground'>
+                      {currentLightThemeName}
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'h-5 w-5 text-muted-foreground transition-transform duration-fast',
+                      lightThemeExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className='pt-4 space-y-6'>
+                {/* Base Themes */}
+                <div>
+                  <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                    Base Themes
+                  </h4>
+                  <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                    {baseThemes.map(theme => (
+                      <ThemeCard
+                        key={theme.id}
+                        theme={theme}
+                        isSelected={
+                          (themePreferences?.systemLightThemeId ||
+                            lightThemes[0]?.id) === theme.id
+                        }
+                        onSelect={() =>
+                          handleSystemThemeChange('light', theme.id)
+                        }
+                        disabled={isSaving}
+                      />
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  </div>
+                </div>
+
+                {/* Custom Themes */}
+                {customThemes && customThemes.length > 0 && (
+                  <div>
+                    <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                      Custom Themes
+                    </h4>
+                    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                      {customThemes.map(theme => (
+                        <CustomThemeCard
+                          key={theme._id}
+                          name={theme.name}
+                          mode={theme.mode}
+                          baseThemeId={theme.baseThemeId}
+                          tokenOverrides={
+                            theme.tokenOverrides as ThemeTokenOverrides
+                          }
+                          isSelected={false}
+                          onSelect={() => {
+                            handleCustomThemeSelect(theme._id);
+                            setLightThemeExpanded(false);
+                          }}
+                          onEdit={() => handleEditCustomTheme(theme)}
+                          onDelete={() => handleDeleteCustomTheme(theme._id)}
+                          disabled={isSaving}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* When system is dark - expandable card */}
+            <Collapsible
+              open={darkThemeExpanded}
+              onOpenChange={setDarkThemeExpanded}
+            >
+              <CollapsibleTrigger asChild disabled={isSaving}>
+                <button
+                  type='button'
+                  className={cn(
+                    'w-full flex items-center justify-between gap-3 rounded-card border-2 p-4 text-left transition-all duration-fast',
+                    'hover:shadow-raised hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                    'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
+                    darkThemeExpanded
+                      ? 'border-primary bg-bg-surface shadow-raised'
+                      : 'border-border bg-card hover:bg-bg-surface/50'
+                  )}
+                >
+                  <div className='flex-1'>
+                    <span className='text-sm text-muted-foreground'>
+                      When system is dark
+                    </span>
+                    <p className='font-medium text-foreground'>
+                      {currentDarkThemeName}
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'h-5 w-5 text-muted-foreground transition-transform duration-fast',
+                      darkThemeExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className='pt-4 space-y-6'>
+                {/* Base Themes */}
+                <div>
+                  <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                    Base Themes
+                  </h4>
+                  <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                    {baseThemes.map(theme => (
+                      <ThemeCard
+                        key={theme.id}
+                        theme={theme}
+                        isSelected={
+                          (themePreferences?.systemDarkThemeId ||
+                            darkThemes[0]?.id) === theme.id
+                        }
+                        onSelect={() =>
+                          handleSystemThemeChange('dark', theme.id)
+                        }
+                        disabled={isSaving}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Themes */}
+                {customThemes && customThemes.length > 0 && (
+                  <div>
+                    <h4 className='text-sm font-medium text-muted-foreground mb-3'>
+                      Custom Themes
+                    </h4>
+                    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                      {customThemes.map(theme => (
+                        <CustomThemeCard
+                          key={theme._id}
+                          name={theme.name}
+                          mode={theme.mode}
+                          baseThemeId={theme.baseThemeId}
+                          tokenOverrides={
+                            theme.tokenOverrides as ThemeTokenOverrides
+                          }
+                          isSelected={false}
+                          onSelect={() => {
+                            handleCustomThemeSelect(theme._id);
+                            setDarkThemeExpanded(false);
+                          }}
+                          onEdit={() => handleEditCustomTheme(theme)}
+                          onDelete={() => handleDeleteCustomTheme(theme._id)}
+                          disabled={isSaving}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </section>
         )}
 
-        {/* Base Themes Section */}
-        <section className='space-y-4'>
-          <h3 className='text-lg font-semibold text-foreground'>Base Themes</h3>
-          <p className='text-sm text-muted-foreground'>
-            Choose from our pre-designed themes.
-          </p>
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            {baseThemes.map(theme => (
-              <ThemeCard
-                key={theme.id}
-                theme={theme}
-                isSelected={
-                  currentThemeId === theme.id &&
-                  !themePreferences?.useSystemPreference &&
-                  themePreferences?.selectedThemeType !== 'custom'
-                }
-                onSelect={() => handleThemeSelect(theme.id)}
-                disabled={isSaving}
-              />
-            ))}
-          </div>
-        </section>
+        {/* Themes Section (only show when using single theme mode) */}
+        {themeMode === 'single' && (
+          <section className='space-y-6'>
+            <div>
+              <h3 className='text-lg font-semibold text-foreground'>
+                Base Themes
+              </h3>
+              <p className='text-sm text-muted-foreground'>
+                Choose from our pre-designed themes.
+              </p>
+            </div>
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+              {baseThemes.map(theme => (
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  isSelected={
+                    currentThemeId === theme.id &&
+                    !themePreferences?.useSystemPreference &&
+                    themePreferences?.selectedThemeType !== 'custom'
+                  }
+                  onSelect={() => handleThemeSelect(theme.id)}
+                  disabled={isSaving}
+                />
+              ))}
+            </div>
 
-        {/* Custom Themes Section */}
-        <section className='space-y-4'>
-          <h3 className='text-lg font-semibold text-foreground'>
-            My Custom Themes
-          </h3>
-          <p className='text-sm text-muted-foreground'>
-            Create and manage your personalized themes.
-          </p>
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            {customThemes.map(theme => (
-              <CustomThemeCard
-                key={theme._id}
-                name={theme.name}
-                mode={theme.mode}
-                baseThemeId={theme.baseThemeId}
-                tokenOverrides={theme.tokenOverrides as ThemeTokenOverrides}
-                isSelected={
-                  themePreferences?.selectedThemeType === 'custom' &&
-                  themePreferences?.selectedCustomThemeId === theme._id
-                }
-                onSelect={() => handleCustomThemeSelect(theme._id)}
-                onEdit={() => handleEditCustomTheme(theme)}
-                onDelete={() => handleDeleteCustomTheme(theme._id)}
+            {/* Custom Themes */}
+            <div>
+              <h3 className='text-lg font-semibold text-foreground'>
+                Custom Themes
+              </h3>
+              <p className='text-sm text-muted-foreground'>
+                Create and manage your personalized themes.
+              </p>
+            </div>
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+              {customThemes.map(theme => (
+                <CustomThemeCard
+                  key={theme._id}
+                  name={theme.name}
+                  mode={theme.mode}
+                  baseThemeId={theme.baseThemeId}
+                  tokenOverrides={theme.tokenOverrides as ThemeTokenOverrides}
+                  isSelected={
+                    themePreferences?.selectedThemeType === 'custom' &&
+                    themePreferences?.selectedCustomThemeId === theme._id
+                  }
+                  onSelect={() => handleCustomThemeSelect(theme._id)}
+                  onEdit={() => handleEditCustomTheme(theme)}
+                  onDelete={() => handleDeleteCustomTheme(theme._id)}
+                  disabled={isSaving}
+                />
+              ))}
+              <CreateThemeCard
+                onClick={handleCreateCustomTheme}
                 disabled={isSaving}
               />
-            ))}
-            <CreateThemeCard
-              onClick={handleCreateCustomTheme}
-              disabled={isSaving}
-            />
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Theme Editor Dialog */}
@@ -595,7 +734,7 @@ function AuthenticatedAppearanceSettings() {
 
 // Theme mode option button component
 interface ThemeModeOptionProps {
-  mode: 'system' | 'light' | 'dark';
+  mode: 'single' | 'system';
   currentMode: string;
   onSelect: () => void;
   icon: React.ReactNode;
@@ -703,8 +842,7 @@ function AppearanceSettingsSkeleton() {
       {/* Theme Mode Section */}
       <section className='space-y-4'>
         <h3 className='text-lg font-semibold text-foreground'>Theme Mode</h3>
-        <div className='grid gap-3'>
-          <ThemeModeOptionSkeleton />
+        <div className='grid gap-3 sm:grid-cols-2'>
           <ThemeModeOptionSkeleton />
           <ThemeModeOptionSkeleton />
         </div>

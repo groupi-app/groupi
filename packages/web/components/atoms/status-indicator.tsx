@@ -25,10 +25,11 @@ const iconSizeClasses = {
   lg: 'size-2.5',
 };
 
+// Sticker journal aesthetic - white border with shadow
 const borderClasses = {
-  sm: 'border border-background',
-  md: 'border-2 border-background',
-  lg: 'border-2 border-background',
+  sm: 'border border-white shadow-raised',
+  md: 'border-2 border-white shadow-raised',
+  lg: 'border-2 border-white shadow-raised',
 };
 
 /**

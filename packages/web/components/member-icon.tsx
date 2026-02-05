@@ -302,7 +302,7 @@ function ActionMenu({
                       {member.role === 'MODERATOR' && (
                         <Button
                           variant='ghost'
-                          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
                           onClick={() => {
                             setDialogAction(MemberAction.DEMOTE);
                             setSheetOpen(false);
@@ -318,7 +318,7 @@ function ActionMenu({
                   {canKick && (
                     <Button
                       variant='ghost'
-                      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                      className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
                       onClick={() => {
                         setDialogAction(MemberAction.KICK);
                         setSheetOpen(false);
@@ -332,7 +332,7 @@ function ActionMenu({
                   {canBan && (
                     <Button
                       variant='ghost'
-                      className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+                      className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
                       onClick={() => {
                         setDialogAction(MemberAction.BAN);
                         setSheetOpen(false);

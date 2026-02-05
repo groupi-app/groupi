@@ -45,7 +45,8 @@ export function PresenceIndicator({
     <span
       data-slot='presence-indicator'
       className={cn(
-        'inline-block rounded-full shrink-0',
+        // Sticker journal aesthetic - presence dot with white border
+        'inline-block rounded-full shrink-0 border-2 border-white',
         sizeClasses[size],
         statusColors[status],
         pulse && status === 'online' && 'animate-pulse',

@@ -95,6 +95,54 @@ import { navigation, toast } from '@groupi/shared/platform';
 2. **Run `pnpm generate`** after schema changes
 3. **Shared logic**: Hooks in `packages/shared/src/hooks/`
 4. **Platform UI**: Web and mobile components
+5. **Create changeset** if the change affects users (see below)
+
+## Changesets (Versioning)
+
+Changesets track what changed for the CHANGELOG and version bumps. Create one per feature/fix, not per commit. See `docs/changesets.md` for comprehensive documentation.
+
+### When to Create a Changeset
+
+| Change Type                  | Needs Changeset? |
+| ---------------------------- | ---------------- |
+| New feature                  | ✅ Yes           |
+| Bug fix                      | ✅ Yes           |
+| Breaking change              | ✅ Yes           |
+| Refactoring (no user impact) | ❌ No            |
+| Docs/comments only           | ❌ No            |
+| CI/tooling changes           | ❌ No            |
+
+### Creating a Changeset
+
+```bash
+pnpm changeset
+```
+
+This prompts for:
+
+1. Which packages changed (select with space)
+2. Bump type: `patch` (fix), `minor` (feature), `major` (breaking)
+3. Summary for CHANGELOG
+
+Commit the generated `.changeset/*.md` file with your code.
+
+### Enforcement
+
+Changesets are enforced at two levels:
+
+1. **Pre-push hook** - Blocks push if source code changed without a changeset
+2. **CI check** - Fails PR if no changeset (unless `skip-changeset` label is added)
+
+**Skipping the check** (for non-user-facing changes):
+
+```bash
+SKIP_CHANGESET=1 git push   # Skip pre-push hook
+git push --no-verify        # Skip all hooks
+```
+
+### AI Agent Rule
+
+**After completing a user-facing feature or fix**, remind the user to create a changeset or offer to guide them through it. Do NOT create changesets automatically without user confirmation since the summary should reflect their intent.
 
 ## Testing
 

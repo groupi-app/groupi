@@ -30,8 +30,9 @@ export function HostingBadge({ size = 'md', className }: HostingBadgeProps) {
   return (
     <span
       className={cn(
+        // Sticker journal aesthetic - hosting badge with white border
         'inline-flex items-center justify-center rounded-full',
-        'bg-primary text-primary-foreground shadow-raised',
+        'bg-primary text-primary-foreground shadow-raised border-2 border-white',
         sizeClasses[size],
         className
       )}

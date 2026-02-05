@@ -155,6 +155,49 @@ export const createTestSession = mutation({
 });
 
 /**
+ * Create a magic link token directly without sending email.
+ * This bypasses the email sending entirely for E2E tests.
+ */
+export const createMagicLinkToken = mutation({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, { email }) => {
+    assertE2EEnabled();
+
+    const now = Date.now();
+
+    // Generate a random token (32 chars, alphanumeric)
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // Create verification record in Better Auth format
+    await ctx.runMutation(components.betterAuth.adapter.create, {
+      input: {
+        model: 'verification',
+        data: {
+          identifier: token,
+          value: JSON.stringify({ email }),
+          expiresAt: now + 15 * 60 * 1000, // 15 minutes
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+    });
+
+    const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
+    return {
+      token,
+      url: `${baseUrl}/api/auth/magic-link/verify?token=${token}`,
+    };
+  },
+});
+
+/**
  * Debug query to inspect verification records.
  */
 export const debugVerifications = query({

@@ -24,7 +24,17 @@ export const getCurrentUser = query({
     _traceId: v.optional(v.string()),
   },
   handler: async ctx => {
-    return await authComponent.getAuthUser(ctx);
+    try {
+      return await authComponent.getAuthUser(ctx);
+    } catch (error) {
+      // Handle unauthenticated users gracefully (e.g., during logout)
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthenticated')) {
+        return null;
+      }
+      throw error;
+    }
   },
 });
 
