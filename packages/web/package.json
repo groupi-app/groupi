@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm generate:tokens && concurrently --names 'next,tokens' --prefix-colors 'cyan,magenta' 'NODE_OPTIONS=--max-http-header-size=65536 next dev' 'pnpm watch:tokens'",
+    "dev": "pnpm generate:tokens && pnpm generate:changelog && concurrently --names 'next,tokens' --prefix-colors 'cyan,magenta' 'NODE_OPTIONS=--max-http-header-size=65536 next dev' 'pnpm watch:tokens'",
     "dev:next": "NODE_OPTIONS='--max-http-header-size=65536' next dev",
-    "build": "pnpm generate:tokens && next build",
+    "build": "pnpm generate:tokens && pnpm generate:changelog && next build",
     "generate:tokens": "tsx scripts/generate-tokens.ts",
+    "generate:changelog": "tsx scripts/generate-changelog.ts",
     "watch:tokens": "chokidar '../shared/src/design/themes/**/*.ts' -c 'pnpm generate:tokens' --silent",
     "start": "next start",
     "lint": "eslint .",

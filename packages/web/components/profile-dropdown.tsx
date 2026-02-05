@@ -47,6 +47,7 @@ export function ProfileDropdown({
   const openFriendsDialog = useFriendsDialogStore(state => state.openDialog);
 
   const handleSignOut = async () => {
+    // Sign out first, then navigate to homepage
     await signOut();
     router.push('/');
     router.refresh();
@@ -57,7 +58,7 @@ export function ProfileDropdown({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger className='rounded-full relative cursor-pointer'>
           <Avatar>
-            <AvatarImage src={userInfo.image || ''} />
+            <AvatarImage src={userInfo.image || undefined} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           {pendingCount > 0 && (

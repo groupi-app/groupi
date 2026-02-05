@@ -58,7 +58,7 @@
   color: 1d76db
   description: Web application
 - name: 'platform: mobile'
-  color: 5319e7
+  color: '5319e7'
   description: Mobile application
 - name: 'platform: backend'
   color: e99695

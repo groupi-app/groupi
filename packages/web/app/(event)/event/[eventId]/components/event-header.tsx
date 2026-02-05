@@ -273,7 +273,7 @@ export function EventHeader({ data }: EventHeaderProps) {
         </Link>
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setDrawerOpen(false);
             setDeleteDialogOpen(true);
@@ -304,7 +304,7 @@ export function EventHeader({ data }: EventHeaderProps) {
         </Button>
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setDrawerOpen(false);
             setLeaveDialogOpen(true);
@@ -324,7 +324,7 @@ export function EventHeader({ data }: EventHeaderProps) {
             ref={coverContainerRef}
             type='button'
             onClick={() => setLightboxOpen(true)}
-            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-card mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            className='w-full aspect-[21/9] md:aspect-[32/9] overflow-hidden rounded-card mb-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border shadow-raised'
             style={{ touchAction: 'manipulation' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- Convex storage URLs require native img */}

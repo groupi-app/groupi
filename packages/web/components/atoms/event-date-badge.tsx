@@ -32,8 +32,9 @@ export function EventDateBadge({
   return (
     <span
       className={cn(
+        // Sticker journal aesthetic - date badge with white border
         'inline-flex items-center font-medium rounded-badge',
-        'bg-card/90 backdrop-blur-sm shadow-raised',
+        'bg-card/90 backdrop-blur-sm shadow-raised border-2 border-white',
         sizeClasses[size],
         className
       )}

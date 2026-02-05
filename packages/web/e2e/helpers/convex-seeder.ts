@@ -74,8 +74,30 @@ export class ConvexSeeder {
   }
 
   /**
+   * Create a magic link token directly in Convex.
+   * This bypasses email sending entirely - for E2E tests only.
+   * @returns The magic link URL that can be used to authenticate
+   */
+  async createMagicLinkToken(email: string): Promise<string | null> {
+    try {
+      const result = await this.client.mutation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'e2e/mutations:createMagicLinkToken' as any,
+        { email }
+      );
+
+      return result?.url ?? null;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to create magic link token:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get the last magic link sent to an email (for testing).
    * Returns null if no verification found.
+   * @deprecated Use createMagicLinkToken instead to avoid email sending.
    */
   async getLastMagicLink(email: string): Promise<string | null> {
     const result = await this.client.query(
@@ -90,6 +112,7 @@ export class ConvexSeeder {
   /**
    * Poll for magic link with retries.
    * Waits for verification record to be created and returns the URL.
+   * @deprecated Use createMagicLinkToken instead to avoid email sending.
    */
   async waitForMagicLink(
     email: string,
@@ -246,6 +269,7 @@ export class ConvexSeeder {
         memberships: [],
       };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('Failed to cleanup test data:', error);
     }
   }

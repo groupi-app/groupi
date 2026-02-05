@@ -10,9 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
+import { LogoSticker } from '@/components/atoms';
+import { siteConfig } from '@/config/site';
 
 const RESEND_COOLDOWN_SECONDS = 10;
 
@@ -239,20 +241,39 @@ export default function SignInPage() {
   };
 
   return (
-    <div className='container py-24'>
-      <div className='flex justify-center'>
+    <div className='container py-12 md:py-24'>
+      <div className='flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 lg:gap-16'>
+        {/* Sticker mascot - only visible on larger screens */}
+        <div className='hidden md:block flex-shrink-0'>
+          <LogoSticker size='4xl' color='primary' waving />
+        </div>
+
         <Card className='w-full max-w-md'>
-          <CardHeader>
-            <CardTitle>
-              {isAddAccountMode ? 'Add Another Account' : 'Sign In'}
-            </CardTitle>
+          {/* Groupi logo header like navbar */}
+          <div className='flex items-center justify-center gap-2 pt-6 pb-2'>
+            <Icons.logo
+              width='32'
+              height='28'
+              viewBox='0 0 197 225'
+              className='text-primary'
+            />
+            <span className='text-2xl font-bold font-heading'>
+              {siteConfig.name}
+            </span>
+          </div>
+
+          <div className='px-6 pb-2 text-center'>
+            <h1 className='text-xl font-heading font-medium'>
+              {isAddAccountMode ? 'Add Another Account' : 'Welcome Back'}
+            </h1>
             {isAddAccountMode && (
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-sm text-muted-foreground mt-1'>
                 Sign in with a different account. Your current session will
                 remain active.
               </p>
             )}
-          </CardHeader>
+          </div>
+
           <CardContent className='space-y-4'>
             {/* Social Sign In */}
             <div className='space-y-2'>
