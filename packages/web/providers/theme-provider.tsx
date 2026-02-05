@@ -435,7 +435,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const storedThemeId = localStorage.getItem(STORAGE_KEYS.THEME_ID);
     const storedThemeType = localStorage.getItem(STORAGE_KEYS.THEME_TYPE);
 
-    // If no theme stored, default to system preference
+    // If no theme stored, default to system preference and persist it
+    // This ensures the theme flash only happens once for new users
     if (!storedThemeId) {
       const systemPref = getSystemPreference();
       const activeThemeId =
@@ -444,14 +445,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const themeClass = `theme-${activeThemeId}`;
 
       applyThemeClass(themeClass);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync theme before paint
-      setState({
+
+      const newState: ThemeState = {
         themeId: activeThemeId,
         themeType: 'system',
         mode,
         systemLightThemeId: DEFAULT_LIGHT_THEME_ID,
         systemDarkThemeId: DEFAULT_DARK_THEME_ID,
-      });
+      };
+
+      // Save to localStorage so subsequent visits don't flash
+      saveToStorage(newState);
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync theme before paint
+      setState(newState);
       return;
     }
 
