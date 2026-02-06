@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -419,6 +420,68 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const applyCustomThemeCSS = useCallback((css: string) => {
     injectCustomCSS(css);
     customCSSRef.current = css;
+  }, []);
+
+  // Track if initial theme sync has been done
+  const initialSyncDone = useRef(false);
+
+  // Sync theme on mount (handles SSR hydration and fresh users)
+  // useLayoutEffect runs synchronously before browser paint, preventing flash
+  useLayoutEffect(() => {
+    if (initialSyncDone.current) return;
+    initialSyncDone.current = true;
+
+    // Check if there's anything in localStorage
+    const storedThemeId = localStorage.getItem(STORAGE_KEYS.THEME_ID);
+    const storedThemeType = localStorage.getItem(STORAGE_KEYS.THEME_TYPE);
+
+    // If no theme stored, default to system preference and persist it
+    // This ensures the theme flash only happens once for new users
+    if (!storedThemeId) {
+      const systemPref = getSystemPreference();
+      const activeThemeId =
+        systemPref === 'dark' ? DEFAULT_DARK_THEME_ID : DEFAULT_LIGHT_THEME_ID;
+      const mode = getThemeMode(activeThemeId);
+      const themeClass = `theme-${activeThemeId}`;
+
+      applyThemeClass(themeClass);
+
+      const newState: ThemeState = {
+        themeId: activeThemeId,
+        themeType: 'system',
+        mode,
+        systemLightThemeId: DEFAULT_LIGHT_THEME_ID,
+        systemDarkThemeId: DEFAULT_DARK_THEME_ID,
+      };
+
+      // Save to localStorage so subsequent visits don't flash
+      saveToStorage(newState);
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync theme before paint
+      setState(newState);
+      return;
+    }
+
+    // If stored as system preference, sync with current system preference
+    if (storedThemeType === 'system') {
+      const systemPref = getSystemPreference();
+      const systemLight =
+        localStorage.getItem(STORAGE_KEYS.SYSTEM_LIGHT) ||
+        DEFAULT_LIGHT_THEME_ID;
+      const systemDark =
+        localStorage.getItem(STORAGE_KEYS.SYSTEM_DARK) || DEFAULT_DARK_THEME_ID;
+      const activeThemeId = systemPref === 'dark' ? systemDark : systemLight;
+      const mode = getThemeMode(activeThemeId);
+      const themeClass = `theme-${activeThemeId}`;
+
+      applyThemeClass(themeClass);
+
+      setState(prev => ({
+        ...prev,
+        themeId: activeThemeId,
+        mode,
+      }));
+    }
   }, []);
 
   // Listen for system preference changes

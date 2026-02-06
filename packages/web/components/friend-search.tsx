@@ -52,7 +52,9 @@ function FriendListItemSkeleton({
 export function FriendSearch({ onRequestSent }: FriendSearchProps) {
   const [inputValue, setInputValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [actioningId, setActioningId] = useState<Id<'persons'> | null>(null);
+  const [actioningIds, setActioningIds] = useState<Set<Id<'persons'>>>(
+    new Set()
+  );
 
   // Parallel search: exact match (fast) + fuzzy search (slower)
   // Only searches when searchTerm is set (on form submit)
@@ -100,9 +102,13 @@ export function FriendSearch({ onRequestSent }: FriendSearchProps) {
 
   const handleSendRequest = useCallback(
     async (personId: Id<'persons'>) => {
-      setActioningId(personId);
+      setActioningIds(prev => new Set(prev).add(personId));
       const result = await sendRequest(personId);
-      setActioningId(null);
+      setActioningIds(prev => {
+        const next = new Set(prev);
+        next.delete(personId);
+        return next;
+      });
       if (result.success) {
         onRequestSent?.();
       }
@@ -172,7 +178,7 @@ export function FriendSearch({ onRequestSent }: FriendSearchProps) {
                       ? () => handleAcceptRequest(user.friendshipId!)
                       : undefined
                   }
-                  isLoading={actioningId === user.personId}
+                  isLoading={actioningIds.has(user.personId)}
                 />
               ))}
             </div>
@@ -218,7 +224,7 @@ export function FriendSearch({ onRequestSent }: FriendSearchProps) {
                   ? () => handleAcceptRequest(result.friendshipId!)
                   : undefined
               }
-              isLoading={actioningId === result.personId}
+              isLoading={actioningIds.has(result.personId)}
             />
           ))}
           {/* Show skeleton when more results may be loading */}
