@@ -383,7 +383,7 @@ export function VisualEventCard({
 
             {/* Date/Time */}
             <div className='flex items-center gap-2 text-sm'>
-              <StickerIcon icon={Icons.date} size='xs' color='primary' />
+              <StickerIcon icon={Icons.date} size='xs' color='info' />
               <span className='text-muted-foreground'>
                 {event.chosenDateTime
                   ? formatDateTimeRangeShort(
@@ -397,12 +397,28 @@ export function VisualEventCard({
             {/* Location */}
             {event.location && (
               <div className='flex items-center gap-2 text-sm'>
-                <StickerIcon icon={Icons.location} size='xs' color='primary' />
+                <StickerIcon icon={Icons.location} size='xs' color='success' />
                 <span className='text-muted-foreground line-clamp-1'>
                   {event.location}
                 </span>
               </div>
             )}
+
+            {/* Visibility */}
+            <div className='flex items-center gap-2 text-sm'>
+              {event.visibility === 'FRIENDS' ? (
+                <Icons.people className='size-3.5 text-muted-foreground/60' />
+              ) : (
+                <Icons.lock className='size-3.5 text-muted-foreground/60' />
+              )}
+              <span className='text-muted-foreground/60'>
+                {event.visibility === 'FRIENDS'
+                  ? 'Friends'
+                  : event.visibility === 'PUBLIC'
+                    ? 'Public'
+                    : 'Private'}
+              </span>
+            </div>
 
             {/* Organizer */}
             {organizer && (

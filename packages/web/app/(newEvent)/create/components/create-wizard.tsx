@@ -7,8 +7,9 @@ import NewEventInfo from './new-event-info';
 import { DateTypeSelection } from './date-type-selection';
 import { NewEventSingleDate } from './new-event-single-date';
 import { NewEventMultiDate } from './new-event-multi-date';
+import { NewEventAddons } from './new-event-addons';
 
-type Step = 'info' | 'date-type' | 'single-date' | 'multi-date';
+type Step = 'info' | 'date-type' | 'single-date' | 'multi-date' | 'add-ons';
 
 // Step order for direction calculation
 const stepOrder: Record<Step, number> = {
@@ -16,6 +17,7 @@ const stepOrder: Record<Step, number> = {
   'date-type': 1,
   'single-date': 2,
   'multi-date': 2, // Same level as single-date
+  'add-ons': 3,
 };
 
 const slideVariants = {
@@ -80,6 +82,14 @@ function WizardContent() {
     goToStep('info');
   };
 
+  const handleDateNext = () => {
+    goToStep('add-ons');
+  };
+
+  const handleAddonsBack = () => {
+    goToStep(formState.dateType === 'multi' ? 'multi-date' : 'single-date');
+  };
+
   return (
     <div className='relative min-h-[400px]'>
       <AnimatePresence mode='wait' custom={direction}>
@@ -127,7 +137,10 @@ function WizardContent() {
             className='w-full'
           >
             <h1 className='text-4xl font-heading mt-10'>Event Date/Time</h1>
-            <NewEventSingleDate onBack={handleDateBack} />
+            <NewEventSingleDate
+              onBack={handleDateBack}
+              onNext={handleDateNext}
+            />
           </motion.div>
         )}
         {step === 'multi-date' && (
@@ -144,7 +157,25 @@ function WizardContent() {
             <h1 className='text-4xl font-heading mt-10'>
               Event Date/Time Options
             </h1>
-            <NewEventMultiDate onBack={handleDateBack} />
+            <NewEventMultiDate
+              onBack={handleDateBack}
+              onNext={handleDateNext}
+            />
+          </motion.div>
+        )}
+        {step === 'add-ons' && (
+          <motion.div
+            key='add-ons'
+            custom={direction}
+            variants={slideVariants}
+            initial='enter'
+            animate='center'
+            exit='exit'
+            transition={transition}
+            className='w-full'
+          >
+            <h1 className='text-4xl font-heading mt-10'>Add-ons</h1>
+            <NewEventAddons onBack={handleAddonsBack} />
           </motion.div>
         )}
       </AnimatePresence>

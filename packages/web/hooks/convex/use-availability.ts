@@ -67,6 +67,7 @@ export function useSubmitAvailability() {
       responses: Array<{
         potentialDateTimeId: Id<'potentialDateTimes'>;
         status: 'YES' | 'NO' | 'MAYBE';
+        note?: string;
       }>;
     }) => {
       try {
@@ -107,11 +108,13 @@ export function useUpdateSingleAvailability() {
     async (data: {
       potentialDateTimeId: Id<'potentialDateTimes'>;
       status: 'YES' | 'NO' | 'MAYBE';
+      note?: string;
     }) => {
       try {
         const result = await updateSingleAvailability({
           potentialDateTimeId: data.potentialDateTimeId,
           status: data.status,
+          note: data.note,
         });
 
         // Show success toast only for explicit user actions (not optimistic updates)
@@ -233,6 +236,45 @@ export function useRemovePotentialDateTimes() {
       }
     },
     [removePotentialDateTimes, toast]
+  );
+}
+
+/**
+ * Update the note on a potential date time (organizer only)
+ */
+export function useUpdatePotentialDateTimeNote() {
+  const updateNote = useMutation(
+    availabilityMutations.updatePotentialDateTimeNote
+  );
+  const { toast } = useToast();
+
+  return useCallback(
+    async (data: {
+      potentialDateTimeId: Id<'potentialDateTimes'>;
+      note?: string;
+    }) => {
+      try {
+        const result = await updateNote({
+          potentialDateTimeId: data.potentialDateTimeId,
+          note: data.note,
+        });
+
+        toast({
+          title: 'Updated',
+          description: 'Date option note has been updated!',
+        });
+
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to update note. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [updateNote, toast]
   );
 }
 

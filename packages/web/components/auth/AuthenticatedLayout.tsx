@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from '@/lib/auth-client';
+import { useConvexAuth } from 'convex/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -41,6 +42,7 @@ export function AuthenticatedLayout({
   skipOnboardingCheck = false,
 }: AuthenticatedLayoutProps) {
   const { data: session, isPending } = useSession();
+  const { isLoading: isConvexAuthLoading } = useConvexAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -64,6 +66,13 @@ export function AuthenticatedLayout({
 
   // Show loading spinner while redirecting to sign-in
   if (!isAuthenticated) {
+    return <AuthLoadingSpinner />;
+  }
+
+  // Show loading spinner while Convex is re-authenticating
+  // (e.g., during account switch). This prevents child queries from
+  // firing with a stale auth token and hitting the error boundary.
+  if (isConvexAuthLoading) {
     return <AuthLoadingSpinner />;
   }
 

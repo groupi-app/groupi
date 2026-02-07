@@ -1,13 +1,10 @@
 'use client';
 
 import { useFormContext } from './form-context';
-import { useRouter } from 'next/navigation';
 import { useRef, useState, useCallback } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useCreateEvent } from '@/hooks/mutations/use-create-event';
-import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import {
   MultiDateTimeSelector,
   type DateTimeOption,
@@ -15,17 +12,12 @@ import {
 
 interface NewEventMultiDateProps {
   onBack: () => void;
+  onNext: () => void;
 }
 
-export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
-  const { formState, reset } = useFormContext();
-  const router = useRouter();
-  const createEvent = useCreateEvent();
-  const { uploadFile } = useFileUpload();
-  const isSubmittingRef = useRef(false);
-  const [isSaving, setIsSaving] = useState(false);
+export function NewEventMultiDate({ onBack, onNext }: NewEventMultiDateProps) {
+  const { formState, setFormState } = useFormContext();
 
-  // Store the current options from the selector
   const optionsRef = useRef<DateTimeOption[]>([]);
   const [optionsCount, setOptionsCount] = useState(0);
 
@@ -34,61 +26,31 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
     setOptionsCount(options.length);
   }, []);
 
-  const onSubmit = useCallback(async () => {
+  const handleNext = useCallback(() => {
     const options = optionsRef.current;
     if (options.length < 2) {
       toast.error('Please add at least two date options');
       return;
     }
 
-    const {
-      title,
-      description,
-      location,
-      reminderOffset,
-      imageFile,
-      imageFocalPoint,
-    } = formState;
-
-    isSubmittingRef.current = true;
-    setIsSaving(true);
-    try {
-      // Upload image file if present
-      let imageStorageId: string | undefined;
-      if (imageFile) {
-        const uploadResult = await uploadFile(imageFile);
-        if (!uploadResult) {
-          toast.error('Failed to upload image.');
-          return;
-        }
-        imageStorageId = uploadResult.storageId;
-      }
-
-      const result = await createEvent({
-        title,
-        description,
-        location,
-        potentialDateTimeOptions: options.map(opt => ({
-          start: opt.start.toISOString(),
-          end: opt.end?.toISOString(),
-        })),
-        reminderOffset,
-        imageStorageId,
-        imageFocalPoint,
-      });
-      toast.success('The event was created successfully.');
-      router.push(`/event/${result.eventId}`);
-      // Reset form context after navigation starts so user doesn't see flash
-      setTimeout(() => reset(), 100);
-    } catch {
-      toast.error('The event was unable to be created.');
-    } finally {
-      isSubmittingRef.current = false;
-      setIsSaving(false);
+    const now = Date.now();
+    const pastOptions = options.filter(opt => opt.start.getTime() <= now);
+    if (pastOptions.length > 0) {
+      toast.error('All date options must be in the future');
+      return;
     }
-  }, [formState, createEvent, uploadFile, reset, router]);
 
-  // In wizard mode, redirect is handled by parent
+    setFormState({
+      ...formState,
+      dateType: 'multi',
+      multiDateTimeOptions: options.map(opt => ({
+        start: opt.start.toISOString(),
+        end: opt.end?.toISOString(),
+      })),
+    });
+    onNext();
+  }, [formState, setFormState, onNext]);
+
   if (!formState.title) {
     return null;
   }
@@ -112,13 +74,15 @@ export function NewEventMultiDate({ onBack }: NewEventMultiDateProps) {
           <Icons.back className='text-sm' />
         </Button>
         <Button
-          data-test='create-event-button'
+          data-test='new-event-next-button'
           type='button'
-          onClick={onSubmit}
+          className='flex items-center gap-1'
+          variant='secondary'
           disabled={optionsCount < 2}
-          isLoading={isSaving}
+          onClick={handleNext}
         >
-          Create Event
+          <span>Next</span>
+          <Icons.forward className='text-sm' />
         </Button>
       </div>
     </div>
