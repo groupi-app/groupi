@@ -25,7 +25,8 @@ export type NotificationType =
   | 'USER_DEMOTED' // When the receiving user is demoted from moderator of an event
   | 'USER_RSVP' // When a user RSVPs to an event
   | 'USER_MENTIONED' // When a user is @mentioned in a post or reply
-  | 'EVENT_REMINDER'; // When an event is starting soon (scheduled reminder)
+  | 'EVENT_REMINDER' // When an event is starting soon (scheduled reminder)
+  | 'ADDON_CONFIG_RESET'; // When an addon's config changes and responses are cleared
 
 // Reminder Offset Types (how far before the event to send reminder)
 export type ReminderOffset =
@@ -92,6 +93,7 @@ export const ConvexEnums = {
     USER_RSVP: 'USER_RSVP' as const,
     USER_MENTIONED: 'USER_MENTIONED' as const,
     EVENT_REMINDER: 'EVENT_REMINDER' as const,
+    ADDON_CONFIG_RESET: 'ADDON_CONFIG_RESET' as const,
   },
   ReminderOffset: {
     '15_MINUTES': '15_MINUTES' as const,

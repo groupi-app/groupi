@@ -1,5 +1,6 @@
 import { query } from '../_generated/server';
 import { authComponent, getPersonForUser } from '../auth';
+import { v } from 'convex/values';
 
 /**
  * Get notification settings for the current user
@@ -66,6 +67,39 @@ export const getNotificationSettings = query({
         personId: personSettings.personId,
       },
       notificationMethods: methodsWithSettings,
+    };
+  },
+});
+
+/**
+ * Get privacy settings for the current user
+ * Returns defaults when no settings are stored.
+ */
+export const getPrivacySettings = query({
+  args: {
+    _traceId: v.optional(v.string()),
+  },
+  handler: async ctx => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    const person = await getPersonForUser(ctx, user._id);
+    if (!person) {
+      return null;
+    }
+
+    const personSettings = await ctx.db
+      .query('personSettings')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .first();
+
+    return {
+      allowFriendRequestsFrom:
+        personSettings?.allowFriendRequestsFrom ?? 'EVERYONE',
+      allowEventInvitesFrom:
+        personSettings?.allowEventInvitesFrom ?? 'EVERYONE',
     };
   },
 });

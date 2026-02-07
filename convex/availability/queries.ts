@@ -75,6 +75,11 @@ export const getEventAvailabilityData = query({
       membershipIds.includes(availability.membershipId)
     );
 
+    // Determine if current user can see private notes (organizer/moderator)
+    const canSeeAllNotes =
+      userMembership.role === 'ORGANIZER' ||
+      userMembership.role === 'MODERATOR';
+
     // Group availabilities by potential date time
     const potentialDateTimes = potentialDates.map(date => {
       const dateAvailabilities = eventAvailabilities.filter(
@@ -86,8 +91,14 @@ export const getEventAvailabilityData = query({
           const member = validMembers.find(m => m._id === avail.membershipId);
           if (!member) return null;
 
+          // Availability notes are visible to the author + organizers/moderators
+          const isAuthor = member.personId === currentPerson._id;
+          const visibleNote =
+            isAuthor || canSeeAllNotes ? avail.note : undefined;
+
           return {
             ...avail,
+            note: visibleNote,
             member: {
               ...member,
               person: member.person
@@ -103,6 +114,7 @@ export const getEventAvailabilityData = query({
 
       return {
         ...date,
+        // potentialDateTime notes are visible to all members (no filtering needed)
         availabilities,
       };
     });

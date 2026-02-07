@@ -209,4 +209,5 @@ See `docs/ui-design-system.md` for comprehensive documentation.
 - Testing: `.claude/rules/testing.md`
 - UI Design System: `.claude/rules/ui-design-system.md`
 - Presence System: `.claude/rules/presence.md`
+- Add-on Framework: `.claude/rules/addons.md`
 - Documentation: `.claude/rules/documentation.md`

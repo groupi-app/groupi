@@ -19,6 +19,7 @@ export const submitAvailability = mutation({
       v.object({
         potentialDateTimeId: v.id('potentialDateTimes'),
         status: v.union(v.literal('YES'), v.literal('NO'), v.literal('MAYBE')),
+        note: v.optional(v.string()),
       })
     ),
     _traceId: v.optional(v.string()),
@@ -40,7 +41,12 @@ export const submitAvailability = mutation({
 
     // Process each availability response
     const results = await Promise.all(
-      responses.map(async ({ potentialDateTimeId, status }) => {
+      responses.map(async ({ potentialDateTimeId, status, note }) => {
+        // Validate note length
+        if (note && note.length > 200) {
+          throw new Error('Note must be 200 characters or less');
+        }
+
         // Check if availability already exists for this member and date
         const existingAvailability = await ctx.db
           .query('availabilities')
@@ -55,6 +61,7 @@ export const submitAvailability = mutation({
           // Update existing availability
           await ctx.db.patch(existingAvailability._id, {
             status: status,
+            note: note || undefined,
             updatedAt: Date.now(),
           });
           return { potentialDateTimeId, status, action: 'updated' as const };
@@ -64,6 +71,7 @@ export const submitAvailability = mutation({
             membershipId: membership._id,
             potentialDateTimeId: potentialDateTimeId,
             status: status,
+            note: note || undefined,
             updatedAt: Date.now(),
           });
           return { potentialDateTimeId, status, action: 'created' as const };
@@ -85,9 +93,10 @@ export const updateSingleAvailability = mutation({
   args: {
     potentialDateTimeId: v.id('potentialDateTimes'),
     status: v.union(v.literal('YES'), v.literal('NO'), v.literal('MAYBE')),
+    note: v.optional(v.string()),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { potentialDateTimeId, status }) => {
+  handler: async (ctx, { potentialDateTimeId, status, note }) => {
     // Require authentication
     const { person } = await requireAuth(ctx);
 
@@ -109,6 +118,11 @@ export const updateSingleAvailability = mutation({
       throw new Error('You are not a member of this event');
     }
 
+    // Validate note length
+    if (note && note.length > 200) {
+      throw new Error('Note must be 200 characters or less');
+    }
+
     // Check if availability already exists
     const existingAvailability = await ctx.db
       .query('availabilities')
@@ -123,6 +137,7 @@ export const updateSingleAvailability = mutation({
       // Update existing availability
       await ctx.db.patch(existingAvailability._id, {
         status: status,
+        note: note || undefined,
         updatedAt: Date.now(),
       });
       return {
@@ -136,6 +151,7 @@ export const updateSingleAvailability = mutation({
         membershipId: membership._id,
         potentialDateTimeId: potentialDateTimeId,
         status: status,
+        note: note || undefined,
         updatedAt: Date.now(),
       });
       return {
@@ -194,7 +210,15 @@ export const clearAllAvailability = mutation({
 export const addPotentialDateTimes = mutation({
   args: {
     eventId: v.id('events'),
-    dateTimes: v.array(v.number()), // Unix timestamps
+    dateTimes: v.array(
+      v.union(
+        v.number(), // Legacy: plain timestamp
+        v.object({
+          dateTime: v.number(),
+          note: v.optional(v.string()),
+        })
+      )
+    ),
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, dateTimes }) => {
@@ -204,10 +228,16 @@ export const addPotentialDateTimes = mutation({
     // Create new potential date times
     const now = Date.now();
     const potentialDateTimeIds = await Promise.all(
-      dateTimes.map(async timestamp => {
+      dateTimes.map(async item => {
+        const timestamp = typeof item === 'number' ? item : item.dateTime;
+        const note = typeof item === 'number' ? undefined : item.note;
+        if (note && note.length > 200) {
+          throw new Error('Note must be 200 characters or less');
+        }
         return await ctx.db.insert('potentialDateTimes', {
           eventId: eventId,
           dateTime: timestamp,
+          note,
           updatedAt: now,
         });
       })
@@ -277,5 +307,37 @@ export const removePotentialDateTimes = mutation({
       deletedCount: validDates.length,
       deletedIds: validDates.map(d => d!._id),
     };
+  },
+});
+
+/**
+ * Update the note on a potential date time (organizer only)
+ */
+export const updatePotentialDateTimeNote = mutation({
+  args: {
+    potentialDateTimeId: v.id('potentialDateTimes'),
+    note: v.optional(v.string()), // Pass undefined/empty to clear
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { potentialDateTimeId, note }) => {
+    const potentialDateTime = await ctx.db.get(potentialDateTimeId);
+    if (!potentialDateTime) {
+      throw new Error('Potential date time not found');
+    }
+
+    // Require organizer role
+    await requireEventRole(ctx, potentialDateTime.eventId, 'ORGANIZER');
+
+    // Validate note length
+    if (note && note.length > 200) {
+      throw new Error('Note must be 200 characters or less');
+    }
+
+    await ctx.db.patch(potentialDateTimeId, {
+      note: note || undefined,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });
