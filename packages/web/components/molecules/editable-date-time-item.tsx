@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -283,6 +284,22 @@ export function EditableDateTimeItem({
         >
           <Icons.delete className='size-4' />
         </Button>
+      </div>
+
+      {/* Note input */}
+      <div className='mt-2 relative'>
+        <Textarea
+          value={option.note ?? ''}
+          onChange={e => onUpdate({ note: e.target.value })}
+          placeholder='Add a note (optional)'
+          maxLength={200}
+          className='min-h-[32px] text-xs resize-none py-1.5 px-2.5 pr-14'
+          rows={1}
+          disabled={disabled}
+        />
+        <span className='absolute bottom-1 right-2.5 text-[10px] text-muted-foreground'>
+          {(option.note ?? '').length}/200
+        </span>
       </div>
     </div>
   );

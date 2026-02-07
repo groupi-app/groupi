@@ -111,12 +111,48 @@ export function isEndAfterStart(
 }
 
 /**
+ * Millisecond values for each reminder offset, matching the backend REMINDER_OFFSETS.
+ */
+export const REMINDER_OFFSET_MS: Record<string, number> = {
+  '30_MINUTES': 30 * 60 * 1000,
+  '1_HOUR': 60 * 60 * 1000,
+  '2_HOURS': 2 * 60 * 60 * 1000,
+  '4_HOURS': 4 * 60 * 60 * 1000,
+  '1_DAY': 24 * 60 * 60 * 1000,
+  '2_DAYS': 2 * 24 * 60 * 60 * 1000,
+  '3_DAYS': 3 * 24 * 60 * 60 * 1000,
+  '1_WEEK': 7 * 24 * 60 * 60 * 1000,
+  '2_WEEKS': 14 * 24 * 60 * 60 * 1000,
+  '4_WEEKS': 28 * 24 * 60 * 60 * 1000,
+};
+
+/**
+ * Check if a reminder offset would result in a reminder time in the past.
+ * @param offset - Reminder offset key (e.g. '1_DAY')
+ * @param eventDateTime - The event's start datetime as a Date or ISO string or timestamp
+ * @returns True if the reminder would fire in the past
+ */
+export function isReminderInPast(
+  offset: string,
+  eventDateTime: Date | string | number
+): boolean {
+  const eventMs =
+    typeof eventDateTime === 'number'
+      ? eventDateTime
+      : new Date(eventDateTime).getTime();
+  const offsetMs = REMINDER_OFFSET_MS[offset];
+  if (offsetMs === undefined) return false;
+  return eventMs - offsetMs <= Date.now();
+}
+
+/**
  * Interface for date time options with optional end times
  */
 export interface DateTimeOption {
   id: string;
   start: Date;
   end?: Date;
+  note?: string;
 }
 
 /**

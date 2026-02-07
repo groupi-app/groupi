@@ -30,6 +30,7 @@ import {
   Heading2,
   Heart,
   Image,
+  Inbox,
   Infinity as Infinite,
   Info,
   Key,
@@ -81,6 +82,7 @@ import {
   Mail,
   Webhook,
   Megaphone,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export type Icon = LucideIcon;
@@ -177,6 +179,8 @@ export const Icons = {
   lock: Lock,
   palette: Palette,
   appearance: Palette, // Alias for palette
+  inbox: Inbox,
+  sliders: SlidersHorizontal,
   discord: ({ ...props }: LucideProps) => (
     <svg
       viewBox='0 0 24 24'

@@ -127,7 +127,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('E2E login error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },

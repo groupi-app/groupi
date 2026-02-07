@@ -65,6 +65,7 @@ export function AvailabilityForm({
         answer: z.enum(['yes', 'maybe', 'no'], {
           message: 'Please select a response for each option',
         }),
+        note: z.string().max(200).optional(),
       })
     ),
   });
@@ -72,12 +73,16 @@ export function AvailabilityForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      formAnswers: potentialDateTimes.map(pdt => ({
-        potentialDateTimeId: pdt._id,
-        answer: answerMap(
-          pdt.availabilities.find(a => a.member?.personId === userId)?.status
-        ),
-      })),
+      formAnswers: potentialDateTimes.map(pdt => {
+        const userAvailability = pdt.availabilities.find(
+          a => a.member?.personId === userId
+        );
+        return {
+          potentialDateTimeId: pdt._id,
+          answer: answerMap(userAvailability?.status),
+          note: userAvailability?.note ?? '',
+        };
+      }),
     },
   });
 
@@ -107,12 +112,13 @@ export function AvailabilityForm({
             return existingAnswer;
           }
           // Otherwise, use the availability from the server or default to 'no'
+          const userAvailability = pdt.availabilities.find(
+            a => a.member?.personId === userId
+          );
           return {
             potentialDateTimeId: pdt._id,
-            answer: answerMap(
-              pdt.availabilities.find(a => a.member?.personId === userId)
-                ?.status
-            ),
+            answer: answerMap(userAvailability?.status),
+            note: userAvailability?.note ?? '',
           };
         }),
       });
@@ -136,10 +142,20 @@ export function AvailabilityForm({
 
   function toggleFormValue(
     index: number,
-    value: { potentialDateTimeId: string; answer: 'yes' | 'maybe' | 'no' }
+    value: {
+      potentialDateTimeId: string;
+      answer: 'yes' | 'maybe' | 'no';
+      note?: string;
+    }
   ) {
     const availabilities = form.getValues(`formAnswers`);
-    availabilities[index] = value;
+    availabilities[index] = { ...availabilities[index], ...value };
+    form.setValue(`formAnswers`, availabilities);
+  }
+
+  function setFormNote(index: number, note: string) {
+    const availabilities = form.getValues(`formAnswers`);
+    availabilities[index] = { ...availabilities[index], note };
     form.setValue(`formAnswers`, availabilities);
   }
 
@@ -149,6 +165,7 @@ export function AvailabilityForm({
       potentialDateTimeId:
         answer.potentialDateTimeId as Id<'potentialDateTimes'>,
       status: answer.answer.toUpperCase() as 'YES' | 'MAYBE' | 'NO',
+      note: answer.note || undefined,
     }));
 
     try {
@@ -226,6 +243,7 @@ export function AvailabilityForm({
                       pdt={pdt}
                       formAnswers={form.watch('formAnswers')}
                       setFormAnswer={toggleFormValue}
+                      setFormNote={setFormNote}
                       index={i}
                     />
                   ))}

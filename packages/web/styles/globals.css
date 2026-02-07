@@ -698,6 +698,34 @@
   }
 }
 
+/* Periodic wiggle - shakes briefly then pauses */
+@keyframes wiggle-periodic {
+  0%,
+  4% {
+    transform: rotate(0deg);
+  }
+  5% {
+    transform: rotate(-3deg);
+  }
+  7% {
+    transform: rotate(3deg);
+  }
+  9% {
+    transform: rotate(-2deg);
+  }
+  10% {
+    transform: rotate(2deg);
+  }
+  11%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-wiggle-periodic {
+  animation: wiggle-periodic 4s ease-in-out infinite;
+}
+
 /* Simple fade in */
 @keyframes fade-in {
   from {

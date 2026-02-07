@@ -1,5 +1,6 @@
 'use client';
 
+import { EventAddons } from './components/event-addons';
 import { EventHeader } from './components/event-header';
 import { MemberList } from './components/member-list';
 import { PostFeed } from './components/post-feed';
@@ -27,6 +28,7 @@ export default function EventPage() {
         <EventHeader data={headerData} />
         <div className='max-w-4xl mx-auto flex flex-col gap-4'>
           <MemberList data={membersData} />
+          <EventAddons data={headerData} />
           <PostFeed data={postFeedData} />
         </div>
       </div>

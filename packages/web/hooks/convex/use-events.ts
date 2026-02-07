@@ -97,6 +97,35 @@ export function useUserEvents() {
   return result;
 }
 
+/**
+ * Get current user's events AND pending invites in a single query
+ * Combines getUserEvents with pending invites for seamless tab switching.
+ * Uses stale-while-revalidate caching.
+ */
+export function useUserEventsAndInvites() {
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    eventQueries.getUserEventsAndInvites,
+    isActive ? {} : 'skip'
+  );
+
+  // Cache the result when we get fresh data
+  if (result !== undefined) {
+    cachedRef.current = result;
+  }
+
+  // Stale-while-revalidate: return cached data when result is undefined
+  // This prevents loading flash when user tabs back in
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
+}
+
 // ===== EVENT MUTATIONS =====
 
 // Reminder offset type for events
@@ -136,7 +165,9 @@ export function useCreateEvent() {
       potentialDateTimeOptions?: Array<{ start: string; end?: string }>; // New format with end times
       chosenDateTime?: string; // ISO date string for single-date events
       chosenEndDateTime?: string; // ISO date string for end time
-      reminderOffset?: ReminderOffset; // When to remind attendees
+      reminderOffset?: ReminderOffset; // Legacy: kept for backward compat
+      addons?: Array<{ addonType: string; config: Record<string, unknown> }>; // Add-on configs
+      visibility?: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
     }) => {
       try {
         const result = await createEvent({
@@ -150,6 +181,8 @@ export function useCreateEvent() {
           chosenDateTime: data.chosenDateTime,
           chosenEndDateTime: data.chosenEndDateTime,
           reminderOffset: data.reminderOffset,
+          addons: data.addons,
+          visibility: data.visibility,
         });
 
         toast({
@@ -187,6 +220,7 @@ export function useUpdateEvent() {
       imageStorageId?: string | null; // Optional cover image storage ID (null to remove)
       imageFocalPoint?: FocalPoint | null; // Optional focal point (null to clear)
       reminderOffset?: ReminderOffset | null;
+      visibility?: 'PRIVATE' | 'FRIENDS' | 'PUBLIC' | null;
     }) => {
       try {
         const result = await updateEvent({
@@ -200,6 +234,7 @@ export function useUpdateEvent() {
               : (data.imageStorageId as Id<'_storage'> | undefined),
           imageFocalPoint: data.imageFocalPoint,
           reminderOffset: data.reminderOffset,
+          visibility: data.visibility,
         });
 
         toast({
@@ -365,6 +400,67 @@ export function useEventManagement(eventId: Id<'events'>) {
     deleteEvent: deleteEventOptimistic,
     leaveEvent: leaveEventOptimistic,
   };
+}
+
+// ===== DISCOVER HOOKS =====
+
+/**
+ * Get discoverable events from friends (FRIENDS visibility)
+ * Uses stale-while-revalidate caching.
+ */
+export function useDiscoverableEvents() {
+  const isActive = useIsActive();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedRef = useRef<any>(undefined);
+
+  const result = useQuery(
+    eventQueries.getDiscoverableEvents,
+    isActive ? {} : 'skip'
+  );
+
+  if (result !== undefined) {
+    cachedRef.current = result;
+  }
+
+  if (result === undefined && cachedRef.current !== undefined) {
+    return cachedRef.current;
+  }
+
+  return result;
+}
+
+/**
+ * Join a discoverable event (friends-visible)
+ */
+export function useJoinDiscoverableEvent() {
+  const joinEvent = useMutation(eventMutations.joinDiscoverableEvent);
+  const { toast } = useToast();
+
+  return useCallback(
+    async (eventId: Id<'events'>) => {
+      try {
+        const result = await joinEvent({ eventId });
+
+        toast({
+          title: 'Joined event',
+          description: "You've joined the event successfully!",
+        });
+
+        return result;
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Failed to join event. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [joinEvent, toast]
+  );
 }
 
 // ===== HOOK ALIASES FOR COMPONENT COMPATIBILITY =====

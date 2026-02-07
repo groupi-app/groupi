@@ -534,3 +534,87 @@ export function useFriendManagement() {
     removeFriend,
   };
 }
+
+// ===== BLOCK HOOKS =====
+
+/**
+ * Block a user
+ */
+export function useBlockUser() {
+  const blockUser = useMutation(friendMutations.blockUser);
+  const { toast } = useToast();
+
+  return useCallback(
+    async (personId: Id<'persons'>) => {
+      try {
+        await blockUser({ personId });
+
+        toast({
+          title: 'User Blocked',
+          description:
+            'This user has been blocked. They can no longer send you friend requests or event invites.',
+        });
+
+        return { success: true };
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to block user. Please try again.';
+
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        });
+
+        return { success: false, error: message };
+      }
+    },
+    [blockUser, toast]
+  );
+}
+
+/**
+ * Unblock a user
+ */
+export function useUnblockUser() {
+  const unblockUser = useMutation(friendMutations.unblockUser);
+  const { toast } = useToast();
+
+  return useCallback(
+    async (personId: Id<'persons'>) => {
+      try {
+        await unblockUser({ personId });
+
+        toast({
+          title: 'User Unblocked',
+          description: 'This user has been unblocked.',
+        });
+
+        return { success: true };
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to unblock user. Please try again.';
+
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        });
+
+        return { success: false, error: message };
+      }
+    },
+    [unblockUser, toast]
+  );
+}
+
+/**
+ * Get list of blocked users
+ */
+export function useBlockedUsers() {
+  return useQuery(friendQueries.getBlockedUsers, {});
+}

@@ -19,8 +19,49 @@ import { useUserProfile } from '@/hooks/convex/use-users';
 import { useMutualEvents } from '@/hooks/convex/use-events';
 import { useMutualFriends, MutualFriend } from '@/hooks/convex/use-friends';
 import { FriendRequestButton } from '@/components/friend-request-button';
+import { InviteToEventPopover } from '@/components/invite-to-event-popover';
 import { Id } from '@/convex/_generated/dataModel';
-import { Users, Calendar } from 'lucide-react';
+import {
+  Users,
+  Calendar,
+  CalendarPlus,
+  ShieldBan,
+  UserX,
+  MoreHorizontal,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { ActionMenuButton } from '@/components/ui/action-menu-button';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import {
+  useBlockUser,
+  useFriendshipStatus,
+  useRemoveFriendByPersonId,
+} from '@/hooks/convex/use-friends';
+import { useActionMenu } from '@/hooks/use-action-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useState } from 'react';
 
 export type ProfileTab = 'profile' | 'mutualEvents' | 'mutualFriends';
 
@@ -105,8 +146,8 @@ export function ProfileViewDialog({
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className='flex flex-col gap-1 flex-1'>
-                  <h3 className='text-xl font-semibold'>
+                <div className='flex flex-col gap-1 flex-1 min-w-0'>
+                  <h3 className='text-xl font-semibold truncate'>
                     {userProfile.name || 'No name'}
                   </h3>
                   <div className='flex items-center gap-1 text-muted-foreground'>
@@ -148,10 +189,15 @@ export function ProfileViewDialog({
                 </p>
               )}
 
-              {/* Friend Request Button - only show if not own profile */}
+              {/* Action Buttons - only show if not own profile */}
               {currentUserId && !isOwnProfile && profileData?.personId && (
-                <FriendRequestButton
+                <ProfileActions
                   personId={profileData.personId as Id<'persons'>}
+                  canSendFriendRequest={
+                    profileData.canSendFriendRequest ?? true
+                  }
+                  canSendEventInvite={profileData.canSendEventInvite ?? true}
+                  isBlockedByMe={profileData.isBlockedByMe ?? false}
                 />
               )}
             </div>
@@ -296,6 +342,207 @@ export function ProfileViewDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Discord-style action buttons:
+ *   Row 1: [Add Friend / Friends]  [📅 Invite to Event]
+ *   Row 2: [Remove Friend]  [Block]   (destructive, ghost)
+ */
+function ProfileActions({
+  personId,
+  canSendFriendRequest,
+  canSendEventInvite,
+  isBlockedByMe,
+}: {
+  personId: Id<'persons'>;
+  canSendFriendRequest: boolean;
+  canSendEventInvite: boolean;
+  isBlockedByMe: boolean;
+}) {
+  const blockUser = useBlockUser();
+  const removeFriend = useRemoveFriendByPersonId();
+  const friendshipStatus = useFriendshipStatus(personId);
+  const { sheetOpen, setSheetOpen, handleMoreClick, handleContextMenu } =
+    useActionMenu();
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+
+  const isFriends = friendshipStatus?.status === 'friends';
+
+  const handleBlock = async () => {
+    await blockUser(personId);
+    setShowBlockDialog(false);
+  };
+
+  const handleRemoveFriend = async () => {
+    await removeFriend(personId);
+    setShowRemoveDialog(false);
+  };
+
+  if (isBlockedByMe) {
+    return (
+      <p className='text-sm text-muted-foreground text-center py-1'>
+        You have blocked this user.
+      </p>
+    );
+  }
+
+  // Dropdown content for desktop ⋯ menu
+  const dropdownContent = (
+    <>
+      {isFriends && (
+        <DropdownMenuItem
+          variant='destructive'
+          onClick={() => setShowRemoveDialog(true)}
+          className='cursor-pointer'
+        >
+          <UserX className='size-4 mr-2' />
+          Remove Friend
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem
+        variant='destructive'
+        onClick={() => setShowBlockDialog(true)}
+        className='cursor-pointer'
+      >
+        <ShieldBan className='size-4 mr-2' />
+        Block
+      </DropdownMenuItem>
+    </>
+  );
+
+  // Drawer content for mobile ⋯ menu
+  const drawerContent = (
+    <div className='flex flex-col gap-2 px-4 pb-4 pt-4'>
+      {isFriends && (
+        <Button
+          variant='ghost'
+          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+          onClick={() => {
+            setSheetOpen(false);
+            setShowRemoveDialog(true);
+          }}
+        >
+          <UserX className='size-4 mr-2' />
+          Remove Friend
+        </Button>
+      )}
+      <Button
+        variant='ghost'
+        className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+        onClick={() => {
+          setSheetOpen(false);
+          setShowBlockDialog(true);
+        }}
+      >
+        <ShieldBan className='size-4 mr-2' />
+        Block
+      </Button>
+    </div>
+  );
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <div className='flex items-center gap-2'>
+        {/* Primary: Friend request button */}
+        {canSendFriendRequest && <FriendRequestButton personId={personId} />}
+
+        {/* Invite to Event icon button */}
+        {canSendEventInvite && (
+          <Tooltip>
+            <InviteToEventPopover targetPersonId={personId}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='secondary'
+                  size='icon'
+                  className='size-10 shrink-0'
+                >
+                  <CalendarPlus className='size-5' />
+                  <span className='sr-only'>Invite to Event</span>
+                </Button>
+              </TooltipTrigger>
+            </InviteToEventPopover>
+            <TooltipContent>Invite to Event</TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* More menu: dropdown on desktop, drawer on mobile */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <ActionMenuButton
+                onClick={handleMoreClick}
+                onContextMenu={handleContextMenu}
+                className='size-10'
+                dropdownContent={dropdownContent}
+              >
+                <MoreHorizontal className='size-5' />
+              </ActionMenuButton>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>More</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Mobile drawer */}
+      <Drawer open={sheetOpen} onOpenChange={setSheetOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <VisuallyHidden>
+              <DrawerTitle>More Options</DrawerTitle>
+            </VisuallyHidden>
+          </DrawerHeader>
+          {drawerContent}
+        </DrawerContent>
+      </Drawer>
+
+      {/* Block confirmation */}
+      <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to block this user? They will no longer be
+              able to send you friend requests or event invites. Any existing
+              friendship will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBlock}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              Block
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove friend confirmation */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Friend</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this friend? You can send a new
+              friend request later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveFriend}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </TooltipProvider>
   );
 }
 

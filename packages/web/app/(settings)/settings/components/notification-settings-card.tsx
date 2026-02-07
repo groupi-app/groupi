@@ -102,6 +102,10 @@ const notificationTypeLabels: Record<
     label: 'Event Reminder',
     description: "an event I'm attending is starting soon.",
   },
+  ADDON_CONFIG_RESET: {
+    label: 'Add-on Updated',
+    description: "an add-on's config changes and my responses are cleared.",
+  },
 };
 
 interface NotificationSettingsCardProps {

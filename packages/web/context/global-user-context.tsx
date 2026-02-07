@@ -106,6 +106,19 @@ export function GlobalUserProvider({ children }: GlobalUserProviderProps) {
     undefined
   );
 
+  // Clear cached data when session identity changes (account switch)
+  // This prevents stale data from the previous user being shown
+  const previousSessionUserIdRef = useRef(
+    (session as { user?: { id?: string } } | null)?.user?.id
+  );
+  const currentSessionUserId = (session as { user?: { id?: string } } | null)
+    ?.user?.id;
+  if (currentSessionUserId !== previousSessionUserIdRef.current) {
+    cachedUserAndPersonRef.current = undefined;
+    cachedNeedsOnboardingRef.current = undefined;
+    previousSessionUserIdRef.current = currentSessionUserId;
+  }
+
   // Fetch user data - visibility-aware to prevent re-subscription flash
   // When tab is hidden, we skip the query but return cached data
   const userAndPersonResult = useQuery(

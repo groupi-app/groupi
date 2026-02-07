@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 import { useFileUpload } from '@/hooks/convex/use-file-upload';
+import { isReminderInPast } from '@/lib/datetime-helpers';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   EventImageUpload,
@@ -65,6 +66,34 @@ const REMINDER_OPTIONS: Array<{
   { value: '4_WEEKS', label: '4 weeks before' },
 ];
 
+// Visibility type
+type Visibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+
+// Visibility options with display labels
+const VISIBILITY_OPTIONS: Array<{
+  value: Visibility;
+  label: string;
+  description: string;
+  disabled?: boolean;
+}> = [
+  {
+    value: 'PRIVATE',
+    label: 'Private (invite only)',
+    description: 'Only invited members can see and join this event',
+  },
+  {
+    value: 'FRIENDS',
+    label: 'Friends can discover',
+    description: 'Your friends can find and join this event',
+  },
+  {
+    value: 'PUBLIC',
+    label: 'Public (coming soon)',
+    description: 'Anyone can find and join this event',
+    disabled: true,
+  },
+];
+
 const formSchema = z.object({
   title: z
     .string()
@@ -78,6 +107,7 @@ const formSchema = z.object({
     .string()
     .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
+  visibility: z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']).optional(),
   reminderOffset: z
     .enum([
       'never',
@@ -103,7 +133,9 @@ export default function EditEventInfo({
     title: string;
     description: string;
     location: string;
+    visibility?: Visibility;
     reminderOffset?: ReminderOffset;
+    chosenDateTime?: number;
     imageUrl?: string | null;
     imageStorageId?: Id<'_storage'>;
     imageFocalPoint?: FocalPoint | null;
@@ -114,10 +146,19 @@ export default function EditEventInfo({
     title,
     description,
     location,
+    visibility,
     reminderOffset,
+    chosenDateTime,
     imageUrl,
     imageFocalPoint: initialFocalPoint,
   } = eventData;
+
+  const availableReminderOptions = chosenDateTime
+    ? REMINDER_OPTIONS.filter(
+        opt =>
+          opt.value === 'never' || !isReminderInPast(opt.value, chosenDateTime)
+      )
+    : REMINDER_OPTIONS;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
   const { uploadFile } = useFileUpload();
@@ -161,18 +202,28 @@ export default function EditEventInfo({
       title: title,
       description: description,
       location: location,
+      visibility: visibility ?? 'PRIVATE',
       reminderOffset: reminderOffset ?? 'never',
     },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    setIsSaving(true);
-
     // Convert "never" to null (which becomes undefined on backend)
     const reminderOffsetValue =
       data.reminderOffset === 'never'
         ? null
         : (data.reminderOffset as ReminderOffset | undefined);
+
+    if (reminderOffsetValue && chosenDateTime) {
+      if (isReminderInPast(reminderOffsetValue, chosenDateTime)) {
+        toast.error(
+          'The selected reminder would be in the past. Please choose a shorter offset or set to "Never".'
+        );
+        return;
+      }
+    }
+
+    setIsSaving(true);
 
     try {
       // Handle image upload/removal
@@ -192,12 +243,19 @@ export default function EditEventInfo({
       }
       // If neither, imageStorageId stays undefined (no change)
 
+      // Convert visibility to mutation value
+      const visibilityValue =
+        data.visibility && data.visibility !== visibility
+          ? data.visibility
+          : undefined;
+
       await updateEvent({
         eventId: eventId,
         title: data.title,
         description: data.description,
         location: data.location,
         reminderOffset: reminderOffsetValue,
+        visibility: visibilityValue,
         // Only include imageStorageId if it changed
         ...(imageStorageId !== undefined && {
           imageStorageId: imageStorageId,
@@ -288,6 +346,40 @@ export default function EditEventInfo({
         </div>
         <FormField
           control={form.control}
+          name='visibility'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event Visibility</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || 'PRIVATE'}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select who can discover this event' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {VISIBILITY_OPTIONS.map(option => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      disabled={option.disabled}
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Control who can discover and join this event.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name='reminderOffset'
           render={({ field }) => (
             <FormItem>
@@ -302,7 +394,7 @@ export default function EditEventInfo({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {REMINDER_OPTIONS.map(option => (
+                  {availableReminderOptions.map(option => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
