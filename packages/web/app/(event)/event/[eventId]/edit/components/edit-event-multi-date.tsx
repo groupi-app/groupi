@@ -63,13 +63,17 @@ export function EditEventMultiDate({
     setDialogOpen(false); // Close dialog immediately
 
     // Convert options to the format expected by the mutation
-    const potentialDateTimes = options.map(opt => opt.start.getTime());
+    const potentialDateTimeOptions = options.map(opt => ({
+      start: opt.start.getTime(),
+      end: opt.end ? opt.end.getTime() : undefined,
+      note: opt.note?.trim() || undefined,
+    }));
 
     try {
       // Update potential date times
       await updatePotentialDateTimes({
         eventId,
-        potentialDateTimes,
+        potentialDateTimeOptions,
       });
 
       // Reset chosen date

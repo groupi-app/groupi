@@ -101,12 +101,15 @@ export function SingleDateTimeSelector({
     // Start time must be valid format
     if (!TIME_REGEX.test(startTime)) return false;
 
+    // Start datetime must be in the future
+    const startDT = getStartDateTime();
+    if (startDT.getTime() <= Date.now()) return false;
+
     if (hasEndTime) {
       // End time must be valid format if end is enabled
       if (!TIME_REGEX.test(endTime)) return false;
 
       // End must be after start
-      const startDT = getStartDateTime();
       const endDT = getEndDateTime();
       if (!endDT || endDT.getTime() <= startDT.getTime()) return false;
     }

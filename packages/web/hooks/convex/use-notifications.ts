@@ -175,28 +175,59 @@ export function usePaginatedNotifications(
 // ===== NOTIFICATION MUTATIONS =====
 
 /**
- * Mark single notification as read
+ * Mark single notification as read (optimistic)
  */
 export function useMarkNotificationAsRead(): (
   notificationId: Id<'notifications'>
 ) => Promise<void> {
   const markAsReadMutation = useMutation(
     notificationMutations.markNotificationAsRead
-  );
+  ).withOptimisticUpdate((localStore, { notificationId }) => {
+    // Optimistically update the notification list
+    // We need to check multiple possible query args since pagination uses different params
+    const notificationsResult = localStore.getQuery(
+      notificationQueries.fetchNotificationsForPerson,
+      { limit: 20 }
+    );
+    if (notificationsResult?.notifications) {
+      const updatedNotifications = notificationsResult.notifications.map(
+        (n: EnrichedNotification) =>
+          n._id === notificationId ? { ...n, read: true } : n
+      );
+      localStore.setQuery(
+        notificationQueries.fetchNotificationsForPerson,
+        { limit: 20 },
+        { ...notificationsResult, notifications: updatedNotifications }
+      );
+    }
+
+    // Optimistically decrement unread count
+    const unreadCount = localStore.getQuery(
+      notificationQueries.getUnreadNotificationCount,
+      {}
+    );
+    if (unreadCount && unreadCount.count > 0) {
+      localStore.setQuery(
+        notificationQueries.getUnreadNotificationCount,
+        {},
+        {
+          count: unreadCount.count - 1,
+        }
+      );
+    }
+  });
   const { toast } = useToast();
 
   return useCallback(
     async (notificationId: Id<'notifications'>) => {
       try {
         await markAsReadMutation({ notificationId });
-        // Success toast not needed - this is a quiet action
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to mark notification as read.',
           variant: 'destructive',
         });
-        throw error;
       }
     },
     [markAsReadMutation, toast]
@@ -204,27 +235,58 @@ export function useMarkNotificationAsRead(): (
 }
 
 /**
- * Mark single notification as unread
+ * Mark single notification as unread (optimistic)
  */
 export function useMarkNotificationAsUnread(): (
   notificationId: Id<'notifications'>
 ) => Promise<void> {
   const markAsUnread = useMutation(
     notificationMutations.markNotificationAsUnread
-  );
+  ).withOptimisticUpdate((localStore, { notificationId }) => {
+    // Optimistically update the notification list
+    const notificationsResult = localStore.getQuery(
+      notificationQueries.fetchNotificationsForPerson,
+      { limit: 20 }
+    );
+    if (notificationsResult?.notifications) {
+      const updatedNotifications = notificationsResult.notifications.map(
+        (n: EnrichedNotification) =>
+          n._id === notificationId ? { ...n, read: false } : n
+      );
+      localStore.setQuery(
+        notificationQueries.fetchNotificationsForPerson,
+        { limit: 20 },
+        { ...notificationsResult, notifications: updatedNotifications }
+      );
+    }
+
+    // Optimistically increment unread count
+    const unreadCount = localStore.getQuery(
+      notificationQueries.getUnreadNotificationCount,
+      {}
+    );
+    if (unreadCount) {
+      localStore.setQuery(
+        notificationQueries.getUnreadNotificationCount,
+        {},
+        {
+          count: unreadCount.count + 1,
+        }
+      );
+    }
+  });
   const { toast } = useToast();
 
   return useCallback(
     async (notificationId: Id<'notifications'>) => {
       try {
         await markAsUnread({ notificationId });
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to mark notification as unread.',
           variant: 'destructive',
         });
-        throw error;
       }
     },
     [markAsUnread, toast]
@@ -281,29 +343,62 @@ export function useMarkEventNotificationsAsRead() {
 }
 
 /**
- * Delete single notification
+ * Delete single notification (optimistic)
  */
 export function useDeleteNotification() {
   const deleteNotification = useMutation(
     notificationMutations.deleteNotification
-  );
+  ).withOptimisticUpdate((localStore, { notificationId }) => {
+    // Optimistically remove the notification from the list
+    const notificationsResult = localStore.getQuery(
+      notificationQueries.fetchNotificationsForPerson,
+      { limit: 20 }
+    );
+    if (notificationsResult?.notifications) {
+      // Find the notification to check if it was unread
+      const deletedNotification = notificationsResult.notifications.find(
+        (n: EnrichedNotification) => n._id === notificationId
+      );
+      const wasUnread = deletedNotification && !deletedNotification.read;
+
+      // Remove the notification from the list
+      const updatedNotifications = notificationsResult.notifications.filter(
+        (n: EnrichedNotification) => n._id !== notificationId
+      );
+      localStore.setQuery(
+        notificationQueries.fetchNotificationsForPerson,
+        { limit: 20 },
+        { ...notificationsResult, notifications: updatedNotifications }
+      );
+
+      // If the deleted notification was unread, decrement the count
+      if (wasUnread) {
+        const unreadCount = localStore.getQuery(
+          notificationQueries.getUnreadNotificationCount,
+          {}
+        );
+        if (unreadCount && unreadCount.count > 0) {
+          localStore.setQuery(
+            notificationQueries.getUnreadNotificationCount,
+            {},
+            { count: unreadCount.count - 1 }
+          );
+        }
+      }
+    }
+  });
   const { toast } = useToast();
 
   return useCallback(
     async (notificationId: Id<'notifications'>) => {
       try {
         await deleteNotification({ notificationId });
-        toast({
-          title: 'Success',
-          description: 'Notification deleted.',
-        });
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to delete notification.',
           variant: 'destructive',
         });
-        throw error;
       }
     },
     [deleteNotification, toast]

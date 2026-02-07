@@ -99,10 +99,15 @@ export function MultiDateTimeSelector({
     }
 
     const [hours, minutes] = parseTimeString(time);
+    const now = Date.now();
 
-    const newOptions: DateTimeOption[] = selectedDates.map(date => {
+    const newOptions: DateTimeOption[] = [];
+    for (const date of selectedDates) {
       const start = new Date(date);
       start.setHours(hours, minutes, 0, 0);
+
+      // Skip dates in the past
+      if (start.getTime() <= now) continue;
 
       let end: Date | undefined;
       if (hasEndTime) {
@@ -111,12 +116,16 @@ export function MultiDateTimeSelector({
         end.setHours(endH, endM, 0, 0);
       }
 
-      return {
+      newOptions.push({
         id: generateId(),
         start,
         end,
-      };
-    });
+      });
+    }
+
+    if (newOptions.length === 0) {
+      return; // All selected dates were in the past
+    }
 
     setDateTimeOptions(prev => mergeDateTimeOptions(prev, newOptions));
 

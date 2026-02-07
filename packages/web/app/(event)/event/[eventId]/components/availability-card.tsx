@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Doc } from '../../../../../../../convex/_generated/dataModel';
 import { User } from '@/convex/types';
 
@@ -27,21 +28,29 @@ export function AvailabilityCard({
   pdt,
   formAnswers,
   setFormAnswer,
+  setFormNote,
   index,
 }: {
   pdt: PotentialDateTime;
   formAnswers: Array<{
     potentialDateTimeId: string;
     answer: 'yes' | 'maybe' | 'no';
+    note?: string;
   }>;
   setFormAnswer: (
     index: number,
-    value: { potentialDateTimeId: string; answer: 'yes' | 'maybe' | 'no' }
+    value: {
+      potentialDateTimeId: string;
+      answer: 'yes' | 'maybe' | 'no';
+      note?: string;
+    }
   ) => void;
+  setFormNote: (index: number, note: string) => void;
   index: number;
 }) {
   const [listOpen, setListOpen] = useState(false);
   const answer = formAnswers[index]?.answer;
+  const note = formAnswers[index]?.note ?? '';
 
   return (
     <div className='w-full sm:max-w-md border border-border shadow-floating rounded-md py-4 px-4 h-max'>
@@ -61,6 +70,11 @@ export function AvailabilityCard({
                 timeStyle: 'short',
               })}
             </h2>
+            {pdt.note && (
+              <p className='text-muted-foreground text-xs mt-1 italic'>
+                {pdt.note}
+              </p>
+            )}
           </div>
         </div>
         <div className='flex items-center gap-2 py-3'>
@@ -120,6 +134,19 @@ export function AvailabilityCard({
           </Button>
         </div>
       </div>
+      <div className='relative mt-2'>
+        <Textarea
+          value={note}
+          onChange={e => setFormNote(index, e.target.value)}
+          placeholder='Add a note (optional)'
+          maxLength={200}
+          className='min-h-[40px] text-sm resize-none'
+          rows={1}
+        />
+        <span className='absolute bottom-1.5 right-3 text-xs text-muted-foreground'>
+          {note.length}/200
+        </span>
+      </div>
       <div
         onClick={() => setListOpen(!listOpen)}
         className='flex items-center py-1 px-2 hover:bg-accent/80 rounded-md justify-between w-max gap-2 cursor-pointer'
@@ -158,124 +185,72 @@ export function AvailabilityCard({
       </div>
       {listOpen && (
         <div className='flex flex-col gap-2 py-1'>
-          {pdt.availabilities.filter(
-            a => a.status === 'YES' && a.member !== null
-          ).length > 0 && (
-            <div>
-              <div className='flex items-center gap-1'>
-                <Icons.check className='size-6 text-success' />
-                <span>Yes</span>
-              </div>
-              <div className='flex flex-col divide-y ml-6'>
-                {pdt.availabilities
-                  .filter(a => a.status === 'YES' && a.member !== null)
-                  .map(a => {
-                    const member = a.member; // Non-null assertion after filter
+          {(['YES', 'MAYBE', 'NO'] as const).map(status => {
+            const filtered = pdt.availabilities.filter(
+              a => a.status === status && a.member !== null
+            );
+            if (filtered.length === 0) return null;
+            return (
+              <div key={status}>
+                <div className='flex items-center gap-1'>
+                  {status === 'YES' && (
+                    <>
+                      <Icons.check className='size-6 text-success' />
+                      <span>Yes</span>
+                    </>
+                  )}
+                  {status === 'MAYBE' && (
+                    <>
+                      <span className='font-semibold w-6 text-xl text-warning text-center'>
+                        ?
+                      </span>
+                      <span>Maybe</span>
+                    </>
+                  )}
+                  {status === 'NO' && (
+                    <>
+                      <Icons.close className='size-6 text-error' />
+                      <span>No</span>
+                    </>
+                  )}
+                </div>
+                <div className='flex flex-col divide-y ml-6'>
+                  {filtered.map(a => {
+                    const member = a.member;
                     return (
                       <div
                         key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-3'
+                        className='flex flex-col py-3'
                       >
-                        <Avatar className='size-6'>
-                          <AvatarFallback>
-                            {(
-                              member.person?.user?.name?.[0] || ''
-                            ).toUpperCase()}
-                          </AvatarFallback>
-                          <AvatarImage
-                            src={member.person?.user?.image || undefined}
-                          />
-                        </Avatar>
-                        <span>
-                          {member.person?.user?.name ||
-                            member.person?.user?.email}
-                        </span>
+                        <div className='flex items-center gap-2'>
+                          <Avatar className='size-6'>
+                            <AvatarFallback>
+                              {getInitialsFromName(
+                                member.person?.user?.name ?? undefined,
+                                member.person?.user?.email ?? undefined
+                              )}
+                            </AvatarFallback>
+                            <AvatarImage
+                              src={member.person?.user?.image || undefined}
+                            />
+                          </Avatar>
+                          <span>
+                            {member.person?.user?.name ||
+                              member.person?.user?.email}
+                          </span>
+                        </div>
+                        {a.note && (
+                          <p className='text-muted-foreground text-xs ml-8 mt-1 italic'>
+                            {a.note}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
+                </div>
               </div>
-            </div>
-          )}
-          {pdt.availabilities.filter(
-            a => a.status === 'MAYBE' && a.member !== null
-          ).length > 0 && (
-            <div>
-              <div className='flex items-center gap-1'>
-                <span className='font-semibold w-6 text-xl text-warning text-center'>
-                  ?
-                </span>
-                <span>Maybe</span>
-              </div>
-              <div className='flex flex-col divide-y ml-6'>
-                {pdt.availabilities
-                  .filter(a => a.status === 'MAYBE' && a.member !== null)
-                  .map(a => {
-                    const member = a.member; // Non-null assertion after filter
-                    return (
-                      <div
-                        key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-3'
-                      >
-                        <Avatar className='size-6'>
-                          <AvatarFallback>
-                            {getInitialsFromName(
-                              member.person?.user?.name ?? undefined,
-                              member.person?.user?.email ?? undefined
-                            )}
-                          </AvatarFallback>
-                          <AvatarImage
-                            src={member.person?.user?.image || undefined}
-                          />
-                        </Avatar>
-                        <span>
-                          {member.person?.user?.name ||
-                            member.person?.user?.email}
-                        </span>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-          {pdt.availabilities.filter(
-            a => a.status === 'NO' && a.member !== null
-          ).length > 0 && (
-            <div>
-              <div className='flex items-center gap-1'>
-                <Icons.close className='size-6 text-error' />
-                <span>No</span>
-              </div>
-              <div className='flex flex-col divide-y ml-6'>
-                {pdt.availabilities
-                  .filter(a => a.status === 'NO' && a.member !== null)
-                  .map(a => {
-                    const member = a.member; // Non-null assertion after filter
-                    return (
-                      <div
-                        key={member._id + pdt._id}
-                        className='flex items-center gap-2 py-3'
-                      >
-                        <Avatar className='size-6'>
-                          <AvatarFallback>
-                            {getInitialsFromName(
-                              member.person?.user?.name ?? undefined,
-                              member.person?.user?.email ?? undefined
-                            )}
-                          </AvatarFallback>
-                          <AvatarImage
-                            src={member.person?.user?.image || undefined}
-                          />
-                        </Avatar>
-                        <span>
-                          {member.person?.user?.name ||
-                            member.person?.user?.email}
-                        </span>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
     </div>

@@ -274,7 +274,6 @@ test.describe('Accessibility', () => {
 
       // Log violations for debugging
       if (accessibilityScanResults.violations.length > 0) {
-        // eslint-disable-next-line no-console
         console.log(
           'Color contrast violations:',
           JSON.stringify(accessibilityScanResults.violations, null, 2)

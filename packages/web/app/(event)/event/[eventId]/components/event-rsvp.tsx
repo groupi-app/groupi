@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useUpdateRSVP } from '@/hooks/convex/use-events';
 import { Id } from '@/convex/_generated/dataModel';
@@ -24,6 +24,7 @@ import { useEventData } from '../context';
 // Form schema defined outside component for stability
 const formSchema = z.object({
   rsvp: z.enum(['YES', 'NO', 'MAYBE', 'PENDING']),
+  rsvpNote: z.string().max(200).optional(),
 });
 
 export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
@@ -42,6 +43,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
     mode: 'onChange',
     defaultValues: {
       rsvp: eventHeaderData?.userMembership?.rsvpStatus ?? 'PENDING',
+      rsvpNote: eventHeaderData?.userMembership?.rsvpNote ?? '',
     },
   });
 
@@ -50,9 +52,14 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
     if (eventHeaderData?.userMembership?.rsvpStatus) {
       form.reset({
         rsvp: eventHeaderData.userMembership.rsvpStatus,
+        rsvpNote: eventHeaderData.userMembership.rsvpNote ?? '',
       });
     }
-  }, [eventHeaderData?.userMembership?.rsvpStatus, form]);
+  }, [
+    eventHeaderData?.userMembership?.rsvpStatus,
+    eventHeaderData?.userMembership?.rsvpNote,
+    form,
+  ]);
 
   // Loading state - AFTER all hooks are called
   if (eventHeaderData === undefined) {
@@ -76,6 +83,7 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
       await updateRSVP({
         eventId: eventId,
         rsvpStatus: values.rsvp,
+        rsvpNote: values.rsvpNote || undefined,
       });
       toast.success('Your RSVP status has been successfully updated');
     } catch {
@@ -93,43 +101,42 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
         userMembership.role !== 'ORGANIZER' &&
         (userMembership.rsvpStatus !== 'PENDING' ? (
           <DialogTrigger asChild>
-            <Button
-              className='flex items-center gap-3 w-max text-muted-foreground'
-              variant={'ghost'}
-              size={'sm'}
+            <button
+              type='button'
+              className={`rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 ${
+                userMembership.rsvpStatus === 'YES'
+                  ? 'bg-success'
+                  : userMembership.rsvpStatus === 'NO'
+                    ? 'bg-error'
+                    : 'bg-warning'
+              }`}
             >
-              <span className='text-primary font-semibold'>RSVP:</span>
-              <div className='flex items-center gap-1'>
-                {userMembership.rsvpStatus === 'YES' ? (
-                  <Icons.check className='text-success' />
-                ) : userMembership.rsvpStatus === 'NO' ? (
-                  <Icons.close className='text-error' />
-                ) : (
-                  <span className='font-semibold w-6 text-xl text-warning text-center'>
-                    ?
-                  </span>
-                )}
-                <span>{userMembership.rsvpStatus}</span>
-              </div>
-              <Icons.arrowRight className='size-4' />
-            </Button>
+              {userMembership.rsvpStatus === 'YES' ? (
+                <Icons.check className='size-5 text-white' />
+              ) : userMembership.rsvpStatus === 'NO' ? (
+                <Icons.close className='size-5 text-white' />
+              ) : (
+                <span className='size-5 text-white font-bold text-xl leading-5 text-center'>
+                  ?
+                </span>
+              )}
+              <span className='text-white font-semibold'>
+                RSVP: {userMembership.rsvpStatus}
+              </span>
+              {userMembership.rsvpNote && (
+                <Icons.messageSquare className='size-4 text-white/80' />
+              )}
+            </button>
           </DialogTrigger>
         ) : (
           <DialogTrigger asChild>
-            <Alert className='hover:bg-accent/80 transition-all cursor-pointer group'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <AlertTitle className='flex items-center gap-1'>
-                    <Icons.info className='size-6 text-primary' />{' '}
-                    <span>Your RSVP is Pending!</span>
-                  </AlertTitle>
-                  <AlertDescription className='text-muted-foreground'>
-                    Please click here to RSVP to this event.
-                  </AlertDescription>
-                </div>
-                <Icons.arrowRight className='size-6 text-muted-foreground ' />
-              </div>
-            </Alert>
+            <button
+              type='button'
+              className='bg-info rounded-card shadow-raised border-[3px] border-white px-4 py-2.5 flex items-center gap-2.5 w-fit cursor-pointer transition-opacity hover:opacity-90 animate-wiggle-periodic'
+            >
+              <Icons.party className='size-5 text-white' />
+              <span className='text-white font-semibold'>RSVP Pending!</span>
+            </button>
           </DialogTrigger>
         ))}
       <DialogContent>
@@ -200,6 +207,27 @@ export function EventRSVP({ eventId }: { eventId: Id<'events'> }) {
                         <span>No</span>
                       </div>
                     </Button>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='rsvpNote'
+              render={({ field }) => (
+                <FormItem className='mt-4'>
+                  <FormControl>
+                    <div className='relative'>
+                      <Textarea
+                        {...field}
+                        placeholder='Add a note (optional)'
+                        maxLength={200}
+                        className='min-h-[60px] resize-none'
+                      />
+                      <span className='absolute bottom-2 right-3 text-xs text-muted-foreground'>
+                        {field.value?.length ?? 0}/200
+                      </span>
+                    </div>
                   </FormControl>
                 </FormItem>
               )}

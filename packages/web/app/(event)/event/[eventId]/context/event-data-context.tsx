@@ -111,9 +111,11 @@ export function EventDataProvider({
   const membersData = useEventAttendeesData(eventIdTyped);
 
   // Only fetch availability data on pages that need it
-  // (availability page and change-date pages)
+  // (availability, change-date, and date-select pages)
   const needsAvailabilityData =
-    pathname?.includes('/availability') || pathname?.includes('/change-date');
+    pathname?.includes('/availability') ||
+    pathname?.includes('/change-date') ||
+    pathname?.includes('/date-select');
   const availabilityData = useEventAvailabilityDataWithSkip(
     needsAvailabilityData ? eventIdTyped : null
   );
