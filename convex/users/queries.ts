@@ -6,6 +6,10 @@ import {
   ExtendedAuthUser,
   AuthUserId,
 } from '../auth';
+import {
+  checkCanSendFriendRequest,
+  checkCanSendEventInvite,
+} from '../lib/privacy';
 
 /**
  * Users queries for the Convex backend
@@ -109,7 +113,9 @@ export const getUserByUsername = query({
 
 /**
  * Get user profile by person ID
- * Used by profile dialogs and user information displays
+ * Used by profile dialogs and user information displays.
+ * Includes privacy flags indicating whether the current user can
+ * send friend requests / event invites to this person.
  */
 export const getUserProfile = query({
   args: {
@@ -132,6 +138,39 @@ export const getUserProfile = query({
       throw new Error('User not found');
     }
 
+    // Check privacy flags and block status for the current viewer
+    let canSendFriendRequest = false;
+    let canSendEventInvite = false;
+    let isBlockedByMe = false;
+
+    const currentPerson = await getCurrentPerson(ctx);
+    if (currentPerson && currentPerson._id !== personId) {
+      // Check if current user has blocked this person
+      const blockedByMe = await ctx.db
+        .query('userBlocks')
+        .withIndex('by_blocker_blocked', q =>
+          q.eq('blockerId', currentPerson._id).eq('blockedId', personId)
+        )
+        .first();
+      isBlockedByMe = !!blockedByMe;
+
+      if (!isBlockedByMe) {
+        const frCheck = await checkCanSendFriendRequest(
+          ctx,
+          currentPerson._id,
+          personId
+        );
+        canSendFriendRequest = frCheck.allowed;
+
+        const eiCheck = await checkCanSendEventInvite(
+          ctx,
+          currentPerson._id,
+          personId
+        );
+        canSendEventInvite = eiCheck.allowed;
+      }
+    }
+
     return {
       user: {
         id: user._id,
@@ -143,13 +182,17 @@ export const getUserProfile = query({
         pronouns: person.pronouns || null,
         lastSeen: person.lastSeen || null,
       },
+      canSendFriendRequest,
+      canSendEventInvite,
+      isBlockedByMe,
     };
   },
 });
 
 /**
  * Get user profile by user ID (string)
- * Used when we have a user ID from the Better Auth component
+ * Used when we have a user ID from the Better Auth component.
+ * Includes privacy flags for the current viewer.
  */
 export const getUserProfileByUserId = query({
   args: {
@@ -173,6 +216,38 @@ export const getUserProfileByUserId = query({
       throw new Error('User not found');
     }
 
+    // Check privacy flags and block status for the current viewer
+    let canSendFriendRequest = false;
+    let canSendEventInvite = false;
+    let isBlockedByMe = false;
+
+    const currentPerson = await getCurrentPerson(ctx);
+    if (currentPerson && currentPerson._id !== person._id) {
+      const blockedByMe = await ctx.db
+        .query('userBlocks')
+        .withIndex('by_blocker_blocked', q =>
+          q.eq('blockerId', currentPerson._id).eq('blockedId', person._id)
+        )
+        .first();
+      isBlockedByMe = !!blockedByMe;
+
+      if (!isBlockedByMe) {
+        const frCheck = await checkCanSendFriendRequest(
+          ctx,
+          currentPerson._id,
+          person._id
+        );
+        canSendFriendRequest = frCheck.allowed;
+
+        const eiCheck = await checkCanSendEventInvite(
+          ctx,
+          currentPerson._id,
+          person._id
+        );
+        canSendEventInvite = eiCheck.allowed;
+      }
+    }
+
     return {
       user: {
         id: user._id,
@@ -184,6 +259,10 @@ export const getUserProfileByUserId = query({
         pronouns: person.pronouns || null,
         lastSeen: person.lastSeen || null,
       },
+      personId: person._id,
+      canSendFriendRequest,
+      canSendEventInvite,
+      isBlockedByMe,
     };
   },
 });
