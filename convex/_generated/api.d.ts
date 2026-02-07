@@ -10,6 +10,7 @@
 
 import type * as accounts_mutations from "../accounts/mutations.js";
 import type * as accounts_queries from "../accounts/queries.js";
+import type * as addons_handlers_bringList from "../addons/handlers/bringList.js";
 import type * as addons_handlers_questionnaire from "../addons/handlers/questionnaire.js";
 import type * as addons_handlers_reminders from "../addons/handlers/reminders.js";
 import type * as addons_lifecycle from "../addons/lifecycle.js";
@@ -108,6 +109,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "accounts/mutations": typeof accounts_mutations;
   "accounts/queries": typeof accounts_queries;
+  "addons/handlers/bringList": typeof addons_handlers_bringList;
   "addons/handlers/questionnaire": typeof addons_handlers_questionnaire;
   "addons/handlers/reminders": typeof addons_handlers_reminders;
   "addons/lifecycle": typeof addons_lifecycle;

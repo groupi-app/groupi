@@ -13,6 +13,7 @@ import { getAddonById } from '@/app/(newEvent)/create/components/addon-registry'
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
+import '@/app/(newEvent)/create/components/addons/bring-list-addon';
 
 export default function AddonPage(props: {
   params: Promise<{ eventId: string; addonId: string }>;

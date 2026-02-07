@@ -14,6 +14,7 @@ import {
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
+import '@/app/(newEvent)/create/components/addons/bring-list-addon';
 
 type HeaderData = NonNullable<ReturnType<typeof useEventHeaderData>>;
 
