@@ -404,6 +404,143 @@ describe('Availability Domain', () => {
     });
   });
 
+  describe('availability notes', () => {
+    test('should submit availability with a note', async () => {
+      const t = createTestInstance();
+      const { eventId, membershipId, potentialDateTimeIds, auth } =
+        await setupEventWithDates(t);
+
+      const result = await auth.mutation(
+        api.availability.mutations.submitAvailability,
+        {
+          eventId,
+          responses: [
+            {
+              potentialDateTimeId: potentialDateTimeIds[0],
+              status: 'YES',
+              note: 'Prefer morning',
+            },
+          ],
+        }
+      );
+
+      expect(result.responses).toHaveLength(1);
+
+      // Verify note was saved
+      const { availability } = await t.run(async ctx => {
+        const availability = await ctx.db
+          .query('availabilities')
+          .withIndex('by_membership_date', q =>
+            q
+              .eq('membershipId', membershipId)
+              .eq('potentialDateTimeId', potentialDateTimeIds[0])
+          )
+          .first();
+        return { availability };
+      });
+
+      expect(availability?.note).toBe('Prefer morning');
+    });
+
+    test('should update availability note via updateSingleAvailability', async () => {
+      const t = createTestInstance();
+      const { eventId, membershipId, potentialDateTimeIds, auth } =
+        await setupEventWithDates(t);
+
+      // Create initial availability
+      await auth.mutation(api.availability.mutations.submitAvailability, {
+        eventId,
+        responses: [
+          { potentialDateTimeId: potentialDateTimeIds[0], status: 'YES' },
+        ],
+      });
+
+      // Update with a note
+      await auth.mutation(api.availability.mutations.updateSingleAvailability, {
+        potentialDateTimeId: potentialDateTimeIds[0],
+        status: 'YES',
+        note: 'Updated note',
+      });
+
+      const { availability } = await t.run(async ctx => {
+        const availability = await ctx.db
+          .query('availabilities')
+          .withIndex('by_membership_date', q =>
+            q
+              .eq('membershipId', membershipId)
+              .eq('potentialDateTimeId', potentialDateTimeIds[0])
+          )
+          .first();
+        return { availability };
+      });
+
+      expect(availability?.note).toBe('Updated note');
+    });
+  });
+
+  describe('updatePotentialDateTimeNote', () => {
+    test('should allow organizer to add note to date option', async () => {
+      const t = createTestInstance();
+      const { potentialDateTimeIds, auth } = await setupEventWithDates(t);
+
+      const result = await auth.mutation(
+        api.availability.mutations.updatePotentialDateTimeNote,
+        {
+          potentialDateTimeId: potentialDateTimeIds[0],
+          note: 'Best option for the venue',
+        }
+      );
+
+      expect(result.success).toBe(true);
+
+      // Verify note was saved
+      const { potentialDateTime } = await t.run(async ctx => {
+        const potentialDateTime = await ctx.db.get(potentialDateTimeIds[0]);
+        return { potentialDateTime };
+      });
+
+      expect(potentialDateTime?.note).toBe('Best option for the venue');
+    });
+
+    test('should require ORGANIZER role', async () => {
+      const t = createTestInstance();
+      const setup = await setupEventWithDates(t);
+
+      // Create attendee
+      const { userId: attendeeUserId } = await createTestUser(t, {
+        email: 'attendee@example.com',
+      });
+
+      // Add attendee to event
+      await t.run(async ctx => {
+        const person = await ctx.db
+          .query('persons')
+          .filter(q => q.eq(q.field('userId'), attendeeUserId))
+          .first();
+        if (person) {
+          await ctx.db.insert('memberships', {
+            personId: person._id,
+            eventId: setup.eventId,
+            role: 'ATTENDEE',
+            rsvpStatus: 'YES',
+          });
+        }
+      });
+
+      const attendeeAuth = createAuthenticatedUser(t, attendeeUserId);
+
+      await expect(
+        attendeeAuth.mutation(
+          api.availability.mutations.updatePotentialDateTimeNote,
+          {
+            potentialDateTimeId: setup.potentialDateTimeIds[0],
+            note: 'Should not work',
+          }
+        )
+      ).rejects.toThrow();
+    });
+  });
+
   describe('getEventAvailabilityData', () => {
     test('should return complete availability data', async () => {
       const t = createTestInstance();

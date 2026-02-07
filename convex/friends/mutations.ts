@@ -2,6 +2,7 @@ import { mutation } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { requireAuth } from '../auth';
 import { createNotification } from '../lib/notifications';
+import { checkCanSendFriendRequest } from '../lib/privacy';
 
 /**
  * Friends mutations for the Convex backend
@@ -29,6 +30,18 @@ export const sendFriendRequest = mutation({
     const addressee = await ctx.db.get(addresseePersonId);
     if (!addressee) {
       throw new ConvexError('User not found');
+    }
+
+    // Check privacy settings
+    const privacyCheck = await checkCanSendFriendRequest(
+      ctx,
+      person._id,
+      addresseePersonId
+    );
+    if (!privacyCheck.allowed) {
+      throw new ConvexError(
+        privacyCheck.reason || 'This user is not accepting friend requests'
+      );
     }
 
     // Check if there's already a friendship between these users (in either direction)
@@ -301,5 +314,99 @@ export const removeFriendByPersonId = mutation({
     }
 
     throw new ConvexError('You are not friends with this user');
+  },
+});
+
+/**
+ * Block a user.
+ * Also removes any existing friendship and cancels pending friend requests.
+ */
+export const blockUser = mutation({
+  args: {
+    personId: v.id('persons'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { personId }) => {
+    const { person } = await requireAuth(ctx);
+
+    if (person._id === personId) {
+      throw new ConvexError("You can't block yourself");
+    }
+
+    // Check if target exists
+    const target = await ctx.db.get(personId);
+    if (!target) {
+      throw new ConvexError('User not found');
+    }
+
+    // Check if already blocked
+    const existingBlock = await ctx.db
+      .query('userBlocks')
+      .withIndex('by_blocker_blocked', q =>
+        q.eq('blockerId', person._id).eq('blockedId', personId)
+      )
+      .first();
+
+    if (existingBlock) {
+      throw new ConvexError('User is already blocked');
+    }
+
+    // Create block
+    await ctx.db.insert('userBlocks', {
+      blockerId: person._id,
+      blockedId: personId,
+      createdAt: Date.now(),
+    });
+
+    // Remove any existing friendship in either direction
+    const asRequester = await ctx.db
+      .query('friendships')
+      .withIndex('by_requester_addressee', q =>
+        q.eq('requesterId', person._id).eq('addresseeId', personId)
+      )
+      .first();
+    if (asRequester) {
+      await ctx.db.delete(asRequester._id);
+    }
+
+    const asAddressee = await ctx.db
+      .query('friendships')
+      .withIndex('by_requester_addressee', q =>
+        q.eq('requesterId', personId).eq('addresseeId', person._id)
+      )
+      .first();
+    if (asAddressee) {
+      await ctx.db.delete(asAddressee._id);
+    }
+
+    return { success: true, message: 'User blocked' };
+  },
+});
+
+/**
+ * Unblock a user
+ */
+export const unblockUser = mutation({
+  args: {
+    personId: v.id('persons'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { personId }) => {
+    const { person } = await requireAuth(ctx);
+
+    const block = await ctx.db
+      .query('userBlocks')
+      .withIndex('by_blocker_blocked', q =>
+        q.eq('blockerId', person._id).eq('blockedId', personId)
+      )
+      .first();
+
+    if (!block) {
+      throw new ConvexError('User is not blocked');
+    }
+
+    await ctx.db.delete(block._id);
+
+    return { success: true, message: 'User unblocked' };
   },
 });

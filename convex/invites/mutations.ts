@@ -281,6 +281,19 @@ export const acceptInvite = mutation({
       });
     }
 
+    // Remove any pending internal (eventInvites) invites for this user/event
+    const pendingEventInvites = await ctx.db
+      .query('eventInvites')
+      .withIndex('by_event_invitee', q =>
+        q.eq('eventId', invite.eventId).eq('inviteeId', person._id)
+      )
+      .filter(q => q.eq(q.field('status'), 'PENDING'))
+      .collect();
+
+    for (const eventInvite of pendingEventInvites) {
+      await ctx.db.delete(eventInvite._id);
+    }
+
     // Notify organizers and moderators about the new member
     await notifyEventModerators(ctx, {
       eventId: invite.eventId,

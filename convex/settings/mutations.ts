@@ -240,3 +240,53 @@ export const deleteNotificationMethod = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Save privacy settings for the current user
+ */
+export const savePrivacySettings = mutation({
+  args: {
+    allowFriendRequestsFrom: v.union(
+      v.literal('EVERYONE'),
+      v.literal('EVENT_MEMBERS'),
+      v.literal('NO_ONE')
+    ),
+    allowEventInvitesFrom: v.union(
+      v.literal('EVERYONE'),
+      v.literal('EVENT_MEMBERS'),
+      v.literal('FRIENDS'),
+      v.literal('NO_ONE')
+    ),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { allowFriendRequestsFrom, allowEventInvitesFrom }) => {
+    const { user } = await requireAuth(ctx);
+
+    const person = await getPersonForUser(ctx, user._id);
+    if (!person) {
+      throw new Error('Person not found for user');
+    }
+
+    const existingSettings = await ctx.db
+      .query('personSettings')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .first();
+
+    if (existingSettings) {
+      await ctx.db.patch(existingSettings._id, {
+        allowFriendRequestsFrom,
+        allowEventInvitesFrom,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert('personSettings', {
+        personId: person._id,
+        allowFriendRequestsFrom,
+        allowEventInvitesFrom,
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});

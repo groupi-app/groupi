@@ -61,7 +61,22 @@ export default defineSchema({
   personSettings: defineTable({
     personId: v.id('persons'),
     updatedAt: v.optional(v.number()), // Unix timestamp
-    // Future settings can be added here
+    // Privacy settings
+    allowFriendRequestsFrom: v.optional(
+      v.union(
+        v.literal('EVERYONE'),
+        v.literal('EVENT_MEMBERS'),
+        v.literal('NO_ONE')
+      )
+    ),
+    allowEventInvitesFrom: v.optional(
+      v.union(
+        v.literal('EVERYONE'),
+        v.literal('EVENT_MEMBERS'),
+        v.literal('FRIENDS'),
+        v.literal('NO_ONE')
+      )
+    ),
   }).index('by_person', ['personId']),
 
   events: defineTable({
@@ -85,6 +100,10 @@ export default defineSchema({
     updatedAt: v.number(), // Unix timestamp
     timezone: v.string(),
     potentialDateTimes: v.array(v.number()), // Array of Unix timestamps (deprecated, use potentialDateTimes table)
+    // Event visibility - who can discover this event (undefined = PRIVATE)
+    visibility: v.optional(
+      v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
+    ),
     // Reminder offset - how far before the event to remind attendees (undefined = never)
     reminderOffset: v.optional(
       v.union(
@@ -116,6 +135,7 @@ export default defineSchema({
       v.literal('NO'),
       v.literal('PENDING')
     ),
+    rsvpNote: v.optional(v.string()), // Optional RSVP note (max 200 chars, visible to author + organizers/moderators)
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_person', ['personId'])
@@ -128,6 +148,7 @@ export default defineSchema({
     // INVARIANT: endDateTime must be > dateTime when set
     dateTime: v.number(), // Unix timestamp for start time
     endDateTime: v.optional(v.number()), // Unix timestamp for end time (optional)
+    note: v.optional(v.string()), // Optional organizer note (max 200 chars, visible to all members)
     updatedAt: v.optional(v.number()), // Unix timestamp
   }).index('by_event', ['eventId']),
 
@@ -140,6 +161,7 @@ export default defineSchema({
       v.literal('NO'),
       v.literal('PENDING')
     ),
+    note: v.optional(v.string()), // Optional note (max 200 chars, visible to author + organizers/moderators)
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_membership', ['membershipId'])
@@ -211,7 +233,10 @@ export default defineSchema({
       v.literal('USER_MENTIONED'),
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
-      v.literal('FRIEND_REQUEST_ACCEPTED')
+      v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('EVENT_INVITE_RECEIVED'),
+      v.literal('EVENT_INVITE_ACCEPTED'),
+      v.literal('ADDON_CONFIG_RESET')
     ),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
@@ -269,7 +294,10 @@ export default defineSchema({
       v.literal('USER_MENTIONED'),
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
-      v.literal('FRIEND_REQUEST_ACCEPTED')
+      v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('EVENT_INVITE_RECEIVED'),
+      v.literal('EVENT_INVITE_ACCEPTED'),
+      v.literal('ADDON_CONFIG_RESET')
     ),
     methodId: v.id('notificationMethods'),
     enabled: v.boolean(),
@@ -331,6 +359,57 @@ export default defineSchema({
     .index('by_person', ['personId'])
     .index('by_post', ['postId'])
     .index('by_person_post', ['personId', 'postId']),
+
+  // ===== REMINDER OPT-OUT TABLES =====
+  // Track users who opted out of event reminders
+
+  reminderOptOuts: defineTable({
+    personId: v.id('persons'),
+    eventId: v.id('events'),
+    optedOutAt: v.number(), // Unix timestamp
+    updatedAt: v.optional(v.number()), // Unix timestamp
+  })
+    .index('by_person', ['personId'])
+    .index('by_event', ['eventId'])
+    .index('by_person_event', ['personId', 'eventId']),
+
+  // ===== ADD-ON TABLES =====
+  // Generic add-on configuration for events (replaces per-feature fields like reminderOffset)
+
+  eventAddonConfigs: defineTable({
+    eventId: v.id('events'),
+    addonType: v.string(), // e.g. 'reminders'
+    enabled: v.boolean(),
+    config: v.any(), // addon-specific JSON
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_event_addon', ['eventId', 'addonType']),
+
+  addonData: defineTable({
+    eventId: v.id('events'),
+    addonType: v.string(),
+    key: v.string(), // addon-defined key (e.g. 'vote:option1', 'expense:123')
+    data: v.any(), // addon-defined payload
+    createdBy: v.optional(v.id('persons')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_event_addon', ['eventId', 'addonType'])
+    .index('by_event_addon_key', ['eventId', 'addonType', 'key'])
+    .index('by_event_addon_creator', ['eventId', 'addonType', 'createdBy']),
+
+  addonOptOuts: defineTable({
+    personId: v.id('persons'),
+    eventId: v.id('events'),
+    addonType: v.string(),
+    optedOutAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index('by_person', ['personId'])
+    .index('by_event', ['eventId'])
+    .index('by_person_event_addon', ['personId', 'eventId', 'addonType']),
 
   // ===== BAN TABLES =====
   // Track banned users from events
@@ -461,4 +540,38 @@ export default defineSchema({
     .index('by_addressee', ['addresseeId'])
     .index('by_requester_addressee', ['requesterId', 'addresseeId'])
     .index('by_addressee_status', ['addresseeId', 'status']),
+
+  // ===== USER BLOCK TABLES =====
+  // Track blocked users - blocked users cannot send friend requests or event invites
+
+  userBlocks: defineTable({
+    blockerId: v.id('persons'), // Who blocked
+    blockedId: v.id('persons'), // Who is blocked
+    createdAt: v.number(), // Unix timestamp
+  })
+    .index('by_blocker', ['blockerId'])
+    .index('by_blocked', ['blockedId'])
+    .index('by_blocker_blocked', ['blockerId', 'blockedId']),
+
+  // ===== EVENT INVITE TABLES =====
+  // Track internal event invites sent between users
+
+  eventInvites: defineTable({
+    eventId: v.id('events'),
+    inviterId: v.id('persons'), // Who sent the invite
+    inviteeId: v.id('persons'), // Who receives the invite
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED')
+    ),
+    message: v.optional(v.string()), // Optional personal message
+    role: v.union(v.literal('ATTENDEE'), v.literal('MODERATOR')),
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_invitee', ['inviteeId'])
+    .index('by_invitee_status', ['inviteeId', 'status'])
+    .index('by_event_invitee', ['eventId', 'inviteeId']),
 });
