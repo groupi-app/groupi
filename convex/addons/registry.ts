@@ -1,6 +1,7 @@
 import { type AddonHandler, type AddonType } from './types';
 import { reminderHandler } from './handlers/reminders';
 import { questionnaireHandler } from './handlers/questionnaire';
+import { bringListHandler } from './handlers/bringList';
 
 /**
  * Static registry of all add-on handlers.
@@ -10,6 +11,7 @@ import { questionnaireHandler } from './handlers/questionnaire';
 const handlers: Record<string, AddonHandler> = {
   [reminderHandler.type]: reminderHandler,
   [questionnaireHandler.type]: questionnaireHandler,
+  [bringListHandler.type]: bringListHandler,
 };
 
 /**
