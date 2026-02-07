@@ -17,7 +17,7 @@ Rules for working with the Groupi add-on framework. See `docs/addon-framework.md
 
 The add-on framework provides optional, pluggable features for events. Add-ons use a handler + registry pattern on both backend and frontend. The framework manages lifecycle, storage, gating, and UI rendering.
 
-**Current add-ons:** Reminders, Questionnaire
+**Current add-ons:** Reminders, Questionnaire, Bring List
 
 **Key tables:** `eventAddonConfigs`, `addonData`, `addonOptOuts`
 

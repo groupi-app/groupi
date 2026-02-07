@@ -359,6 +359,21 @@ Question types: `SHORT_ANSWER`, `LONG_ANSWER`, `MULTIPLE_CHOICE`, `CHECKBOXES`, 
 - Organizers can export responses as CSV or JSON via the export dropdown
 - Does not support opt-out (completion is mandatory)
 
+### Bring List
+
+Coordinate what attendees bring to the event. Config: `{ items: BringListItem[] }`.
+
+Each item has `id` (string), `name` (string), and `quantity` (number >= 1).
+
+- **Handler:** `convex/addons/handlers/bring-list.ts`
+- **Frontend:** `packages/web/app/(newEvent)/create/components/addons/bring-list-addon.tsx`
+- Claims stored as `addonData` with key `claims:{personId}` — data is `Record<itemId, quantity>`
+- Config updates clear all claims and notify members (`ADDON_CONFIG_RESET` notification)
+- No gating (`requiresCompletion: false`) — the bring list is informational, not required
+- Organizers see an overview card with export to CSV or JSON
+- Attendees can claim items; single-quantity items toggle on/off, multi-quantity items show a picker
+- Does not support opt-out
+
 ## Building a New Add-on
 
 ### 1. Backend handler

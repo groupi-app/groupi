@@ -8,6 +8,7 @@ import { Id } from '../_generated/dataModel';
 export const ADDON_TYPES = {
   REMINDERS: 'reminders',
   QUESTIONNAIRE: 'questionnaire',
+  BRING_LIST: 'bring-list',
 } as const;
 
 export type AddonType = (typeof ADDON_TYPES)[keyof typeof ADDON_TYPES];

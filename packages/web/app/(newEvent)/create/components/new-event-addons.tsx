@@ -15,6 +15,7 @@ import { AddonToggleCard } from './addon-toggle-card';
 // Import addon modules so they self-register
 import './addons/reminder-addon';
 import './addons/questionnaire-addon';
+import './addons/bring-list-addon';
 
 interface NewEventAddonsProps {
   onBack: () => void;

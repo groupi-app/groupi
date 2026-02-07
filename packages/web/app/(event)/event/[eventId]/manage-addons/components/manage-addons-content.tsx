@@ -20,6 +20,7 @@ import { getAddonRegistry } from '@/app/(newEvent)/create/components/addon-regis
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
+import '@/app/(newEvent)/create/components/addons/bring-list-addon';
 
 export function ManageAddonsContent({ eventId }: { eventId: string }) {
   const eventData = useEventHeader(eventId as Id<'events'>);
