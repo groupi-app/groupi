@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
 import { LogoSticker } from '@/components/atoms';
 import { siteConfig } from '@/config/site';
+import { useGlobalUser } from '@/context/global-user-context';
 
 const RESEND_COOLDOWN_SECONDS = 10;
 
@@ -23,6 +24,14 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/events';
   const isAddAccountMode = searchParams.get('mode') === 'add-account';
+  const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
+
+  // Redirect authenticated users away from sign-in (unless adding another account)
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && !isAddAccountMode) {
+      router.replace(redirectTo);
+    }
+  }, [isAuthLoading, isAuthenticated, isAddAccountMode, redirectTo, router]);
 
   // Build callback URL based on mode
   // For add-account mode, go directly to events (they're already onboarded)
