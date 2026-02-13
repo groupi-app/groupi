@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
 import { useEventHeaderData, useEventAttendeesData } from '@/hooks/convex';
 import { useEventAvailabilityDataWithSkip } from '@/hooks/convex/use-availability';
@@ -102,7 +102,6 @@ export function EventDataProvider({
 
   // Detect if we're on a post page by checking URL params
   const params = useParams();
-  const pathname = usePathname();
   const postId = (params?.postId as string) || null;
   const postIdTyped = postId ? (postId as Id<'posts'>) : null;
 
@@ -110,15 +109,10 @@ export function EventDataProvider({
   const headerData = useEventHeaderData(eventIdTyped);
   const membersData = useEventAttendeesData(eventIdTyped);
 
-  // Only fetch availability data on pages that need it
-  // (availability, change-date, and date-select pages)
-  const needsAvailabilityData =
-    pathname?.includes('/availability') ||
-    pathname?.includes('/change-date') ||
-    pathname?.includes('/date-select');
-  const availabilityData = useEventAvailabilityDataWithSkip(
-    needsAvailabilityData ? eventIdTyped : null
-  );
+  // Always fetch availability data - skipping based on pathname caused
+  // production-only issues where client-side navigation didn't update
+  // the pathname check correctly, leaving the query permanently skipped.
+  const availabilityData = useEventAvailabilityDataWithSkip(eventIdTyped);
 
   // Skip post feed query when on a post detail page
   // The post detail query already fetches the needed post data

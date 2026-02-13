@@ -1,4 +1,4 @@
-import { query } from '../_generated/server';
+import { query, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import { getCurrentPerson, requireAuth, getPersonWithUser } from '../auth';
 import { checkCanSendEventInvite } from '../lib/privacy';
@@ -384,44 +384,44 @@ export const getEventAvailabilityData = query({
       m => m.person && m.person.user
     );
 
-    // Get all availabilities for this event
-    const allAvailabilities = await ctx.db.query('availabilities').collect();
-
-    // Filter availabilities for this event's memberships
-    const membershipIds = validMembers.map(m => m._id);
-    const eventAvailabilities = allAvailabilities.filter(availability =>
-      membershipIds.includes(availability.membershipId)
-    );
-
     // Determine if current user can see private notes (organizer/moderator)
     const canSeeAllNotes =
       userMembership.role === 'ORGANIZER' ||
       userMembership.role === 'MODERATOR';
 
-    // Group availabilities by potential date time
-    const availabilitiesByDate = potentialDates.map(date => {
-      const dateAvailabilities = eventAvailabilities.filter(
-        avail => avail.potentialDateTimeId === date._id
-      );
+    // Build a membership lookup map for efficient member resolution
+    const membershipMap = new Map(validMembers.map(m => [m._id, m]));
 
-      return {
-        potentialDateTime: date,
-        availabilities: dateAvailabilities
-          .map(avail => {
-            const member = validMembers.find(m => m._id === avail.membershipId);
-            // Availability notes are visible to the author + organizers/moderators
-            const isAuthor = member?.personId === currentPerson._id;
-            const visibleNote =
-              isAuthor || canSeeAllNotes ? avail.note : undefined;
-            return {
-              ...avail,
-              note: visibleNote,
-              member: member || null,
-            };
-          })
-          .filter(a => a.member !== null),
-      };
-    });
+    // Query availabilities per potential date time using the by_potential_date index
+    // (avoids full table scan that would exceed read limits in production)
+    const availabilitiesByDate = await Promise.all(
+      potentialDates.map(async date => {
+        const dateAvailabilities = await ctx.db
+          .query('availabilities')
+          .withIndex('by_potential_date', q =>
+            q.eq('potentialDateTimeId', date._id)
+          )
+          .collect();
+
+        return {
+          potentialDateTime: date,
+          availabilities: dateAvailabilities
+            .map(avail => {
+              const member = membershipMap.get(avail.membershipId);
+              // Availability notes are visible to the author + organizers/moderators
+              const isAuthor = member?.personId === currentPerson._id;
+              const visibleNote =
+                isAuthor || canSeeAllNotes ? avail.note : undefined;
+              return {
+                ...avail,
+                note: visibleNote,
+                member: member || null,
+              };
+            })
+            .filter(a => a.member !== null),
+        };
+      })
+    );
 
     return {
       event: {
@@ -771,5 +771,21 @@ export const getDiscoverableEvents = query({
 
     // Sort by creation time (newest first)
     return discoverableEvents.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// ===== INTERNAL QUERIES =====
+
+/**
+ * Internal query to get event data by ID.
+ * Used by Discord actions to read event details for syncing.
+ * No auth check — only called from internal actions.
+ */
+export const getEventById = internalQuery({
+  args: {
+    eventId: v.id('events'),
+  },
+  handler: async (ctx, { eventId }) => {
+    return await ctx.db.get(eventId);
   },
 });
