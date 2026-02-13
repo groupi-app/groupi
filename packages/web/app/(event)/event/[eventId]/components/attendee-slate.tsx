@@ -105,20 +105,27 @@ export function AttendeeSlate({
               )}
             </Button>
           ) : (
-            <div className='flex items-center gap-1 text-muted-foreground'>
-              <span>RSVP: </span>
-              {member.rsvpStatus === 'YES' && (
-                <Icons.check className='text-success' />
+            <div>
+              <div className='flex items-center gap-1 text-muted-foreground'>
+                <span>RSVP: </span>
+                {member.rsvpStatus === 'YES' && (
+                  <Icons.check className='text-success' />
+                )}
+                {member.rsvpStatus === 'MAYBE' && (
+                  <span className='font-semibold w-6 text-xl text-warning text-center'>
+                    ?
+                  </span>
+                )}
+                {member.rsvpStatus === 'NO' && (
+                  <Icons.close className='text-error' />
+                )}
+                <span className='text-foreground'>{member.rsvpStatus}</span>
+              </div>
+              {member.rsvpNote && (
+                <p className='text-muted-foreground text-xs mt-0.5 italic'>
+                  {member.rsvpNote}
+                </p>
               )}
-              {member.rsvpStatus === 'MAYBE' && (
-                <span className='font-semibold w-6 text-xl text-warning text-center'>
-                  ?
-                </span>
-              )}
-              {member.rsvpStatus === 'NO' && (
-                <Icons.close className='text-error' />
-              )}
-              <span className='text-foreground'>{member.rsvpStatus}</span>
             </div>
           )}
           <div className='flex items-center gap-1'>

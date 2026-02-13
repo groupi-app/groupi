@@ -88,7 +88,6 @@ export class ConvexSeeder {
 
       return result?.url ?? null;
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to create magic link token:', error);
       return null;
     }
@@ -269,7 +268,6 @@ export class ConvexSeeder {
         memberships: [],
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to cleanup test data:', error);
     }
   }

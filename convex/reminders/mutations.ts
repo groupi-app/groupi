@@ -188,6 +188,30 @@ export const sendReminder = internalMutation({
         continue;
       }
 
+      // Check if user has opted out of reminders for this event
+      // Check both new addonOptOuts table and legacy reminderOptOuts table
+      const addonOptOut = await ctx.db
+        .query('addonOptOuts')
+        .withIndex('by_person_event_addon', q =>
+          q
+            .eq('personId', membership.personId)
+            .eq('eventId', eventId)
+            .eq('addonType', 'reminders')
+        )
+        .first();
+
+      const legacyOptOut = await ctx.db
+        .query('reminderOptOuts')
+        .withIndex('by_person_event', q =>
+          q.eq('personId', membership.personId).eq('eventId', eventId)
+        )
+        .first();
+
+      if (addonOptOut || legacyOptOut) {
+        skipped++;
+        continue;
+      }
+
       // Check if user has muted this event
       const shouldSkip = await shouldSkipNotificationDueToMute(
         ctx,

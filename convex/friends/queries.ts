@@ -804,3 +804,82 @@ export const getMutualFriends = query({
     return mutualFriends.filter(Boolean);
   },
 });
+
+/**
+ * Get block status between current user and another person.
+ * Returns whether the current user has blocked them, and whether they've blocked the current user.
+ */
+export const getBlockStatus = query({
+  args: {
+    targetPersonId: v.id('persons'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { targetPersonId }) => {
+    const currentPerson = await getCurrentPerson(ctx);
+    if (!currentPerson) {
+      return { blockedByMe: false, blockedByThem: false };
+    }
+
+    if (currentPerson._id === targetPersonId) {
+      return { blockedByMe: false, blockedByThem: false };
+    }
+
+    const blockedByMe = await ctx.db
+      .query('userBlocks')
+      .withIndex('by_blocker_blocked', q =>
+        q.eq('blockerId', currentPerson._id).eq('blockedId', targetPersonId)
+      )
+      .first();
+
+    const blockedByThem = await ctx.db
+      .query('userBlocks')
+      .withIndex('by_blocker_blocked', q =>
+        q.eq('blockerId', targetPersonId).eq('blockedId', currentPerson._id)
+      )
+      .first();
+
+    return {
+      blockedByMe: !!blockedByMe,
+      blockedByThem: !!blockedByThem,
+    };
+  },
+});
+
+/**
+ * Get list of users blocked by the current user
+ */
+export const getBlockedUsers = query({
+  args: {
+    _traceId: v.optional(v.string()),
+  },
+  handler: async ctx => {
+    const currentPerson = await getCurrentPerson(ctx);
+    if (!currentPerson) {
+      return [];
+    }
+
+    const blocks = await ctx.db
+      .query('userBlocks')
+      .withIndex('by_blocker', q => q.eq('blockerId', currentPerson._id))
+      .collect();
+
+    const blockedUsers = await Promise.all(
+      blocks.map(async block => {
+        const person = await ctx.db.get(block.blockedId);
+        if (!person) return null;
+
+        const userData = await getUserDataFallback(ctx, person);
+
+        return {
+          personId: person._id,
+          name: userData.name,
+          username: userData.username,
+          image: userData.image,
+          blockedAt: block.createdAt,
+        };
+      })
+    );
+
+    return blockedUsers.filter(Boolean);
+  },
+});

@@ -7,7 +7,13 @@ import {
   notifyPerson,
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
-import { internal } from '../_generated/api';
+import { checkIfFriends } from '../lib/privacy';
+import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
+import { getAddonHandler } from '../addons/registry';
+import {
+  dispatchAddonLifecycle,
+  dispatchSingleAddonLifecycle,
+} from '../addons/lifecycle';
 
 /**
  * Events mutations for the Convex backend
@@ -61,7 +67,18 @@ export const createEvent = mutation({
     potentialDateTimeOptions: v.optional(v.array(dateTimeOptionValidator)),
     chosenDateTime: v.optional(v.string()), // ISO date string for single-date events
     chosenEndDateTime: v.optional(v.string()), // ISO date string for end time
-    reminderOffset: v.optional(reminderOffsetValidator), // How far before event to send reminder
+    reminderOffset: v.optional(reminderOffsetValidator), // Legacy: kept for backward compat
+    addons: v.optional(
+      v.array(
+        v.object({
+          addonType: v.string(),
+          config: v.any(),
+        })
+      )
+    ),
+    visibility: v.optional(
+      v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
+    ),
     _traceId: v.optional(v.string()),
   },
   handler: async (
@@ -77,6 +94,8 @@ export const createEvent = mutation({
       chosenDateTime,
       chosenEndDateTime,
       reminderOffset,
+      addons,
+      visibility,
     }
   ) => {
     // Require authentication
@@ -129,8 +148,28 @@ export const createEvent = mutation({
       throw new Error('End time must be after start time');
     }
 
-    // Create the event
+    // Validate dates are in the future
     const now = Date.now();
+    if (chosenTimestamp && chosenTimestamp <= now) {
+      throw new Error('Event date must be in the future');
+    }
+    for (const opt of dateTimeOptions) {
+      if (opt.start <= now) {
+        throw new Error('All date options must be in the future');
+      }
+    }
+
+    // Validate reminder offset won't result in a past reminder time
+    if (reminderOffset && chosenTimestamp) {
+      const offsetMs = REMINDER_OFFSETS[reminderOffset as ReminderOffset];
+      if (offsetMs && chosenTimestamp - offsetMs <= now) {
+        throw new Error(
+          'Reminder time would be in the past. Choose a shorter reminder offset.'
+        );
+      }
+    }
+
+    // Create the event
     const eventId = await ctx.db.insert('events', {
       title: title.trim(),
       description: description?.trim() || '',
@@ -145,6 +184,7 @@ export const createEvent = mutation({
       chosenDateTime: chosenTimestamp,
       chosenEndDateTime: chosenEndTimestamp,
       reminderOffset: reminderOffset,
+      visibility: visibility,
     });
 
     // Create the creator's membership as ORGANIZER
@@ -185,15 +225,41 @@ export const createEvent = mutation({
     // Get the created event
     const event = await ctx.db.get(eventId);
 
-    // Schedule reminder if event was created with both a date and reminder offset
-    if (chosenTimestamp && reminderOffset) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
-      const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-      await ctx.scheduler.runAfter(0, reminderFn, {
-        eventId,
-        reminderOffset,
+    // Build the list of add-ons to enable
+    // Support both new `addons` arg and legacy `reminderOffset` arg
+    const addonEntries: Array<{ addonType: string; config: unknown }> = [];
+
+    if (addons && addons.length > 0) {
+      addonEntries.push(...addons);
+    } else if (reminderOffset) {
+      // Legacy backward compat: convert reminderOffset to addon config
+      addonEntries.push({
+        addonType: 'reminders',
+        config: { reminderOffset },
       });
+    }
+
+    // Create addon config rows and dispatch onEnabled lifecycle
+    for (const addon of addonEntries) {
+      const handler = getAddonHandler(addon.addonType);
+      if (!handler || !handler.validateConfig(addon.config)) continue;
+
+      await ctx.db.insert('eventAddonConfigs', {
+        eventId,
+        addonType: addon.addonType,
+        enabled: true,
+        config: addon.config,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await dispatchSingleAddonLifecycle(
+        ctx,
+        eventId,
+        addon.addonType,
+        'onEnabled',
+        addon.config
+      );
     }
 
     return {
@@ -228,10 +294,12 @@ export const updateEvent = mutation({
         v.null() // Allow null to clear the focal point
       )
     ),
-    reminderOffset: v.optional(
+    visibility: v.optional(
       v.union(
-        reminderOffsetValidator,
-        v.null() // Allow null to clear the reminder
+        v.literal('PRIVATE'),
+        v.literal('FRIENDS'),
+        v.literal('PUBLIC'),
+        v.null()
       )
     ),
     _traceId: v.optional(v.string()),
@@ -245,7 +313,7 @@ export const updateEvent = mutation({
       location,
       imageStorageId,
       imageFocalPoint,
-      reminderOffset,
+      visibility,
     }
   ) => {
     // Require organizer or moderator role
@@ -300,10 +368,21 @@ export const updateEvent = mutation({
         imageFocalPoint === null ? undefined : imageFocalPoint;
     }
 
-    if (reminderOffset !== undefined) {
-      // If null is passed, clear the reminder; otherwise set it
-      updateData.reminderOffset =
-        reminderOffset === null ? undefined : reminderOffset;
+    if (visibility !== undefined) {
+      // Visibility changes require ORGANIZER role (not just MODERATOR)
+      const { person: currentPerson } = await requireAuth(ctx);
+      const currentUserMembership = await ctx.db
+        .query('memberships')
+        .withIndex('by_person_event', q =>
+          q.eq('personId', currentPerson._id).eq('eventId', eventId)
+        )
+        .first();
+
+      if (currentUserMembership?.role !== 'ORGANIZER') {
+        throw new Error('Only organizers can change event visibility');
+      }
+
+      updateData.visibility = visibility === null ? undefined : visibility;
     }
 
     // Update the event
@@ -312,27 +391,6 @@ export const updateEvent = mutation({
 
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
-
-    // Handle reminder reschedule/cancel when reminderOffset changes
-    if (reminderOffset !== undefined) {
-      if (reminderOffset === null) {
-        // Clear reminder - cancel any scheduled reminders
-        await ctx.scheduler.runAfter(
-          0,
-          internal.reminders.mutations.cancelEventReminders,
-          { eventId }
-        );
-      } else if (updatedEvent?.chosenDateTime) {
-        // Reminder offset changed and event has a date - reschedule reminder
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - Type instantiation is excessively deep (TS2589)
-        const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-        await ctx.scheduler.runAfter(0, reminderFn, {
-          eventId,
-          reminderOffset,
-        });
-      }
-    }
 
     // Get the current user's person ID for the notification author
     const { person } = await requireAuth(ctx);
@@ -446,22 +504,40 @@ export const deleteEvent = mutation({
       await ctx.db.delete(notification._id);
     }
 
-    // 7. Cancel and delete reminders
-    const reminders = await ctx.db
-      .query('eventReminders')
+    // 7. Dispatch onEventDeleted to all add-ons and clean up addon tables
+    await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
+
+    const addonConfigs = await ctx.db
+      .query('eventAddonConfigs')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect();
+    for (const config of addonConfigs) {
+      await ctx.db.delete(config._id);
+    }
 
-    for (const reminder of reminders) {
-      // Cancel the scheduled function if it exists
-      if (reminder.scheduledFunctionId) {
-        try {
-          await ctx.scheduler.cancel(reminder.scheduledFunctionId);
-        } catch {
-          // Ignore - job may have already run
-        }
-      }
-      await ctx.db.delete(reminder._id);
+    const addonDataEntries = await ctx.db
+      .query('addonData')
+      .withIndex('by_event_addon', q => q.eq('eventId', eventId))
+      .collect();
+    for (const entry of addonDataEntries) {
+      await ctx.db.delete(entry._id);
+    }
+
+    const addonOptOuts = await ctx.db
+      .query('addonOptOuts')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const optOut of addonOptOuts) {
+      await ctx.db.delete(optOut._id);
+    }
+
+    // Also clean up legacy reminderOptOuts
+    const reminderOptOuts = await ctx.db
+      .query('reminderOptOuts')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const optOut of reminderOptOuts) {
+      await ctx.db.delete(optOut._id);
     }
 
     // 8. Delete memberships
@@ -488,9 +564,10 @@ export const updateRSVP = mutation({
       v.literal('NO'),
       v.literal('PENDING')
     ),
+    rsvpNote: v.optional(v.string()),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, rsvpStatus }) => {
+  handler: async (ctx, { eventId, rsvpStatus, rsvpNote }) => {
     // Require authentication and membership
     const { person } = await requireAuth(ctx);
 
@@ -505,9 +582,15 @@ export const updateRSVP = mutation({
       throw new Error('You are not a member of this event');
     }
 
-    // Update the RSVP status
+    // Validate note length
+    if (rsvpNote && rsvpNote.length > 200) {
+      throw new Error('RSVP note must be 200 characters or less');
+    }
+
+    // Update the RSVP status and note
     await ctx.db.patch(membership._id, {
       rsvpStatus: rsvpStatus,
+      rsvpNote: rsvpNote || undefined,
       updatedAt: Date.now(),
     });
 
@@ -748,6 +831,21 @@ export const chooseEventDate = mutation({
       throw new Error('End time must be after start time');
     }
 
+    // Validate chosen date is in the future
+    if (chosenDateTime <= Date.now()) {
+      throw new Error('Event date must be in the future');
+    }
+
+    // Validate reminder offset won't result in a past reminder time
+    if (reminderOffset) {
+      const offsetMs = REMINDER_OFFSETS[reminderOffset as ReminderOffset];
+      if (offsetMs && chosenDateTime - offsetMs <= Date.now()) {
+        throw new Error(
+          'Reminder time would be in the past. Choose a shorter reminder offset.'
+        );
+      }
+    }
+
     // Update the event with chosen date
     // Always set both fields together to prevent sync issues
     // If endDateTime not provided, explicitly clear it
@@ -771,18 +869,10 @@ export const chooseEventDate = mutation({
       datetime: chosenDateTime,
     });
 
-    // Schedule reminder if requested (use passed value, or fall back to event's stored value)
-    const effectiveReminderOffset =
-      reminderOffset ?? updatedEvent?.reminderOffset;
-    if (effectiveReminderOffset) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex return type
-      const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-      await ctx.scheduler.runAfter(0, reminderFn, {
-        eventId,
-        reminderOffset: effectiveReminderOffset,
-      });
-    }
+    // Dispatch onDateChosen to all enabled add-ons
+    await dispatchAddonLifecycle(ctx, eventId, 'onDateChosen', {
+      chosenDateTime,
+    });
 
     return { event: updatedEvent };
   },
@@ -790,7 +880,7 @@ export const chooseEventDate = mutation({
 
 /**
  * Reset event date (clear chosen date, organizer only)
- * Also cancels any scheduled reminders
+ * Also cancels any scheduled reminders via add-on lifecycle
  */
 export const resetEventDate = mutation({
   args: {
@@ -801,12 +891,8 @@ export const resetEventDate = mutation({
     // Require organizer role
     await requireEventRole(ctx, eventId, 'ORGANIZER');
 
-    // Cancel any scheduled reminders
-    await ctx.scheduler.runAfter(
-      0,
-      internal.reminders.mutations.cancelEventReminders,
-      { eventId }
-    );
+    // Dispatch onDateReset to all enabled add-ons (e.g. cancel reminders)
+    await dispatchAddonLifecycle(ctx, eventId, 'onDateReset');
 
     // Update the event to remove chosen date and end date
     await ctx.db.patch(eventId, {
@@ -954,12 +1040,13 @@ export const updatePotentialDateTimes = mutation({
     eventId: v.id('events'),
     // Legacy: array of Unix timestamps (backward compatible)
     potentialDateTimes: v.optional(v.array(v.number())),
-    // New: array of objects with start/end times
+    // New: array of objects with start/end times and optional notes
     potentialDateTimeOptions: v.optional(
       v.array(
         v.object({
           start: v.number(), // Unix timestamp
           end: v.optional(v.number()), // Unix timestamp for end time
+          note: v.optional(v.string()), // Optional note (max 200 chars)
         })
       )
     ),
@@ -973,10 +1060,14 @@ export const updatePotentialDateTimes = mutation({
     await requireEventRole(ctx, eventId, 'ORGANIZER');
 
     // Handle both legacy and new format
-    let dateTimeOptions: Array<{ start: number; end?: number }> = [];
+    let dateTimeOptions: Array<{
+      start: number;
+      end?: number;
+      note?: string;
+    }> = [];
 
     if (potentialDateTimeOptions && potentialDateTimeOptions.length > 0) {
-      // New format: objects with start/end
+      // New format: objects with start/end/note
       dateTimeOptions = potentialDateTimeOptions;
     } else if (potentialDateTimes && potentialDateTimes.length > 0) {
       // Legacy format: array of timestamps (just start times)
@@ -985,10 +1076,17 @@ export const updatePotentialDateTimes = mutation({
       }));
     }
 
-    // Validate end times are after start times
+    // Validate end times are after start times and note lengths
+    const now = Date.now();
     for (const opt of dateTimeOptions) {
+      if (opt.start <= now) {
+        throw new Error('All date options must be in the future');
+      }
       if (opt.end && opt.end <= opt.start) {
         throw new Error('End time must be after start time');
+      }
+      if (opt.note && opt.note.length > 200) {
+        throw new Error('Note must be 200 characters or less');
       }
     }
 
@@ -1015,13 +1113,13 @@ export const updatePotentialDateTimes = mutation({
     }
 
     // Create new potential date times
-    const now = Date.now();
     const newPotentialDateTimeIds = await Promise.all(
       dateTimeOptions.map(async opt => {
         return await ctx.db.insert('potentialDateTimes', {
           eventId: eventId,
           dateTime: opt.start,
           endDateTime: opt.end,
+          note: opt.note || undefined,
           updatedAt: now,
         });
       })
@@ -1057,13 +1155,9 @@ export const updatePotentialDateTimes = mutation({
       newPotentialDateTimeIds.map(id => ctx.db.get(id))
     );
 
-    // Cancel any scheduled reminders since we're starting a new poll
+    // Dispatch onDateReset to all enabled add-ons since we're starting a new poll
     // (the chosen date will likely change, so any existing reminder is invalid)
-    await ctx.scheduler.runAfter(
-      0,
-      internal.reminders.mutations.cancelEventReminders,
-      { eventId }
-    );
+    await dispatchAddonLifecycle(ctx, eventId, 'onDateReset');
 
     // Notify all members about new date options (using DATE_CHANGED type)
     await notifyEventMembers(ctx, {
@@ -1076,5 +1170,79 @@ export const updatePotentialDateTimes = mutation({
       potentialDates: updatedPotentialDates.filter(d => d !== null),
       success: true,
     };
+  },
+});
+
+/**
+ * Join a discoverable event (friends-visible) without an invite
+ */
+export const joinDiscoverableEvent = mutation({
+  args: {
+    eventId: v.id('events'),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (ctx, { eventId }) => {
+    const { person } = await requireAuth(ctx);
+
+    // Verify the event exists and has FRIENDS visibility
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    if (event.visibility !== 'FRIENDS') {
+      throw new Error('This event is not open for discovery');
+    }
+
+    // Verify the user is friends with the event creator
+    const isFriends = await checkIfFriends(ctx, person._id, event.creatorId);
+    if (!isFriends) {
+      throw new Error(
+        'You must be friends with the event organizer to join this event'
+      );
+    }
+
+    // Verify the user is not already a member
+    const existingMembership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', person._id).eq('eventId', eventId)
+      )
+      .first();
+
+    if (existingMembership) {
+      throw new Error('You are already a member of this event');
+    }
+
+    // Verify the user is not banned
+    const ban = await ctx.db
+      .query('eventBans')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', person._id).eq('eventId', eventId)
+      )
+      .first();
+
+    if (ban) {
+      throw new Error('You are banned from this event');
+    }
+
+    // Create membership
+    const now = Date.now();
+    const membershipId = await ctx.db.insert('memberships', {
+      personId: person._id,
+      eventId: eventId,
+      role: 'ATTENDEE',
+      rsvpStatus: 'YES',
+      updatedAt: now,
+    });
+
+    // Notify organizers/moderators about the new member
+    await notifyEventModerators(ctx, {
+      eventId,
+      type: 'USER_JOINED',
+      authorId: person._id,
+    });
+
+    return { membershipId, success: true };
   },
 });

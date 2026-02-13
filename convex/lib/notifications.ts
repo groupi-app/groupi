@@ -134,7 +134,10 @@ export type NotificationType =
   | 'USER_MENTIONED'
   | 'EVENT_REMINDER'
   | 'FRIEND_REQUEST_RECEIVED'
-  | 'FRIEND_REQUEST_ACCEPTED';
+  | 'FRIEND_REQUEST_ACCEPTED'
+  | 'EVENT_INVITE_RECEIVED'
+  | 'EVENT_INVITE_ACCEPTED'
+  | 'ADDON_CONFIG_RESET';
 
 export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 
@@ -351,6 +354,16 @@ function getNotificationEmailSubject(ctx: NotificationMessageContext): string {
       return authorName
         ? `${authorName} accepted your friend request`
         : 'Friend request accepted';
+    case 'EVENT_INVITE_RECEIVED':
+      return authorName
+        ? `${prefix}${authorName} invited you`
+        : `${prefix}You've been invited`;
+    case 'EVENT_INVITE_ACCEPTED':
+      return authorName
+        ? `${prefix}${authorName} accepted your invite`
+        : `${prefix}Your invite was accepted`;
+    case 'ADDON_CONFIG_RESET':
+      return `${prefix}Add-on updated — please resubmit`;
     default:
       return `${prefix}Notification`;
   }
@@ -407,6 +420,12 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'EVENT_INVITE_RECEIVED':
+      return `${author} invited you to ${event}`;
+    case 'EVENT_INVITE_ACCEPTED':
+      return `${author} accepted your invite to ${event}`;
+    case 'ADDON_CONFIG_RESET':
+      return `An add-on in ${event} has been updated. Your previous responses have been cleared — please resubmit.`;
     default:
       return 'You have a new notification';
   }
@@ -466,6 +485,12 @@ function getNotificationMessageMarkdown(
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'EVENT_INVITE_RECEIVED':
+      return `${author} invited you to ${event}`;
+    case 'EVENT_INVITE_ACCEPTED':
+      return `${author} accepted your invite to ${event}`;
+    case 'ADDON_CONFIG_RESET':
+      return `An add-on in ${event} has been updated. Your previous responses have been cleared — please resubmit.`;
     default:
       return 'You have a new notification';
   }
@@ -522,6 +547,12 @@ function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'EVENT_INVITE_RECEIVED':
+      return `${author} invited you to "${event}"`;
+    case 'EVENT_INVITE_ACCEPTED':
+      return `${author} accepted your invite to "${event}"`;
+    case 'ADDON_CONFIG_RESET':
+      return `An add-on in "${event}" has been updated. Your previous responses have been cleared — please resubmit.`;
     default:
       return 'You have a new notification';
   }
@@ -577,6 +608,16 @@ function buildNotificationUrl(
     type === 'FRIEND_REQUEST_ACCEPTED'
   ) {
     return `${siteUrl}/friends`;
+  }
+
+  // Event invite received links to the invited tab on events page
+  if (type === 'EVENT_INVITE_RECEIVED') {
+    return `${siteUrl}/events?tab=invited`;
+  }
+
+  // Event invite accepted links to the event
+  if (type === 'EVENT_INVITE_ACCEPTED' && eventId) {
+    return `${siteUrl}/event/${eventId}`;
   }
 
   // Post-related notifications link to the post

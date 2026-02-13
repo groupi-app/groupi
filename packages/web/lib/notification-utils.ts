@@ -18,6 +18,7 @@ export function getNotificationTypeDisplayName(type: NotificationType): string {
     NEW_REPLY: 'New Reply',
     USER_MENTIONED: 'Mentioned',
     EVENT_REMINDER: 'Event Reminder',
+    ADDON_CONFIG_RESET: 'Add-on Updated',
   };
 
   return displayNames[type] || type;

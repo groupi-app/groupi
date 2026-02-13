@@ -66,46 +66,58 @@ export const getEventAvailabilityData = query({
 
     const validMembers = membersWithUsers.filter(m => m.person && m.user);
 
-    // Get all availabilities for this event
-    const allAvailabilities = await ctx.db.query('availabilities').collect();
+    // Determine if current user can see private notes (organizer/moderator)
+    const canSeeAllNotes =
+      userMembership.role === 'ORGANIZER' ||
+      userMembership.role === 'MODERATOR';
 
-    // Filter availabilities for this event's memberships
-    const membershipIds = validMembers.map(m => m._id);
-    const eventAvailabilities = allAvailabilities.filter(availability =>
-      membershipIds.includes(availability.membershipId)
+    // Build a membership lookup map for efficient member resolution
+    const membershipMap = new Map(validMembers.map(m => [m._id, m]));
+
+    // Query availabilities per potential date time using the by_potential_date index
+    // (avoids full table scan that would exceed read limits in production)
+    const potentialDateTimes = await Promise.all(
+      potentialDates.map(async date => {
+        const dateAvailabilities = await ctx.db
+          .query('availabilities')
+          .withIndex('by_potential_date', q =>
+            q.eq('potentialDateTimeId', date._id)
+          )
+          .collect();
+
+        const availabilities = dateAvailabilities
+          .map(avail => {
+            const member = membershipMap.get(avail.membershipId);
+            if (!member) return null;
+
+            // Availability notes are visible to the author + organizers/moderators
+            const isAuthor = member.personId === currentPerson._id;
+            const visibleNote =
+              isAuthor || canSeeAllNotes ? avail.note : undefined;
+
+            return {
+              ...avail,
+              note: visibleNote,
+              member: {
+                ...member,
+                person: member.person
+                  ? {
+                      ...member.person,
+                      user: member.user!,
+                    }
+                  : null,
+              },
+            };
+          })
+          .filter((a): a is NonNullable<typeof a> => a !== null);
+
+        return {
+          ...date,
+          // potentialDateTime notes are visible to all members (no filtering needed)
+          availabilities,
+        };
+      })
     );
-
-    // Group availabilities by potential date time
-    const potentialDateTimes = potentialDates.map(date => {
-      const dateAvailabilities = eventAvailabilities.filter(
-        avail => avail.potentialDateTimeId === date._id
-      );
-
-      const availabilities = dateAvailabilities
-        .map(avail => {
-          const member = validMembers.find(m => m._id === avail.membershipId);
-          if (!member) return null;
-
-          return {
-            ...avail,
-            member: {
-              ...member,
-              person: member.person
-                ? {
-                    ...member.person,
-                    user: member.user!,
-                  }
-                : null,
-            },
-          };
-        })
-        .filter((a): a is NonNullable<typeof a> => a !== null);
-
-      return {
-        ...date,
-        availabilities,
-      };
-    });
 
     return {
       potentialDateTimes,

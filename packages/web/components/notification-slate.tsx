@@ -1,18 +1,5 @@
-import { useMutation } from 'convex/react';
 import { formatDate } from '@/lib/utils';
-
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let notificationMutations: any;
-function initApi() {
-  if (!notificationMutations) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('../../../convex/_generated/api');
-    notificationMutations = api.notifications?.mutations ?? {};
-  }
-}
-initApi();
-import { Doc, Id } from '@/convex/_generated/dataModel';
+import { Doc } from '@/convex/_generated/dataModel';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { useNotificationCloseStore } from '@/stores/notification-close-store';
@@ -23,7 +10,11 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 import { useActionMenu } from '@/hooks/use-action-menu';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ActionMenuButton } from '@/components/ui/action-menu-button';
-import { toast } from 'sonner';
+import {
+  useMarkNotificationAsRead,
+  useMarkNotificationAsUnread,
+  useDeleteNotification,
+} from '@/hooks/convex/use-notifications';
 
 // Extended notification type with joined event/post/author data
 interface EnrichedNotification extends Doc<'notifications'> {
@@ -53,14 +44,10 @@ export function NotificationSlate({
     useNotificationCloseStore();
   const openFriendsDialog = useFriendsDialogStore(state => state.openDialog);
 
-  // Convex mutations
-  const markAsRead = useMutation(notificationMutations.markNotificationAsRead);
-  const markAsUnread = useMutation(
-    notificationMutations.markNotificationAsUnread
-  );
-  const deleteNotification = useMutation(
-    notificationMutations.deleteNotification
-  );
+  // Optimistic notification mutations
+  const markAsRead = useMarkNotificationAsRead();
+  const markAsUnread = useMarkNotificationAsUnread();
+  const deleteNotification = useDeleteNotification();
 
   const closeMenus = () => {
     setPopoverOpen(false);
@@ -80,6 +67,9 @@ export function NotificationSlate({
   };
 
   const getNotificationLink = (): string => {
+    // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
+    if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
+
     if (!event) return '/';
 
     const eventId = event.id;
@@ -115,6 +105,12 @@ export function NotificationSlate({
         return `/event/${eventId}`;
 
       case 'EVENT_REMINDER':
+        return `/event/${eventId}`;
+
+      case 'EVENT_INVITE_ACCEPTED':
+        return `/event/${eventId}`;
+
+      case 'ADDON_CONFIG_RESET':
         return `/event/${eventId}`;
 
       default:
@@ -250,6 +246,30 @@ export function NotificationSlate({
           </>
         );
 
+      case 'EVENT_INVITE_RECEIVED':
+        return (
+          <>
+            <strong>{authorName}</strong> invited you to{' '}
+            <strong>{eventTitle}</strong>
+          </>
+        );
+
+      case 'EVENT_INVITE_ACCEPTED':
+        return (
+          <>
+            <strong>{authorName}</strong> accepted your invite to{' '}
+            <strong>{eventTitle}</strong>
+          </>
+        );
+
+      case 'ADDON_CONFIG_RESET':
+        return (
+          <>
+            An add-on in <strong>{eventTitle}</strong> was updated — please
+            resubmit your responses
+          </>
+        );
+
       default:
         return (
           <>
@@ -266,19 +286,9 @@ export function NotificationSlate({
         <Button
           variant='ghost'
           className='w-full justify-start'
-          onClick={async () => {
+          onClick={() => {
             setSheetOpen(false);
-            try {
-              await markAsUnread({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as unread');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as unread.',
-              });
-            }
+            markAsUnread(notification._id);
           }}
         >
           <Icons.unread className='size-4 mr-2' />
@@ -288,19 +298,9 @@ export function NotificationSlate({
         <Button
           variant='ghost'
           className='w-full justify-start'
-          onClick={async () => {
+          onClick={() => {
             setSheetOpen(false);
-            try {
-              await markAsRead({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as read');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as read.',
-              });
-            }
+            markAsRead(notification._id);
           }}
         >
           <Icons.read className='size-4 mr-2' />
@@ -310,18 +310,9 @@ export function NotificationSlate({
       <Button
         variant='ghost'
         className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
-        onClick={async () => {
+        onClick={() => {
           setSheetOpen(false);
-          try {
-            await deleteNotification({
-              notificationId: notification.id as Id<'notifications'>,
-            });
-            toast.success('Notification deleted');
-          } catch {
-            toast.error('An error occurred', {
-              description: 'There was a problem deleting this notification.',
-            });
-          }
+          deleteNotification(notification._id);
         }}
       >
         <Icons.delete className='size-4 mr-2' />
@@ -335,19 +326,7 @@ export function NotificationSlate({
     <>
       {read ? (
         <ContextMenuItem
-          onClick={async () => {
-            try {
-              await markAsUnread({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as unread');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as unread.',
-              });
-            }
-          }}
+          onClick={() => markAsUnread(notification._id)}
           className='cursor-pointer'
         >
           <div className='flex items-center gap-1'>
@@ -357,19 +336,7 @@ export function NotificationSlate({
         </ContextMenuItem>
       ) : (
         <ContextMenuItem
-          onClick={async () => {
-            try {
-              await markAsRead({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as read');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as read.',
-              });
-            }
-          }}
+          onClick={() => markAsRead(notification._id)}
           className='cursor-pointer'
         >
           <div className='flex items-center gap-1'>
@@ -379,18 +346,9 @@ export function NotificationSlate({
         </ContextMenuItem>
       )}
       <ContextMenuItem
-        onSelect={async e => {
+        onSelect={e => {
           e.preventDefault();
-          try {
-            await deleteNotification({
-              notificationId: notification.id as Id<'notifications'>,
-            });
-            toast.success('Notification deleted');
-          } catch {
-            toast.error('An error occurred', {
-              description: 'There was a problem deleting this notification.',
-            });
-          }
+          deleteNotification(notification._id);
         }}
         className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
       >
@@ -407,19 +365,7 @@ export function NotificationSlate({
     <>
       {read ? (
         <DropdownMenuItem
-          onClick={async () => {
-            try {
-              await markAsUnread({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as unread');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as unread.',
-              });
-            }
-          }}
+          onClick={() => markAsUnread(notification._id)}
           className='cursor-pointer'
         >
           <Icons.unread className='size-4' />
@@ -427,19 +373,7 @@ export function NotificationSlate({
         </DropdownMenuItem>
       ) : (
         <DropdownMenuItem
-          onClick={async () => {
-            try {
-              await markAsRead({
-                notificationId: notification.id as Id<'notifications'>,
-              });
-              toast.success('Notification marked as read');
-            } catch {
-              toast.error('An error occurred', {
-                description:
-                  'There was a problem marking this notification as read.',
-              });
-            }
-          }}
+          onClick={() => markAsRead(notification._id)}
           className='cursor-pointer'
         >
           <Icons.read className='size-4' />
@@ -447,18 +381,7 @@ export function NotificationSlate({
         </DropdownMenuItem>
       )}
       <DropdownMenuItem
-        onClick={async () => {
-          try {
-            await deleteNotification({
-              notificationId: notification.id as Id<'notifications'>,
-            });
-            toast.success('Notification deleted');
-          } catch {
-            toast.error('An error occurred', {
-              description: 'There was a problem deleting this notification.',
-            });
-          }
-        }}
+        onClick={() => deleteNotification(notification._id)}
         className='focus:bg-destructive focus:text-destructive-foreground cursor-pointer'
       >
         <Icons.delete className='size-4' />
@@ -469,17 +392,11 @@ export function NotificationSlate({
 
   const action = getNotificationAction();
 
-  const handleNotificationClick = async () => {
+  const handleNotificationClick = () => {
     closeMenus();
     // Mark as read when clicking
     if (!read) {
-      try {
-        await markAsRead({
-          notificationId: notification.id as Id<'notifications'>,
-        });
-      } catch {
-        // Silently fail - action/navigation is more important
-      }
+      markAsRead(notification._id);
     }
     // If there's an action, execute it
     if (action) {

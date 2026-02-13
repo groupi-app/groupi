@@ -13,6 +13,8 @@ const mockUpdateEventFn = vi.fn();
 const mockDeleteEventFn = vi.fn();
 const mockLeaveEventFn = vi.fn();
 const mockUseEventManagement = vi.fn();
+const mockUseDiscoverableEvents = vi.fn();
+const mockJoinDiscoverableEventFn = vi.fn();
 
 const mockToast = vi.fn();
 
@@ -37,6 +39,8 @@ vi.mock('./use-events', () => ({
   useDeleteEvent: () => mockDeleteEventFn,
   useLeaveEvent: () => mockLeaveEventFn,
   useEventManagement: (eventId: any) => mockUseEventManagement(eventId),
+  useDiscoverableEvents: () => mockUseDiscoverableEvents(),
+  useJoinDiscoverableEvent: () => mockJoinDiscoverableEventFn,
 }));
 
 describe('useEvents hooks', () => {
@@ -51,6 +55,8 @@ describe('useEvents hooks', () => {
     mockDeleteEventFn.mockReset();
     mockLeaveEventFn.mockReset();
     mockUseEventManagement.mockReset();
+    mockUseDiscoverableEvents.mockReset();
+    mockJoinDiscoverableEventFn.mockReset();
   });
 
   describe('useEventHeaderData', () => {
@@ -359,6 +365,91 @@ describe('useEvents hooks', () => {
       expect(result.current.event).toEqual(mockData.event);
       expect(result.current.userMembership).toEqual(mockData.userMembership);
       expect(result.current.attendees).toEqual(mockData.attendees);
+    });
+  });
+
+  describe('useDiscoverableEvents', () => {
+    test('returns undefined when loading', async () => {
+      mockUseDiscoverableEvents.mockReturnValue(undefined);
+
+      const { useDiscoverableEvents } = await import('./use-events');
+      const { result } = renderHook(() => useDiscoverableEvents());
+
+      expect(result.current).toBeUndefined();
+    });
+
+    test('returns discoverable events when loaded', async () => {
+      const mockData = [
+        {
+          eventId: 'event-1',
+          title: 'Friends Event',
+          description: 'A friends event',
+          location: 'Test Location',
+          chosenDateTime: null,
+          chosenEndDateTime: null,
+          imageUrl: null,
+          memberCount: 3,
+          createdAt: Date.now(),
+          organizer: {
+            personId: 'person-1',
+            name: 'Organizer',
+            username: 'organizer',
+            image: null,
+          },
+        },
+      ];
+      mockUseDiscoverableEvents.mockReturnValue(mockData);
+
+      const { useDiscoverableEvents } = await import('./use-events');
+      const { result } = renderHook(() => useDiscoverableEvents());
+
+      expect(result.current).toEqual(mockData);
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].title).toBe('Friends Event');
+    });
+
+    test('returns empty array when no events available', async () => {
+      mockUseDiscoverableEvents.mockReturnValue([]);
+
+      const { useDiscoverableEvents } = await import('./use-events');
+      const { result } = renderHook(() => useDiscoverableEvents());
+
+      expect(result.current).toEqual([]);
+    });
+  });
+
+  describe('useJoinDiscoverableEvent', () => {
+    test('calls mutation with event ID', async () => {
+      mockJoinDiscoverableEventFn.mockResolvedValue({
+        membershipId: 'membership-1',
+        success: true,
+      });
+
+      const { useJoinDiscoverableEvent } = await import('./use-events');
+      const { result } = renderHook(() => useJoinDiscoverableEvent());
+
+      await act(async () => {
+        await result.current('event-1' as any);
+      });
+
+      expect(mockJoinDiscoverableEventFn).toHaveBeenCalledWith('event-1');
+    });
+
+    test('shows error toast on failure', async () => {
+      mockJoinDiscoverableEventFn.mockRejectedValue(
+        new Error('Not friends with organizer')
+      );
+
+      const { useJoinDiscoverableEvent } = await import('./use-events');
+      const { result } = renderHook(() => useJoinDiscoverableEvent());
+
+      await expect(async () => {
+        await act(async () => {
+          await result.current('event-1' as any);
+        });
+      }).rejects.toThrow('Not friends with organizer');
+
+      expect(mockJoinDiscoverableEventFn).toHaveBeenCalled();
     });
   });
 });

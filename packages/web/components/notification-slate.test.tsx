@@ -6,23 +6,16 @@ import { render, screen } from '@testing-library/react';
 import { expect, test, describe, beforeEach, vi } from 'vitest';
 import { NotificationSlate } from './notification-slate';
 
-// Mock Convex mutations
+// Mock notification hook functions
 const mockMarkAsRead = vi.fn();
 const mockMarkAsUnread = vi.fn();
 const mockDeleteNotification = vi.fn();
 
-// Mock convex generated API - must be before component import
-// Use relative path to match the require() in notification-slate.tsx
-vi.mock('../../../convex/_generated/api', () => ({
-  api: {
-    notifications: {
-      mutations: {
-        markNotificationAsRead: 'markNotificationAsRead',
-        markNotificationAsUnread: 'markNotificationAsUnread',
-        deleteNotification: 'deleteNotification',
-      },
-    },
-  },
+// Mock the notification hooks directly to prevent require('@/convex/_generated/api')
+vi.mock('@/hooks/convex/use-notifications', () => ({
+  useMarkNotificationAsRead: () => mockMarkAsRead,
+  useMarkNotificationAsUnread: () => mockMarkAsUnread,
+  useDeleteNotification: () => mockDeleteNotification,
 }));
 
 vi.mock('convex/react', () => ({
@@ -35,6 +28,12 @@ vi.mock('@/stores/notification-close-store', () => ({
     setPopoverOpen: vi.fn(),
     setSheetOpen: vi.fn(),
   }),
+}));
+
+vi.mock('@/stores/friends-dialog-store', () => ({
+  useFriendsDialogStore: (
+    selector: (state: { openDialog: () => void }) => unknown
+  ) => selector({ openDialog: vi.fn() }),
 }));
 
 vi.mock('@/hooks/use-action-menu', () => ({

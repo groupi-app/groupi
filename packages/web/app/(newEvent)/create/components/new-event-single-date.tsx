@@ -1,13 +1,10 @@
 'use client';
 
 import { useFormContext } from './form-context';
-import { useRouter } from 'next/navigation';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useCreateEvent } from '@/hooks/mutations/use-create-event';
-import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import {
   SingleDateTimeSelector,
   type SingleDateTimeData,
@@ -15,74 +12,46 @@ import {
 
 interface NewEventSingleDateProps {
   onBack: () => void;
+  onNext: () => void;
 }
 
-export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
-  const { formState, reset } = useFormContext();
-  const router = useRouter();
-  const createEvent = useCreateEvent();
-  const { uploadFile } = useFileUpload();
-  const [isSaving, setIsSaving] = useState(false);
+export function NewEventSingleDate({
+  onBack,
+  onNext,
+}: NewEventSingleDateProps) {
+  const { formState, setFormState } = useFormContext();
 
-  // Store the current datetime values from the selector
   const dateTimeRef = useRef<SingleDateTimeData | null>(null);
 
   const handleDateTimeChange = useCallback((data: SingleDateTimeData) => {
     dateTimeRef.current = data;
   }, []);
 
-  const onSubmit = useCallback(async () => {
+  const handleNext = useCallback(() => {
     const dateTimeData = dateTimeRef.current;
     if (!dateTimeData || !dateTimeData.isValid) {
-      toast.error('Please select a valid date and time');
+      if (
+        dateTimeData?.startDateTime &&
+        dateTimeData.startDateTime.getTime() <= Date.now()
+      ) {
+        toast.error('Event date and time must be in the future');
+      } else {
+        toast.error('Please select a valid date and time');
+      }
       return;
     }
 
-    const {
-      title,
-      description,
-      location,
-      reminderOffset,
-      imageFile,
-      imageFocalPoint,
-    } = formState;
+    setFormState({
+      ...formState,
+      dateType: 'single',
+      singleDateTime: {
+        startDateTime: dateTimeData.startDateTime.toISOString(),
+        endDateTime: dateTimeData.endDateTime?.toISOString(),
+      },
+    });
+    onNext();
+  }, [formState, setFormState, onNext]);
 
-    setIsSaving(true);
-    try {
-      // Upload image file if present
-      let imageStorageId: string | undefined;
-      if (imageFile) {
-        const uploadResult = await uploadFile(imageFile);
-        if (!uploadResult) {
-          toast.error('Failed to upload image.');
-          return;
-        }
-        imageStorageId = uploadResult.storageId;
-      }
-
-      const result = await createEvent({
-        title,
-        description,
-        location,
-        chosenDateTime: dateTimeData.startDateTime.toISOString(),
-        chosenEndDateTime: dateTimeData.endDateTime?.toISOString(),
-        reminderOffset,
-        imageStorageId,
-        imageFocalPoint,
-      });
-      toast.success('The event was created successfully.');
-      router.push(`/event/${result.eventId}`);
-      // Reset form context after navigation starts so user doesn't see flash
-      setTimeout(() => reset(), 100);
-    } catch {
-      toast.error('The event was unable to be created.');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [formState, createEvent, uploadFile, reset, router]);
-
-  // In wizard mode, redirect is handled by parent
-  // Keep validation check but don't redirect
   if (!formState.title) {
     return null;
   }
@@ -95,19 +64,21 @@ export function NewEventSingleDate({ onBack }: NewEventSingleDateProps) {
         <Button
           type='button'
           className='flex items-center gap-1'
-          variant={'secondary'}
+          variant='secondary'
           onClick={onBack}
         >
           <span>Back</span>
           <Icons.back className='text-sm' />
         </Button>
         <Button
-          data-test='create-event-button'
+          data-test='new-event-next-button'
           type='button'
-          onClick={onSubmit}
-          isLoading={isSaving}
+          className='flex items-center gap-1'
+          variant='secondary'
+          onClick={handleNext}
         >
-          Create Event
+          <span>Next</span>
+          <Icons.forward className='text-sm' />
         </Button>
       </div>
     </div>

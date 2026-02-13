@@ -126,7 +126,7 @@ export function FriendRequestButton({
 
       case 'pending_sent':
         return (
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant='secondary'
@@ -151,8 +151,9 @@ export function FriendRequestButton({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
+                variant='destructive'
                 onClick={handleCancelRequest}
-                className='text-destructive focus:text-destructive cursor-pointer'
+                className='cursor-pointer'
               >
                 <Icons.close className='size-4 mr-2' />
                 Cancel Request
@@ -190,39 +191,26 @@ export function FriendRequestButton({
       case 'friends':
         return (
           <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant='secondary'
-                  size={
-                    variant === 'sm'
-                      ? 'sm'
-                      : variant === 'icon'
-                        ? 'icon'
-                        : 'default'
-                  }
-                  className={className}
-                >
-                  {variant !== 'icon' && (
-                    <>
-                      <Icons.check className='size-4 mr-1' />
-                      Friends
-                      <Icons.down className='size-4 ml-1' />
-                    </>
-                  )}
-                  {variant === 'icon' && <Icons.people className='size-4' />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => setShowRemoveDialog(true)}
-                  className='text-destructive focus:text-destructive cursor-pointer'
-                >
-                  <Icons.close className='size-4 mr-2' />
+            <Button
+              variant='destructive'
+              size={
+                variant === 'sm'
+                  ? 'sm'
+                  : variant === 'icon'
+                    ? 'icon'
+                    : 'default'
+              }
+              onClick={() => setShowRemoveDialog(true)}
+              className={className}
+            >
+              {variant !== 'icon' && (
+                <>
+                  <Icons.close className='size-4 mr-1' />
                   Remove Friend
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </>
+              )}
+              {variant === 'icon' && <Icons.close className='size-4' />}
+            </Button>
 
             <AlertDialog
               open={showRemoveDialog}

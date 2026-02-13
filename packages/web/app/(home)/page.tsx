@@ -87,10 +87,9 @@ export default function Home() {
     }
   }, [isLoading, isAuthenticated, needsOnboarding, router]);
 
-  // Only show loading when user is definitely authenticated and will be redirected
-  // Don't show loading for initial auth check - show marketing content immediately
-  // This prevents loading flash when tabbing back to the page
-  if (isAuthenticated && needsOnboarding === false) {
+  // Show loading state while auth is being determined OR when user will be redirected
+  // This prevents the marketing page flash for logged-in users
+  if (isLoading || (isAuthenticated && needsOnboarding === false)) {
     return (
       <div className='flex items-center justify-center min-h-[50vh]'>
         <Icons.spinner className='size-8 animate-spin text-muted-foreground' />

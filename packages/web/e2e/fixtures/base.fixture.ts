@@ -62,7 +62,7 @@ type GroupiFixtures = {
 function setupPageErrorHandler(page: Page): void {
   page.on('pageerror', error => {
     // Log but don't throw - let the test continue
-    // eslint-disable-next-line no-console
+
     console.warn('[Page Error]', error.message);
   });
 }
@@ -128,11 +128,9 @@ async function authenticateUser(
       return true;
     }
 
-    // eslint-disable-next-line no-console
     console.warn(`Failed to create magic link token for ${email}`);
     return false;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn('Authentication setup error:', error);
     return false;
   }
@@ -150,6 +148,7 @@ export const test = base.extend<GroupiFixtures>({
   },
 
   // Seeder - auto-cleanup after each test
+
   // eslint-disable-next-line no-empty-pattern
   seeder: async ({}, use) => {
     const seeder = new ConvexSeeder();

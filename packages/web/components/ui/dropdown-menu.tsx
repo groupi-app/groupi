@@ -101,15 +101,20 @@ export function DropdownMenuContent({
 export function DropdownMenuItem({
   className,
   inset,
+  variant,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean;
+  variant?: 'default' | 'destructive';
 }) {
   return (
     <DropdownMenuPrimitive.Item
       data-slot='dropdown-menu-item'
       className={cn(
-        'relative flex cursor-default select-none items-center rounded-subtle px-2 py-1.5 text-sm outline-hidden transition-colors duration-fast focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50',
+        'relative flex cursor-default select-none items-center rounded-subtle px-2 py-1.5 text-sm outline-hidden transition-colors duration-fast data-disabled:pointer-events-none data-disabled:opacity-50',
+        variant === 'destructive'
+          ? 'focus:bg-destructive focus:text-destructive-foreground'
+          : 'focus:bg-accent focus:text-accent-foreground',
         inset && 'pl-8',
         className
       )}

@@ -21,18 +21,27 @@ export type ReminderOffset =
   | '2_WEEKS'
   | '4_WEEKS';
 
+export type Visibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+
 interface FocalPoint {
   x: number;
   y: number;
 }
 
-interface FormState {
+export interface FormState {
   title: string;
   description?: string;
   location?: string;
+  visibility?: Visibility;
+  /** @deprecated Use addonConfigs.reminders.reminderOffset instead */
   reminderOffset?: ReminderOffset;
+  /** Generic addon config storage keyed by addon id */
+  addonConfigs?: Record<string, Record<string, unknown>>;
   imageFile?: File;
   imageFocalPoint?: FocalPoint;
+  dateType?: 'single' | 'multi';
+  singleDateTime?: { startDateTime: string; endDateTime?: string };
+  multiDateTimeOptions?: Array<{ start: string; end?: string }>;
 }
 
 interface FormContextValue {
@@ -48,9 +57,14 @@ export function FormProvider({ children }: { children: ReactNode }) {
     title: '',
     description: undefined,
     location: undefined,
+    visibility: 'PRIVATE',
     reminderOffset: undefined,
+    addonConfigs: {},
     imageFile: undefined,
     imageFocalPoint: undefined,
+    dateType: undefined,
+    singleDateTime: undefined,
+    multiDateTimeOptions: undefined,
   });
 
   const reset = useCallback(() => {
@@ -59,8 +73,12 @@ export function FormProvider({ children }: { children: ReactNode }) {
       description: undefined,
       location: undefined,
       reminderOffset: undefined,
+      addonConfigs: {},
       imageFile: undefined,
       imageFocalPoint: undefined,
+      dateType: undefined,
+      singleDateTime: undefined,
+      multiDateTimeOptions: undefined,
     });
   }, []);
 

@@ -199,20 +199,30 @@ function ActionMenu({
                 </span>
               </div>
               {eventDateTime && (
-                <div className='flex items-center gap-2 text-muted-foreground'>
-                  <span>RSVP: </span>
-                  {member.rsvpStatus === 'YES' && (
-                    <Icons.check className='text-success' />
+                <div>
+                  <div className='flex items-center gap-2 text-muted-foreground'>
+                    <span>RSVP: </span>
+                    {member.rsvpStatus === 'YES' && (
+                      <Icons.check className='text-success' />
+                    )}
+                    {member.rsvpStatus === 'MAYBE' && (
+                      <span className='font-semibold w-6 text-xl text-warning text-center'>
+                        ?
+                      </span>
+                    )}
+                    {member.rsvpStatus === 'NO' && (
+                      <Icons.close className='text-error' />
+                    )}
+                    <span className='text-foreground'>{member.rsvpStatus}</span>
+                    {member.rsvpNote && (
+                      <Icons.messageSquare className='size-4 text-muted-foreground ml-1' />
+                    )}
+                  </div>
+                  {member.rsvpNote && (
+                    <p className='text-muted-foreground text-xs mt-1 italic'>
+                      {member.rsvpNote}
+                    </p>
                   )}
-                  {member.rsvpStatus === 'MAYBE' && (
-                    <span className='font-semibold w-6 text-xl text-warning text-center'>
-                      ?
-                    </span>
-                  )}
-                  {member.rsvpStatus === 'NO' && (
-                    <Icons.close className='text-error' />
-                  )}
-                  <span className='text-foreground'>{member.rsvpStatus}</span>
                 </div>
               )}
             </DrawerHeader>
@@ -409,21 +419,49 @@ function ActionMenu({
           </DropdownMenuLabel>
           {eventDateTime && (
             <DropdownMenuLabel>
-              <div className='flex items-center gap-1 text-muted-foreground'>
-                <span>RSVP: </span>
-                {member.rsvpStatus === 'YES' && (
-                  <Icons.check className='text-success' />
-                )}
-                {member.rsvpStatus === 'MAYBE' && (
-                  <span className='font-semibold w-6 text-xl text-warning text-center'>
-                    ?
-                  </span>
-                )}
-                {member.rsvpStatus === 'NO' && (
-                  <Icons.close className='text-error' />
-                )}
-                <span className='text-foreground'>{member.rsvpStatus}</span>
-              </div>
+              {member.rsvpNote ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className='flex items-center gap-1 text-muted-foreground cursor-default'>
+                      <span>RSVP: </span>
+                      {member.rsvpStatus === 'YES' && (
+                        <Icons.check className='text-success' />
+                      )}
+                      {member.rsvpStatus === 'MAYBE' && (
+                        <span className='font-semibold w-6 text-xl text-warning text-center'>
+                          ?
+                        </span>
+                      )}
+                      {member.rsvpStatus === 'NO' && (
+                        <Icons.close className='text-error' />
+                      )}
+                      <span className='text-foreground'>
+                        {member.rsvpStatus}
+                      </span>
+                      <Icons.messageSquare className='size-3.5 text-muted-foreground ml-1' />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side='bottom' className='max-w-[200px]'>
+                    <p className='text-xs'>{member.rsvpNote}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className='flex items-center gap-1 text-muted-foreground'>
+                  <span>RSVP: </span>
+                  {member.rsvpStatus === 'YES' && (
+                    <Icons.check className='text-success' />
+                  )}
+                  {member.rsvpStatus === 'MAYBE' && (
+                    <span className='font-semibold w-6 text-xl text-warning text-center'>
+                      ?
+                    </span>
+                  )}
+                  {member.rsvpStatus === 'NO' && (
+                    <Icons.close className='text-error' />
+                  )}
+                  <span className='text-foreground'>{member.rsvpStatus}</span>
+                </div>
+              )}
             </DropdownMenuLabel>
           )}
 
