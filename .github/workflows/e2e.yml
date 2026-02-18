@@ -95,7 +95,7 @@ jobs:
 
       - name: Checkout code
         if: steps.e2e-config.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         if: steps.e2e-config.outputs.skip != 'true'
@@ -184,7 +184,7 @@ jobs:
           echo "convex_url=$CONVEX_URL" >> $GITHUB_OUTPUT
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
