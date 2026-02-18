@@ -133,7 +133,7 @@ jobs:
           pnpm e2e --project=chromium
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always() && steps.e2e-config.outputs.skip != 'true'
         with:
           name: playwright-report-${{ github.event.deployment.id || github.run_id }}
@@ -141,7 +141,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test artifacts on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure() && steps.e2e-config.outputs.skip != 'true'
         with:
           name: test-results-${{ github.event.deployment.id || github.run_id }}
@@ -213,7 +213,7 @@ jobs:
         run: pnpm e2e --project=${{ matrix.browser }}
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}-${{ github.event.deployment.id }}
