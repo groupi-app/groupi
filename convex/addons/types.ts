@@ -9,17 +9,24 @@ export const ADDON_TYPES = {
   REMINDERS: 'reminders',
   QUESTIONNAIRE: 'questionnaire',
   BRING_LIST: 'bring-list',
+  DISCORD: 'discord',
+  CUSTOM: '__custom__',
 } as const;
 
 export type AddonType = (typeof ADDON_TYPES)[keyof typeof ADDON_TYPES];
 
 /**
- * Lifecycle events that add-on handlers can respond to.
+ * @deprecated Use `defineAddonHandler()` from `convex/addons/define.ts` instead.
  *
- * The same interface is used for both first-party (in-process) and
- * future user add-ons (webhook dispatch). First-party handlers receive
- * the full MutationCtx; user add-on handlers will receive a
- * capability-scoped wrapper over the same lifecycle surface.
+ * This interface is kept for reference only. All handlers should be
+ * migrated to the builder pattern which provides:
+ * - Runtime validation at definition time
+ * - Scoped `AddonContext` instead of raw `MutationCtx`
+ * - Brand checking to prevent forged handler objects
+ * - Automatic try/catch wrapping for `validateConfig`
+ *
+ * @see defineAddonHandler in `convex/addons/define.ts`
+ * @see AddonContext in `convex/addons/context.ts`
  */
 export interface AddonHandler {
   /** Must match a key in ADDON_TYPES */
@@ -56,6 +63,13 @@ export interface AddonHandler {
 
   /** Called when an event's date is reset (cleared). */
   onDateReset?: (
+    ctx: MutationCtx,
+    eventId: Id<'events'>,
+    config: unknown
+  ) => Promise<void>;
+
+  /** Called when an event's details are updated (title, description, location, etc). */
+  onEventUpdated?: (
     ctx: MutationCtx,
     eventId: Id<'events'>,
     config: unknown

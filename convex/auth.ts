@@ -141,6 +141,7 @@ export const createAuthOptions = (
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID!,
         clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+        scope: ['identify', 'email', 'guilds'],
       },
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,

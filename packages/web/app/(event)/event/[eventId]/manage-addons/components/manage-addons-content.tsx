@@ -16,11 +16,14 @@ import {
 import { Id } from '@/convex/_generated/dataModel';
 import { NewEventFormSkeleton } from '@/components/skeletons';
 import { getAddonRegistry } from '@/app/(newEvent)/create/components/addon-registry';
+import { registerCustomAddonsFromConfigs } from '@/lib/custom-addon-registration';
+import { TemplatePicker } from './template-picker';
 
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
 import '@/app/(newEvent)/create/components/addons/bring-list-addon';
+import '@/app/(newEvent)/create/components/addons/discord-addon';
 
 export function ManageAddonsContent({ eventId }: { eventId: string }) {
   const eventData = useEventHeader(eventId as Id<'events'>);
@@ -30,6 +33,17 @@ export function ManageAddonsContent({ eventId }: { eventId: string }) {
   const updateAddonConfig = useUpdateAddonConfig();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Dynamically register any custom addons
+  if (addonConfigs) {
+    registerCustomAddonsFromConfigs(
+      addonConfigs as Array<{
+        addonType: string;
+        config: unknown;
+        enabled: boolean;
+      }>
+    );
+  }
 
   const allAddons = getAddonRegistry();
 
@@ -119,6 +133,13 @@ export function ManageAddonsContent({ eventId }: { eventId: string }) {
           );
         })}
       </div>
+
+      <TemplatePicker
+        eventId={eventId as Id<'events'>}
+        onSelect={async (addonType, config) => {
+          await handleSave(addonType, config);
+        }}
+      />
 
       <div className='flex justify-end mt-6'>
         <Button

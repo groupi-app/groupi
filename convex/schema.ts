@@ -236,7 +236,8 @@ export default defineSchema({
       v.literal('FRIEND_REQUEST_ACCEPTED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
-      v.literal('ADDON_CONFIG_RESET')
+      v.literal('ADDON_CONFIG_RESET'),
+      v.literal('ADDON_AUTOMATION')
     ),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
@@ -297,7 +298,8 @@ export default defineSchema({
       v.literal('FRIEND_REQUEST_ACCEPTED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
-      v.literal('ADDON_CONFIG_RESET')
+      v.literal('ADDON_CONFIG_RESET'),
+      v.literal('ADDON_AUTOMATION')
     ),
     methodId: v.id('notificationMethods'),
     enabled: v.boolean(),
@@ -399,6 +401,20 @@ export default defineSchema({
     .index('by_event_addon', ['eventId', 'addonType'])
     .index('by_event_addon_key', ['eventId', 'addonType', 'key'])
     .index('by_event_addon_creator', ['eventId', 'addonType', 'createdBy']),
+
+  addonTemplates: defineTable({
+    ownerId: v.id('persons'),
+    name: v.string(),
+    description: v.string(),
+    iconName: v.string(),
+    template: v.any(), // full CustomAddonTemplate (validated before save)
+    version: v.number(),
+    isPublished: v.boolean(), // draft vs ready to use
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_owner', ['ownerId'])
+    .index('by_owner_published', ['ownerId', 'isPublished']),
 
   addonOptOuts: defineTable({
     personId: v.id('persons'),

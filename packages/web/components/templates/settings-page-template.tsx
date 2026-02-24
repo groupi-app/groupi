@@ -12,6 +12,10 @@ export interface SettingsPageTemplateProps {
    */
   title: string;
   /**
+   * Optional badge rendered next to the title
+   */
+  titleBadge?: React.ReactNode;
+  /**
    * Optional description below the title
    */
   description?: string;
@@ -55,6 +59,7 @@ const maxWidthClasses = {
 
 export function SettingsPageTemplate({
   title,
+  titleBadge,
   description,
   isLoading = false,
   loadingContent,
@@ -83,7 +88,10 @@ export function SettingsPageTemplate({
             <span className='text-sm'>Settings</span>
           </Link>
         )}
-        <h1 className='text-3xl font-heading font-medium'>{title}</h1>
+        <h1 className='text-3xl font-heading font-medium flex items-center gap-2'>
+          {title}
+          {titleBadge}
+        </h1>
         {description && (
           <p className='text-muted-foreground mt-1'>{description}</p>
         )}

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export function SettingsNav() {
   const [open, setOpen] = useState(false);
@@ -63,6 +64,14 @@ export function SettingsNav() {
               )}
             >
               {item.title}
+              {'badge' in item && item.badge && (
+                <Badge
+                  variant='default'
+                  className='text-[10px] px-2.5 py-0.5 mt-1 block w-fit'
+                >
+                  {item.badge}
+                </Badge>
+              )}
             </Link>
           ))}
         </div>

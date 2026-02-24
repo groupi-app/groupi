@@ -9,11 +9,14 @@ import { useAddonConfig } from '@/hooks/convex/use-addons';
 import { Id } from '@/convex/_generated/dataModel';
 import { NewEventFormSkeleton } from '@/components/skeletons';
 import { getAddonById } from '@/app/(newEvent)/create/components/addon-registry';
+import { ensureCustomAddonRegistered } from '@/lib/custom-addon-registration';
+import type { CustomAddonConfig } from '@/lib/custom-addon-schema';
 
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
 import '@/app/(newEvent)/create/components/addons/bring-list-addon';
+import '@/app/(newEvent)/create/components/addons/discord-addon';
 
 export default function AddonPage(props: {
   params: Promise<{ eventId: string; addonId: string }>;
@@ -22,6 +25,15 @@ export default function AddonPage(props: {
   const eventData = useEventHeader(eventId as Id<'events'>);
   const addonConfig = useAddonConfig(eventId as Id<'events'>, addonId);
   const { redirectTo } = useAddonGating(eventId as Id<'events'>);
+
+  // Dynamically register custom addon if needed
+  if (addonId.startsWith('custom:') && addonConfig?.config) {
+    const customConfig = addonConfig.config as unknown as CustomAddonConfig;
+    if (customConfig?.template) {
+      ensureCustomAddonRegistered(addonId, customConfig.template);
+    }
+  }
+
   const definition = getAddonById(addonId);
   const isGated = redirectTo !== null;
 

@@ -1,4 +1,5 @@
 import {
+  Blocks,
   User2 as Account,
   ArrowLeft,
   ArrowRight,
@@ -89,6 +90,7 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  blocks: Blocks,
   sidebar: Sidebar,
   info: Info,
   warning: Warning,

@@ -73,6 +73,12 @@ http.route({
   handler: apiV1Handler,
 });
 
+http.route({
+  pathPrefix: '/api/v1/events/',
+  method: 'PUT',
+  handler: apiV1Handler,
+});
+
 // Posts routes
 http.route({
   pathPrefix: '/api/v1/posts/',

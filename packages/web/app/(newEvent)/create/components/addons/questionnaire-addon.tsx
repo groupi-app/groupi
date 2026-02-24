@@ -356,28 +356,18 @@ function QuestionnaireManageConfig({
 }: ManageConfigProps) {
   const currentQuestions = (config?.questions as Question[]) ?? [];
   const [questions, setQuestions] = useState<Question[]>(currentQuestions);
-  const [enabled, setEnabled] = useState(config !== null);
-  const [expanded, setExpanded] = useState(config !== null);
-
-  useEffect(() => {
-    const hasConfig = config !== null;
-    setEnabled(hasConfig);
-    setExpanded(hasConfig);
-    if (hasConfig && config?.questions) {
-      setQuestions(config.questions as Question[]);
-    }
-  }, [config]);
-
-  useEffect(() => {
-    setExpanded(enabled);
-  }, [enabled]);
+  const enabled = config !== null;
+  const [expanded, setExpanded] = useState(false);
 
   const handleToggle = async (checked: boolean) => {
-    setEnabled(checked);
     if (!checked) {
+      setExpanded(false);
       await onDisable();
-    } else if (questions.length > 0) {
-      await onSave({ questions });
+    } else {
+      setExpanded(true);
+      if (questions.length > 0) {
+        await onSave({ questions });
+      }
     }
   };
 

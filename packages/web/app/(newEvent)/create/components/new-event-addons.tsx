@@ -11,11 +11,13 @@ import { isReminderInPast } from '@/lib/datetime-helpers';
 import { useFormContext } from './form-context';
 import { getAddonRegistry } from './addon-registry';
 import { AddonToggleCard } from './addon-toggle-card';
+import { CreateWizardTemplatePicker } from './create-wizard-template-picker';
 
 // Import addon modules so they self-register
 import './addons/reminder-addon';
 import './addons/questionnaire-addon';
 import './addons/bring-list-addon';
+import './addons/discord-addon';
 
 interface NewEventAddonsProps {
   onBack: () => void;
@@ -176,6 +178,11 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
           />
         ))}
       </div>
+
+      <CreateWizardTemplatePicker
+        formState={formState}
+        setFormState={setFormState}
+      />
 
       <div className='flex justify-between mt-2'>
         <Button

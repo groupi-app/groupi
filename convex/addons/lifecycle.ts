@@ -1,6 +1,9 @@
 import { MutationCtx } from '../_generated/server';
 import { Id } from '../_generated/dataModel';
 import { getAddonHandler } from './registry';
+import { createAddonContext, createTrustedAddonContext } from './context';
+import type { AnyDefinedHandler } from './define';
+import type { AddonContext } from './context';
 
 /**
  * Lifecycle event names that can be dispatched to add-on handlers.
@@ -11,7 +14,32 @@ type LifecycleEvent =
   | 'onConfigUpdated'
   | 'onDateChosen'
   | 'onDateReset'
-  | 'onEventDeleted';
+  | 'onEventUpdated'
+  | 'onEventDeleted'
+  | 'onDataSubmitted'
+  | 'onMemberJoined'
+  | 'onMemberLeft';
+
+/**
+ * Build the appropriate scoped context for a handler.
+ * Trusted handlers get TrustedAddonContext (with rawCtx).
+ * Standard handlers get AddonContext (restricted).
+ *
+ * @param addonType - The actual addon type string stored in the database,
+ *   which may differ from handler.type for shared handlers (e.g., custom
+ *   addons use `custom:{templateId}` but share the `__custom__` handler).
+ */
+function buildContext(
+  ctx: MutationCtx,
+  handler: AnyDefinedHandler,
+  eventId: Id<'events'>,
+  addonType: string
+): AddonContext {
+  if (handler.trusted) {
+    return createTrustedAddonContext(ctx, addonType, eventId);
+  }
+  return createAddonContext(ctx, addonType, eventId);
+}
 
 /**
  * Dispatch a lifecycle event to ALL enabled add-ons for an event.
@@ -23,7 +51,13 @@ export async function dispatchAddonLifecycle(
   ctx: MutationCtx,
   eventId: Id<'events'>,
   event: LifecycleEvent,
-  args?: { chosenDateTime?: number }
+  args?: {
+    chosenDateTime?: number;
+    personId?: Id<'persons'>;
+    key?: string;
+    data?: unknown;
+    submitterId?: Id<'persons'>;
+  }
 ): Promise<void> {
   const addonConfigs = await ctx.db
     .query('eventAddonConfigs')
@@ -36,10 +70,11 @@ export async function dispatchAddonLifecycle(
     const handler = getAddonHandler(addonConfig.addonType);
     if (!handler) continue;
 
+    const addonCtx = buildContext(ctx, handler, eventId, addonConfig.addonType);
+
     await dispatchToHandler(
-      ctx,
       handler,
-      eventId,
+      addonCtx,
       event,
       addonConfig.config,
       undefined,
@@ -59,53 +94,93 @@ export async function dispatchSingleAddonLifecycle(
   event: LifecycleEvent,
   config?: unknown,
   oldConfig?: unknown,
-  args?: { chosenDateTime?: number }
+  args?: {
+    chosenDateTime?: number;
+    personId?: Id<'persons'>;
+    key?: string;
+    data?: unknown;
+    submitterId?: Id<'persons'>;
+  }
 ): Promise<void> {
   const handler = getAddonHandler(addonType);
   if (!handler) return;
 
-  await dispatchToHandler(
-    ctx,
-    handler,
-    eventId,
-    event,
-    config,
-    oldConfig,
-    args
-  );
+  const addonCtx = buildContext(ctx, handler, eventId, addonType);
+
+  await dispatchToHandler(handler, addonCtx, event, config, oldConfig, args);
 }
 
 async function dispatchToHandler(
-  ctx: MutationCtx,
-  handler: ReturnType<typeof getAddonHandler>,
-  eventId: Id<'events'>,
+  handler: AnyDefinedHandler,
+  addonCtx: AddonContext,
   event: LifecycleEvent,
   config?: unknown,
   oldConfig?: unknown,
-  args?: { chosenDateTime?: number }
+  args?: {
+    chosenDateTime?: number;
+    personId?: Id<'persons'>;
+    key?: string;
+    data?: unknown;
+    submitterId?: Id<'persons'>;
+  }
 ): Promise<void> {
-  if (!handler) return;
-
   switch (event) {
     case 'onEnabled':
-      await handler.onEnabled?.(ctx, eventId, config);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onEnabled as any)?.(addonCtx, config);
       break;
     case 'onDisabled':
-      await handler.onDisabled?.(ctx, eventId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onDisabled as any)?.(addonCtx);
       break;
     case 'onConfigUpdated':
-      await handler.onConfigUpdated?.(ctx, eventId, oldConfig, config);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onConfigUpdated as any)?.(addonCtx, oldConfig, config);
       break;
     case 'onDateChosen':
       if (args?.chosenDateTime) {
-        await handler.onDateChosen?.(ctx, eventId, args.chosenDateTime, config);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (handler.onDateChosen as any)?.(
+          addonCtx,
+          args.chosenDateTime,
+          config
+        );
       }
       break;
     case 'onDateReset':
-      await handler.onDateReset?.(ctx, eventId, config);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onDateReset as any)?.(addonCtx, config);
+      break;
+    case 'onEventUpdated':
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onEventUpdated as any)?.(addonCtx, config);
       break;
     case 'onEventDeleted':
-      await handler.onEventDeleted?.(ctx, eventId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler.onEventDeleted as any)?.(addonCtx);
+      break;
+    case 'onDataSubmitted':
+      if (args?.key && args.submitterId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (handler.onDataSubmitted as any)?.(
+          addonCtx,
+          args.key,
+          args.data,
+          args.submitterId
+        );
+      }
+      break;
+    case 'onMemberJoined':
+      if (args?.personId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (handler.onMemberJoined as any)?.(addonCtx, args.personId);
+      }
+      break;
+    case 'onMemberLeft':
+      if (args?.personId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (handler.onMemberLeft as any)?.(addonCtx, args.personId);
+      }
       break;
   }
 }

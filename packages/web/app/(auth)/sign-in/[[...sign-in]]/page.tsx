@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
 import { LogoSticker } from '@/components/atoms';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { siteConfig } from '@/config/site';
 import { useGlobalUser } from '@/context/global-user-context';
 
@@ -27,9 +28,13 @@ export default function SignInPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
 
   // Redirect authenticated users away from sign-in (unless adding another account)
+  // Redirect unauthenticated users away from add-account mode
   useEffect(() => {
-    if (!isAuthLoading && isAuthenticated && !isAddAccountMode) {
+    if (isAuthLoading) return;
+    if (isAuthenticated && !isAddAccountMode) {
       router.replace(redirectTo);
+    } else if (!isAuthenticated && isAddAccountMode) {
+      router.replace('/sign-in');
     }
   }, [isAuthLoading, isAuthenticated, isAddAccountMode, redirectTo, router]);
 
@@ -187,6 +192,19 @@ export default function SignInPage() {
       }
     };
   }, [cooldownSeconds]);
+
+  // Show loading state while auth is being determined or when a redirect is imminent
+  if (
+    isAuthLoading ||
+    (isAuthenticated && !isAddAccountMode) ||
+    (!isAuthenticated && isAddAccountMode)
+  ) {
+    return (
+      <div className='flex items-center justify-center min-h-[50vh]'>
+        <LoadingSpinner size='lg' />
+      </div>
+    );
+  }
 
   const handleMagicLink = async (e?: React.FormEvent, resend = false) => {
     if (e) {

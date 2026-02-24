@@ -4,6 +4,7 @@ import { requireAuth, requireEventRole } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
+import { dispatchAddonLifecycle } from '../addons/lifecycle';
 
 /**
  * Type for invite creation data
@@ -299,6 +300,11 @@ export const acceptInvite = mutation({
       eventId: invite.eventId,
       type: 'USER_JOINED',
       authorId: person._id,
+    });
+
+    // Dispatch onMemberJoined lifecycle
+    await dispatchAddonLifecycle(ctx, invite.eventId, 'onMemberJoined', {
+      personId: person._id,
     });
 
     // Get the created membership
