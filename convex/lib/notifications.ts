@@ -137,7 +137,8 @@ export type NotificationType =
   | 'FRIEND_REQUEST_ACCEPTED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
-  | 'ADDON_CONFIG_RESET';
+  | 'ADDON_CONFIG_RESET'
+  | 'ADDON_AUTOMATION';
 
 export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 
@@ -364,6 +365,8 @@ function getNotificationEmailSubject(ctx: NotificationMessageContext): string {
         : `${prefix}Your invite was accepted`;
     case 'ADDON_CONFIG_RESET':
       return `${prefix}Add-on updated — please resubmit`;
+    case 'ADDON_AUTOMATION':
+      return `${prefix}Add-on notification`;
     default:
       return `${prefix}Notification`;
   }
@@ -426,6 +429,8 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} accepted your invite to ${event}`;
     case 'ADDON_CONFIG_RESET':
       return `An add-on in ${event} has been updated. Your previous responses have been cleared — please resubmit.`;
+    case 'ADDON_AUTOMATION':
+      return `You have a notification from an add-on in ${event}`;
     default:
       return 'You have a new notification';
   }
@@ -491,6 +496,8 @@ function getNotificationMessageMarkdown(
       return `${author} accepted your invite to ${event}`;
     case 'ADDON_CONFIG_RESET':
       return `An add-on in ${event} has been updated. Your previous responses have been cleared — please resubmit.`;
+    case 'ADDON_AUTOMATION':
+      return `You have a notification from an add-on in ${event}`;
     default:
       return 'You have a new notification';
   }
@@ -553,6 +560,8 @@ function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
       return `${author} accepted your invite to "${event}"`;
     case 'ADDON_CONFIG_RESET':
       return `An add-on in "${event}" has been updated. Your previous responses have been cleared — please resubmit.`;
+    case 'ADDON_AUTOMATION':
+      return `You have a notification from an add-on in "${event}"`;
     default:
       return 'You have a new notification';
   }

@@ -278,3 +278,27 @@ export function useDeleteAddonData() {
     [deleteData, toast]
   );
 }
+
+/**
+ * Execute inline actions for a field (e.g., action_button click)
+ */
+export function useExecuteFieldActions() {
+  const executeActions = useMutation(addonMutations.executeFieldActions);
+  const { toast } = useToast();
+
+  return useCallback(
+    async (eventId: Id<'events'>, addonType: string, fieldId: string) => {
+      try {
+        return await executeActions({ eventId, addonType, fieldId });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to execute action. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [executeActions, toast]
+  );
+}

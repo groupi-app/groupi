@@ -402,6 +402,9 @@ export const updateEvent = mutation({
       authorId: person._id,
     });
 
+    // Dispatch onEventUpdated to all enabled add-ons (e.g. sync Discord event)
+    await dispatchAddonLifecycle(ctx, eventId, 'onEventUpdated');
+
     return { event: updatedEvent };
   },
 });
@@ -730,6 +733,11 @@ export const removeMember = mutation({
       eventId: membership.eventId,
     });
 
+    // Dispatch onMemberLeft lifecycle before deleting membership
+    await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
+      personId: membership.personId,
+    });
+
     // Delete the membership
     await ctx.db.delete(membershipId);
 
@@ -792,6 +800,11 @@ export const leaveEvent = mutation({
       eventId,
       type: 'USER_LEFT',
       authorId: person._id,
+    });
+
+    // Dispatch onMemberLeft lifecycle before deleting membership
+    await dispatchAddonLifecycle(ctx, eventId, 'onMemberLeft', {
+      personId: person._id,
     });
 
     // Delete the membership
@@ -993,6 +1006,11 @@ export const banMember = mutation({
     for (const availability of availabilities) {
       await ctx.db.delete(availability._id);
     }
+
+    // Dispatch onMemberLeft lifecycle before deleting membership
+    await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
+      personId: membership.personId,
+    });
 
     // Delete the membership
     await ctx.db.delete(membershipId);
@@ -1241,6 +1259,11 @@ export const joinDiscoverableEvent = mutation({
       eventId,
       type: 'USER_JOINED',
       authorId: person._id,
+    });
+
+    // Dispatch onMemberJoined lifecycle
+    await dispatchAddonLifecycle(ctx, eventId, 'onMemberJoined', {
+      personId: person._id,
     });
 
     return { membershipId, success: true };

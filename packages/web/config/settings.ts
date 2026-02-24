@@ -20,5 +20,11 @@ export const settingsConfig = {
       href: '/settings/appearance',
       icon: 'palette' as const,
     },
+    {
+      title: 'Add-ons',
+      href: '/settings/custom-addons',
+      icon: 'blocks' as const,
+      badge: 'Experimental' as const,
+    },
   ],
 };

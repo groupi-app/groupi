@@ -1,8 +1,5 @@
-import { MutationCtx } from '../../_generated/server';
-import { Id } from '../../_generated/dataModel';
-import { type AddonHandler, ADDON_TYPES } from '../types';
-import { notifyEventMembers } from '../../lib/notifications';
-import { requireAuth } from '../../auth';
+import { defineAddonHandler } from '../define';
+import { ADDON_TYPES } from '../types';
 
 /**
  * Valid question types for the questionnaire addon.
@@ -74,56 +71,30 @@ function isValidQuestionnaireConfig(
   return true;
 }
 
-/**
- * Delete all addonData rows for a given event+addonType.
- */
-async function clearAllResponses(
-  ctx: MutationCtx,
-  eventId: Id<'events'>,
-  addonType: string
-) {
-  const entries = await ctx.db
-    .query('addonData')
-    .withIndex('by_event_addon', q =>
-      q.eq('eventId', eventId).eq('addonType', addonType)
-    )
-    .collect();
-
-  for (const entry of entries) {
-    await ctx.db.delete(entry._id);
-  }
-}
-
-export const questionnaireHandler: AddonHandler = {
+export const questionnaireHandler = defineAddonHandler({
   type: ADDON_TYPES.QUESTIONNAIRE,
 
-  validateConfig: (config: unknown): boolean => {
-    return isValidQuestionnaireConfig(config);
-  },
+  validateConfig: isValidQuestionnaireConfig,
 
-  onConfigUpdated: async (
-    ctx: MutationCtx,
-    eventId: Id<'events'>,
-    _oldConfig: unknown,
-    _newConfig: unknown
-  ) => {
+  onConfigUpdated: async (ctx, _oldConfig, _newConfig) => {
     // Clear all existing responses when config changes
-    await clearAllResponses(ctx, eventId, ADDON_TYPES.QUESTIONNAIRE);
+    await ctx.deleteAllAddonData();
 
     // Notify members that responses were cleared
-    const { person } = await requireAuth(ctx);
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'ADDON_CONFIG_RESET',
-      authorId: person._id,
-    });
+    const person = await ctx.getAuthPerson();
+    if (person) {
+      await ctx.notifyEventMembers({
+        type: 'ADDON_CONFIG_RESET',
+        authorId: person._id,
+      });
+    }
   },
 
-  onDisabled: async (ctx: MutationCtx, eventId: Id<'events'>) => {
-    await clearAllResponses(ctx, eventId, ADDON_TYPES.QUESTIONNAIRE);
+  onDisabled: async ctx => {
+    await ctx.deleteAllAddonData();
   },
 
-  onEventDeleted: async (ctx: MutationCtx, eventId: Id<'events'>) => {
-    await clearAllResponses(ctx, eventId, ADDON_TYPES.QUESTIONNAIRE);
+  onEventDeleted: async ctx => {
+    await ctx.deleteAllAddonData();
   },
-};
+});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -245,28 +245,22 @@ function BringListManageConfig({
 }: ManageConfigProps) {
   const currentItems = (config?.items as BringListItem[]) ?? [];
   const [items, setItems] = useState<BringListItem[]>(currentItems);
-  const [enabled, setEnabled] = useState(config !== null);
-  const [expanded, setExpanded] = useState(config !== null);
-
-  useEffect(() => {
-    const hasConfig = config !== null;
-    setEnabled(hasConfig);
-    setExpanded(hasConfig);
-    if (hasConfig && config?.items) {
-      setItems(config.items as BringListItem[]);
-    }
-  }, [config]);
-
-  useEffect(() => {
-    setExpanded(enabled);
-  }, [enabled]);
+  const enabled = config !== null;
+  const [pendingEnable, setPendingEnable] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const isOn = enabled || pendingEnable;
 
   const handleToggle = async (checked: boolean) => {
-    setEnabled(checked);
     if (!checked) {
+      setExpanded(false);
+      setPendingEnable(false);
       await onDisable();
     } else if (items.length > 0) {
       await onSave({ items });
+      setExpanded(true);
+    } else {
+      setPendingEnable(true);
+      setExpanded(true);
     }
   };
 
@@ -276,6 +270,7 @@ function BringListManageConfig({
       return;
     }
     await onSave({ items });
+    setPendingEnable(false);
   };
 
   const hasChanges = JSON.stringify(items) !== JSON.stringify(currentItems);
@@ -284,7 +279,7 @@ function BringListManageConfig({
     <Card
       className={cn(
         'transition-all duration-normal',
-        enabled && 'ring-2 ring-primary/30'
+        isOn && 'ring-2 ring-primary/30'
       )}
     >
       <div className='flex items-center gap-3 p-4'>
@@ -297,7 +292,7 @@ function BringListManageConfig({
             Coordinate what attendees bring to the event
           </p>
         </div>
-        {enabled && (
+        {isOn && (
           <button
             type='button'
             onClick={() => setExpanded(prev => !prev)}
@@ -313,17 +308,17 @@ function BringListManageConfig({
           </button>
         )}
         <Switch
-          checked={enabled}
+          checked={isOn}
           onCheckedChange={handleToggle}
           disabled={isSaving}
           data-test='addon-toggle-bring-list'
         />
       </div>
-      <Collapsible open={enabled && expanded}>
+      <Collapsible open={isOn && expanded}>
         <CollapsibleContent>
           <div className='px-4 pb-4 pt-0 space-y-3'>
             <ItemBuilder items={items} onChange={setItems} />
-            {hasChanges && items.length > 0 && (
+            {(hasChanges || pendingEnable) && items.length > 0 && (
               <>
                 <p className='text-sm text-warning'>
                   Saving changes will reset all existing claims and notify

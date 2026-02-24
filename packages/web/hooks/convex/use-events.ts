@@ -219,7 +219,6 @@ export function useUpdateEvent() {
       location?: string;
       imageStorageId?: string | null; // Optional cover image storage ID (null to remove)
       imageFocalPoint?: FocalPoint | null; // Optional focal point (null to clear)
-      reminderOffset?: ReminderOffset | null;
       visibility?: 'PRIVATE' | 'FRIENDS' | 'PUBLIC' | null;
     }) => {
       try {
@@ -233,7 +232,6 @@ export function useUpdateEvent() {
               ? null
               : (data.imageStorageId as Id<'_storage'> | undefined),
           imageFocalPoint: data.imageFocalPoint,
-          reminderOffset: data.reminderOffset,
           visibility: data.visibility,
         });
 

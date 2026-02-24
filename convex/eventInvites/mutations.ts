@@ -3,6 +3,7 @@ import { v, ConvexError } from 'convex/values';
 import { requireAuth } from '../auth';
 import { createNotification } from '../lib/notifications';
 import { checkCanSendEventInvite } from '../lib/privacy';
+import { dispatchAddonLifecycle } from '../addons/lifecycle';
 
 /**
  * Event Invites mutations for the Convex backend
@@ -246,6 +247,11 @@ export const acceptEventInvite = mutation({
       type: 'EVENT_INVITE_ACCEPTED',
       authorId: person._id,
       eventId: invite.eventId,
+    });
+
+    // Dispatch onMemberJoined lifecycle
+    await dispatchAddonLifecycle(ctx, invite.eventId, 'onMemberJoined', {
+      personId: person._id,
     });
 
     return {

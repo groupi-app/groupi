@@ -254,7 +254,6 @@ export default function EditEventInfo({
         title: data.title,
         description: data.description,
         location: data.location,
-        reminderOffset: reminderOffsetValue,
         visibility: visibilityValue,
         // Only include imageStorageId if it changed
         ...(imageStorageId !== undefined && {

@@ -1,8 +1,7 @@
-import { MutationCtx } from '../../_generated/server';
 import { internal } from '../../_generated/api';
-import { Id } from '../../_generated/dataModel';
 import { REMINDER_OFFSETS, type ReminderOffset } from '../../types';
-import { type AddonHandler, ADDON_TYPES } from '../types';
+import { defineAddonHandler } from '../define';
+import { ADDON_TYPES } from '../types';
 
 /**
  * Expected config shape for the reminders add-on.
@@ -19,106 +18,87 @@ function isValidReminderConfig(config: unknown): config is ReminderConfig {
   );
 }
 
-export const reminderHandler: AddonHandler = {
+export const reminderHandler = defineAddonHandler({
   type: ADDON_TYPES.REMINDERS,
+  trusted: true,
 
-  validateConfig: (config: unknown): boolean => {
-    return isValidReminderConfig(config);
-  },
+  validateConfig: isValidReminderConfig,
 
-  onEnabled: async (
-    ctx: MutationCtx,
-    eventId: Id<'events'>,
-    config: unknown
-  ) => {
+  onEnabled: async (ctx, config) => {
     if (!isValidReminderConfig(config)) return;
 
-    const event = await ctx.db.get(eventId);
+    const event = await ctx.getEvent();
     if (!event?.chosenDateTime) return;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-    await ctx.scheduler.runAfter(0, reminderFn, {
-      eventId,
+    await ctx.rawCtx.scheduler.runAfter(0, reminderFn, {
+      eventId: ctx.eventId,
       reminderOffset: config.reminderOffset,
     });
   },
 
-  onDisabled: async (ctx: MutationCtx, eventId: Id<'events'>) => {
-    await ctx.scheduler.runAfter(
+  onDisabled: async ctx => {
+    await ctx.rawCtx.scheduler.runAfter(
       0,
       internal.reminders.mutations.cancelEventReminders,
-      { eventId }
+      { eventId: ctx.eventId }
     );
   },
 
-  onConfigUpdated: async (
-    ctx: MutationCtx,
-    eventId: Id<'events'>,
-    _oldConfig: unknown,
-    newConfig: unknown
-  ) => {
+  onConfigUpdated: async (ctx, _oldConfig, newConfig) => {
     if (!isValidReminderConfig(newConfig)) return;
 
-    const event = await ctx.db.get(eventId);
+    const event = await ctx.getEvent();
     if (!event?.chosenDateTime) return;
 
     // Reschedule with new offset
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-    await ctx.scheduler.runAfter(0, reminderFn, {
-      eventId,
+    await ctx.rawCtx.scheduler.runAfter(0, reminderFn, {
+      eventId: ctx.eventId,
       reminderOffset: newConfig.reminderOffset,
     });
   },
 
-  onDateChosen: async (
-    ctx: MutationCtx,
-    eventId: Id<'events'>,
-    _chosenDateTime: number,
-    config: unknown
-  ) => {
+  onDateChosen: async (ctx, _chosenDateTime, config) => {
     if (!isValidReminderConfig(config)) return;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const reminderFn = internal.reminders.mutations.scheduleEventReminder;
-    await ctx.scheduler.runAfter(0, reminderFn, {
-      eventId,
+    await ctx.rawCtx.scheduler.runAfter(0, reminderFn, {
+      eventId: ctx.eventId,
       reminderOffset: config.reminderOffset,
     });
   },
 
-  onDateReset: async (
-    ctx: MutationCtx,
-    eventId: Id<'events'>,
-    _config: unknown
-  ) => {
-    await ctx.scheduler.runAfter(
+  onDateReset: async (ctx, _config) => {
+    await ctx.rawCtx.scheduler.runAfter(
       0,
       internal.reminders.mutations.cancelEventReminders,
-      { eventId }
+      { eventId: ctx.eventId }
     );
   },
 
-  onEventDeleted: async (ctx: MutationCtx, eventId: Id<'events'>) => {
+  onEventDeleted: async ctx => {
     // Cancel scheduled functions and delete eventReminders rows
-    const reminders = await ctx.db
+    const reminders = await ctx.rawCtx.db
       .query('eventReminders')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .withIndex('by_event', q => q.eq('eventId', ctx.eventId))
       .collect();
 
     for (const reminder of reminders) {
       if (reminder.scheduledFunctionId) {
         try {
-          await ctx.scheduler.cancel(reminder.scheduledFunctionId);
+          await ctx.rawCtx.scheduler.cancel(reminder.scheduledFunctionId);
         } catch {
           // Ignore - job may have already run
         }
       }
-      await ctx.db.delete(reminder._id);
+      await ctx.rawCtx.db.delete(reminder._id);
     }
   },
-};
+});

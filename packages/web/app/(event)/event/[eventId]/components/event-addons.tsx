@@ -11,10 +11,13 @@ import {
   type AddonDefinition,
 } from '@/app/(newEvent)/create/components/addon-registry';
 
+import { registerCustomAddonsFromConfigs } from '@/lib/custom-addon-registration';
+
 // Import addon modules so they self-register
 import '@/app/(newEvent)/create/components/addons/reminder-addon';
 import '@/app/(newEvent)/create/components/addons/questionnaire-addon';
 import '@/app/(newEvent)/create/components/addons/bring-list-addon';
+import '@/app/(newEvent)/create/components/addons/discord-addon';
 
 type HeaderData = NonNullable<ReturnType<typeof useEventHeaderData>>;
 
@@ -44,6 +47,17 @@ export function EventAddons({ data }: EventAddonsProps) {
 
   // Ensure the addon registry is loaded
   getAddonRegistry();
+
+  // Dynamically register any custom addons
+  if (addonConfigs) {
+    registerCustomAddonsFromConfigs(
+      addonConfigs as Array<{
+        addonType: string;
+        config: unknown;
+        enabled: boolean;
+      }>
+    );
+  }
 
   // Filter to enabled add-ons that have a registered handler
   const enabledAddons: EnabledAddon[] = [];

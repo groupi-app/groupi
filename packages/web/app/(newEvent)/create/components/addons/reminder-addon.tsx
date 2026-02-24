@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -234,28 +234,15 @@ function ReminderManageConfig({
 }: ManageConfigProps) {
   const currentOffset = (config?.reminderOffset as ReminderOffset) ?? '1_DAY';
   const [offset, setOffset] = useState<ReminderOffset>(currentOffset);
-  const [enabled, setEnabled] = useState(config !== null);
-  const [expanded, setExpanded] = useState(config !== null);
-
-  // Sync when server data changes
-  useEffect(() => {
-    const hasConfig = config !== null;
-    setEnabled(hasConfig);
-    setExpanded(hasConfig);
-    if (hasConfig && config?.reminderOffset) {
-      setOffset(config.reminderOffset as ReminderOffset);
-    }
-  }, [config]);
-
-  useEffect(() => {
-    setExpanded(enabled);
-  }, [enabled]);
+  const enabled = config !== null;
+  const [expanded, setExpanded] = useState(false);
 
   const handleToggle = async (checked: boolean) => {
-    setEnabled(checked);
     if (!checked) {
+      setExpanded(false);
       await onDisable();
     } else {
+      setExpanded(true);
       await onSave({ reminderOffset: offset });
     }
   };

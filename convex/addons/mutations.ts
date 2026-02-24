@@ -1,8 +1,11 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth, requireEventRole } from '../auth';
+import { requireAuth, requireEventRole, authComponent } from '../auth';
+import type { AuthUserId } from '../auth';
 import { getAddonHandler } from './registry';
 import { dispatchSingleAddonLifecycle } from './lifecycle';
+import { createTrustedAddonContext } from './context';
+import type { AutomationAction } from './automations/types';
 
 /** Max size for addon config/data payloads (64KB stringified) */
 const MAX_DATA_SIZE = 64 * 1024;
@@ -293,6 +296,9 @@ export const setAddonData = mutation({
       )
       .first();
 
+    let resultId;
+    let created;
+
     if (existing) {
       // Only the creator or a MODERATOR+ can update existing entries
       const isCreator = existing.createdBy === person._id;
@@ -304,9 +310,10 @@ export const setAddonData = mutation({
         data,
         updatedAt: now,
       });
-      return { id: existing._id, created: false };
+      resultId = existing._id;
+      created = false;
     } else {
-      const id = await ctx.db.insert('addonData', {
+      resultId = await ctx.db.insert('addonData', {
         eventId,
         addonType,
         key,
@@ -315,8 +322,21 @@ export const setAddonData = mutation({
         createdAt: now,
         updatedAt: now,
       });
-      return { id, created: true };
+      created = true;
     }
+
+    // Dispatch onDataSubmitted lifecycle to all enabled addons of this type
+    await dispatchSingleAddonLifecycle(
+      ctx,
+      eventId,
+      addonType,
+      'onDataSubmitted',
+      undefined,
+      undefined,
+      { key, data, submitterId: person._id }
+    );
+
+    return { id: resultId, created };
   },
 });
 
@@ -363,6 +383,115 @@ export const deleteAddonData = mutation({
     }
 
     await ctx.db.delete(entry._id);
+    return { success: true };
+  },
+});
+
+/**
+ * Execute inline actions for a field (e.g., action_button click).
+ * The client sends the fieldId reference, the server resolves actions from config.
+ * - Requires event membership
+ * - Field must be an action_button with configured actions
+ */
+export const executeFieldActions = mutation({
+  args: {
+    eventId: v.id('events'),
+    addonType: v.string(),
+    fieldId: v.string(),
+  },
+  handler: async (ctx, { eventId, addonType, fieldId }) => {
+    const { person } = await requireAuth(ctx);
+
+    // Verify membership
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', person._id).eq('eventId', eventId)
+      )
+      .first();
+    if (!membership) {
+      throw new Error('You are not a member of this event');
+    }
+
+    // Load addon config
+    const addonConfig = await ctx.db
+      .query('eventAddonConfigs')
+      .withIndex('by_event_addon', q =>
+        q.eq('eventId', eventId).eq('addonType', addonType)
+      )
+      .first();
+    if (!addonConfig?.enabled || !addonConfig.config) {
+      throw new Error(`Add-on ${addonType} is not enabled for this event`);
+    }
+
+    // Extract template and find the field
+    const config = addonConfig.config as Record<string, unknown>;
+    const template = config.template as Record<string, unknown> | undefined;
+    if (!template?.sections) {
+      throw new Error('Invalid addon config');
+    }
+
+    const sections = template.sections as Array<{
+      fields: Array<{
+        id: string;
+        type: string;
+        actions?: Array<Record<string, unknown>>;
+      }>;
+    }>;
+
+    let field: (typeof sections)[0]['fields'][0] | undefined;
+    for (const section of sections) {
+      field = section.fields.find(f => f.id === fieldId);
+      if (field) break;
+    }
+
+    if (!field) {
+      throw new Error('Field not found');
+    }
+    if (field.type !== 'action_button') {
+      throw new Error('Field is not an action button');
+    }
+    if (!field.actions || field.actions.length === 0) {
+      throw new Error('No actions configured for this button');
+    }
+
+    // Build context and dispatch actions
+    const trustedCtx = createTrustedAddonContext(ctx, addonType, eventId);
+
+    const { buildVariableContext } = await import('./automations/resolve');
+    const { dispatchActions } = await import('./automations/dispatch');
+
+    // Build variable context
+    const event = await ctx.db.get(eventId);
+    let memberName = '';
+    const personDoc = await ctx.db.get(person._id);
+    if (personDoc) {
+      try {
+        const user = await authComponent.getAnyUserById(
+          ctx,
+          personDoc.userId as AuthUserId
+        );
+        memberName = user?.name ?? user?.email ?? '';
+      } catch {
+        // ignore
+      }
+    }
+
+    const variableCtx = buildVariableContext({
+      memberName,
+      memberRole: membership.role,
+      eventTitle: event?.title ?? '',
+      eventLocation: event?.location ?? '',
+      addonName: (template.name as string) ?? '',
+    });
+
+    await dispatchActions(
+      trustedCtx,
+      field.actions as unknown as AutomationAction[],
+      variableCtx,
+      person._id
+    );
+
     return { success: true };
   },
 });
