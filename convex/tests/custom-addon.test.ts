@@ -37,6 +37,7 @@ const validTemplate = {
     {
       id: 'sec2',
       title: 'What are you bringing?',
+      layout: 'interactive',
       fields: [
         {
           id: 'f2',
@@ -797,6 +798,7 @@ describe('custom template validation', () => {
         {
           id: 's2',
           title: 'Interactive Fields',
+          layout: 'interactive',
           fields: [
             {
               id: 'f7',
