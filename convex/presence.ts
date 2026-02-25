@@ -246,11 +246,13 @@ export const setStatus = mutation({
       statusExpiresAt?: number;
       autoIdleEnabled?: boolean;
       statusVisibility?: StatusVisibility;
+      statusSource: 'manual';
       updatedAt: number;
     } = {
       status,
       statusSetAt: now,
       statusExpiresAt,
+      statusSource: 'manual',
       updatedAt: now,
     };
 
@@ -288,6 +290,7 @@ export const clearStatus = mutation({
       status: 'ONLINE',
       statusExpiresAt: undefined,
       statusSetAt: Date.now(),
+      statusSource: undefined,
       updatedAt: Date.now(),
     });
 
@@ -457,41 +460,56 @@ export const setAutoIdle = mutation({
       return { success: false };
     }
 
-    // Check if auto-idle is enabled
-    if (person.autoIdleEnabled === false) {
-      return { success: false, reason: 'auto_idle_disabled' };
+    // Bug 3: Clean up expired status before processing idle logic
+    let currentStatus = person.status ?? 'ONLINE';
+    if (person.statusExpiresAt && Date.now() >= person.statusExpiresAt) {
+      currentStatus = 'ONLINE';
+      await ctx.db.patch(person._id, {
+        status: 'ONLINE',
+        statusExpiresAt: undefined,
+        statusSource: undefined,
+        updatedAt: Date.now(),
+      });
     }
 
     // Don't override DND status with idle
-    if (person.status === 'DO_NOT_DISTURB') {
+    if (currentStatus === 'DO_NOT_DISTURB') {
       return { success: false, reason: 'dnd_active' };
     }
 
     // Don't override INVISIBLE status
-    if (person.status === 'INVISIBLE') {
+    if (currentStatus === 'INVISIBLE') {
       return { success: false, reason: 'invisible_active' };
     }
 
     const now = Date.now();
 
     if (isIdle) {
+      // Bug 5: Only check autoIdleEnabled when setting idle (not when reverting)
+      if (person.autoIdleEnabled === false) {
+        return { success: false, reason: 'auto_idle_disabled' };
+      }
+
       // Set to IDLE if not already idle
-      if (person.status !== 'IDLE') {
+      if (currentStatus !== 'IDLE') {
         await ctx.db.patch(person._id, {
           status: 'IDLE',
           statusSetAt: now,
           statusExpiresAt: undefined, // Auto-idle doesn't expire
+          statusSource: 'auto',
           updatedAt: now,
         });
         return { success: true, status: 'IDLE' as const };
       }
     } else {
-      // Coming back from idle - revert to ONLINE
-      if (person.status === 'IDLE') {
+      // Coming back from idle - revert to ONLINE only if auto-set
+      // Bug 4: Preserve manually-set IDLE status
+      if (currentStatus === 'IDLE' && person.statusSource !== 'manual') {
         await ctx.db.patch(person._id, {
           status: 'ONLINE',
           statusSetAt: now,
           statusExpiresAt: undefined,
+          statusSource: undefined,
           updatedAt: now,
         });
         return { success: true, status: 'ONLINE' as const };
