@@ -556,6 +556,22 @@ describe('Presence System', () => {
       // Expiration should be cleared for ONLINE status
     });
 
+    it('should set statusSource to manual', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      await auth.mutation(api.presence.setStatus, {
+        status: 'IDLE',
+      });
+
+      const { person } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+
+      expect(person?.statusSource).toBe('manual');
+    });
+
     it('should set autoIdleEnabled setting', async () => {
       const t = createTestInstance();
       const { personId, auth } = await TestScenarios.simpleUser(t);
@@ -625,6 +641,27 @@ describe('Presence System', () => {
       expect(person?.status).toBe('ONLINE');
       expect(person?.statusExpiresAt).toBeUndefined();
     });
+
+    it('should clear statusSource', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      // Set DND (sets statusSource: 'manual')
+      await auth.mutation(api.presence.setStatus, {
+        status: 'DO_NOT_DISTURB',
+      });
+
+      // Clear status
+      await auth.mutation(api.presence.clearStatus, {});
+
+      const { person } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+
+      expect(person?.status).toBe('ONLINE');
+      expect(person?.statusSource).toBeUndefined();
+    });
   });
 
   describe('setAutoIdle', () => {
@@ -650,13 +687,13 @@ describe('Presence System', () => {
       expect(person?.status).toBe('IDLE');
     });
 
-    it('should revert to ONLINE when isIdle=false and status is IDLE', async () => {
+    it('should revert to ONLINE when isIdle=false and status is auto IDLE', async () => {
       const t = createTestInstance();
       const { personId, auth } = await TestScenarios.simpleUser(t);
 
-      // Set to IDLE first
+      // Set to auto IDLE first (simulating what setAutoIdle would do)
       await t.run(async ctx => {
-        await ctx.db.patch(personId, { status: 'IDLE' });
+        await ctx.db.patch(personId, { status: 'IDLE', statusSource: 'auto' });
       });
 
       const result = await auth.mutation(api.presence.setAutoIdle, {
@@ -753,9 +790,9 @@ describe('Presence System', () => {
       const t = createTestInstance();
       const { personId, auth } = await TestScenarios.simpleUser(t);
 
-      // Set to IDLE
+      // Set to auto IDLE
       await t.run(async ctx => {
-        await ctx.db.patch(personId, { status: 'IDLE' });
+        await ctx.db.patch(personId, { status: 'IDLE', statusSource: 'auto' });
       });
 
       const result = await auth.mutation(api.presence.setAutoIdle, {
@@ -765,6 +802,118 @@ describe('Presence System', () => {
       expect(result.success).toBe(true);
       // No status change since already IDLE
       expect(result.status).toBeUndefined();
+    });
+
+    it('should preserve manually-set IDLE when reverting (statusSource=manual)', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      // Manually set IDLE via setStatus (sets statusSource: 'manual')
+      await auth.mutation(api.presence.setStatus, { status: 'IDLE' });
+
+      // Verify it's manual
+      const { person: before } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+      expect(before?.statusSource).toBe('manual');
+
+      // Try to revert via setAutoIdle
+      const result = await auth.mutation(api.presence.setAutoIdle, {
+        isIdle: false,
+      });
+
+      expect(result.success).toBe(true);
+      // Should NOT have reverted since it was manually set
+      expect(result.status).toBeUndefined();
+
+      const { person: after } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+      expect(after?.status).toBe('IDLE');
+      expect(after?.statusSource).toBe('manual');
+    });
+
+    it('should clean up expired status before processing idle', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      // Set expired DND directly in DB
+      await t.run(async ctx => {
+        await ctx.db.patch(personId, {
+          status: 'DO_NOT_DISTURB',
+          statusExpiresAt: Date.now() - 1000, // Expired
+          statusSource: 'manual',
+        });
+      });
+
+      // setAutoIdle should clean up expired DND and then set IDLE
+      const result = await auth.mutation(api.presence.setAutoIdle, {
+        isIdle: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('IDLE');
+
+      const { person } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+
+      expect(person?.status).toBe('IDLE');
+      expect(person?.statusSource).toBe('auto');
+    });
+
+    it('should allow revert even when autoIdleEnabled=false', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      // Set auto IDLE first, then disable auto-idle
+      await t.run(async ctx => {
+        await ctx.db.patch(personId, {
+          status: 'IDLE',
+          statusSource: 'auto',
+          autoIdleEnabled: false,
+        });
+      });
+
+      // isIdle=false should still revert even though autoIdleEnabled is false
+      const result = await auth.mutation(api.presence.setAutoIdle, {
+        isIdle: false,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('ONLINE');
+
+      const { person } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+
+      expect(person?.status).toBe('ONLINE');
+      expect(person?.statusSource).toBeUndefined();
+    });
+
+    it('should set statusSource=auto when auto-idling', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      await auth.mutation(api.presence.setStatus, { status: 'ONLINE' });
+
+      const result = await auth.mutation(api.presence.setAutoIdle, {
+        isIdle: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('IDLE');
+
+      const { person } = await t.run(async ctx => {
+        const person = await ctx.db.get(personId);
+        return { person };
+      });
+
+      expect(person?.statusSource).toBe('auto');
     });
 
     it('should do nothing when ONLINE and isIdle=false', async () => {

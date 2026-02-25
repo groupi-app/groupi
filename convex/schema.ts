@@ -53,6 +53,7 @@ export default defineSchema({
     statusExpiresAt: v.optional(v.number()), // Unix timestamp when status should revert to ONLINE
     statusSetAt: v.optional(v.number()), // When status was manually set
     autoIdleEnabled: v.optional(v.boolean()), // Default true - whether to auto-set IDLE on AFK
+    statusSource: v.optional(v.union(v.literal('manual'), v.literal('auto'))), // Whether status was set manually or by auto-idle
     statusVisibility: v.optional(
       v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NONE'))
     ),

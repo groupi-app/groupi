@@ -10,7 +10,6 @@ import {
   useShouldPauseHeartbeats,
   useIsOffline,
   useIsAway,
-  useLastActivityTime,
 } from '@/providers/visibility-provider';
 
 // ===== CONSTANTS =====
@@ -375,7 +374,6 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
   const shouldPauseHeartbeats = useShouldPauseHeartbeats();
   const isOffline = useIsOffline();
   const isAway = useIsAway();
-  const lastActivityTime = useLastActivityTime();
   const isActive = useIsActive(); // For lastSeen updates
   const convex = useConvex();
 
@@ -452,10 +450,13 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
   useEffect(() => {
     if (!personId) return;
 
-    // On first run, just record the initial state without calling the mutation
-    // This prevents race conditions during mount from triggering unwanted status changes
+    // On first run, record the initial state and sync if user is active
+    // Bug 1: Previously no sync happened on mount, so IDLE persisted after refresh
     if (prevIsAwayRef.current === null) {
       prevIsAwayRef.current = isAway;
+      if (!isAway) {
+        void convex.mutation(getApi().presence.setAutoIdle, { isIdle: false });
+      }
       return;
     }
 
@@ -488,9 +489,7 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
     }
 
     // Only call updateLastSeen once per active session
-    // This prevents duplicate calls from:
-    // 1. Mount + visibility change happening together
-    // 2. lastActivityTime changing right after mount
+    // This prevents duplicate calls from mount + visibility change happening together
     if (!hasUpdatedInSessionRef.current) {
       hasUpdatedInSessionRef.current = true;
       updateLastSeen();
@@ -507,7 +506,7 @@ export function useAppPresence(personId: Id<'persons'> | undefined) {
     );
 
     return () => clearInterval(interval);
-  }, [personId, isActive, lastActivityTime, updateLastSeen]);
+  }, [personId, isActive, updateLastSeen]);
 }
 
 // ===== CONVENIENCE HOOKS WITH GLOBAL USER CONTEXT =====
