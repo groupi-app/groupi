@@ -21,6 +21,11 @@ const adminNavItems = [
     icon: Icons.users,
   },
   {
+    title: 'Reports',
+    href: '/admin/reports',
+    icon: Icons.flag,
+  },
+  {
     title: 'Explorer',
     href: '/admin/explorer',
     icon: Icons.search,

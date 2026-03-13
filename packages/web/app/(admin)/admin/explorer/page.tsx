@@ -1,8 +1,18 @@
 'use client';
 
-import { DataExplorer } from './components/data-explorer';
+import { useSearchParams } from 'next/navigation';
+import { DataExplorer, type DetailTarget } from './components/data-explorer';
 
 export default function ExplorerPage() {
+  const searchParams = useSearchParams();
+  const type = searchParams.get('type');
+  const id = searchParams.get('id');
+
+  const initialTarget: DetailTarget | undefined =
+    type && id && (type === 'user' || type === 'event' || type === 'post')
+      ? { type, id }
+      : undefined;
+
   return (
     <div className='space-y-6'>
       <div>
@@ -12,7 +22,7 @@ export default function ExplorerPage() {
           relations.
         </p>
       </div>
-      <DataExplorer />
+      <DataExplorer initialTarget={initialTarget} />
     </div>
   );
 }
