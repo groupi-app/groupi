@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { Doc, Id } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { DeleteReplyDialog } from './deleteReplyDialog';
+import { ReportDialog } from '@/components/report-dialog';
 import { Icons } from '@/components/icons';
 import { AttachmentGallery } from '@/components/attachments';
 import { useMergedAttachments } from '@/contexts/pending-attachments-context';
@@ -153,6 +154,7 @@ function ReplyActionMenu({
   canDelete,
   setEditMode,
   setDeleteDialogOpen,
+  setReportDialogOpen,
 }: {
   children: React.ReactNode;
   isMobile: boolean;
@@ -165,6 +167,7 @@ function ReplyActionMenu({
   canDelete: boolean;
   setEditMode: (edit: boolean) => void;
   setDeleteDialogOpen: (open: boolean) => void;
+  setReportDialogOpen: (open: boolean) => void;
 }) {
   if (isMobile) {
     return (
@@ -215,6 +218,19 @@ function ReplyActionMenu({
                 Edit
               </Button>
             )}
+            {!isMe && (
+              <Button
+                variant='ghost'
+                className='w-full justify-start'
+                onClick={() => {
+                  setSheetOpen(false);
+                  setReportDialogOpen(true);
+                }}
+              >
+                <Icons.flag className='size-4 mr-2' />
+                Report Reply
+              </Button>
+            )}
             <Button
               variant='ghost'
               className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
@@ -245,6 +261,20 @@ function ReplyActionMenu({
               <div className='flex items-center gap-1'>
                 <Icons.edit className='size-4' />
                 <span>Edit</span>
+              </div>
+            </ContextMenuItem>
+          )}
+          {!isMe && (
+            <ContextMenuItem
+              onSelect={e => {
+                e.preventDefault();
+                setReportDialogOpen(true);
+              }}
+              className='cursor-pointer'
+            >
+              <div className='flex items-center gap-1'>
+                <Icons.flag className='size-4' />
+                <span>Report Reply</span>
               </div>
             </ContextMenuItem>
           )}
@@ -324,6 +354,7 @@ export default function ReplyComponent({
 }) {
   const [editMode, setEditMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deletingAttachmentIds, setDeletingAttachmentIds] = useState<
     Set<string>
@@ -608,7 +639,17 @@ export default function ReplyComponent({
                 </div>
               </DropdownMenuItem>
             )}
-
+            {!isMe && (
+              <DropdownMenuItem
+                onClick={() => setReportDialogOpen(true)}
+                className='cursor-pointer'
+              >
+                <div className='flex items-center gap-1'>
+                  <Icons.flag className='size-4' />
+                  <span>Report Reply</span>
+                </div>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => setDeleteDialogOpen(true)}
               className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
@@ -625,29 +666,42 @@ export default function ReplyComponent({
   );
 
   return (
-    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <ReplyActionMenu
-        isMobile={isMobile}
-        sheetOpen={sheetOpen}
-        editMode={editMode}
-        setSheetOpen={setSheetOpen}
-        handleContextMenu={handleContextMenu}
-        handleClick={handleClick}
-        isMe={isMe}
-        canDelete={canDelete}
-        setEditMode={setEditMode}
-        setDeleteDialogOpen={setDeleteDialogOpen}
-      >
-        {isMobile ? (
-          <div onContextMenu={handleContextMenu}>{replyContentElement}</div>
-        ) : (
-          <ContextMenuTrigger asChild>{replyContentElement}</ContextMenuTrigger>
-        )}
-      </ReplyActionMenu>
-      <DeleteReplyDialog
-        id={(reply._id || reply.id) as Id<'replies'>}
-        postId={postId as Id<'posts'>}
-      />
-    </Dialog>
+    <>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <ReplyActionMenu
+          isMobile={isMobile}
+          sheetOpen={sheetOpen}
+          editMode={editMode}
+          setSheetOpen={setSheetOpen}
+          handleContextMenu={handleContextMenu}
+          handleClick={handleClick}
+          isMe={isMe}
+          canDelete={canDelete}
+          setEditMode={setEditMode}
+          setDeleteDialogOpen={setDeleteDialogOpen}
+          setReportDialogOpen={setReportDialogOpen}
+        >
+          {isMobile ? (
+            <div onContextMenu={handleContextMenu}>{replyContentElement}</div>
+          ) : (
+            <ContextMenuTrigger asChild>
+              {replyContentElement}
+            </ContextMenuTrigger>
+          )}
+        </ReplyActionMenu>
+        <DeleteReplyDialog
+          id={(reply._id || reply.id) as Id<'replies'>}
+          postId={postId as Id<'posts'>}
+        />
+      </Dialog>
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <ReportDialog
+          targetType='REPLY'
+          targetId={(reply._id || reply.id) as string}
+          targetLabel='Reply'
+          onClose={() => setReportDialogOpen(false)}
+        />
+      </Dialog>
+    </>
   );
 }

@@ -61,6 +61,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { ReportDialog } from '@/components/report-dialog';
+import { Dialog as ReportDialogWrapper } from '@/components/ui/dialog';
 import { useState } from 'react';
 
 export type ProfileTab = 'profile' | 'mutualEvents' | 'mutualFriends';
@@ -193,6 +195,7 @@ export function ProfileViewDialog({
               {currentUserId && !isOwnProfile && profileData?.personId && (
                 <ProfileActions
                   personId={profileData.personId as Id<'persons'>}
+                  userName={userProfile?.name || userProfile?.email || 'User'}
                   canSendFriendRequest={
                     profileData.canSendFriendRequest ?? true
                   }
@@ -352,11 +355,13 @@ export function ProfileViewDialog({
  */
 function ProfileActions({
   personId,
+  userName,
   canSendFriendRequest,
   canSendEventInvite,
   isBlockedByMe,
 }: {
   personId: Id<'persons'>;
+  userName: string;
   canSendFriendRequest: boolean;
   canSendEventInvite: boolean;
   isBlockedByMe: boolean;
@@ -368,6 +373,7 @@ function ProfileActions({
     useActionMenu();
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const isFriends = friendshipStatus?.status === 'friends';
 
@@ -392,6 +398,13 @@ function ProfileActions({
   // Dropdown content for desktop ⋯ menu
   const dropdownContent = (
     <>
+      <DropdownMenuItem
+        onClick={() => setReportDialogOpen(true)}
+        className='cursor-pointer'
+      >
+        <Icons.flag className='size-4 mr-2' />
+        Report
+      </DropdownMenuItem>
       {isFriends && (
         <DropdownMenuItem
           variant='destructive'
@@ -416,6 +429,17 @@ function ProfileActions({
   // Drawer content for mobile ⋯ menu
   const drawerContent = (
     <div className='flex flex-col gap-2 px-4 pb-4 pt-4'>
+      <Button
+        variant='ghost'
+        className='w-full justify-start'
+        onClick={() => {
+          setSheetOpen(false);
+          setReportDialogOpen(true);
+        }}
+      >
+        <Icons.flag className='size-4 mr-2' />
+        Report
+      </Button>
       {isFriends && (
         <Button
           variant='ghost'
@@ -542,6 +566,19 @@ function ProfileActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Report user */}
+      <ReportDialogWrapper
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+      >
+        <ReportDialog
+          targetType='USER'
+          targetId={personId}
+          targetLabel={userName}
+          onClose={() => setReportDialogOpen(false)}
+        />
+      </ReportDialogWrapper>
     </TooltipProvider>
   );
 }

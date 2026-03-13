@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
 import { LeaveEventDialog } from './leaveEventDialog';
+import { ReportDialog } from '@/components/report-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -60,6 +61,7 @@ export function EventHeader({ data }: EventHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [imageNaturalSize, setImageNaturalSize] = useState<{
     width: number;
@@ -328,6 +330,17 @@ export function EventHeader({ data }: EventHeaderProps) {
         </Button>
         <Button
           variant='ghost'
+          className='w-full justify-start'
+          onClick={() => {
+            setDrawerOpen(false);
+            setReportDialogOpen(true);
+          }}
+        >
+          <Icons.flag className='size-4 mr-2' />
+          Report Event
+        </Button>
+        <Button
+          variant='ghost'
           className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
           onClick={() => {
             setDrawerOpen(false);
@@ -476,15 +489,26 @@ export function EventHeader({ data }: EventHeaderProps) {
                     </DropdownMenuItem>
                   </>
                 ) : (
-                  <DropdownMenuItem
-                    className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
-                    onClick={() => setLeaveDialogOpen(true)}
-                  >
-                    <div className='flex items-center gap-1'>
-                      <Icons.leave className='size-4' />
-                      <span>Leave Event</span>
-                    </div>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      className='cursor-pointer'
+                      onClick={() => setReportDialogOpen(true)}
+                    >
+                      <div className='flex items-center gap-1'>
+                        <Icons.flag className='size-4' />
+                        <span>Report Event</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                      onClick={() => setLeaveDialogOpen(true)}
+                    >
+                      <div className='flex items-center gap-1'>
+                        <Icons.leave className='size-4' />
+                        <span>Leave Event</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -546,6 +570,14 @@ export function EventHeader({ data }: EventHeaderProps) {
           <LeaveEventDialog eventId={eventIdTyped} />
         </Dialog>
       )}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <ReportDialog
+          targetType='EVENT'
+          targetId={eventId}
+          targetLabel={title}
+          onClose={() => setReportDialogOpen(false)}
+        />
+      </Dialog>
       {event.imageUrl && (
         <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
           <DialogContent className='max-w-4xl max-h-[90vh] p-0 overflow-hidden'>
