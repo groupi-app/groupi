@@ -67,6 +67,7 @@ packages/web/storybook-static/
 
 # Supabase dumps
 supabase_prod_*.sql
+supabase-backup*.sql
 
 # Migration data (sensitive)
 scripts/migration/
