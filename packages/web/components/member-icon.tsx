@@ -29,6 +29,7 @@ import {
 
 import { MemberAction, MemberActionDialog } from './member-action-dialog';
 import { ProfileViewDialog } from './profile-view-dialog';
+import { ReportDialog } from './report-dialog';
 import { StatusIndicator } from '@/components/atoms';
 import { useState, useCallback } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
@@ -83,6 +84,7 @@ type ActionMenuProps = {
   setDialogOpen: (open: boolean) => void;
   setProfileDialogOpen: (open: boolean) => void;
   align?: 'start' | 'center' | 'end';
+  setReportDialogOpen: (open: boolean) => void;
   // Friend action props
   friendStatus: FriendshipStatus;
   friendIsLoading: boolean;
@@ -112,6 +114,7 @@ function ActionMenu({
   setDialogAction,
   setDialogOpen,
   setProfileDialogOpen,
+  setReportDialogOpen,
   align,
   friendStatus,
   friendIsLoading,
@@ -199,20 +202,30 @@ function ActionMenu({
                 </span>
               </div>
               {eventDateTime && (
-                <div className='flex items-center gap-2 text-muted-foreground'>
-                  <span>RSVP: </span>
-                  {member.rsvpStatus === 'YES' && (
-                    <Icons.check className='text-success' />
+                <div>
+                  <div className='flex items-center gap-2 text-muted-foreground'>
+                    <span>RSVP: </span>
+                    {member.rsvpStatus === 'YES' && (
+                      <Icons.check className='text-success' />
+                    )}
+                    {member.rsvpStatus === 'MAYBE' && (
+                      <span className='font-semibold w-6 text-xl text-warning text-center'>
+                        ?
+                      </span>
+                    )}
+                    {member.rsvpStatus === 'NO' && (
+                      <Icons.close className='text-error' />
+                    )}
+                    <span className='text-foreground'>{member.rsvpStatus}</span>
+                    {member.rsvpNote && (
+                      <Icons.messageSquare className='size-4 text-muted-foreground ml-1' />
+                    )}
+                  </div>
+                  {member.rsvpNote && (
+                    <p className='text-muted-foreground text-xs mt-1 italic'>
+                      {member.rsvpNote}
+                    </p>
                   )}
-                  {member.rsvpStatus === 'MAYBE' && (
-                    <span className='font-semibold w-6 text-xl text-warning text-center'>
-                      ?
-                    </span>
-                  )}
-                  {member.rsvpStatus === 'NO' && (
-                    <Icons.close className='text-error' />
-                  )}
-                  <span className='text-foreground'>{member.rsvpStatus}</span>
                 </div>
               )}
             </DrawerHeader>
@@ -279,6 +292,19 @@ function ActionMenu({
                 >
                   <Icons.people className='size-4 mr-2' />
                   Friends
+                </Button>
+              )}
+              {!isMe && personId && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start'
+                  onClick={() => {
+                    setSheetOpen(false);
+                    setReportDialogOpen(true);
+                  }}
+                >
+                  <Icons.flag className='size-4 mr-2' />
+                  Report User
                 </Button>
               )}
               {(canKick || canBan || canPromote) && (
@@ -409,21 +435,49 @@ function ActionMenu({
           </DropdownMenuLabel>
           {eventDateTime && (
             <DropdownMenuLabel>
-              <div className='flex items-center gap-1 text-muted-foreground'>
-                <span>RSVP: </span>
-                {member.rsvpStatus === 'YES' && (
-                  <Icons.check className='text-success' />
-                )}
-                {member.rsvpStatus === 'MAYBE' && (
-                  <span className='font-semibold w-6 text-xl text-warning text-center'>
-                    ?
-                  </span>
-                )}
-                {member.rsvpStatus === 'NO' && (
-                  <Icons.close className='text-error' />
-                )}
-                <span className='text-foreground'>{member.rsvpStatus}</span>
-              </div>
+              {member.rsvpNote ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className='flex items-center gap-1 text-muted-foreground cursor-default'>
+                      <span>RSVP: </span>
+                      {member.rsvpStatus === 'YES' && (
+                        <Icons.check className='text-success' />
+                      )}
+                      {member.rsvpStatus === 'MAYBE' && (
+                        <span className='font-semibold w-6 text-xl text-warning text-center'>
+                          ?
+                        </span>
+                      )}
+                      {member.rsvpStatus === 'NO' && (
+                        <Icons.close className='text-error' />
+                      )}
+                      <span className='text-foreground'>
+                        {member.rsvpStatus}
+                      </span>
+                      <Icons.messageSquare className='size-3.5 text-muted-foreground ml-1' />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side='bottom' className='max-w-[200px]'>
+                    <p className='text-xs'>{member.rsvpNote}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className='flex items-center gap-1 text-muted-foreground'>
+                  <span>RSVP: </span>
+                  {member.rsvpStatus === 'YES' && (
+                    <Icons.check className='text-success' />
+                  )}
+                  {member.rsvpStatus === 'MAYBE' && (
+                    <span className='font-semibold w-6 text-xl text-warning text-center'>
+                      ?
+                    </span>
+                  )}
+                  {member.rsvpStatus === 'NO' && (
+                    <Icons.close className='text-error' />
+                  )}
+                  <span className='text-foreground'>{member.rsvpStatus}</span>
+                </div>
+              )}
             </DropdownMenuLabel>
           )}
 
@@ -474,6 +528,15 @@ function ActionMenu({
             <DropdownMenuItem disabled className='text-muted-foreground'>
               <Icons.people className='size-4 mr-2' />
               <span>Friends</span>
+            </DropdownMenuItem>
+          )}
+          {!isMe && personId && (
+            <DropdownMenuItem
+              onClick={() => setReportDialogOpen(true)}
+              className='cursor-pointer'
+            >
+              <Icons.flag className='size-4 mr-2' />
+              <span>Report User</span>
             </DropdownMenuItem>
           )}
 
@@ -609,6 +672,7 @@ export default function MemberIcon({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const isMobile = useMobile();
 
   // Friend actions
@@ -707,6 +771,7 @@ export default function MemberIcon({
           setDialogAction={setDialogAction}
           setDialogOpen={setDialogOpen}
           setProfileDialogOpen={setProfileDialogOpen}
+          setReportDialogOpen={setReportDialogOpen}
           align={align}
           friendStatus={friendStatus as FriendshipStatus}
           friendIsLoading={friendIsLoading}
@@ -725,6 +790,16 @@ export default function MemberIcon({
           />
         )}
       </Dialog>
+      {personId && (
+        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <ReportDialog
+            targetType='USER'
+            targetId={personId}
+            targetLabel={fullName}
+            onClose={() => setReportDialogOpen(false)}
+          />
+        </Dialog>
+      )}
     </motion.div>
   );
 }

@@ -4,6 +4,7 @@ import { requireAuth, requireEventRole } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
+import { dispatchAddonLifecycle } from '../addons/lifecycle';
 
 /**
  * Type for invite creation data
@@ -281,11 +282,29 @@ export const acceptInvite = mutation({
       });
     }
 
+    // Remove any pending internal (eventInvites) invites for this user/event
+    const pendingEventInvites = await ctx.db
+      .query('eventInvites')
+      .withIndex('by_event_invitee', q =>
+        q.eq('eventId', invite.eventId).eq('inviteeId', person._id)
+      )
+      .filter(q => q.eq(q.field('status'), 'PENDING'))
+      .collect();
+
+    for (const eventInvite of pendingEventInvites) {
+      await ctx.db.delete(eventInvite._id);
+    }
+
     // Notify organizers and moderators about the new member
     await notifyEventModerators(ctx, {
       eventId: invite.eventId,
       type: 'USER_JOINED',
       authorId: person._id,
+    });
+
+    // Dispatch onMemberJoined lifecycle
+    await dispatchAddonLifecycle(ctx, invite.eventId, 'onMemberJoined', {
+      personId: person._id,
     });
 
     // Get the created membership

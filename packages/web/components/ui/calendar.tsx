@@ -44,7 +44,7 @@ export const Calendar = ({
         [UI.Months]: 'relative flex flex-col gap-4 sm:flex-row sm:gap-6',
         [UI.Month]: 'space-y-4',
         [UI.MonthCaption]: cn(
-          'flex justify-center items-center relative',
+          'flex justify-center items-center relative px-12',
           config.caption
         ),
         [UI.CaptionLabel]: cn(
@@ -66,13 +66,13 @@ export const Calendar = ({
         ),
         [UI.PreviousMonthButton]: cn(
           buttonVariants({ variant: 'outline' }),
-          'absolute left-1 top-0 bg-transparent p-0 opacity-70 hover:opacity-100 hover:bg-accent',
+          'absolute left-1 top-0 z-lifted bg-transparent p-0 opacity-70 hover:opacity-100 hover:bg-accent',
           'rounded-button transition-all duration-fast',
           config.nav
         ),
         [UI.NextMonthButton]: cn(
           buttonVariants({ variant: 'outline' }),
-          'absolute right-1 top-0 bg-transparent p-0 opacity-70 hover:opacity-100 hover:bg-accent',
+          'absolute right-1 top-0 z-lifted bg-transparent p-0 opacity-70 hover:opacity-100 hover:bg-accent',
           'rounded-button transition-all duration-fast',
           config.nav
         ),

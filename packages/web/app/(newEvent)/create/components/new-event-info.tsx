@@ -25,30 +25,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Icons } from '@/components/icons';
 import dynamic from 'next/dynamic';
-import { useFormContext, type ReminderOffset } from './form-context';
+import { useFormContext, type Visibility } from './form-context';
 import { Button } from '@/components/ui/button';
 import {
   EventImageUpload,
   type FocalPoint,
 } from '@/components/event-image-upload';
-
-// Reminder offset options with display labels
-const REMINDER_OPTIONS: Array<{
-  value: ReminderOffset | 'never';
-  label: string;
-}> = [
-  { value: 'never', label: 'Never' },
-  { value: '30_MINUTES', label: '30 minutes before' },
-  { value: '1_HOUR', label: '1 hour before' },
-  { value: '2_HOURS', label: '2 hours before' },
-  { value: '4_HOURS', label: '4 hours before' },
-  { value: '1_DAY', label: '1 day before' },
-  { value: '2_DAYS', label: '2 days before' },
-  { value: '3_DAYS', label: '3 days before' },
-  { value: '1_WEEK', label: '1 week before' },
-  { value: '2_WEEKS', label: '2 weeks before' },
-  { value: '4_WEEKS', label: '4 weeks before' },
-];
 
 const LocationInput = dynamic(
   () =>
@@ -65,6 +47,31 @@ const LocationInput = dynamic(
   }
 );
 
+// Visibility options with display labels
+const VISIBILITY_OPTIONS: Array<{
+  value: Visibility;
+  label: string;
+  description: string;
+  disabled?: boolean;
+}> = [
+  {
+    value: 'PRIVATE',
+    label: 'Private (invite only)',
+    description: 'Only invited members can see and join this event',
+  },
+  {
+    value: 'FRIENDS',
+    label: 'Friends can discover',
+    description: 'Your friends can find and join this event',
+  },
+  {
+    value: 'PUBLIC',
+    label: 'Public (coming soon)',
+    description: 'Anyone can find and join this event',
+    disabled: true,
+  },
+];
+
 const formSchema = z.object({
   title: z.string().min(1, {
     message: 'Event Title is required',
@@ -77,21 +84,7 @@ const formSchema = z.object({
     .string()
     .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
-  reminderOffset: z
-    .enum([
-      'never',
-      '30_MINUTES',
-      '1_HOUR',
-      '2_HOURS',
-      '4_HOURS',
-      '1_DAY',
-      '2_DAYS',
-      '3_DAYS',
-      '1_WEEK',
-      '2_WEEKS',
-      '4_WEEKS',
-    ])
-    .optional(),
+  visibility: z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']).optional(),
 });
 
 interface NewEventInfoProps {
@@ -117,7 +110,7 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
       title: formState.title,
       description: formState.description,
       location: formState.location,
-      reminderOffset: formState.reminderOffset ?? 'never',
+      visibility: formState.visibility ?? 'PRIVATE',
     },
     mode: 'onChange',
   });
@@ -128,25 +121,21 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
       title: formState.title || '',
       description: formState.description || '',
       location: formState.location || '',
-      reminderOffset: formState.reminderOffset ?? 'never',
+      visibility: formState.visibility ?? 'PRIVATE',
     });
   }, [
     formState.title,
     formState.description,
     formState.location,
-    formState.reminderOffset,
+    formState.visibility,
     form,
   ]);
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    // Convert "never" to undefined for the backend
-    const reminderOffset =
-      data.reminderOffset === 'never'
-        ? undefined
-        : (data.reminderOffset as ReminderOffset | undefined);
     setFormState({
+      ...formState,
       ...data,
-      reminderOffset,
+      visibility: (data.visibility as Visibility) ?? 'PRIVATE',
       imageFile: imageFile ?? undefined,
       imageFocalPoint: focalPoint ?? undefined,
     });
@@ -234,29 +223,33 @@ export default function NewEventInfo({ onNext }: NewEventInfoProps) {
           />
           <FormField
             control={form.control}
-            name='reminderOffset'
+            name='visibility'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Remind attendees</FormLabel>
+                <FormLabel>Event Visibility</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value || 'never'}
+                  defaultValue={field.value || 'PRIVATE'}
                 >
                   <FormControl>
-                    <SelectTrigger data-test='new-event-reminder'>
-                      <SelectValue placeholder='Select when to remind attendees' />
+                    <SelectTrigger data-test='new-event-visibility'>
+                      <SelectValue placeholder='Select who can discover this event' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {REMINDER_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                    {VISIBILITY_OPTIONS.map(option => (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Send a reminder to attendees before the event starts.
+                  Control who can discover and join this event.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

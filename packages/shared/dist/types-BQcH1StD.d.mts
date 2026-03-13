@@ -33,4 +33,4 @@ interface ToastAdapter {
     info(message: string, title?: string): void;
 }
 
-export type { NavigationAdapter as N, Platform as P, StorageAdapter as S, ToastOptions as T, PlatformConfig as a, ToastAdapter as b };
+export type { NavigationAdapter as N, Platform as P, StorageAdapter as S, ToastAdapter as T, PlatformConfig as a, ToastOptions as b };

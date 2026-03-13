@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { EntityTabs } from './entity-tabs';
 import { EntityTable } from './entity-table';
@@ -33,7 +33,12 @@ export type DetailTarget = {
   id: string;
 };
 
-export function DataExplorer() {
+interface DataExplorerProps {
+  /** Optional initial target to open in the detail panel on mount */
+  initialTarget?: DetailTarget;
+}
+
+export function DataExplorer({ initialTarget }: DataExplorerProps) {
   const [activeTab, setActiveTab] = useState<EntityType>('users');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -42,6 +47,22 @@ export function DataExplorer() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+
+  // Open initial target on mount (e.g. deep-link from reports page)
+  useEffect(() => {
+    if (initialTarget) {
+      setDetailTarget(initialTarget);
+      setBreadcrumbs([
+        {
+          label: `${initialTarget.type.charAt(0).toUpperCase() + initialTarget.type.slice(1)} Detail`,
+          target: initialTarget,
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Debounce search
   const handleSearchChange = useCallback((value: string) => {
@@ -96,6 +117,20 @@ export function DataExplorer() {
     },
     [breadcrumbs]
   );
+
+  // Handle going back one step in the detail panel
+  const handleBack = useCallback(() => {
+    if (breadcrumbs.length <= 1) {
+      // At the first item — close the panel
+      setDetailTarget(null);
+      setBreadcrumbs([]);
+    } else {
+      // Pop the current item, navigate to the previous one
+      const previous = breadcrumbs[breadcrumbs.length - 2];
+      setBreadcrumbs(prev => prev.slice(0, -1));
+      setDetailTarget(previous.target);
+    }
+  }, [breadcrumbs]);
 
   // Handle detail panel close
   const handleDetailClose = useCallback(() => {
@@ -228,6 +263,8 @@ export function DataExplorer() {
         target={detailTarget}
         onClose={handleDetailClose}
         onNavigate={handleRelationClick}
+        canGoBack={breadcrumbs.length > 1}
+        onBack={handleBack}
       />
     </div>
   );

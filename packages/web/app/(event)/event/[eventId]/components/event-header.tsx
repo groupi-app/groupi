@@ -8,10 +8,12 @@ import React, {
   useMemo,
 } from 'react';
 import { Icons } from '@/components/icons';
+import { StickerIcon } from '@/components/atoms';
 import Link from 'next/link';
 import { DeleteEventDialog } from './deleteEventDialog';
 import { EventRSVP } from './event-rsvp';
 import { LeaveEventDialog } from './leaveEventDialog';
+import { ReportDialog } from '@/components/report-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -59,6 +61,7 @@ export function EventHeader({ data }: EventHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [imageNaturalSize, setImageNaturalSize] = useState<{
     width: number;
@@ -177,8 +180,21 @@ export function EventHeader({ data }: EventHeaderProps) {
 
   // Data is guaranteed by parent - no loading/error checks needed
 
-  const { title, location, chosenDateTime, chosenEndDateTime, description } =
-    event;
+  const {
+    title,
+    location,
+    chosenDateTime,
+    chosenEndDateTime,
+    description,
+    visibility,
+  } = event;
+
+  const visibilityLabel =
+    visibility === 'FRIENDS'
+      ? 'Friends'
+      : visibility === 'PUBLIC'
+        ? 'Public'
+        : 'Private';
 
   // Format combined date string with start and optional end time
   const formatEventDateRange = (
@@ -271,6 +287,16 @@ export function EventHeader({ data }: EventHeaderProps) {
             Change Date
           </Button>
         </Link>
+        <Link href={`/event/${eventId}/manage-addons`}>
+          <Button
+            variant='ghost'
+            className='w-full justify-start'
+            onClick={() => setDrawerOpen(false)}
+          >
+            <Icons.sliders className='size-4 mr-2' />
+            Manage Add-ons
+          </Button>
+        </Link>
         <Button
           variant='ghost'
           className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
@@ -301,6 +327,17 @@ export function EventHeader({ data }: EventHeaderProps) {
               Mute Event
             </>
           )}
+        </Button>
+        <Button
+          variant='ghost'
+          className='w-full justify-start'
+          onClick={() => {
+            setDrawerOpen(false);
+            setReportDialogOpen(true);
+          }}
+        >
+          <Icons.flag className='size-4 mr-2' />
+          Report Event
         </Button>
         <Button
           variant='ghost'
@@ -433,6 +470,14 @@ export function EventHeader({ data }: EventHeaderProps) {
                         </div>
                       </DropdownMenuItem>
                     </Link>
+                    <Link href={`/event/${eventId}/manage-addons`}>
+                      <DropdownMenuItem className='cursor-pointer'>
+                        <div className='flex items-center gap-1'>
+                          <Icons.sliders className='size-4' />
+                          <span>Manage Add-ons</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem
                       className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
                       onClick={() => setDeleteDialogOpen(true)}
@@ -444,15 +489,26 @@ export function EventHeader({ data }: EventHeaderProps) {
                     </DropdownMenuItem>
                   </>
                 ) : (
-                  <DropdownMenuItem
-                    className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
-                    onClick={() => setLeaveDialogOpen(true)}
-                  >
-                    <div className='flex items-center gap-1'>
-                      <Icons.leave className='size-4' />
-                      <span>Leave Event</span>
-                    </div>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      className='cursor-pointer'
+                      onClick={() => setReportDialogOpen(true)}
+                    >
+                      <div className='flex items-center gap-1'>
+                        <Icons.flag className='size-4' />
+                        <span>Report Event</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+                      onClick={() => setLeaveDialogOpen(true)}
+                    >
+                      <div className='flex items-center gap-1'>
+                        <Icons.leave className='size-4' />
+                        <span>Leave Event</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -460,38 +516,46 @@ export function EventHeader({ data }: EventHeaderProps) {
         </div>
         <div className='flex flex-col gap-2'>
           {location && (
-            <div className='flex items-center gap-1 text-muted-foreground'>
-              <Icons.location className='size-6 text-primary' />
-              <span data-test='event-location'>{location}</span>
+            <div className='flex items-center gap-2.5'>
+              <StickerIcon icon={Icons.location} size='sm' color='success' />
+              <span data-test='event-location' className='font-semibold'>
+                {location}
+              </span>
             </div>
           )}
-          <div className='flex items-center gap-1 text-muted-foreground'>
-            <Icons.date className='size-6 text-primary' />
-            {eventDateStr != null ? (
-              <span data-test='event-datetime'>{eventDateStr}</span>
-            ) : userMembership.role === 'ORGANIZER' ? (
-              <Link href={`/event/${eventId}/date-select`}>
-                <Button
-                  className='flex items-center gap-1'
-                  variant={'ghost'}
-                  size={'sm'}
-                >
-                  <span>Choose Date/Time</span>
-                  <Icons.arrowRight className='size-4' />
-                </Button>
-              </Link>
+          {eventDateStr != null ? (
+            <div className='flex items-center gap-2.5'>
+              <StickerIcon icon={Icons.date} size='sm' color='info' />
+              <span data-test='event-datetime' className='font-semibold'>
+                {eventDateStr}
+              </span>
+            </div>
+          ) : userMembership.role === 'ORGANIZER' ? (
+            <Link href={`/event/${eventId}/date-select`}>
+              <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
+                <Icons.date className='size-5' />
+                Choose Date/Time
+                <Icons.arrowRight className='size-4' />
+              </Button>
+            </Link>
+          ) : (
+            <Link href={`/event/${eventId}/availability`}>
+              <Button className='flex items-center gap-2.5 px-4 py-2.5 h-auto text-base font-semibold rounded-card border-[3px]'>
+                <Icons.date className='size-5' />
+                Set Availability
+                <Icons.arrowRight className='size-4' />
+              </Button>
+            </Link>
+          )}
+          <div className='flex items-center gap-2.5'>
+            {visibility === 'FRIENDS' ? (
+              <Icons.people className='size-4 text-muted-foreground/70' />
             ) : (
-              <Link href={`/event/${eventId}/availability`}>
-                <Button
-                  className='flex items-center gap-1'
-                  variant={'ghost'}
-                  size={'sm'}
-                >
-                  <span>Set Availability</span>
-                  <Icons.arrowRight className='size-4' />
-                </Button>
-              </Link>
+              <Icons.lock className='size-4 text-muted-foreground/70' />
             )}
+            <span className='text-sm text-muted-foreground/70'>
+              {visibilityLabel}
+            </span>
           </div>
         </div>
         {description && <p data-test='event-description'>{description}</p>}
@@ -506,6 +570,14 @@ export function EventHeader({ data }: EventHeaderProps) {
           <LeaveEventDialog eventId={eventIdTyped} />
         </Dialog>
       )}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <ReportDialog
+          targetType='EVENT'
+          targetId={eventId}
+          targetLabel={title}
+          onClose={() => setReportDialogOpen(false)}
+        />
+      </Dialog>
       {event.imageUrl && (
         <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
           <DialogContent className='max-w-4xl max-h-[90vh] p-0 overflow-hidden'>

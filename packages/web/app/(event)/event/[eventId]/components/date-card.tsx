@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChooseDateTime } from '@/hooks/mutations/use-choose-date-time';
 import { cn, isSameDay } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { MemberSlate } from './member-slate';
 import { Button } from '@/components/ui/button';
-import { Doc } from '@/convex/_generated/dataModel';
+import { Textarea } from '@/components/ui/textarea';
+import { Doc, Id } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useUpdatePotentialDateTimeNote } from '@/hooks/convex/use-availability';
 
 type PotentialDateWithRank = Doc<'potentialDateTimes'> & {
   availabilities: Array<
@@ -56,8 +58,28 @@ export function DateCard({
   const [dialogType, setDialogType] = useState<'overview' | 'confirm'>(
     'overview'
   );
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteValue, setNoteValue] = useState(pdt.note ?? '');
+  const [isSavingNote, setIsSavingNote] = useState(false);
   const router = useRouter();
   const chooseDateTime = useChooseDateTime();
+  const updateNote = useUpdatePotentialDateTimeNote();
+  const isOrganizer = userRole === 'ORGANIZER';
+
+  const handleSaveNote = useCallback(async () => {
+    setIsSavingNote(true);
+    try {
+      await updateNote({
+        potentialDateTimeId: pdt._id as Id<'potentialDateTimes'>,
+        note: noteValue.trim() || undefined,
+      });
+      setIsEditingNote(false);
+    } catch {
+      // Toast is handled by the hook
+    } finally {
+      setIsSavingNote(false);
+    }
+  }, [updateNote, pdt._id, noteValue]);
 
   async function selectDate() {
     try {
@@ -137,6 +159,11 @@ export function DateCard({
               </span>
             </div>
           </div>
+          {pdt.note && (
+            <p className='text-muted-foreground text-xs mt-2 italic'>
+              {pdt.note}
+            </p>
+          )}
           <div className='flex items-center gap-2 mt-4'>
             <div className='flex items-center gap-2'>
               <Icons.check className='size-6 rounded-full  text-success' />
@@ -224,6 +251,69 @@ export function DateCard({
                 )}
               </h2>
             </DialogHeader>
+            {isOrganizer && (
+              <div className='mb-2'>
+                {isEditingNote ? (
+                  <div className='space-y-2'>
+                    <div className='relative'>
+                      <Textarea
+                        value={noteValue}
+                        onChange={e => setNoteValue(e.target.value)}
+                        placeholder='Add a note for this date option...'
+                        maxLength={200}
+                        className='min-h-[40px] text-sm resize-none'
+                        rows={2}
+                      />
+                      <span className='absolute bottom-1.5 right-3 text-xs text-muted-foreground'>
+                        {noteValue.length}/200
+                      </span>
+                    </div>
+                    <div className='flex gap-1 justify-end'>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => {
+                          setNoteValue(pdt.note ?? '');
+                          setIsEditingNote(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type='button'
+                        size='sm'
+                        onClick={handleSaveNote}
+                        disabled={isSavingNote}
+                        isLoading={isSavingNote}
+                        loadingText='Saving...'
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type='button'
+                    className='flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors'
+                    onClick={() => setIsEditingNote(true)}
+                  >
+                    <Icons.edit className='size-3.5' />
+                    <span>{pdt.note ? 'Edit note' : 'Add note'}</span>
+                  </button>
+                )}
+                {!isEditingNote && pdt.note && (
+                  <p className='text-muted-foreground text-sm italic mt-1'>
+                    {pdt.note}
+                  </p>
+                )}
+              </div>
+            )}
+            {!isOrganizer && pdt.note && (
+              <p className='text-muted-foreground text-sm italic mb-2'>
+                {pdt.note}
+              </p>
+            )}
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList>
                 <TabsTrigger value='yes'>
@@ -269,60 +359,32 @@ export function DateCard({
                   </div>
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value='yes'>
-                <ScrollArea className='h-64'>
-                  <div className='flex flex-col divide-y'>
-                    {pdt.availabilities
-                      .filter(a => a.status === 'YES')
-                      .map(availability => (
-                        <MemberSlate
-                          key={availability.member._id}
-                          itemKey={availability.member._id}
-                          member={availability.member}
-                          userId={userId}
-                          userRole={userRole}
-                          eventDateTime={null}
-                        />
-                      ))}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-              <TabsContent value='maybe'>
-                <ScrollArea className='h-64'>
-                  <div className='flex flex-col divide-y'>
-                    {pdt.availabilities
-                      .filter(a => a.status === 'MAYBE')
-                      .map(availability => (
-                        <MemberSlate
-                          key={availability.member._id}
-                          itemKey={availability.member._id}
-                          member={availability.member}
-                          userId={userId}
-                          userRole={userRole}
-                          eventDateTime={null}
-                        />
-                      ))}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-              <TabsContent value='no'>
-                <ScrollArea className='h-64'>
-                  <div className='flex flex-col divide-y'>
-                    {pdt.availabilities
-                      .filter(a => a.status === 'NO')
-                      .map(availability => (
-                        <MemberSlate
-                          key={availability.member._id}
-                          itemKey={availability.member._id}
-                          member={availability.member}
-                          userId={userId}
-                          userRole={userRole}
-                          eventDateTime={null}
-                        />
-                      ))}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
+              {(['yes', 'maybe', 'no'] as const).map(tab => (
+                <TabsContent key={tab} value={tab}>
+                  <ScrollArea className='h-64'>
+                    <div className='flex flex-col divide-y'>
+                      {pdt.availabilities
+                        .filter(a => a.status === tab.toUpperCase())
+                        .map(availability => (
+                          <div key={availability.member._id}>
+                            <MemberSlate
+                              itemKey={availability.member._id}
+                              member={availability.member}
+                              userId={userId}
+                              userRole={userRole}
+                              eventDateTime={null}
+                            />
+                            {availability.note && (
+                              <p className='text-muted-foreground text-xs italic ml-12 -mt-1 pb-2'>
+                                {availability.note}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              ))}
             </Tabs>
             <div className='flex justify-end gap-1 items-center '>
               <DialogClose asChild>

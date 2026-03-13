@@ -1,0 +1,22 @@
+[    1451ms] Error: Module [project]/node_modules/.pnpm/next@16.1.5_@babel+core@7.29.0_@opentelemetry+api@1.9.0_@playwright+test@1.58.0_react-d_d49d1de625d79fb3a7c2c3dad95b2e9b/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript) was instantiated because it was required from module [project]/packages/web/instrumentation-client.ts [app-client] (ecmascript), but the module factory is not available. It might have been deleted in an HMR update.
+    at instantiateModule (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:846:15)
+    at getOrInstantiateModuleFromParent (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:831:12)
+    at DevContext.esmImport [as i] (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:239:20)
+    at module evaluation (http://localhost:3000/_next/static/chunks/packages_web_instrumentation-client_ts_4d9f675b._.js:13:411)
+    at http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:880:13
+    at runModuleExecutionHooks (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:905:13)
+    at instantiateModule (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:878:9)
+    at getOrInstantiateModuleFromParent (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:831:12)
+    at DevContext.commonJsRequire [as r] (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:260:12)
+    at Object.module (http://localhost:3000/_next/static/chunks/d86fe_next_dist_027b3798._.js:679:47)
+[   86676ms] Error: Module [project]/node_modules/.pnpm/next@16.1.5_@babel+core@7.29.0_@opentelemetry+api@1.9.0_@playwright+test@1.58.0_react-d_d49d1de625d79fb3a7c2c3dad95b2e9b/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript) was instantiated because it was required from module [project]/packages/web/instrumentation-client.ts [app-client] (ecmascript), but the module factory is not available. It might have been deleted in an HMR update.
+    at instantiateModule (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:846:15)
+    at getOrInstantiateModuleFromParent (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:831:12)
+    at DevContext.esmImport [as i] (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:239:20)
+    at module evaluation (http://localhost:3000/_next/static/chunks/packages_web_instrumentation-client_ts_4d9f675b._.js:13:411)
+    at http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:880:13
+    at runModuleExecutionHooks (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:905:13)
+    at instantiateModule (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:878:9)
+    at getOrInstantiateModuleFromParent (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:831:12)
+    at DevContext.commonJsRequire [as r] (http://localhost:3000/_next/static/chunks/turbopack-packages_web_8e5c0209._.js:260:12)
+    at Object.module (http://localhost:3000/_next/static/chunks/d86fe_next_dist_027b3798._.js:679:47)

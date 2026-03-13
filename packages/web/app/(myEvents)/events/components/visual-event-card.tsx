@@ -10,6 +10,7 @@ import { Doc, Id } from '@/convex/_generated/dataModel';
 import { Dialog } from '@/components/ui/dialog';
 import { DeleteEventDialog } from '@/app/(event)/event/[eventId]/components/deleteEventDialog';
 import { LeaveEventDialog } from '@/app/(event)/event/[eventId]/components/leaveEventDialog';
+import { ReportDialog } from '@/components/report-dialog';
 import { useActionMenu } from '@/hooks/use-action-menu';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ActionMenuButton } from '@/components/ui/action-menu-button';
@@ -66,6 +67,7 @@ export function VisualEventCard({
 }: VisualEventCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const {
     sheetOpen,
     setSheetOpen,
@@ -142,17 +144,30 @@ export function VisualEventCard({
           </Button>
         </>
       ) : (
-        <Button
-          variant='ghost'
-          className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
-          onClick={() => {
-            setSheetOpen(false);
-            setLeaveDialogOpen(true);
-          }}
-        >
-          <Icons.leave className='size-4 mr-2' />
-          Leave Event
-        </Button>
+        <>
+          <Button
+            variant='ghost'
+            className='w-full justify-start'
+            onClick={() => {
+              setSheetOpen(false);
+              setReportDialogOpen(true);
+            }}
+          >
+            <Icons.flag className='size-4 mr-2' />
+            Report Event
+          </Button>
+          <Button
+            variant='ghost'
+            className='w-full justify-start hover:bg-destructive hover:text-destructive-foreground'
+            onClick={() => {
+              setSheetOpen(false);
+              setLeaveDialogOpen(true);
+            }}
+          >
+            <Icons.leave className='size-4 mr-2' />
+            Leave Event
+          </Button>
+        </>
       )}
     </div>
   );
@@ -213,18 +228,32 @@ export function VisualEventCard({
           </ContextMenuItem>
         </>
       ) : (
-        <ContextMenuItem
-          onSelect={e => {
-            e.preventDefault();
-            setLeaveDialogOpen(true);
-          }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
-        >
-          <div className='flex items-center gap-1'>
-            <Icons.leave className='size-4' />
-            <span>Leave Event</span>
-          </div>
-        </ContextMenuItem>
+        <>
+          <ContextMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setReportDialogOpen(true);
+            }}
+            className='cursor-pointer'
+          >
+            <div className='flex items-center gap-1'>
+              <Icons.flag className='size-4' />
+              <span>Report Event</span>
+            </div>
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setLeaveDialogOpen(true);
+            }}
+            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          >
+            <div className='flex items-center gap-1'>
+              <Icons.leave className='size-4' />
+              <span>Leave Event</span>
+            </div>
+          </ContextMenuItem>
+        </>
       )}
     </>
   );
@@ -285,18 +314,32 @@ export function VisualEventCard({
           </DropdownMenuItem>
         </>
       ) : (
-        <DropdownMenuItem
-          onSelect={e => {
-            e.preventDefault();
-            setLeaveDialogOpen(true);
-          }}
-          className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
-        >
-          <div className='flex items-center gap-1'>
-            <Icons.leave className='size-4' />
-            <span>Leave Event</span>
-          </div>
-        </DropdownMenuItem>
+        <>
+          <DropdownMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setReportDialogOpen(true);
+            }}
+            className='cursor-pointer'
+          >
+            <div className='flex items-center gap-1'>
+              <Icons.flag className='size-4' />
+              <span>Report Event</span>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setLeaveDialogOpen(true);
+            }}
+            className='cursor-pointer focus:bg-destructive focus:text-destructive-foreground'
+          >
+            <div className='flex items-center gap-1'>
+              <Icons.leave className='size-4' />
+              <span>Leave Event</span>
+            </div>
+          </DropdownMenuItem>
+        </>
       )}
     </>
   );
@@ -383,7 +426,7 @@ export function VisualEventCard({
 
             {/* Date/Time */}
             <div className='flex items-center gap-2 text-sm'>
-              <StickerIcon icon={Icons.date} size='xs' color='primary' />
+              <StickerIcon icon={Icons.date} size='xs' color='info' />
               <span className='text-muted-foreground'>
                 {event.chosenDateTime
                   ? formatDateTimeRangeShort(
@@ -397,12 +440,28 @@ export function VisualEventCard({
             {/* Location */}
             {event.location && (
               <div className='flex items-center gap-2 text-sm'>
-                <StickerIcon icon={Icons.location} size='xs' color='primary' />
+                <StickerIcon icon={Icons.location} size='xs' color='success' />
                 <span className='text-muted-foreground line-clamp-1'>
                   {event.location}
                 </span>
               </div>
             )}
+
+            {/* Visibility */}
+            <div className='flex items-center gap-2 text-sm'>
+              {event.visibility === 'FRIENDS' ? (
+                <Icons.people className='size-3.5 text-muted-foreground/60' />
+              ) : (
+                <Icons.lock className='size-3.5 text-muted-foreground/60' />
+              )}
+              <span className='text-muted-foreground/60'>
+                {event.visibility === 'FRIENDS'
+                  ? 'Friends'
+                  : event.visibility === 'PUBLIC'
+                    ? 'Public'
+                    : 'Private'}
+              </span>
+            </div>
 
             {/* Organizer */}
             {organizer && (
@@ -436,6 +495,14 @@ export function VisualEventCard({
       </Dialog>
       <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
         <LeaveEventDialog eventId={eventId} />
+      </Dialog>
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <ReportDialog
+          targetType='EVENT'
+          targetId={eventId}
+          targetLabel={event.title}
+          onClose={() => setReportDialogOpen(false)}
+        />
       </Dialog>
       <ActionMenu
         drawerTitle='Event Options'

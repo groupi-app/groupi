@@ -164,3 +164,65 @@ export function useNotificationMethodSettingsManagement() {
     deleteMethod,
   };
 }
+
+// ===== PRIVACY SETTINGS =====
+
+export type FriendRequestPolicy = 'EVERYONE' | 'EVENT_MEMBERS' | 'NO_ONE';
+export type EventInvitePolicy =
+  | 'EVERYONE'
+  | 'EVENT_MEMBERS'
+  | 'FRIENDS'
+  | 'NO_ONE';
+
+/**
+ * Get privacy settings for the current user
+ */
+export function usePrivacySettings() {
+  return useQuery(settingsQueries.getPrivacySettings, {}) as
+    | {
+        allowFriendRequestsFrom: FriendRequestPolicy;
+        allowEventInvitesFrom: EventInvitePolicy;
+      }
+    | null
+    | undefined;
+}
+
+/**
+ * Save privacy settings
+ */
+export function useSavePrivacySettings() {
+  const saveSettings = useMutation(settingsMutations.savePrivacySettings);
+  const { toast } = useToast();
+
+  return useCallback(
+    async (data: {
+      allowFriendRequestsFrom: FriendRequestPolicy;
+      allowEventInvitesFrom: EventInvitePolicy;
+    }) => {
+      try {
+        await saveSettings(data);
+
+        toast({
+          title: 'Settings Saved',
+          description: 'Your privacy settings have been updated.',
+        });
+
+        return { success: true };
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to save settings. Please try again.';
+
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        });
+
+        return { success: false, error: message };
+      }
+    },
+    [saveSettings, toast]
+  );
+}

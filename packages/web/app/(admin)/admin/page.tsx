@@ -13,11 +13,14 @@ import { Icons } from '@/components/icons';
 // Dynamic require to avoid deep type instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let adminQueries: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let reportQueries: any;
 function initApi() {
   if (!adminQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { api } = require('@/convex/_generated/api');
     adminQueries = api.admin?.queries ?? {};
+    reportQueries = api.reports?.queries ?? {};
   }
 }
 initApi();
@@ -28,6 +31,7 @@ export default function AdminDashboardPage() {
   const eventsData = useQuery(adminQueries.getEventsAdmin, { limit: 1 });
   const postsData = useQuery(adminQueries.getPostsAdmin, { limit: 1 });
   const repliesData = useQuery(adminQueries.getRepliesAdmin, { limit: 1 });
+  const reportStats = useQuery(reportQueries.getReportStats, {});
 
   const isLoading = !usersData || !eventsData || !postsData || !repliesData;
 
@@ -55,6 +59,12 @@ export default function AdminDashboardPage() {
       value: repliesData?.totalCount ?? 0,
       icon: Icons.reply,
       description: 'Post replies',
+    },
+    {
+      title: 'Pending Reports',
+      value: reportStats?.pending ?? 0,
+      icon: Icons.flag,
+      description: 'Awaiting review',
     },
   ];
 
@@ -112,6 +122,22 @@ export default function AdminDashboardPage() {
                 <p className='font-medium'>Manage Users</p>
                 <p className='text-sm text-muted-foreground'>
                   View and manage user accounts
+                </p>
+              </div>
+            </a>
+            <a
+              href='/admin/reports'
+              className='flex items-center gap-4 p-4 rounded-lg border hover:bg-muted transition-colors'
+            >
+              <div className='p-2 rounded-full bg-primary/10'>
+                <Icons.flag className='h-5 w-5 text-primary' />
+              </div>
+              <div>
+                <p className='font-medium'>Review Reports</p>
+                <p className='text-sm text-muted-foreground'>
+                  {reportStats?.pending
+                    ? `${reportStats.pending} pending report${reportStats.pending !== 1 ? 's' : ''}`
+                    : 'No pending reports'}
                 </p>
               </div>
             </a>

@@ -1,4 +1,5 @@
 import {
+  Blocks,
   User2 as Account,
   ArrowLeft,
   ArrowRight,
@@ -26,10 +27,12 @@ import {
   File,
   FileAudio,
   FileVideo,
+  Flag,
   Fingerprint,
   Heading2,
   Heart,
   Image,
+  Inbox,
   Infinity as Infinite,
   Info,
   Key,
@@ -46,6 +49,7 @@ import {
   DoorOpen as Leave,
   Link,
   List,
+  ListChecks,
   ListOrdered,
   Loader2,
   MapPin as Location,
@@ -81,11 +85,13 @@ import {
   Mail,
   Webhook,
   Megaphone,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export type Icon = LucideIcon;
 
 export const Icons = {
+  blocks: Blocks,
   sidebar: Sidebar,
   info: Info,
   warning: Warning,
@@ -137,6 +143,7 @@ export const Icons = {
   strikethrough: Strikethrough,
   code: Code,
   list: List,
+  listChecks: ListChecks,
   listOrdered: ListOrdered,
   heading: Heading2,
   location: Location,
@@ -152,6 +159,7 @@ export const Icons = {
   crown: Crown,
   kick: Kick,
   copy: Copy,
+  flag: Flag,
   fingerprint: Fingerprint,
   invite: Invite,
   key: Key,
@@ -177,6 +185,8 @@ export const Icons = {
   lock: Lock,
   palette: Palette,
   appearance: Palette, // Alias for palette
+  inbox: Inbox,
+  sliders: SlidersHorizontal,
   discord: ({ ...props }: LucideProps) => (
     <svg
       viewBox='0 0 24 24'

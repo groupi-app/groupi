@@ -4,6 +4,8 @@ import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
+import { getInviteUrl } from '@/lib/urls';
 
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,7 +105,14 @@ export function useCreateInvite(eventId?: Id<'events'>) {
           expiresAt: data.expiresAt?.getTime(),
         });
 
-        // No success toast - instant appearance is feedback enough
+        // Copy invite link to clipboard
+        const inviteUrl = getInviteUrl(result.invite.token);
+        try {
+          await navigator.clipboard.writeText(inviteUrl);
+          sonnerToast.success('Invite link created and copied to clipboard.');
+        } catch {
+          sonnerToast.success('Invite link created successfully.');
+        }
 
         return result;
       } catch (error) {

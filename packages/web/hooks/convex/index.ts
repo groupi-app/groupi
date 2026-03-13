@@ -1,12 +1,16 @@
 // Export all Convex hooks for easy importing
 export * from './use-accounts';
+export * from './use-addon-gating';
+export * from './use-addons';
 export * from './use-availability';
+export * from './use-event-invites';
 export * from './use-events';
 export * from './use-file-upload';
 export * from './use-friends';
 export * from './use-invites';
 export * from './use-multi-session';
 export * from './use-muting';
+export * from './use-reminder-opt-out';
 export * from './use-notifications';
 export * from './use-posts';
 export * from './use-presence';
