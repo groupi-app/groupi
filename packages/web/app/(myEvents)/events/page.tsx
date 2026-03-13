@@ -97,11 +97,31 @@ export default function MyEventsPage() {
           onValueChange={handleTabChange}
           className='w-full'
         >
-          <TabsList className='mb-6'>
-            <TabsTrigger value='upcoming'>Upcoming</TabsTrigger>
-            <TabsTrigger value='attended'>Attended</TabsTrigger>
-            <TabsTrigger value='invited'>Invited</TabsTrigger>
-            <TabsTrigger value='discover'>Discover</TabsTrigger>
+          <TabsList className='mb-6 w-full max-w-lg'>
+            <TabsTrigger
+              value='upcoming'
+              className='flex-1 min-w-0 text-xs sm:text-sm'
+            >
+              Upcoming
+            </TabsTrigger>
+            <TabsTrigger
+              value='attended'
+              className='flex-1 min-w-0 text-xs sm:text-sm'
+            >
+              Attended
+            </TabsTrigger>
+            <TabsTrigger
+              value='invited'
+              className='flex-1 min-w-0 text-xs sm:text-sm'
+            >
+              Invited
+            </TabsTrigger>
+            <TabsTrigger
+              value='discover'
+              className='flex-1 min-w-0 text-xs sm:text-sm'
+            >
+              Discover
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value='upcoming'>
@@ -326,8 +346,11 @@ function EventsPageContent({
 
       {/* Unified Tabs: Upcoming / Attended / Invited */}
       <Tabs value={activeTab} onValueChange={onTabChange} className='w-full'>
-        <TabsList className='mb-6'>
-          <TabsTrigger value='upcoming'>
+        <TabsList className='mb-6 w-full max-w-lg'>
+          <TabsTrigger
+            value='upcoming'
+            className='flex-1 min-w-0 text-xs sm:text-sm'
+          >
             Upcoming
             {counts.upcoming > 0 && (
               <span className='ml-1.5 text-xs text-muted-foreground'>
@@ -335,7 +358,10 @@ function EventsPageContent({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value='attended'>
+          <TabsTrigger
+            value='attended'
+            className='flex-1 min-w-0 text-xs sm:text-sm'
+          >
             Attended
             {counts.past > 0 && (
               <span className='ml-1.5 text-xs text-muted-foreground'>
@@ -343,7 +369,10 @@ function EventsPageContent({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value='invited' className='flex items-center gap-2'>
+          <TabsTrigger
+            value='invited'
+            className='flex-1 min-w-0 text-xs sm:text-sm flex items-center gap-2'
+          >
             Invited
             {pendingInviteCount > 0 && (
               <Badge
@@ -354,7 +383,10 @@ function EventsPageContent({
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value='discover' className='flex items-center gap-2'>
+          <TabsTrigger
+            value='discover'
+            className='flex-1 min-w-0 text-xs sm:text-sm flex items-center gap-2'
+          >
             Discover
             {discoverCount > 0 && (
               <span className='ml-1.5 text-xs text-muted-foreground'>

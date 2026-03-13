@@ -292,7 +292,6 @@ function LinkInviteTab({ eventId }: { eventId: Id<'events'> }) {
         expiresAt: expiresAt ?? undefined,
         usesTotal: values.maxUses ?? undefined,
       });
-      toast.success('Invite link created successfully.');
       form.reset();
     } catch (error) {
       const err = error as { _tag?: string };
