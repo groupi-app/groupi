@@ -34,6 +34,8 @@ interface EntityDetailPanelProps {
   target: DetailTarget | null;
   onClose: () => void;
   onNavigate: (target: DetailTarget, label: string) => void;
+  canGoBack?: boolean;
+  onBack?: () => void;
 }
 
 function formatDate(timestamp: number | null | undefined): string {
@@ -60,6 +62,8 @@ export function EntityDetailPanel({
   target,
   onClose,
   onNavigate,
+  canGoBack,
+  onBack,
 }: EntityDetailPanelProps) {
   const api = getApi();
 
@@ -141,6 +145,17 @@ export function EntityDetailPanel({
   return (
     <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
       <SheetContent className='w-full sm:max-w-lg overflow-y-auto'>
+        {canGoBack && onBack && (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='-ml-2 mb-2'
+            onClick={onBack}
+          >
+            <Icons.arrowLeft className='size-4 mr-1' />
+            Back
+          </Button>
+        )}
         {renderContent()}
       </SheetContent>
     </Sheet>
