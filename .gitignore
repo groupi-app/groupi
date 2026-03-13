@@ -69,5 +69,6 @@ packages/web/storybook-static/
 supabase_prod_*.sql
 
 # Migration data (sensitive)
+scripts/migration/
 migration_data.json
 clerk_users.json

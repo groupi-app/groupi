@@ -2,6 +2,7 @@
   "name": "@groupi/web",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL-3.0",
   "type": "module",
   "scripts": {
     "dev": "pnpm generate:tokens && pnpm generate:changelog && concurrently --names 'next,tokens' --prefix-colors 'cyan,magenta' 'NODE_OPTIONS=--max-http-header-size=65536 next dev' 'pnpm watch:tokens'",
