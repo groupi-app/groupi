@@ -2,6 +2,7 @@
   "name": "@groupi/convex",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL-3.0",
   "description": "Convex backend functions and tests for Groupi",
   "scripts": {
     "build": "cd .. && pnpx convex codegen",
@@ -23,7 +24,7 @@
     "@hono/swagger-ui": "^0.5.3",
     "@hono/zod-openapi": "^1.2.0",
     "better-auth": "^1.4.9",
-    "hono": "^4.11.7",
+    "hono": "^4.12.7",
     "resend": "^4.0.0"
   },
   "devDependencies": {

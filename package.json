@@ -2,6 +2,7 @@
   "name": "groupi",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL-3.0",
   "type": "module",
   "packageManager": "pnpm@10.12.1",
   "scripts": {
@@ -95,7 +96,9 @@
       "react": "19.2.0",
       "react-dom": "19.2.0",
       "@types/react": "19.2.2",
-      "@types/react-dom": "19.2.2"
+      "@types/react-dom": "19.2.2",
+      "minimatch": ">=10.0.0",
+      "rollup": ">=4.59.0"
     }
   },
   "lint-staged": {

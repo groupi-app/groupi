@@ -9,7 +9,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 Sentry.init({
   enabled: !isDev,
-  dsn: 'https://90d0f3dd02d7a97c2fafca08eacf6d14@o4509634965602304.ingest.us.sentry.io/4509634981068800',
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
