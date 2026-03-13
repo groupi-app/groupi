@@ -443,6 +443,45 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_person_event', ['personId', 'eventId']),
 
+  // ===== CONTENT REPORTS =====
+  // Track user-submitted reports of harmful content
+
+  reports: defineTable({
+    reporterId: v.id('persons'),
+    targetType: v.union(
+      v.literal('USER'),
+      v.literal('EVENT'),
+      v.literal('POST'),
+      v.literal('REPLY')
+    ),
+    targetId: v.string(),
+    contextEventId: v.optional(v.id('events')),
+    contextPostId: v.optional(v.id('posts')),
+    reason: v.union(
+      v.literal('SPAM'),
+      v.literal('HARASSMENT'),
+      v.literal('HATE_SPEECH'),
+      v.literal('INAPPROPRIATE_CONTENT'),
+      v.literal('IMPERSONATION'),
+      v.literal('OTHER')
+    ),
+    details: v.optional(v.string()),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('DISMISSED'),
+      v.literal('ACTION_TAKEN')
+    ),
+    resolvedById: v.optional(v.id('persons')),
+    resolvedAt: v.optional(v.number()),
+    adminNote: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index('by_reporter', ['reporterId'])
+    .index('by_target', ['targetType', 'targetId'])
+    .index('by_status', ['status'])
+    .index('by_reporter_target', ['reporterId', 'targetType', 'targetId']),
+
   // ===== REMINDER TABLES =====
   // Track scheduled event reminders
 

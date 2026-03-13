@@ -29,6 +29,7 @@ import {
 
 import { MemberAction, MemberActionDialog } from './member-action-dialog';
 import { ProfileViewDialog } from './profile-view-dialog';
+import { ReportDialog } from './report-dialog';
 import { StatusIndicator } from '@/components/atoms';
 import { useState, useCallback } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
@@ -83,6 +84,7 @@ type ActionMenuProps = {
   setDialogOpen: (open: boolean) => void;
   setProfileDialogOpen: (open: boolean) => void;
   align?: 'start' | 'center' | 'end';
+  setReportDialogOpen: (open: boolean) => void;
   // Friend action props
   friendStatus: FriendshipStatus;
   friendIsLoading: boolean;
@@ -112,6 +114,7 @@ function ActionMenu({
   setDialogAction,
   setDialogOpen,
   setProfileDialogOpen,
+  setReportDialogOpen,
   align,
   friendStatus,
   friendIsLoading,
@@ -289,6 +292,19 @@ function ActionMenu({
                 >
                   <Icons.people className='size-4 mr-2' />
                   Friends
+                </Button>
+              )}
+              {!isMe && personId && (
+                <Button
+                  variant='ghost'
+                  className='w-full justify-start'
+                  onClick={() => {
+                    setSheetOpen(false);
+                    setReportDialogOpen(true);
+                  }}
+                >
+                  <Icons.flag className='size-4 mr-2' />
+                  Report User
                 </Button>
               )}
               {(canKick || canBan || canPromote) && (
@@ -514,6 +530,15 @@ function ActionMenu({
               <span>Friends</span>
             </DropdownMenuItem>
           )}
+          {!isMe && personId && (
+            <DropdownMenuItem
+              onClick={() => setReportDialogOpen(true)}
+              className='cursor-pointer'
+            >
+              <Icons.flag className='size-4 mr-2' />
+              <span>Report User</span>
+            </DropdownMenuItem>
+          )}
 
           {(canKick || canBan || canPromote) && <DropdownMenuSeparator />}
 
@@ -647,6 +672,7 @@ export default function MemberIcon({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const isMobile = useMobile();
 
   // Friend actions
@@ -745,6 +771,7 @@ export default function MemberIcon({
           setDialogAction={setDialogAction}
           setDialogOpen={setDialogOpen}
           setProfileDialogOpen={setProfileDialogOpen}
+          setReportDialogOpen={setReportDialogOpen}
           align={align}
           friendStatus={friendStatus as FriendshipStatus}
           friendIsLoading={friendIsLoading}
@@ -763,6 +790,16 @@ export default function MemberIcon({
           />
         )}
       </Dialog>
+      {personId && (
+        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <ReportDialog
+            targetType='USER'
+            targetId={personId}
+            targetLabel={fullName}
+            onClose={() => setReportDialogOpen(false)}
+          />
+        </Dialog>
+      )}
     </motion.div>
   );
 }

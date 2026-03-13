@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/utils';
 import { canDeletePost } from '@/lib/event-permissions';
 import Link from 'next/link';
 import { DeletePostDialog } from './delete-post-dialog';
+import { ReportDialog } from './report-dialog';
 import { Icons } from '@/components/icons';
 import MemberIcon from '@/components/member-icon';
 import { PostCardContent } from './post-card-content';
@@ -55,6 +56,7 @@ export function PostCard({
   userRole: string;
 }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const {
     sheetOpen,
     setSheetOpen,
@@ -135,6 +137,19 @@ export function PostCard({
           </>
         )}
       </Button>
+      {!isMe && (
+        <Button
+          variant='ghost'
+          className='w-full justify-start'
+          onClick={() => {
+            setSheetOpen(false);
+            setReportDialogOpen(true);
+          }}
+        >
+          <Icons.flag className='size-4 mr-2' />
+          Report Post
+        </Button>
+      )}
       {isMe && (
         <Button variant='ghost' className='w-full justify-start' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
@@ -183,6 +198,20 @@ export function PostCard({
           )}
         </div>
       </ContextMenuItem>
+      {!isMe && (
+        <ContextMenuItem
+          onSelect={e => {
+            e.preventDefault();
+            setReportDialogOpen(true);
+          }}
+          className='cursor-pointer'
+        >
+          <div className='flex items-center gap-1'>
+            <Icons.flag className='size-4' />
+            <span>Report Post</span>
+          </div>
+        </ContextMenuItem>
+      )}
       {isMe && (
         <ContextMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
@@ -234,6 +263,20 @@ export function PostCard({
           )}
         </div>
       </DropdownMenuItem>
+      {!isMe && (
+        <DropdownMenuItem
+          onSelect={e => {
+            e.preventDefault();
+            setReportDialogOpen(true);
+          }}
+          className='cursor-pointer'
+        >
+          <div className='flex items-center gap-1'>
+            <Icons.flag className='size-4' />
+            <span>Report Post</span>
+          </div>
+        </DropdownMenuItem>
+      )}
       {isMe && (
         <DropdownMenuItem className='cursor-pointer' asChild>
           <Link href={`/event/${event._id}/post/${id}/edit`}>
@@ -334,20 +377,30 @@ export function PostCard({
   );
 
   return (
-    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <ActionMenu
-        drawerTitle='Post Options'
-        drawerContent={drawerContent}
-        contextMenuContent={contextMenuContent}
-        sheetOpen={sheetOpen}
-        onSheetOpenChange={setSheetOpen}
-        onContextMenu={handleContextMenu}
-        onClick={handleClick}
-      >
-        {cardContent}
-      </ActionMenu>
-      <DeletePostDialog id={id} eventId={event._id} />
-    </Dialog>
+    <>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <ActionMenu
+          drawerTitle='Post Options'
+          drawerContent={drawerContent}
+          contextMenuContent={contextMenuContent}
+          sheetOpen={sheetOpen}
+          onSheetOpenChange={setSheetOpen}
+          onContextMenu={handleContextMenu}
+          onClick={handleClick}
+        >
+          {cardContent}
+        </ActionMenu>
+        <DeletePostDialog id={id} eventId={event._id} />
+      </Dialog>
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <ReportDialog
+          targetType='POST'
+          targetId={id}
+          targetLabel={title}
+          onClose={() => setReportDialogOpen(false)}
+        />
+      </Dialog>
+    </>
   );
 }
 
