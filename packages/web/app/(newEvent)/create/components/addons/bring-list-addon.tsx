@@ -61,7 +61,7 @@ function ItemBuilder({
 }) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newQuantity, setNewQuantity] = useState(1);
+  const [newQuantity, setNewQuantity] = useState<number | ''>(1);
 
   const handleAdd = () => {
     if (!newName.trim()) return;
@@ -69,7 +69,7 @@ function ItemBuilder({
     const item: BringListItem = {
       id: crypto.randomUUID(),
       name: newName.trim(),
-      quantity: Math.max(1, newQuantity),
+      quantity: Math.min(999, Math.max(1, Number(newQuantity) || 1)),
     };
 
     onChange([...items, item]);
@@ -122,8 +122,15 @@ function ItemBuilder({
             <Input
               type='number'
               min={1}
+              max={999}
               value={newQuantity}
-              onChange={e => setNewQuantity(Number(e.target.value) || 1)}
+              onChange={e =>
+                setNewQuantity(
+                  e.target.value === ''
+                    ? ''
+                    : Math.min(999, Math.max(1, Number(e.target.value)))
+                )
+              }
               className='w-20'
             />
           </div>
@@ -506,7 +513,7 @@ function BringListItemRow({
   onClaim: (qty: number) => void;
 }) {
   const [editingQty, setEditingQty] = useState(false);
-  const [qtyInput, setQtyInput] = useState(1);
+  const [qtyInput, setQtyInput] = useState<number | ''>(1);
 
   const totalClaimed = summary?.totalClaimed ?? 0;
   const remaining = item.quantity - totalClaimed;
@@ -527,7 +534,10 @@ function BringListItemRow({
   };
 
   const handleConfirmQty = () => {
-    const qty = Math.max(0, Math.min(qtyInput, remaining + myClaimQty));
+    const qty = Math.max(
+      0,
+      Math.min(Number(qtyInput) || 1, remaining + myClaimQty)
+    );
     onClaim(qty);
     setEditingQty(false);
   };
@@ -576,9 +586,16 @@ function BringListItemRow({
               <Input
                 type='number'
                 min={1}
-                max={remaining + myClaimQty}
+                max={Math.min(999, remaining + myClaimQty)}
                 value={qtyInput}
-                onChange={e => setQtyInput(Number(e.target.value) || 1)}
+                onChange={e => {
+                  const max = Math.min(999, remaining + myClaimQty);
+                  setQtyInput(
+                    e.target.value === ''
+                      ? ''
+                      : Math.min(max, Math.max(1, Number(e.target.value)))
+                  );
+                }}
                 className='w-16 h-8 text-sm'
                 autoFocus
               />

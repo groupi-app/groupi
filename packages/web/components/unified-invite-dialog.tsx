@@ -183,15 +183,11 @@ function AnimatedTabsContent({
 
       <div
         ref={contentRef}
-        className='relative mt-4 overflow-hidden'
+        className='relative mt-4 flex-1 min-h-0 overflow-y-auto'
         style={{
-          height:
-            animationState.height === 'auto'
-              ? 'auto'
-              : `${animationState.height}px`,
           opacity: animationState.opacity,
           transition: animationState.animate
-            ? 'height 200ms ease-out, opacity 150ms ease-out'
+            ? 'opacity 150ms ease-out'
             : 'opacity 100ms ease-out',
         }}
       >
@@ -230,8 +226,8 @@ export function UnifiedInviteDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className='sm:max-w-[700px] max-h-[85vh] overflow-hidden flex flex-col'>
-        <DialogHeader>
+      <DialogContent className='sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden'>
+        <DialogHeader className='flex-shrink-0'>
           <DialogTitle className='flex items-center gap-2'>
             <Icons.invite className='size-5' />
             Invite People
@@ -854,7 +850,7 @@ function EmailInviteTab({ eventId }: { eventId: Id<'events'> }) {
             </h3>
           </div>
 
-          <div className='flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 max-h-[180px]'>
+          <div className='flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1 max-h-[120px] md:max-h-[180px]'>
             {/* Local invites (not yet saved) */}
             {localInvites.map((invite: ParsedInvite, index: number) => (
               <LocalEmailInviteItem

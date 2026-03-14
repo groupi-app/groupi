@@ -169,20 +169,16 @@ export function AvailabilityForm({
     }));
 
     try {
-      // Show optimistic toast and navigation
-      toast.success('Availability Updated', {
-        description: 'Your availability has been successfully updated.',
-      });
-      router.push(`/event/${eventId}`);
-
-      // Handle mutation in background
       await submitAvailability({
         eventId,
         responses,
       });
+
+      toast.success('Availability Updated', {
+        description: 'Your availability has been successfully updated.',
+      });
+      router.push(`/event/${eventId}`);
     } catch {
-      // Rollback navigation and show error toast
-      router.push(`/event/${eventId}/availability`);
       toast.error('Unable to update', {
         description:
           'There was an error updating your availability. Please try again.',

@@ -137,7 +137,17 @@ export function ErrorDisplay({
         </p>
         <div className='flex items-center gap-2'>
           {showBackButton && (
-            <Button variant='outline' size='sm' onClick={() => router.back()}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                if (window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push('/events');
+                }
+              }}
+            >
               <Icons.back className='mr-1 h-4 w-4' />
               Go Back
             </Button>
@@ -193,7 +203,16 @@ export function ErrorDisplay({
       {/* Action buttons */}
       <div className='flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200'>
         {showBackButton && (
-          <Button variant='outline' onClick={() => router.back()}>
+          <Button
+            variant='outline'
+            onClick={() => {
+              if (window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/events');
+              }
+            }}
+          >
             <Icons.back className='mr-2 h-4 w-4' />
             Go Back
           </Button>

@@ -189,8 +189,8 @@ export function SingleDateTimeSelector({
   return (
     <div className='flex flex-col gap-6'>
       {/* Calendar Card with integrated time picker */}
-      <div className='flex justify-center'>
-        <Card className='w-fit overflow-hidden border-border shadow-raised'>
+      <div className='flex justify-center w-full'>
+        <Card className='overflow-hidden border-border shadow-raised max-w-fit'>
           <CardContent className='p-0'>
             {hasEndTime ? (
               // Date range mode when end time is enabled
@@ -201,7 +201,7 @@ export function SingleDateTimeSelector({
                 defaultMonth={startDate}
                 captionLayout='dropdown'
                 size='xl'
-                className='bg-transparent p-4'
+                className='bg-transparent p-4 [--cell-size:--spacing(10)] md:[--cell-size:--spacing(12)]'
                 disabled={disabled ? disabled : { before: new Date() }}
               />
             ) : (
@@ -213,7 +213,7 @@ export function SingleDateTimeSelector({
                 defaultMonth={startDate}
                 captionLayout='dropdown'
                 size='xl'
-                className='bg-transparent p-4'
+                className='bg-transparent p-4 [--cell-size:--spacing(10)] md:[--cell-size:--spacing(12)]'
                 disabled={disabled ? disabled : { before: new Date() }}
               />
             )}
