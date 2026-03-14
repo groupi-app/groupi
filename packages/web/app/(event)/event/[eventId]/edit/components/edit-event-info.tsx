@@ -28,43 +28,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUpdateEvent } from '@/hooks/mutations/use-update-event';
 import { useFileUpload } from '@/hooks/convex/use-file-upload';
-import { isReminderInPast } from '@/lib/datetime-helpers';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   EventImageUpload,
   type FocalPoint,
 } from '@/components/event-image-upload';
-
-// Reminder offset type
-type ReminderOffset =
-  | '30_MINUTES'
-  | '1_HOUR'
-  | '2_HOURS'
-  | '4_HOURS'
-  | '1_DAY'
-  | '2_DAYS'
-  | '3_DAYS'
-  | '1_WEEK'
-  | '2_WEEKS'
-  | '4_WEEKS';
-
-// Reminder offset options with display labels
-const REMINDER_OPTIONS: Array<{
-  value: ReminderOffset | 'never';
-  label: string;
-}> = [
-  { value: 'never', label: 'Never' },
-  { value: '30_MINUTES', label: '30 minutes before' },
-  { value: '1_HOUR', label: '1 hour before' },
-  { value: '2_HOURS', label: '2 hours before' },
-  { value: '4_HOURS', label: '4 hours before' },
-  { value: '1_DAY', label: '1 day before' },
-  { value: '2_DAYS', label: '2 days before' },
-  { value: '3_DAYS', label: '3 days before' },
-  { value: '1_WEEK', label: '1 week before' },
-  { value: '2_WEEKS', label: '2 weeks before' },
-  { value: '4_WEEKS', label: '4 weeks before' },
-];
 
 // Visibility type
 type Visibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
@@ -108,21 +76,6 @@ const formSchema = z.object({
     .max(200, { message: 'Location must be less than 200 characters.' })
     .optional(),
   visibility: z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']).optional(),
-  reminderOffset: z
-    .enum([
-      'never',
-      '30_MINUTES',
-      '1_HOUR',
-      '2_HOURS',
-      '4_HOURS',
-      '1_DAY',
-      '2_DAYS',
-      '3_DAYS',
-      '1_WEEK',
-      '2_WEEKS',
-      '4_WEEKS',
-    ])
-    .optional(),
 });
 
 export default function EditEventInfo({
@@ -134,8 +87,6 @@ export default function EditEventInfo({
     description: string;
     location: string;
     visibility?: Visibility;
-    reminderOffset?: ReminderOffset;
-    chosenDateTime?: number;
     imageUrl?: string | null;
     imageStorageId?: Id<'_storage'>;
     imageFocalPoint?: FocalPoint | null;
@@ -147,18 +98,10 @@ export default function EditEventInfo({
     description,
     location,
     visibility,
-    reminderOffset,
-    chosenDateTime,
     imageUrl,
     imageFocalPoint: initialFocalPoint,
   } = eventData;
 
-  const availableReminderOptions = chosenDateTime
-    ? REMINDER_OPTIONS.filter(
-        opt =>
-          opt.value === 'never' || !isReminderInPast(opt.value, chosenDateTime)
-      )
-    : REMINDER_OPTIONS;
   const router = useRouter();
   const updateEvent = useUpdateEvent();
   const { uploadFile } = useFileUpload();
@@ -203,26 +146,10 @@ export default function EditEventInfo({
       description: description,
       location: location,
       visibility: visibility ?? 'PRIVATE',
-      reminderOffset: reminderOffset ?? 'never',
     },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    // Convert "never" to null (which becomes undefined on backend)
-    const reminderOffsetValue =
-      data.reminderOffset === 'never'
-        ? null
-        : (data.reminderOffset as ReminderOffset | undefined);
-
-    if (reminderOffsetValue && chosenDateTime) {
-      if (isReminderInPast(reminderOffsetValue, chosenDateTime)) {
-        toast.error(
-          'The selected reminder would be in the past. Please choose a shorter offset or set to "Never".'
-        );
-        return;
-      }
-    }
-
     setIsSaving(true);
 
     try {
@@ -377,37 +304,12 @@ export default function EditEventInfo({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name='reminderOffset'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Remind attendees</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value || 'never'}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select when to remind attendees' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableReminderOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Send a reminder to attendees before the event starts.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type='submit' isLoading={isSaving} loadingText='Saving...'>
+        <Button
+          type='submit'
+          isLoading={isSaving}
+          loadingText='Saving...'
+          className='mb-20 md:mb-0'
+        >
           Save Changes
         </Button>
       </form>

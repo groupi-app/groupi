@@ -39,8 +39,6 @@ export function EditEventContent({ eventId }: { eventId: string }) {
           description: event.description || '',
           location: event.location || '',
           visibility: event.visibility,
-          reminderOffset: event.reminderOffset,
-          chosenDateTime: event.chosenDateTime,
           imageUrl: event.imageUrl,
           imageStorageId: event.imageStorageId,
           imageFocalPoint: event.imageFocalPoint,

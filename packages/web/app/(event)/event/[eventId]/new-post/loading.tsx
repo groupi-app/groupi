@@ -1,5 +1,4 @@
 import { Icons } from '@/components/icons';
-import { ToolbarSkeleton } from '../post/[postId]/components/toolbar-skeleton';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -11,25 +10,13 @@ export default function Page() {
         <span>Back</span>
       </Button>
       <Skeleton className='w-1/2 h-12 my-8' />
-      <ToolbarSkeleton />
-      <div className='flex flex-col gap-1'>
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-full h-4' />
-        <Skeleton className='w-1/2 h-4' />
-      </div>
-      <Button className='w-full md:w-max flex items-center gap-1 mt-4'>
+      <Skeleton className='w-full h-[300px] rounded-card' />
+      <Button
+        className='w-full md:w-auto flex items-center gap-1 mt-4'
+        disabled
+      >
         <Icons.submit className='size-4' />
-        <span>Submit</span>{' '}
+        <span>Create Post</span>
       </Button>
     </div>
   );

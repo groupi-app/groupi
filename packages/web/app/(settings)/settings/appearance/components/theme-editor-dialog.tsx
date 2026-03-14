@@ -283,21 +283,6 @@ export function ThemeEditorDialog({
 
     // Validate contrast before saving
     const contrastIssues = validateContrast();
-    if (contrastIssues.length > 0) {
-      const issueList = contrastIssues
-        .map(issue => `${issue.label} (ratio: ${issue.ratio.toFixed(1)}:1)`)
-        .join('\n');
-
-      toast.warning(
-        `Low contrast detected - UI may be hard to read:\n${issueList}`,
-        {
-          duration: 6000,
-          description:
-            'Consider adjusting colors for better readability. Minimum recommended ratio is 3:1.',
-        }
-      );
-      // We warn but still allow saving - users may have specific accessibility needs
-    }
 
     setIsSaving(true);
     try {
@@ -308,7 +293,6 @@ export function ThemeEditorDialog({
           description: description.trim() || undefined,
           tokenOverrides: overrides,
         });
-        toast.success('Theme updated');
       } else {
         await createTheme({
           name: name.trim(),
@@ -317,7 +301,23 @@ export function ThemeEditorDialog({
           mode,
           tokenOverrides: overrides,
         });
-        toast.success('Theme created');
+      }
+
+      if (contrastIssues.length > 0) {
+        const issueList = contrastIssues
+          .map(issue => `${issue.label} (ratio: ${issue.ratio.toFixed(1)}:1)`)
+          .join('\n');
+
+        toast.warning(
+          `Theme ${isEditing ? 'updated' : 'created'} with low contrast warnings:\n${issueList}`,
+          {
+            duration: 6000,
+            description:
+              'Consider adjusting colors for better readability. Minimum recommended ratio is 3:1.',
+          }
+        );
+      } else {
+        toast.success(`Theme ${isEditing ? 'updated' : 'created'}`);
       }
       onOpenChange(false);
     } catch (error) {
@@ -555,34 +555,35 @@ export function ThemeEditorDialog({
     );
   };
 
-  // Mobile: Drawer from bottom with compact preview on top
+  // Mobile: Drawer from bottom with collapsible preview inside
   if (isMobile) {
     return (
-      <>
-        {/* Live Preview - Compact top section on mobile */}
-        {open && (
-          <div className='fixed inset-x-0 top-0 h-[20vh] z-modal p-2 flex items-center justify-center overflow-hidden animate-in fade-in duration-300 bg-background/80 backdrop-blur-sm'>
-            <ThemePreview
-              baseTheme={baseTheme}
-              overrides={overrides}
-              className='border border-border shadow-raised w-full max-w-[280px] scale-[0.7] origin-center'
-            />
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className='max-h-[90vh] flex flex-col'>
+          <DrawerHeader className='flex-shrink-0 py-3'>
+            <DrawerTitle className='text-base'>
+              {isEditing ? 'Edit Custom Theme' : 'Create Custom Theme'}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className='flex-1 overflow-y-auto px-4 pb-6 overscroll-contain'>
+            {/* Collapsible preview section */}
+            <Collapsible>
+              <CollapsibleTrigger className='flex w-full items-center justify-between rounded-card border border-border bg-card px-4 py-3 text-sm font-medium hover:bg-bg-surface transition-colors mb-4'>
+                Preview
+                <ChevronDown className='h-4 w-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180' />
+              </CollapsibleTrigger>
+              <CollapsibleContent className='mb-4'>
+                <ThemePreview
+                  baseTheme={baseTheme}
+                  overrides={overrides}
+                  className='border border-border shadow-raised w-full'
+                />
+              </CollapsibleContent>
+            </Collapsible>
+            {renderFormContent(false)}
           </div>
-        )}
-
-        <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className='max-h-[80vh] flex flex-col'>
-            <DrawerHeader className='flex-shrink-0 py-3'>
-              <DrawerTitle className='text-base'>
-                {isEditing ? 'Edit Custom Theme' : 'Create Custom Theme'}
-              </DrawerTitle>
-            </DrawerHeader>
-            <div className='flex-1 overflow-y-auto px-4 pb-6 overscroll-contain'>
-              {renderFormContent(false)}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      </>
+        </DrawerContent>
+      </Drawer>
     );
   }
 

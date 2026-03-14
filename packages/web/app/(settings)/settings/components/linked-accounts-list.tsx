@@ -123,30 +123,9 @@ export function LinkedAccountsList({
         }
         toast.error(error.message || 'Failed to link account');
       }
-    } catch {
-      // Final fallback: use signIn.social as last resort
-      try {
-        const { error } = await authClient.signIn.social({
-          provider,
-          callbackURL: '/settings/account',
-        });
-        if (error) {
-          const message = error.message?.toLowerCase() || '';
-          // Handle user cancellation gracefully - don't show error
-          if (
-            message.includes('cancel') ||
-            message.includes('closed') ||
-            message.includes('denied') ||
-            message.includes('access_denied')
-          ) {
-            return;
-          }
-          toast.error(error.message || 'Failed to link account');
-        }
-      } catch (err) {
-        toast.error('Failed to initiate account linking');
-        console.error('Account linking error:', err);
-      }
+    } catch (err) {
+      toast.error('Failed to initiate account linking. Please try again.');
+      console.error('Account linking error:', err);
     }
   };
 

@@ -342,18 +342,20 @@ export function ProfileEditDialog({
                 {isUploading && (
                   <p className='text-xs text-muted-foreground'>Uploading...</p>
                 )}
-                {!isUploading && (currentImage || userInfo.image) && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={handleClearAvatar}
-                    className='text-xs text-muted-foreground hover:text-destructive'
-                  >
-                    <X className='h-3 w-3 mr-1' />
-                    Remove
-                  </Button>
-                )}
+                {!isUploading &&
+                  ((currentImage && currentImage.trim() !== '') ||
+                    userInfo.image) && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleClearAvatar}
+                      className='text-xs text-muted-foreground hover:text-destructive'
+                    >
+                      <X className='h-3 w-3 mr-1' />
+                      Remove
+                    </Button>
+                  )}
               </div>
               <FormField
                 control={form.control}

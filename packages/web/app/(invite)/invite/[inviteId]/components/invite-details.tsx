@@ -83,7 +83,7 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
         <ExpiredError
           title='Invalid Invite'
           message='This invite link is invalid, expired, or has been used up. Please ask the event organizer for a new invite.'
-          showBackButton={true}
+          showBackButton={false}
           showHomeButton={true}
         />
       </div>

@@ -18,10 +18,26 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
 };
 
 // Size configurations for different variants
+// 'xl' uses a CSS variable --cell-size so consumers can set responsive sizes
 const sizeConfig = {
-  default: { cell: 'h-9 w-9', text: 'text-sm', caption: 'h-9', nav: 'h-9 w-9' },
-  lg: { cell: 'h-11 w-11', text: 'text-base', caption: 'h-10', nav: 'h-9 w-9' },
-  xl: { cell: 'h-14 w-14', text: 'text-lg', caption: 'h-12', nav: 'h-10 w-10' },
+  default: {
+    cell: 'h-9 w-9',
+    text: 'text-sm',
+    caption: 'h-9',
+    nav: 'h-9 w-9',
+  },
+  lg: {
+    cell: 'h-11 w-11',
+    text: 'text-base',
+    caption: 'h-10',
+    nav: 'h-9 w-9',
+  },
+  xl: {
+    cell: 'size-(--cell-size)',
+    text: 'text-base',
+    caption: 'h-10',
+    nav: 'size-9',
+  },
 };
 
 export const Calendar = ({
@@ -41,7 +57,7 @@ export const Calendar = ({
       captionLayout={captionLayout}
       className={cn('p-4', className)}
       classNames={{
-        [UI.Months]: 'relative flex flex-col gap-4 sm:flex-row sm:gap-6',
+        [UI.Months]: 'relative flex flex-col sm:flex-row',
         [UI.Month]: 'space-y-4',
         [UI.MonthCaption]: cn(
           'flex justify-center items-center relative px-12',

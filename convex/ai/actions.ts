@@ -40,16 +40,16 @@ Rules:
 - Split compound expressions into separate simple expressions
 - Keep relative terms as-is (e.g., "next Friday", "tomorrow", "in 2 weeks")
 - Each expression should be ONE date/day with its time or time range
-- For time ranges, use format "Xpm-Ypm" with a HYPHEN (not "to")
+- For time ranges, use format "X pm to Y pm" with the word "to" (not hyphens)
 - Preserve the original time for each split expression
 - Do NOT calculate or convert to absolute dates - keep the natural language
 
 Examples:
-- "fri or sat 4-8pm" → {"expressions": ["Friday 4pm-8pm", "Saturday 4pm-8pm"]}
-- "Tuesday and Thursday next week 6-8pm" → {"expressions": ["Tuesday next week 6pm-8pm", "Thursday next week 6pm-8pm"]}
+- "fri or sat 4-8pm" → {"expressions": ["Friday 4 pm to 8 pm", "Saturday 4 pm to 8 pm"]}
+- "Tuesday and Thursday next week 6-8pm" → {"expressions": ["Tuesday next week 6 pm to 8 pm", "Thursday next week 6 pm to 8 pm"]}
 - "the next 3 Tuesdays at 2pm" → {"expressions": ["next Tuesday at 2pm", "Tuesday in 2 weeks at 2pm", "Tuesday in 3 weeks at 2pm"]}
 - "tomorrow or Sunday 5pm" → {"expressions": ["tomorrow at 5pm", "Sunday at 5pm"]}
-- "Jan 15 and 20 from 4-6pm" → {"expressions": ["January 15 4pm-6pm", "January 20 4pm-6pm"]}
+- "Jan 15 and 20 from 4-6pm" → {"expressions": ["January 15 4 pm to 6 pm", "January 20 4 pm to 6 pm"]}
 
 Return JSON with an "expressions" array:`;
 

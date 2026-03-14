@@ -366,17 +366,10 @@ export default function ReplyComponent({
 
   // Merge pending attachments with real attachments for optimistic rendering
   // This keeps preview images visible until real attachment URLs are available
-  console.log(
-    '[Reply] reply._id:',
-    reply._id,
-    'reply.attachments:',
-    reply.attachments
-  );
   const mergedAttachments = useMergedAttachments(
     reply._id || reply.id,
     reply.attachments
   );
-  console.log('[Reply] mergedAttachments:', mergedAttachments);
 
   // Filter out attachments that are being deleted (optimistic deletion)
   const visibleAttachments = useMemo(
@@ -544,60 +537,68 @@ export default function ReplyComponent({
         </div>
 
         {editMode ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <FormField
-                control={form.control}
-                name='reply'
-                render={({ field }) => (
-                  <FormItem className='w-full'>
-                    <FormControl>
-                      <div className='relative'>
-                        <BlockNoteInline
-                          ref={editorRef}
-                          placeholder='Edit reply...'
-                          content={field.value}
-                          onChange={field.onChange}
-                          eventId={post?.event?._id}
-                          members={post?.event?.memberships as any}
-                          isMobile={isMobile}
-                          onKeyDown={e => {
-                            if (e.key === 'Escape') {
-                              e.preventDefault();
-                              handleExitEditMode();
-                            } else if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              form.handleSubmit(onSubmit)();
-                            }
-                          }}
-                        />
-                        <div className='flex items-center gap-1 mt-2 text-xs text-muted-foreground'>
-                          <span className='leading-none'>Escape to</span>
-                          <Button
-                            type='button'
-                            variant='link'
-                            className='h-auto p-0 m-0 leading-none !text-xs !text-primary hover:!text-primary/80'
-                            onClick={handleExitEditMode}
-                          >
-                            cancel
-                          </Button>
-                          <span className='leading-none'>•</span>
-                          <span className='leading-none'>Enter to</span>
-                          <Button
-                            variant='link'
-                            className='h-auto p-0 m-0 leading-none !text-xs !text-primary hover:!text-primary/80'
-                            onClick={() => form.handleSubmit(onSubmit)()}
-                          >
-                            save
-                          </Button>
+          <>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <FormField
+                  control={form.control}
+                  name='reply'
+                  render={({ field }) => (
+                    <FormItem className='w-full'>
+                      <FormControl>
+                        <div className='relative'>
+                          <BlockNoteInline
+                            ref={editorRef}
+                            placeholder='Edit reply...'
+                            content={field.value}
+                            onChange={field.onChange}
+                            eventId={post?.event?._id}
+                            members={post?.event?.memberships as any}
+                            isMobile={isMobile}
+                            onKeyDown={e => {
+                              if (e.key === 'Escape') {
+                                e.preventDefault();
+                                handleExitEditMode();
+                              } else if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                form.handleSubmit(onSubmit)();
+                              }
+                            }}
+                          />
+                          <div className='flex items-center gap-1 mt-2 text-xs text-muted-foreground'>
+                            <span className='leading-none'>Escape to</span>
+                            <Button
+                              type='button'
+                              variant='link'
+                              className='h-auto p-0 m-0 leading-none !text-xs !text-primary hover:!text-primary/80'
+                              onClick={handleExitEditMode}
+                            >
+                              cancel
+                            </Button>
+                            <span className='leading-none'>•</span>
+                            <span className='leading-none'>Enter to</span>
+                            <Button
+                              variant='link'
+                              className='h-auto p-0 m-0 leading-none !text-xs !text-primary hover:!text-primary/80'
+                              onClick={() => form.handleSubmit(onSubmit)()}
+                            >
+                              save
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </FormControl>
-                  </FormItem>
-                )}
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </form>
+            </Form>
+            {visibleAttachments.length > 0 && (
+              <AttachmentGallery
+                attachments={visibleAttachments}
+                onDelete={isMe ? handleDeleteAttachment : undefined}
               />
-            </form>
-          </Form>
+            )}
+          </>
         ) : (
           <div className='space-y-2'>
             <MentionHandler
@@ -607,7 +608,7 @@ export default function ReplyComponent({
               eventDateTime={eventDateTime}
             >
               <div
-                className='prose prose-sm max-w-none text-foreground'
+                className='prose prose-sm dark:prose-invert max-w-none text-foreground'
                 dangerouslySetInnerHTML={{ __html: replyContent }}
               />
             </MentionHandler>
@@ -624,7 +625,7 @@ export default function ReplyComponent({
 
       {canDelete && !editMode && (
         <DropdownMenu>
-          <DropdownMenuTrigger className='absolute z-float size-8 transition-all rounded-md hover:bg-muted top-2 right-2 flex items-center justify-center opacity-0 group-hover:opacity-100'>
+          <DropdownMenuTrigger className='absolute z-float size-8 transition-all rounded-md hover:bg-muted top-2 right-2 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100'>
             <Icons.more />
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
