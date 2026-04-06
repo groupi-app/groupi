@@ -125,3 +125,9 @@ docs/.vitepress/cache
 
 # Cypress config
 cypress.config.ts
+
+# AI agent skills (third-party, not our code)
+.agents/
+
+# Playwright MCP artifacts
+.playwright-mcp/

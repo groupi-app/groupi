@@ -23,8 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        # Vite 7.x and Vitest 4.x require Node 20+
-        node-version: [20, 22]
+        node-version: [22, 24]
 
     steps:
       - name: Checkout code
@@ -56,7 +55,7 @@ jobs:
 
       - name: Upload shared coverage
         uses: codecov/codecov-action@v4
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         with:
           file: ./packages/shared/coverage/lcov.info
           flags: shared
@@ -70,8 +69,7 @@ jobs:
 
     strategy:
       matrix:
-        # Vite 7.x and Vitest 4.x require Node 20+
-        node-version: [20, 22]
+        node-version: [22, 24]
 
     steps:
       - name: Checkout code
@@ -108,7 +106,7 @@ jobs:
 
       - name: Upload web coverage
         uses: codecov/codecov-action@v4
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         with:
           file: ./packages/web/coverage/lcov.info
           flags: web
@@ -122,8 +120,7 @@ jobs:
 
     strategy:
       matrix:
-        # Vite 7.x and Vitest 4.x require Node 20+
-        node-version: [20, 22]
+        node-version: [22, 24]
 
     steps:
       - name: Checkout code
@@ -160,7 +157,7 @@ jobs:
 
       - name: Upload mobile coverage
         uses: codecov/codecov-action@v4
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         with:
           file: ./packages/mobile/coverage/lcov.info
           flags: mobile
@@ -185,7 +182,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -223,7 +220,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
