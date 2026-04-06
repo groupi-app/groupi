@@ -69,7 +69,8 @@ export default function AccountSettings() {
 
 function AuthenticatedAccountSettings() {
   const userAndPerson = useQuery(authQueries.getCurrentUserAndPerson, {});
-  const linkedAccounts = useLinkedAccounts();
+  const { accounts: linkedAccounts, refetch: refetchAccounts } =
+    useLinkedAccounts();
 
   if (!userAndPerson) {
     return (
@@ -109,7 +110,10 @@ function AuthenticatedAccountSettings() {
       <AccountFormProvider defaultValues={defaultValues}>
         <div className='relative'>
           <AccountFormWithGuard>
-            <AccountSettingsContent accountData={accountData} />
+            <AccountSettingsContent
+              accountData={accountData}
+              onAccountsChanged={refetchAccounts}
+            />
           </AccountFormWithGuard>
         </div>
       </AccountFormProvider>

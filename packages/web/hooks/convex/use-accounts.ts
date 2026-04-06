@@ -30,15 +30,21 @@ type LinkedAccount = {
 /**
  * Get all linked accounts for the current user
  * Uses an action to fetch Discord usernames from Discord API
+ * Returns { accounts, refetch } so callers can trigger a refresh after mutations
  */
 export function useLinkedAccounts() {
   const [accounts, setAccounts] = useState<LinkedAccount[] | undefined>(
     undefined
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchKey, setFetchKey] = useState(0);
   const fetchAccounts = useAction(
     accountQueries.getLinkedAccountsWithUsernames
   );
+
+  const refetch = useCallback(() => {
+    setFetchKey(k => k + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,10 +70,12 @@ export function useLinkedAccounts() {
     return () => {
       cancelled = true;
     };
-  }, [fetchAccounts]);
+  }, [fetchAccounts, fetchKey]);
 
-  // Return undefined while loading to match useQuery behavior
-  return isLoading ? undefined : accounts;
+  return {
+    accounts: isLoading ? undefined : accounts,
+    refetch,
+  };
 }
 
 /**
@@ -118,7 +126,7 @@ export function useUnlinkAccount() {
  * Combined hook for account management
  */
 export function useAccountManagement() {
-  const linkedAccounts = useLinkedAccounts();
+  const { accounts: linkedAccounts, refetch } = useLinkedAccounts();
   const providers = useHasLinkedProviders();
   const unlinkAccount = useUnlinkAccount();
 
@@ -133,5 +141,6 @@ export function useAccountManagement() {
 
     // Actions
     unlinkAccount,
+    refetchAccounts: refetch,
   };
 }

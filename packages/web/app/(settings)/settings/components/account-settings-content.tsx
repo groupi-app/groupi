@@ -18,12 +18,14 @@ type LinkedAccount = {
 
 export function AccountSettingsContent({
   accountData,
+  onAccountsChanged,
 }: {
   accountData: {
     username: string;
     email: string;
     linkedAccounts: LinkedAccount[];
   };
+  onAccountsChanged?: () => void;
 }) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -43,6 +45,7 @@ export function AccountSettingsContent({
       <LinkedAccountsList
         linkedAccounts={accountData.linkedAccounts}
         userEmail={accountData.email}
+        onAccountsChanged={onAccountsChanged}
       />
 
       <PasskeySettings />

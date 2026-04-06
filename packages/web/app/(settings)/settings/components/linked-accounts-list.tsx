@@ -22,7 +22,6 @@ import {
 import { useUnlinkAccount } from '@/hooks/convex/use-accounts';
 import { toast } from 'sonner';
 import { Icons } from '@/components/icons';
-import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 
 type LinkedAccount = {
@@ -35,9 +34,11 @@ type LinkedAccount = {
 export function LinkedAccountsList({
   linkedAccounts,
   userEmail,
+  onAccountsChanged,
 }: {
   linkedAccounts: LinkedAccount[];
   userEmail: string;
+  onAccountsChanged?: () => void;
 }) {
   const [unlinkingAccountId, setUnlinkingAccountId] = useState<string | null>(
     null
@@ -46,7 +47,6 @@ export function LinkedAccountsList({
   const [pendingUnlinkAccountId, setPendingUnlinkAccountId] = useState<
     string | null
   >(null);
-  const router = useRouter();
 
   // Use Convex mutation for unlinking accounts
   const unlinkAccountMutation = useUnlinkAccount();
@@ -55,7 +55,7 @@ export function LinkedAccountsList({
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'account-linked' && e.newValue) {
-        router.refresh();
+        onAccountsChanged?.();
         // Clear the flag
         localStorage.removeItem('account-linked');
       }
@@ -63,7 +63,7 @@ export function LinkedAccountsList({
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [router]);
+  }, [onAccountsChanged]);
 
   const handleLinkAccount = async (provider: 'discord' | 'google') => {
     try {
@@ -94,6 +94,26 @@ export function LinkedAccountsList({
           window.open(redirectURL, '_blank', 'noopener,noreferrer');
           return;
         }
+      }
+
+      // Handle error responses from the link-social endpoint
+      if (response.status >= 400) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || '';
+        const lowerMessage = errorMessage.toLowerCase();
+
+        if (lowerMessage.includes('different emails')) {
+          toast.error(
+            'Cannot link this account because it uses a different email address. Please contact support if you need help.'
+          );
+        } else if (lowerMessage.includes('not linked')) {
+          toast.error(
+            'Unable to link this account. The account may already be associated with another user.'
+          );
+        } else {
+          toast.error(errorMessage || 'Failed to link account');
+        }
+        return;
       }
 
       // If no redirect header, try to get URL from response body
@@ -144,8 +164,7 @@ export function LinkedAccountsList({
       const result = await unlinkAccountMutation(pendingUnlinkAccountId);
 
       if (result.success) {
-        // Convex handles real-time updates, but refresh for any server state
-        router.refresh();
+        onAccountsChanged?.();
       }
     } catch (error) {
       // Error handling is done in the hook via toast
