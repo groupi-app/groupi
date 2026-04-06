@@ -25,6 +25,7 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/events';
   const isAddAccountMode = searchParams.get('mode') === 'add-account';
+  const oauthError = searchParams.get('error');
   const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
 
   // Redirect authenticated users away from sign-in (unless adding another account)
@@ -58,6 +59,28 @@ export default function SignInPage() {
   const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [passkeySupported, setPasskeySupported] = useState(false);
 
+  // Show error from OAuth callback redirect (e.g., account linking failure)
+  useEffect(() => {
+    if (!oauthError) return;
+    const errorMessages: Record<string, string> = {
+      account_not_linked:
+        'This account is already associated with a different user. Try signing in with a different method.',
+      signup_disabled: 'New account registration is currently disabled.',
+      unable_to_create_user: 'Unable to create your account. Please try again.',
+      unable_to_create_session:
+        'Unable to create your session. Please try again.',
+    };
+    setError(
+      errorMessages[oauthError] ||
+        'Something went wrong during sign in. Please try again.'
+    );
+    // Clean the error from the URL without triggering a navigation
+    const url = new URL(window.location.href);
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    window.history.replaceState({}, '', url.toString());
+  }, [oauthError]);
+
   // Check passkey support on mount
   useEffect(() => {
     const checkPasskeySupport = async () => {
@@ -86,6 +109,7 @@ export default function SignInPage() {
       const { error } = await signIn.social({
         provider,
         callbackURL,
+        errorCallbackURL: '/sign-in',
       });
 
       if (error) {

@@ -1,9 +1,11 @@
 name: E2E Tests
 
 on:
-  # Trigger on Vercel deployment success
-  deployment_status:
-  # Also allow manual trigger for debugging
+  # Disabled: E2E auth requires Convex SITE_URL to match the deployment URL.
+  # Preview deployments use localhost:3000 as SITE_URL, causing magic link
+  # verification to fail. Re-enable when SITE_URL is dynamically configured.
+  # deployment_status:
+  # Manual trigger only for now
   workflow_dispatch:
     inputs:
       deployment_url:
@@ -95,7 +97,7 @@ jobs:
 
       - name: Checkout code
         if: steps.e2e-config.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         if: steps.e2e-config.outputs.skip != 'true'
@@ -105,9 +107,9 @@ jobs:
 
       - name: Setup Node.js
         if: steps.e2e-config.outputs.skip != 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -133,7 +135,7 @@ jobs:
           pnpm e2e --project=chromium
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always() && steps.e2e-config.outputs.skip != 'true'
         with:
           name: playwright-report-${{ github.event.deployment.id || github.run_id }}
@@ -141,7 +143,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test artifacts on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure() && steps.e2e-config.outputs.skip != 'true'
         with:
           name: test-results-${{ github.event.deployment.id || github.run_id }}
@@ -184,7 +186,7 @@ jobs:
           echo "convex_url=$CONVEX_URL" >> $GITHUB_OUTPUT
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -192,9 +194,9 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -213,7 +215,7 @@ jobs:
         run: pnpm e2e --project=${{ matrix.browser }}
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}-${{ github.event.deployment.id }}

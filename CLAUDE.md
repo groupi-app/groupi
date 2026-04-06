@@ -202,6 +202,16 @@ Components are organized by complexity:
 
 See `docs/ui-design-system.md` for comprehensive documentation.
 
+## AI Agent Skills
+
+This project uses [skills.sh](https://skills.sh/) to provide specialized knowledge about the tech stack. Skills are tracked in `skills-lock.json` and installed to `.agents/`. Contributors restore them with:
+
+```bash
+npx skills experimental_install
+```
+
+Installed skills: Convex (general, best practices, schema validator, realtime, cron jobs), Expo (data fetching, TypeScript, performance), Vitest, Vercel (React best practices, composition patterns), and shadcn.
+
 ## Detailed Rules
 
 - Architecture: `.claude/rules/architecture.md`

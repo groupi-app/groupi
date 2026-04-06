@@ -260,6 +260,17 @@ export const createAuthOptions = (
       },
     },
 
+    // Account linking configuration
+    // Enables linking OAuth accounts (Discord, Google) to existing users,
+    // even when the OAuth email differs from the account email (multi-session scenario)
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['discord', 'google'],
+        allowDifferentEmails: true,
+      },
+    },
+
     trustedOrigins: [siteUrl],
   };
 };

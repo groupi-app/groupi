@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-03-13T17:32:47.064Z
+ * Generated: 2026-03-18T18:26:00.582Z
  */
 
 export interface ChangelogEntry {
@@ -12,26 +12,21 @@ export interface ChangelogEntry {
 }
 
 export interface ChangelogSection {
-  type:
-    | 'added'
-    | 'changed'
-    | 'deprecated'
-    | 'removed'
-    | 'fixed'
-    | 'security'
-    | 'general';
+  type: 'added' | 'changed' | 'deprecated' | 'removed' | 'fixed' | 'security' | 'general';
   items: string[];
 }
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: '0.1.0',
-    date: 'Initial Release',
-    changes: [
+    "version": "0.1.0",
+    "date": "Initial Release",
+    "changes": [
       {
-        type: 'general',
-        items: ['Initial development version of Groupi.'],
-      },
-    ],
-  },
+        "type": "general",
+        "items": [
+          "Initial development version of Groupi."
+        ]
+      }
+    ]
+  }
 ];

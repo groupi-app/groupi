@@ -89,6 +89,47 @@ groupi/
 └── docs/                # Documentation
 ```
 
+## AI Agent Skills
+
+This project includes a curated set of [skills.sh](https://skills.sh/) skills that give AI coding agents (Claude Code, Cursor, Copilot, etc.) specialized knowledge about the tech stack. Skills are tracked in `skills-lock.json` so every contributor gets the same set.
+
+### Install skills (first time setup)
+
+```bash
+npx skills experimental_install
+```
+
+This restores all project skills from `skills-lock.json` into your local agent directories.
+
+### What's included
+
+| Skill                           | Purpose                               |
+| ------------------------------- | ------------------------------------- |
+| `convex`                        | General Convex patterns               |
+| `convex-best-practices`         | Convex function best practices        |
+| `convex-schema-validator`       | Schema validation patterns            |
+| `convex-realtime`               | Real-time subscription patterns       |
+| `convex-cron-jobs`              | Scheduled function patterns           |
+| `native-data-fetching`          | Official Expo data fetching           |
+| `expo-react-native-typescript`  | Expo + React Native + TypeScript      |
+| `expo-react-native-performance` | React Native performance optimization |
+| `vitest`                        | Vitest testing patterns               |
+| `vercel-react-best-practices`   | React/Next.js performance             |
+| `vercel-composition-patterns`   | React composition patterns            |
+| `shadcn`                        | shadcn/ui component management        |
+
+### Managing skills
+
+```bash
+npx skills list              # See installed skills
+npx skills check             # Check for updates
+npx skills update            # Update all skills
+npx skills find [query]      # Search for new skills
+npx skills add <package>     # Add a new skill (omit -g to add to project)
+```
+
+When adding a new skill to the project (without `-g`), it updates `skills-lock.json` automatically. Commit that file so other contributors get the skill too.
+
 ## Development Workflow
 
 ### Running Commands

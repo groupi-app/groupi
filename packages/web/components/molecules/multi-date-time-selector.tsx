@@ -188,7 +188,7 @@ export function MultiDateTimeSelector({
                 onSelect={dates => setSelectedDates(dates ?? [])}
                 captionLayout='dropdown'
                 size='xl'
-                className='bg-transparent p-4'
+                className='bg-transparent p-4 [--cell-size:--spacing(10)] md:[--cell-size:--spacing(12)]'
                 disabled={disabled ? disabled : { before: new Date() }}
               />
             </CardContent>

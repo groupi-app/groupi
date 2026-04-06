@@ -9,10 +9,11 @@ import ErrorPage from './error';
 
 // Mock next/navigation
 const mockBack = vi.fn();
+const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: mockBack,
-    push: vi.fn(),
+    push: mockPush,
     refresh: vi.fn(),
   }),
 }));
@@ -42,7 +43,13 @@ describe('ErrorPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('should call router.back when Go Back button is clicked', async () => {
+  it('should call router.back when Go Back button is clicked with history', async () => {
+    // Simulate having navigation history
+    Object.defineProperty(window, 'history', {
+      value: { length: 3 },
+      writable: true,
+    });
+
     const user = userEvent.setup();
     render(<ErrorPage message='Error' />);
 
@@ -50,6 +57,22 @@ describe('ErrorPage', () => {
     await user.click(button);
 
     expect(mockBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('should navigate to /events when Go Back is clicked without history', async () => {
+    // Simulate no navigation history (fresh tab)
+    Object.defineProperty(window, 'history', {
+      value: { length: 1 },
+      writable: true,
+    });
+
+    const user = userEvent.setup();
+    render(<ErrorPage message='Error' />);
+
+    const button = screen.getByRole('button', { name: /go back/i });
+    await user.click(button);
+
+    expect(mockPush).toHaveBeenCalledWith('/events');
   });
 
   it('should render with container styling', () => {
