@@ -1,21 +1,15 @@
 /**
- * Platform adapter setup for React Native
+ * Platform adapter setup for React Native with Expo Router
  * Configures all platform-specific implementations
  */
 
 import React from 'react';
-import {
-  Dimensions,
-  Keyboard,
-  KeyboardEventListener,
-  Platform,
-} from 'react-native';
+import { Dimensions, Keyboard, KeyboardEventListener, Platform } from 'react-native';
+import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { NavigationContainerRef } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Import shared platform adapters
 import {
   setNavigationAdapter,
   setStorageAdapter,
@@ -28,49 +22,29 @@ import {
   triggerKeyboardEvent,
 } from '@groupi/shared';
 
-/** Route params type for navigation - matches RootStackParamList in App.tsx */
-type RouteParams = Record<string, unknown>;
-
-// Navigation reference with generic params
-let navigationRef: NavigationContainerRef<RouteParams> | null = null;
-
-export function setNavigationRef(ref: NavigationContainerRef<RouteParams>) {
-  navigationRef = ref;
-}
-
 /**
- * Setup all platform adapters for React Native
+ * Setup all platform adapters for React Native with Expo Router
  */
 export function setupPlatformAdapters() {
-  // Setup navigation adapter
+  // Navigation adapter using Expo Router
   setNavigationAdapter({
     push(path: string) {
-      if (navigationRef?.isReady()) {
-        // Parse React Navigation route
-        const [routeName, params] = parseRoute(path);
-        navigationRef.navigate(routeName, params);
-      }
+      router.push(path as never);
     },
     replace(path: string) {
-      if (navigationRef?.isReady()) {
-        const [routeName, params] = parseRoute(path);
-        navigationRef.reset({
-          index: 0,
-          routes: [{ name: routeName, params }],
-        });
-      }
+      router.replace(path as never);
     },
     back() {
-      if (navigationRef?.isReady() && navigationRef.canGoBack()) {
-        navigationRef.goBack();
+      if (router.canGoBack()) {
+        router.back();
       }
     },
     canGoBack(): boolean {
-      return navigationRef?.canGoBack() || false;
+      return router.canGoBack();
     },
   });
 
-  // Setup storage adapter using Expo SecureStore
+  // Storage adapter using Expo SecureStore
   setStorageAdapter({
     async getItem(key: string): Promise<string | null> {
       return await SecureStore.getItemAsync(key);
@@ -82,15 +56,13 @@ export function setupPlatformAdapters() {
       await SecureStore.deleteItemAsync(key);
     },
     async clear(): Promise<void> {
-      // Note: SecureStore doesn't have a clear all method
-      // In practice, you'd need to track keys separately
       console.warn(
         'SecureStore.clear() not implemented - would need to track keys'
       );
     },
   });
 
-  // Setup toast adapter (using react-native-toast-message API)
+  // Toast adapter
   setToastAdapter({
     show(options) {
       Toast.show({
@@ -127,24 +99,23 @@ export function setupPlatformAdapters() {
     },
   });
 
-  // Setup device info
+  // Device info
   setDeviceInfo({
     platform: 'mobile',
     isWeb: false,
     isMobile: true,
   });
 
-  // Setup layout info
+  // Layout info
   const screen = Dimensions.get('screen');
   const window = Dimensions.get('window');
 
   setLayoutInfo({
     screen: { width: screen.width, height: screen.height },
     window: { width: window.width, height: window.height },
-    statusBarHeight: Platform.OS === 'ios' ? 20 : 0, // Basic implementation
+    statusBarHeight: Platform.OS === 'ios' ? 20 : 0,
   });
 
-  // Listen for dimension changes
   const subscription = Dimensions.addEventListener(
     'change',
     ({ screen, window }) => {
@@ -156,13 +127,12 @@ export function setupPlatformAdapters() {
     }
   );
 
-  // Setup keyboard handling
+  // Keyboard handling
   setDismissKeyboardFunction(() => {
     Keyboard.dismiss();
   });
 
-  // Setup keyboard event listeners
-  const keyboardDidShowListener: KeyboardEventListener = e => {
+  const keyboardDidShowListener: KeyboardEventListener = (e) => {
     setKeyboardState({
       isVisible: true,
       height: e.endCoordinates.height,
@@ -174,7 +144,7 @@ export function setupPlatformAdapters() {
     });
   };
 
-  const keyboardDidHideListener: KeyboardEventListener = e => {
+  const keyboardDidHideListener: KeyboardEventListener = (e) => {
     setKeyboardState({
       isVisible: false,
       height: 0,
@@ -195,44 +165,11 @@ export function setupPlatformAdapters() {
     keyboardDidHideListener
   );
 
-  // Return cleanup function
   return () => {
     subscription?.remove();
     keyboardShowSubscription.remove();
     keyboardHideSubscription.remove();
   };
-}
-
-/** Parsed route type - tuple of route name and params */
-type ParsedRoute = [string, Record<string, string | undefined>];
-
-/**
- * Parse web-style routes into React Navigation format
- */
-function parseRoute(path: string): ParsedRoute {
-  // Convert web paths to React Navigation routes
-  // Example: "/event/123" -> ["Event", { eventId: "123" }]
-
-  if (path === '/' || path === '/home') {
-    return ['Home', {}];
-  }
-
-  if (path === '/auth') {
-    return ['Auth', {}];
-  }
-
-  if (path.startsWith('/event/')) {
-    const eventId = path.split('/')[2];
-    return ['Event', { eventId }];
-  }
-
-  if (path.startsWith('/profile')) {
-    const userId = path.split('/')[2];
-    return ['Profile', userId ? { userId } : {}];
-  }
-
-  // Default to Home
-  return ['Home', {}];
 }
 
 /**

@@ -11,6 +11,10 @@
     "playwright": {
       "command": "pnpx",
       "args": ["@playwright/mcp@latest"]
+    },
+    "uniwind": {
+      "type": "http",
+      "url": "https://docs.uniwind.dev/mcp"
     }
   }
 }

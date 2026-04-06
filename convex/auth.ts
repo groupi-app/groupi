@@ -247,6 +247,9 @@ export const createAuthOptions = (
       }),
       admin(),
       apiKey(),
+      // TODO: Re-enable expo() plugin when mobile auth is ready for e2e testing.
+      // Currently breaks web OAuth callbacks (500 on /api/auth/callback/*).
+      // expo(),
       multiSession({
         maximumSessions: 5,
       }),
@@ -280,6 +283,9 @@ export const createAuthOptions = (
       ...(siteUrl?.includes('://www.')
         ? [siteUrl.replace('://www.', '://')]
         : []),
+      'groupi://',
+      'exp://',
+      'exp://**',
     ].filter(Boolean),
   };
 };
