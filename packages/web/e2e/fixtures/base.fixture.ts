@@ -96,7 +96,10 @@ async function authenticateUser(
       const result = await response.json();
 
       if (result.magicLinkUrl) {
-        await page.goto(result.magicLinkUrl);
+        // Rewrite URL to use actual deployment base URL (Convex may return localhost)
+        const parsed = new URL(result.magicLinkUrl);
+        const rewrittenUrl = `${baseURL}${parsed.pathname}${parsed.search}`;
+        await page.goto(rewrittenUrl);
         // Wait for navigation to complete - use domcontentloaded instead of networkidle
         await page.waitForURL(/\/(events|onboarding|create|settings)/, {
           timeout: 10000,
@@ -107,9 +110,13 @@ async function authenticateUser(
     }
 
     // Fallback: Create magic link token directly (bypasses email sending)
-    const magicLinkUrl = await seeder.createMagicLinkToken(email);
+    let magicLinkUrl = await seeder.createMagicLinkToken(email);
 
     if (magicLinkUrl) {
+      // The Convex mutation generates URLs using SITE_URL (may be localhost).
+      // Rewrite to use the actual deployment base URL.
+      const parsed = new URL(magicLinkUrl);
+      magicLinkUrl = `${baseURL}${parsed.pathname}${parsed.search}`;
       await page.goto(magicLinkUrl);
       // Wait for redirect after magic link verification
       await page.waitForURL(/\/(events|onboarding|create|settings|sign-in)/, {
