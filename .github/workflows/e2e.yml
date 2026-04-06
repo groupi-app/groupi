@@ -1,9 +1,11 @@
 name: E2E Tests
 
 on:
-  # Trigger on Vercel deployment success
-  deployment_status:
-  # Also allow manual trigger for debugging
+  # Disabled: E2E auth requires Convex SITE_URL to match the deployment URL.
+  # Preview deployments use localhost:3000 as SITE_URL, causing magic link
+  # verification to fail. Re-enable when SITE_URL is dynamically configured.
+  # deployment_status:
+  # Manual trigger only for now
   workflow_dispatch:
     inputs:
       deployment_url:
