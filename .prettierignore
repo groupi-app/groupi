@@ -87,9 +87,10 @@ jspm_packages/
 # Serverless directories
 .serverless
 
-# IDE
+# IDE and local config
 .vscode
 .idea
+.claude/settings.local.json
 
 # OS
 .DS_Store
@@ -99,13 +100,13 @@ Thumbs.db
 tmp/
 temp/
 
-# Package manager lock files (optional - uncomment if you want to ignore them)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+# Package manager lock files
+pnpm-lock.yaml
 
-# Generated types
+# Generated types and files
 *.d.ts
+packages/web/lib/_generated-changelog.ts
+packages/web/styles/_generated-tokens.css
 
 # Storybook build outputs
 storybook-static
@@ -125,6 +126,9 @@ docs/.vitepress/cache
 
 # Cypress config
 cypress.config.ts
+
+# iOS build output (CocoaPods, Xcode)
+packages/mobile/ios/
 
 # AI agent skills (third-party, not our code)
 .agents/

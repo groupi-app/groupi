@@ -103,20 +103,20 @@ This restores all project skills from `skills-lock.json` into your local agent d
 
 ### What's included
 
-| Skill | Purpose |
-| ----- | ------- |
-| `convex` | General Convex patterns |
-| `convex-best-practices` | Convex function best practices |
-| `convex-schema-validator` | Schema validation patterns |
-| `convex-realtime` | Real-time subscription patterns |
-| `convex-cron-jobs` | Scheduled function patterns |
-| `native-data-fetching` | Official Expo data fetching |
-| `expo-react-native-typescript` | Expo + React Native + TypeScript |
+| Skill                           | Purpose                               |
+| ------------------------------- | ------------------------------------- |
+| `convex`                        | General Convex patterns               |
+| `convex-best-practices`         | Convex function best practices        |
+| `convex-schema-validator`       | Schema validation patterns            |
+| `convex-realtime`               | Real-time subscription patterns       |
+| `convex-cron-jobs`              | Scheduled function patterns           |
+| `native-data-fetching`          | Official Expo data fetching           |
+| `expo-react-native-typescript`  | Expo + React Native + TypeScript      |
 | `expo-react-native-performance` | React Native performance optimization |
-| `vitest` | Vitest testing patterns |
-| `vercel-react-best-practices` | React/Next.js performance |
-| `vercel-composition-patterns` | React composition patterns |
-| `shadcn` | shadcn/ui component management |
+| `vitest`                        | Vitest testing patterns               |
+| `vercel-react-best-practices`   | React/Next.js performance             |
+| `vercel-composition-patterns`   | React composition patterns            |
+| `shadcn`                        | shadcn/ui component management        |
 
 ### Managing skills
 
