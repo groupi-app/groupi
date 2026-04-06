@@ -241,17 +241,9 @@
   --z-index-overlay: 100;
 
   /* Typography */
-  --font-sans:
-    var(--font-sans), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif;
-  --font-heading:
-    var(--font-heading), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif;
-  --font-mono:
-    'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-heading: var(--font-heading), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: "Fira Code", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* Animation tokens */
   --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -361,14 +353,10 @@
   --fun-party: hsl(330 100% 60%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.1);
   --shadow-glow: 0 0 20px 0 hsl(285 100% 34% / 0.3);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.1);
@@ -471,14 +459,10 @@
   --fun-party: hsl(330 85% 62%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
   --shadow-glow: 0 0 20px 0 hsl(280 85% 60% / 0.35);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
@@ -581,14 +565,10 @@
   --fun-party: hsl(330 100% 60%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.1);
   --shadow-glow: 0 0 20px 0 hsl(285 100% 34% / 0.3);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.1);
@@ -691,14 +671,10 @@
   --fun-party: hsl(330 85% 62%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
   --shadow-glow: 0 0 20px 0 hsl(280 85% 60% / 0.35);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
@@ -907,17 +883,10 @@
   --fun-party: hsl(170 80% 45%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 hsl(200 30% 20% / 0.08), 0 1px 2px -1px hsl(200 30% 20% / 0.08);
-  --shadow-floating:
-    0 4px 6px -1px hsl(200 30% 20% / 0.08),
-    0 2px 4px -2px hsl(200 30% 20% / 0.08);
-  --shadow-overlay:
-    0 20px 25px -5px hsl(200 30% 20% / 0.1),
-    0 8px 10px -6px hsl(200 30% 20% / 0.08);
-  --shadow-popup:
-    0 10px 15px -3px hsl(200 30% 20% / 0.08),
-    0 4px 6px -4px hsl(200 30% 20% / 0.08);
+  --shadow-raised: 0 1px 3px 0 hsl(200 30% 20% / 0.08), 0 1px 2px -1px hsl(200 30% 20% / 0.08);
+  --shadow-floating: 0 4px 6px -1px hsl(200 30% 20% / 0.08), 0 2px 4px -2px hsl(200 30% 20% / 0.08);
+  --shadow-overlay: 0 20px 25px -5px hsl(200 30% 20% / 0.1), 0 8px 10px -6px hsl(200 30% 20% / 0.08);
+  --shadow-popup: 0 10px 15px -3px hsl(200 30% 20% / 0.08), 0 4px 6px -4px hsl(200 30% 20% / 0.08);
   --shadow-pop: 0 4px 0 0 hsl(200 30% 20% / 0.08);
   --shadow-glow: 0 0 20px 0 hsl(200 85% 40% / 0.3);
   --shadow-bounce: 0 2px 0 0 hsl(200 30% 20% / 0.08);
@@ -1020,15 +989,10 @@
   --fun-party: hsl(170 80% 55%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 hsl(210 50% 5% / 0.3), 0 1px 2px -1px hsl(210 50% 5% / 0.3);
-  --shadow-floating:
-    0 4px 6px -1px hsl(210 50% 5% / 0.4), 0 2px 4px -2px hsl(210 50% 5% / 0.3);
-  --shadow-overlay:
-    0 20px 25px -5px hsl(210 50% 5% / 0.4),
-    0 8px 10px -6px hsl(210 50% 5% / 0.3);
-  --shadow-popup:
-    0 10px 15px -3px hsl(210 50% 5% / 0.4), 0 4px 6px -4px hsl(210 50% 5% / 0.3);
+  --shadow-raised: 0 1px 3px 0 hsl(210 50% 5% / 0.3), 0 1px 2px -1px hsl(210 50% 5% / 0.3);
+  --shadow-floating: 0 4px 6px -1px hsl(210 50% 5% / 0.4), 0 2px 4px -2px hsl(210 50% 5% / 0.3);
+  --shadow-overlay: 0 20px 25px -5px hsl(210 50% 5% / 0.4), 0 8px 10px -6px hsl(210 50% 5% / 0.3);
+  --shadow-popup: 0 10px 15px -3px hsl(210 50% 5% / 0.4), 0 4px 6px -4px hsl(210 50% 5% / 0.3);
   --shadow-pop: 0 4px 0 0 hsl(210 50% 5% / 0.3);
   --shadow-glow: 0 0 20px 0 hsl(200 85% 55% / 0.4);
   --shadow-bounce: 0 2px 0 0 hsl(210 50% 5% / 0.3);
@@ -1131,14 +1095,10 @@
   --fun-party: hsl(348 79% 81%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-pop: 0 4px 0 0 hsl(348 60% 75% / 0.4);
   --shadow-glow: 0 0 25px 3px hsl(348 79% 81% / 0.35);
   --shadow-bounce: 0 2px 0 0 hsl(348 60% 75% / 0.4);
@@ -1241,14 +1201,10 @@
   --fun-party: hsl(348 79% 81%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
   --shadow-pop: 0 4px 0 0 hsl(197 80% 40% / 0.5);
   --shadow-glow: 0 0 30px 5px hsl(197 94% 67% / 0.4);
   --shadow-bounce: 0 2px 0 0 hsl(197 80% 40% / 0.5);
@@ -1351,16 +1307,10 @@
   --fun-party: hsl(340 75% 55%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 hsl(20 30% 15% / 0.08), 0 1px 2px -1px hsl(20 30% 15% / 0.08);
-  --shadow-floating:
-    0 4px 6px -1px hsl(20 30% 15% / 0.1), 0 2px 4px -2px hsl(20 30% 15% / 0.08);
-  --shadow-overlay:
-    0 20px 25px -5px hsl(20 30% 15% / 0.12),
-    0 8px 10px -6px hsl(20 30% 15% / 0.08);
-  --shadow-popup:
-    0 10px 15px -3px hsl(20 30% 15% / 0.1),
-    0 4px 6px -4px hsl(20 30% 15% / 0.08);
+  --shadow-raised: 0 1px 3px 0 hsl(20 30% 15% / 0.08), 0 1px 2px -1px hsl(20 30% 15% / 0.08);
+  --shadow-floating: 0 4px 6px -1px hsl(20 30% 15% / 0.1), 0 2px 4px -2px hsl(20 30% 15% / 0.08);
+  --shadow-overlay: 0 20px 25px -5px hsl(20 30% 15% / 0.12), 0 8px 10px -6px hsl(20 30% 15% / 0.08);
+  --shadow-popup: 0 10px 15px -3px hsl(20 30% 15% / 0.1), 0 4px 6px -4px hsl(20 30% 15% / 0.08);
   --shadow-pop: 0 4px 0 0 hsl(20 30% 15% / 0.1);
   --shadow-glow: 0 0 15px 0 hsl(15 85% 55% / 0.25);
   --shadow-bounce: 0 2px 0 0 hsl(20 30% 15% / 0.1);
@@ -1463,14 +1413,10 @@
   --fun-party: hsl(340 75% 62%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
   --shadow-glow: 0 0 20px 0 hsl(15 85% 58% / 0.35);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
@@ -1573,17 +1519,10 @@
   --fun-party: hsl(85 50% 48%);
 
   /* Shadow tokens */
-  --shadow-raised:
-    0 1px 3px 0 hsl(150 30% 15% / 0.08), 0 1px 2px -1px hsl(150 30% 15% / 0.08);
-  --shadow-floating:
-    0 4px 6px -1px hsl(150 30% 15% / 0.1),
-    0 2px 4px -2px hsl(150 30% 15% / 0.08);
-  --shadow-overlay:
-    0 20px 25px -5px hsl(150 30% 15% / 0.12),
-    0 8px 10px -6px hsl(150 30% 15% / 0.08);
-  --shadow-popup:
-    0 10px 15px -3px hsl(150 30% 15% / 0.1),
-    0 4px 6px -4px hsl(150 30% 15% / 0.08);
+  --shadow-raised: 0 1px 3px 0 hsl(150 30% 15% / 0.08), 0 1px 2px -1px hsl(150 30% 15% / 0.08);
+  --shadow-floating: 0 4px 6px -1px hsl(150 30% 15% / 0.1), 0 2px 4px -2px hsl(150 30% 15% / 0.08);
+  --shadow-overlay: 0 20px 25px -5px hsl(150 30% 15% / 0.12), 0 8px 10px -6px hsl(150 30% 15% / 0.08);
+  --shadow-popup: 0 10px 15px -3px hsl(150 30% 15% / 0.1), 0 4px 6px -4px hsl(150 30% 15% / 0.08);
   --shadow-pop: 0 4px 0 0 hsl(150 30% 15% / 0.1);
   --shadow-glow: 0 0 15px 0 hsl(150 55% 38% / 0.25);
   --shadow-bounce: 0 2px 0 0 hsl(150 30% 15% / 0.1);
@@ -1686,14 +1625,10 @@
   --fun-party: hsl(85 55% 55%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.4);
   --shadow-glow: 0 0 20px 0 hsl(150 55% 45% / 0.35);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.4);
@@ -1796,14 +1731,10 @@
   --fun-party: hsl(320 95% 62%);
 
   /* Shadow tokens (dark mode) */
-  --shadow-raised:
-    0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-  --shadow-floating:
-    0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --shadow-overlay:
-    0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --shadow-popup:
-    0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-floating: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --shadow-popup: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
   --shadow-pop: 0 4px 0 0 rgb(0 0 0 / 0.5);
   --shadow-glow: 0 0 30px 5px hsl(320 95% 60% / 0.4);
   --shadow-bounce: 0 2px 0 0 rgb(0 0 0 / 0.5);
