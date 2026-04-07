@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Mail, Check, Clock, Users } from 'lucide-react';
+import { X, Mail, Check, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -65,12 +65,6 @@ export function EmailInviteItem({
           >
             <Check className='size-3 mr-1' />
             Sent
-          </Badge>
-        )}
-        {emailStatus === 'pending' && (
-          <Badge variant='outline' className='text-muted-foreground'>
-            <Clock className='size-3 mr-1' />
-            Pending
           </Badge>
         )}
 
