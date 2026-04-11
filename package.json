@@ -55,7 +55,7 @@
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
     "convex": "^1.31.4",
-    "next": "^16.1.5"
+    "next": "^16.2.3"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
