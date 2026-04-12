@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+import { PortalHost } from '@rn-primitives/portal';
 
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import { ThemeProvider } from '@/theme/theme-provider';
@@ -29,18 +30,65 @@ export default function RootLayout() {
           <ConvexClientProvider>
             <GlobalUserProvider>
               <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name='(auth)' />
+                <Stack.Screen name='(tabs)' />
                 <Stack.Screen
-                  name="event/[eventId]"
+                  name='onboarding'
+                  options={{
+                    gestureEnabled: false,
+                    animation: 'fade',
+                  }}
+                />
+                <Stack.Screen
+                  name='event/[eventId]'
                   options={{
                     gestureEnabled: true,
                     gestureDirection: 'horizontal',
                     animation: 'slide_from_right',
                   }}
                 />
+                <Stack.Screen
+                  name='create-event/index'
+                  options={{
+                    presentation: 'modal',
+                    gestureEnabled: true,
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name='friends/index'
+                  options={{
+                    presentation: 'modal',
+                    gestureEnabled: true,
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name='profile/[userId]'
+                  options={{
+                    gestureEnabled: true,
+                    gestureDirection: 'horizontal',
+                    animation: 'slide_from_right',
+                  }}
+                />
+                <Stack.Screen
+                  name='settings'
+                  options={{
+                    gestureEnabled: true,
+                    gestureDirection: 'horizontal',
+                    animation: 'slide_from_right',
+                  }}
+                />
+                <Stack.Screen
+                  name='invite/[inviteId]'
+                  options={{
+                    presentation: 'modal',
+                    gestureEnabled: true,
+                  }}
+                />
               </Stack>
-              <StatusBar style="auto" />
+              <StatusBar style='auto' />
+              <PortalHost />
               <Toast />
             </GlobalUserProvider>
           </ConvexClientProvider>

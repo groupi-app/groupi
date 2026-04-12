@@ -32,11 +32,7 @@ export function LogoSticker({
 
   useEffect(() => {
     if (waving) {
-      rotation.value = withRepeat(
-        withTiming(-8, { duration: 400 }),
-        -1,
-        true
-      );
+      rotation.value = withRepeat(withTiming(-8, { duration: 400 }), -1, true);
     } else {
       rotation.value = 0;
     }
@@ -56,8 +52,8 @@ export function LogoSticker({
   return (
     <View style={{ width, height }}>
       {/* Body + head (static) */}
-      <Svg width={width} height={height} viewBox={VIEWBOX} fill="none">
-        <G stroke="white" strokeWidth={12} fill="none">
+      <Svg width={width} height={height} viewBox={VIEWBOX} fill='none'>
+        <G stroke='white' strokeWidth={12} fill='none'>
           <Path d={HEAD_PATH} />
           <Path d={BODY_PATH} />
         </G>
@@ -73,8 +69,8 @@ export function LogoSticker({
           armStyle,
         ]}
       >
-        <Svg width={width} height={height} viewBox={VIEWBOX} fill="none">
-          <Path d={ARM_PATH} stroke="white" strokeWidth={12} fill="none" />
+        <Svg width={width} height={height} viewBox={VIEWBOX} fill='none'>
+          <Path d={ARM_PATH} stroke='white' strokeWidth={12} fill='none' />
           <Path d={ARM_PATH} fill={color} />
         </Svg>
       </Animated.View>

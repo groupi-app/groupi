@@ -2,6 +2,7 @@
 @import 'uniwind';
 
 @source './src';
+@source './app';
 
 @theme {
   /* Border Radius - Component Tokens */

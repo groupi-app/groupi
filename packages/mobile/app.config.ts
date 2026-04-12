@@ -6,7 +6,6 @@ export default {
   scheme: 'groupi',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: true,
   splash: {
     image: './assets/splash-icon.png',
     resizeMode: 'contain' as const,

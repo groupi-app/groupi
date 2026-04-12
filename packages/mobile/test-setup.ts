@@ -52,12 +52,18 @@ vi.mock('expo-router', () => ({
     canGoBack: vi.fn(() => true),
   })),
   Link: vi.fn(({ children }: { children: React.ReactNode }) => children),
-  Stack: Object.assign(vi.fn(({ children }: { children?: React.ReactNode }) => children), {
-    Screen: vi.fn(() => null),
-  }),
-  Tabs: Object.assign(vi.fn(({ children }: { children?: React.ReactNode }) => children), {
-    Screen: vi.fn(() => null),
-  }),
+  Stack: Object.assign(
+    vi.fn(({ children }: { children?: React.ReactNode }) => children),
+    {
+      Screen: vi.fn(() => null),
+    }
+  ),
+  Tabs: Object.assign(
+    vi.fn(({ children }: { children?: React.ReactNode }) => children),
+    {
+      Screen: vi.fn(() => null),
+    }
+  ),
   Redirect: vi.fn(() => null),
 }));
 
@@ -87,14 +93,20 @@ vi.mock('expo-status-bar', () => ({
 
 // Mock Safe Area
 vi.mock('react-native-safe-area-context', () => ({
-  SafeAreaProvider: vi.fn(({ children }: { children: React.ReactNode }) => children),
-  SafeAreaView: vi.fn(({ children }: { children: React.ReactNode }) => children),
+  SafeAreaProvider: vi.fn(
+    ({ children }: { children: React.ReactNode }) => children
+  ),
+  SafeAreaView: vi.fn(
+    ({ children }: { children: React.ReactNode }) => children
+  ),
   useSafeAreaInsets: vi.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
 }));
 
 // Mock Gesture Handler
 vi.mock('react-native-gesture-handler', () => ({
-  GestureHandlerRootView: vi.fn(({ children }: { children: React.ReactNode }) => children),
+  GestureHandlerRootView: vi.fn(
+    ({ children }: { children: React.ReactNode }) => children
+  ),
 }));
 
 // Mock Reanimated v4
@@ -153,12 +165,16 @@ vi.mock('@/lib/auth-client', () => ({
 
 // Mock Convex Provider
 vi.mock('@/providers/convex-provider', () => ({
-  ConvexClientProvider: vi.fn(({ children }: { children: React.ReactNode }) => children),
+  ConvexClientProvider: vi.fn(
+    ({ children }: { children: React.ReactNode }) => children
+  ),
 }));
 
 // Mock Convex Better Auth Provider
 vi.mock('@convex-dev/better-auth/react', () => ({
-  ConvexBetterAuthProvider: vi.fn(({ children }: { children: React.ReactNode }) => children),
+  ConvexBetterAuthProvider: vi.fn(
+    ({ children }: { children: React.ReactNode }) => children
+  ),
 }));
 
 // Mock Convex generated API

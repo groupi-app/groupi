@@ -49,6 +49,7 @@ export type ExtendedIdentity = {
 import {
   username,
   magicLink,
+  emailOTP,
   admin,
   oneTap,
   multiSession,
@@ -56,6 +57,7 @@ import {
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
+import { expo } from '@better-auth/expo';
 
 // Import local schema for Better Auth component (local install)
 import authSchema from './betterAuth/schema';
@@ -227,6 +229,59 @@ export const createAuthOptions = (
             // Warn if neither Resend nor debug logging is configured
             console.warn(
               `⚠️ Magic link requested for ${email} but RESEND_API_KEY is not configured and DEBUG_MAGIC_LINKS is not enabled`
+            );
+          }
+        },
+      }),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 15 * 60, // 15 minutes
+        async sendVerificationOTP({ email, otp, type }) {
+          if (type !== 'sign-in') return;
+
+          if (process.env.DEBUG_MAGIC_LINKS === 'true') {
+            console.log(`🔢 OTP CODE for ${email}: ${otp}`);
+          }
+
+          if (resendClient) {
+            try {
+              await resendClient.emails.send({
+                from:
+                  process.env.RESEND_FROM_EMAIL || 'Groupi <noreply@groupi.gg>',
+                to: email,
+                subject: `${otp} is your Groupi sign-in code`,
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #8b00b8; margin: 0;">Groupi</h1>
+                      </div>
+                      <h2 style="color: #1f2937;">Your sign-in code</h2>
+                      <p>Enter this code in the app to sign in. It expires in 5 minutes.</p>
+                      <div style="margin: 30px 0; text-align: center;">
+                        <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #8b00b8; background: #f3e8ff; padding: 16px 32px; border-radius: 12px; display: inline-block;">
+                          ${otp}
+                        </span>
+                      </div>
+                      <p style="color: #6b7280; font-size: 14px;">
+                        If you didn't request this code, you can safely ignore it.
+                      </p>
+                    </body>
+                  </html>
+                `,
+              });
+              console.log(`📧 OTP email sent to ${email}`);
+            } catch (error) {
+              console.error(`Failed to send OTP email to ${email}:`, error);
+            }
+          } else if (!process.env.DEBUG_MAGIC_LINKS) {
+            console.warn(
+              `⚠️ OTP requested for ${email} but RESEND_API_KEY is not configured`
             );
           }
         },

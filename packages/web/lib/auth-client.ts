@@ -6,6 +6,7 @@ import { convexClient } from '@convex-dev/better-auth/client/plugins';
 // Import your existing plugins
 import { usernameClient } from 'better-auth/client/plugins';
 import { magicLinkClient } from 'better-auth/client/plugins';
+import { emailOTPClient } from 'better-auth/client/plugins';
 import { oneTapClient } from 'better-auth/client/plugins';
 import { adminClient } from 'better-auth/client/plugins';
 import { apiKeyClient } from '@better-auth/api-key/client';
@@ -38,6 +39,7 @@ const baseAuthClient = createAuthClient({
     convexClient(),
     usernameClient(),
     magicLinkClient(),
+    emailOTPClient(),
     adminClient(),
     apiKeyClient(),
     passkeyClient(),

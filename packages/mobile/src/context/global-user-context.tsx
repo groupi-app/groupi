@@ -3,7 +3,6 @@ import {
   useContext,
   ReactNode,
   useMemo,
-  useRef,
   useEffect,
   useState,
 } from 'react';
@@ -80,21 +79,27 @@ export function GlobalUserProvider({ children }: { children: ReactNode }) {
   } = useConvexAuth();
 
   const isActive = useIsAppActive();
-  const cachedUserAndPersonRef = useRef<UserAndPersonData>(undefined);
-  const cachedNeedsOnboardingRef = useRef<boolean | null | undefined>(
-    undefined
-  );
 
-  // Clear cached data when session identity changes
-  const previousSessionUserIdRef = useRef(
-    (session as { user?: { id?: string } } | null)?.user?.id
-  );
+  // Cache query results in state to avoid ref-during-render lint errors
+  const [cachedUserAndPerson, setCachedUserAndPerson] =
+    useState<UserAndPersonData>(undefined);
+  const [cachedNeedsOnboarding, setCachedNeedsOnboarding] = useState<
+    boolean | null | undefined
+  >(undefined);
+  const [prevSessionUserId, setPrevSessionUserId] = useState<
+    string | undefined
+  >(undefined);
+
+  // Clear cached data when session identity changes (inline state update)
   const currentSessionUserId = (session as { user?: { id?: string } } | null)
     ?.user?.id;
-  if (currentSessionUserId !== previousSessionUserIdRef.current) {
-    cachedUserAndPersonRef.current = undefined;
-    cachedNeedsOnboardingRef.current = undefined;
-    previousSessionUserIdRef.current = currentSessionUserId;
+
+  if (currentSessionUserId !== prevSessionUserId) {
+    setPrevSessionUserId(currentSessionUserId);
+    if (prevSessionUserId !== undefined) {
+      setCachedUserAndPerson(undefined);
+      setCachedNeedsOnboarding(undefined);
+    }
   }
 
   const userAndPersonResult = useQuery(
@@ -102,13 +107,18 @@ export function GlobalUserProvider({ children }: { children: ReactNode }) {
     isConvexAuthenticated && isActive ? {} : 'skip'
   );
 
-  if (userAndPersonResult !== undefined) {
-    cachedUserAndPersonRef.current = userAndPersonResult;
+  // Cache query results when they arrive. This is an intentional sync pattern
+  // to preserve data across Convex subscription reconnects.
+  if (
+    userAndPersonResult !== undefined &&
+    userAndPersonResult !== cachedUserAndPerson
+  ) {
+    setCachedUserAndPerson(userAndPersonResult);
   }
 
   const userAndPerson =
     userAndPersonResult === undefined
-      ? cachedUserAndPersonRef.current
+      ? cachedUserAndPerson
       : userAndPersonResult;
 
   const needsOnboardingResult = useQuery(
@@ -116,21 +126,23 @@ export function GlobalUserProvider({ children }: { children: ReactNode }) {
     isConvexAuthenticated && isActive ? {} : 'skip'
   );
 
-  if (needsOnboardingResult !== undefined) {
-    cachedNeedsOnboardingRef.current = needsOnboardingResult;
+  if (
+    needsOnboardingResult !== undefined &&
+    needsOnboardingResult !== cachedNeedsOnboarding
+  ) {
+    setCachedNeedsOnboarding(needsOnboardingResult);
   }
 
   const needsOnboarding =
     needsOnboardingResult === undefined
-      ? cachedNeedsOnboardingRef.current
+      ? cachedNeedsOnboarding
       : needsOnboardingResult;
 
-  const isLoading =
-    isSessionPending ||
-    isConvexAuthLoading ||
-    (isConvexAuthenticated && userAndPerson === undefined);
+  const isLoading = isSessionPending || isConvexAuthLoading;
 
-  const isAuthenticated = isConvexAuthenticated && !!userAndPerson?.user;
+  // Use isConvexAuthenticated as the primary auth check.
+  // Don't require userAndPerson - users who need onboarding won't have a person record yet.
+  const isAuthenticated = isConvexAuthenticated;
 
   const user = userAndPerson?.user ?? null;
   const person = userAndPerson?.person ?? null;

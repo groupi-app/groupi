@@ -4,7 +4,12 @@
  */
 
 import React from 'react';
-import { Dimensions, Keyboard, KeyboardEventListener, Platform } from 'react-native';
+import {
+  Dimensions,
+  Keyboard,
+  KeyboardEventListener,
+  Platform,
+} from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
@@ -132,7 +137,7 @@ export function setupPlatformAdapters() {
     Keyboard.dismiss();
   });
 
-  const keyboardDidShowListener: KeyboardEventListener = (e) => {
+  const keyboardDidShowListener: KeyboardEventListener = e => {
     setKeyboardState({
       isVisible: true,
       height: e.endCoordinates.height,
@@ -144,7 +149,7 @@ export function setupPlatformAdapters() {
     });
   };
 
-  const keyboardDidHideListener: KeyboardEventListener = (e) => {
+  const keyboardDidHideListener: KeyboardEventListener = e => {
     setKeyboardState({
       isVisible: false,
       height: 0,

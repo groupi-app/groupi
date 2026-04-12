@@ -2,12 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
-    "lib": [
-      "esnext"
-    ],
-    "types": [
-      "node"
-    ],
+    "lib": ["esnext"],
+    "types": ["node"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -25,18 +21,10 @@
     "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@groupi/shared": [
-        "../shared/src"
-      ],
-      "@groupi/shared/*": [
-        "../shared/src/*"
-      ],
-      "convex/_generated/*": [
-        "../../convex/_generated/*"
-      ]
+      "@/*": ["./src/*"],
+      "@groupi/shared": ["../shared/src"],
+      "@groupi/shared/*": ["../shared/src/*"],
+      "convex/_generated/*": ["../../convex/_generated/*"]
     }
   },
   "include": [
@@ -47,9 +35,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".expo"
-  ]
+  "exclude": ["node_modules", "dist", ".expo"]
 }

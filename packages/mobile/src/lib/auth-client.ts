@@ -3,6 +3,7 @@ import { convexClient } from '@convex-dev/better-auth/client/plugins';
 import {
   usernameClient,
   magicLinkClient,
+  emailOTPClient,
 } from 'better-auth/client/plugins';
 import { expoClient } from '@better-auth/expo/client';
 import * as SecureStore from 'expo-secure-store';
@@ -22,6 +23,7 @@ const baseAuthClient = createAuthClient({
     convexClient(),
     usernameClient(),
     magicLinkClient(),
+    emailOTPClient(),
     expoClient({
       scheme: 'groupi',
       storagePrefix: 'groupi',
