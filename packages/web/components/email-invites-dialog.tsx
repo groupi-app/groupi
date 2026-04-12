@@ -15,7 +15,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Icons } from '@/components/icons';
 import {
   LocalEmailInviteItem,
   EmailInviteItem,
@@ -100,8 +99,6 @@ export function EmailInvitesDialog({
       (invite: BaseInvite): invite is InviteWithEmail => invite.hasEmail
     );
   }, [inviteData]);
-
-  const pendingCount = inviteData?.pendingEmailCount || 0;
 
   // Handle manual add
   const handleManualAdd = useCallback(() => {
@@ -242,34 +239,22 @@ export function EmailInvitesDialog({
     [deleteInvites]
   );
 
-  // Handle save (create invites on server)
-  const handleSave = useCallback(async () => {
-    if (localInvites.length === 0) return;
-
-    await createEmailInvites({
-      invites: localInvites,
-      customMessage: customMessage.trim() || undefined,
-    });
-
-    setLocalInvites([]);
-  }, [localInvites, customMessage, createEmailInvites]);
-
-  // Handle send emails
-  const handleSendEmails = useCallback(async () => {
+  // Handle send invites (create + send in one action)
+  const handleSendInvites = useCallback(async () => {
     setIsSending(true);
     try {
-      // First save any unsaved invites
       if (localInvites.length > 0) {
-        await handleSave();
+        await createEmailInvites({
+          invites: localInvites,
+          customMessage: customMessage.trim() || undefined,
+        });
+        setLocalInvites([]);
       }
       await sendEmailInvites();
     } finally {
       setIsSending(false);
     }
-  }, [localInvites.length, handleSave, sendEmailInvites]);
-
-  // Calculate total pending (local + server pending)
-  const totalPending = localInvites.length + pendingCount;
+  }, [localInvites, customMessage, createEmailInvites, sendEmailInvites]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -577,22 +562,10 @@ John Doe <john@example.com>; Jane Smith <jane@example.com>`}
         </div>
 
         {/* Footer with actions */}
-        <div className='flex items-center justify-between pt-4 border-t gap-4'>
-          {/* Save local invites button (if there are unsaved) */}
-          {localInvites.length > 0 && (
-            <Button variant='outline' onClick={handleSave}>
-              <Icons.check className='size-4 mr-2' />
-              Save {localInvites.length} invite
-              {localInvites.length !== 1 ? 's' : ''}
-            </Button>
-          )}
-
-          <div className='flex-1' />
-
-          {/* Send emails button */}
+        <div className='flex items-center justify-end pt-4 border-t gap-4'>
           <Button
-            onClick={handleSendEmails}
-            disabled={totalPending === 0 || isSending}
+            onClick={handleSendInvites}
+            disabled={localInvites.length === 0 || isSending}
             className='min-w-[150px]'
           >
             {isSending ? (
@@ -603,8 +576,8 @@ John Doe <john@example.com>; Jane Smith <jane@example.com>`}
             ) : (
               <>
                 <Send className='size-4 mr-2' />
-                Send emails
-                {totalPending > 0 && ` (${totalPending})`}
+                Send invites
+                {localInvites.length > 0 && ` (${localInvites.length})`}
               </>
             )}
           </Button>
