@@ -69,11 +69,9 @@ export function LinkedAccountsList({
     try {
       // Use Better Auth's linkSocial method
       // We need to intercept the redirect and open it in a new tab
-      const baseURL =
-        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-
-      // Try to get the redirect URL by making a fetch request with redirect: 'manual'
-      const response = await fetch(`${baseURL}/api/auth/link-social`, {
+      // Use relative URL to guarantee same-origin (avoids CORS issues from
+      // NEXT_PUBLIC_BASE_URL mismatches like www vs non-www)
+      const response = await fetch('/api/auth/link-social', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
