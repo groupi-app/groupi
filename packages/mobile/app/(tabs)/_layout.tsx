@@ -14,7 +14,7 @@ export default function TabsLayout() {
 
   const unreadCount = useQuery(
     api.notifications.queries.getUnreadNotificationCount,
-    isAuthenticated ? {} : 'skip',
+    isAuthenticated ? {} : 'skip'
   );
 
   const didRedirectRef = useRef(false);

@@ -20,13 +20,17 @@ export function SectionHeader({
         <Text variant='large'>{title}</Text>
         {count !== undefined ? (
           <View className='rounded-badge bg-muted px-1.5 py-0.5'>
-            <Text variant='muted' className='text-xs'>{count}</Text>
+            <Text variant='muted' className='text-xs'>
+              {count}
+            </Text>
           </View>
         ) : null}
       </View>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction}>
-          <Text className='text-sm font-medium text-primary'>{actionLabel}</Text>
+          <Text className='text-sm font-medium text-primary'>
+            {actionLabel}
+          </Text>
         </Pressable>
       ) : null}
     </View>

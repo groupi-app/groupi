@@ -3,7 +3,7 @@ import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { MAX_ATTACHMENTS } from '@/hooks/use-file-upload';
 
 interface AttachmentButtonProps {
@@ -26,6 +26,7 @@ export function AttachmentButton({
   disabled = false,
 }: AttachmentButtonProps) {
   const { pickMultipleImages, takePhoto } = useImagePicker();
+  const { showActionMenu } = useActionMenu();
 
   const remaining = MAX_ATTACHMENTS - currentCount;
   const isMaxed = remaining <= 0;
@@ -33,12 +34,13 @@ export function AttachmentButton({
   function handlePress() {
     if (disabled || isMaxed) return;
 
-    showActionSheet({
+    showActionMenu({
       title: 'Add Attachment',
       message: `${remaining} slot${remaining === 1 ? '' : 's'} remaining`,
       options: [
         {
           label: 'Photo Library',
+          icon: 'images-outline',
           onPress: async () => {
             const images = await pickMultipleImages({
               mediaTypes: ['images', 'videos'],
@@ -58,6 +60,7 @@ export function AttachmentButton({
         },
         {
           label: 'Take Photo',
+          icon: 'camera-outline',
           onPress: async () => {
             const photo = await takePhoto();
             if (photo) {

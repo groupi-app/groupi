@@ -24,7 +24,14 @@ export default function OnboardingScreen() {
     isLoading: isGlobalLoading,
     needsOnboarding,
   } = useGlobalUser();
-  console.log('[Onboarding] isAuthenticated:', isAuthenticated, 'isGlobalLoading:', isGlobalLoading, 'needsOnboarding:', needsOnboarding);
+  console.log(
+    '[Onboarding] isAuthenticated:',
+    isAuthenticated,
+    'isGlobalLoading:',
+    isGlobalLoading,
+    'needsOnboarding:',
+    needsOnboarding
+  );
 
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -126,8 +133,16 @@ export default function OnboardingScreen() {
         contentContainerStyle={{ paddingBottom: 32, paddingTop: 32 }}
         style={{ flex: 1, paddingHorizontal: 24 }}
       >
-        <Text className='text-3xl font-bold text-foreground' style={{ fontSize: 30, fontWeight: 'bold', color: '#1f2937' }}>Welcome!</Text>
-        <Text className='mt-2 text-base text-muted-foreground' style={{ marginTop: 8, fontSize: 16, color: '#6b7280' }}>
+        <Text
+          className='text-3xl font-bold text-foreground'
+          style={{ fontSize: 30, fontWeight: 'bold', color: '#1f2937' }}
+        >
+          Welcome!
+        </Text>
+        <Text
+          className='mt-2 text-base text-muted-foreground'
+          style={{ marginTop: 8, fontSize: 16, color: '#6b7280' }}
+        >
           Let&apos;s set up your profile to get started.
         </Text>
 
@@ -171,7 +186,12 @@ export default function OnboardingScreen() {
 
           <Button
             onPress={handleSubmit}
-            disabled={isSubmitting || !username.trim() || !!usernameError || !isAvailable}
+            disabled={
+              isSubmitting ||
+              !username.trim() ||
+              !!usernameError ||
+              !isAvailable
+            }
             className='mt-2'
           >
             <Text>{isSubmitting ? 'Setting up...' : 'Complete Setup'}</Text>

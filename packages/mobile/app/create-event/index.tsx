@@ -57,7 +57,7 @@ export default function CreateEventScreen() {
   // Date state
   const [dateType, setDateType] = useState<DateType>('none');
   const [singleDate, setSingleDate] = useState<Date>(
-    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   );
   const [showSinglePicker, setShowSinglePicker] = useState(false);
   const [dateOptions, setDateOptions] = useState<DateOption[]>([]);
@@ -69,10 +69,7 @@ export default function CreateEventScreen() {
   const isValid = title.trim().length > 0;
 
   function addDateOption(date: Date) {
-    setDateOptions(prev => [
-      ...prev,
-      { id: `date-${nextDateId++}`, date },
-    ]);
+    setDateOptions(prev => [...prev, { id: `date-${nextDateId++}`, date }]);
   }
 
   function removeDateOption(id: string) {
@@ -90,7 +87,7 @@ export default function CreateEventScreen() {
         const result = await uploadFile(
           imageFile.uri,
           imageFile.filename,
-          imageFile.mimeType,
+          imageFile.mimeType
         );
         if (result) {
           imageStorageId = result.storageId;
@@ -123,7 +120,7 @@ export default function CreateEventScreen() {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Failed to create event',
+        err instanceof Error ? err.message : 'Failed to create event'
       );
     } finally {
       setIsSubmitting(false);
@@ -281,11 +278,7 @@ export default function CreateEventScreen() {
                     <Text className='flex-1 text-base text-foreground'>
                       {formatDate(singleDate)}
                     </Text>
-                    <Ionicons
-                      name='chevron-down'
-                      size={16}
-                      color='#9ca3af'
-                    />
+                    <Ionicons name='chevron-down' size={16} color='#9ca3af' />
                   </Pressable>
                   {showSinglePicker ? (
                     <View className='mt-2'>
@@ -345,7 +338,11 @@ export default function CreateEventScreen() {
                     onPress={() => setShowMultiPicker(true)}
                     className='flex-row items-center gap-2 rounded-input border border-dashed border-border px-4 py-3'
                   >
-                    <Ionicons name='add-circle-outline' size={20} color='#8b00b8' />
+                    <Ionicons
+                      name='add-circle-outline'
+                      size={20}
+                      color='#8b00b8'
+                    />
                     <Text className='text-base font-medium text-primary'>
                       Add date option
                     </Text>

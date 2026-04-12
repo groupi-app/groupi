@@ -24,7 +24,10 @@ import {
 import { useAttachments } from '@/hooks/use-file-upload';
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
 import { BackButton } from '@/components/ui/back-button';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import {
+  useActionMenu,
+  type ActionMenuOption,
+} from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AttachmentGallery } from '@/components/attachments/attachment-gallery';
 import { AttachmentButton } from '@/components/attachments/attachment-button';
@@ -63,6 +66,7 @@ export default function PostDetailScreen() {
   const createReply = useCreateReply();
   const deletePost = useDeletePost();
   const deleteReply = useDeleteReply();
+  const { showActionMenu } = useActionMenu();
   const createAttachmentsBatch = useMutation(
     api.attachments.mutations.createAttachmentsBatch
   );
@@ -134,15 +138,12 @@ export default function PostDetailScreen() {
   }
 
   function handlePostActions() {
-    const options: {
-      label: string;
-      onPress: () => void;
-      destructive?: boolean;
-    }[] = [];
+    const options: ActionMenuOption[] = [];
 
     if (isAuthor) {
       options.push({
         label: 'Delete Post',
+        icon: 'trash-outline',
         destructive: true,
         onPress: () => {
           showConfirmDialog({
@@ -165,17 +166,18 @@ export default function PostDetailScreen() {
     }
 
     if (options.length > 0) {
-      showActionSheet({ title: 'Post Options', options });
+      showActionMenu({ title: 'Post Options', options });
     }
   }
 
   function handleReplyActions(replyId: string, isReplyAuthor: boolean) {
     if (!isReplyAuthor) return;
 
-    showActionSheet({
+    showActionMenu({
       options: [
         {
           label: 'Delete Reply',
+          icon: 'trash-outline',
           destructive: true,
           onPress: () => {
             showConfirmDialog({

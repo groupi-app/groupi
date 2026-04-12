@@ -5,7 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { BackButton } from '@/components/ui/back-button';
 import { Badge } from '@/components/ui/badge';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import {
+  useActionMenu,
+  type ActionMenuOption,
+} from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteEvent, useLeaveEvent } from '@/hooks/use-events';
 import { EventRsvp } from './event-rsvp';
@@ -59,6 +62,7 @@ export function EventHeader({
 }: EventHeaderProps) {
   const deleteEvent = useDeleteEvent();
   const leaveEvent = useLeaveEvent();
+  const { showActionMenu } = useActionMenu();
 
   const event = headerData?.event ?? headerData;
   const userMembership = headerData?.userMembership;
@@ -75,23 +79,22 @@ export function EventHeader({
   const isOrganizer = permissions?.canDelete === true;
 
   function handleShowMenu() {
-    const options: {
-      label: string;
-      onPress: () => void;
-      destructive?: boolean;
-    }[] = [];
+    const options: ActionMenuOption[] = [];
 
     if (isOrganizer) {
       options.push({
         label: 'Edit Event',
+        icon: 'create-outline',
         onPress: () => router.push(`/event/${eventId}/edit`),
       });
       options.push({
         label: 'Manage Members',
+        icon: 'people-outline',
         onPress: () => router.push(`/event/${eventId}/attendees`),
       });
       options.push({
         label: 'Delete Event',
+        icon: 'trash-outline',
         destructive: true,
         onPress: () => {
           showConfirmDialog({
@@ -114,6 +117,7 @@ export function EventHeader({
     } else {
       options.push({
         label: 'Leave Event',
+        icon: 'exit-outline',
         destructive: true,
         onPress: () => {
           showConfirmDialog({
@@ -135,7 +139,7 @@ export function EventHeader({
       });
     }
 
-    showActionSheet({ title: 'Event Options', options });
+    showActionMenu({ title: 'Event Options', options });
   }
 
   return (

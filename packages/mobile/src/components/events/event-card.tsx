@@ -104,7 +104,10 @@ export function EventCard({ event, membership, organizer }: EventCardProps) {
         </View>
 
         {membership.role === 'ORGANIZER' ? (
-          <Badge variant='outline' className='mt-2 self-start border-primary/20 bg-primary/10'>
+          <Badge
+            variant='outline'
+            className='mt-2 self-start border-primary/20 bg-primary/10'
+          >
             <Text className='text-xs font-medium text-primary'>Organizer</Text>
           </Badge>
         ) : null}

@@ -17,7 +17,8 @@ function Switch({
         props.disabled && 'opacity-50',
         className
       )}
-      {...props}>
+      {...props}
+    >
       <SwitchPrimitives.Thumb
         className={cn(
           'bg-background size-4 rounded-full transition-transform',

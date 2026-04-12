@@ -98,16 +98,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     theme?.tokens ?? baseThemeRegistry[DEFAULT_LIGHT_THEME_ID].tokens;
   const isDark = theme?.mode === 'dark';
 
-  const setTheme = useCallback(
-    (id: string) => {
-      const themeEntry = baseThemeRegistry[id];
-      if (!themeEntry) return;
+  const setTheme = useCallback((id: string) => {
+    const themeEntry = baseThemeRegistry[id];
+    if (!themeEntry) return;
 
-      setThemeId(id);
-      applyTheme(themeEntry);
-    },
-    [],
-  );
+    setThemeId(id);
+    applyTheme(themeEntry);
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ themeId, tokens, isDark, setTheme }}>

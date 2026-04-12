@@ -42,9 +42,18 @@ const buttonVariants = cva(
         link: '',
       },
       size: {
-        default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
-        sm: cn('h-9 gap-1.5 rounded-md px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
-        lg: cn('h-11 rounded-md px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
+        default: cn(
+          'h-10 px-4 py-2 sm:h-9',
+          Platform.select({ web: 'has-[>svg]:px-3' })
+        ),
+        sm: cn(
+          'h-9 gap-1.5 rounded-md px-3 sm:h-8',
+          Platform.select({ web: 'has-[>svg]:px-2.5' })
+        ),
+        lg: cn(
+          'h-11 rounded-md px-6 sm:h-10',
+          Platform.select({ web: 'has-[>svg]:px-4' })
+        ),
         icon: 'h-10 w-10 sm:h-9 sm:w-9',
       },
     },
@@ -73,7 +82,9 @@ const buttonTextVariants = cva(
         ghost: 'group-active:text-accent-foreground',
         link: cn(
           'text-primary group-active:underline',
-          Platform.select({ web: 'underline-offset-4 hover:underline group-hover:underline' })
+          Platform.select({
+            web: 'underline-offset-4 hover:underline group-hover:underline',
+          })
         ),
       },
       size: {
@@ -96,20 +107,36 @@ type ButtonProps = React.ComponentProps<typeof Pressable> &
     loadingText?: string;
   };
 
-function Button({ className, variant, size, isLoading, loadingText, children, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant,
+  size,
+  isLoading,
+  loadingText,
+  children,
+  ...props
+}: ButtonProps) {
   const isDisabled = props.disabled || isLoading;
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
-        className={cn(isDisabled && 'opacity-50', buttonVariants({ variant, size }), className)}
-        role="button"
+        className={cn(
+          isDisabled && 'opacity-50',
+          buttonVariants({ variant, size }),
+          className
+        )}
+        role='button'
         disabled={isDisabled}
         {...props}
       >
         {isLoading && loadingText ? (
-          <Text className={cn(buttonTextVariants({ variant, size }))}>{loadingText}</Text>
+          <Text className={cn(buttonTextVariants({ variant, size }))}>
+            {loadingText}
+          </Text>
         ) : typeof children === 'string' ? (
-          <Text className={cn(buttonTextVariants({ variant, size }))}>{children}</Text>
+          <Text className={cn(buttonTextVariants({ variant, size }))}>
+            {children}
+          </Text>
         ) : (
           children
         )}

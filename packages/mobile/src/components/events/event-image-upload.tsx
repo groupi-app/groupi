@@ -3,7 +3,7 @@ import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 
 interface EventImageUploadProps {
   imageUri?: string | null;
@@ -21,6 +21,7 @@ export function EventImageUpload({
   disabled = false,
 }: EventImageUploadProps) {
   const { pickImage, takePhoto } = useImagePicker();
+  const { showActionMenu } = useActionMenu();
 
   const displayUri = imageUri ?? existingImageUrl;
 
@@ -29,11 +30,13 @@ export function EventImageUpload({
 
     const options: {
       label: string;
+      icon?: string;
       onPress: () => void;
       destructive?: boolean;
     }[] = [
       {
         label: 'Choose from Library',
+        icon: 'images-outline',
         onPress: async () => {
           const result = await pickImage({
             allowsEditing: true,
@@ -47,6 +50,7 @@ export function EventImageUpload({
       },
       {
         label: 'Take Photo',
+        icon: 'camera-outline',
         onPress: async () => {
           const result = await takePhoto({
             allowsEditing: true,
@@ -63,12 +67,13 @@ export function EventImageUpload({
     if (displayUri) {
       options.push({
         label: 'Remove Image',
+        icon: 'trash-outline',
         destructive: true,
         onPress: onImageRemoved,
       });
     }
 
-    showActionSheet({ title: 'Event Cover Image', options });
+    showActionMenu({ title: 'Event Cover Image', options });
   }
 
   if (displayUri) {

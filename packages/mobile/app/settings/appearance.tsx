@@ -74,10 +74,7 @@ export default function AppearanceSettingsScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        className='flex-1 px-4'
-        contentContainerClassName='pb-8 pt-2'
-      >
+      <ScrollView className='flex-1 px-4' contentContainerClassName='pb-8 pt-2'>
         <View className='gap-2'>
           {themes.map(theme => {
             const isSelected = themeId === theme.id;
@@ -108,11 +105,7 @@ export default function AppearanceSettingsScreen() {
                   ) : null}
                 </View>
                 {isSelected ? (
-                  <Ionicons
-                    name='checkmark-circle'
-                    size={22}
-                    color='#8b00b8'
-                  />
+                  <Ionicons name='checkmark-circle' size={22} color='#8b00b8' />
                 ) : null}
               </Pressable>
             );

@@ -46,7 +46,11 @@ const StyledIcon = withUniwind(IconImpl, {
 function Icon({ as: IconComponent, className, ...props }: IconProps) {
   const textClass = React.useContext(TextClassContext);
   return (
-    <StyledIcon as={IconComponent} className={cn('text-foreground size-5', textClass, className)} {...props} />
+    <StyledIcon
+      as={IconComponent}
+      className={cn('text-foreground size-5', textClass, className)}
+      {...props}
+    />
   );
 }
 

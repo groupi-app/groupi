@@ -29,7 +29,9 @@ const badgeVariants = cva(
         success: 'bg-success border-transparent',
         warning: 'bg-warning border-transparent',
         error: 'bg-error border-transparent',
-        outline: Platform.select({ web: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground' }),
+        outline: Platform.select({
+          web: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+        }),
       },
     },
     defaultVariants: {
@@ -56,14 +58,17 @@ const badgeTextVariants = cva('text-xs font-medium', {
 });
 
 type BadgeProps = React.ComponentProps<typeof View> & {
-    asChild?: boolean;
-  } & VariantProps<typeof badgeVariants>;
+  asChild?: boolean;
+} & VariantProps<typeof badgeVariants>;
 
 function Badge({ className, variant, asChild, ...props }: BadgeProps) {
   const Component = asChild ? Slot.View : View;
   return (
     <TextClassContext.Provider value={badgeTextVariants({ variant })}>
-      <Component className={cn(badgeVariants({ variant }), className)} {...props} />
+      <Component
+        className={cn(badgeVariants({ variant }), className)}
+        {...props}
+      />
     </TextClassContext.Provider>
   );
 }

@@ -61,3 +61,8 @@ export { SectionHeader } from './section-header';
 export { BackButton } from './back-button';
 export { showConfirmDialog } from './confirm-dialog';
 export { showActionSheet } from './action-sheet';
+export {
+  ActionMenuProvider,
+  useActionMenu,
+  type ActionMenuOption,
+} from './action-menu';

@@ -22,7 +22,7 @@ function Textarea({
       placeholderClassName={cn('text-muted-foreground', placeholderClassName)}
       multiline={multiline}
       numberOfLines={numberOfLines}
-      textAlignVertical="top"
+      textAlignVertical='top'
       {...props}
     />
   );

@@ -44,13 +44,15 @@ export function UserAvatar({
   className,
 }: UserAvatarProps) {
   return (
-    <Avatar
-      alt={name ?? 'User'}
-      className={cn(sizeClasses[size], className)}
-    >
+    <Avatar alt={name ?? 'User'} className={cn(sizeClasses[size], className)}>
       <AvatarImage source={{ uri: src ?? undefined }} />
       <AvatarFallback>
-        <Text className={cn('font-bold text-primary-foreground', textSizeClasses[size])}>
+        <Text
+          className={cn(
+            'font-bold text-primary-foreground',
+            textSizeClasses[size]
+          )}
+        >
           {getInitials(name)}
         </Text>
       </AvatarFallback>
