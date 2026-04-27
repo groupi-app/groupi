@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Timestamp } from '@/components/molecules';
 
 interface PostCardProps {
   post: {
@@ -12,37 +13,28 @@ interface PostCardProps {
     title: string;
     content: string;
     _creationTime: number;
+    updatedAt?: number;
     author?: {
-      person?: { _id: string };
-      user?: { name: string; image?: string };
-    };
+      person?: { _id: string; user?: { name: string; image?: string } };
+      user?: { name: string; image?: string } | null;
+    } | null;
     replyCount?: number;
   };
   eventId: string;
 }
 
-function formatTimeAgo(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-
-  return new Date(timestamp).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export function PostCard({ post, eventId }: PostCardProps) {
-  const authorName = post.author?.user?.name ?? 'Unknown';
-  const authorImage = post.author?.user?.image;
+  // Handle both author.user and author.person.user shapes
+  const authorName =
+    post.author?.user?.name ?? post.author?.person?.user?.name ?? 'Unknown';
+  const authorImage =
+    post.author?.user?.image ?? post.author?.person?.user?.image ?? undefined;
   const replyCount = post.replyCount ?? 0;
+  const isEdited =
+    post.updatedAt !== undefined && post.updatedAt !== post._creationTime;
+
+  // Strip HTML for preview — show plain text in card
+  const plainContent = post.content.replace(/<[^>]*>/g, '').trim();
 
   return (
     <Pressable
@@ -52,7 +44,7 @@ export function PostCard({ post, eventId }: PostCardProps) {
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
           <Avatar alt={authorName} className='h-8 w-8'>
-            <AvatarImage source={{ uri: authorImage ?? undefined }} />
+            <AvatarImage source={{ uri: authorImage }} />
             <AvatarFallback>
               <Text className='text-xs font-bold text-primary-foreground'>
                 {authorName.charAt(0).toUpperCase()}
@@ -61,9 +53,12 @@ export function PostCard({ post, eventId }: PostCardProps) {
           </Avatar>
           <View className='flex-1'>
             <Text variant='small'>{authorName}</Text>
-            <Text variant='muted' className='text-xs'>
-              {formatTimeAgo(post._creationTime)}
-            </Text>
+            <View className='flex-row items-center gap-1'>
+              <Timestamp time={post._creationTime} className='text-xs' />
+              {isEdited ? (
+                <Text className='text-xs text-muted-foreground'>(edited)</Text>
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -72,9 +67,9 @@ export function PostCard({ post, eventId }: PostCardProps) {
           {post.title}
         </Text>
 
-        {/* Content preview */}
+        {/* Content preview — always show plain text in card */}
         <Text variant='muted' className='mt-1 text-sm' numberOfLines={3}>
-          {post.content}
+          {plainContent || post.content}
         </Text>
 
         {/* Reply count */}

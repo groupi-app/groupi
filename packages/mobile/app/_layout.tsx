@@ -14,6 +14,7 @@ import { ActionMenuProvider } from '@/components/ui/action-menu';
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import { ThemeProvider } from '@/theme/theme-provider';
 import { GlobalUserProvider } from '@/context/global-user-context';
+import { GlobalPresenceTracker } from '@/components/global-presence-tracker';
 import { setupPlatformAdapters } from '@/lib/platform-setup';
 
 SplashScreen.preventAutoHideAsync();
@@ -84,6 +85,14 @@ export default function RootLayout() {
                       }}
                     />
                     <Stack.Screen
+                      name='invites/index'
+                      options={{
+                        gestureEnabled: true,
+                        gestureDirection: 'horizontal',
+                        animation: 'slide_from_right',
+                      }}
+                    />
+                    <Stack.Screen
                       name='invite/[inviteId]'
                       options={{
                         presentation: 'modal',
@@ -93,6 +102,7 @@ export default function RootLayout() {
                   </Stack>
                 </ActionMenuProvider>
               </BottomSheetModalProvider>
+              <GlobalPresenceTracker />
               <StatusBar style='auto' />
               <PortalHost />
               <Toast />

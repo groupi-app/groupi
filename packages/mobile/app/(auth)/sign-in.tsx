@@ -246,11 +246,17 @@ export default function SignInScreen() {
           JSON.stringify(sessionData)
         );
 
-        console.log('[OTP] Stored cookies and session data, navigating...');
+        console.log(
+          '[OTP] Stored cookies and session data, refreshing session...'
+        );
 
-        // Navigate to tabs — the ConvexBetterAuthProvider will read
-        // the stored cookies from SecureStore on next render cycle
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Force the Better Auth client to re-read cookies from SecureStore
+        // and update its internal session state. Without this, useSession()
+        // and useConvexAuth() still report unauthenticated.
+        await authClient.getSession({
+          fetchOptions: { headers: { 'expo-origin': 'groupi://' } },
+        });
+
         router.replace('/(tabs)');
       }
     } catch {

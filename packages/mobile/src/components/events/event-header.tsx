@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Pressable, Image } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
@@ -5,12 +6,15 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { BackButton } from '@/components/ui/back-button';
 import { Badge } from '@/components/ui/badge';
+import { ImageLightbox } from '@/components/ui/image-lightbox';
 import {
   useActionMenu,
   type ActionMenuOption,
 } from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteEvent, useLeaveEvent } from '@/hooks/use-events';
+import { useIsEventMuted, useToggleEventMute } from '@/hooks/use-muting';
+import { useCreateReport } from '@/hooks/use-reports';
 import { EventRsvp } from './event-rsvp';
 import { toast } from '@groupi/shared/platform';
 
@@ -60,8 +64,12 @@ export function EventHeader({
   permissions,
   eventId,
 }: EventHeaderProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const deleteEvent = useDeleteEvent();
   const leaveEvent = useLeaveEvent();
+  const toggleMute = useToggleEventMute();
+  const isMuted = useIsEventMuted(eventId);
+  const createReport = useCreateReport();
   const { showActionMenu } = useActionMenu();
 
   const event = headerData?.event ?? headerData;
@@ -139,6 +147,27 @@ export function EventHeader({
       });
     }
 
+    // Common options for all users
+    options.push({
+      label: isMuted ? 'Unmute Event' : 'Mute Event',
+      icon: isMuted ? 'notifications-outline' : 'notifications-off-outline',
+      onPress: () => toggleMute(eventId),
+    });
+
+    if (!isOrganizer) {
+      options.push({
+        label: 'Report Event',
+        icon: 'flag-outline',
+        onPress: () => {
+          createReport({
+            targetType: 'EVENT',
+            targetId: eventId,
+            reason: 'INAPPROPRIATE_CONTENT',
+          });
+        },
+      });
+    }
+
     showActionMenu({ title: 'Event Options', options });
   }
 
@@ -147,11 +176,13 @@ export function EventHeader({
       {/* Cover image */}
       {imageUrl ? (
         <View className='relative'>
-          <Image
-            source={{ uri: imageUrl }}
-            className='h-52 w-full'
-            resizeMode='cover'
-          />
+          <Pressable onPress={() => setLightboxOpen(true)}>
+            <Image
+              source={{ uri: imageUrl }}
+              className='h-52 w-full'
+              resizeMode='cover'
+            />
+          </Pressable>
           {/* Gradient overlay for navigation buttons */}
           <View className='absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent' />
           {/* Navigation buttons overlaid on image */}
@@ -164,6 +195,11 @@ export function EventHeader({
               <Ionicons name='ellipsis-horizontal' size={20} color='#ffffff' />
             </Pressable>
           </View>
+          <ImageLightbox
+            uri={imageUrl}
+            visible={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+          />
         </View>
       ) : (
         /* Navigation bar without image */
@@ -171,7 +207,7 @@ export function EventHeader({
           <BackButton />
           <Pressable
             onPress={handleShowMenu}
-            className='h-10 w-10 items-center justify-center rounded-full bg-muted'
+            className='h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-muted shadow-raised'
           >
             <Ionicons name='ellipsis-horizontal' size={20} color='#6b7280' />
           </Pressable>

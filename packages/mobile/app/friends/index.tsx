@@ -1,55 +1,63 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   FlatList,
   Pressable,
   TextInput,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { useQuery, useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { TabBarFilter } from '@/components/molecules';
+import { LoadingState } from '@/components/molecules';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
-import { toast } from '@groupi/shared/platform';
+import {
+  useFriendsList,
+  usePendingRequests,
+  useSentRequests,
+  useFriendSearch,
+  useFriendSuggestions,
+  useSendFriendRequest,
+  useAcceptFriendRequest,
+  useDeclineFriendRequest,
+  useCancelFriendRequest,
+  useRemoveFriend,
+} from '@/hooks/use-friends';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+type Tab = 'friends' | 'requests' | 'sent' | 'search';
 
-type Tab = 'friends' | 'requests' | 'search';
+const TABS = [
+  { key: 'friends', label: 'Friends' },
+  { key: 'requests', label: 'Requests' },
+  { key: 'sent', label: 'Sent' },
+  { key: 'search', label: 'Search' },
+];
 
 export default function FriendsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const friends = useQuery(api.friends.queries.getFriends, {});
-  const pendingRequests = useQuery(api.friends.queries.getPendingRequests, {});
-  const searchResults = useQuery(
-    api.friends.queries.searchUsersByUsername,
-    activeTab === 'search' && debouncedSearch.length >= 3
-      ? { searchTerm: debouncedSearch }
-      : 'skip'
+  const friends = useFriendsList();
+  const pendingRequests = usePendingRequests();
+  const sentRequests = useSentRequests();
+  const { results: searchResults, debouncedTerm } = useFriendSearch(
+    searchTerm,
+    activeTab === 'search'
   );
+  const suggestions = useFriendSuggestions();
 
-  const sendRequest = useMutation(api.friends.mutations.sendFriendRequest);
-  const acceptRequest = useMutation(api.friends.mutations.acceptFriendRequest);
-  const declineRequest = useMutation(
-    api.friends.mutations.declineFriendRequest
-  );
-  const removeFriend = useMutation(api.friends.mutations.removeFriend);
+  const sendRequest = useSendFriendRequest();
+  const acceptRequest = useAcceptFriendRequest();
+  const declineRequest = useDeclineFriendRequest();
+  const cancelRequest = useCancelFriendRequest();
+  const removeFriend = useRemoveFriend();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -57,45 +65,32 @@ export default function FriendsScreen() {
   }, []);
 
   const requestCount = pendingRequests?.length ?? 0;
+  const sentCount = sentRequests?.length ?? 0;
+
+  const tabsWithBadges = TABS.map(tab => ({
+    ...tab,
+    badge:
+      tab.key === 'requests'
+        ? requestCount
+        : tab.key === 'sent'
+          ? sentCount
+          : undefined,
+  }));
 
   return (
     <SafeAreaView className='flex-1 bg-background'>
-      {/* Header */}
       <View className='flex-row items-center justify-between border-b border-border px-4 py-3'>
         <BackButton />
         <Text className='text-lg font-semibold text-foreground'>Friends</Text>
         <View className='w-10' />
       </View>
 
-      {/* Tabs */}
-      <View className='flex-row border-b border-border'>
-        {[
-          { key: 'friends' as const, label: 'Friends' },
-          {
-            key: 'requests' as const,
-            label: `Requests${requestCount > 0 ? ` (${requestCount})` : ''}`,
-          },
-          { key: 'search' as const, label: 'Search' },
-        ].map(tab => (
-          <Pressable
-            key={tab.key}
-            onPress={() => setActiveTab(tab.key)}
-            className={`flex-1 items-center py-3 ${
-              activeTab === tab.key ? 'border-b-2 border-primary' : ''
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium ${
-                activeTab === tab.key ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              {tab.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <TabBarFilter
+        tabs={tabsWithBadges}
+        activeTab={activeTab}
+        onTabChange={key => setActiveTab(key as Tab)}
+      />
 
-      {/* Search bar */}
       {activeTab === 'search' ? (
         <View className='px-4 py-3'>
           <View className='flex-row items-center gap-2 rounded-input border border-border bg-background px-3'>
@@ -118,24 +113,16 @@ export default function FriendsScreen() {
         </View>
       ) : null}
 
-      {/* Content */}
       {activeTab === 'friends' ? (
         <FriendsList
           friends={friends}
-          onRemove={async (friendshipId: string) => {
+          onRemove={(friendshipId: string) => {
             showConfirmDialog({
               title: 'Remove Friend',
               message: 'Are you sure you want to remove this friend?',
               confirmLabel: 'Remove',
               destructive: true,
-              onConfirm: async () => {
-                try {
-                  await removeFriend({ friendshipId });
-                  toast.success('Friend removed');
-                } catch {
-                  toast.error('Failed to remove friend');
-                }
-              },
+              onConfirm: () => removeFriend(friendshipId),
             });
           }}
           refreshing={refreshing}
@@ -144,21 +131,22 @@ export default function FriendsScreen() {
       ) : activeTab === 'requests' ? (
         <RequestsList
           requests={pendingRequests}
-          onAccept={async (friendshipId: string) => {
-            try {
-              await acceptRequest({ friendshipId });
-              toast.success('Friend request accepted!');
-            } catch {
-              toast.error('Failed to accept request');
-            }
-          }}
-          onDecline={async (friendshipId: string) => {
-            try {
-              await declineRequest({ friendshipId });
-              toast.info('Request declined');
-            } catch {
-              toast.error('Failed to decline request');
-            }
+          onAccept={acceptRequest}
+          onDecline={declineRequest}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      ) : activeTab === 'sent' ? (
+        <SentRequestsList
+          requests={sentRequests}
+          onCancel={(friendshipId: string) => {
+            showConfirmDialog({
+              title: 'Cancel Request',
+              message: 'Are you sure you want to cancel this friend request?',
+              confirmLabel: 'Cancel Request',
+              destructive: true,
+              onConfirm: () => cancelRequest(friendshipId),
+            });
           }}
           refreshing={refreshing}
           onRefresh={onRefresh}
@@ -166,39 +154,29 @@ export default function FriendsScreen() {
       ) : (
         <SearchResults
           results={searchResults}
-          searchTerm={debouncedSearch}
-          onSendRequest={async (addresseePersonId: string) => {
-            try {
-              const result = await sendRequest({ addresseePersonId });
-              toast.success(result.message ?? 'Friend request sent!');
-            } catch {
-              toast.error('Failed to send request');
-            }
-          }}
+          searchTerm={debouncedTerm}
+          suggestions={suggestions}
+          onSendRequest={sendRequest}
         />
       )}
     </SafeAreaView>
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function FriendsList({
   friends,
   onRemove,
   refreshing,
   onRefresh,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   friends: any;
   onRemove: (id: string) => void;
   refreshing: boolean;
   onRefresh: () => void;
 }) {
   if (friends === undefined) {
-    return (
-      <View className='flex-1 items-center justify-center'>
-        <ActivityIndicator size='large' />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -254,7 +232,6 @@ function FriendsList({
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function RequestsList({
   requests,
   onAccept,
@@ -262,6 +239,7 @@ function RequestsList({
   refreshing,
   onRefresh,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requests: any;
   onAccept: (id: string) => void;
   onDecline: (id: string) => void;
@@ -269,11 +247,7 @@ function RequestsList({
   onRefresh: () => void;
 }) {
   if (requests === undefined) {
-    return (
-      <View className='flex-1 items-center justify-center'>
-        <ActivityIndicator size='large' />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -350,17 +324,159 @@ function RequestsList({
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SentRequestsList({
+  requests,
+  onCancel,
+  refreshing,
+  onRefresh,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  requests: any;
+  onCancel: (id: string) => void;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  if (requests === undefined) {
+    return <LoadingState />;
+  }
+
+  return (
+    <FlatList
+      data={requests}
+      keyExtractor={(item: { friendshipId: string }) => item.friendshipId}
+      renderItem={({
+        item,
+      }: {
+        item: {
+          friendshipId: string;
+          personId: string;
+          name: string | null;
+          username: string | null;
+          image: string | null;
+        };
+      }) => (
+        <View className='flex-row items-center gap-3 border-b border-border px-4 py-3'>
+          <Pressable
+            onPress={() => router.push(`/profile/${item.personId}`)}
+            className='flex-row flex-1 items-center gap-3'
+          >
+            <Avatar src={item.image} name={item.name} size='md' />
+            <View className='flex-1'>
+              <Text className='text-base font-medium text-foreground'>
+                {item.name ?? 'Unknown'}
+              </Text>
+              {item.username ? (
+                <Text className='text-sm text-muted-foreground'>
+                  @{item.username}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+          <Pressable
+            onPress={() => onCancel(item.friendshipId)}
+            className='rounded-button border border-border px-3 py-1.5'
+          >
+            <Text className='text-sm font-medium text-muted-foreground'>
+              Cancel
+            </Text>
+          </Pressable>
+        </View>
+      )}
+      ListEmptyComponent={
+        <EmptyState
+          icon='paper-plane-outline'
+          title='No sent requests'
+          description='Sent friend requests will appear here'
+        />
+      }
+      contentContainerStyle={
+        (requests?.length ?? 0) === 0 ? { flex: 1 } : undefined
+      }
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    />
+  );
+}
+
 function SearchResults({
   results,
   searchTerm,
+  suggestions,
   onSendRequest,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   results: any;
   searchTerm: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  suggestions: any;
   onSendRequest: (id: string) => void;
 }) {
+  // Show suggestions when no search term
   if (!searchTerm || searchTerm.length < 3) {
+    if (suggestions && suggestions.length > 0) {
+      return (
+        <FlatList
+          data={suggestions}
+          keyExtractor={(item: { personId: string }) => item.personId}
+          ListHeaderComponent={
+            <View className='px-4 py-3'>
+              <Text className='text-base font-semibold text-foreground'>
+                People from your events
+              </Text>
+              <Text className='mt-0.5 text-sm text-muted-foreground'>
+                Type at least 3 characters to search by username
+              </Text>
+            </View>
+          }
+          renderItem={({
+            item,
+          }: {
+            item: {
+              personId: string;
+              name: string | null;
+              username: string | null;
+              image: string | null;
+              mutualEventCount: number;
+              friendshipStatus: string;
+            };
+          }) => {
+            const canAdd = item.friendshipStatus === 'none';
+
+            return (
+              <View className='flex-row items-center gap-3 border-b border-border px-4 py-3'>
+                <Pressable
+                  onPress={() => router.push(`/profile/${item.personId}`)}
+                  className='flex-row flex-1 items-center gap-3'
+                >
+                  <Avatar src={item.image} name={item.name} size='md' />
+                  <View className='flex-1'>
+                    <Text className='text-base font-medium text-foreground'>
+                      {item.name ?? 'Unknown'}
+                    </Text>
+                    <Text className='text-sm text-muted-foreground'>
+                      {item.mutualEventCount} mutual{' '}
+                      {item.mutualEventCount === 1 ? 'event' : 'events'}
+                    </Text>
+                  </View>
+                </Pressable>
+                {canAdd ? (
+                  <Pressable
+                    onPress={() => onSendRequest(item.personId)}
+                    className='rounded-button bg-primary px-3 py-1.5'
+                  >
+                    <Text className='text-sm font-medium text-primary-foreground'>
+                      Add
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          }}
+        />
+      );
+    }
+
     return (
       <View className='flex-1 items-center justify-center px-6'>
         <Ionicons name='search' size={48} color='#9ca3af' />
@@ -372,11 +488,7 @@ function SearchResults({
   }
 
   if (results === undefined) {
-    return (
-      <View className='flex-1 items-center justify-center'>
-        <ActivityIndicator size='large' />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (

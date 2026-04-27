@@ -1,30 +1,23 @@
 import { useState } from 'react';
-import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams } from 'expo-router';
-import { useQuery, useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 
-import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
+import { DetailScreenTemplate } from '@/components/templates';
+import { StatusPicker } from '@/components/molecules';
+import { LoadingState } from '@/components/molecules';
 import { useGlobalUser } from '@/context/global-user-context';
+import { useCanManageEvent } from '@/hooks/use-events';
+import {
+  useEventAvailabilityData,
+  useSubmitAvailability,
+} from '@/hooks/use-availability';
+import { useChooseEventDate } from '@/hooks/use-members';
 import { toast } from '@groupi/shared/platform';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
-
-type VoteStatus = 'YES' | 'MAYBE' | 'NO' | null;
-
-const statusConfig = {
-  YES: {
-    icon: 'checkmark-circle' as const,
-    color: '#22c55e',
-    label: 'Available',
-  },
-  MAYBE: { icon: 'help-circle' as const, color: '#f59e0b', label: 'Maybe' },
-  NO: { icon: 'close-circle' as const, color: '#ef4444', label: 'Unavailable' },
-};
+import type { VoteStatus } from '@/components/molecules';
 
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
@@ -40,22 +33,19 @@ function formatDate(timestamp: number): string {
 export default function AvailabilityScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const { person } = useGlobalUser();
+  const permissions = useCanManageEvent(eventId as never);
 
-  const availabilityData = useQuery(
-    api.events.queries.getEventAvailabilityData,
-    { eventId }
-  );
+  const availabilityData = useEventAvailabilityData(eventId);
+  const submitAvailability = useSubmitAvailability();
+  const chooseDate = useChooseEventDate();
 
-  const submitAvailability = useMutation(
-    api.availability.mutations.submitAvailability
-  );
-  const [votes, setVotes] = useState<Record<string, VoteStatus>>({});
+  const [votes, setVotes] = useState<Record<string, VoteStatus | null>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
-  // Initialize votes from existing data
   if (availabilityData && !initialized && person) {
-    const initialVotes: Record<string, VoteStatus> = {};
+    const initialVotes: Record<string, VoteStatus | null> = {};
     const potentialDates = availabilityData.potentialDateTimes ?? [];
     for (const dt of potentialDates) {
       const existing = dt.availabilities?.find(
@@ -77,6 +67,15 @@ export default function AvailabilityScreen() {
     }));
   }
 
+  function handleBatchSelect(status: VoteStatus | null) {
+    const potentialDates = availabilityData?.potentialDateTimes ?? [];
+    const newVotes: Record<string, VoteStatus | null> = {};
+    for (const dt of potentialDates) {
+      newVotes[dt._id] = status;
+    }
+    setVotes(newVotes);
+  }
+
   async function handleSubmit() {
     const responses = Object.entries(votes)
       .filter(([, status]) => status !== null)
@@ -93,9 +92,6 @@ export default function AvailabilityScreen() {
     setIsSubmitting(true);
     try {
       await submitAvailability({ eventId, responses });
-      toast.success('Availability saved!');
-    } catch {
-      toast.error('Failed to save availability');
     } finally {
       setIsSubmitting(false);
     }
@@ -103,114 +99,196 @@ export default function AvailabilityScreen() {
 
   if (availabilityData === undefined) {
     return (
-      <SafeAreaView className='flex-1 bg-background'>
-        <View className='flex-row items-center px-4 py-3'>
-          <BackButton />
-          <Text className='text-lg font-semibold text-foreground'>
-            Availability
-          </Text>
-        </View>
-        <View className='flex-1 items-center justify-center'>
-          <ActivityIndicator size='large' />
-        </View>
-      </SafeAreaView>
+      <DetailScreenTemplate title='Availability'>
+        <LoadingState />
+      </DetailScreenTemplate>
     );
   }
 
   const potentialDates = availabilityData?.potentialDateTimes ?? [];
+  const isOrganizer = permissions?.role === 'ORGANIZER';
 
   return (
-    <SafeAreaView className='flex-1 bg-background'>
-      <View className='flex-row items-center px-4 py-3'>
-        <BackButton />
-        <Text className='text-lg font-semibold text-foreground'>
-          Set Availability
-        </Text>
-      </View>
+    <DetailScreenTemplate title='Set Availability'>
+      <Text className='mb-4 text-base text-muted-foreground'>
+        Let the organizer know when you&apos;re available
+      </Text>
 
-      <ScrollView className='flex-1 px-4' contentContainerClassName='pb-8'>
-        <Text className='mb-4 text-base text-muted-foreground'>
-          Let the organizer know when you&apos;re available
-        </Text>
-
-        {potentialDates.length === 0 ? (
-          <View className='items-center py-12'>
-            <Ionicons name='calendar-outline' size={48} color='#9ca3af' />
-            <Text className='mt-4 text-base text-muted-foreground'>
-              No dates have been proposed yet
+      {/* Batch quick-select */}
+      {potentialDates.length > 1 ? (
+        <View className='mb-4 flex-row gap-2'>
+          <Pressable
+            onPress={() => handleBatchSelect('YES')}
+            className='flex-1 items-center rounded-button border border-border py-2'
+          >
+            <Text className='text-xs font-medium text-success'>All Yes</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleBatchSelect('MAYBE')}
+            className='flex-1 items-center rounded-button border border-border py-2'
+          >
+            <Text className='text-xs font-medium text-warning'>All Maybe</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleBatchSelect('NO')}
+            className='flex-1 items-center rounded-button border border-border py-2'
+          >
+            <Text className='text-xs font-medium text-error'>All No</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleBatchSelect(null)}
+            className='flex-1 items-center rounded-button border border-border py-2'
+          >
+            <Text className='text-xs font-medium text-muted-foreground'>
+              Clear
             </Text>
-          </View>
-        ) : (
-          <View className='gap-3'>
-            {potentialDates.map(
-              (dt: {
-                _id: string;
-                startDateTime: number;
-                endDateTime?: number;
-                note?: string;
-              }) => {
-                const currentVote = votes[dt._id];
-                return (
-                  <View
-                    key={dt._id}
-                    className='rounded-card border border-border bg-card p-4'
-                  >
-                    <Text className='text-base font-medium text-foreground'>
-                      {formatDate(dt.startDateTime)}
-                    </Text>
-                    {dt.note ? (
-                      <Text className='mt-1 text-sm text-muted-foreground'>
-                        {dt.note}
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* Summary toggle */}
+      {potentialDates.length > 0 ? (
+        <Pressable
+          onPress={() => setShowSummary(!showSummary)}
+          className='mb-4 flex-row items-center justify-between rounded-card border border-border bg-card p-3'
+        >
+          <Text className='text-sm font-medium text-foreground'>
+            {showSummary ? 'Hide response summary' : 'Show response summary'}
+          </Text>
+          <Ionicons
+            name={showSummary ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color='#6b7280'
+          />
+        </Pressable>
+      ) : null}
+
+      {potentialDates.length === 0 ? (
+        <View className='items-center py-12'>
+          <Ionicons name='calendar-outline' size={48} color='#9ca3af' />
+          <Text className='mt-4 text-base text-muted-foreground'>
+            No dates have been proposed yet
+          </Text>
+        </View>
+      ) : (
+        <View className='gap-3'>
+          {potentialDates.map(
+            (dt: {
+              _id: string;
+              startDateTime: number;
+              endDateTime?: number;
+              note?: string;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              availabilities?: any[];
+            }) => {
+              const currentVote = votes[dt._id] ?? null;
+              const allAvailabilities = dt.availabilities ?? [];
+              const yesCount = allAvailabilities.filter(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (a: any) => a.status === 'YES'
+              ).length;
+              const maybeCount = allAvailabilities.filter(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (a: any) => a.status === 'MAYBE'
+              ).length;
+              const noCount = allAvailabilities.filter(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (a: any) => a.status === 'NO'
+              ).length;
+
+              return (
+                <View
+                  key={dt._id}
+                  className='rounded-card border border-border bg-card p-4'
+                >
+                  <View className='flex-row items-start justify-between'>
+                    <View className='flex-1'>
+                      <Text className='text-base font-medium text-foreground'>
+                        {formatDate(dt.startDateTime)}
                       </Text>
-                    ) : null}
-
-                    <View className='mt-3 flex-row gap-2'>
-                      {(['YES', 'MAYBE', 'NO'] as const).map(status => {
-                        const cfg = statusConfig[status];
-                        const isSelected = currentVote === status;
-                        return (
-                          <Pressable
-                            key={status}
-                            onPress={() => toggleVote(dt._id, status)}
-                            className={`flex-1 flex-row items-center justify-center gap-1 rounded-button py-2 ${
-                              isSelected
-                                ? 'bg-primary/10 border border-primary'
-                                : 'border border-border'
-                            }`}
-                          >
-                            <Ionicons
-                              name={cfg.icon}
-                              size={16}
-                              color={isSelected ? cfg.color : '#9ca3af'}
-                            />
-                            <Text
-                              className={`text-sm font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}
-                            >
-                              {cfg.label}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
+                      {dt.note ? (
+                        <Text className='mt-1 text-sm text-muted-foreground'>
+                          {dt.note}
+                        </Text>
+                      ) : null}
                     </View>
+                    {isOrganizer ? (
+                      <Pressable
+                        onPress={() =>
+                          chooseDate({
+                            eventId,
+                            chosenDateTime: dt.startDateTime,
+                            chosenEndDateTime: dt.endDateTime,
+                          })
+                        }
+                        className='rounded-button bg-primary/10 px-3 py-1'
+                      >
+                        <Text className='text-xs font-semibold text-primary'>
+                          Choose
+                        </Text>
+                      </Pressable>
+                    ) : null}
                   </View>
-                );
-              }
-            )}
-          </View>
-        )}
 
-        {potentialDates.length > 0 ? (
-          <View className='mt-6'>
-            <Button
-              onPress={handleSubmit}
-              isLoading={isSubmitting}
-              loadingText='Saving...'
-            >
-              Save Availability
-            </Button>
-          </View>
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+                  {/* Response summary */}
+                  {showSummary ? (
+                    <View className='mt-2 flex-row gap-3'>
+                      <View className='flex-row items-center gap-1'>
+                        <Ionicons
+                          name='checkmark-circle'
+                          size={14}
+                          color='#22c55e'
+                        />
+                        <Text className='text-xs text-muted-foreground'>
+                          {yesCount}
+                        </Text>
+                      </View>
+                      <View className='flex-row items-center gap-1'>
+                        <Ionicons
+                          name='help-circle'
+                          size={14}
+                          color='#f59e0b'
+                        />
+                        <Text className='text-xs text-muted-foreground'>
+                          {maybeCount}
+                        </Text>
+                      </View>
+                      <View className='flex-row items-center gap-1'>
+                        <Ionicons
+                          name='close-circle'
+                          size={14}
+                          color='#ef4444'
+                        />
+                        <Text className='text-xs text-muted-foreground'>
+                          {noCount}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <StatusPicker
+                    value={currentVote}
+                    onChange={status => toggleVote(dt._id, status)}
+                    className='mt-3'
+                  />
+                </View>
+              );
+            }
+          )}
+        </View>
+      )}
+
+      {potentialDates.length > 0 ? (
+        <View className='mt-6'>
+          <Button
+            onPress={handleSubmit}
+            isLoading={isSubmitting}
+            loadingText='Saving...'
+          >
+            Save Availability
+          </Button>
+        </View>
+      ) : null}
+    </DetailScreenTemplate>
   );
 }

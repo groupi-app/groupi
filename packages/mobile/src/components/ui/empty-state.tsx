@@ -20,7 +20,8 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View className='flex-1 items-center justify-center px-6'>
-      <View className='mb-4 h-20 w-20 items-center justify-center rounded-full bg-muted'>
+      {/* Sticker journal aesthetic — icon in sticker container with white border */}
+      <View className='mb-4 h-20 w-20 items-center justify-center rounded-full border-[3px] border-white bg-muted shadow-raised'>
         <Ionicons name={icon} size={36} color='#9ca3af' />
       </View>
       <Text variant='h4'>{title}</Text>

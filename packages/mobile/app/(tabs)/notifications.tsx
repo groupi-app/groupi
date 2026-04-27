@@ -1,19 +1,23 @@
 import { useState, useCallback } from 'react';
 import { View, FlatList, Pressable, RefreshControl } from 'react-native';
 import { Text } from '@/components/ui/text';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { useQuery, useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-import { useGlobalUser } from '@/context/global-user-context';
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { ListScreenTemplate } from '@/components/templates';
+import { TabBarFilter } from '@/components/molecules';
+import { Timestamp } from '@/components/molecules';
+import { useNotificationStore } from '@/stores';
+import {
+  useNotifications,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+  useDeleteAllNotifications,
+} from '@/hooks/use-notifications';
+import { showActionSheet } from '@/components/ui/action-sheet';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Notification = any;
@@ -42,37 +46,24 @@ function getNotificationIcon(type: string): keyof typeof Ionicons.glyphMap {
   return NOTIFICATION_ICONS[type] ?? 'notifications';
 }
 
-function formatTimeAgo(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m`;
-  if (hours < 24) return `${hours}h`;
-  if (days < 7) return `${days}d`;
-  return `${Math.floor(days / 7)}w`;
-}
+const FILTER_TABS = [
+  { key: 'all', label: 'All' },
+  { key: 'unread', label: 'Unread' },
+];
 
 export default function NotificationsScreen() {
-  const { isAuthenticated } = useGlobalUser();
   const [refreshing, setRefreshing] = useState(false);
+  const { filter, setFilter } = useNotificationStore();
 
-  const notificationsData = useQuery(
-    api.notifications.queries.fetchNotificationsForPerson,
-    isAuthenticated ? { limit: 50 } : 'skip'
-  );
-  const markAsRead = useMutation(
-    api.notifications.mutations.markNotificationAsRead
-  );
-  const markAllAsRead = useMutation(
-    api.notifications.mutations.markAllNotificationsAsRead
-  );
+  const { notifications, isLoading } = useNotifications();
+  const markAsRead = useMarkNotificationAsRead();
+  const markAllAsRead = useMarkAllNotificationsAsRead();
+  const deleteAll = useDeleteAllNotifications();
 
-  const notifications = notificationsData?.notifications ?? [];
-  const isLoading = notificationsData === undefined;
+  const filteredNotifications =
+    filter === 'unread'
+      ? notifications.filter((n: Notification) => !n.readAt)
+      : notifications;
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -80,12 +71,10 @@ export default function NotificationsScreen() {
   }, []);
 
   function handleNotificationPress(notification: Notification) {
-    // Mark as read
     if (!notification.readAt) {
-      markAsRead({ notificationId: notification._id }).catch(() => {});
+      markAsRead(notification._id);
     }
 
-    // Navigate based on type
     if (notification.eventId) {
       if (notification.postId) {
         router.push(
@@ -102,23 +91,19 @@ export default function NotificationsScreen() {
     }
   }
 
-  async function handleMarkAllRead() {
-    try {
-      await markAllAsRead({});
-      toast.success('All marked as read');
-    } catch {
-      toast.error('Failed to mark all as read');
-    }
+  function handleHeaderActions() {
+    showActionSheet({
+      title: 'Notification Actions',
+      options: [
+        { label: 'Mark all as read', onPress: () => markAllAsRead() },
+        { label: 'Delete all', onPress: () => deleteAll(), destructive: true },
+      ],
+    });
   }
 
   if (isLoading) {
     return (
-      <SafeAreaView className='flex-1 bg-background'>
-        <View className='flex-row items-center justify-between px-4 py-4'>
-          <Text className='text-2xl font-bold text-foreground'>
-            Notifications
-          </Text>
-        </View>
+      <ListScreenTemplate title='Notifications'>
         <View className='gap-4 px-4'>
           {Array.from({ length: 5 }).map((_, i) => (
             <View key={i} className='flex-row items-center gap-3'>
@@ -130,27 +115,31 @@ export default function NotificationsScreen() {
             </View>
           ))}
         </View>
-      </SafeAreaView>
+      </ListScreenTemplate>
     );
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-background'>
-      <View className='flex-row items-center justify-between px-4 py-4'>
-        <Text className='text-2xl font-bold text-foreground'>
-          Notifications
-        </Text>
-        {notifications.length > 0 ? (
-          <Pressable onPress={handleMarkAllRead}>
-            <Text className='text-sm font-medium text-primary'>
-              Mark all read
-            </Text>
+    <ListScreenTemplate
+      title='Notifications'
+      headerRight={
+        notifications.length > 0 ? (
+          <Pressable onPress={handleHeaderActions} className='p-2'>
+            <Ionicons name='ellipsis-horizontal' size={20} color='#6b7280' />
           </Pressable>
-        ) : null}
-      </View>
-
+        ) : undefined
+      }
+      controls={
+        <TabBarFilter
+          tabs={FILTER_TABS}
+          activeTab={filter}
+          onTabChange={key => setFilter(key as 'all' | 'unread')}
+          className='px-0'
+        />
+      }
+    >
       <FlatList
-        data={notifications}
+        data={filteredNotifications}
         keyExtractor={(item: Notification) => item._id}
         renderItem={({ item }: { item: Notification }) => (
           <Pressable
@@ -180,9 +169,7 @@ export default function NotificationsScreen() {
               >
                 {item.message ?? item.title ?? 'Notification'}
               </Text>
-              <Text className='mt-0.5 text-sm text-muted-foreground'>
-                {formatTimeAgo(item._creationTime)}
-              </Text>
+              <Timestamp time={item._creationTime} className='mt-0.5' />
             </View>
             {!item.readAt ? (
               <View className='mt-2 h-2 w-2 rounded-full bg-primary' />
@@ -192,17 +179,21 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <EmptyState
             icon='notifications-outline'
-            title='No notifications'
+            title={
+              filter === 'unread'
+                ? 'No unread notifications'
+                : 'No notifications'
+            }
             description="You're all caught up!"
           />
         }
         contentContainerStyle={
-          notifications.length === 0 ? { flex: 1 } : undefined
+          filteredNotifications.length === 0 ? { flex: 1 } : undefined
         }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-    </SafeAreaView>
+    </ListScreenTemplate>
   );
 }

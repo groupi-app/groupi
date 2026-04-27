@@ -1,0 +1,244 @@
+import { useState } from 'react';
+import { View, Pressable } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { Ionicons } from '@expo/vector-icons';
+
+import { SettingsScreenTemplate } from '@/components/templates';
+import { LoadingState } from '@/components/molecules';
+import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { Button } from '@/components/ui/button';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  usePrivacySettings,
+  useSavePrivacySettings,
+} from '@/hooks/use-settings';
+import { useBlockedUsers, useUnblockUser } from '@/hooks/use-friends';
+
+type FriendRequestOption = 'EVERYONE' | 'EVENT_MEMBERS' | 'NO_ONE';
+type EventInviteOption = 'EVERYONE' | 'EVENT_MEMBERS' | 'FRIENDS' | 'NO_ONE';
+
+const FRIEND_REQUEST_OPTIONS: {
+  value: FriendRequestOption;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'EVERYONE',
+    label: 'Everyone',
+    description: 'Anyone can send you friend requests',
+  },
+  {
+    value: 'EVENT_MEMBERS',
+    label: 'Event Members',
+    description: 'Only people who share an event with you',
+  },
+  {
+    value: 'NO_ONE',
+    label: 'No One',
+    description: 'Nobody can send you friend requests',
+  },
+];
+
+const EVENT_INVITE_OPTIONS: {
+  value: EventInviteOption;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'EVERYONE',
+    label: 'Everyone',
+    description: 'Anyone can invite you to events',
+  },
+  {
+    value: 'EVENT_MEMBERS',
+    label: 'Event Members',
+    description: 'Only people who share an event with you',
+  },
+  {
+    value: 'FRIENDS',
+    label: 'Friends',
+    description: 'Only your friends can invite you',
+  },
+  {
+    value: 'NO_ONE',
+    label: 'No One',
+    description: 'Nobody can invite you to events',
+  },
+];
+
+export default function PrivacySettingsScreen() {
+  const settings = usePrivacySettings();
+  const saveSettings = useSavePrivacySettings();
+  const blockedUsers = useBlockedUsers();
+  const unblockUser = useUnblockUser();
+
+  const [friendRequestsFrom, setFriendRequestsFrom] =
+    useState<FriendRequestOption>('EVERYONE');
+  const [eventInvitesFrom, setEventInvitesFrom] =
+    useState<EventInviteOption>('EVERYONE');
+  const [initialized, setInitialized] = useState(false);
+
+  if (settings && !initialized) {
+    setInitialized(true);
+    setFriendRequestsFrom(
+      (settings.allowFriendRequestsFrom as FriendRequestOption) ?? 'EVERYONE'
+    );
+    setEventInvitesFrom(
+      (settings.allowEventInvitesFrom as EventInviteOption) ?? 'EVERYONE'
+    );
+  }
+
+  function handleSaveFriendRequests(value: FriendRequestOption) {
+    setFriendRequestsFrom(value);
+    saveSettings({
+      allowFriendRequestsFrom: value,
+      allowEventInvitesFrom: eventInvitesFrom,
+    });
+  }
+
+  function handleSaveEventInvites(value: EventInviteOption) {
+    setEventInvitesFrom(value);
+    saveSettings({
+      allowFriendRequestsFrom: friendRequestsFrom,
+      allowEventInvitesFrom: value,
+    });
+  }
+
+  if (settings === undefined) {
+    return (
+      <SettingsScreenTemplate title='Privacy'>
+        <LoadingState />
+      </SettingsScreenTemplate>
+    );
+  }
+
+  return (
+    <SettingsScreenTemplate
+      title='Privacy'
+      description='Control who can interact with you'
+    >
+      {/* Friend Requests */}
+      <View className='mb-6'>
+        <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
+          Friend Requests
+        </Text>
+        <Text className='mb-3 text-sm text-muted-foreground'>
+          Who can send you friend requests?
+        </Text>
+        <View className='rounded-card border border-border overflow-hidden'>
+          {FRIEND_REQUEST_OPTIONS.map((option, index) => (
+            <Pressable
+              key={option.value}
+              onPress={() => handleSaveFriendRequests(option.value)}
+              className={`flex-row items-center justify-between px-4 py-3 ${
+                index < FRIEND_REQUEST_OPTIONS.length - 1
+                  ? 'border-b border-border'
+                  : ''
+              }`}
+            >
+              <View className='flex-1 pr-3'>
+                <Text className='text-base font-medium text-foreground'>
+                  {option.label}
+                </Text>
+                <Text className='text-sm text-muted-foreground'>
+                  {option.description}
+                </Text>
+              </View>
+              {friendRequestsFrom === option.value ? (
+                <Ionicons name='checkmark-circle' size={22} color='#8b00b8' />
+              ) : (
+                <View className='h-[22px] w-[22px] rounded-full border-2 border-border' />
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Event Invites */}
+      <View className='mb-6'>
+        <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
+          Event Invites
+        </Text>
+        <Text className='mb-3 text-sm text-muted-foreground'>
+          Who can invite you to events?
+        </Text>
+        <View className='rounded-card border border-border overflow-hidden'>
+          {EVENT_INVITE_OPTIONS.map((option, index) => (
+            <Pressable
+              key={option.value}
+              onPress={() => handleSaveEventInvites(option.value)}
+              className={`flex-row items-center justify-between px-4 py-3 ${
+                index < EVENT_INVITE_OPTIONS.length - 1
+                  ? 'border-b border-border'
+                  : ''
+              }`}
+            >
+              <View className='flex-1 pr-3'>
+                <Text className='text-base font-medium text-foreground'>
+                  {option.label}
+                </Text>
+                <Text className='text-sm text-muted-foreground'>
+                  {option.description}
+                </Text>
+              </View>
+              {eventInvitesFrom === option.value ? (
+                <Ionicons name='checkmark-circle' size={22} color='#8b00b8' />
+              ) : (
+                <View className='h-[22px] w-[22px] rounded-full border-2 border-border' />
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Blocked Users */}
+      <View className='mb-6'>
+        <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
+          Blocked Users
+        </Text>
+        {blockedUsers === undefined ? (
+          <LoadingState size='small' className='py-6' />
+        ) : blockedUsers.length === 0 ? (
+          <Text className='text-sm text-muted-foreground'>
+            No blocked users
+          </Text>
+        ) : (
+          <View className='rounded-card border border-border overflow-hidden'>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {blockedUsers.map((user: any, index: number) => (
+              <View
+                key={user.personId}
+                className={`flex-row items-center justify-between px-4 py-3 ${
+                  index < blockedUsers.length - 1
+                    ? 'border-b border-border'
+                    : ''
+                }`}
+              >
+                <View className='flex-row items-center gap-3'>
+                  <Avatar src={user.image} name={user.name} size='sm' />
+                  <Text className='text-base font-medium text-foreground'>
+                    {user.name ?? 'Unknown'}
+                  </Text>
+                </View>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onPress={() => {
+                    showConfirmDialog({
+                      title: 'Unblock User',
+                      message: `Unblock ${user.name ?? 'this user'}?`,
+                      confirmLabel: 'Unblock',
+                      onConfirm: () => unblockUser(user.personId),
+                    });
+                  }}
+                >
+                  Unblock
+                </Button>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    </SettingsScreenTemplate>
+  );
+}

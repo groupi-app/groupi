@@ -4,7 +4,9 @@ import {
   usernameClient,
   magicLinkClient,
   emailOTPClient,
+  apiKeyClient,
 } from 'better-auth/client/plugins';
+import { passkeyClient } from '@better-auth/passkey/client';
 import { expoClient } from '@better-auth/expo/client';
 import * as SecureStore from 'expo-secure-store';
 
@@ -24,6 +26,8 @@ const baseAuthClient = createAuthClient({
     usernameClient(),
     magicLinkClient(),
     emailOTPClient(),
+    apiKeyClient(),
+    passkeyClient(),
     expoClient({
       scheme: 'groupi',
       storagePrefix: 'groupi',
@@ -32,5 +36,46 @@ const baseAuthClient = createAuthClient({
   ],
 });
 
-export const authClient = baseAuthClient;
+// Type-assert to include plugin methods that TypeScript can't infer
+export const authClient = baseAuthClient as typeof baseAuthClient & {
+  apiKey: {
+    list: () => Promise<{
+      data?: Array<{
+        id: string;
+        name?: string | null;
+        start?: string;
+        createdAt: string;
+        expiresAt?: string | null;
+      }>;
+      error?: { message: string };
+    }>;
+    create: (options: { name: string; expiresIn?: number }) => Promise<{
+      data?: { key: string };
+      error?: { message: string };
+    }>;
+    delete: (options: { keyId: string }) => Promise<{
+      error?: { message: string };
+    }>;
+  };
+  passkey: {
+    addPasskey: (options?: { name?: string }) => Promise<{
+      error?: { message: string };
+    }>;
+    listUserPasskeys: () => Promise<{
+      data?: Array<{
+        id: string;
+        name?: string | null;
+        createdAt: string;
+      }>;
+      error?: { message: string };
+    }>;
+    deletePasskey: (options: { id: string }) => Promise<{
+      error?: { message: string };
+    }>;
+    updatePasskey: (options: { id: string; name: string }) => Promise<{
+      error?: { message: string };
+    }>;
+  };
+};
+
 export const { signIn, signUp, signOut, useSession } = authClient;

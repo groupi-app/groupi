@@ -1,33 +1,141 @@
-import { useState, useCallback } from 'react';
-import { View, FlatList, RefreshControl } from 'react-native';
+import { useState, useCallback, useMemo } from 'react';
+import { View, FlatList, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { Text } from '@/components/ui/text';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import { useUserEvents } from '@/hooks/use-events';
+import { usePendingInviteCount } from '@/hooks/use-event-invites';
+import { useMutedEvents } from '@/hooks/use-muting';
+import { useFilterSortStore } from '@/stores';
 import { EventCard } from '@/components/events/event-card';
 import { EventListSkeleton } from '@/components/events/event-list-skeleton';
-import { EventsWelcomeHeader } from '@/components/events/events-welcome-header';
 import { EmptyEvents } from '@/components/events/empty-events';
 import { CreateEventFab } from '@/components/events/create-event-fab';
+import { TabBarFilter } from '@/components/molecules';
+import { showActionSheet } from '@/components/ui/action-sheet';
+
+import type { EventTab, SortBy } from '@/stores';
+
+function isEventPast(chosenDateTime: string | undefined): boolean {
+  if (!chosenDateTime) return false;
+  return new Date(chosenDateTime).getTime() < Date.now();
+}
+
+const EVENT_TABS = [
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'hosting', label: 'Hosting' },
+  { key: 'attended', label: 'Attended' },
+];
+
+const SORT_LABELS: Record<SortBy, string> = {
+  lastactivity: 'Latest Activity',
+  eventdate: 'Event Date',
+  createdat: 'Date Created',
+  title: 'Title',
+};
 
 export default function HomeScreen() {
   const { user } = useGlobalUser();
   const eventsData = useUserEvents();
+  const inviteCount = usePendingInviteCount();
+  const mutedEventsData = useMutedEvents();
+  const { activeTab, sortBy, setActiveTab, setSortBy } = useFilterSortStore();
   const [refreshing, setRefreshing] = useState(false);
 
-  const events = eventsData?.events ?? [];
   const isLoading = eventsData === undefined;
+
+  const mutedEventIds = useMemo(() => {
+    if (!mutedEventsData) return new Set<string>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Set(mutedEventsData.map((m: any) => m.eventId));
+  }, [mutedEventsData]);
+
+  // Filter events by tab
+  const filteredEvents = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allEvents: any[] = eventsData?.events ?? [];
+    return allEvents.filter(item => {
+      const isPast = isEventPast(item.event.chosenDateTime);
+      const isOrganizer = item.membership.role === 'ORGANIZER';
+
+      switch (activeTab) {
+        case 'upcoming':
+          return !isPast;
+        case 'hosting':
+          return isOrganizer && !isPast;
+        case 'attended':
+          return isPast;
+        default:
+          return true;
+      }
+    });
+  }, [eventsData, activeTab]);
+
+  // Sort events
+  const sortedEvents = useMemo(() => {
+    return [...filteredEvents].sort((a, b) => {
+      switch (sortBy) {
+        case 'title':
+          return (a.event.title ?? '').localeCompare(b.event.title ?? '');
+        case 'eventdate': {
+          const aDate = a.event.chosenDateTime
+            ? new Date(a.event.chosenDateTime).getTime()
+            : 0;
+          const bDate = b.event.chosenDateTime
+            ? new Date(b.event.chosenDateTime).getTime()
+            : 0;
+          return bDate - aDate;
+        }
+        case 'createdat':
+          return (b.event._creationTime ?? 0) - (a.event._creationTime ?? 0);
+        case 'lastactivity':
+        default:
+          return (
+            (b.event.lastActivityAt ?? b.event._creationTime ?? 0) -
+            (a.event.lastActivityAt ?? a.event._creationTime ?? 0)
+          );
+      }
+    });
+  }, [filteredEvents, sortBy]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Convex auto-syncs, so just show the indicator briefly
     setTimeout(() => setRefreshing(false), 500);
   }, []);
+
+  function handleSortPress() {
+    const sortOptions: SortBy[] = [
+      'lastactivity',
+      'eventdate',
+      'createdat',
+      'title',
+    ];
+
+    showActionSheet({
+      title: 'Sort Events',
+      options: sortOptions.map(option => ({
+        label: `${SORT_LABELS[option]}${sortBy === option ? ' ✓' : ''}`,
+        onPress: () => setSortBy(option),
+      })),
+    });
+  }
+
+  const greeting = user?.name
+    ? `Hey, ${user.name.split(' ')[0]}!`
+    : 'Hey there!';
+  const pendingInvites = (inviteCount as number) ?? 0;
 
   if (isLoading) {
     return (
       <SafeAreaView className='flex-1 bg-background'>
-        <EventsWelcomeHeader userName={user?.name ?? null} eventCount={0} />
+        <View className='px-4 pb-4 pt-2'>
+          <Text variant='h3' className='text-left'>
+            {greeting}
+          </Text>
+        </View>
         <EventListSkeleton />
       </SafeAreaView>
     );
@@ -37,24 +145,65 @@ export default function HomeScreen() {
     <SafeAreaView className='flex-1 bg-background'>
       <View className='flex-1'>
         <FlatList
-          data={events}
+          data={sortedEvents}
           keyExtractor={item => item.event._id}
           renderItem={({ item }) => (
             <EventCard
               event={item.event}
               membership={item.membership}
               organizer={item.organizer}
+              isMuted={mutedEventIds.has(item.event._id)}
             />
           )}
           ListHeaderComponent={
-            <EventsWelcomeHeader
-              userName={user?.name ?? null}
-              eventCount={events.length}
-            />
+            <View>
+              <View className='px-4 pb-2 pt-2'>
+                <View className='flex-row items-center justify-between'>
+                  <Text variant='h3' className='text-left'>
+                    {greeting}
+                  </Text>
+                  <Pressable
+                    onPress={handleSortPress}
+                    className='h-9 w-9 items-center justify-center rounded-full bg-muted'
+                  >
+                    <Ionicons name='swap-vertical' size={18} color='#6b7280' />
+                  </Pressable>
+                </View>
+
+                {/* Pending invites banner */}
+                {pendingInvites > 0 ? (
+                  <Pressable
+                    onPress={() => router.push('/invites')}
+                    className='mt-3 flex-row items-center justify-between rounded-card bg-primary/10 px-4 py-3'
+                  >
+                    <View className='flex-row items-center gap-2'>
+                      <Ionicons name='mail' size={18} color='#8b00b8' />
+                      <Text className='text-sm font-medium text-primary'>
+                        {pendingInvites} pending{' '}
+                        {pendingInvites === 1 ? 'invite' : 'invites'}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name='chevron-forward'
+                      size={16}
+                      color='#8b00b8'
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+
+              <TabBarFilter
+                tabs={EVENT_TABS}
+                activeTab={activeTab}
+                onTabChange={key => setActiveTab(key as EventTab)}
+              />
+            </View>
           }
           ListEmptyComponent={<EmptyEvents />}
           contentContainerClassName='pb-6'
-          contentContainerStyle={events.length === 0 ? { flex: 1 } : undefined}
+          contentContainerStyle={
+            sortedEvents.length === 0 ? { flex: 1 } : undefined
+          }
           className='px-4'
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

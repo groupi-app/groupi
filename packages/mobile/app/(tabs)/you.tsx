@@ -202,7 +202,7 @@ export default function YouScreen() {
                 placeholder='Tell people about yourself...'
                 value={editBio}
                 onChangeText={setEditBio}
-                maxLength={200}
+                maxLength={500}
               />
               <Button
                 onPress={handleSaveProfile}

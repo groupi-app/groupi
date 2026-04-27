@@ -13,7 +13,7 @@ export function BackButton({ onPress, className }: BackButtonProps) {
       onPress={onPress ?? (() => router.back())}
       className={
         className ??
-        'mr-3 h-10 w-10 items-center justify-center rounded-full bg-muted'
+        'mr-3 h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-muted shadow-raised'
       }
     >
       <Ionicons name='arrow-back' size={20} color='#6b7280' />

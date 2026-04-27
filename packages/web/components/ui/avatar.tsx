@@ -14,7 +14,7 @@ export function Avatar({
       data-slot='avatar'
       className={cn(
         // Clean avatar - subtle border for definition
-        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-avatar border border-border/50 shadow-sm',
+        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-avatar border border-border/50 shadow-raised',
         className
       )}
       {...props}

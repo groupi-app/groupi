@@ -15,7 +15,8 @@ interface PostFeedProps {
 }
 
 export function PostFeed({ postFeedData, eventId }: PostFeedProps) {
-  const posts = postFeedData?.posts ?? [];
+  // The query returns { event: { posts: [...] }, ... }
+  const posts = postFeedData?.event?.posts ?? postFeedData?.posts ?? [];
 
   return (
     <View className='mt-6'>
@@ -44,10 +45,14 @@ export function PostFeed({ postFeedData, eventId }: PostFeedProps) {
               title: string;
               content: string;
               _creationTime: number;
+              updatedAt?: number;
               author?: {
-                person?: { _id: string };
+                person?: {
+                  _id: string;
+                  user?: { name: string; image?: string };
+                };
                 user?: { name: string; image?: string };
-              };
+              } | null;
               replyCount?: number;
             }) => (
               <PostCard key={post._id} post={post} eventId={eventId} />

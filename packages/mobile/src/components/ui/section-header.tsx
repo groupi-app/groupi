@@ -19,8 +19,8 @@ export function SectionHeader({
       <View className='flex-row items-center gap-2'>
         <Text variant='large'>{title}</Text>
         {count !== undefined ? (
-          <View className='rounded-badge bg-muted px-1.5 py-0.5'>
-            <Text variant='muted' className='text-xs'>
+          <View className='rounded-badge border-2 border-white bg-muted px-1.5 py-0.5 shadow-raised'>
+            <Text variant='muted' className='text-xs font-semibold'>
               {count}
             </Text>
           </View>

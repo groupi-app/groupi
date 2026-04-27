@@ -52,7 +52,7 @@ export default function SettingsScreen() {
         <SettingsItem
           icon='person-circle-outline'
           label='Account'
-          description='Email, username, delete account'
+          description='Username, emails, linked accounts'
           onPress={() => router.push('/settings/account')}
         />
         <SettingsItem
@@ -66,6 +66,18 @@ export default function SettingsScreen() {
           label='Notifications'
           description='Manage notification preferences'
           onPress={() => router.push('/settings/notifications')}
+        />
+        <SettingsItem
+          icon='shield-outline'
+          label='Privacy'
+          description='Friend requests, invites, blocked users'
+          onPress={() => router.push('/settings/privacy')}
+        />
+        <SettingsItem
+          icon='megaphone-outline'
+          label="What's New"
+          description='Changelog and recent updates'
+          onPress={() => router.push('/settings/changelog')}
         />
       </View>
     </SafeAreaView>

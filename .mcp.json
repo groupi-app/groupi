@@ -15,6 +15,10 @@
     "uniwind": {
       "type": "http",
       "url": "https://docs.uniwind.dev/mcp"
+    },
+    "ios-simulator": {
+      "command": "npx",
+      "args": ["-y", "ios-simulator-mcp"]
     }
   }
 }

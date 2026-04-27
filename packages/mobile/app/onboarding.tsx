@@ -179,7 +179,7 @@ export default function OnboardingScreen() {
             placeholder='Tell people a bit about yourself...'
             value={bio}
             onChangeText={setBio}
-            maxLength={200}
+            maxLength={500}
           />
 
           {error ? <Text className='text-sm text-error'>{error}</Text> : null}

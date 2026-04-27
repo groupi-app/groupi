@@ -1,9 +1,15 @@
-import { View, Pressable, Image } from 'react-native';
+import {
+  View,
+  Pressable,
+  Image,
+  ActionSheetIOS,
+  Alert,
+  Platform,
+} from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
-import { useActionMenu } from '@/components/ui/action-menu';
 
 interface EventImageUploadProps {
   imageUri?: string | null;
@@ -21,59 +27,80 @@ export function EventImageUpload({
   disabled = false,
 }: EventImageUploadProps) {
   const { pickImage, takePhoto } = useImagePicker();
-  const { showActionMenu } = useActionMenu();
 
   const displayUri = imageUri ?? existingImageUrl;
+
+  async function chooseFromLibrary() {
+    const result = await pickImage({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (result) {
+      onImageSelected(result.uri, result.filename, result.mimeType);
+    }
+  }
+
+  async function takeNewPhoto() {
+    const result = await takePhoto({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (result) {
+      onImageSelected(result.uri, result.filename, result.mimeType);
+    }
+  }
 
   function handlePress() {
     if (disabled) return;
 
-    const options: {
-      label: string;
-      icon?: string;
-      onPress: () => void;
-      destructive?: boolean;
-    }[] = [
-      {
-        label: 'Choose from Library',
-        icon: 'images-outline',
-        onPress: async () => {
-          const result = await pickImage({
-            allowsEditing: true,
-            aspect: [16, 9],
-            quality: 0.8,
-          });
-          if (result) {
-            onImageSelected(result.uri, result.filename, result.mimeType);
-          }
-        },
-      },
-      {
-        label: 'Take Photo',
-        icon: 'camera-outline',
-        onPress: async () => {
-          const result = await takePhoto({
-            allowsEditing: true,
-            aspect: [16, 9],
-            quality: 0.8,
-          });
-          if (result) {
-            onImageSelected(result.uri, result.filename, result.mimeType);
-          }
-        },
-      },
-    ];
+    const hasImage = !!displayUri;
 
-    if (displayUri) {
-      options.push({
-        label: 'Remove Image',
-        icon: 'trash-outline',
-        destructive: true,
-        onPress: onImageRemoved,
+    if (Platform.OS === 'ios') {
+      const options = hasImage
+        ? ['Take Photo', 'Choose from Library', 'Remove Image', 'Cancel']
+        : ['Take Photo', 'Choose from Library', 'Cancel'];
+
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: options.length - 1,
+          destructiveButtonIndex: hasImage ? 2 : undefined,
+          title: 'Event Cover Image',
+        },
+        buttonIndex => {
+          if (buttonIndex === 0) {
+            takeNewPhoto();
+          } else if (buttonIndex === 1) {
+            chooseFromLibrary();
+          } else if (hasImage && buttonIndex === 2) {
+            onImageRemoved();
+          }
+        }
+      );
+    } else {
+      const buttons: { text: string; onPress?: () => void }[] = [
+        { text: 'Take Photo', onPress: () => void takeNewPhoto() },
+        {
+          text: 'Choose from Library',
+          onPress: () => void chooseFromLibrary(),
+        },
+      ];
+
+      if (hasImage) {
+        buttons.push({
+          text: 'Remove Image',
+          onPress: onImageRemoved,
+        });
+      }
+
+      buttons.push({ text: 'Cancel' });
+
+      Alert.alert('Event Cover Image', undefined, buttons, {
+        cancelable: true,
       });
     }
-
-    showActionMenu({ title: 'Event Cover Image', options });
   }
 
   if (displayUri) {

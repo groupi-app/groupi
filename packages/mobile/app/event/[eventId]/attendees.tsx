@@ -1,27 +1,26 @@
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { View, FlatList, Pressable } from 'react-native';
+import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useEventMembers, useCanManageEvent } from '@/hooks/use-events';
+import {
+  useUpdateMemberRole,
+  useRemoveMember,
+  useBanMember,
+} from '@/hooks/use-members';
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { RoleBadge } from '@/components/molecules';
+import { LoadingState } from '@/components/molecules';
+import { showActionSheet } from '@/components/ui/action-sheet';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useGlobalUser } from '@/context/global-user-context';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Member = any;
-
-const ROLE_LABELS: Record<string, string> = {
-  ORGANIZER: 'Organizer',
-  MODERATOR: 'Moderator',
-  ATTENDEE: 'Attendee',
-};
 
 const RSVP_ICONS: Record<
   string,
@@ -35,11 +34,79 @@ const RSVP_ICONS: Record<
 
 export default function AttendeesScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
+  const { person: currentPerson } = useGlobalUser();
   const membersData = useEventMembers(eventId as never);
   const permissions = useCanManageEvent(eventId as never);
 
+  const updateRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
+  const banMember = useBanMember();
+
   const members: Member[] = membersData?.members ?? membersData ?? [];
   const isLoading = membersData === undefined;
+  const canManage = permissions?.canManage ?? false;
+
+  function handleMemberLongPress(member: Member) {
+    if (!canManage) return;
+
+    const personId = member.person?._id ?? member.personId;
+    const membershipId = member._id ?? member.membership?._id;
+    const role = member.role ?? member.membership?.role;
+    const name = member.user?.name ?? member.person?.user?.name ?? 'Member';
+    const isCurrentUser = personId === currentPerson?._id;
+    const isOrganizer = role === 'ORGANIZER';
+
+    if (isCurrentUser || isOrganizer || !membershipId) return;
+
+    const sheetOptions: {
+      label: string;
+      onPress: () => void;
+      destructive?: boolean;
+    }[] = [];
+
+    if (role === 'ATTENDEE') {
+      sheetOptions.push({
+        label: 'Promote to Moderator',
+        onPress: () => updateRole({ membershipId, newRole: 'MODERATOR' }),
+      });
+    }
+    if (role === 'MODERATOR') {
+      sheetOptions.push({
+        label: 'Demote to Attendee',
+        onPress: () => updateRole({ membershipId, newRole: 'ATTENDEE' }),
+      });
+    }
+
+    sheetOptions.push({
+      label: 'Remove from Event',
+      onPress: () =>
+        showConfirmDialog({
+          title: 'Remove Member',
+          message: `Remove ${name} from this event?`,
+          confirmLabel: 'Remove',
+          destructive: true,
+          onConfirm: () => removeMember({ membershipId }),
+        }),
+    });
+
+    sheetOptions.push({
+      label: 'Ban from Event',
+      destructive: true,
+      onPress: () =>
+        showConfirmDialog({
+          title: 'Ban Member',
+          message: `Ban ${name} from this event? They will not be able to rejoin.`,
+          confirmLabel: 'Ban',
+          destructive: true,
+          onConfirm: () => banMember({ membershipId }),
+        }),
+    });
+
+    showActionSheet({
+      title: name,
+      options: sheetOptions,
+    });
+  }
 
   if (isLoading) {
     return (
@@ -48,14 +115,11 @@ export default function AttendeesScreen() {
           <BackButton />
           <Text className='text-lg font-semibold text-foreground'>Members</Text>
         </View>
-        <View className='flex-1 items-center justify-center'>
-          <ActivityIndicator size='large' />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }
 
-  // Sort: organizers first
   const roleOrder: Record<string, number> = {
     ORGANIZER: 0,
     MODERATOR: 1,
@@ -76,7 +140,7 @@ export default function AttendeesScreen() {
             Members ({members.length})
           </Text>
         </View>
-        {permissions?.canManage ? (
+        {canManage ? (
           <Pressable
             onPress={() => router.push(`/event/${eventId}/invite`)}
             className='flex-row items-center gap-1 rounded-button bg-primary px-3 py-1.5'
@@ -102,6 +166,7 @@ export default function AttendeesScreen() {
           return (
             <Pressable
               onPress={() => router.push(`/profile/${item.person?._id}`)}
+              onLongPress={() => handleMemberLongPress(item)}
               className='flex-row items-center gap-3 border-b border-border px-4 py-3'
             >
               <Avatar src={image} name={name} size='md' />
@@ -109,9 +174,7 @@ export default function AttendeesScreen() {
                 <Text className='text-base font-medium text-foreground'>
                   {name}
                 </Text>
-                <Text className='text-sm text-muted-foreground'>
-                  {ROLE_LABELS[role] ?? role}
-                </Text>
+                <RoleBadge role={role} className='mt-1 self-start' />
               </View>
               <Ionicons name={rsvpInfo.icon} size={20} color={rsvpInfo.color} />
             </Pressable>

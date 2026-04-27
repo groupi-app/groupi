@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import { View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -15,8 +9,10 @@ import { LabeledTextarea as Textarea } from '@/components/ui/labeled-textarea';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { EventImageUpload } from '@/components/events/event-image-upload';
+import { LoadingState } from '@/components/molecules';
 import { useEventHeader, useUpdateEvent } from '@/hooks/use-events';
 import { useFileUpload } from '@/hooks/use-file-upload';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { toast } from '@groupi/shared/platform';
 
 export default function EditEventScreen() {
@@ -54,6 +50,16 @@ export default function EditEventScreen() {
     }
   }, [event, initialized]);
 
+  // Unsaved changes guard
+  const hasChanges =
+    initialized &&
+    (title !== (event?.title ?? '') ||
+      description !== (event?.description ?? '') ||
+      location !== (event?.location ?? '') ||
+      newImageUri !== null ||
+      removeExistingImage);
+  useUnsavedChanges(hasChanges);
+
   if (headerData === undefined) {
     return (
       <SafeAreaView className='flex-1 bg-background'>
@@ -63,9 +69,7 @@ export default function EditEventScreen() {
             Edit Event
           </Text>
         </View>
-        <View className='flex-1 items-center justify-center'>
-          <ActivityIndicator size='large' />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }
@@ -166,7 +170,7 @@ export default function EditEventScreen() {
               placeholder="What's this event about?"
               value={description}
               onChangeText={setDescription}
-              maxLength={2000}
+              maxLength={1000}
             />
 
             <Input

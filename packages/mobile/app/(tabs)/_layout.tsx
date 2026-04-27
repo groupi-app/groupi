@@ -93,10 +93,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name='discover'
+        options={{
+          title: 'Discover',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name='compass' size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name='notifications'
         options={{
           title: 'Notifications',
-          tabBarBadge: badgeCount > 0 ? badgeCount : undefined,
+          tabBarBadge:
+            badgeCount > 0 ? (badgeCount > 99 ? '99+' : badgeCount) : undefined,
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name='notifications' size={size} color={color} />
           ),

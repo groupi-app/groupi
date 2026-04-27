@@ -28,6 +28,8 @@ PODS:
     - Yoga
   - ExpoAsset (55.0.13):
     - ExpoModulesCore
+  - ExpoClipboard (55.0.13):
+    - ExpoModulesCore
   - ExpoDomWebView (55.0.5):
     - ExpoModulesCore
   - ExpoFileSystem (55.0.15):
@@ -1577,6 +1579,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-webview (13.16.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - React-NativeModulesApple (0.83.4):
     - hermes-engine
     - React-callinvoker
@@ -1961,6 +1985,28 @@ PODS:
     - React-utils (= 0.83.4)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.83.4)
+  - RNDateTimePicker (9.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGestureHandler (2.30.1):
     - hermes-engine
     - RCTRequired
@@ -2231,12 +2277,35 @@ PODS:
   - SDWebImageWebPCoder (0.14.6):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
+  - tentap (1.0.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - Yoga (0.0.0)
 
 DEPENDENCIES:
   - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@55.0.12_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react_eed989de1189762a5694563f07f74ba8/node_modules/expo-constants/ios`)"
-  - "Expo (from `../../../node_modules/.pnpm/expo@55.0.12_@babel+core@7.28.5_@expo+dom-webview@55.0.5_@expo+metro-runtime@55.0.9_exp_43bea3b0884eed353b27d7b82be4729a/node_modules/expo`)"
+  - "Expo (from `../../../node_modules/.pnpm/expo@55.0.12_@babel+core@7.28.5_@expo+dom-webview@55.0.5_@expo+metro-runtime@55.0.9_exp_50b95fc37ecbdbf197f1e7f668cacdf5/node_modules/expo`)"
   - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@55.0.13_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react@19._35d08604007d535cd320b2da52e9c6e1/node_modules/expo-asset/ios`)"
+  - "ExpoClipboard (from `../../../node_modules/.pnpm/expo-clipboard@55.0.13_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react_3d586e58b3259d3a16208be1733c1a53/node_modules/expo-clipboard/ios`)"
   - "ExpoDomWebView (from `../../../node_modules/.pnpm/@expo+dom-webview@55.0.5_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+rea_5d09e55f07364d7e5fd8ceb3e51ddc18/node_modules/@expo/dom-webview/ios`)"
   - "ExpoFileSystem (from `../../../node_modules/.pnpm/expo-file-system@55.0.15_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0_/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.pnpm/expo-font@55.0.6_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/expo-font/ios`)"
@@ -2294,6 +2363,7 @@ DEPENDENCIES:
   - "React-Mapbuffer (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon`)"
   - "React-microtasksnativemodule (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)"
   - "react-native-safe-area-context (from `../../../node_modules/.pnpm/react-native-safe-area-context@5.6.2_react-native@0.83.4_@babel+core@7.28.5_@types+reac_10daf3680402c615ce6a57dd347afe92/node_modules/react-native-safe-area-context`)"
+  - "react-native-webview (from `../../../node_modules/.pnpm/react-native-webview@13.16.1_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/react-native-webview`)"
   - "React-NativeModulesApple (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)"
   - "React-networking (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/react/networking`)"
   - "React-oscompat (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/oscompat`)"
@@ -2328,11 +2398,13 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - "ReactCommon/turbomodule/core (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon`)"
   - "ReactNativeDependencies (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)"
+  - "RNDateTimePicker (from `../../../node_modules/.pnpm/@react-native-community+datetimepicker@9.1.0_expo@55.0.12_react-native@0.83.4_@babel+co_1d2e011ff5b91801a163007bd1effd0d/node_modules/@react-native-community/datetimepicker`)"
   - "RNGestureHandler (from `../../../node_modules/.pnpm/react-native-gesture-handler@2.30.1_react-native@0.83.4_@babel+core@7.28.5_@types+react_f49f2474fca3ca7ffeae0fa96230c8b7/node_modules/react-native-gesture-handler`)"
   - "RNReanimated (from `../../../node_modules/.pnpm/react-native-reanimated@4.2.1_react-native-worklets@0.7.2_@babel+core@7.28.5_react-nati_03eaab417bb30439633ae93f2fdde90a/node_modules/react-native-reanimated`)"
   - "RNScreens (from `../../../node_modules/.pnpm/react-native-screens@4.23.0_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/react-native-screens`)"
   - "RNSVG (from `../../../node_modules/.pnpm/react-native-svg@15.15.3_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/react-native-svg`)"
   - "RNWorklets (from `../../../node_modules/.pnpm/react-native-worklets@0.7.2_@babel+core@7.28.5_react-native@0.83.4_@babel+core@7.28.5_@_23e2f4a1f12ebe99b41fe9dc4954085b/node_modules/react-native-worklets`)"
+  - "tentap (from `../../../node_modules/.pnpm/@10play+tentap-editor@1.0.1_@types+react-dom@19.2.2_@types+react@19.2.2__@types+react@1_0fb78c2bcc528e04097529042674221b/node_modules/@10play/tentap-editor`)"
   - "Yoga (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/yoga`)"
 
 SPEC REPOS:
@@ -2349,9 +2421,11 @@ EXTERNAL SOURCES:
   EXConstants:
     :path: "../../../node_modules/.pnpm/expo-constants@55.0.12_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react_eed989de1189762a5694563f07f74ba8/node_modules/expo-constants/ios"
   Expo:
-    :path: "../../../node_modules/.pnpm/expo@55.0.12_@babel+core@7.28.5_@expo+dom-webview@55.0.5_@expo+metro-runtime@55.0.9_exp_43bea3b0884eed353b27d7b82be4729a/node_modules/expo"
+    :path: "../../../node_modules/.pnpm/expo@55.0.12_@babel+core@7.28.5_@expo+dom-webview@55.0.5_@expo+metro-runtime@55.0.9_exp_50b95fc37ecbdbf197f1e7f668cacdf5/node_modules/expo"
   ExpoAsset:
     :path: "../../../node_modules/.pnpm/expo-asset@55.0.13_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react@19._35d08604007d535cd320b2da52e9c6e1/node_modules/expo-asset/ios"
+  ExpoClipboard:
+    :path: "../../../node_modules/.pnpm/expo-clipboard@55.0.13_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+react_3d586e58b3259d3a16208be1733c1a53/node_modules/expo-clipboard/ios"
   ExpoDomWebView:
     :path: "../../../node_modules/.pnpm/@expo+dom-webview@55.0.5_expo@55.0.12_react-native@0.83.4_@babel+core@7.28.5_@types+rea_5d09e55f07364d7e5fd8ceb3e51ddc18/node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
@@ -2465,6 +2539,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-safe-area-context:
     :path: "../../../node_modules/.pnpm/react-native-safe-area-context@5.6.2_react-native@0.83.4_@babel+core@7.28.5_@types+reac_10daf3680402c615ce6a57dd347afe92/node_modules/react-native-safe-area-context"
+  react-native-webview:
+    :path: "../../../node_modules/.pnpm/react-native-webview@13.16.1_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/react-native-webview"
   React-NativeModulesApple:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -2533,6 +2609,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNDateTimePicker:
+    :path: "../../../node_modules/.pnpm/@react-native-community+datetimepicker@9.1.0_expo@55.0.12_react-native@0.83.4_@babel+co_1d2e011ff5b91801a163007bd1effd0d/node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../../../node_modules/.pnpm/react-native-gesture-handler@2.30.1_react-native@0.83.4_@babel+core@7.28.5_@types+react_f49f2474fca3ca7ffeae0fa96230c8b7/node_modules/react-native-gesture-handler"
   RNReanimated:
@@ -2543,6 +2621,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native-svg@15.15.3_react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0__react@19.2.0/node_modules/react-native-svg"
   RNWorklets:
     :path: "../../../node_modules/.pnpm/react-native-worklets@0.7.2_@babel+core@7.28.5_react-native@0.83.4_@babel+core@7.28.5_@_23e2f4a1f12ebe99b41fe9dc4954085b/node_modules/react-native-worklets"
+  tentap:
+    :path: "../../../node_modules/.pnpm/@10play+tentap-editor@1.0.1_@types+react-dom@19.2.2_@types+react@19.2.2__@types+react@1_0fb78c2bcc528e04097529042674221b/node_modules/@10play/tentap-editor"
   Yoga:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.28.5_@types+react@19.2.2_react@19.2.0/node_modules/react-native/ReactCommon/yoga"
 
@@ -2550,6 +2630,7 @@ SPEC CHECKSUMS:
   EXConstants: 97e4a5b18e38331acce952f0e4a6817b0418408f
   Expo: 04f5391a7affe866de03b928cf40d683ec4a3463
   ExpoAsset: 3636e70a874487efd0a677f6c064dbc9fc8f174b
+  ExpoClipboard: 5d1b0cd2686406f21e616f2d9b3431259dee2e6a
   ExpoDomWebView: 2b2fbd9a07de8790569257cbf9dfdaa31cf95c70
   ExpoFileSystem: d40374bc7b6e990e2640e5dc3350fc83b1d74a40
   ExpoFont: cdd7a1d574a376fa003c713eff49e0a4df8672c7
@@ -2609,6 +2690,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 274cb203819492f7fb594bbb3a1f3f5061fa794d
   React-microtasksnativemodule: 563b4dcc8b8570814d6de4fc1196f48d2944acd4
   react-native-safe-area-context: 37e680fc4cace3c0030ee46e8987d24f5d3bdab2
+  react-native-webview: 0ed52ddb2eafc64a502871218440b8b4d37961c3
   React-NativeModulesApple: f3eb751b0ea23645a5283ed8c8bb8ebeeda32d15
   React-networking: af5eba8ccda3334cd2f6246b599d3b55bb73eb2e
   React-oscompat: 3774ed6bc0e9866ff7236b94adbc7ad33ceaecdd
@@ -2643,6 +2725,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 05667185819c18f53e5795812c0179fd8ef1e8a2
   ReactCommon: c6e81cc1ae185fa84863f3ea1d58caac4be741d7
   ReactNativeDependencies: 8c93c0c118f69962e81104e15e6a66be7fa9a9ae
+  RNDateTimePicker: 9025ccd219b382f246e9ceb85cd4095279b9bad1
   RNGestureHandler: 0ea8153746a92b3744d4eaadade647debedf646e
   RNReanimated: 1fe4525d5b35d36e8aaad2e6018c7ec7d5a0f70e
   RNScreens: 02e62f995ceb94ea465864b3bf4d4767b87f0362
@@ -2652,6 +2735,7 @@ SPEC CHECKSUMS:
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
+  tentap: 60c7b42c6b4c3e91ebccb9917a0217a8009b8112
   Yoga: acd565934addf7423687593ec490bd4491b2a802
 
 PODFILE CHECKSUM: 46ed3327ed8c5444421fa2cea4cce55387ad5ffe

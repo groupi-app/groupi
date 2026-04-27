@@ -15,13 +15,20 @@ interface MemberListProps {
 }
 
 export function MemberList({ members, eventId, canManage }: MemberListProps) {
+  // The query returns { event: { memberships: [...] }, ... }
+  // Extract the actual member list from all possible shapes
   const memberList: {
-    person: { _id: string; bio?: string };
-    user: { name: string; image?: string };
-    membership: { role: string };
-  }[] = members?.members ?? members ?? [];
+    personId?: string;
+    person?: { _id: string; user?: { name: string; image?: string } } | null;
+    user?: { name: string; image?: string } | null;
+    role?: string;
+    membership?: { role: string };
+  }[] =
+    members?.event?.memberships ??
+    members?.members ??
+    (Array.isArray(members) ? members : []);
 
-  if (!Array.isArray(memberList) || memberList.length === 0) return null;
+  if (memberList.length === 0) return null;
 
   // Sort: organizers first, then moderators, then attendees
   const roleOrder: Record<string, number> = {
@@ -29,10 +36,11 @@ export function MemberList({ members, eventId, canManage }: MemberListProps) {
     MODERATOR: 1,
     ATTENDEE: 2,
   };
-  const sorted = [...memberList].sort(
-    (a, b) =>
-      (roleOrder[a.membership.role] ?? 3) - (roleOrder[b.membership.role] ?? 3)
-  );
+  const sorted = [...memberList].sort((a, b) => {
+    const roleA = a.role ?? a.membership?.role ?? 'ATTENDEE';
+    const roleB = b.role ?? b.membership?.role ?? 'ATTENDEE';
+    return (roleOrder[roleA] ?? 3) - (roleOrder[roleB] ?? 3);
+  });
 
   return (
     <View className='mt-4'>
@@ -48,22 +56,28 @@ export function MemberList({ members, eventId, canManage }: MemberListProps) {
         className='px-4'
         contentContainerClassName='gap-3 py-2'
       >
-        {sorted.slice(0, 15).map(member => (
-          <Pressable
-            key={member.person._id}
-            onPress={() => router.push(`/profile/${member.person._id}`)}
-          >
-            <Avatar
-              src={member.user?.image}
-              name={member.user?.name}
-              size='lg'
-            />
-          </Pressable>
-        ))}
+        {sorted.slice(0, 15).map(member => {
+          const personId = member.personId ?? member.person?._id;
+          const userName =
+            member.user?.name ?? member.person?.user?.name ?? '?';
+          const userImage =
+            member.user?.image ?? member.person?.user?.image ?? undefined;
+
+          if (!personId) return null;
+
+          return (
+            <Pressable
+              key={personId}
+              onPress={() => router.push(`/profile/${personId}`)}
+            >
+              <Avatar src={userImage} name={userName} size='lg' />
+            </Pressable>
+          );
+        })}
         {canManage ? (
           <Pressable
             onPress={() => router.push(`/event/${eventId}/invite`)}
-            className='h-14 w-14 items-center justify-center rounded-full border border-dashed border-border'
+            className='h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-border'
           >
             <Ionicons name='add' size={24} color='#9ca3af' />
           </Pressable>
