@@ -139,40 +139,45 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <ul className='ml-6 mt-2 divide-y divide-border'>
-                  {event.potentialDateTimes.map((date, i) => {
-                    const start = new Date(date.dateTime);
-                    const dateStr = start.toLocaleDateString(undefined, {
-                      weekday: 'short',
-                      month: 'numeric',
-                      day: 'numeric',
-                      year: 'numeric',
-                    });
-                    const startTime = start.toLocaleTimeString(undefined, {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    });
-                    const endTime =
-                      date.endDateTime != null
-                        ? new Date(date.endDateTime).toLocaleTimeString(
-                            undefined,
-                            { hour: 'numeric', minute: '2-digit' }
-                          )
-                        : null;
-                    const sameDay =
-                      date.endDateTime != null &&
-                      isSameDay(date.dateTime, date.endDateTime);
+                  {event.potentialDateTimes.map(
+                    (
+                      date: { dateTime: number; endDateTime?: number },
+                      i: number
+                    ) => {
+                      const start = new Date(date.dateTime);
+                      const dateStr = start.toLocaleDateString(undefined, {
+                        weekday: 'short',
+                        month: 'numeric',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                      const startTime = start.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      });
+                      const endTime =
+                        date.endDateTime != null
+                          ? new Date(date.endDateTime).toLocaleTimeString(
+                              undefined,
+                              { hour: 'numeric', minute: '2-digit' }
+                            )
+                          : null;
+                      const sameDay =
+                        date.endDateTime != null &&
+                        isSameDay(date.dateTime, date.endDateTime);
 
-                    return (
-                      <li key={i} className='py-1.5 text-sm'>
-                        <span className='text-foreground'>{dateStr}</span>
-                        <span className='text-muted-foreground'>
-                          {', '}
-                          {startTime}
-                          {endTime && sameDay && ` - ${endTime}`}
-                        </span>
-                      </li>
-                    );
-                  })}
+                      return (
+                        <li key={i} className='py-1.5 text-sm'>
+                          <span className='text-foreground'>{dateStr}</span>
+                          <span className='text-muted-foreground'>
+                            {', '}
+                            {startTime}
+                            {endTime && sameDay && ` - ${endTime}`}
+                          </span>
+                        </li>
+                      );
+                    }
+                  )}
                 </ul>
               </CollapsibleContent>
             </Collapsible>

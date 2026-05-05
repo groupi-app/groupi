@@ -1,11 +1,6 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import {
-  requireAuth,
-  requireEventMembership,
-  hasEventRole,
-  requireEventPermission,
-} from '../auth';
+import { requireAuth, hasEventRole, requireEventPermission } from '../auth';
 import {
   notifyEventMembers,
   notifyPerson,
