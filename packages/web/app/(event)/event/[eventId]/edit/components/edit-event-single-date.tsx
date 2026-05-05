@@ -28,12 +28,16 @@ interface EditEventSingleDateProps {
   eventId: string;
   datetime: Date | undefined;
   endDatetime?: Date | undefined;
+  backHref?: string;
+  onSuccess?: () => void;
 }
 
 export function EditEventSingleDate({
   eventId,
   datetime,
   endDatetime,
+  backHref,
+  onSuccess,
 }: EditEventSingleDateProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -61,7 +65,11 @@ export function EditEventSingleDate({
         dateTimeData.startDateTime,
         dateTimeData.endDateTime
       );
-      router.push(`/event/${eventId}`);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push(`/event/${eventId}`);
+      }
     } catch {
       toast.error('Failed to update date/time', {
         description: 'An unexpected error occurred. Please try again.',
@@ -69,7 +77,7 @@ export function EditEventSingleDate({
     } finally {
       setIsUpdating(false);
     }
-  }, [eventId, chooseDateTime, router]);
+  }, [eventId, chooseDateTime, router, onSuccess]);
 
   // Prepare initial values for the selector
   const initialStartDate = datetime ?? new Date();
@@ -92,7 +100,7 @@ export function EditEventSingleDate({
       />
 
       <div className='flex justify-between mt-2'>
-        <Link href={`/event/${eventId}/change-date`}>
+        <Link href={backHref ?? `/event/${eventId}/change-date`}>
           <Button className='flex items-center gap-1' variant={'secondary'}>
             <span>Back</span>
             <Icons.back className='text-sm' />

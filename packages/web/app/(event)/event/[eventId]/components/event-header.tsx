@@ -267,34 +267,14 @@ export function EventHeader({ data }: EventHeaderProps) {
             </>
           )}
         </Button>
-        <Link href={`/event/${eventId}/edit`}>
+        <Link href={`/event/${eventId}/settings`}>
           <Button
             variant='ghost'
             className='w-full justify-start'
             onClick={() => setDrawerOpen(false)}
           >
-            <Icons.edit className='size-4 mr-2' />
-            Edit Details
-          </Button>
-        </Link>
-        <Link href={`/event/${eventId}/change-date`}>
-          <Button
-            variant='ghost'
-            className='w-full justify-start'
-            onClick={() => setDrawerOpen(false)}
-          >
-            <Icons.date className='size-4 mr-2' />
-            Change Date
-          </Button>
-        </Link>
-        <Link href={`/event/${eventId}/manage-addons`}>
-          <Button
-            variant='ghost'
-            className='w-full justify-start'
-            onClick={() => setDrawerOpen(false)}
-          >
-            <Icons.sliders className='size-4 mr-2' />
-            Manage Add-ons
+            <Icons.settings className='size-4 mr-2' />
+            Event Settings
           </Button>
         </Link>
         <Button
@@ -454,27 +434,11 @@ export function EventHeader({ data }: EventHeaderProps) {
                 </DropdownMenuItem>
                 {userMembership.role === 'ORGANIZER' ? (
                   <>
-                    <Link href={`/event/${eventId}/edit`}>
+                    <Link href={`/event/${eventId}/settings`}>
                       <DropdownMenuItem className='cursor-pointer'>
                         <div className='flex items-center gap-1'>
-                          <Icons.edit className='size-4' />
-                          <span>Edit Details</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href={`/event/${eventId}/change-date`}>
-                      <DropdownMenuItem className='cursor-pointer'>
-                        <div className='flex items-center gap-1'>
-                          <Icons.date className='size-4' />
-                          <span>Change Date</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href={`/event/${eventId}/manage-addons`}>
-                      <DropdownMenuItem className='cursor-pointer'>
-                        <div className='flex items-center gap-1'>
-                          <Icons.sliders className='size-4' />
-                          <span>Manage Add-ons</span>
+                          <Icons.settings className='size-4' />
+                          <span>Event Settings</span>
                         </div>
                       </DropdownMenuItem>
                     </Link>

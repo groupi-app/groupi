@@ -25,8 +25,15 @@ import {
 } from '@/components/ui/card';
 import { AcceptInviteForm } from './invite-accept';
 import { formatDateTimeRange } from '@/lib/utils';
+import { isSameDay } from '@groupi/shared';
 import { ExpiredError } from '@/components/error-display';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function InviteDetails({ inviteId }: { inviteId: string }) {
   const router = useRouter();
@@ -108,20 +115,98 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
 
           {event.location && (
             <div className='flex items-center gap-2 text-sm'>
-              <Icons.mapPin className='h-4 w-4' />
+              <Icons.mapPin className='h-4 w-4 text-primary' />
               <span>{event.location}</span>
             </div>
           )}
 
-          {event.chosenDateTime && (
+          {event.chosenDateTime ? (
             <div className='flex items-center gap-2 text-sm'>
-              <Icons.calendar className='h-4 w-4' />
+              <Icons.calendar className='h-4 w-4 text-primary' />
               <span>
                 {formatDateTimeRange(
                   event.chosenDateTime,
                   event.chosenEndDateTime
                 )}
               </span>
+            </div>
+          ) : event.potentialDateTimes.length > 0 ? (
+            <Collapsible>
+              <CollapsibleTrigger className='flex items-center gap-2 text-sm group'>
+                <Icons.calendar className='h-4 w-4 text-primary' />
+                <span className='text-muted-foreground'>Date TBD</span>
+                <Icons.down className='h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ul className='ml-6 mt-2 divide-y divide-border'>
+                  {event.potentialDateTimes.map(
+                    (
+                      date: { dateTime: number; endDateTime?: number },
+                      i: number
+                    ) => {
+                      const start = new Date(date.dateTime);
+                      const dateStr = start.toLocaleDateString(undefined, {
+                        weekday: 'short',
+                        month: 'numeric',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                      const startTime = start.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      });
+                      const endTime =
+                        date.endDateTime != null
+                          ? new Date(date.endDateTime).toLocaleTimeString(
+                              undefined,
+                              { hour: 'numeric', minute: '2-digit' }
+                            )
+                          : null;
+                      const sameDay =
+                        date.endDateTime != null &&
+                        isSameDay(date.dateTime, date.endDateTime);
+
+                      return (
+                        <li key={i} className='py-1.5 text-sm'>
+                          <span className='text-foreground'>{dateStr}</span>
+                          <span className='text-muted-foreground'>
+                            {', '}
+                            {startTime}
+                            {endTime && sameDay && ` - ${endTime}`}
+                          </span>
+                        </li>
+                      );
+                    }
+                  )}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <div className='flex items-center gap-2 text-sm'>
+              <Icons.calendar className='h-4 w-4 text-primary' />
+              <span className='text-muted-foreground'>Date TBD</span>
+            </div>
+          )}
+
+          <div className='flex items-center gap-2 text-sm'>
+            <Icons.people className='h-4 w-4 text-primary' />
+            <span>
+              {event.memberCount}{' '}
+              {event.memberCount === 1 ? 'attendee' : 'attendees'}
+            </span>
+          </div>
+
+          {event.organizer?.name && (
+            <div className='flex items-center gap-2 text-sm'>
+              <Avatar className='h-5 w-5'>
+                {event.organizer.image && (
+                  <AvatarImage src={event.organizer.image} />
+                )}
+                <AvatarFallback className='text-[10px]'>
+                  {event.organizer.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span>{event.organizer.name}</span>
             </div>
           )}
         </CardContent>

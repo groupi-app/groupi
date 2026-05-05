@@ -1,6 +1,6 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireEventRole, getCurrentPerson } from '../auth';
+import { requireEventRole, getCurrentPerson, getPersonWithUser } from '../auth';
 
 /**
  * Invites queries for the Convex backend
@@ -112,6 +112,38 @@ export const getInviteByToken = query({
       isAlreadyMember = !!existingMembership;
     }
 
+    // Get organizer info
+    const creator = await getPersonWithUser(ctx, event.creatorId);
+    const organizer = creator?.user
+      ? { name: creator.user.name, image: creator.user.image }
+      : null;
+
+    // Count event members
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_event', q => q.eq('eventId', invite.eventId))
+      .collect();
+    const memberCount = memberships.length;
+
+    // Fetch potential dates when no date has been chosen yet
+    let potentialDateTimes: Array<{
+      dateTime: number;
+      endDateTime: number | null;
+      note: string | null;
+    }> = [];
+    if (!event.chosenDateTime) {
+      const potentialDates = await ctx.db
+        .query('potentialDateTimes')
+        .withIndex('by_event', q => q.eq('eventId', invite.eventId))
+        .order('asc')
+        .collect();
+      potentialDateTimes = potentialDates.map(d => ({
+        dateTime: d.dateTime,
+        endDateTime: d.endDateTime ?? null,
+        note: d.note ?? null,
+      }));
+    }
+
     return {
       invite: {
         id: invite._id,
@@ -129,6 +161,9 @@ export const getInviteByToken = query({
         location: event.location,
         chosenDateTime: event.chosenDateTime ?? null,
         chosenEndDateTime: event.chosenEndDateTime ?? null,
+        potentialDateTimes,
+        memberCount,
+        organizer,
       },
       isAlreadyMember,
     };

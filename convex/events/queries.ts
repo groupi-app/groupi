@@ -1,6 +1,12 @@
 import { query, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
-import { getCurrentPerson, requireAuth, getPersonWithUser } from '../auth';
+import {
+  getCurrentPerson,
+  requireAuth,
+  getPersonWithUser,
+  resolveEventPermissions,
+} from '../auth';
+import { DEFAULT_EVENT_PERMISSIONS } from '../types';
 import { checkCanSendEventInvite } from '../lib/privacy';
 
 /**
@@ -57,6 +63,7 @@ export const getEventHeader = query({
         // rsvpNote is always visible to the current user for their own membership
         person: currentPerson,
       },
+      permissions: resolveEventPermissions(event),
     };
   },
 });
@@ -90,6 +97,22 @@ export const getEventAttendeesData = query({
 
     if (!userMembership) {
       throw new Error('You are not a member of this event');
+    }
+
+    // Check viewAttendeeList permission
+    const viewLevel =
+      event.permissions?.viewAttendeeList ??
+      DEFAULT_EVENT_PERMISSIONS.viewAttendeeList;
+    const roleHierarchy: Record<string, number> = {
+      ATTENDEE: 1,
+      MODERATOR: 2,
+      ORGANIZER: 3,
+    };
+    const requiredLevel =
+      roleHierarchy[viewLevel === 'EVERYONE' ? 'ATTENDEE' : viewLevel] ?? 1;
+    const userLevel = roleHierarchy[userMembership.role] ?? 0;
+    if (userLevel < requiredLevel) {
+      throw new Error('You do not have permission to view the attendee list');
     }
 
     // Get all event memberships

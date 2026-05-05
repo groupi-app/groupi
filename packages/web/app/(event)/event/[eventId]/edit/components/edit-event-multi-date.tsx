@@ -31,11 +31,15 @@ interface EditEventMultiDateProps {
   eventId: Id<'events'>;
   /** Initial options from existing potential date times */
   initialOptions?: Array<{ start: Date; end?: Date }>;
+  backHref?: string;
+  onSuccess?: () => void;
 }
 
 export function EditEventMultiDate({
   eventId,
   initialOptions,
+  backHref,
+  onSuccess,
 }: EditEventMultiDateProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -82,7 +86,11 @@ export function EditEventMultiDate({
       });
 
       toast.success('New poll started successfully.');
-      router.push(`/event/${eventId}`);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push(`/event/${eventId}`);
+      }
     } catch {
       toast.error('Failed to start new poll', {
         description: 'An unexpected error occurred. Please try again.',
@@ -90,7 +98,7 @@ export function EditEventMultiDate({
     } finally {
       setIsUpdating(false);
     }
-  }, [eventId, updatePotentialDateTimes, resetEventDate, router]);
+  }, [eventId, updatePotentialDateTimes, resetEventDate, router, onSuccess]);
 
   // Convert initial options to DateTimeOption format
   const initialDateTimeOptions: DateTimeOption[] | undefined =
@@ -110,7 +118,7 @@ export function EditEventMultiDate({
       />
 
       <div className='flex justify-between'>
-        <Link href={`/event/${eventId}/change-date`}>
+        <Link href={backHref ?? `/event/${eventId}/change-date`}>
           <Button className='flex items-center gap-1' variant={'secondary'}>
             <span>Back</span>
             <Icons.back className='text-sm' />

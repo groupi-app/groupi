@@ -4,7 +4,7 @@ import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
 import { InviteCardList } from '../components/invite-card-list';
-import { isOrganizer, isModerator } from '@/lib/event-permissions';
+import { isOrganizer, canInviteMembers } from '@/lib/event-permissions';
 import { FormPageTemplate } from '@/components/templates';
 import { useEventData } from '../context';
 
@@ -53,14 +53,12 @@ export default function EventInvitePage(props: {
     }
   }, [eventData, availabilityData, eventId, router]);
 
-  // Redirect non-moderator members to the event page
-  // Only ORGANIZER and MODERATOR roles can manage invites
   useEffect(() => {
     if (eventData) {
       const userRole = eventData.userMembership?.role;
+      const perms = eventData.permissions;
 
-      // If user is a member but not a moderator/organizer, redirect to event page
-      if (userRole && !isModerator(userRole)) {
+      if (userRole && perms && !canInviteMembers(userRole, perms)) {
         router.replace(`/event/${eventId}`);
       }
     }
