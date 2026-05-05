@@ -10,8 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Doc } from '@/convex/_generated/dataModel';
 import { User } from '@/convex/types';
 import { useEventAttendeesData } from '@/hooks/convex';
+import {
+  canInviteMembers,
+  canViewAttendeeList,
+  type EventPermissions,
+} from '@/lib/event-permissions';
 
-// Match the Member type expected by MemberIcon
 type Membership = Doc<'memberships'> & {
   person:
     | (Doc<'persons'> & {
@@ -20,33 +24,25 @@ type Membership = Doc<'memberships'> & {
     | null;
 };
 
-// Type for the data prop (inferred from useEventAttendeesData return type)
 type MemberListDataType = NonNullable<ReturnType<typeof useEventAttendeesData>>;
 
 interface MemberListProps {
   data: MemberListDataType;
+  permissions?: EventPermissions;
 }
 
-/**
- * Member list component - receives data from context
- * - Data is pre-loaded by EventDataProvider in layout
- * - No loading state needed - data is guaranteed
- */
-export function MemberList({ data }: MemberListProps) {
-  // Extract eventId from data for links
+export function MemberList({ data, permissions }: MemberListProps) {
   const eventId = data.event._id as string;
 
-  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const ref = useRef<HTMLDivElement>(null);
   const [visibleIcons, setVisibleIcons] = useState(100);
   const pathname = usePathname();
 
-  // useLayoutEffect must be called unconditionally
   useLayoutEffect(() => {
     function checkOverflow() {
       if (ref.current) {
         const { clientWidth } = ref.current;
-        const iconWidth = 40; // Replace with your icon width
+        const iconWidth = 40;
         const iconsCount = Math.floor(clientWidth / iconWidth);
         setVisibleIcons(iconsCount);
       }
@@ -60,13 +56,16 @@ export function MemberList({ data }: MemberListProps) {
     };
   }, [pathname]);
 
-  // Data is guaranteed by parent - no loading checks needed
   const { event, userMembership, userId } = data;
   const members = event.memberships;
   const userRole = userMembership.role;
   const eventDateTime = event.chosenDateTime
     ? new Date(event.chosenDateTime)
     : null;
+
+  const showInvite = permissions && canInviteMembers(userRole, permissions);
+  const showAttendeeLinks =
+    !permissions || canViewAttendeeList(userRole, permissions);
 
   const container = {
     hidden: { opacity: 0 },
@@ -100,7 +99,7 @@ export function MemberList({ data }: MemberListProps) {
         <div className='rounded-full p-[.3rem] flex items-center justify-center text-xs bg-muted text-muted-foreground text-center'>
           <span>{members.length}</span>
         </div>
-        {(userRole === 'ORGANIZER' || userRole === 'MODERATOR') && (
+        {showInvite && (
           <Link href={`/event/${eventId}/invite`}>
             <Button className='flex items-center gap-1' size='sm'>
               <Icons.invite className='size-4' />
@@ -132,7 +131,7 @@ export function MemberList({ data }: MemberListProps) {
                     eventDateTime={eventDateTime}
                   />
                 ) : (
-                  i === visibleIcons - 1 && (
+                  i === visibleIcons - 1 && showAttendeeLinks && (
                     <motion.div variants={item} layout key={i}>
                       <Link href={`${pathname}/attendees`}>
                         <Button className='rounded-full z-top' key={i}>
@@ -146,11 +145,13 @@ export function MemberList({ data }: MemberListProps) {
           </AnimatePresence>
         </LayoutGroup>
       </motion.div>
-      <Link href={`${pathname}/attendees`}>
-        <span className='rounded-full z-top text-primary hover:underline'>
-          View All
-        </span>
-      </Link>
+      {showAttendeeLinks && (
+        <Link href={`${pathname}/attendees`}>
+          <span className='rounded-full z-top text-primary hover:underline'>
+            View All
+          </span>
+        </Link>
+      )}
     </div>
   );
 }

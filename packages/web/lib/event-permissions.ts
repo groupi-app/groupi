@@ -1,6 +1,64 @@
-import { Role } from '@/convex/types';
+import { type Role } from '@/convex/types';
 
 type RoleType = Role;
+
+// Configurable event permissions
+export type PermissionLevel = 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+export type EventPermissionKey =
+  | 'createPosts'
+  | 'inviteMembers'
+  | 'viewAttendeeList';
+export type EventPermissions = Record<EventPermissionKey, PermissionLevel>;
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  ATTENDEE: 1,
+  MODERATOR: 2,
+  ORGANIZER: 3,
+};
+
+export function hasPermission(
+  userRole: RoleType,
+  requiredLevel: PermissionLevel
+): boolean {
+  const userLevel = ROLE_HIERARCHY[userRole] ?? 0;
+  const required =
+    ROLE_HIERARCHY[requiredLevel === 'EVERYONE' ? 'ATTENDEE' : requiredLevel] ??
+    1;
+  return userLevel >= required;
+}
+
+export function canCreatePosts(
+  userRole: RoleType,
+  permissions: EventPermissions
+): boolean {
+  return hasPermission(userRole, permissions.createPosts);
+}
+
+export function canInviteMembers(
+  userRole: RoleType,
+  permissions: EventPermissions
+): boolean {
+  return hasPermission(userRole, permissions.inviteMembers);
+}
+
+export function canViewAttendeeList(
+  userRole: RoleType,
+  permissions: EventPermissions
+): boolean {
+  return hasPermission(userRole, permissions.viewAttendeeList);
+}
+
+export const PERMISSION_LABELS: Record<EventPermissionKey, string> = {
+  createPosts: 'Create posts',
+  inviteMembers: 'Invite members',
+  viewAttendeeList: 'View attendee list',
+};
+
+export const PERMISSION_LEVEL_LABELS: Record<PermissionLevel, string> = {
+  EVERYONE: 'Everyone',
+  MODERATOR: 'Mods & Organizers',
+  ORGANIZER: 'Organizer only',
+};
 
 /**
  * Event permissions utility functions

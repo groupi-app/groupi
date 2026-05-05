@@ -1,20 +1,18 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { NewPostContent } from './new-post-content';
 import { PostEditorSkeleton } from '@/components/skeletons';
 import { useEventData } from '../../context';
+import { canCreatePosts } from '@/lib/event-permissions';
 
 interface NewPostWrapperProps {
   eventId: string;
 }
 
-/**
- * New Post Wrapper - Client-only architecture
- * - Uses EventDataProvider context for data (pre-fetched at layout level)
- * - Renders new post content when data is ready
- */
 export function NewPostWrapper({ eventId }: NewPostWrapperProps) {
-  // Use context data (pre-fetched at layout level)
+  const router = useRouter();
   const {
     headerData: eventData,
     currentUser,
@@ -22,7 +20,16 @@ export function NewPostWrapper({ eventId }: NewPostWrapperProps) {
     isCurrentUserLoading,
   } = useEventData();
 
-  // Loading state
+  useEffect(() => {
+    if (eventData) {
+      const userRole = eventData.userMembership?.role;
+      const perms = eventData.permissions;
+      if (userRole && perms && !canCreatePosts(userRole, perms)) {
+        router.replace(`/event/${eventId}`);
+      }
+    }
+  }, [eventData, eventId, router]);
+
   if (isHeaderLoading || isCurrentUserLoading || !eventData || !currentUser) {
     return (
       <div className='container pt-6'>

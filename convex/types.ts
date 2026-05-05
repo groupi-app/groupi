@@ -11,6 +11,25 @@ export type Status = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
 // Membership Roles
 export type Role = 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE';
 
+// Configurable event permission levels
+export type PermissionLevel = 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+
+// Keys for configurable event permissions
+export type EventPermissionKey =
+  | 'createPosts'
+  | 'inviteMembers'
+  | 'viewAttendeeList';
+
+// Default permission values (preserve current behavior for existing events)
+export const DEFAULT_EVENT_PERMISSIONS: Record<
+  EventPermissionKey,
+  PermissionLevel
+> = {
+  createPosts: 'EVERYONE',
+  inviteMembers: 'MODERATOR',
+  viewAttendeeList: 'EVERYONE',
+};
+
 // Notification Types
 export type NotificationType =
   | 'EVENT_EDITED' // When the details of an event that the receiving user is a member of is edited

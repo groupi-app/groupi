@@ -1,6 +1,11 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth, requireEventMembership, hasEventRole } from '../auth';
+import {
+  requireAuth,
+  requireEventMembership,
+  hasEventRole,
+  requireEventPermission,
+} from '../auth';
 import {
   notifyEventMembers,
   notifyPerson,
@@ -26,9 +31,12 @@ export const createPost = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, title, content }) => {
-    // Require authentication and event membership
     const { person } = await requireAuth(ctx);
-    const membership = await requireEventMembership(ctx, eventId);
+    const membership = await requireEventPermission(
+      ctx,
+      eventId,
+      'createPosts'
+    );
 
     // Validate input
     if (!title.trim()) {

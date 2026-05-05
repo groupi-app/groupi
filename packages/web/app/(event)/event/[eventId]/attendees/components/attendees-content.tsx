@@ -7,7 +7,7 @@ import { Attendees } from './attendees';
 import { AttendeeListSkeleton } from '@/components/skeletons';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { isOrganizer } from '@/lib/event-permissions';
+import { isOrganizer, canViewAttendeeList } from '@/lib/event-permissions';
 import { useEventData } from '../../context';
 
 /**
@@ -27,8 +27,17 @@ export function AttendeesContent() {
     isLoading,
   } = useEventData();
 
-  // Check if user should be redirected to availability page
-  // Redirect if: poll active, not organizer, and hasn't set availability
+  // Redirect if user lacks viewAttendeeList permission
+  useEffect(() => {
+    if (headerData) {
+      const userRole = headerData.userMembership?.role;
+      const perms = headerData.permissions;
+      if (userRole && perms && !canViewAttendeeList(userRole, perms)) {
+        router.replace(`/event/${eventId}`);
+      }
+    }
+  }, [headerData, eventId, router]);
+
   useEffect(() => {
     if (headerData && membersData && currentUser && availabilityData) {
       const event = headerData.event;

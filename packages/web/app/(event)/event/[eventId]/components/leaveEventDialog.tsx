@@ -22,9 +22,9 @@ export function LeaveEventDialog({ eventId }: { eventId: Id<'events'> }) {
   const handleLeave = async () => {
     setIsLeaving(true);
     try {
+      router.push('/events');
       await leaveEvent(eventId);
       toast.success('You have left the event.');
-      router.push(`/events`);
     } catch {
       toast.error('Unable to leave the event.');
     } finally {
@@ -48,15 +48,13 @@ export function LeaveEventDialog({ eventId }: { eventId: Id<'events'> }) {
               Cancel
             </Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button
-              onClick={handleLeave}
-              variant='destructive'
-              disabled={isLeaving}
-            >
-              {isLeaving ? 'Leaving...' : 'Leave'}
-            </Button>
-          </DialogClose>
+          <Button
+            onClick={handleLeave}
+            variant='destructive'
+            disabled={isLeaving}
+          >
+            {isLeaving ? 'Leaving...' : 'Leave'}
+          </Button>
         </div>
       </DialogFooter>
     </DialogContent>

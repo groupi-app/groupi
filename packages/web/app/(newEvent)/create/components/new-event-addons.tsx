@@ -56,6 +56,7 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
       dateType,
       singleDateTime,
       multiDateTimeOptions,
+      permissions,
     } = formState;
 
     // Validate event date is still in the future
@@ -137,6 +138,7 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
         imageStorageId,
         imageFocalPoint,
         addons: enabledAddons,
+        permissions,
       };
 
       if (dateType === 'single' && singleDateTime) {

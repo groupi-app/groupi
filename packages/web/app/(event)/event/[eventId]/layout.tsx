@@ -29,7 +29,12 @@ export default function EventIdLayout({ children, params }: EventLayoutProps) {
 }
 
 /** Routes exempt from addon gating to avoid redirect loops */
-const GATING_EXEMPT_PATTERNS = ['/availability', '/addon/', '/manage-addons'];
+const GATING_EXEMPT_PATTERNS = [
+  '/availability',
+  '/addon/',
+  '/manage-addons',
+  '/settings',
+];
 
 /**
  * Inner component that can access the EventDataProvider context.

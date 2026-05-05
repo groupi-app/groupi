@@ -32,8 +32,8 @@ export function PostEditWrapper() {
     return <div>You are not a member of this event</div>;
   }
 
-  const { post, attachments } = postData;
-  const { title, content, _id: id, author, event } = post;
+  const { post } = postData;
+  const { title, content, _id: id, author, event, attachments } = post;
 
   if (!author || author.user?._id !== currentUser.user.id) {
     return (

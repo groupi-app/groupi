@@ -26,7 +26,11 @@ import { User } from '@/convex/types';
 import { DeleteReplyDialog } from './deleteReplyDialog';
 import { ReportDialog } from '@/components/report-dialog';
 import { Icons } from '@/components/icons';
-import { AttachmentGallery } from '@/components/attachments';
+import {
+  AttachmentGallery,
+  AttachmentPreview,
+  fromServerAttachment,
+} from '@/components/attachments';
 import { useMergedAttachments } from '@/contexts/pending-attachments-context';
 import MemberIcon from '@/components/member-icon';
 import { Button } from '@/components/ui/button';
@@ -362,6 +366,9 @@ export default function ReplyComponent({
   const isMobile = useMobile();
   const updateReply = useUpdateReply(postId as Id<'posts'>);
   const deleteAttachment = useMutation(attachmentMutations.deleteAttachment);
+  const updateAttachmentMutation = useMutation(
+    attachmentMutations.updateAttachment
+  );
   const editorRef = useRef<BlockNoteInlineHandle>(null);
 
   // Merge pending attachments with real attachments for optimistic rendering
@@ -481,6 +488,37 @@ export default function ReplyComponent({
     [deleteAttachment]
   );
 
+  const handleToggleAttachmentSpoiler = useCallback(
+    (id: string) => {
+      const attachment = visibleAttachments.find(a => a._id === id);
+      if (!attachment) return;
+      updateAttachmentMutation({
+        attachmentId: id as Id<'attachments'>,
+        isSpoiler: !attachment.isSpoiler,
+      });
+    },
+    [visibleAttachments, updateAttachmentMutation]
+  );
+
+  const handleUpdateAttachment = useCallback(
+    (
+      id: string,
+      updates: {
+        displayFilename?: string;
+        altText?: string;
+        isSpoiler?: boolean;
+      }
+    ) => {
+      updateAttachmentMutation({
+        attachmentId: id as Id<'attachments'>,
+        filename: updates.displayFilename,
+        altText: updates.altText,
+        isSpoiler: updates.isSpoiler,
+      });
+    },
+    [updateAttachmentMutation]
+  );
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // Close edit mode immediately for instant UI feedback
@@ -592,11 +630,16 @@ export default function ReplyComponent({
                 />
               </form>
             </Form>
-            {visibleAttachments.length > 0 && (
-              <AttachmentGallery
-                attachments={visibleAttachments}
-                onDelete={isMe ? handleDeleteAttachment : undefined}
+            {visibleAttachments.length > 0 && isMe && (
+              <AttachmentPreview
+                items={visibleAttachments.map(fromServerAttachment)}
+                onRemove={handleDeleteAttachment}
+                onToggleSpoiler={handleToggleAttachmentSpoiler}
+                onUpdate={handleUpdateAttachment}
               />
+            )}
+            {visibleAttachments.length > 0 && !isMe && (
+              <AttachmentGallery attachments={visibleAttachments} />
             )}
           </>
         ) : (
@@ -614,10 +657,7 @@ export default function ReplyComponent({
             </MentionHandler>
             {/* Display attachments (merged with pending for optimistic rendering) */}
             {visibleAttachments.length > 0 && (
-              <AttachmentGallery
-                attachments={visibleAttachments}
-                onDelete={isMe ? handleDeleteAttachment : undefined}
-              />
+              <AttachmentGallery attachments={visibleAttachments} />
             )}
           </div>
         )}

@@ -18,7 +18,11 @@ import {
   usePendingAttachments,
   PendingAttachment,
 } from '@/contexts/pending-attachments-context';
-import { AttachmentButton, AttachmentPreview } from '@/components/attachments';
+import {
+  AttachmentButton,
+  AttachmentPreview,
+  fromPendingUpload,
+} from '@/components/attachments';
 import { BlockNoteInline, BlockNoteInlineHandle } from './blocknote-inline';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
@@ -454,7 +458,7 @@ export default function ReplyForm({
                       {/* Attachment Preview - hide when submitting */}
                       {pendingUploads.length > 0 && !isSubmitting && (
                         <AttachmentPreview
-                          uploads={pendingUploads}
+                          items={pendingUploads.map(fromPendingUpload)}
                           onRemove={removeFile}
                           onToggleSpoiler={toggleSpoiler}
                           onUpdate={updateFile}

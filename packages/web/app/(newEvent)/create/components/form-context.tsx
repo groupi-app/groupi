@@ -28,6 +28,14 @@ interface FocalPoint {
   y: number;
 }
 
+export type PermissionLevel = 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+
+export interface EventPermissions {
+  createPosts?: PermissionLevel;
+  inviteMembers?: PermissionLevel;
+  viewAttendeeList?: PermissionLevel;
+}
+
 export interface FormState {
   title: string;
   description?: string;
@@ -42,6 +50,7 @@ export interface FormState {
   dateType?: 'single' | 'multi';
   singleDateTime?: { startDateTime: string; endDateTime?: string };
   multiDateTimeOptions?: Array<{ start: string; end?: string }>;
+  permissions?: EventPermissions;
 }
 
 interface FormContextValue {

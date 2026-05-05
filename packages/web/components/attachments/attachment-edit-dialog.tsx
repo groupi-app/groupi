@@ -13,10 +13,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { PendingUpload } from '@/hooks/convex/use-file-upload';
+import type { PreviewAttachment } from './types';
 
 interface AttachmentEditDialogProps {
-  upload: PendingUpload | null;
+  item: PreviewAttachment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (updates: {
@@ -26,28 +26,20 @@ interface AttachmentEditDialogProps {
   }) => void;
 }
 
-/**
- * Discord-style dialog for editing attachment metadata
- * - Filename
- * - Alt text / description (for images)
- * - Spoiler toggle
- */
 export function AttachmentEditDialog({
-  upload,
+  item,
   open,
   onOpenChange,
   onSave,
 }: AttachmentEditDialogProps) {
-  // Render inner form only when dialog is open and upload exists
-  // This ensures form state is fresh each time the dialog opens
-  if (!open || !upload) {
+  if (!open || !item) {
     return null;
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <AttachmentEditForm
-        upload={upload}
+        item={item}
         onSave={onSave}
         onCancel={() => onOpenChange(false)}
       />
@@ -55,34 +47,29 @@ export function AttachmentEditDialog({
   );
 }
 
-/**
- * Inner form component that initializes state from upload prop
- * Remounts when dialog opens with new upload, resetting form state
- */
 function AttachmentEditForm({
-  upload,
+  item,
   onSave,
   onCancel,
 }: {
-  upload: PendingUpload;
+  item: PreviewAttachment;
   onSave: AttachmentEditDialogProps['onSave'];
   onCancel: () => void;
 }) {
-  // Initialize state directly from props - component remounts when dialog opens
-  const [filename, setFilename] = useState(upload.displayFilename);
-  const [altText, setAltText] = useState(upload.altText || '');
-  const [isSpoiler, setIsSpoiler] = useState(upload.isSpoiler);
+  const [filename, setFilename] = useState(item.filename);
+  const [altText, setAltText] = useState(item.altText || '');
+  const [isSpoiler, setIsSpoiler] = useState(item.isSpoiler);
 
   const handleSave = () => {
     onSave({
-      displayFilename: filename.trim() || upload.file.name || 'file',
+      displayFilename: filename.trim() || item.filename || 'file',
       altText: altText.trim() || undefined,
       isSpoiler,
     });
     onCancel();
   };
 
-  const isImage = upload.file.type.startsWith('image/');
+  const isImage = item.mimeType.startsWith('image/');
 
   return (
     <DialogContent className='sm:max-w-md'>
@@ -91,13 +78,12 @@ function AttachmentEditForm({
       </DialogHeader>
 
       <div className='space-y-4'>
-        {/* Image Preview */}
-        {upload.preview && (
+        {item.preview && (
           <div className='relative w-32 h-32 rounded-md overflow-hidden bg-muted'>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={upload.preview}
-              alt={upload.displayFilename}
+              src={item.preview}
+              alt={item.filename}
               className={cn(
                 'w-full h-full object-cover',
                 isSpoiler && 'blur-xl'
@@ -113,18 +99,16 @@ function AttachmentEditForm({
           </div>
         )}
 
-        {/* Non-image file icon */}
-        {!upload.preview && (
+        {!item.preview && (
           <div className='flex items-center gap-2 p-3 rounded-md bg-muted'>
             <FileIcon
-              mimeType={upload.file.type}
+              mimeType={item.mimeType}
               className='h-8 w-8 text-muted-foreground'
             />
-            <span className='text-sm truncate'>{upload.displayFilename}</span>
+            <span className='text-sm truncate'>{item.filename}</span>
           </div>
         )}
 
-        {/* Filename */}
         <div className='space-y-2'>
           <Label htmlFor='filename'>Filename</Label>
           <Input
@@ -136,7 +120,6 @@ function AttachmentEditForm({
           />
         </div>
 
-        {/* Alt Text (for images only) */}
         {isImage && (
           <div className='space-y-2'>
             <Label htmlFor='altText'>Description (Alt Text)</Label>
@@ -150,7 +133,6 @@ function AttachmentEditForm({
           </div>
         )}
 
-        {/* Spoiler Toggle */}
         <div className='flex items-center gap-3'>
           <Checkbox
             id='spoiler'
@@ -162,7 +144,6 @@ function AttachmentEditForm({
           </Label>
         </div>
 
-        {/* Actions */}
         <div className='flex gap-2 pt-2'>
           <Button variant='outline' onClick={onCancel} className='flex-1'>
             Cancel
@@ -176,9 +157,6 @@ function AttachmentEditForm({
   );
 }
 
-/**
- * Get the appropriate icon for a file type
- */
 function FileIcon({
   mimeType,
   className,

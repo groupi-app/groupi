@@ -80,6 +80,7 @@ const formSchema = z.object({
 
 export default function EditEventInfo({
   eventData,
+  onSuccess,
 }: {
   eventData: {
     eventId: Id<'events'>;
@@ -91,6 +92,7 @@ export default function EditEventInfo({
     imageStorageId?: Id<'_storage'>;
     imageFocalPoint?: FocalPoint | null;
   };
+  onSuccess?: () => void;
 }) {
   const {
     eventId,
@@ -195,7 +197,11 @@ export default function EditEventInfo({
       toast.success('Event updated', {
         description: 'Event details have been updated.',
       });
-      router.push(`/event/${eventId}`);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push(`/event/${eventId}`);
+      }
     } catch {
       toast.error('Error editing event', {
         description: 'Failed to edit event details.',

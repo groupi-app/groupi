@@ -7,17 +7,24 @@ import NewEventInfo from './new-event-info';
 import { DateTypeSelection } from './date-type-selection';
 import { NewEventSingleDate } from './new-event-single-date';
 import { NewEventMultiDate } from './new-event-multi-date';
+import { NewEventPermissions } from './new-event-permissions';
 import { NewEventAddons } from './new-event-addons';
 
-type Step = 'info' | 'date-type' | 'single-date' | 'multi-date' | 'add-ons';
+type Step =
+  | 'info'
+  | 'date-type'
+  | 'single-date'
+  | 'multi-date'
+  | 'permissions'
+  | 'add-ons';
 
-// Step order for direction calculation
 const stepOrder: Record<Step, number> = {
   info: 0,
   'date-type': 1,
   'single-date': 2,
-  'multi-date': 2, // Same level as single-date
-  'add-ons': 3,
+  'multi-date': 2,
+  permissions: 3,
+  'add-ons': 4,
 };
 
 const slideVariants = {
@@ -46,8 +53,6 @@ function WizardContent() {
   const [direction, setDirection] = useState(1);
   const [isInitialMount, setIsInitialMount] = useState(true);
 
-  // Reset stepState when form becomes empty (user navigated back after creating event)
-  // This handles cases where Next.js might cache the component
   if (!formState.title && stepState !== 'info') {
     setStepState('info');
     setIsInitialMount(true);
@@ -60,7 +65,6 @@ function WizardContent() {
     const newOrder = stepOrder[newStep];
     setDirection(newOrder > currentOrder ? 1 : -1);
     setStepState(newStep);
-    // After first step change, we're no longer on initial mount
     if (isInitialMount) {
       setIsInitialMount(false);
     }
@@ -83,11 +87,19 @@ function WizardContent() {
   };
 
   const handleDateNext = () => {
+    goToStep('permissions');
+  };
+
+  const handlePermissionsBack = () => {
+    goToStep(formState.dateType === 'multi' ? 'multi-date' : 'single-date');
+  };
+
+  const handlePermissionsNext = () => {
     goToStep('add-ons');
   };
 
   const handleAddonsBack = () => {
-    goToStep(formState.dateType === 'multi' ? 'multi-date' : 'single-date');
+    goToStep('permissions');
   };
 
   return (
@@ -160,6 +172,24 @@ function WizardContent() {
             <NewEventMultiDate
               onBack={handleDateBack}
               onNext={handleDateNext}
+            />
+          </motion.div>
+        )}
+        {step === 'permissions' && (
+          <motion.div
+            key='permissions'
+            custom={direction}
+            variants={slideVariants}
+            initial='enter'
+            animate='center'
+            exit='exit'
+            transition={transition}
+            className='w-full'
+          >
+            <h1 className='text-4xl font-heading mt-10'>Permissions</h1>
+            <NewEventPermissions
+              onBack={handlePermissionsBack}
+              onNext={handlePermissionsNext}
             />
           </motion.div>
         )}

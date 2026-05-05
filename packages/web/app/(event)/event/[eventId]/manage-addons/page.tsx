@@ -1,34 +1,17 @@
 'use client';
 
-import { ManageAddonsContent } from './components/manage-addons-content';
-import { EventOrganizerOnly } from '@/components/auth/auth-wrappers';
-import { use } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { use, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function ManageAddonsPage(props: {
+export default function ManageAddonsRedirect(props: {
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = use(props.params);
+  const router = useRouter();
 
-  return (
-    <EventOrganizerOnly
-      eventId={eventId}
-      fallback={
-        <div className='container mx-auto py-8 text-center'>
-          <div className='max-w-md mx-auto'>
-            <h1 className='text-2xl font-bold mb-4'>Access Denied</h1>
-            <p className='text-muted-foreground mb-6'>
-              Only event organizers and moderators can manage add-ons.
-            </p>
-            <Link href={`/event/${eventId}`}>
-              <Button>Return to Event</Button>
-            </Link>
-          </div>
-        </div>
-      }
-    >
-      <ManageAddonsContent eventId={eventId} />
-    </EventOrganizerOnly>
-  );
+  useEffect(() => {
+    router.replace(`/event/${eventId}/settings/addons`);
+  }, [eventId, router]);
+
+  return null;
 }
