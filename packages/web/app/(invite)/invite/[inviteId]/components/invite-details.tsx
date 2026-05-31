@@ -211,7 +211,11 @@ export function InviteDetails({ inviteId }: { inviteId: string }) {
           )}
         </CardContent>
         <CardFooter>
-          <AcceptInviteForm inviteId={inviteId} eventId={event.id} />
+          <AcceptInviteForm
+            inviteId={inviteId}
+            eventId={event.id}
+            isAlreadyMember={inviteData.isAlreadyMember}
+          />
         </CardFooter>
       </Card>
     </div>
