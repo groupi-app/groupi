@@ -8,7 +8,7 @@ import { usernameClient } from 'better-auth/client/plugins';
 import { magicLinkClient } from 'better-auth/client/plugins';
 import { oneTapClient } from 'better-auth/client/plugins';
 import { adminClient } from 'better-auth/client/plugins';
-import { apiKeyClient } from 'better-auth/client/plugins';
+import { apiKeyClient } from '@better-auth/api-key/client';
 import { multiSessionClient } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 
@@ -71,44 +71,6 @@ export const authClient = baseAuthClient as typeof baseAuthClient & {
       error?: { message: string };
     }>;
     unbanUser: (options: { userId: string }) => Promise<{
-      error?: { message: string };
-    }>;
-  };
-  apiKey: {
-    list: () => Promise<{
-      data?: Array<{
-        id: string;
-        name?: string | null;
-        start?: string;
-        createdAt: string;
-        expiresAt?: string | null;
-      }>;
-      error?: { message: string };
-    }>;
-    create: (options: { name: string; expiresIn?: number }) => Promise<{
-      data?: { key: string };
-      error?: { message: string };
-    }>;
-    delete: (options: { keyId: string }) => Promise<{
-      error?: { message: string };
-    }>;
-  };
-  passkey: {
-    addPasskey: (options?: { name?: string }) => Promise<{
-      error?: { message: string };
-    }>;
-    listUserPasskeys: () => Promise<{
-      data?: Array<{
-        id: string;
-        name?: string | null;
-        createdAt: string;
-      }>;
-      error?: { message: string };
-    }>;
-    deletePasskey: (options: { id: string }) => Promise<{
-      error?: { message: string };
-    }>;
-    updatePasskey: (options: { id: string; name: string }) => Promise<{
       error?: { message: string };
     }>;
   };

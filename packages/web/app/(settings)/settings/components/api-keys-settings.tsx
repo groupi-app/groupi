@@ -61,7 +61,7 @@ export function ApiKeysSettings() {
       const result = await authClient.apiKey.list();
       if (result.data) {
         setKeys(
-          result.data.map(key => ({
+          result.data.apiKeys.map(key => ({
             id: key.id,
             name: key.name ?? null,
             start: key.start ?? key.id.slice(0, 8),
