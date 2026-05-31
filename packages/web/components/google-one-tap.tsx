@@ -75,7 +75,7 @@ export function GoogleOneTap() {
               // Also do a full page refresh as fallback to ensure cookies are read
               router.refresh();
             },
-            onError: ctx => {
+            onError: (ctx: { error: { message: string } }) => {
               console.error('[GoogleOneTap] Auth error:', ctx.error);
             },
           },

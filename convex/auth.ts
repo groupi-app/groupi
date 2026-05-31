@@ -4,7 +4,6 @@ import { components } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import { query, QueryCtx, MutationCtx } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
-import type { BetterAuthPlugin } from 'better-auth';
 import authConfig from './auth.config';
 import { ConvexError } from 'convex/values';
 import {
@@ -51,11 +50,11 @@ import {
   username,
   magicLink,
   admin,
-  apiKey,
   oneTap,
   multiSession,
   openAPI,
 } from 'better-auth/plugins';
+import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
 
 // Import local schema for Better Auth component (local install)
@@ -245,9 +244,9 @@ export const createAuthOptions = (
         rpID: process.env.PASSKEY_RP_ID || 'localhost',
         rpName: process.env.PASSKEY_RP_NAME || 'Groupi',
         origin: siteUrl,
-      }) as BetterAuthPlugin,
-      admin() as BetterAuthPlugin,
-      apiKey() as BetterAuthPlugin,
+      }),
+      admin(),
+      apiKey(),
       multiSession({
         maximumSessions: 5,
       }),
