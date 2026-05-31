@@ -253,7 +253,22 @@ export const acceptInvite = mutation({
       .first();
 
     if (existingMembership) {
-      throw new Error('You are already a member of this event');
+      const event = await ctx.db.get(invite.eventId);
+      return {
+        membership: {
+          id: existingMembership._id,
+          eventId: existingMembership.eventId,
+          role: existingMembership.role,
+          rsvpStatus: existingMembership.rsvpStatus,
+        },
+        event: {
+          id: event!._id,
+          title: event!.title,
+          description: event!.description,
+          location: event!.location,
+        },
+        alreadyMember: true,
+      };
     }
 
     // Check if user is banned from this event
@@ -329,6 +344,7 @@ export const acceptInvite = mutation({
         description: event!.description,
         location: event!.location,
       },
+      alreadyMember: false,
     };
   },
 });

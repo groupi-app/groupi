@@ -22,9 +22,11 @@ initApi();
 
 export function AcceptInviteForm({
   inviteId,
+  isAlreadyMember,
 }: {
   inviteId: string;
   eventId: string;
+  isAlreadyMember: boolean;
 }) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +113,7 @@ export function AcceptInviteForm({
         onClick={handleAccept}
         isLoading={isLoading}
         loadingText='Accepting...'
+        disabled={isAlreadyMember}
       >
         Accept invite
       </Button>
