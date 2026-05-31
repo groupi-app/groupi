@@ -46,6 +46,12 @@ const reminderOffsetValidator = v.union(
   v.literal('4_WEEKS')
 );
 
+const permissionLevelValidator = v.union(
+  v.literal('EVERYONE'),
+  v.literal('MODERATOR'),
+  v.literal('ORGANIZER')
+);
+
 /**
  * Create a new event
  */
@@ -79,6 +85,13 @@ export const createEvent = mutation({
     visibility: v.optional(
       v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
     ),
+    permissions: v.optional(
+      v.object({
+        createPosts: v.optional(permissionLevelValidator),
+        inviteMembers: v.optional(permissionLevelValidator),
+        viewAttendeeList: v.optional(permissionLevelValidator),
+      })
+    ),
     _traceId: v.optional(v.string()),
   },
   handler: async (
@@ -96,6 +109,7 @@ export const createEvent = mutation({
       reminderOffset,
       addons,
       visibility,
+      permissions,
     }
   ) => {
     // Require authentication
@@ -185,6 +199,7 @@ export const createEvent = mutation({
       chosenEndDateTime: chosenEndTimestamp,
       reminderOffset: reminderOffset,
       visibility: visibility,
+      permissions: permissions,
     });
 
     // Create the creator's membership as ORGANIZER
@@ -1267,5 +1282,39 @@ export const joinDiscoverableEvent = mutation({
     });
 
     return { membershipId, success: true };
+  },
+});
+
+export const updateEventPermissions = mutation({
+  args: {
+    eventId: v.id('events'),
+    createPosts: v.optional(permissionLevelValidator),
+    inviteMembers: v.optional(permissionLevelValidator),
+    viewAttendeeList: v.optional(permissionLevelValidator),
+    _traceId: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { eventId, createPosts, inviteMembers, viewAttendeeList }
+  ) => {
+    await requireEventRole(ctx, eventId, 'ORGANIZER');
+
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const currentPermissions = event.permissions ?? {};
+    const updatedPermissions = {
+      ...currentPermissions,
+      ...(createPosts !== undefined && { createPosts }),
+      ...(inviteMembers !== undefined && { inviteMembers }),
+      ...(viewAttendeeList !== undefined && { viewAttendeeList }),
+    };
+
+    await ctx.db.patch(eventId, {
+      permissions: updatedPermissions,
+      updatedAt: Date.now(),
+    });
   },
 });

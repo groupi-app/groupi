@@ -7,6 +7,11 @@ import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
 import type { BetterAuthPlugin } from 'better-auth';
 import authConfig from './auth.config';
 import { ConvexError } from 'convex/values';
+import {
+  DEFAULT_EVENT_PERMISSIONS,
+  type EventPermissionKey,
+  type PermissionLevel,
+} from './types';
 import { Resend } from 'resend';
 import { isAdminRole } from './lib/constants';
 
@@ -507,6 +512,82 @@ export async function requireEventRole(
     throw new ConvexError(`${role} role required for this event`);
   }
   return await requireEventMembership(ctx, eventId);
+}
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  ATTENDEE: 1,
+  MODERATOR: 2,
+  ORGANIZER: 3,
+};
+
+/**
+ * Resolve effective permissions for an event, applying defaults for missing values.
+ */
+export function resolveEventPermissions(event: {
+  permissions?: {
+    createPosts?: PermissionLevel;
+    inviteMembers?: PermissionLevel;
+    viewAttendeeList?: PermissionLevel;
+  };
+}): Record<EventPermissionKey, PermissionLevel> {
+  return {
+    createPosts:
+      event.permissions?.createPosts ?? DEFAULT_EVENT_PERMISSIONS.createPosts,
+    inviteMembers:
+      event.permissions?.inviteMembers ??
+      DEFAULT_EVENT_PERMISSIONS.inviteMembers,
+    viewAttendeeList:
+      event.permissions?.viewAttendeeList ??
+      DEFAULT_EVENT_PERMISSIONS.viewAttendeeList,
+  };
+}
+
+/**
+ * Check if user has a configurable event permission.
+ * Reads the event's permission settings and checks against the user's role.
+ */
+export async function requireEventPermission(
+  ctx: AuthCtx,
+  eventId: string,
+  permission: EventPermissionKey
+) {
+  const membership = await requireEventMembership(ctx, eventId);
+
+  const event = await ctx.db.get(eventId as Id<'events'>);
+  if (!event) {
+    throw new ConvexError('Event not found');
+  }
+
+  const level: PermissionLevel =
+    event.permissions?.[permission] ?? DEFAULT_EVENT_PERMISSIONS[permission];
+
+  const requiredLevel =
+    ROLE_HIERARCHY[level === 'EVERYONE' ? 'ATTENDEE' : level] ?? 1;
+  const userLevel = ROLE_HIERARCHY[membership.role] ?? 0;
+
+  if (userLevel < requiredLevel) {
+    throw new ConvexError(
+      `Permission denied: this action requires ${level === 'EVERYONE' ? 'event membership' : `${level} role`}`
+    );
+  }
+
+  return membership;
+}
+
+/**
+ * Non-throwing version: returns boolean for conditional checks.
+ */
+export async function hasEventPermission(
+  ctx: AuthCtx,
+  eventId: string,
+  permission: EventPermissionKey
+): Promise<boolean> {
+  try {
+    await requireEventPermission(ctx, eventId, permission);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

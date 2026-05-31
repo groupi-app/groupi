@@ -168,6 +168,11 @@ export function useCreateEvent() {
       reminderOffset?: ReminderOffset; // Legacy: kept for backward compat
       addons?: Array<{ addonType: string; config: Record<string, unknown> }>; // Add-on configs
       visibility?: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+      permissions?: {
+        createPosts?: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+        inviteMembers?: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+        viewAttendeeList?: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+      };
     }) => {
       try {
         const result = await createEvent({
@@ -183,6 +188,7 @@ export function useCreateEvent() {
           reminderOffset: data.reminderOffset,
           addons: data.addons,
           visibility: data.visibility,
+          permissions: data.permissions,
         });
 
         toast({

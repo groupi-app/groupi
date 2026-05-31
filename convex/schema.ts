@@ -120,6 +120,32 @@ export default defineSchema({
         v.literal('4_WEEKS')
       )
     ),
+    // Configurable permissions (undefined = use defaults)
+    permissions: v.optional(
+      v.object({
+        createPosts: v.optional(
+          v.union(
+            v.literal('EVERYONE'),
+            v.literal('MODERATOR'),
+            v.literal('ORGANIZER')
+          )
+        ),
+        inviteMembers: v.optional(
+          v.union(
+            v.literal('EVERYONE'),
+            v.literal('MODERATOR'),
+            v.literal('ORGANIZER')
+          )
+        ),
+        viewAttendeeList: v.optional(
+          v.union(
+            v.literal('EVERYONE'),
+            v.literal('MODERATOR'),
+            v.literal('ORGANIZER')
+          )
+        ),
+      })
+    ),
   }).index('by_creator', ['creatorId']),
 
   memberships: defineTable({

@@ -1,6 +1,6 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth, requireEventRole } from '../auth';
+import { requireAuth, requireEventRole, requireEventPermission } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
@@ -38,8 +38,11 @@ export const createInvite = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, name, usesTotal, expiresAt }) => {
-    // Require organizer or moderator role and get the membership
-    const membership = await requireEventRole(ctx, eventId, 'MODERATOR');
+    const membership = await requireEventPermission(
+      ctx,
+      eventId,
+      'inviteMembers'
+    );
 
     // Generate unique invite token
     const token = generateInviteToken();
@@ -250,7 +253,22 @@ export const acceptInvite = mutation({
       .first();
 
     if (existingMembership) {
-      throw new Error('You are already a member of this event');
+      const event = await ctx.db.get(invite.eventId);
+      return {
+        membership: {
+          id: existingMembership._id,
+          eventId: existingMembership.eventId,
+          role: existingMembership.role,
+          rsvpStatus: existingMembership.rsvpStatus,
+        },
+        event: {
+          id: event!._id,
+          title: event!.title,
+          description: event!.description,
+          location: event!.location,
+        },
+        alreadyMember: true,
+      };
     }
 
     // Check if user is banned from this event
@@ -326,6 +344,7 @@ export const acceptInvite = mutation({
         description: event!.description,
         location: event!.location,
       },
+      alreadyMember: false,
     };
   },
 });
@@ -361,8 +380,11 @@ export const createEmailInvites = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, invites, customMessage, expiresAt }) => {
-    // Require organizer or moderator role
-    const membership = await requireEventRole(ctx, eventId, 'MODERATOR');
+    const membership = await requireEventPermission(
+      ctx,
+      eventId,
+      'inviteMembers'
+    );
 
     // Validate custom message length (max 480 chars)
     if (customMessage && customMessage.length > 480) {

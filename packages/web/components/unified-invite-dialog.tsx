@@ -191,12 +191,17 @@ function AnimatedTabsContent({
             : 'opacity 100ms ease-out',
         }}
       >
-        <TabsContent value='link' className='mt-0 data-[state=inactive]:hidden'>
+        <TabsContent
+          value='link'
+          forceMount
+          className='mt-0 data-[state=inactive]:hidden'
+        >
           <LinkInviteTab eventId={eventId} />
         </TabsContent>
 
         <TabsContent
           value='email'
+          forceMount
           className='mt-0 data-[state=inactive]:hidden'
         >
           <EmailInviteTab eventId={eventId} />
@@ -204,6 +209,7 @@ function AnimatedTabsContent({
 
         <TabsContent
           value='username'
+          forceMount
           className='mt-0 data-[state=inactive]:hidden'
         >
           <EventInviteSearch eventId={eventId} />
@@ -611,30 +617,22 @@ function EmailInviteTab({ eventId }: { eventId: Id<'events'> }) {
     [deleteInvites]
   );
 
-  // Handle save (create invites on server)
-  const handleSave = useCallback(async () => {
-    if (localInvites.length === 0) return;
-
-    await createEmailInvites({
-      invites: localInvites,
-      customMessage: customMessage.trim() || undefined,
-    });
-
-    setLocalInvites([]);
-  }, [localInvites, customMessage, createEmailInvites]);
-
-  // Handle send emails
+  // Handle send emails (saves local invites then sends all pending)
   const handleSendEmails = useCallback(async () => {
     setIsSending(true);
     try {
       if (localInvites.length > 0) {
-        await handleSave();
+        await createEmailInvites({
+          invites: localInvites,
+          customMessage: customMessage.trim() || undefined,
+        });
+        setLocalInvites([]);
       }
       await sendEmailInvites();
     } finally {
       setIsSending(false);
     }
-  }, [localInvites.length, handleSave, sendEmailInvites]);
+  }, [localInvites, customMessage, createEmailInvites, sendEmailInvites]);
 
   const totalPending = localInvites.length + pendingCount;
 
@@ -885,16 +883,7 @@ function EmailInviteTab({ eventId }: { eventId: Id<'events'> }) {
         </div>
 
         {/* Footer with actions */}
-        <div className='flex items-center justify-between pt-2 border-t gap-2'>
-          {localInvites.length > 0 && (
-            <Button variant='outline' size='sm' onClick={handleSave}>
-              <Icons.check className='size-4 mr-1' />
-              Save ({localInvites.length})
-            </Button>
-          )}
-
-          <div className='flex-1' />
-
+        <div className='flex items-center justify-end pt-2 border-t gap-2'>
           <Button
             onClick={handleSendEmails}
             disabled={totalPending === 0 || isSending}

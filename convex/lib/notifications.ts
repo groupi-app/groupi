@@ -630,8 +630,12 @@ function buildNotificationUrl(
   }
 
   // Post-related notifications link to the post
-  if (postId && ['NEW_POST', 'NEW_REPLY', 'USER_MENTIONED'].includes(type)) {
-    return `${siteUrl}/post/${postId}`;
+  if (
+    postId &&
+    eventId &&
+    ['NEW_POST', 'NEW_REPLY', 'USER_MENTIONED'].includes(type)
+  ) {
+    return `${siteUrl}/event/${eventId}/post/${postId}`;
   }
 
   // Event-related notifications link to the event
