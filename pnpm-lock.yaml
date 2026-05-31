@@ -115,22 +115,22 @@ importers:
         version: 1.4.9(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(nanostores@1.0.1)
       '@convex-dev/better-auth':
         specifier: ^0.10.10
-        version: 0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.7)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+        version: 0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.23)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       '@convex-dev/resend':
         specifier: ^0.2.3
-        version: 0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)
+        version: 0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)
       '@hono/swagger-ui':
         specifier: ^0.5.3
-        version: 0.5.3(hono@4.12.7)
+        version: 0.5.3(hono@4.12.23)
       '@hono/zod-openapi':
         specifier: ^1.2.0
-        version: 1.2.0(hono@4.12.7)(zod@4.1.12)
+        version: 1.2.0(hono@4.12.23)(zod@4.1.12)
       better-auth:
         specifier: ^1.4.9
         version: 1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
       hono:
-        specifier: ^4.12.7
-        version: 4.12.7
+        specifier: ^4.12.18
+        version: 4.12.23
       resend:
         specifier: ^4.0.0
         version: 4.8.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -283,10 +283,10 @@ importers:
         version: 0.46.1(@floating-ui/dom@1.7.4)(@types/hast@3.0.4)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(postcss@8.5.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.17)
       '@convex-dev/better-auth':
         specifier: ^0.10.10
-        version: 0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.7)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+        version: 0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.23)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       '@convex-dev/resend':
         specifier: ^0.2.3
-        version: 0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)
+        version: 0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -8138,8 +8138,8 @@ packages:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
 
-  hono@4.12.7:
-    resolution: {integrity: sha512-jq9l1DM0zVIvsm3lv9Nw9nlJnMNPOcAtsbsgiUhWcFzPE99Gvo6yRTlszSLLYacMeQ6quHD6hMfId8crVHvexw==}
+  hono@4.12.23:
+    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@3.0.8:
@@ -14396,14 +14396,14 @@ snapshots:
       picocolors: 1.1.1
     optional: true
 
-  '@convex-dev/better-auth@0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.7)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
+  '@convex-dev/better-auth@0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.23)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
     dependencies:
       '@better-auth/passkey': 1.4.9(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(nanostores@1.0.1)
       '@better-fetch/fetch': 1.1.21
       better-auth: 1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.1.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
       common-tags: 1.8.2
       convex: 1.31.4(react@19.2.0)
-      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
+      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
       jose: 6.1.1
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
@@ -14420,14 +14420,14 @@ snapshots:
       - nanostores
       - typescript
 
-  '@convex-dev/better-auth@0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.7)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
+  '@convex-dev/better-auth@0.10.10(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.0.0)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(convex@1.31.4(react@19.2.0))(hono@4.12.23)(nanostores@1.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
     dependencies:
       '@better-auth/passkey': 1.4.9(@better-auth/core@1.4.9(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.7(zod@4.1.12))(jose@6.1.1)(kysely@0.28.8)(nanostores@1.0.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(better-call@1.1.7(zod@4.1.12))(nanostores@1.0.1)
       '@better-fetch/fetch': 1.1.21
       better-auth: 1.4.9(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(prisma@6.19.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
       common-tags: 1.8.2
       convex: 1.31.4(react@19.2.0)
-      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
+      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
       jose: 6.1.1
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
@@ -14456,12 +14456,12 @@ snapshots:
     optionalDependencies:
       react: 19.2.0
 
-  '@convex-dev/resend@0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)':
+  '@convex-dev/resend@0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@convex-dev/rate-limiter': 0.3.2(convex@1.31.4(react@19.2.0))(react@19.2.0)
-      '@convex-dev/workpool': 0.3.1(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))
+      '@convex-dev/workpool': 0.3.1(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))
       convex: 1.31.4(react@19.2.0)
-      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
+      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
       remeda: 2.33.3
       resend: 6.7.0(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       svix: 1.84.1
@@ -14469,10 +14469,10 @@ snapshots:
       - '@react-email/render'
       - react
 
-  '@convex-dev/workpool@0.3.1(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))':
+  '@convex-dev/workpool@0.3.1(convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12))(convex@1.31.4(react@19.2.0))':
     dependencies:
       convex: 1.31.4(react@19.2.0)
-      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
+      convex-helpers: 0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12)
 
   '@csstools/color-helpers@5.1.0': {}
 
@@ -15151,21 +15151,21 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/swagger-ui@0.5.3(hono@4.12.7)':
+  '@hono/swagger-ui@0.5.3(hono@4.12.23)':
     dependencies:
-      hono: 4.12.7
+      hono: 4.12.23
 
-  '@hono/zod-openapi@1.2.0(hono@4.12.7)(zod@4.1.12)':
+  '@hono/zod-openapi@1.2.0(hono@4.12.23)(zod@4.1.12)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.4.0(zod@4.1.12)
-      '@hono/zod-validator': 0.7.6(hono@4.12.7)(zod@4.1.12)
-      hono: 4.12.7
+      '@hono/zod-validator': 0.7.6(hono@4.12.23)(zod@4.1.12)
+      hono: 4.12.23
       openapi3-ts: 4.5.0
       zod: 4.1.12
 
-  '@hono/zod-validator@0.7.6(hono@4.12.7)(zod@4.1.12)':
+  '@hono/zod-validator@0.7.6(hono@4.12.23)(zod@4.1.12)':
     dependencies:
-      hono: 4.12.7
+      hono: 4.12.23
       zod: 4.1.12
 
   '@hookform/resolvers@5.2.2(react-hook-form@7.66.0(react@19.2.0))':
@@ -20021,12 +20021,12 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.7)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12):
+  convex-helpers@0.1.109(@standard-schema/spec@1.0.0)(convex@1.31.4(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.1.12):
     dependencies:
       convex: 1.31.4(react@19.2.0)
     optionalDependencies:
       '@standard-schema/spec': 1.0.0
-      hono: 4.12.7
+      hono: 4.12.23
       react: 19.2.0
       typescript: 5.9.3
       zod: 4.1.12
@@ -22143,7 +22143,7 @@ snapshots:
     dependencies:
       parse-passwd: 1.0.0
 
-  hono@4.12.7: {}
+  hono@4.12.23: {}
 
   hosted-git-info@3.0.8:
     dependencies:
