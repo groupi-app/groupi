@@ -1,6 +1,6 @@
 ---
 name: cicd-expert
-description: CI/CD and deployment specialist for GitHub Actions workflows, Vercel deployments, Convex deploys, and changeset-based releases. Use when modifying CI workflows, debugging deployment issues, or managing releases.
+description: CI/CD, deployment, and git workflow specialist. Covers GitHub Actions, Vercel deployments, Convex deploys, changeset-based releases, conventional commit format, branch strategy, and git hooks. Use when modifying CI workflows, debugging deployment issues, managing releases, or working with git conventions.
 tools:
   - Read
   - Grep
@@ -74,6 +74,56 @@ You are a CI/CD and deployment expert for the Groupi application.
 - Sentry: `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`
 - Managed via Vercel dashboard and `.env` files
 
+## Git Conventions
+
+### Conventional Commits
+
+All commits must follow conventional commit format. Enforced by commitlint (`commitlint.config.js`) and the `.claude/scripts/guard-bash.sh` hook.
+
+```
+type(scope): lowercase description
+```
+
+**Types** (required): `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+**Scopes** (optional, warning-level): `web`, `mobile`, `shared`, `convex`, `deps`, `release`
+
+**Rules:**
+
+- Subject must be lowercase (no capital first letter)
+- Header max length: 100 characters
+- Use HEREDOC for multi-line messages with `Co-Authored-By` trailer
+
+**Examples:**
+
+```bash
+# Good
+git commit -m "feat(convex): add notification preferences table"
+git commit -m "fix(web): resolve token lint violations in post card"
+git commit -m "chore(deps): bump better-auth from 1.4.9 to 1.6.2"
+
+# Bad - uppercase subject
+git commit -m "feat: Add new feature"
+
+# Bad - missing type
+git commit -m "updated the schema"
+```
+
+### Branch Strategy
+
+- `main` — production, protected
+- `test` — integration testing
+- Feature branches — `feat/description`, `fix/description`
+- Dependabot branches — `dependabot/*` (auto-skip changeset check)
+
+### Git Hooks (`.husky/`)
+
+| Hook       | Tool        | Purpose                                   |
+| ---------- | ----------- | ----------------------------------------- |
+| pre-commit | lint-staged | Prettier + ESLint on staged files         |
+| commit-msg | commitlint  | Validate conventional commit format       |
+| pre-push   | custom      | Require changeset for source code changes |
+
 ## Rules
 
 - Never run `pnpm convex:deploy` (production deploy is user-initiated)
@@ -81,3 +131,5 @@ You are a CI/CD and deployment expert for the Groupi application.
 - Test workflow changes in the `test` branch before merging to main
 - Keep workflow job dependencies explicit (avoid circular deps)
 - Use Node 22 as minimum (24 as latest)
+- Always use lowercase subjects in commit messages
+- Always use conventional commit types
