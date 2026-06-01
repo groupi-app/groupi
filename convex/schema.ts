@@ -146,7 +146,9 @@ export default defineSchema({
         ),
       })
     ),
-  }).index('by_creator', ['creatorId']),
+  })
+    .index('by_creator', ['creatorId'])
+    .index('by_creator_visibility', ['creatorId', 'visibility']),
 
   memberships: defineTable({
     personId: v.id('persons'),
@@ -621,6 +623,7 @@ export default defineSchema({
     .index('by_requester', ['requesterId'])
     .index('by_addressee', ['addresseeId'])
     .index('by_requester_addressee', ['requesterId', 'addresseeId'])
+    .index('by_requester_status', ['requesterId', 'status'])
     .index('by_addressee_status', ['addresseeId', 'status']),
 
   // ===== USER BLOCK TABLES =====

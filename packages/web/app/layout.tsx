@@ -33,8 +33,10 @@ const fontSans = FontSans({
 });
 
 const fontHeading = localFont({
-  src: '../../../assets/fonts/Geologica.ttf',
+  src: '../../../assets/fonts/Geologica.woff2',
   variable: '--font-heading',
+  display: 'swap',
+  adjustFontFallback: 'Arial',
 });
 
 export const metadata = {

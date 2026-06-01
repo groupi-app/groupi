@@ -60,19 +60,21 @@ export const listFriends = internalQuery({
   handler: async (ctx, { personId }) => {
     const pid = personId as Id<'persons'>;
 
-    // Get accepted friendships where user is requester
-    const asRequester = await ctx.db
-      .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', pid))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
-
-    // Get accepted friendships where user is addressee
-    const asAddressee = await ctx.db
-      .query('friendships')
-      .withIndex('by_addressee', q => q.eq('addresseeId', pid))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
+    // Get accepted friendships using compound indexes
+    const [asRequester, asAddressee] = await Promise.all([
+      ctx.db
+        .query('friendships')
+        .withIndex('by_requester_status', q =>
+          q.eq('requesterId', pid).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+      ctx.db
+        .query('friendships')
+        .withIndex('by_addressee_status', q =>
+          q.eq('addresseeId', pid).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+    ]);
 
     // Get friend person IDs and map to friendship IDs
     const friendData = [
@@ -152,11 +154,12 @@ export const listSentRequests = internalQuery({
   handler: async (ctx, { personId }) => {
     const pid = personId as Id<'persons'>;
 
-    // Get pending requests where user is requester
+    // Get pending requests where user is requester using compound index
     const requests = await ctx.db
       .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', pid))
-      .filter(q => q.eq(q.field('status'), 'PENDING'))
+      .withIndex('by_requester_status', q =>
+        q.eq('requesterId', pid).eq('status', 'PENDING')
+      )
       .collect();
 
     // Get addressee details
