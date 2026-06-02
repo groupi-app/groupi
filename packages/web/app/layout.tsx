@@ -25,6 +25,7 @@ import { OnboardingRedirectWrapper } from '@/components/onboarding-redirect-wrap
 import { GoogleOneTap } from '@/components/google-one-tap';
 import { GlobalPresenceTracker } from '@/components/global-presence-tracker';
 import { ThemeSync } from '@/components/theme-sync';
+import { AuthenticatedOnly } from '@/components/authenticated-only';
 import { Github } from 'lucide-react';
 
 const fontSans = FontSans({
@@ -171,17 +172,19 @@ export default function RootLayout({
                       <GlobalNavigationGuard />
                     </Suspense>
                     <Suspense fallback={null}>
-                      <OnboardingRedirectWrapper />
-                    </Suspense>
-                    <Suspense fallback={null}>
                       <GoogleOneTap />
                     </Suspense>
-                    <Suspense fallback={null}>
-                      <GlobalPresenceTracker />
-                    </Suspense>
-                    <Suspense fallback={null}>
-                      <ThemeSync />
-                    </Suspense>
+                    <AuthenticatedOnly>
+                      <Suspense fallback={null}>
+                        <OnboardingRedirectWrapper />
+                      </Suspense>
+                      <Suspense fallback={null}>
+                        <GlobalPresenceTracker />
+                      </Suspense>
+                      <Suspense fallback={null}>
+                        <ThemeSync />
+                      </Suspense>
+                    </AuthenticatedOnly>
                     <div className='flex flex-col min-h-screen'>
                       {/* Static header shell - renders immediately */}
                       <header className='z-sticky w-full bg-primary text-primary-foreground'>

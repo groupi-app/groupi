@@ -200,6 +200,7 @@ export const createEvent = mutation({
       reminderOffset: reminderOffset,
       visibility: visibility,
       permissions: permissions,
+      memberCount: 1,
     });
 
     // Create the creator's membership as ORGANIZER
@@ -753,8 +754,14 @@ export const removeMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership
+    // Delete the membership and decrement member count
     await ctx.db.delete(membershipId);
+    const event = await ctx.db.get(membership.eventId);
+    if (event && (event.memberCount ?? 0) > 0) {
+      await ctx.db.patch(membership.eventId, {
+        memberCount: (event.memberCount ?? 1) - 1,
+      });
+    }
 
     return { success: true };
   },
@@ -822,8 +829,14 @@ export const leaveEvent = mutation({
       personId: person._id,
     });
 
-    // Delete the membership
+    // Delete the membership and decrement member count
     await ctx.db.delete(membership._id);
+    const eventDoc = await ctx.db.get(eventId);
+    if (eventDoc && (eventDoc.memberCount ?? 0) > 0) {
+      await ctx.db.patch(eventId, {
+        memberCount: (eventDoc.memberCount ?? 1) - 1,
+      });
+    }
 
     return { success: true };
   },
@@ -1027,8 +1040,14 @@ export const banMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership
+    // Delete the membership and decrement member count
     await ctx.db.delete(membershipId);
+    const eventDoc = await ctx.db.get(membership.eventId);
+    if (eventDoc && (eventDoc.memberCount ?? 0) > 0) {
+      await ctx.db.patch(membership.eventId, {
+        memberCount: (eventDoc.memberCount ?? 1) - 1,
+      });
+    }
 
     return { success: true };
   },
@@ -1259,7 +1278,7 @@ export const joinDiscoverableEvent = mutation({
       throw new Error('You are banned from this event');
     }
 
-    // Create membership
+    // Create membership and increment member count
     const now = Date.now();
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
@@ -1267,6 +1286,9 @@ export const joinDiscoverableEvent = mutation({
       role: 'ATTENDEE',
       rsvpStatus: 'YES',
       updatedAt: now,
+    });
+    await ctx.db.patch(eventId, {
+      memberCount: (event.memberCount ?? 0) + 1,
     });
 
     // Notify organizers/moderators about the new member

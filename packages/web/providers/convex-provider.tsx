@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { ConvexReactClient } from 'convex/react';
 import { authClient } from '@/lib/auth-client';
 import {
@@ -9,13 +9,6 @@ import {
 } from '@convex-dev/better-auth/react';
 import { isDevelopment } from '@/lib/convex';
 
-// 🚀 Enhanced Convex client with performance optimizations
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
-  // 🗄️ Optimized for real-time performance
-  unsavedChangesWarning: false, // Disabled for better UX with optimistic updates
-  verbose: isDevelopment,
-});
-
 export function ConvexClientProvider({
   children,
   initialToken,
@@ -23,9 +16,17 @@ export function ConvexClientProvider({
   children: ReactNode;
   initialToken?: string | null;
 }) {
+  const [client] = useState(
+    () =>
+      new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
+        unsavedChangesWarning: false,
+        verbose: isDevelopment,
+      })
+  );
+
   return (
     <ConvexBetterAuthProvider
-      client={convex}
+      client={client}
       authClient={authClient as unknown as AuthClient}
       initialToken={initialToken}
     >

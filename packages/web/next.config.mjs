@@ -65,8 +65,7 @@ const nextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
-  // Disabled - app is primarily client-side with Convex real-time data
-  cacheComponents: false,
+  cacheComponents: true,
   // Enable detailed error output during build
   logging: {
     fetches: {

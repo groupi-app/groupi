@@ -283,7 +283,7 @@ export const acceptInvite = mutation({
       throw new Error('You have been banned from this event');
     }
 
-    // Create membership
+    // Create membership and increment member count
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
       eventId: invite.eventId,
@@ -291,6 +291,12 @@ export const acceptInvite = mutation({
       rsvpStatus: 'PENDING',
       updatedAt: now,
     });
+    const eventDoc = await ctx.db.get(invite.eventId);
+    if (eventDoc) {
+      await ctx.db.patch(invite.eventId, {
+        memberCount: (eventDoc.memberCount ?? 0) + 1,
+      });
+    }
 
     // Decrement invite uses if limited
     if (invite.usesRemaining !== undefined) {

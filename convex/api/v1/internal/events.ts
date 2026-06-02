@@ -177,6 +177,7 @@ export const createEvent = internalMutation({
       chosenDateTime: chosenTimestamp,
       chosenEndDateTime: chosenEndTimestamp,
       reminderOffset,
+      memberCount: 1,
     });
 
     // Create membership for creator

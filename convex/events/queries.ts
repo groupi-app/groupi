@@ -216,27 +216,20 @@ export const getUserEvents = query({
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
 
-        // Get member count for this event
-        const memberCount = await ctx.db
-          .query('memberships')
-          .withIndex('by_event', q => q.eq('eventId', event._id))
-          .collect()
-          .then(members => members.length);
-
-        // Get the organizer (creator) data
-        const organizerData = await getPersonWithUser(ctx, event.creatorId);
-
-        // Get image URL if event has an image
-        const imageUrl = event.imageStorageId
-          ? await ctx.storage.getUrl(event.imageStorageId)
-          : null;
+        // Get the organizer (creator) data and image in parallel
+        const [organizerData, imageUrl] = await Promise.all([
+          getPersonWithUser(ctx, event.creatorId),
+          event.imageStorageId
+            ? ctx.storage.getUrl(event.imageStorageId)
+            : null,
+        ]);
 
         return {
           event: {
             ...event,
             imageUrl,
             chosenDateTime: event.chosenDateTime,
-            memberCount,
+            memberCount: event.memberCount ?? 0,
           },
           membership: {
             ...membership,
@@ -484,12 +477,7 @@ export const getUserEventsAndInvites = query({
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
 
-        const [memberCount, organizerData, imageUrl] = await Promise.all([
-          ctx.db
-            .query('memberships')
-            .withIndex('by_event', q => q.eq('eventId', event._id))
-            .collect()
-            .then(members => members.length),
+        const [organizerData, imageUrl] = await Promise.all([
           getPersonWithUser(ctx, event.creatorId),
           event.imageStorageId
             ? ctx.storage.getUrl(event.imageStorageId)
@@ -501,7 +489,7 @@ export const getUserEventsAndInvites = query({
             ...event,
             imageUrl,
             chosenDateTime: event.chosenDateTime,
-            memberCount,
+            memberCount: event.memberCount ?? 0,
           },
           membership: {
             ...membership,
@@ -538,17 +526,12 @@ export const getUserEventsAndInvites = query({
         ]);
         if (!event || !inviterPerson) return null;
 
-        const [inviterData, eventImageUrl, eventMemberships] =
-          await Promise.all([
-            getPersonWithUser(ctx, inviterPerson._id),
-            event.imageStorageId
-              ? ctx.storage.getUrl(event.imageStorageId)
-              : null,
-            ctx.db
-              .query('memberships')
-              .withIndex('by_event', q => q.eq('eventId', event._id))
-              .collect(),
-          ]);
+        const [inviterData, eventImageUrl] = await Promise.all([
+          getPersonWithUser(ctx, inviterPerson._id),
+          event.imageStorageId
+            ? ctx.storage.getUrl(event.imageStorageId)
+            : null,
+        ]);
 
         return {
           inviteId: invite._id,
@@ -559,7 +542,7 @@ export const getUserEventsAndInvites = query({
           eventLocation: event.location || null,
           eventDateTime: event.chosenDateTime || null,
           eventVisibility: event.visibility || 'PRIVATE',
-          memberCount: eventMemberships.length,
+          memberCount: event.memberCount ?? 0,
           role: invite.role,
           message: invite.message || null,
           createdAt: invite.createdAt,
@@ -659,12 +642,6 @@ export const getEventsForUserInvite = query({
       if (event.chosenDateTime && event.chosenDateTime < Date.now()) continue;
 
       // Get member count
-      const memberCount = await ctx.db
-        .query('memberships')
-        .withIndex('by_event', q => q.eq('eventId', eventId))
-        .collect()
-        .then(members => members.length);
-
       // Get image URL
       const eventImageUrl = event.imageStorageId
         ? await ctx.storage.getUrl(event.imageStorageId)
@@ -675,7 +652,7 @@ export const getEventsForUserInvite = query({
         title: event.title,
         location: event.location || null,
         chosenDateTime: event.chosenDateTime || null,
-        memberCount,
+        memberCount: event.memberCount ?? 0,
         eventImageUrl,
         currentUserRole: membership.role,
       });
@@ -752,12 +729,7 @@ export const getDiscoverableEvents = query({
     // Fetch member counts, images, and organizer data in parallel per event
     const discoverableEvents = await Promise.all(
       candidateEvents.map(async event => {
-        const [memberCount, imageUrl, organizerData] = await Promise.all([
-          ctx.db
-            .query('memberships')
-            .withIndex('by_event', q => q.eq('eventId', event._id))
-            .collect()
-            .then(members => members.length),
+        const [imageUrl, organizerData] = await Promise.all([
           event.imageStorageId
             ? ctx.storage.getUrl(event.imageStorageId)
             : null,
@@ -772,7 +744,7 @@ export const getDiscoverableEvents = query({
           chosenDateTime: event.chosenDateTime || null,
           chosenEndDateTime: event.chosenEndDateTime || null,
           imageUrl,
-          memberCount,
+          memberCount: event.memberCount ?? 0,
           createdAt: event.createdAt,
           organizer: organizerData
             ? {
