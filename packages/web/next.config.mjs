@@ -65,7 +65,9 @@ const nextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
-  cacheComponents: true,
+  // Disabled — client-side providers use Date.now()/Math.random() in state
+  // initializers which are incompatible with static prerendering
+  cacheComponents: false,
   // Enable detailed error output during build
   logging: {
     fetches: {
