@@ -1,0 +1,21 @@
+diff: unrecognized option `--no-color'
+usage: diff [-aBbdilpTtw] [-c | -e | -f | -n | -q | -u] [--ignore-case]
+            [--no-ignore-case] [--normal] [--strip-trailing-cr] [--tabsize]
+            [-I pattern] [-F pattern] [-L label] file1 file2
+       diff [-aBbdilpTtw] [-I pattern] [-L label] [--ignore-case]
+            [--no-ignore-case] [--normal] [--strip-trailing-cr] [--tabsize]
+            [-F pattern] -C number file1 file2
+       diff [-aBbdiltw] [-I pattern] [--ignore-case] [--no-ignore-case]
+            [--normal] [--strip-trailing-cr] [--tabsize] -D string file1 file2
+       diff [-aBbdilpTtw] [-I pattern] [-L label] [--ignore-case]
+            [--no-ignore-case] [--normal] [--tabsize] [--strip-trailing-cr]
+            [-F pattern] -U number file1 file2
+       diff [-aBbdilNPprsTtw] [-c | -e | -f | -n | -q | -u] [--ignore-case]
+            [--no-ignore-case] [--normal] [--tabsize] [-I pattern] [-L label]
+            [-F pattern] [-S name] [-X file] [-x pattern] dir1 dir2
+       diff [-aBbditwW] [--expand-tabs] [--ignore-all-space]
+            [--ignore-blank-lines] [--ignore-case] [--minimal]
+            [--no-ignore-file-name-case] [--strip-trailing-cr]
+            [--suppress-common-lines] [--tabsize] [--text] [--width]
+            -y | --side-by-side file1 file2
+       diff [--help] [--version]
