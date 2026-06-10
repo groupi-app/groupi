@@ -1,21 +1,33 @@
-diff: unrecognized option `--no-color'
-usage: diff [-aBbdilpTtw] [-c | -e | -f | -n | -q | -u] [--ignore-case]
-            [--no-ignore-case] [--normal] [--strip-trailing-cr] [--tabsize]
-            [-I pattern] [-F pattern] [-L label] file1 file2
-       diff [-aBbdilpTtw] [-I pattern] [-L label] [--ignore-case]
-            [--no-ignore-case] [--normal] [--strip-trailing-cr] [--tabsize]
-            [-F pattern] -C number file1 file2
-       diff [-aBbdiltw] [-I pattern] [--ignore-case] [--no-ignore-case]
-            [--normal] [--strip-trailing-cr] [--tabsize] -D string file1 file2
-       diff [-aBbdilpTtw] [-I pattern] [-L label] [--ignore-case]
-            [--no-ignore-case] [--normal] [--tabsize] [--strip-trailing-cr]
-            [-F pattern] -U number file1 file2
-       diff [-aBbdilNPprsTtw] [-c | -e | -f | -n | -q | -u] [--ignore-case]
-            [--no-ignore-case] [--normal] [--tabsize] [-I pattern] [-L label]
-            [-F pattern] [-S name] [-X file] [-x pattern] dir1 dir2
-       diff [-aBbditwW] [--expand-tabs] [--ignore-all-space]
-            [--ignore-blank-lines] [--ignore-case] [--minimal]
-            [--no-ignore-file-name-case] [--strip-trailing-cr]
-            [--suppress-common-lines] [--tabsize] [--text] [--width]
-            -y | --side-by-side file1 file2
-       diff [--help] [--version]
+diff -ruN a/dist/bun-sqlite-dialect-DzNwOpKv.mjs b/dist/bun-sqlite-dialect-DzNwOpKv.mjs
+--- a/dist/bun-sqlite-dialect-DzNwOpKv.mjs
++++ b/dist/bun-sqlite-dialect-DzNwOpKv.mjs
+@@ -1,4 +1,6 @@
+-import { CompiledQuery, DEFAULT_MIGRATION_LOCK_TABLE, DEFAULT_MIGRATION_TABLE, DefaultQueryCompiler, sql } from "kysely";
++import { CompiledQuery, DefaultQueryCompiler, sql } from "kysely";
++const DEFAULT_MIGRATION_TABLE = "__better_auth_migration";
++const DEFAULT_MIGRATION_LOCK_TABLE = "__better_auth_migration_lock";
+ //#region src/bun-sqlite-dialect.ts
+ var BunSqliteAdapter = class {
+ 	get supportsCreateIfNotExists() {
+diff -ruN a/dist/d1-sqlite-dialect-C2B7YsIT.mjs b/dist/d1-sqlite-dialect-C2B7YsIT.mjs
+--- a/dist/d1-sqlite-dialect-C2B7YsIT.mjs
++++ b/dist/d1-sqlite-dialect-C2B7YsIT.mjs
+@@ -1,4 +1,6 @@
+-import { DEFAULT_MIGRATION_LOCK_TABLE, DEFAULT_MIGRATION_TABLE, SqliteAdapter, SqliteQueryCompiler } from "kysely";
++import { SqliteAdapter, SqliteQueryCompiler } from "kysely";
++const DEFAULT_MIGRATION_TABLE = "__better_auth_migration";
++const DEFAULT_MIGRATION_LOCK_TABLE = "__better_auth_migration_lock";
+ //#region src/d1-sqlite-dialect.ts
+ var D1SqliteAdapter = class extends SqliteAdapter {};
+ var D1SqliteDriver = class {
+diff -ruN a/dist/node-sqlite-dialect.mjs b/dist/node-sqlite-dialect.mjs
+--- a/dist/node-sqlite-dialect.mjs
++++ b/dist/node-sqlite-dialect.mjs
+@@ -1,4 +1,6 @@
+-import { CompiledQuery, DEFAULT_MIGRATION_LOCK_TABLE, DEFAULT_MIGRATION_TABLE, DefaultQueryCompiler, sql } from "kysely";
++import { CompiledQuery, DefaultQueryCompiler, sql } from "kysely";
++const DEFAULT_MIGRATION_TABLE = "__better_auth_migration";
++const DEFAULT_MIGRATION_LOCK_TABLE = "__better_auth_migration_lock";
+ //#region src/node-sqlite-dialect.ts
+ var NodeSqliteAdapter = class {
+ 	get supportsCreateIfNotExists() {
