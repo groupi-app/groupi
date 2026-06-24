@@ -36,7 +36,7 @@ jobs:
       convex_url: ${{ steps.check.outputs.convex_url }}
     steps:
       # Select validation code from protected staging, independently of the deployment.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: test
           persist-credentials: false
@@ -104,7 +104,7 @@ jobs:
             echo '::error::E2E_FIXTURE_KEY is missing or invalid; authenticated verification is blocked.'
             exit 1
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.expected_sha }}
       - uses: pnpm/action-setup@v6
