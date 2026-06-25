@@ -105,14 +105,25 @@ export const updateLastSeen = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async ctx => {
-    // Get current person (works in both production and tests)
     const person = await getCurrentPerson(ctx);
     if (!person) {
       return { success: false };
     }
 
-    // Update last seen in the persons table
-    await ctx.db.patch(person._id, { lastSeen: Date.now() });
+    // Write to isolated personPresence table to avoid invalidating persons cache
+    const existing = await ctx.db
+      .query('personPresence')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { lastSeen: Date.now() });
+    } else {
+      await ctx.db.insert('personPresence', {
+        personId: person._id,
+        lastSeen: Date.now(),
+      });
+    }
 
     return { success: true, personId: person._id };
   },
@@ -321,13 +332,18 @@ export const getMyStatus = query({
       expiresAt = undefined;
     }
 
+    const presenceRecord = await ctx.db
+      .query('personPresence')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .first();
+
     return {
       status: effectiveStatus,
       statusExpiresAt: expiresAt,
       statusSetAt: person.statusSetAt,
-      autoIdleEnabled: person.autoIdleEnabled ?? true, // Default to true
-      statusVisibility: person.statusVisibility ?? 'EVERYONE', // Default to EVERYONE
-      lastSeen: person.lastSeen,
+      autoIdleEnabled: person.autoIdleEnabled ?? true,
+      statusVisibility: person.statusVisibility ?? 'EVERYONE',
+      lastSeen: presenceRecord?.lastSeen ?? person.lastSeen,
     };
   },
 });
@@ -419,28 +435,29 @@ export const getPersonStatus = query({
       };
     }
 
+    // Read lastSeen from isolated personPresence table (falls back to persons field)
+    const presenceRecord = await ctx.db
+      .query('personPresence')
+      .withIndex('by_person', q => q.eq('personId', personId))
+      .first();
+    const lastSeen = presenceRecord?.lastSeen ?? targetPerson.lastSeen;
+
     // Check if online based on lastSeen (within 5 minutes)
     const fiveMinutes = 5 * 60 * 1000;
-    const hasRecentActivity = targetPerson.lastSeen
-      ? now - targetPerson.lastSeen < fiveMinutes
-      : false;
+    const hasRecentActivity = lastSeen ? now - lastSeen < fiveMinutes : false;
 
-    // If user has stale lastSeen, they're offline regardless of set status
-    // This applies to ALL statuses including DND and IDLE
-    // The functional DND behavior (notification muting) is handled separately
     if (!hasRecentActivity) {
       return {
         status: 'OFFLINE' as const,
         isOnline: false,
-        lastSeen: targetPerson.lastSeen,
+        lastSeen,
       };
     }
 
-    // User has recent activity - show their actual status
     return {
       status: effectiveStatus,
       isOnline: effectiveStatus === 'ONLINE',
-      lastSeen: targetPerson.lastSeen,
+      lastSeen,
     };
   },
 });

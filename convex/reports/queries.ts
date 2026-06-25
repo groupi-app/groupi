@@ -86,6 +86,43 @@ export const hasReported = query({
   },
 });
 
+export const hasReportedBatch = query({
+  args: {
+    targets: v.array(
+      v.object({
+        targetType: v.union(
+          v.literal('USER'),
+          v.literal('EVENT'),
+          v.literal('POST'),
+          v.literal('REPLY')
+        ),
+        targetId: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, { targets }) => {
+    const person = await getCurrentPerson(ctx);
+    if (!person) return {};
+
+    const results = await Promise.all(
+      targets.map(async ({ targetType, targetId }) => {
+        const existing = await ctx.db
+          .query('reports')
+          .withIndex('by_reporter_target', q =>
+            q
+              .eq('reporterId', person._id)
+              .eq('targetType', targetType)
+              .eq('targetId', targetId)
+          )
+          .first();
+        return [targetId, existing !== null] as const;
+      })
+    );
+
+    return Object.fromEntries(results);
+  },
+});
+
 /**
  * Get report statistics for the admin dashboard.
  */
