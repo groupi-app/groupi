@@ -277,8 +277,9 @@ export const createAuthOptions = (
 
     trustedOrigins: [
       siteUrl,
-      // Also trust the bare domain in case the www redirect hasn't completed
-      siteUrl.replace('://www.', '://'),
+      ...(siteUrl.includes('://www.')
+        ? [siteUrl.replace('://www.', '://')]
+        : []),
     ],
   };
 };
