@@ -4,6 +4,7 @@ import { requireAuth } from '../auth';
 import { createNotification } from '../lib/notifications';
 import { checkCanSendEventInvite } from '../lib/privacy';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Event Invites mutations for the Convex backend
@@ -223,8 +224,13 @@ export const acceptEventInvite = mutation({
     });
     const eventDoc = await ctx.db.get(invite.eventId);
     if (eventDoc) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        invite.eventId,
+        eventDoc
+      );
       await ctx.db.patch(invite.eventId, {
-        memberCount: (eventDoc.memberCount ?? 0) + 1,
+        memberCount: currentCount + 1,
       });
     }
 
