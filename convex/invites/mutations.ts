@@ -5,6 +5,7 @@ import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Type for invite creation data
@@ -293,8 +294,13 @@ export const acceptInvite = mutation({
     });
     const eventDoc = await ctx.db.get(invite.eventId);
     if (eventDoc) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        invite.eventId,
+        eventDoc
+      );
       await ctx.db.patch(invite.eventId, {
-        memberCount: (eventDoc.memberCount ?? 0) + 1,
+        memberCount: currentCount + 1,
       });
     }
 

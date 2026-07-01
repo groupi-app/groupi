@@ -8,6 +8,7 @@ import {
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
 import { checkIfFriends } from '../lib/privacy';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
 import { getAddonHandler } from '../addons/registry';
 import {
@@ -757,9 +758,14 @@ export const removeMember = mutation({
     // Delete the membership and decrement member count
     await ctx.db.delete(membershipId);
     const event = await ctx.db.get(membership.eventId);
-    if (event && (event.memberCount ?? 0) > 0) {
+    if (event) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        membership.eventId,
+        event
+      );
       await ctx.db.patch(membership.eventId, {
-        memberCount: (event.memberCount ?? 1) - 1,
+        memberCount: Math.max(0, currentCount - 1),
       });
     }
 
@@ -832,9 +838,14 @@ export const leaveEvent = mutation({
     // Delete the membership and decrement member count
     await ctx.db.delete(membership._id);
     const eventDoc = await ctx.db.get(eventId);
-    if (eventDoc && (eventDoc.memberCount ?? 0) > 0) {
+    if (eventDoc) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        eventId,
+        eventDoc
+      );
       await ctx.db.patch(eventId, {
-        memberCount: (eventDoc.memberCount ?? 1) - 1,
+        memberCount: Math.max(0, currentCount - 1),
       });
     }
 
@@ -1043,9 +1054,14 @@ export const banMember = mutation({
     // Delete the membership and decrement member count
     await ctx.db.delete(membershipId);
     const eventDoc = await ctx.db.get(membership.eventId);
-    if (eventDoc && (eventDoc.memberCount ?? 0) > 0) {
+    if (eventDoc) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        membership.eventId,
+        eventDoc
+      );
       await ctx.db.patch(membership.eventId, {
-        memberCount: (eventDoc.memberCount ?? 1) - 1,
+        memberCount: Math.max(0, currentCount - 1),
       });
     }
 
@@ -1287,8 +1303,9 @@ export const joinDiscoverableEvent = mutation({
       rsvpStatus: 'YES',
       updatedAt: now,
     });
+    const currentCount = await getOrComputeMemberCount(ctx, eventId, event);
     await ctx.db.patch(eventId, {
-      memberCount: (event.memberCount ?? 0) + 1,
+      memberCount: currentCount + 1,
     });
 
     // Notify organizers/moderators about the new member

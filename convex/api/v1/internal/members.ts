@@ -2,6 +2,7 @@ import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
 import { getPersonWithUser } from '../../../auth';
+import { getOrComputeMemberCount } from '../../../lib/memberCount';
 
 /**
  * Internal queries and mutations for member routes
@@ -142,6 +143,18 @@ export const removeMember = internalMutation({
     // Delete membership
     await ctx.db.delete(membershipId as Id<'memberships'>);
 
+    const event = await ctx.db.get(membership.eventId);
+    if (event) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        membership.eventId,
+        event
+      );
+      await ctx.db.patch(membership.eventId, {
+        memberCount: Math.max(0, currentCount - 1),
+      });
+    }
+
     return { success: true };
   },
 });
@@ -192,6 +205,19 @@ export const leaveEvent = internalMutation({
 
     // Delete membership
     await ctx.db.delete(membership._id);
+
+    const typedEventId = eventId as Id<'events'>;
+    const event = await ctx.db.get(typedEventId);
+    if (event) {
+      const currentCount = await getOrComputeMemberCount(
+        ctx,
+        typedEventId,
+        event
+      );
+      await ctx.db.patch(typedEventId, {
+        memberCount: Math.max(0, currentCount - 1),
+      });
+    }
 
     return { success: true };
   },
