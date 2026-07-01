@@ -47,6 +47,13 @@ const baseAuthClient = createAuthClient({
       ? [
           oneTapClient({
             clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+            autoSelect: true,
+            context: 'signin',
+            cancelOnTapOutside: true,
+            promptOptions: {
+              fedCM: false,
+              maxAttempts: 3,
+            },
           }),
         ]
       : []),
