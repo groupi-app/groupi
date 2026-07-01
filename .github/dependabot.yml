@@ -21,6 +21,10 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+    ignore:
+      # Pinned to 16.1.7 — Vercel adapter crash with shouldNormalizeNextData in 16.2.x
+      - dependency-name: 'next'
+        versions: ['>=16.2.0']
     open-pull-requests-limit: 10
 
   # GitHub Actions

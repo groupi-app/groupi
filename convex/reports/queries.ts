@@ -9,6 +9,8 @@ import {
   AuthUserId,
 } from '../auth';
 
+const MAX_BATCH_TARGETS = 50;
+
 /**
  * Admin queries and user-facing queries for the reports system.
  */
@@ -101,6 +103,12 @@ export const hasReportedBatch = query({
     ),
   },
   handler: async (ctx, { targets }) => {
+    if (targets.length > MAX_BATCH_TARGETS) {
+      throw new Error(
+        `Too many targets (${targets.length}). Maximum is ${MAX_BATCH_TARGETS}.`
+      );
+    }
+
     const person = await getCurrentPerson(ctx);
     if (!person) return {};
 
