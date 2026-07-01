@@ -73,3 +73,6 @@ supabase-backup*.sql
 scripts/migration/
 migration_data.json
 clerk_users.json
+.env*
+!.env.example
+!packages/web/.env.local.example
