@@ -1,8 +1,13 @@
 import { v } from 'convex/values';
+import { makeFunctionReference } from 'convex/server';
+import type { FunctionReference } from 'convex/server';
 import { internalMutation } from '../_generated/server';
-import { internal } from '../_generated/api';
 
 const BATCH_SIZE = 50;
+
+const selfRef = makeFunctionReference<'mutation', { cursor?: string }>(
+  'migration/backfillMemberCount:backfillMemberCount'
+) as unknown as FunctionReference<'mutation', 'internal', { cursor?: string }>;
 
 export const backfillMemberCount = internalMutation({
   args: {
@@ -31,11 +36,9 @@ export const backfillMemberCount = internalMutation({
     );
 
     if (!results.isDone) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.migration.backfillMemberCount.backfillMemberCount,
-        { cursor: results.continueCursor }
-      );
+      await ctx.scheduler.runAfter(0, selfRef, {
+        cursor: results.continueCursor,
+      });
     }
 
     return { updated, isDone: results.isDone };
