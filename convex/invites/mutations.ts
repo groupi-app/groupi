@@ -284,7 +284,12 @@ export const acceptInvite = mutation({
       throw new Error('You have been banned from this event');
     }
 
-    // Create membership and increment member count
+    // Get count BEFORE inserting so fallback path counts correctly
+    const eventDoc = await ctx.db.get(invite.eventId);
+    const countBeforeInsert = eventDoc
+      ? await getOrComputeMemberCount(ctx, invite.eventId, eventDoc)
+      : 0;
+
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
       eventId: invite.eventId,
@@ -292,15 +297,9 @@ export const acceptInvite = mutation({
       rsvpStatus: 'PENDING',
       updatedAt: now,
     });
-    const eventDoc = await ctx.db.get(invite.eventId);
     if (eventDoc) {
-      const currentCount = await getOrComputeMemberCount(
-        ctx,
-        invite.eventId,
-        eventDoc
-      );
       await ctx.db.patch(invite.eventId, {
-        memberCount: currentCount + 1,
+        memberCount: countBeforeInsert + 1,
       });
     }
 

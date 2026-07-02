@@ -755,17 +755,17 @@ export const removeMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership and decrement member count
-    await ctx.db.delete(membershipId);
+    // Get count BEFORE deleting so fallback path counts correctly
     const event = await ctx.db.get(membership.eventId);
+    const countBeforeDelete = event
+      ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+      : 0;
+
+    await ctx.db.delete(membershipId);
+
     if (event) {
-      const currentCount = await getOrComputeMemberCount(
-        ctx,
-        membership.eventId,
-        event
-      );
       await ctx.db.patch(membership.eventId, {
-        memberCount: Math.max(0, currentCount - 1),
+        memberCount: Math.max(0, countBeforeDelete - 1),
       });
     }
 
@@ -835,17 +835,16 @@ export const leaveEvent = mutation({
       personId: person._id,
     });
 
-    // Delete the membership and decrement member count
-    await ctx.db.delete(membership._id);
     const eventDoc = await ctx.db.get(eventId);
+    const countBeforeDelete = eventDoc
+      ? await getOrComputeMemberCount(ctx, eventId, eventDoc)
+      : 0;
+
+    await ctx.db.delete(membership._id);
+
     if (eventDoc) {
-      const currentCount = await getOrComputeMemberCount(
-        ctx,
-        eventId,
-        eventDoc
-      );
       await ctx.db.patch(eventId, {
-        memberCount: Math.max(0, currentCount - 1),
+        memberCount: Math.max(0, countBeforeDelete - 1),
       });
     }
 
@@ -1051,17 +1050,16 @@ export const banMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership and decrement member count
-    await ctx.db.delete(membershipId);
     const eventDoc = await ctx.db.get(membership.eventId);
+    const countBeforeDelete = eventDoc
+      ? await getOrComputeMemberCount(ctx, membership.eventId, eventDoc)
+      : 0;
+
+    await ctx.db.delete(membershipId);
+
     if (eventDoc) {
-      const currentCount = await getOrComputeMemberCount(
-        ctx,
-        membership.eventId,
-        eventDoc
-      );
       await ctx.db.patch(membership.eventId, {
-        memberCount: Math.max(0, currentCount - 1),
+        memberCount: Math.max(0, countBeforeDelete - 1),
       });
     }
 
@@ -1294,7 +1292,12 @@ export const joinDiscoverableEvent = mutation({
       throw new Error('You are banned from this event');
     }
 
-    // Create membership and increment member count
+    const countBeforeInsert = await getOrComputeMemberCount(
+      ctx,
+      eventId,
+      event
+    );
+
     const now = Date.now();
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
@@ -1303,9 +1306,8 @@ export const joinDiscoverableEvent = mutation({
       rsvpStatus: 'YES',
       updatedAt: now,
     });
-    const currentCount = await getOrComputeMemberCount(ctx, eventId, event);
     await ctx.db.patch(eventId, {
-      memberCount: currentCount + 1,
+      memberCount: countBeforeInsert + 1,
     });
 
     // Notify organizers/moderators about the new member

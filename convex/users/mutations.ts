@@ -9,6 +9,7 @@ import {
   createAuth,
 } from '../auth';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Users mutations for the Convex backend
@@ -409,13 +410,16 @@ export const deleteUserAccount = mutation({
         await ctx.db.delete(availability._id);
       }
 
+      const event = await ctx.db.get(membership.eventId);
+      const countBeforeDelete = event
+        ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+        : 0;
+
       await ctx.db.delete(membership._id);
 
-      // Decrement memberCount on the event
-      const event = await ctx.db.get(membership.eventId);
-      if (event && (event.memberCount ?? 0) > 0) {
+      if (event) {
         await ctx.db.patch(membership.eventId, {
-          memberCount: (event.memberCount ?? 1) - 1,
+          memberCount: Math.max(0, countBeforeDelete - 1),
         });
       }
     }
