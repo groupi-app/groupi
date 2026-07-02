@@ -4,6 +4,7 @@ import { requireAuth } from '../auth';
 import { createNotification } from '../lib/notifications';
 import { checkCanSendEventInvite } from '../lib/privacy';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Event Invites mutations for the Convex backend
@@ -213,7 +214,11 @@ export const acceptEventInvite = mutation({
       respondedAt: Date.now(),
     });
 
-    // Create membership
+    const eventDoc = await ctx.db.get(invite.eventId);
+    const countBeforeInsert = eventDoc
+      ? await getOrComputeMemberCount(ctx, invite.eventId, eventDoc)
+      : 0;
+
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
       eventId: invite.eventId,
@@ -221,6 +226,11 @@ export const acceptEventInvite = mutation({
       rsvpStatus: 'PENDING',
       updatedAt: Date.now(),
     });
+    if (eventDoc) {
+      await ctx.db.patch(invite.eventId, {
+        memberCount: countBeforeInsert + 1,
+      });
+    }
 
     // Remove any other pending invites for this event
     const otherPendingInvites = await ctx.db

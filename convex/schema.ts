@@ -59,6 +59,11 @@ export default defineSchema({
     ),
   }).index('by_user_id', ['userId']),
 
+  personPresence: defineTable({
+    personId: v.id('persons'),
+    lastSeen: v.number(),
+  }).index('by_person', ['personId']),
+
   personSettings: defineTable({
     personId: v.id('persons'),
     updatedAt: v.optional(v.number()), // Unix timestamp
@@ -97,6 +102,7 @@ export default defineSchema({
     chosenDateTime: v.optional(v.number()), // Unix timestamp for start
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end (optional)
     creatorId: v.id('persons'), // Person who created the event
+    memberCount: v.optional(v.number()), // Denormalized count of memberships
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.number(), // Unix timestamp
     timezone: v.string(),
@@ -146,7 +152,9 @@ export default defineSchema({
         ),
       })
     ),
-  }).index('by_creator', ['creatorId']),
+  })
+    .index('by_creator', ['creatorId'])
+    .index('by_creator_visibility', ['creatorId', 'visibility']),
 
   memberships: defineTable({
     personId: v.id('persons'),
@@ -621,6 +629,7 @@ export default defineSchema({
     .index('by_requester', ['requesterId'])
     .index('by_addressee', ['addresseeId'])
     .index('by_requester_addressee', ['requesterId', 'addresseeId'])
+    .index('by_requester_status', ['requesterId', 'status'])
     .index('by_addressee_status', ['addresseeId', 'status']),
 
   // ===== USER BLOCK TABLES =====

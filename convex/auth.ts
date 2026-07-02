@@ -275,7 +275,12 @@ export const createAuthOptions = (
       },
     },
 
-    trustedOrigins: [siteUrl],
+    trustedOrigins: [
+      siteUrl,
+      ...(siteUrl?.includes('://www.')
+        ? [siteUrl.replace('://www.', '://')]
+        : []),
+    ].filter(Boolean),
   };
 };
 

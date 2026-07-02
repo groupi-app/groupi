@@ -202,15 +202,65 @@ Components are organized by complexity:
 
 See `docs/ui-design-system.md` for comprehensive documentation.
 
-## AI Agent Skills
+## AI Agent Infrastructure
 
-This project uses [skills.sh](https://skills.sh/) to provide specialized knowledge about the tech stack. Skills are tracked in `skills-lock.json` and installed to `.agents/`. Contributors restore them with:
+### Hooks (`.claude/settings.json`)
+
+Automated hooks enforce project conventions:
+
+| Hook               | Trigger          | Purpose                                     |
+| ------------------ | ---------------- | ------------------------------------------- |
+| Auto-format        | After Edit/Write | Runs prettier on edited files               |
+| Bash guard         | Before Bash      | Blocks prohibited commands (dev/build/npm)  |
+| Token lint         | After TSX edits  | Checks design token usage                   |
+| Changeset reminder | On session stop  | Reminds about changesets for source changes |
+
+### Custom Skills (`.claude/skills/`)
+
+Project-specific workflow skills (invoke with `/skill-name`):
+
+| Skill                 | When to Use                              |
+| --------------------- | ---------------------------------------- |
+| `convex-feature`      | Building new backend features end-to-end |
+| `web-component`       | Creating UI components (atomic arch)     |
+| `addon-dev`           | Building new event add-ons               |
+| `cross-platform-hook` | Creating shared hooks (factory pattern)  |
+| `test-convex`         | Writing Convex backend tests             |
+| `security-review`     | Reviewing code for security issues       |
+| `schema-migration`    | Evolving the database schema safely      |
+
+### Custom Agents (`.claude/agents/`)
+
+Specialized sub-agents for delegation:
+
+| Agent             | Domain                      | Key Tools                  |
+| ----------------- | --------------------------- | -------------------------- |
+| `convex-expert`   | Backend/database            | Convex MCP, Edit, Bash     |
+| `ui-expert`       | Frontend/design system      | Playwright MCP, Edit, Bash |
+| `test-expert`     | Testing across all packages | Edit, Bash (test runners)  |
+| `reviewer`        | Code review (read-only)     | Read, Grep, Glob, Bash     |
+| `security-expert` | Auth, authz, data isolation | Convex MCP, Edit, Bash     |
+| `cicd-expert`     | CI/CD, deploys, releases    | Convex MCP, Edit, Bash     |
+
+### Agent Teams
+
+Teams are enabled for multi-agent parallel work. Common team patterns:
+
+**Feature Team**: convex-expert (backend) + ui-expert (frontend) + test-expert (tests) working in parallel on a new feature, coordinated by the team lead.
+
+**Bug Fix Team**: reviewer (diagnose) + appropriate expert (fix) + test-expert (regression test).
+
+**Addon Team**: convex-expert (handler + registry) + ui-expert (frontend + registration) + test-expert (tests).
+
+### Third-Party Skills
+
+Installed via [skills.sh](https://skills.sh/) and tracked in `skills-lock.json`. Restore with:
 
 ```bash
 npx skills experimental_install
 ```
 
-Installed skills: Convex (general, best practices, schema validator, realtime, cron jobs), Expo (data fetching, TypeScript, performance), Vitest, Vercel (React best practices, composition patterns), and shadcn.
+Installed: Convex (general, best practices, schema validator, realtime, cron jobs), Expo (data fetching, TypeScript, performance), Vitest, Vercel (React best practices, composition patterns), and shadcn.
 
 ## Detailed Rules
 
@@ -220,4 +270,5 @@ Installed skills: Convex (general, best practices, schema validator, realtime, c
 - UI Design System: `.claude/rules/ui-design-system.md`
 - Presence System: `.claude/rules/presence.md`
 - Add-on Framework: `.claude/rules/addons.md`
+- Design Tokens: `.claude/rules/design-tokens.md`
 - Documentation: `.claude/rules/documentation.md`

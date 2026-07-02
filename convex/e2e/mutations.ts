@@ -318,6 +318,7 @@ export const seedEvent = mutation({
       creatorId: personId,
       potentialDateTimes: [],
       chosenDateTime: args.chosenDateTime,
+      memberCount: 1,
       createdAt: now,
       updatedAt: now,
       timezone: 'UTC',
@@ -465,6 +466,13 @@ export const seedMembership = mutation({
       rsvpStatus: args.rsvpStatus,
       updatedAt: now,
     });
+
+    const event = await ctx.db.get(eventId);
+    if (event) {
+      await ctx.db.patch(eventId, {
+        memberCount: (event.memberCount ?? 0) + 1,
+      });
+    }
 
     return {
       membershipId: membershipId.toString(),

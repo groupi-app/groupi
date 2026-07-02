@@ -55,7 +55,7 @@
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
     "convex": "^1.31.4",
-    "next": "^16.2.6"
+    "next": "16.1.7"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
@@ -93,12 +93,16 @@
   },
   "pnpm": {
     "overrides": {
+      "next": "16.1.7",
       "react": "19.2.0",
       "react-dom": "19.2.0",
       "@types/react": "19.2.2",
       "@types/react-dom": "19.2.2",
       "minimatch": ">=10.0.0",
       "rollup": ">=4.59.0"
+    },
+    "patchedDependencies": {
+      "@better-auth/kysely-adapter@1.6.13": "patches/@better-auth__kysely-adapter@1.6.13.patch"
     }
   },
   "lint-staged": {

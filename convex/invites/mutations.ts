@@ -5,6 +5,7 @@ import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Type for invite creation data
@@ -283,7 +284,12 @@ export const acceptInvite = mutation({
       throw new Error('You have been banned from this event');
     }
 
-    // Create membership
+    // Get count BEFORE inserting so fallback path counts correctly
+    const eventDoc = await ctx.db.get(invite.eventId);
+    const countBeforeInsert = eventDoc
+      ? await getOrComputeMemberCount(ctx, invite.eventId, eventDoc)
+      : 0;
+
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
       eventId: invite.eventId,
@@ -291,6 +297,11 @@ export const acceptInvite = mutation({
       rsvpStatus: 'PENDING',
       updatedAt: now,
     });
+    if (eventDoc) {
+      await ctx.db.patch(invite.eventId, {
+        memberCount: countBeforeInsert + 1,
+      });
+    }
 
     // Decrement invite uses if limited
     if (invite.usesRemaining !== undefined) {

@@ -118,12 +118,7 @@ export const getInviteByToken = query({
       ? { name: creator.user.name, image: creator.user.image }
       : null;
 
-    // Count event members
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', invite.eventId))
-      .collect();
-    const memberCount = memberships.length;
+    const memberCount = event.memberCount ?? 0;
 
     // Fetch potential dates when no date has been chosen yet
     let potentialDateTimes: Array<{

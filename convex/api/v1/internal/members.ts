@@ -2,6 +2,7 @@ import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
 import { getPersonWithUser } from '../../../auth';
+import { getOrComputeMemberCount } from '../../../lib/memberCount';
 
 /**
  * Internal queries and mutations for member routes
@@ -139,8 +140,18 @@ export const removeMember = internalMutation({
       await ctx.db.delete(avail._id);
     }
 
-    // Delete membership
+    const event = await ctx.db.get(membership.eventId);
+    const countBeforeDelete = event
+      ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+      : 0;
+
     await ctx.db.delete(membershipId as Id<'memberships'>);
+
+    if (event) {
+      await ctx.db.patch(membership.eventId, {
+        memberCount: Math.max(0, countBeforeDelete - 1),
+      });
+    }
 
     return { success: true };
   },
@@ -190,8 +201,19 @@ export const leaveEvent = internalMutation({
       await ctx.db.delete(avail._id);
     }
 
-    // Delete membership
+    const typedEventId = eventId as Id<'events'>;
+    const event = await ctx.db.get(typedEventId);
+    const countBeforeDelete = event
+      ? await getOrComputeMemberCount(ctx, typedEventId, event)
+      : 0;
+
     await ctx.db.delete(membership._id);
+
+    if (event) {
+      await ctx.db.patch(typedEventId, {
+        memberCount: Math.max(0, countBeforeDelete - 1),
+      });
+    }
 
     return { success: true };
   },

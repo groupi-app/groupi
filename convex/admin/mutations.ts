@@ -4,6 +4,7 @@ import { getCurrentPerson, isAdmin } from '../auth';
 import { Id } from '../_generated/dataModel';
 import { components } from '../_generated/api';
 import { UserRole } from '../lib/constants';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Admin mutations for the Convex backend
@@ -255,7 +256,18 @@ export const deletePerson = mutation({
       .collect();
 
     for (const membership of memberships) {
+      const event = await ctx.db.get(membership.eventId);
+      const countBeforeDelete = event
+        ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+        : 0;
+
       await ctx.db.delete(membership._id);
+
+      if (event) {
+        await ctx.db.patch(membership.eventId, {
+          memberCount: Math.max(0, countBeforeDelete - 1),
+        });
+      }
     }
 
     // 4. Delete all availability records for this person (via their memberships)

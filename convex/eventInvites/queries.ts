@@ -98,12 +98,6 @@ export const getPendingEventInvites = query({
           eventImageUrl = await ctx.storage.getUrl(event.imageStorageId);
         }
 
-        // Get member count for the event
-        const memberships = await ctx.db
-          .query('memberships')
-          .withIndex('by_event', q => q.eq('eventId', event._id))
-          .collect();
-
         return {
           inviteId: invite._id,
           eventId: event._id,
@@ -112,7 +106,7 @@ export const getPendingEventInvites = query({
           eventImageUrl,
           eventLocation: event.location || null,
           eventDateTime: event.chosenDateTime || null,
-          memberCount: memberships.length,
+          memberCount: event.memberCount ?? 0,
           role: invite.role,
           message: invite.message || null,
           createdAt: invite.createdAt,

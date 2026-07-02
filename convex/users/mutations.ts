@@ -1,5 +1,6 @@
-import { mutation } from '../_generated/server';
+import { mutation, MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
+import { Id } from '../_generated/dataModel';
 import {
   requireAuth,
   requireAuthUser,
@@ -7,6 +8,8 @@ import {
   authComponent,
   createAuth,
 } from '../auth';
+import { dispatchAddonLifecycle } from '../addons/lifecycle';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Users mutations for the Convex backend
@@ -382,6 +385,11 @@ export const deleteUserAccount = mutation({
         }
       }
 
+      // Dispatch onMemberLeft lifecycle before deleting membership
+      await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
+        personId: membership.personId,
+      });
+
       // Delete invites created by this membership
       const invites = await ctx.db
         .query('invites')
@@ -402,7 +410,18 @@ export const deleteUserAccount = mutation({
         await ctx.db.delete(availability._id);
       }
 
+      const event = await ctx.db.get(membership.eventId);
+      const countBeforeDelete = event
+        ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+        : 0;
+
       await ctx.db.delete(membership._id);
+
+      if (event) {
+        await ctx.db.patch(membership.eventId, {
+          memberCount: Math.max(0, countBeforeDelete - 1),
+        });
+      }
     }
 
     // Delete all replies authored by this person
@@ -500,22 +519,20 @@ export const deleteUserAccount = mutation({
  * Helper function to delete an event and all related data
  * Used when the sole organizer deletes their account
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function deleteEventAndRelatedData(ctx: any, eventId: any) {
+async function deleteEventAndRelatedData(
+  ctx: MutationCtx,
+  eventId: Id<'events'>
+) {
   // Delete all memberships and their availabilities
   const memberships = await ctx.db
     .query('memberships')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .withIndex('by_event', (q: any) => q.eq('eventId', eventId))
+    .withIndex('by_event', q => q.eq('eventId', eventId))
     .collect();
 
   for (const membership of memberships) {
     const availabilities = await ctx.db
       .query('availabilities')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_membership', (q: any) =>
-        q.eq('membershipId', membership._id)
-      )
+      .withIndex('by_membership', q => q.eq('membershipId', membership._id))
       .collect();
 
     for (const availability of availabilities) {
@@ -525,8 +542,7 @@ async function deleteEventAndRelatedData(ctx: any, eventId: any) {
     // Delete invites created by this membership
     const invites = await ctx.db
       .query('invites')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_creator', (q: any) => q.eq('createdById', membership._id))
+      .withIndex('by_creator', q => q.eq('createdById', membership._id))
       .collect();
 
     for (const invite of invites) {
@@ -539,8 +555,7 @@ async function deleteEventAndRelatedData(ctx: any, eventId: any) {
   // Delete potential date times
   const potentialDates = await ctx.db
     .query('potentialDateTimes')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .withIndex('by_event', (q: any) => q.eq('eventId', eventId))
+    .withIndex('by_event', q => q.eq('eventId', eventId))
     .collect();
 
   for (const date of potentialDates) {
@@ -550,15 +565,13 @@ async function deleteEventAndRelatedData(ctx: any, eventId: any) {
   // Delete posts and their replies
   const posts = await ctx.db
     .query('posts')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .withIndex('by_event', (q: any) => q.eq('eventId', eventId))
+    .withIndex('by_event', q => q.eq('eventId', eventId))
     .collect();
 
   for (const post of posts) {
     const replies = await ctx.db
       .query('replies')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_post', (q: any) => q.eq('postId', post._id))
+      .withIndex('by_post', q => q.eq('postId', post._id))
       .collect();
 
     for (const reply of replies) {
@@ -571,12 +584,38 @@ async function deleteEventAndRelatedData(ctx: any, eventId: any) {
   // Delete notifications for this event
   const notifications = await ctx.db
     .query('notifications')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .withIndex('by_event', (q: any) => q.eq('eventId', eventId))
+    .withIndex('by_event', q => q.eq('eventId', eventId))
     .collect();
 
   for (const notification of notifications) {
     await ctx.db.delete(notification._id);
+  }
+
+  // Dispatch onEventDeleted to all add-ons and clean up addon tables
+  await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
+
+  const addonConfigs = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event', q => q.eq('eventId', eventId))
+    .collect();
+  for (const config of addonConfigs) {
+    await ctx.db.delete(config._id);
+  }
+
+  const addonDataEntries = await ctx.db
+    .query('addonData')
+    .withIndex('by_event_addon', q => q.eq('eventId', eventId))
+    .collect();
+  for (const entry of addonDataEntries) {
+    await ctx.db.delete(entry._id);
+  }
+
+  const addonOptOuts = await ctx.db
+    .query('addonOptOuts')
+    .withIndex('by_event', q => q.eq('eventId', eventId))
+    .collect();
+  for (const optOut of addonOptOuts) {
+    await ctx.db.delete(optOut._id);
   }
 
   // Delete the event

@@ -9,6 +9,8 @@ import {
   AuthUserId,
 } from '../auth';
 
+const MAX_BATCH_TARGETS = 50;
+
 /**
  * Admin queries and user-facing queries for the reports system.
  */
@@ -83,6 +85,49 @@ export const hasReported = query({
       .first();
 
     return existing !== null;
+  },
+});
+
+export const hasReportedBatch = query({
+  args: {
+    targets: v.array(
+      v.object({
+        targetType: v.union(
+          v.literal('USER'),
+          v.literal('EVENT'),
+          v.literal('POST'),
+          v.literal('REPLY')
+        ),
+        targetId: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, { targets }) => {
+    if (targets.length > MAX_BATCH_TARGETS) {
+      throw new Error(
+        `Too many targets (${targets.length}). Maximum is ${MAX_BATCH_TARGETS}.`
+      );
+    }
+
+    const person = await getCurrentPerson(ctx);
+    if (!person) return {};
+
+    const results = await Promise.all(
+      targets.map(async ({ targetType, targetId }) => {
+        const existing = await ctx.db
+          .query('reports')
+          .withIndex('by_reporter_target', q =>
+            q
+              .eq('reporterId', person._id)
+              .eq('targetType', targetType)
+              .eq('targetId', targetId)
+          )
+          .first();
+        return [targetId, existing !== null] as const;
+      })
+    );
+
+    return Object.fromEntries(results);
   },
 });
 

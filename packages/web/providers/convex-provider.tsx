@@ -9,12 +9,17 @@ import {
 } from '@convex-dev/better-auth/react';
 import { isDevelopment } from '@/lib/convex';
 
-// 🚀 Enhanced Convex client with performance optimizations
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
-  // 🗄️ Optimized for real-time performance
-  unsavedChangesWarning: false, // Disabled for better UX with optimistic updates
-  verbose: isDevelopment,
-});
+let convexClient: ConvexReactClient | null = null;
+
+function getConvexClient() {
+  if (!convexClient) {
+    convexClient = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
+      unsavedChangesWarning: false,
+      verbose: isDevelopment,
+    });
+  }
+  return convexClient;
+}
 
 export function ConvexClientProvider({
   children,
@@ -25,7 +30,7 @@ export function ConvexClientProvider({
 }) {
   return (
     <ConvexBetterAuthProvider
-      client={convex}
+      client={getConvexClient()}
       authClient={authClient as unknown as AuthClient}
       initialToken={initialToken}
     >

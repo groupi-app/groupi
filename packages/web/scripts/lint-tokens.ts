@@ -56,8 +56,11 @@ const EXCEPTIONS: Record<string, string[]> = {
     'rounded-full',
     'z-0',
   ],
-  // Example file-specific exception:
-  // 'components/legacy/OldComponent.tsx': ['bg-gray-100', 'text-gray-500'],
+  // Decorative SVG illustration fills (no semantic equivalent)
+  'app/(home)/components/home-content.tsx': [
+    'fill-[#F472B6]',
+    'fill-[#FDDCAB]',
+  ],
 };
 
 // =============================================================================

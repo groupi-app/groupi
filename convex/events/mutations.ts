@@ -8,6 +8,7 @@ import {
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
 import { checkIfFriends } from '../lib/privacy';
+import { getOrComputeMemberCount } from '../lib/memberCount';
 import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
 import { getAddonHandler } from '../addons/registry';
 import {
@@ -200,6 +201,7 @@ export const createEvent = mutation({
       reminderOffset: reminderOffset,
       visibility: visibility,
       permissions: permissions,
+      memberCount: 1,
     });
 
     // Create the creator's membership as ORGANIZER
@@ -753,8 +755,19 @@ export const removeMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership
+    // Get count BEFORE deleting so fallback path counts correctly
+    const event = await ctx.db.get(membership.eventId);
+    const countBeforeDelete = event
+      ? await getOrComputeMemberCount(ctx, membership.eventId, event)
+      : 0;
+
     await ctx.db.delete(membershipId);
+
+    if (event) {
+      await ctx.db.patch(membership.eventId, {
+        memberCount: Math.max(0, countBeforeDelete - 1),
+      });
+    }
 
     return { success: true };
   },
@@ -822,8 +835,18 @@ export const leaveEvent = mutation({
       personId: person._id,
     });
 
-    // Delete the membership
+    const eventDoc = await ctx.db.get(eventId);
+    const countBeforeDelete = eventDoc
+      ? await getOrComputeMemberCount(ctx, eventId, eventDoc)
+      : 0;
+
     await ctx.db.delete(membership._id);
+
+    if (eventDoc) {
+      await ctx.db.patch(eventId, {
+        memberCount: Math.max(0, countBeforeDelete - 1),
+      });
+    }
 
     return { success: true };
   },
@@ -1027,8 +1050,18 @@ export const banMember = mutation({
       personId: membership.personId,
     });
 
-    // Delete the membership
+    const eventDoc = await ctx.db.get(membership.eventId);
+    const countBeforeDelete = eventDoc
+      ? await getOrComputeMemberCount(ctx, membership.eventId, eventDoc)
+      : 0;
+
     await ctx.db.delete(membershipId);
+
+    if (eventDoc) {
+      await ctx.db.patch(membership.eventId, {
+        memberCount: Math.max(0, countBeforeDelete - 1),
+      });
+    }
 
     return { success: true };
   },
@@ -1259,7 +1292,12 @@ export const joinDiscoverableEvent = mutation({
       throw new Error('You are banned from this event');
     }
 
-    // Create membership
+    const countBeforeInsert = await getOrComputeMemberCount(
+      ctx,
+      eventId,
+      event
+    );
+
     const now = Date.now();
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
@@ -1267,6 +1305,9 @@ export const joinDiscoverableEvent = mutation({
       role: 'ATTENDEE',
       rsvpStatus: 'YES',
       updatedAt: now,
+    });
+    await ctx.db.patch(eventId, {
+      memberCount: countBeforeInsert + 1,
     });
 
     // Notify organizers/moderators about the new member

@@ -24,12 +24,7 @@ export const listUserEvents = internalQuery({
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
 
-        // Get member count
-        const memberCount = await ctx.db
-          .query('memberships')
-          .withIndex('by_event', q => q.eq('eventId', event._id))
-          .collect()
-          .then(m => m.length);
+        const memberCount = event.memberCount ?? 0;
 
         // Get image URL
         const imageUrl = event.imageStorageId
@@ -177,6 +172,7 @@ export const createEvent = internalMutation({
       chosenDateTime: chosenTimestamp,
       chosenEndDateTime: chosenEndTimestamp,
       reminderOffset,
+      memberCount: 1,
     });
 
     // Create membership for creator

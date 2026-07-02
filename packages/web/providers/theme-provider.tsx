@@ -153,12 +153,6 @@ function removeCustomCSS(): void {
 
 function saveToStorage(state: ThemeState, customCSS?: string): void {
   try {
-    console.log(
-      '[ThemeProvider] saveToStorage called, themeType:',
-      state.themeType,
-      'hasCSS:',
-      !!customCSS
-    );
     localStorage.setItem(STORAGE_KEYS.THEME_ID, state.themeId);
     localStorage.setItem(STORAGE_KEYS.THEME_TYPE, state.themeType);
     localStorage.setItem(STORAGE_KEYS.SYSTEM_LIGHT, state.systemLightThemeId);
@@ -168,16 +162,9 @@ function saveToStorage(state: ThemeState, customCSS?: string): void {
       const themeClass = `theme-custom-${state.themeId}`;
       localStorage.setItem(STORAGE_KEYS.CUSTOM_THEME_CLASS, themeClass);
       localStorage.setItem(STORAGE_KEYS.CUSTOM_THEME_CSS, customCSS);
-      console.log(
-        '[ThemeProvider] Saved custom theme to localStorage, class:',
-        themeClass,
-        'CSS length:',
-        customCSS.length
-      );
     } else {
       localStorage.removeItem(STORAGE_KEYS.CUSTOM_THEME_CLASS);
       localStorage.removeItem(STORAGE_KEYS.CUSTOM_THEME_CSS);
-      console.log('[ThemeProvider] Cleared custom theme from localStorage');
     }
   } catch (e) {
     console.error('[ThemeProvider] saveToStorage error:', e);
@@ -192,16 +179,6 @@ function loadFromStorage(): Partial<ThemeState> | null {
     ) as ThemeType | null;
     const systemLight = localStorage.getItem(STORAGE_KEYS.SYSTEM_LIGHT);
     const systemDark = localStorage.getItem(STORAGE_KEYS.SYSTEM_DARK);
-    const customClass = localStorage.getItem(STORAGE_KEYS.CUSTOM_THEME_CLASS);
-    const customCSS = localStorage.getItem(STORAGE_KEYS.CUSTOM_THEME_CSS);
-
-    console.log('[ThemeProvider] loadFromStorage:', {
-      themeId,
-      themeType,
-      hasCustomClass: !!customClass,
-      hasCustomCSS: !!customCSS,
-      customCSSLength: customCSS?.length ?? 0,
-    });
 
     if (!themeId) return null;
 
@@ -315,25 +292,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Set a custom theme
   const setCustomTheme = useCallback((themeId: string, css: string) => {
-    console.log(
-      '[ThemeProvider] setCustomTheme called at',
-      performance.now().toFixed(2) + 'ms'
-    );
-    console.log('[ThemeProvider] Theme ID:', themeId);
-    console.log('[ThemeProvider] CSS starts with:', css.substring(0, 60));
-
     const themeClass = `theme-custom-${themeId}`;
 
-    // Apply to DOM
     applyThemeClass(themeClass);
-    console.log('[ThemeProvider] Applied theme class:', themeClass);
-
     injectCustomCSS(css);
-    console.log('[ThemeProvider] Injected custom CSS');
-
-    // Add custom theme attribute (used for CSS specificity)
     document.documentElement.setAttribute('data-custom-theme', 'true');
-    console.log('[ThemeProvider] Set data-custom-theme attribute');
 
     // Determine mode from the CSS (look for color-scheme)
     const isDark = css.includes('color-scheme: dark');

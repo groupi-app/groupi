@@ -131,6 +131,7 @@ export async function createTestEventWithUser(
       createdAt: Date.now(),
       updatedAt: Date.now(),
       timezone: 'UTC',
+      memberCount: 1,
     });
 
     // Create membership
@@ -183,6 +184,7 @@ export async function createTestEventWithMultipleUsers(
       createdAt: Date.now(),
       updatedAt: Date.now(),
       timezone: 'UTC',
+      memberCount: 2,
     });
 
     // Create organizer membership

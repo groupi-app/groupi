@@ -9,6 +9,13 @@
 #
 # Convex env vars (set once per deployment via CLI or dashboard):
 # - SITE_URL, BETTER_AUTH_SECRET, DISCORD_*, GOOGLE_*
+#
+# Build requirements:
+# - ENABLE_EXPERIMENTAL_COREPACK=1 must be set in Vercel project settings
+#   (or corepack enable must run before pnpm install) so Vercel uses pnpm 10
+#   matching the packageManager field in package.json
+# - Next.js is pinned to 16.1.7 due to Vercel adapter crash with
+#   shouldNormalizeNextData in 16.2.x (revisit when Next.js fixes this)
 
 set -e
 

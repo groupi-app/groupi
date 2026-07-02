@@ -70,25 +70,21 @@ export const getFriends = query({
       return [];
     }
 
-    // Get friendships where current user is requester
-    const asRequester = await ctx.db
-      .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', currentPerson._id))
-      .collect();
-
-    // Get friendships where current user is addressee
-    const asAddressee = await ctx.db
-      .query('friendships')
-      .withIndex('by_addressee', q => q.eq('addresseeId', currentPerson._id))
-      .collect();
-
-    // Filter to only accepted friendships
-    const acceptedAsRequester = asRequester.filter(
-      f => f.status === 'ACCEPTED'
-    );
-    const acceptedAsAddressee = asAddressee.filter(
-      f => f.status === 'ACCEPTED'
-    );
+    // Get accepted friendships using compound indexes
+    const [acceptedAsRequester, acceptedAsAddressee] = await Promise.all([
+      ctx.db
+        .query('friendships')
+        .withIndex('by_requester_status', q =>
+          q.eq('requesterId', currentPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+      ctx.db
+        .query('friendships')
+        .withIndex('by_addressee_status', q =>
+          q.eq('addresseeId', currentPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+    ]);
 
     // Create a map of personId to friendshipId
     const friendshipMap = new Map<string, string>();
@@ -193,8 +189,9 @@ export const getSentRequests = query({
     // Get pending requests where current user is the requester
     const sentRequests = await ctx.db
       .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', currentPerson._id))
-      .filter(q => q.eq(q.field('status'), 'PENDING'))
+      .withIndex('by_requester_status', q =>
+        q.eq('requesterId', currentPerson._id).eq('status', 'PENDING')
+      )
       .collect();
 
     // Fetch addressee details
@@ -497,34 +494,42 @@ async function getMutualFriendsData(
   count: number;
   sampleAvatars: Array<{ image: string | null; name: string | null }>;
 }> {
-  // Get current user's friends (ACCEPTED friendships)
-  const currentAsRequester = await ctx.db
-    .query('friendships')
-    .withIndex('by_requester', q => q.eq('requesterId', currentPersonId))
-    .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-    .collect();
-  const currentAsAddressee = await ctx.db
-    .query('friendships')
-    .withIndex('by_addressee', q => q.eq('addresseeId', currentPersonId))
-    .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-    .collect();
+  // Get current user's friends (ACCEPTED friendships) using compound indexes
+  const [currentAsRequester, currentAsAddressee] = await Promise.all([
+    ctx.db
+      .query('friendships')
+      .withIndex('by_requester_status', q =>
+        q.eq('requesterId', currentPersonId).eq('status', 'ACCEPTED')
+      )
+      .collect(),
+    ctx.db
+      .query('friendships')
+      .withIndex('by_addressee_status', q =>
+        q.eq('addresseeId', currentPersonId).eq('status', 'ACCEPTED')
+      )
+      .collect(),
+  ]);
 
   const currentFriendIds = new Set([
     ...currentAsRequester.map(f => f.addresseeId),
     ...currentAsAddressee.map(f => f.requesterId),
   ]);
 
-  // Get target's friends
-  const targetAsRequester = await ctx.db
-    .query('friendships')
-    .withIndex('by_requester', q => q.eq('requesterId', targetPersonId))
-    .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-    .collect();
-  const targetAsAddressee = await ctx.db
-    .query('friendships')
-    .withIndex('by_addressee', q => q.eq('addresseeId', targetPersonId))
-    .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-    .collect();
+  // Get target's friends using compound indexes
+  const [targetAsRequester, targetAsAddressee] = await Promise.all([
+    ctx.db
+      .query('friendships')
+      .withIndex('by_requester_status', q =>
+        q.eq('requesterId', targetPersonId).eq('status', 'ACCEPTED')
+      )
+      .collect(),
+    ctx.db
+      .query('friendships')
+      .withIndex('by_addressee_status', q =>
+        q.eq('addresseeId', targetPersonId).eq('status', 'ACCEPTED')
+      )
+      .collect(),
+  ]);
 
   const targetFriendIds = new Set([
     ...targetAsRequester.map(f => f.addresseeId),
@@ -743,34 +748,42 @@ export const getMutualFriends = query({
       return [];
     }
 
-    // Get current user's friends
-    const currentAsRequester = await ctx.db
-      .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', currentPerson._id))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
-    const currentAsAddressee = await ctx.db
-      .query('friendships')
-      .withIndex('by_addressee', q => q.eq('addresseeId', currentPerson._id))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
+    // Get current user's friends using compound indexes
+    const [currentAsRequester, currentAsAddressee] = await Promise.all([
+      ctx.db
+        .query('friendships')
+        .withIndex('by_requester_status', q =>
+          q.eq('requesterId', currentPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+      ctx.db
+        .query('friendships')
+        .withIndex('by_addressee_status', q =>
+          q.eq('addresseeId', currentPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+    ]);
 
     const currentFriendIds = new Set([
       ...currentAsRequester.map(f => f.addresseeId),
       ...currentAsAddressee.map(f => f.requesterId),
     ]);
 
-    // Get target's friends
-    const targetAsRequester = await ctx.db
-      .query('friendships')
-      .withIndex('by_requester', q => q.eq('requesterId', targetPerson._id))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
-    const targetAsAddressee = await ctx.db
-      .query('friendships')
-      .withIndex('by_addressee', q => q.eq('addresseeId', targetPerson._id))
-      .filter(q => q.eq(q.field('status'), 'ACCEPTED'))
-      .collect();
+    // Get target's friends using compound indexes
+    const [targetAsRequester, targetAsAddressee] = await Promise.all([
+      ctx.db
+        .query('friendships')
+        .withIndex('by_requester_status', q =>
+          q.eq('requesterId', targetPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+      ctx.db
+        .query('friendships')
+        .withIndex('by_addressee_status', q =>
+          q.eq('addresseeId', targetPerson._id).eq('status', 'ACCEPTED')
+        )
+        .collect(),
+    ]);
 
     const targetFriendIds = new Set([
       ...targetAsRequester.map(f => f.addresseeId),
