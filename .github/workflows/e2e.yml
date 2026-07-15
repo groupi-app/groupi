@@ -52,7 +52,7 @@ jobs:
             echo 'eligible=false' >> "$GITHUB_OUTPUT"
             echo 'Not the current test revision; automatic staging readiness does not apply. No runtime verification performed.' >> "$GITHUB_STEP_SUMMARY"
           fi
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         if: steps.scope.outputs.eligible == 'true'
         with:
           node-version: '24'
@@ -110,7 +110,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           version: 10.12.1
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
