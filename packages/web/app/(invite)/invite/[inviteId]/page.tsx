@@ -2,8 +2,6 @@ import { Suspense } from 'react';
 import { InviteDetails } from './components/invite-details';
 import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
 
-export const experimental_ppr = true;
-
 type Props = {
   params: Promise<{ inviteId: string }>;
 };
