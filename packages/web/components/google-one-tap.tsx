@@ -89,8 +89,9 @@ export function GoogleOneTap() {
         ? `/onboarding?redirect=${encodeURIComponent(pathname)}`
         : '/onboarding';
 
-    // Small delay to let the page settle before showing One Tap
-    const timer = setTimeout(async () => {
+    // Defer until page is fully loaded and browser is idle to avoid
+    // blocking LCP with the 95KB Google GSI script
+    const initOneTap = async () => {
       try {
         console.log('[GoogleOneTap] Initiating One Tap prompt...');
         const result = await authClient.oneTap({
@@ -99,21 +100,14 @@ export function GoogleOneTap() {
               console.log(
                 '[GoogleOneTap] Login successful, waiting for session...'
               );
-
-              // Store pending redirect in ref - the effect above will handle it once session is ready
               pendingRedirectRef.current = redirectUrl;
-
-              // Refetch session to get updated state
               await refetch();
-
-              // Also do a full page refresh as fallback to ensure cookies are read
               router.refresh();
             },
             onError: (ctx: { error: { message: string } }) => {
               console.error('[GoogleOneTap] Auth error:', ctx.error);
               const message = ctx.error?.message || '';
 
-              // If the error is an authorization/response_type error, fall back to standard OAuth
               if (isAuthFallbackError(message)) {
                 console.log(
                   '[GoogleOneTap] Authorization error detected, falling back to standard Google OAuth'
@@ -130,7 +124,6 @@ export function GoogleOneTap() {
             },
           },
           onPromptNotification: notification => {
-            // Handle cases where One Tap prompt was dismissed or skipped
             if (notification?.isNotDisplayed?.()) {
               const reason = notification.getNotDisplayedReason?.();
               console.log(
@@ -148,7 +141,6 @@ export function GoogleOneTap() {
         });
         console.log('[GoogleOneTap] One Tap result:', result);
       } catch (error) {
-        // One Tap can fail silently (user dismissed, cooldown, etc.)
         console.error('[GoogleOneTap] One Tap failed:', error);
         const message =
           error instanceof Error
@@ -161,7 +153,6 @@ export function GoogleOneTap() {
           console.error('[GoogleOneTap] Error details:', message);
         }
 
-        // If it looks like a FedCM/authorization error, fall back to standard OAuth
         if (message && isAuthFallbackError(message)) {
           console.log('[GoogleOneTap] Falling back to standard Google OAuth');
           signIn.social({
@@ -170,13 +161,31 @@ export function GoogleOneTap() {
             errorCallbackURL: '/sign-in',
           });
         } else if (message) {
-          // Non-authorization error with a message - notify the user
           toast.error('Google sign-in failed. Please try again.');
         }
       }
-    }, 1000);
+    };
 
-    return () => clearTimeout(timer);
+    const startOneTap = () => {
+      if ('requestIdleCallback' in window) {
+        (window as Window).requestIdleCallback(() =>
+          setTimeout(initOneTap, 1000)
+        );
+      } else {
+        setTimeout(initOneTap, 3000);
+      }
+    };
+
+    let cleanup: (() => void) | undefined;
+    if (document.readyState === 'complete') {
+      startOneTap();
+    } else {
+      const onLoad = () => startOneTap();
+      window.addEventListener('load', onLoad, { once: true });
+      cleanup = () => window.removeEventListener('load', onLoad);
+    }
+
+    return () => cleanup?.();
   }, [isPending, session, router, pathname, refetch]);
 
   // This component doesn't render anything visible

@@ -117,6 +117,102 @@ export async function shouldSkipNotification(
 }
 
 /**
+ * Pre-fetched message context for batch notification scenarios.
+ * Avoids redundant event/post/author lookups when sending to multiple recipients.
+ */
+interface PreFetchedMessageContext {
+  eventTitle?: string;
+  postTitle?: string;
+  authorName?: string;
+  notificationUrl?: string;
+}
+
+async function batchGetMutedEventPersonIds(
+  ctx: MutationCtx | QueryCtx,
+  eventId: Id<'events'>
+): Promise<Set<string>> {
+  const mutes = await ctx.db
+    .query('mutedEvents')
+    .withIndex('by_event', q => q.eq('eventId', eventId))
+    .collect();
+  return new Set(mutes.map(m => m.personId as string));
+}
+
+async function batchGetMutedPostPersonIds(
+  ctx: MutationCtx | QueryCtx,
+  postId: Id<'posts'>
+): Promise<Set<string>> {
+  const mutes = await ctx.db
+    .query('mutedPosts')
+    .withIndex('by_post', q => q.eq('postId', postId))
+    .collect();
+  return new Set(mutes.map(m => m.personId as string));
+}
+
+async function batchGetPersonDndStatus(
+  ctx: MutationCtx | QueryCtx,
+  personIds: Id<'persons'>[]
+): Promise<Map<string, boolean>> {
+  const results = new Map<string, boolean>();
+  const persons = await Promise.all(personIds.map(id => ctx.db.get(id)));
+  const now = Date.now();
+  for (let i = 0; i < personIds.length; i++) {
+    const person = persons[i];
+    if (!person || person.status !== 'DO_NOT_DISTURB') {
+      results.set(personIds[i] as string, false);
+      continue;
+    }
+    const expired =
+      person.statusExpiresAt !== undefined && now >= person.statusExpiresAt;
+    results.set(personIds[i] as string, !expired);
+  }
+  return results;
+}
+
+async function fetchMessageContext(
+  ctx: MutationCtx,
+  data: {
+    type: NotificationType;
+    authorId?: Id<'persons'>;
+    eventId?: Id<'events'>;
+    postId?: Id<'posts'>;
+    rsvp?: RsvpStatus;
+  }
+): Promise<PreFetchedMessageContext> {
+  const [event, post, authorPerson] = await Promise.all([
+    data.eventId ? ctx.db.get(data.eventId) : undefined,
+    data.postId ? ctx.db.get(data.postId) : undefined,
+    data.authorId ? ctx.db.get(data.authorId) : undefined,
+  ]);
+
+  let authorName: string | undefined;
+  if (authorPerson) {
+    try {
+      const authorUser = await authComponent.getAnyUserById(
+        ctx,
+        authorPerson.userId as AuthUserId
+      );
+      authorName = authorUser?.name || authorUser?.email || undefined;
+    } catch {
+      // Auth component may not be registered in test environments
+    }
+  }
+
+  const notificationUrl = buildNotificationUrl(
+    data.type,
+    data.eventId as string | undefined,
+    data.postId as string | undefined
+  );
+
+  return {
+    eventTitle: event?.title,
+    postTitle: post?.title,
+    authorName,
+    notificationUrl,
+  };
+}
+
+/**
  * Notification types matching the schema
  */
 export type NotificationType =
@@ -177,57 +273,73 @@ export async function notifyMentionedUsers(
 ): Promise<{ sent: number; skipped: number }> {
   const mentionedPersonIds = extractMentionedPersonIds(data.content);
 
-  let sent = 0;
-  let skipped = 0;
+  const filteredIds = mentionedPersonIds.filter(
+    id => id !== (data.authorId as string)
+  );
+  if (filteredIds.length === 0) {
+    return { sent: 0, skipped: 0 };
+  }
 
-  for (const personIdStr of mentionedPersonIds) {
-    const personId = personIdStr as Id<'persons'>;
+  const personIds = filteredIds.map(id => id as Id<'persons'>);
 
-    // Skip if the author mentioned themselves
-    if (personId === data.authorId) {
-      continue;
-    }
-
-    // Check if this person exists and is a member of the event
-    const person = await ctx.db.get(personId);
-    if (!person) {
-      skipped++;
-      continue;
-    }
-
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', personId).eq('eventId', data.eventId)
+  const [
+    persons,
+    memberships,
+    mutedEventPersonIds,
+    mutedPostPersonIds,
+    messageCtx,
+  ] = await Promise.all([
+    Promise.all(personIds.map(id => ctx.db.get(id))),
+    Promise.all(
+      personIds.map(id =>
+        ctx.db
+          .query('memberships')
+          .withIndex('by_person_event', q =>
+            q.eq('personId', id).eq('eventId', data.eventId)
+          )
+          .first()
       )
-      .first();
-
-    if (!membership) {
-      skipped++;
-      continue;
-    }
-
-    // Check if user has muted this event or post
-    const shouldSkip = await shouldSkipNotificationDueToMute(
-      ctx,
-      personId,
-      data.eventId,
-      data.postId
-    );
-
-    if (shouldSkip) {
-      skipped++;
-      continue;
-    }
-
-    // Create the mention notification
-    await createNotification(ctx, {
-      personId,
+    ),
+    batchGetMutedEventPersonIds(ctx, data.eventId),
+    batchGetMutedPostPersonIds(ctx, data.postId),
+    fetchMessageContext(ctx, {
       type: 'USER_MENTIONED',
       authorId: data.authorId,
       eventId: data.eventId,
       postId: data.postId,
-    });
+    }),
+  ]);
+
+  let sent = 0;
+  let skipped = 0;
+
+  for (let i = 0; i < personIds.length; i++) {
+    const personId = personIds[i];
+    const person = persons[i];
+    const membership = memberships[i];
+
+    if (!person || !membership) {
+      skipped++;
+      continue;
+    }
+
+    const pid = personId as string;
+    if (mutedPostPersonIds.has(pid) || mutedEventPersonIds.has(pid)) {
+      skipped++;
+      continue;
+    }
+
+    await createNotification(
+      ctx,
+      {
+        personId,
+        type: 'USER_MENTIONED',
+        authorId: data.authorId,
+        eventId: data.eventId,
+        postId: data.postId,
+      },
+      { messageContext: messageCtx }
+    );
     sent++;
   }
 
@@ -658,9 +770,9 @@ async function collectEmailData(
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
-  }
+  },
+  preFetchedCtx?: PreFetchedMessageContext
 ): Promise<Array<{ to: string; subject: string; html: string }>> {
-  // Get enabled emails for this notification type
   const emails = await getEnabledEmailsForNotification(
     ctx,
     data.personId,
@@ -671,55 +783,61 @@ async function collectEmailData(
     return [];
   }
 
-  // Get event title if we have an event
-  let eventTitle: string | undefined;
-  if (data.eventId) {
-    const event = await ctx.db.get(data.eventId);
-    eventTitle = event?.title;
-  }
+  let messageContext: NotificationMessageContext;
 
-  // Get post title if we have a post
-  let postTitle: string | undefined;
-  if (data.postId) {
-    const post = await ctx.db.get(data.postId);
-    postTitle = post?.title;
-  }
-
-  // Get author name if we have an author
-  let authorName: string | undefined;
-  if (data.authorId) {
-    const authorPerson = await ctx.db.get(data.authorId);
-    if (authorPerson) {
-      const authorUser = await authComponent.getAnyUserById(
-        ctx,
-        authorPerson.userId as AuthUserId
-      );
-      authorName = authorUser?.name || authorUser?.email || undefined;
+  if (preFetchedCtx) {
+    messageContext = {
+      type: data.type,
+      eventTitle: preFetchedCtx.eventTitle,
+      authorName: preFetchedCtx.authorName,
+      postTitle: preFetchedCtx.postTitle,
+      rsvp: data.rsvp,
+      notificationUrl: preFetchedCtx.notificationUrl,
+    };
+  } else {
+    let eventTitle: string | undefined;
+    if (data.eventId) {
+      const event = await ctx.db.get(data.eventId);
+      eventTitle = event?.title;
     }
+
+    let postTitle: string | undefined;
+    if (data.postId) {
+      const post = await ctx.db.get(data.postId);
+      postTitle = post?.title;
+    }
+
+    let authorName: string | undefined;
+    if (data.authorId) {
+      const authorPerson = await ctx.db.get(data.authorId);
+      if (authorPerson) {
+        const authorUser = await authComponent.getAnyUserById(
+          ctx,
+          authorPerson.userId as AuthUserId
+        );
+        authorName = authorUser?.name || authorUser?.email || undefined;
+      }
+    }
+
+    const notificationUrl = buildNotificationUrl(
+      data.type,
+      data.eventId as string | undefined,
+      data.postId as string | undefined
+    );
+
+    messageContext = {
+      type: data.type,
+      eventTitle,
+      authorName,
+      postTitle,
+      rsvp: data.rsvp,
+      notificationUrl,
+    };
   }
 
-  // Build notification URL
-  const notificationUrl = buildNotificationUrl(
-    data.type,
-    data.eventId as string | undefined,
-    data.postId as string | undefined
-  );
-
-  // Build message context
-  const messageContext: NotificationMessageContext = {
-    type: data.type,
-    eventTitle,
-    authorName,
-    postTitle,
-    rsvp: data.rsvp,
-    notificationUrl,
-  };
-
-  // Generate email content
   const subject = getNotificationEmailSubject(messageContext);
   const html = getNotificationEmailHtml(messageContext);
 
-  // Return email data for each email address
   return emails.map(email => ({
     to: email,
     subject,
@@ -926,7 +1044,8 @@ async function collectWebhookData(
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
-  }
+  },
+  preFetchedCtx?: PreFetchedMessageContext
 ): Promise<
   Array<{
     url: string;
@@ -944,51 +1063,58 @@ async function collectWebhookData(
     return [];
   }
 
-  // Get event title if we have an event
-  let eventTitle: string | undefined;
-  if (data.eventId) {
-    const event = await ctx.db.get(data.eventId);
-    eventTitle = event?.title;
-  }
+  let messageContext: NotificationMessageContext;
 
-  // Get post title if we have a post
-  let postTitle: string | undefined;
-  if (data.postId) {
-    const post = await ctx.db.get(data.postId);
-    postTitle = post?.title;
-  }
-
-  // Get author name if we have an author
-  let authorName: string | undefined;
-  if (data.authorId) {
-    const authorPerson = await ctx.db.get(data.authorId);
-    if (authorPerson) {
-      const authorUser = await authComponent.getAnyUserById(
-        ctx,
-        authorPerson.userId as AuthUserId
-      );
-      authorName = authorUser?.name || authorUser?.email || undefined;
+  if (preFetchedCtx) {
+    messageContext = {
+      type: data.type,
+      eventTitle: preFetchedCtx.eventTitle,
+      authorName: preFetchedCtx.authorName,
+      postTitle: preFetchedCtx.postTitle,
+      rsvp: data.rsvp,
+      notificationUrl: preFetchedCtx.notificationUrl,
+    };
+  } else {
+    let eventTitle: string | undefined;
+    if (data.eventId) {
+      const event = await ctx.db.get(data.eventId);
+      eventTitle = event?.title;
     }
+
+    let postTitle: string | undefined;
+    if (data.postId) {
+      const post = await ctx.db.get(data.postId);
+      postTitle = post?.title;
+    }
+
+    let authorName: string | undefined;
+    if (data.authorId) {
+      const authorPerson = await ctx.db.get(data.authorId);
+      if (authorPerson) {
+        const authorUser = await authComponent.getAnyUserById(
+          ctx,
+          authorPerson.userId as AuthUserId
+        );
+        authorName = authorUser?.name || authorUser?.email || undefined;
+      }
+    }
+
+    const notificationUrl = buildNotificationUrl(
+      data.type,
+      data.eventId as string | undefined,
+      data.postId as string | undefined
+    );
+
+    messageContext = {
+      type: data.type,
+      eventTitle,
+      authorName,
+      postTitle,
+      rsvp: data.rsvp,
+      notificationUrl,
+    };
   }
 
-  // Build notification URL
-  const notificationUrl = buildNotificationUrl(
-    data.type,
-    data.eventId as string | undefined,
-    data.postId as string | undefined
-  );
-
-  // Build message context
-  const messageContext: NotificationMessageContext = {
-    type: data.type,
-    eventTitle,
-    authorName,
-    postTitle,
-    rsvp: data.rsvp,
-    notificationUrl,
-  };
-
-  // Return webhook data for each webhook
   return webhooks.map(webhook => {
     const payload = formatWebhookPayload(
       webhook.format,
@@ -1020,13 +1146,15 @@ export async function createNotification(
     postId?: Id<'posts'>;
     datetime?: number;
     rsvp?: RsvpStatus;
+  },
+  preFetched?: {
+    isDnd?: boolean;
+    messageContext?: PreFetchedMessageContext;
   }
 ) {
-  // Check if user is in DND mode - if so, still create the notification but don't send external alerts
-  const isInDnd = await isPersonInDndMode(ctx, data.personId);
+  const isInDnd =
+    preFetched?.isDnd ?? (await isPersonInDndMode(ctx, data.personId));
 
-  // Insert the notification into the database (always, even in DND mode)
-  // This allows users to see missed notifications when they come back online
   const notificationId = await ctx.db.insert('notifications', {
     personId: data.personId,
     type: data.type,
@@ -1039,12 +1167,10 @@ export async function createNotification(
     updatedAt: Date.now(),
   });
 
-  // Skip external notifications if in DND mode
   if (isInDnd) {
     return notificationId;
   }
 
-  // Collect email and webhook data
   const notificationData = {
     personId: data.personId,
     type: data.type,
@@ -1055,11 +1181,10 @@ export async function createNotification(
   };
 
   const [emails, webhooks] = await Promise.all([
-    collectEmailData(ctx, notificationData),
-    collectWebhookData(ctx, notificationData),
+    collectEmailData(ctx, notificationData, preFetched?.messageContext),
+    collectWebhookData(ctx, notificationData, preFetched?.messageContext),
   ]);
 
-  // Schedule action to send external notifications if there are any
   if (emails.length > 0 || webhooks.length > 0) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589) - varies by environment
@@ -1086,34 +1211,59 @@ export async function notifyEventMembers(
     excludePersonIds?: Id<'persons'>[];
   }
 ): Promise<{ sent: Id<'notifications'>[]; skippedMuted: number }> {
-  // Get all memberships for this event
   const memberships = await ctx.db
     .query('memberships')
     .withIndex('by_event', q => q.eq('eventId', data.eventId))
     .collect();
 
-  const excludeIds = new Set([data.authorId, ...(data.excludePersonIds || [])]);
+  const excludeIds = new Set([
+    data.authorId as string,
+    ...(data.excludePersonIds || []).map(id => id as string),
+  ]);
 
-  // Create notification for each member (except author, excluded, and muted)
+  const relevantMembers = memberships.filter(
+    m => !excludeIds.has(m.personId as string)
+  );
+
+  if (relevantMembers.length === 0) {
+    return { sent: [], skippedMuted: 0 };
+  }
+
+  const [mutedEventPersonIds, mutedPostPersonIds, dndStatusMap, messageCtx] =
+    await Promise.all([
+      batchGetMutedEventPersonIds(ctx, data.eventId),
+      data.postId
+        ? batchGetMutedPostPersonIds(ctx, data.postId)
+        : Promise.resolve(new Set<string>()),
+      batchGetPersonDndStatus(
+        ctx,
+        relevantMembers.map(m => m.personId)
+      ),
+      fetchMessageContext(ctx, {
+        type: data.type,
+        authorId: data.authorId,
+        eventId: data.eventId,
+        postId: data.postId,
+        rsvp: data.rsvp,
+      }),
+    ]);
+
   const notificationIds: Id<'notifications'>[] = [];
   let skippedMuted = 0;
 
-  for (const membership of memberships) {
-    if (!excludeIds.has(membership.personId)) {
-      // Check if user has muted this event or post
-      const shouldSkip = await shouldSkipNotificationDueToMute(
-        ctx,
-        membership.personId,
-        data.eventId,
-        data.postId
-      );
+  for (const membership of relevantMembers) {
+    const pid = membership.personId as string;
 
-      if (shouldSkip) {
-        skippedMuted++;
-        continue;
-      }
+    if (mutedPostPersonIds.has(pid) || mutedEventPersonIds.has(pid)) {
+      skippedMuted++;
+      continue;
+    }
 
-      const id = await createNotification(ctx, {
+    const isDnd = dndStatusMap.get(pid) ?? false;
+
+    const id = await createNotification(
+      ctx,
+      {
         personId: membership.personId,
         type: data.type,
         authorId: data.authorId,
@@ -1121,9 +1271,10 @@ export async function notifyEventMembers(
         postId: data.postId,
         datetime: data.datetime,
         rsvp: data.rsvp,
-      });
-      notificationIds.push(id);
-    }
+      },
+      { isDnd, messageContext: messageCtx }
+    );
+    notificationIds.push(id);
   }
 
   return { sent: notificationIds, skippedMuted };
@@ -1144,46 +1295,66 @@ export async function notifyEventModerators(
     rsvp?: RsvpStatus;
   }
 ): Promise<{ sent: Id<'notifications'>[]; skippedMuted: number }> {
-  // Get all memberships for this event
   const memberships = await ctx.db
     .query('memberships')
     .withIndex('by_event', q => q.eq('eventId', data.eventId))
     .collect();
 
-  // Filter to moderators and organizers (excluding author)
   const moderators = memberships.filter(
     m =>
       (m.role === 'ORGANIZER' || m.role === 'MODERATOR') &&
       m.personId !== data.authorId
   );
 
-  // Create notification for each moderator (respecting mute settings)
+  if (moderators.length === 0) {
+    return { sent: [], skippedMuted: 0 };
+  }
+
+  const [mutedEventPersonIds, mutedPostPersonIds, dndStatusMap, messageCtx] =
+    await Promise.all([
+      batchGetMutedEventPersonIds(ctx, data.eventId),
+      data.postId
+        ? batchGetMutedPostPersonIds(ctx, data.postId)
+        : Promise.resolve(new Set<string>()),
+      batchGetPersonDndStatus(
+        ctx,
+        moderators.map(m => m.personId)
+      ),
+      fetchMessageContext(ctx, {
+        type: data.type,
+        authorId: data.authorId,
+        eventId: data.eventId,
+        postId: data.postId,
+        rsvp: data.rsvp,
+      }),
+    ]);
+
   const notificationIds: Id<'notifications'>[] = [];
   let skippedMuted = 0;
 
   for (const membership of moderators) {
-    // Check if user has muted this event
-    const shouldSkip = await shouldSkipNotificationDueToMute(
-      ctx,
-      membership.personId,
-      data.eventId,
-      data.postId
-    );
+    const pid = membership.personId as string;
 
-    if (shouldSkip) {
+    if (mutedPostPersonIds.has(pid) || mutedEventPersonIds.has(pid)) {
       skippedMuted++;
       continue;
     }
 
-    const id = await createNotification(ctx, {
-      personId: membership.personId,
-      type: data.type,
-      authorId: data.authorId,
-      eventId: data.eventId,
-      postId: data.postId,
-      datetime: data.datetime,
-      rsvp: data.rsvp,
-    });
+    const isDnd = dndStatusMap.get(pid) ?? false;
+
+    const id = await createNotification(
+      ctx,
+      {
+        personId: membership.personId,
+        type: data.type,
+        authorId: data.authorId,
+        eventId: data.eventId,
+        postId: data.postId,
+        datetime: data.datetime,
+        rsvp: data.rsvp,
+      },
+      { isDnd, messageContext: messageCtx }
+    );
     notificationIds.push(id);
   }
 
@@ -1275,93 +1446,78 @@ export async function notifyThreadParticipants(
   let skippedPresent = 0;
   let skippedMuted = 0;
 
-  // Get users currently present in the post room
-  let presentUsers: string[] = [];
+  let presentUserSet: Set<string>;
   try {
     const roomId = `post:${data.postId}`;
-    // Use internal API to call the presence listRoom query from mutation context
     const roomData = await ctx.runQuery(internal.presence.listRoom, {
       roomId,
       onlineOnly: true,
     });
-    presentUsers = roomData.map(user => user.userId);
+    presentUserSet = new Set(roomData.map(user => user.userId));
   } catch {
-    // If presence check fails, continue without it
-    presentUsers = [];
+    presentUserSet = new Set();
   }
 
-  const presentUserSet = new Set(presentUsers);
-
-  // Notify the post author (if not the reply author and not present)
-  if (data.postAuthorId !== data.replyAuthorId) {
-    if (presentUserSet.has(data.postAuthorId as string)) {
-      skippedPresent++;
-    } else {
-      // Check if user has muted this event or post
-      const shouldSkip = await shouldSkipNotificationDueToMute(
-        ctx,
-        data.postAuthorId,
-        data.eventId,
-        data.postId
-      );
-
-      if (shouldSkip) {
-        skippedMuted++;
-      } else {
-        await createNotification(ctx, {
-          personId: data.postAuthorId,
-          type: 'NEW_REPLY',
-          authorId: data.replyAuthorId,
-          eventId: data.eventId,
-          postId: data.postId,
-        });
-        sent++;
-      }
-    }
-  }
-
-  // Get all existing replies to find other participants
   const existingReplies = await ctx.db
     .query('replies')
     .withIndex('by_post', q => q.eq('postId', data.postId))
     .collect();
 
-  // Track who we've already notified (or skipped)
-  const processedAuthors = new Set<string>([
-    data.replyAuthorId as string,
-    data.postAuthorId as string,
-  ]);
-
-  // Notify each unique reply author
+  // Collect all unique participant IDs to notify
+  const participantIds = new Set<string>();
+  if (data.postAuthorId !== data.replyAuthorId) {
+    participantIds.add(data.postAuthorId as string);
+  }
   for (const reply of existingReplies) {
-    if (!processedAuthors.has(reply.authorId as string)) {
-      processedAuthors.add(reply.authorId as string);
-
-      if (presentUserSet.has(reply.authorId as string)) {
-        skippedPresent++;
-      } else {
-        // Check if user has muted this event or post
-        const shouldSkip = await shouldSkipNotificationDueToMute(
-          ctx,
-          reply.authorId,
-          data.eventId,
-          data.postId
-        );
-
-        if (shouldSkip) {
-          skippedMuted++;
-        } else {
-          await createNotification(ctx, {
-            personId: reply.authorId,
-            type: 'NEW_REPLY',
-            authorId: data.replyAuthorId,
-            eventId: data.eventId,
-            postId: data.postId,
-          });
-          sent++;
-        }
-      }
+    if ((reply.authorId as string) !== (data.replyAuthorId as string)) {
+      participantIds.add(reply.authorId as string);
     }
+  }
+
+  if (participantIds.size === 0) {
+    return { sent: 0, skippedPresent: 0, skippedMuted: 0 };
+  }
+
+  const participantIdArray = [...participantIds].map(id => id as Id<'persons'>);
+
+  const [mutedEventPersonIds, mutedPostPersonIds, dndStatusMap, messageCtx] =
+    await Promise.all([
+      batchGetMutedEventPersonIds(ctx, data.eventId),
+      batchGetMutedPostPersonIds(ctx, data.postId),
+      batchGetPersonDndStatus(ctx, participantIdArray),
+      fetchMessageContext(ctx, {
+        type: 'NEW_REPLY',
+        authorId: data.replyAuthorId,
+        eventId: data.eventId,
+        postId: data.postId,
+      }),
+    ]);
+
+  for (const pidStr of participantIds) {
+    if (presentUserSet.has(pidStr)) {
+      skippedPresent++;
+      continue;
+    }
+
+    if (mutedPostPersonIds.has(pidStr) || mutedEventPersonIds.has(pidStr)) {
+      skippedMuted++;
+      continue;
+    }
+
+    const isDnd = dndStatusMap.get(pidStr) ?? false;
+
+    await createNotification(
+      ctx,
+      {
+        personId: pidStr as Id<'persons'>,
+        type: 'NEW_REPLY',
+        authorId: data.replyAuthorId,
+        eventId: data.eventId,
+        postId: data.postId,
+      },
+      { isDnd, messageContext: messageCtx }
+    );
+    sent++;
   }
 
   return { sent, skippedPresent, skippedMuted };

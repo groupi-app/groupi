@@ -1099,13 +1099,16 @@ describe('Presence System', () => {
 
       expect(result.success).toBe(true);
 
-      const { person } = await t.run(async ctx => {
-        const person = await ctx.db.get(personId);
-        return { person };
+      const { presenceRecord } = await t.run(async ctx => {
+        const presenceRecord = await ctx.db
+          .query('personPresence')
+          .withIndex('by_person', q => q.eq('personId', personId))
+          .first();
+        return { presenceRecord };
       });
 
-      expect(person?.lastSeen).toBeGreaterThanOrEqual(beforeTime);
-      expect(person?.lastSeen).toBeLessThanOrEqual(afterTime);
+      expect(presenceRecord?.lastSeen).toBeGreaterThanOrEqual(beforeTime);
+      expect(presenceRecord?.lastSeen).toBeLessThanOrEqual(afterTime);
     });
 
     it('should fail for unauthenticated user', async () => {

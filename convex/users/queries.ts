@@ -2,10 +2,12 @@ import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import {
   getCurrentPerson,
+  getCurrentUserAndPerson,
   authComponent,
   ExtendedAuthUser,
   AuthUserId,
 } from '../auth';
+import { components } from '../_generated/api';
 import {
   checkCanSendFriendRequest,
   checkCanSendEventInvite,
@@ -20,6 +22,43 @@ import {
  * Note: Users are managed by the Better Auth component.
  * We use authComponent.getAnyUserById() to look up user data.
  */
+
+export const getCurrentUserData = query({
+  args: {
+    _traceId: v.optional(v.string()),
+  },
+  handler: async ctx => {
+    const result = await getCurrentUserAndPerson(ctx);
+    if (!result) {
+      return null;
+    }
+
+    const { user, person } = result;
+    const username = user.username;
+    const needsOnboarding =
+      !person ||
+      !username ||
+      (typeof username === 'string' && username.trim() === '');
+
+    return {
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name || null,
+        image: user.image || null,
+        username: username || null,
+        role: user.role || 'user',
+      },
+      person: person
+        ? {
+            _id: person._id,
+            bio: person.bio || null,
+          }
+        : null,
+      needsOnboarding,
+    };
+  },
+});
 
 /**
  * Get current authenticated user's profile
@@ -80,34 +119,36 @@ export const getUserByUsername = query({
   handler: async (ctx, { username }) => {
     const searchUsername = username.toLowerCase();
 
-    // Get all persons and find the one with matching username
-    const persons = await ctx.db.query('persons').collect();
+    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+      model: 'user',
+      where: [{ field: 'username', operator: 'eq', value: searchUsername }],
+    });
 
-    for (const person of persons) {
-      const user = await authComponent.getAnyUserById(
-        ctx,
-        person.userId as AuthUserId
-      );
-      if (
-        user &&
-        (user as ExtendedAuthUser).username?.toLowerCase() === searchUsername
-      ) {
-        return {
-          user: {
-            id: user._id,
-            name: user.name || null,
-            email: user.email,
-            image: user.image || null,
-            username: (user as ExtendedAuthUser).username || null,
-            bio: person.bio || null,
-            pronouns: person.pronouns || null,
-            lastSeen: person.lastSeen || null,
-          },
-        };
-      }
+    if (!user) {
+      return null;
     }
 
-    return null;
+    const person = await ctx.db
+      .query('persons')
+      .withIndex('by_user_id', q => q.eq('userId', user._id as string))
+      .first();
+
+    if (!person) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: user._id,
+        name: (user.name as string) || null,
+        email: user.email as string,
+        image: (user.image as string) || null,
+        username: (user.username as string) || null,
+        bio: person.bio || null,
+        pronouns: person.pronouns || null,
+        lastSeen: person.lastSeen || null,
+      },
+    };
   },
 });
 
@@ -457,7 +498,6 @@ export const checkUsernameAvailability = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { username }) => {
-    // Check if username is valid format (3-50 characters, alphanumeric + underscore/dash)
     const trimmedUsername = username.trim().toLowerCase();
 
     if (trimmedUsername.length < 3 || trimmedUsername.length > 50) {
@@ -475,43 +515,35 @@ export const checkUsernameAvailability = query({
       };
     }
 
-    // Get current user to check if it's their own username
-    const currentPerson = await getCurrentPerson(ctx);
-    let currentUserId: string | null = null;
-    if (currentPerson) {
-      currentUserId = currentPerson.userId;
+    const existingUser = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: 'user',
+        where: [{ field: 'username', operator: 'eq', value: trimmedUsername }],
+      }
+    );
+
+    if (!existingUser) {
+      return {
+        available: true,
+        reason: 'Username is available',
+      };
     }
 
-    // Search through all persons to find if username is taken
-    const persons = await ctx.db.query('persons').collect();
-
-    for (const person of persons) {
-      const user = await authComponent.getAnyUserById(
-        ctx,
-        person.userId as AuthUserId
-      );
-      if (
-        user &&
-        (user as ExtendedAuthUser).username?.toLowerCase() === trimmedUsername
-      ) {
-        // Check if it's the current user's username
-        if (currentUserId && person.userId === currentUserId) {
-          return {
-            available: true,
-            reason: 'This is your current username',
-          };
-        }
-
-        return {
-          available: false,
-          reason: 'Username is already taken',
-        };
-      }
+    const currentPerson = await getCurrentPerson(ctx);
+    if (
+      currentPerson &&
+      currentPerson.userId === (existingUser._id as string)
+    ) {
+      return {
+        available: true,
+        reason: 'This is your current username',
+      };
     }
 
     return {
-      available: true,
-      reason: 'Username is available',
+      available: false,
+      reason: 'Username is already taken',
     };
   },
 });

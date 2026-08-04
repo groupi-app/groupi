@@ -9,6 +9,7 @@ import {
 import { Doc } from '../_generated/dataModel';
 import { checkIfFriends } from '../lib/privacy';
 import { getOrComputeMemberCount } from '../lib/memberCount';
+import { cascadeDeleteEventData } from '../lib/cascade';
 import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
 import { getAddonHandler } from '../addons/registry';
 import {
@@ -333,8 +334,12 @@ export const updateEvent = mutation({
       visibility,
     }
   ) => {
-    // Require organizer or moderator role
-    await requireEventRole(ctx, eventId, 'MODERATOR');
+    // Require organizer or moderator role (single auth call)
+    const { person, membership } = await requireEventRole(
+      ctx,
+      eventId,
+      'MODERATOR'
+    );
 
     // Get the event
     const event = await ctx.db.get(eventId);
@@ -387,15 +392,7 @@ export const updateEvent = mutation({
 
     if (visibility !== undefined) {
       // Visibility changes require ORGANIZER role (not just MODERATOR)
-      const { person: currentPerson } = await requireAuth(ctx);
-      const currentUserMembership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', eventId)
-        )
-        .first();
-
-      if (currentUserMembership?.role !== 'ORGANIZER') {
+      if (membership.role !== 'ORGANIZER') {
         throw new Error('Only organizers can change event visibility');
       }
 
@@ -408,9 +405,6 @@ export const updateEvent = mutation({
 
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
-
-    // Get the current user's person ID for the notification author
-    const { person } = await requireAuth(ctx);
 
     // Notify all event members about the edit
     await notifyEventMembers(ctx, {
@@ -435,16 +429,13 @@ export const deleteEvent = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
-    // Require organizer role only
     await requireEventRole(ctx, eventId, 'ORGANIZER');
 
-    // Get the event to check for image
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new Error('Event not found');
     }
 
-    // Delete cover image from storage if it exists
     if (event.imageStorageId) {
       try {
         await ctx.storage.delete(event.imageStorageId);
@@ -453,120 +444,7 @@ export const deleteEvent = mutation({
       }
     }
 
-    // Delete all related data in order (to avoid foreign key issues)
-
-    // 1. Delete all availabilities for this event
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const membership of memberships) {
-      const availabilities = await ctx.db
-        .query('availabilities')
-        .withIndex('by_membership', q => q.eq('membershipId', membership._id))
-        .collect();
-
-      for (const availability of availabilities) {
-        await ctx.db.delete(availability._id);
-      }
-    }
-
-    // 2. Delete potential date times
-    const potentialDates = await ctx.db
-      .query('potentialDateTimes')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const date of potentialDates) {
-      await ctx.db.delete(date._id);
-    }
-
-    // 3. Delete replies to posts in this event
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const post of posts) {
-      const replies = await ctx.db
-        .query('replies')
-        .withIndex('by_post', q => q.eq('postId', post._id))
-        .collect();
-
-      for (const reply of replies) {
-        await ctx.db.delete(reply._id);
-      }
-    }
-
-    // 4. Delete posts
-    for (const post of posts) {
-      await ctx.db.delete(post._id);
-    }
-
-    // 5. Delete invites
-    const invites = await ctx.db
-      .query('invites')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const invite of invites) {
-      await ctx.db.delete(invite._id);
-    }
-
-    // 6. Delete notifications
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
-
-    // 7. Dispatch onEventDeleted to all add-ons and clean up addon tables
-    await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
-
-    const addonConfigs = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-    for (const config of addonConfigs) {
-      await ctx.db.delete(config._id);
-    }
-
-    const addonDataEntries = await ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon', q => q.eq('eventId', eventId))
-      .collect();
-    for (const entry of addonDataEntries) {
-      await ctx.db.delete(entry._id);
-    }
-
-    const addonOptOuts = await ctx.db
-      .query('addonOptOuts')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-    for (const optOut of addonOptOuts) {
-      await ctx.db.delete(optOut._id);
-    }
-
-    // Also clean up legacy reminderOptOuts
-    const reminderOptOuts = await ctx.db
-      .query('reminderOptOuts')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-    for (const optOut of reminderOptOuts) {
-      await ctx.db.delete(optOut._id);
-    }
-
-    // 8. Delete memberships
-    for (const membership of memberships) {
-      await ctx.db.delete(membership._id);
-    }
-
-    // 9. Finally, delete the event
-    await ctx.db.delete(eventId);
+    await cascadeDeleteEventData(ctx, eventId);
 
     return { success: true };
   },
@@ -649,20 +527,23 @@ export const updateMemberRole = mutation({
       throw new Error('Membership not found');
     }
 
-    // Require organizer or moderator role in this event
-    await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+    // Require organizer or moderator role in this event (single auth call)
+    const { person: currentPerson } = await requireEventRole(
+      ctx,
+      membership.eventId,
+      'MODERATOR'
+    );
 
     // Prevent demoting the last organizer
     if (membership.role === 'ORGANIZER' && newRole !== 'ORGANIZER') {
-      const organizerCount = await ctx.db
+      const organizers = await ctx.db
         .query('memberships')
-        .withIndex('by_event', q => q.eq('eventId', membership.eventId))
-        .collect()
-        .then(
-          memberships => memberships.filter(m => m.role === 'ORGANIZER').length
-        );
+        .withIndex('by_event_role', q =>
+          q.eq('eventId', membership.eventId).eq('role', 'ORGANIZER')
+        )
+        .collect();
 
-      if (organizerCount <= 1) {
+      if (organizers.length <= 1) {
         throw new Error('Cannot demote the last organizer');
       }
     }
@@ -675,9 +556,6 @@ export const updateMemberRole = mutation({
 
     // Get the updated membership
     const updatedMembership = await ctx.db.get(membershipId);
-
-    // Get the current user's person ID for the notification author
-    const { person: currentPerson } = await requireAuth(ctx);
 
     // Notify the affected user about their role change
     const notificationType =
@@ -711,20 +589,23 @@ export const removeMember = mutation({
       throw new Error('Membership not found');
     }
 
-    // Require organizer or moderator role in this event
-    await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+    // Require organizer or moderator role in this event (single auth call)
+    const { person: currentPerson } = await requireEventRole(
+      ctx,
+      membership.eventId,
+      'MODERATOR'
+    );
 
     // Prevent removing the last organizer
     if (membership.role === 'ORGANIZER') {
-      const organizerCount = await ctx.db
+      const organizers = await ctx.db
         .query('memberships')
-        .withIndex('by_event', q => q.eq('eventId', membership.eventId))
-        .collect()
-        .then(
-          memberships => memberships.filter(m => m.role === 'ORGANIZER').length
-        );
+        .withIndex('by_event_role', q =>
+          q.eq('eventId', membership.eventId).eq('role', 'ORGANIZER')
+        )
+        .collect();
 
-      if (organizerCount <= 1) {
+      if (organizers.length <= 1) {
         throw new Error('Cannot remove the last organizer');
       }
     }
@@ -738,9 +619,6 @@ export const removeMember = mutation({
     for (const availability of availabilities) {
       await ctx.db.delete(availability._id);
     }
-
-    // Get the current user's person ID for the notification author
-    const { person: currentPerson } = await requireAuth(ctx);
 
     // Notify the removed user (before deleting membership so we have eventId)
     await notifyPerson(ctx, {
@@ -798,15 +676,14 @@ export const leaveEvent = mutation({
 
     // Prevent the last organizer from leaving
     if (membership.role === 'ORGANIZER') {
-      const organizerCount = await ctx.db
+      const organizers = await ctx.db
         .query('memberships')
-        .withIndex('by_event', q => q.eq('eventId', eventId))
-        .collect()
-        .then(
-          memberships => memberships.filter(m => m.role === 'ORGANIZER').length
-        );
+        .withIndex('by_event_role', q =>
+          q.eq('eventId', eventId).eq('role', 'ORGANIZER')
+        )
+        .collect();
 
-      if (organizerCount <= 1) {
+      if (organizers.length <= 1) {
         throw new Error(
           'Cannot leave event as the last organizer. Transfer ownership first.'
         );
@@ -874,8 +751,8 @@ export const chooseEventDate = mutation({
     ctx,
     { eventId, chosenDateTime, chosenEndDateTime, reminderOffset }
   ) => {
-    // Require organizer role
-    await requireEventRole(ctx, eventId, 'ORGANIZER');
+    // Require organizer role (single auth call)
+    const { person } = await requireEventRole(ctx, eventId, 'ORGANIZER');
 
     // Validate end time is after start time if provided
     if (chosenEndDateTime && chosenEndDateTime <= chosenDateTime) {
@@ -909,9 +786,6 @@ export const chooseEventDate = mutation({
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
 
-    // Get the current user's person ID for the notification author
-    const { person } = await requireAuth(ctx);
-
     // Notify all members about date being chosen
     await notifyEventMembers(ctx, {
       eventId,
@@ -939,8 +813,8 @@ export const resetEventDate = mutation({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
-    // Require organizer role
-    await requireEventRole(ctx, eventId, 'ORGANIZER');
+    // Require organizer role (single auth call)
+    const { person } = await requireEventRole(ctx, eventId, 'ORGANIZER');
 
     // Dispatch onDateReset to all enabled add-ons (e.g. cancel reminders)
     await dispatchAddonLifecycle(ctx, eventId, 'onDateReset');
@@ -954,9 +828,6 @@ export const resetEventDate = mutation({
 
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
-
-    // Get the current user's person ID for the notification author
-    const { person } = await requireAuth(ctx);
 
     // Notify all members about date being reset
     await notifyEventMembers(ctx, {
@@ -986,11 +857,12 @@ export const banMember = mutation({
       throw new Error('Membership not found');
     }
 
-    // Require organizer or moderator role in this event
-    await requireEventRole(ctx, membership.eventId, 'MODERATOR');
-
-    // Get the current user's person ID
-    const { person: currentPerson } = await requireAuth(ctx);
+    // Require organizer or moderator role in this event (single auth call)
+    const { person: currentPerson } = await requireEventRole(
+      ctx,
+      membership.eventId,
+      'MODERATOR'
+    );
 
     // Prevent banning yourself
     if (membership.personId === currentPerson._id) {
@@ -999,15 +871,14 @@ export const banMember = mutation({
 
     // Prevent banning the last organizer
     if (membership.role === 'ORGANIZER') {
-      const organizerCount = await ctx.db
+      const organizers = await ctx.db
         .query('memberships')
-        .withIndex('by_event', q => q.eq('eventId', membership.eventId))
-        .collect()
-        .then(
-          memberships => memberships.filter(m => m.role === 'ORGANIZER').length
-        );
+        .withIndex('by_event_role', q =>
+          q.eq('eventId', membership.eventId).eq('role', 'ORGANIZER')
+        )
+        .collect();
 
-      if (organizerCount <= 1) {
+      if (organizers.length <= 1) {
         throw new Error('Cannot ban the last organizer');
       }
     }
@@ -1122,8 +993,12 @@ export const updatePotentialDateTimes = mutation({
     ctx,
     { eventId, potentialDateTimes, potentialDateTimeOptions }
   ) => {
-    // Require organizer role
-    await requireEventRole(ctx, eventId, 'ORGANIZER');
+    // Require organizer role (single auth call, also provides membership)
+    const { person, membership: organizerMembership } = await requireEventRole(
+      ctx,
+      eventId,
+      'ORGANIZER'
+    );
 
     // Handle both legacy and new format
     let dateTimeOptions: Array<{
@@ -1190,17 +1065,6 @@ export const updatePotentialDateTimes = mutation({
         });
       })
     );
-
-    // Get the current user's person ID for the notification author
-    const { person } = await requireAuth(ctx);
-
-    // Get the organizer's membership to create default availabilities
-    const organizerMembership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
 
     // Create "YES" availabilities for the organizer for all new date options
     if (organizerMembership) {

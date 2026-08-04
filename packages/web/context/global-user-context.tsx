@@ -9,15 +9,12 @@ import { useIsActive } from '@/providers/visibility-provider';
 
 // Dynamic require to avoid deep type instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authQueries: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let userQueries: any;
 
 function initApi() {
-  if (!authQueries) {
+  if (!userQueries) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { api } = require('@/convex/_generated/api');
-    authQueries = api.auth?.queries ?? {};
     userQueries = api.users?.queries ?? {};
   }
 }
@@ -99,12 +96,15 @@ export function GlobalUserProvider({ children }: GlobalUserProviderProps) {
 
   // Visibility-aware caching to prevent skeleton flashing on tab switch
   const isActive = useIsActive();
-  const cachedUserAndPersonRef = useRef<UserAndPerson | null | undefined>(
-    undefined
-  );
-  const cachedNeedsOnboardingRef = useRef<boolean | null | undefined>(
-    undefined
-  );
+  const cachedUserDataRef = useRef<
+    | {
+        user: UserAndPerson['user'];
+        person: UserAndPerson['person'];
+        needsOnboarding: boolean;
+      }
+    | null
+    | undefined
+  >(undefined);
 
   // Clear cached data when session identity changes (account switch)
   // This prevents stale data from the previous user being shown
@@ -114,46 +114,31 @@ export function GlobalUserProvider({ children }: GlobalUserProviderProps) {
   const currentSessionUserId = (session as { user?: { id?: string } } | null)
     ?.user?.id;
   if (currentSessionUserId !== previousSessionUserIdRef.current) {
-    cachedUserAndPersonRef.current = undefined;
-    cachedNeedsOnboardingRef.current = undefined;
+    cachedUserDataRef.current = undefined;
     previousSessionUserIdRef.current = currentSessionUserId;
   }
 
-  // Fetch user data - visibility-aware to prevent re-subscription flash
-  // When tab is hidden, we skip the query but return cached data
-  const userAndPersonResult = useQuery(
-    authQueries.getCurrentUserAndPerson,
+  // Single merged query: user + person + onboarding check
+  const userDataResult = useQuery(
+    userQueries.getCurrentUserData,
     isConvexAuthenticated && isActive ? {} : 'skip'
   );
 
   // Cache the result when we get fresh data
-  if (userAndPersonResult !== undefined) {
-    cachedUserAndPersonRef.current = userAndPersonResult;
+  if (userDataResult !== undefined) {
+    cachedUserDataRef.current = userDataResult;
   }
 
   // Stale-while-revalidate: return cached data when result is undefined
-  // This prevents loading flash when user tabs back in
-  const userAndPerson =
-    userAndPersonResult === undefined
-      ? cachedUserAndPersonRef.current
-      : userAndPersonResult;
+  const userData =
+    userDataResult === undefined ? cachedUserDataRef.current : userDataResult;
 
-  // Check if user needs onboarding - also visibility-aware
-  const needsOnboardingResult = useQuery(
-    userQueries.checkNeedsOnboarding,
-    isConvexAuthenticated && isActive ? {} : 'skip'
-  );
-
-  // Cache the onboarding result
-  if (needsOnboardingResult !== undefined) {
-    cachedNeedsOnboardingRef.current = needsOnboardingResult;
-  }
-
-  // Stale-while-revalidate: return cached data when result is undefined
-  const needsOnboarding =
-    needsOnboardingResult === undefined
-      ? cachedNeedsOnboardingRef.current
-      : needsOnboardingResult;
+  const userAndPerson = userData
+    ? { user: userData.user, person: userData.person }
+    : userData === null
+      ? null
+      : undefined;
+  const needsOnboarding = userData?.needsOnboarding ?? null;
 
   // Compute loading state
   // Loading if:

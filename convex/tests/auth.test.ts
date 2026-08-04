@@ -391,7 +391,7 @@ describe('Authentication System', () => {
       const result = await asUser.run(async ctx => {
         return await requireEventRole(ctx, eventId, 'ATTENDEE');
       });
-      expect(result.role).toBe('ATTENDEE');
+      expect(result.membership.role).toBe('ATTENDEE');
 
       // Should fail for organizer role
       await expect(

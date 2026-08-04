@@ -11,8 +11,7 @@ Sentry.init({
   enabled: !isDev,
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
+  integrations: [],
 
   // Only propagate traces to non-auth API routes to avoid large headers causing 431 errors
   // Auth routes don't need distributed tracing and the baggage header can exceed header size limits
@@ -36,5 +35,19 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 });
+
+// Lazy-load Replay after page is interactive to reduce initial bundle size (~30-50KB)
+if (!isDev && typeof window !== 'undefined') {
+  window.addEventListener(
+    'load',
+    () => {
+      setTimeout(async () => {
+        const replay = await Sentry.lazyLoadIntegration('replayIntegration');
+        Sentry.addIntegration(replay());
+      }, 3000);
+    },
+    { once: true }
+  );
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

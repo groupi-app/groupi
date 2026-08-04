@@ -73,8 +73,9 @@ export const markAllNotificationsAsRead = mutation({
 
     const notifications = await ctx.db
       .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .filter(q => q.eq(q.field('read'), false))
+      .withIndex('by_person_read', q =>
+        q.eq('personId', person._id).eq('read', false)
+      )
       .collect();
 
     for (const notification of notifications) {
@@ -101,10 +102,10 @@ export const markEventNotificationsAsRead = mutation({
 
     const notifications = await ctx.db
       .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .filter(q =>
-        q.and(q.eq(q.field('eventId'), eventId), q.eq(q.field('read'), false))
+      .withIndex('by_person_read', q =>
+        q.eq('personId', person._id).eq('read', false)
       )
+      .filter(q => q.eq(q.field('eventId'), eventId))
       .collect();
 
     for (const notification of notifications) {
@@ -131,10 +132,10 @@ export const markPostNotificationsAsRead = mutation({
 
     const notifications = await ctx.db
       .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .filter(q =>
-        q.and(q.eq(q.field('postId'), postId), q.eq(q.field('read'), false))
+      .withIndex('by_person_read', q =>
+        q.eq('personId', person._id).eq('read', false)
       )
+      .filter(q => q.eq(q.field('postId'), postId))
       .collect();
 
     for (const notification of notifications) {

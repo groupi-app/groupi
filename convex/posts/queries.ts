@@ -46,76 +46,61 @@ export const getPostDetail = query({
       throw new Error('You are not a member of this event');
     }
 
-    // Get all event memberships for context
-    const eventMemberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', event._id))
-      .collect();
+    // Fetch replies and post attachments in parallel
+    const [replies, postAttachments] = await Promise.all([
+      ctx.db
+        .query('replies')
+        .withIndex('by_post', q => q.eq('postId', post._id))
+        .order('asc')
+        .collect(),
+      ctx.db
+        .query('attachments')
+        .withIndex('by_post', q => q.eq('postId', post._id))
+        .collect(),
+    ]);
 
-    // Get user data for all members - nest user inside person AND at top level for compatibility
-    const membershipsWithUsers = await Promise.all(
-      eventMemberships.map(async membership => {
-        const memberData = await getPersonWithUser(ctx, membership.personId);
-        return {
-          ...membership,
-          person: memberData
-            ? {
-                ...memberData.person,
-                user: memberData.user,
-              }
-            : null,
-          user: memberData?.user || null,
-        };
-      })
+    // Batch-fetch all unique authors (post + replies) to avoid N+1
+    const authorIds = new Set<string>([post.authorId as string]);
+    for (const reply of replies) {
+      authorIds.add(reply.authorId as string);
+    }
+
+    type PersonData = NonNullable<
+      Awaited<ReturnType<typeof getPersonWithUser>>
+    >;
+    const personMap = new Map<string, PersonData>();
+    const batchedData = await Promise.all(
+      [...authorIds].map(id =>
+        getPersonWithUser(ctx, id).then(data => ({ id, data }))
+      )
     );
+    for (const { id, data } of batchedData) {
+      if (data) personMap.set(id, data);
+    }
 
-    // Get post author data - nest user inside person
-    const postAuthorData = await getPersonWithUser(ctx, post.authorId);
+    const postAuthorData = personMap.get(post.authorId as string);
 
-    // Get post attachments
-    const postAttachments = await ctx.db
-      .query('attachments')
-      .withIndex('by_post', q => q.eq('postId', post._id))
-      .collect();
-
-    // Get URLs for post attachments
     const postAttachmentsWithUrls = await Promise.all(
-      postAttachments.map(async attachment => {
-        const url = await ctx.storage.getUrl(attachment.storageId);
-        return {
-          ...attachment,
-          url,
-        };
-      })
+      postAttachments.map(async attachment => ({
+        ...attachment,
+        url: await ctx.storage.getUrl(attachment.storageId),
+      }))
     );
 
-    // Get replies for this post
-    const replies = await ctx.db
-      .query('replies')
-      .withIndex('by_post', q => q.eq('postId', post._id))
-      .order('asc')
-      .collect();
-
-    // Get user data for reply authors and attachments - nest user inside person
     const repliesWithAuthors = await Promise.all(
       replies.map(async reply => {
-        const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
+        const replyAuthorData = personMap.get(reply.authorId as string);
 
-        // Get attachments for this reply
         const replyAttachments = await ctx.db
           .query('attachments')
           .withIndex('by_reply', q => q.eq('replyId', reply._id))
           .collect();
 
-        // Get URLs for reply attachments
         const replyAttachmentsWithUrls = await Promise.all(
-          replyAttachments.map(async attachment => {
-            const url = await ctx.storage.getUrl(attachment.storageId);
-            return {
-              ...attachment,
-              url,
-            };
-          })
+          replyAttachments.map(async attachment => ({
+            ...attachment,
+            url: await ctx.storage.getUrl(attachment.storageId),
+          }))
         );
 
         return {
@@ -146,12 +131,7 @@ export const getPostDetail = query({
               user: postAuthorData.user,
             }
           : null,
-        event: {
-          ...event,
-          memberships: membershipsWithUsers.filter(
-            m => m.person && m.person.user
-          ),
-        },
+        event,
         replies: repliesWithAuthors.filter(r => r.author !== null),
         attachments: postAttachmentsWithUrls,
       },
@@ -197,95 +177,133 @@ export const getEventPostFeed = query({
       throw new Error('Event not found');
     }
 
-    // Get all posts for this event
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .order('desc') // Most recent first
-      .collect();
+    // Get all posts and memberships for this event
+    const [posts, eventMemberships] = await Promise.all([
+      ctx.db
+        .query('posts')
+        .withIndex('by_event', q => q.eq('eventId', eventId))
+        .order('desc')
+        .collect(),
+      ctx.db
+        .query('memberships')
+        .withIndex('by_event', q => q.eq('eventId', eventId))
+        .collect(),
+    ]);
 
-    // Get author data for all posts - nest user inside person
-    const postsWithAuthors = await Promise.all(
-      posts.map(async post => {
-        const authorData = await getPersonWithUser(ctx, post.authorId);
-
-        // Get replies with author data for preview
-        const replies = await ctx.db
+    // Fetch replies for all posts in parallel
+    const allPostReplies = await Promise.all(
+      posts.map(async post => ({
+        postId: post._id,
+        replies: await ctx.db
           .query('replies')
           .withIndex('by_post', q => q.eq('postId', post._id))
           .order('desc')
-          .collect();
+          .collect(),
+      }))
+    );
 
-        // Get unique recent reply authors (up to 3) for avatar preview
-        const seenAuthors = new Set<string>();
-        const recentReplyAuthors: Array<{
-          id: string;
-          _creationTime: number;
-          user: {
-            name: string | null;
-            email: string;
-            image: string | null;
-          } | null;
-        }> = [];
+    const postRepliesMap = new Map(
+      allPostReplies.map(({ postId, replies }) => [postId, replies])
+    );
 
-        for (const reply of replies) {
-          if (seenAuthors.has(reply.authorId)) continue;
-          if (recentReplyAuthors.length >= 3) break;
-
-          const replyAuthorData = await getPersonWithUser(ctx, reply.authorId);
-          if (replyAuthorData?.user) {
-            seenAuthors.add(reply.authorId);
-            recentReplyAuthors.push({
-              id: reply.authorId,
-              _creationTime: reply._creationTime,
-              user: {
-                name: replyAuthorData.user.name ?? null,
-                email: replyAuthorData.user.email ?? '',
-                image: replyAuthorData.user.image ?? null,
-              },
-            });
-          }
+    // Collect all unique person IDs to batch-fetch
+    const personIds = new Set<string>();
+    for (const post of posts) {
+      personIds.add(post.authorId as string);
+    }
+    for (const { replies } of allPostReplies) {
+      const seen = new Set<string>();
+      for (const reply of replies) {
+        if (seen.size >= 3) break;
+        if (!seen.has(reply.authorId as string)) {
+          seen.add(reply.authorId as string);
+          personIds.add(reply.authorId as string);
         }
+      }
+    }
+    for (const membership of eventMemberships) {
+      personIds.add(membership.personId as string);
+    }
 
-        return {
-          ...post,
-          author: authorData
-            ? {
-                person: {
-                  ...authorData.person,
-                  user: authorData.user,
-                },
+    // Batch-fetch all unique persons once
+    type PersonData = NonNullable<
+      Awaited<ReturnType<typeof getPersonWithUser>>
+    >;
+    const personMap = new Map<string, PersonData>();
+    const batchedData = await Promise.all(
+      [...personIds].map(id =>
+        getPersonWithUser(ctx, id).then(data => ({ id, data }))
+      )
+    );
+    for (const { id, data } of batchedData) {
+      if (data) personMap.set(id, data);
+    }
+
+    // Build posts with authors using the map
+    const postsWithAuthors = posts.map(post => {
+      const authorData = personMap.get(post.authorId as string);
+      const replies = postRepliesMap.get(post._id) || [];
+
+      const seenAuthors = new Set<string>();
+      const recentReplyAuthors: Array<{
+        id: string;
+        _creationTime: number;
+        user: {
+          name: string | null;
+          email: string;
+          image: string | null;
+        } | null;
+      }> = [];
+
+      for (const reply of replies) {
+        if (seenAuthors.has(reply.authorId)) continue;
+        if (recentReplyAuthors.length >= 3) break;
+
+        const replyAuthorData = personMap.get(reply.authorId as string);
+        if (replyAuthorData?.user) {
+          seenAuthors.add(reply.authorId);
+          recentReplyAuthors.push({
+            id: reply.authorId,
+            _creationTime: reply._creationTime,
+            user: {
+              name: replyAuthorData.user.name ?? null,
+              email: replyAuthorData.user.email ?? '',
+              image: replyAuthorData.user.image ?? null,
+            },
+          });
+        }
+      }
+
+      return {
+        ...post,
+        author: authorData
+          ? {
+              person: {
+                ...authorData.person,
                 user: authorData.user,
-              }
-            : null,
-          replyCount: replies.length,
-          recentReplyAuthors,
-        };
-      })
-    );
+              },
+              user: authorData.user,
+            }
+          : null,
+        replyCount: replies.length,
+        recentReplyAuthors,
+      };
+    });
 
-    // Get event memberships - nest user inside person
-    const eventMemberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    const membershipsWithUsers = await Promise.all(
-      eventMemberships.map(async membership => {
-        const memberData = await getPersonWithUser(ctx, membership.personId);
-        return {
-          ...membership,
-          // Include user at top level AND nested in person for component compatibility
-          person: memberData
-            ? {
-                ...memberData.person,
-                user: memberData.user,
-              }
-            : null,
-          user: memberData?.user || null,
-        };
-      })
-    );
+    // Build memberships with users using the same map
+    const membershipsWithUsers = eventMemberships.map(membership => {
+      const memberData = personMap.get(membership.personId as string);
+      return {
+        ...membership,
+        person: memberData
+          ? {
+              ...memberData.person,
+              user: memberData.user,
+            }
+          : null,
+        user: memberData?.user || null,
+      };
+    });
 
     return {
       event: {
