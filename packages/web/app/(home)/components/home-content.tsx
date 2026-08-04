@@ -1,3 +1,5 @@
+'use client';
+
 import { Typewriter } from './typewriter';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
