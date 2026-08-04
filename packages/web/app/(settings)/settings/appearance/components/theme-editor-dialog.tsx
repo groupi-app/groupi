@@ -152,8 +152,6 @@ export function ThemeEditorDialog({
     [lightThemes, darkThemes]
   );
 
-  // Mutations - using variable assignment to break deep type inference
-  // @ts-expect-error - TS2589: Type instantiation is excessively deep
   const createMutation = api.themes.mutations.createCustomTheme;
   const updateMutation = api.themes.mutations.updateCustomTheme;
   const createTheme = useMutation(createMutation);
