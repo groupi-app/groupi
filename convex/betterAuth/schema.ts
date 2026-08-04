@@ -118,7 +118,9 @@ export const tables = {
     updatedAt: v.number(),
     permissions: v.optional(v.union(v.null(), v.string())),
     metadata: v.optional(v.union(v.null(), v.string())),
-  }).index('userId', ['userId']),
+  })
+    .index('key', ['key'])
+    .index('userId', ['userId']),
 };
 
 const schema = defineSchema(tables);

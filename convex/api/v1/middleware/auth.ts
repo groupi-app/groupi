@@ -40,12 +40,10 @@ export async function validateApiKey(
   }
 
   try {
-    // Use internal mutation to validate the API key
-    // (mutation allows using ctx.runQuery for Better Auth adapter access)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex internal function types
     const validateFn = internal.api.v1.internal.auth.validateApiKey;
-    const result = (await ctx.runMutation(validateFn, { apiKey })) as
+    const result = (await ctx.runQuery(validateFn, { apiKey })) as
       | { userId: string; personId: string }
       | { error: string }
       | null;
