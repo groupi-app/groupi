@@ -1,6 +1,8 @@
 import { httpRouter } from 'convex/server';
+import { httpAction } from './_generated/server';
 import { authComponent, createAuth } from './auth';
 import { handler as apiV1Handler } from './api/v1/index';
+import { internal } from './_generated/api';
 
 /**
  * HTTP router for Convex
@@ -286,6 +288,52 @@ http.route({
   pathPrefix: '/api/v1/',
   method: 'OPTIONS',
   handler: apiV1Handler,
+});
+
+// Public invite metadata endpoint for OpenGraph previews (no auth required)
+const inviteMetaHandler = httpAction(async (ctx, request) => {
+  const url = new URL(request.url);
+  const token = url.pathname.replace('/api/invite-meta/', '');
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Missing token' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
+  const meta = await ctx.runQuery(
+    internal.api.v1.internal.invites.getInviteOgMeta,
+    { token }
+  );
+
+  if (!meta) {
+    return new Response(JSON.stringify({ error: 'Invite not found' }), {
+      status: 404,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
+  return new Response(JSON.stringify(meta), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=300',
+    },
+  });
+});
+
+http.route({
+  pathPrefix: '/api/invite-meta/',
+  method: 'GET',
+  handler: inviteMetaHandler,
 });
 
 export default http;
