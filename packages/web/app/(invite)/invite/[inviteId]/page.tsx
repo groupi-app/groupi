@@ -1,23 +1,19 @@
-'use client';
-
+import { Suspense } from 'react';
 import { InviteDetails } from './components/invite-details';
 import { InviteDetailsSkeleton } from '@/components/skeletons/invite-details-skeleton';
-import { useEffect, useState } from 'react';
+
+export const experimental_ppr = true;
 
 type Props = {
   params: Promise<{ inviteId: string }>;
 };
 
-export default function InvitePage({ params }: Props) {
-  const [inviteId, setInviteId] = useState<string | null>(null);
+export default async function InvitePage({ params }: Props) {
+  const { inviteId } = await params;
 
-  useEffect(() => {
-    params.then(p => setInviteId(p.inviteId));
-  }, [params]);
-
-  if (!inviteId) {
-    return <InviteDetailsSkeleton />;
-  }
-
-  return <InviteDetails inviteId={inviteId} />;
+  return (
+    <Suspense fallback={<InviteDetailsSkeleton />}>
+      <InviteDetails inviteId={inviteId} />
+    </Suspense>
+  );
 }

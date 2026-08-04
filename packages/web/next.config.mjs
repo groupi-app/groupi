@@ -64,6 +64,7 @@ const nextConfig = {
   },
   experimental: {
     turbopackFileSystemCacheForDev: true,
+    ppr: 'incremental',
   },
   // Enable detailed error output during build
   logging: {
