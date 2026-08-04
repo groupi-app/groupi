@@ -1,10 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { Icons } from '@/components/icons';
 
-/**
- * Icon component type - accepts any component that takes className.
- */
 type IconComponent = React.ComponentType<{ className?: string }>;
 
 /**
@@ -59,10 +57,7 @@ const colorClasses: Record<StickerIconColor, string> = {
 } as const;
 
 export interface StickerIconProps {
-  /**
-   * The icon component to render.
-   */
-  icon: IconComponent;
+  icon: IconComponent | keyof typeof Icons;
   /**
    * The background color of the sticker.
    * @default 'primary'
@@ -84,11 +79,12 @@ export interface StickerIconProps {
  * Creates a die-cut sticker aesthetic with proper aspect ratio.
  */
 export function StickerIcon({
-  icon: Icon,
+  icon,
   color = 'primary',
   size = 'md',
   className,
 }: StickerIconProps) {
+  const Icon = typeof icon === 'string' ? Icons[icon] : icon;
   return (
     <div
       className={cn(

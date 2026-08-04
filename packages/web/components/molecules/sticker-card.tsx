@@ -2,13 +2,11 @@
 
 import { cn } from '@/lib/utils';
 import { type LucideIcon } from 'lucide-react';
+import { Icons } from '@/components/icons';
 import { StickerIcon, type StickerIconColor } from '@/components/atoms';
 
 export interface StickerCardProps {
-  /**
-   * The icon to display in the sticker.
-   */
-  icon: LucideIcon;
+  icon: LucideIcon | keyof typeof Icons;
   /**
    * The color of the sticker icon.
    */
