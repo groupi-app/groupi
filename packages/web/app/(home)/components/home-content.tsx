@@ -1,5 +1,3 @@
-'use client';
-
 import { Typewriter } from './typewriter';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -492,28 +490,28 @@ export default function HomeContent() {
           <div className='grid md:grid-cols-2 gap-4'>
             {[
               {
-                icon: Icons.heart,
+                icon: 'heart' as const,
                 iconColor: 'error' as const,
                 title: '100% free',
                 description:
                   'No premium tiers, no feature gates. Everything is available to everyone.',
               },
               {
-                icon: Icons.lock,
+                icon: 'lock' as const,
                 iconColor: 'primary' as const,
                 title: 'Your data stays yours',
                 description:
                   "We don't sell your information or track you across the web. No ads, ever.",
               },
               {
-                icon: Icons.code,
+                icon: 'code' as const,
                 iconColor: 'info' as const,
                 title: 'Open source',
                 description:
                   'See exactly how it works. Contribute improvements or run your own instance.',
               },
               {
-                icon: Icons.people,
+                icon: 'people' as const,
                 iconColor: 'success' as const,
                 title: 'Made by people like you',
                 description:
