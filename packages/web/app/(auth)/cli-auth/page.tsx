@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,20 @@ import { useGlobalUser } from '@/context/global-user-context';
 import { siteConfig } from '@/config/site';
 
 export default function CliAuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-[50vh]'>
+          <LoadingSpinner size='lg' />
+        </div>
+      }
+    >
+      <CliAuthContent />
+    </Suspense>
+  );
+}
+
+function CliAuthContent() {
   const searchParams = useSearchParams();
   const callbackPort = searchParams.get('callbackPort');
   const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
