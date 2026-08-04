@@ -126,51 +126,88 @@ export const getEventAttendeesData = query({
       userMembership.role === 'ORGANIZER' ||
       userMembership.role === 'MODERATOR';
 
-    // Get user data for all members and their availabilities
-    const membershipsWithData = await Promise.all(
-      memberships.map(async membership => {
-        const memberData = await getPersonWithUser(ctx, membership.personId);
+    // Pre-fetch all potential dates and availabilities to avoid N+1
+    const potentialDateTimes = await ctx.db
+      .query('potentialDateTimes')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
 
-        // Get availabilities for this member
-        const availabilities = await ctx.db
-          .query('availabilities')
-          .withIndex('by_membership', q => q.eq('membershipId', membership._id))
-          .collect();
-
-        // Get potential date time data for each availability
-        const availabilitiesWithDates = await Promise.all(
-          availabilities.map(async availability => {
-            const potentialDateTime = await ctx.db.get(
-              availability.potentialDateTimeId
-            );
-            return {
-              ...availability,
-              potentialDateTime,
-            };
-          })
-        );
-
-        // rsvpNote is visible to the author + organizers/moderators
-        const isOwnMembership = membership.personId === currentPerson._id;
-        const visibleRsvpNote =
-          isOwnMembership || canSeeAllRsvpNotes
-            ? membership.rsvpNote
-            : undefined;
-
-        return {
-          ...membership,
-          rsvpNote: visibleRsvpNote,
-          person: memberData
-            ? {
-                ...memberData.person,
-                user: memberData.user,
-              }
-            : null,
-          user: memberData?.user || null,
-          availabilities: availabilitiesWithDates,
-        };
-      })
+    const potentialDateTimeMap = new Map(
+      potentialDateTimes.map(pdt => [pdt._id, pdt])
     );
+
+    const allAvailabilities = (
+      await Promise.all(
+        potentialDateTimes.map(pdt =>
+          ctx.db
+            .query('availabilities')
+            .withIndex('by_potential_date', q =>
+              q.eq('potentialDateTimeId', pdt._id)
+            )
+            .collect()
+        )
+      )
+    ).flat();
+
+    const availabilitiesByMembership = new Map<
+      string,
+      typeof allAvailabilities
+    >();
+    for (const avail of allAvailabilities) {
+      const key = avail.membershipId as string;
+      const existing = availabilitiesByMembership.get(key);
+      if (existing) {
+        existing.push(avail);
+      } else {
+        availabilitiesByMembership.set(key, [avail]);
+      }
+    }
+
+    // Batch-fetch person data for all members
+    type PersonData = NonNullable<
+      Awaited<ReturnType<typeof getPersonWithUser>>
+    >;
+    const personMap = new Map<string, PersonData>();
+    const batchedPersonData = await Promise.all(
+      memberships.map(m =>
+        getPersonWithUser(ctx, m.personId).then(data => ({
+          id: m.personId as string,
+          data,
+        }))
+      )
+    );
+    for (const { id, data } of batchedPersonData) {
+      if (data) personMap.set(id, data);
+    }
+
+    const membershipsWithData = memberships.map(membership => {
+      const memberData = personMap.get(membership.personId as string);
+
+      const memberAvailabilities =
+        availabilitiesByMembership.get(membership._id as string) || [];
+      const availabilitiesWithDates = memberAvailabilities.map(avail => ({
+        ...avail,
+        potentialDateTime:
+          potentialDateTimeMap.get(avail.potentialDateTimeId) ?? null,
+      }));
+
+      const isOwnMembership = membership.personId === currentPerson._id;
+      const visibleRsvpNote =
+        isOwnMembership || canSeeAllRsvpNotes ? membership.rsvpNote : undefined;
+
+      return {
+        ...membership,
+        rsvpNote: visibleRsvpNote,
+        person: memberData
+          ? {
+              ...memberData.person,
+              user: memberData.user,
+            }
+          : null,
+        user: memberData?.user || null,
+        availabilities: availabilitiesWithDates,
+      };
+    });
 
     // Filter out invalid memberships
     const validMemberships = membershipsWithData.filter(

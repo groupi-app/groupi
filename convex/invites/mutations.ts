@@ -336,11 +336,7 @@ export const acceptInvite = mutation({
       personId: person._id,
     });
 
-    // Get the created membership
     const membership = await ctx.db.get(membershipId);
-
-    // Get the event
-    const event = await ctx.db.get(invite.eventId);
 
     return {
       membership: {
@@ -350,10 +346,10 @@ export const acceptInvite = mutation({
         rsvpStatus: membership!.rsvpStatus,
       },
       event: {
-        id: event!._id,
-        title: event!.title,
-        description: event!.description,
-        location: event!.location,
+        id: eventDoc!._id,
+        title: eventDoc!.title,
+        description: eventDoc!.description,
+        location: eventDoc!.location,
       },
       alreadyMember: false,
     };

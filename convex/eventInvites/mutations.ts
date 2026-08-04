@@ -214,10 +214,11 @@ export const acceptEventInvite = mutation({
       respondedAt: Date.now(),
     });
 
-    const eventDoc = await ctx.db.get(invite.eventId);
-    const countBeforeInsert = eventDoc
-      ? await getOrComputeMemberCount(ctx, invite.eventId, eventDoc)
-      : 0;
+    const countBeforeInsert = await getOrComputeMemberCount(
+      ctx,
+      invite.eventId,
+      event
+    );
 
     const membershipId = await ctx.db.insert('memberships', {
       personId: person._id,
@@ -226,11 +227,9 @@ export const acceptEventInvite = mutation({
       rsvpStatus: 'PENDING',
       updatedAt: Date.now(),
     });
-    if (eventDoc) {
-      await ctx.db.patch(invite.eventId, {
-        memberCount: countBeforeInsert + 1,
-      });
-    }
+    await ctx.db.patch(invite.eventId, {
+      memberCount: countBeforeInsert + 1,
+    });
 
     // Remove any other pending invites for this event
     const otherPendingInvites = await ctx.db

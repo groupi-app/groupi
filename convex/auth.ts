@@ -506,16 +506,37 @@ export async function hasEventRole(
 /**
  * Require specific event role
  * Throws ConvexError if not authenticated or doesn't have the required role
+ * Returns { user, person, membership } for callers that need auth context
  */
 export async function requireEventRole(
   ctx: AuthCtx,
   eventId: string,
   role: 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE'
 ) {
-  if (!(await hasEventRole(ctx, eventId, role))) {
-    throw new ConvexError(`${role} role required for this event`);
+  const { user, person } = await requireAuth(ctx);
+
+  const membership = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', person._id).eq('eventId', eventId as Id<'events'>)
+    )
+    .first();
+
+  if (!membership) {
+    throw new ConvexError('Event membership required');
   }
-  return await requireEventMembership(ctx, eventId);
+
+  if (role === 'MODERATOR') {
+    if (membership.role !== 'ORGANIZER' && membership.role !== 'MODERATOR') {
+      throw new ConvexError(`${role} role required for this event`);
+    }
+  } else if (role === 'ORGANIZER') {
+    if (membership.role !== 'ORGANIZER') {
+      throw new ConvexError(`${role} role required for this event`);
+    }
+  }
+
+  return { user, person, membership };
 }
 
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -674,11 +695,7 @@ export async function getPersonWithUser(
   const personIdStr =
     typeof personId === 'string' ? personId : personId.toString();
 
-  // Query persons table directly to get proper typing
-  const person = await ctx.db
-    .query('persons')
-    .filter(q => q.eq(q.field('_id'), personIdStr as Id<'persons'>))
-    .first();
+  const person = await ctx.db.get(personIdStr as Id<'persons'>);
 
   if (!person) return null;
 

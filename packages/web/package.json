@@ -27,7 +27,9 @@
     "e2e:codegen": "playwright codegen localhost:3000",
     "e2e:report": "playwright show-report e2e/playwright-report",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build -o storybook-static"
+    "storybook:build": "storybook build -o storybook-static",
+    "lighthouse": "bash scripts/lighthouse.sh",
+    "lighthouse:dev": "bash scripts/lighthouse.sh dev"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.13",

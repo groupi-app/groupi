@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -320,24 +319,16 @@ export default function HomeContent() {
       {/* Floating Background Logos */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
         {floatingLogos.map((logo, i) => (
-          <motion.div
+          <div
             key={i}
-            className='absolute opacity-[0.07]'
+            className='absolute opacity-[0.07] animate-float'
             style={{
               top: logo.top,
               left: logo.left,
               right: logo.right,
-              rotate: logo.rotate,
-            }}
-            animate={{
-              y: [0, -15, 0],
-              rotate: [logo.rotate, logo.rotate + 5, logo.rotate],
-            }}
-            transition={{
-              duration: 6 + (i % 3),
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: logo.delay,
+              rotate: `${logo.rotate}deg`,
+              animationDuration: `${6 + (i % 3)}s`,
+              animationDelay: `${logo.delay}s`,
             }}
           >
             <LogoSticker
@@ -345,7 +336,7 @@ export default function HomeContent() {
               color={logo.color}
               showArm={i % 4 === 0}
             />
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -353,26 +344,18 @@ export default function HomeContent() {
       <section className='relative min-h-[85vh] flex items-center justify-center px-6 py-12 md:py-20'>
         <div className='relative z-base flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-5xl mx-auto'>
           {/* Party Scene */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
-            className='relative scale-75 sm:scale-90 md:scale-100'
-          >
+          <div className='relative scale-75 sm:scale-90 md:scale-100 animate-fade-in-scale'>
             <div className='flex items-end justify-center -space-x-6 md:-space-x-8'>
-              <motion.div
-                initial={{ y: 30 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.2, type: 'spring', bounce: 0.5 }}
+              <div
+                className='animate-slide-up'
+                style={{ animationDelay: '0.1s' }}
               >
                 <LogoSticker size='xl' color='success' showArm waving />
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ y: 30 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.3, type: 'spring', bounce: 0.5 }}
-                className='z-lifted'
+              <div
+                className='z-lifted animate-slide-up'
+                style={{ animationDelay: '0.15s' }}
               >
                 <LogoSticker
                   size='2xl'
@@ -381,22 +364,19 @@ export default function HomeContent() {
                   partyHat
                   partyHatColor='warning'
                 />
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ y: 30 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.4, type: 'spring', bounce: 0.5 }}
+              <div
+                className='animate-slide-up'
+                style={{ animationDelay: '0.2s' }}
               >
                 <LogoSticker size='xl' color='info' showArm={false} />
-              </motion.div>
+              </div>
             </div>
 
-            <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.45, type: 'spring', bounce: 0.4 }}
-              className='absolute bottom-0 left-1/2 -translate-x-[30%] z-float'
+            <div
+              className='absolute bottom-0 left-1/2 -translate-x-[30%] z-float animate-slide-up'
+              style={{ animationDelay: '0.2s' }}
             >
               <svg
                 width='120'
@@ -456,17 +436,12 @@ export default function HomeContent() {
                   className='fill-muted'
                 />
               </svg>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
-          {/* Text Content */}
+          {/* Text Content — no animation delays, renders instantly for LCP */}
           <div className='text-center lg:text-left'>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className='mb-6'
-            >
+            <div className='mb-6'>
               <h1 className='text-3xl md:text-4xl lg:text-5xl font-black text-foreground leading-tight'>
                 Spend less time planning
                 <br />
@@ -479,87 +454,56 @@ export default function HomeContent() {
                 className='text-3xl md:text-4xl lg:text-5xl font-black text-primary leading-tight'
                 repeat={Infinity}
               />
-            </motion.div>
+            </div>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className='text-lg text-muted-foreground mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed'
-            >
+            <p className='text-lg text-muted-foreground mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed'>
               Groupi helps you find a time that works for everyone. Create an
               event, share a link, and let your friends vote on when
               they&apos;re free. That&apos;s it.
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className='flex flex-col sm:flex-row gap-3 justify-center lg:justify-start'
-            >
+            <div className='flex flex-col sm:flex-row gap-3 justify-center lg:justify-start'>
               <Link href='/create'>
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                <Button
+                  size='lg'
+                  className='text-base px-8 py-6 rounded-card font-bold shadow-raised hover:shadow-floating hover:scale-[1.03] active:scale-[0.97] transition-all border-[3px] border-white'
                 >
-                  <Button
-                    size='lg'
-                    className='text-base px-8 py-6 rounded-card font-bold shadow-raised hover:shadow-floating border-[3px] border-white'
-                  >
-                    Create an Event
-                    <Icons.arrowRight className='ml-2 w-5 h-5' />
-                  </Button>
-                </motion.div>
+                  Create an Event
+                  <Icons.arrowRight className='ml-2 w-5 h-5' />
+                </Button>
               </Link>
               <Link href='/sign-in'>
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                <Button
+                  size='lg'
+                  variant='outline'
+                  className='text-base px-8 py-6 rounded-card font-bold bg-card border-2 hover:scale-[1.03] active:scale-[0.97] transition-all'
                 >
-                  <Button
-                    size='lg'
-                    variant='outline'
-                    className='text-base px-8 py-6 rounded-card font-bold bg-card border-2'
-                  >
-                    Sign In
-                  </Button>
-                </motion.div>
+                  Sign In
+                </Button>
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className='absolute bottom-8 left-1/2 -translate-x-1/2'
+        <div
+          className='absolute bottom-8 left-1/2 -translate-x-1/2 animate-fade-in'
+          style={{ animationDelay: '1s' }}
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            className='flex flex-col items-center gap-1 text-muted-foreground'
-          >
+          <div className='flex flex-col items-center gap-1 text-muted-foreground animate-bounce-gentle'>
             <Icons.down className='size-6' />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </section>
 
       {/* How It Works */}
       <section className='py-16 px-6'>
         <div className='max-w-2xl mx-auto'>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className='text-center mb-12'
-          >
+          <div className='text-center mb-12 animate-on-scroll'>
             <h2 className='text-2xl md:text-3xl font-black text-foreground'>
               How it works
             </h2>
-          </motion.div>
+          </div>
 
           <div className='space-y-4'>
             {[
@@ -584,12 +528,10 @@ export default function HomeContent() {
                 color: 'success' as const,
               },
             ].map((item, i) => (
-              <motion.div
+              <div
                 key={i}
-                initial={{ opacity: 0, x: -15 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, type: 'spring', bounce: 0.3 }}
+                className='animate-on-scroll'
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <StepItem
                   step={item.step}
@@ -597,7 +539,7 @@ export default function HomeContent() {
                   title={item.title}
                   description={item.description}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -606,12 +548,7 @@ export default function HomeContent() {
       {/* Built for You Section */}
       <section className='py-16 px-6 bg-card/60'>
         <div className='max-w-3xl mx-auto'>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className='text-center mb-12'
-          >
+          <div className='text-center mb-12 animate-on-scroll'>
             <h2 className='text-2xl md:text-3xl font-black text-foreground mb-3'>
               Built for you, not advertisers
             </h2>
@@ -619,7 +556,7 @@ export default function HomeContent() {
               Groupi is designed around people, not profit. Here&apos;s what
               that means:
             </p>
-          </motion.div>
+          </div>
 
           <div className='grid md:grid-cols-2 gap-4'>
             {[
@@ -652,18 +589,10 @@ export default function HomeContent() {
                   'Built because we needed it ourselves, not to hit growth targets.',
               },
             ].map((card, i) => (
-              <motion.div
+              <div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{
-                  delay: i * 0.08,
-                  duration: 0.4,
-                  type: 'spring',
-                  bounce: 0.3,
-                }}
-                whileHover={{ y: -4 }}
+                className='animate-on-scroll hover:-translate-y-1 transition-transform'
+                style={{ animationDelay: `${i * 0.08}s` }}
               >
                 <StickerCard
                   icon={card.icon}
@@ -672,7 +601,7 @@ export default function HomeContent() {
                   description={card.description}
                   className='hover:shadow-floating transition-shadow'
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -681,18 +610,11 @@ export default function HomeContent() {
       {/* CTA Section */}
       <section className='py-20 px-6'>
         <div className='max-w-xl mx-auto text-center'>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-          >
+          <div className='animate-on-scroll'>
             <div className='flex items-center justify-center gap-3 mb-3'>
-              <motion.div
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
+              <div className='animate-bounce-gentle'>
                 <LogoSticker size='sm' color='primary' showArm waving />
-              </motion.div>
+              </div>
               <h2 className='text-2xl md:text-3xl font-black text-foreground'>
                 Ready to try it?
               </h2>
@@ -701,21 +623,15 @@ export default function HomeContent() {
               Create your first event in under a minute.
             </p>
             <Link href='/create'>
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className='inline-block'
+              <Button
+                size='lg'
+                className='text-lg px-10 py-7 rounded-card font-bold shadow-floating hover:shadow-overlay hover:scale-[1.03] active:scale-[0.97] transition-all border-[3px] border-white'
               >
-                <Button
-                  size='lg'
-                  className='text-lg px-10 py-7 rounded-card font-bold shadow-floating hover:shadow-overlay border-[3px] border-white'
-                >
-                  Create Your Event
-                  <Icons.arrowRight className='ml-2 w-5 h-5' />
-                </Button>
-              </motion.div>
+                Create Your Event
+                <Icons.arrowRight className='ml-2 w-5 h-5' />
+              </Button>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 

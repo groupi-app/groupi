@@ -1,4 +1,7 @@
-import { z } from '@hono/zod-openapi';
+import { z, extendZodWithOpenApi } from '@hono/zod-openapi';
+
+// Ensure .openapi() is available on Zod schemas
+extendZodWithOpenApi(z);
 
 /**
  * Common API schemas for the REST API

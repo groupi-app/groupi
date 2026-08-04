@@ -1,6 +1,5 @@
-import { mutation, MutationCtx } from '../_generated/server';
+import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { Id } from '../_generated/dataModel';
 import {
   requireAuth,
   requireAuthUser,
@@ -10,6 +9,7 @@ import {
 } from '../auth';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 import { getOrComputeMemberCount } from '../lib/memberCount';
+import { cascadeDeleteEventData } from '../lib/cascade';
 
 /**
  * Users mutations for the Convex backend
@@ -350,10 +350,12 @@ export const deleteUserAccount = mutation({
       .withIndex('by_person', q => q.eq('personId', person._id))
       .collect();
 
-    // Handle events where user is sole organizer
+    // Phase 1: Handle organizer succession, identify events to fully delete
+    const eventsToDelete: (typeof memberships)[0]['eventId'][] = [];
+    const membershipsToRemove: typeof memberships = [];
+
     for (const membership of memberships) {
       if (membership.role === 'ORGANIZER') {
-        // Check if there are other organizers
         const eventMemberships = await ctx.db
           .query('memberships')
           .withIndex('by_event', q => q.eq('eventId', membership.eventId))
@@ -364,260 +366,199 @@ export const deleteUserAccount = mutation({
         );
 
         if (otherOrganizers.length === 0) {
-          // No other organizers - try to promote someone else
           const otherMembers = eventMemberships.filter(
             m => m._id !== membership._id
           );
 
           if (otherMembers.length > 0) {
-            // Promote the first moderator, or first attendee if no moderators
             const newOrganizer =
               otherMembers.find(m => m.role === 'MODERATOR') || otherMembers[0];
             await ctx.db.patch(newOrganizer._id, {
               role: 'ORGANIZER',
               updatedAt: Date.now(),
             });
+            membershipsToRemove.push(membership);
           } else {
-            // No other members - delete the entire event
-            await deleteEventAndRelatedData(ctx, membership.eventId);
-            continue; // Skip membership deletion since event is deleted
+            eventsToDelete.push(membership.eventId);
           }
+        } else {
+          membershipsToRemove.push(membership);
         }
+      } else {
+        membershipsToRemove.push(membership);
       }
+    }
 
-      // Dispatch onMemberLeft lifecycle before deleting membership
+    // Phase 2: Delete entire events where user was sole member
+    for (const eventId of eventsToDelete) {
+      await cascadeDeleteEventData(ctx, eventId);
+    }
+
+    // Phase 3: Remove user from remaining events
+    for (const membership of membershipsToRemove) {
       await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
-        personId: membership.personId,
+        personId: person._id,
       });
+    }
 
-      // Delete invites created by this membership
-      const invites = await ctx.db
-        .query('invites')
-        .withIndex('by_creator', q => q.eq('createdById', membership._id))
-        .collect();
+    // Batch-read related data for all memberships to remove
+    const [invitesByMembership, availabilitiesByMembership, eventDocs] =
+      await Promise.all([
+        Promise.all(
+          membershipsToRemove.map(m =>
+            ctx.db
+              .query('invites')
+              .withIndex('by_creator', q => q.eq('createdById', m._id))
+              .collect()
+          )
+        ),
+        Promise.all(
+          membershipsToRemove.map(m =>
+            ctx.db
+              .query('availabilities')
+              .withIndex('by_membership', q => q.eq('membershipId', m._id))
+              .collect()
+          )
+        ),
+        Promise.all(membershipsToRemove.map(m => ctx.db.get(m.eventId))),
+      ]);
 
+    const memberCounts = await Promise.all(
+      membershipsToRemove.map((m, i) => {
+        const event = eventDocs[i];
+        return event
+          ? getOrComputeMemberCount(ctx, m.eventId, event)
+          : Promise.resolve(0);
+      })
+    );
+
+    for (const invites of invitesByMembership) {
       for (const invite of invites) {
         await ctx.db.delete(invite._id);
       }
+    }
 
-      // Delete availabilities for this membership
-      const availabilities = await ctx.db
-        .query('availabilities')
-        .withIndex('by_membership', q => q.eq('membershipId', membership._id))
-        .collect();
-
-      for (const availability of availabilities) {
-        await ctx.db.delete(availability._id);
+    for (const avails of availabilitiesByMembership) {
+      for (const a of avails) {
+        await ctx.db.delete(a._id);
       }
+    }
 
-      const event = await ctx.db.get(membership.eventId);
-      const countBeforeDelete = event
-        ? await getOrComputeMemberCount(ctx, membership.eventId, event)
-        : 0;
-
-      await ctx.db.delete(membership._id);
-
+    for (let i = 0; i < membershipsToRemove.length; i++) {
+      await ctx.db.delete(membershipsToRemove[i]._id);
+      const event = eventDocs[i];
       if (event) {
-        await ctx.db.patch(membership.eventId, {
-          memberCount: Math.max(0, countBeforeDelete - 1),
+        await ctx.db.patch(membershipsToRemove[i].eventId, {
+          memberCount: Math.max(0, memberCounts[i] - 1),
         });
       }
     }
 
-    // Delete all replies authored by this person
-    const replies = await ctx.db
-      .query('replies')
-      .withIndex('by_author', q => q.eq('authorId', person._id))
-      .collect();
+    // Phase 4: Delete user's authored content
+    // Batch-read all user content and sub-entities
+    const [
+      authoredReplies,
+      authoredPosts,
+      receivedNotifications,
+      personSettings,
+    ] = await Promise.all([
+      ctx.db
+        .query('replies')
+        .withIndex('by_author', q => q.eq('authorId', person._id))
+        .collect(),
+      ctx.db
+        .query('posts')
+        .withIndex('by_author', q => q.eq('authorId', person._id))
+        .collect(),
+      ctx.db
+        .query('notifications')
+        .withIndex('by_person', q => q.eq('personId', person._id))
+        .collect(),
+      ctx.db
+        .query('personSettings')
+        .withIndex('by_person', q => q.eq('personId', person._id))
+        .first(),
+    ]);
 
-    for (const reply of replies) {
-      await ctx.db.delete(reply._id);
+    // Batch-read replies and notifications for each authored post
+    const [repliesByPost, notificationsByPost] = await Promise.all([
+      Promise.all(
+        authoredPosts.map(p =>
+          ctx.db
+            .query('replies')
+            .withIndex('by_post', q => q.eq('postId', p._id))
+            .collect()
+        )
+      ),
+      Promise.all(
+        authoredPosts.map(p =>
+          ctx.db
+            .query('notifications')
+            .withIndex('by_post', q => q.eq('postId', p._id))
+            .collect()
+        )
+      ),
+    ]);
+
+    // Deduplicate reply IDs (user may have replied to their own posts)
+    const replyIdsToDelete = new Set<(typeof authoredReplies)[0]['_id']>();
+    for (const reply of authoredReplies) replyIdsToDelete.add(reply._id);
+    for (const postReplies of repliesByPost) {
+      for (const reply of postReplies) replyIdsToDelete.add(reply._id);
     }
 
-    // Delete all posts authored by this person
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_author', q => q.eq('authorId', person._id))
-      .collect();
+    for (const id of replyIdsToDelete) {
+      await ctx.db.delete(id);
+    }
 
-    for (const post of posts) {
-      // First delete all replies to this post
-      const postReplies = await ctx.db
-        .query('replies')
-        .withIndex('by_post', q => q.eq('postId', post._id))
-        .collect();
+    // Deduplicate notification IDs
+    const notificationIdsToDelete = new Set<
+      (typeof receivedNotifications)[0]['_id']
+    >();
+    for (const n of receivedNotifications) notificationIdsToDelete.add(n._id);
+    for (const postNotifications of notificationsByPost) {
+      for (const n of postNotifications) notificationIdsToDelete.add(n._id);
+    }
 
-      for (const reply of postReplies) {
-        await ctx.db.delete(reply._id);
-      }
+    for (const id of notificationIdsToDelete) {
+      await ctx.db.delete(id);
+    }
 
-      // Delete notifications related to this post
-      const postNotifications = await ctx.db
-        .query('notifications')
-        .withIndex('by_post', q => q.eq('postId', post._id))
-        .collect();
-
-      for (const notification of postNotifications) {
-        await ctx.db.delete(notification._id);
-      }
-
+    for (const post of authoredPosts) {
       await ctx.db.delete(post._id);
     }
 
-    // Delete notifications for this person (received)
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
-
-    // Delete person settings and notification methods
-    const personSettings = await ctx.db
-      .query('personSettings')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .first();
-
+    // Phase 5: Delete person settings and notification methods
     if (personSettings) {
-      // Delete notification methods
       const notificationMethods = await ctx.db
         .query('notificationMethods')
         .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
         .collect();
 
-      for (const method of notificationMethods) {
-        // Delete notification settings for this method
-        const methodSettings = await ctx.db
-          .query('notificationSettings')
-          .withIndex('by_method', q => q.eq('methodId', method._id))
-          .collect();
+      const settingsByMethod = await Promise.all(
+        notificationMethods.map(method =>
+          ctx.db
+            .query('notificationSettings')
+            .withIndex('by_method', q => q.eq('methodId', method._id))
+            .collect()
+        )
+      );
 
-        for (const setting of methodSettings) {
+      for (const settings of settingsByMethod) {
+        for (const setting of settings) {
           await ctx.db.delete(setting._id);
         }
+      }
 
+      for (const method of notificationMethods) {
         await ctx.db.delete(method._id);
       }
 
       await ctx.db.delete(personSettings._id);
     }
 
-    // Delete person record
     await ctx.db.delete(person._id);
-
-    // Note: Better Auth session/account/user cleanup should be handled
-    // by calling auth.api.deleteUser() or similar, but the exact API
-    // may vary. For now, the client should sign out after this mutation.
 
     return { success: true };
   },
 });
-
-/**
- * Helper function to delete an event and all related data
- * Used when the sole organizer deletes their account
- */
-async function deleteEventAndRelatedData(
-  ctx: MutationCtx,
-  eventId: Id<'events'>
-) {
-  // Delete all memberships and their availabilities
-  const memberships = await ctx.db
-    .query('memberships')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-
-  for (const membership of memberships) {
-    const availabilities = await ctx.db
-      .query('availabilities')
-      .withIndex('by_membership', q => q.eq('membershipId', membership._id))
-      .collect();
-
-    for (const availability of availabilities) {
-      await ctx.db.delete(availability._id);
-    }
-
-    // Delete invites created by this membership
-    const invites = await ctx.db
-      .query('invites')
-      .withIndex('by_creator', q => q.eq('createdById', membership._id))
-      .collect();
-
-    for (const invite of invites) {
-      await ctx.db.delete(invite._id);
-    }
-
-    await ctx.db.delete(membership._id);
-  }
-
-  // Delete potential date times
-  const potentialDates = await ctx.db
-    .query('potentialDateTimes')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-
-  for (const date of potentialDates) {
-    await ctx.db.delete(date._id);
-  }
-
-  // Delete posts and their replies
-  const posts = await ctx.db
-    .query('posts')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-
-  for (const post of posts) {
-    const replies = await ctx.db
-      .query('replies')
-      .withIndex('by_post', q => q.eq('postId', post._id))
-      .collect();
-
-    for (const reply of replies) {
-      await ctx.db.delete(reply._id);
-    }
-
-    await ctx.db.delete(post._id);
-  }
-
-  // Delete notifications for this event
-  const notifications = await ctx.db
-    .query('notifications')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-
-  for (const notification of notifications) {
-    await ctx.db.delete(notification._id);
-  }
-
-  // Dispatch onEventDeleted to all add-ons and clean up addon tables
-  await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
-
-  const addonConfigs = await ctx.db
-    .query('eventAddonConfigs')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-  for (const config of addonConfigs) {
-    await ctx.db.delete(config._id);
-  }
-
-  const addonDataEntries = await ctx.db
-    .query('addonData')
-    .withIndex('by_event_addon', q => q.eq('eventId', eventId))
-    .collect();
-  for (const entry of addonDataEntries) {
-    await ctx.db.delete(entry._id);
-  }
-
-  const addonOptOuts = await ctx.db
-    .query('addonOptOuts')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-  for (const optOut of addonOptOuts) {
-    await ctx.db.delete(optOut._id);
-  }
-
-  // Delete the event
-  await ctx.db.delete(eventId);
-}

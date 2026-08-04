@@ -11,6 +11,14 @@ import { createMemberRoutes } from './routes/members';
 import { createAvailabilityRoutes } from './routes/availability';
 import { createFriendRoutes } from './routes/friends';
 import { createAddonRoutes } from './routes/addons';
+import { createNotificationRoutes } from './routes/notifications';
+import { createMutingRoutes } from './routes/muting';
+import { createProfileRoutes } from './routes/profile';
+import { createSettingsRoutes } from './routes/settings';
+import { createThemeRoutes } from './routes/themes';
+import { createInviteRoutes } from './routes/invites';
+import { createReportRoutes } from './routes/reports';
+import { createAdminRoutes } from './routes/admin';
 
 /**
  * REST API v1 Entry Point
@@ -29,8 +37,20 @@ type Variables = {
 /**
  * Create the API v1 Hono app
  */
-function createApiV1App() {
+function createApiV1App(
+  injectedCtx?: unknown,
+  injectedUserId?: string,
+  injectedPersonId?: string
+) {
   const app = new OpenAPIHono<{ Variables: Variables }>();
+
+  // Inject Convex context BEFORE routes are matched
+  app.use('*', async (c, next) => {
+    if (injectedCtx) c.set('ctx', injectedCtx as Variables['ctx']);
+    if (injectedUserId) c.set('userId', injectedUserId);
+    if (injectedPersonId) c.set('personId', injectedPersonId);
+    await next();
+  });
 
   // CORS middleware
   app.use(
@@ -128,6 +148,14 @@ All errors return a consistent JSON format:
       { name: 'Availability', description: 'Date availability voting' },
       { name: 'Friends', description: 'Friend management' },
       { name: 'Add-ons', description: 'Event add-on management' },
+      { name: 'Notifications', description: 'User notifications' },
+      { name: 'Muting', description: 'Muting events and posts' },
+      { name: 'Profile', description: 'User profiles' },
+      { name: 'Settings', description: 'User settings' },
+      { name: 'Themes', description: 'Custom themes' },
+      { name: 'Invites', description: 'Event invitations' },
+      { name: 'Reports', description: 'Content reporting' },
+      { name: 'Admin', description: 'Administrative operations' },
     ],
   });
 
@@ -147,6 +175,14 @@ All errors return a consistent JSON format:
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
   app.route('/', createAddonRoutes());
+  app.route('/', createNotificationRoutes());
+  app.route('/', createMutingRoutes());
+  app.route('/', createProfileRoutes());
+  app.route('/', createSettingsRoutes());
+  app.route('/', createThemeRoutes());
+  app.route('/', createInviteRoutes());
+  app.route('/', createReportRoutes());
+  app.route('/', createAdminRoutes());
 
   // Register OpenAPI security scheme
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {
@@ -165,42 +201,27 @@ All errors return a consistent JSON format:
  * This is the main entry point that Convex HTTP router uses.
  */
 export const handler = httpAction(async (ctx, request) => {
-  const app = createApiV1App();
-
-  // Get the path relative to /api/v1
   const url = new URL(request.url);
   const strippedPath = url.pathname.replace(/^\/api\/v1/, '') || '/';
 
-  // Create a new URL with the stripped path for Hono to match routes
   const honoUrl = new URL(request.url);
   honoUrl.pathname = strippedPath;
 
-  // Skip auth for docs and health endpoints
   const publicPaths = ['/docs', '/openapi.json', '/health', '/'];
   const isPublicPath = publicPaths.some(
     p => strippedPath === p || strippedPath.startsWith('/docs')
   );
 
   if (!isPublicPath) {
-    // Validate API key
     const apiKey = getApiKey(request.headers);
     try {
       const auth = await validateApiKey(ctx, apiKey);
+      const app = createApiV1App(ctx, auth.userId, auth.personId);
 
-      // Clone the request with the rewritten URL for Hono routing
       const modifiedRequest = new Request(honoUrl.toString(), {
         method: request.method,
         headers: request.headers,
         body: request.body,
-      });
-
-      // We need to set context in the Hono app
-      // Use middleware to inject ctx, userId, personId
-      app.use('*', async (c, next) => {
-        c.set('ctx', ctx);
-        c.set('userId', auth.userId);
-        c.set('personId', auth.personId);
-        await next();
       });
 
       return app.fetch(modifiedRequest);
@@ -224,16 +245,11 @@ export const handler = httpAction(async (ctx, request) => {
     }
   }
 
-  // For public paths, create request with rewritten URL and set ctx
+  const app = createApiV1App(ctx);
   const publicRequest = new Request(honoUrl.toString(), {
     method: request.method,
     headers: request.headers,
     body: request.body,
-  });
-
-  app.use('*', async (c, next) => {
-    c.set('ctx', ctx);
-    await next();
   });
 
   return app.fetch(publicRequest);

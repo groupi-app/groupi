@@ -44,17 +44,19 @@
     "convex:dev": "pnpx convex dev",
     "convex:deploy": "pnpx convex deploy",
     "generate": "pnpx convex codegen",
+    "generate:changelog": "pnpm --filter @groupi/web generate:changelog",
     "prepare": "husky",
     "changeset": "changeset",
     "changeset:add": "changeset add",
     "changeset:version": "changeset version",
     "changeset:status": "changeset status",
     "commit": "cz",
-    "release": "changeset version && git add -A && git commit -m 'chore(release): version packages'"
+    "version-packages": "changeset version && pnpm generate:changelog",
+    "release": "changeset version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
-    "convex": "^1.31.4",
+    "convex": "^1.43.0",
     "next": "16.1.7"
   },
   "devDependencies": {

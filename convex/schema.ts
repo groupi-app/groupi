@@ -175,6 +175,7 @@ export default defineSchema({
   })
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
+    .index('by_event_role', ['eventId', 'role'])
     .index('by_person_event', ['personId', 'eventId']),
 
   potentialDateTimes: defineTable({

@@ -317,56 +317,40 @@ export const searchUsersByUsername = query({
     }
 
     const MAX_RESULTS = 10;
-    const BATCH_SIZE = 50; // Larger batches for better parallelism
 
-    // Get persons in batches to find matches more efficiently
-    const persons = await ctx.db.query('persons').collect();
-
-    // Filter out current user first
-    const otherPersons = persons.filter(p => p._id !== currentPerson._id);
-
-    // Process in batches to find matches
-    const matchedPersons: Array<{
-      person: Doc<'persons'>;
-      userData: {
-        name: string | null;
-        username: string | null;
-        image: string | null;
-      };
-    }> = [];
-
-    for (
-      let i = 0;
-      i < otherPersons.length && matchedPersons.length < MAX_RESULTS;
-      i += BATCH_SIZE
-    ) {
-      const batch = otherPersons.slice(i, i + BATCH_SIZE);
-
-      // Fetch user data for batch
-      const batchResults = await Promise.all(
-        batch.map(async person => {
-          const userData = await getUserDataFallback(ctx, person);
-          const username = userData.username?.toLowerCase() || '';
-
-          // Check if username contains search term
-          if (username.includes(trimmedSearch)) {
-            return { person, userData };
-          }
-          return null;
-        })
-      );
-
-      // Add matches
-      for (const result of batchResults) {
-        if (result && matchedPersons.length < MAX_RESULTS) {
-          matchedPersons.push(result);
-        }
+    const matchingUsers = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'user',
+        where: [
+          {
+            field: 'username',
+            operator: 'contains',
+            value: trimmedSearch,
+            mode: 'insensitive',
+          },
+        ],
+        paginationOpts: {
+          cursor: null,
+          numItems: MAX_RESULTS + 1,
+        },
       }
-    }
+    );
 
-    // Only fetch friendship status for matches (much fewer queries)
+    const users = (matchingUsers as { data: ExtendedAuthUser[] }).data ?? [];
+
     const results = await Promise.all(
-      matchedPersons.map(async ({ person, userData }) => {
+      users.slice(0, MAX_RESULTS + 1).map(async user => {
+        const userId = user._id?.toString();
+        if (!userId) return null;
+
+        const person = await ctx.db
+          .query('persons')
+          .withIndex('by_user_id', q => q.eq('userId', userId))
+          .first();
+
+        if (!person || person._id === currentPerson._id) return null;
+
         const friendshipStatus = await getFriendshipStatusHelper(
           ctx,
           currentPerson._id,
@@ -376,16 +360,16 @@ export const searchUsersByUsername = query({
         return {
           personId: person._id,
           userId: person.userId,
-          name: userData.name,
-          username: userData.username,
-          image: userData.image,
+          name: user.name || null,
+          username: user.username || null,
+          image: user.image || null,
           friendshipStatus: friendshipStatus.status,
           friendshipId: friendshipStatus.friendshipId,
         };
       })
     );
 
-    return results;
+    return results.filter(Boolean).slice(0, MAX_RESULTS);
   },
 });
 

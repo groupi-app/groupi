@@ -241,14 +241,6 @@ export const searchUsersForEventInvite = query({
       .collect();
     const memberPersonIds = new Set(existingMemberships.map(m => m.personId));
 
-    // Get pending invites for the event
-    const pendingInvites = await ctx.db
-      .query('eventInvites')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .filter(q => q.eq(q.field('status'), 'PENDING'))
-      .collect();
-    // Note: pendingInvites is used below to check for existing pending invites
-
     // Get banned users
     const bannedUsers = await ctx.db
       .query('eventBans')
@@ -256,68 +248,75 @@ export const searchUsersForEventInvite = query({
       .collect();
     const bannedPersonIds = new Set(bannedUsers.map(b => b.personId));
 
-    // Get all persons and filter
-    const persons = await ctx.db.query('persons').collect();
+    // Search users via Better Auth adapter instead of scanning persons table
+    const matchingUsers = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: 'user',
+        where: [
+          {
+            field: 'username',
+            operator: 'contains',
+            value: trimmedSearch,
+            mode: 'insensitive',
+          },
+        ],
+        paginationOpts: {
+          cursor: null,
+          numItems: MAX_RESULTS + 20,
+        },
+      }
+    );
 
-    // Filter and search
-    const matchedPersons: Array<{
-      person: Doc<'persons'>;
-      userData: {
-        name: string | null;
-        username: string | null;
-        image: string | null;
-      };
+    const users = (matchingUsers as { data: ExtendedAuthUser[] }).data ?? [];
+
+    const results: Array<{
+      personId: Id<'persons'>;
+      name: string | null;
+      username: string | null;
+      image: string | null;
       isFriend: boolean;
+      hasPendingInvite: boolean;
       pendingInviteId: Id<'eventInvites'> | null;
     }> = [];
 
-    for (const person of persons) {
-      if (matchedPersons.length >= MAX_RESULTS) break;
+    for (const user of users) {
+      if (results.length >= MAX_RESULTS) break;
 
-      // Skip if already a member
+      const userId = user._id?.toString();
+      if (!userId) continue;
+
+      const person = await ctx.db
+        .query('persons')
+        .withIndex('by_user_id', q => q.eq('userId', userId))
+        .first();
+
+      if (!person) continue;
       if (memberPersonIds.has(person._id)) continue;
-
-      // Skip if banned
       if (bannedPersonIds.has(person._id)) continue;
 
-      const userData = await getUserDataFallback(ctx, person);
-      const username = userData.username?.toLowerCase() || '';
+      const isFriend = await checkIfFriends(ctx, currentPerson._id, person._id);
 
-      // Check if username matches search term
-      if (username.includes(trimmedSearch)) {
-        // Check friendship status
-        const isFriend = await checkIfFriends(
-          ctx,
-          currentPerson._id,
-          person._id
-        );
+      const pendingInvite = await ctx.db
+        .query('eventInvites')
+        .withIndex('by_event_invitee', q =>
+          q.eq('eventId', eventId).eq('inviteeId', person._id)
+        )
+        .filter(q => q.eq(q.field('status'), 'PENDING'))
+        .first();
 
-        // Check for pending invite
-        const pendingInvite = pendingInvites.find(
-          i => i.inviteeId === person._id
-        );
-
-        matchedPersons.push({
-          person,
-          userData,
-          isFriend,
-          pendingInviteId: pendingInvite?._id || null,
-        });
-      }
+      results.push({
+        personId: person._id,
+        name: user.name || null,
+        username: user.username || null,
+        image: user.image || null,
+        isFriend,
+        hasPendingInvite: !!pendingInvite,
+        pendingInviteId: pendingInvite?._id || null,
+      });
     }
 
-    // Return formatted results
-    return matchedPersons.map(
-      ({ person, userData, isFriend, pendingInviteId }) => ({
-        personId: person._id,
-        name: userData.name,
-        username: userData.username,
-        image: userData.image,
-        isFriend,
-        hasPendingInvite: !!pendingInviteId,
-        pendingInviteId,
-      })
-    );
+    return results;
   },
 });
 

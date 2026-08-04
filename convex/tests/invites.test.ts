@@ -341,11 +341,13 @@ describe('Invites Domain', () => {
       const { inviteToken, userId } = await createTestEventWithInvite(t);
       const auth = createAuthenticatedUser(t, userId);
 
-      await expect(
-        auth.mutation(api.invites.mutations.acceptInvite, {
-          token: inviteToken,
-        })
-      ).rejects.toThrow('You are already a member of this event');
+      const result = await auth.mutation(api.invites.mutations.acceptInvite, {
+        token: inviteToken,
+      });
+
+      expect(result.alreadyMember).toBe(true);
+      expect(result.membership).toBeDefined();
+      expect(result.event).toBeDefined();
     });
 
     test('should fail when user is banned', async () => {

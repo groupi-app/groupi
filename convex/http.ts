@@ -123,6 +123,164 @@ http.route({
   handler: apiV1Handler,
 });
 
+// Notifications routes
+http.route({
+  path: '/api/v1/notifications',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  path: '/api/v1/notifications',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/notifications/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/notifications/',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/notifications/',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+// Muting routes
+http.route({
+  path: '/api/v1/muting',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/muting/',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/muting/',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+// Profile routes
+http.route({
+  path: '/api/v1/profile',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  path: '/api/v1/profile',
+  method: 'PUT',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/profile/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+// Settings routes
+http.route({
+  pathPrefix: '/api/v1/settings/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/settings/',
+  method: 'PUT',
+  handler: apiV1Handler,
+});
+
+// Themes routes
+http.route({
+  path: '/api/v1/themes',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  path: '/api/v1/themes',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/themes/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/themes/',
+  method: 'PUT',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/themes/',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+// Invites routes (note: /events/:eventId/invites is covered by events pathPrefix)
+http.route({
+  pathPrefix: '/api/v1/invites/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/invites/',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/invites/',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+// Reports routes
+http.route({
+  path: '/api/v1/reports',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+// Admin routes
+http.route({
+  pathPrefix: '/api/v1/admin/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/admin/',
+  method: 'DELETE',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/admin/',
+  method: 'PUT',
+  handler: apiV1Handler,
+});
+
 // Handle OPTIONS for CORS preflight
 http.route({
   pathPrefix: '/api/v1/',

@@ -1,4 +1,4 @@
-import { internalQuery, internalMutation } from '../../../_generated/server';
+import { internalQuery } from '../../../_generated/server';
 import { components } from '../../../_generated/api';
 import { v } from 'convex/values';
 import { authComponent, AuthUserId } from '../../../auth';
@@ -9,20 +9,30 @@ import type { Id } from '../../../_generated/dataModel';
  * These are used by the API middleware and routes for authentication and authorization
  */
 
-// Type for API key record from Better Auth
 interface ApiKeyRecord {
   _id: string;
   userId: string;
-  start?: string | null;
+  key: string;
   expiresAt?: number | null;
   enabled?: boolean | null;
 }
 
+async function hashApiKey(raw: string): Promise<string> {
+  const data = new TextEncoder().encode(raw);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const bytes = new Uint8Array(hash);
+  const b64 = btoa(String.fromCharCode(...bytes));
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 /**
- * Validate an API key and return user information
- * Uses internalMutation to access ctx.runQuery for the Better Auth adapter
+ * Validate an API key by hashing it and looking up the hash
+ * in the Better Auth component's apikey table.
+ *
+ * This matches Better Auth's own lookup: hash with SHA-256,
+ * encode as base64url, query by the `key` field.
  */
-export const validateApiKey = internalMutation({
+export const validateApiKey = internalQuery({
   args: {
     apiKey: v.string(),
   },
@@ -33,43 +43,32 @@ export const validateApiKey = internalMutation({
     { userId: string; personId: Id<'persons'> } | { error: string }
   > => {
     try {
-      // Better Auth's apiKey plugin stores keys in the 'apikey' table
-      // The table has: id, name, start, key (hashed), userId, expiresAt, createdAt, etc.
-      // The 'start' field contains the first 10 characters of the key for lookup
+      const hashedKey = await hashApiKey(apiKey);
 
-      const keyPrefix = apiKey.substring(0, 10);
+      const findFn = components.betterAuth.adapter.findMany;
+      const result = await ctx.runQuery(findFn, {
+        model: 'apikey',
+        where: [{ field: 'key', operator: 'eq', value: hashedKey }],
+        paginationOpts: { cursor: null, numItems: 1 },
+      });
 
-      // Query the apikey table using Better Auth's adapter
-      // This properly accesses the component's tables with correct typing
-      const apiKeysResult = await ctx.runQuery(
-        components.betterAuth.adapter.findMany,
-        {
-          model: 'apikey',
-          where: [{ field: 'start', operator: 'eq', value: keyPrefix }],
-          paginationOpts: { cursor: null, numItems: 1 },
-        }
-      );
+      const record = result.page?.[0] as ApiKeyRecord | undefined;
 
-      const apiKeyRecord = apiKeysResult.page?.[0] as ApiKeyRecord | undefined;
-
-      if (!apiKeyRecord) {
+      if (!record) {
         return { error: 'Invalid API key.' };
       }
 
-      // Check expiration
-      if (apiKeyRecord.expiresAt && apiKeyRecord.expiresAt < Date.now()) {
-        return { error: 'API key has expired.' };
-      }
-
-      // Check if key is enabled (if the field exists)
-      if (apiKeyRecord.enabled === false) {
+      if (record.enabled === false) {
         return { error: 'API key is disabled.' };
       }
 
-      // Get the person record for this user
+      if (record.expiresAt && record.expiresAt < Date.now()) {
+        return { error: 'API key has expired.' };
+      }
+
       const person = await ctx.db
         .query('persons')
-        .withIndex('by_user_id', q => q.eq('userId', apiKeyRecord.userId))
+        .withIndex('by_user_id', q => q.eq('userId', record.userId))
         .first();
 
       if (!person) {
@@ -77,7 +76,7 @@ export const validateApiKey = internalMutation({
       }
 
       return {
-        userId: apiKeyRecord.userId,
+        userId: record.userId,
         personId: person._id,
       };
     } catch (error) {

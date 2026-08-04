@@ -4,9 +4,8 @@ import {
   authComponent,
   getCurrentUserAndPerson as getAuthUserAndPerson,
   isAdmin,
-  AuthUserId,
-  ExtendedAuthUser,
 } from '../auth';
+import { components } from '../_generated/api';
 
 /**
  * Client-accessible auth queries
@@ -77,22 +76,15 @@ export const getEmailForUsername = query({
   handler: async (ctx, { username }) => {
     const searchUsername = username.toLowerCase();
 
-    // Get all persons and find the one with matching username
-    const persons = await ctx.db.query('persons').collect();
+    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+      model: 'user',
+      where: [{ field: 'username', operator: 'eq', value: searchUsername }],
+    });
 
-    for (const person of persons) {
-      const user = await authComponent.getAnyUserById(
-        ctx,
-        person.userId as AuthUserId
-      );
-      if (
-        user &&
-        (user as ExtendedAuthUser).username?.toLowerCase() === searchUsername
-      ) {
-        return { email: user.email };
-      }
+    if (!user) {
+      return null;
     }
 
-    return null;
+    return { email: user.email as string };
   },
 });

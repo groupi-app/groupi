@@ -1,4 +1,5 @@
-import { z } from '@hono/zod-openapi';
+import { z, extendZodWithOpenApi } from '@hono/zod-openapi';
+extendZodWithOpenApi(z);
 import { TimestampSchema } from './common';
 
 /**
