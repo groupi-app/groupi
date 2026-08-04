@@ -1,6 +1,7 @@
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
+import { getPersonWithUser } from '../../../auth';
 
 /**
  * Internal queries and mutations for invite routes
@@ -129,6 +130,48 @@ export const getInviteByToken = internalQuery({
       name: invite.name ?? null,
       expired,
       maxUsesReached: maxUsesReached ?? false,
+    };
+  },
+});
+
+/**
+ * Get minimal invite metadata for OpenGraph previews.
+ * Returns only non-sensitive event info (title, location, date, creator name).
+ * No authentication required since invite links are meant to be shared.
+ */
+export const getInviteOgMeta = internalQuery({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, { token }) => {
+    const invite = await ctx.db
+      .query('invites')
+      .withIndex('by_token', q => q.eq('token', token))
+      .first();
+
+    if (!invite) return null;
+
+    // Check validity
+    if (invite.expiresAt && invite.expiresAt <= Date.now()) return null;
+    if (invite.usesRemaining !== undefined && invite.usesRemaining <= 0)
+      return null;
+
+    const event = await ctx.db.get(invite.eventId);
+    if (!event) return null;
+
+    // Get creator name
+    let creatorName: string | null = null;
+    const creatorData = await getPersonWithUser(ctx, event.creatorId);
+    if (creatorData?.user) {
+      creatorName = creatorData.user.name ?? creatorData.user.username ?? null;
+    }
+
+    return {
+      title: event.title,
+      location: event.location ?? null,
+      chosenDateTime: event.chosenDateTime ?? null,
+      chosenEndDateTime: event.chosenEndDateTime ?? null,
+      creatorName,
     };
   },
 });
