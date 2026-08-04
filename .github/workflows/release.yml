@@ -33,7 +33,7 @@ jobs:
       - name: Create Release PR or Tag
         uses: changesets/action@v1
         with:
-          version: pnpm changeset version
+          version: pnpm run version-packages
           commit: 'chore(release): version packages'
           title: 'chore(release): version packages'
         env:

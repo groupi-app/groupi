@@ -42,9 +42,25 @@ function parseChangelog(content: string): ChangelogEntry[] {
   let currentEntry: ChangelogEntry | null = null;
   let currentSection: ChangelogSection | null = null;
 
+  const sectionTypeMap: Record<string, ChangelogSection['type']> = {
+    added: 'added',
+    changed: 'changed',
+    deprecated: 'deprecated',
+    removed: 'removed',
+    fixed: 'fixed',
+    security: 'security',
+    'minor changes': 'added',
+    'major changes': 'changed',
+    'patch changes': 'fixed',
+  };
+
   for (const line of lines) {
-    // Match version headers like "## [0.1.0] - Initial Release" or "## [1.2.3] - 2024-01-15"
-    const versionMatch = line.match(/^## \[([^\]]+)\](?: - (.+))?/);
+    // Match version headers:
+    //   Keep a Changelog: "## [0.1.0] - Initial Release" or "## [1.2.3] - 2024-01-15"
+    //   Changesets:        "## 0.2.0"
+    const versionMatch =
+      line.match(/^## \[([^\]]+)\](?: - (.+))?/) ||
+      line.match(/^## (\d+\.\d+\.\d+[^\s]*)\s*$/);
     if (versionMatch) {
       if (currentEntry) {
         if (currentSection && currentSection.items.length > 0) {
@@ -62,25 +78,27 @@ function parseChangelog(content: string): ChangelogEntry[] {
       continue;
     }
 
-    // Match section headers like "### Added", "### Fixed", etc.
+    // Match section headers (Keep a Changelog and Changesets formats)
     const sectionMatch = line.match(
-      /^### (Added|Changed|Deprecated|Removed|Fixed|Security)/i
+      /^### (Added|Changed|Deprecated|Removed|Fixed|Security|Minor Changes|Major Changes|Patch Changes)/i
     );
     if (sectionMatch && currentEntry) {
       if (currentSection && currentSection.items.length > 0) {
         currentEntry.changes.push(currentSection);
       }
+      const key = sectionMatch[1].toLowerCase();
       currentSection = {
-        type: sectionMatch[1].toLowerCase() as ChangelogSection['type'],
+        type: sectionTypeMap[key] ?? 'general',
         items: [],
       };
       continue;
     }
 
-    // Match list items
+    // Match list items, stripping optional commit hash prefix (e.g. "abc1234: ")
     const itemMatch = line.match(/^[-*] (.+)/);
     if (itemMatch && currentSection) {
-      currentSection.items.push(itemMatch[1]);
+      const text = itemMatch[1].replace(/^[0-9a-f]{7}: /, '');
+      currentSection.items.push(text);
       continue;
     }
 
@@ -130,20 +148,45 @@ export const changelog: ChangelogEntry[] = ${JSON.stringify(entries, null, 2)};
 }
 
 function main() {
-  // Read CHANGELOG.md from repo root (two levels up from scripts/)
-  const changelogPath = path.resolve(__dirname, '../../../CHANGELOG.md');
+  const repoRoot = path.resolve(__dirname, '../../..');
   const outputPath = path.resolve(__dirname, '../lib/_generated-changelog.ts');
 
-  if (!fs.existsSync(changelogPath)) {
-    console.error('CHANGELOG.md not found at:', changelogPath);
+  // Changesets writes per-package CHANGELOGs. Read from packages/web first
+  // (the user-facing app), then fall back to the root CHANGELOG.md.
+  const packageChangelog = path.join(repoRoot, 'packages/web/CHANGELOG.md');
+  const rootChangelog = path.join(repoRoot, 'CHANGELOG.md');
+
+  let entries: ChangelogEntry[] = [];
+
+  if (fs.existsSync(packageChangelog)) {
+    const content = fs.readFileSync(packageChangelog, 'utf-8');
+    entries = parseChangelog(content);
+  }
+
+  // Merge in root CHANGELOG entries that aren't already present (e.g. 0.1.0 initial)
+  if (fs.existsSync(rootChangelog)) {
+    const rootContent = fs.readFileSync(rootChangelog, 'utf-8');
+    const rootEntries = parseChangelog(rootContent);
+    const existingVersions = new Set(entries.map(e => e.version));
+    for (const entry of rootEntries) {
+      if (!existingVersions.has(entry.version)) {
+        entries.push(entry);
+      }
+    }
+  }
+
+  if (entries.length === 0) {
+    console.error(
+      'No changelog entries found in:',
+      packageChangelog,
+      'or',
+      rootChangelog
+    );
     process.exit(1);
   }
 
-  const content = fs.readFileSync(changelogPath, 'utf-8');
-  const entries = parseChangelog(content);
   const output = generateTypeScriptFile(entries);
 
-  // Ensure lib directory exists
   const libDir = path.dirname(outputPath);
   if (!fs.existsSync(libDir)) {
     fs.mkdirSync(libDir, { recursive: true });
