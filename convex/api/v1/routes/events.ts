@@ -11,6 +11,7 @@ import {
   CreateEventRequestSchema,
   UpdateEventRequestSchema,
 } from '../schemas/events';
+import { parseGDL } from '@groupi/shared';
 
 // Type for Hono app with Convex context
 type Variables = {
@@ -119,10 +120,51 @@ export function createEventRoutes() {
     const personId = c.get('personId');
     const body = c.req.valid('json');
 
+    if (body.gdl && body.potentialDateTimeOptions) {
+      return c.json(
+        {
+          success: false as const,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message:
+              'Cannot specify both "gdl" and "potentialDateTimeOptions". Use one or the other.',
+          },
+        },
+        400
+      );
+    }
+
+    let mutationBody = { personId, ...body };
+
+    if (body.gdl) {
+      const gdlResult = parseGDL(body.gdl);
+      if (!gdlResult.success) {
+        return c.json(
+          {
+            success: false as const,
+            error: {
+              code: 'GDL_PARSE_ERROR',
+              message: `Invalid GDL expression: ${gdlResult.error}`,
+            },
+          },
+          400
+        );
+      }
+
+      const { gdl: _gdl, ...rest } = mutationBody;
+      mutationBody = {
+        ...rest,
+        potentialDateTimeOptions: gdlResult.results.map(opt => ({
+          start: opt.start.toISOString(),
+          end: opt.end?.toISOString(),
+        })),
+      };
+    }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const createFn = internal.api.v1.internal.events.createEvent;
-    const result = await ctx.runMutation(createFn, { personId, ...body });
+    const result = await ctx.runMutation(createFn, mutationBody);
 
     return c.json(
       {

@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAction } from 'convex/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -17,10 +16,13 @@ import { Icons } from '@/components/icons';
 import { toast } from 'sonner';
 import {
   parseDateExpressions,
+  tryClientDecomposition,
   formatParsedDateRange,
   validateParsedDates,
   type ParsedDateRange,
 } from '@/lib/date-parser';
+import { isGDL, parseGDL } from '@groupi/shared';
+import { GDLHighlightedInput } from '@/components/gdl-highlighted-input';
 
 // Dynamic import for api
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,33 +48,104 @@ interface SmartDateInputProps {
   placeholder?: string;
 }
 
+function useDebounced<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+type PreviewMode = 'empty' | 'gdl' | 'instant' | 'llm';
+
+interface PreviewState {
+  mode: PreviewMode;
+  dates: Array<{ start: Date; end?: Date; note?: string }>;
+  error?: string;
+}
+
+function formatDateOption(opt: {
+  start: Date;
+  end?: Date;
+  note?: string;
+}): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  };
+  const startStr = opt.start.toLocaleString(undefined, options);
+  if (!opt.end) return startStr;
+  const sameDay =
+    opt.start.getFullYear() === opt.end.getFullYear() &&
+    opt.start.getMonth() === opt.end.getMonth() &&
+    opt.start.getDate() === opt.end.getDate();
+  if (sameDay) {
+    const endStr = opt.end.toLocaleString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    return `${startStr} - ${endStr}`;
+  }
+  return `${startStr} - ${opt.end.toLocaleString(undefined, options)}`;
+}
+
 export function SmartDateInput({
   onDatesAdded,
   referenceDate,
-  placeholder = 'e.g., Tuesday and Thursday next week 6-8pm',
+  placeholder = 'e.g., Fr@18-20 or Tuesday and Thursday next week 6-8pm',
 }: SmartDateInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [parsedDates, setParsedDates] = useState<ParsedDateWithSelection[]>([]);
-
   const decomposeDateExpression = useAction(aiActions.decomposeDateExpression);
 
-  const parseInput = useCallback(async () => {
-    if (!inputValue.trim()) {
-      toast.error('Please enter some date/time information');
-      return;
+  const debouncedInput = useDebounced(inputValue.trim(), 200);
+
+  const preview = useMemo((): PreviewState => {
+    if (!debouncedInput) return { mode: 'empty', dates: [] };
+    const refDate = referenceDate || new Date();
+
+    // Tier 1: GDL
+    if (isGDL(debouncedInput)) {
+      const result = parseGDL(debouncedInput, refDate);
+      if (result.success) {
+        return { mode: 'gdl', dates: result.results };
+      }
+      return { mode: 'gdl', dates: [], error: result.error };
     }
 
-    setIsLoading(true);
+    // Tier 2: chrono-node client-side
+    const clientResult = tryClientDecomposition(debouncedInput, refDate);
+    if (clientResult && clientResult.length > 0) {
+      return { mode: 'instant', dates: clientResult };
+    }
 
+    // Tier 3: LLM fallback
+    return { mode: 'llm', dates: [] };
+  }, [debouncedInput, referenceDate]);
+
+  const handleAddDirect = useCallback(() => {
+    if (preview.dates.length === 0) return;
+    onDatesAdded(preview.dates.map(({ start, end }) => ({ start, end })));
+    setInputValue('');
+    toast.success(`Added ${preview.dates.length} date option(s)`);
+  }, [preview, onDatesAdded]);
+
+  const handleLLMParse = useCallback(async () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    setIsLoading(true);
     try {
       const refDate = referenceDate || new Date();
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // Call AI to decompose the input
       const result = await decomposeDateExpression({
-        input: inputValue,
+        input: trimmed,
         referenceDate: refDate.getTime(),
         timezone,
       });
@@ -84,15 +157,12 @@ export function SmartDateInput({
         return;
       }
 
-      // Parse the expressions with chrono-node
       const parsed = parseDateExpressions(result.expressions, refDate);
-
       if (parsed.length === 0) {
         toast.error('Could not parse the dates. Please try rephrasing.');
         return;
       }
 
-      // Validate and add selection state
       const validations = validateParsedDates(parsed);
       const withSelection: ParsedDateWithSelection[] = parsed.map(
         (date, i) => ({
@@ -113,14 +183,22 @@ export function SmartDateInput({
     }
   }, [inputValue, referenceDate, decomposeDateExpression]);
 
+  const handleSubmit = useCallback(() => {
+    if (preview.mode === 'gdl' || preview.mode === 'instant') {
+      handleAddDirect();
+    } else if (preview.mode === 'llm') {
+      handleLLMParse();
+    }
+  }, [preview.mode, handleAddDirect, handleLLMParse]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        parseInput();
+        handleSubmit();
       }
     },
-    [parseInput]
+    [handleSubmit]
   );
 
   const toggleDateSelection = useCallback((id: string) => {
@@ -154,40 +232,93 @@ export function SmartDateInput({
   }, []);
 
   const selectedCount = parsedDates.filter(d => d.selected).length;
+  const isLLMMode = preview.mode === 'llm';
+  const isGDLMode = preview.mode === 'gdl';
+  const hasDirectPreview =
+    (preview.mode === 'gdl' || preview.mode === 'instant') &&
+    preview.dates.length > 0;
 
   return (
     <>
-      <div className='flex flex-col gap-2'>
+      <div className='flex flex-col gap-1.5'>
         <div className='flex items-center gap-2'>
           <div className='relative flex-1'>
-            <Icons.sparkles className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground' />
-            <Input
-              type='text'
-              placeholder={placeholder}
+            <Icons.sparkles
+              className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-lifted size-4 ${
+                isLLMMode
+                  ? 'smart-date-rainbow-icon'
+                  : 'text-muted-foreground/30 transition-colors duration-normal'
+              }`}
+            />
+            <GDLHighlightedInput
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              onChange={setInputValue}
               onKeyDown={handleKeyDown}
-              className='pl-9 pr-4'
+              placeholder={placeholder}
               disabled={isLoading}
+              highlight={isGDLMode}
+              rainbowFocus={isLLMMode}
+              className='pl-9'
             />
           </div>
-          <Button
-            type='button'
-            onClick={parseInput}
-            disabled={isLoading || !inputValue.trim()}
-            size='sm'
-          >
-            {isLoading ? (
-              <Icons.spinner className='size-4 animate-spin' />
-            ) : (
-              'Parse'
-            )}
-          </Button>
+          {preview.mode !== 'empty' && (
+            <Button
+              type='button'
+              onClick={handleSubmit}
+              disabled={isLoading || (isGDLMode && preview.dates.length === 0)}
+              size='sm'
+              variant={hasDirectPreview ? 'default' : 'outline'}
+            >
+              {isLoading ? (
+                <Icons.spinner className='size-4 animate-spin' />
+              ) : hasDirectPreview ? (
+                <Icons.plus className='size-4' />
+              ) : (
+                <Icons.sparkles className='size-4' />
+              )}
+            </Button>
+          )}
         </div>
-        <p className='text-xs text-muted-foreground'>
-          Describe your event times naturally. Press Enter or click Parse to
-          interpret.
-        </p>
+
+        {hasDirectPreview && (
+          <div className='flex flex-wrap gap-1.5 px-1'>
+            {[...preview.dates]
+              .sort((a, b) => a.start.getTime() - b.start.getTime())
+              .map((date, i) => (
+                <span
+                  key={i}
+                  className='text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-badge'
+                >
+                  {formatDateOption(date)}
+                  {date.note && ` — ${date.note}`}
+                </span>
+              ))}
+          </div>
+        )}
+
+        {isGDLMode && preview.error && (
+          <p className='text-xs text-error px-1'>{preview.error}</p>
+        )}
+
+        {isLLMMode && (
+          <p className='text-xs text-muted-foreground px-1'>
+            AI will parse this expression
+          </p>
+        )}
+
+        {preview.mode === 'empty' && (
+          <p className='text-xs text-muted-foreground px-1'>
+            Describe your event times naturally or use a{' '}
+            <a
+              href='/gdl'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='underline hover:text-foreground transition-colors'
+            >
+              GDL expression
+            </a>
+          </p>
+        )}
       </div>
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
@@ -218,9 +349,6 @@ export function SmartDateInput({
                 <div className='flex-1 min-w-0'>
                   <div className='text-sm font-medium'>
                     {formatParsedDateRange(date)}
-                  </div>
-                  <div className='text-xs text-muted-foreground truncate'>
-                    Parsed from: &quot;{date.text}&quot;
                   </div>
                   {date.validationErrors.length > 0 && (
                     <div className='text-xs text-warning mt-1'>

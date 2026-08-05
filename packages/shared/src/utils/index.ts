@@ -9,6 +9,7 @@ import type { ValidationResult, FormField, AsyncState } from '../types';
 export * from './device';
 export * from './keyboard';
 export * from './accessibility';
+export * from './gdl-parser';
 
 // Date and time utilities
 export function formatDate(date: Date | number): string {

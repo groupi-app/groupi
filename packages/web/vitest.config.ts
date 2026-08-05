@@ -78,6 +78,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/convex': resolve(__dirname, '../../convex'),
+      '@groupi/shared': resolve(__dirname, '../shared/src'),
       '@': resolve(__dirname, '.'),
       '~': resolve(__dirname, '.'),
     },
