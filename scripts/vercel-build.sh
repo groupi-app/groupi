@@ -45,9 +45,19 @@ else
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "$BUILD_CMD"
 
-  # Enable E2E testing functions on preview deployments
-  echo "Enabling E2E testing on preview: $PREVIEW_NAME..."
+  # Set environment variables on preview deployments
+  echo "Configuring preview environment: $PREVIEW_NAME..."
   npx convex env set E2E_TESTING true --preview-name "$PREVIEW_NAME" || echo "Warning: Could not set E2E_TESTING env var"
+
+  # Auth needs SITE_URL and BETTER_AUTH_SECRET to create sessions
+  if [ -n "$BETTER_AUTH_SECRET" ]; then
+    PREVIEW_SITE_URL="${VERCEL_BRANCH_URL:+https://$VERCEL_BRANCH_URL}"
+    if [ -n "$PREVIEW_SITE_URL" ]; then
+      npx convex env set SITE_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME" || true
+      npx convex env set BETTER_AUTH_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME" || true
+    fi
+    npx convex env set BETTER_AUTH_SECRET "$BETTER_AUTH_SECRET" --preview-name "$PREVIEW_NAME" || true
+  fi
 fi
 
 echo "=== Build Complete ==="

@@ -11,7 +11,7 @@ import {
   CreateEventRequestSchema,
   UpdateEventRequestSchema,
 } from '../schemas/events';
-import { parseGDL } from '@groupi/shared';
+import { parseGDL } from '../../../lib/gdl-parser';
 
 // Type for Hono app with Convex context
 type Variables = {
