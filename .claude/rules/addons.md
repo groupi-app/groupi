@@ -642,9 +642,9 @@ Custom addon automations run via `TrustedAddonContext` because they need schedul
 
 ## REST API Rules
 
-### Rule 33: REST API follows standard response format
+### Rule 33: REST API follows standard REST conventions
 
-All responses use: `{ success: boolean, data?: ..., error?: { code, message } }`.
+Success responses return data directly (no envelope). Errors use `{ error: { code, message } }`. Deletes return 204 No Content.
 
 ### Rule 34: REST API enforces same auth as Convex mutations
 

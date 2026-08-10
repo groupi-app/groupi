@@ -69,7 +69,6 @@ function createApiV1App(
     if (err instanceof HTTPException) {
       return c.json(
         {
-          success: false,
           error: {
             code:
               err.status === 401
@@ -86,7 +85,6 @@ function createApiV1App(
     console.error('Unhandled error:', err);
     return c.json(
       {
-        success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: 'An unexpected error occurred',
@@ -121,11 +119,10 @@ API requests are rate limited. If you exceed the limit, you'll receive a 429 Too
 
 ## Errors
 
-All errors return a consistent JSON format:
+All errors return a consistent JSON format with an appropriate HTTP status code:
 
 \`\`\`json
 {
-  "success": false,
   "error": {
     "code": "ERROR_CODE",
     "message": "Human-readable error message"
@@ -229,7 +226,6 @@ export const handler = httpAction(async (ctx, request) => {
       if (error instanceof HTTPException) {
         return new Response(
           JSON.stringify({
-            success: false,
             error: {
               code: 'UNAUTHORIZED',
               message: error.message,

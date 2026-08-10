@@ -51,12 +51,9 @@ export const AvailabilityGridEntrySchema = z
 // Full availability grid response
 export const AvailabilityGridResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      eventId: z.string(),
-      potentialDates: z.array(AvailabilityGridEntrySchema),
-      userMembershipId: z.string(),
-    }),
+    eventId: z.string(),
+    potentialDates: z.array(AvailabilityGridEntrySchema),
+    userMembershipId: z.string(),
   })
   .openapi('AvailabilityGridResponse');
 
@@ -75,18 +72,12 @@ export const SubmitAvailabilityRequestSchema = z
 // Submit availability response
 export const SubmitAvailabilityResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      updated: z.number().int(),
-      created: z.number().int(),
-    }),
+    updated: z.number().int(),
+    created: z.number().int(),
   })
   .openapi('SubmitAvailabilityResponse');
 
 // Potential dates list response
 export const PotentialDatesResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: z.array(PotentialDateTimeSchema),
-  })
+  .array(PotentialDateTimeSchema)
   .openapi('PotentialDatesResponse');

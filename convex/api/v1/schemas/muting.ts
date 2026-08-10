@@ -41,20 +41,7 @@ export const MutedPostSchema = z
 // Muted list response (combined or filtered)
 export const MutedListResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      events: z.array(MutedEventSchema),
-      posts: z.array(MutedPostSchema),
-    }),
+    events: z.array(MutedEventSchema),
+    posts: z.array(MutedPostSchema),
   })
   .openapi('MutedListResponse');
-
-// Generic muting success response
-export const MutingSuccessResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: z.object({
-      message: z.string(),
-    }),
-  })
-  .openapi('MutingSuccessResponse');

@@ -72,12 +72,9 @@ export function createAvailabilityRoutes() {
 
     return c.json(
       {
-        success: true as const,
-        data: {
-          eventId,
-          potentialDates: result.potentialDates,
-          userMembershipId: membership.membershipId,
-        },
+        eventId,
+        potentialDates: result.potentialDates,
+        userMembershipId: membership.membershipId,
       },
       200
     );
@@ -155,11 +152,8 @@ export function createAvailabilityRoutes() {
 
     return c.json(
       {
-        success: true as const,
-        data: {
-          updated: result.updated,
-          created: result.created,
-        },
+        updated: result.updated,
+        created: result.created,
       },
       200
     );
@@ -216,13 +210,7 @@ export function createAvailabilityRoutes() {
     const getDatesFn = internal.api.v1.internal.availability.getPotentialDates;
     const result = await ctx.runQuery(getDatesFn, { eventId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result.potentialDates,
-      },
-      200
-    );
+    return c.json(result.potentialDates, 200);
   });
 
   return app;

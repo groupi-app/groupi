@@ -1,5 +1,4 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { canModifyReply } from '../middleware/auth';
@@ -86,20 +85,13 @@ export function createReplyRoutes() {
     if (!result) {
       return c.json(
         {
-          success: false as const,
           error: { code: 'NOT_FOUND', message: 'Post not found' },
         },
         404
       );
     }
 
-    return c.json(
-      {
-        success: true as const,
-        data: result.replies,
-      },
-      200
-    );
+    return c.json(result.replies, 200);
   });
 
   // POST /posts/:postId/replies - Create reply
@@ -182,7 +174,6 @@ export function createReplyRoutes() {
     if (!result) {
       return c.json(
         {
-          success: false as const,
           error: { code: 'NOT_FOUND', message: 'Post not found' },
         },
         404
@@ -191,10 +182,7 @@ export function createReplyRoutes() {
 
     return c.json(
       {
-        success: true as const,
-        data: {
-          replyId: result.replyId,
-        },
+        replyId: result.replyId,
       },
       201
     );
@@ -272,13 +260,7 @@ export function createReplyRoutes() {
     const updateFn = internal.api.v1.internal.replies.updateReply;
     const result = await ctx.runMutation(updateFn, { replyId, ...body });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // DELETE /replies/:replyId - Delete reply
@@ -293,16 +275,8 @@ export function createReplyRoutes() {
       params: ReplyIdParamSchema,
     },
     responses: {
-      200: {
+      204: {
         description: 'Reply deleted',
-        content: {
-          'application/json': {
-            schema: z.object({
-              success: z.literal(true),
-              data: z.object({ message: z.string() }),
-            }),
-          },
-        },
       },
       401: {
         description: 'Unauthorized',
@@ -348,13 +322,7 @@ export function createReplyRoutes() {
     const deleteFn = internal.api.v1.internal.replies.deleteReply;
     await ctx.runMutation(deleteFn, { replyId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: { message: 'Reply deleted successfully' },
-      },
-      200
-    );
+    return c.body(null, 204);
   });
 
   return app;

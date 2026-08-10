@@ -181,19 +181,16 @@ export default function APIReferencePage() {
             path='/events'
             summary='List events'
             description='Get all events the authenticated user is a member of.'
-            response={`{
-  "success": true,
-  "data": [{
-    "id": "k170...",
-    "title": "Team Offsite",
-    "description": "Annual event",
-    "location": "Mountain View",
-    "chosenDateTime": 1704067200000,
-    "memberCount": 12,
-    "userRole": "ORGANIZER",
-    "userRsvpStatus": "YES"
-  }]
-}`}
+            response={`[{
+  "id": "k170...",
+  "title": "Team Offsite",
+  "description": "Annual event",
+  "location": "Mountain View",
+  "chosenDateTime": 1704067200000,
+  "memberCount": 12,
+  "userRole": "ORGANIZER",
+  "userRsvpStatus": "YES"
+}]`}
             curl={`curl -H "x-api-key: grp_xxx" \\
   https://api.groupi.gg/api/v1/events`}
           />
@@ -229,11 +226,8 @@ export default function APIReferencePage() {
   "reminderOffset": "1_DAY"           // optional
 }`}
             response={`{
-  "success": true,
-  "data": {
-    "eventId": "k170...",
-    "membershipId": "k171..."
-  }
+  "eventId": "k170...",
+  "membershipId": "k171..."
 }`}
             curl={`curl -X POST -H "x-api-key: grp_xxx" \\
   -H "Content-Type: application/json" \\
@@ -246,19 +240,16 @@ export default function APIReferencePage() {
             summary='Get event details'
             description='Get full details of a specific event. Requires membership.'
             response={`{
-  "success": true,
-  "data": {
-    "id": "k170...",
-    "title": "Team Offsite",
-    "description": "...",
-    "location": "...",
-    "timezone": "America/New_York",
-    "chosenDateTime": null,
-    "reminderOffset": "1_DAY",
-    "creator": {
-      "id": "k172...",
-      "user": { "name": "Alice", "username": "alice" }
-    }
+  "id": "k170...",
+  "title": "Team Offsite",
+  "description": "...",
+  "location": "...",
+  "timezone": "America/New_York",
+  "chosenDateTime": null,
+  "reminderOffset": "1_DAY",
+  "creator": {
+    "id": "k172...",
+    "user": { "name": "Alice", "username": "alice" }
   }
 }`}
           />
@@ -298,10 +289,7 @@ export default function APIReferencePage() {
   "title": "Meeting Notes",   // required
   "content": "Discussed..."   // required
 }`}
-            response={`{
-  "success": true,
-  "data": { "postId": "k173..." }
-}`}
+            response={`{ "postId": "k173..." }`}
           />
           <Endpoint
             method='GET'
@@ -355,16 +343,13 @@ export default function APIReferencePage() {
             path='/events/{eventId}/members'
             summary='List members'
             description='Get all members of an event with their roles and RSVP status.'
-            response={`{
-  "success": true,
-  "data": [{
-    "id": "k174...",
-    "role": "ATTENDEE",
-    "rsvpStatus": "YES",
-    "person": { "id": "...", "userId": "..." },
-    "user": { "name": "Bob", "username": "bob" }
-  }]
-}`}
+            response={`[{
+  "id": "k174...",
+  "role": "ATTENDEE",
+  "rsvpStatus": "YES",
+  "person": { "id": "...", "userId": "..." },
+  "user": { "name": "Bob", "username": "bob" }
+}]`}
           />
           <Endpoint
             method='PATCH'
@@ -451,7 +436,7 @@ export default function APIReferencePage() {
             method='GET'
             path='/notifications/count'
             summary='Get unread count'
-            response={`{ "success": true, "data": { "count": 5 } }`}
+            response={`{ "count": 5 }`}
           />
           <Endpoint
             method='POST'
@@ -490,10 +475,7 @@ export default function APIReferencePage() {
             method='POST'
             path='/events/{eventId}/invites'
             summary='Create invite link'
-            response={`{
-  "success": true,
-  "data": { "inviteId": "...", "token": "abc123", "url": "https://groupi.gg/invite/abc123" }
-}`}
+            response={`{ "id": "...", "token": "abc123" }`}
           />
           <Endpoint
             method='DELETE'
@@ -650,15 +632,21 @@ export default function APIReferencePage() {
           <div className='rounded-card bg-card p-4 text-sm space-y-3'>
             <div>
               <p className='font-medium mb-1'>Success</p>
+              <p className='text-muted-foreground text-xs mb-1'>
+                Data is returned directly — no envelope. HTTP status code
+                indicates success (200, 201, 204).
+              </p>
               <pre className='bg-bg-sunken rounded-input p-3 text-xs'>
-                {`{ "success": true, "data": { ... } }`}
+                {`// GET /events/{eventId} → 200
+{ "id": "k170...", "title": "Team Offsite", ... }
+
+// DELETE /events/{eventId} → 204 No Content`}
               </pre>
             </div>
             <div>
               <p className='font-medium mb-1'>Error</p>
               <pre className='bg-bg-sunken rounded-input p-3 text-xs'>
                 {`{
-  "success": false,
   "error": {
     "code": "NOT_FOUND",
     "message": "Event not found"

@@ -7,12 +7,11 @@ import {
 extendZodWithOpenApi(z);
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { ErrorResponseSchema } from '../schemas/common';
+import { ErrorResponseSchema, MessageResponseSchema } from '../schemas/common';
 import {
   NotificationIdParamSchema,
   NotificationListResponseSchema,
   UnreadCountResponseSchema,
-  NotificationSuccessResponseSchema,
 } from '../schemas/notifications';
 
 type Variables = {
@@ -73,13 +72,7 @@ export function createNotificationRoutes() {
     const listFn = internal.api.v1.internal.notifications.listNotifications;
     const result = await ctx.runQuery(listFn, { personId, unreadOnly });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // GET /notifications/count - Get unread count
@@ -119,13 +112,7 @@ export function createNotificationRoutes() {
     const countFn = internal.api.v1.internal.notifications.getUnreadCount;
     const result = await ctx.runQuery(countFn, { personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: { count: result.count },
-      },
-      200
-    );
+    return c.json({ count: result.count }, 200);
   });
 
   // POST /notifications/:notificationId/read - Mark as read
@@ -144,7 +131,7 @@ export function createNotificationRoutes() {
         description: 'Notification marked as read',
         content: {
           'application/json': {
-            schema: NotificationSuccessResponseSchema,
+            schema: MessageResponseSchema,
           },
         },
       },
@@ -178,23 +165,11 @@ export function createNotificationRoutes() {
       const readFn = internal.api.v1.internal.notifications.markAsRead;
       await ctx.runMutation(readFn, { notificationId, personId });
 
-      return c.json(
-        {
-          success: true as const,
-          data: { message: 'Notification marked as read' },
-        },
-        200
-      );
+      return c.json({ message: 'Notification marked as read' }, 200);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Notification not found';
-      return c.json(
-        {
-          success: false as const,
-          error: { code: 'NOT_FOUND', message },
-        },
-        404
-      );
+      return c.json({ error: { code: 'NOT_FOUND', message } }, 404);
     }
   });
 
@@ -214,7 +189,7 @@ export function createNotificationRoutes() {
         description: 'Notification marked as unread',
         content: {
           'application/json': {
-            schema: NotificationSuccessResponseSchema,
+            schema: MessageResponseSchema,
           },
         },
       },
@@ -248,23 +223,11 @@ export function createNotificationRoutes() {
       const unreadFn = internal.api.v1.internal.notifications.markAsUnread;
       await ctx.runMutation(unreadFn, { notificationId, personId });
 
-      return c.json(
-        {
-          success: true as const,
-          data: { message: 'Notification marked as unread' },
-        },
-        200
-      );
+      return c.json({ message: 'Notification marked as unread' }, 200);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Notification not found';
-      return c.json(
-        {
-          success: false as const,
-          error: { code: 'NOT_FOUND', message },
-        },
-        404
-      );
+      return c.json({ error: { code: 'NOT_FOUND', message } }, 404);
     }
   });
 
@@ -281,7 +244,7 @@ export function createNotificationRoutes() {
         description: 'All notifications marked as read',
         content: {
           'application/json': {
-            schema: NotificationSuccessResponseSchema,
+            schema: MessageResponseSchema,
           },
         },
       },
@@ -306,12 +269,7 @@ export function createNotificationRoutes() {
     const result = await ctx.runMutation(markAllFn, { personId });
 
     return c.json(
-      {
-        success: true as const,
-        data: {
-          message: `Marked ${result.count} notifications as read`,
-        },
-      },
+      { message: `Marked ${result.count} notifications as read` },
       200
     );
   });
@@ -328,13 +286,8 @@ export function createNotificationRoutes() {
       params: NotificationIdParamSchema,
     },
     responses: {
-      200: {
+      204: {
         description: 'Notification deleted',
-        content: {
-          'application/json': {
-            schema: NotificationSuccessResponseSchema,
-          },
-        },
       },
       401: {
         description: 'Unauthorized',
@@ -367,23 +320,11 @@ export function createNotificationRoutes() {
       const deleteFn = internal.api.v1.internal.notifications.deleteNotification;
       await ctx.runMutation(deleteFn, { notificationId, personId });
 
-      return c.json(
-        {
-          success: true as const,
-          data: { message: 'Notification deleted' },
-        },
-        200
-      );
+      return c.body(null, 204);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Notification not found';
-      return c.json(
-        {
-          success: false as const,
-          error: { code: 'NOT_FOUND', message },
-        },
-        404
-      );
+      return c.json({ error: { code: 'NOT_FOUND', message } }, 404);
     }
   });
 
@@ -396,13 +337,8 @@ export function createNotificationRoutes() {
     description: 'Delete all notifications for the authenticated user',
     security: [{ apiKey: [] }],
     responses: {
-      200: {
+      204: {
         description: 'All notifications deleted',
-        content: {
-          'application/json': {
-            schema: NotificationSuccessResponseSchema,
-          },
-        },
       },
       401: {
         description: 'Unauthorized',
@@ -423,17 +359,9 @@ export function createNotificationRoutes() {
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     // prettier-ignore
     const deleteAllFn = internal.api.v1.internal.notifications.deleteAllNotifications;
-    const result = await ctx.runMutation(deleteAllFn, { personId });
+    await ctx.runMutation(deleteAllFn, { personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: {
-          message: `Deleted ${result.count} notifications`,
-        },
-      },
-      200
-    );
+    return c.body(null, 204);
   });
 
   return app;

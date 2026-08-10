@@ -117,27 +117,16 @@ export const UpdateEventRequestSchema = z
 
 // Event list response
 export const EventListResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: z.array(EventSummarySchema),
-  })
+  .array(EventSummarySchema)
   .openapi('EventListResponse');
 
 // Single event response
-export const EventResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: EventDetailSchema,
-  })
-  .openapi('EventResponse');
+export const EventResponseSchema = EventDetailSchema;
 
 // Event create response
 export const EventCreateResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      eventId: z.string(),
-      membershipId: z.string(),
-    }),
+    eventId: z.string(),
+    membershipId: z.string(),
   })
   .openapi('EventCreateResponse');

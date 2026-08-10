@@ -42,26 +42,15 @@ export const UpdateReplyRequestSchema = z
 
 // Reply list response
 export const ReplyListResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: z.array(ReplyDetailSchema),
-  })
+  .array(ReplyDetailSchema)
   .openapi('ReplyListResponse');
 
-// Single reply response
-export const ReplyResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: ReplyDetailSchema,
-  })
-  .openapi('ReplyResponse');
+// Single reply response (alias for ReplyDetailSchema)
+export const ReplyResponseSchema = ReplyDetailSchema;
 
 // Reply create response
 export const ReplyCreateResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      replyId: z.string(),
-    }),
+    replyId: z.string(),
   })
   .openapi('ReplyCreateResponse');

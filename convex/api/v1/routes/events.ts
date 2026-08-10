@@ -1,5 +1,4 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { requireEventMembership, requireEventRole } from '../middleware/auth';
@@ -61,13 +60,7 @@ export function createEventRoutes() {
     const listFn = internal.api.v1.internal.events.listUserEvents;
     const result = await ctx.runQuery(listFn, { personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result.events,
-      },
-      200
-    );
+    return c.json(result.events, 200);
   });
 
   // POST /events - Create event
@@ -123,7 +116,6 @@ export function createEventRoutes() {
     if (body.gdl && body.potentialDateTimeOptions) {
       return c.json(
         {
-          success: false as const,
           error: {
             code: 'VALIDATION_ERROR',
             message:
@@ -141,7 +133,6 @@ export function createEventRoutes() {
       if (!gdlResult.success) {
         return c.json(
           {
-            success: false as const,
             error: {
               code: 'GDL_PARSE_ERROR',
               message: `Invalid GDL expression: ${gdlResult.error}`,
@@ -168,11 +159,8 @@ export function createEventRoutes() {
 
     return c.json(
       {
-        success: true as const,
-        data: {
-          eventId: result.eventId,
-          membershipId: result.membershipId,
-        },
+        eventId: result.eventId,
+        membershipId: result.membershipId,
       },
       201
     );
@@ -241,20 +229,13 @@ export function createEventRoutes() {
     if (!result) {
       return c.json(
         {
-          success: false as const,
           error: { code: 'NOT_FOUND', message: 'Event not found' },
         },
         404
       );
     }
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // PATCH /events/:eventId - Update event
@@ -325,13 +306,7 @@ export function createEventRoutes() {
     const updateFn = internal.api.v1.internal.events.updateEvent;
     const result = await ctx.runMutation(updateFn, { eventId, ...body });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // DELETE /events/:eventId - Delete event
@@ -346,16 +321,8 @@ export function createEventRoutes() {
       params: EventIdParamSchema,
     },
     responses: {
-      200: {
-        description: 'Event deleted',
-        content: {
-          'application/json': {
-            schema: z.object({
-              success: z.literal(true),
-              data: z.object({ message: z.string() }),
-            }),
-          },
-        },
+      204: {
+        description: 'Event deleted successfully',
       },
       401: {
         description: 'Unauthorized',
@@ -397,13 +364,7 @@ export function createEventRoutes() {
     const deleteFn = internal.api.v1.internal.events.deleteEvent;
     await ctx.runMutation(deleteFn, { eventId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: { message: 'Event deleted successfully' },
-      },
-      200
-    );
+    return c.body(null, 204);
   });
 
   return app;

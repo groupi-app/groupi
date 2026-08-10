@@ -70,19 +70,3 @@ export const NotificationSettingsSchema = z
     typeSettings: z.array(NotificationTypeSettingSchema),
   })
   .openapi('NotificationSettings');
-
-// Privacy settings response
-export const PrivacySettingsResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: PrivacySettingsSchema,
-  })
-  .openapi('PrivacySettingsResponse');
-
-// Notification settings response
-export const NotificationSettingsResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: NotificationSettingsSchema,
-  })
-  .openapi('NotificationSettingsResponse');
