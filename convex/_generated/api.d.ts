@@ -114,6 +114,7 @@ import type * as invites_mutations from "../invites/mutations.js";
 import type * as invites_queries from "../invites/queries.js";
 import type * as lib_cascade from "../lib/cascade.js";
 import type * as lib_constants from "../lib/constants.js";
+import type * as lib_gdl_parser from "../lib/gdl_parser.js";
 import type * as lib_memberCount from "../lib/memberCount.js";
 import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_privacy from "../lib/privacy.js";
@@ -262,6 +263,7 @@ declare const fullApi: ApiFromModules<{
   "invites/queries": typeof invites_queries;
   "lib/cascade": typeof lib_cascade;
   "lib/constants": typeof lib_constants;
+  "lib/gdl_parser": typeof lib_gdl_parser;
   "lib/memberCount": typeof lib_memberCount;
   "lib/notifications": typeof lib_notifications;
   "lib/privacy": typeof lib_privacy;
