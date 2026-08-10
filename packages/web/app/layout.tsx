@@ -221,6 +221,12 @@ export default function RootLayout({
                               Changelog
                             </Link>
                             <Link
+                              href='/docs/api'
+                              className='underline hover:text-primary-foreground/80'
+                            >
+                              API Reference
+                            </Link>
+                            <Link
                               href={siteConfig.links.github}
                               target='_blank'
                               rel='noopener noreferrer'

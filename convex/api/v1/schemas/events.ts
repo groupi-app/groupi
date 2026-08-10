@@ -86,6 +86,11 @@ export const CreateEventRequestSchema = z
       .openapi({
         description: 'Potential date/time options for voting',
       }),
+    gdl: z.string().optional().openapi({
+      example: '[Tu,Th]@18-20',
+      description:
+        'Groupi Date Language expression to generate potential date/time options. Parsed server-side. Cannot be combined with potentialDateTimeOptions.',
+    }),
     chosenDateTime: z.string().datetime().optional().openapi({
       example: '2024-02-15T18:00:00Z',
       description: 'Fixed event start time (for single-date events)',

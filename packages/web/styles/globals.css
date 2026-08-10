@@ -901,3 +901,90 @@
   animation-timeline: view();
   animation-range: entry 0% entry 30%;
 }
+
+@keyframes rainbow-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(139, 92, 246, 0.3),
+      0 0 12px rgba(139, 92, 246, 0.15);
+  }
+  33% {
+    box-shadow:
+      0 0 0 2px rgba(236, 72, 153, 0.3),
+      0 0 12px rgba(236, 72, 153, 0.15);
+  }
+  66% {
+    box-shadow:
+      0 0 0 2px rgba(59, 130, 246, 0.3),
+      0 0 12px rgba(59, 130, 246, 0.15);
+  }
+}
+
+.smart-date-rainbow {
+  animation: rainbow-glow 3s ease-in-out infinite;
+}
+
+@keyframes rainbow-color {
+  0%,
+  100% {
+    color: rgba(139, 92, 246, 1);
+  }
+  33% {
+    color: rgba(236, 72, 153, 1);
+  }
+  66% {
+    color: rgba(59, 130, 246, 1);
+  }
+}
+
+.smart-date-rainbow-icon {
+  animation: rainbow-color 2.2s ease-in-out infinite;
+}
+
+.smart-date-rainbow-input {
+  border: 2px solid transparent;
+  background-image:
+    linear-gradient(var(--background), var(--background)),
+    linear-gradient(
+      90deg,
+      #ef4444,
+      #f97316,
+      #eab308,
+      #22c55e,
+      #3b82f6,
+      #8b5cf6,
+      #ec4899,
+      #ef4444
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-size:
+    100% 100%,
+    300% 100%;
+  animation:
+    rainbow-shift 3s linear infinite,
+    rainbow-fade-in 0.4s ease-out;
+}
+
+@keyframes rainbow-fade-in {
+  from {
+    border-color: var(--input);
+    background-image:
+      linear-gradient(var(--background), var(--background)),
+      linear-gradient(90deg, transparent, transparent);
+  }
+}
+
+@keyframes rainbow-shift {
+  0% {
+    background-position:
+      0 0,
+      0% 0;
+  }
+  100% {
+    background-position:
+      0 0,
+      300% 0;
+  }
+}
