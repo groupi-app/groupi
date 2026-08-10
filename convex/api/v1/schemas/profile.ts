@@ -49,11 +49,3 @@ export const UsernameParamSchema = z.object({
     description: 'Username to look up',
   }),
 });
-
-// Profile response
-export const ProfileResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: ProfileSchema,
-  })
-  .openapi('ProfileResponse');

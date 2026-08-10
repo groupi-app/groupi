@@ -1,5 +1,4 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema } from '../schemas/common';
@@ -60,13 +59,7 @@ export function createThemeRoutes() {
     const listFn = internal.api.v1.internal.themes.listCustomThemes;
     const result = await ctx.runQuery(listFn, { personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // GET /themes/preferences - Get theme preferences
@@ -106,13 +99,7 @@ export function createThemeRoutes() {
     const getFn = internal.api.v1.internal.themes.getThemePreferences;
     const result = await ctx.runQuery(getFn, { personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // POST /themes - Create custom theme
@@ -174,13 +161,7 @@ export function createThemeRoutes() {
       tokenOverrides: body.tokenOverrides ?? undefined,
     });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      201
-    );
+    return c.json(result, 201);
   });
 
   // PUT /themes/:themeId - Update custom theme
@@ -260,13 +241,7 @@ export function createThemeRoutes() {
       ...body,
     });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // DELETE /themes/:themeId - Delete custom theme
@@ -281,16 +256,8 @@ export function createThemeRoutes() {
       params: ThemeIdParamSchema,
     },
     responses: {
-      200: {
-        description: 'Theme deleted',
-        content: {
-          'application/json': {
-            schema: z.object({
-              success: z.literal(true),
-              data: z.object({ message: z.string() }),
-            }),
-          },
-        },
+      204: {
+        description: 'Deleted successfully',
       },
       401: {
         description: 'Unauthorized',
@@ -329,13 +296,7 @@ export function createThemeRoutes() {
     const deleteFn = internal.api.v1.internal.themes.deleteCustomTheme;
     await ctx.runMutation(deleteFn, { themeId, personId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: { message: 'Theme deleted successfully' },
-      },
-      200
-    );
+    return c.body(null, 204);
   });
 
   // PUT /themes/preferences - Set theme preference
@@ -398,13 +359,7 @@ export function createThemeRoutes() {
       selectedCustomThemeId: body.selectedCustomThemeId ?? undefined,
     });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   return app;

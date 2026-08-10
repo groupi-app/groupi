@@ -1,9 +1,12 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { requireEventMembership, requireEventRole } from '../middleware/auth';
-import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
+import {
+  ErrorResponseSchema,
+  EventIdParamSchema,
+  MessageResponseSchema,
+} from '../schemas/common';
 import {
   EventAddonParamSchema,
   EventAddonDataKeyParamSchema,
@@ -11,10 +14,9 @@ import {
   UpdateAddonConfigRequestSchema,
   SetAddonDataRequestSchema,
   AddonListResponseSchema,
-  AddonConfigSingleResponseSchema,
+  AddonConfigResponseSchema,
   AddonDataListResponseSchema,
-  AddonDataSingleResponseSchema,
-  AddonSuccessResponseSchema,
+  AddonDataEntrySchema,
 } from '../schemas/addons';
 
 // Type for Hono app with Convex context
@@ -80,13 +82,7 @@ export function createAddonRoutes() {
     const listFn = internal.api.v1.internal.addons.listEventAddons;
     const result = await ctx.runQuery(listFn, { eventId });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // POST /events/:eventId/addons/:addonType/enable - Enable addon
@@ -113,7 +109,7 @@ export function createAddonRoutes() {
         description: 'Add-on enabled',
         content: {
           'application/json': {
-            schema: AddonSuccessResponseSchema,
+            schema: MessageResponseSchema,
           },
         },
       },
@@ -162,20 +158,13 @@ export function createAddonRoutes() {
         error instanceof Error ? error.message : 'Failed to enable add-on';
       return c.json(
         {
-          success: false as const,
           error: { code: 'BAD_REQUEST', message },
         },
         400
       );
     }
 
-    return c.json(
-      {
-        success: true as const,
-        data: { message: `Add-on ${addonType} enabled successfully` },
-      },
-      200
-    );
+    return c.json({ message: `Add-on ${addonType} enabled successfully` }, 200);
   });
 
   // POST /events/:eventId/addons/:addonType/disable - Disable addon
@@ -195,7 +184,7 @@ export function createAddonRoutes() {
         description: 'Add-on disabled',
         content: {
           'application/json': {
-            schema: AddonSuccessResponseSchema,
+            schema: MessageResponseSchema,
           },
         },
       },
@@ -231,10 +220,7 @@ export function createAddonRoutes() {
     await ctx.runMutation(disableFn, { eventId, addonType });
 
     return c.json(
-      {
-        success: true as const,
-        data: { message: `Add-on ${addonType} disabled successfully` },
-      },
+      { message: `Add-on ${addonType} disabled successfully` },
       200
     );
   });
@@ -263,7 +249,7 @@ export function createAddonRoutes() {
         description: 'Add-on config updated',
         content: {
           'application/json': {
-            schema: AddonConfigSingleResponseSchema,
+            schema: AddonConfigResponseSchema,
           },
         },
       },
@@ -312,13 +298,7 @@ export function createAddonRoutes() {
         config,
       });
 
-      return c.json(
-        {
-          success: true as const,
-          data: result,
-        },
-        200
-      );
+      return c.json(result, 200);
     } catch (error) {
       const message =
         error instanceof Error
@@ -326,7 +306,6 @@ export function createAddonRoutes() {
           : 'Failed to update add-on config';
       return c.json(
         {
-          success: false as const,
           error: { code: 'BAD_REQUEST', message },
         },
         400
@@ -387,13 +366,7 @@ export function createAddonRoutes() {
     const getDataFn = internal.api.v1.internal.addons.getAddonData;
     const result = await ctx.runQuery(getDataFn, { eventId, addonType });
 
-    return c.json(
-      {
-        success: true as const,
-        data: result,
-      },
-      200
-    );
+    return c.json(result, 200);
   });
 
   // PUT /events/:eventId/addons/:addonType/data/:key - Set addon data entry
@@ -420,7 +393,7 @@ export function createAddonRoutes() {
         description: 'Data entry created or updated',
         content: {
           'application/json': {
-            schema: AddonDataSingleResponseSchema,
+            schema: AddonDataEntrySchema,
           },
         },
       },
@@ -473,15 +446,12 @@ export function createAddonRoutes() {
 
       return c.json(
         {
-          success: true as const,
-          data: {
-            id: result.id,
-            key: result.key,
-            data: result.data,
-            createdBy: result.createdBy,
-            createdAt: result.createdAt,
-            updatedAt: result.updatedAt,
-          },
+          id: result.id,
+          key: result.key,
+          data: result.data,
+          createdBy: result.createdBy,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
         },
         200
       );
@@ -490,7 +460,6 @@ export function createAddonRoutes() {
         error instanceof Error ? error.message : 'Failed to set add-on data';
       return c.json(
         {
-          success: false as const,
           error: { code: 'BAD_REQUEST', message },
         },
         400
@@ -511,16 +480,8 @@ export function createAddonRoutes() {
       params: EventAddonDataKeyParamSchema,
     },
     responses: {
-      200: {
+      204: {
         description: 'Data entry deleted',
-        content: {
-          'application/json': {
-            schema: z.object({
-              success: z.literal(true),
-              data: z.object({ message: z.string() }),
-            }),
-          },
-        },
       },
       401: {
         description: 'Unauthorized',
@@ -558,20 +519,13 @@ export function createAddonRoutes() {
         error instanceof Error ? error.message : 'Failed to delete add-on data';
       return c.json(
         {
-          success: false as const,
           error: { code: 'FORBIDDEN', message },
         },
         403
       );
     }
 
-    return c.json(
-      {
-        success: true as const,
-        data: { message: 'Data entry deleted successfully' },
-      },
-      200
-    );
+    return c.body(null, 204);
   });
 
   return app;

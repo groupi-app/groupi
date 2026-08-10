@@ -76,26 +76,15 @@ export const UpdatePostRequestSchema = z
 
 // Post list response
 export const PostListResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: z.array(PostSummarySchema),
-  })
+  .array(PostSummarySchema)
   .openapi('PostListResponse');
 
 // Single post response
-export const PostResponseSchema = z
-  .object({
-    success: z.literal(true),
-    data: PostDetailSchema,
-  })
-  .openapi('PostResponse');
+export const PostResponseSchema = PostDetailSchema;
 
 // Post create response
 export const PostCreateResponseSchema = z
   .object({
-    success: z.literal(true),
-    data: z.object({
-      postId: z.string(),
-    }),
+    postId: z.string(),
   })
   .openapi('PostCreateResponse');
