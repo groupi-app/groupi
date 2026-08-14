@@ -190,7 +190,7 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
         {selectedPreset === 'custom' ? (
           <View className='gap-3 rounded-card border border-border bg-card p-4'>
             {PERMISSION_KEYS.map(({ key, label }) => (
-              <View key={key} className='gap-2'>
+              <View key={String(key)} className='gap-2'>
                 <Text className='text-sm font-medium text-foreground'>
                   {label}
                 </Text>

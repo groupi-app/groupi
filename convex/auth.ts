@@ -57,7 +57,7 @@ import {
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
-import { expo } from '@better-auth/expo';
+import { expo as _expo } from '@better-auth/expo';
 
 // Import local schema for Better Auth component (local install)
 import authSchema from './betterAuth/schema';

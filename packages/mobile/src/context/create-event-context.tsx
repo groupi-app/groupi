@@ -8,6 +8,13 @@ import {
 
 export type DateType = 'single' | 'multi';
 export type EventVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+export type PermissionLevel = 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
+
+export interface EventPermissions {
+  createPosts?: PermissionLevel;
+  inviteMembers?: PermissionLevel;
+  viewAttendeeList?: PermissionLevel;
+}
 
 export interface DateOption {
   id: string;
@@ -34,6 +41,8 @@ export interface FormState {
   dateOptions: DateOption[];
   imageUri: string | null;
   imageFile: ImageFile | null;
+  addonConfigs: Record<string, Record<string, unknown>>;
+  permissions?: EventPermissions;
 }
 
 interface FormContextValue {
@@ -55,6 +64,7 @@ function createInitialState(): FormState {
     dateOptions: [],
     imageUri: null,
     imageFile: null,
+    addonConfigs: {},
   };
 }
 
