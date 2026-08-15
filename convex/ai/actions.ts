@@ -10,7 +10,7 @@ import { v } from 'convex/values';
  * The LLM handles language decomposition only - it does NOT calculate dates.
  * Chrono-node handles the actual date parsing from the cleaned-up expressions.
  *
- * Uses Groq API with Llama 3.3 70B for reliable structured output.
+ * Uses Groq API with GPT-OSS 20B for reliable structured output.
  *
  * For example: "fri or sat 4-8pm"
  * Returns: ["Friday 4pm to 8pm", "Saturday 4pm to 8pm"]
@@ -103,7 +103,7 @@ Return JSON with an "expressions" array:`;
             Authorization: `Bearer ${groqApiKey}`,
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
+            model: 'openai/gpt-oss-20b',
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt },
