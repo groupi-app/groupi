@@ -206,6 +206,41 @@ describe('NotificationSlate', () => {
     expect(screen.getByText('Test Event')).toBeInTheDocument();
   });
 
+  test.each([
+    ['YES', 'yes'],
+    ['MAYBE', 'maybe'],
+    ['NO', 'no'],
+  ] as const)(
+    'should show the RSVP copied from availability for DATE_CHOSEN (%s)',
+    (rsvp, label) => {
+      const notification = {
+        ...mockNotification,
+        type: 'DATE_CHOSEN' as const,
+        post: undefined,
+        rsvp,
+      };
+
+      render(<NotificationSlate notification={notification} />);
+
+      expect(screen.getByText(label)).toBeInTheDocument();
+      expect(screen.getByText(/Your RSVP was set to/)).toBeInTheDocument();
+    }
+  );
+
+  test('should show when the selected date has no RSVP response', () => {
+    const notification = {
+      ...mockNotification,
+      type: 'DATE_CHOSEN' as const,
+      post: undefined,
+      rsvp: 'PENDING' as const,
+    };
+
+    render(<NotificationSlate notification={notification} />);
+
+    expect(screen.getByText('no response')).toBeInTheDocument();
+    expect(screen.getByText(/Your RSVP was set to/)).toBeInTheDocument();
+  });
+
   test('should format date correctly', () => {
     const notification = {
       ...mockNotification,

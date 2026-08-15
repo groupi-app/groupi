@@ -744,12 +744,19 @@ export const chooseEventDate = mutation({
     eventId: v.id('events'),
     chosenDateTime: v.number(), // Unix timestamp
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end time
+    potentialDateTimeId: v.optional(v.id('potentialDateTimes')),
     reminderOffset: v.optional(reminderOffsetValidator),
     _traceId: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { eventId, chosenDateTime, chosenEndDateTime, reminderOffset }
+    {
+      eventId,
+      chosenDateTime,
+      chosenEndDateTime,
+      potentialDateTimeId,
+      reminderOffset,
+    }
   ) => {
     // Require organizer role (single auth call)
     const { person } = await requireEventRole(ctx, eventId, 'ORGANIZER');
@@ -762,6 +769,22 @@ export const chooseEventDate = mutation({
     // Validate chosen date is in the future
     if (chosenDateTime <= Date.now()) {
       throw new Error('Event date must be in the future');
+    }
+
+    // Only poll selections inherit availability. Manual date edits omit the
+    // potential date ID and preserve the event's current RSVP statuses.
+    if (potentialDateTimeId) {
+      const potentialDateTime = await ctx.db.get(potentialDateTimeId);
+      if (!potentialDateTime || potentialDateTime.eventId !== eventId) {
+        throw new Error('Potential date time does not belong to this event');
+      }
+
+      if (
+        potentialDateTime.dateTime !== chosenDateTime ||
+        potentialDateTime.endDateTime !== chosenEndDateTime
+      ) {
+        throw new Error('Chosen date time does not match the selected option');
+      }
     }
 
     // Validate reminder offset won't result in a past reminder time
@@ -777,11 +800,44 @@ export const chooseEventDate = mutation({
     // Update the event with chosen date
     // Always set both fields together to prevent sync issues
     // If endDateTime not provided, explicitly clear it
+    const now = Date.now();
     await ctx.db.patch(eventId, {
       chosenDateTime: chosenDateTime,
       chosenEndDateTime: chosenEndDateTime ?? undefined,
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
+
+    if (potentialDateTimeId) {
+      const [memberships, availabilities] = await Promise.all([
+        ctx.db
+          .query('memberships')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect(),
+        ctx.db
+          .query('availabilities')
+          .withIndex('by_potential_date', q =>
+            q.eq('potentialDateTimeId', potentialDateTimeId)
+          )
+          .collect(),
+      ]);
+
+      const availabilityStatusByMembership = new Map(
+        availabilities.map(availability => [
+          availability.membershipId,
+          availability.status,
+        ])
+      );
+
+      await Promise.all(
+        memberships.map(membership =>
+          ctx.db.patch(membership._id, {
+            rsvpStatus:
+              availabilityStatusByMembership.get(membership._id) ?? 'PENDING',
+            updatedAt: now,
+          })
+        )
+      );
+    }
 
     // Get the updated event
     const updatedEvent = await ctx.db.get(eventId);
@@ -792,6 +848,7 @@ export const chooseEventDate = mutation({
       type: 'DATE_CHOSEN',
       authorId: person._id,
       datetime: chosenDateTime,
+      rsvpFromMembership: potentialDateTimeId !== undefined,
     });
 
     // Dispatch onDateChosen to all enabled add-ons

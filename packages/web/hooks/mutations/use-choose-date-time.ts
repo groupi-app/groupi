@@ -24,13 +24,15 @@ export function useChooseDateTime() {
     async (
       eventId: Id<'events'>,
       dateTime: Date,
-      endDateTime?: Date | null
+      endDateTime?: Date | null,
+      potentialDateTimeId?: Id<'potentialDateTimes'>
     ) => {
       try {
         const result = await chooseEventDate({
           eventId,
           chosenDateTime: dateTime.getTime(), // Convert to Unix timestamp
           chosenEndDateTime: endDateTime ? endDateTime.getTime() : undefined,
+          potentialDateTimeId,
         });
 
         toast.success('Event date has been chosen!');

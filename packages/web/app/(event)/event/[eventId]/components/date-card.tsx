@@ -91,7 +91,8 @@ export function DateCard({
       await chooseDateTime(
         pdt.eventId,
         new Date(pdt.dateTime),
-        pdt.endDateTime ? new Date(pdt.endDateTime) : null
+        pdt.endDateTime ? new Date(pdt.endDateTime) : null,
+        pdt._id
       );
     } catch {
       // Show error toast (no navigation rollback needed since we're already on the page)

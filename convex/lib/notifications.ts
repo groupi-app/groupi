@@ -413,6 +413,19 @@ interface NotificationMessageContext {
   notificationUrl?: string;
 }
 
+function getRsvpDisplayText(rsvp: RsvpStatus): string {
+  switch (rsvp) {
+    case 'YES':
+      return 'Yes';
+    case 'MAYBE':
+      return 'Maybe';
+    case 'NO':
+      return 'No';
+    case 'PENDING':
+      return 'No response';
+  }
+}
+
 /**
  * Generate email subject for a notification type
  */
@@ -505,7 +518,9 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
     case 'EVENT_EDITED':
       return `The event ${event} has been updated`;
     case 'DATE_CHOSEN':
-      return `A date has been chosen for ${event}`;
+      return rsvp
+        ? `A date has been chosen for ${event}. Your RSVP was set to <strong>${getRsvpDisplayText(rsvp)}</strong>.`
+        : `A date has been chosen for ${event}`;
     case 'DATE_CHANGED':
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
@@ -572,7 +587,9 @@ function getNotificationMessageMarkdown(
     case 'EVENT_EDITED':
       return `The event ${event} has been updated`;
     case 'DATE_CHOSEN':
-      return `A date has been chosen for ${event}`;
+      return rsvp
+        ? `A date has been chosen for ${event}. Your RSVP was set to **${getRsvpDisplayText(rsvp)}**.`
+        : `A date has been chosen for ${event}`;
     case 'DATE_CHANGED':
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
@@ -636,7 +653,9 @@ function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
     case 'EVENT_EDITED':
       return `The event "${event}" has been updated`;
     case 'DATE_CHOSEN':
-      return `A date has been chosen for "${event}"`;
+      return rsvp
+        ? `A date has been chosen for "${event}". Your RSVP was set to ${getRsvpDisplayText(rsvp)}.`
+        : `A date has been chosen for "${event}"`;
     case 'DATE_CHANGED':
       return `The date for "${event}" has been changed`;
     case 'DATE_RESET':
@@ -1208,6 +1227,7 @@ export async function notifyEventMembers(
     postId?: Id<'posts'>;
     datetime?: number;
     rsvp?: RsvpStatus;
+    rsvpFromMembership?: boolean;
     excludePersonIds?: Id<'persons'>[];
   }
 ): Promise<{ sent: Id<'notifications'>[]; skippedMuted: number }> {
@@ -1270,7 +1290,7 @@ export async function notifyEventMembers(
         eventId: data.eventId,
         postId: data.postId,
         datetime: data.datetime,
-        rsvp: data.rsvp,
+        rsvp: data.rsvpFromMembership ? membership.rsvpStatus : data.rsvp,
       },
       { isDnd, messageContext: messageCtx }
     );
