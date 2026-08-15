@@ -96,7 +96,7 @@ Always run `pnpm check` before submitting a PR.
 - **Platform UI**: Web in `packages/web`, mobile in `packages/mobile`
 - **Real-time**: Use Convex queries/mutations, not useState + useEffect for data
 
-See `CLAUDE.md` and `docs/` for detailed architecture documentation.
+See `AGENTS.md` and `docs/` for detailed architecture documentation.
 
 ## Commit Guidelines
 
@@ -248,7 +248,7 @@ Please include:
 
 - Check existing [Discussions](../../discussions) for answers
 - Open a new discussion for general questions
-- Read the documentation in `docs/` and `CLAUDE.md`
+- Read the documentation in `docs/` and `AGENTS.md`
 
 ## Recognition
 

@@ -175,7 +175,7 @@ The app uses a provider hierarchy in `components/providers/`:
 
 ## Related Documentation
 
-- [Architecture Rules](../../.claude/rules/architecture.md)
-- [UI Design System](../../.claude/rules/ui-design-system.md)
-- [Presence System](../../.claude/rules/presence.md)
-- [Testing Guide](../../.claude/rules/testing.md)
+- [Architecture Rules](../../.agents/rules/architecture.md)
+- [UI Design System](../../.agents/rules/ui-design-system.md)
+- [Presence System](../../.agents/rules/presence.md)
+- [Testing Guide](../../.agents/rules/testing.md)

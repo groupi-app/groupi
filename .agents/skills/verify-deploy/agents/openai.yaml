@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Verify Deploy'
+  short_description: 'Monitor GitHub CI and Vercel checks'
+  default_prompt: 'Use $verify-deploy to monitor the requested branch, commit, or PR.'

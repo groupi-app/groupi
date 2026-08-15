@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Test Coverage Gap'
+  short_description: 'Prioritize untested Convex functions'
+  default_prompt: 'Use $test-coverage-gap to find the highest-risk backend test gaps.'
