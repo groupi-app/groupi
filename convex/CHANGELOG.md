@@ -1,5 +1,16 @@
 # @groupi/convex
 
+## 0.3.0
+
+### Minor Changes
+
+- db6b391: Default event RSVPs from date-poll availability and include the assigned status in date-selected notifications.
+- 8e0088a: Add REST API v2 with direct response bodies, 204 delete responses, and normalized validation errors while preserving the existing v1 contract.
+
+### Patch Changes
+
+- 164cdb3: Migrate smart date expression parsing from Llama 3.3 70B to GPT-OSS 20B.
+
 ## 0.2.0
 
 ### Minor Changes
