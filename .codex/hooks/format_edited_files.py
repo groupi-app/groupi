@@ -2,7 +2,6 @@
 """Format files changed by apply_patch and lint tokens after TSX edits."""
 
 import json
-import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -97,15 +96,27 @@ def main() -> None:
         warning("Prettier failed after an edit" + (f": {detail[0]}" if detail else "."))
         return
 
-    if any(path.suffix.lower() == ".tsx" for path in paths) and pnpm:
-        child_env = os.environ.copy()
-        child_env["PATH"] = str(Path(node).parent) + os.pathsep + child_env.get("PATH", "")
+    if any(path.suffix.lower() == ".tsx" for path in paths):
+        tsx = root / "node_modules" / "tsx" / "dist" / "cli.mjs"
+        token_linter = root / "packages" / "web" / "scripts" / "lint-tokens.ts"
+        missing = [
+            str(path.relative_to(root))
+            for path in (tsx, token_linter)
+            if not path.is_file()
+        ]
+        if missing:
+            warning(
+                "Could not lint design tokens after the TSX edit because these local "
+                f"files are unavailable: {', '.join(missing)}. Run `pnpm install` if "
+                "the tsx runtime is missing."
+            )
+            return
+
         tokens = subprocess.run(
-            [pnpm, "lint:tokens"],
+            [node, str(tsx), str(token_linter)],
             cwd=root,
             text=True,
             capture_output=True,
-            env=child_env,
         )
         if tokens.returncode != 0:
             excerpt = "\n".join((tokens.stdout + tokens.stderr).strip().splitlines()[-10:])
