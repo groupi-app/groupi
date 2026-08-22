@@ -13,7 +13,7 @@ A framework for building ui, components and design systems. Components are added
 ## Current Project Context
 
 ```json
-!`npx shadcn@latest info --json 2>/dev/null || echo '{"error": "No shadcn project found. Run shadcn init first."}'`
+Run `pnpm dlx shadcn@latest info --json` to inspect the project before selecting components. If it is not initialized, report that state rather than guessing its configuration.
 ```
 
 The JSON above contains the project config and installed components. Use `npx shadcn@latest docs <component>` to get documentation and example URLs for any component.

@@ -202,5 +202,5 @@ Use `console.log` in your functions - logs appear in the Convex dashboard.
 ## Related Documentation
 
 - [Convex Documentation](https://docs.convex.dev/)
-- [Architecture Rules](../.claude/rules/architecture.md)
-- [Testing Guide](../.claude/rules/testing.md)
+- [Architecture Rules](../.agents/rules/architecture.md)
+- [Testing Guide](../.agents/rules/testing.md)

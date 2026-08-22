@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Fix Issue'
+  short_description: 'Take a GitHub issue through verified repair'
+  default_prompt: 'Use $fix-issue to triage and fix the requested GitHub issue.'

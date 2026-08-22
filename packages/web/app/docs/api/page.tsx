@@ -104,6 +104,7 @@ function Section({
 }
 
 const NAV_SECTIONS = [
+  { id: 'versions', label: 'Versions & Migration' },
   { id: 'auth', label: 'Authentication' },
   { id: 'events', label: 'Events' },
   { id: 'posts', label: 'Posts' },
@@ -146,10 +147,51 @@ export default function APIReferencePage() {
         <div className='mb-8'>
           <h1 className='text-2xl font-bold mb-2'>API Reference</h1>
           <p className='text-muted-foreground'>
-            The Groupi REST API. All endpoints require an API key via the{' '}
+            The Groupi REST API v2. All endpoints require an API key via the{' '}
             <code className='text-sm'>x-api-key</code> header.
           </p>
         </div>
+
+        <section id='versions' className='mb-8 scroll-mt-20'>
+          <h2 className='text-lg font-semibold mb-3'>Versions & Migration</h2>
+          <div className='rounded-card bg-card p-4 text-sm space-y-3'>
+            <p>
+              <strong>v2 is recommended for new integrations.</strong> It
+              returns resources directly and uses{' '}
+              <code className='text-xs'>204 No Content</code> after successful
+              deletes.
+            </p>
+            <pre className='bg-bg-sunken rounded-input p-3 text-xs overflow-x-auto'>
+              {`v2: https://api.groupi.gg/api/v2
+v1: https://api.groupi.gg/api/v1`}
+            </pre>
+            <p className='text-muted-foreground'>
+              The v1 contract remains available for existing integrations. Its
+              successful responses use{' '}
+              <code className='text-xs'>{`{ "success": true, "data": ... }`}</code>{' '}
+              envelopes, and deletes return a JSON confirmation with status 200.
+            </p>
+            <div>
+              <p className='font-medium mb-1'>Migrating from v1</p>
+              <ol className='list-decimal pl-5 space-y-1 text-muted-foreground'>
+                <li>Change the base path from /api/v1 to /api/v2.</li>
+                <li>
+                  Read successful response fields from the top level instead of
+                  from <code className='text-xs'>data</code>.
+                </li>
+                <li>
+                  Treat a 204 response to DELETE as success without parsing a
+                  response body.
+                </li>
+                <li>
+                  Handle validation failures as{' '}
+                  <code className='text-xs'>VALIDATION_ERROR</code> in the
+                  standard error object.
+                </li>
+              </ol>
+            </div>
+          </div>
+        </section>
 
         <section id='auth' className='mb-8 scroll-mt-20'>
           <h2 className='text-lg font-semibold mb-3'>Authentication</h2>
@@ -160,7 +202,7 @@ export default function APIReferencePage() {
             </p>
             <pre className='bg-bg-sunken rounded-input p-3 text-xs overflow-x-auto'>
               {`curl -H "x-api-key: grp_your_key_here" \\
-  https://api.groupi.gg/api/v1/events`}
+  https://api.groupi.gg/api/v2/events`}
             </pre>
             <p className='text-muted-foreground'>
               Create API keys in your{' '}
@@ -181,21 +223,18 @@ export default function APIReferencePage() {
             path='/events'
             summary='List events'
             description='Get all events the authenticated user is a member of.'
-            response={`{
-  "success": true,
-  "data": [{
-    "id": "k170...",
-    "title": "Team Offsite",
-    "description": "Annual event",
-    "location": "Mountain View",
-    "chosenDateTime": 1704067200000,
-    "memberCount": 12,
-    "userRole": "ORGANIZER",
-    "userRsvpStatus": "YES"
-  }]
-}`}
+            response={`[{
+  "id": "k170...",
+  "title": "Team Offsite",
+  "description": "Annual event",
+  "location": "Mountain View",
+  "chosenDateTime": 1704067200000,
+  "memberCount": 12,
+  "userRole": "ORGANIZER",
+  "userRsvpStatus": "YES"
+}]`}
             curl={`curl -H "x-api-key: grp_xxx" \\
-  https://api.groupi.gg/api/v1/events`}
+  https://api.groupi.gg/api/v2/events`}
           />
           <Endpoint
             method='POST'
@@ -229,16 +268,13 @@ export default function APIReferencePage() {
   "reminderOffset": "1_DAY"           // optional
 }`}
             response={`{
-  "success": true,
-  "data": {
-    "eventId": "k170...",
-    "membershipId": "k171..."
-  }
+  "eventId": "k170...",
+  "membershipId": "k171..."
 }`}
             curl={`curl -X POST -H "x-api-key: grp_xxx" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"Dinner","gdl":"Fr@19"}' \\
-  https://api.groupi.gg/api/v1/events`}
+  https://api.groupi.gg/api/v2/events`}
           />
           <Endpoint
             method='GET'
@@ -246,19 +282,16 @@ export default function APIReferencePage() {
             summary='Get event details'
             description='Get full details of a specific event. Requires membership.'
             response={`{
-  "success": true,
-  "data": {
-    "id": "k170...",
-    "title": "Team Offsite",
-    "description": "...",
-    "location": "...",
-    "timezone": "America/New_York",
-    "chosenDateTime": null,
-    "reminderOffset": "1_DAY",
-    "creator": {
-      "id": "k172...",
-      "user": { "name": "Alice", "username": "alice" }
-    }
+  "id": "k170...",
+  "title": "Team Offsite",
+  "description": "...",
+  "location": "...",
+  "timezone": "America/New_York",
+  "chosenDateTime": null,
+  "reminderOffset": "1_DAY",
+  "creator": {
+    "id": "k172...",
+    "user": { "name": "Alice", "username": "alice" }
   }
 }`}
           />
@@ -298,10 +331,7 @@ export default function APIReferencePage() {
   "title": "Meeting Notes",   // required
   "content": "Discussed..."   // required
 }`}
-            response={`{
-  "success": true,
-  "data": { "postId": "k173..." }
-}`}
+            response={`{ "postId": "k173..." }`}
           />
           <Endpoint
             method='GET'
@@ -355,16 +385,13 @@ export default function APIReferencePage() {
             path='/events/{eventId}/members'
             summary='List members'
             description='Get all members of an event with their roles and RSVP status.'
-            response={`{
-  "success": true,
-  "data": [{
-    "id": "k174...",
-    "role": "ATTENDEE",
-    "rsvpStatus": "YES",
-    "person": { "id": "...", "userId": "..." },
-    "user": { "name": "Bob", "username": "bob" }
-  }]
-}`}
+            response={`[{
+  "id": "k174...",
+  "role": "ATTENDEE",
+  "rsvpStatus": "YES",
+  "personId": "k175...",
+  "user": { "name": "Bob", "username": "bob" }
+}]`}
           />
           <Endpoint
             method='PATCH'
@@ -451,7 +478,7 @@ export default function APIReferencePage() {
             method='GET'
             path='/notifications/count'
             summary='Get unread count'
-            response={`{ "success": true, "data": { "count": 5 } }`}
+            response={`{ "count": 5 }`}
           />
           <Endpoint
             method='POST'
@@ -490,10 +517,7 @@ export default function APIReferencePage() {
             method='POST'
             path='/events/{eventId}/invites'
             summary='Create invite link'
-            response={`{
-  "success": true,
-  "data": { "inviteId": "...", "token": "abc123", "url": "https://groupi.gg/invite/abc123" }
-}`}
+            response={`{ "id": "...", "token": "abc123" }`}
           />
           <Endpoint
             method='DELETE'
@@ -646,19 +670,25 @@ export default function APIReferencePage() {
         </Section>
 
         <section id='responses' className='mb-8 scroll-mt-20'>
-          <h2 className='text-lg font-semibold mb-3'>Response Format</h2>
+          <h2 className='text-lg font-semibold mb-3'>Response Format (v2)</h2>
           <div className='rounded-card bg-card p-4 text-sm space-y-3'>
             <div>
               <p className='font-medium mb-1'>Success</p>
+              <p className='text-muted-foreground text-xs mb-1'>
+                Data is returned directly — no envelope. HTTP status code
+                indicates success (200, 201, 204).
+              </p>
               <pre className='bg-bg-sunken rounded-input p-3 text-xs'>
-                {`{ "success": true, "data": { ... } }`}
+                {`// GET /events/{eventId} → 200
+{ "id": "k170...", "title": "Team Offsite", ... }
+
+// DELETE /events/{eventId} → 204 No Content`}
               </pre>
             </div>
             <div>
               <p className='font-medium mb-1'>Error</p>
               <pre className='bg-bg-sunken rounded-input p-3 text-xs'>
                 {`{
-  "success": false,
   "error": {
     "code": "NOT_FOUND",
     "message": "Event not found"

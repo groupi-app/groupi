@@ -70,6 +70,16 @@ export const SubmitAvailabilityRequestSchema = z
       })
     ),
   })
+  .refine(
+    ({ responses }) =>
+      new Set(responses.map(response => response.potentialDateTimeId)).size ===
+      responses.length,
+    {
+      message:
+        'Each potential date time can only appear once per availability submission',
+      path: ['responses'],
+    }
+  )
   .openapi('SubmitAvailabilityRequest');
 
 // Submit availability response

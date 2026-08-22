@@ -1,0 +1,21 @@
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 6
+
+[features]
+hooks = true
+multi_agent = true
+
+[mcp_servers.next-devtools]
+command = "pnpm"
+args = ["dlx", "next-devtools-mcp@latest"]
+startup_timeout_sec = 30
+[mcp_servers.convex]
+command = "pnpm"
+args = ["dlx", "convex@latest", "mcp", "start"]
+startup_timeout_sec = 30
+
+[mcp_servers.playwright]
+command = "pnpm"
+args = ["dlx", "@playwright/mcp@latest"]
+startup_timeout_sec = 30

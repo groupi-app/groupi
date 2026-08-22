@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Schema Migration'
+  short_description: 'Plan safe Groupi Convex schema migrations'
+  default_prompt: 'Use $schema-migration to evolve this Convex schema safely.'

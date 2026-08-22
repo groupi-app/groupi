@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Add-on Development'
+  short_description: 'Build Groupi event add-ons end to end'
+  default_prompt: 'Use $addon-dev to build a new Groupi event add-on.'

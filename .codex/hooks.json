@@ -1,0 +1,42 @@
+{
+  "description": "Enforce Groupi command, formatting, token, and changeset conventions.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/guard_bash.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking repository command policy"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/format_edited_files.py\"",
+            "timeout": 120,
+            "statusMessage": "Formatting edited files and checking design tokens"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/changeset_reminder.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

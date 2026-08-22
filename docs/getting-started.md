@@ -91,12 +91,12 @@ groupi/
 
 ## AI Agent Skills
 
-This project includes a curated set of [skills.sh](https://skills.sh/) skills that give AI coding agents (Claude Code, Cursor, Copilot, etc.) specialized knowledge about the tech stack. Skills are tracked in `skills-lock.json` so every contributor gets the same set.
+This project includes repository-scoped Codex skills under `.agents/skills/`, including a curated set installed from [skills.sh](https://skills.sh/). Skills are tracked in `skills-lock.json` so every contributor gets the same stack-specific guidance.
 
 ### Install skills (first time setup)
 
 ```bash
-npx skills experimental_install
+pnpm dlx skills experimental_install
 ```
 
 This restores all project skills from `skills-lock.json` into your local agent directories.
@@ -229,7 +229,7 @@ pnpm test:shared       # Shared package only
 
 - Read the [CONTRIBUTING.md](../CONTRIBUTING.md) guide
 - Check existing [GitHub Discussions](https://github.com/TheiaSurette/groupi/discussions)
-- Review the [architecture documentation](../CLAUDE.md)
+- Review the [agent and architecture guide](../AGENTS.md)
 
 ## Next Steps
 

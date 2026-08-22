@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Create Issue'
+  short_description: 'Create evidence-rich Groupi GitHub issues'
+  default_prompt: 'Use $create-issue to investigate and create a structured GitHub issue.'

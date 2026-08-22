@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Web Component'
+  short_description: 'Build Groupi web components with design tokens'
+  default_prompt: 'Use $web-component to build this Groupi UI component.'

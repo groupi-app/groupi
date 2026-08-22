@@ -37,7 +37,7 @@ type Variables = {
 /**
  * Create the API v1 Hono app
  */
-function createApiV1App(
+export function createApiV1App(
   injectedCtx?: unknown,
   injectedUserId?: string,
   injectedPersonId?: string

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Test Convex'
+  short_description: 'Write reliable Groupi Convex backend tests'
+  default_prompt: 'Use $test-convex to add backend tests for this behavior.'

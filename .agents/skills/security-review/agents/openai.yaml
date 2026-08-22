@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Security Review'
+  short_description: 'Audit Groupi authentication and authorization'
+  default_prompt: 'Use $security-review to audit these changes for security risks.'
