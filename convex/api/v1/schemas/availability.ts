@@ -51,9 +51,12 @@ export const AvailabilityGridEntrySchema = z
 // Full availability grid response
 export const AvailabilityGridResponseSchema = z
   .object({
-    eventId: z.string(),
-    potentialDates: z.array(AvailabilityGridEntrySchema),
-    userMembershipId: z.string(),
+    success: z.literal(true),
+    data: z.object({
+      eventId: z.string(),
+      potentialDates: z.array(AvailabilityGridEntrySchema),
+      userMembershipId: z.string(),
+    }),
   })
   .openapi('AvailabilityGridResponse');
 
@@ -67,17 +70,33 @@ export const SubmitAvailabilityRequestSchema = z
       })
     ),
   })
+  .refine(
+    ({ responses }) =>
+      new Set(responses.map(response => response.potentialDateTimeId)).size ===
+      responses.length,
+    {
+      message:
+        'Each potential date time can only appear once per availability submission',
+      path: ['responses'],
+    }
+  )
   .openapi('SubmitAvailabilityRequest');
 
 // Submit availability response
 export const SubmitAvailabilityResponseSchema = z
   .object({
-    updated: z.number().int(),
-    created: z.number().int(),
+    success: z.literal(true),
+    data: z.object({
+      updated: z.number().int(),
+      created: z.number().int(),
+    }),
   })
   .openapi('SubmitAvailabilityResponse');
 
 // Potential dates list response
 export const PotentialDatesResponseSchema = z
-  .array(PotentialDateTimeSchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(PotentialDateTimeSchema),
+  })
   .openapi('PotentialDatesResponse');

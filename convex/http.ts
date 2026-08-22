@@ -2,6 +2,7 @@ import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { authComponent, createAuth } from './auth';
 import { handler as apiV1Handler } from './api/v1/index';
+import { handler as apiV2Handler } from './api/v2/index';
 import { internal } from './_generated/api';
 
 /**
@@ -78,6 +79,31 @@ http.route({
 http.route({
   pathPrefix: '/api/v1/events/',
   method: 'PUT',
+  handler: apiV1Handler,
+});
+
+// Friends routes
+http.route({
+  path: '/api/v1/friends',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/friends/',
+  method: 'GET',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/friends/',
+  method: 'POST',
+  handler: apiV1Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v1/friends/',
+  method: 'DELETE',
   handler: apiV1Handler,
 });
 
@@ -288,6 +314,341 @@ http.route({
   pathPrefix: '/api/v1/',
   method: 'OPTIONS',
   handler: apiV1Handler,
+});
+
+// REST API v2 routes
+// These handle all /api/v2/* endpoints with API key authentication
+http.route({
+  path: '/api/v2/health',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/docs',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/openapi.json',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+// Events routes
+http.route({
+  path: '/api/v2/events',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/events',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/events/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/events/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/events/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/events/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/events/',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+// Friends routes
+http.route({
+  path: '/api/v2/friends',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/friends/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/friends/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/friends/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Posts routes
+http.route({
+  pathPrefix: '/api/v2/posts/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/posts/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/posts/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/posts/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+// Replies routes
+http.route({
+  pathPrefix: '/api/v2/replies/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/replies/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/replies/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Notifications routes
+http.route({
+  path: '/api/v2/notifications',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/notifications',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/notifications/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/notifications/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/notifications/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Muting routes
+http.route({
+  path: '/api/v2/muting',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/muting/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/muting/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Profile routes
+http.route({
+  path: '/api/v2/profile',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/profile',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/profile/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+// Settings routes
+http.route({
+  pathPrefix: '/api/v2/settings/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/settings/',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+// Themes routes
+http.route({
+  path: '/api/v2/themes',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  path: '/api/v2/themes',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/themes/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/themes/',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/themes/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Invites routes (note: /events/:eventId/invites is covered by events pathPrefix)
+http.route({
+  pathPrefix: '/api/v2/invites/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/invites/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/invites/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Reports routes
+http.route({
+  path: '/api/v2/reports',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+// Admin routes
+http.route({
+  pathPrefix: '/api/v2/admin/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/admin/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/admin/',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+// Route every remaining v2 request through Hono so future route groups cannot
+// be omitted from this outer router and unknown paths use the v2 error shape.
+http.route({
+  path: '/api/v2',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'PUT',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+
+// Handle OPTIONS for CORS preflight
+http.route({
+  pathPrefix: '/api/v2/',
+  method: 'OPTIONS',
+  handler: apiV2Handler,
 });
 
 // Public invite metadata endpoint for OpenGraph previews (no auth required)

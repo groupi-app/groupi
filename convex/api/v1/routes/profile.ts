@@ -3,7 +3,7 @@ import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema } from '../schemas/common';
 import {
-  ProfileSchema,
+  ProfileResponseSchema,
   UpdateProfileRequestSchema,
   UsernameParamSchema,
 } from '../schemas/profile';
@@ -31,7 +31,7 @@ export function createProfileRoutes() {
         description: 'User profile',
         content: {
           'application/json': {
-            schema: ProfileSchema,
+            schema: ProfileResponseSchema,
           },
         },
       },
@@ -66,13 +66,20 @@ export function createProfileRoutes() {
     if (!result) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message: 'Profile not found' },
         },
         404
       );
     }
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /profile/:username - Get profile by username
@@ -91,7 +98,7 @@ export function createProfileRoutes() {
         description: 'User profile',
         content: {
           'application/json': {
-            schema: ProfileSchema,
+            schema: ProfileResponseSchema,
           },
         },
       },
@@ -126,13 +133,20 @@ export function createProfileRoutes() {
     if (!result) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message: 'User not found' },
         },
         404
       );
     }
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // PUT /profile - Update current user's profile
@@ -157,7 +171,7 @@ export function createProfileRoutes() {
         description: 'Updated profile',
         content: {
           'application/json': {
-            schema: ProfileSchema,
+            schema: ProfileResponseSchema,
           },
         },
       },
@@ -195,7 +209,13 @@ export function createProfileRoutes() {
       ...body,
     });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   return app;

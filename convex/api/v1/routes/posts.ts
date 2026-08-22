@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { requireEventMembership, canModifyPost } from '../middleware/auth';
@@ -76,7 +77,13 @@ export function createPostRoutes() {
     const listFn = internal.api.v1.internal.posts.listEventPosts;
     const result = await ctx.runQuery(listFn, { eventId });
 
-    return c.json(result.posts, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.posts,
+      },
+      200
+    );
   });
 
   // POST /events/:eventId/posts - Create post
@@ -151,7 +158,15 @@ export function createPostRoutes() {
       ...body,
     });
 
-    return c.json({ postId: result.postId }, 201);
+    return c.json(
+      {
+        success: true as const,
+        data: {
+          postId: result.postId,
+        },
+      },
+      201
+    );
   });
 
   // GET /posts/:postId - Get post details
@@ -213,12 +228,21 @@ export function createPostRoutes() {
 
     if (!result) {
       return c.json(
-        { error: { code: 'NOT_FOUND', message: 'Post not found' } },
+        {
+          success: false as const,
+          error: { code: 'NOT_FOUND', message: 'Post not found' },
+        },
         404
       );
     }
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // PATCH /posts/:postId - Update post
@@ -293,7 +317,13 @@ export function createPostRoutes() {
     const updateFn = internal.api.v1.internal.posts.updatePost;
     const result = await ctx.runMutation(updateFn, { postId, ...body });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // DELETE /posts/:postId - Delete post
@@ -308,8 +338,16 @@ export function createPostRoutes() {
       params: PostIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'Post deleted successfully',
+      200: {
+        description: 'Post deleted',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.object({ message: z.string() }),
+            }),
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -355,7 +393,13 @@ export function createPostRoutes() {
     const deleteFn = internal.api.v1.internal.posts.deletePost;
     await ctx.runMutation(deleteFn, { postId });
 
-    return c.body(null, 204);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Post deleted successfully' },
+      },
+      200
+    );
   });
 
   return app;

@@ -74,6 +74,9 @@ export const CreateReportRequestSchema = z
 // Report create response
 export const ReportCreateResponseSchema = z
   .object({
-    reportId: z.string(),
+    success: z.literal(true),
+    data: z.object({
+      reportId: z.string(),
+    }),
   })
   .openapi('ReportCreateResponse');

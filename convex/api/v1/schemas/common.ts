@@ -11,6 +11,7 @@ extendZodWithOpenApi(z);
 // Error response schema
 export const ErrorResponseSchema = z
   .object({
+    success: z.literal(false),
     error: z.object({
       code: z.string().openapi({ example: 'NOT_FOUND' }),
       message: z.string().openapi({ example: 'Resource not found' }),
@@ -18,14 +19,12 @@ export const ErrorResponseSchema = z
   })
   .openapi('ErrorResponse');
 
-// Simple message response (for actions like mark-as-read, accept, etc.)
-export const MessageResponseSchema = z
+// Success response wrapper (generic)
+export const SuccessResponseSchema = z
   .object({
-    message: z
-      .string()
-      .openapi({ example: 'Operation completed successfully' }),
+    success: z.literal(true),
   })
-  .openapi('MessageResponse');
+  .openapi('SuccessResponse');
 
 // Pagination query parameters
 export const PaginationQuerySchema = z.object({
@@ -43,6 +42,7 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(
   itemSchema: T
 ) =>
   z.object({
+    success: z.literal(true),
     data: z.array(itemSchema),
     pagination: z.object({
       hasMore: z.boolean(),
