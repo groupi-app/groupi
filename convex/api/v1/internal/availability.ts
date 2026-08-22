@@ -2,10 +2,27 @@ import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
 import { getPersonWithUser } from '../../../auth';
+import type { Doc } from '../../../_generated/dataModel';
 
 /**
  * Internal queries and mutations for availability routes
  */
+
+function compareAvailabilityRecency(
+  left: Doc<'availabilities'>,
+  right: Doc<'availabilities'>
+): number {
+  const timestampDifference =
+    (left.updatedAt ?? left._creationTime) -
+    (right.updatedAt ?? right._creationTime);
+
+  if (timestampDifference !== 0) return timestampDifference;
+
+  const creationTimeDifference = left._creationTime - right._creationTime;
+  if (creationTimeDifference !== 0) return creationTimeDifference;
+
+  return String(left._id).localeCompare(String(right._id));
+}
 
 export const getAvailabilityGrid = internalQuery({
   args: {
@@ -106,12 +123,38 @@ export const submitAvailability = internalMutation({
       })
     ),
   },
+  returns: v.object({ created: v.number(), updated: v.number() }),
   handler: async (ctx, { membershipId, responses }) => {
+    const uniquePotentialDateTimeIds = new Set(
+      responses.map(response => response.potentialDateTimeId)
+    );
+    if (uniquePotentialDateTimeIds.size !== responses.length) {
+      throw new Error(
+        'Each potential date time can only appear once per availability submission'
+      );
+    }
+
+    const membership = await ctx.db.get(membershipId as Id<'memberships'>);
+    if (!membership) {
+      throw new Error('Membership not found');
+    }
+
     let created = 0;
     let updated = 0;
+    const now = Date.now();
 
     for (const response of responses) {
-      const existing = await ctx.db
+      const potentialDateTime = await ctx.db.get(
+        response.potentialDateTimeId as Id<'potentialDateTimes'>
+      );
+      if (
+        !potentialDateTime ||
+        potentialDateTime.eventId !== membership.eventId
+      ) {
+        throw new Error('Potential date time does not belong to this event');
+      }
+
+      const existingAvailabilities = await ctx.db
         .query('availabilities')
         .withIndex('by_membership_date', q =>
           q
@@ -121,12 +164,30 @@ export const submitAvailability = internalMutation({
               response.potentialDateTimeId as Id<'potentialDateTimes'>
             )
         )
-        .first();
+        .collect();
+
+      const existing =
+        existingAvailabilities.reduce<Doc<'availabilities'> | null>(
+          (mostRecent, availability) =>
+            !mostRecent ||
+            compareAvailabilityRecency(availability, mostRecent) > 0
+              ? availability
+              : mostRecent,
+          null
+        );
+
+      if (existing) {
+        await Promise.all(
+          existingAvailabilities
+            .filter(availability => availability._id !== existing._id)
+            .map(availability => ctx.db.delete(availability._id))
+        );
+      }
 
       if (existing) {
         await ctx.db.patch(existing._id, {
           status: response.status,
-          updatedAt: Date.now(),
+          updatedAt: now,
         });
         updated++;
       } else {
@@ -135,7 +196,7 @@ export const submitAvailability = internalMutation({
           potentialDateTimeId:
             response.potentialDateTimeId as Id<'potentialDateTimes'>,
           status: response.status,
-          updatedAt: Date.now(),
+          updatedAt: now,
         });
         created++;
       }

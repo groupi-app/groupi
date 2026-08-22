@@ -1,6 +1,7 @@
-import { mutation } from '../_generated/server';
+import { mutation, type MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth, requireEventRole } from '../auth';
+import type { Doc, Id } from '../_generated/dataModel';
 
 /**
  * Availability mutations for the Convex backend
@@ -8,6 +9,67 @@ import { requireAuth, requireEventRole } from '../auth';
  * These functions handle availability responses and date management
  * with proper authentication and authorization checks.
  */
+
+function compareAvailabilityRecency(
+  left: Doc<'availabilities'>,
+  right: Doc<'availabilities'>
+): number {
+  const timestampDifference =
+    (left.updatedAt ?? left._creationTime) -
+    (right.updatedAt ?? right._creationTime);
+
+  if (timestampDifference !== 0) return timestampDifference;
+
+  const creationTimeDifference = left._creationTime - right._creationTime;
+  if (creationTimeDifference !== 0) return creationTimeDifference;
+
+  return String(left._id).localeCompare(String(right._id));
+}
+
+async function consolidateAvailabilityResponses(
+  ctx: MutationCtx,
+  membershipId: Id<'memberships'>,
+  potentialDateTimeId: Id<'potentialDateTimes'>
+): Promise<Doc<'availabilities'> | null> {
+  const existingAvailabilities = await ctx.db
+    .query('availabilities')
+    .withIndex('by_membership_date', q =>
+      q
+        .eq('membershipId', membershipId)
+        .eq('potentialDateTimeId', potentialDateTimeId)
+    )
+    .collect();
+
+  if (existingAvailabilities.length === 0) return null;
+
+  const mostRecentAvailability = existingAvailabilities.reduce(
+    (mostRecent, availability) =>
+      compareAvailabilityRecency(availability, mostRecent) > 0
+        ? availability
+        : mostRecent
+  );
+
+  await Promise.all(
+    existingAvailabilities
+      .filter(availability => availability._id !== mostRecentAvailability._id)
+      .map(availability => ctx.db.delete(availability._id))
+  );
+
+  return mostRecentAvailability;
+}
+
+function assertUniquePotentialDateTimeIds(
+  responses: Array<{ potentialDateTimeId: Id<'potentialDateTimes'> }>
+) {
+  const uniqueIds = new Set(
+    responses.map(response => response.potentialDateTimeId)
+  );
+  if (uniqueIds.size !== responses.length) {
+    throw new Error(
+      'Each potential date time can only appear once per availability submission'
+    );
+  }
+}
 
 /**
  * Submit availability for multiple potential date times
@@ -24,9 +86,21 @@ export const submitAvailability = mutation({
     ),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({
+    responses: v.array(
+      v.object({
+        potentialDateTimeId: v.id('potentialDateTimes'),
+        status: v.union(v.literal('YES'), v.literal('NO'), v.literal('MAYBE')),
+        action: v.union(v.literal('created'), v.literal('updated')),
+      })
+    ),
+    membershipId: v.id('memberships'),
+  }),
   handler: async (ctx, { eventId, responses }) => {
     // Require authentication and membership
     const { person } = await requireAuth(ctx);
+
+    assertUniquePotentialDateTimeIds(responses);
 
     const membership = await ctx.db
       .query('memberships')
@@ -39,45 +113,57 @@ export const submitAvailability = mutation({
       throw new Error('You are not a member of this event');
     }
 
-    // Process each availability response
-    const results = await Promise.all(
-      responses.map(async ({ potentialDateTimeId, status, note }) => {
-        // Validate note length
-        if (note && note.length > 200) {
-          throw new Error('Note must be 200 characters or less');
-        }
+    const now = Date.now();
+    const results: Array<{
+      potentialDateTimeId: Id<'potentialDateTimes'>;
+      status: 'YES' | 'NO' | 'MAYBE';
+      action: 'created' | 'updated';
+    }> = [];
 
-        // Check if availability already exists for this member and date
-        const existingAvailability = await ctx.db
-          .query('availabilities')
-          .withIndex('by_membership_date', q =>
-            q
-              .eq('membershipId', membership._id)
-              .eq('potentialDateTimeId', potentialDateTimeId)
-          )
-          .first();
+    // Process sequentially so each response observes earlier writes in this
+    // transaction and a membership/date pair can never be inserted twice.
+    for (const { potentialDateTimeId, status, note } of responses) {
+      if (note && note.length > 200) {
+        throw new Error('Note must be 200 characters or less');
+      }
 
-        if (existingAvailability) {
-          // Update existing availability
-          await ctx.db.patch(existingAvailability._id, {
-            status: status,
-            note: note || undefined,
-            updatedAt: Date.now(),
-          });
-          return { potentialDateTimeId, status, action: 'updated' as const };
-        } else {
-          // Create new availability
-          await ctx.db.insert('availabilities', {
-            membershipId: membership._id,
-            potentialDateTimeId: potentialDateTimeId,
-            status: status,
-            note: note || undefined,
-            updatedAt: Date.now(),
-          });
-          return { potentialDateTimeId, status, action: 'created' as const };
-        }
-      })
-    );
+      const potentialDateTime = await ctx.db.get(potentialDateTimeId);
+      if (!potentialDateTime || potentialDateTime.eventId !== eventId) {
+        throw new Error('Potential date time does not belong to this event');
+      }
+
+      const existingAvailability = await consolidateAvailabilityResponses(
+        ctx,
+        membership._id,
+        potentialDateTimeId
+      );
+
+      if (existingAvailability) {
+        await ctx.db.patch(existingAvailability._id, {
+          status,
+          note: note || undefined,
+          updatedAt: now,
+        });
+        results.push({
+          potentialDateTimeId,
+          status,
+          action: 'updated',
+        });
+      } else {
+        await ctx.db.insert('availabilities', {
+          membershipId: membership._id,
+          potentialDateTimeId,
+          status,
+          note: note || undefined,
+          updatedAt: now,
+        });
+        results.push({
+          potentialDateTimeId,
+          status,
+          action: 'created',
+        });
+      }
+    }
 
     return {
       responses: results,
@@ -96,6 +182,11 @@ export const updateSingleAvailability = mutation({
     note: v.optional(v.string()),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({
+    availabilityId: v.id('availabilities'),
+    status: v.union(v.literal('YES'), v.literal('NO'), v.literal('MAYBE')),
+    action: v.union(v.literal('created'), v.literal('updated')),
+  }),
   handler: async (ctx, { potentialDateTimeId, status, note }) => {
     // Require authentication
     const { person } = await requireAuth(ctx);
@@ -123,15 +214,12 @@ export const updateSingleAvailability = mutation({
       throw new Error('Note must be 200 characters or less');
     }
 
-    // Check if availability already exists
-    const existingAvailability = await ctx.db
-      .query('availabilities')
-      .withIndex('by_membership_date', q =>
-        q
-          .eq('membershipId', membership._id)
-          .eq('potentialDateTimeId', potentialDateTimeId)
-      )
-      .first();
+    // Collapse any historical duplicates before applying the update.
+    const existingAvailability = await consolidateAvailabilityResponses(
+      ctx,
+      membership._id,
+      potentialDateTimeId
+    );
 
     if (existingAvailability) {
       // Update existing availability

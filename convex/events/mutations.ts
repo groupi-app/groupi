@@ -54,6 +54,61 @@ const permissionLevelValidator = v.union(
   v.literal('ORGANIZER')
 );
 
+const dateSelectionSourceValidator = v.union(
+  v.literal('POLL'),
+  v.literal('MANUAL')
+);
+
+const eventDocumentValidator = v.object({
+  _id: v.id('events'),
+  _creationTime: v.number(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  location: v.optional(v.string()),
+  imageStorageId: v.optional(v.id('_storage')),
+  imageFocalPoint: v.optional(
+    v.object({
+      x: v.number(),
+      y: v.number(),
+    })
+  ),
+  chosenDateTime: v.optional(v.number()),
+  chosenEndDateTime: v.optional(v.number()),
+  creatorId: v.id('persons'),
+  memberCount: v.optional(v.number()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  timezone: v.string(),
+  potentialDateTimes: v.array(v.number()),
+  visibility: v.optional(
+    v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
+  ),
+  reminderOffset: v.optional(reminderOffsetValidator),
+  permissions: v.optional(
+    v.object({
+      createPosts: v.optional(permissionLevelValidator),
+      inviteMembers: v.optional(permissionLevelValidator),
+      viewAttendeeList: v.optional(permissionLevelValidator),
+    })
+  ),
+});
+
+function compareAvailabilityRecency(
+  left: Doc<'availabilities'>,
+  right: Doc<'availabilities'>
+): number {
+  const timestampDifference =
+    (left.updatedAt ?? left._creationTime) -
+    (right.updatedAt ?? right._creationTime);
+
+  if (timestampDifference !== 0) return timestampDifference;
+
+  const creationTimeDifference = left._creationTime - right._creationTime;
+  if (creationTimeDifference !== 0) return creationTimeDifference;
+
+  return String(left._id).localeCompare(String(right._id));
+}
+
 /**
  * Create a new event
  */
@@ -745,9 +800,13 @@ export const chooseEventDate = mutation({
     chosenDateTime: v.number(), // Unix timestamp
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end time
     potentialDateTimeId: v.optional(v.id('potentialDateTimes')),
+    selectionSource: v.optional(dateSelectionSourceValidator),
     reminderOffset: v.optional(reminderOffsetValidator),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({
+    event: v.union(eventDocumentValidator, v.null()),
+  }),
   handler: async (
     ctx,
     {
@@ -755,6 +814,7 @@ export const chooseEventDate = mutation({
       chosenDateTime,
       chosenEndDateTime,
       potentialDateTimeId,
+      selectionSource,
       reminderOffset,
     }
   ) => {
@@ -771,10 +831,41 @@ export const chooseEventDate = mutation({
       throw new Error('Event date must be in the future');
     }
 
-    // Only poll selections inherit availability. Manual date edits omit the
-    // potential date ID and preserve the event's current RSVP statuses.
-    if (potentialDateTimeId) {
-      const potentialDateTime = await ctx.db.get(potentialDateTimeId);
+    if (selectionSource === 'POLL' && !potentialDateTimeId) {
+      throw new Error('A potential date time is required for poll selections');
+    }
+
+    if (selectionSource === 'MANUAL' && potentialDateTimeId) {
+      throw new Error('Manual date selections cannot include a poll option');
+    }
+
+    // Current clients explicitly identify poll/manual selections. Legacy
+    // clients omit the source and potential date ID, so infer a poll selection
+    // only when its exact start/end pair identifies one unique event option.
+    let selectedPotentialDateTimeId = potentialDateTimeId;
+    if (!selectedPotentialDateTimeId && selectionSource !== 'MANUAL') {
+      const matchingPotentialDateTimes = (
+        await ctx.db
+          .query('potentialDateTimes')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      ).filter(
+        potentialDateTime =>
+          potentialDateTime.dateTime === chosenDateTime &&
+          potentialDateTime.endDateTime === chosenEndDateTime
+      );
+
+      if (matchingPotentialDateTimes.length > 1) {
+        throw new Error(
+          'This date option is ambiguous. Refresh the event and select it again.'
+        );
+      }
+
+      selectedPotentialDateTimeId = matchingPotentialDateTimes[0]?._id;
+    }
+
+    if (selectedPotentialDateTimeId) {
+      const potentialDateTime = await ctx.db.get(selectedPotentialDateTimeId);
       if (!potentialDateTime || potentialDateTime.eventId !== eventId) {
         throw new Error('Potential date time does not belong to this event');
       }
@@ -807,7 +898,7 @@ export const chooseEventDate = mutation({
       updatedAt: now,
     });
 
-    if (potentialDateTimeId) {
+    if (selectedPotentialDateTimeId) {
       const [memberships, availabilities] = await Promise.all([
         ctx.db
           .query('memberships')
@@ -816,27 +907,49 @@ export const chooseEventDate = mutation({
         ctx.db
           .query('availabilities')
           .withIndex('by_potential_date', q =>
-            q.eq('potentialDateTimeId', potentialDateTimeId)
+            q.eq('potentialDateTimeId', selectedPotentialDateTimeId)
           )
           .collect(),
       ]);
 
-      const availabilityStatusByMembership = new Map(
-        availabilities.map(availability => [
-          availability.membershipId,
-          availability.status,
-        ])
+      const latestAvailabilityByMembership = new Map<
+        Doc<'availabilities'>['membershipId'],
+        Doc<'availabilities'>
+      >();
+      for (const availability of availabilities) {
+        const existing = latestAvailabilityByMembership.get(
+          availability.membershipId
+        );
+        if (
+          !existing ||
+          compareAvailabilityRecency(availability, existing) > 0
+        ) {
+          latestAvailabilityByMembership.set(
+            availability.membershipId,
+            availability
+          );
+        }
+      }
+
+      const duplicateAvailabilities = availabilities.filter(
+        availability =>
+          latestAvailabilityByMembership.get(availability.membershipId)?._id !==
+          availability._id
       );
 
-      await Promise.all(
-        memberships.map(membership =>
+      await Promise.all([
+        ...memberships.map(membership =>
           ctx.db.patch(membership._id, {
             rsvpStatus:
-              availabilityStatusByMembership.get(membership._id) ?? 'PENDING',
+              latestAvailabilityByMembership.get(membership._id)?.status ??
+              'PENDING',
             updatedAt: now,
           })
-        )
-      );
+        ),
+        ...duplicateAvailabilities.map(availability =>
+          ctx.db.delete(availability._id)
+        ),
+      ]);
     }
 
     // Get the updated event
@@ -848,7 +961,7 @@ export const chooseEventDate = mutation({
       type: 'DATE_CHOSEN',
       authorId: person._id,
       datetime: chosenDateTime,
-      rsvpFromMembership: potentialDateTimeId !== undefined,
+      rsvpFromMembership: selectedPotentialDateTimeId !== undefined,
     });
 
     // Dispatch onDateChosen to all enabled add-ons

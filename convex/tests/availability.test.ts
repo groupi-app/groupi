@@ -109,6 +109,83 @@ describe('Availability Domain', () => {
         })
       ).rejects.toThrow('You are not a member of this event');
     });
+
+    test('should reject repeated potential date IDs without writing responses', async () => {
+      const t = createTestInstance();
+      const { eventId, membershipId, potentialDateTimeIds, auth } =
+        await setupEventWithDates(t);
+
+      await expect(
+        auth.mutation(api.availability.mutations.submitAvailability, {
+          eventId,
+          responses: [
+            { potentialDateTimeId: potentialDateTimeIds[0], status: 'YES' },
+            { potentialDateTimeId: potentialDateTimeIds[0], status: 'NO' },
+          ],
+        })
+      ).rejects.toThrow('can only appear once');
+
+      const availabilities = await t.run(ctx =>
+        ctx.db
+          .query('availabilities')
+          .withIndex('by_membership', q => q.eq('membershipId', membershipId))
+          .collect()
+      );
+      expect(availabilities).toHaveLength(0);
+    });
+
+    test('should update the newest historical response and delete duplicates', async () => {
+      const t = createTestInstance();
+      const { eventId, membershipId, potentialDateTimeIds, auth } =
+        await setupEventWithDates(t);
+      const now = Date.now();
+
+      const newestAvailabilityId = await t.run(async ctx => {
+        await ctx.db.insert('availabilities', {
+          membershipId,
+          potentialDateTimeId: potentialDateTimeIds[0],
+          status: 'YES',
+          updatedAt: now,
+        });
+        return await ctx.db.insert('availabilities', {
+          membershipId,
+          potentialDateTimeId: potentialDateTimeIds[0],
+          status: 'NO',
+          updatedAt: now + 1,
+        });
+      });
+
+      const result = await auth.mutation(
+        api.availability.mutations.submitAvailability,
+        {
+          eventId,
+          responses: [
+            {
+              potentialDateTimeId: potentialDateTimeIds[0],
+              status: 'MAYBE',
+            },
+          ],
+        }
+      );
+
+      const availabilities = await t.run(ctx =>
+        ctx.db
+          .query('availabilities')
+          .withIndex('by_membership_date', q =>
+            q
+              .eq('membershipId', membershipId)
+              .eq('potentialDateTimeId', potentialDateTimeIds[0])
+          )
+          .collect()
+      );
+
+      expect(result.responses[0]?.action).toBe('updated');
+      expect(availabilities).toHaveLength(1);
+      expect(availabilities[0]).toMatchObject({
+        _id: newestAvailabilityId,
+        status: 'MAYBE',
+      });
+    });
   });
 
   describe('updateSingleAvailability', () => {

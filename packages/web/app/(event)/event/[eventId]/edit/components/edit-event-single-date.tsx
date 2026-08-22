@@ -60,11 +60,12 @@ export function EditEventSingleDate({
     setIsUpdating(true);
 
     try {
-      await chooseDateTime(
-        eventId as Id<'events'>,
-        dateTimeData.startDateTime,
-        dateTimeData.endDateTime
-      );
+      await chooseDateTime({
+        source: 'manual',
+        eventId: eventId as Id<'events'>,
+        dateTime: dateTimeData.startDateTime,
+        endDateTime: dateTimeData.endDateTime,
+      });
       if (onSuccess) {
         onSuccess();
       } else {
