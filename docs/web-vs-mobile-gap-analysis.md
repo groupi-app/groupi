@@ -33,6 +33,23 @@ The smallest credible path to parity is:
 | Native release     | No working signed CI/EAS/store path                            |
 | Push notifications | Settings UI only; no device registration or delivery path      |
 
+## Implementation progress on `feat/native-mobile`
+
+The first stabilization tranche after this audit is now implemented on the branch:
+
+- Replaced generated-API type erasure across the repaired event, availability, member, invite, friend, profile, post/reply, add-on, notification, settings, and report flows.
+- Corrected the runtime contract failures in availability, attendees, replies, attachment parent IDs, discovery, received invites, invite management/acceptance, notification presentation/settings, and external profiles.
+- Made questionnaire, Bring List, and reminder data interoperable with their canonical web/backend formats.
+- Wired permissions and add-ons into native event creation, included both in the create payload/review, added reminder/config validation, and added native organizer add-on management.
+- Added required availability/questionnaire gating before event content.
+- Hardened shared event/post/reply reads, member-role mutations, attachment registration, and presence writes at the backend boundary.
+- Rebuilt native notifications around the real 19-type delivery-method model with item actions and reactive cursor pagination.
+- Synced single/system/custom appearance preferences through Convex and Uniwind.
+- Made mobile type-check/test failures blocking in CI, fixed the Vitest coverage ratchet, and added focused mobile/shared/Convex regressions.
+- Standardized common native headers, buttons, back navigation, semantic tokens, and accessibility affordances.
+
+The P0/P1 inventory below documents the audited baseline and broader path to full parity. Items above are complete for this tranche; remaining major work still includes native push delivery, signed release/EAS/store automation, universal links, device E2E/accessibility coverage, advanced invitation methods, custom add-on rendering, mentions/attachment metadata, and full organizer date/settings surfaces.
+
 ## P0: functional and data-contract blockers
 
 These must be fixed before adding more parity surface. Each is an existing flow that currently fails, loses data, or presents misleading state.
