@@ -98,8 +98,9 @@
       "next": "16.1.7",
       "react": "19.2.0",
       "react-dom": "19.2.0",
-      "@types/react": "19.2.2",
+      "@types/react": "19.2.14",
       "@types/react-dom": "19.2.2",
+      "react-native-webview": "13.16.0",
       "minimatch": ">=10.0.0",
       "rollup": ">=4.59.0"
     },

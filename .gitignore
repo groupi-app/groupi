@@ -80,6 +80,7 @@ clerk_users.json
 .env*
 !.env.example
 !packages/web/.env.local.example
+!packages/mobile/.env.example
 
 # Playwright MCP logs
 .playwright-mcp/

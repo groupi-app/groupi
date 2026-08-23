@@ -7,8 +7,8 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Monorepo: watch shared package and convex from workspace root
-config.watchFolders = [monorepoRoot];
+// Monorepo: preserve Expo's defaults while also watching shared workspace code.
+config.watchFolders = [...new Set([...config.watchFolders, monorepoRoot])];
 
 // Monorepo: resolve node_modules from both package and root
 config.resolver.nodeModulesPaths = [

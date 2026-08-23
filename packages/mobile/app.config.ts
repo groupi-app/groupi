@@ -14,6 +14,9 @@ export default {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.groupi.mobile',
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
     adaptiveIcon: {
@@ -25,6 +28,8 @@ export default {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    '@react-native-community/datetimepicker',
+    'expo-font',
     [
       'expo-notifications',
       {
