@@ -19,7 +19,15 @@ const SAFE_RETURN_PATH =
   /^\/(?:invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
 
 export function getSafeAuthReturnPath(value?: string): string | null {
-  const candidate = value?.trim();
+  const rawCandidate = value?.trim();
+  let candidate: string | undefined;
+  try {
+    // Expo Linking encodes an already-escaped callback query once more when it
+    // converts a relative callback into a custom-scheme URL.
+    candidate = rawCandidate ? decodeURIComponent(rawCandidate) : undefined;
+  } catch {
+    return null;
+  }
   if (
     !candidate ||
     candidate.startsWith('//') ||

@@ -12,9 +12,14 @@ describe('getSafeAuthReturnPath', () => {
     '/settings/privacy',
     '/profile/person-123',
     '/notifications',
+    '%2Finvite%2Finvite-token',
     '/',
   ])('allows internal app destination %s', destination => {
-    expect(getSafeAuthReturnPath(destination)).toBe(destination);
+    expect(getSafeAuthReturnPath(destination)).toBe(
+      destination === '%2Finvite%2Finvite-token'
+        ? '/invite/invite-token'
+        : destination
+    );
   });
 
   it.each([
@@ -25,6 +30,9 @@ describe('getSafeAuthReturnPath', () => {
     '/onboarding',
     '/unknown',
     '/event\\evil',
+    'https%3A%2F%2Fevil.test',
+    '%2F%2Fevil.test',
+    '%E0%A4%A',
   ])('rejects unsafe destination %s', destination => {
     expect(getSafeAuthReturnPath(destination)).toBeNull();
   });

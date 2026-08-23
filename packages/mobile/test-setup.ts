@@ -115,6 +115,9 @@ vi.mock('expo-constants', () => ({
 }));
 
 vi.mock('expo-secure-store', () => ({
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  deleteItem: vi.fn(),
   getItemAsync: vi.fn(),
   setItemAsync: vi.fn(),
   deleteItemAsync: vi.fn(),
@@ -123,6 +126,17 @@ vi.mock('expo-secure-store', () => ({
 vi.mock('expo-splash-screen', () => ({
   preventAutoHideAsync: vi.fn(),
   hideAsync: vi.fn(),
+}));
+
+vi.mock('expo-linking', () => ({
+  createURL: vi.fn((path: string) => `groupi://${path}`),
+  openURL: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: vi.fn(),
+  openAuthSessionAsync: vi.fn(),
+  dismissAuthSession: vi.fn(),
 }));
 
 vi.mock('expo-status-bar', () => ({

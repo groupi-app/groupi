@@ -45,6 +45,10 @@ export const authClient = baseAuthClient as typeof baseAuthClient & {
     }) => Promise<{ error?: { message: string } }>;
   };
   signIn: typeof baseAuthClient.signIn & {
+    emailOtp: (options: { email: string; otp: string }) => Promise<{
+      data?: unknown;
+      error?: { message?: string };
+    }>;
     magicLink: (options: {
       email: string;
       callbackURL?: string;

@@ -21,6 +21,9 @@ export default defineConfig({
     setupFiles: ['./test-setup.ts'],
     server: {
       deps: {
+        // Better Auth's Expo adapter is ESM and must be transformed so its
+        // React Native/Expo imports resolve to the test setup mocks.
+        inline: ['@better-auth/expo'],
         // Prevent Vitest from trying to parse React Native's Flow syntax
         external: [
           'react-native',

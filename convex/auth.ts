@@ -57,7 +57,7 @@ import {
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
-import { expo as _expo } from '@better-auth/expo';
+import { expo } from '@better-auth/expo';
 
 // Import local schema for Better Auth component (local install)
 import authSchema from './betterAuth/schema';
@@ -302,9 +302,9 @@ export const createAuthOptions = (
       }),
       admin(),
       apiKey(),
-      // TODO: Re-enable expo() plugin when mobile auth is ready for e2e testing.
-      // Currently breaks web OAuth callbacks (500 on /api/auth/callback/*).
-      // expo(),
+      // Adds the native OAuth state proxy and returns session cookies only on
+      // trusted non-HTTP callback URLs. Ordinary web callbacks remain intact.
+      expo(),
       multiSession({
         maximumSessions: 5,
       }),

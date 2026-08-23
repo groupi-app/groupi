@@ -12,11 +12,15 @@ import { Text } from '@/components/ui/text';
 import Svg, { Path } from 'react-native-svg';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-import { authClient } from '@/lib/auth-client';
 import { LogoSticker } from '@/components/atoms/logo-sticker';
 import { Ionicons } from '@expo/vector-icons';
 import { getSafeAuthReturnPath } from '@/lib/auth-route-policy';
+import { getNativeAuthCallbackPath } from '@/lib/native-auth';
+import {
+  requestNativeSignInEmail,
+  signInWithNativeSocial,
+  verifyNativeEmailOtp,
+} from '@/lib/native-auth-actions';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -106,26 +110,13 @@ export default function SignInScreen() {
     setCodeSent(false);
 
     try {
-      // Send both magic link and OTP code simultaneously
-      const [otpResult] = await Promise.allSettled([
-        authClient.emailOtp.sendVerificationOtp({
-          email: value,
-          type: 'sign-in',
-        }),
-        authClient.signIn.magicLink({
-          email: value,
-          callbackURL: '/',
-        }),
-      ]);
+      const result = await requestNativeSignInEmail(
+        value,
+        getNativeAuthCallbackPath(returnTo)
+      );
 
-      // Check OTP result (primary method)
-      const otpError =
-        otpResult.status === 'fulfilled'
-          ? otpResult.value.error?.message
-          : 'Failed to send code';
-
-      if (otpError) {
-        setError(otpError);
+      if (!result.success) {
+        setError(result.message);
       } else {
         setCodeSent(true);
         setLastSentIdentifier(value);
@@ -151,101 +142,17 @@ export default function SignInScreen() {
     setIsLoading(true);
 
     try {
-      const baseURL = process.env.EXPO_PUBLIC_BETTER_AUTH_URL;
+      if (!lastSentIdentifier) {
+        setError('Request a new code and try again');
+        return;
+      }
 
-      // Manual fetch to capture ALL set-cookie headers
-      // The Better Auth expo client plugin's onSuccess hook only gets the first
-      // set-cookie header on React Native, missing convex_jwt and session_data
-      const res = await fetch(`${baseURL}/api/auth/sign-in/email-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'expo-origin': 'groupi://',
-        },
-        credentials: 'omit',
-        body: JSON.stringify({ email: lastSentIdentifier, otp: code }),
-      });
+      const result = await verifyNativeEmailOtp(lastSentIdentifier, code);
 
-      const data = await res.json();
-
-      if (!res.ok || data.code) {
-        setError(data.message || 'Invalid code');
+      if (!result.success) {
+        setError(result.message);
         setOtpCode('');
       } else {
-        // Collect ALL set-cookie headers using forEach
-        // headers.get() only returns the first one on React Native
-        const allCookies: string[] = [];
-        res.headers.forEach((value, name) => {
-          if (name.toLowerCase() === 'set-cookie') {
-            allCookies.push(value);
-          }
-        });
-
-        // If forEach only gave us one entry, try splitting on known cookie names
-        let cookieStrings = allCookies;
-        if (
-          allCookies.length === 1 &&
-          allCookies[0].includes('better-auth.session_data')
-        ) {
-          // All cookies concatenated in one string - split them
-          const raw = allCookies[0];
-          cookieStrings = [];
-          const parts = raw.split(/(?<=\bLax|None|Strict),\s*/i);
-          for (const p of parts) {
-            if (p.trim()) cookieStrings.push(p.trim());
-          }
-        }
-
-        // Parse into the JSON format the expo client expects
-        const cookieObj: Record<
-          string,
-          { value: string; expires: string | null }
-        > = {};
-        for (const cookie of cookieStrings) {
-          const segments = cookie.split(';');
-          const first = segments[0]?.trim();
-          if (!first) continue;
-          const eqIdx = first.indexOf('=');
-          if (eqIdx <= 0) continue;
-
-          const name = first.slice(0, eqIdx);
-          const value = decodeURIComponent(first.slice(eqIdx + 1));
-
-          let expires: string | null = null;
-          for (const seg of segments.slice(1)) {
-            const [k, ...v] = seg.split('=');
-            if (k.trim().toLowerCase() === 'max-age') {
-              const sec = parseInt(v.join('='), 10);
-              if (!isNaN(sec))
-                expires = new Date(Date.now() + sec * 1000).toISOString();
-            }
-          }
-          cookieObj[name] = { value, expires };
-        }
-
-        const SecureStore = await import('expo-secure-store');
-        await SecureStore.setItemAsync(
-          'groupi_cookie',
-          JSON.stringify(cookieObj)
-        );
-
-        // Also store the session data cache that useSession() reads from
-        // The expo client stores this under `${storagePrefix}_session_data`
-        const sessionData = {
-          session: data,
-        };
-        await SecureStore.setItemAsync(
-          'groupi_session_data',
-          JSON.stringify(sessionData)
-        );
-
-        // Force the Better Auth client to re-read cookies from SecureStore
-        // and update its internal session state. Without this, useSession()
-        // and useConvexAuth() still report unauthenticated.
-        await authClient.getSession({
-          fetchOptions: { headers: { 'expo-origin': 'groupi://' } },
-        });
-
         router.replace(authDestination);
       }
     } catch {
@@ -266,39 +173,16 @@ export default function SignInScreen() {
     setOauthLoading(provider);
     setError('');
 
-    const baseURL = process.env.EXPO_PUBLIC_BETTER_AUTH_URL;
     try {
-      // Step 1: Get the OAuth URL from the server
-      const res = await fetch(`${baseURL}/api/auth/sign-in/social`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, callbackURL: '/onboarding' }),
-      });
-      const data = await res.json();
-
-      if (!data?.url) {
-        setError('Could not get auth URL');
-        return;
-      }
-
-      // Step 2: Open the auth URL in an in-app browser
-      const redirectUrl = Linking.createURL('/', { scheme: 'groupi' });
-
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectUrl
+      const result = await signInWithNativeSocial(
+        provider,
+        getNativeAuthCallbackPath(returnTo)
       );
 
-      if (result.type === 'success') {
-        const url = new URL(result.url);
-        const cookie = url.searchParams.get('cookie');
-        if (cookie) {
-          const SecureStore = await import('expo-secure-store');
-          await SecureStore.setItemAsync('groupi_cookie', cookie);
-        }
+      if (!result.success) {
+        setError(result.message);
+      } else {
         router.replace(authDestination);
-      } else if (result.type !== 'cancel') {
-        setError('Authentication was not completed');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unexpected error occurred');
