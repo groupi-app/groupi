@@ -371,7 +371,11 @@ export function useAttachments() {
 
     try {
       for (const upload of pendingUploads) {
-        if (upload.status !== 'pending') continue;
+        if (upload.status === 'complete' && upload.result) {
+          results.push(upload.result);
+          continue;
+        }
+        if (upload.status === 'uploading') continue;
 
         // Update status to uploading
         setPendingUploads(prev =>

@@ -10,6 +10,7 @@ export * from './device';
 export * from './keyboard';
 export * from './accessibility';
 export * from './gdl-parser';
+export * from './attachment-submission';
 
 // Date and time utilities
 export function formatDate(date: Date | number): string {

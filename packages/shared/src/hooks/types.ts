@@ -32,6 +32,17 @@ export interface TracedMutationArgs {
   _traceId?: string;
 }
 
+export interface AttachmentMutationInput {
+  storageId: ConvexId<'_storage'>;
+  filename: string;
+  size: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isSpoiler?: boolean;
+  altText?: string;
+}
+
 /**
  * The generated Convex API surface required by the shared post action hooks.
  * Keeping this domain contract explicit prevents a renamed module or changed
@@ -46,6 +57,7 @@ export interface PostActionApi {
           eventId: ConvexId<'events'>;
           title: string;
           content: string;
+          attachments?: AttachmentMutationInput[];
         },
         { postId: ConvexId<'posts'>; post: unknown }
       >;
@@ -66,7 +78,11 @@ export interface PostActionApi {
   replies: {
     mutations: {
       createReply: PublicMutation<
-        TracedMutationArgs & { postId: ConvexId<'posts'>; text: string },
+        TracedMutationArgs & {
+          postId: ConvexId<'posts'>;
+          text: string;
+          attachments?: AttachmentMutationInput[];
+        },
         { replyId: ConvexId<'replies'> }
       >;
       updateReply: PublicMutation<

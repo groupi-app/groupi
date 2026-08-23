@@ -7,6 +7,10 @@ import {
   notifyMentionedUsers,
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
+import {
+  attachmentInputValidator,
+  createAttachmentsForParent,
+} from '../attachments/model';
 
 /**
  * Posts mutations for the Convex backend
@@ -23,9 +27,10 @@ export const createPost = mutation({
     eventId: v.id('events'),
     title: v.string(),
     content: v.string(),
+    attachments: v.optional(v.array(attachmentInputValidator)),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, title, content }) => {
+  handler: async (ctx, { eventId, title, content, attachments = [] }) => {
     const { person } = await requireAuth(ctx);
     const membership = await requireEventPermission(
       ctx,
@@ -51,6 +56,14 @@ export const createPost = mutation({
       eventId: eventId,
       membershipId: membership._id,
     });
+
+    if (attachments.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments,
+        postId,
+        personId: person._id,
+      });
+    }
 
     // Get the created post with populated data
     const post = await ctx.db.get(postId);

@@ -6,7 +6,7 @@
 
 import { useMutation } from 'convex/react';
 import { useCallback } from 'react';
-import type { ConvexId, PostActionApi } from './types';
+import type { AttachmentMutationInput, ConvexId, PostActionApi } from './types';
 
 /**
  * Post action hooks factory - accepts api and returns post action hooks
@@ -82,7 +82,10 @@ export function createPostActionHooks(api: PostActionApi) {
     }, [postId, deletePost]);
 
     const createReplyForId = useCallback(
-      async (data: { text: string }) => {
+      async (data: {
+        text: string;
+        attachments?: AttachmentMutationInput[];
+      }) => {
         return createReply({ postId, ...data });
       },
       [postId, createReply]
@@ -129,7 +132,11 @@ export function createPostActionHooks(api: PostActionApi) {
     const createPost = useCreatePost();
 
     const createEventPost = useCallback(
-      async (data: { title: string; content: string }) => {
+      async (data: {
+        title: string;
+        content: string;
+        attachments?: AttachmentMutationInput[];
+      }) => {
         return createPost({ eventId, ...data });
       },
       [eventId, createPost]

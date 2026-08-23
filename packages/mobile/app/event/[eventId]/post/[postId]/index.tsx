@@ -12,9 +12,7 @@ import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation } from 'convex/react';
 import type { Id } from 'convex/_generated/dataModel';
-import { api } from 'convex/_generated/api';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import {
@@ -47,6 +45,7 @@ import { HtmlContent } from '@/components/posts/html-content';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatTimeAgo, LoadingState } from '@/components/molecules';
 import { toast } from '@groupi/shared/platform';
+import { createAfterUploading } from '@groupi/shared/utils';
 import { router } from 'expo-router';
 
 export default function PostDetailScreen() {
@@ -64,9 +63,6 @@ export default function PostDetailScreen() {
   const togglePostMute = useTogglePostMute();
   const createReport = useCreateReport();
   const { showActionMenu } = useActionMenu();
-  const createAttachmentsBatch = useMutation(
-    api.attachments.mutations.createAttachmentsBatch
-  );
 
   // Presence & typing
   const { roomToken } = usePostPresence(postId);
@@ -152,18 +148,14 @@ export default function PostDetailScreen() {
     setTyping(false);
     setIsSubmittingReply(true);
     try {
-      const { replyId } = await createReply({
-        postId: typedPostId,
-        text: replyText.trim(),
-      });
-
-      // Upload and attach files to the reply
-      if (pendingUploads.length > 0 && replyId) {
-        const uploadResults = await uploadAll();
-        if (uploadResults.length > 0) {
-          await createAttachmentsBatch({
-            replyId,
-            attachments: uploadResults.map(r => ({
+      await createAfterUploading({
+        expectedUploadCount: pendingUploads.length,
+        uploadAll,
+        create: attachments =>
+          createReply({
+            postId: typedPostId,
+            text: replyText.trim(),
+            attachments: attachments.map(r => ({
               storageId: r.storageId as Id<'_storage'>,
               filename: r.filename,
               size: r.size,
@@ -171,14 +163,15 @@ export default function PostDetailScreen() {
               width: r.width,
               height: r.height,
             })),
-          });
-        }
-      }
+          }),
+      });
 
       clearAll();
       setReplyText('');
-    } catch {
-      toast.error('Failed to send reply');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to send reply'
+      );
     } finally {
       setIsSubmittingReply(false);
     }

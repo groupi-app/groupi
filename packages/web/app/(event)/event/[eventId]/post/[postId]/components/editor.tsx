@@ -255,7 +255,7 @@ export function Editor({
       let uploadedAttachments: UploadResult[] = [];
       if (pendingUploads.length > 0) {
         uploadedAttachments = await uploadAll();
-        if (uploadedAttachments.length === 0 && pendingUploads.length > 0) {
+        if (uploadedAttachments.length !== pendingUploads.length) {
           toast.error('Failed to upload attachments', {
             description: 'Please try again.',
           });
@@ -266,28 +266,21 @@ export function Editor({
 
       if (!postData) {
         // Create new post
-        const result = await createPost({
+        await createPost({
           eventId: eventId as Id<'events'>,
           title: values.title,
           content: values.content,
+          attachments: uploadedAttachments.map(a => ({
+            storageId: a.storageId,
+            filename: a.filename,
+            size: a.size,
+            mimeType: a.mimeType,
+            width: a.width,
+            height: a.height,
+            isSpoiler: a.isSpoiler,
+            altText: a.altText,
+          })),
         });
-
-        // If we have attachments, create the attachment records
-        if (uploadedAttachments.length > 0 && result?.postId) {
-          await createAttachmentsBatch({
-            attachments: uploadedAttachments.map(a => ({
-              storageId: a.storageId,
-              filename: a.filename,
-              size: a.size,
-              mimeType: a.mimeType,
-              width: a.width,
-              height: a.height,
-              isSpoiler: a.isSpoiler,
-              altText: a.altText,
-            })),
-            postId: result.postId,
-          });
-        }
 
         // Clear form before navigating away
         resetFormState();

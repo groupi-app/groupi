@@ -3,9 +3,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useMutation } from 'convex/react';
 import type { Id } from 'convex/_generated/dataModel';
-import { api } from 'convex/_generated/api';
 
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { BackButton } from '@/components/ui/back-button';
@@ -15,6 +13,7 @@ import { RichTextEditor } from '@/components/posts/rich-text-editor';
 import { useCreatePost } from '@/hooks/use-posts';
 import { useAttachments } from '@/hooks/use-file-upload';
 import { toast } from '@groupi/shared/platform';
+import { createAfterUploading } from '@groupi/shared/utils';
 
 /** Strip empty HTML tags to check if there's real content */
 function hasContent(html: string): boolean {
@@ -31,9 +30,6 @@ export default function NewPostScreen() {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createPost = useCreatePost();
-  const createAttachmentsBatch = useMutation(
-    api.attachments.mutations.createAttachmentsBatch
-  );
 
   const {
     pendingUploads,
@@ -55,19 +51,15 @@ export default function NewPostScreen() {
 
     setIsSubmitting(true);
     try {
-      const { postId } = await createPost({
-        eventId: eventId as Id<'events'>,
-        title: title.trim(),
-        content,
-      });
-
-      if (pendingUploads.length > 0 && postId) {
-        const uploadResults = await uploadAll();
-
-        if (uploadResults.length > 0) {
-          await createAttachmentsBatch({
-            postId,
-            attachments: uploadResults.map(r => ({
+      await createAfterUploading({
+        expectedUploadCount: pendingUploads.length,
+        uploadAll,
+        create: attachments =>
+          createPost({
+            eventId: eventId as Id<'events'>,
+            title: title.trim(),
+            content,
+            attachments: attachments.map(r => ({
               storageId: r.storageId as Id<'_storage'>,
               filename: r.filename,
               size: r.size,
@@ -75,15 +67,16 @@ export default function NewPostScreen() {
               width: r.width,
               height: r.height,
             })),
-          });
-        }
-      }
+          }),
+      });
 
       clearAll();
       toast.success('Post created!');
       router.back();
-    } catch {
-      toast.error('Failed to create post');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create post'
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -189,6 +189,9 @@ export function useAttachments() {
               : u
           )
         );
+        throw new Error(
+          `${upload.filename} could not be uploaded. Check your connection and try again.`
+        );
       }
     }
 
