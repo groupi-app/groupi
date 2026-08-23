@@ -1,26 +1,21 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import { toast } from '@groupi/shared/platform';
+import {
+  ALLOWED_FILE_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  getAttachmentValidationError,
+  MAX_ATTACHMENTS,
+  MAX_FILE_SIZE,
+} from '@/lib/file-upload-policy';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
-
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const MAX_ATTACHMENTS = 10;
-
-export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-];
-
-export const ALLOWED_FILE_TYPES = [
-  ...ALLOWED_IMAGE_TYPES,
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'application/pdf',
-];
+export {
+  ALLOWED_FILE_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  MAX_ATTACHMENTS,
+  MAX_FILE_SIZE,
+};
 
 export interface UploadResult {
   storageId: string;
@@ -56,10 +51,18 @@ export function useFileUpload() {
     ): Promise<UploadResult | null> => {
       setIsUploading(true);
       try {
-        const uploadUrl = await generateUploadUrl({});
+        const metadataError = getAttachmentValidationError({ mimeType });
+        if (metadataError) throw new Error(metadataError);
 
         const response = await fetch(uri);
         const blob = await response.blob();
+        const contentError = getAttachmentValidationError({
+          mimeType,
+          size: blob.size,
+        });
+        if (contentError) throw new Error(contentError);
+
+        const uploadUrl = await generateUploadUrl({});
 
         const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
@@ -81,8 +84,7 @@ export function useFileUpload() {
           size: blob.size,
           mimeType,
         };
-      } catch (err) {
-        console.error('File upload error:', err);
+      } catch {
         return null;
       } finally {
         setIsUploading(false);
@@ -110,9 +112,16 @@ export function useAttachments() {
       filename: string,
       mimeType: string,
       width?: number,
-      height?: number
+      height?: number,
+      size?: number
     ) => {
       if (pendingUploads.length >= MAX_ATTACHMENTS) return;
+
+      const validationError = getAttachmentValidationError({ mimeType, size });
+      if (validationError) {
+        toast.error(`${filename}: ${validationError}`);
+        return;
+      }
 
       const id = `upload-${nextIdRef.current++}`;
       setPendingUploads(prev => [
@@ -122,7 +131,7 @@ export function useAttachments() {
           uri,
           filename,
           mimeType,
-          size: 0,
+          size: size ?? 0,
           width,
           height,
           status: 'pending',

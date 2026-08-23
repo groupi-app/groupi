@@ -66,10 +66,10 @@ const CHANGELOG_ENTRIES = [
 ];
 
 const TYPE_LABELS: Record<string, { label: string; className: string }> = {
-  added: { label: 'Added', className: 'bg-success/15 text-success' },
-  improved: { label: 'Improved', className: 'bg-info/15 text-info' },
-  fixed: { label: 'Fixed', className: 'bg-warning/15 text-warning' },
-  removed: { label: 'Removed', className: 'bg-error/15 text-error' },
+  added: { label: 'Added', className: 'bg-success/15 text-text-success' },
+  improved: { label: 'Improved', className: 'bg-info/15 text-text-info' },
+  fixed: { label: 'Fixed', className: 'bg-warning/15 text-text-warning' },
+  removed: { label: 'Removed', className: 'bg-error/15 text-text-error' },
 };
 
 export default function ChangelogScreen() {

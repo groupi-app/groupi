@@ -64,6 +64,8 @@ export function useChooseEventDate() {
       eventId: Id<'events'>;
       chosenDateTime: number;
       chosenEndDateTime?: number;
+      potentialDateTimeId?: Id<'potentialDateTimes'>;
+      selectionSource?: 'POLL' | 'MANUAL';
     }) => {
       try {
         await mutation(params);

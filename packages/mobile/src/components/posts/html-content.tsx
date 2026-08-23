@@ -3,6 +3,7 @@ import { View, Linking } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import { cn } from '@/lib/utils';
+import { getSafeExternalUrl } from '@/lib/safe-links';
 
 interface HtmlContentProps {
   html: string;
@@ -22,6 +23,7 @@ interface ContentBlock {
   segments: TextSegment[];
   level?: number;
   ordered?: boolean;
+  listIndex?: number;
 }
 
 /**
@@ -63,7 +65,7 @@ function ContentBlockView({ block }: { block: ContentBlock }) {
     return (
       <View className='flex-row gap-2 pl-2'>
         <Text className='text-base text-muted-foreground'>
-          {block.ordered ? '•' : '•'}
+          {block.ordered ? `${block.listIndex ?? 1}.` : '•'}
         </Text>
         <Text className={textClassName}>
           <SegmentedText segments={block.segments} />
@@ -101,7 +103,10 @@ function SegmentedText({ segments }: { segments: TextSegment[] }) {
               key={i}
               className='text-primary underline'
               onPress={() => {
-                if (seg.href) Linking.openURL(seg.href);
+                const safeUrl = getSafeExternalUrl(seg.href);
+                if (safeUrl) {
+                  void Linking.openURL(safeUrl).catch(() => undefined);
+                }
               }}
             >
               {seg.text}
@@ -125,7 +130,7 @@ function SegmentedText({ segments }: { segments: TextSegment[] }) {
 }
 
 // Simple HTML parser for BlockNote output
-function parseHtml(html: string): ContentBlock[] {
+export function parseHtml(html: string): ContentBlock[] {
   const blocks: ContentBlock[] = [];
 
   // Strip wrapping divs
@@ -139,12 +144,32 @@ function parseHtml(html: string): ContentBlock[] {
 
   // Split by block-level tags
   const blockPattern =
-    /<(p|h[1-6]|li|pre|blockquote|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+    /<(p|h[1-6]|li|pre|blockquote|div|ol|ul)[^>]*>([\s\S]*?)<\/\1>/gi;
   let match;
 
   while ((match = blockPattern.exec(content)) !== null) {
     const tag = match[1].toLowerCase();
     const inner = match[2];
+
+    if (tag === 'ol' || tag === 'ul') {
+      const itemPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let itemMatch;
+      let listIndex = 1;
+
+      while ((itemMatch = itemPattern.exec(inner)) !== null) {
+        const segments = parseInlineHtml(itemMatch[1]);
+        if (segments.length > 0) {
+          blocks.push({
+            type: 'list-item',
+            segments,
+            ordered: tag === 'ol',
+            listIndex,
+          });
+          listIndex += 1;
+        }
+      }
+      continue;
+    }
 
     let type: ContentBlock['type'] = 'paragraph';
     let level: number | undefined;

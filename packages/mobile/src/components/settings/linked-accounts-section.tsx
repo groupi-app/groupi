@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useAction, useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
 
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { toast } from '@groupi/shared/platform';
 import { Ionicons } from '@expo/vector-icons';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
 
 type LinkedAccount = {
   id: string;
@@ -52,6 +50,7 @@ export function LinkedAccountsSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
+  const { showActionMenu } = useActionMenu();
 
   const fetchAccounts = useAction(
     api.accounts.queries.getLinkedAccountsWithUsernames
@@ -141,7 +140,7 @@ export function LinkedAccountsSection() {
       return;
     }
 
-    showActionSheet({
+    showActionMenu({
       title: 'Link Account',
       message: 'Select a provider to link',
       options: availableProviders.map(provider => ({

@@ -42,7 +42,14 @@ export function AddonCard({
   const name = getAddonName(addonType);
 
   return (
-    <Pressable onPress={onPress} disabled={!onPress}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={`${name}${completed === undefined ? '' : completed ? ', completed' : ', required'}`}
+      accessibilityHint={onPress ? 'Opens add-on' : undefined}
+      accessibilityState={{ disabled: !onPress }}
+    >
       <Card className={cn('flex-row items-center gap-3', className)}>
         {/* Sticker journal aesthetic — icon container with white border */}
         <View className='h-10 w-10 items-center justify-center rounded-card border-2 border-white bg-primary shadow-raised'>

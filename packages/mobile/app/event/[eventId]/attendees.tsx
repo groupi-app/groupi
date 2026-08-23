@@ -20,9 +20,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { RoleBadge } from '@/components/molecules';
 import { LoadingState } from '@/components/molecules';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useGlobalUser } from '@/context/global-user-context';
+import { canRoleViewAttendeeList } from '@/lib/event-access-policy';
 
 const RSVP_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   YES: 'checkmark-circle',
@@ -35,9 +36,17 @@ export default function AttendeesScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const typedEventId = eventId as Id<'events'>;
   const { person: currentPerson } = useGlobalUser();
-  const membersData = useQuery(api.events.queries.getEventAttendeesData, {
+  const headerData = useQuery(api.events.queries.getEventHeader, {
     eventId: typedEventId,
   });
+  const canViewMembers = canRoleViewAttendeeList(
+    headerData?.userMembership.role,
+    headerData?.permissions.viewAttendeeList
+  );
+  const membersData = useQuery(
+    api.events.queries.getEventAttendeesData,
+    canViewMembers ? { eventId: typedEventId } : 'skip'
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const successColor = String(
     useCSSVariable('--color-success') ?? 'transparent'
@@ -56,9 +65,11 @@ export default function AttendeesScreen() {
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const banMember = useBanMember();
+  const { showActionMenu } = useActionMenu();
 
   const members = membersData?.event.memberships;
-  const isLoading = membersData === undefined;
+  const isLoading =
+    headerData === undefined || (canViewMembers && membersData === undefined);
   const canManage =
     membersData?.userMembership.role === 'ORGANIZER' ||
     membersData?.userMembership.role === 'MODERATOR';
@@ -134,7 +145,7 @@ export default function AttendeesScreen() {
         }),
     });
 
-    showActionSheet({
+    showActionMenu({
       title: name,
       options: sheetOptions,
     });
@@ -148,6 +159,22 @@ export default function AttendeesScreen() {
           <Text className='text-lg font-semibold text-foreground'>Members</Text>
         </View>
         <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
+  if (!headerData || !canViewMembers) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>Members</Text>
+        </View>
+        <EmptyState
+          icon='lock-closed-outline'
+          title='Member list unavailable'
+          description='Your role does not have permission to view this event’s attendee list.'
+        />
       </SafeAreaView>
     );
   }

@@ -336,7 +336,7 @@ export function ApiKeysSection() {
                 </Button>
               </View>
               <View className='rounded-input border border-border bg-bg-warning-subtle p-3'>
-                <Text className='text-sm text-warning'>
+                <Text className='text-sm text-text-warning'>
                   Important: This is the only time you will see this key. Make
                   sure to copy and store it securely.
                 </Text>

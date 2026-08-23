@@ -5,15 +5,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventCard } from '../event-card';
 
 const mocks = vi.hoisted(() => ({
-  showActionSheet: vi.fn(),
+  showActionMenu: vi.fn(),
   showConfirmDialog: vi.fn(),
   toggleMute: vi.fn(),
   deleteEvent: vi.fn(),
   leaveEvent: vi.fn(),
 }));
 
-vi.mock('../../ui/action-sheet', () => ({
-  showActionSheet: mocks.showActionSheet,
+vi.mock('../../ui/action-menu', () => ({
+  useActionMenu: () => ({ showActionMenu: mocks.showActionMenu }),
 }));
 
 vi.mock('../../ui/confirm-dialog', () => ({
@@ -98,7 +98,7 @@ describe('EventCard', () => {
 
     card.props.onLongPress();
 
-    expect(mocks.showActionSheet).toHaveBeenCalledWith(
+    expect(mocks.showActionMenu).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Launch Party',
         options: [
@@ -108,7 +108,7 @@ describe('EventCard', () => {
       })
     );
 
-    const { options } = mocks.showActionSheet.mock.calls[0][0];
+    const { options } = mocks.showActionMenu.mock.calls[0][0];
     options[0].onPress();
     options[1].onPress();
 
@@ -127,7 +127,7 @@ describe('EventCard', () => {
 
     card.props.onLongPress();
 
-    const { options } = mocks.showActionSheet.mock.calls[0][0];
+    const { options } = mocks.showActionMenu.mock.calls[0][0];
     expect(options.map((option: { label: string }) => option.label)).toEqual([
       'Mute Event',
       'Edit Event',

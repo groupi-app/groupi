@@ -39,6 +39,9 @@ export function PostCard({ post, eventId }: PostCardProps) {
   return (
     <Pressable
       onPress={() => router.push(`/event/${eventId}/post/${post._id}`)}
+      accessibilityRole='button'
+      accessibilityLabel={`${post.title}, by ${authorName}, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+      accessibilityHint='Opens post and replies'
     >
       <Card>
         {/* Author row */}

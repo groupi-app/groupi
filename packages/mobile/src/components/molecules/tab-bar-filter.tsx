@@ -34,6 +34,9 @@ export function TabBarFilter({
           <Pressable
             key={tab.key}
             onPress={() => onTabChange(tab.key)}
+            accessibilityRole='tab'
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={tab.label}
             className={cn(
               // Sticker journal aesthetic — solid active tab with white border
               'flex-row items-center gap-1.5 rounded-badge px-4 py-2',

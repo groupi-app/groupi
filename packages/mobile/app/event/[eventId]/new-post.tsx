@@ -143,7 +143,8 @@ export default function NewPostScreen() {
                 file.filename,
                 file.mimeType,
                 file.width,
-                file.height
+                file.height,
+                file.size
               );
             }
           }}

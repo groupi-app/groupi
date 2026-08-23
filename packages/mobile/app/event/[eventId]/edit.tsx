@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { EventImageUpload } from '@/components/events/event-image-upload';
 import { LoadingState } from '@/components/molecules';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useEventHeader, useUpdateEvent } from '@/hooks/use-events';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -70,6 +71,24 @@ export default function EditEventScreen() {
           </Text>
         </View>
         <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
+  if (!event) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>
+            Edit Event
+          </Text>
+        </View>
+        <EmptyState
+          icon='calendar-outline'
+          title='Event not found'
+          description='This event may have been deleted or you may no longer have permission to edit it.'
+        />
       </SafeAreaView>
     );
   }

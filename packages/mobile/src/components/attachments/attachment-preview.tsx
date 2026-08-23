@@ -66,6 +66,9 @@ export function AttachmentPreview({
             <Pressable
               onPress={() => onRemove(upload.id)}
               className='absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full bg-foreground'
+              hitSlop={12}
+              accessibilityRole='button'
+              accessibilityLabel={`Remove ${upload.filename}`}
             >
               <Ionicons name='close' size={12} color='#ffffff' />
             </Pressable>

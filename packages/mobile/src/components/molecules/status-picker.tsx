@@ -2,6 +2,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '@/lib/utils';
+import { useCSSVariable } from 'uniwind';
 
 type VoteStatus = 'YES' | 'MAYBE' | 'NO';
 
@@ -17,20 +18,20 @@ const STATUS_CONFIG: Record<
   YES: {
     icon: 'checkmark-circle',
     label: 'Available',
-    activeBg: 'bg-success border-2 border-white shadow-raised',
-    activeText: 'text-white',
+    activeBg: 'bg-bg-success-subtle border border-border-success shadow-raised',
+    activeText: 'text-text-success',
   },
   MAYBE: {
     icon: 'help-circle',
     label: 'Maybe',
-    activeBg: 'bg-warning border-2 border-white shadow-raised',
-    activeText: 'text-white',
+    activeBg: 'bg-bg-warning-subtle border border-border shadow-raised',
+    activeText: 'text-text-warning',
   },
   NO: {
     icon: 'close-circle',
     label: 'Unavailable',
-    activeBg: 'bg-error border-2 border-white shadow-raised',
-    activeText: 'text-white',
+    activeBg: 'bg-bg-error-subtle border border-border-error shadow-raised',
+    activeText: 'text-text-error',
   },
 };
 
@@ -45,8 +46,18 @@ export function StatusPicker({
   onChange,
   className,
 }: StatusPickerProps) {
+  const statusColors: Record<VoteStatus, string> = {
+    YES: String(useCSSVariable('--color-text-success') ?? ''),
+    MAYBE: String(useCSSVariable('--color-text-warning') ?? ''),
+    NO: String(useCSSVariable('--color-text-error') ?? ''),
+  };
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
+
   return (
-    <View className={cn('flex-row gap-2', className)}>
+    <View
+      className={cn('flex-row gap-2', className)}
+      accessibilityRole='radiogroup'
+    >
       {(['YES', 'MAYBE', 'NO'] as const).map(status => {
         const config = STATUS_CONFIG[status];
         const isSelected = value === status;
@@ -55,15 +66,18 @@ export function StatusPicker({
           <Pressable
             key={status}
             onPress={() => onChange(status)}
+            accessibilityRole='radio'
+            accessibilityState={{ checked: isSelected }}
+            accessibilityLabel={config.label}
             className={cn(
-              'flex-1 flex-row items-center justify-center gap-1 rounded-button py-2',
+              'min-h-11 flex-1 flex-row items-center justify-center gap-1 rounded-button py-2',
               isSelected ? config.activeBg : 'border border-border'
             )}
           >
             <Ionicons
               name={config.icon}
               size={16}
-              color={isSelected ? '#ffffff' : '#9ca3af'}
+              color={isSelected ? statusColors[status] : mutedColor}
             />
             <Text
               className={cn(

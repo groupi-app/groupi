@@ -8,6 +8,8 @@ This is the implementation and release backlog for bringing the Expo app to prac
 
 **Scope:** end-user and event-organizer workflows, shared data compatibility, native release readiness, and platform-appropriate equivalents. Web administration, API documentation, CLI auth, PWA behavior, hover interactions, and the visual add-on builder are excluded unless product requirements explicitly put them on mobile.
 
+**Latest verification:** See [Native Mobile E2E and Quality Audit — 2026-08-23](./mobile-e2e-audit-2026-08-23.md) for the current automated results, safe repairs, device-test blocker, and newly confirmed architecture backlog.
+
 ## Verdict
 
 The native app has substantially more functionality than the previous April audit reported. Authentication, onboarding, event lists, discovery, core event detail, posting, friends, moderation, privacy, and much of account management are present.
@@ -27,9 +29,9 @@ The smallest credible path to parity is:
 | Area               | Native status                                                         |
 | ------------------ | --------------------------------------------------------------------- |
 | Product surface    | 27 non-layout user screens; 83 TSX components; 16 hooks               |
-| Unit tests         | 12 files / 62 tests; all pass                                         |
-| Measured coverage  | 12.31% statements, 11.19% branches, 10.16% functions, 12.13% lines    |
-| E2E/device tests   | None                                                                  |
+| Unit tests         | 17 files / 112 tests; all pass                                        |
+| Measured coverage  | 14.04% statements, 12.32% branches, 10.87% functions, 13.88% lines    |
+| E2E/device tests   | Simulator prepared; live journey blocked on env/binary                |
 | Native release     | No working signed CI/EAS/store path                                   |
 | Push notifications | Native registration/delivery implemented; signed-device setup remains |
 

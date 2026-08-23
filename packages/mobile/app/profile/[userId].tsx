@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { LoadingState } from '@/components/molecules';
 import { useGlobalUser } from '@/context/global-user-context';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   useFriendshipStatus,
@@ -57,11 +57,12 @@ export default function ProfileScreen() {
   const blockUser = useBlockUser();
   const unblockUser = useUnblockUser();
   const createReport = useCreateReport();
+  const { showActionMenu } = useActionMenu();
 
   const isLoading = profile === undefined;
 
   function handleMoreActions() {
-    showActionSheet({
+    showActionMenu({
       title: 'More Actions',
       options: [
         {
@@ -78,7 +79,7 @@ export default function ProfileScreen() {
               { label: 'Impersonation', value: 'IMPERSONATION' as const },
               { label: 'Other', value: 'OTHER' as const },
             ];
-            showActionSheet({
+            showActionMenu({
               title: 'Report Reason',
               options: reasons.map(r => ({
                 label: r.label,

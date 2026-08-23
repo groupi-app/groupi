@@ -1,9 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, RefreshControl, Pressable } from 'react-native';
+import { useMemo } from 'react';
+import { View, FlatList, Pressable } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { isEventPast } from '@groupi/shared/utils';
+import { useCSSVariable } from 'uniwind';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import { useUserEvents } from '@/hooks/use-events';
@@ -15,14 +17,9 @@ import { EventListSkeleton } from '@/components/events/event-list-skeleton';
 import { EmptyEvents } from '@/components/events/empty-events';
 import { CreateEventFab } from '@/components/events/create-event-fab';
 import { TabBarFilter } from '@/components/molecules';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 
 import type { EventTab, SortBy } from '@/stores';
-
-function isEventPast(chosenDateTime: string | undefined): boolean {
-  if (!chosenDateTime) return false;
-  return new Date(chosenDateTime).getTime() < Date.now();
-}
 
 const EVENT_TABS = [
   { key: 'upcoming', label: 'Upcoming' },
@@ -43,7 +40,9 @@ export default function HomeScreen() {
   const inviteCount = usePendingInviteCount();
   const mutedEventsData = useMutedEvents();
   const { activeTab, sortBy, setActiveTab, setSortBy } = useFilterSortStore();
-  const [refreshing, setRefreshing] = useState(false);
+  const { showActionMenu } = useActionMenu();
+  const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
 
   const isLoading = eventsData === undefined;
 
@@ -58,7 +57,10 @@ export default function HomeScreen() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allEvents: any[] = eventsData?.events ?? [];
     return allEvents.filter(item => {
-      const isPast = isEventPast(item.event.chosenDateTime);
+      const isPast = isEventPast(
+        item.event.chosenDateTime,
+        item.event.chosenEndDateTime
+      );
       const isOrganizer = item.membership.role === 'ORGANIZER';
 
       switch (activeTab) {
@@ -81,13 +83,9 @@ export default function HomeScreen() {
         case 'title':
           return (a.event.title ?? '').localeCompare(b.event.title ?? '');
         case 'eventdate': {
-          const aDate = a.event.chosenDateTime
-            ? new Date(a.event.chosenDateTime).getTime()
-            : 0;
-          const bDate = b.event.chosenDateTime
-            ? new Date(b.event.chosenDateTime).getTime()
-            : 0;
-          return bDate - aDate;
+          const aDate = a.event.chosenDateTime ?? Number.MAX_SAFE_INTEGER;
+          const bDate = b.event.chosenDateTime ?? Number.MAX_SAFE_INTEGER;
+          return aDate - bDate;
         }
         case 'createdat':
           return (b.event._creationTime ?? 0) - (a.event._creationTime ?? 0);
@@ -101,11 +99,6 @@ export default function HomeScreen() {
     });
   }, [filteredEvents, sortBy]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 500);
-  }, []);
-
   function handleSortPress() {
     const sortOptions: SortBy[] = [
       'lastactivity',
@@ -114,7 +107,7 @@ export default function HomeScreen() {
       'title',
     ];
 
-    showActionSheet({
+    showActionMenu({
       title: 'Sort Events',
       options: sortOptions.map(option => ({
         label: `${SORT_LABELS[option]}${sortBy === option ? ' ✓' : ''}`,
@@ -164,9 +157,15 @@ export default function HomeScreen() {
                   </Text>
                   <Pressable
                     onPress={handleSortPress}
-                    className='h-9 w-9 items-center justify-center rounded-full bg-muted'
+                    className='h-11 w-11 items-center justify-center rounded-badge bg-muted'
+                    accessibilityRole='button'
+                    accessibilityLabel='Sort events'
                   >
-                    <Ionicons name='swap-vertical' size={18} color='#6b7280' />
+                    <Ionicons
+                      name='swap-vertical'
+                      size={18}
+                      color={mutedColor}
+                    />
                   </Pressable>
                 </View>
 
@@ -175,9 +174,12 @@ export default function HomeScreen() {
                   <Pressable
                     onPress={() => router.push('/invites')}
                     className='mt-3 flex-row items-center justify-between rounded-card bg-primary/10 px-4 py-3'
+                    accessibilityRole='button'
+                    accessibilityLabel={`${pendingInvites} pending ${pendingInvites === 1 ? 'invite' : 'invites'}`}
+                    accessibilityHint='Opens pending invitations'
                   >
                     <View className='flex-row items-center gap-2'>
-                      <Ionicons name='mail' size={18} color='#8b00b8' />
+                      <Ionicons name='mail' size={18} color={primaryColor} />
                       <Text className='text-sm font-medium text-primary'>
                         {pendingInvites} pending{' '}
                         {pendingInvites === 1 ? 'invite' : 'invites'}
@@ -186,7 +188,7 @@ export default function HomeScreen() {
                     <Ionicons
                       name='chevron-forward'
                       size={16}
-                      color='#8b00b8'
+                      color={primaryColor}
                     />
                   </Pressable>
                 ) : null}
@@ -205,9 +207,6 @@ export default function HomeScreen() {
             sortedEvents.length === 0 ? { flex: 1 } : undefined
           }
           className='px-4'
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
         />
         <CreateEventFab />
       </View>

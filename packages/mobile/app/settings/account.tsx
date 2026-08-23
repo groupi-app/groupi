@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -8,10 +9,9 @@ import { useMutation } from 'convex/react';
 import { useGlobalUser } from '@/context/global-user-context';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
-import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import { LabeledInput } from '@/components/ui/labeled-input';
 import { signOut } from '@/lib/auth-client';
 import { toast } from '@groupi/shared/platform';
-import { usePushNotifications } from '@/context/push-notification-context';
 
 import { UsernameSection } from '@/components/settings/username-section';
 import { EmailSection } from '@/components/settings/email-section';
@@ -19,38 +19,35 @@ import { LinkedAccountsSection } from '@/components/settings/linked-accounts-sec
 import { PasskeySection } from '@/components/settings/passkey-section';
 import { ApiKeysSection } from '@/components/settings/api-keys-section';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { api } from 'convex/_generated/api';
 
 export default function AccountSettingsScreen() {
   const { user } = useGlobalUser();
   const deleteAccount = useMutation(api.users.mutations.deleteUserAccount);
-  const { unregisterThisDevice } = usePushNotifications();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const username = (user?.username as string | undefined) ?? '';
+  const usernameMatches =
+    Boolean(username) &&
+    confirmation.trim().toLowerCase() === username.trim().toLowerCase();
 
-  function handleDeleteAccount() {
-    const username = user?.username as string;
-    showConfirmDialog({
-      title: 'Delete Account',
-      message:
-        'This will permanently delete your account and all associated data. This action cannot be undone.',
-      confirmLabel: 'Delete Account',
-      destructive: true,
-      onConfirm: async () => {
-        try {
-          try {
-            await unregisterThisDevice();
-          } catch {
-            // Account deletion must remain available when the device is offline.
-          }
-          await deleteAccount({ confirmation: username });
-          await signOut();
-          router.replace('/(auth)/sign-in');
-          toast.success('Account deleted');
-        } catch {
-          toast.error('Failed to delete account');
-        }
-      },
-    });
+  async function handleDeleteAccount() {
+    if (!usernameMatches || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteAccount({ confirmation });
+      await signOut();
+      router.replace('/(auth)/sign-in');
+      toast.success('Account deleted');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete account'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -77,16 +74,55 @@ export default function AccountSettingsScreen() {
         {/* Danger Zone */}
         <Card>
           <CardHeader>
-            <CardTitle className='text-error'>Danger Zone</CardTitle>
+            <CardTitle className='text-text-error'>Danger Zone</CardTitle>
           </CardHeader>
           <CardContent>
             <Text className='mb-3 text-sm text-muted-foreground'>
               Once you delete your account, there is no going back. Please be
               certain.
             </Text>
-            <Button variant='destructive' onPress={handleDeleteAccount}>
-              Delete Account
-            </Button>
+            {showDeleteConfirmation ? (
+              <View className='gap-3'>
+                <LabeledInput
+                  label={`Type ${username || 'your username'} to confirm`}
+                  value={confirmation}
+                  onChangeText={setConfirmation}
+                  autoCapitalize='none'
+                  autoCorrect={false}
+                  editable={!isDeleting}
+                />
+                <View className='flex-row gap-3'>
+                  <Button
+                    variant='outline'
+                    className='flex-1'
+                    disabled={isDeleting}
+                    onPress={() => {
+                      setShowDeleteConfirmation(false);
+                      setConfirmation('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    className='flex-1'
+                    onPress={handleDeleteAccount}
+                    disabled={!usernameMatches}
+                    isLoading={isDeleting}
+                    loadingText='Deleting...'
+                  >
+                    Delete Forever
+                  </Button>
+                </View>
+              </View>
+            ) : (
+              <Button
+                variant='destructive'
+                onPress={() => setShowDeleteConfirmation(true)}
+              >
+                Delete Account
+              </Button>
+            )}
           </CardContent>
         </Card>
       </ScrollView>

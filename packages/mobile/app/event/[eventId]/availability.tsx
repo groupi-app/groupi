@@ -129,6 +129,8 @@ export default function AvailabilityScreen() {
             eventId: typedEventId,
             chosenDateTime: dateTime,
             chosenEndDateTime: endDateTime,
+            potentialDateTimeId: dateId,
+            selectionSource: 'POLL',
           });
         } finally {
           setChoosingDateId(null);
@@ -165,7 +167,9 @@ export default function AvailabilityScreen() {
             accessibilityLabel='Mark every date yes'
             className='flex-1 items-center rounded-button border border-border py-2'
           >
-            <Text className='text-xs font-medium text-success'>All Yes</Text>
+            <Text className='text-xs font-medium text-text-success'>
+              All Yes
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => handleBatchSelect('MAYBE')}
@@ -173,7 +177,9 @@ export default function AvailabilityScreen() {
             accessibilityLabel='Mark every date maybe'
             className='flex-1 items-center rounded-button border border-border py-2'
           >
-            <Text className='text-xs font-medium text-warning'>All Maybe</Text>
+            <Text className='text-xs font-medium text-text-warning'>
+              All Maybe
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => handleBatchSelect('NO')}
@@ -181,7 +187,7 @@ export default function AvailabilityScreen() {
             accessibilityLabel='Mark every date no'
             className='flex-1 items-center rounded-button border border-border py-2'
           >
-            <Text className='text-xs font-medium text-error'>All No</Text>
+            <Text className='text-xs font-medium text-text-error'>All No</Text>
           </Pressable>
           <Pressable
             onPress={() => handleBatchSelect(null)}

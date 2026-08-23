@@ -145,12 +145,12 @@ export function UsernameSection({ currentUsername }: UsernameSectionProps) {
           )}
         </View>
         {availabilityStatus === 'available' && (
-          <Text className='text-sm text-success'>
+          <Text className='text-sm text-text-success'>
             {usernameAvailability?.reason ?? 'Username is available'}
           </Text>
         )}
         {availabilityStatus === 'taken' && (
-          <Text className='text-sm text-error'>
+          <Text className='text-sm text-text-error'>
             {usernameAvailability?.reason ?? 'Username is already taken'}
           </Text>
         )}

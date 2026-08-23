@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToggleEventMute } from '@/hooks/use-muting';
 import { useDeleteEvent, useLeaveEvent } from '@/hooks/use-events';
@@ -66,6 +66,7 @@ export function EventCard({
   const toggleMute = useToggleEventMute();
   const deleteEvent = useDeleteEvent();
   const leaveEvent = useLeaveEvent();
+  const { showActionMenu } = useActionMenu();
   const isOrganizer = membership.role === 'ORGANIZER';
 
   function handleLongPress() {
@@ -113,7 +114,7 @@ export function EventCard({
       });
     }
 
-    showActionSheet({
+    showActionMenu({
       title: event.title,
       options,
     });
@@ -123,6 +124,9 @@ export function EventCard({
     <Pressable
       onPress={() => router.push(`/event/${event._id}`)}
       onLongPress={handleLongPress}
+      accessibilityRole='button'
+      accessibilityLabel={`${event.title}, ${membership.rsvpStatus.toLowerCase()} RSVP${event.location ? `, ${event.location}` : ''}`}
+      accessibilityHint='Opens event. Long press for event actions.'
     >
       <Card className='mb-3'>
         <View className='flex-row items-start justify-between'>

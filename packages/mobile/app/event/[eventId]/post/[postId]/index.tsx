@@ -44,6 +44,7 @@ import { AttachmentButton } from '@/components/attachments/attachment-button';
 import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { TypingIndicator } from '@/components/posts/typing-indicator';
 import { HtmlContent } from '@/components/posts/html-content';
+import { EmptyState } from '@/components/ui/empty-state';
 import { formatTimeAgo, LoadingState } from '@/components/molecules';
 import { toast } from '@groupi/shared/platform';
 import { router } from 'expo-router';
@@ -119,17 +120,35 @@ export default function PostDetailScreen() {
     );
   }
 
-  const post = postDetail?.post;
-  const replies = post?.replies ?? [];
-  const postAttachments = post?.attachments ?? [];
+  if (!postDetail?.post) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>Post</Text>
+        </View>
+        <EmptyState
+          icon='chatbubble-ellipses-outline'
+          title='Post not found'
+          description='This post may have been deleted or is no longer available.'
+        />
+      </SafeAreaView>
+    );
+  }
+
+  const post = postDetail.post;
+  const replies = post.replies ?? [];
+  const postAttachments = post.attachments ?? [];
   const authorName =
     post?.author?.user?.name ?? post?.author?.person?.user?.name ?? 'Unknown';
   const authorImage =
     post?.author?.user?.image ?? post?.author?.person?.user?.image ?? undefined;
   const isAuthor = person?._id && post?.author?.person?._id === person._id;
+  const userRole = postDetail.userMembership?.role;
+  const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
 
   async function handleSubmitReply() {
-    if (!replyText.trim()) return;
+    if (!replyText.trim() && pendingUploads.length === 0) return;
     setTyping(false);
     setIsSubmittingReply(true);
     try {
@@ -177,6 +196,9 @@ export default function PostDetailScreen() {
           router.push(`/event/${eventId}/post/${postId}/edit`);
         },
       });
+    }
+
+    if (isAuthor || canModerate) {
       options.push({
         label: 'Delete Post',
         icon: 'trash-outline',
@@ -244,41 +266,59 @@ export default function PostDetailScreen() {
     isReplyAuthor: boolean,
     replyContent: string
   ) {
-    if (!isReplyAuthor) return;
+    const options: ActionMenuOption[] = [];
 
-    showActionMenu({
-      options: [
-        {
-          label: 'Edit Reply',
-          icon: 'create-outline',
-          onPress: () => {
-            setEditingReplyId(replyId);
-            setEditingReplyText(replyContent);
-          },
+    if (isReplyAuthor) {
+      options.push({
+        label: 'Edit Reply',
+        icon: 'create-outline',
+        onPress: () => {
+          setEditingReplyId(replyId);
+          setEditingReplyText(replyContent);
         },
-        {
-          label: 'Delete Reply',
-          icon: 'trash-outline',
-          destructive: true,
-          onPress: () => {
-            showConfirmDialog({
-              title: 'Delete Reply',
-              message: 'Are you sure?',
-              confirmLabel: 'Delete',
-              destructive: true,
-              onConfirm: async () => {
-                try {
-                  await deleteReply({ replyId: replyId as Id<'replies'> });
-                  toast.success('Reply deleted');
-                } catch {
-                  toast.error('Failed to delete reply');
-                }
-              },
-            });
-          },
+      });
+    }
+
+    if (isReplyAuthor || canModerate) {
+      options.push({
+        label: 'Delete Reply',
+        icon: 'trash-outline',
+        destructive: true,
+        onPress: () => {
+          showConfirmDialog({
+            title: 'Delete Reply',
+            message: 'Are you sure?',
+            confirmLabel: 'Delete',
+            destructive: true,
+            onConfirm: async () => {
+              try {
+                await deleteReply({ replyId: replyId as Id<'replies'> });
+                toast.success('Reply deleted');
+              } catch {
+                toast.error('Failed to delete reply');
+              }
+            },
+          });
         },
-      ],
-    });
+      });
+    }
+
+    if (!isReplyAuthor) {
+      options.push({
+        label: 'Report Reply',
+        icon: 'flag-outline',
+        onPress: () =>
+          createReport({
+            targetType: 'REPLY',
+            targetId: replyId,
+            reason: 'INAPPROPRIATE_CONTENT',
+          }),
+      });
+    }
+
+    if (options.length > 0) {
+      showActionMenu({ title: 'Reply Options', options });
+    }
   }
 
   return (
@@ -466,7 +506,8 @@ export default function PostDetailScreen() {
                   file.filename,
                   file.mimeType,
                   file.width,
-                  file.height
+                  file.height,
+                  file.size
                 );
               }
             }}
@@ -488,13 +529,22 @@ export default function PostDetailScreen() {
               isSubmittingReply ||
               isUploading
             }
-            className={`h-10 w-10 items-center justify-center rounded-full ${
+            className={`h-11 w-11 items-center justify-center rounded-full ${
               (replyText.trim() || pendingUploads.length > 0) &&
               !isSubmittingReply &&
               !isUploading
                 ? 'bg-primary'
                 : 'bg-muted'
             }`}
+            accessibilityRole='button'
+            accessibilityLabel='Send reply'
+            accessibilityState={{
+              disabled:
+                (!replyText.trim() && pendingUploads.length === 0) ||
+                isSubmittingReply ||
+                isUploading,
+              busy: isSubmittingReply || isUploading,
+            }}
           >
             {isSubmittingReply || isUploading ? (
               <ActivityIndicator size='small' color='#ffffff' />

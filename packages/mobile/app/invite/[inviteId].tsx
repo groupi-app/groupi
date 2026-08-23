@@ -47,7 +47,12 @@ export default function AcceptInviteScreen() {
           Sign in to accept invite
         </Text>
         <Button
-          onPress={() => router.replace('/(auth)/sign-in')}
+          onPress={() =>
+            router.replace({
+              pathname: '/(auth)/sign-in',
+              params: { returnTo: `/invite/${token}` },
+            })
+          }
           className='mt-6'
           accessibilityLabel='Sign in to accept this invite'
         >

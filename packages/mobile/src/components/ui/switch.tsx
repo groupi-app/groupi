@@ -8,6 +8,7 @@ function Switch({
 }: React.ComponentProps<typeof SwitchPrimitives.Root>) {
   return (
     <SwitchPrimitives.Root
+      hitSlop={13}
       className={cn(
         'flex h-[1.15rem] w-8 shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5',
         Platform.select({

@@ -17,6 +17,7 @@ import { useIsEventMuted, useToggleEventMute } from '@/hooks/use-muting';
 import { useCreateReport } from '@/hooks/use-reports';
 import { EventRsvp } from './event-rsvp';
 import { toast } from '@groupi/shared/platform';
+import { useCSSVariable } from 'uniwind';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HeaderData = any;
@@ -71,6 +72,8 @@ export function EventHeader({
   const isMuted = useIsEventMuted(eventId);
   const createReport = useCreateReport();
   const { showActionMenu } = useActionMenu();
+  const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
 
   const event = headerData?.event ?? headerData;
   const userMembership = headerData?.userMembership;
@@ -89,17 +92,23 @@ export function EventHeader({
   function handleShowMenu() {
     const options: ActionMenuOption[] = [];
 
-    if (isOrganizer) {
+    if (permissions?.canEdit) {
       options.push({
         label: 'Edit Event',
         icon: 'create-outline',
         onPress: () => router.push(`/event/${eventId}/edit`),
       });
+    }
+
+    if (permissions?.canManage) {
       options.push({
         label: 'Manage Members',
         icon: 'people-outline',
         onPress: () => router.push(`/event/${eventId}/attendees`),
       });
+    }
+
+    if (permissions?.canDelete) {
       options.push({
         label: 'Delete Event',
         icon: 'trash-outline',
@@ -176,21 +185,28 @@ export function EventHeader({
       {/* Cover image */}
       {imageUrl ? (
         <View className='relative'>
-          <Pressable onPress={() => setLightboxOpen(true)}>
+          <Pressable
+            onPress={() => setLightboxOpen(true)}
+            accessibilityRole='button'
+            accessibilityLabel={`View ${title} cover image`}
+          >
             <Image
               source={{ uri: imageUrl }}
               className='h-52 w-full'
               resizeMode='cover'
+              accessible={false}
             />
           </Pressable>
           {/* Gradient overlay for navigation buttons */}
           <View className='absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent' />
           {/* Navigation buttons overlaid on image */}
           <View className='absolute inset-x-0 top-0 flex-row items-center justify-between px-4 py-3'>
-            <BackButton className='h-10 w-10 items-center justify-center rounded-full bg-black/40' />
+            <BackButton className='h-11 w-11 items-center justify-center rounded-badge bg-black/40' />
             <Pressable
               onPress={handleShowMenu}
-              className='h-10 w-10 items-center justify-center rounded-full bg-black/40'
+              className='h-11 w-11 items-center justify-center rounded-badge bg-black/40'
+              accessibilityRole='button'
+              accessibilityLabel='Event actions'
             >
               <Ionicons name='ellipsis-horizontal' size={20} color='#ffffff' />
             </Pressable>
@@ -207,9 +223,11 @@ export function EventHeader({
           <BackButton />
           <Pressable
             onPress={handleShowMenu}
-            className='h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-muted shadow-raised'
+            className='h-11 w-11 items-center justify-center rounded-badge border-2 border-background bg-muted shadow-raised'
+            accessibilityRole='button'
+            accessibilityLabel='Event actions'
           >
-            <Ionicons name='ellipsis-horizontal' size={20} color='#6b7280' />
+            <Ionicons name='ellipsis-horizontal' size={20} color={mutedColor} />
           </Pressable>
         </View>
       )}
@@ -238,7 +256,7 @@ export function EventHeader({
         {/* Date */}
         {formattedDate ? (
           <View className='mt-3 flex-row items-center gap-2'>
-            <Ionicons name='calendar-outline' size={16} color='#9ca3af' />
+            <Ionicons name='calendar-outline' size={16} color={mutedColor} />
             <Text className='text-base text-muted-foreground'>
               {formattedDate}
             </Text>
@@ -247,8 +265,12 @@ export function EventHeader({
           <Pressable
             onPress={() => router.push(`/event/${eventId}/availability`)}
             className='mt-3 flex-row items-center gap-2'
+            accessibilityRole='button'
+            accessibilityLabel={
+              isOrganizer ? 'Choose event date and time' : 'Set availability'
+            }
           >
-            <Ionicons name='calendar-outline' size={16} color='#8b00b8' />
+            <Ionicons name='calendar-outline' size={16} color={primaryColor} />
             <Text className='text-base font-medium text-primary'>
               {isOrganizer ? 'Choose Date/Time' : 'Set Availability'}
             </Text>
@@ -258,7 +280,7 @@ export function EventHeader({
         {/* Location */}
         {location ? (
           <View className='mt-2 flex-row items-center gap-2'>
-            <Ionicons name='location-outline' size={16} color='#9ca3af' />
+            <Ionicons name='location-outline' size={16} color={mutedColor} />
             <Text className='text-base text-muted-foreground'>{location}</Text>
           </View>
         ) : null}

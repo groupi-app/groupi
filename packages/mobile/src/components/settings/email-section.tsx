@@ -186,7 +186,7 @@ export function EmailSection() {
               {email.status === 'pending' && (
                 <>
                   <Badge variant='outline'>
-                    <Text className='text-warning'>Pending</Text>
+                    <Text className='text-text-warning'>Pending</Text>
                   </Badge>
                   {email.expiresAt ? (
                     <Text className='text-xs text-muted-foreground'>

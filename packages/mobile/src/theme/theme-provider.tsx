@@ -60,14 +60,10 @@ function tokensToCssVars(
     '--color-primary': overrides?.brand?.primary ?? tokens.brand.primary,
     '--color-primary-hover': tokens.brand.primaryHover,
     '--color-primary-foreground': tokens.text.onPrimary ?? 'hsl(0, 0%, 100%)',
-    '--color-secondary': overrides?.brand?.secondary ?? tokens.brand.secondary,
-    '--color-secondary-foreground':
-      overrides?.text?.secondary ??
-      tokens.text.secondary ??
-      tokens.text.primary,
-    '--color-accent': overrides?.brand?.accent ?? tokens.brand.accent,
-    '--color-accent-foreground':
-      overrides?.text?.primary ?? tokens.text.primary,
+    '--color-secondary': tokens.legacy.secondary,
+    '--color-secondary-foreground': tokens.legacy.secondaryForeground,
+    '--color-accent': tokens.legacy.accent,
+    '--color-accent-foreground': tokens.legacy.accentForeground,
     '--color-background': overrides?.background?.page ?? tokens.background.page,
     '--color-foreground': overrides?.text?.primary ?? tokens.text.primary,
     '--color-card': overrides?.background?.surface ?? tokens.background.surface,
@@ -102,6 +98,10 @@ function tokensToCssVars(
     '--color-text-secondary':
       overrides?.text?.secondary ?? tokens.text.secondary,
     '--color-text-tertiary': tokens.text.tertiary,
+    '--color-text-success': tokens.text.success,
+    '--color-text-warning': tokens.text.warning,
+    '--color-text-error': tokens.text.error,
+    '--color-text-info': tokens.text.link,
     '--color-border': tokens.border.default,
     '--color-border-strong': tokens.border.strong,
     '--color-border-subtle': tokens.border.subtle,

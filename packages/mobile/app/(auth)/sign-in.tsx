@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import Svg, { Path } from 'react-native-svg';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { authClient } from '@/lib/auth-client';
 import { LogoSticker } from '@/components/atoms/logo-sticker';
 import { Ionicons } from '@expo/vector-icons';
+import { getSafeAuthReturnPath } from '@/lib/auth-route-policy';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -56,6 +57,7 @@ function GoogleIcon() {
 }
 
 export default function SignInScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [identifier, setIdentifier] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState('');
@@ -68,6 +70,8 @@ export default function SignInScreen() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const otpInputRef = useRef<TextInput>(null);
+  const authDestination = (getSafeAuthReturnPath(returnTo) ??
+    '/(tabs)') as Href;
 
   // Session detection is handled by the tabs layout's auth guard.
   // When OTP/OAuth sign-in succeeds, we navigate directly in the handler.
@@ -219,10 +223,6 @@ export default function SignInScreen() {
           cookieObj[name] = { value, expires };
         }
 
-        console.log(
-          '[OTP] Storing cookies:',
-          Object.keys(cookieObj).join(', ')
-        );
         const SecureStore = await import('expo-secure-store');
         await SecureStore.setItemAsync(
           'groupi_cookie',
@@ -239,10 +239,6 @@ export default function SignInScreen() {
           JSON.stringify(sessionData)
         );
 
-        console.log(
-          '[OTP] Stored cookies and session data, refreshing session...'
-        );
-
         // Force the Better Auth client to re-read cookies from SecureStore
         // and update its internal session state. Without this, useSession()
         // and useConvexAuth() still report unauthenticated.
@@ -250,7 +246,7 @@ export default function SignInScreen() {
           fetchOptions: { headers: { 'expo-origin': 'groupi://' } },
         });
 
-        router.replace('/(tabs)');
+        router.replace(authDestination);
       }
     } catch {
       setError('An unexpected error occurred');
@@ -271,18 +267,14 @@ export default function SignInScreen() {
     setError('');
 
     const baseURL = process.env.EXPO_PUBLIC_BETTER_AUTH_URL;
-    console.log('[OAuth] Starting', provider);
-
     try {
       // Step 1: Get the OAuth URL from the server
-      console.log('[OAuth] Fetching auth URL...');
       const res = await fetch(`${baseURL}/api/auth/sign-in/social`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider, callbackURL: '/onboarding' }),
       });
       const data = await res.json();
-      console.log('[OAuth] Server response:', JSON.stringify(data));
 
       if (!data?.url) {
         setError('Could not get auth URL');
@@ -291,31 +283,24 @@ export default function SignInScreen() {
 
       // Step 2: Open the auth URL in an in-app browser
       const redirectUrl = Linking.createURL('/', { scheme: 'groupi' });
-      console.log('[OAuth] Opening browser:', data.url);
-      console.log('[OAuth] Redirect URL:', redirectUrl);
 
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectUrl
       );
 
-      console.log('[OAuth] Browser result:', result.type);
-
       if (result.type === 'success') {
-        console.log('[OAuth] Success URL:', result.url);
         const url = new URL(result.url);
         const cookie = url.searchParams.get('cookie');
         if (cookie) {
-          console.log('[OAuth] Got cookie, storing...');
           const SecureStore = await import('expo-secure-store');
           await SecureStore.setItemAsync('groupi_cookie', cookie);
         }
-        router.replace('/(tabs)');
+        router.replace(authDestination);
       } else if (result.type !== 'cancel') {
         setError('Authentication was not completed');
       }
     } catch (e) {
-      console.error('[OAuth Error]', provider, e);
       setError(e instanceof Error ? e.message : 'An unexpected error occurred');
     } finally {
       setOauthLoading(null);
@@ -445,22 +430,22 @@ export default function SignInScreen() {
               <View className='rounded-card border border-border-success bg-bg-success-subtle p-4'>
                 <View className='mb-2 flex-row items-center gap-2'>
                   <Ionicons name='mail-outline' size={16} color='#22c55e' />
-                  <Text className='text-sm font-semibold text-success'>
+                  <Text className='text-sm font-semibold text-text-success'>
                     Check your email!
                   </Text>
                 </View>
-                <Text className='text-sm text-success'>
+                <Text className='text-sm text-text-success'>
                   We sent a 6-digit code and a magic link to{' '}
                   {lastSentIdentifier}. Enter the code above or tap the link.
                 </Text>
                 <View className='mt-3 border-t border-border-success pt-3'>
                   {cooldownSeconds > 0 ? (
-                    <Text className='text-sm text-success'>
+                    <Text className='text-sm text-text-success'>
                       Resend available in {cooldownSeconds}s
                     </Text>
                   ) : (
                     <Pressable onPress={handleResend} disabled={isLoading}>
-                      <Text className='text-sm font-medium text-success underline'>
+                      <Text className='text-sm font-medium text-text-success underline'>
                         Resend code
                       </Text>
                     </Pressable>
@@ -486,7 +471,7 @@ export default function SignInScreen() {
           ) : (
             <>
               {error ? (
-                <Text className='text-sm text-error'>{error}</Text>
+                <Text className='text-sm text-text-error'>{error}</Text>
               ) : null}
 
               {/* Send code button */}
@@ -507,7 +492,7 @@ export default function SignInScreen() {
           )}
 
           {codeSent && error ? (
-            <Text className='text-sm text-error'>{error}</Text>
+            <Text className='text-sm text-text-error'>{error}</Text>
           ) : null}
         </View>
 

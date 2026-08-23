@@ -248,7 +248,7 @@ function MenuItem({
         color={destructive ? '#ef4444' : '#6b7280'}
       />
       <Text
-        className={`flex-1 text-base ${destructive ? 'text-error' : 'text-foreground'}`}
+        className={`flex-1 text-base ${destructive ? 'text-text-error' : 'text-foreground'}`}
       >
         {label}
       </Text>

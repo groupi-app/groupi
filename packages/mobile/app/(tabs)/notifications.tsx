@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useCSSVariable } from 'uniwind';
 
 import { EmptyState } from '@/components/ui/empty-state';
-import { showActionSheet } from '@/components/ui/action-sheet';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
@@ -67,6 +67,7 @@ export default function NotificationsScreen() {
   const markAllAsRead = useMarkAllNotificationsAsRead();
   const deleteNotification = useDeleteNotification();
   const deleteAll = useDeleteAllNotifications();
+  const { showActionMenu } = useActionMenu();
   const mutedColor = String(useCSSVariable('--color-muted-foreground'));
   const primaryColor = String(useCSSVariable('--color-primary'));
 
@@ -86,7 +87,7 @@ export default function NotificationsScreen() {
   }
 
   function handleNotificationActions(notification: NotificationItem) {
-    showActionSheet({
+    showActionMenu({
       title: 'Notification options',
       message: getNotificationMessage(notification),
       options: [
@@ -109,7 +110,7 @@ export default function NotificationsScreen() {
   }
 
   function handleHeaderActions() {
-    showActionSheet({
+    showActionMenu({
       title: 'Notification options',
       options: [
         ...(hasUnread
@@ -184,7 +185,7 @@ export default function NotificationsScreen() {
     >
       {error ? (
         <View className='mx-4 mb-2 rounded-card bg-bg-error-subtle px-4 py-3'>
-          <Text className='text-sm text-error'>
+          <Text className='text-sm text-text-error'>
             Notifications couldn’t be loaded. Try again in a moment.
           </Text>
         </View>

@@ -1,15 +1,9 @@
-import {
-  View,
-  Pressable,
-  Image,
-  ActionSheetIOS,
-  Alert,
-  Platform,
-} from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
+import { useActionMenu } from '@/components/ui/action-menu';
 
 interface EventImageUploadProps {
   imageUri?: string | null;
@@ -27,6 +21,7 @@ export function EventImageUpload({
   disabled = false,
 }: EventImageUploadProps) {
   const { pickImage, takePhoto } = useImagePicker();
+  const { showActionMenu } = useActionMenu();
 
   const displayUri = imageUri ?? existingImageUrl;
 
@@ -57,55 +52,42 @@ export function EventImageUpload({
 
     const hasImage = !!displayUri;
 
-    if (Platform.OS === 'ios') {
-      const options = hasImage
-        ? ['Take Photo', 'Choose from Library', 'Remove Image', 'Cancel']
-        : ['Take Photo', 'Choose from Library', 'Cancel'];
-
-      ActionSheetIOS.showActionSheetWithOptions(
+    showActionMenu({
+      title: 'Event Cover Image',
+      options: [
         {
-          options,
-          cancelButtonIndex: options.length - 1,
-          destructiveButtonIndex: hasImage ? 2 : undefined,
-          title: 'Event Cover Image',
+          label: 'Take Photo',
+          icon: 'camera-outline',
+          onPress: () => void takeNewPhoto(),
         },
-        buttonIndex => {
-          if (buttonIndex === 0) {
-            takeNewPhoto();
-          } else if (buttonIndex === 1) {
-            chooseFromLibrary();
-          } else if (hasImage && buttonIndex === 2) {
-            onImageRemoved();
-          }
-        }
-      );
-    } else {
-      const buttons: { text: string; onPress?: () => void }[] = [
-        { text: 'Take Photo', onPress: () => void takeNewPhoto() },
         {
-          text: 'Choose from Library',
+          label: 'Choose from Library',
+          icon: 'images-outline',
           onPress: () => void chooseFromLibrary(),
         },
-      ];
-
-      if (hasImage) {
-        buttons.push({
-          text: 'Remove Image',
-          onPress: onImageRemoved,
-        });
-      }
-
-      buttons.push({ text: 'Cancel' });
-
-      Alert.alert('Event Cover Image', undefined, buttons, {
-        cancelable: true,
-      });
-    }
+        ...(hasImage
+          ? [
+              {
+                label: 'Remove Image',
+                icon: 'trash-outline',
+                destructive: true,
+                onPress: onImageRemoved,
+              },
+            ]
+          : []),
+      ],
+    });
   }
 
   if (displayUri) {
     return (
-      <Pressable onPress={handlePress} disabled={disabled}>
+      <Pressable
+        onPress={handlePress}
+        disabled={disabled}
+        accessibilityRole='button'
+        accessibilityLabel='Change event cover image'
+        accessibilityState={{ disabled }}
+      >
         <View className='overflow-hidden rounded-card'>
           <Image
             source={{ uri: displayUri }}
@@ -122,7 +104,13 @@ export function EventImageUpload({
   }
 
   return (
-    <Pressable onPress={handlePress} disabled={disabled}>
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      accessibilityRole='button'
+      accessibilityLabel='Add event cover image'
+      accessibilityState={{ disabled }}
+    >
       <View className='h-32 items-center justify-center rounded-card border-2 border-dashed border-border'>
         <Ionicons name='image-outline' size={32} color='#9ca3af' />
         <Text className='mt-2 text-sm text-muted-foreground'>

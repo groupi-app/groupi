@@ -16,6 +16,9 @@ export function LabeledInput({
   helperText,
   containerClassName,
   className,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
   ...props
 }: LabeledInputProps) {
   return (
@@ -27,10 +30,19 @@ export function LabeledInput({
       ) : null}
       <Input
         className={cn(error && 'border-destructive', className)}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={accessibilityHint ?? error ?? helperText}
+        accessibilityState={accessibilityState}
+        aria-invalid={error ? true : undefined}
         {...props}
       />
       {error ? (
-        <Text className='text-sm text-destructive'>{error}</Text>
+        <Text
+          className='text-sm text-destructive'
+          accessibilityLiveRegion='polite'
+        >
+          {error}
+        </Text>
       ) : helperText ? (
         <Text variant='muted' className='text-sm'>
           {helperText}

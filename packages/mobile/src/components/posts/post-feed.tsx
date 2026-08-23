@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { SectionHeader } from '@/components/ui/section-header';
 import { PostCard } from './post-card';
+import { LoadingState } from '@/components/molecules';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PostFeedData = any;
@@ -15,6 +16,12 @@ interface PostFeedProps {
 }
 
 export function PostFeed({ postFeedData, eventId }: PostFeedProps) {
+  if (postFeedData === undefined) {
+    return (
+      <LoadingState message='Loading posts...' className='min-h-[160px]' />
+    );
+  }
+
   // The query returns { event: { posts: [...] }, ... }
   const posts = postFeedData?.event?.posts ?? postFeedData?.posts ?? [];
 

@@ -26,6 +26,7 @@ import {
   useEventInviteSearch,
   useSendEventInvite,
 } from '@/hooks/use-event-invites';
+import { getPublicInviteUrl } from '@/lib/public-urls';
 
 export default function InviteScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
@@ -66,7 +67,7 @@ export default function InviteScreen() {
     try {
       const result = await createInvite({ eventId: typedEventId });
       if (result.invite.token) {
-        const url = `https://groupi.app/invite/${result.invite.token}`;
+        const url = getPublicInviteUrl(result.invite.token);
         await Share.share({
           message: `Join my event on Groupi! ${url}`,
           url,
@@ -81,7 +82,7 @@ export default function InviteScreen() {
   }
 
   async function handleShareExisting(token: string) {
-    const url = `https://groupi.app/invite/${token}`;
+    const url = getPublicInviteUrl(token);
     try {
       await Share.share({
         message: `Join my event on Groupi! ${url}`,

@@ -14,8 +14,8 @@ import { MemberList } from '@/components/events/member-list';
 import { PostFeed } from '@/components/posts/post-feed';
 import { EventDetailSkeleton } from '@/components/events/event-detail-skeleton';
 import { EventAddonsSection } from '@/components/addons/event-addons-section';
-import { LoadingState } from '@/components/molecules';
 import { BackButton } from '@/components/ui/back-button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function EventDetailScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
@@ -61,7 +61,11 @@ export default function EventDetailScreen() {
         <View className='flex-row items-center px-4 py-3'>
           <BackButton />
         </View>
-        <LoadingState />
+        <EmptyState
+          icon='calendar-outline'
+          title='Event not found'
+          description='This event may have been deleted or you may no longer have access.'
+        />
       </SafeAreaView>
     );
   }

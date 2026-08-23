@@ -289,13 +289,14 @@ export function PushNotificationProvider({
 }
 
 export function PushNotificationResponseHandler() {
-  const { isLoading: isAuthLoading } = useGlobalUser();
+  const { isLoading: isAuthLoading, isAuthenticated } = useGlobalUser();
   const navigationState = useRootNavigationState();
   const markNotificationRead = useMutation(
     api.notifications.mutations.markNotificationAsRead
   );
   const handledResponseIds = useRef(new Set<string>());
-  const isNavigationReady = Boolean(navigationState?.key) && !isAuthLoading;
+  const isNavigationReady =
+    Boolean(navigationState?.key) && !isAuthLoading && isAuthenticated;
 
   const handleResponse = useCallback(
     (response: Notifications.NotificationResponse) => {

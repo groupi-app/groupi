@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 
 import { SettingsScreenTemplate } from '@/components/templates';
 import { LoadingState } from '@/components/molecules';
@@ -72,36 +73,48 @@ export default function PrivacySettingsScreen() {
   const blockedUsers = useBlockedUsers();
   const unblockUser = useUnblockUser();
 
-  const [friendRequestsFrom, setFriendRequestsFrom] =
-    useState<FriendRequestOption>('EVERYONE');
-  const [eventInvitesFrom, setEventInvitesFrom] =
-    useState<EventInviteOption>('EVERYONE');
-  const [initialized, setInitialized] = useState(false);
+  const [friendRequestsOverride, setFriendRequestsOverride] =
+    useState<FriendRequestOption | null>(null);
+  const [eventInvitesOverride, setEventInvitesOverride] =
+    useState<EventInviteOption | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const primaryColor = String(
+    useCSSVariable('--color-primary') ?? 'transparent'
+  );
 
-  if (settings && !initialized) {
-    setInitialized(true);
-    setFriendRequestsFrom(
-      (settings.allowFriendRequestsFrom as FriendRequestOption) ?? 'EVERYONE'
-    );
-    setEventInvitesFrom(
-      (settings.allowEventInvitesFrom as EventInviteOption) ?? 'EVERYONE'
-    );
-  }
+  const friendRequestsFrom =
+    friendRequestsOverride ??
+    (settings?.allowFriendRequestsFrom as FriendRequestOption | undefined) ??
+    'EVERYONE';
+  const eventInvitesFrom =
+    eventInvitesOverride ??
+    (settings?.allowEventInvitesFrom as EventInviteOption | undefined) ??
+    'EVERYONE';
 
-  function handleSaveFriendRequests(value: FriendRequestOption) {
-    setFriendRequestsFrom(value);
-    saveSettings({
+  async function handleSaveFriendRequests(value: FriendRequestOption) {
+    if (isSaving) return;
+    const previous = friendRequestsOverride;
+    setFriendRequestsOverride(value);
+    setIsSaving(true);
+    const saved = await saveSettings({
       allowFriendRequestsFrom: value,
       allowEventInvitesFrom: eventInvitesFrom,
     });
+    if (!saved) setFriendRequestsOverride(previous);
+    setIsSaving(false);
   }
 
-  function handleSaveEventInvites(value: EventInviteOption) {
-    setEventInvitesFrom(value);
-    saveSettings({
+  async function handleSaveEventInvites(value: EventInviteOption) {
+    if (isSaving) return;
+    const previous = eventInvitesOverride;
+    setEventInvitesOverride(value);
+    setIsSaving(true);
+    const saved = await saveSettings({
       allowFriendRequestsFrom: friendRequestsFrom,
       allowEventInvitesFrom: value,
     });
+    if (!saved) setEventInvitesOverride(previous);
+    setIsSaving(false);
   }
 
   if (settings === undefined) {
@@ -129,7 +142,14 @@ export default function PrivacySettingsScreen() {
           {FRIEND_REQUEST_OPTIONS.map((option, index) => (
             <Pressable
               key={option.value}
-              onPress={() => handleSaveFriendRequests(option.value)}
+              onPress={() => void handleSaveFriendRequests(option.value)}
+              disabled={isSaving}
+              accessibilityRole='radio'
+              accessibilityState={{
+                checked: friendRequestsFrom === option.value,
+                disabled: isSaving,
+                busy: isSaving,
+              }}
               className={`flex-row items-center justify-between px-4 py-3 ${
                 index < FRIEND_REQUEST_OPTIONS.length - 1
                   ? 'border-b border-border'
@@ -145,7 +165,11 @@ export default function PrivacySettingsScreen() {
                 </Text>
               </View>
               {friendRequestsFrom === option.value ? (
-                <Ionicons name='checkmark-circle' size={22} color='#8b00b8' />
+                <Ionicons
+                  name='checkmark-circle'
+                  size={22}
+                  color={primaryColor}
+                />
               ) : (
                 <View className='h-[22px] w-[22px] rounded-full border-2 border-border' />
               )}
@@ -166,7 +190,14 @@ export default function PrivacySettingsScreen() {
           {EVENT_INVITE_OPTIONS.map((option, index) => (
             <Pressable
               key={option.value}
-              onPress={() => handleSaveEventInvites(option.value)}
+              onPress={() => void handleSaveEventInvites(option.value)}
+              disabled={isSaving}
+              accessibilityRole='radio'
+              accessibilityState={{
+                checked: eventInvitesFrom === option.value,
+                disabled: isSaving,
+                busy: isSaving,
+              }}
               className={`flex-row items-center justify-between px-4 py-3 ${
                 index < EVENT_INVITE_OPTIONS.length - 1
                   ? 'border-b border-border'
@@ -182,7 +213,11 @@ export default function PrivacySettingsScreen() {
                 </Text>
               </View>
               {eventInvitesFrom === option.value ? (
-                <Ionicons name='checkmark-circle' size={22} color='#8b00b8' />
+                <Ionicons
+                  name='checkmark-circle'
+                  size={22}
+                  color={primaryColor}
+                />
               ) : (
                 <View className='h-[22px] w-[22px] rounded-full border-2 border-border' />
               )}

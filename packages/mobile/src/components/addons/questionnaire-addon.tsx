@@ -110,7 +110,9 @@ export function QuestionnaireAddon({
             <Text className='text-base font-medium text-foreground'>
               {question.label || `Question ${index + 1}`}
             </Text>
-            {question.required ? <Text className='text-error'>*</Text> : null}
+            {question.required ? (
+              <Text className='text-text-error'>*</Text>
+            ) : null}
           </View>
 
           <QuestionInput

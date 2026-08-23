@@ -17,6 +17,9 @@ export function LabeledTextarea({
   containerClassName,
   className,
   value,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
   ...props
 }: LabeledTextareaProps) {
   return (
@@ -30,11 +33,20 @@ export function LabeledTextarea({
         className={cn(error && 'border-destructive', className)}
         value={value}
         maxLength={maxLength}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={accessibilityHint ?? error}
+        accessibilityState={accessibilityState}
+        aria-invalid={error ? true : undefined}
         {...props}
       />
       <View className='flex-row justify-between'>
         {error ? (
-          <Text className='text-sm text-destructive'>{error}</Text>
+          <Text
+            className='text-sm text-destructive'
+            accessibilityLiveRegion='polite'
+          >
+            {error}
+          </Text>
         ) : (
           <View />
         )}

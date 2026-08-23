@@ -58,6 +58,10 @@ export function ActionMenuProvider({ children }: { children: ReactNode }) {
 
   const bgColor = (useCSSVariable('--color-card') as string) ?? '#ffffff';
   const borderColor = (useCSSVariable('--color-border') as string) ?? '#e5e7eb';
+  const destructiveColor =
+    (useCSSVariable('--color-destructive') as string) ?? '#ef4444';
+  const mutedColor =
+    (useCSSVariable('--color-muted-foreground') as string) ?? '#6b7280';
 
   const showActionMenu = useCallback((opts: ActionMenuState) => {
     setState(opts);
@@ -116,26 +120,32 @@ export function ActionMenuProvider({ children }: { children: ReactNode }) {
             <View key={`${option.label}-${index}`}>
               <Pressable
                 onPress={() => handleSelect(option)}
+                accessibilityRole='button'
+                accessibilityLabel={option.label}
                 className='flex-row items-center gap-3 px-5 py-4 active:bg-muted'
               >
                 {option.icon ? (
                   <Ionicons
                     name={option.icon as keyof typeof Ionicons.glyphMap}
                     size={22}
-                    color={option.destructive ? '#ef4444' : '#6b7280'}
+                    color={option.destructive ? destructiveColor : mutedColor}
                   />
                 ) : null}
                 <Text
                   className={`flex-1 text-base ${
                     option.destructive
-                      ? 'font-medium text-destructive'
+                      ? 'font-medium text-text-error'
                       : 'text-foreground'
                   }`}
                 >
                   {option.label}
                 </Text>
                 {option.destructive ? null : (
-                  <Ionicons name='chevron-forward' size={18} color='#9ca3af' />
+                  <Ionicons
+                    name='chevron-forward'
+                    size={18}
+                    color={mutedColor}
+                  />
                 )}
               </Pressable>
               {index < state.options.length - 1 ? <Separator /> : null}

@@ -15,6 +15,15 @@
   --radius-tooltip: 0.75rem;
   --radius-dropdown: 1rem;
   --radius-sheet: 1.5rem;
+  --radius-popover: 1rem;
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --z-popover: 50;
+  --z-tooltip: 60;
 }
 
 @layer theme {
@@ -62,6 +71,10 @@
       --color-text-secondary: hsl(217, 9%, 40%);
       --color-text-tertiary: hsl(217, 10%, 50%);
       --color-text-disabled: hsl(217, 10%, 65%);
+      --color-text-success: hsl(145, 80%, 28%);
+      --color-text-warning: hsl(35, 100%, 36%);
+      --color-text-error: hsl(0, 85%, 46%);
+      --color-text-info: hsl(285, 100%, 34%);
 
       /* Border */
       --color-border: hsl(214.3, 31.8%, 91.4%);
@@ -121,6 +134,10 @@
       --color-text-secondary: hsl(270, 15%, 55%);
       --color-text-tertiary: hsl(270, 12%, 45%);
       --color-text-disabled: hsl(270, 10%, 35%);
+      --color-text-success: hsl(145, 70%, 58%);
+      --color-text-warning: hsl(38, 92%, 62%);
+      --color-text-error: hsl(0, 65%, 62%);
+      --color-text-info: hsl(280, 85%, 70%);
 
       /* Border */
       --color-border: hsl(270, 25%, 20%);

@@ -129,8 +129,10 @@ export function useSavePrivacySettings() {
       try {
         await mutation(settings);
         toast.success('Privacy settings saved');
+        return true;
       } catch {
         toast.error('Failed to save privacy settings');
+        return false;
       }
     },
     [mutation]

@@ -5,6 +5,7 @@ import { Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsAddonOptedOut, useToggleAddonOptOut } from '@/hooks/use-addons';
 import { getReminderOffset, type ReminderOffset } from '@/lib/addon-contracts';
+import { useCSSVariable } from 'uniwind';
 
 interface ReminderAddonProps {
   eventId: string;
@@ -28,6 +29,7 @@ export function ReminderAddon({ eventId, config }: ReminderAddonProps) {
   const optOutData = useIsAddonOptedOut(eventId, 'reminders');
   const toggleOptOut = useToggleAddonOptOut();
   const [isSaving, setIsSaving] = useState(false);
+  const primaryColor = String(useCSSVariable('--color-primary') ?? '');
 
   const isOptedOut = optOutData?.isOptedOut ?? false;
   const reminderOffset = getReminderOffset(config);
@@ -46,7 +48,7 @@ export function ReminderAddon({ eventId, config }: ReminderAddonProps) {
     <View className='gap-4'>
       <View className='flex-row items-center gap-3'>
         <View className='h-10 w-10 items-center justify-center rounded-card bg-primary/10'>
-          <Ionicons name='alarm-outline' size={20} color='#8b00b8' />
+          <Ionicons name='alarm-outline' size={20} color={primaryColor} />
         </View>
         <View className='flex-1'>
           <Text className='text-base font-medium text-foreground'>

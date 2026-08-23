@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  FlatList,
   View,
   Image,
   Pressable,
-  Dimensions,
   Modal,
   Text,
-  ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -27,11 +27,12 @@ interface AttachmentGalleryProps {
   attachments: Attachment[];
 }
 
-const screenWidth = Dimensions.get('window').width;
 const GALLERY_PADDING = 32; // px-4 = 16 * 2
 const GAP = 4;
 
 export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  const lightboxRef = useRef<FlatList<Attachment>>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(
     new Set()
@@ -39,9 +40,17 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
 
   const images = attachments.filter(a => a.type === 'IMAGE' && a.url);
 
-  if (images.length === 0) return null;
-
   const availableWidth = screenWidth - GALLERY_PADDING;
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    lightboxRef.current?.scrollToOffset({
+      offset: lightboxIndex * screenWidth,
+      animated: false,
+    });
+  }, [lightboxIndex, screenWidth]);
+
+  if (images.length === 0) return null;
 
   function handlePress(attachment: Attachment, index: number) {
     if (attachment.isSpoiler && !revealedSpoilers.has(attachment._id)) {
@@ -59,7 +68,14 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
       const height = Math.min(availableWidth / aspectRatio, 300);
 
       return (
-        <Pressable onPress={() => handlePress(img, 0)}>
+        <Pressable
+          onPress={() => handlePress(img, 0)}
+          accessibilityRole='button'
+          accessibilityLabel={img.altText ?? `View ${img.filename}`}
+          accessibilityHint={
+            img.isSpoiler ? 'Reveals spoiler image' : undefined
+          }
+        >
           <ImageTile
             attachment={img}
             width={availableWidth}
@@ -75,7 +91,15 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
       return (
         <View className='flex-row' style={{ gap: GAP }}>
           {images.map((img, i) => (
-            <Pressable key={img._id} onPress={() => handlePress(img, i)}>
+            <Pressable
+              key={img._id}
+              onPress={() => handlePress(img, i)}
+              accessibilityRole='button'
+              accessibilityLabel={img.altText ?? `View ${img.filename}`}
+              accessibilityHint={
+                img.isSpoiler ? 'Reveals spoiler image' : undefined
+              }
+            >
               <ImageTile
                 attachment={img}
                 width={tileWidth}
@@ -101,7 +125,15 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
           if (row.length === 1 && rowIdx === 0) {
             const img = row[0];
             return (
-              <Pressable key={img._id} onPress={() => handlePress(img, 0)}>
+              <Pressable
+                key={img._id}
+                onPress={() => handlePress(img, 0)}
+                accessibilityRole='button'
+                accessibilityLabel={img.altText ?? `View ${img.filename}`}
+                accessibilityHint={
+                  img.isSpoiler ? 'Reveals spoiler image' : undefined
+                }
+              >
                 <ImageTile
                   attachment={img}
                   width={availableWidth}
@@ -123,6 +155,11 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
                   <Pressable
                     key={img._id}
                     onPress={() => handlePress(img, flatIndex)}
+                    accessibilityRole='button'
+                    accessibilityLabel={img.altText ?? `View ${img.filename}`}
+                    accessibilityHint={
+                      img.isSpoiler ? 'Reveals spoiler image' : undefined
+                    }
                   >
                     <ImageTile
                       attachment={img}
@@ -153,7 +190,12 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
       >
         <SafeAreaView className='flex-1 bg-black'>
           <View className='flex-row items-center justify-between px-4 py-2'>
-            <Pressable onPress={() => setLightboxIndex(null)} className='p-2'>
+            <Pressable
+              onPress={() => setLightboxIndex(null)}
+              className='min-h-[44px] min-w-[44px] items-center justify-center'
+              accessibilityRole='button'
+              accessibilityLabel='Close image viewer'
+            >
               <Ionicons name='close' size={28} color='#ffffff' />
             </Pressable>
             <Text className='text-sm text-white/70'>
@@ -162,18 +204,28 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
             <View className='w-10' />
           </View>
 
-          <ScrollView
+          <FlatList
+            ref={lightboxRef}
+            data={images}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            contentOffset={{
-              x: (lightboxIndex ?? 0) * screenWidth,
-              y: 0,
+            keyExtractor={item => item._id}
+            initialNumToRender={1}
+            maxToRenderPerBatch={2}
+            windowSize={3}
+            getItemLayout={(_, index) => ({
+              length: screenWidth,
+              offset: screenWidth * index,
+              index,
+            })}
+            onMomentumScrollEnd={event => {
+              setLightboxIndex(
+                Math.round(event.nativeEvent.contentOffset.x / screenWidth)
+              );
             }}
-          >
-            {images.map(img => (
+            renderItem={({ item: img }) => (
               <View
-                key={img._id}
                 className='items-center justify-center'
                 style={{ width: screenWidth }}
               >
@@ -181,10 +233,11 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
                   source={{ uri: img.url! }}
                   className='h-full w-full'
                   resizeMode='contain'
+                  accessibilityLabel={img.altText ?? img.filename}
                 />
               </View>
-            ))}
-          </ScrollView>
+            )}
+          />
         </SafeAreaView>
       </Modal>
     </View>
@@ -211,6 +264,7 @@ function ImageTile({
         style={{ width, height }}
         resizeMode='cover'
         blurRadius={isSpoiler ? 30 : 0}
+        accessible={false}
       />
       {isSpoiler ? (
         <View className='absolute inset-0 items-center justify-center bg-black/30'>

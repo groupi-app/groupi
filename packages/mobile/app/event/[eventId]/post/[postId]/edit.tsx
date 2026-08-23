@@ -8,6 +8,7 @@ import type { Id } from 'convex/_generated/dataModel';
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { BackButton } from '@/components/ui/back-button';
 import { LoadingState } from '@/components/molecules';
+import { EmptyState } from '@/components/ui/empty-state';
 import { RichTextEditor } from '@/components/posts/rich-text-editor';
 import { usePostDetail, useUpdatePost } from '@/hooks/use-posts';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -36,7 +37,7 @@ export default function EditPostScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  const post = postDetail?.post ?? postDetail;
+  const post = postDetail?.post;
 
   useEffect(() => {
     if (post && !initialized) {
@@ -66,6 +67,24 @@ export default function EditPostScreen() {
           </Text>
         </View>
         <LoadingState />
+      </SafeAreaView>
+    );
+  }
+
+  if (!post) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>
+            Edit Post
+          </Text>
+        </View>
+        <EmptyState
+          icon='chatbubble-ellipses-outline'
+          title='Post not found'
+          description='This post may have been deleted or you may no longer have permission to edit it.'
+        />
       </SafeAreaView>
     );
   }

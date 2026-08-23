@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import {
   RichText,
@@ -48,7 +48,8 @@ export function RichTextEditor({
   const primaryColor = useCSSVariable('--color-primary') as string | undefined;
   const borderColor = useCSSVariable('--color-border') as string | undefined;
 
-  const customCSS = `
+  const customCSS = useMemo(
+    () => `
     body {
       background-color: ${bgColor ?? '#ffffff'};
       color: ${textColor ?? '#1a1a1a'};
@@ -82,10 +83,12 @@ export function RichTextEditor({
     h3 { font-size: 18px; font-weight: 600; margin: 4px 0; }
     ul, ol { padding-left: 24px; }
     li { margin: 2px 0; }
-  `;
+  `,
+    [bgColor, borderColor, minHeight, mutedColor, primaryColor, textColor]
+  );
 
-  const editor = useEditorBridge({
-    bridgeExtensions: [
+  const bridgeExtensions = useMemo(
+    () => [
       CoreBridge.configureCSS(customCSS),
       BoldBridge,
       ItalicBridge,
@@ -102,11 +105,33 @@ export function RichTextEditor({
       HardBreakBridge,
       PlaceholderBridge.configureExtension({ placeholder }),
     ],
+    [customCSS, placeholder]
+  );
+
+  const editor = useEditorBridge({
+    bridgeExtensions,
     initialContent: initialContent || '',
     autofocus: false,
     editable,
     dynamicHeight: true,
   });
+  const { webviewRef } = editor;
+
+  useEffect(() => {
+    const css = JSON.stringify(customCSS);
+    webviewRef.current?.injectJavaScript(`
+      (() => {
+        let style = document.getElementById('groupi-theme');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = 'groupi-theme';
+          document.head.appendChild(style);
+        }
+        style.textContent = ${css};
+      })();
+      true;
+    `);
+  }, [customCSS, webviewRef]);
 
   // Reactively track HTML content — avoids circular reference with editor
   const html = useEditorContent(editor, { type: 'html' });

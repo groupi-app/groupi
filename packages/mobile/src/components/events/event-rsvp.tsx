@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LabeledTextarea as Textarea } from '@/components/ui/labeled-textarea';
 import { useUpdateRSVP } from '@/hooks/use-events';
 import { toast } from '@groupi/shared/platform';
+import { useCSSVariable } from 'uniwind';
 
 interface EventRsvpProps {
   eventId: string;
@@ -22,33 +23,23 @@ const statusConfig: Record<
   {
     label: string;
     icon: keyof typeof Ionicons.glyphMap;
-    color: string;
-    bgClass: string;
   }
 > = {
   YES: {
     label: 'Going',
     icon: 'checkmark-circle',
-    color: '#22c55e',
-    bgClass: 'bg-success',
   },
   MAYBE: {
     label: 'Maybe',
     icon: 'help-circle',
-    color: '#f59e0b',
-    bgClass: 'bg-warning',
   },
   NO: {
     label: "Can't Go",
     icon: 'close-circle',
-    color: '#ef4444',
-    bgClass: 'bg-error',
   },
   PENDING: {
     label: 'RSVP Pending',
     icon: 'time',
-    color: '#6366f1',
-    bgClass: 'bg-info',
   },
 };
 
@@ -65,6 +56,13 @@ export function EventRsvp({
   const [note, setNote] = useState(currentNote ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateRSVP = useUpdateRSVP();
+  const statusColors: Record<RsvpStatus, string> = {
+    YES: String(useCSSVariable('--color-text-success') ?? ''),
+    MAYBE: String(useCSSVariable('--color-text-warning') ?? ''),
+    NO: String(useCSSVariable('--color-text-error') ?? ''),
+    PENDING: String(useCSSVariable('--color-text-info') ?? ''),
+  };
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
 
   // Organizers don't need to RSVP
   if (isOrganizer) return null;
@@ -97,13 +95,20 @@ export function EventRsvp({
           setNote(currentNote ?? '');
           setShowModal(true);
         }}
-        className='mt-4 flex-row items-center gap-2 rounded-button bg-card px-4 py-3'
+        className='mt-4 min-h-11 flex-row items-center gap-2 rounded-button bg-card px-4 py-3'
+        accessibilityRole='button'
+        accessibilityLabel={`RSVP: ${config.label}`}
+        accessibilityHint='Opens RSVP options'
       >
-        <Ionicons name={config.icon} size={20} color={config.color} />
+        <Ionicons
+          name={config.icon}
+          size={20}
+          color={statusColors[currentStatus as RsvpStatus] ?? mutedColor}
+        />
         <Text className='text-base font-semibold text-foreground'>
           {config.label}
         </Text>
-        <Ionicons name='chevron-down' size={16} color='#9ca3af' />
+        <Ionicons name='chevron-down' size={16} color={mutedColor} />
       </Pressable>
 
       <Modal
@@ -114,7 +119,12 @@ export function EventRsvp({
       >
         <View className='flex-1 bg-background'>
           <View className='flex-row items-center justify-between border-b border-border px-4 py-4'>
-            <Pressable onPress={() => setShowModal(false)}>
+            <Pressable
+              onPress={() => setShowModal(false)}
+              className='min-h-11 min-w-14 justify-center'
+              accessibilityRole='button'
+              accessibilityLabel='Cancel RSVP changes'
+            >
               <Text className='text-base text-muted-foreground'>Cancel</Text>
             </Pressable>
             <Text className='text-lg font-semibold text-foreground'>RSVP</Text>
@@ -137,6 +147,9 @@ export function EventRsvp({
                   <Pressable
                     key={status}
                     onPress={() => setSelectedStatus(status)}
+                    accessibilityRole='radio'
+                    accessibilityState={{ checked: isSelected }}
+                    accessibilityLabel={cfg.label}
                     className={`flex-row items-center gap-3 rounded-card border-2 p-4 ${
                       isSelected
                         ? 'border-primary bg-primary/5'
@@ -146,7 +159,7 @@ export function EventRsvp({
                     <Ionicons
                       name={cfg.icon}
                       size={24}
-                      color={isSelected ? cfg.color : '#9ca3af'}
+                      color={isSelected ? statusColors[status] : mutedColor}
                     />
                     <Text
                       className={`text-base font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}

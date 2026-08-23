@@ -1,37 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import { Text } from '@/components/ui/text';
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { LabeledTextarea as Textarea } from '@/components/ui/labeled-textarea';
 import { Button } from '@/components/ui/button';
-
-// Lazy-load API to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { getSafeAuthReturnPath } from '@/lib/auth-route-policy';
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export default function OnboardingScreen() {
-  console.log('[Onboarding] Screen rendered');
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const {
     user,
     isAuthenticated,
     isLoading: isGlobalLoading,
     needsOnboarding,
   } = useGlobalUser();
-  console.log(
-    '[Onboarding] isAuthenticated:',
-    isAuthenticated,
-    'isGlobalLoading:',
-    isGlobalLoading,
-    'needsOnboarding:',
-    needsOnboarding
-  );
 
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -75,9 +65,9 @@ export default function OnboardingScreen() {
   // Redirect if not needing onboarding
   useEffect(() => {
     if (!isGlobalLoading && isAuthenticated && needsOnboarding === false) {
-      router.replace('/(tabs)');
+      router.replace((getSafeAuthReturnPath(returnTo) ?? '/(tabs)') as Href);
     }
-  }, [isGlobalLoading, isAuthenticated, needsOnboarding]);
+  }, [isGlobalLoading, isAuthenticated, needsOnboarding, returnTo]);
 
   const getUnameError = useCallback((): string | undefined => {
     const trimmed = username.trim();
@@ -125,24 +115,14 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-background' style={{ flex: 1 }}>
+    <SafeAreaView className='flex-1 bg-background'>
       <ScrollView
         className='flex-1 px-6'
         keyboardShouldPersistTaps='handled'
         contentContainerClassName='pb-8 pt-8'
-        contentContainerStyle={{ paddingBottom: 32, paddingTop: 32 }}
-        style={{ flex: 1, paddingHorizontal: 24 }}
       >
-        <Text
-          className='text-3xl font-bold text-foreground'
-          style={{ fontSize: 30, fontWeight: 'bold', color: '#1f2937' }}
-        >
-          Welcome!
-        </Text>
-        <Text
-          className='mt-2 text-base text-muted-foreground'
-          style={{ marginTop: 8, fontSize: 16, color: '#6b7280' }}
-        >
+        <Text className='text-3xl font-bold text-foreground'>Welcome!</Text>
+        <Text className='mt-2 text-base text-muted-foreground'>
           Let&apos;s set up your profile to get started.
         </Text>
 
@@ -182,7 +162,9 @@ export default function OnboardingScreen() {
             maxLength={500}
           />
 
-          {error ? <Text className='text-sm text-error'>{error}</Text> : null}
+          {error ? (
+            <Text className='text-sm text-text-error'>{error}</Text>
+          ) : null}
 
           <Button
             onPress={handleSubmit}

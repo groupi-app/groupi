@@ -3,8 +3,8 @@ import {
   View,
   Image,
   Pressable,
-  Dimensions,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -18,8 +18,7 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ImageLightboxProps {
   uri: string;
@@ -28,6 +27,8 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -51,7 +52,7 @@ export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
         // Dismiss
         opacity.value = withTiming(0, { duration: 150 });
         translateY.value = withTiming(
-          e.translationY > 0 ? SCREEN_HEIGHT : -SCREEN_HEIGHT,
+          e.translationY > 0 ? screenHeight : -screenHeight,
           { duration: 200 },
           () => {
             runOnJS(onClose)();
@@ -102,10 +103,15 @@ export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Animated.View style={[{ flex: 1 }, backdropStyle]}>
           {/* Close button */}
-          <View className='absolute right-4 top-14 z-tooltip'>
+          <View
+            className='absolute right-4 z-tooltip'
+            style={{ top: insets.top + 8 }}
+          >
             <Pressable
               onPress={handleClose}
-              className='h-10 w-10 items-center justify-center rounded-full bg-white/20'
+              className='h-11 w-11 items-center justify-center rounded-full bg-white/20'
+              accessibilityRole='button'
+              accessibilityLabel='Close image viewer'
             >
               <Ionicons name='close' size={24} color='#ffffff' />
             </Pressable>
@@ -126,8 +132,8 @@ export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
               <Image
                 source={{ uri }}
                 style={{
-                  width: SCREEN_WIDTH,
-                  height: SCREEN_HEIGHT * 0.7,
+                  width: screenWidth,
+                  height: screenHeight * 0.7,
                 }}
                 resizeMode='contain'
               />

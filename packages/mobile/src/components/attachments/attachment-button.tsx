@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
 import { useActionMenu } from '@/components/ui/action-menu';
-import { MAX_ATTACHMENTS } from '@/hooks/use-file-upload';
+import { MAX_ATTACHMENTS } from '@/lib/file-upload-policy';
 
 interface AttachmentButtonProps {
   onFilesSelected: (
@@ -12,6 +12,7 @@ interface AttachmentButtonProps {
       uri: string;
       filename: string;
       mimeType: string;
+      size?: number;
       width?: number;
       height?: number;
     }[]
@@ -43,7 +44,7 @@ export function AttachmentButton({
           icon: 'images-outline',
           onPress: async () => {
             const images = await pickMultipleImages({
-              mediaTypes: ['images', 'videos'],
+              mediaTypes: ['images'],
             });
             if (images.length > 0) {
               onFilesSelected(
@@ -51,6 +52,7 @@ export function AttachmentButton({
                   uri: img.uri,
                   filename: img.filename,
                   mimeType: img.mimeType,
+                  size: img.fileSize,
                   width: img.width,
                   height: img.height,
                 }))
@@ -69,6 +71,7 @@ export function AttachmentButton({
                   uri: photo.uri,
                   filename: photo.filename,
                   mimeType: photo.mimeType,
+                  size: photo.fileSize,
                   width: photo.width,
                   height: photo.height,
                 },
@@ -84,7 +87,14 @@ export function AttachmentButton({
     <Pressable
       onPress={handlePress}
       disabled={disabled || isMaxed}
-      className={`flex-row items-center gap-1 p-2 ${isMaxed ? 'opacity-40' : ''}`}
+      className={`min-h-[44px] min-w-[44px] flex-row items-center justify-center gap-1 p-2 ${isMaxed ? 'opacity-40' : ''}`}
+      accessibilityRole='button'
+      accessibilityLabel={
+        currentCount > 0
+          ? `Add attachment, ${currentCount} selected`
+          : 'Add attachment'
+      }
+      accessibilityState={{ disabled: disabled || isMaxed }}
     >
       <Ionicons
         name='attach'

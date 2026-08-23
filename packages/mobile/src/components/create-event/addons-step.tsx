@@ -795,7 +795,7 @@ function DiscordConfig({
   if (error) {
     return (
       <View className='items-center gap-2 py-4'>
-        <Text className='text-sm text-error'>{error}</Text>
+        <Text className='text-sm text-text-error'>{error}</Text>
         <Button variant='outline' size='sm' onPress={fetchGuilds}>
           Retry
         </Button>
