@@ -1,9 +1,7 @@
 import { useMutation } from 'convex/react';
 import { useCallback } from 'react';
 import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { api } from 'convex/_generated/api';
 
 type TargetType = 'USER' | 'EVENT' | 'POST' | 'REPLY';
 type ReportReason =

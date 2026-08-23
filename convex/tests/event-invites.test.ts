@@ -5,6 +5,7 @@ import {
   createTestUser,
   createAuthenticatedUser,
   createTestEventWithUser,
+  createTestEventWithMultipleUsers,
 } from './test_helpers';
 
 describe('Event Invites', () => {
@@ -127,7 +128,64 @@ describe('Event Invites', () => {
           inviteePersonId,
           role: 'ATTENDEE',
         })
-      ).rejects.toThrow('must be a member');
+      ).rejects.toThrow('Event membership required');
+    });
+
+    test('should enforce the configured inviteMembers permission', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithMultipleUsers(t);
+      const firstInvitee = await createTestUser(t, {
+        username: 'permission-invitee-one',
+      });
+      const secondInvitee = await createTestUser(t, {
+        username: 'permission-invitee-two',
+      });
+      const attendeeAuth = createAuthenticatedUser(t, setup.attendee.userId);
+
+      await expect(
+        attendeeAuth.mutation(api.eventInvites.mutations.sendEventInvite, {
+          eventId: setup.eventId,
+          inviteePersonId: firstInvitee.personId,
+          role: 'ATTENDEE',
+        })
+      ).rejects.toThrow('requires MODERATOR role');
+
+      await t.run(async ctx => {
+        await ctx.db.patch(setup.eventId, {
+          permissions: { inviteMembers: 'EVERYONE' },
+        });
+      });
+
+      const result = await attendeeAuth.mutation(
+        api.eventInvites.mutations.sendEventInvite,
+        {
+          eventId: setup.eventId,
+          inviteePersonId: secondInvitee.personId,
+          role: 'ATTENDEE',
+        }
+      );
+      expect(result.status).toBe('PENDING');
+    });
+
+    test('should retain organizer-only moderator invitations', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithMultipleUsers(t);
+      const invitee = await createTestUser(t, {
+        username: 'moderator-invitee',
+      });
+
+      await t.run(async ctx => {
+        await ctx.db.patch(setup.attendee.membershipId, { role: 'MODERATOR' });
+      });
+      const moderatorAuth = createAuthenticatedUser(t, setup.attendee.userId);
+
+      await expect(
+        moderatorAuth.mutation(api.eventInvites.mutations.sendEventInvite, {
+          eventId: setup.eventId,
+          inviteePersonId: invitee.personId,
+          role: 'MODERATOR',
+        })
+      ).rejects.toThrow('Only organizers');
     });
 
     test('should not allow duplicate pending invites', async () => {

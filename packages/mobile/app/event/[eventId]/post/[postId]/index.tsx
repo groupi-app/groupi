@@ -13,6 +13,8 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from 'convex/react';
+import type { Id } from 'convex/_generated/dataModel';
+import { api } from 'convex/_generated/api';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import {
@@ -46,16 +48,14 @@ import { formatTimeAgo, LoadingState } from '@/components/molecules';
 import { toast } from '@groupi/shared/platform';
 import { router } from 'expo-router';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
-
 export default function PostDetailScreen() {
   const { postId } = useLocalSearchParams<{
     eventId: string;
     postId: string;
   }>();
   const { person } = useGlobalUser();
-  const postDetail = usePostDetail(postId as never);
+  const typedPostId = postId as Id<'posts'>;
+  const postDetail = usePostDetail(typedPostId);
   const createReply = useCreateReply();
   const deletePost = useDeletePost();
   const deleteReply = useDeleteReply();
@@ -119,9 +119,9 @@ export default function PostDetailScreen() {
     );
   }
 
-  const post = postDetail?.post ?? postDetail;
-  const replies = postDetail?.replies ?? [];
-  const postAttachments = postDetail?.attachments ?? post?.attachments ?? [];
+  const post = postDetail?.post;
+  const replies = post?.replies ?? [];
+  const postAttachments = post?.attachments ?? [];
   const authorName =
     post?.author?.user?.name ?? post?.author?.person?.user?.name ?? 'Unknown';
   const authorImage =
@@ -133,7 +133,10 @@ export default function PostDetailScreen() {
     setTyping(false);
     setIsSubmittingReply(true);
     try {
-      const replyId = await createReply({ postId, text: replyText.trim() });
+      const { replyId } = await createReply({
+        postId: typedPostId,
+        text: replyText.trim(),
+      });
 
       // Upload and attach files to the reply
       if (pendingUploads.length > 0 && replyId) {
@@ -142,7 +145,7 @@ export default function PostDetailScreen() {
           await createAttachmentsBatch({
             replyId,
             attachments: uploadResults.map(r => ({
-              storageId: r.storageId,
+              storageId: r.storageId as Id<'_storage'>,
               filename: r.filename,
               size: r.size,
               mimeType: r.mimeType,
@@ -186,7 +189,7 @@ export default function PostDetailScreen() {
             destructive: true,
             onConfirm: async () => {
               try {
-                await deletePost({ postId });
+                await deletePost({ postId: typedPostId });
                 toast.success('Post deleted');
                 router.back();
               } catch {
@@ -225,7 +228,7 @@ export default function PostDetailScreen() {
     if (!editingReplyId || !editingReplyText.trim()) return;
     try {
       await updateReply({
-        replyId: editingReplyId,
+        replyId: editingReplyId as Id<'replies'>,
         text: editingReplyText.trim(),
       });
       setEditingReplyId(null);
@@ -265,7 +268,7 @@ export default function PostDetailScreen() {
               destructive: true,
               onConfirm: async () => {
                 try {
-                  await deleteReply({ replyId });
+                  await deleteReply({ replyId: replyId as Id<'replies'> });
                   toast.success('Reply deleted');
                 } catch {
                   toast.error('Failed to delete reply');

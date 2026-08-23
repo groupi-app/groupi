@@ -6,12 +6,12 @@
 
 import { useMutation } from 'convex/react';
 import { useCallback } from 'react';
-import type { ConvexApi, ConvexId } from './types';
+import type { ConvexId, PostActionApi } from './types';
 
 /**
  * Post action hooks factory - accepts api and returns post action hooks
  */
-export function createPostActionHooks(api: ConvexApi) {
+export function createPostActionHooks(api: PostActionApi) {
   /**
    * Create a new post
    * Works on web and mobile - no UI feedback included
@@ -41,7 +41,7 @@ export function createPostActionHooks(api: ConvexApi) {
    * Works on web and mobile - no UI feedback included
    */
   function useCreateReply() {
-    return useMutation(api.posts.mutations.createReply);
+    return useMutation(api.replies.mutations.createReply);
   }
 
   /**
@@ -49,7 +49,7 @@ export function createPostActionHooks(api: ConvexApi) {
    * Works on web and mobile - no UI feedback included
    */
   function useUpdateReply() {
-    return useMutation(api.posts.mutations.updateReply);
+    return useMutation(api.replies.mutations.updateReply);
   }
 
   /**
@@ -57,7 +57,7 @@ export function createPostActionHooks(api: ConvexApi) {
    * Works on web and mobile - no UI feedback included
    */
   function useDeleteReply() {
-    return useMutation(api.posts.mutations.deleteReply);
+    return useMutation(api.replies.mutations.deleteReply);
   }
 
   /**
@@ -82,7 +82,7 @@ export function createPostActionHooks(api: ConvexApi) {
     }, [postId, deletePost]);
 
     const createReplyForId = useCallback(
-      async (data: { content: string }) => {
+      async (data: { text: string }) => {
         return createReply({ postId, ...data });
       },
       [postId, createReply]
@@ -105,7 +105,7 @@ export function createPostActionHooks(api: ConvexApi) {
 
     // Bound actions with replyId pre-filled
     const updateReplyForId = useCallback(
-      async (data: { content: string }) => {
+      async (data: { text: string }) => {
         return updateReply({ replyId, ...data });
       },
       [replyId, updateReply]

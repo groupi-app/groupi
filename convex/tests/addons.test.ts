@@ -1,8 +1,9 @@
-import { expect, test, describe, beforeEach } from 'vitest';
+import { expect, test, describe } from 'vitest';
 import {
   createTestInstance,
   createTestUser,
   createTestEventWithUser,
+  createTestEventWithMultipleUsers,
 } from './test_helpers';
 import { api } from './_generated/api';
 
@@ -200,6 +201,225 @@ describe('Add-on Framework', () => {
           config: { reminderOffset: '1_DAY' },
         })
       ).rejects.toThrow('not enabled');
+    });
+  });
+
+  describe('replaceBuiltInAddonConfigs', () => {
+    test('should apply the complete desired built-in set in one mutation', async () => {
+      const t = createTestInstance();
+      const { userId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await asUser.mutation(api.addons.mutations.enableAddon, {
+        eventId,
+        addonType: 'bring-list',
+        config: {
+          items: [{ id: 'ice', name: 'Ice', quantity: 2 }],
+        },
+      });
+
+      const result = await asUser.mutation(
+        api.addons.mutations.replaceBuiltInAddonConfigs,
+        {
+          eventId,
+          addons: [
+            {
+              addonType: 'questionnaire',
+              config: {
+                questions: [
+                  {
+                    id: 'meal',
+                    label: 'Meal preference',
+                    type: 'SHORT_ANSWER',
+                    required: false,
+                  },
+                ],
+              },
+            },
+          ],
+        }
+      );
+
+      expect(result).toEqual({
+        enabled: 1,
+        updated: 0,
+        disabled: 1,
+        unchanged: 0,
+      });
+
+      const configs = await t.run(async ctx => {
+        return await ctx.db
+          .query('eventAddonConfigs')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect();
+      });
+      const enabledTypes = configs
+        .filter(config => config.enabled)
+        .map(config => config.addonType);
+
+      expect(enabledTypes).toEqual(['questionnaire']);
+    });
+
+    test('should preserve responses when config is semantically unchanged', async () => {
+      const t = createTestInstance();
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+      const originalConfig = {
+        questions: [
+          {
+            id: 'meal',
+            label: 'Meal preference',
+            type: 'MULTIPLE_CHOICE',
+            required: true,
+            options: ['Vegetarian', 'Anything'],
+          },
+        ],
+      };
+
+      await asUser.mutation(api.addons.mutations.enableAddon, {
+        eventId,
+        addonType: 'questionnaire',
+        config: originalConfig,
+      });
+      await asUser.mutation(api.addons.mutations.setAddonData, {
+        eventId,
+        addonType: 'questionnaire',
+        key: `response:${personId}`,
+        data: { meal: 'Vegetarian' },
+      });
+
+      const before = await t.run(async ctx => {
+        return await ctx.db
+          .query('eventAddonConfigs')
+          .withIndex('by_event_addon', q =>
+            q.eq('eventId', eventId).eq('addonType', 'questionnaire')
+          )
+          .first();
+      });
+
+      const result = await asUser.mutation(
+        api.addons.mutations.replaceBuiltInAddonConfigs,
+        {
+          eventId,
+          addons: [
+            {
+              addonType: 'questionnaire',
+              config: {
+                questions: [
+                  {
+                    options: ['Vegetarian', 'Anything'],
+                    required: true,
+                    type: 'MULTIPLE_CHOICE',
+                    label: 'Meal preference',
+                    id: 'meal',
+                  },
+                ],
+              },
+            },
+          ],
+        }
+      );
+
+      expect(result.unchanged).toBe(1);
+
+      const after = await t.run(async ctx => {
+        const config = await ctx.db
+          .query('eventAddonConfigs')
+          .withIndex('by_event_addon', q =>
+            q.eq('eventId', eventId).eq('addonType', 'questionnaire')
+          )
+          .first();
+        const responses = await ctx.db
+          .query('addonData')
+          .withIndex('by_event_addon', q =>
+            q.eq('eventId', eventId).eq('addonType', 'questionnaire')
+          )
+          .collect();
+        return { config, responses };
+      });
+
+      expect(after.config?.updatedAt).toBe(before?.updatedAt);
+      expect(after.responses).toHaveLength(1);
+      expect(after.responses[0].data).toEqual({ meal: 'Vegetarian' });
+    });
+
+    test('should validate the full request before applying any changes', async () => {
+      const t = createTestInstance();
+      const { userId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await asUser.mutation(api.addons.mutations.enableAddon, {
+        eventId,
+        addonType: 'questionnaire',
+        config: {
+          questions: [
+            {
+              id: 'meal',
+              label: 'Meal preference',
+              type: 'SHORT_ANSWER',
+              required: false,
+            },
+          ],
+        },
+      });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.replaceBuiltInAddonConfigs, {
+          eventId,
+          addons: [
+            {
+              addonType: 'questionnaire',
+              config: {
+                questions: [
+                  {
+                    id: 'meal',
+                    label: 'Updated meal preference',
+                    type: 'SHORT_ANSWER',
+                    required: false,
+                  },
+                ],
+              },
+            },
+            {
+              addonType: 'bring-list',
+              config: { items: [] },
+            },
+          ],
+        })
+      ).rejects.toThrow('Invalid config for add-on: bring-list');
+
+      const questionnaire = await t.run(async ctx => {
+        return await ctx.db
+          .query('eventAddonConfigs')
+          .withIndex('by_event_addon', q =>
+            q.eq('eventId', eventId).eq('addonType', 'questionnaire')
+          )
+          .first();
+      });
+
+      expect(questionnaire?.config).toEqual({
+        questions: [
+          {
+            id: 'meal',
+            label: 'Meal preference',
+            type: 'SHORT_ANSWER',
+            required: false,
+          },
+        ],
+      });
+    });
+
+    test('should require MODERATOR+ role', async () => {
+      const t = createTestInstance();
+      const { attendee, eventId } = await createTestEventWithMultipleUsers(t);
+      const asAttendee = t.withIdentity({ subject: attendee.userId });
+
+      await expect(
+        asAttendee.mutation(api.addons.mutations.replaceBuiltInAddonConfigs, {
+          eventId,
+          addons: [],
+        })
+      ).rejects.toThrow('MODERATOR role required');
     });
   });
 

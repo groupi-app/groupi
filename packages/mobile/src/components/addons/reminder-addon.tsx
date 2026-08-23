@@ -1,22 +1,24 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsAddonOptedOut, useToggleAddonOptOut } from '@/hooks/use-addons';
+import { getReminderOffset, type ReminderOffset } from '@/lib/addon-contracts';
 
 interface ReminderAddonProps {
   eventId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config: any;
+  config: unknown;
 }
 
-const REMINDER_LABELS: Record<string, string> = {
+const REMINDER_LABELS: Record<ReminderOffset, string> = {
   '30_MINUTES': '30 minutes before',
   '1_HOUR': '1 hour before',
   '2_HOURS': '2 hours before',
   '4_HOURS': '4 hours before',
   '1_DAY': '1 day before',
   '2_DAYS': '2 days before',
+  '3_DAYS': '3 days before',
   '1_WEEK': '1 week before',
   '2_WEEKS': '2 weeks before',
   '4_WEEKS': '4 weeks before',
@@ -25,10 +27,20 @@ const REMINDER_LABELS: Record<string, string> = {
 export function ReminderAddon({ eventId, config }: ReminderAddonProps) {
   const optOutData = useIsAddonOptedOut(eventId, 'reminders');
   const toggleOptOut = useToggleAddonOptOut();
+  const [isSaving, setIsSaving] = useState(false);
 
   const isOptedOut = optOutData?.isOptedOut ?? false;
-  const timing = config?.reminderTiming ?? '1_HOUR';
-  const label = REMINDER_LABELS[timing] ?? timing;
+  const reminderOffset = getReminderOffset(config);
+  const label = REMINDER_LABELS[reminderOffset];
+
+  async function handleToggle() {
+    setIsSaving(true);
+    try {
+      await toggleOptOut({ eventId, addonType: 'reminders' });
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <View className='gap-4'>
@@ -59,9 +71,8 @@ export function ReminderAddon({ eventId, config }: ReminderAddonProps) {
         </View>
         <Switch
           value={!isOptedOut}
-          onValueChange={() =>
-            toggleOptOut({ eventId, addonType: 'reminders' })
-          }
+          disabled={optOutData === undefined || isSaving}
+          onValueChange={handleToggle}
         />
       </View>
     </View>

@@ -3,6 +3,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
+import type { Id } from 'convex/_generated/dataModel';
 
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { BackButton } from '@/components/ui/back-button';
@@ -26,7 +27,8 @@ export default function EditPostScreen() {
     eventId: string;
     postId: string;
   }>();
-  const postDetail = usePostDetail(postId as never);
+  const typedPostId = postId as Id<'posts'>;
+  const postDetail = usePostDetail(typedPostId);
   const updatePost = useUpdatePost();
 
   const [title, setTitle] = useState('');
@@ -76,7 +78,7 @@ export default function EditPostScreen() {
     setIsSubmitting(true);
     try {
       await updatePost({
-        postId,
+        postId: typedPostId,
         title: title.trim(),
         content,
       });

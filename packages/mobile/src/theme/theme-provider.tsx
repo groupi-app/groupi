@@ -1,66 +1,106 @@
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
 } from 'react';
 import { useColorScheme } from 'react-native';
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import type { FunctionArgs, FunctionReturnType } from 'convex/server';
 import { Uniwind } from 'uniwind';
+
+import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 import {
   type ThemeTokens,
+  type ThemeTokenOverrides,
   baseThemeRegistry,
-  DEFAULT_LIGHT_THEME_ID,
   DEFAULT_DARK_THEME_ID,
+  DEFAULT_LIGHT_THEME_ID,
 } from '@groupi/shared/design/themes';
+
+type ThemePreference = FunctionArgs<
+  typeof api.themes.mutations.saveThemePreference
+>;
+type CustomTheme = FunctionReturnType<
+  typeof api.themes.queries.getCustomThemes
+>[number];
 
 interface ThemeContextValue {
   themeId: string;
+  selectedThemeId: string;
+  selectedThemeType: 'base' | 'custom';
+  selectedCustomThemeId?: Id<'customThemes'>;
+  useSystemPreference: boolean;
+  systemLightThemeId: string;
+  systemDarkThemeId: string;
+  customThemes: CustomTheme[];
   tokens: ThemeTokens;
   isDark: boolean;
-  setTheme: (id: string) => void;
+  isLoading: boolean;
+  isSaving: boolean;
+  setTheme: (
+    id: string,
+    customThemeId?: Id<'customThemes'>
+  ) => Promise<boolean>;
+  setUseSystemPreference: (enabled: boolean) => Promise<boolean>;
+  setSystemTheme: (mode: 'light' | 'dark', id: string) => Promise<boolean>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-/**
- * Convert ThemeTokens to CSS variable overrides for Uniwind.
- */
-function tokensToCssVars(tokens: ThemeTokens): Record<string, string> {
+function tokensToCssVars(
+  tokens: ThemeTokens,
+  overrides?: ThemeTokenOverrides
+): Record<string, string> {
   return {
-    '--color-primary': tokens.brand.primary,
+    '--color-primary': overrides?.brand?.primary ?? tokens.brand.primary,
     '--color-primary-hover': tokens.brand.primaryHover,
     '--color-primary-foreground': tokens.text.onPrimary ?? 'hsl(0, 0%, 100%)',
-    '--color-secondary': tokens.brand.secondary,
+    '--color-secondary': overrides?.brand?.secondary ?? tokens.brand.secondary,
     '--color-secondary-foreground':
-      tokens.text.secondary ?? tokens.text.primary,
-    '--color-accent': tokens.brand.accent,
-    '--color-accent-foreground': tokens.text.primary,
-    '--color-background': tokens.background.page,
-    '--color-foreground': tokens.text.primary,
-    '--color-card': tokens.background.surface,
-    '--color-card-foreground': tokens.text.primary,
-    '--color-popover': tokens.background.elevated,
-    '--color-popover-foreground': tokens.text.primary,
-    '--color-muted': tokens.background.interactive,
-    '--color-muted-foreground': tokens.text.muted ?? tokens.text.secondary,
-    '--color-bg-surface': tokens.background.surface,
-    '--color-bg-elevated': tokens.background.elevated,
-    '--color-bg-sunken': tokens.background.sunken,
+      overrides?.text?.secondary ??
+      tokens.text.secondary ??
+      tokens.text.primary,
+    '--color-accent': overrides?.brand?.accent ?? tokens.brand.accent,
+    '--color-accent-foreground':
+      overrides?.text?.primary ?? tokens.text.primary,
+    '--color-background': overrides?.background?.page ?? tokens.background.page,
+    '--color-foreground': overrides?.text?.primary ?? tokens.text.primary,
+    '--color-card': overrides?.background?.surface ?? tokens.background.surface,
+    '--color-card-foreground': overrides?.text?.primary ?? tokens.text.primary,
+    '--color-popover':
+      overrides?.background?.elevated ?? tokens.background.elevated,
+    '--color-popover-foreground':
+      overrides?.text?.primary ?? tokens.text.primary,
+    '--color-muted':
+      overrides?.background?.sunken ?? tokens.background.interactive,
+    '--color-muted-foreground':
+      overrides?.text?.muted ?? tokens.text.muted ?? tokens.text.secondary,
+    '--color-bg-surface':
+      overrides?.background?.surface ?? tokens.background.surface,
+    '--color-bg-elevated':
+      overrides?.background?.elevated ?? tokens.background.elevated,
+    '--color-bg-sunken':
+      overrides?.background?.sunken ?? tokens.background.sunken,
     '--color-bg-interactive': tokens.background.interactive,
     '--color-bg-overlay': tokens.background.overlay,
-    '--color-success': tokens.background.success,
+    '--color-success': overrides?.status?.success ?? tokens.background.success,
     '--color-bg-success-subtle': tokens.background.successSubtle,
-    '--color-warning': tokens.background.warning,
+    '--color-warning': overrides?.status?.warning ?? tokens.background.warning,
     '--color-bg-warning-subtle': tokens.background.warningSubtle,
-    '--color-error': tokens.background.error,
+    '--color-error': overrides?.status?.error ?? tokens.background.error,
     '--color-bg-error-subtle': tokens.background.errorSubtle,
-    '--color-info': tokens.background.info,
+    '--color-info': overrides?.status?.info ?? tokens.background.info,
     '--color-bg-info-subtle': tokens.background.infoSubtle,
-    '--color-destructive': tokens.background.error,
+    '--color-destructive': overrides?.status?.error ?? tokens.background.error,
     '--color-destructive-foreground':
       tokens.text.onPrimary ?? 'hsl(0, 0%, 100%)',
-    '--color-text-secondary': tokens.text.secondary,
+    '--color-text-secondary':
+      overrides?.text?.secondary ?? tokens.text.secondary,
     '--color-text-tertiary': tokens.text.tertiary,
     '--color-border': tokens.border.default,
     '--color-border-strong': tokens.border.strong,
@@ -74,42 +114,210 @@ function tokensToCssVars(tokens: ThemeTokens): Record<string, string> {
   };
 }
 
-/**
- * Apply a theme by setting Uniwind's mode and injecting its CSS variables.
- */
-function applyTheme(themeEntry: (typeof baseThemeRegistry)[string]) {
-  const mode = themeEntry.mode === 'dark' ? 'dark' : 'light';
-  // Set mode first, then override variables for that mode
+function getDefaultPreference(
+  colorScheme: 'light' | 'dark' | null | undefined
+): ThemePreference {
+  return {
+    selectedThemeType: 'base',
+    selectedThemeId:
+      colorScheme === 'dark' ? DEFAULT_DARK_THEME_ID : DEFAULT_LIGHT_THEME_ID,
+    useSystemPreference: true,
+    systemLightThemeId: DEFAULT_LIGHT_THEME_ID,
+    systemDarkThemeId: DEFAULT_DARK_THEME_ID,
+  };
+}
+
+function applyTheme(tokens: ThemeTokens, mode: 'light' | 'dark') {
+  Uniwind.updateCSSVariables(mode, tokensToCssVars(tokens));
   Uniwind.setTheme(mode);
-  Uniwind.updateCSSVariables(mode, tokensToCssVars(themeEntry.tokens));
+}
+
+function applyCustomTheme(
+  tokens: ThemeTokens,
+  overrides: ThemeTokenOverrides,
+  mode: 'light' | 'dark'
+) {
+  Uniwind.updateCSSVariables(mode, tokensToCssVars(tokens, overrides));
+  Uniwind.setTheme(mode);
+}
+
+function preferencesMatch(
+  saved: FunctionReturnType<typeof api.themes.queries.getThemePreferences>,
+  pending: ThemePreference
+) {
+  return (
+    saved?.selectedThemeType === pending.selectedThemeType &&
+    saved.selectedThemeId === pending.selectedThemeId &&
+    saved.selectedCustomThemeId === pending.selectedCustomThemeId &&
+    saved.useSystemPreference === pending.useSystemPreference &&
+    saved.systemLightThemeId === pending.systemLightThemeId &&
+    saved.systemDarkThemeId === pending.systemDarkThemeId
+  );
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const systemColorScheme = useColorScheme();
-  const defaultThemeId =
-    systemColorScheme === 'dark'
-      ? DEFAULT_DARK_THEME_ID
-      : DEFAULT_LIGHT_THEME_ID;
+  const colorScheme = useColorScheme();
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+  const savedPreference = useQuery(
+    api.themes.queries.getThemePreferences,
+    isAuthenticated ? {} : 'skip'
+  );
+  const customThemesResult = useQuery(
+    api.themes.queries.getCustomThemes,
+    isAuthenticated ? {} : 'skip'
+  );
+  const saveThemePreference = useMutation(
+    api.themes.mutations.saveThemePreference
+  );
+  const [pendingPreference, setPendingPreference] =
+    useState<ThemePreference | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [themeId, setThemeId] = useState(defaultThemeId);
+  const normalizedColorScheme = colorScheme === 'dark' ? 'dark' : 'light';
+  const defaultPreference = useMemo(
+    () => getDefaultPreference(normalizedColorScheme),
+    [normalizedColorScheme]
+  );
+  const preference = pendingPreference ?? savedPreference ?? defaultPreference;
+  const customThemes = useMemo(
+    () => customThemesResult ?? [],
+    [customThemesResult]
+  );
 
-  const theme = baseThemeRegistry[themeId];
-  const tokens =
-    theme?.tokens ?? baseThemeRegistry[DEFAULT_LIGHT_THEME_ID].tokens;
-  const isDark = theme?.mode === 'dark';
+  const activeThemeId = preference.useSystemPreference
+    ? normalizedColorScheme === 'dark'
+      ? preference.systemDarkThemeId
+      : preference.systemLightThemeId
+    : preference.selectedThemeId;
+  const selectedCustomTheme =
+    !preference.useSystemPreference && preference.selectedThemeType === 'custom'
+      ? customThemes.find(
+          theme =>
+            theme._id === preference.selectedCustomThemeId ||
+            theme._id === preference.selectedThemeId
+        )
+      : undefined;
+  const baseThemeId = selectedCustomTheme?.baseThemeId ?? activeThemeId;
+  const activeTheme =
+    baseThemeRegistry[baseThemeId] ??
+    baseThemeRegistry[
+      normalizedColorScheme === 'dark'
+        ? DEFAULT_DARK_THEME_ID
+        : DEFAULT_LIGHT_THEME_ID
+    ];
+  const resolvedThemeId = selectedCustomTheme?._id ?? activeTheme.id;
 
-  const setTheme = useCallback((id: string) => {
-    const themeEntry = baseThemeRegistry[id];
-    if (!themeEntry) return;
+  useEffect(() => {
+    if (selectedCustomTheme) {
+      applyCustomTheme(
+        activeTheme.tokens,
+        selectedCustomTheme.tokenOverrides,
+        selectedCustomTheme.mode
+      );
+      return;
+    }
+    applyTheme(activeTheme.tokens, activeTheme.mode);
+  }, [activeTheme, selectedCustomTheme]);
 
-    setThemeId(id);
-    applyTheme(themeEntry);
-  }, []);
+  useEffect(() => {
+    if (
+      pendingPreference &&
+      savedPreference &&
+      preferencesMatch(savedPreference, pendingPreference)
+    ) {
+      setPendingPreference(null);
+    }
+  }, [pendingPreference, savedPreference]);
+
+  const persistPreference = useCallback(
+    async (nextPreference: ThemePreference) => {
+      setPendingPreference(nextPreference);
+      setIsSaving(true);
+      try {
+        await saveThemePreference(nextPreference);
+        return true;
+      } catch {
+        setPendingPreference(null);
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [saveThemePreference]
+  );
+
+  const setTheme = useCallback(
+    async (id: string, customThemeId?: Id<'customThemes'>) =>
+      persistPreference({
+        ...preference,
+        selectedThemeType: customThemeId ? 'custom' : 'base',
+        selectedThemeId: id,
+        selectedCustomThemeId: customThemeId,
+        useSystemPreference: false,
+      }),
+    [persistPreference, preference]
+  );
+
+  const setUseSystemPreference = useCallback(
+    async (enabled: boolean) =>
+      persistPreference({
+        ...preference,
+        useSystemPreference: enabled,
+      }),
+    [persistPreference, preference]
+  );
+
+  const setSystemTheme = useCallback(
+    async (mode: 'light' | 'dark', id: string) =>
+      persistPreference({
+        ...preference,
+        useSystemPreference: true,
+        systemLightThemeId:
+          mode === 'light' ? id : preference.systemLightThemeId,
+        systemDarkThemeId: mode === 'dark' ? id : preference.systemDarkThemeId,
+      }),
+    [persistPreference, preference]
+  );
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      themeId: resolvedThemeId,
+      selectedThemeId: preference.selectedThemeId,
+      selectedThemeType: preference.selectedThemeType,
+      selectedCustomThemeId: preference.selectedCustomThemeId,
+      useSystemPreference: preference.useSystemPreference,
+      systemLightThemeId: preference.systemLightThemeId,
+      systemDarkThemeId: preference.systemDarkThemeId,
+      customThemes,
+      tokens: activeTheme.tokens,
+      isDark: activeTheme.mode === 'dark',
+      isLoading:
+        isAuthLoading ||
+        (isAuthenticated &&
+          (savedPreference === undefined || customThemesResult === undefined)),
+      isSaving,
+      setTheme,
+      setUseSystemPreference,
+      setSystemTheme,
+    }),
+    [
+      activeTheme,
+      customThemes,
+      customThemesResult,
+      isAuthLoading,
+      isAuthenticated,
+      isSaving,
+      preference,
+      resolvedThemeId,
+      savedPreference,
+      setSystemTheme,
+      setTheme,
+      setUseSystemPreference,
+    ]
+  );
 
   return (
-    <ThemeContext.Provider value={{ themeId, tokens, isDark, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

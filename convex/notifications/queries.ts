@@ -17,17 +17,19 @@ export const fetchNotificationsForPerson = query({
     cursor: v.optional(v.string()),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { limit = 20 }) => {
+  handler: async (ctx, { limit = 20, cursor }) => {
     const currentPerson = await getCurrentPerson(ctx);
     if (!currentPerson) {
       return { notifications: [], nextCursor: null };
     }
 
-    const notifications = await ctx.db
+    const page = await ctx.db
       .query('notifications')
       .withIndex('by_person', q => q.eq('personId', currentPerson._id))
       .order('desc')
-      .take(limit);
+      .paginate({ cursor: cursor ?? null, numItems: limit });
+
+    const notifications = page.page;
 
     // Enrich notifications with related data
     const enrichedNotifications = await Promise.all(
@@ -67,10 +69,14 @@ export const fetchNotificationsForPerson = query({
                 ? {
                     name: authorUser.name || null,
                     email: authorUser.email,
+                    image: authorUser.image || null,
+                    username: authorUser.username || null,
                   }
                 : {
                     name: null,
                     email: null,
+                    image: null,
+                    username: null,
                   },
             };
           }
@@ -89,10 +95,7 @@ export const fetchNotificationsForPerson = query({
 
     return {
       notifications: enrichedNotifications,
-      nextCursor:
-        notifications.length === limit
-          ? notifications[notifications.length - 1]._id
-          : null,
+      nextCursor: page.isDone ? null : page.continueCursor,
     };
   },
 });

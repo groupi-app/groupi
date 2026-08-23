@@ -1,6 +1,6 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { getCurrentPerson, getPersonWithUser } from '../auth';
+import { requireAuth, getPersonWithUser } from '../auth';
 
 /**
  * Replies queries for the Convex backend
@@ -17,25 +17,22 @@ export const getRepliesByPost = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { postId }) => {
+    const { person: currentPerson } = await requireAuth(ctx);
     // Get the post first
     const post = await ctx.db.get(postId);
     if (!post) {
       throw new Error('Post not found');
     }
 
-    // Verify user has access to this post's event
-    const currentPerson = await getCurrentPerson(ctx);
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
-        )
-        .first();
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+      )
+      .first();
 
-      if (!membership) {
-        throw new Error('Access denied to this post');
-      }
+    if (!membership) {
+      throw new Error('Access denied to this post');
     }
 
     // Get all replies for this post

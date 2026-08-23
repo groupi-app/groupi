@@ -16,6 +16,7 @@ import {
   dispatchAddonLifecycle,
   dispatchSingleAddonLifecycle,
 } from '../addons/lifecycle';
+import { requireDiscordGuildAuthorization } from '../discord/authorization';
 
 /**
  * Events mutations for the Convex backend
@@ -317,6 +318,13 @@ export const createEvent = mutation({
       const handler = getAddonHandler(addon.addonType);
       if (!handler || !handler.validateConfig(addon.config)) continue;
 
+      await requireDiscordGuildAuthorization(
+        ctx,
+        person._id,
+        addon.addonType,
+        addon.config
+      );
+
       await ctx.db.insert('eventAddonConfigs', {
         eventId,
         addonType: addon.addonType,
@@ -583,11 +591,17 @@ export const updateMemberRole = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+
+    // Moderators can manage attendee/moderator roles, but organizer authority
+    // can only be granted or changed by another organizer.
+    if (
+      currentMembership.role !== 'ORGANIZER' &&
+      (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER')
+    ) {
+      throw new Error('Only organizers can manage the organizer role');
+    }
 
     // Prevent demoting the last organizer
     if (membership.role === 'ORGANIZER' && newRole !== 'ORGANIZER') {
@@ -645,11 +659,15 @@ export const removeMember = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+
+    if (
+      membership.role === 'ORGANIZER' &&
+      currentMembership.role !== 'ORGANIZER'
+    ) {
+      throw new Error('Only organizers can remove another organizer');
+    }
 
     // Prevent removing the last organizer
     if (membership.role === 'ORGANIZER') {
@@ -1028,15 +1046,19 @@ export const banMember = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
 
     // Prevent banning yourself
     if (membership.personId === currentPerson._id) {
       throw new Error('You cannot ban yourself');
+    }
+
+    if (
+      membership.role === 'ORGANIZER' &&
+      currentMembership.role !== 'ORGANIZER'
+    ) {
+      throw new Error('Only organizers can ban another organizer');
     }
 
     // Prevent banning the last organizer

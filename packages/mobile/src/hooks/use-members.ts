@@ -1,16 +1,15 @@
 import { useMutation } from 'convex/react';
 import { useCallback } from 'react';
 import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 
 export function useUpdateMemberRole() {
   const mutation = useMutation(api.events.mutations.updateMemberRole);
 
   return useCallback(
     async (params: {
-      membershipId: string;
+      membershipId: Id<'memberships'>;
       newRole: 'MODERATOR' | 'ATTENDEE';
     }) => {
       try {
@@ -29,7 +28,7 @@ export function useRemoveMember() {
   const mutation = useMutation(api.events.mutations.removeMember);
 
   return useCallback(
-    async (params: { membershipId: string }) => {
+    async (params: { membershipId: Id<'memberships'> }) => {
       try {
         await mutation(params);
         toast.success('Member removed');
@@ -45,7 +44,7 @@ export function useBanMember() {
   const mutation = useMutation(api.events.mutations.banMember);
 
   return useCallback(
-    async (params: { membershipId: string; reason?: string }) => {
+    async (params: { membershipId: Id<'memberships'>; reason?: string }) => {
       try {
         await mutation(params);
         toast.success('Member banned');
@@ -62,7 +61,7 @@ export function useChooseEventDate() {
 
   return useCallback(
     async (params: {
-      eventId: string;
+      eventId: Id<'events'>;
       chosenDateTime: number;
       chosenEndDateTime?: number;
     }) => {
@@ -81,7 +80,7 @@ export function useResetEventDate() {
   const mutation = useMutation(api.events.mutations.resetEventDate);
 
   return useCallback(
-    async (eventId: string) => {
+    async (eventId: Id<'events'>) => {
       try {
         await mutation({ eventId });
         toast.success('Event date reset');

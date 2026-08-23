@@ -31,7 +31,7 @@ export function DetailScreenTemplate({
 }: DetailScreenTemplateProps) {
   return (
     <SafeAreaView className={cn('flex-1 bg-background', className)}>
-      <View className='flex-row items-center justify-between px-4 py-3'>
+      <View className='flex-row items-center justify-between border-b border-border px-4 py-3'>
         <View className='flex-row items-center flex-1'>
           <BackButton />
           {title ? (

@@ -1,9 +1,8 @@
 import { useQuery, useMutation } from 'convex/react';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 
 // --- Queries ---
 
@@ -19,7 +18,7 @@ export function useSentRequests() {
   return useQuery(api.friends.queries.getSentRequests, {});
 }
 
-export function useFriendshipStatus(targetPersonId: string | undefined) {
+export function useFriendshipStatus(targetPersonId: Id<'persons'> | undefined) {
   return useQuery(
     api.friends.queries.getFriendshipStatus,
     targetPersonId ? { targetPersonId } : 'skip'
@@ -55,7 +54,7 @@ export function useMutualFriends(targetUserId: string | undefined) {
   );
 }
 
-export function useBlockStatus(targetPersonId: string | undefined) {
+export function useBlockStatus(targetPersonId: Id<'persons'> | undefined) {
   return useQuery(
     api.friends.queries.getBlockStatus,
     targetPersonId ? { targetPersonId } : 'skip'
@@ -72,7 +71,7 @@ export function useSendFriendRequest() {
   const mutation = useMutation(api.friends.mutations.sendFriendRequest);
 
   return useCallback(
-    async (addresseePersonId: string) => {
+    async (addresseePersonId: Id<'persons'>) => {
       try {
         const result = await mutation({ addresseePersonId });
         toast.success(result?.message ?? 'Friend request sent!');
@@ -89,7 +88,7 @@ export function useAcceptFriendRequest() {
   const mutation = useMutation(api.friends.mutations.acceptFriendRequest);
 
   return useCallback(
-    async (friendshipId: string) => {
+    async (friendshipId: Id<'friendships'>) => {
       try {
         await mutation({ friendshipId });
         toast.success('Friend request accepted!');
@@ -105,7 +104,7 @@ export function useDeclineFriendRequest() {
   const mutation = useMutation(api.friends.mutations.declineFriendRequest);
 
   return useCallback(
-    async (friendshipId: string) => {
+    async (friendshipId: Id<'friendships'>) => {
       try {
         await mutation({ friendshipId });
         toast.info('Request declined');
@@ -121,7 +120,7 @@ export function useCancelFriendRequest() {
   const mutation = useMutation(api.friends.mutations.cancelFriendRequest);
 
   return useCallback(
-    async (friendshipId: string) => {
+    async (friendshipId: Id<'friendships'>) => {
       try {
         await mutation({ friendshipId });
         toast.info('Request cancelled');
@@ -137,7 +136,7 @@ export function useRemoveFriend() {
   const mutation = useMutation(api.friends.mutations.removeFriend);
 
   return useCallback(
-    async (friendshipId: string) => {
+    async (friendshipId: Id<'friendships'>) => {
       try {
         await mutation({ friendshipId });
         toast.success('Friend removed');
@@ -153,7 +152,7 @@ export function useBlockUser() {
   const mutation = useMutation(api.friends.mutations.blockUser);
 
   return useCallback(
-    async (personId: string) => {
+    async (personId: Id<'persons'>) => {
       try {
         await mutation({ personId });
         toast.success('User blocked');
@@ -169,7 +168,7 @@ export function useUnblockUser() {
   const mutation = useMutation(api.friends.mutations.unblockUser);
 
   return useCallback(
-    async (personId: string) => {
+    async (personId: Id<'persons'>) => {
       try {
         await mutation({ personId });
         toast.success('User unblocked');

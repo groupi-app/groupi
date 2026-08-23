@@ -109,7 +109,12 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
     formState.permissions ?? PRESET_PERMISSIONS.standard
   );
 
-  const primaryColor = String(useCSSVariable('--color-primary') ?? '#8200AD');
+  const primaryColor = String(
+    useCSSVariable('--color-primary') ?? 'transparent'
+  );
+  const mutedColor = String(
+    useCSSVariable('--color-muted-foreground') ?? 'transparent'
+  );
 
   function handlePresetSelect(preset: Preset) {
     setSelectedPreset(preset);
@@ -167,7 +172,7 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
                   <Ionicons
                     name={preset.icon}
                     size={18}
-                    color={isSelected ? primaryColor : '#6b7280'}
+                    color={isSelected ? primaryColor : mutedColor}
                   />
                   <Text
                     className={cn(
@@ -204,14 +209,16 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
                         className={cn(
                           'flex-1 items-center rounded-badge px-2 py-2',
                           isActive
-                            ? 'border-2 border-white bg-primary shadow-raised'
+                            ? 'border-2 border-primary-foreground bg-primary shadow-raised'
                             : 'bg-muted'
                         )}
                       >
                         <Text
                           className={cn(
                             'text-xs font-medium',
-                            isActive ? 'text-white' : 'text-muted-foreground'
+                            isActive
+                              ? 'text-primary-foreground'
+                              : 'text-muted-foreground'
                           )}
                         >
                           {level.label}

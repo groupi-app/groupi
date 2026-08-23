@@ -10,6 +10,7 @@ import { useCreateEventForm } from '@/context/create-event-context';
 import { useCreateEvent } from '@/hooks/use-events';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { toast } from '@groupi/shared/platform';
+import type { EventPermissions } from '@/context/create-event-context';
 
 interface ReviewStepProps {
   onBack: () => void;
@@ -32,6 +33,55 @@ function formatTime(date: Date): string {
   });
 }
 
+function getPermissionPresetName(permissions?: EventPermissions): string {
+  if (!permissions) return 'Standard';
+
+  const { createPosts, inviteMembers, viewAttendeeList } = permissions;
+  if (
+    createPosts === 'EVERYONE' &&
+    inviteMembers === 'EVERYONE' &&
+    viewAttendeeList === 'EVERYONE'
+  ) {
+    return 'Loose';
+  }
+  if (
+    createPosts === 'EVERYONE' &&
+    inviteMembers === 'MODERATOR' &&
+    viewAttendeeList === 'EVERYONE'
+  ) {
+    return 'Standard';
+  }
+  if (
+    createPosts === 'MODERATOR' &&
+    inviteMembers === 'ORGANIZER' &&
+    viewAttendeeList === 'MODERATOR'
+  ) {
+    return 'Strict';
+  }
+
+  return 'Custom';
+}
+
+const ADDON_NAMES: Record<string, string> = {
+  reminders: 'Reminders',
+  'bring-list': 'Bring List',
+  questionnaire: 'Questionnaire',
+  discord: 'Discord',
+};
+
+const REMINDER_OFFSET_MS: Record<string, number> = {
+  '30_MINUTES': 30 * 60 * 1000,
+  '1_HOUR': 60 * 60 * 1000,
+  '2_HOURS': 2 * 60 * 60 * 1000,
+  '4_HOURS': 4 * 60 * 60 * 1000,
+  '1_DAY': 24 * 60 * 60 * 1000,
+  '2_DAYS': 2 * 24 * 60 * 60 * 1000,
+  '3_DAYS': 3 * 24 * 60 * 60 * 1000,
+  '1_WEEK': 7 * 24 * 60 * 60 * 1000,
+  '2_WEEKS': 14 * 24 * 60 * 60 * 1000,
+  '4_WEEKS': 28 * 24 * 60 * 60 * 1000,
+};
+
 export function ReviewStep({ onBack }: ReviewStepProps) {
   const { formState } = useCreateEventForm();
   const {
@@ -45,6 +95,8 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
     dateOptions,
     imageUri,
     imageFile,
+    addonConfigs,
+    permissions,
   } = formState;
   const createEvent = useCreateEvent();
   const { uploadFile, isUploading } = useFileUpload();
@@ -54,6 +106,29 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
 
   async function handleSubmit() {
     if (!title.trim()) return;
+
+    const reminderOffset = addonConfigs.reminders?.reminderOffset;
+    const reminderDuration =
+      typeof reminderOffset === 'string'
+        ? REMINDER_OFFSET_MS[reminderOffset]
+        : undefined;
+    const eventStart =
+      dateType === 'single'
+        ? singleDate.getTime()
+        : dateOptions.reduce(
+            (earliest, option) => Math.min(earliest, option.date.getTime()),
+            Number.POSITIVE_INFINITY
+          );
+    if (
+      reminderDuration &&
+      Number.isFinite(eventStart) &&
+      eventStart - reminderDuration <= Date.now()
+    ) {
+      toast.error(
+        'That reminder would be sent in the past. Choose a shorter reminder or update the event date.'
+      );
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -89,6 +164,11 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
         location: location.trim() || undefined,
         visibility: formState.visibility,
         imageStorageId,
+        permissions,
+        addons: Object.entries(addonConfigs).map(([addonType, config]) => ({
+          addonType,
+          config,
+        })),
         ...dateArgs,
       });
 
@@ -227,6 +307,32 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
               ))}
             </View>
           ) : null}
+
+          <View className='flex-row items-center gap-2'>
+            <Ionicons
+              name='shield-checkmark-outline'
+              size={16}
+              color={primaryColor}
+            />
+            <Text className='text-sm text-foreground'>
+              {getPermissionPresetName(permissions)} permissions
+            </Text>
+          </View>
+
+          {Object.keys(addonConfigs).length > 0 ? (
+            <View className='flex-row items-start gap-2'>
+              <Ionicons
+                name='extension-puzzle-outline'
+                size={16}
+                color={primaryColor}
+              />
+              <Text className='flex-1 text-sm text-foreground'>
+                {Object.keys(addonConfigs)
+                  .map(addonType => ADDON_NAMES[addonType] ?? addonType)
+                  .join(', ')}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Checklist */}
@@ -255,6 +361,13 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
             color={successColor}
           />
           <ReviewCheckItem label='Date & time' checked color={successColor} />
+          <ReviewCheckItem label='Permissions' checked color={successColor} />
+          <ReviewCheckItem
+            label='Add-ons'
+            checked={Object.keys(addonConfigs).length > 0}
+            optional
+            color={successColor}
+          />
         </View>
 
         <View className='mt-2 flex-row gap-3'>

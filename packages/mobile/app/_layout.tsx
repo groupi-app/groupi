@@ -29,8 +29,8 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <ConvexClientProvider>
+        <ConvexClientProvider>
+          <ThemeProvider>
             <GlobalUserProvider>
               <BottomSheetModalProvider>
                 <ActionMenuProvider>
@@ -107,8 +107,8 @@ export default function RootLayout() {
               <PortalHost />
               <Toast />
             </GlobalUserProvider>
-          </ConvexClientProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </ConvexClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

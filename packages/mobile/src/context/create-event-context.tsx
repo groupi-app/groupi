@@ -70,8 +70,17 @@ function createInitialState(): FormState {
 
 const FormContext = createContext<FormContextValue | undefined>(undefined);
 
-export function CreateEventProvider({ children }: { children: ReactNode }) {
-  const [formState, setFormState] = useState<FormState>(createInitialState);
+export function CreateEventProvider({
+  children,
+  initialState,
+}: {
+  children: ReactNode;
+  initialState?: Partial<FormState>;
+}) {
+  const [formState, setFormState] = useState<FormState>(() => ({
+    ...createInitialState(),
+    ...initialState,
+  }));
 
   const updateFormState = useCallback((patch: Partial<FormState>) => {
     setFormState(prev => ({ ...prev, ...patch }));

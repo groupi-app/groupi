@@ -27,7 +27,12 @@ export function SectionHeader({
         ) : null}
       </View>
       {actionLabel && onAction ? (
-        <Pressable onPress={onAction}>
+        <Pressable
+          onPress={onAction}
+          accessibilityRole='button'
+          accessibilityLabel={actionLabel}
+          hitSlop={8}
+        >
           <Text className='text-sm font-medium text-primary'>
             {actionLabel}
           </Text>

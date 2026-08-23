@@ -8,7 +8,17 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ totalSteps, currentStep }: StepIndicatorProps) {
   return (
-    <View className='flex-row items-center justify-center gap-2 py-4'>
+    <View
+      className='flex-row items-center justify-center gap-2 py-4'
+      accessibilityRole='progressbar'
+      accessibilityLabel='Event creation progress'
+      accessibilityValue={{
+        min: 1,
+        max: totalSteps,
+        now: currentStep + 1,
+        text: `Step ${currentStep + 1} of ${totalSteps}`,
+      }}
+    >
       {Array.from({ length: totalSteps }, (_, i) => (
         <View
           key={i}

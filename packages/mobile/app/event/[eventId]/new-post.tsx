@@ -4,6 +4,8 @@ import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useMutation } from 'convex/react';
+import type { Id } from 'convex/_generated/dataModel';
+import { api } from 'convex/_generated/api';
 
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { BackButton } from '@/components/ui/back-button';
@@ -13,9 +15,6 @@ import { RichTextEditor } from '@/components/posts/rich-text-editor';
 import { useCreatePost } from '@/hooks/use-posts';
 import { useAttachments } from '@/hooks/use-file-upload';
 import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
 
 /** Strip empty HTML tags to check if there's real content */
 function hasContent(html: string): boolean {
@@ -56,8 +55,8 @@ export default function NewPostScreen() {
 
     setIsSubmitting(true);
     try {
-      const postId = await createPost({
-        eventId,
+      const { postId } = await createPost({
+        eventId: eventId as Id<'events'>,
         title: title.trim(),
         content,
       });
@@ -69,7 +68,7 @@ export default function NewPostScreen() {
           await createAttachmentsBatch({
             postId,
             attachments: uploadResults.map(r => ({
-              storageId: r.storageId,
+              storageId: r.storageId as Id<'_storage'>,
               filename: r.filename,
               size: r.size,
               mimeType: r.mimeType,

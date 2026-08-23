@@ -20,16 +20,27 @@ import { EventInfoStep } from '@/components/create-event/event-info-step';
 import { DateTypeStep } from '@/components/create-event/date-type-step';
 import { SingleDateStep } from '@/components/create-event/single-date-step';
 import { MultiDateStep } from '@/components/create-event/multi-date-step';
+import { PermissionsStep } from '@/components/create-event/permissions-step';
+import { AddonsStep } from '@/components/create-event/addons-step';
 import { ReviewStep } from '@/components/create-event/review-step';
 
-type Step = 'info' | 'date-type' | 'single-date' | 'multi-date' | 'review';
+type Step =
+  | 'info'
+  | 'date-type'
+  | 'single-date'
+  | 'multi-date'
+  | 'permissions'
+  | 'add-ons'
+  | 'review';
 
 const STEP_ORDER: Record<Step, number> = {
   info: 0,
   'date-type': 1,
   'single-date': 2,
   'multi-date': 2,
-  review: 3,
+  permissions: 3,
+  'add-ons': 4,
+  review: 5,
 };
 
 const STEP_TITLES: Record<Step, string> = {
@@ -37,13 +48,15 @@ const STEP_TITLES: Record<Step, string> = {
   'date-type': 'Date',
   'single-date': 'Date & Time',
   'multi-date': 'Date Options',
+  permissions: 'Permissions',
+  'add-ons': 'Add-ons',
   review: 'Review',
 };
 
 const ANIMATION_DURATION = 250;
 
 function WizardContent() {
-  const { updateFormState } = useCreateEventForm();
+  const { formState, updateFormState } = useCreateEventForm();
   const [step, setStep] = useState<Step>('info');
   const [direction, setDirection] = useState<1 | -1>(1);
   const pendingStepRef = useRef<Step | null>(null);
@@ -87,11 +100,27 @@ function WizardContent() {
   }
 
   function handleDateNext() {
-    goToStep('review');
+    goToStep('permissions');
   }
 
   function handleDateBack() {
     goToStep('date-type');
+  }
+
+  function handlePermissionsBack() {
+    goToStep(formState.dateType === 'multi' ? 'multi-date' : 'single-date');
+  }
+
+  function handlePermissionsNext() {
+    goToStep('add-ons');
+  }
+
+  function handleAddonsBack() {
+    goToStep('permissions');
+  }
+
+  function handleAddonsNext() {
+    goToStep('review');
   }
 
   const entering =
@@ -116,9 +145,12 @@ function WizardContent() {
               handleDateTypeBack();
             } else if (step === 'single-date' || step === 'multi-date') {
               handleDateBack();
+            } else if (step === 'permissions') {
+              handlePermissionsBack();
+            } else if (step === 'add-ons') {
+              handleAddonsBack();
             } else if (step === 'review') {
-              // Go back to whichever date step was used
-              goToStep('date-type');
+              goToStep('add-ons');
             }
           }}
         />
@@ -129,7 +161,7 @@ function WizardContent() {
       </View>
 
       {/* Step indicator */}
-      <StepIndicator totalSteps={4} currentStep={STEP_ORDER[step]} />
+      <StepIndicator totalSteps={6} currentStep={STEP_ORDER[step]} />
 
       {/* Step content */}
       <Animated.View
@@ -150,8 +182,15 @@ function WizardContent() {
           <SingleDateStep onNext={handleDateNext} onBack={handleDateBack} />
         ) : step === 'multi-date' ? (
           <MultiDateStep onNext={handleDateNext} onBack={handleDateBack} />
+        ) : step === 'permissions' ? (
+          <PermissionsStep
+            onNext={handlePermissionsNext}
+            onBack={handlePermissionsBack}
+          />
+        ) : step === 'add-ons' ? (
+          <AddonsStep onNext={handleAddonsNext} onBack={handleAddonsBack} />
         ) : (
-          <ReviewStep onBack={() => goToStep('date-type')} />
+          <ReviewStep onBack={() => goToStep('add-ons')} />
         )}
       </Animated.View>
     </SafeAreaView>

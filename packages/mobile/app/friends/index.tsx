@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import type { Id } from 'convex/_generated/dataModel';
 
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
 import { BackButton } from '@/components/ui/back-button';
@@ -116,7 +117,7 @@ export default function FriendsScreen() {
       {activeTab === 'friends' ? (
         <FriendsList
           friends={friends}
-          onRemove={(friendshipId: string) => {
+          onRemove={(friendshipId: Id<'friendships'>) => {
             showConfirmDialog({
               title: 'Remove Friend',
               message: 'Are you sure you want to remove this friend?',
@@ -139,7 +140,7 @@ export default function FriendsScreen() {
       ) : activeTab === 'sent' ? (
         <SentRequestsList
           requests={sentRequests}
-          onCancel={(friendshipId: string) => {
+          onCancel={(friendshipId: Id<'friendships'>) => {
             showConfirmDialog({
               title: 'Cancel Request',
               message: 'Are you sure you want to cancel this friend request?',
@@ -171,7 +172,7 @@ function FriendsList({
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   friends: any;
-  onRemove: (id: string) => void;
+  onRemove: (id: Id<'friendships'>) => void;
   refreshing: boolean;
   onRefresh: () => void;
 }) {
@@ -182,13 +183,15 @@ function FriendsList({
   return (
     <FlatList
       data={friends}
-      keyExtractor={(item: { friendshipId: string }) => item.friendshipId}
+      keyExtractor={(item: { friendshipId: Id<'friendships'> }) =>
+        item.friendshipId
+      }
       renderItem={({
         item,
       }: {
         item: {
-          friendshipId: string;
-          personId: string;
+          friendshipId: Id<'friendships'>;
+          personId: Id<'persons'>;
           name: string | null;
           username: string | null;
           image: string | null;
@@ -241,8 +244,8 @@ function RequestsList({
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requests: any;
-  onAccept: (id: string) => void;
-  onDecline: (id: string) => void;
+  onAccept: (id: Id<'friendships'>) => void;
+  onDecline: (id: Id<'friendships'>) => void;
   refreshing: boolean;
   onRefresh: () => void;
 }) {
@@ -253,13 +256,15 @@ function RequestsList({
   return (
     <FlatList
       data={requests}
-      keyExtractor={(item: { friendshipId: string }) => item.friendshipId}
+      keyExtractor={(item: { friendshipId: Id<'friendships'> }) =>
+        item.friendshipId
+      }
       renderItem={({
         item,
       }: {
         item: {
-          friendshipId: string;
-          personId: string;
+          friendshipId: Id<'friendships'>;
+          personId: Id<'persons'>;
           name: string | null;
           username: string | null;
           image: string | null;
@@ -332,7 +337,7 @@ function SentRequestsList({
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requests: any;
-  onCancel: (id: string) => void;
+  onCancel: (id: Id<'friendships'>) => void;
   refreshing: boolean;
   onRefresh: () => void;
 }) {
@@ -343,13 +348,15 @@ function SentRequestsList({
   return (
     <FlatList
       data={requests}
-      keyExtractor={(item: { friendshipId: string }) => item.friendshipId}
+      keyExtractor={(item: { friendshipId: Id<'friendships'> }) =>
+        item.friendshipId
+      }
       renderItem={({
         item,
       }: {
         item: {
-          friendshipId: string;
-          personId: string;
+          friendshipId: Id<'friendships'>;
+          personId: Id<'persons'>;
           name: string | null;
           username: string | null;
           image: string | null;
@@ -410,7 +417,7 @@ function SearchResults({
   searchTerm: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   suggestions: any;
-  onSendRequest: (id: string) => void;
+  onSendRequest: (id: Id<'persons'>) => void;
 }) {
   // Show suggestions when no search term
   if (!searchTerm || searchTerm.length < 3) {
@@ -418,7 +425,7 @@ function SearchResults({
       return (
         <FlatList
           data={suggestions}
-          keyExtractor={(item: { personId: string }) => item.personId}
+          keyExtractor={(item: { personId: Id<'persons'> }) => item.personId}
           ListHeaderComponent={
             <View className='px-4 py-3'>
               <Text className='text-base font-semibold text-foreground'>
@@ -433,7 +440,7 @@ function SearchResults({
             item,
           }: {
             item: {
-              personId: string;
+              personId: Id<'persons'>;
               name: string | null;
               username: string | null;
               image: string | null;
@@ -494,12 +501,12 @@ function SearchResults({
   return (
     <FlatList
       data={results}
-      keyExtractor={(item: { personId: string }) => item.personId}
+      keyExtractor={(item: { personId: Id<'persons'> }) => item.personId}
       renderItem={({
         item,
       }: {
         item: {
-          personId: string;
+          personId: Id<'persons'>;
           name: string | null;
           username: string | null;
           image: string | null;

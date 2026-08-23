@@ -3,6 +3,7 @@ import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
 import { getAddonHandler } from '../../../addons/registry';
 import { dispatchSingleAddonLifecycle } from '../../../addons/lifecycle';
+import { requireDiscordGuildAuthorization } from '../../../discord/authorization';
 
 /** Max size for addon config/data payloads (64KB stringified) */
 const MAX_DATA_SIZE = 64 * 1024;
@@ -47,10 +48,11 @@ export const listEventAddons = internalQuery({
 export const enableAddon = internalMutation({
   args: {
     eventId: v.string(),
+    personId: v.string(),
     addonType: v.string(),
     config: v.any(),
   },
-  handler: async (ctx, { eventId, addonType, config }) => {
+  handler: async (ctx, { eventId, personId, addonType, config }) => {
     const typedEventId = eventId as Id<'events'>;
 
     const handler = getAddonHandler(addonType);
@@ -62,6 +64,12 @@ export const enableAddon = internalMutation({
     }
 
     validateDataSize(config);
+    await requireDiscordGuildAuthorization(
+      ctx,
+      personId as Id<'persons'>,
+      addonType,
+      config
+    );
 
     const now = Date.now();
 
@@ -145,10 +153,11 @@ export const disableAddon = internalMutation({
 export const updateAddonConfig = internalMutation({
   args: {
     eventId: v.string(),
+    personId: v.string(),
     addonType: v.string(),
     config: v.any(),
   },
-  handler: async (ctx, { eventId, addonType, config }) => {
+  handler: async (ctx, { eventId, personId, addonType, config }) => {
     const typedEventId = eventId as Id<'events'>;
 
     const handler = getAddonHandler(addonType);
@@ -160,6 +169,12 @@ export const updateAddonConfig = internalMutation({
     }
 
     validateDataSize(config);
+    await requireDiscordGuildAuthorization(
+      ctx,
+      personId as Id<'persons'>,
+      addonType,
+      config
+    );
 
     const existing = await ctx.db
       .query('eventAddonConfigs')

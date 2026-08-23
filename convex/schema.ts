@@ -373,6 +373,7 @@ export default defineSchema({
   })
     .index('by_post', ['postId'])
     .index('by_reply', ['replyId'])
+    .index('by_storage', ['storageId'])
     .index('by_uploader', ['uploaderId']),
 
   // ===== MUTING TABLES =====
@@ -424,6 +425,16 @@ export default defineSchema({
   })
     .index('by_event', ['eventId'])
     .index('by_event_addon', ['eventId', 'addonType']),
+
+  discordGuildAuthorizations: defineTable({
+    personId: v.id('persons'),
+    guildId: v.string(),
+    guildName: v.string(),
+    botInstalled: v.boolean(),
+    authorizedAt: v.number(),
+  })
+    .index('by_person', ['personId'])
+    .index('by_person_guild', ['personId', 'guildId']),
 
   addonData: defineTable({
     eventId: v.id('events'),

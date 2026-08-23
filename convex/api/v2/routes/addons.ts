@@ -158,7 +158,12 @@ export function createAddonRoutes() {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
       const enableFn = internal.api.v1.internal.addons.enableAddon;
-      await ctx.runMutation(enableFn, { eventId, addonType, config });
+      await ctx.runMutation(enableFn, {
+        eventId,
+        personId,
+        addonType,
+        config,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to enable add-on';
@@ -300,6 +305,7 @@ export function createAddonRoutes() {
       const updateFn = internal.api.v1.internal.addons.updateAddonConfig;
       const result = await ctx.runMutation(updateFn, {
         eventId,
+        personId,
         addonType,
         config,
       });

@@ -21,12 +21,12 @@ export function SettingsScreenTemplate({
 }: SettingsScreenTemplateProps) {
   return (
     <SafeAreaView className={cn('flex-1 bg-background', className)}>
-      <View className='flex-row items-center px-4 py-3'>
+      <View className='flex-row items-center border-b border-border px-4 py-3'>
         <BackButton />
         <Text className='text-lg font-semibold text-foreground'>{title}</Text>
       </View>
 
-      <ScrollView className='flex-1' contentContainerClassName='px-4 pb-8'>
+      <ScrollView className='flex-1' contentContainerClassName='px-4 pb-8 pt-4'>
         {description ? (
           <Text className='mb-4 text-base text-muted-foreground'>
             {description}

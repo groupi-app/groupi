@@ -5,11 +5,21 @@
 
 import { vi } from 'vitest';
 
-// Mock React Native modules
+// Mock React Native modules. Component tests can inspect the React element tree
+// produced with these host names without loading React Native's Flow sources.
 vi.mock('react-native', () => ({
+  View: 'View',
+  Text: 'Text',
+  Pressable: 'Pressable',
+  TextInput: 'TextInput',
+  Image: 'Image',
+  ScrollView: 'ScrollView',
+  Modal: 'Modal',
+  Switch: 'Switch',
+  ActivityIndicator: 'ActivityIndicator',
   Platform: {
     OS: 'ios',
-    select: vi.fn((obj: Record<string, unknown>) => obj.ios || obj.default),
+    select: vi.fn((obj: Record<string, unknown>) => obj.ios ?? obj.default),
   },
   Dimensions: {
     get: vi.fn(() => ({ width: 375, height: 667 })),
@@ -24,6 +34,8 @@ vi.mock('react-native', () => ({
   },
   StyleSheet: {
     create: vi.fn((styles: Record<string, unknown>) => styles),
+    flatten: vi.fn((style: unknown) => style ?? {}),
+    compose: vi.fn((first: unknown, second: unknown) => [first, second]),
   },
   Keyboard: {
     dismiss: vi.fn(),
@@ -34,6 +46,15 @@ vi.mock('react-native', () => ({
     currentState: 'active',
   },
   useColorScheme: vi.fn(() => 'light'),
+}));
+
+// RN Primitives publishes JSX in an .mjs file, which Node cannot load in the
+// mobile test environment. Slot is an external presentation boundary here.
+vi.mock('@rn-primitives/slot', () => ({
+  Text: 'Text',
+  View: 'View',
+  Pressable: 'Pressable',
+  Image: 'Image',
 }));
 
 // Mock Expo Router
@@ -133,6 +154,7 @@ vi.mock('react-native-toast-message', () => ({
 // Mock Convex React
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
+  useQueries: vi.fn(() => ({})),
   useMutation: vi.fn(() => vi.fn()),
   useConvexAuth: vi.fn(() => ({
     isLoading: false,

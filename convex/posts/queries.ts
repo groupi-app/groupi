@@ -1,6 +1,6 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { getCurrentPerson, requireAuth, getPersonWithUser } from '../auth';
+import { requireAuth, getPersonWithUser } from '../auth';
 
 /**
  * Posts queries for the Convex backend
@@ -331,24 +331,21 @@ export const getPost = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { postId }) => {
+    const { person: currentPerson } = await requireAuth(ctx);
     const post = await ctx.db.get(postId);
     if (!post) {
       throw new Error('Post not found');
     }
 
-    // Check if current user has access to this post's event
-    const currentPerson = await getCurrentPerson(ctx);
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
-        )
-        .first();
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+      )
+      .first();
 
-      if (!membership) {
-        throw new Error('Access denied to this post');
-      }
+    if (!membership) {
+      throw new Error('Access denied to this post');
     }
 
     return post;
@@ -365,24 +362,22 @@ export const getPostReplies = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { postId }) => {
+    const { person: currentPerson } = await requireAuth(ctx);
     // Verify access to the post
     const post = await ctx.db.get(postId);
     if (!post) {
       throw new Error('Post not found');
     }
 
-    const currentPerson = await getCurrentPerson(ctx);
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
-        )
-        .first();
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', post.eventId)
+      )
+      .first();
 
-      if (!membership) {
-        throw new Error('Access denied to this post');
-      }
+    if (!membership) {
+      throw new Error('Access denied to this post');
     }
 
     // Get all replies

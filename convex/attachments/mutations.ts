@@ -1,6 +1,7 @@
-import { mutation } from '../_generated/server';
+import { mutation, type MutationCtx } from '../_generated/server';
+import { Id } from '../_generated/dataModel';
 import { v } from 'convex/values';
-import { requireAuth } from '../auth';
+import { requireAuth, requireEventRole } from '../auth';
 
 /**
  * Attachment mutations for Convex
@@ -61,6 +62,109 @@ function isAllowedMimeType(mimeType: string): boolean {
   return Object.values(ALLOWED_MIME_TYPES).flat().includes(mimeType);
 }
 
+type AttachmentParent = {
+  postId?: Id<'posts'>;
+  replyId?: Id<'replies'>;
+};
+
+/**
+ * Resolve an attachment parent and enforce the event isolation boundary.
+ * New attachments may only be registered by the parent author; this prevents
+ * a member from attaching their uploaded file to another member's content.
+ */
+async function requireAttachmentParentAccess(
+  ctx: MutationCtx,
+  parent: AttachmentParent,
+  personId: Id<'persons'>,
+  requireParentAuthor: boolean
+) {
+  if (
+    (parent.postId && parent.replyId) ||
+    (!parent.postId && !parent.replyId)
+  ) {
+    throw new Error('Exactly one of postId or replyId must be specified');
+  }
+
+  if (parent.postId) {
+    const post = await ctx.db.get(parent.postId);
+    if (!post) {
+      throw new Error('Attachment parent not found');
+    }
+
+    await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+    if (requireParentAuthor && post.authorId !== personId) {
+      throw new Error('You can only attach files to your own content');
+    }
+
+    return;
+  }
+
+  const reply = await ctx.db.get(parent.replyId!);
+  if (!reply) {
+    throw new Error('Attachment parent not found');
+  }
+
+  const post = await ctx.db.get(reply.postId);
+  if (!post) {
+    throw new Error('Attachment parent not found');
+  }
+
+  await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+  if (requireParentAuthor && reply.authorId !== personId) {
+    throw new Error('You can only attach files to your own content');
+  }
+}
+
+/**
+ * Convex does not currently persist who generated an upload URL, so strict
+ * storage ownership cannot be proven after upload. Validate everything the
+ * storage metadata does expose: existence, byte size, and content type.
+ */
+async function requireValidStoredFile(
+  ctx: MutationCtx,
+  storageId: Id<'_storage'>,
+  declaredSize: number,
+  declaredMimeType: string
+) {
+  const storedFile = await ctx.db.system.get('_storage', storageId);
+  if (!storedFile) {
+    throw new Error('Uploaded file not found');
+  }
+
+  if (storedFile.size !== declaredSize) {
+    throw new Error('Uploaded file size does not match');
+  }
+
+  if (storedFile.size > MAX_FILE_SIZE) {
+    throw new Error(
+      `File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`
+    );
+  }
+
+  if (storedFile.contentType && storedFile.contentType !== declaredMimeType) {
+    throw new Error('Uploaded file type does not match');
+  }
+
+  const effectiveMimeType = storedFile.contentType || declaredMimeType;
+  if (!isAllowedMimeType(effectiveMimeType)) {
+    throw new Error(`File type ${effectiveMimeType} is not allowed`);
+  }
+}
+
+async function requireUnclaimedStorage(
+  ctx: MutationCtx,
+  storageId: Id<'_storage'>
+) {
+  const existingAttachment = await ctx.db
+    .query('attachments')
+    .withIndex('by_storage', q => q.eq('storageId', storageId))
+    .first();
+
+  if (existingAttachment) {
+    throw new Error('Uploaded file is already attached');
+  }
+}
+
 /**
  * Create an attachment record after file upload
  */
@@ -80,6 +184,10 @@ export const createAttachment = mutation({
   handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
 
+    await requireAttachmentParentAccess(ctx, args, person._id, true);
+    await requireValidStoredFile(ctx, args.storageId, args.size, args.mimeType);
+    await requireUnclaimedStorage(ctx, args.storageId);
+
     // Validate file size
     if (args.size > MAX_FILE_SIZE) {
       throw new Error(
@@ -90,11 +198,6 @@ export const createAttachment = mutation({
     // Validate MIME type
     if (!isAllowedMimeType(args.mimeType)) {
       throw new Error(`File type ${args.mimeType} is not allowed`);
-    }
-
-    // Validate exactly one parent is specified
-    if ((args.postId && args.replyId) || (!args.postId && !args.replyId)) {
-      throw new Error('Exactly one of postId or replyId must be specified');
     }
 
     // Check attachment count limit
@@ -163,6 +266,8 @@ export const updateAttachment = mutation({
       throw new Error('You can only update your own attachments');
     }
 
+    await requireAttachmentParentAccess(ctx, attachment, person._id, false);
+
     // Build update object
     const updates: {
       filename?: string;
@@ -209,11 +314,22 @@ export const deleteAttachment = mutation({
       throw new Error('You can only delete your own attachments');
     }
 
-    // Delete from storage
-    await ctx.storage.delete(attachment.storageId);
+    await requireAttachmentParentAccess(ctx, attachment, person._id, false);
+
+    const otherAttachment = await ctx.db
+      .query('attachments')
+      .withIndex('by_storage', q => q.eq('storageId', attachment.storageId))
+      .filter(q => q.neq(q.field('_id'), args.attachmentId))
+      .first();
 
     // Delete the record
     await ctx.db.delete(args.attachmentId);
+
+    // Legacy data may contain multiple attachment rows for one blob. Only
+    // delete the underlying file once the final reference is removed.
+    if (!otherAttachment) {
+      await ctx.storage.delete(attachment.storageId);
+    }
 
     return { success: true };
   },
@@ -243,10 +359,7 @@ export const createAttachmentsBatch = mutation({
   handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
 
-    // Validate exactly one parent is specified
-    if ((args.postId && args.replyId) || (!args.postId && !args.replyId)) {
-      throw new Error('Exactly one of postId or replyId must be specified');
-    }
+    await requireAttachmentParentAccess(ctx, args, person._id, true);
 
     // Validate attachment count
     if (args.attachments.length > MAX_ATTACHMENTS) {
@@ -272,9 +385,23 @@ export const createAttachmentsBatch = mutation({
       }
     }
 
+    const storageIds = new Set<string>();
     const attachmentIds = [];
 
     for (const attachment of args.attachments) {
+      if (storageIds.has(attachment.storageId)) {
+        throw new Error('The same uploaded file cannot be attached twice');
+      }
+      storageIds.add(attachment.storageId);
+
+      await requireValidStoredFile(
+        ctx,
+        attachment.storageId,
+        attachment.size,
+        attachment.mimeType
+      );
+      await requireUnclaimedStorage(ctx, attachment.storageId);
+
       // Validate each file
       if (attachment.size > MAX_FILE_SIZE) {
         throw new Error(

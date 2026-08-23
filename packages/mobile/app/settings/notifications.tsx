@@ -1,125 +1,255 @@
-import { View, Switch, ScrollView } from 'react-native';
-import { Text } from '@/components/ui/text';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { useQuery, useMutation } from 'convex/react';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 
 import { BackButton } from '@/components/ui/back-button';
+import { Button } from '@/components/ui/button';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
 import { LoadingState } from '@/components/molecules';
 import { useGlobalUser } from '@/context/global-user-context';
-import { toast } from '@groupi/shared/platform';
+import {
+  type NotificationMethod,
+  type NotificationType,
+  SUPPORTED_NOTIFICATION_TYPES,
+  useNotificationSettings,
+  useSaveNotificationSettings,
+} from '@/hooks/use-settings';
+import { cn } from '@/lib/utils';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+interface NotificationPreference {
+  type: NotificationType;
+  label: string;
+  description: string;
+}
 
-const NOTIFICATION_CATEGORIES = [
+const NOTIFICATION_CATEGORIES: Array<{
+  title: string;
+  items: NotificationPreference[];
+}> = [
   {
     title: 'Events',
     items: [
       {
-        key: 'eventUpdates',
-        label: 'Event Updates',
-        description: 'When an event you joined is edited',
+        type: 'EVENT_EDITED',
+        label: 'Event updates',
+        description: 'Details change for an event you joined.',
       },
       {
-        key: 'dateChosen',
-        label: 'Date Selected',
-        description: 'When the organizer picks a date',
+        type: 'DATE_CHOSEN',
+        label: 'Date selected',
+        description: 'An organizer chooses the event date.',
       },
       {
-        key: 'memberActivity',
-        label: 'Member Activity',
-        description: 'When someone joins or leaves an event',
+        type: 'DATE_CHANGED',
+        label: 'Date changed',
+        description: 'A selected event date changes.',
       },
       {
-        key: 'rsvpUpdates',
-        label: 'RSVP Updates',
-        description: 'When someone changes their RSVP',
+        type: 'DATE_RESET',
+        label: 'New date poll',
+        description: 'An organizer starts a new availability poll.',
+      },
+      {
+        type: 'EVENT_REMINDER',
+        label: 'Event reminders',
+        description: 'An event you’re attending is starting soon.',
       },
     ],
   },
   {
-    title: 'Posts & Replies',
+    title: 'Posts and replies',
     items: [
       {
-        key: 'newPosts',
-        label: 'New Posts',
-        description: 'When someone creates a post in your event',
+        type: 'NEW_POST',
+        label: 'New posts',
+        description: 'Someone posts in an event you joined.',
       },
       {
-        key: 'newReplies',
-        label: 'New Replies',
-        description: 'When someone replies to your post',
+        type: 'NEW_REPLY',
+        label: 'New replies',
+        description: 'Someone replies to a post you follow.',
       },
       {
-        key: 'mentions',
+        type: 'USER_MENTIONED',
         label: 'Mentions',
-        description: 'When someone mentions you',
+        description: 'Someone mentions you in a post or reply.',
       },
     ],
   },
   {
-    title: 'Social',
+    title: 'Members',
     items: [
       {
-        key: 'friendRequests',
-        label: 'Friend Requests',
-        description: 'When someone sends you a friend request',
+        type: 'USER_JOINED',
+        label: 'Member joined',
+        description: 'Someone joins an event you manage.',
       },
       {
-        key: 'eventInvites',
-        label: 'Event Invites',
-        description: 'When someone invites you to an event',
+        type: 'USER_LEFT',
+        label: 'Member left',
+        description: 'Someone leaves an event you manage.',
+      },
+      {
+        type: 'USER_RSVP',
+        label: 'RSVP updates',
+        description: 'Someone responds to an event you manage.',
+      },
+      {
+        type: 'USER_PROMOTED',
+        label: 'Promoted to moderator',
+        description: 'You become a moderator of an event.',
+      },
+      {
+        type: 'USER_DEMOTED',
+        label: 'Moderator role removed',
+        description: 'Your moderator role changes.',
       },
     ],
   },
   {
-    title: 'Reminders',
+    title: 'Friends and invitations',
     items: [
       {
-        key: 'eventReminders',
-        label: 'Event Reminders',
-        description: 'Scheduled reminders before events',
+        type: 'FRIEND_REQUEST_RECEIVED',
+        label: 'Friend requests',
+        description: 'Someone sends you a friend request.',
+      },
+      {
+        type: 'FRIEND_REQUEST_ACCEPTED',
+        label: 'Accepted requests',
+        description: 'Someone accepts your friend request.',
+      },
+      {
+        type: 'EVENT_INVITE_RECEIVED',
+        label: 'Event invitations',
+        description: 'Someone invites you to an event.',
+      },
+      {
+        type: 'EVENT_INVITE_ACCEPTED',
+        label: 'Accepted invitations',
+        description: 'Someone accepts your event invitation.',
+      },
+    ],
+  },
+  {
+    title: 'Add-ons',
+    items: [
+      {
+        type: 'ADDON_CONFIG_RESET',
+        label: 'Response resets',
+        description: 'An add-on changes and needs a new response from you.',
+      },
+      {
+        type: 'ADDON_AUTOMATION',
+        label: 'Automations',
+        description: 'An event add-on sends an automated update.',
       },
     ],
   },
 ];
 
+function getMethodLabel(method: NotificationMethod) {
+  if (method.name?.trim()) return method.name;
+  if (method.type === 'EMAIL') return 'Email';
+  if (method.type === 'PUSH') return 'Push notifications';
+  return 'Webhook';
+}
+
+function getMethodDescription(method: NotificationMethod) {
+  if (method.type === 'EMAIL') return method.value;
+  if (method.type === 'PUSH') return 'This device';
+  return method.webhookFormat
+    ? `${method.webhookFormat.toLowerCase()} webhook`
+    : 'Webhook';
+}
+
 export default function NotificationSettingsScreen() {
-  const { isAuthenticated } = useGlobalUser();
+  const { user } = useGlobalUser();
+  const { notificationMethods, isLoading } = useNotificationSettings();
+  const saveNotificationSettings = useSaveNotificationSettings();
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const saveInFlight = useRef(false);
+  const isSaving = savingKey !== null;
+  const primaryColor = String(useCSSVariable('--color-primary'));
+  const mutedColor = String(useCSSVariable('--color-muted-foreground'));
 
-  const settings = useQuery(
-    api.settings.queries.getNotificationSettings,
-    isAuthenticated ? {} : 'skip'
+  const selectedMethod =
+    notificationMethods.find(method => method.id === selectedMethodId) ??
+    notificationMethods[0];
+  const accountEmail =
+    typeof user?.email === 'string' && user.email.includes('@')
+      ? user.email
+      : null;
+  const hasAccountEmailMethod = notificationMethods.some(
+    method => method.type === 'EMAIL' && method.value === accountEmail
   );
-  const updateSettings = useMutation(
-    api.users.mutations.updateUserNotificationSettings
-  );
 
-  const isLoading = settings === undefined;
-
-  async function toggleSetting(key: string, value: boolean) {
+  async function saveMethods(key: string, nextMethods: NotificationMethod[]) {
+    if (saveInFlight.current) return;
+    saveInFlight.current = true;
+    setSavingKey(key);
     try {
-      await updateSettings({ [key]: value });
-    } catch {
-      toast.error('Failed to update settings');
+      await saveNotificationSettings(nextMethods);
+    } finally {
+      saveInFlight.current = false;
+      setSavingKey(null);
     }
   }
 
-  function getSettingValue(key: string): boolean {
-    if (!settings) return true;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (settings as Record<string, any>)[key] ?? true;
+  function toggleMethod(method: NotificationMethod, enabled: boolean) {
+    void saveMethods(
+      `method-${method.id ?? method.value}`,
+      notificationMethods.map(current =>
+        current.id === method.id ? { ...current, enabled } : current
+      )
+    );
+  }
+
+  function togglePreference(type: NotificationType, enabled: boolean) {
+    if (!selectedMethod) return;
+
+    const existingSetting = selectedMethod.notifications.some(
+      notification => notification.notificationType === type
+    );
+    const notifications = existingSetting
+      ? selectedMethod.notifications.map(notification =>
+          notification.notificationType === type
+            ? { ...notification, enabled }
+            : notification
+        )
+      : [...selectedMethod.notifications, { notificationType: type, enabled }];
+
+    void saveMethods(
+      `preference-${selectedMethod.id ?? selectedMethod.value}-${type}`,
+      notificationMethods.map(method =>
+        method.id === selectedMethod.id ? { ...method, notifications } : method
+      )
+    );
+  }
+
+  function addAccountEmail() {
+    if (!accountEmail) return;
+    const emailMethod: NotificationMethod = {
+      type: 'EMAIL',
+      name: 'Primary email',
+      value: accountEmail,
+      enabled: true,
+      notifications: SUPPORTED_NOTIFICATION_TYPES.map(notificationType => ({
+        notificationType,
+        enabled: true,
+      })),
+    };
+    void saveMethods('add-email', [...notificationMethods, emailMethod]);
   }
 
   if (isLoading) {
     return (
       <SafeAreaView className='flex-1 bg-background'>
-        <View className='flex-row items-center px-4 py-3'>
-          <BackButton />
-          <Text className='text-lg font-semibold text-foreground'>
-            Notifications
-          </Text>
-        </View>
+        <SettingsHeader />
         <LoadingState />
       </SafeAreaView>
     );
@@ -127,51 +257,176 @@ export default function NotificationSettingsScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-background'>
-      <View className='flex-row items-center px-4 py-3'>
-        <BackButton />
-        <Text className='text-lg font-semibold text-foreground'>
-          Notifications
-        </Text>
-      </View>
+      <SettingsHeader />
 
-      <ScrollView className='flex-1 px-4' contentContainerClassName='pb-8 pt-4'>
-        {/* Global toggles */}
-        <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
-          Delivery Methods
-        </Text>
-
-        <ToggleRow
-          label='Push Notifications'
-          description='Receive push notifications on your device'
-          value={getSettingValue('pushNotifications')}
-          onToggle={val => toggleSetting('pushNotifications', val)}
-        />
-        <ToggleRow
-          label='Email Notifications'
-          description='Receive notifications via email'
-          value={getSettingValue('emailNotifications')}
-          onToggle={val => toggleSetting('emailNotifications', val)}
-        />
-
-        {/* Per-category settings */}
-        {NOTIFICATION_CATEGORIES.map(category => (
-          <View key={category.title} className='mt-6'>
-            <Text className='mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
-              {category.title}
+      <ScrollView
+        className='flex-1'
+        contentContainerClassName='gap-7 px-4 pb-10 pt-2'
+      >
+        <View className='gap-3'>
+          <View>
+            <Text className='text-lg font-bold text-foreground'>
+              Delivery methods
             </Text>
-            {category.items.map(item => (
-              <ToggleRow
-                key={item.key}
-                label={item.label}
-                description={item.description}
-                value={getSettingValue(item.key)}
-                onToggle={val => toggleSetting(item.key, val)}
-              />
+            <Text className='mt-1 text-sm text-muted-foreground'>
+              Choose where Groupi should send updates. Each method can have its
+              own preferences.
+            </Text>
+          </View>
+
+          {notificationMethods.length === 0 ? (
+            <View className='items-start gap-3 rounded-card border border-border bg-card p-4'>
+              <View className='flex-row items-center gap-3'>
+                <View className='h-10 w-10 items-center justify-center rounded-badge bg-muted'>
+                  <Ionicons
+                    name='notifications-outline'
+                    size={20}
+                    color={mutedColor}
+                  />
+                </View>
+                <View className='flex-1'>
+                  <Text className='font-semibold text-foreground'>
+                    No delivery methods yet
+                  </Text>
+                  <Text className='mt-0.5 text-sm text-muted-foreground'>
+                    In-app notifications will still appear in your activity
+                    feed.
+                  </Text>
+                </View>
+              </View>
+              {accountEmail ? (
+                <Button
+                  variant='outline'
+                  onPress={addAccountEmail}
+                  disabled={isSaving}
+                  accessibilityLabel='Add primary email as a notification method'
+                >
+                  Add primary email
+                </Button>
+              ) : null}
+            </View>
+          ) : (
+            <View className='gap-2'>
+              {notificationMethods.map(method => {
+                const methodKey = method.id ?? `${method.type}-${method.value}`;
+                return (
+                  <Pressable
+                    key={methodKey}
+                    onPress={() => setSelectedMethodId(method.id ?? null)}
+                    accessibilityRole='button'
+                    accessibilityLabel={`Edit ${getMethodLabel(method)} notification preferences`}
+                    accessibilityState={{
+                      selected: selectedMethod === method,
+                    }}
+                    className={cn(
+                      'flex-row items-center gap-3 rounded-card border bg-card p-4 active:bg-accent/60',
+                      selectedMethod === method
+                        ? 'border-primary'
+                        : 'border-border'
+                    )}
+                  >
+                    <View className='h-10 w-10 items-center justify-center rounded-badge bg-muted'>
+                      <Ionicons
+                        name={
+                          method.type === 'EMAIL'
+                            ? 'mail-outline'
+                            : method.type === 'PUSH'
+                              ? 'phone-portrait-outline'
+                              : 'git-network-outline'
+                        }
+                        size={20}
+                        color={
+                          selectedMethod === method ? primaryColor : mutedColor
+                        }
+                      />
+                    </View>
+                    <View className='flex-1'>
+                      <Text className='font-semibold text-foreground'>
+                        {getMethodLabel(method)}
+                      </Text>
+                      <Text
+                        className='mt-0.5 text-sm text-muted-foreground'
+                        numberOfLines={1}
+                      >
+                        {getMethodDescription(method)}
+                      </Text>
+                    </View>
+                    <Switch
+                      checked={method.enabled}
+                      onCheckedChange={enabled => toggleMethod(method, enabled)}
+                      disabled={isSaving}
+                      accessibilityLabel={`${getMethodLabel(method)} delivery`}
+                      accessibilityHint='Turns this notification delivery method on or off'
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
+          {accountEmail && !hasAccountEmailMethod ? (
+            <Button
+              variant='outline'
+              onPress={addAccountEmail}
+              disabled={isSaving}
+              accessibilityLabel='Add primary email as a notification method'
+            >
+              Add primary email
+            </Button>
+          ) : null}
+        </View>
+
+        {selectedMethod ? (
+          <View className='gap-6'>
+            <View>
+              <Text className='text-lg font-bold text-foreground'>
+                What gets delivered
+              </Text>
+              <Text className='mt-1 text-sm text-muted-foreground'>
+                Preferences below apply to {getMethodLabel(selectedMethod)}.
+              </Text>
+            </View>
+
+            {NOTIFICATION_CATEGORIES.map(category => (
+              <View key={category.title} className='gap-2'>
+                <Text className='px-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground'>
+                  {category.title}
+                </Text>
+                <View className='overflow-hidden rounded-card border border-border bg-card'>
+                  {category.items.map((item, index) => (
+                    <ToggleRow
+                      key={item.type}
+                      label={item.label}
+                      description={item.description}
+                      value={
+                        selectedMethod.notifications.find(
+                          notification =>
+                            notification.notificationType === item.type
+                        )?.enabled ?? false
+                      }
+                      disabled={!selectedMethod.enabled || isSaving}
+                      onToggle={value => togglePreference(item.type, value)}
+                      showDivider={index < category.items.length - 1}
+                    />
+                  ))}
+                </View>
+              </View>
             ))}
           </View>
-        ))}
+        ) : null}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SettingsHeader() {
+  return (
+    <View className='flex-row items-center px-4 py-3'>
+      <BackButton />
+      <Text className='text-lg font-semibold text-foreground'>
+        Notification settings
+      </Text>
+    </View>
   );
 }
 
@@ -179,22 +434,37 @@ function ToggleRow({
   label,
   description,
   value,
+  disabled,
   onToggle,
+  showDivider,
 }: {
   label: string;
   description: string;
   value: boolean;
-  onToggle: (val: boolean) => void;
+  disabled: boolean;
+  onToggle: (value: boolean) => void;
+  showDivider: boolean;
 }) {
   return (
-    <View className='flex-row items-center justify-between border-b border-border py-4'>
+    <View
+      className={cn(
+        'flex-row items-center justify-between px-4 py-4',
+        showDivider && 'border-b border-border'
+      )}
+    >
       <View className='flex-1 pr-4'>
-        <Text className='text-base font-medium text-foreground'>{label}</Text>
+        <Text className='font-medium text-foreground'>{label}</Text>
         <Text className='mt-0.5 text-sm text-muted-foreground'>
           {description}
         </Text>
       </View>
-      <Switch value={value} onValueChange={onToggle} />
+      <Switch
+        checked={value}
+        onCheckedChange={onToggle}
+        disabled={disabled}
+        accessibilityLabel={label}
+        accessibilityHint={description}
+      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 import { cn } from '@/lib/utils';
 import { useAction } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import { toast } from '@groupi/shared/platform';
 
 import {
   useCreateEventForm,
   type FormState,
 } from '@/context/create-event-context';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -171,11 +170,23 @@ const CHOICE_TYPES: QuestionType[] = [
 interface AddonsStepProps {
   onNext: () => void;
   onBack: () => void;
+  submitLabel?: string;
+  isSubmitting?: boolean;
 }
 
-export function AddonsStep({ onNext, onBack }: AddonsStepProps) {
+export function AddonsStep({
+  onNext,
+  onBack,
+  submitLabel = 'Next',
+  isSubmitting = false,
+}: AddonsStepProps) {
   const { formState, updateFormState } = useCreateEventForm();
-  const primaryColor = String(useCSSVariable('--color-primary') ?? '#8200AD');
+  const primaryColor = String(
+    useCSSVariable('--color-primary') ?? 'transparent'
+  );
+  const mutedColor = String(
+    useCSSVariable('--color-muted-foreground') ?? 'transparent'
+  );
 
   const handleToggle = useCallback(
     (addon: AddonDefinition, enabled: boolean) => {
@@ -186,6 +197,46 @@ export function AddonsStep({ onNext, onBack }: AddonsStepProps) {
     },
     [formState, updateFormState]
   );
+
+  function handleNext() {
+    const bringListItems = formState.addonConfigs['bring-list']?.items;
+    if (
+      bringListItems &&
+      (!Array.isArray(bringListItems) || bringListItems.length === 0)
+    ) {
+      toast.error('Add at least one item or turn off the Bring List add-on.');
+      return;
+    }
+
+    const questions = formState.addonConfigs.questionnaire?.questions;
+    if (questions && (!Array.isArray(questions) || questions.length === 0)) {
+      toast.error(
+        'Add at least one question or turn off the Questionnaire add-on.'
+      );
+      return;
+    }
+    if (
+      Array.isArray(questions) &&
+      questions.some(question => {
+        const candidate = question as Question;
+        return (
+          CHOICE_TYPES.includes(candidate.type) &&
+          (!candidate.options || candidate.options.length === 0)
+        );
+      })
+    ) {
+      toast.error('Add at least one option to every choice question.');
+      return;
+    }
+
+    const discordConfig = formState.addonConfigs.discord;
+    if (discordConfig && (!discordConfig.guildId || !discordConfig.guildName)) {
+      toast.error('Choose a Discord server or turn off the Discord add-on.');
+      return;
+    }
+
+    onNext();
+  }
 
   return (
     <ScrollView className='flex-1 px-4' contentContainerClassName='pb-8'>
@@ -209,7 +260,7 @@ export function AddonsStep({ onNext, onBack }: AddonsStepProps) {
                   <Ionicons
                     name={addon.icon}
                     size={22}
-                    color={enabled ? primaryColor : '#9ca3af'}
+                    color={enabled ? primaryColor : mutedColor}
                   />
                   <View className='flex-1'>
                     <Text className='font-semibold text-foreground'>
@@ -223,6 +274,7 @@ export function AddonsStep({ onNext, onBack }: AddonsStepProps) {
                 <Switch
                   checked={enabled}
                   onCheckedChange={v => handleToggle(addon, v)}
+                  accessibilityLabel={`${enabled ? 'Disable' : 'Enable'} ${addon.name}`}
                 />
               </View>
 
@@ -238,11 +290,21 @@ export function AddonsStep({ onNext, onBack }: AddonsStepProps) {
         })}
 
         <View className='mt-2 flex-row gap-3'>
-          <Button variant='outline' onPress={onBack} className='flex-1'>
+          <Button
+            variant='outline'
+            onPress={onBack}
+            className='flex-1'
+            disabled={isSubmitting}
+          >
             Back
           </Button>
-          <Button onPress={onNext} className='flex-1'>
-            Next
+          <Button
+            onPress={handleNext}
+            className='flex-1'
+            isLoading={isSubmitting}
+            loadingText={submitLabel}
+          >
+            {submitLabel}
           </Button>
         </View>
       </View>
@@ -332,14 +394,14 @@ function ReminderConfig({
               className={cn(
                 'rounded-badge px-3 py-1.5',
                 isActive
-                  ? 'border-2 border-white bg-primary shadow-raised'
+                  ? 'border-2 border-primary-foreground bg-primary shadow-raised'
                   : 'bg-muted'
               )}
             >
               <Text
                 className={cn(
                   'text-xs font-medium',
-                  isActive ? 'text-white' : 'text-muted-foreground'
+                  isActive ? 'text-primary-foreground' : 'text-muted-foreground'
                 )}
               >
                 {opt.label}
@@ -361,6 +423,9 @@ function BringListConfig({
   formState: FormState;
   updateFormState: (patch: Partial<FormState>) => void;
 }) {
+  const mutedColor = String(
+    useCSSVariable('--color-muted-foreground') ?? 'transparent'
+  );
   const items = (formState.addonConfigs['bring-list']?.items ??
     []) as BringListItem[];
   const [isAdding, setIsAdding] = useState(false);
@@ -405,7 +470,7 @@ function BringListConfig({
                 {item.name} x{item.quantity}
               </Text>
               <Pressable onPress={() => handleRemove(item.id)}>
-                <Ionicons name='close-circle' size={20} color='#9ca3af' />
+                <Ionicons name='close-circle' size={20} color={mutedColor} />
               </Pressable>
             </View>
           ))}
@@ -464,6 +529,9 @@ function QuestionnaireConfig({
   formState: FormState;
   updateFormState: (patch: Partial<FormState>) => void;
 }) {
+  const mutedColor = String(
+    useCSSVariable('--color-muted-foreground') ?? 'transparent'
+  );
   const questions = (formState.addonConfigs.questionnaire?.questions ??
     []) as Question[];
   const [isAdding, setIsAdding] = useState(false);
@@ -529,7 +597,7 @@ function QuestionnaireConfig({
                 </View>
               </View>
               <Pressable onPress={() => handleRemove(q.id)}>
-                <Ionicons name='close-circle' size={20} color='#9ca3af' />
+                <Ionicons name='close-circle' size={20} color={mutedColor} />
               </Pressable>
             </View>
           ))}
@@ -561,14 +629,16 @@ function QuestionnaireConfig({
                     className={cn(
                       'rounded-badge px-2.5 py-1',
                       isActive
-                        ? 'border-2 border-white bg-primary shadow-raised'
+                        ? 'border-2 border-primary-foreground bg-primary shadow-raised'
                         : 'bg-muted'
                     )}
                   >
                     <Text
                       className={cn(
                         'text-xs font-medium',
-                        isActive ? 'text-white' : 'text-muted-foreground'
+                        isActive
+                          ? 'text-primary-foreground'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {t.label}
@@ -603,7 +673,11 @@ function QuestionnaireConfig({
                         setNewOptions(newOptions.filter((_, j) => j !== i))
                       }
                     >
-                      <Ionicons name='close-circle' size={20} color='#9ca3af' />
+                      <Ionicons
+                        name='close-circle'
+                        size={20}
+                        color={mutedColor}
+                      />
                     </Pressable>
                   ) : null}
                 </View>
@@ -663,6 +737,9 @@ function DiscordConfig({
   formState: FormState;
   updateFormState: (patch: Partial<FormState>) => void;
 }) {
+  const primaryColor = String(
+    useCSSVariable('--color-primary') ?? 'transparent'
+  );
   const [guilds, setGuilds] = useState<Guild[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -671,12 +748,18 @@ function DiscordConfig({
   const selectedGuildId =
     (formState.addonConfigs.discord?.guildId as string) ?? '';
 
-  async function fetchGuilds() {
+  const fetchGuilds = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const result = await getGuilds({});
-      setGuilds(result?.guilds ?? []);
+      setGuilds([
+        ...result.available.map(guild => ({ ...guild, botInstalled: true })),
+        ...result.invitable.map(guild => ({
+          ...guild,
+          botInstalled: false,
+        })),
+      ]);
     } catch {
       setError(
         'Failed to load Discord servers. Make sure your account is linked.'
@@ -684,12 +767,11 @@ function DiscordConfig({
     } finally {
       setLoading(false);
     }
-  }
+  }, [getGuilds]);
 
-  // Fetch on first render
-  if (guilds === null && !loading && !error) {
-    fetchGuilds();
-  }
+  useEffect(() => {
+    void fetchGuilds();
+  }, [fetchGuilds]);
 
   function handleSelect(guild: Guild) {
     updateFormState({
@@ -756,7 +838,11 @@ function DiscordConfig({
                   {guild.name}
                 </Text>
                 {isSelected ? (
-                  <Ionicons name='checkmark-circle' size={20} color='#8200AD' />
+                  <Ionicons
+                    name='checkmark-circle'
+                    size={20}
+                    color={primaryColor}
+                  />
                 ) : null}
               </Pressable>
             );
