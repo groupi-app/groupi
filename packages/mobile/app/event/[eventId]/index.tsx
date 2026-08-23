@@ -1,11 +1,11 @@
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 
-import { useEventPostFeed } from '@/hooks/use-posts';
+import { usePaginatedEventPosts } from '@/hooks/use-paginated-event-posts';
 import { useEventAddons } from '@/hooks/use-addons';
 import { canRoleViewAttendeeList } from '@/lib/event-access-policy';
 
@@ -32,7 +32,11 @@ export default function EventDetailScreen() {
     api.events.queries.getEventAttendeesData,
     canViewMembers ? { eventId: typedEventId } : 'skip'
   );
-  const postFeedData = useEventPostFeed(typedEventId);
+  const {
+    results: posts,
+    status: postFeedStatus,
+    loadMore,
+  } = usePaginatedEventPosts(typedEventId);
   const addons = useEventAddons(eventId);
   const role = headerData?.userMembership.role;
   const permissions = {
@@ -72,27 +76,33 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-background'>
-      <ScrollView className='flex-1' contentContainerClassName='pb-24'>
-        <EventHeader
-          headerData={headerData}
-          permissions={permissions}
-          eventId={eventId}
-        />
+      <PostFeed
+        eventId={eventId}
+        posts={posts}
+        status={postFeedStatus}
+        loadMore={loadMore}
+        header={
+          <View>
+            <EventHeader
+              headerData={headerData}
+              permissions={permissions}
+              eventId={eventId}
+            />
 
-        {canViewMembers && membersData ? (
-          <MemberList
-            members={membersData}
-            eventId={eventId}
-            canManage={permissions?.canManage ?? false}
-          />
-        ) : null}
+            {canViewMembers && membersData ? (
+              <MemberList
+                members={membersData}
+                eventId={eventId}
+                canManage={permissions?.canManage ?? false}
+              />
+            ) : null}
 
-        {addons && addons.length > 0 ? (
-          <EventAddonsSection addons={addons} eventId={eventId} />
-        ) : null}
-
-        <PostFeed postFeedData={postFeedData} eventId={eventId} />
-      </ScrollView>
+            {addons && addons.length > 0 ? (
+              <EventAddonsSection addons={addons} eventId={eventId} />
+            ) : null}
+          </View>
+        }
+      />
     </SafeAreaView>
   );
 }

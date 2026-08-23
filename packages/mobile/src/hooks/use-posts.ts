@@ -9,7 +9,6 @@ const postActionHooks = createPostActionHooks(api);
 
 export const {
   usePostDetail,
-  useEventPostFeed,
   usePostReplies,
   usePost,
   useCanManagePost,

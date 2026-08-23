@@ -14,6 +14,7 @@ vi.mock('react-native', () => ({
   TextInput: 'TextInput',
   Image: 'Image',
   ScrollView: 'ScrollView',
+  FlatList: 'FlatList',
   Modal: 'Modal',
   Switch: 'Switch',
   ActivityIndicator: 'ActivityIndicator',
@@ -214,6 +215,12 @@ vi.mock('react-native-toast-message', () => ({
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useQueries: vi.fn(() => ({})),
+  usePaginatedQuery: vi.fn(() => ({
+    results: [],
+    status: 'Exhausted',
+    isLoading: false,
+    loadMore: vi.fn(),
+  })),
   useMutation: vi.fn(() => vi.fn()),
   useConvexAuth: vi.fn(() => ({
     isLoading: false,
@@ -276,7 +283,10 @@ vi.mock('convex/_generated/api', () => ({
       },
     },
     posts: {
-      queries: { getEventPostFeed: 'getEventPostFeed' },
+      queries: {
+        getEventPostFeed: 'getEventPostFeed',
+        getEventPostFeedPage: 'getEventPostFeedPage',
+      },
       mutations: { createPost: 'createPost' },
     },
     pushNotifications: {

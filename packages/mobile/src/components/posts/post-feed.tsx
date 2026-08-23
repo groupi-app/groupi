@@ -1,85 +1,126 @@
-import { View, Pressable } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { useCallback, useMemo, type ReactElement } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  View,
+  type ListRenderItem,
+} from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 
-import { SectionHeader } from '@/components/ui/section-header';
-import { PostCard } from './post-card';
 import { LoadingState } from '@/components/molecules';
+import { SectionHeader } from '@/components/ui/section-header';
+import { Text } from '@/components/ui/text';
+import { POST_FEED_PAGE_SIZE } from '@/hooks/use-paginated-event-posts';
+import { PostCard, type PostCardProps } from './post-card';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PostFeedData = any;
+type PostFeedStatus =
+  | 'LoadingFirstPage'
+  | 'CanLoadMore'
+  | 'LoadingMore'
+  | 'Exhausted';
 
 interface PostFeedProps {
-  postFeedData: PostFeedData;
   eventId: string;
+  header: ReactElement;
+  posts: PostCardProps['post'][];
+  status: PostFeedStatus;
+  loadMore: (count: number) => void;
 }
 
-export function PostFeed({ postFeedData, eventId }: PostFeedProps) {
-  if (postFeedData === undefined) {
-    return (
-      <LoadingState message='Loading posts...' className='min-h-[160px]' />
-    );
-  }
+export function shouldLoadMorePosts(status: PostFeedStatus) {
+  return status === 'CanLoadMore';
+}
 
-  // The query returns { event: { posts: [...] }, ... }
-  const posts = postFeedData?.event?.posts ?? postFeedData?.posts ?? [];
+export function PostFeed({
+  eventId,
+  header,
+  posts,
+  status,
+  loadMore,
+}: PostFeedProps) {
+  const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
+
+  const handleEndReached = useCallback(() => {
+    if (shouldLoadMorePosts(status)) {
+      loadMore(POST_FEED_PAGE_SIZE);
+    }
+  }, [loadMore, status]);
+
+  const renderItem = useCallback<ListRenderItem<PostCardProps['post']>>(
+    ({ item }) => (
+      <View className='px-4'>
+        <PostCard post={item} eventId={eventId} />
+      </View>
+    ),
+    [eventId]
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <View>
+        {header}
+        <View className='mt-6'>
+          <SectionHeader
+            title='Posts'
+            actionLabel='New Post'
+            onAction={() => router.push(`/event/${eventId}/new-post`)}
+          />
+        </View>
+      </View>
+    ),
+    [eventId, header]
+  );
+
+  const emptyState =
+    status === 'LoadingFirstPage' ? (
+      <LoadingState message='Loading posts...' className='min-h-[160px]' />
+    ) : (
+      <View className='items-center px-6 py-10'>
+        <Ionicons name='chatbubble-outline' size={32} color={mutedColor} />
+        <Text className='mt-2 text-base text-muted-foreground'>
+          No posts yet
+        </Text>
+        <Text className='mt-1 text-center text-sm text-muted-foreground'>
+          Start the conversation with a new post.
+        </Text>
+      </View>
+    );
+
+  const loadingMore =
+    status === 'LoadingMore' ? (
+      <View
+        className='flex-row items-center justify-center gap-2 py-6'
+        accessibilityRole='progressbar'
+        accessibilityLabel='Loading more posts'
+      >
+        <ActivityIndicator color={primaryColor} />
+        <Text className='text-sm text-muted-foreground'>
+          Loading more posts…
+        </Text>
+      </View>
+    ) : null;
 
   return (
-    <View className='mt-6'>
-      <SectionHeader title='Posts' count={posts.length} />
-
-      {posts.length === 0 ? (
-        <View className='items-center px-6 py-8'>
-          <Ionicons name='chatbubble-outline' size={32} color='#9ca3af' />
-          <Text className='mt-2 text-base text-muted-foreground'>
-            No posts yet
-          </Text>
-          <Pressable
-            onPress={() => router.push(`/event/${eventId}/new-post`)}
-            className='mt-3'
-          >
-            <Text className='text-base font-medium text-primary'>
-              Create the first post
-            </Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View className='gap-3 px-4'>
-          {posts.map(
-            (post: {
-              _id: string;
-              title: string;
-              content: string;
-              _creationTime: number;
-              updatedAt?: number;
-              author?: {
-                person?: {
-                  _id: string;
-                  user?: { name: string; image?: string };
-                };
-                user?: { name: string; image?: string };
-              } | null;
-              replyCount?: number;
-            }) => (
-              <PostCard key={post._id} post={post} eventId={eventId} />
-            )
-          )}
-        </View>
-      )}
-
-      {/* FAB for new post */}
-      <View className='mt-4 items-center'>
-        <Pressable
-          onPress={() => router.push(`/event/${eventId}/new-post`)}
-          className='flex-row items-center gap-2 rounded-button bg-primary px-5 py-3'
-        >
-          <Ionicons name='add' size={20} color='#ffffff' />
-          <Text className='text-base font-semibold text-primary-foreground'>
-            New Post
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+    <FlatList
+      className='flex-1'
+      contentContainerClassName='gap-3 pb-24'
+      data={posts}
+      keyExtractor={post => post._id}
+      renderItem={renderItem}
+      ListHeaderComponent={listHeader}
+      ListEmptyComponent={emptyState}
+      ListFooterComponent={loadingMore}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.5}
+      initialNumToRender={POST_FEED_PAGE_SIZE}
+      maxToRenderPerBatch={10}
+      windowSize={7}
+      removeClippedSubviews={Platform.OS === 'android'}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }

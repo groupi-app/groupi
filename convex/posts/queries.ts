@@ -1,6 +1,26 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from 'convex/server';
 import { requireAuth, getPersonWithUser } from '../auth';
+
+const postFeedItemValidator = v.object({
+  _id: v.id('posts'),
+  _creationTime: v.number(),
+  title: v.string(),
+  content: v.string(),
+  editedAt: v.optional(v.number()),
+  membershipId: v.optional(v.id('memberships')),
+  authorId: v.id('persons'),
+  eventId: v.id('events'),
+  updatedAt: v.optional(v.number()),
+  author: v.object({
+    name: v.union(v.string(), v.null()),
+    image: v.union(v.string(), v.null()),
+  }),
+});
 
 /**
  * Posts queries for the Convex backend
@@ -317,6 +337,80 @@ export const getEventPostFeed = query({
         ...userMembership,
         person: currentPerson,
       },
+    };
+  },
+});
+
+/**
+ * Get a cursor-paginated, card-sized post feed for native clients.
+ *
+ * This deliberately omits the event membership graph and reply documents.
+ * Those are already loaded by dedicated event/detail queries, and including
+ * them here would make every page grow with the lifetime of the event.
+ */
+export const getEventPostFeedPage = query({
+  args: {
+    eventId: v.id('events'),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(postFeedItemValidator),
+  handler: async (ctx, { eventId, paginationOpts }) => {
+    const { person: currentPerson } = await requireAuth(ctx);
+    const boundedPaginationOpts = {
+      ...paginationOpts,
+      numItems: Math.min(Math.max(Math.trunc(paginationOpts.numItems), 1), 50),
+    };
+
+    const event = await ctx.db.get(eventId);
+
+    if (!event) {
+      const emptyResult = await ctx.db
+        .query('posts')
+        .withIndex('by_event', q => q.eq('eventId', eventId))
+        .paginate(boundedPaginationOpts);
+      return { ...emptyResult, page: [] };
+    }
+
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', eventId)
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error('You are not a member of this event');
+    }
+
+    const result = await ctx.db
+      .query('posts')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .order('desc')
+      .paginate(boundedPaginationOpts);
+
+    const authorIds = [...new Set(result.page.map(post => post.authorId))];
+    const authors = await Promise.all(
+      authorIds.map(async personId => ({
+        personId,
+        data: await getPersonWithUser(ctx, personId),
+      }))
+    );
+    const authorMap = new Map(
+      authors.map(({ personId, data }) => [personId, data?.user ?? null])
+    );
+
+    return {
+      ...result,
+      page: result.page.map(post => {
+        const author = authorMap.get(post.authorId);
+        return {
+          ...post,
+          author: {
+            name: author?.name ?? null,
+            image: author?.image ?? null,
+          },
+        };
+      }),
     };
   },
 });

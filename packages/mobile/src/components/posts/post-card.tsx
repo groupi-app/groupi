@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Timestamp } from '@/components/molecules';
 
-interface PostCardProps {
+export interface PostCardProps {
   post: {
     _id: string;
     title: string;
@@ -15,6 +15,8 @@ interface PostCardProps {
     _creationTime: number;
     updatedAt?: number;
     author?: {
+      name?: string | null;
+      image?: string | null;
       person?: { _id: string; user?: { name: string; image?: string } };
       user?: { name: string; image?: string } | null;
     } | null;
@@ -26,10 +28,16 @@ interface PostCardProps {
 export function PostCard({ post, eventId }: PostCardProps) {
   // Handle both author.user and author.person.user shapes
   const authorName =
-    post.author?.user?.name ?? post.author?.person?.user?.name ?? 'Unknown';
+    post.author?.name ??
+    post.author?.user?.name ??
+    post.author?.person?.user?.name ??
+    'Unknown';
   const authorImage =
-    post.author?.user?.image ?? post.author?.person?.user?.image ?? undefined;
-  const replyCount = post.replyCount ?? 0;
+    post.author?.image ??
+    post.author?.user?.image ??
+    post.author?.person?.user?.image ??
+    undefined;
+  const replyCount = post.replyCount;
   const isEdited =
     post.updatedAt !== undefined && post.updatedAt !== post._creationTime;
 
@@ -40,7 +48,7 @@ export function PostCard({ post, eventId }: PostCardProps) {
     <Pressable
       onPress={() => router.push(`/event/${eventId}/post/${post._id}`)}
       accessibilityRole='button'
-      accessibilityLabel={`${post.title}, by ${authorName}, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+      accessibilityLabel={`${post.title}, by ${authorName}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
       accessibilityHint='Opens post and replies'
     >
       <Card>
@@ -76,7 +84,7 @@ export function PostCard({ post, eventId }: PostCardProps) {
         </Text>
 
         {/* Reply count */}
-        {replyCount > 0 ? (
+        {replyCount !== undefined && replyCount > 0 ? (
           <View className='mt-3 flex-row items-center gap-1'>
             <Ionicons name='chatbubble-outline' size={14} color='#9ca3af' />
             <Text variant='muted' className='text-sm'>
