@@ -27,6 +27,20 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="groupi"/>
       </intent-filter>
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/invite"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/event"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/user"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/settings"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/friends"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/invites"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/discover"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/notifications"/>
+        <data android:scheme="https" android:host="www.groupi.gg" android:pathPrefix="/create-event"/>
+      </intent-filter>
     </activity>
   </application>
 </manifest>

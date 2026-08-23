@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useActionMenu } from '@/components/ui/action-menu';
+import { getPublicBaseUrl } from '@/lib/public-urls';
 import { toast } from '@groupi/shared/platform';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -147,7 +148,7 @@ export function LinkedAccountsSection() {
         label: `Link ${provider.name}`,
         onPress: () => {
           toast.info(
-            `To link your ${provider.name} account, please use the web app at groupi.app/settings/account`
+            `To link your ${provider.name} account, please use the web app at ${getPublicBaseUrl()}/settings/account`
           );
         },
       })),

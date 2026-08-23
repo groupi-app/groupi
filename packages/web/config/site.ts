@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: 'Groupi',
   description: 'A simple way to create and manage events with your friends.',
-  url: 'https://groupi.gg',
-  ogImage: 'https://groupi.gg/og.jpg',
+  url: 'https://www.groupi.gg',
+  ogImage: 'https://www.groupi.gg/og.jpg',
   links: {
     github:
       process.env.NEXT_PUBLIC_GITHUB_URL ??

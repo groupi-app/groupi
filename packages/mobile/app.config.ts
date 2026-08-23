@@ -1,3 +1,7 @@
+import linkingConfig from './linking.config.json';
+
+const appLinkHost = linkingConfig.appLinkHost;
+
 export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
@@ -14,6 +18,7 @@ export default {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.groupi.mobile',
+    associatedDomains: [`applinks:${appLinkHost}`],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -24,6 +29,12 @@ export default {
       backgroundColor: '#ffffff',
     },
     package: 'com.groupi.mobile',
+    intentFilters: linkingConfig.pathPrefixes.map(pathPrefix => ({
+      action: 'VIEW',
+      autoVerify: true,
+      data: [{ scheme: 'https', host: appLinkHost, pathPrefix }],
+      category: ['BROWSABLE', 'DEFAULT'],
+    })),
   },
   plugins: [
     'expo-router',

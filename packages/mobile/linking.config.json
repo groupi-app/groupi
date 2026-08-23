@@ -1,0 +1,15 @@
+{
+  "publicBaseUrl": "https://www.groupi.gg",
+  "appLinkHost": "www.groupi.gg",
+  "pathPrefixes": [
+    "/invite",
+    "/event",
+    "/user",
+    "/settings",
+    "/friends",
+    "/invites",
+    "/discover",
+    "/notifications",
+    "/create-event"
+  ]
+}

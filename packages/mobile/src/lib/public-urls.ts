@@ -1,4 +1,8 @@
-const DEFAULT_PUBLIC_BASE_URL = 'https://groupi.gg';
+import linkingConfig from '../../linking.config.json';
+
+const DEFAULT_PUBLIC_BASE_URL = linkingConfig.publicBaseUrl;
+export const PUBLIC_APP_LINK_HOST = linkingConfig.appLinkHost;
+export const APP_LINK_PATH_PREFIXES = linkingConfig.pathPrefixes;
 
 export function getPublicBaseUrl(value = process.env.EXPO_PUBLIC_BASE_URL) {
   if (!value) return DEFAULT_PUBLIC_BASE_URL;
@@ -10,6 +14,9 @@ export function getPublicBaseUrl(value = process.env.EXPO_PUBLIC_BASE_URL) {
       url.username ||
       url.password
     ) {
+      return DEFAULT_PUBLIC_BASE_URL;
+    }
+    if (url.protocol === 'https:' && url.hostname === 'groupi.gg') {
       return DEFAULT_PUBLIC_BASE_URL;
     }
     return url.origin;
