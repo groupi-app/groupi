@@ -75,7 +75,13 @@ export function createInviteRoutes() {
     const listFn = internal.api.v1.internal.invites.listEventInvites;
     const result = await ctx.runQuery(listFn, { eventId });
 
-    return c.json(result.invites, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.invites,
+      },
+      200
+    );
   });
 
   // POST /events/:eventId/invites - Create invite
@@ -102,8 +108,11 @@ export function createInviteRoutes() {
         content: {
           'application/json': {
             schema: z.object({
-              id: z.string(),
-              token: z.string(),
+              success: z.literal(true),
+              data: z.object({
+                id: z.string(),
+                token: z.string(),
+              }),
             }),
           },
         },
@@ -153,8 +162,11 @@ export function createInviteRoutes() {
 
     return c.json(
       {
-        id: result.id,
-        token: result.token,
+        success: true as const,
+        data: {
+          id: result.id,
+          token: result.token,
+        },
       },
       201
     );
@@ -172,8 +184,16 @@ export function createInviteRoutes() {
       params: InviteIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'Invite deleted successfully',
+      200: {
+        description: 'Invite deleted',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.object({ message: z.string() }),
+            }),
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -205,12 +225,19 @@ export function createInviteRoutes() {
       const deleteFn = internal.api.v1.internal.invites.deleteInvite;
       await ctx.runMutation(deleteFn, { inviteId, personId });
 
-      return c.body(null, 204);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: 'Invite deleted successfully' },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to delete invite';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404
@@ -260,13 +287,20 @@ export function createInviteRoutes() {
     if (!result) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message: 'Invite not found' },
         },
         404
       );
     }
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // POST /invites/:token/accept - Accept invite
@@ -330,8 +364,11 @@ export function createInviteRoutes() {
 
       return c.json(
         {
-          eventId: result.eventId,
-          membershipId: result.membershipId,
+          success: true as const,
+          data: {
+            eventId: result.eventId,
+            membershipId: result.membershipId,
+          },
         },
         200
       );
@@ -342,6 +379,7 @@ export function createInviteRoutes() {
       if (message === 'Invite not found') {
         return c.json(
           {
+            success: false as const,
             error: { code: 'NOT_FOUND', message },
           },
           404
@@ -350,6 +388,7 @@ export function createInviteRoutes() {
 
       return c.json(
         {
+          success: false as const,
           error: { code: 'BAD_REQUEST', message },
         },
         400

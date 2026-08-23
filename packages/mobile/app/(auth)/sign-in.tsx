@@ -108,14 +108,7 @@ export default function SignInScreen() {
           email: value,
           type: 'sign-in',
         }),
-        (
-          authClient.signIn as {
-            magicLink: (opts: {
-              email: string;
-              callbackURL: string;
-            }) => Promise<{ error?: { message: string } }>;
-          }
-        ).magicLink({
+        authClient.signIn.magicLink({
           email: value,
           callbackURL: '/',
         }),

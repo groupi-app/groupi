@@ -456,7 +456,13 @@ export function getNotificationSubject(
       return `Event Updated: ${event?.title || 'Event'}`;
 
     case 'DATE_CHOSEN':
-      return `Date Set for ${event?.title || 'Event'}`;
+      return `Date Set for ${event?.title || 'Event'}${
+        rsvp
+          ? `. Your RSVP was set to ${
+              rsvp === 'PENDING' ? 'no response' : rsvp.toLowerCase()
+            }`
+          : ''
+      }`;
 
     case 'DATE_CHANGED':
       return `Date Changed for ${event?.title || 'Event'}`;

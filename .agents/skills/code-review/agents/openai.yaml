@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Code Review'
+  short_description: 'Review diffs and verify actionable findings'
+  default_prompt: 'Use $code-review to review this branch against the requested base.'

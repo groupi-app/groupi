@@ -3,6 +3,7 @@ import {
   createTestInstance,
   createTestUser,
   createTestEventWithUser,
+  createTestEventWithMultipleUsers,
 } from './test_helpers';
 import { api } from './_generated/api';
 
@@ -535,6 +536,390 @@ describe('Events Operations', () => {
           eventId: eventResult.eventId,
         })
       ).rejects.toThrow('banned');
+    });
+  });
+
+  describe('chooseEventDate RSVP defaults', () => {
+    test('should default member RSVPs to their availability for the chosen date', async () => {
+      const t = createTestInstance();
+      const { organizer, attendee, eventId } =
+        await createTestEventWithMultipleUsers(t);
+      const maybeMember = await createTestUser(t, {
+        email: 'maybe@example.com',
+        username: 'maybe-member',
+        name: 'Maybe Member',
+      });
+      const noMember = await createTestUser(t, {
+        email: 'no@example.com',
+        username: 'no-member',
+        name: 'No Member',
+      });
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+      const potentialDateTimeId = await t.run(async ctx => {
+        const maybeMembershipId = await ctx.db.insert('memberships', {
+          personId: maybeMember.personId,
+          eventId,
+          role: 'ATTENDEE',
+          rsvpStatus: 'YES',
+        });
+        const noMembershipId = await ctx.db.insert('memberships', {
+          personId: noMember.personId,
+          eventId,
+          role: 'ATTENDEE',
+          rsvpStatus: 'YES',
+        });
+        const potentialDateTimeId = await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+
+        await Promise.all([
+          ctx.db.insert('availabilities', {
+            membershipId: organizer.membershipId,
+            potentialDateTimeId,
+            status: 'YES',
+          }),
+          ctx.db.insert('availabilities', {
+            membershipId: attendee.membershipId,
+            potentialDateTimeId,
+            status: 'YES',
+          }),
+          ctx.db.insert('availabilities', {
+            membershipId: maybeMembershipId,
+            potentialDateTimeId,
+            status: 'MAYBE',
+          }),
+          ctx.db.insert('availabilities', {
+            membershipId: noMembershipId,
+            potentialDateTimeId,
+            status: 'NO',
+          }),
+        ]);
+
+        return potentialDateTimeId;
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime,
+        potentialDateTimeId,
+        selectionSource: 'POLL',
+      });
+
+      const { memberships, notifications } = await t.run(async ctx => ({
+        memberships: await ctx.db
+          .query('memberships')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect(),
+        notifications: await ctx.db
+          .query('notifications')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect(),
+      }));
+      const rsvpByPerson = new Map(
+        memberships.map(membership => [
+          membership.personId as string,
+          membership.rsvpStatus,
+        ])
+      );
+      const notificationRsvpByPerson = new Map(
+        notifications
+          .filter(notification => notification.type === 'DATE_CHOSEN')
+          .map(notification => [
+            notification.personId as string,
+            notification.rsvp,
+          ])
+      );
+
+      expect(rsvpByPerson.get(attendee.personId as string)).toBe('YES');
+      expect(rsvpByPerson.get(maybeMember.personId as string)).toBe('MAYBE');
+      expect(rsvpByPerson.get(noMember.personId as string)).toBe('NO');
+      expect(notificationRsvpByPerson).toEqual(
+        new Map([
+          [attendee.personId as string, 'YES'],
+          [maybeMember.personId as string, 'MAYBE'],
+          [noMember.personId as string, 'NO'],
+        ])
+      );
+    });
+
+    test('should default a member without availability to pending RSVP', async () => {
+      const t = createTestInstance();
+      const { organizer, eventId } = await createTestEventWithMultipleUsers(t);
+      const lateMember = await createTestUser(t, {
+        email: 'late@example.com',
+        username: 'late-member',
+        name: 'Late Member',
+      });
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+      const potentialDateTimeId = await t.run(async ctx => {
+        const potentialDateTimeId = await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+
+        await ctx.db.insert('availabilities', {
+          membershipId: organizer.membershipId,
+          potentialDateTimeId,
+          status: 'YES',
+        });
+
+        // This membership is added after the poll option and has no availability.
+        await ctx.db.insert('memberships', {
+          personId: lateMember.personId,
+          eventId,
+          role: 'ATTENDEE',
+          rsvpStatus: 'YES',
+        });
+
+        return potentialDateTimeId;
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime,
+        potentialDateTimeId,
+      });
+
+      const { membership, notifications } = await t.run(async ctx => ({
+        membership: await ctx.db
+          .query('memberships')
+          .withIndex('by_person_event', q =>
+            q.eq('personId', lateMember.personId).eq('eventId', eventId)
+          )
+          .unique(),
+        notifications: await ctx.db
+          .query('notifications')
+          .withIndex('by_person', q => q.eq('personId', lateMember.personId))
+          .collect(),
+      }));
+      const notification = notifications.find(
+        item => item.type === 'DATE_CHOSEN' && item.eventId === eventId
+      );
+
+      expect(membership?.rsvpStatus).toBe('PENDING');
+      expect(notification).toMatchObject({
+        personId: lateMember.personId,
+        type: 'DATE_CHOSEN',
+        rsvp: 'PENDING',
+      });
+    });
+
+    test('should infer a unique poll option for a legacy client that omits its ID', async () => {
+      const t = createTestInstance();
+      const { organizer, attendee, eventId } =
+        await createTestEventWithMultipleUsers(t);
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+      await t.run(async ctx => {
+        const potentialDateTimeId = await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+        await ctx.db.insert('availabilities', {
+          membershipId: attendee.membershipId,
+          potentialDateTimeId,
+          status: 'MAYBE',
+        });
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime,
+      });
+
+      const { membership, notification } = await t.run(async ctx => ({
+        membership: await ctx.db.get(attendee.membershipId),
+        notification: (
+          await ctx.db
+            .query('notifications')
+            .withIndex('by_person', q => q.eq('personId', attendee.personId))
+            .collect()
+        ).find(item => item.type === 'DATE_CHOSEN' && item.eventId === eventId),
+      }));
+
+      expect(membership?.rsvpStatus).toBe('MAYBE');
+      expect(notification?.rsvp).toBe('MAYBE');
+    });
+
+    test('should preserve RSVPs when a legacy manual date matches no poll option', async () => {
+      const t = createTestInstance();
+      const { organizer, attendee, eventId } =
+        await createTestEventWithMultipleUsers(t);
+      const pollDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      const manualDateTime = pollDateTime + 60 * 60 * 1000;
+
+      await t.run(async ctx => {
+        await ctx.db.patch(attendee.membershipId, { rsvpStatus: 'NO' });
+        await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: pollDateTime,
+        });
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime: manualDateTime,
+      });
+
+      const { membership, notification } = await t.run(async ctx => ({
+        membership: await ctx.db.get(attendee.membershipId),
+        notification: (
+          await ctx.db
+            .query('notifications')
+            .withIndex('by_person', q => q.eq('personId', attendee.personId))
+            .collect()
+        ).find(item => item.type === 'DATE_CHOSEN' && item.eventId === eventId),
+      }));
+
+      expect(membership?.rsvpStatus).toBe('NO');
+      expect(notification?.rsvp).toBeUndefined();
+    });
+
+    test('should preserve RSVPs for an explicit manual selection matching a poll option', async () => {
+      const t = createTestInstance();
+      const { organizer, attendee, eventId } =
+        await createTestEventWithMultipleUsers(t);
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+      await t.run(async ctx => {
+        await ctx.db.patch(attendee.membershipId, { rsvpStatus: 'NO' });
+        const potentialDateTimeId = await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+        await ctx.db.insert('availabilities', {
+          membershipId: attendee.membershipId,
+          potentialDateTimeId,
+          status: 'YES',
+        });
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime,
+        selectionSource: 'MANUAL',
+      });
+
+      const membership = await t.run(ctx => ctx.db.get(attendee.membershipId));
+      expect(membership?.rsvpStatus).toBe('NO');
+    });
+
+    test('should reject an ambiguous legacy poll match', async () => {
+      const t = createTestInstance();
+      const { organizer, eventId } = await createTestEventWithMultipleUsers(t);
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+      await t.run(async ctx => {
+        await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+        await ctx.db.insert('potentialDateTimes', {
+          eventId,
+          dateTime: chosenDateTime,
+        });
+      });
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await expect(
+        organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+          eventId,
+          chosenDateTime,
+        })
+      ).rejects.toThrow('date option is ambiguous');
+
+      const event = await t.run(ctx => ctx.db.get(eventId));
+      expect(event?.chosenDateTime).toBeUndefined();
+    });
+
+    test('should require a poll option ID from current clients', async () => {
+      const t = createTestInstance();
+      const { organizer, eventId } = await createTestEventWithMultipleUsers(t);
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+
+      await expect(
+        organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+          eventId,
+          chosenDateTime: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          selectionSource: 'POLL',
+        })
+      ).rejects.toThrow('potential date time is required');
+    });
+
+    test('should inherit the newest duplicate availability and remove older duplicates', async () => {
+      const t = createTestInstance();
+      const { organizer, attendee, eventId } =
+        await createTestEventWithMultipleUsers(t);
+      const chosenDateTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      const { potentialDateTimeId, newestAvailabilityId } = await t.run(
+        async ctx => {
+          const potentialDateTimeId = await ctx.db.insert(
+            'potentialDateTimes',
+            {
+              eventId,
+              dateTime: chosenDateTime,
+            }
+          );
+          await ctx.db.insert('availabilities', {
+            membershipId: attendee.membershipId,
+            potentialDateTimeId,
+            status: 'YES',
+            updatedAt: now,
+          });
+          const newestAvailabilityId = await ctx.db.insert('availabilities', {
+            membershipId: attendee.membershipId,
+            potentialDateTimeId,
+            status: 'NO',
+            updatedAt: now + 1,
+          });
+          return { potentialDateTimeId, newestAvailabilityId };
+        }
+      );
+
+      const organizerAuth = t.withIdentity({ subject: organizer.userId });
+      await organizerAuth.mutation(api.events.mutations.chooseEventDate, {
+        eventId,
+        chosenDateTime,
+        potentialDateTimeId,
+        selectionSource: 'POLL',
+      });
+
+      const { membership, availabilities, notification } = await t.run(
+        async ctx => ({
+          membership: await ctx.db.get(attendee.membershipId),
+          availabilities: await ctx.db
+            .query('availabilities')
+            .withIndex('by_membership_date', q =>
+              q
+                .eq('membershipId', attendee.membershipId)
+                .eq('potentialDateTimeId', potentialDateTimeId)
+            )
+            .collect(),
+          notification: (
+            await ctx.db
+              .query('notifications')
+              .withIndex('by_person', q => q.eq('personId', attendee.personId))
+              .collect()
+          ).find(
+            item => item.type === 'DATE_CHOSEN' && item.eventId === eventId
+          ),
+        })
+      );
+
+      expect(membership?.rsvpStatus).toBe('NO');
+      expect(notification?.rsvp).toBe('NO');
+      expect(availabilities).toHaveLength(1);
+      expect(availabilities[0]?._id).toBe(newestAvailabilityId);
     });
   });
 

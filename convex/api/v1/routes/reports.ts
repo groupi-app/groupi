@@ -81,7 +81,10 @@ export function createReportRoutes() {
 
       return c.json(
         {
-          reportId: result.reportId,
+          success: true as const,
+          data: {
+            reportId: result.reportId,
+          },
         },
         201
       );
@@ -90,6 +93,7 @@ export function createReportRoutes() {
         error instanceof Error ? error.message : 'Failed to create report';
       return c.json(
         {
+          success: false as const,
           error: { code: 'BAD_REQUEST', message },
         },
         400

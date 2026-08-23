@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Dependency Check'
+  short_description: 'Assess and validate dependency upgrades'
+  default_prompt: 'Use $dependency-check to assess this dependency update.'

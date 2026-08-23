@@ -17,20 +17,40 @@ function initApi() {
 }
 initApi();
 
+type ManualDateSelection = {
+  source: 'manual';
+  eventId: Id<'events'>;
+  dateTime: Date;
+  endDateTime?: Date | null;
+};
+
+type PollDateSelection = {
+  source: 'poll';
+  eventId: Id<'events'>;
+  dateTime: Date;
+  endDateTime?: Date | null;
+  potentialDateTimeId: Id<'potentialDateTimes'>;
+};
+
+export type ChooseDateTimeSelection = ManualDateSelection | PollDateSelection;
+
 export function useChooseDateTime() {
   const chooseEventDate = useMutation(eventMutations.chooseEventDate);
 
   return useCallback(
-    async (
-      eventId: Id<'events'>,
-      dateTime: Date,
-      endDateTime?: Date | null
-    ) => {
+    async (selection: ChooseDateTimeSelection) => {
       try {
         const result = await chooseEventDate({
-          eventId,
-          chosenDateTime: dateTime.getTime(), // Convert to Unix timestamp
-          chosenEndDateTime: endDateTime ? endDateTime.getTime() : undefined,
+          eventId: selection.eventId,
+          chosenDateTime: selection.dateTime.getTime(),
+          chosenEndDateTime: selection.endDateTime
+            ? selection.endDateTime.getTime()
+            : undefined,
+          selectionSource: selection.source === 'poll' ? 'POLL' : 'MANUAL',
+          potentialDateTimeId:
+            selection.source === 'poll'
+              ? selection.potentialDateTimeId
+              : undefined,
         });
 
         toast.success('Event date has been chosen!');

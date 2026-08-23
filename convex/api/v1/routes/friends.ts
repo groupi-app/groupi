@@ -1,13 +1,14 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { ErrorResponseSchema, MessageResponseSchema } from '../schemas/common';
+import { ErrorResponseSchema } from '../schemas/common';
 import {
   FriendListResponseSchema,
   FriendRequestListResponseSchema,
   UserSearchResponseSchema,
   SendFriendRequestSchema,
   FriendRequestResponseSchema,
+  FriendActionResponseSchema,
   FriendshipStatusResponseSchema,
   FriendshipIdParamSchema,
   SearchQuerySchema,
@@ -60,7 +61,13 @@ export function createFriendRoutes() {
     const listFn = internal.api.v1.internal.friends.listFriends;
     const result = await ctx.runQuery(listFn, { personId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /friends/requests/incoming - List incoming friend requests
@@ -100,7 +107,13 @@ export function createFriendRoutes() {
     const listFn = internal.api.v1.internal.friends.listPendingRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /friends/requests/outgoing - List sent friend requests
@@ -140,7 +153,13 @@ export function createFriendRoutes() {
     const listFn = internal.api.v1.internal.friends.listSentRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /friends/search - Search users to add as friends
@@ -184,7 +203,13 @@ export function createFriendRoutes() {
     const searchFn = internal.api.v1.internal.friends.searchUsers;
     const result = await ctx.runQuery(searchFn, { personId, searchTerm: q });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /friends/status/:personId - Get friendship status with a user
@@ -230,7 +255,13 @@ export function createFriendRoutes() {
     const statusFn = internal.api.v1.internal.friends.getFriendshipStatus;
     const result = await ctx.runQuery(statusFn, { personId, targetPersonId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // POST /friends/requests - Send friend request
@@ -291,7 +322,13 @@ export function createFriendRoutes() {
       addresseeId: body.personId,
     });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // POST /friends/requests/:friendshipId/accept - Accept friend request
@@ -310,7 +347,7 @@ export function createFriendRoutes() {
         description: 'Friend request accepted',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: FriendActionResponseSchema,
           },
         },
       },
@@ -351,7 +388,13 @@ export function createFriendRoutes() {
     const acceptFn = internal.api.v1.internal.friends.acceptFriendRequest;
     await ctx.runMutation(acceptFn, { friendshipId, personId });
 
-    return c.json({ message: 'Friend request accepted' }, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Friend request accepted' },
+      },
+      200
+    );
   });
 
   // POST /friends/requests/:friendshipId/decline - Decline friend request
@@ -370,7 +413,7 @@ export function createFriendRoutes() {
         description: 'Friend request declined',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: FriendActionResponseSchema,
           },
         },
       },
@@ -411,7 +454,13 @@ export function createFriendRoutes() {
     const declineFn = internal.api.v1.internal.friends.declineFriendRequest;
     await ctx.runMutation(declineFn, { friendshipId, personId });
 
-    return c.json({ message: 'Friend request declined' }, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Friend request declined' },
+      },
+      200
+    );
   });
 
   // DELETE /friends/requests/:friendshipId - Cancel friend request
@@ -426,8 +475,13 @@ export function createFriendRoutes() {
       params: FriendshipIdParamSchema,
     },
     responses: {
-      204: {
+      200: {
         description: 'Friend request cancelled',
+        content: {
+          'application/json': {
+            schema: FriendActionResponseSchema,
+          },
+        },
       },
       400: {
         description: 'Bad request',
@@ -466,7 +520,13 @@ export function createFriendRoutes() {
     const cancelFn = internal.api.v1.internal.friends.cancelFriendRequest;
     await ctx.runMutation(cancelFn, { friendshipId, personId });
 
-    return c.body(null, 204);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Friend request cancelled' },
+      },
+      200
+    );
   });
 
   // DELETE /friends/:friendshipId - Remove friend
@@ -481,8 +541,13 @@ export function createFriendRoutes() {
       params: FriendshipIdParamSchema,
     },
     responses: {
-      204: {
+      200: {
         description: 'Friend removed',
+        content: {
+          'application/json': {
+            schema: FriendActionResponseSchema,
+          },
+        },
       },
       400: {
         description: 'Bad request',
@@ -521,7 +586,13 @@ export function createFriendRoutes() {
     const removeFn = internal.api.v1.internal.friends.removeFriend;
     await ctx.runMutation(removeFn, { friendshipId, personId });
 
-    return c.body(null, 204);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Friend removed' },
+      },
+      200
+    );
   });
 
   return app;

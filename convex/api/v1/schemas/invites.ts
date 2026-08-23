@@ -70,19 +70,35 @@ export const InviteTokenParamSchema = z.object({
 
 // Invite list response
 export const InviteListResponseSchema = z
-  .array(InviteSummarySchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(InviteSummarySchema),
+  })
   .openapi('InviteListResponse');
 
 // Single invite response
-export const InviteResponseSchema = InviteSummarySchema;
+export const InviteResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: InviteSummarySchema,
+  })
+  .openapi('InviteResponse');
 
 // Public invite response
-export const InvitePublicResponseSchema = InvitePublicSchema;
+export const InvitePublicResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: InvitePublicSchema,
+  })
+  .openapi('InvitePublicResponse');
 
 // Accept invite response
 export const AcceptInviteResponseSchema = z
   .object({
-    eventId: z.string(),
-    membershipId: z.string(),
+    success: z.literal(true),
+    data: z.object({
+      eventId: z.string(),
+      membershipId: z.string(),
+    }),
   })
   .openapi('AcceptInviteResponse');

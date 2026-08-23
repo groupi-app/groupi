@@ -159,10 +159,22 @@ export const SetThemePreferenceRequestSchema = z
 
 // Response schemas
 export const CustomThemeListResponseSchema = z
-  .array(CustomThemeSchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(CustomThemeSchema),
+  })
   .openapi('CustomThemeListResponse');
 
-export const CustomThemeResponseSchema = CustomThemeSchema;
+export const CustomThemeResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: CustomThemeSchema,
+  })
+  .openapi('CustomThemeResponse');
 
-export const ThemePreferencesResponseSchema =
-  ThemePreferencesSchema.nullable().openapi('ThemePreferencesResponse');
+export const ThemePreferencesResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: ThemePreferencesSchema.nullable(),
+  })
+  .openapi('ThemePreferencesResponse');

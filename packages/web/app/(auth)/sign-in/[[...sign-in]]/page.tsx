@@ -17,13 +17,14 @@ import { LogoSticker } from '@/components/atoms';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { siteConfig } from '@/config/site';
 import { useGlobalUser } from '@/context/global-user-context';
+import { getMagicLinkCallbackUrl, getSafeInternalRedirect } from '@/lib/urls';
 
 const RESEND_COOLDOWN_SECONDS = 10;
 
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/events';
+  const redirectTo = getSafeInternalRedirect(searchParams.get('redirect'));
   const isAddAccountMode = searchParams.get('mode') === 'add-account';
   const oauthError = searchParams.get('error');
   const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
@@ -47,6 +48,9 @@ export default function SignInPage() {
     : redirectTo !== '/events'
       ? `/onboarding?redirect=${encodeURIComponent(redirectTo)}`
       : '/onboarding';
+  const magicLinkCallbackURL = isAddAccountMode
+    ? redirectTo
+    : getMagicLinkCallbackUrl(redirectTo);
   const [identifier, setIdentifier] = useState(''); // Email or username
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -262,7 +266,7 @@ export default function SignInPage() {
     try {
       const { error } = await sendMagicLinkWithEmailOrUsername({
         identifier: identifierToUse,
-        callbackURL,
+        callbackURL: magicLinkCallbackURL,
       });
 
       if (error) {

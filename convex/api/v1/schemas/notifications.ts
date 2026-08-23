@@ -86,12 +86,28 @@ export const NotificationIdParamSchema = z.object({
 
 // Notification list response
 export const NotificationListResponseSchema = z
-  .array(NotificationSchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(NotificationSchema),
+  })
   .openapi('NotificationListResponse');
 
 // Unread count response
 export const UnreadCountResponseSchema = z
   .object({
-    count: z.number().int(),
+    success: z.literal(true),
+    data: z.object({
+      count: z.number().int(),
+    }),
   })
   .openapi('UnreadCountResponse');
+
+// Generic notification success response
+export const NotificationSuccessResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.object({
+      message: z.string(),
+    }),
+  })
+  .openapi('NotificationSuccessResponse');

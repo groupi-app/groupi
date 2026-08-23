@@ -361,6 +361,28 @@ describe('Utils', () => {
       expect(result).toBe('Date Set for Conference');
     });
 
+    it('should include the RSVP copied from availability in DATE_CHOSEN', () => {
+      const result = getNotificationSubject({
+        type: 'DATE_CHOSEN',
+        event: { title: 'Conference' },
+        rsvp: 'MAYBE',
+      });
+      expect(result).toBe(
+        'Date Set for Conference. Your RSVP was set to maybe'
+      );
+    });
+
+    it('should indicate when DATE_CHOSEN has no RSVP response', () => {
+      const result = getNotificationSubject({
+        type: 'DATE_CHOSEN',
+        event: { title: 'Conference' },
+        rsvp: 'PENDING',
+      });
+      expect(result).toBe(
+        'Date Set for Conference. Your RSVP was set to no response'
+      );
+    });
+
     it('should format DATE_CHANGED notification', () => {
       const result = getNotificationSubject({
         type: 'DATE_CHANGED',

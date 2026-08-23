@@ -143,6 +143,14 @@ export function NotificationSlate({
         return (
           <>
             Date Set for <strong>{eventTitle}</strong>
+            {rsvp && (
+              <>
+                . Your RSVP was set to{' '}
+                <strong>
+                  {rsvp === 'PENDING' ? 'no response' : rsvp.toLowerCase()}
+                </strong>
+              </>
+            )}
           </>
         );
 

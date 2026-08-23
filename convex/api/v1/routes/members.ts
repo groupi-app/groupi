@@ -3,15 +3,13 @@ import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { requireEventMembership, requireEventRole } from '../middleware/auth';
-import {
-  ErrorResponseSchema,
-  EventIdParamSchema,
-  MessageResponseSchema,
-} from '../schemas/common';
+import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   MemberListResponseSchema,
-  MemberDetailSchema,
+  MemberUpdateResponseSchema,
   RsvpUpdateResponseSchema,
+  LeaveEventResponseSchema,
+  RemoveMemberResponseSchema,
   UpdateMemberRoleRequestSchema,
   UpdateRsvpRequestSchema,
 } from '../schemas/members';
@@ -76,7 +74,13 @@ export function createMemberRoutes() {
     const listFn = internal.api.v1.internal.members.listEventMembers;
     const result = await ctx.runQuery(listFn, { eventId });
 
-    return c.json(result.members, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.members,
+      },
+      200
+    );
   });
 
   // PATCH /events/:eventId/members/:memberId - Update member role
@@ -105,7 +109,7 @@ export function createMemberRoutes() {
         description: 'Member role updated',
         content: {
           'application/json': {
-            schema: MemberDetailSchema,
+            schema: MemberUpdateResponseSchema,
           },
         },
       },
@@ -152,7 +156,13 @@ export function createMemberRoutes() {
       newRole: body.role,
     });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // DELETE /events/:eventId/members/:memberId - Remove member
@@ -171,8 +181,13 @@ export function createMemberRoutes() {
       }),
     },
     responses: {
-      204: {
-        description: 'Member removed successfully',
+      200: {
+        description: 'Member removed',
+        content: {
+          'application/json': {
+            schema: RemoveMemberResponseSchema,
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -213,7 +228,13 @@ export function createMemberRoutes() {
     const removeFn = internal.api.v1.internal.members.removeMember;
     await ctx.runMutation(removeFn, { membershipId: memberId });
 
-    return c.body(null, 204);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Member removed successfully' },
+      },
+      200
+    );
   });
 
   // POST /events/:eventId/leave - Leave event
@@ -232,7 +253,7 @@ export function createMemberRoutes() {
         description: 'Left event successfully',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: LeaveEventResponseSchema,
           },
         },
       },
@@ -265,7 +286,13 @@ export function createMemberRoutes() {
     const leaveFn = internal.api.v1.internal.members.leaveEvent;
     await ctx.runMutation(leaveFn, { eventId, personId });
 
-    return c.json({ message: 'Left event successfully' }, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: { message: 'Left event successfully' },
+      },
+      200
+    );
   });
 
   // PATCH /events/:eventId/rsvp - Update RSVP
@@ -331,8 +358,11 @@ export function createMemberRoutes() {
 
     return c.json(
       {
-        membershipId: result.membershipId,
-        rsvpStatus: result.rsvpStatus,
+        success: true as const,
+        data: {
+          membershipId: result.membershipId,
+          rsvpStatus: result.rsvpStatus,
+        },
       },
       200
     );

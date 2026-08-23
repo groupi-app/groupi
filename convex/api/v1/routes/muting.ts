@@ -10,10 +10,12 @@ import { internal } from '../../../_generated/api';
 import {
   ErrorResponseSchema,
   EventIdParamSchema,
-  MessageResponseSchema,
   PostIdParamSchema,
 } from '../schemas/common';
-import { MutedListResponseSchema } from '../schemas/muting';
+import {
+  MutedListResponseSchema,
+  MutingSuccessResponseSchema,
+} from '../schemas/muting';
 
 type Variables = {
   ctx: ActionCtx;
@@ -73,8 +75,11 @@ export function createMutingRoutes() {
 
     return c.json(
       {
-        events: result.events,
-        posts: result.posts,
+        success: true as const,
+        data: {
+          events: result.events,
+          posts: result.posts,
+        },
       },
       200
     );
@@ -97,7 +102,7 @@ export function createMutingRoutes() {
         description: 'Event muted',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: MutingSuccessResponseSchema,
           },
         },
       },
@@ -143,7 +148,13 @@ export function createMutingRoutes() {
         ? 'Event was already muted'
         : 'Event muted successfully';
 
-      return c.json({ message }, 200);
+      return c.json(
+        {
+          success: true as const,
+          data: { message },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to mute event';
@@ -152,6 +163,7 @@ export function createMutingRoutes() {
 
       return c.json(
         {
+          success: false as const,
           error: { code, message },
         },
         status
@@ -171,8 +183,13 @@ export function createMutingRoutes() {
       params: EventIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'Event unmuted successfully',
+      200: {
+        description: 'Event unmuted',
+        content: {
+          'application/json': {
+            schema: MutingSuccessResponseSchema,
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -204,12 +221,19 @@ export function createMutingRoutes() {
       const unmuteFn = internal.api.v1.internal.muting.unmuteEvent;
       await ctx.runMutation(unmuteFn, { personId, eventId });
 
-      return c.body(null, 204);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: 'Event unmuted successfully' },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Event is not muted';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404
@@ -234,7 +258,7 @@ export function createMutingRoutes() {
         description: 'Post muted',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: MutingSuccessResponseSchema,
           },
         },
       },
@@ -280,7 +304,13 @@ export function createMutingRoutes() {
         ? 'Post was already muted'
         : 'Post muted successfully';
 
-      return c.json({ message }, 200);
+      return c.json(
+        {
+          success: true as const,
+          data: { message },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to mute post';
@@ -289,6 +319,7 @@ export function createMutingRoutes() {
 
       return c.json(
         {
+          success: false as const,
           error: { code, message },
         },
         status
@@ -308,8 +339,13 @@ export function createMutingRoutes() {
       params: PostIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'Post unmuted successfully',
+      200: {
+        description: 'Post unmuted',
+        content: {
+          'application/json': {
+            schema: MutingSuccessResponseSchema,
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -341,12 +377,19 @@ export function createMutingRoutes() {
       const unmuteFn = internal.api.v1.internal.muting.unmutePost;
       await ctx.runMutation(unmuteFn, { personId, postId });
 
-      return c.body(null, 204);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: 'Post unmuted successfully' },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Post is not muted';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404

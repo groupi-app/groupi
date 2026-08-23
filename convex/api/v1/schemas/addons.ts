@@ -102,8 +102,19 @@ export const AddonConfigResponseSchema = z
 
 // Addon list response
 export const AddonListResponseSchema = z
-  .array(AddonConfigResponseSchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(AddonConfigResponseSchema),
+  })
   .openapi('AddonListResponse');
+
+// Single addon config response
+export const AddonConfigSingleResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: AddonConfigResponseSchema,
+  })
+  .openapi('AddonConfigResponse');
 
 // Addon data entry response object
 export const AddonDataEntrySchema = z
@@ -119,5 +130,24 @@ export const AddonDataEntrySchema = z
 
 // Addon data list response
 export const AddonDataListResponseSchema = z
-  .array(AddonDataEntrySchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(AddonDataEntrySchema),
+  })
   .openapi('AddonDataListResponse');
+
+// Addon data single response
+export const AddonDataSingleResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: AddonDataEntrySchema,
+  })
+  .openapi('AddonDataResponse');
+
+// Success message response (for enable/disable/delete)
+export const AddonSuccessResponseSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.object({ message: z.string() }),
+  })
+  .openapi('AddonSuccessResponse');

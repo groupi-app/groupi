@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Cross-platform Hook'
+  short_description: 'Build shared hooks for web and mobile'
+  default_prompt: 'Use $cross-platform-hook to create a shared Groupi hook.'

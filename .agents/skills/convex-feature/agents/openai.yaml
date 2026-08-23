@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Convex Feature'
+  short_description: 'Build Groupi Convex features end to end'
+  default_prompt: 'Use $convex-feature to implement this backend feature.'

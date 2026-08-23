@@ -88,11 +88,13 @@ export function DateCard({
       router.push(`/event/${pdt.eventId}`);
 
       // Handle mutation in background - include end time if available
-      await chooseDateTime(
-        pdt.eventId,
-        new Date(pdt.dateTime),
-        pdt.endDateTime ? new Date(pdt.endDateTime) : null
-      );
+      await chooseDateTime({
+        source: 'poll',
+        eventId: pdt.eventId,
+        dateTime: new Date(pdt.dateTime),
+        endDateTime: pdt.endDateTime ? new Date(pdt.endDateTime) : null,
+        potentialDateTimeId: pdt._id,
+      });
     } catch {
       // Show error toast (no navigation rollback needed since we're already on the page)
       toast.error('Failed to select date', {

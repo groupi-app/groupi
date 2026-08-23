@@ -3,9 +3,9 @@ import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema } from '../schemas/common';
 import {
-  PrivacySettingsSchema,
+  PrivacySettingsResponseSchema,
   UpdatePrivacySettingsRequestSchema,
-  NotificationSettingsSchema,
+  NotificationSettingsResponseSchema,
 } from '../schemas/settings';
 
 // Type for Hono app with Convex context
@@ -31,7 +31,7 @@ export function createSettingsRoutes() {
         description: 'Privacy settings',
         content: {
           'application/json': {
-            schema: PrivacySettingsSchema,
+            schema: PrivacySettingsResponseSchema,
           },
         },
       },
@@ -55,7 +55,13 @@ export function createSettingsRoutes() {
     const getFn = internal.api.v1.internal.settings.getPrivacySettings;
     const result = await ctx.runQuery(getFn, { personId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // PUT /settings/privacy - Update privacy settings
@@ -80,7 +86,7 @@ export function createSettingsRoutes() {
         description: 'Updated privacy settings',
         content: {
           'application/json': {
-            schema: PrivacySettingsSchema,
+            schema: PrivacySettingsResponseSchema,
           },
         },
       },
@@ -113,7 +119,13 @@ export function createSettingsRoutes() {
     const updateFn = internal.api.v1.internal.settings.updatePrivacySettings;
     const result = await ctx.runMutation(updateFn, { personId, ...body });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   // GET /settings/notifications - Get notification settings
@@ -130,7 +142,7 @@ export function createSettingsRoutes() {
         description: 'Notification settings',
         content: {
           'application/json': {
-            schema: NotificationSettingsSchema,
+            schema: NotificationSettingsResponseSchema,
           },
         },
       },
@@ -154,7 +166,13 @@ export function createSettingsRoutes() {
     const getFn = internal.api.v1.internal.settings.getNotificationSettings;
     const result = await ctx.runQuery(getFn, { personId });
 
-    return c.json(result, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result,
+      },
+      200
+    );
   });
 
   return app;

@@ -58,15 +58,24 @@ export const UserIdParamSchema = z.object({
 
 // Admin user list response
 export const AdminUserListResponseSchema = z
-  .array(AdminUserSummarySchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(AdminUserSummarySchema),
+  })
   .openapi('AdminUserListResponse');
 
 // Admin event list response
 export const AdminEventListResponseSchema = z
-  .array(AdminEventSummarySchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(AdminEventSummarySchema),
+  })
   .openapi('AdminEventListResponse');
 
 // Admin report list response
 export const AdminReportListResponseSchema = z
-  .array(ReportSummarySchema)
+  .object({
+    success: z.literal(true),
+    data: z.array(ReportSummarySchema),
+  })
   .openapi('AdminReportListResponse');

@@ -1,11 +1,8 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import {
-  ErrorResponseSchema,
-  EventIdParamSchema,
-  MessageResponseSchema,
-} from '../schemas/common';
+import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   AdminUserListResponseSchema,
   AdminEventListResponseSchema,
@@ -78,6 +75,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -89,7 +87,13 @@ export function createAdminRoutes() {
     const listFn = internal.api.v1.internal.admin.listUsers;
     const result = await ctx.runQuery(listFn, {});
 
-    return c.json(result.users, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.users,
+      },
+      200
+    );
   });
 
   // DELETE /admin/users/:userId - Delete user
@@ -104,8 +108,16 @@ export function createAdminRoutes() {
       params: UserIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'User deleted successfully',
+      200: {
+        description: 'User deleted',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.object({ message: z.string() }),
+            }),
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -143,6 +155,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -155,12 +168,19 @@ export function createAdminRoutes() {
       const deleteFn = internal.api.v1.internal.admin.deleteUser;
       await ctx.runMutation(deleteFn, { userId });
 
-      return c.body(null, 204);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: 'User deleted successfully' },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to delete user';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404
@@ -191,7 +211,10 @@ export function createAdminRoutes() {
         description: 'Role updated',
         content: {
           'application/json': {
-            schema: MessageResponseSchema,
+            schema: z.object({
+              success: z.literal(true),
+              data: z.object({ message: z.string() }),
+            }),
           },
         },
       },
@@ -232,6 +255,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -244,12 +268,19 @@ export function createAdminRoutes() {
       const setRoleFn = internal.api.v1.internal.admin.setUserRole;
       await ctx.runMutation(setRoleFn, { userId, role: body.role });
 
-      return c.json({ message: `User role updated to ${body.role}` }, 200);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: `User role updated to ${body.role}` },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to update role';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404
@@ -301,6 +332,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -312,7 +344,13 @@ export function createAdminRoutes() {
     const listFn = internal.api.v1.internal.admin.listAllEvents;
     const result = await ctx.runQuery(listFn, {});
 
-    return c.json(result.events, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.events,
+      },
+      200
+    );
   });
 
   // DELETE /admin/events/:eventId - Delete event
@@ -327,8 +365,16 @@ export function createAdminRoutes() {
       params: EventIdParamSchema,
     },
     responses: {
-      204: {
-        description: 'Event deleted successfully',
+      200: {
+        description: 'Event deleted',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.object({ message: z.string() }),
+            }),
+          },
+        },
       },
       401: {
         description: 'Unauthorized',
@@ -366,6 +412,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -379,12 +426,19 @@ export function createAdminRoutes() {
       const deleteFn = internal.api.v1.internal.events.deleteEvent;
       await ctx.runMutation(deleteFn, { eventId });
 
-      return c.body(null, 204);
+      return c.json(
+        {
+          success: true as const,
+          data: { message: 'Event deleted successfully' },
+        },
+        200
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to delete event';
       return c.json(
         {
+          success: false as const,
           error: { code: 'NOT_FOUND', message },
         },
         404
@@ -436,6 +490,7 @@ export function createAdminRoutes() {
     if (!admin) {
       return c.json(
         {
+          success: false as const,
           error: { code: 'FORBIDDEN', message: 'Admin privileges required' },
         },
         403
@@ -447,7 +502,13 @@ export function createAdminRoutes() {
     const listFn = internal.api.v1.internal.admin.listReportsAdmin;
     const result = await ctx.runQuery(listFn, {});
 
-    return c.json(result.reports, 200);
+    return c.json(
+      {
+        success: true as const,
+        data: result.reports,
+      },
+      200
+    );
   });
 
   return app;
