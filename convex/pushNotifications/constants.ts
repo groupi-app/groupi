@@ -59,6 +59,7 @@ export const MAX_RECEIPT_CHECK_ATTEMPTS = 3;
 export const MAX_ACTIVE_PUSH_DEVICES = 10;
 export const RECEIPT_CHECK_DELAY_MS = 15 * 60 * 1000;
 export const DELIVERY_LEASE_MS = 5 * 60 * 1000;
+export const REDACTED_EXPO_PUSH_TOKEN = '[redacted-push-token]';
 
 export function getRetryDelayMs(attempt: number): number {
   const boundedAttempt = Math.max(1, Math.min(attempt, MAX_PUSH_ATTEMPTS));

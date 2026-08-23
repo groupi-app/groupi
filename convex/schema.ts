@@ -363,6 +363,7 @@ export default defineSchema({
     .index('by_person', ['personId'])
     .index('by_person_and_active', ['personId', 'active'])
     .index('by_person_and_device', ['personId', 'deviceId'])
+    .index('by_active_and_deactivated_at', ['active', 'deactivatedAt'])
     .index('by_token', ['token']),
 
   // Durable audit trail for ticket and receipt state. Token values are never
@@ -404,7 +405,8 @@ export default defineSchema({
     .index('by_notification', ['notificationId'])
     .index('by_push_token', ['pushTokenId'])
     .index('by_ticket', ['ticketId'])
-    .index('by_status_and_next_attempt', ['status', 'nextAttemptAt']),
+    .index('by_status_and_next_attempt', ['status', 'nextAttemptAt'])
+    .index('by_status_and_updated_at', ['status', 'updatedAt']),
 
   // ===== ATTACHMENT TABLES =====
   // Store file attachments for posts and replies (Discord-style)

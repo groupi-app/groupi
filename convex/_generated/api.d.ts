@@ -136,6 +136,7 @@ import type * as pushNotifications_actions from "../pushNotifications/actions.js
 import type * as pushNotifications_constants from "../pushNotifications/constants.js";
 import type * as pushNotifications_mutations from "../pushNotifications/mutations.js";
 import type * as pushNotifications_queries from "../pushNotifications/queries.js";
+import type * as pushNotifications_retention from "../pushNotifications/retention.js";
 import type * as reminderOptOuts_mutations from "../reminderOptOuts/mutations.js";
 import type * as reminderOptOuts_queries from "../reminderOptOuts/queries.js";
 import type * as reminders_index from "../reminders/index.js";
@@ -289,6 +290,7 @@ declare const fullApi: ApiFromModules<{
   "pushNotifications/constants": typeof pushNotifications_constants;
   "pushNotifications/mutations": typeof pushNotifications_mutations;
   "pushNotifications/queries": typeof pushNotifications_queries;
+  "pushNotifications/retention": typeof pushNotifications_retention;
   "reminderOptOuts/mutations": typeof reminderOptOuts_mutations;
   "reminderOptOuts/queries": typeof reminderOptOuts_queries;
   "reminders/index": typeof reminders_index;

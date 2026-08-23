@@ -14,6 +14,7 @@ import {
   MAX_PUSH_ATTEMPTS,
   NOTIFICATION_TYPES,
   pushDeliveryStatusValidator,
+  REDACTED_EXPO_PUSH_TOKEN,
   RECEIPT_CHECK_DELAY_MS,
   sanitizePushErrorMessage,
 } from './constants';
@@ -244,6 +245,7 @@ export const registerDevice = mutation({
       [...conflictingRegistrations.values()].map(registration =>
         ctx.db.patch(registration._id, {
           active: false,
+          token: REDACTED_EXPO_PUSH_TOKEN,
           deactivatedAt: now,
           updatedAt: now,
         })
@@ -308,6 +310,7 @@ export const unregisterDevice = mutation({
       activeRegistrations.map(registration =>
         ctx.db.patch(registration._id, {
           active: false,
+          token: REDACTED_EXPO_PUSH_TOKEN,
           deactivatedAt: now,
           updatedAt: now,
         })
@@ -497,6 +500,7 @@ export const recordDeliveryUpdates = internalMutation({
         ) {
           await ctx.db.patch(token._id, {
             active: false,
+            token: REDACTED_EXPO_PUSH_TOKEN,
             deactivatedAt: now,
             updatedAt: now,
           });

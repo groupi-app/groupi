@@ -6,6 +6,7 @@ import {
   isTransientPushError,
   isValidExpoPushToken,
   NOTIFICATION_TYPES,
+  REDACTED_EXPO_PUSH_TOKEN,
   sanitizePushErrorMessage,
 } from '../pushNotifications/constants';
 import { collectPushData } from '../lib/notifications';
@@ -163,6 +164,9 @@ describe('Native push notifications', () => {
     expect(state.tokens.find(token => token._id === first.id)?.active).toBe(
       false
     );
+    expect(state.tokens.find(token => token._id === first.id)?.token).toBe(
+      REDACTED_EXPO_PUSH_TOKEN
+    );
     expect(state.pushMethod?.value).toBe('Native push notifications');
     expect(state.pushMethod?.value).not.toContain('PushToken[');
     expect(state.preferences).toHaveLength(NOTIFICATION_TYPES.length);
@@ -244,15 +248,15 @@ describe('Native push notifications', () => {
     });
 
     const registrations = await t.run(ctx =>
-      ctx.db
-        .query('pushTokens')
-        .withIndex('by_token', q => q.eq('token', TOKEN_A))
-        .collect()
+      ctx.db.query('pushTokens').collect()
     );
     expect(registrations).toHaveLength(2);
     expect(
-      registrations.find(item => item.personId === first.personId)?.active
-    ).toBe(false);
+      registrations.find(item => item.personId === first.personId)
+    ).toMatchObject({
+      active: false,
+      token: REDACTED_EXPO_PUSH_TOKEN,
+    });
     expect(
       registrations.find(item => item.personId === second.personId)?.active
     ).toBe(true);
