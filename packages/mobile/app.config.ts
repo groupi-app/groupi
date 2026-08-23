@@ -22,7 +22,18 @@ export default {
     },
     package: 'com.groupi.mobile',
   },
-  plugins: ['expo-router', 'expo-secure-store'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    [
+      'expo-notifications',
+      {
+        defaultChannel: 'default',
+        icon: './assets/notification-icon.png',
+        color: '#6d28d9',
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },

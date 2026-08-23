@@ -45,6 +45,9 @@ vi.mock('react-native', () => ({
     addEventListener: vi.fn(() => ({ remove: vi.fn() })),
     currentState: 'active',
   },
+  Linking: {
+    openSettings: vi.fn().mockResolvedValue(undefined),
+  },
   useColorScheme: vi.fn(() => 'light'),
 }));
 
@@ -66,6 +69,7 @@ vi.mock('expo-router', () => ({
     canGoBack: vi.fn(() => true),
   },
   useLocalSearchParams: vi.fn(() => ({})),
+  useRootNavigationState: vi.fn(() => ({ key: 'test-navigation' })),
   useRouter: vi.fn(() => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -90,10 +94,23 @@ vi.mock('expo-router', () => ({
 
 // Mock Expo modules
 vi.mock('expo-constants', () => ({
+  AppOwnership: {
+    Expo: 'expo',
+    Guest: 'guest',
+    Standalone: 'standalone',
+  },
+  ExecutionEnvironment: {
+    Bare: 'bare',
+    Standalone: 'standalone',
+    StoreClient: 'storeClient',
+  },
   default: {
+    appOwnership: 'standalone',
+    executionEnvironment: 'standalone',
     expoConfig: {
       extra: {},
     },
+    easConfig: null,
   },
 }));
 
@@ -110,6 +127,34 @@ vi.mock('expo-splash-screen', () => ({
 
 vi.mock('expo-status-bar', () => ({
   StatusBar: vi.fn(() => null),
+}));
+
+vi.mock('expo-notifications', () => ({
+  AndroidImportance: { HIGH: 4, MAX: 5 },
+  DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
+  setNotificationHandler: vi.fn(),
+  setNotificationChannelAsync: vi.fn().mockResolvedValue(null),
+  getPermissionsAsync: vi.fn().mockResolvedValue({
+    status: 'granted',
+    granted: true,
+    canAskAgain: true,
+  }),
+  requestPermissionsAsync: vi.fn().mockResolvedValue({
+    status: 'granted',
+    granted: true,
+    canAskAgain: true,
+  }),
+  getExpoPushTokenAsync: vi.fn().mockResolvedValue({
+    data: 'ExponentPushToken[test-token]',
+    type: 'expo',
+  }),
+  getLastNotificationResponseAsync: vi.fn().mockResolvedValue(null),
+  clearLastNotificationResponseAsync: vi.fn().mockResolvedValue(undefined),
+  addPushTokenListener: vi.fn(() => ({ remove: vi.fn() })),
+  addNotificationReceivedListener: vi.fn(() => ({ remove: vi.fn() })),
+  addNotificationResponseReceivedListener: vi.fn(() => ({
+    remove: vi.fn(),
+  })),
 }));
 
 // Mock Safe Area
@@ -219,6 +264,15 @@ vi.mock('convex/_generated/api', () => ({
     posts: {
       queries: { getEventPostFeed: 'getEventPostFeed' },
       mutations: { createPost: 'createPost' },
+    },
+    pushNotifications: {
+      mutations: {
+        registerDevice: 'registerPushDevice',
+        unregisterDevice: 'unregisterPushDevice',
+      },
+    },
+    notifications: {
+      mutations: { markNotificationAsRead: 'markNotificationAsRead' },
     },
   },
 }));

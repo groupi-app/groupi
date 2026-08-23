@@ -1,13 +1,26 @@
-import { mutation } from '../_generated/server';
+import { mutation, type MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
-import { Doc } from '../_generated/dataModel';
+import { Doc, Id } from '../_generated/dataModel';
 
 /**
  * Notifications mutations for the Convex backend
  *
  * These functions handle notification state changes with proper authentication.
  */
+
+async function deletePushDeliveries(
+  ctx: MutationCtx,
+  notificationIds: Id<'notifications'>[]
+) {
+  for (const notificationId of notificationIds) {
+    const deliveries = await ctx.db
+      .query('pushDeliveries')
+      .withIndex('by_notification', q => q.eq('notificationId', notificationId))
+      .collect();
+    await Promise.all(deliveries.map(delivery => ctx.db.delete(delivery._id)));
+  }
+}
 
 /**
  * Mark single notification as read
@@ -157,6 +170,7 @@ export const deleteNotification = mutation({
     notificationId: v.id('notifications'),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { notificationId }) => {
     const { person } = await requireAuth(ctx);
 
@@ -170,6 +184,7 @@ export const deleteNotification = mutation({
       throw new Error('Not authorized to delete this notification');
     }
 
+    await deletePushDeliveries(ctx, [notificationId]);
     await ctx.db.delete(notificationId);
     return { success: true };
   },
@@ -182,6 +197,7 @@ export const deleteAllNotifications = mutation({
   args: {
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean(), count: v.number() }),
   handler: async ctx => {
     const { person } = await requireAuth(ctx);
 
@@ -190,6 +206,10 @@ export const deleteAllNotifications = mutation({
       .withIndex('by_person', q => q.eq('personId', person._id))
       .collect();
 
+    await deletePushDeliveries(
+      ctx,
+      notifications.map(notification => notification._id)
+    );
     for (const notification of notifications) {
       await ctx.db.delete(notification._id);
     }

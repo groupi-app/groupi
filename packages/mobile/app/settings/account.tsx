@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { signOut } from '@/lib/auth-client';
 import { toast } from '@groupi/shared/platform';
+import { usePushNotifications } from '@/context/push-notification-context';
 
 import { UsernameSection } from '@/components/settings/username-section';
 import { EmailSection } from '@/components/settings/email-section';
@@ -24,6 +25,7 @@ const { api } = require('convex/_generated/api') as { api: any };
 export default function AccountSettingsScreen() {
   const { user } = useGlobalUser();
   const deleteAccount = useMutation(api.users.mutations.deleteUserAccount);
+  const { unregisterThisDevice } = usePushNotifications();
 
   function handleDeleteAccount() {
     const username = user?.username as string;
@@ -35,6 +37,11 @@ export default function AccountSettingsScreen() {
       destructive: true,
       onConfirm: async () => {
         try {
+          try {
+            await unregisterThisDevice();
+          } catch {
+            // Account deletion must remain available when the device is offline.
+          }
           await deleteAccount({ confirmation: username });
           await signOut();
           router.replace('/(auth)/sign-in');

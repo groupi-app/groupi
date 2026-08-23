@@ -344,6 +344,68 @@ export default defineSchema({
     .index('by_method', ['methodId'])
     .index('by_type_method', ['notificationType', 'methodId']),
 
+  // Expo push tokens are kept separate from user-visible notification methods.
+  // A notification method stores preferences; this table stores per-device secrets.
+  pushTokens: defineTable({
+    personId: v.id('persons'),
+    token: v.string(),
+    deviceId: v.string(),
+    platform: v.union(v.literal('ios'), v.literal('android')),
+    projectId: v.optional(v.string()),
+    appId: v.optional(v.string()),
+    deviceName: v.optional(v.string()),
+    active: v.boolean(),
+    lastRegisteredAt: v.number(),
+    deactivatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_person', ['personId'])
+    .index('by_person_and_active', ['personId', 'active'])
+    .index('by_person_and_device', ['personId', 'deviceId'])
+    .index('by_token', ['token']),
+
+  // Durable audit trail for ticket and receipt state. Token values are never
+  // copied here so delivery history cannot expose a device credential.
+  pushDeliveries: defineTable({
+    notificationId: v.id('notifications'),
+    pushTokenId: v.id('pushTokens'),
+    title: v.string(),
+    body: v.string(),
+    destination: v.union(
+      v.literal('notifications'),
+      v.literal('invites'),
+      v.literal('friends'),
+      v.literal('event'),
+      v.literal('post')
+    ),
+    eventId: v.optional(v.id('events')),
+    postId: v.optional(v.id('posts')),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('SENDING'),
+      v.literal('RETRY_SCHEDULED'),
+      v.literal('TICKET_OK'),
+      v.literal('TICKET_ERROR'),
+      v.literal('RECEIPT_OK'),
+      v.literal('RECEIPT_ERROR')
+    ),
+    ticketId: v.optional(v.string()),
+    errorCode: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    attempts: v.number(),
+    receiptCheckAttempts: v.number(),
+    nextAttemptAt: v.optional(v.number()),
+    leaseExpiresAt: v.optional(v.number()),
+    receiptCheckedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_notification', ['notificationId'])
+    .index('by_push_token', ['pushTokenId'])
+    .index('by_ticket', ['ticketId'])
+    .index('by_status_and_next_attempt', ['status', 'nextAttemptAt']),
+
   // ===== ATTACHMENT TABLES =====
   // Store file attachments for posts and replies (Discord-style)
 

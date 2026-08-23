@@ -18,6 +18,7 @@ import {
   useSaveNotificationSettings,
 } from '@/hooks/use-settings';
 import { cn } from '@/lib/utils';
+import { usePushNotifications } from '@/context/push-notification-context';
 
 interface NotificationPreference {
   type: NotificationType;
@@ -160,7 +161,7 @@ function getMethodLabel(method: NotificationMethod) {
 
 function getMethodDescription(method: NotificationMethod) {
   if (method.type === 'EMAIL') return method.value;
-  if (method.type === 'PUSH') return 'This device';
+  if (method.type === 'PUSH') return 'Your registered mobile devices';
   return method.webhookFormat
     ? `${method.webhookFormat.toLowerCase()} webhook`
     : 'Webhook';
@@ -176,7 +177,6 @@ export default function NotificationSettingsScreen() {
   const isSaving = savingKey !== null;
   const primaryColor = String(useCSSVariable('--color-primary'));
   const mutedColor = String(useCSSVariable('--color-muted-foreground'));
-
   const selectedMethod =
     notificationMethods.find(method => method.id === selectedMethodId) ??
     notificationMethods[0];
@@ -263,6 +263,8 @@ export default function NotificationSettingsScreen() {
         className='flex-1'
         contentContainerClassName='gap-7 px-4 pb-10 pt-2'
       >
+        <PushDeviceCard />
+
         <View className='gap-3'>
           <View>
             <Text className='text-lg font-bold text-foreground'>
@@ -416,6 +418,86 @@ export default function NotificationSettingsScreen() {
         ) : null}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function PushDeviceCard() {
+  const { status, permission, errorMessage, enable, openSettings } =
+    usePushNotifications();
+  const successColor = String(useCSSVariable('--color-success'));
+  const mutedColor = String(useCSSVariable('--color-muted-foreground'));
+  const isBusy = status === 'checking' || status === 'registering';
+  const isRegistered = status === 'registered';
+  const needsSettings = permission === 'denied';
+
+  let description =
+    errorMessage ??
+    'Enable notifications to receive timely event updates on this device.';
+  if (status === 'checking') {
+    description = 'Checking notification access on this device…';
+  } else if (status === 'registering') {
+    description = 'Securely registering this device…';
+  } else if (isRegistered) {
+    description = 'This device is ready to receive Groupi notifications.';
+  } else if (status === 'unsupported') {
+    description =
+      'Use a development or production build to enable remote notifications.';
+  } else if (status === 'misconfigured') {
+    description = 'This build is missing its native push configuration.';
+  } else if (needsSettings) {
+    description = 'Notifications are blocked in your device settings.';
+  }
+
+  return (
+    <View className='gap-3 rounded-card border border-border bg-card p-4'>
+      <View className='flex-row items-center gap-3'>
+        <View className='h-10 w-10 items-center justify-center rounded-badge bg-muted'>
+          <Ionicons
+            name={isRegistered ? 'notifications' : 'notifications-outline'}
+            size={20}
+            color={isRegistered ? successColor : mutedColor}
+          />
+        </View>
+        <View className='flex-1'>
+          <Text className='font-semibold text-foreground'>This device</Text>
+          <Text
+            className='mt-0.5 text-sm text-muted-foreground'
+            accessibilityLiveRegion='polite'
+          >
+            {description}
+          </Text>
+        </View>
+      </View>
+
+      {!isRegistered &&
+      status !== 'unsupported' &&
+      status !== 'misconfigured' ? (
+        <Button
+          variant='outline'
+          onPress={() => {
+            if (needsSettings) {
+              void openSettings();
+            } else {
+              void enable();
+            }
+          }}
+          disabled={isBusy}
+          accessibilityLabel={
+            needsSettings
+              ? 'Open notification settings'
+              : 'Enable notifications'
+          }
+        >
+          {isBusy
+            ? 'Checking…'
+            : needsSettings
+              ? 'Open settings'
+              : status === 'error'
+                ? 'Try again'
+                : 'Enable notifications'}
+        </Button>
+      ) : null}
+    </View>
   );
 }
 

@@ -2,6 +2,8 @@ import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { authComponent, AuthUserId } from '../auth';
+import { makeFunctionReference } from 'convex/server';
+import { MAX_ACTIVE_PUSH_DEVICES } from '../pushNotifications/constants';
 
 /**
  * Check if a person has muted an event
@@ -404,7 +406,7 @@ async function getEnabledEmailsForNotification(
 /**
  * Context data for generating notification messages
  */
-interface NotificationMessageContext {
+export interface NotificationMessageContext {
   type: NotificationType;
   eventTitle?: string;
   authorName?: string;
@@ -429,7 +431,9 @@ function getRsvpDisplayText(rsvp: RsvpStatus): string {
 /**
  * Generate email subject for a notification type
  */
-function getNotificationEmailSubject(ctx: NotificationMessageContext): string {
+export function getNotificationEmailSubject(
+  ctx: NotificationMessageContext
+): string {
   const { type, eventTitle, authorName, postTitle } = ctx;
   const prefix = eventTitle ? `[${eventTitle}] ` : '';
 
@@ -635,7 +639,9 @@ function getNotificationMessageMarkdown(
 /**
  * Generate plain text message (no formatting) for webhooks that don't support markdown
  */
-function getNotificationMessagePlain(ctx: NotificationMessageContext): string {
+export function getNotificationMessagePlain(
+  ctx: NotificationMessageContext
+): string {
   const { type, eventTitle, authorName, postTitle, rsvp } = ctx;
   const author = authorName || 'Someone';
   const event = eventTitle || 'an event';
@@ -1149,6 +1155,183 @@ async function collectWebhookData(
   });
 }
 
+export type PushNotificationRequest = {
+  deliveryId: Id<'pushDeliveries'>;
+};
+
+function getPushDestination(
+  type: NotificationType,
+  eventId?: Id<'events'>,
+  postId?: Id<'posts'>
+): {
+  destination: 'notifications' | 'invites' | 'friends' | 'event' | 'post';
+  eventId?: Id<'events'>;
+  postId?: Id<'posts'>;
+} {
+  if (
+    type === 'FRIEND_REQUEST_RECEIVED' ||
+    type === 'FRIEND_REQUEST_ACCEPTED'
+  ) {
+    return { destination: 'friends' };
+  }
+  if (type === 'EVENT_INVITE_RECEIVED') {
+    return { destination: 'invites' };
+  }
+  if (
+    eventId &&
+    postId &&
+    (type === 'NEW_POST' || type === 'NEW_REPLY' || type === 'USER_MENTIONED')
+  ) {
+    return { destination: 'post', eventId, postId };
+  }
+  if (eventId) {
+    return { destination: 'event', eventId };
+  }
+  return { destination: 'notifications' };
+}
+
+async function resolveNotificationMessageContext(
+  ctx: MutationCtx,
+  data: {
+    type: NotificationType;
+    authorId?: Id<'persons'>;
+    eventId?: Id<'events'>;
+    postId?: Id<'posts'>;
+    rsvp?: RsvpStatus;
+  },
+  preFetchedCtx?: PreFetchedMessageContext
+): Promise<NotificationMessageContext> {
+  if (preFetchedCtx) {
+    return {
+      type: data.type,
+      eventTitle: preFetchedCtx.eventTitle,
+      authorName: preFetchedCtx.authorName,
+      postTitle: preFetchedCtx.postTitle,
+      rsvp: data.rsvp,
+      notificationUrl: preFetchedCtx.notificationUrl,
+    };
+  }
+
+  const [event, post, authorPerson] = await Promise.all([
+    data.eventId ? ctx.db.get(data.eventId) : undefined,
+    data.postId ? ctx.db.get(data.postId) : undefined,
+    data.authorId ? ctx.db.get(data.authorId) : undefined,
+  ]);
+
+  let authorName: string | undefined;
+  if (authorPerson) {
+    try {
+      const authorUser = await authComponent.getAnyUserById(
+        ctx,
+        authorPerson.userId as AuthUserId
+      );
+      authorName = authorUser?.name || authorUser?.email || undefined;
+    } catch {
+      // The Better Auth component is intentionally absent in convex-test.
+    }
+  }
+
+  return {
+    type: data.type,
+    eventTitle: event?.title,
+    postTitle: post?.title,
+    authorName,
+    rsvp: data.rsvp,
+    notificationUrl: buildNotificationUrl(
+      data.type,
+      data.eventId as string | undefined,
+      data.postId as string | undefined
+    ),
+  };
+}
+
+/**
+ * Collect push requests and create durable pending delivery records. This is
+ * exported for focused tests; callers should normally use createNotification.
+ */
+export async function collectPushData(
+  ctx: MutationCtx,
+  notificationId: Id<'notifications'>,
+  data: {
+    personId: Id<'persons'>;
+    type: NotificationType;
+    authorId?: Id<'persons'>;
+    eventId?: Id<'events'>;
+    postId?: Id<'posts'>;
+    rsvp?: RsvpStatus;
+  },
+  preFetchedCtx?: PreFetchedMessageContext
+): Promise<PushNotificationRequest[]> {
+  const settings = await ctx.db
+    .query('personSettings')
+    .withIndex('by_person', q => q.eq('personId', data.personId))
+    .first();
+  if (!settings) return [];
+
+  const methods = await ctx.db
+    .query('notificationMethods')
+    .withIndex('by_settings', q => q.eq('settingsId', settings._id))
+    .collect();
+  const enabledMethods = methods.filter(
+    method => method.type === 'PUSH' && method.enabled
+  );
+  if (enabledMethods.length === 0) return [];
+
+  let enabledForType = false;
+  for (const method of enabledMethods) {
+    const typeSetting = await ctx.db
+      .query('notificationSettings')
+      .withIndex('by_type_method', q =>
+        q.eq('notificationType', data.type).eq('methodId', method._id)
+      )
+      .first();
+    if (typeSetting?.enabled ?? true) {
+      enabledForType = true;
+      break;
+    }
+  }
+  if (!enabledForType) return [];
+
+  const tokens = await ctx.db
+    .query('pushTokens')
+    .withIndex('by_person_and_active', q =>
+      q.eq('personId', data.personId).eq('active', true)
+    )
+    .take(MAX_ACTIVE_PUSH_DEVICES);
+  if (tokens.length === 0) return [];
+
+  const messageContext = await resolveNotificationMessageContext(
+    ctx,
+    data,
+    preFetchedCtx
+  );
+  const title = getNotificationEmailSubject(messageContext).slice(0, 120);
+  const body = getNotificationMessagePlain(messageContext).slice(0, 1_000);
+  const destination = getPushDestination(data.type, data.eventId, data.postId);
+  const now = Date.now();
+
+  return await Promise.all(
+    tokens.map(async token => {
+      const deliveryId = await ctx.db.insert('pushDeliveries', {
+        notificationId,
+        pushTokenId: token._id,
+        title,
+        body,
+        ...destination,
+        status: 'PENDING',
+        attempts: 0,
+        receiptCheckAttempts: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      return {
+        deliveryId,
+      };
+    })
+  );
+}
+
 /**
  * Create a notification for a single recipient
  * Also schedules email and webhook notifications via action if the user has them enabled
@@ -1199,9 +1382,15 @@ export async function createNotification(
     rsvp: data.rsvp,
   };
 
-  const [emails, webhooks] = await Promise.all([
+  const [emails, webhooks, pushes] = await Promise.all([
     collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),
+    collectPushData(
+      ctx,
+      notificationId,
+      notificationData,
+      preFetched?.messageContext
+    ),
   ]);
 
   if (emails.length > 0 || webhooks.length > 0) {
@@ -1209,6 +1398,17 @@ export async function createNotification(
     // @ts-ignore - Type instantiation is excessively deep (TS2589) - varies by environment
     const sendAction = internal.notifications.actions.sendExternalNotifications;
     await ctx.scheduler.runAfter(0, sendAction, { emails, webhooks });
+  }
+
+  if (pushes.length > 0) {
+    const sendPushAction = makeFunctionReference<
+      'action',
+      { deliveryIds: Id<'pushDeliveries'>[] },
+      { sent: number; failed: number; retrying: number }
+    >('pushNotifications/actions:sendPushNotifications');
+    await ctx.scheduler.runAfter(0, sendPushAction, {
+      deliveryIds: pushes.map(push => push.deliveryId),
+    });
   }
 
   return notificationId;

@@ -24,14 +24,14 @@ The smallest credible path to parity is:
 
 ## Current baseline
 
-| Area               | Native status                                                  |
-| ------------------ | -------------------------------------------------------------- |
-| Product surface    | 27 non-layout user screens; 83 TSX components; 16 hooks        |
-| Unit tests         | 2 files / 16 tests; both pass                                  |
-| Measured coverage  | 0.69% statements, 0.07% branches, 0.81% functions, 0.72% lines |
-| E2E/device tests   | None                                                           |
-| Native release     | No working signed CI/EAS/store path                            |
-| Push notifications | Settings UI only; no device registration or delivery path      |
+| Area               | Native status                                                         |
+| ------------------ | --------------------------------------------------------------------- |
+| Product surface    | 27 non-layout user screens; 83 TSX components; 16 hooks               |
+| Unit tests         | 12 files / 62 tests; all pass                                         |
+| Measured coverage  | 12.31% statements, 11.19% branches, 10.16% functions, 12.13% lines    |
+| E2E/device tests   | None                                                                  |
+| Native release     | No working signed CI/EAS/store path                                   |
+| Push notifications | Native registration/delivery implemented; signed-device setup remains |
 
 ## Implementation progress on `feat/native-mobile`
 
@@ -44,11 +44,12 @@ The first stabilization tranche after this audit is now implemented on the branc
 - Added required availability/questionnaire gating before event content.
 - Hardened shared event/post/reply reads, member-role mutations, attachment registration, and presence writes at the backend boundary.
 - Rebuilt native notifications around the real 19-type delivery-method model with item actions and reactive cursor pagination.
+- Added authenticated per-device Expo push registration, account/type preference filtering, durable delivery tickets and receipts, bounded retries, stale-token cleanup, and safe native notification routing.
 - Synced single/system/custom appearance preferences through Convex and Uniwind.
 - Made mobile type-check/test failures blocking in CI, fixed the Vitest coverage ratchet, and added focused mobile/shared/Convex regressions.
 - Standardized common native headers, buttons, back navigation, semantic tokens, and accessibility affordances.
 
-The P0/P1 inventory below documents the audited baseline and broader path to full parity. Items above are complete for this tranche; remaining major work still includes native push delivery, signed release/EAS/store automation, universal links, device E2E/accessibility coverage, advanced invitation methods, custom add-on rendering, mentions/attachment metadata, and full organizer date/settings surfaces.
+The P0/P1 inventory below documents the audited baseline and broader path to full parity. Items above are complete for this tranche; remaining major work still includes signed release/EAS/store automation and push credentials, universal links, device E2E/accessibility coverage, advanced invitation methods, custom add-on rendering, mentions/attachment metadata, and full organizer date/settings surfaces.
 
 ## P0: functional and data-contract blockers
 
@@ -190,7 +191,11 @@ Evidence:
 
 ### 3. Implement push end to end
 
-The app advertises device push but has no `expo-notifications` dependency, permission request, token registration, token lifecycle, notification handler, APNs entitlement, Android permission, or backend push-delivery branch. Disable the UI until the complete path exists, then test foreground, background, cold-start, opt-out, token rotation, and notification-to-route behavior.
+Implemented on `feat/native-mobile`: `expo-notifications` configuration, user-initiated permission handling, stable per-installation registration, token rotation and sign-out cleanup, foreground presentation, cold/warm tap routing, account/type preference filtering, Expo ticket/receipt processing, bounded retry behavior, and `DeviceNotRegistered` cleanup.
+
+Production activation still requires an EAS project ID in `EAS_PROJECT_ID`, valid APNs/FCM credentials on the Expo project, a signed development or production build on a physical device, the matching `EXPO_ALLOWED_PROJECT_IDS` and `EXPO_ALLOWED_APP_IDS` allowlists in Convex, and `EXPO_ACCESS_TOKEN` when Expo push access-token security is enabled. These are deployment credentials rather than source defaults and cannot be validated by the unit suite.
+
+Operational follow-up: add scheduled retention for terminal delivery records and inactive token generations so copied notification text and obsolete credentials do not remain indefinitely.
 
 ## P1: core product parity
 

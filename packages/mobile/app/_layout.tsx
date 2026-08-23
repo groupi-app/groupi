@@ -16,8 +16,14 @@ import { ThemeProvider } from '@/theme/theme-provider';
 import { GlobalUserProvider } from '@/context/global-user-context';
 import { GlobalPresenceTracker } from '@/components/global-presence-tracker';
 import { setupPlatformAdapters } from '@/lib/platform-setup';
+import {
+  PushNotificationProvider,
+  PushNotificationResponseHandler,
+} from '@/context/push-notification-context';
+import { configureForegroundNotifications } from '@/lib/push-notifications';
 
 SplashScreen.preventAutoHideAsync();
+configureForegroundNotifications();
 
 export default function RootLayout() {
   useEffect(() => {
@@ -32,80 +38,83 @@ export default function RootLayout() {
         <ConvexClientProvider>
           <ThemeProvider>
             <GlobalUserProvider>
-              <BottomSheetModalProvider>
-                <ActionMenuProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name='(auth)' />
-                    <Stack.Screen name='(tabs)' />
-                    <Stack.Screen
-                      name='onboarding'
-                      options={{
-                        gestureEnabled: false,
-                        animation: 'fade',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='event/[eventId]'
-                      options={{
-                        gestureEnabled: true,
-                        gestureDirection: 'horizontal',
-                        animation: 'slide_from_right',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='create-event/index'
-                      options={{
-                        presentation: 'modal',
-                        gestureEnabled: true,
-                        animation: 'slide_from_bottom',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='friends/index'
-                      options={{
-                        presentation: 'modal',
-                        gestureEnabled: true,
-                        animation: 'slide_from_bottom',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='profile/[userId]'
-                      options={{
-                        gestureEnabled: true,
-                        gestureDirection: 'horizontal',
-                        animation: 'slide_from_right',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='settings'
-                      options={{
-                        gestureEnabled: true,
-                        gestureDirection: 'horizontal',
-                        animation: 'slide_from_right',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='invites/index'
-                      options={{
-                        gestureEnabled: true,
-                        gestureDirection: 'horizontal',
-                        animation: 'slide_from_right',
-                      }}
-                    />
-                    <Stack.Screen
-                      name='invite/[inviteId]'
-                      options={{
-                        presentation: 'modal',
-                        gestureEnabled: true,
-                      }}
-                    />
-                  </Stack>
-                </ActionMenuProvider>
-              </BottomSheetModalProvider>
-              <GlobalPresenceTracker />
-              <StatusBar style='auto' />
-              <PortalHost />
-              <Toast />
+              <PushNotificationProvider>
+                <BottomSheetModalProvider>
+                  <ActionMenuProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name='(auth)' />
+                      <Stack.Screen name='(tabs)' />
+                      <Stack.Screen
+                        name='onboarding'
+                        options={{
+                          gestureEnabled: false,
+                          animation: 'fade',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='event/[eventId]'
+                        options={{
+                          gestureEnabled: true,
+                          gestureDirection: 'horizontal',
+                          animation: 'slide_from_right',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='create-event/index'
+                        options={{
+                          presentation: 'modal',
+                          gestureEnabled: true,
+                          animation: 'slide_from_bottom',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='friends/index'
+                        options={{
+                          presentation: 'modal',
+                          gestureEnabled: true,
+                          animation: 'slide_from_bottom',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='profile/[userId]'
+                        options={{
+                          gestureEnabled: true,
+                          gestureDirection: 'horizontal',
+                          animation: 'slide_from_right',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='settings'
+                        options={{
+                          gestureEnabled: true,
+                          gestureDirection: 'horizontal',
+                          animation: 'slide_from_right',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='invites/index'
+                        options={{
+                          gestureEnabled: true,
+                          gestureDirection: 'horizontal',
+                          animation: 'slide_from_right',
+                        }}
+                      />
+                      <Stack.Screen
+                        name='invite/[inviteId]'
+                        options={{
+                          presentation: 'modal',
+                          gestureEnabled: true,
+                        }}
+                      />
+                    </Stack>
+                    <PushNotificationResponseHandler />
+                  </ActionMenuProvider>
+                </BottomSheetModalProvider>
+                <GlobalPresenceTracker />
+                <StatusBar style='auto' />
+                <PortalHost />
+                <Toast />
+              </PushNotificationProvider>
             </GlobalUserProvider>
           </ThemeProvider>
         </ConvexClientProvider>

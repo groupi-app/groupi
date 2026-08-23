@@ -16,6 +16,7 @@ import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useImagePicker } from '@/hooks/use-image-picker';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { toast } from '@groupi/shared/platform';
+import { usePushNotifications } from '@/context/push-notification-context';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
 const { api } = require('convex/_generated/api') as { api: any };
@@ -25,6 +26,7 @@ export default function YouScreen() {
   const updateProfile = useMutation(api.users.mutations.updateUserProfile);
   const { pickImage } = useImagePicker();
   const { uploadFile, isUploading } = useFileUpload();
+  const { unregisterThisDevice } = usePushNotifications();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -87,6 +89,11 @@ export default function YouScreen() {
       confirmLabel: 'Sign Out',
       destructive: true,
       onConfirm: async () => {
+        try {
+          await unregisterThisDevice();
+        } catch {
+          // Signing out must remain available when the device is offline.
+        }
         await signOut();
         router.replace('/(auth)/sign-in');
       },
