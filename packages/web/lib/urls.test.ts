@@ -17,6 +17,8 @@ import {
   getEventUrl,
   getUserUrl,
   getAbsoluteUrl,
+  getSafeInternalRedirect,
+  getMagicLinkCallbackUrl,
 } from './urls';
 
 describe('URL Utils', () => {
@@ -76,6 +78,30 @@ describe('URL Utils', () => {
     it('should handle empty path', () => {
       const url = getAbsoluteUrl('');
       expect(url).toBe('https://groupi.app/');
+    });
+  });
+
+  describe('getMagicLinkCallbackUrl', () => {
+    it('keeps the default onboarding callback for the events route', () => {
+      expect(getMagicLinkCallbackUrl('/events')).toBe('/onboarding');
+    });
+
+    it('preserves return destinations that contain query parameters', () => {
+      expect(getMagicLinkCallbackUrl('/invite/abc?action=accept')).toBe(
+        '/onboarding?redirect=%252Finvite%252Fabc%253Faction%253Daccept'
+      );
+    });
+  });
+
+  describe('getSafeInternalRedirect', () => {
+    it.each([
+      ['/invite/abc?action=accept', '/invite/abc?action=accept'],
+      ['https://evil.example/steal-session', '/events'],
+      ['//evil.example/steal-session', '/events'],
+      ['/\\evil.example/steal-session', '/events'],
+      [undefined, '/events'],
+    ])('maps %s to %s', (redirectTo, expected) => {
+      expect(getSafeInternalRedirect(redirectTo)).toBe(expected);
     });
   });
 });
