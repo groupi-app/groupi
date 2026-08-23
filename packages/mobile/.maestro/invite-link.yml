@@ -1,0 +1,13 @@
+appId: com.groupi.mobile
+name: Signed-out invite deep link
+tags:
+  - smoke
+  - deep-link
+---
+- launchApp:
+    clearState: true
+- openLink: 'groupi://invite/e2e-automation-invite'
+- assertVisible: 'Sign in to accept invite'
+- tapOn: 'Sign In'
+- assertVisible: 'Groupi'
+- assertVisible: 'Continue with Email'

@@ -1,0 +1,16 @@
+name: Signed mobile previews
+
+jobs:
+  build_android:
+    name: Build signed Android preview
+    type: build
+    params:
+      platform: android
+      profile: preview
+
+  build_ios:
+    name: Build signed iOS preview
+    type: build
+    params:
+      platform: ios
+      profile: preview

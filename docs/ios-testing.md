@@ -96,12 +96,15 @@ profile. From the mobile package, an authenticated Expo user can create a
 shareable simulator build with:
 
 ```bash
-pnpm dlx eas-cli build --platform ios --profile ios-simulator
+pnpm dlx eas-cli@22.2.0 build --platform ios --profile ios-simulator
 ```
 
 Simulator builds do not require an Apple Developer account. A physical-device
 development build and production push credentials do require the appropriate
 Apple Developer and APNs configuration.
+
+Signed physical-device previews, automated Maestro runs, and store builds are
+documented in [Mobile Build, Device Test, and Release](./mobile-release.md).
 
 ## Push smoke testing
 

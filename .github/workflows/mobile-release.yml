@@ -1,0 +1,68 @@
+name: Mobile Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'EAS pipeline to run'
+        required: true
+        default: 'e2e-tests'
+        type: choice
+        options:
+          - e2e-tests
+          - signed-preview
+          - release-internal
+      git_ref:
+        description: 'Committed branch, tag, or SHA to build'
+        required: true
+        default: 'main'
+        type: string
+
+concurrency:
+  group: mobile-${{ inputs.pipeline }}-${{ inputs.git_ref }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Run ${{ inputs.pipeline }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Require Expo configuration
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EAS_PROJECT_ID" ]; then
+            echo 'EXPO_TOKEN and EAS_PROJECT_ID repository secrets are required.'
+            exit 1
+          fi
+
+      - name: Checkout requested ref
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.git_ref }}
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: 22.2.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate release configuration
+        working-directory: packages/mobile
+        run: node scripts/validate-release-config.mjs
+
+      - name: Run EAS pipeline
+        working-directory: packages/mobile
+        env:
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          MOBILE_EAS_PIPELINE: ${{ inputs.pipeline }}
+          MOBILE_GIT_REF: ${{ inputs.git_ref }}
+        run: |
+          eas workflow:run ".eas/workflows/${MOBILE_EAS_PIPELINE}.yml" \
+            --ref "${MOBILE_GIT_REF}" \
+            --non-interactive \
+            --wait

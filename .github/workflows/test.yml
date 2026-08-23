@@ -180,6 +180,11 @@ jobs:
           cd packages/mobile
           pnpm lint
 
+      - name: Validate mobile release configuration
+        run: |
+          cd packages/mobile
+          pnpm release:check
+
       - name: Run mobile package tests with coverage
         run: |
           cd packages/mobile

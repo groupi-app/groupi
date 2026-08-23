@@ -32,7 +32,7 @@ The smallest credible path to parity is:
 | Unit tests         | 17 files / 112 tests; all pass                                        |
 | Measured coverage  | 14.04% statements, 12.32% branches, 10.87% functions, 13.88% lines    |
 | E2E/device tests   | Simulator prepared; live journey blocked on env/binary                |
-| Native release     | No working signed CI/EAS/store path                                   |
+| Native release     | Profiles/workflows added; managed credentials and store links pending |
 | Push notifications | Native registration/delivery implemented; signed-device setup remains |
 
 ## Implementation progress on `feat/native-mobile`
@@ -47,11 +47,16 @@ The first stabilization tranche after this audit is now implemented on the branc
 - Hardened shared event/post/reply reads, member-role mutations, attachment registration, and presence writes at the backend boundary.
 - Rebuilt native notifications around the real 19-type delivery-method model with item actions and reactive cursor pagination.
 - Added authenticated per-device Expo push registration, account/type preference filtering, durable delivery tickets and receipts, bounded retries, stale-token cleanup, and safe native notification routing.
+- Replaced the unsupported native auth workaround with the Better Auth Expo proxy/storage flow, including provider callback, OTP, invite-return, refresh, and sign-out regressions.
+- Made post/reply attachment creation atomic with explicit batch failure cleanup and rollback behavior.
+- Replaced the eager event discussion graph with a cursor-paginated Convex query and one continuously scrolling virtualized native list.
+- Added canonical HTTPS/custom-scheme normalization plus checked-in iOS associated-domain and Android App Link configuration.
+- Added EAS preview/production/E2E profiles, remote build versioning, on-demand signed build/store workflows, Maestro Android/iOS smoke flows, and a release-configuration CI guard.
 - Synced single/system/custom appearance preferences through Convex and Uniwind.
 - Made mobile type-check/test failures blocking in CI, fixed the Vitest coverage ratchet, and added focused mobile/shared/Convex regressions.
 - Standardized common native headers, buttons, back navigation, semantic tokens, and accessibility affordances.
 
-The P0/P1 inventory below documents the audited baseline and broader path to full parity. Items above are complete for this tranche; remaining major work still includes signed release/EAS/store automation and push credentials, universal links, device E2E/accessibility coverage, advanced invitation methods, custom add-on rendering, mentions/attachment metadata, and full organizer date/settings surfaces.
+The P0/P1 inventory below documents the audited baseline and broader path to full parity. Items above are complete in source. Release activation still requires the owner-managed EAS project/signing/store credentials, preview/production environment values, the real Apple application prefix and Play signing fingerprint for hosted association files, and physical-device acceptance. Broader work still includes authenticated device E2E/accessibility coverage, advanced invitation methods, custom add-on rendering, mentions/attachment metadata, and full organizer date/settings surfaces.
 
 ## P0: functional and data-contract blockers
 

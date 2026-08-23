@@ -1,0 +1,120 @@
+# Mobile Build, Device Test, and Release
+
+Groupi uses EAS Build for signed native artifacts and EAS Workflows for
+cross-platform Maestro smoke tests and store delivery. Run EAS commands from
+`packages/mobile`, which is the Expo app root in this monorepo.
+
+## Build profiles
+
+`packages/mobile/eas.json` defines the release progression:
+
+| Profile         | Signing                    | Artifact                               | Purpose                         |
+| --------------- | -------------------------- | -------------------------------------- | ------------------------------- |
+| `ios-simulator` | None                       | iOS Simulator development client       | Local simulator development     |
+| `e2e-test`      | None                       | Android APK and iOS Simulator app      | Automated Maestro smoke tests   |
+| `preview`       | EAS-managed device signing | Installable Android APK and iOS ad hoc | Physical-device acceptance test |
+| `production`    | EAS-managed store signing  | Android App Bundle and iOS archive     | Store submission                |
+
+Production build numbers use EAS remote versioning and auto-increment. Android
+automated submission is deliberately limited to the completed Google Play
+internal-test track. iOS submission uploads to App Store Connect/TestFlight;
+promotion beyond internal testing remains an explicit store-console action.
+
+## One-time Expo and signing setup
+
+Install EAS CLI, sign in to the Groupi Expo owner account, and link or create
+the EAS project. Do not commit access tokens, signing keys, provisioning
+profiles, or store service-account JSON files.
+
+```bash
+cd packages/mobile
+eas login
+eas init
+eas credentials:configure-build --platform android --profile production
+eas credentials:configure-build --platform ios --profile production
+```
+
+Create EAS `preview` and `production` environment variables for:
+
+- `EXPO_PUBLIC_CONVEX_URL`
+- `EXPO_PUBLIC_BETTER_AUTH_URL`
+- `EXPO_PUBLIC_BASE_URL=https://www.groupi.gg`
+
+The build worker provides `EAS_BUILD_PROJECT_ID`; local development may still
+set `EAS_PROJECT_ID` in the ignored `packages/mobile/.env.local` file. Configure
+the matching Convex deployment with this project ID in
+`EXPO_ALLOWED_PROJECT_IDS` and `com.groupi.mobile` in
+`EXPO_ALLOWED_APP_IDS` before physical push testing.
+
+For GitHub dispatch, add the repository secrets `EXPO_TOKEN` and
+`EAS_PROJECT_ID`. Connect the EAS project to this GitHub repository if the
+`mobile-e2e` pull-request label trigger should run directly in EAS.
+
+## Automated pipelines
+
+The GitHub **Mobile Build and Release** workflow exposes three manual choices:
+
+- `e2e-tests`: unsigned Android emulator and iOS Simulator builds, followed by
+  Maestro on both platforms;
+- `signed-preview`: EAS-signed installable builds for physical-device QA;
+- `release-internal`: signed store builds, Android internal-track release, and
+  iOS App Store Connect upload.
+
+The same pipelines can be run directly from the app directory:
+
+```bash
+pnpm test:e2e
+pnpm build:preview
+pnpm release:internal
+```
+
+E2E builds read the EAS `preview` environment. The current Maestro suite covers
+cold launch, the native authentication surface, client-side email validation,
+and signed-out invite deep-link routing. Authenticated provider, session,
+attachment, event, and push delivery flows require preview test identities and
+a reachable E2E-enabled backend before they can be automated safely.
+
+Run the structural release guard without contacting EAS:
+
+```bash
+pnpm release:check
+```
+
+## Universal-link trust files
+
+The native app claims `www.groupi.gg`, but the website must publish association
+files derived from the actual store signing identities. After EAS and Play App
+Signing are configured, obtain:
+
+1. the 10-character Apple application-identifier prefix from the signed iOS
+   entitlements (often, but not always, the Apple Team ID); and
+2. the **Play App Signing** SHA-256 certificate fingerprint, not merely the EAS
+   upload-key fingerprint.
+
+Generate the public files, review them, and commit them with the signing setup:
+
+```bash
+APPLE_APPLICATION_PREFIX=ABCDE12345 \
+ANDROID_SHA256_CERT_FINGERPRINT=AA:BB:...:FF \
+pnpm mobile:link-associations
+```
+
+Deploy the web app, then verify direct HTTP 200 JSON responses at:
+
+- `https://www.groupi.gg/.well-known/apple-app-site-association`
+- `https://www.groupi.gg/.well-known/assetlinks.json`
+
+Finally, uninstall/reinstall signed builds so both operating systems fetch the
+new associations, and test links from Messages/Mail on physical iOS and Android
+devices. Redirected links from `groupi.gg` do not substitute for hosting the
+files directly on the claimed `www.groupi.gg` domain.
+
+## Release acceptance
+
+Before promotion beyond internal testing, exercise native Google, Discord,
+magic-link, and OTP sign-in; invite return; event creation and editing;
+availability and RSVP; add-ons; infinite post loading; attachment rollback;
+notification receipt/tap/sign-out behavior; camera and media permissions;
+offline recovery; and universal links. Repeat push, background delivery,
+passkey behavior, and link verification on signed physical iOS and Android
+devices because simulator results are not sufficient for these capabilities.
