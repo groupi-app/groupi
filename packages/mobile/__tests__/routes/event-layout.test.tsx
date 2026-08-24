@@ -22,20 +22,20 @@ vi.mock('expo-router', () => ({
   usePathname: () => mocks.pathname,
 }));
 
-vi.mock('../../../src/hooks/use-addons', () => ({
+vi.mock('../../src/hooks/use-addons', () => ({
   useAddonCompletionStatus: (eventId: string | undefined) => {
     mocks.requestedEventIds.push(eventId);
     return mocks.completionStatus;
   },
 }));
-vi.mock('../../../src/components/molecules', () => ({
+vi.mock('../../src/components/molecules', () => ({
   LoadingState: 'LoadingState',
 }));
-vi.mock('../../../src/components/ui/safe-area-view', () => ({
+vi.mock('../../src/components/ui/safe-area-view', () => ({
   SafeAreaView: 'SafeAreaView',
 }));
 
-import EventLayout from './_layout';
+import EventLayout from '../../app/event/[eventId]/_layout';
 
 describe('event layout completion gate', () => {
   beforeEach(() => {

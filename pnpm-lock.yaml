@@ -353,6 +353,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.0.17
         version: 4.0.17(vitest@4.0.17(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.2)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
+      babel-preset-expo:
+        specifier: ~55.0.24
+        version: 55.0.24(@babel/core@7.29.0)(@babel/runtime@7.29.2)(expo@55.0.29)(react-refresh@0.14.2)
       prettier:
         specifier: ^3.0.0
         version: 3.6.2

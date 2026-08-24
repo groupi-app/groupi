@@ -87,12 +87,34 @@ for (const workflow of [
   );
 }
 
-for (const flow of ['.maestro/smoke.yml', '.maestro/invite-link.yml']) {
+const maestroFlows = [
+  '.maestro/smoke.yml',
+  '.maestro/invite-link.yml',
+  '.maestro/protected-routes.yml',
+  '.maestro/process-recovery.yml',
+  '.maestro/authenticated-event.yml',
+];
+const e2eWorkflow = read('.eas/workflows/e2e-tests.yml');
+
+for (const flow of maestroFlows) {
   assert(
     read(flow).includes('appId: com.groupi.mobile'),
     `${flow} must target the release application ID`
   );
+  assert(
+    e2eWorkflow.includes(`'${flow}'`),
+    `${flow} must run in the EAS mobile E2E workflow`
+  );
 }
+
+const authenticatedFlow = read('.maestro/authenticated-event.yml');
+assert(
+  authenticatedFlow.includes('onFlowStart:') &&
+    authenticatedFlow.includes('onFlowComplete:') &&
+    authenticatedFlow.includes('setup-authenticated-fixture.js') &&
+    authenticatedFlow.includes('cleanup-authenticated-fixture.js'),
+  'Authenticated E2E must seed and clean its isolated fixture through hooks'
+);
 
 const rootPackage = JSON.parse(
   readFileSync(join(repositoryDir, 'package.json'), 'utf8')

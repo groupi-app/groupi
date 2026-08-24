@@ -6,8 +6,16 @@ tags:
 ---
 - launchApp:
     clearState: true
+    clearKeychain: true
+- openLink: 'groupi://invite/e2e-automation-invite'
+- runFlow:
+    when:
+      visible: 'Open in.*Groupi'
+    commands:
+      - tapOn: '^Open$'
 - openLink: 'groupi://invite/e2e-automation-invite'
 - assertVisible: 'Sign in to accept invite'
-- tapOn: 'Sign In'
+- tapOn: 'Sign in to accept this invite'
 - assertVisible: 'Groupi'
 - assertVisible: 'Continue with Email'
+- assertNotVisible: 'Invalid Invite'

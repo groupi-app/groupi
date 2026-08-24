@@ -43,28 +43,28 @@ vi.mock('convex/react', () => ({
   useQuery: () => mocks.queryResult,
 }));
 
-vi.mock('../../../../src/hooks/use-addons', () => ({
+vi.mock('../../src/hooks/use-addons', () => ({
   useReplaceBuiltInAddonConfigs: () => mocks.replaceBuiltInAddonConfigs,
 }));
 
-vi.mock('../../../../src/context/create-event-context', () => ({
+vi.mock('../../src/context/create-event-context', () => ({
   CreateEventProvider: 'CreateEventProvider',
   useCreateEventForm: () => ({ formState: mocks.formState }),
 }));
-vi.mock('../../../../src/components/create-event/addons-step', () => ({
+vi.mock('../../src/components/create-event/addons-step', () => ({
   AddonsStep: 'AddonsStep',
 }));
-vi.mock('../../../../src/components/templates', () => ({
+vi.mock('../../src/components/templates', () => ({
   DetailScreenTemplate: 'DetailScreenTemplate',
 }));
-vi.mock('../../../../src/components/molecules', () => ({
+vi.mock('../../src/components/molecules', () => ({
   LoadingState: 'LoadingState',
 }));
 vi.mock('@groupi/shared/platform', () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
-import ManageAddonsScreen from './manage';
+import ManageAddonsScreen from '../../app/event/[eventId]/addons/manage';
 
 function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
   if (!isValidElement<Record<string, unknown>>(node)) {

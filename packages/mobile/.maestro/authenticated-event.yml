@@ -1,0 +1,31 @@
+appId: com.groupi.mobile
+name: Authenticated event and post journey
+tags:
+  - authenticated
+  - core
+onFlowStart:
+  - runScript: scripts/setup-authenticated-fixture.js
+onFlowComplete:
+  - runScript: scripts/cleanup-authenticated-fixture.js
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- openLink: 'groupi://e2e?code=${output.authenticatedFixture.loginCode}'
+- runFlow:
+    when:
+      visible: 'Open in.*Groupi'
+    commands:
+      - tapOn: '^Open$'
+      - openLink: 'groupi://e2e?code=${output.authenticatedFixture.loginCode}'
+- extendedWaitUntil:
+    visible: '${output.authenticatedFixture.eventTitle}'
+    timeout: 30000
+- assertVisible: 'Groupi Test Lab'
+- assertVisible: 'Posts'
+- assertVisible: '${output.authenticatedFixture.postTitle}'
+- tapOn: '${output.authenticatedFixture.postTitle}'
+- extendedWaitUntil:
+    visible: 'This seeded post verifies authenticated event and discussion navigation.'
+    timeout: 15000
+- assertVisible: 'Write a reply...'

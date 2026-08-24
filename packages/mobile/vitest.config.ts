@@ -11,8 +11,6 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
-      'app/**/*.test.ts',
-      'app/**/*.test.tsx',
       '__tests__/**/*.test.ts',
       '__tests__/**/*.test.tsx',
     ],
@@ -58,8 +56,6 @@ export default defineConfig({
         'ios/**',
         'src/**/*.test.ts',
         'src/**/*.test.tsx',
-        'app/**/*.test.ts',
-        'app/**/*.test.tsx',
         '__tests__/**',
         'test-helpers.tsx',
         'test-setup.ts',

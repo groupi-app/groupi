@@ -26,45 +26,45 @@ vi.mock('convex/_generated/api', () => ({
     },
   },
 }));
-vi.mock('../../../src/hooks/use-paginated-event-posts', () => ({
+vi.mock('../../src/hooks/use-paginated-event-posts', () => ({
   usePaginatedEventPosts: () => ({
     results: mocks.posts,
     status: 'CanLoadMore',
     loadMore: mocks.loadMore,
   }),
 }));
-vi.mock('../../../src/hooks/use-addons', () => ({
+vi.mock('../../src/hooks/use-addons', () => ({
   useEventAddons: () => [],
 }));
-vi.mock('../../../src/lib/event-access-policy', () => ({
+vi.mock('../../src/lib/event-access-policy', () => ({
   canRoleViewAttendeeList: () => true,
 }));
-vi.mock('../../../src/components/events/event-header', () => ({
+vi.mock('../../src/components/events/event-header', () => ({
   EventHeader: 'EventHeader',
 }));
-vi.mock('../../../src/components/events/member-list', () => ({
+vi.mock('../../src/components/events/member-list', () => ({
   MemberList: 'MemberList',
 }));
-vi.mock('../../../src/components/posts/post-feed', () => ({
+vi.mock('../../src/components/posts/post-feed', () => ({
   PostFeed: 'PostFeed',
 }));
-vi.mock('../../../src/components/events/event-detail-skeleton', () => ({
+vi.mock('../../src/components/events/event-detail-skeleton', () => ({
   EventDetailSkeleton: 'EventDetailSkeleton',
 }));
-vi.mock('../../../src/components/addons/event-addons-section', () => ({
+vi.mock('../../src/components/addons/event-addons-section', () => ({
   EventAddonsSection: 'EventAddonsSection',
 }));
-vi.mock('../../../src/components/ui/back-button', () => ({
+vi.mock('../../src/components/ui/back-button', () => ({
   BackButton: 'BackButton',
 }));
-vi.mock('../../../src/components/ui/empty-state', () => ({
+vi.mock('../../src/components/ui/empty-state', () => ({
   EmptyState: 'EmptyState',
 }));
-vi.mock('../../../src/components/ui/safe-area-view', () => ({
+vi.mock('../../src/components/ui/safe-area-view', () => ({
   SafeAreaView: 'SafeAreaView',
 }));
 
-import EventDetailScreen from './index';
+import EventDetailScreen from '../../app/event/[eventId]/index';
 
 function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
   if (!isValidElement<Record<string, unknown>>(node)) {

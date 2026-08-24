@@ -89,6 +89,7 @@ async function authenticateUser(
       },
       headers: {
         'Content-Type': 'application/json',
+        'x-e2e-fixture-key': process.env.E2E_FIXTURE_KEY ?? '',
       },
     });
 

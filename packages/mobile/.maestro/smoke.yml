@@ -5,6 +5,7 @@ tags:
 ---
 - launchApp:
     clearState: true
+    clearKeychain: true
 - assertVisible: 'Groupi'
 - assertVisible: 'Plan events together'
 - assertVisible: 'Continue with Discord'
@@ -14,3 +15,6 @@ tags:
 - inputText: 'not-an-email'
 - tapOn: 'Continue with Email'
 - assertVisible: 'Please enter a valid email address'
+- assertVisible:
+    text: 'Continue with Email'
+    enabled: true
