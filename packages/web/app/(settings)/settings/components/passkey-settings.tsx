@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
+import { authClient, signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,7 +29,22 @@ type Passkey = {
   createdAt: Date;
 };
 
+function isSessionNotFreshError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const { code, message } = error as { code?: unknown; message?: unknown };
+
+  return (
+    code === 'SESSION_NOT_FRESH' ||
+    (typeof message === 'string' &&
+      message.toLowerCase().includes('session is not fresh'))
+  );
+}
+
 export function PasskeySettings() {
+  const router = useRouter();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -40,6 +56,9 @@ export function PasskeySettings() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [isSupported, setIsSupported] = useState(true);
+  const [showReauthenticationDialog, setShowReauthenticationDialog] =
+    useState(false);
+  const [isReauthenticating, setIsReauthenticating] = useState(false);
 
   // Check if passkeys are supported
   useEffect(() => {
@@ -99,6 +118,11 @@ export function PasskeySettings() {
       });
 
       if (result.error) {
+        if (isSessionNotFreshError(result.error)) {
+          setShowReauthenticationDialog(true);
+          return;
+        }
+
         toast.error(result.error.message || 'Failed to add passkey');
         return;
       }
@@ -106,6 +130,11 @@ export function PasskeySettings() {
       toast.success('Passkey added successfully');
       await loadPasskeys();
     } catch (error) {
+      if (isSessionNotFreshError(error)) {
+        setShowReauthenticationDialog(true);
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : 'Failed to add passkey';
       // Handle user cancellation gracefully
@@ -115,6 +144,26 @@ export function PasskeySettings() {
       toast.error(message);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const reauthenticate = async () => {
+    setIsReauthenticating(true);
+
+    try {
+      const result = await signOut();
+
+      if (result.error) {
+        toast.error('Failed to start sign in. Please try again.');
+        setIsReauthenticating(false);
+        return;
+      }
+
+      router.push('/sign-in?redirect=%2Fsettings%2Faccount');
+      router.refresh();
+    } catch {
+      toast.error('Failed to start sign in. Please try again.');
+      setIsReauthenticating(false);
     }
   };
 
@@ -338,6 +387,41 @@ export function PasskeySettings() {
               loadingText='Deleting...'
             >
               Delete Passkey
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showReauthenticationDialog}
+        onOpenChange={open => {
+          if (!isReauthenticating) {
+            setShowReauthenticationDialog(open);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign in again to add a passkey</DialogTitle>
+            <DialogDescription>
+              For your security, adding a new passkey requires a recent sign in.
+              You&apos;ll return to account settings after signing in again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowReauthenticationDialog(false)}
+              disabled={isReauthenticating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={reauthenticate}
+              isLoading={isReauthenticating}
+              loadingText='Signing out...'
+            >
+              Sign in again
             </Button>
           </DialogFooter>
         </DialogContent>
