@@ -22,17 +22,24 @@ promotion beyond internal testing remains an explicit store-console action.
 
 ## One-time Expo and signing setup
 
-Install EAS CLI, sign in to the Groupi Expo owner account, and link or create
-the EAS project. Do not commit access tokens, signing keys, provisioning
-profiles, or store service-account JSON files.
+The app is linked to
+[`@theiasurette/groupi-mobile`](https://expo.dev/accounts/theiasurette/projects/groupi-mobile)
+with project ID `15aeaffd-755c-4f24-96b9-dd9f1bc25e6f`. Install EAS CLI and
+sign in to the Groupi Expo owner account. Do not commit access tokens, signing
+keys, provisioning profiles, or store service-account JSON files.
 
 ```bash
 cd packages/mobile
 eas login
-eas init
 eas credentials:configure-build --platform android --profile production
 eas credentials:configure-build --platform ios --profile production
 ```
+
+Android managed production signing is configured. iOS managed signing,
+physical-device previews, TestFlight, push entitlements, and App Store release
+require the Apple Account to belong to a paid Apple Developer Program team. A
+free Personal Team can run short-lived local device builds but cannot replace
+the distribution team required by this pipeline.
 
 Create EAS `preview` and `production` environment variables for:
 
@@ -59,6 +66,11 @@ The GitHub **Mobile Build and Release** workflow exposes three manual choices:
 - `signed-preview`: EAS-signed installable builds for physical-device QA;
 - `release-internal`: signed store builds, Android internal-track release, and
   iOS App Store Connect upload.
+
+EAS-hosted `maestro` workflow jobs require a paid Expo plan. The E2E workflow
+and flows are ready, but the current Expo account cannot execute or fully
+validate that job type until the plan is enabled. Signed preview and internal
+release workflows validate successfully without that entitlement.
 
 The same pipelines can be run directly from the app directory:
 

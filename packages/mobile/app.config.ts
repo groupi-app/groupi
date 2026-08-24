@@ -1,10 +1,15 @@
 import linkingConfig from './linking.config.json';
 
 const appLinkHost = linkingConfig.appLinkHost;
+const easProjectId =
+  process.env.EAS_PROJECT_ID?.trim() ||
+  process.env.EAS_BUILD_PROJECT_ID?.trim() ||
+  '15aeaffd-755c-4f24-96b9-dd9f1bc25e6f';
 
 export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
+  owner: 'theiasurette',
   version: '0.1.0',
   orientation: 'portrait',
   scheme: 'groupi',
@@ -55,7 +60,7 @@ export default {
   },
   extra: {
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? process.env.EAS_BUILD_PROJECT_ID,
+      projectId: easProjectId,
     },
   },
 };

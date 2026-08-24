@@ -51,9 +51,11 @@ assert(
 );
 
 assert(
-  appConfig.includes("bundleIdentifier: 'com.groupi.mobile'") &&
+  appConfig.includes("owner: 'theiasurette'") &&
+    appConfig.includes("'15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'") &&
+    appConfig.includes("bundleIdentifier: 'com.groupi.mobile'") &&
     appConfig.includes("package: 'com.groupi.mobile'"),
-  'iOS and Android application IDs must remain com.groupi.mobile'
+  'Expo ownership/project linkage and native application IDs must remain stable'
 );
 assert(
   linking.appLinkHost === 'www.groupi.gg',

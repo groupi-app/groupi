@@ -5,6 +5,13 @@ import appConfig from '../app.config';
 import { APP_LINK_PATH_PREFIXES } from '../src/lib/public-urls';
 
 describe('native app-link configuration', () => {
+  it('is linked to the production Expo project', () => {
+    expect(appConfig.owner).toBe('theiasurette');
+    expect(appConfig.extra.eas.projectId).toBe(
+      '15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
+    );
+  });
+
   it('declares matching iOS and Android associations for the public host', () => {
     expect(appConfig.ios.associatedDomains).toEqual(['applinks:www.groupi.gg']);
     expect(appConfig.android.intentFilters).toHaveLength(
