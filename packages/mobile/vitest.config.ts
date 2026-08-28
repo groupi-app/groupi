@@ -80,6 +80,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@groupi/shared/utils': fileURLToPath(
+        new URL('../shared/src/utils/index.ts', import.meta.url)
+      ),
       '@': './src',
       '@/components': './src/components',
       '@/lib': './src/lib',

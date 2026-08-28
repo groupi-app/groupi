@@ -70,8 +70,9 @@ export function useChooseEventDate() {
       try {
         await mutation(params);
         toast.success('Event date selected!');
-      } catch {
+      } catch (error) {
         toast.error('Failed to choose date');
+        throw error;
       }
     },
     [mutation]
@@ -82,12 +83,38 @@ export function useResetEventDate() {
   const mutation = useMutation(api.events.mutations.resetEventDate);
 
   return useCallback(
-    async (eventId: Id<'events'>) => {
+    async (eventId: Id<'events'>, options?: { silent?: boolean }) => {
       try {
         await mutation({ eventId });
-        toast.success('Event date reset');
-      } catch {
+        if (!options?.silent) {
+          toast.success('Event date reset');
+        }
+      } catch (error) {
         toast.error('Failed to reset date');
+        throw error;
+      }
+    },
+    [mutation]
+  );
+}
+
+export function useUpdatePotentialDateTimes() {
+  const mutation = useMutation(api.events.mutations.updatePotentialDateTimes);
+
+  return useCallback(
+    async (params: {
+      eventId: Id<'events'>;
+      potentialDateTimeOptions: Array<{
+        start: number;
+        end?: number;
+        note?: string;
+      }>;
+    }) => {
+      try {
+        await mutation(params);
+      } catch (error) {
+        toast.error('Failed to update date options');
+        throw error;
       }
     },
     [mutation]

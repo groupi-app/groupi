@@ -15,12 +15,6 @@ interface EventCompletionStatus {
 type EventRole = 'ATTENDEE' | 'MODERATOR' | 'ORGANIZER';
 type AttendeeListPermission = 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
 
-const ROLE_LEVELS: Record<EventRole, number> = {
-  ATTENDEE: 1,
-  MODERATOR: 2,
-  ORGANIZER: 3,
-};
-
 function getEventRouteSuffix(pathname: string, eventId: string): string | null {
   const eventRoot = `/event/${eventId}`;
   if (pathname === eventRoot) return '';
@@ -65,12 +59,6 @@ export function canRoleViewAttendeeList(
   role: EventRole | undefined,
   requiredPermission: AttendeeListPermission | undefined
 ): boolean {
-  if (!role) return false;
-
-  const requiredRole =
-    !requiredPermission || requiredPermission === 'EVERYONE'
-      ? 'ATTENDEE'
-      : requiredPermission;
-
-  return ROLE_LEVELS[role] >= ROLE_LEVELS[requiredRole];
+  return hasPermission(role, requiredPermission ?? 'EVERYONE');
 }
+import { hasPermission } from '@groupi/shared/utils';

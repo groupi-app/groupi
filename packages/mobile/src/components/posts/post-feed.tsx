@@ -10,6 +10,11 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+import {
+  canCreatePosts,
+  type EventPermissions,
+  type EventRole,
+} from '@groupi/shared/utils';
 
 import { LoadingState } from '@/components/molecules';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -28,7 +33,8 @@ interface PostFeedProps {
   header: ReactElement;
   posts: PostCardProps['post'][];
   currentPersonId: string;
-  userRole?: string;
+  userRole?: EventRole;
+  eventPermissions?: EventPermissions;
   status: PostFeedStatus;
   loadMore: (count: number) => void;
 }
@@ -43,6 +49,7 @@ export function PostFeed({
   posts,
   currentPersonId,
   userRole,
+  eventPermissions,
   status,
   loadMore,
 }: PostFeedProps) {
@@ -51,6 +58,7 @@ export function PostFeed({
     useCSSVariable('--color-primary-foreground') ?? ''
   );
   const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
+  const showNewPost = canCreatePosts(userRole, eventPermissions);
 
   const handleEndReached = useCallback(() => {
     if (shouldLoadMorePosts(status)) {
@@ -94,7 +102,9 @@ export function PostFeed({
           No posts yet
         </Text>
         <Text className='mt-1 text-center text-sm text-muted-foreground'>
-          Start the conversation with a new post.
+          {showNewPost
+            ? 'Start the conversation with a new post.'
+            : 'Posts shared with this event will appear here.'}
         </Text>
       </View>
     );
@@ -133,17 +143,21 @@ export function PostFeed({
         showsVerticalScrollIndicator={false}
       />
 
-      <Pressable
-        onPress={() => router.push(`/event/${eventId}/new-post`)}
-        accessibilityRole='button'
-        accessibilityLabel='Create new post'
-        accessibilityHint='Opens the new post composer'
-        hitSlop={4}
-        className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-primary-foreground bg-primary px-5 py-3 shadow-floating active:scale-95 active:bg-primary-hover'
-      >
-        <Ionicons name='add' size={20} color={primaryForegroundColor} />
-        <Text className='font-semibold text-primary-foreground'>New Post</Text>
-      </Pressable>
+      {showNewPost ? (
+        <Pressable
+          onPress={() => router.push(`/event/${eventId}/new-post`)}
+          accessibilityRole='button'
+          accessibilityLabel='Create new post'
+          accessibilityHint='Opens the new post composer'
+          hitSlop={4}
+          className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-primary-foreground bg-primary px-5 py-3 shadow-floating active:scale-95 active:bg-primary-hover'
+        >
+          <Ionicons name='add' size={20} color={primaryForegroundColor} />
+          <Text className='font-semibold text-primary-foreground'>
+            New Post
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

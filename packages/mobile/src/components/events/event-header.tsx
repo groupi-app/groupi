@@ -96,10 +96,10 @@ export function EventHeader({
 
     if (permissions?.canEdit) {
       options.push({
-        label: 'Edit Event',
-        icon: 'create-outline',
+        label: 'Event Settings',
+        icon: 'settings-outline',
         showChevron: true,
-        onPress: () => router.push(`/event/${eventId}/edit`),
+        onPress: () => router.push(`/event/${eventId}/settings`),
       });
     }
 
@@ -257,12 +257,27 @@ export function EventHeader({
 
         {/* Date */}
         {formattedDate ? (
-          <View className='mt-3 flex-row items-center gap-2'>
+          <Pressable
+            onPress={
+              isOrganizer
+                ? () => router.push(`/event/${eventId}/settings/date`)
+                : undefined
+            }
+            disabled={!isOrganizer}
+            accessibilityRole={isOrganizer ? 'button' : undefined}
+            accessibilityLabel={
+              isOrganizer ? 'Change event date and time' : undefined
+            }
+            className='mt-3 flex-row items-center gap-2'
+          >
             <Ionicons name='calendar-outline' size={16} color={mutedColor} />
-            <Text className='text-base text-muted-foreground'>
+            <Text className='flex-1 text-base text-muted-foreground'>
               {formattedDate}
             </Text>
-          </View>
+            {isOrganizer ? (
+              <Ionicons name='chevron-forward' size={16} color={mutedColor} />
+            ) : null}
+          </Pressable>
         ) : !chosenDateTime ? (
           <Pressable
             onPress={() => router.push(`/event/${eventId}/availability`)}

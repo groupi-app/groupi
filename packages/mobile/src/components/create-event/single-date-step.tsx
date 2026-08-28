@@ -13,6 +13,8 @@ import { toast } from '@groupi/shared/platform';
 interface SingleDateStepProps {
   onNext: () => void;
   onBack: () => void;
+  submitLabel?: string;
+  isSubmitting?: boolean;
 }
 
 function formatTime(date: Date): string {
@@ -46,7 +48,12 @@ function todayString(): string {
 
 type TimePicker = 'start' | 'end';
 
-export function SingleDateStep({ onNext, onBack }: SingleDateStepProps) {
+export function SingleDateStep({
+  onNext,
+  onBack,
+  submitLabel = 'Next',
+  isSubmitting = false,
+}: SingleDateStepProps) {
   const { formState, updateFormState } = useCreateEventForm();
   const { singleDate, singleEndDate, hasEndTime } = formState;
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
@@ -312,8 +319,13 @@ export function SingleDateStep({ onNext, onBack }: SingleDateStepProps) {
           <Button variant='outline' onPress={onBack} className='flex-1'>
             Back
           </Button>
-          <Button onPress={handleNext} className='flex-1'>
-            Next
+          <Button
+            onPress={handleNext}
+            className='flex-1'
+            isLoading={isSubmitting}
+            loadingText='Saving...'
+          >
+            {submitLabel}
           </Button>
         </View>
       </View>

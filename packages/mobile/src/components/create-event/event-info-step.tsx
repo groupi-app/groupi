@@ -1,47 +1,11 @@
-import {
-  View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-} from 'react-native';
+import { View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '@/components/ui/text';
-import { Ionicons } from '@expo/vector-icons';
 import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { LabeledTextarea as Textarea } from '@/components/ui/labeled-textarea';
 import { Button } from '@/components/ui/button';
 import { EventImageUpload } from '@/components/events/event-image-upload';
-import {
-  useCreateEventForm,
-  type EventVisibility,
-} from '@/context/create-event-context';
-import { cn } from '@/lib/utils';
-
-const VISIBILITY_OPTIONS: {
-  value: EventVisibility;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  description: string;
-}[] = [
-  {
-    value: 'PRIVATE',
-    label: 'Private',
-    icon: 'lock-closed',
-    description: 'Only invited members can see this event',
-  },
-  {
-    value: 'FRIENDS',
-    label: 'Friends',
-    icon: 'people',
-    description: 'Friends of members can discover this event',
-  },
-  {
-    value: 'PUBLIC',
-    label: 'Public',
-    icon: 'globe',
-    description: 'Anyone can discover and join this event',
-  },
-];
+import { EventVisibilitySelector } from '@/components/events/event-visibility-selector';
+import { useCreateEventForm } from '@/context/create-event-context';
 
 interface EventInfoStepProps {
   onNext: () => void;
@@ -123,51 +87,10 @@ export function EventInfoStep({ onNext }: EventInfoStepProps) {
             <Text className='mb-1.5 text-sm font-medium text-foreground'>
               Visibility
             </Text>
-            <View className='gap-2'>
-              {VISIBILITY_OPTIONS.map(opt => {
-                const isSelected = visibility === opt.value;
-                return (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => updateFormState({ visibility: opt.value })}
-                    className={cn(
-                      'flex-row items-center gap-3 rounded-card border p-3',
-                      isSelected
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border'
-                    )}
-                  >
-                    <Ionicons
-                      name={opt.icon}
-                      size={18}
-                      color={isSelected ? '#8b00b8' : '#9ca3af'}
-                    />
-                    <View className='flex-1'>
-                      <Text
-                        className={cn(
-                          'text-sm font-medium',
-                          isSelected
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        )}
-                      >
-                        {opt.label}
-                      </Text>
-                      <Text className='text-xs text-muted-foreground'>
-                        {opt.description}
-                      </Text>
-                    </View>
-                    {isSelected ? (
-                      <Ionicons
-                        name='checkmark-circle'
-                        size={20}
-                        color='#8b00b8'
-                      />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
+            <EventVisibilitySelector
+              value={visibility}
+              onChange={value => updateFormState({ visibility: value })}
+            />
           </View>
 
           <Button onPress={onNext} disabled={!isValid} className='mt-2'>

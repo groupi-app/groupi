@@ -8,6 +8,7 @@ import type { Id } from 'convex/_generated/dataModel';
 import { usePaginatedEventPosts } from '@/hooks/use-paginated-event-posts';
 import { useEventAddons } from '@/hooks/use-addons';
 import { canRoleViewAttendeeList } from '@/lib/event-access-policy';
+import { canInviteMembers } from '@groupi/shared/utils';
 
 import { EventHeader } from '@/components/events/event-header';
 import { MemberList } from '@/components/events/member-list';
@@ -80,6 +81,7 @@ export default function EventDetailScreen() {
         eventId={eventId}
         currentPersonId={headerData.userMembership.person._id}
         userRole={headerData.userMembership.role}
+        eventPermissions={headerData.permissions}
         posts={posts}
         status={postFeedStatus}
         loadMore={loadMore}
@@ -96,6 +98,10 @@ export default function EventDetailScreen() {
                 members={membersData}
                 eventId={eventId}
                 canManage={permissions?.canManage ?? false}
+                canInvite={canInviteMembers(
+                  headerData.userMembership.role,
+                  headerData.permissions
+                )}
               />
             ) : null}
 

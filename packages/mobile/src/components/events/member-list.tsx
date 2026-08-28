@@ -13,9 +13,15 @@ interface MemberListProps {
   members: MembersData;
   eventId: string;
   canManage: boolean;
+  canInvite: boolean;
 }
 
-export function MemberList({ members, eventId, canManage }: MemberListProps) {
+export function MemberList({
+  members,
+  eventId,
+  canManage,
+  canInvite,
+}: MemberListProps) {
   // The query returns { event: { memberships: [...] }, ... }
   // Extract the actual member list from all possible shapes
   const memberList: {
@@ -97,9 +103,12 @@ export function MemberList({ members, eventId, canManage }: MemberListProps) {
             />
           );
         })}
-        {canManage ? (
+        {canInvite ? (
           <Pressable
             onPress={() => router.push(`/event/${eventId}/invite`)}
+            accessibilityRole='button'
+            accessibilityLabel='Invite people'
+            accessibilityHint='Opens event invitation options'
             className='h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-border'
           >
             <Ionicons name='add' size={24} color='#9ca3af' />

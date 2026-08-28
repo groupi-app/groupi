@@ -6,6 +6,9 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useCSSVariable } from 'uniwind';
 import type { Id } from 'convex/_generated/dataModel';
+import { useQuery } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import { canCreatePosts } from '@groupi/shared/utils';
 
 import { BackButton } from '@/components/ui/back-button';
 import { AttachmentButton } from '@/components/attachments/attachment-button';
@@ -13,6 +16,8 @@ import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { PostComposerKeyboardView } from '@/components/posts/post-composer-keyboard-view';
 import { PostTitleInput } from '@/components/posts/post-title-input';
 import { RichTextEditor } from '@/components/posts/rich-text-editor';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingState } from '@/components/molecules';
 import { useCreatePost } from '@/hooks/use-posts';
 import { useAttachments } from '@/hooks/use-file-upload';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -30,6 +35,10 @@ function hasContent(html: string): boolean {
 
 export default function NewPostScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
+  const typedEventId = eventId as Id<'events'>;
+  const eventHeader = useQuery(api.events.queries.getEventHeader, {
+    eventId: typedEventId,
+  });
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,9 +68,13 @@ export default function NewPostScreen() {
   const hasChanges =
     title.trim().length > 0 || hasContent(content) || pendingUploads.length > 0;
   const allowNextNavigation = useUnsavedChanges(hasChanges);
+  const canCreatePost = canCreatePosts(
+    eventHeader?.userMembership.role,
+    eventHeader?.permissions
+  );
 
   async function handleSubmit() {
-    if (!isValid) return;
+    if (!isValid || !canCreatePost) return;
 
     setIsSubmitting(true);
     try {
@@ -70,7 +83,7 @@ export default function NewPostScreen() {
         uploadAll,
         create: attachments =>
           createPost({
-            eventId: eventId as Id<'events'>,
+            eventId: typedEventId,
             title: title.trim(),
             content,
             attachments: attachments.map(r => ({
@@ -95,6 +108,38 @@ export default function NewPostScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (eventHeader === undefined) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center border-b border-border px-4 py-3'>
+          <BackButton />
+          <Text className='ml-3 text-lg font-semibold text-foreground'>
+            New Post
+          </Text>
+        </View>
+        <LoadingState message='Checking posting permissions...' />
+      </SafeAreaView>
+    );
+  }
+
+  if (!eventHeader || !canCreatePost) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center border-b border-border px-4 py-3'>
+          <BackButton />
+          <Text className='ml-3 text-lg font-semibold text-foreground'>
+            New Post
+          </Text>
+        </View>
+        <EmptyState
+          icon='lock-closed-outline'
+          title='Posting unavailable'
+          description="You don't have permission to create posts for this event."
+        />
+      </SafeAreaView>
+    );
   }
 
   return (

@@ -61,8 +61,11 @@ vi.mock('../../src/components/ui/back-button', () => ({
 vi.mock('../../src/components/ui/safe-area-view', () => ({
   SafeAreaView: 'SafeAreaView',
 }));
+vi.mock('../../src/components/ui/empty-state', () => ({
+  EmptyState: 'EmptyState',
+}));
 
-import InviteScreen from '../../app/event/[eventId]/invite';
+import InviteScreen, { InviteContent } from '../../app/event/[eventId]/invite';
 
 function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
   if (
@@ -88,6 +91,11 @@ describe('event invite screen', () => {
         return {
           event: { title: 'Launch Party' },
           userMembership: { role: 'ORGANIZER' },
+          permissions: {
+            createPosts: 'EVERYONE',
+            inviteMembers: 'MODERATOR',
+            viewAttendeeList: 'EVERYONE',
+          },
         };
       }
       return {
@@ -101,7 +109,13 @@ describe('event invite screen', () => {
   });
 
   it('presents the three mobile invite methods with live counts', () => {
-    const tree = elements(InviteScreen());
+    const tree = elements(
+      InviteContent({
+        eventId: 'event-123' as never,
+        eventTitle: 'Launch Party',
+        canInviteModerator: true,
+      })
+    );
     const tabs = tree.find(element => element.type === 'TabBarFilter');
 
     expect(tabs?.props.tabs).toEqual([
@@ -118,6 +132,24 @@ describe('event invite screen', () => {
     const tree = elements(InviteScreen());
 
     expect(tree.some(element => element.type === 'InviteSkeleton')).toBe(true);
+    expect(tree.some(element => element.type === 'TabBarFilter')).toBe(false);
+  });
+
+  it('blocks direct invite routes when the configured permission denies it', () => {
+    mocks.useQuery.mockReturnValue({
+      event: { title: 'Launch Party' },
+      userMembership: { role: 'ATTENDEE' },
+      permissions: {
+        createPosts: 'EVERYONE',
+        inviteMembers: 'MODERATOR',
+        viewAttendeeList: 'EVERYONE',
+      },
+    });
+
+    const tree = elements(InviteScreen());
+    const empty = tree.find(element => element.type === 'EmptyState');
+
+    expect(empty?.props.title).toBe('Inviting unavailable');
     expect(tree.some(element => element.type === 'TabBarFilter')).toBe(false);
   });
 });

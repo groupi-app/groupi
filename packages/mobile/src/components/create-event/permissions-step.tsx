@@ -98,9 +98,16 @@ function detectPreset(permissions?: EventPermissions): Preset {
 interface PermissionsStepProps {
   onNext: () => void;
   onBack: () => void;
+  submitLabel?: string;
+  isSubmitting?: boolean;
 }
 
-export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
+export function PermissionsStep({
+  onNext,
+  onBack,
+  submitLabel = 'Next',
+  isSubmitting = false,
+}: PermissionsStepProps) {
   const { formState, updateFormState } = useCreateEventForm();
   const [selectedPreset, setSelectedPreset] = useState<Preset>(
     detectPreset(formState.permissions)
@@ -161,6 +168,9 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
               <Pressable
                 key={preset.id}
                 onPress={() => handlePresetSelect(preset.id)}
+                accessibilityRole='radio'
+                accessibilityLabel={`${preset.name}. ${preset.description}`}
+                accessibilityState={{ checked: isSelected }}
                 className={cn(
                   'w-[48%] gap-2 rounded-card border-2 p-4',
                   isSelected
@@ -206,6 +216,9 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
                       <Pressable
                         key={level.value}
                         onPress={() => handleCustomChange(key, level.value)}
+                        accessibilityRole='radio'
+                        accessibilityLabel={`${label}: ${level.label}`}
+                        accessibilityState={{ checked: isActive }}
                         className={cn(
                           'flex-1 items-center rounded-badge px-2 py-2',
                           isActive
@@ -236,8 +249,13 @@ export function PermissionsStep({ onNext, onBack }: PermissionsStepProps) {
           <Button variant='outline' onPress={onBack} className='flex-1'>
             Back
           </Button>
-          <Button onPress={handleNext} className='flex-1'>
-            Next
+          <Button
+            onPress={handleNext}
+            className='flex-1'
+            isLoading={isSubmitting}
+            loadingText='Saving...'
+          >
+            {submitLabel}
           </Button>
         </View>
       </View>

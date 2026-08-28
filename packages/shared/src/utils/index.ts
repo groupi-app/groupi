@@ -13,6 +13,7 @@ export * from './gdl-parser';
 export * from './attachment-submission';
 export * from './date-parser';
 export * from './date-voting';
+export * from './event-permissions';
 
 // Date and time utilities
 export function formatDate(date: Date | number): string {

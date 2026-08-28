@@ -6,6 +6,7 @@ import {
   authComponent,
   ExtendedAuthUser,
   AuthUserId,
+  requireEventPermission,
 } from '../auth';
 import { Id, Doc } from '../_generated/dataModel';
 import { checkIfFriends } from '../lib/privacy';
@@ -138,17 +139,7 @@ export const getSentEventInvites = query({
       return [];
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return [];
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     // Get all invites for this event
     const invites = await ctx.db
@@ -225,17 +216,7 @@ export const searchUsersForEventInvite = query({
       return [];
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return [];
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     const trimmedSearch = searchTerm.trim().toLowerCase();
     // Minimum search length is 2 characters
@@ -352,17 +333,7 @@ export const searchUserByExactUsernameForEventInvite = query({
       return null;
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return null;
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     const trimmedSearch = searchTerm.trim().toLowerCase();
     if (trimmedSearch.length < 2) {

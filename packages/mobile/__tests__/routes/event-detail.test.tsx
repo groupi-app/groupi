@@ -84,7 +84,11 @@ describe('event detail post feed', () => {
             role: 'ORGANIZER',
             person: { _id: 'person-current' },
           },
-          permissions: { viewAttendeeList: 'EVERYONE' },
+          permissions: {
+            createPosts: 'EVERYONE',
+            inviteMembers: 'MODERATOR',
+            viewAttendeeList: 'EVERYONE',
+          },
         };
       }
       return { event: { memberships: [] } };
@@ -102,6 +106,11 @@ describe('event detail post feed', () => {
     expect(feed?.props.loadMore).toBe(mocks.loadMore);
     expect(feed?.props.currentPersonId).toBe('person-current');
     expect(feed?.props.userRole).toBe('ORGANIZER');
+    expect(feed?.props.eventPermissions).toEqual({
+      createPosts: 'EVERYONE',
+      inviteMembers: 'MODERATOR',
+      viewAttendeeList: 'EVERYONE',
+    });
     expect(tree.some(element => element.type === 'ScrollView')).toBe(false);
   });
 });

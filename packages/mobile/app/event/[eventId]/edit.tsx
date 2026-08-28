@@ -9,12 +9,14 @@ import { LabeledTextarea as Textarea } from '@/components/ui/labeled-textarea';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { EventImageUpload } from '@/components/events/event-image-upload';
+import { EventVisibilitySelector } from '@/components/events/event-visibility-selector';
 import { LoadingState } from '@/components/molecules';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useEventHeader, useUpdateEvent } from '@/hooks/use-events';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { toast } from '@groupi/shared/platform';
+import type { EventVisibility } from '@/context/create-event-context';
 
 export default function EditEventScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
@@ -25,6 +27,7 @@ export default function EditEventScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [visibility, setVisibility] = useState<EventVisibility>('PRIVATE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -46,6 +49,7 @@ export default function EditEventScreen() {
       setTitle(event.title ?? '');
       setDescription(event.description ?? '');
       setLocation(event.location ?? '');
+      setVisibility((event.visibility ?? 'PRIVATE') as EventVisibility);
       setExistingImageUrl(event.imageUrl ?? null);
       setInitialized(true);
     }
@@ -57,6 +61,7 @@ export default function EditEventScreen() {
     (title !== (event?.title ?? '') ||
       description !== (event?.description ?? '') ||
       location !== (event?.location ?? '') ||
+      visibility !== (event?.visibility ?? 'PRIVATE') ||
       newImageUri !== null ||
       removeExistingImage);
   const allowNextNavigation = useUnsavedChanges(hasChanges);
@@ -93,6 +98,27 @@ export default function EditEventScreen() {
     );
   }
 
+  const role = headerData.userMembership.role;
+  const canEdit = role === 'ORGANIZER' || role === 'MODERATOR';
+
+  if (!canEdit) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>
+            Edit Event
+          </Text>
+        </View>
+        <EmptyState
+          icon='lock-closed-outline'
+          title='Editing unavailable'
+          description='Only event organizers and moderators can edit event details.'
+        />
+      </SafeAreaView>
+    );
+  }
+
   const isValid = title.trim().length > 0;
 
   async function handleSubmit() {
@@ -111,6 +137,8 @@ export default function EditEventScreen() {
         );
         if (result) {
           imageStorageId = result.storageId;
+        } else {
+          throw new Error('Cover image upload failed');
         }
       } else if (removeExistingImage) {
         imageStorageId = null; // Signal to clear the image
@@ -119,8 +147,9 @@ export default function EditEventScreen() {
       await updateEvent({
         eventId,
         title: title.trim(),
-        description: description.trim() || undefined,
-        location: location.trim() || undefined,
+        description: description.trim(),
+        location: location.trim(),
+        ...(role === 'ORGANIZER' ? { visibility } : {}),
         ...(imageStorageId !== undefined ? { imageStorageId } : {}),
       });
       toast.success('Event updated!');
@@ -199,6 +228,18 @@ export default function EditEventScreen() {
               value={location}
               onChangeText={setLocation}
             />
+
+            {role === 'ORGANIZER' ? (
+              <View>
+                <Text className='mb-1.5 text-sm font-medium text-foreground'>
+                  Visibility
+                </Text>
+                <EventVisibilitySelector
+                  value={visibility}
+                  onChange={setVisibility}
+                />
+              </View>
+            ) : null}
 
             <Button
               onPress={handleSubmit}

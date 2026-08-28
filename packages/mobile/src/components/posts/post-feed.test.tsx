@@ -56,6 +56,11 @@ function createFeed(
     eventId: 'event-123',
     currentPersonId: 'person-current',
     userRole: 'ATTENDEE',
+    eventPermissions: {
+      createPosts: 'EVERYONE',
+      inviteMembers: 'MODERATOR',
+      viewAttendeeList: 'EVERYONE',
+    },
     header: <></>,
     posts,
     status,
@@ -124,5 +129,26 @@ describe('PostFeed infinite scrolling', () => {
     button.props.onPress();
 
     expect(router.push).toHaveBeenCalledWith('/event/event-123/new-post');
+  });
+
+  it('hides the new-post action when the event permission denies it', () => {
+    const feed = PostFeed({
+      eventId: 'event-123',
+      currentPersonId: 'person-current',
+      userRole: 'ATTENDEE',
+      eventPermissions: {
+        createPosts: 'MODERATOR',
+        inviteMembers: 'MODERATOR',
+        viewAttendeeList: 'EVERYONE',
+      },
+      header: <></>,
+      posts: [],
+      status: 'Exhausted',
+      loadMore: mocks.loadMore,
+    });
+
+    expect(feedChildren(feed).some(child => child.type === 'Pressable')).toBe(
+      false
+    );
   });
 });

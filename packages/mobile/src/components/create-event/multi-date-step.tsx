@@ -19,6 +19,8 @@ import { SmartDateInput } from './smart-date-input';
 interface MultiDateStepProps {
   onNext: () => void;
   onBack: () => void;
+  submitLabel?: string;
+  isSubmitting?: boolean;
 }
 
 function formatDateShort(date: Date): string {
@@ -73,7 +75,12 @@ let nextDateId = 0;
 
 type TimePicker = 'start' | 'end';
 
-export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
+export function MultiDateStep({
+  onNext,
+  onBack,
+  submitLabel = 'Next',
+  isSubmitting = false,
+}: MultiDateStepProps) {
   const { formState, updateFormState } = useCreateEventForm();
   const { dateOptions } = formState;
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
@@ -508,8 +515,10 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
             onPress={handleNext}
             disabled={dateOptions.length < 2}
             className='flex-1'
+            isLoading={isSubmitting}
+            loadingText='Saving...'
           >
-            Next
+            {submitLabel}
           </Button>
         </View>
       </View>
