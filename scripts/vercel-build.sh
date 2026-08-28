@@ -10,13 +10,6 @@
 # Convex env vars (set once per deployment via CLI or dashboard):
 # - BETTER_AUTH_SECRET, DISCORD_*, GOOGLE_*
 #
-# Convex preview defaults:
-# - SITE_URL=https://www.groupi.gg
-#
-# SITE_URL must exist while Convex analyzes the auth module during initial
-# preview creation. After creation, this script replaces the bootstrap value
-# with the branch-specific Vercel URL.
-#
 # Build requirements:
 # - ENABLE_EXPERIMENTAL_COREPACK=1 must be set in Vercel project settings
 #   (or corepack enable must run before pnpm install) so Vercel uses pnpm 10
@@ -45,13 +38,6 @@ else
   # Sanitize branch name (replace special chars with dashes, lowercase)
   PREVIEW_NAME=$(echo "$PREVIEW_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
 
-  echo "Deploying to Convex preview: $PREVIEW_NAME..."
-
-  npx convex deploy \
-    --preview-create "$PREVIEW_NAME" \
-    --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
-    --cmd "$BUILD_CMD"
-
   PREVIEW_HOST="${VERCEL_BRANCH_URL:-${VERCEL_URL:-}}"
   if [ -z "$PREVIEW_HOST" ]; then
     echo "Error: VERCEL_BRANCH_URL or VERCEL_URL is required for preview auth configuration"
@@ -59,8 +45,14 @@ else
   fi
   PREVIEW_SITE_URL="https://$PREVIEW_HOST"
 
-  # Set environment variables on preview deployments. These must not be hidden
-  # behind BETTER_AUTH_SECRET because SITE_URL also configures passkeys.
+  # Claim a fresh deployment before configuring it. The initial function push
+  # can fail because auth intentionally requires SITE_URL during analysis; the
+  # deployment is still created and can then be configured before the real push.
+  echo "Creating Convex preview: $PREVIEW_NAME..."
+  if ! npx convex deploy --preview-create "$PREVIEW_NAME"; then
+    echo "Initial preview push deferred until auth environment is configured"
+  fi
+
   echo "Configuring preview environment: $PREVIEW_NAME..."
   npx convex env set SITE_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME"
   npx convex env set BETTER_AUTH_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME"
@@ -74,6 +66,12 @@ else
   else
     echo "Warning: BETTER_AUTH_SECRET is not available; preview sign-in may not work"
   fi
+
+  echo "Deploying to Convex preview: $PREVIEW_NAME..."
+  npx convex deploy \
+    --preview-name "$PREVIEW_NAME" \
+    --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
+    --cmd "$BUILD_CMD"
 fi
 
 echo "=== Build Complete ==="
