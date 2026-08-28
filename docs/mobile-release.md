@@ -8,12 +8,14 @@ cross-platform Maestro smoke tests and store delivery. Run EAS commands from
 
 `packages/mobile/eas.json` defines the release progression:
 
-| Profile         | Signing                    | Artifact                               | Purpose                         |
-| --------------- | -------------------------- | -------------------------------------- | ------------------------------- |
-| `ios-simulator` | None                       | iOS Simulator development client       | Local simulator development     |
-| `e2e-test`      | None                       | Android APK and iOS Simulator app      | Automated Maestro smoke tests   |
-| `preview`       | EAS-managed device signing | Installable Android APK and iOS ad hoc | Physical-device acceptance test |
-| `production`    | EAS-managed store signing  | Android App Bundle and iOS archive     | Store submission                |
+| Profile           | Signing                    | Backend     | Purpose                                     |
+| ----------------- | -------------------------- | ----------- | ------------------------------------------- |
+| `ios-simulator`   | None                       | Development | Local simulator development                 |
+| `e2e-test`        | None                       | Preview     | Automated preview Maestro tests             |
+| `preview`         | EAS-managed device signing | Preview     | Physical-device preview testing             |
+| `production-test` | None                       | Production  | Non-mutating hosted production smoke tests  |
+| `acceptance`      | EAS-managed device signing | Production  | Installable production acceptance artifacts |
+| `production`      | EAS-managed store signing  | Production  | Store submission                            |
 
 Production build numbers use EAS remote versioning and auto-increment. Android
 automated submission is deliberately limited to the completed Google Play
@@ -53,6 +55,13 @@ Authentication rejects missing, insecure, unrelated relying-party
 configuration, and unregistered Android certificate origins instead of
 silently falling back to localhost.
 
+The `acceptance`, `production-test`, and `production` build profiles fail during
+app configuration unless all three public URLs are present, use HTTPS, and
+point to the canonical Groupi web/auth host plus a Convex cloud deployment.
+This prevents a signed acceptance or store artifact from accidentally embedding
+local or preview web endpoints. Selecting the correct production Convex
+deployment remains an owner-controlled EAS environment operation.
+
 The build worker provides `EAS_BUILD_PROJECT_ID`; local development may still
 set `EAS_PROJECT_ID` in the ignored `packages/mobile/.env.local` file. Configure
 the matching Convex deployment with this project ID in
@@ -65,24 +74,31 @@ For GitHub dispatch, add the repository secrets `EXPO_TOKEN` and
 
 ## Automated pipelines
 
-The GitHub **Mobile Build and Release** workflow exposes three manual choices:
+The GitHub **Mobile Build and Release** workflow exposes five manual choices:
 
 - `e2e-tests`: unsigned Android emulator and iOS Simulator builds, followed by
   Maestro on both platforms;
 - `signed-preview`: EAS-signed installable builds for physical-device QA;
+- `production-acceptance`: source-gated, signed installable artifacts connected
+  to production, without any store submission;
+- `production-e2e`: non-mutating Android/iOS hosted smoke tests against the
+  production environment;
 - `release-internal`: signed store builds, Android internal-track release, and
   iOS App Store Connect upload.
 
-EAS-hosted `maestro` workflow jobs require a paid Expo plan. The E2E workflow
-and flows are ready, but the current Expo account cannot execute or fully
-validate that job type until the plan is enabled. Signed preview and internal
-release workflows validate successfully without that entitlement.
+EAS-hosted `maestro` workflow jobs require a paid Expo plan. The preview and
+production E2E workflows and flows are ready, but the current Expo account
+cannot execute or fully validate that job type until the plan is enabled.
+Signed preview, production acceptance, and internal release workflows validate
+successfully without that entitlement.
 
 The same pipelines can be run directly from the app directory:
 
 ```bash
 pnpm test:e2e
+pnpm test:e2e:production
 pnpm build:preview
+pnpm build:acceptance
 pnpm release:internal
 ```
 
@@ -91,6 +107,12 @@ cold launch, the native authentication surface, client-side email validation,
 and signed-out invite deep-link routing. Authenticated provider, session,
 attachment, event, and push delivery flows require preview test identities and
 a reachable E2E-enabled backend before they can be automated safely.
+
+Production E2E intentionally excludes the authenticated fixture because that
+fixture creates and removes records. It runs only signed-out, non-destructive
+smoke, routing, invite-return, and process-recovery flows. Authenticated
+production acceptance is a manual test with dedicated test accounts after the
+signed `acceptance` artifacts install.
 
 Run the structural release guard without contacting EAS:
 

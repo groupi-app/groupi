@@ -1,8 +1,24 @@
 name: Signed mobile previews
 
 jobs:
+  validate:
+    name: Validate mobile preview source
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - run:
+          name: Validate release configuration
+          command: pnpm release:check
+      - run:
+          name: Check mobile types
+          command: pnpm type-check
+      - run:
+          name: Run mobile unit tests
+          command: pnpm test:run
+
   build_android:
     name: Build signed Android preview
+    needs: [validate]
     type: build
     params:
       platform: android
@@ -10,6 +26,7 @@ jobs:
 
   build_ios:
     name: Build signed iOS preview
+    needs: [validate]
     type: build
     params:
       platform: ios

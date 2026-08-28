@@ -5,6 +5,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
+import type { FocalPoint } from '@/lib/image-focal-point';
 
 export type DateType = 'single' | 'multi';
 export type EventVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
@@ -41,6 +42,7 @@ export interface FormState {
   dateOptions: DateOption[];
   imageUri: string | null;
   imageFile: ImageFile | null;
+  imageFocalPoint: FocalPoint | null;
   addonConfigs: Record<string, Record<string, unknown>>;
   permissions?: EventPermissions;
 }
@@ -64,6 +66,7 @@ function createInitialState(): FormState {
     dateOptions: [],
     imageUri: null,
     imageFile: null,
+    imageFocalPoint: null,
     addonConfigs: {},
   };
 }

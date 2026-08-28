@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventCard } from '../event-card';
 import { GroupiMark } from '../../atoms/groupi-mark';
 import { MutedEventIndicator } from '../muted-event-indicator';
+import { FocalImage } from '../focal-image';
 
 const mocks = vi.hoisted(() => ({
   showActionMenu: vi.fn(),
@@ -122,12 +123,11 @@ describe('EventCard', () => {
       membership: { role: 'ATTENDEE', rsvpStatus: 'YES' },
       organizer: { user: { name: 'Avery' } },
     });
-    const image = findElementByType(card, 'Image');
+    const image = findElementByType(card, FocalImage);
 
     expect(image?.props).toEqual(
       expect.objectContaining({
-        source: { uri: 'https://example.com/event-cover.jpg' },
-        resizeMode: 'cover',
+        uri: 'https://example.com/event-cover.jpg',
       })
     );
   });

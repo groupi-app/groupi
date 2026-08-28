@@ -1,4 +1,4 @@
-import { View, ScrollView, Image } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { useCreateEvent } from '@/hooks/use-events';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { toast } from '@groupi/shared/platform';
 import type { EventPermissions } from '@/context/create-event-context';
+import { FocalImage } from '@/components/events/focal-image';
 
 interface ReviewStepProps {
   onBack: () => void;
@@ -95,6 +96,7 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
     dateOptions,
     imageUri,
     imageFile,
+    imageFocalPoint,
     addonConfigs,
     permissions,
   } = formState;
@@ -168,6 +170,9 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
         location: location.trim() || undefined,
         visibility: formState.visibility,
         imageStorageId,
+        imageFocalPoint: imageStorageId
+          ? (imageFocalPoint ?? undefined)
+          : undefined,
         permissions,
         addons: Object.entries(addonConfigs).map(([addonType, config]) => ({
           addonType,
@@ -205,10 +210,10 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
           {/* Cover image preview */}
           {imageUri ? (
             <View className='overflow-hidden rounded-input'>
-              <Image
-                source={{ uri: imageUri }}
+              <FocalImage
+                uri={imageUri}
+                focalPoint={imageFocalPoint}
                 className='h-36 w-full'
-                resizeMode='cover'
               />
             </View>
           ) : null}

@@ -53,6 +53,7 @@ function createFormState(overrides: Partial<FormState> = {}): FormState {
     dateOptions: [],
     imageUri: null,
     imageFile: null,
+    imageFocalPoint: null,
     addonConfigs: { reminders: { reminderOffset: '1_HOUR' } },
     permissions: {
       createPosts: 'EVERYONE',

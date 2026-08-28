@@ -13,7 +13,14 @@ interface EventInfoStepProps {
 
 export function EventInfoStep({ onNext }: EventInfoStepProps) {
   const { formState, updateFormState } = useCreateEventForm();
-  const { title, description, location, visibility, imageUri } = formState;
+  const {
+    title,
+    description,
+    location,
+    visibility,
+    imageUri,
+    imageFocalPoint,
+  } = formState;
 
   const isValid = title.trim().length > 0;
 
@@ -50,8 +57,16 @@ export function EventInfoStep({ onNext }: EventInfoStepProps) {
                 });
               }}
               onImageRemoved={() => {
-                updateFormState({ imageUri: null, imageFile: null });
+                updateFormState({
+                  imageUri: null,
+                  imageFile: null,
+                  imageFocalPoint: null,
+                });
               }}
+              focalPoint={imageFocalPoint}
+              onFocalPointChange={focalPoint =>
+                updateFormState({ imageFocalPoint: focalPoint })
+              }
             />
           </View>
 

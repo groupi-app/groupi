@@ -1,4 +1,4 @@
-name: Release mobile apps to internal testing
+name: Production-backed mobile acceptance
 
 jobs:
   validate:
@@ -17,33 +17,17 @@ jobs:
           command: pnpm test:run
 
   build_android:
-    name: Build signed Android release
+    name: Build signed Android acceptance app
     needs: [validate]
     type: build
     params:
       platform: android
-      profile: production
+      profile: acceptance
 
   build_ios:
-    name: Build signed iOS release
+    name: Build signed iOS acceptance app
     needs: [validate]
     type: build
     params:
       platform: ios
-      profile: production
-
-  submit_android:
-    name: Release Android to internal testing
-    needs: [build_android]
-    type: submit
-    params:
-      build_id: ${{ needs.build_android.outputs.build_id }}
-      profile: production
-
-  submit_ios:
-    name: Submit iOS build to App Store Connect
-    needs: [build_ios]
-    type: submit
-    params:
-      build_id: ${{ needs.build_ios.outputs.build_id }}
-      profile: production
+      profile: acceptance

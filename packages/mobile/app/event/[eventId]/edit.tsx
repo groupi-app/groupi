@@ -17,6 +17,16 @@ import { useFileUpload } from '@/hooks/use-file-upload';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { toast } from '@groupi/shared/platform';
 import type { EventVisibility } from '@/context/create-event-context';
+import type { FocalPoint } from '@/lib/image-focal-point';
+
+function focalPointsEqual(left?: FocalPoint | null, right?: FocalPoint | null) {
+  const normalizedLeft = left ?? null;
+  const normalizedRight = right ?? null;
+  return (
+    normalizedLeft?.x === normalizedRight?.x &&
+    normalizedLeft?.y === normalizedRight?.y
+  );
+}
 
 export default function EditEventScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
@@ -40,6 +50,10 @@ export default function EditEventScreen() {
   } | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [imageFocalPoint, setImageFocalPoint] = useState<FocalPoint | null>(
+    null
+  );
+  const [focalPointChanged, setFocalPointChanged] = useState(false);
 
   const event = headerData?.event ?? headerData;
 
@@ -51,6 +65,7 @@ export default function EditEventScreen() {
       setLocation(event.location ?? '');
       setVisibility((event.visibility ?? 'PRIVATE') as EventVisibility);
       setExistingImageUrl(event.imageUrl ?? null);
+      setImageFocalPoint(event.imageFocalPoint ?? null);
       setInitialized(true);
     }
   }, [event, initialized]);
@@ -63,7 +78,8 @@ export default function EditEventScreen() {
       location !== (event?.location ?? '') ||
       visibility !== (event?.visibility ?? 'PRIVATE') ||
       newImageUri !== null ||
-      removeExistingImage);
+      removeExistingImage ||
+      !focalPointsEqual(imageFocalPoint, event?.imageFocalPoint));
   const allowNextNavigation = useUnsavedChanges(hasChanges);
 
   if (headerData === undefined) {
@@ -151,6 +167,7 @@ export default function EditEventScreen() {
         location: location.trim(),
         ...(role === 'ORGANIZER' ? { visibility } : {}),
         ...(imageStorageId !== undefined ? { imageStorageId } : {}),
+        ...(focalPointChanged ? { imageFocalPoint } : {}),
       });
       toast.success('Event updated!');
       allowNextNavigation();
@@ -198,6 +215,11 @@ export default function EditEventScreen() {
                   setNewImageUri(null);
                   setNewImageFile(null);
                   setRemoveExistingImage(true);
+                }}
+                focalPoint={imageFocalPoint}
+                onFocalPointChange={focalPoint => {
+                  setImageFocalPoint(focalPoint);
+                  setFocalPointChanged(true);
                 }}
               />
             </View>

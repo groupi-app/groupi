@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, Image } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import { useCSSVariable } from 'uniwind';
 
 import { EventVisibilityBadge } from './event-visibility-badge';
 import { MutedEventIndicator } from './muted-event-indicator';
+import { FocalImage } from './focal-image';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HeaderData = any;
@@ -87,6 +88,7 @@ export function EventHeader({
   const chosenEndDateTime = event?.chosenEndDateTime;
   const visibility = event?.visibility;
   const imageUrl = event?.imageUrl;
+  const imageFocalPoint = event?.imageFocalPoint;
 
   const formattedDate = formatEventDate(chosenDateTime, chosenEndDateTime);
   const isOrganizer = permissions?.canDelete === true;
@@ -197,11 +199,10 @@ export function EventHeader({
             accessibilityRole='button'
             accessibilityLabel={`View ${title} cover image`}
           >
-            <Image
-              source={{ uri: imageUrl }}
+            <FocalImage
+              uri={imageUrl}
+              focalPoint={imageFocalPoint}
               className='h-52 w-full'
-              resizeMode='cover'
-              accessible={false}
             />
           </Pressable>
           {/* Gradient overlay for navigation buttons */}

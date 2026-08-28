@@ -5,6 +5,68 @@ const easProjectId =
   process.env.EAS_PROJECT_ID?.trim() ||
   process.env.EAS_BUILD_PROJECT_ID?.trim() ||
   '15aeaffd-755c-4f24-96b9-dd9f1bc25e6f';
+const productionBackedProfiles = new Set([
+  'acceptance',
+  'production',
+  'production-test',
+]);
+
+function requireProductionUrl(
+  name:
+    | 'EXPO_PUBLIC_BASE_URL'
+    | 'EXPO_PUBLIC_BETTER_AUTH_URL'
+    | 'EXPO_PUBLIC_CONVEX_URL',
+  isAllowed: (url: URL) => boolean
+) {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(`${name} is required for production-backed mobile builds.`);
+  }
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${name} must be a valid URL.`);
+  }
+
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    !isAllowed(url)
+  ) {
+    throw new Error(`${name} is not a valid Groupi production URL.`);
+  }
+}
+
+if (productionBackedProfiles.has(process.env.EAS_BUILD_PROFILE ?? '')) {
+  requireProductionUrl(
+    'EXPO_PUBLIC_BASE_URL',
+    url =>
+      url.origin === `https://${appLinkHost}` &&
+      url.pathname === '/' &&
+      !url.search &&
+      !url.hash
+  );
+  requireProductionUrl(
+    'EXPO_PUBLIC_BETTER_AUTH_URL',
+    url =>
+      url.origin === `https://${appLinkHost}` &&
+      url.pathname === '/' &&
+      !url.search &&
+      !url.hash
+  );
+  requireProductionUrl(
+    'EXPO_PUBLIC_CONVEX_URL',
+    url =>
+      url.pathname === '/' &&
+      !url.search &&
+      !url.hash &&
+      /^[a-z0-9-]+\.convex\.cloud$/.test(url.hostname)
+  );
+}
 
 export default {
   name: 'Groupi',

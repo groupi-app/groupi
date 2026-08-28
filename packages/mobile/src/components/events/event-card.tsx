@@ -1,4 +1,4 @@
-import { Image, View, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
@@ -14,6 +14,8 @@ import {
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToggleEventMute } from '@/hooks/use-muting';
 import { useDeleteEvent, useLeaveEvent } from '@/hooks/use-events';
+import type { FocalPoint } from '@/lib/image-focal-point';
+import { FocalImage } from './focal-image';
 
 interface EventCardProps {
   event: {
@@ -23,6 +25,7 @@ interface EventCardProps {
     chosenDateTime?: string;
     memberCount: number;
     imageUrl?: string | null;
+    imageFocalPoint?: FocalPoint | null;
   };
   membership: {
     role: string;
@@ -144,11 +147,10 @@ export function EventCard({
       <Card className='mb-3 gap-0 overflow-hidden p-0'>
         <View className='aspect-video w-full items-center justify-center overflow-hidden bg-primary/10'>
           {event.imageUrl ? (
-            <Image
-              source={{ uri: event.imageUrl }}
+            <FocalImage
+              uri={event.imageUrl}
+              focalPoint={event.imageFocalPoint}
               className='h-full w-full'
-              resizeMode='cover'
-              accessible={false}
             />
           ) : (
             <GroupiMark size={56} color={primaryColor} />

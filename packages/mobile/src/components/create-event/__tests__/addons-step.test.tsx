@@ -55,6 +55,7 @@ function createFormState(addonConfigs: FormState['addonConfigs']): FormState {
     dateOptions: [],
     imageUri: null,
     imageFile: null,
+    imageFocalPoint: null,
     addonConfigs,
   };
 }

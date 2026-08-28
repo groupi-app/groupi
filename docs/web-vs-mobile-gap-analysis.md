@@ -10,7 +10,30 @@ This is the implementation and release backlog for bringing the Expo app to prac
 
 **Latest verification:** See [Native Mobile E2E and Quality Audit — 2026-08-23](./mobile-e2e-audit-2026-08-23.md) for the current automated results, safe repairs, device-test blocker, and newly confirmed architecture backlog.
 
-## Verdict
+## Current source status — 2026-08-28
+
+The eight high-priority parity and release tracks from this audit are complete
+in source on `feat/native-mobile`: native passkey/link trust, organizer event
+permissions and settings, atomic attachment creation and management, native
+account linking, universal-link destinations, add-on destinations/fallbacks,
+and source-gated signed-device automation. Post-creation cover focal positioning
+was also completed for create, edit, card, and header rendering.
+
+The branch is source-ready to produce signed iOS and Android production
+acceptance artifacts. It is not yet operationally accepted against production:
+the remaining gates require owner-managed EAS/Convex production environment
+values, publishing the checked-in web association files, registered physical
+devices and signing accounts, the Google Play app-signing fingerprint once
+available, and authenticated physical-device verification. EAS-hosted Maestro
+jobs also remain optional behind Expo's paid-plan entitlement; the signed
+acceptance workflow does not depend on them.
+
+The broader, non-release-blocking parity backlog remains product work rather
+than broken core flow repair: richer native rendering for arbitrary custom
+add-ons, advanced questionnaire organizer aggregation/export, mentions, and
+deeper authenticated accessibility/E2E coverage.
+
+## Original audit verdict
 
 The native app has substantially more functionality than the previous April audit reported. Authentication, onboarding, event lists, discovery, core event detail, posting, friends, moderation, privacy, and much of account management are present.
 
@@ -24,7 +47,7 @@ The smallest credible path to parity is:
 4. Establish a real signed build, CI, E2E, push, deep-link, and observability path.
 5. Complete secondary UX parity and explicitly decide which advanced web tools belong on native.
 
-## Current baseline
+## Original audited baseline
 
 | Area               | Native status                                                         |
 | ------------------ | --------------------------------------------------------------------- |

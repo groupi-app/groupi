@@ -68,8 +68,18 @@ assert(
   'The e2e-test profile must create unsigned simulator/emulator artifacts'
 );
 assert(
+  eas.build?.['production-test']?.extends === 'e2e-test' &&
+    eas.build?.['production-test']?.environment === 'production',
+  'The production-test profile must test the production environment without release credentials'
+);
+assert(
   eas.build?.preview?.distribution === 'internal',
   'The preview profile must create signed internal-distribution builds'
+);
+assert(
+  eas.build?.acceptance?.extends === 'preview' &&
+    eas.build?.acceptance?.environment === 'production',
+  'The acceptance profile must create signed internal builds against production'
 );
 assert(
   eas.build?.production?.distribution === 'store' &&
@@ -89,6 +99,22 @@ assert(
     appConfig.includes("package: 'com.groupi.mobile'"),
   'Expo ownership/project linkage and native application IDs must remain stable'
 );
+for (const profile of ['acceptance', 'production', 'production-test']) {
+  assert(
+    appConfig.includes(`'${profile}'`),
+    `Production URL validation must cover the ${profile} profile`
+  );
+}
+for (const variable of [
+  'EXPO_PUBLIC_BASE_URL',
+  'EXPO_PUBLIC_BETTER_AUTH_URL',
+  'EXPO_PUBLIC_CONVEX_URL',
+]) {
+  assert(
+    appConfig.includes(`'${variable}'`),
+    `${variable} must be validated before a production-backed build`
+  );
+}
 assert(
   linking.appLinkHost === 'www.groupi.gg',
   'Release links must use the canonical www.groupi.gg host'
@@ -162,6 +188,8 @@ assert(
 for (const workflow of [
   '.eas/workflows/e2e-tests.yml',
   '.eas/workflows/signed-preview.yml',
+  '.eas/workflows/production-acceptance.yml',
+  '.eas/workflows/production-e2e.yml',
   '.eas/workflows/release-internal.yml',
 ]) {
   const source = read(workflow);
@@ -170,6 +198,40 @@ for (const workflow of [
     `${workflow} must contain a build job`
   );
 }
+
+for (const workflow of [
+  '.eas/workflows/signed-preview.yml',
+  '.eas/workflows/production-acceptance.yml',
+  '.eas/workflows/production-e2e.yml',
+  '.eas/workflows/release-internal.yml',
+]) {
+  const source = read(workflow);
+  for (const command of [
+    'pnpm release:check',
+    'pnpm type-check',
+    'pnpm test:run',
+  ]) {
+    assert(
+      source.includes(`command: ${command}`),
+      `${workflow} must run ${command} before signed builds`
+    );
+  }
+  assert(
+    source.includes('needs: [validate]'),
+    `${workflow} signed builds must wait for source validation`
+  );
+}
+
+const productionE2eWorkflow = read('.eas/workflows/production-e2e.yml');
+assert(
+  productionE2eWorkflow.includes('profile: production-test') &&
+    productionE2eWorkflow.includes('environment: production'),
+  'Production E2E must test production-backed unsigned builds'
+);
+assert(
+  !productionE2eWorkflow.includes('authenticated-event.yml'),
+  'Production E2E must never seed the production backend'
+);
 
 const maestroFlows = [
   '.maestro/smoke.yml',

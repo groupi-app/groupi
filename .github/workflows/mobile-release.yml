@@ -11,6 +11,8 @@ on:
         options:
           - e2e-tests
           - signed-preview
+          - production-acceptance
+          - production-e2e
           - release-internal
       git_ref:
         description: 'Committed branch, tag, or SHA to build'

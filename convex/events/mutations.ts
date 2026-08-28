@@ -60,6 +60,23 @@ const dateSelectionSourceValidator = v.union(
   v.literal('MANUAL')
 );
 
+function validateImageFocalPoint(
+  focalPoint: { x: number; y: number } | null | undefined
+) {
+  if (!focalPoint) return;
+
+  if (
+    !Number.isFinite(focalPoint.x) ||
+    !Number.isFinite(focalPoint.y) ||
+    focalPoint.x < 0 ||
+    focalPoint.x > 1 ||
+    focalPoint.y < 0 ||
+    focalPoint.y > 1
+  ) {
+    throw new Error('Image focal point must be between 0 and 1');
+  }
+}
+
 const eventDocumentValidator = v.object({
   _id: v.id('events'),
   _creationTime: v.number(),
@@ -176,6 +193,11 @@ export const createEvent = mutation({
     // Validate input
     if (!title.trim()) {
       throw new Error('Event title is required');
+    }
+
+    validateImageFocalPoint(imageFocalPoint);
+    if (imageFocalPoint && !imageStorageId) {
+      throw new Error('An image focal point requires a cover image');
     }
 
     // Handle potential date times - support both legacy and new format
@@ -408,6 +430,15 @@ export const updateEvent = mutation({
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new Error('Event not found');
+    }
+
+    validateImageFocalPoint(imageFocalPoint);
+    const willHaveImage =
+      imageStorageId === undefined
+        ? event.imageStorageId !== undefined
+        : imageStorageId !== null;
+    if (imageFocalPoint && !willHaveImage) {
+      throw new Error('An image focal point requires a cover image');
     }
 
     // Prepare update data

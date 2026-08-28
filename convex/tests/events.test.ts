@@ -159,6 +159,30 @@ describe('Events Operations', () => {
       expect(event?.imageStorageId).toBeUndefined();
     });
 
+    test('should reject an invalid or orphaned image focal point', async () => {
+      const t = createTestInstance();
+      const { userId } = await createTestUser(t, {
+        email: 'focal-create@example.com',
+        username: 'focalcreate',
+        name: 'Focal Create',
+      });
+      const asUser = t.withIdentity({ subject: userId });
+
+      await expect(
+        asUser.mutation(api.events.mutations.createEvent, {
+          title: 'Invalid focal point',
+          imageFocalPoint: { x: 1.1, y: 0.5 },
+        })
+      ).rejects.toThrow('Image focal point must be between 0 and 1');
+
+      await expect(
+        asUser.mutation(api.events.mutations.createEvent, {
+          title: 'Orphaned focal point',
+          imageFocalPoint: { x: 0.5, y: 0.5 },
+        })
+      ).rejects.toThrow('An image focal point requires a cover image');
+    });
+
     test('should create event with visibility', async () => {
       const t = createTestInstance();
 
@@ -285,6 +309,21 @@ describe('Events Operations', () => {
           visibility: 'FRIENDS',
         })
       ).rejects.toThrow('Only organizers can change event visibility');
+    });
+  });
+
+  describe('updateEvent image focal point', () => {
+    test('should reject invalid focal points', async () => {
+      const t = createTestInstance();
+      const { userId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await expect(
+        asUser.mutation(api.events.mutations.updateEvent, {
+          eventId,
+          imageFocalPoint: { x: -0.1, y: 0.5 },
+        })
+      ).rejects.toThrow('Image focal point must be between 0 and 1');
     });
   });
 

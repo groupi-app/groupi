@@ -25,12 +25,20 @@
         "simulator": true
       }
     },
+    "production-test": {
+      "extends": "e2e-test",
+      "environment": "production"
+    },
     "preview": {
       "distribution": "internal",
       "environment": "preview",
       "android": {
         "buildType": "apk"
       }
+    },
+    "acceptance": {
+      "extends": "preview",
+      "environment": "production"
     },
     "production": {
       "autoIncrement": true,
