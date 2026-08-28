@@ -9,7 +9,8 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { Text } from '@/components/ui/text';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
+import type { Id } from 'convex/_generated/dataModel';
 
 interface TypingUser {
   personId: string;
@@ -74,7 +75,12 @@ export function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
             key={user.personId}
             style={{ marginLeft: index > 0 ? -8 : 0, zIndex: 3 - index }}
           >
-            <UserAvatar src={user.image} name={user.name} size='xs' />
+            <MemberAvatar
+              personId={user.personId as Id<'persons'>}
+              src={user.image}
+              name={user.name}
+              size='xs'
+            />
           </View>
         ))}
       </View>

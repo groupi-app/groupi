@@ -159,7 +159,7 @@ export function getPushNotificationDestination(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
 
   const destination = Reflect.get(data, 'destination');
-  if (destination === 'notifications') return '/(tabs)/notifications';
+  if (destination === 'notifications') return '/notifications';
   if (destination === 'invites') return '/invites';
   if (destination === 'friends') return '/friends';
 

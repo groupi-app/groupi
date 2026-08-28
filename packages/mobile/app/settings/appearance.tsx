@@ -1,19 +1,23 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useMutation } from 'convex/react';
 import { useCSSVariable } from 'uniwind';
 
+import { api } from 'convex/_generated/api';
 import { LoadingState } from '@/components/molecules';
+import { CustomThemeEditor } from '@/components/settings/custom-theme-editor';
+import { useActionMenu } from '@/components/ui/action-menu';
 import { BackButton } from '@/components/ui/back-button';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/theme/theme-provider';
+import { type MobileCustomTheme, useTheme } from '@/theme/theme-provider';
 import {
   type BaseTheme,
   baseThemeRegistry,
   baseThemes,
-  darkThemes,
-  lightThemes,
 } from '@groupi/shared/design/themes';
 import { toast } from '@groupi/shared/platform';
 
@@ -30,6 +34,7 @@ interface ThemeOptionProps {
   selected: boolean;
   disabled: boolean;
   onPress: () => void;
+  onMorePress?: () => void;
 }
 
 function ThemePalette({ preview }: { preview: ThemePreview }) {
@@ -63,61 +68,78 @@ function ThemeOption({
   selected,
   disabled,
   onPress,
+  onMorePress,
 }: ThemeOptionProps) {
   const primaryColor = String(useCSSVariable('--color-primary'));
+  const mutedColor = String(useCSSVariable('--color-muted-foreground'));
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole='radio'
-      accessibilityLabel={name}
-      accessibilityHint={description}
-      accessibilityState={{ checked: selected, disabled }}
+    <View
       className={cn(
-        'flex-row items-center gap-3 rounded-card border-2 bg-card p-4 active:bg-accent/60',
+        'flex-row items-center overflow-hidden rounded-card border-2 bg-card',
         selected ? 'border-primary' : 'border-border',
         disabled && 'opacity-60'
       )}
     >
-      <ThemePalette preview={preview} />
-      <View className='flex-1'>
-        <Text className='font-semibold text-foreground'>{name}</Text>
-        {description ? (
-          <Text
-            className='mt-0.5 text-xs text-muted-foreground'
-            numberOfLines={2}
-          >
-            {description}
-          </Text>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole='radio'
+        accessibilityLabel={name}
+        accessibilityHint={description}
+        accessibilityState={{ checked: selected, disabled }}
+        className='min-h-[76px] flex-1 flex-row items-center gap-3 p-4 active:bg-accent/60'
+      >
+        <ThemePalette preview={preview} />
+        <View className='flex-1'>
+          <Text className='font-semibold text-foreground'>{name}</Text>
+          {description ? (
+            <Text
+              className='mt-0.5 text-xs text-muted-foreground'
+              numberOfLines={2}
+            >
+              {description}
+            </Text>
+          ) : null}
+        </View>
+        {selected ? (
+          <Ionicons name='checkmark-circle' size={22} color={primaryColor} />
         ) : null}
-      </View>
-      {selected ? (
-        <Ionicons name='checkmark-circle' size={22} color={primaryColor} />
-      ) : (
-        <View className='h-[22px] w-[22px]' />
-      )}
-    </Pressable>
+      </Pressable>
+      {onMorePress ? (
+        <Pressable
+          onPress={onMorePress}
+          disabled={disabled}
+          accessibilityRole='button'
+          accessibilityLabel={`Manage ${name}`}
+          className='min-h-[76px] min-w-[48px] items-center justify-center active:bg-muted'
+        >
+          <Ionicons name='ellipsis-horizontal' size={20} color={mutedColor} />
+        </Pressable>
+      ) : !selected ? (
+        <View className='w-4' />
+      ) : null}
+    </View>
   );
 }
 
 export default function AppearanceSettingsScreen() {
+  const { showActionMenu } = useActionMenu();
+  const deleteCustomTheme = useMutation(api.themes.mutations.deleteCustomTheme);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingTheme, setEditingTheme] = useState<MobileCustomTheme>();
   const {
     themeId,
     selectedThemeId,
     selectedThemeType,
     selectedCustomThemeId,
-    useSystemPreference,
-    systemLightThemeId,
-    systemDarkThemeId,
     customThemes,
     isLoading,
     isSaving,
     setTheme,
-    setUseSystemPreference,
-    setSystemTheme,
   } = useTheme();
   const mutedColor = String(useCSSVariable('--color-muted-foreground'));
+  const primaryColor = String(useCSSVariable('--color-primary'));
   const activeThemeName =
     baseThemeRegistry[themeId]?.name ??
     customThemes.find(theme => theme._id === themeId)?.name;
@@ -127,14 +149,58 @@ export default function AppearanceSettingsScreen() {
     if (!saved) toast.error('Failed to save theme preference');
   }
 
-  async function changeMode(useSystem: boolean) {
-    const saved = await setUseSystemPreference(useSystem);
+  async function selectCustomTheme(
+    baseThemeId: string,
+    customThemeId: (typeof customThemes)[number]['_id']
+  ) {
+    const saved = await setTheme(baseThemeId, customThemeId);
     if (!saved) toast.error('Failed to save theme preference');
   }
 
-  async function selectSystemTheme(mode: 'light' | 'dark', theme: BaseTheme) {
-    const saved = await setSystemTheme(mode, theme.id);
-    if (!saved) toast.error('Failed to save theme preference');
+  function openCreateTheme() {
+    setEditingTheme(undefined);
+    setEditorOpen(true);
+  }
+
+  function openEditTheme(theme: MobileCustomTheme) {
+    setEditingTheme(theme);
+    setEditorOpen(true);
+  }
+
+  async function removeTheme(theme: MobileCustomTheme) {
+    try {
+      await deleteCustomTheme({ themeId: theme._id });
+      toast.success('Theme deleted');
+    } catch {
+      toast.error('Unable to delete theme');
+    }
+  }
+
+  function showThemeActions(theme: MobileCustomTheme) {
+    showActionMenu({
+      title: theme.name,
+      options: [
+        {
+          label: 'Edit Theme',
+          icon: 'create-outline',
+          showChevron: true,
+          onPress: () => openEditTheme(theme),
+        },
+        {
+          label: 'Delete Theme',
+          icon: 'trash-outline',
+          destructive: true,
+          onPress: () =>
+            showConfirmDialog({
+              title: 'Delete theme?',
+              message: `“${theme.name}” will be permanently deleted.`,
+              confirmLabel: 'Delete',
+              destructive: true,
+              onConfirm: () => void removeTheme(theme),
+            }),
+        },
+      ],
+    });
   }
 
   if (isLoading) {
@@ -154,121 +220,103 @@ export default function AppearanceSettingsScreen() {
         className='flex-1'
         contentContainerClassName='gap-7 px-4 pb-10 pt-2'
       >
-        <View className='gap-3'>
-          <View>
-            <Text className='text-lg font-bold text-foreground'>
-              Appearance mode
-            </Text>
-            <Text className='mt-1 text-sm text-muted-foreground'>
-              Match your device automatically or keep one theme all the time.
-            </Text>
-          </View>
-          <View
-            className='flex-row gap-2 rounded-card bg-muted p-1.5'
-            accessibilityRole='radiogroup'
-          >
-            <ModeOption
-              label='Match device'
-              icon='phone-portrait-outline'
-              selected={useSystemPreference}
-              disabled={isSaving}
-              onPress={() => void changeMode(true)}
-            />
-            <ModeOption
-              label='One theme'
-              icon='color-palette-outline'
-              selected={!useSystemPreference}
-              disabled={isSaving}
-              onPress={() => void changeMode(false)}
-            />
-          </View>
+        <View>
+          <Text className='text-lg font-bold text-foreground'>
+            Choose your theme
+          </Text>
+          <Text className='mt-1 text-sm text-muted-foreground'>
+            Your selection stays active until you choose another theme.
+          </Text>
         </View>
 
-        {useSystemPreference ? (
-          <View className='gap-7'>
-            <ThemeSection
-              title='Light appearance'
-              description='Used when your device is in light mode.'
-              themes={lightThemes}
-              selectedThemeId={systemLightThemeId}
-              disabled={isSaving}
-              onSelect={theme => void selectSystemTheme('light', theme)}
-            />
-            <ThemeSection
-              title='Dark appearance'
-              description='Used when your device is in dark mode.'
-              themes={darkThemes}
-              selectedThemeId={systemDarkThemeId}
-              disabled={isSaving}
-              onSelect={theme => void selectSystemTheme('dark', theme)}
-            />
-          </View>
-        ) : (
-          <View className='gap-7'>
-            <ThemeSection
-              title='Groupi themes'
-              description='Pick a theme to use on every device.'
-              themes={baseThemes}
-              selectedThemeId={
-                selectedThemeType === 'base' ? selectedThemeId : ''
-              }
-              disabled={isSaving}
-              onSelect={theme => void selectBaseTheme(theme)}
-            />
+        <ThemeSection
+          title='Base themes'
+          description='Choose from Groupi’s pre-designed themes.'
+          themes={baseThemes}
+          selectedThemeId={selectedThemeType === 'base' ? selectedThemeId : ''}
+          disabled={isSaving}
+          onSelect={theme => void selectBaseTheme(theme)}
+        />
 
-            {customThemes.length > 0 ? (
-              <View className='gap-3'>
-                <View>
-                  <Text className='text-lg font-bold text-foreground'>
-                    Your themes
-                  </Text>
-                  <Text className='mt-1 text-sm text-muted-foreground'>
-                    Custom themes you created on Groupi web.
-                  </Text>
-                </View>
-                <View className='gap-2' accessibilityRole='radiogroup'>
-                  {customThemes.map(theme => {
-                    const baseTheme =
-                      baseThemeRegistry[theme.baseThemeId] ??
-                      baseThemeRegistry['groupi-light'];
-                    return (
-                      <ThemeOption
-                        key={theme._id}
-                        name={theme.name}
-                        description={theme.description}
-                        preview={{
-                          primary:
-                            theme.tokenOverrides.brand?.primary ??
-                            baseTheme.preview.primary,
-                          background:
-                            theme.tokenOverrides.background?.page ??
-                            baseTheme.preview.background,
-                          accent:
-                            theme.tokenOverrides.brand?.accent ??
-                            baseTheme.preview.accent,
-                        }}
-                        selected={
-                          selectedThemeType === 'custom' &&
-                          selectedCustomThemeId === theme._id
-                        }
-                        disabled={isSaving}
-                        onPress={() =>
-                          void setTheme(theme.baseThemeId, theme._id).then(
-                            saved => {
-                              if (!saved) {
-                                toast.error('Failed to save theme preference');
-                              }
-                            }
-                          )
-                        }
-                      />
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
+        <View className='gap-3'>
+          <View className='flex-row items-start justify-between gap-3'>
+            <View className='flex-1'>
+              <Text className='text-lg font-bold text-foreground'>
+                Custom themes
+              </Text>
+              <Text className='mt-1 text-sm text-muted-foreground'>
+                Build your own look from any Groupi theme.
+              </Text>
+            </View>
+            <Pressable
+              onPress={openCreateTheme}
+              accessibilityRole='button'
+              accessibilityLabel='Create custom theme'
+              className='min-h-[44px] flex-row items-center gap-1.5 rounded-button px-3 active:bg-muted'
+            >
+              <Ionicons name='add' size={18} color={primaryColor} />
+              <Text className='text-sm font-semibold text-primary'>New</Text>
+            </Pressable>
           </View>
-        )}
+
+          {customThemes.length > 0 ? (
+            <View className='gap-2' accessibilityRole='radiogroup'>
+              {customThemes.map(theme => {
+                const baseTheme =
+                  baseThemeRegistry[theme.baseThemeId] ??
+                  baseThemeRegistry['groupi-light'];
+                return (
+                  <ThemeOption
+                    key={theme._id}
+                    name={theme.name}
+                    description={theme.description}
+                    preview={{
+                      primary:
+                        theme.tokenOverrides.brand?.primary ??
+                        baseTheme.preview.primary,
+                      background:
+                        theme.tokenOverrides.background?.page ??
+                        baseTheme.preview.background,
+                      accent:
+                        theme.tokenOverrides.brand?.accent ??
+                        baseTheme.preview.accent,
+                    }}
+                    selected={
+                      selectedThemeType === 'custom' &&
+                      selectedCustomThemeId === theme._id
+                    }
+                    disabled={isSaving}
+                    onPress={() =>
+                      void selectCustomTheme(theme.baseThemeId, theme._id)
+                    }
+                    onMorePress={() => showThemeActions(theme)}
+                  />
+                );
+              })}
+            </View>
+          ) : (
+            <Pressable
+              onPress={openCreateTheme}
+              accessibilityRole='button'
+              accessibilityLabel='Create a custom theme'
+              className='min-h-28 items-center justify-center gap-2 rounded-card border border-dashed border-border bg-card px-5 py-4 active:bg-muted'
+            >
+              <View className='h-10 w-10 items-center justify-center rounded-badge bg-muted'>
+                <Ionicons
+                  name='color-wand-outline'
+                  size={21}
+                  color={mutedColor}
+                />
+              </View>
+              <Text className='font-semibold text-foreground'>
+                Create a custom theme
+              </Text>
+              <Text className='text-center text-sm text-muted-foreground'>
+                Choose a starting point and make it yours.
+              </Text>
+            </Pressable>
+          )}
+        </View>
 
         <View className='flex-row items-center gap-2 rounded-card bg-muted px-4 py-3'>
           <Ionicons name='sync-outline' size={18} color={mutedColor} />
@@ -278,6 +326,12 @@ export default function AppearanceSettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <CustomThemeEditor
+        open={editorOpen}
+        editingTheme={editingTheme}
+        onClose={() => setEditorOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -288,52 +342,6 @@ function SettingsHeader() {
       <BackButton />
       <Text className='text-lg font-semibold text-foreground'>Appearance</Text>
     </View>
-  );
-}
-
-function ModeOption({
-  label,
-  icon,
-  selected,
-  disabled,
-  onPress,
-}: {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  selected: boolean;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const foregroundColor = String(useCSSVariable('--color-foreground'));
-  const mutedColor = String(useCSSVariable('--color-muted-foreground'));
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole='radio'
-      accessibilityLabel={label}
-      accessibilityState={{ checked: selected, disabled }}
-      className={cn(
-        'h-12 flex-1 flex-row items-center justify-center gap-2 rounded-button px-3',
-        selected ? 'bg-card shadow-raised' : 'bg-transparent',
-        disabled && 'opacity-60'
-      )}
-    >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={selected ? foregroundColor : mutedColor}
-      />
-      <Text
-        className={cn(
-          'text-sm font-semibold',
-          selected ? 'text-foreground' : 'text-muted-foreground'
-        )}
-      >
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 

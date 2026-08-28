@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   redeemFixture: vi.fn(),
   completeCallback: vi.fn(),
+  getStoredFixture: vi.fn(),
+  setStoredFixture: vi.fn(),
   code: 'mobile_e2e_one-time-code',
 }));
 
@@ -33,6 +35,10 @@ vi.mock('convex/_generated/api', () => ({
 vi.mock('../../src/lib/native-auth-actions', () => ({
   completeNativeAuthCallback: mocks.completeCallback,
 }));
+vi.mock('expo-secure-store', () => ({
+  getItemAsync: mocks.getStoredFixture,
+  setItemAsync: mocks.setStoredFixture,
+}));
 vi.mock('../../src/components/molecules/loading-state', () => ({
   LoadingState: 'LoadingState',
 }));
@@ -57,6 +63,8 @@ describe('native E2E one-time login route', () => {
       eventId: 'event-123',
     });
     mocks.completeCallback.mockResolvedValue({ success: true });
+    mocks.getStoredFixture.mockResolvedValue(null);
+    mocks.setStoredFixture.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -79,9 +87,34 @@ describe('native E2E one-time login route', () => {
     expect(mocks.completeCallback).toHaveBeenCalledWith(
       '__Secure-better-auth.session_token=signed'
     );
+    expect(mocks.setStoredFixture).toHaveBeenCalledWith(
+      'groupi-e2e-consumed-fixture',
+      JSON.stringify({
+        loginCode: 'mobile_e2e_one-time-code',
+        eventId: 'event-123',
+      })
+    );
     await vi.waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith('/event/event-123')
     );
+  });
+
+  it('returns a reloaded fixture to its event without reusing its code', async () => {
+    mocks.getStoredFixture.mockResolvedValue(
+      JSON.stringify({
+        loginCode: 'mobile_e2e_one-time-code',
+        eventId: 'event-123',
+      })
+    );
+
+    NativeE2ELoginScreen();
+    mocks.effects[0]?.();
+
+    await vi.waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith('/event/event-123')
+    );
+    expect(mocks.redeemFixture).not.toHaveBeenCalled();
+    expect(mocks.completeCallback).not.toHaveBeenCalled();
   });
 
   it('never calls the fixture endpoint in a normal app build', async () => {

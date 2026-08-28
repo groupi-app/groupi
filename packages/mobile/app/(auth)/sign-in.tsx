@@ -16,22 +16,29 @@ import { LogoSticker } from '@/components/atoms/logo-sticker';
 import { Ionicons } from '@expo/vector-icons';
 import { getSafeAuthReturnPath } from '@/lib/auth-route-policy';
 import { getNativeAuthCallbackPath } from '@/lib/native-auth';
+import { authClient } from '@/lib/auth-client';
 import {
-  requestNativeSignInEmail,
+  requestNativeSignIn,
   signInWithNativeSocial,
   verifyNativeEmailOtp,
 } from '@/lib/native-auth-actions';
+import { isNativePasskeyAvailable } from '@/lib/native-passkey-client';
+import {
+  getPasskeyErrorMessage,
+  isPasskeyCancellation,
+} from '@/lib/passkey-errors';
+import { useCSSVariable } from 'uniwind';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
-function DiscordIcon() {
+function DiscordIcon({ color }: { color: string }) {
   return (
     <Svg width={20} height={20} viewBox='0 0 24 24' fill='none'>
       <Path
         d='M20.317 4.369a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.947 2.418-2.157 2.418z'
-        fill='#5865F2'
+        fill={color}
       />
     </Svg>
   );
@@ -67,15 +74,21 @@ export default function SignInScreen() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [lastSentIdentifier, setLastSentIdentifier] = useState<string | null>(
     null
   );
+  const [lastSentEmail, setLastSentEmail] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const otpInputRef = useRef<TextInput>(null);
   const authDestination = (getSafeAuthReturnPath(returnTo) ??
     '/(tabs)') as Href;
+  const passkeyAvailable = isNativePasskeyAvailable();
+  const foregroundColor = useCSSVariable('--color-foreground') as
+    | string
+    | undefined;
 
   // Session detection is handled by the tabs layout's auth guard.
   // When OTP/OAuth sign-in succeeds, we navigate directly in the handler.
@@ -100,8 +113,8 @@ export default function SignInScreen() {
 
   async function handleSendCode() {
     const value = identifier.trim();
-    if (!value || !value.includes('@')) {
-      setError('Please enter a valid email address');
+    if (!value) {
+      setError('Please enter your email or username');
       return;
     }
 
@@ -110,7 +123,7 @@ export default function SignInScreen() {
     setCodeSent(false);
 
     try {
-      const result = await requestNativeSignInEmail(
+      const result = await requestNativeSignIn(
         value,
         getNativeAuthCallbackPath(returnTo)
       );
@@ -120,6 +133,7 @@ export default function SignInScreen() {
       } else {
         setCodeSent(true);
         setLastSentIdentifier(value);
+        setLastSentEmail(result.email);
         setCooldownSeconds(RESEND_COOLDOWN_SECONDS);
         // Auto-focus OTP input
         setTimeout(() => otpInputRef.current?.focus(), 300);
@@ -142,12 +156,12 @@ export default function SignInScreen() {
     setIsLoading(true);
 
     try {
-      if (!lastSentIdentifier) {
+      if (!lastSentEmail) {
         setError('Request a new code and try again');
         return;
       }
 
-      const result = await verifyNativeEmailOtp(lastSentIdentifier, code);
+      const result = await verifyNativeEmailOtp(lastSentEmail, code);
 
       if (!result.success) {
         setError(result.message);
@@ -191,7 +205,37 @@ export default function SignInScreen() {
     }
   }
 
-  const anyLoading = isLoading || oauthLoading !== null;
+  async function handlePasskeySignIn() {
+    if (!passkeyAvailable) return;
+
+    setPasskeyLoading(true);
+    setError('');
+
+    try {
+      const result = await authClient.signIn.passkey();
+
+      if (result.error) {
+        if (!isPasskeyCancellation(result.error)) {
+          setError(
+            getPasskeyErrorMessage(result.error, 'Passkey sign-in failed')
+          );
+        }
+        return;
+      }
+
+      router.replace(authDestination);
+    } catch (passkeyError) {
+      if (!isPasskeyCancellation(passkeyError)) {
+        setError(
+          getPasskeyErrorMessage(passkeyError, 'Passkey sign-in failed')
+        );
+      }
+    } finally {
+      setPasskeyLoading(false);
+    }
+  }
+
+  const anyLoading = isLoading || oauthLoading !== null || passkeyLoading;
 
   return (
     <KeyboardAvoidingView
@@ -202,14 +246,17 @@ export default function SignInScreen() {
         contentContainerClassName='flex-grow justify-center px-6 py-12'
         keyboardShouldPersistTaps='handled'
       >
-        {/* Logo + title */}
-        <View className='mb-2 flex-row items-center justify-center gap-3'>
-          <LogoSticker size={56} waving />
-          <Text className='mt-4 text-5xl font-extrabold text-primary'>
+        {/* Brand + welcome */}
+        <View className='mb-1 flex-row items-center justify-center gap-2'>
+          <LogoSticker size={44} waving />
+          <Text className='mt-3 text-4xl font-extrabold text-primary'>
             Groupi
           </Text>
         </View>
-        <View className='mb-8 items-center'>
+        <View className='mb-7 items-center gap-1'>
+          <Text className='text-2xl font-bold text-foreground'>
+            Welcome back
+          </Text>
           <Text className='text-base text-muted-foreground'>
             Plan events together
           </Text>
@@ -218,7 +265,9 @@ export default function SignInScreen() {
         {/* OAuth buttons */}
         <View className='mb-5 gap-3'>
           <Pressable
-            className='flex-row items-center justify-center gap-3 rounded-button border border-border bg-card py-3.5'
+            accessibilityRole='button'
+            accessibilityLabel='Continue with Discord'
+            className='flex-row items-center justify-center gap-3 rounded-button border border-border bg-card py-3.5 active:opacity-80 disabled:opacity-50'
             onPress={() => handleSocialSignIn('discord')}
             disabled={anyLoading}
           >
@@ -226,7 +275,7 @@ export default function SignInScreen() {
               <ActivityIndicator size='small' />
             ) : (
               <>
-                <DiscordIcon />
+                <DiscordIcon color={foregroundColor ?? '#111827'} />
                 <Text className='text-base font-medium text-foreground'>
                   Continue with Discord
                 </Text>
@@ -235,7 +284,9 @@ export default function SignInScreen() {
           </Pressable>
 
           <Pressable
-            className='flex-row items-center justify-center gap-3 rounded-button border border-border bg-card py-3.5'
+            accessibilityRole='button'
+            accessibilityLabel='Continue with Google'
+            className='flex-row items-center justify-center gap-3 rounded-button border border-border bg-card py-3.5 active:opacity-80 disabled:opacity-50'
             onPress={() => handleSocialSignIn('google')}
             disabled={anyLoading}
           >
@@ -250,13 +301,43 @@ export default function SignInScreen() {
               </>
             )}
           </Pressable>
+
+          {passkeyAvailable ? (
+            <Pressable
+              accessibilityRole='button'
+              accessibilityLabel='Continue with a passkey'
+              className='flex-row items-center justify-center gap-3 rounded-button border border-border bg-card py-3.5 active:opacity-80 disabled:opacity-50'
+              onPress={handlePasskeySignIn}
+              disabled={anyLoading}
+            >
+              {passkeyLoading ? (
+                <View className='flex-row items-center gap-3'>
+                  <ActivityIndicator size='small' />
+                  <Text className='text-base font-medium text-foreground'>
+                    Checking passkey…
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Ionicons
+                    name='key-outline'
+                    size={20}
+                    color={foregroundColor ?? '#111827'}
+                  />
+                  <Text className='text-base font-medium text-foreground'>
+                    Continue with a passkey
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          ) : null}
         </View>
 
         {/* Divider */}
         <View className='mb-5 flex-row items-center'>
           <View className='flex-1 border-b border-border' />
           <Text className='mx-3 text-xs uppercase text-muted-foreground'>
-            Or continue with
+            Or use email
           </Text>
           <View className='flex-1 border-b border-border' />
         </View>
@@ -265,12 +346,12 @@ export default function SignInScreen() {
         <View className='gap-4'>
           <View>
             <Text className='mb-1 text-sm font-medium text-foreground'>
-              Email
+              Email or username
             </Text>
             <TextInput
               className='rounded-input border border-input bg-card px-4 py-3 text-base text-foreground'
-              placeholder='you@example.com'
-              placeholderTextColor='#9ca3af'
+              placeholder='Enter your email or username'
+              placeholderTextColorClassName='accent-muted-foreground'
               value={identifier}
               onChangeText={text => {
                 setIdentifier(text);
@@ -281,7 +362,7 @@ export default function SignInScreen() {
               }}
               autoCapitalize='none'
               keyboardType='email-address'
-              autoComplete='email'
+              autoComplete='username'
               editable={!anyLoading}
             />
           </View>
@@ -291,13 +372,13 @@ export default function SignInScreen() {
               {/* OTP Code Input */}
               <View>
                 <Text className='mb-1 text-sm font-medium text-foreground'>
-                  Verification Code
+                  Verification code
                 </Text>
                 <TextInput
                   ref={otpInputRef}
                   className='rounded-input border border-input bg-card px-4 py-3 text-center text-2xl font-bold tracking-[8px] text-foreground'
                   placeholder='000000'
-                  placeholderTextColor='#9ca3af'
+                  placeholderTextColorClassName='accent-muted-foreground'
                   value={otpCode}
                   onChangeText={text => {
                     const digits = text.replace(/\D/g, '').slice(0, 6);
@@ -315,12 +396,12 @@ export default function SignInScreen() {
                 <View className='mb-2 flex-row items-center gap-2'>
                   <Ionicons name='mail-outline' size={16} color='#22c55e' />
                   <Text className='text-sm font-semibold text-text-success'>
-                    Check your email!
+                    Check your email
                   </Text>
                 </View>
                 <Text className='text-sm text-text-success'>
-                  We sent a 6-digit code and a magic link to{' '}
-                  {lastSentIdentifier}. Enter the code above or tap the link.
+                  We sent a 6-digit code and a sign-in link to{' '}
+                  {lastSentIdentifier}. Enter the code above or open the link.
                 </Text>
                 <View className='mt-3 border-t border-border-success pt-3'>
                   {cooldownSeconds > 0 ? (
@@ -347,7 +428,7 @@ export default function SignInScreen() {
                   <ActivityIndicator color='white' />
                 ) : (
                   <Text className='text-base font-semibold text-primary-foreground'>
-                    Verify Code
+                    Verify code
                   </Text>
                 )}
               </Pressable>
@@ -368,7 +449,7 @@ export default function SignInScreen() {
                   <ActivityIndicator color='white' />
                 ) : (
                   <Text className='text-base font-semibold text-primary-foreground'>
-                    Continue with Email
+                    Continue with email
                   </Text>
                 )}
               </Pressable>
@@ -382,7 +463,7 @@ export default function SignInScreen() {
 
         <View className='mt-6 items-center'>
           <Text className='text-sm text-muted-foreground'>
-            New users will be automatically registered
+            New to Groupi? We’ll create an account automatically.
           </Text>
         </View>
       </ScrollView>

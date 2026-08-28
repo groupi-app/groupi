@@ -41,6 +41,17 @@ export function normalizeNativeIntentPath(path: string): string {
       return `${candidatePath}${url.search}`;
     }
 
+    // The one-time fixture login route must never be reachable in ordinary
+    // builds. Metro replaces EXPO_PUBLIC_* values at build time, so only the
+    // isolated E2E artifact can retain this route and its login code.
+    if (
+      isCustomScheme &&
+      candidatePath === '/e2e' &&
+      process.env.EXPO_PUBLIC_E2E_TESTING === 'true'
+    ) {
+      return `${candidatePath}${url.search}`;
+    }
+
     const legacyProfileMatch = /^\/user\/([^/]+)$/.exec(candidatePath);
     const appPath = legacyProfileMatch
       ? `/profile/${legacyProfileMatch[1]}`

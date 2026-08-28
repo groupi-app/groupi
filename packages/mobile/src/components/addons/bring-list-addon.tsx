@@ -3,7 +3,8 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
+import type { Id } from 'convex/_generated/dataModel';
 import { useGlobalUser } from '@/context/global-user-context';
 import {
   useAddonData,
@@ -178,7 +179,8 @@ export function BringListAddon({ eventId, config }: BringListAddonProps) {
                     key={claim.personId}
                     className='flex-row items-center gap-0.5'
                   >
-                    <UserAvatar
+                    <MemberAvatar
+                      personId={claim.personId as Id<'persons'>}
                       name={claim.personId === personId ? 'You' : 'Attendee'}
                       size='xs'
                     />

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from 'expo-router';
 
@@ -8,11 +8,21 @@ import { useNavigation } from 'expo-router';
  */
 export function useUnsavedChanges(hasChanges: boolean) {
   const navigation = useNavigation();
+  const allowNextNavigationRef = useRef(false);
+
+  const allowNextNavigation = useCallback(() => {
+    allowNextNavigationRef.current = true;
+  }, []);
 
   useEffect(() => {
     if (!hasChanges) return;
 
     const unsubscribe = navigation.addListener('beforeRemove', e => {
+      if (allowNextNavigationRef.current) {
+        allowNextNavigationRef.current = false;
+        return;
+      }
+
       e.preventDefault();
 
       Alert.alert(
@@ -23,12 +33,17 @@ export function useUnsavedChanges(hasChanges: boolean) {
           {
             text: 'Discard',
             style: 'destructive',
-            onPress: () => navigation.dispatch(e.data.action),
+            onPress: () => {
+              allowNextNavigation();
+              navigation.dispatch(e.data.action);
+            },
           },
         ]
       );
     });
 
     return unsubscribe;
-  }, [hasChanges, navigation]);
+  }, [allowNextNavigation, hasChanges, navigation]);
+
+  return allowNextNavigation;
 }

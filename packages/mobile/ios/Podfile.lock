@@ -1,4 +1,6 @@
 PODS:
+  - BetterAuthReactNativePasskey (1.0.2):
+    - ExpoModulesCore
   - EXApplication (55.0.18):
     - ExpoModulesCore
   - EXConstants (55.0.17):
@@ -182,6 +184,8 @@ PODS:
   - ExpoAsset (55.0.19):
     - ExpoModulesCore
   - ExpoClipboard (55.0.16):
+    - ExpoModulesCore
+  - ExpoDocumentPicker (55.0.17):
     - ExpoModulesCore
   - ExpoDomWebView (55.0.6):
     - ExpoModulesCore
@@ -2499,6 +2503,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "BetterAuthReactNativePasskey (from `../../../node_modules/.pnpm/@lobehub+expo-better-auth-passkey@1.0.2_patch_hash=41f7469e8a728622d5faf740da6200ad341a_348a878220b3c45efa67b1d9ef1ff779/node_modules/@lobehub/expo-better-auth-passkey/ios`)"
   - "EXApplication (from `../../../node_modules/.pnpm/expo-application@55.0.18_expo@55.0.29/node_modules/expo-application/ios`)"
   - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@55.0.17_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-nati_c181964f9656055951414ad09de8f059/node_modules/expo-constants/ios`)"
   - "EXJSONUtils (from `../../../node_modules/.pnpm/expo-json-utils@55.0.2/node_modules/expo-json-utils/ios`)"
@@ -2510,6 +2515,7 @@ DEPENDENCIES:
   - "expo-dev-menu-interface (from `../../../node_modules/.pnpm/expo-dev-menu-interface@55.0.2_expo@55.0.29/node_modules/expo-dev-menu-interface/ios`)"
   - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@55.0.19_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-native-c_d3584fe288aa0c70a4e316c161a80128/node_modules/expo-asset/ios`)"
   - "ExpoClipboard (from `../../../node_modules/.pnpm/expo-clipboard@55.0.16_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-nati_b8254f4693fc40bbe5e4c76a134548af/node_modules/expo-clipboard/ios`)"
+  - "ExpoDocumentPicker (from `../../../node_modules/.pnpm/expo-document-picker@55.0.17_expo@55.0.29/node_modules/expo-document-picker/ios`)"
   - "ExpoDomWebView (from `../../../node_modules/.pnpm/@expo+dom-webview@55.0.6_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-na_dff06d5815a90dc64978549f69127bc4/node_modules/@expo/dom-webview/ios`)"
   - "ExpoFileSystem (from `../../../node_modules/.pnpm/expo-file-system@55.0.25_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-na_1c22960d16683fc2d85036580cad6557/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.pnpm/expo-font@55.0.8_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-native-com_f217d7c7e0faac9958b6332aa76fbfdc/node_modules/expo-font/ios`)"
@@ -2625,6 +2631,8 @@ SPEC REPOS:
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
+  BetterAuthReactNativePasskey:
+    :path: "../../../node_modules/.pnpm/@lobehub+expo-better-auth-passkey@1.0.2_patch_hash=41f7469e8a728622d5faf740da6200ad341a_348a878220b3c45efa67b1d9ef1ff779/node_modules/@lobehub/expo-better-auth-passkey/ios"
   EXApplication:
     :path: "../../../node_modules/.pnpm/expo-application@55.0.18_expo@55.0.29/node_modules/expo-application/ios"
   EXConstants:
@@ -2647,6 +2655,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/expo-asset@55.0.19_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-native-c_d3584fe288aa0c70a4e316c161a80128/node_modules/expo-asset/ios"
   ExpoClipboard:
     :path: "../../../node_modules/.pnpm/expo-clipboard@55.0.16_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-nati_b8254f4693fc40bbe5e4c76a134548af/node_modules/expo-clipboard/ios"
+  ExpoDocumentPicker:
+    :path: "../../../node_modules/.pnpm/expo-document-picker@55.0.17_expo@55.0.29/node_modules/expo-document-picker/ios"
   ExpoDomWebView:
     :path: "../../../node_modules/.pnpm/@expo+dom-webview@55.0.6_expo@55.0.29_react-native@0.83.10_@babel+core@7.29.0_@react-na_dff06d5815a90dc64978549f69127bc4/node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
@@ -2854,6 +2864,7 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.83.10_@babel+core@7.29.0_@react-native-community+cli@11.3.7_@babel+core@_eaa35be0b199c659c5a4ceb7807534a1/node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  BetterAuthReactNativePasskey: 53a14309d018aeb0f352beaab7d1a7ebf07e9171
   EXApplication: 7d049f1415573b29e5b21de8e98c01fafd007f7d
   EXConstants: 49a092f564eb895b79ab416f53ba54f7e6935197
   EXJSONUtils: 04bc3807d351331a5fe154ce1da596ec15d99169
@@ -2865,6 +2876,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 833795f4c98a674d36cbc12b11b21756c38e01e8
   ExpoAsset: 3ed03b277e3c0d095671a6fdaaf158cb275361a0
   ExpoClipboard: 22455e54ebf6fce0886e322827e67f5eab9dfa07
+  ExpoDocumentPicker: 6b83f9b3c5df77bf4129ced5199fc51ea1d9b12c
   ExpoDomWebView: b2e9d601f9cb77d3c97da73234e175b64be91928
   ExpoFileSystem: 8d5b2404ef2e839136146812d0036485d3ed8198
   ExpoFont: a7e34a75bdfb703fa07a0e87807f836236608c76

@@ -6,12 +6,17 @@ MOBILE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 FLOW_TARGET="${MOBILE_ROOT}/.maestro"
 FLOW_TAG='smoke'
+MAESTRO_ENV_ARGS=()
 if [[ "${1:-}" == '--authenticated' ]]; then
   shift
   # shellcheck disable=SC1091
   source "${SCRIPT_DIR}/load-e2e-environment.sh"
   FLOW_TARGET="${MOBILE_ROOT}/.maestro/authenticated-event.yml"
   FLOW_TAG='authenticated'
+  MAESTRO_ENV_ARGS=(
+    -e "E2E_CONVEX_URL=${MAESTRO_E2E_CONVEX_URL}"
+    -e "E2E_FIXTURE_KEY=${MAESTRO_E2E_FIXTURE_KEY}"
+  )
 fi
 
 if ! java -version >/dev/null 2>&1; then
@@ -38,4 +43,4 @@ fi
 export MAESTRO_CLI_NO_ANALYTICS="${MAESTRO_CLI_NO_ANALYTICS:-1}"
 export MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED="${MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED:-true}"
 
-exec maestro test "${FLOW_TARGET}" --include-tags "${FLOW_TAG}" "$@"
+exec maestro test "${FLOW_TARGET}" --include-tags "${FLOW_TAG}" "${MAESTRO_ENV_ARGS[@]}" "$@"

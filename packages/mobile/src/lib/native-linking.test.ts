@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeNativeIntentPath } from './native-linking';
 
 describe('normalizeNativeIntentPath', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it.each([
     ['https://www.groupi.gg/invite/invite-token', '/invite/invite-token'],
     ['https://groupi.gg/event/event-123', '/event/event-123'],
@@ -29,6 +33,20 @@ describe('normalizeNativeIntentPath', () => {
         'groupi:///callback?cookie=session%3Dsecret&returnTo=%2Finvite%2Ftoken'
       )
     ).toBe('/callback?cookie=session%3Dsecret&returnTo=%2Finvite%2Ftoken');
+  });
+
+  it('allows the fixture login link only in an isolated E2E build', () => {
+    vi.stubEnv('EXPO_PUBLIC_E2E_TESTING', 'true');
+
+    expect(normalizeNativeIntentPath('groupi://e2e?code=one-time-code')).toBe(
+      '/e2e?code=one-time-code'
+    );
+  });
+
+  it('rejects the fixture login link in ordinary builds', () => {
+    expect(normalizeNativeIntentPath('groupi://e2e?code=one-time-code')).toBe(
+      '/'
+    );
   });
 
   it.each([

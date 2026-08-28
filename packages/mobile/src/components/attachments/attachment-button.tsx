@@ -3,6 +3,7 @@ import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useImagePicker } from '@/hooks/use-image-picker';
+import { useDocumentPicker } from '@/hooks/use-document-picker';
 import { useActionMenu } from '@/components/ui/action-menu';
 import { MAX_ATTACHMENTS } from '@/lib/file-upload-policy';
 
@@ -19,14 +20,17 @@ interface AttachmentButtonProps {
   ) => void;
   currentCount: number;
   disabled?: boolean;
+  showLabel?: boolean;
 }
 
 export function AttachmentButton({
   onFilesSelected,
   currentCount,
   disabled = false,
+  showLabel = false,
 }: AttachmentButtonProps) {
   const { pickMultipleImages, takePhoto } = useImagePicker();
+  const { pickFiles } = useDocumentPicker();
   const { showActionMenu } = useActionMenu();
 
   const remaining = MAX_ATTACHMENTS - currentCount;
@@ -79,6 +83,16 @@ export function AttachmentButton({
             }
           },
         },
+        {
+          label: 'Choose File',
+          icon: 'document-attach-outline',
+          onPress: async () => {
+            const files = await pickFiles();
+            if (files.length > 0) {
+              onFilesSelected(files.slice(0, remaining));
+            }
+          },
+        },
       ],
     });
   }
@@ -101,6 +115,7 @@ export function AttachmentButton({
         size={22}
         color={isMaxed ? '#9ca3af' : '#6b7280'}
       />
+      {showLabel ? <Text variant='small'>Add attachment</Text> : null}
       {currentCount > 0 ? (
         <View className='rounded-badge bg-primary px-1.5'>
           <Text className='text-xs font-medium text-primary-foreground'>

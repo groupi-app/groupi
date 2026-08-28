@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useColorScheme } from 'react-native';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import type { FunctionArgs, FunctionReturnType } from 'convex/server';
 import { Uniwind } from 'uniwind';
@@ -18,14 +17,14 @@ import {
   type ThemeTokens,
   type ThemeTokenOverrides,
   baseThemeRegistry,
-  DEFAULT_DARK_THEME_ID,
   DEFAULT_LIGHT_THEME_ID,
 } from '@groupi/shared/design/themes';
+import { normalizeMobileThemePreference } from './theme-preference';
 
 type ThemePreference = FunctionArgs<
   typeof api.themes.mutations.saveThemePreference
 >;
-type CustomTheme = FunctionReturnType<
+export type MobileCustomTheme = FunctionReturnType<
   typeof api.themes.queries.getCustomThemes
 >[number];
 
@@ -34,10 +33,7 @@ interface ThemeContextValue {
   selectedThemeId: string;
   selectedThemeType: 'base' | 'custom';
   selectedCustomThemeId?: Id<'customThemes'>;
-  useSystemPreference: boolean;
-  systemLightThemeId: string;
-  systemDarkThemeId: string;
-  customThemes: CustomTheme[];
+  customThemes: MobileCustomTheme[];
   tokens: ThemeTokens;
   isDark: boolean;
   isLoading: boolean;
@@ -46,8 +42,6 @@ interface ThemeContextValue {
     id: string,
     customThemeId?: Id<'customThemes'>
   ) => Promise<boolean>;
-  setUseSystemPreference: (enabled: boolean) => Promise<boolean>;
-  setSystemTheme: (mode: 'light' | 'dark', id: string) => Promise<boolean>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -114,19 +108,6 @@ function tokensToCssVars(
   };
 }
 
-function getDefaultPreference(
-  colorScheme: 'light' | 'dark' | null | undefined
-): ThemePreference {
-  return {
-    selectedThemeType: 'base',
-    selectedThemeId:
-      colorScheme === 'dark' ? DEFAULT_DARK_THEME_ID : DEFAULT_LIGHT_THEME_ID,
-    useSystemPreference: true,
-    systemLightThemeId: DEFAULT_LIGHT_THEME_ID,
-    systemDarkThemeId: DEFAULT_DARK_THEME_ID,
-  };
-}
-
 function applyTheme(tokens: ThemeTokens, mode: 'light' | 'dark') {
   Uniwind.updateCSSVariables(mode, tokensToCssVars(tokens));
   Uniwind.setTheme(mode);
@@ -156,7 +137,6 @@ function preferencesMatch(
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const colorScheme = useColorScheme();
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
   const savedPreference = useQuery(
     api.themes.queries.getThemePreferences,
@@ -173,38 +153,28 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     useState<ThemePreference | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const normalizedColorScheme = colorScheme === 'dark' ? 'dark' : 'light';
-  const defaultPreference = useMemo(
-    () => getDefaultPreference(normalizedColorScheme),
-    [normalizedColorScheme]
+  const preferenceSource = pendingPreference ?? savedPreference;
+  const preference = useMemo(
+    () => normalizeMobileThemePreference(preferenceSource),
+    [preferenceSource]
   );
-  const preference = pendingPreference ?? savedPreference ?? defaultPreference;
   const customThemes = useMemo(
     () => customThemesResult ?? [],
     [customThemesResult]
   );
 
-  const activeThemeId = preference.useSystemPreference
-    ? normalizedColorScheme === 'dark'
-      ? preference.systemDarkThemeId
-      : preference.systemLightThemeId
-    : preference.selectedThemeId;
   const selectedCustomTheme =
-    !preference.useSystemPreference && preference.selectedThemeType === 'custom'
+    preference.selectedThemeType === 'custom'
       ? customThemes.find(
           theme =>
             theme._id === preference.selectedCustomThemeId ||
             theme._id === preference.selectedThemeId
         )
       : undefined;
-  const baseThemeId = selectedCustomTheme?.baseThemeId ?? activeThemeId;
+  const baseThemeId =
+    selectedCustomTheme?.baseThemeId ?? preference.selectedThemeId;
   const activeTheme =
-    baseThemeRegistry[baseThemeId] ??
-    baseThemeRegistry[
-      normalizedColorScheme === 'dark'
-        ? DEFAULT_DARK_THEME_ID
-        : DEFAULT_LIGHT_THEME_ID
-    ];
+    baseThemeRegistry[baseThemeId] ?? baseThemeRegistry[DEFAULT_LIGHT_THEME_ID];
   const resolvedThemeId = selectedCustomTheme?._id ?? activeTheme.id;
 
   useEffect(() => {
@@ -231,10 +201,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const persistPreference = useCallback(
     async (nextPreference: ThemePreference) => {
-      setPendingPreference(nextPreference);
+      const mutationPayload = normalizeMobileThemePreference(nextPreference);
+      setPendingPreference(mutationPayload);
       setIsSaving(true);
       try {
-        await saveThemePreference(nextPreference);
+        await saveThemePreference(mutationPayload);
         return true;
       } catch {
         setPendingPreference(null);
@@ -249,32 +220,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useCallback(
     async (id: string, customThemeId?: Id<'customThemes'>) =>
       persistPreference({
-        ...preference,
         selectedThemeType: customThemeId ? 'custom' : 'base',
         selectedThemeId: id,
         selectedCustomThemeId: customThemeId,
         useSystemPreference: false,
-      }),
-    [persistPreference, preference]
-  );
-
-  const setUseSystemPreference = useCallback(
-    async (enabled: boolean) =>
-      persistPreference({
-        ...preference,
-        useSystemPreference: enabled,
-      }),
-    [persistPreference, preference]
-  );
-
-  const setSystemTheme = useCallback(
-    async (mode: 'light' | 'dark', id: string) =>
-      persistPreference({
-        ...preference,
-        useSystemPreference: true,
-        systemLightThemeId:
-          mode === 'light' ? id : preference.systemLightThemeId,
-        systemDarkThemeId: mode === 'dark' ? id : preference.systemDarkThemeId,
+        systemLightThemeId: preference.systemLightThemeId,
+        systemDarkThemeId: preference.systemDarkThemeId,
       }),
     [persistPreference, preference]
   );
@@ -285,9 +236,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       selectedThemeId: preference.selectedThemeId,
       selectedThemeType: preference.selectedThemeType,
       selectedCustomThemeId: preference.selectedCustomThemeId,
-      useSystemPreference: preference.useSystemPreference,
-      systemLightThemeId: preference.systemLightThemeId,
-      systemDarkThemeId: preference.systemDarkThemeId,
       customThemes,
       tokens: activeTheme.tokens,
       isDark: activeTheme.mode === 'dark',
@@ -297,8 +245,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           (savedPreference === undefined || customThemesResult === undefined)),
       isSaving,
       setTheme,
-      setUseSystemPreference,
-      setSystemTheme,
     }),
     [
       activeTheme,
@@ -310,9 +256,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       preference,
       resolvedThemeId,
       savedPreference,
-      setSystemTheme,
       setTheme,
-      setUseSystemPreference,
     ]
   );
 

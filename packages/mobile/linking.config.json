@@ -1,6 +1,7 @@
 {
   "publicBaseUrl": "https://www.groupi.gg",
   "appLinkHost": "www.groupi.gg",
+  "appleApplicationPrefix": "X2HQQURT9V",
   "pathPrefixes": [
     "/invite",
     "/event",

@@ -27,10 +27,11 @@ import {
   useTypingState,
   useTypingIndicators,
 } from '@/hooks/use-presence';
-import { useTogglePostMute } from '@/hooks/use-muting';
+import { useIsPostMuted, useTogglePostMute } from '@/hooks/use-muting';
 import { useCreateReport } from '@/hooks/use-reports';
 import { useAttachments } from '@/hooks/use-file-upload';
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { BackButton } from '@/components/ui/back-button';
 import {
   useActionMenu,
@@ -60,6 +61,8 @@ export default function PostDetailScreen() {
   const deletePost = useDeletePost();
   const deleteReply = useDeleteReply();
   const updateReply = useUpdateReply();
+  const postMuteState = useIsPostMuted(postId);
+  const isPostMuted = postMuteState?.isMuted ?? false;
   const togglePostMute = useTogglePostMute();
   const createReport = useCreateReport();
   const { showActionMenu } = useActionMenu();
@@ -139,6 +142,7 @@ export default function PostDetailScreen() {
     post?.author?.user?.name ?? post?.author?.person?.user?.name ?? 'Unknown';
   const authorImage =
     post?.author?.user?.image ?? post?.author?.person?.user?.image ?? undefined;
+  const authorPersonId = post?.author?.person?._id;
   const isAuthor = person?._id && post?.author?.person?._id === person._id;
   const userRole = postDetail.userMembership?.role;
   const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
@@ -184,6 +188,7 @@ export default function PostDetailScreen() {
       options.push({
         label: 'Edit Post',
         icon: 'create-outline',
+        showChevron: true,
         onPress: () => {
           const { eventId } = post;
           router.push(`/event/${eventId}/post/${postId}/edit`);
@@ -218,8 +223,8 @@ export default function PostDetailScreen() {
 
     // Always available actions
     options.push({
-      label: 'Mute Post',
-      icon: 'notifications-off-outline',
+      label: isPostMuted ? 'Unmute Post' : 'Mute Post',
+      icon: isPostMuted ? 'notifications-outline' : 'notifications-off-outline',
       onPress: () => togglePostMute(postId),
     });
 
@@ -342,7 +347,16 @@ export default function PostDetailScreen() {
             <View className='border-b border-border px-4 pb-4 pt-4'>
               {/* Author */}
               <View className='flex-row items-center gap-2'>
-                <Avatar src={authorImage} name={authorName} size='md' />
+                {authorPersonId ? (
+                  <MemberAvatar
+                    personId={authorPersonId}
+                    src={authorImage}
+                    name={authorName}
+                    size='md'
+                  />
+                ) : (
+                  <Avatar src={authorImage} name={authorName} size='md' />
+                )}
                 <View>
                   <Text className='text-base font-medium text-foreground'>
                     {authorName}
@@ -407,6 +421,7 @@ export default function PostDetailScreen() {
               item.author?.user?.image ??
               item.author?.person?.user?.image ??
               undefined;
+            const replyAuthorPersonId = item.author?.person?._id;
             const isReplyAuthor =
               person?._id && item.author?.person?._id === person._id;
             const replyAttachments = item.attachments ?? [];
@@ -422,11 +437,20 @@ export default function PostDetailScreen() {
                 className='border-b border-border px-4 py-3'
               >
                 <View className='flex-row items-start gap-2'>
-                  <Avatar
-                    src={replyAuthorImage}
-                    name={replyAuthorName}
-                    size='sm'
-                  />
+                  {replyAuthorPersonId ? (
+                    <MemberAvatar
+                      personId={replyAuthorPersonId as Id<'persons'>}
+                      src={replyAuthorImage}
+                      name={replyAuthorName}
+                      size='sm'
+                    />
+                  ) : (
+                    <Avatar
+                      src={replyAuthorImage}
+                      name={replyAuthorName}
+                      size='sm'
+                    />
+                  )}
                   <View className='flex-1'>
                     <View className='flex-row items-center gap-2'>
                       <Text className='text-sm font-medium text-foreground'>

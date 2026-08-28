@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getPublicBaseUrl,
+  getPublicGdlUrl,
   getPublicInviteUrl,
   PUBLIC_APP_LINK_HOST,
 } from './public-urls';
@@ -12,6 +13,7 @@ describe('public URLs', () => {
     expect(getPublicInviteUrl('invite-token')).toBe(
       'https://www.groupi.gg/invite/invite-token'
     );
+    expect(getPublicGdlUrl()).toBe('https://www.groupi.gg/gdl');
     expect(PUBLIC_APP_LINK_HOST).toBe('www.groupi.gg');
   });
 

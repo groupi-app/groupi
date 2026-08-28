@@ -78,6 +78,8 @@ export default function EventDetailScreen() {
     <SafeAreaView className='flex-1 bg-background'>
       <PostFeed
         eventId={eventId}
+        currentPersonId={headerData.userMembership.person._id}
+        userRole={headerData.userMembership.role}
         posts={posts}
         status={postFeedStatus}
         loadMore={loadMore}

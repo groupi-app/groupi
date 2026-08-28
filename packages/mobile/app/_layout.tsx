@@ -17,6 +17,7 @@ import Toast from 'react-native-toast-message';
 import { PortalHost } from '@rn-primitives/portal';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ActionMenuProvider } from '@/components/ui/action-menu';
+import { MemberDrawerProvider } from '@/components/events/member-drawer';
 
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import { ThemeProvider, useTheme } from '@/theme/theme-provider';
@@ -154,6 +155,14 @@ function RootNavigator() {
         }}
       />
       <Stack.Screen
+        name='notifications/index'
+        options={{
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name='invite/[inviteId]'
         options={{
           presentation: 'modal',
@@ -180,8 +189,10 @@ export default function RootLayout() {
               <PushNotificationProvider>
                 <BottomSheetModalProvider>
                   <ActionMenuProvider>
-                    <RootNavigator />
-                    <PushNotificationResponseHandler />
+                    <MemberDrawerProvider>
+                      <RootNavigator />
+                      <PushNotificationResponseHandler />
+                    </MemberDrawerProvider>
                   </ActionMenuProvider>
                 </BottomSheetModalProvider>
                 <GlobalPresenceTracker />

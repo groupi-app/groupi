@@ -106,7 +106,8 @@
       "rollup": ">=4.59.0"
     },
     "patchedDependencies": {
-      "@better-auth/kysely-adapter@1.6.13": "patches/@better-auth__kysely-adapter@1.6.13.patch"
+      "@better-auth/kysely-adapter@1.6.13": "patches/@better-auth__kysely-adapter@1.6.13.patch",
+      "@lobehub/expo-better-auth-passkey@1.0.2": "patches/@lobehub__expo-better-auth-passkey@1.0.2.patch"
     }
   },
   "lint-staged": {

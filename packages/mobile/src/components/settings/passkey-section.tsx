@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import { router } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from '@groupi/shared/platform';
 import { authClient } from '@/lib/auth-client';
+import { isNativePasskeyAvailable } from '@/lib/native-passkey-client';
+import {
+  getPasskeyErrorMessage,
+  isPasskeyCancellation,
+  isSessionNotFreshError,
+} from '@/lib/passkey-errors';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 
@@ -54,6 +61,13 @@ export function PasskeySection() {
   }
 
   async function handleAddPasskey() {
+    if (!isNativePasskeyAvailable()) {
+      toast.error(
+        'Passkeys are not available in this build yet. Install the latest version of Groupi and try again.'
+      );
+      return;
+    }
+
     setIsAdding(true);
     try {
       const result = await authClient.passkey.addPasskey({
@@ -61,21 +75,61 @@ export function PasskeySection() {
       });
 
       if (result.error) {
-        toast.error(result.error.message || 'Failed to add passkey');
+        if (isSessionNotFreshError(result.error)) {
+          promptForFreshSignIn();
+          return;
+        }
+        if (!isPasskeyCancellation(result.error)) {
+          toast.error(
+            getPasskeyErrorMessage(result.error, 'Failed to add passkey')
+          );
+        }
         return;
       }
 
       toast.success('Passkey added successfully');
       await loadPasskeys();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to add passkey';
-      if (message.includes('cancel') || message.includes('abort')) {
+      if (isSessionNotFreshError(error)) {
+        promptForFreshSignIn();
         return;
       }
-      toast.error(message);
+      if (isPasskeyCancellation(error)) {
+        return;
+      }
+      toast.error(getPasskeyErrorMessage(error, 'Failed to add passkey'));
     } finally {
       setIsAdding(false);
+    }
+  }
+
+  function promptForFreshSignIn() {
+    showConfirmDialog({
+      title: 'Sign in again',
+      message:
+        'For your security, adding a passkey requires a recent sign-in. You will return here afterward.',
+      confirmLabel: 'Sign In Again',
+      onConfirm: () => {
+        void restartAuthentication();
+      },
+    });
+  }
+
+  async function restartAuthentication() {
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        toast.error('Failed to start sign in. Please try again.');
+        return;
+      }
+
+      router.replace({
+        pathname: '/(auth)/sign-in',
+        params: { returnTo: '/settings/account' },
+      });
+    } catch {
+      toast.error('Failed to start sign in. Please try again.');
     }
   }
 

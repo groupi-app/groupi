@@ -156,7 +156,7 @@ export default function SignInPage() {
         ) {
           return;
         }
-        setError(result.error.message || 'Passkey authentication failed');
+        setError(result.error.message || 'Passkey sign-in failed');
         return;
       }
 
@@ -164,7 +164,7 @@ export default function SignInPage() {
       router.push(callbackURL);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Passkey authentication failed';
+        err instanceof Error ? err.message : 'Passkey sign-in failed';
       const lowerMessage = message.toLowerCase();
       // Handle user cancellation gracefully
       if (
@@ -270,7 +270,7 @@ export default function SignInPage() {
       });
 
       if (error) {
-        setError(error.message || 'Failed to send magic link');
+        setError(error.message || 'Unable to send the sign-in link');
         setSuccess(false);
       } else {
         // Success! Show success message
@@ -296,37 +296,25 @@ export default function SignInPage() {
   };
 
   return (
-    <div className='container py-12 md:py-24'>
-      <div className='flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 lg:gap-16'>
-        {/* Sticker mascot - only visible on larger screens */}
-        <div className='hidden md:block flex-shrink-0'>
-          <LogoSticker size='4xl' color='primary' waving />
-        </div>
-
+    <div className='container py-12 md:py-20'>
+      <div className='flex items-center justify-center'>
         <Card className='w-full max-w-md'>
-          {/* Groupi logo header like navbar */}
-          <div className='flex items-center justify-center gap-2 pt-6 pb-2'>
-            <Icons.logo
-              width='32'
-              height='28'
-              viewBox='0 0 197 225'
-              className='text-primary'
-            />
-            <span className='text-2xl font-bold font-heading'>
+          <div className='flex items-center justify-center gap-2 pt-7 pb-1'>
+            <LogoSticker size='xs' color='primary' waving />
+            <span className='text-3xl font-bold font-heading text-primary'>
               {siteConfig.name}
             </span>
           </div>
 
-          <div className='px-6 pb-2 text-center'>
-            <h1 className='text-xl font-heading font-medium'>
-              {isAddAccountMode ? 'Add Another Account' : 'Welcome Back'}
+          <div className='px-6 pb-3 text-center'>
+            <h1 className='text-2xl font-heading font-semibold'>
+              {isAddAccountMode ? 'Add another account' : 'Welcome back'}
             </h1>
-            {isAddAccountMode && (
-              <p className='text-sm text-muted-foreground mt-1'>
-                Sign in with a different account. Your current session will
-                remain active.
-              </p>
-            )}
+            <p className='text-sm text-muted-foreground mt-1'>
+              {isAddAccountMode
+                ? 'Sign in with a different account. Your current session will remain active.'
+                : 'Plan events together'}
+            </p>
           </div>
 
           <CardContent className='space-y-4'>
@@ -357,10 +345,10 @@ export default function SignInPage() {
                   variant='outline'
                   disabled={loading}
                   isLoading={passkeyLoading}
-                  loadingText='Authenticating...'
-                  icon={<Icons.fingerprint className='size-4' />}
+                  loadingText='Checking passkey…'
+                  icon={<Icons.key className='size-4' />}
                 >
-                  Sign in with Passkey
+                  Continue with a passkey
                 </Button>
               )}
             </div>
@@ -371,15 +359,15 @@ export default function SignInPage() {
               </div>
               <div className='relative flex justify-center text-xs uppercase'>
                 <span className='bg-background px-2 text-muted-foreground'>
-                  Or continue with
+                  Or use email
                 </span>
               </div>
             </div>
 
-            {/* Magic Link with Email or Username */}
+            {/* Email or username sign-in */}
             <form onSubmit={handleMagicLink} className='space-y-4'>
               <div>
-                <Label htmlFor='identifier'>Email or Username</Label>
+                <Label htmlFor='identifier'>Email or username</Label>
                 <Input
                   id='identifier'
                   type='text'
@@ -396,6 +384,7 @@ export default function SignInPage() {
                     }
                   }}
                   placeholder='Enter your email or username'
+                  autoComplete='username'
                   required
                   disabled={cooldownSeconds > 0}
                 />
@@ -404,10 +393,11 @@ export default function SignInPage() {
               {success && (
                 <Alert variant='success'>
                   <Icons.mail className='h-4 w-4' />
-                  <AlertTitle>Check your email!</AlertTitle>
+                  <AlertTitle>Check your email</AlertTitle>
                   <AlertDescription>
-                    We&apos;ve sent you a magic link to sign in. Click the link
-                    in the email to continue.
+                    We sent a sign-in link
+                    {lastSentIdentifier ? ` to ${lastSentIdentifier}` : ''}.
+                    Open it to continue.
                     {lastSentIdentifier && (
                       <div className='mt-3 pt-3 border-t border-border-success'>
                         <p className='text-sm mb-2'>
@@ -425,7 +415,7 @@ export default function SignInPage() {
                             disabled={loading}
                             className='text-sm font-medium text-text-success hover:text-text-success/80 underline disabled:opacity-50 disabled:cursor-not-allowed'
                           >
-                            Resend magic link
+                            Resend sign-in link
                           </button>
                         )}
                       </div>
@@ -444,19 +434,17 @@ export default function SignInPage() {
                 type='submit'
                 className='w-full'
                 isLoading={loading}
-                loadingText='Sending...'
+                loadingText='Sending sign-in link…'
                 disabled={passkeyLoading || cooldownSeconds > 0}
               >
-                {success && identifier === lastSentIdentifier
-                  ? 'Link Sent!'
-                  : 'Send Magic Link'}
+                {success ? 'Sign-in link sent' : 'Continue with email'}
               </Button>
             </form>
 
             <p className='text-center text-sm text-muted-foreground'>
               {isAddAccountMode
                 ? 'You can switch between accounts anytime'
-                : 'New users will be automatically registered'}
+                : 'New to Groupi? We’ll create an account automatically.'}
             </p>
           </CardContent>
         </Card>

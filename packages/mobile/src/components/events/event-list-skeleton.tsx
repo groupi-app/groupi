@@ -21,14 +21,17 @@ function SkeletonCard() {
   return (
     <Animated.View
       style={animatedStyle}
-      className='mb-3 rounded-card bg-card p-4'
+      className='mb-3 overflow-hidden rounded-card bg-card'
     >
-      <View className='h-5 w-3/4 rounded bg-muted' />
-      <View className='mt-2 h-4 w-1/2 rounded bg-muted' />
-      <View className='mt-3 flex-row gap-3'>
-        <View className='h-4 w-24 rounded bg-muted' />
-        <View className='h-4 w-20 rounded bg-muted' />
-        <View className='h-4 w-12 rounded bg-muted' />
+      <View className='aspect-video w-full bg-muted' />
+      <View className='p-4'>
+        <View className='h-5 w-3/4 rounded bg-muted' />
+        <View className='mt-2 h-4 w-1/2 rounded bg-muted' />
+        <View className='mt-3 flex-row gap-3'>
+          <View className='h-4 w-24 rounded bg-muted' />
+          <View className='h-4 w-20 rounded bg-muted' />
+          <View className='h-4 w-12 rounded bg-muted' />
+        </View>
       </View>
     </Animated.View>
   );

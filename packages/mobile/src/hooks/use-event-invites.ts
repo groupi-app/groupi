@@ -33,14 +33,38 @@ export function useEventInviteSearch(
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const results = useQuery(
+  const exactMatch = useQuery(
+    api.eventInvites.queries.searchUserByExactUsernameForEventInvite,
+    enabled && eventId && debouncedTerm.length >= 2
+      ? { eventId, searchTerm: debouncedTerm }
+      : 'skip'
+  );
+  const fuzzyResults = useQuery(
     api.eventInvites.queries.searchUsersForEventInvite,
     enabled && eventId && debouncedTerm.length >= 2
       ? { eventId, searchTerm: debouncedTerm }
       : 'skip'
   );
 
-  return { results, debouncedTerm };
+  const results =
+    exactMatch === undefined && fuzzyResults === undefined
+      ? undefined
+      : [
+          ...(exactMatch ? [exactMatch] : []),
+          ...(fuzzyResults ?? []).filter(
+            result => result.personId !== exactMatch?.personId
+          ),
+        ];
+
+  return {
+    results,
+    exactMatch,
+    debouncedTerm,
+    isLoading:
+      enabled &&
+      debouncedTerm.length >= 2 &&
+      (exactMatch === undefined || fuzzyResults === undefined),
+  };
 }
 
 // --- Mutations ---

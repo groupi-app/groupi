@@ -116,7 +116,7 @@ export async function sendMagicLinkWithEmailOrUsername({
       if (!result || !result.email) {
         return {
           error: {
-            message: 'Username not found',
+            message: "We couldn't find that username",
           },
         };
       }
@@ -129,7 +129,7 @@ export async function sendMagicLinkWithEmailOrUsername({
     } catch {
       return {
         error: {
-          message: 'Failed to send magic link',
+          message: 'Unable to send the sign-in link',
         },
       };
     }

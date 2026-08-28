@@ -1,5 +1,6 @@
 import { expect, test, describe } from 'vitest';
 import { api } from './_generated/api';
+import betterAuthSchema from '../betterAuth/schema';
 import {
   createTestInstance,
   createTestUser,
@@ -8,7 +9,114 @@ import {
   createTestEventWithMultipleUsers,
 } from './test_helpers';
 
+// Avoid deep generated API instantiation for component function references.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const { components }: any = require('../_generated/api');
+const betterAuthModules = import.meta.glob('../betterAuth/**/*.ts');
+
+function createEventInviteSearchTestInstance() {
+  const t = createTestInstance();
+  t.registerComponent('betterAuth', betterAuthSchema, betterAuthModules);
+  return t;
+}
+
 describe('Event Invites', () => {
+  describe('searchUsersForEventInvite', () => {
+    test('searches normalized usernames without an unsupported case-insensitive query', async () => {
+      const t = createEventInviteSearchTestInstance();
+      const now = Date.now();
+
+      const organizerUser = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'user',
+            data: {
+              email: 'search-organizer@example.com',
+              name: 'Search Organizer',
+              username: 'search_organizer',
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+      const candidateUser = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'user',
+            data: {
+              email: 'search-candidate@example.com',
+              name: 'Invite Candidate',
+              username: 'mobile_invitee',
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+      const organizerSession = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'session',
+            data: {
+              userId: organizerUser._id,
+              token: 'event-invite-search-session',
+              expiresAt: now + 60_000,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+
+      const { eventId, candidatePersonId } = await t.run(async ctx => {
+        const organizerPersonId = await ctx.db.insert('persons', {
+          userId: organizerUser._id,
+        });
+        const candidatePersonId = await ctx.db.insert('persons', {
+          userId: candidateUser._id,
+        });
+        const eventId = await ctx.db.insert('events', {
+          title: 'Invite Search Event',
+          creatorId: organizerPersonId,
+          createdAt: now,
+          updatedAt: now,
+          timezone: 'UTC',
+          potentialDateTimes: [],
+        });
+        await ctx.db.insert('memberships', {
+          personId: organizerPersonId,
+          eventId,
+          role: 'ORGANIZER',
+          rsvpStatus: 'YES',
+        });
+        return { eventId, candidatePersonId };
+      });
+
+      const organizerAuth = t.withIdentity({
+        subject: organizerUser._id,
+        sessionId: organizerSession._id,
+      });
+      const results = await organizerAuth.query(
+        api.eventInvites.queries.searchUsersForEventInvite,
+        { eventId, searchTerm: 'INVITEE' }
+      );
+
+      expect(results).toEqual([
+        expect.objectContaining({
+          personId: candidatePersonId,
+          name: 'Invite Candidate',
+          username: 'mobile_invitee',
+        }),
+      ]);
+    });
+  });
+
   describe('sendEventInvite', () => {
     test('should send an event invite', async () => {
       const t = createTestInstance();

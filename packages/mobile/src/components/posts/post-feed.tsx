@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  Pressable,
   View,
   type ListRenderItem,
 } from 'react-native';
@@ -26,6 +27,8 @@ interface PostFeedProps {
   eventId: string;
   header: ReactElement;
   posts: PostCardProps['post'][];
+  currentPersonId: string;
+  userRole?: string;
   status: PostFeedStatus;
   loadMore: (count: number) => void;
 }
@@ -38,10 +41,15 @@ export function PostFeed({
   eventId,
   header,
   posts,
+  currentPersonId,
+  userRole,
   status,
   loadMore,
 }: PostFeedProps) {
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const primaryForegroundColor = String(
+    useCSSVariable('--color-primary-foreground') ?? ''
+  );
   const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
 
   const handleEndReached = useCallback(() => {
@@ -53,10 +61,15 @@ export function PostFeed({
   const renderItem = useCallback<ListRenderItem<PostCardProps['post']>>(
     ({ item }) => (
       <View className='px-4'>
-        <PostCard post={item} eventId={eventId} />
+        <PostCard
+          post={item}
+          eventId={eventId}
+          currentPersonId={currentPersonId}
+          userRole={userRole}
+        />
       </View>
     ),
-    [eventId]
+    [currentPersonId, eventId, userRole]
   );
 
   const listHeader = useMemo(
@@ -64,15 +77,11 @@ export function PostFeed({
       <View>
         {header}
         <View className='mt-6'>
-          <SectionHeader
-            title='Posts'
-            actionLabel='New Post'
-            onAction={() => router.push(`/event/${eventId}/new-post`)}
-          />
+          <SectionHeader title='Posts' />
         </View>
       </View>
     ),
-    [eventId, header]
+    [header]
   );
 
   const emptyState =
@@ -105,22 +114,36 @@ export function PostFeed({
     ) : null;
 
   return (
-    <FlatList
-      className='flex-1'
-      contentContainerClassName='gap-3 pb-24'
-      data={posts}
-      keyExtractor={post => post._id}
-      renderItem={renderItem}
-      ListHeaderComponent={listHeader}
-      ListEmptyComponent={emptyState}
-      ListFooterComponent={loadingMore}
-      onEndReached={handleEndReached}
-      onEndReachedThreshold={0.5}
-      initialNumToRender={POST_FEED_PAGE_SIZE}
-      maxToRenderPerBatch={10}
-      windowSize={7}
-      removeClippedSubviews={Platform.OS === 'android'}
-      showsVerticalScrollIndicator={false}
-    />
+    <View className='relative flex-1'>
+      <FlatList
+        className='flex-1'
+        contentContainerClassName='gap-3 pb-32'
+        data={posts}
+        keyExtractor={post => post._id}
+        renderItem={renderItem}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={emptyState}
+        ListFooterComponent={loadingMore}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        initialNumToRender={POST_FEED_PAGE_SIZE}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === 'android'}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <Pressable
+        onPress={() => router.push(`/event/${eventId}/new-post`)}
+        accessibilityRole='button'
+        accessibilityLabel='Create new post'
+        accessibilityHint='Opens the new post composer'
+        hitSlop={4}
+        className='absolute bottom-6 right-4 z-popover min-h-12 flex-row items-center justify-center gap-2 rounded-full border-2 border-primary-foreground bg-primary px-5 py-3 shadow-floating active:scale-95 active:bg-primary-hover'
+      >
+        <Ionicons name='add' size={20} color={primaryForegroundColor} />
+        <Text className='font-semibold text-primary-foreground'>New Post</Text>
+      </Pressable>
+    </View>
   );
 }

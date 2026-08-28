@@ -4,8 +4,18 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import type { Id } from 'convex/_generated/dataModel';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { Timestamp } from '@/components/molecules';
+import {
+  useActionMenu,
+  type ActionMenuOption,
+} from '@/components/ui/action-menu';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useDeletePost } from '@/hooks/use-posts';
+import { useIsPostMuted, useTogglePostMute } from '@/hooks/use-muting';
+import { useCreateReport } from '@/hooks/use-reports';
+import { toast } from '@groupi/shared/platform';
 
 export interface PostCardProps {
   post: {
@@ -14,6 +24,7 @@ export interface PostCardProps {
     content: string;
     _creationTime: number;
     updatedAt?: number;
+    authorId: string;
     author?: {
       name?: string | null;
       image?: string | null;
@@ -23,9 +34,16 @@ export interface PostCardProps {
     replyCount?: number;
   };
   eventId: string;
+  currentPersonId: string;
+  userRole?: string;
 }
 
-export function PostCard({ post, eventId }: PostCardProps) {
+export function PostCard({
+  post,
+  eventId,
+  currentPersonId,
+  userRole,
+}: PostCardProps) {
   // Handle both author.user and author.person.user shapes
   const authorName =
     post.author?.name ??
@@ -40,28 +58,90 @@ export function PostCard({ post, eventId }: PostCardProps) {
   const replyCount = post.replyCount;
   const isEdited =
     post.updatedAt !== undefined && post.updatedAt !== post._creationTime;
+  const isAuthor = post.authorId === currentPersonId;
+  const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
+  const mutedState = useIsPostMuted(post._id);
+  const isMuted = mutedState?.isMuted ?? false;
+  const togglePostMute = useTogglePostMute();
+  const deletePost = useDeletePost();
+  const createReport = useCreateReport();
+  const { showActionMenu } = useActionMenu();
 
   // Strip HTML for preview — show plain text in card
   const plainContent = post.content.replace(/<[^>]*>/g, '').trim();
 
+  function handleLongPress() {
+    const options: ActionMenuOption[] = [
+      {
+        label: isMuted ? 'Unmute Post' : 'Mute Post',
+        icon: isMuted ? 'notifications-outline' : 'notifications-off-outline',
+        onPress: () => togglePostMute(post._id),
+      },
+    ];
+
+    if (isAuthor) {
+      options.push({
+        label: 'Edit Post',
+        icon: 'create-outline',
+        showChevron: true,
+        onPress: () => router.push(`/event/${eventId}/post/${post._id}/edit`),
+      });
+    } else {
+      options.push({
+        label: 'Report Post',
+        icon: 'flag-outline',
+        onPress: () =>
+          createReport({
+            targetType: 'POST',
+            targetId: post._id,
+            reason: 'INAPPROPRIATE_CONTENT',
+          }),
+      });
+    }
+
+    if (isAuthor || canModerate) {
+      options.push({
+        label: 'Delete Post',
+        icon: 'trash-outline',
+        destructive: true,
+        onPress: () =>
+          showConfirmDialog({
+            title: 'Delete Post',
+            message: 'This will also delete all replies. Are you sure?',
+            confirmLabel: 'Delete',
+            destructive: true,
+            onConfirm: async () => {
+              try {
+                await deletePost({ postId: post._id as Id<'posts'> });
+                toast.success('Post deleted');
+              } catch {
+                toast.error('Failed to delete post');
+              }
+            },
+          }),
+      });
+    }
+
+    showActionMenu({ title: post.title, options });
+  }
+
   return (
     <Pressable
       onPress={() => router.push(`/event/${eventId}/post/${post._id}`)}
+      onLongPress={handleLongPress}
       accessibilityRole='button'
       accessibilityLabel={`${post.title}, by ${authorName}${replyCount === undefined ? '' : `, ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}`}
-      accessibilityHint='Opens post and replies'
+      accessibilityHint='Opens post and replies. Long press for post actions.'
     >
       <Card>
         {/* Author row */}
         <View className='flex-row items-center gap-2'>
-          <Avatar alt={authorName} className='h-8 w-8'>
-            <AvatarImage source={{ uri: authorImage }} />
-            <AvatarFallback>
-              <Text className='text-xs font-bold text-primary-foreground'>
-                {authorName.charAt(0).toUpperCase()}
-              </Text>
-            </AvatarFallback>
-          </Avatar>
+          <MemberAvatar
+            personId={post.authorId as Id<'persons'>}
+            src={authorImage}
+            name={authorName}
+            size='sm'
+          />
           <View className='flex-1'>
             <Text variant='small'>{authorName}</Text>
             <View className='flex-row items-center gap-1'>

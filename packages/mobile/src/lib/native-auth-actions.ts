@@ -1,14 +1,51 @@
 import { authClient } from './auth-client';
+import { convex } from './convex';
 import { persistNativeAuthCallbackCookies } from './native-auth';
+import { api } from 'convex/_generated/api';
 
 export type NativeAuthActionResult =
   | { success: true }
   | { success: false; message: string };
 
-export async function requestNativeSignInEmail(
-  email: string,
+export type NativeEmailRequestResult =
+  | { success: true; email: string }
+  | { success: false; message: string };
+
+async function resolveSignInEmail(identifier: string) {
+  if (identifier.includes('@')) return identifier;
+
+  try {
+    const result = await convex.query(api.auth.queries.getEmailForUsername, {
+      username: identifier,
+    });
+    return result?.email ?? null;
+  } catch {
+    throw new Error('Unable to look up that username. Try again.');
+  }
+}
+
+export async function requestNativeSignIn(
+  identifier: string,
   callbackURL: string
-): Promise<NativeAuthActionResult> {
+): Promise<NativeEmailRequestResult> {
+  let email: string | null;
+
+  try {
+    email = await resolveSignInEmail(identifier.trim());
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Unable to look up that username. Try again.',
+    };
+  }
+
+  if (!email) {
+    return { success: false, message: "We couldn't find that username" };
+  }
+
   const [otpResult] = await Promise.allSettled([
     authClient.emailOtp.sendVerificationOtp({
       email,
@@ -26,7 +63,7 @@ export async function requestNativeSignInEmail(
       message: otpResult.value.error.message || 'Failed to send code',
     };
   }
-  return { success: true };
+  return { success: true, email };
 }
 
 export async function verifyNativeEmailOtp(

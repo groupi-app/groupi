@@ -11,6 +11,9 @@ onFlowComplete:
 - launchApp:
     clearState: true
     clearKeychain: true
+- extendedWaitUntil:
+    visible: 'Continue with Email'
+    timeout: 30000
 - openLink: 'groupi://e2e?code=${output.authenticatedFixture.loginCode}'
 - runFlow:
     when:
@@ -19,12 +22,16 @@ onFlowComplete:
       - tapOn: '^Open$'
       - openLink: 'groupi://e2e?code=${output.authenticatedFixture.loginCode}'
 - extendedWaitUntil:
-    visible: '${output.authenticatedFixture.eventTitle}'
+    visible: '.*${output.authenticatedFixture.eventTitle}.*'
     timeout: 30000
-- assertVisible: 'Groupi Test Lab'
+- assertVisible: '.*Groupi Test Lab.*'
+- tapOn: '.*${output.authenticatedFixture.eventTitle}.*'
+- extendedWaitUntil:
+    visible: 'Posts'
+    timeout: 15000
 - assertVisible: 'Posts'
-- assertVisible: '${output.authenticatedFixture.postTitle}'
-- tapOn: '${output.authenticatedFixture.postTitle}'
+- assertVisible: '.*${output.authenticatedFixture.postTitle}.*'
+- tapOn: '.*${output.authenticatedFixture.postTitle}.*'
 - extendedWaitUntil:
     visible: 'This seeded post verifies authenticated event and discussion navigation.'
     timeout: 15000

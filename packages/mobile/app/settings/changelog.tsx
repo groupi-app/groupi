@@ -10,7 +10,7 @@ const CHANGELOG_ENTRIES = [
       {
         type: 'added' as const,
         items: [
-          'Event filtering by Upcoming, Hosting, and Attended tabs',
+          'Event filtering by Upcoming and Attended with an All/My Events toggle',
           'Event sorting by activity, date, or title',
           'Event muting with bell indicator',
           'Long-press context actions on event cards',

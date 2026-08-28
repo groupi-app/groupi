@@ -1,8 +1,10 @@
 import { View, Pressable, ScrollView } from 'react-native';
-import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
-import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
+
+import { GroupIcon } from '@/components/atoms/group-icon';
+import { OrganizerIcon } from '@/components/atoms/organizer-icon';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 
 interface DateTypeStepProps {
   onSelectSingle: () => void;
@@ -16,6 +18,7 @@ export function DateTypeStep({
   onBack,
 }: DateTypeStepProps) {
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
 
   return (
     <ScrollView className='flex-1 px-4' contentContainerClassName='pb-8'>
@@ -30,7 +33,7 @@ export function DateTypeStep({
             onPress={onSelectSingle}
             className='items-center gap-3 rounded-card border-2 border-border bg-card px-6 py-10 active:border-primary active:bg-primary/5'
           >
-            <Ionicons name='calendar' size={40} color={primaryColor} />
+            <OrganizerIcon size={64} color={primaryColor} />
             <Text className='text-lg font-semibold text-foreground'>
               Choose a date myself
             </Text>
@@ -41,7 +44,11 @@ export function DateTypeStep({
             onPress={onSelectMulti}
             className='items-center gap-3 rounded-card border-2 border-border bg-card px-6 py-10 active:border-primary active:bg-primary/5'
           >
-            <Ionicons name='people' size={40} color={primaryColor} />
+            <GroupIcon
+              size={64}
+              color={primaryColor}
+              secondaryColor={mutedColor}
+            />
             <Text className='text-lg font-semibold text-foreground'>
               Poll Attendees
             </Text>

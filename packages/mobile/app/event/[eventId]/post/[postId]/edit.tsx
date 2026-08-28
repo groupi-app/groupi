@@ -5,10 +5,11 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { Id } from 'convex/_generated/dataModel';
 
-import { LabeledInput as Input } from '@/components/ui/labeled-input';
 import { BackButton } from '@/components/ui/back-button';
 import { LoadingState } from '@/components/molecules';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PostComposerKeyboardView } from '@/components/posts/post-composer-keyboard-view';
+import { PostTitleInput } from '@/components/posts/post-title-input';
 import { RichTextEditor } from '@/components/posts/rich-text-editor';
 import { usePostDetail, useUpdatePost } from '@/hooks/use-posts';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
@@ -55,7 +56,7 @@ export default function EditPostScreen() {
     initialized &&
     (title.trim() !== (post?.title ?? '') || content !== (post?.content ?? ''));
 
-  useUnsavedChanges(hasChanges);
+  const allowNextNavigation = useUnsavedChanges(hasChanges);
 
   if (postDetail === undefined) {
     return (
@@ -102,6 +103,7 @@ export default function EditPostScreen() {
         content,
       });
       toast.success('Post updated!');
+      allowNextNavigation();
       router.back();
     } catch {
       toast.error('Failed to update post');
@@ -129,28 +131,25 @@ export default function EditPostScreen() {
         </Pressable>
       </View>
 
-      {/* Title input */}
-      <View className='px-4 pt-4'>
-        <Input
-          placeholder='Post title'
-          value={title}
-          onChangeText={setTitle}
-          className='border-0 px-0 text-xl font-bold'
-        />
-      </View>
+      <PostComposerKeyboardView>
+        {/* Title input */}
+        <View className='px-4 pt-4'>
+          <PostTitleInput value={title} onChangeText={setTitle} />
+        </View>
 
-      {/* Rich text editor — only mount once we have initial content */}
-      <View className='flex-1 px-4 pt-2'>
-        {initialized ? (
-          <RichTextEditor
-            initialContent={post?.content ?? ''}
-            placeholder="What's on your mind?"
-            onChange={handleContentChange}
-          />
-        ) : (
-          <LoadingState message='Loading content...' />
-        )}
-      </View>
+        {/* Rich text editor — only mount once we have initial content */}
+        <View className='flex-1 px-4 pt-2'>
+          {initialized ? (
+            <RichTextEditor
+              initialContent={post?.content ?? ''}
+              placeholder="What's on your mind?"
+              onChange={handleContentChange}
+            />
+          ) : (
+            <LoadingState message='Loading content...' />
+          )}
+        </View>
+      </PostComposerKeyboardView>
     </SafeAreaView>
   );
 }

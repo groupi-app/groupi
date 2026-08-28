@@ -1,4 +1,5 @@
 export { TabBarFilter } from './tab-bar-filter';
+export { EventScopeToggle } from './event-scope-toggle';
 export { RoleBadge } from './role-badge';
 export { Timestamp, formatTimeAgo } from './timestamp';
 export { LoadingState } from './loading-state';

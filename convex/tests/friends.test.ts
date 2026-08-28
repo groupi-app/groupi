@@ -1,12 +1,104 @@
 import { expect, test, describe } from 'vitest';
 import { api } from './_generated/api';
+import betterAuthSchema from '../betterAuth/schema';
 import {
   createTestInstance,
   createTestUser,
   createAuthenticatedUser,
 } from './test_helpers';
 
+// Avoid deep generated API instantiation for component function references.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const { components }: any = require('../_generated/api');
+const betterAuthModules = import.meta.glob('../betterAuth/**/*.ts');
+
+function createFriendSearchTestInstance() {
+  const t = createTestInstance();
+  t.registerComponent('betterAuth', betterAuthSchema, betterAuthModules);
+  return t;
+}
+
 describe('Friends Feature', () => {
+  describe('searchUsersByUsername', () => {
+    test('searches normalized usernames without an unsupported case-insensitive query', async () => {
+      const t = createFriendSearchTestInstance();
+      const now = Date.now();
+
+      const currentUser = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'user',
+            data: {
+              email: 'friend-search-current@example.com',
+              name: 'Current User',
+              username: 'current_user',
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+      const candidateUser = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'user',
+            data: {
+              email: 'friend-search-candidate@example.com',
+              name: 'Friend Candidate',
+              username: 'mobile_friend',
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+      const currentSession = await t.mutation(
+        components.betterAuth.adapter.create,
+        {
+          input: {
+            model: 'session',
+            data: {
+              userId: currentUser._id,
+              token: 'friend-search-session',
+              expiresAt: now + 60_000,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+        }
+      );
+
+      const candidatePersonId = await t.run(async ctx => {
+        await ctx.db.insert('persons', { userId: currentUser._id });
+        return await ctx.db.insert('persons', {
+          userId: candidateUser._id,
+        });
+      });
+
+      const currentUserAuth = t.withIdentity({
+        subject: currentUser._id,
+        sessionId: currentSession._id,
+      });
+      const results = await currentUserAuth.query(
+        api.friends.queries.searchUsersByUsername,
+        { searchTerm: 'FRIEND' }
+      );
+
+      expect(results).toEqual([
+        expect.objectContaining({
+          personId: candidatePersonId,
+          name: 'Friend Candidate',
+          username: 'mobile_friend',
+          friendshipStatus: 'none',
+        }),
+      ]);
+    });
+  });
+
   describe('Friend Requests', () => {
     test('should send a friend request', async () => {
       const t = createTestInstance();

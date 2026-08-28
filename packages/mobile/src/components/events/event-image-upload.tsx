@@ -69,7 +69,7 @@ export function EventImageUpload({
           ? [
               {
                 label: 'Remove Image',
-                icon: 'trash-outline',
+                icon: 'trash-outline' as const,
                 destructive: true,
                 onPress: onImageRemoved,
               },

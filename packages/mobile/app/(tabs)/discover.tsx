@@ -11,7 +11,7 @@ import type { Id } from 'convex/_generated/dataModel';
 import { ListScreenTemplate } from '@/components/templates';
 import { LoadingState } from '@/components/molecules';
 import { EmptyState } from '@/components/ui/empty-state';
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@groupi/shared/platform';
@@ -81,7 +81,8 @@ export default function DiscoverScreen() {
 
               {item.organizer?.name ? (
                 <View className='mt-1 flex-row items-center gap-2'>
-                  <Avatar
+                  <MemberAvatar
+                    personId={item.organizer.personId}
                     src={item.organizer?.image}
                     name={item.organizer?.name}
                     size='xs'

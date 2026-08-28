@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useMutation } from 'convex/react';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 
 import { api } from 'convex/_generated/api';
 import { LoadingState } from '@/components/molecules/loading-state';
@@ -10,6 +11,8 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { completeNativeAuthCallback } from '@/lib/native-auth-actions';
 
+const CONSUMED_FIXTURE_KEY = 'groupi-e2e-consumed-fixture';
+
 function firstParam(value: string | string[] | undefined): string | undefined {
   return typeof value === 'string' ? value : value?.[0];
 }
@@ -17,12 +20,13 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 export default function NativeE2ELoginScreen() {
   const params = useLocalSearchParams<{ code?: string | string[] }>();
   const redeemFixture = useMutation(api.e2e.mutations.redeemMobileFixture);
-  const started = useRef(false);
+  const startedCode = useRef<string | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    const loginCode = firstParam(params.code);
+    if (startedCode.current === loginCode) return;
+    startedCode.current = loginCode ?? null;
     let active = true;
 
     async function authenticateFixture() {
@@ -31,12 +35,38 @@ export default function NativeE2ELoginScreen() {
           throw new Error('E2E login is disabled');
         }
 
-        const loginCode = firstParam(params.code);
         if (!loginCode) throw new Error('Missing E2E login code');
+
+        // The login code is intentionally single-use. Remember its event on
+        // the device so a reload can leave this route without a network call.
+        try {
+          const storedFixture =
+            await SecureStore.getItemAsync(CONSUMED_FIXTURE_KEY);
+          const consumed = storedFixture
+            ? (JSON.parse(storedFixture) as {
+                loginCode?: unknown;
+                eventId?: unknown;
+              })
+            : null;
+          if (
+            consumed?.loginCode === loginCode &&
+            typeof consumed.eventId === 'string'
+          ) {
+            if (active) router.replace(`/event/${consumed.eventId}`);
+            return;
+          }
+        } catch {
+          // Corrupt or unavailable local state should not block a fresh login.
+        }
 
         const fixture = await redeemFixture({ loginCode });
         const result = await completeNativeAuthCallback(fixture.cookieHeader);
         if (!result.success) throw new Error(result.message);
+
+        await SecureStore.setItemAsync(
+          CONSUMED_FIXTURE_KEY,
+          JSON.stringify({ loginCode, eventId: fixture.eventId })
+        );
 
         if (active) router.replace(`/event/${fixture.eventId}`);
       } catch {

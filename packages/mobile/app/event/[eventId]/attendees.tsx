@@ -14,13 +14,16 @@ import {
   useRemoveMember,
   useBanMember,
 } from '@/hooks/use-members';
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { RoleBadge } from '@/components/molecules';
 import { LoadingState } from '@/components/molecules';
-import { useActionMenu } from '@/components/ui/action-menu';
+import {
+  useActionMenu,
+  type ActionMenuOption,
+} from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useGlobalUser } from '@/context/global-user-context';
 import { canRoleViewAttendeeList } from '@/lib/event-access-policy';
@@ -101,27 +104,27 @@ export default function AttendeesScreen() {
 
     if (isCurrentUser || isOrganizer) return;
 
-    const sheetOptions: {
-      label: string;
-      onPress: () => void;
-      destructive?: boolean;
-    }[] = [];
+    const sheetOptions: ActionMenuOption[] = [];
 
     if (role === 'ATTENDEE') {
       sheetOptions.push({
         label: 'Promote to Moderator',
+        icon: 'arrow-up-circle-outline',
         onPress: () => updateRole({ membershipId, newRole: 'MODERATOR' }),
       });
     }
     if (role === 'MODERATOR') {
       sheetOptions.push({
         label: 'Demote to Attendee',
+        icon: 'arrow-down-circle-outline',
         onPress: () => updateRole({ membershipId, newRole: 'ATTENDEE' }),
       });
     }
 
     sheetOptions.push({
       label: 'Remove from Event',
+      icon: 'person-remove-outline',
+      destructive: true,
       onPress: () =>
         showConfirmDialog({
           title: 'Remove Member',
@@ -134,6 +137,7 @@ export default function AttendeesScreen() {
 
     sheetOptions.push({
       label: 'Ban from Event',
+      icon: 'ban-outline',
       destructive: true,
       onPress: () =>
         showConfirmDialog({
@@ -251,7 +255,20 @@ export default function AttendeesScreen() {
               }
               className='flex-row items-center gap-3 border-b border-border px-4 py-3'
             >
-              <Avatar src={image} name={name} size='md' />
+              <MemberAvatar
+                personId={item.personId}
+                src={image}
+                name={name}
+                size='md'
+                eventMembership={{
+                  membershipId: item._id,
+                  role,
+                  rsvpStatus,
+                  rsvpNote: item.rsvpNote,
+                  viewerRole: membersData?.userMembership.role,
+                  canManage,
+                }}
+              />
               <View className='flex-1'>
                 <Text className='text-base font-medium text-foreground'>
                   {name}

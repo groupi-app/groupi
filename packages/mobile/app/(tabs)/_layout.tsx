@@ -1,21 +1,12 @@
 import { Redirect, Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from 'convex/react';
 import { useCSSVariable } from 'uniwind';
 import { useGlobalUser } from '@/context/global-user-context';
 import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useRef } from 'react';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
-
 export default function TabsLayout() {
   const { isAuthenticated, isLoading, needsOnboarding } = useGlobalUser();
-
-  const unreadCount = useQuery(
-    api.notifications.queries.getUnreadNotificationCount,
-    isAuthenticated ? {} : 'skip'
-  );
 
   const didRedirectRef = useRef(false);
 
@@ -67,8 +58,6 @@ export default function TabsLayout() {
     );
   }
 
-  const badgeCount = unreadCount?.count ?? 0;
-
   return (
     <Tabs
       screenOptions={{
@@ -98,17 +87,6 @@ export default function TabsLayout() {
           title: 'Discover',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name='compass' size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name='notifications'
-        options={{
-          title: 'Notifications',
-          tabBarBadge:
-            badgeCount > 0 ? (badgeCount > 99 ? '99+' : badgeCount) : undefined,
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name='notifications' size={size} color={color} />
           ),
         }}
       />

@@ -24,6 +24,7 @@ interface NotificationPreference {
   type: NotificationType;
   label: string;
   description: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }
 
 const NOTIFICATION_CATEGORIES: Array<{
@@ -37,26 +38,31 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'EVENT_EDITED',
         label: 'Event updates',
         description: 'Details change for an event you joined.',
+        icon: 'create-outline',
       },
       {
         type: 'DATE_CHOSEN',
         label: 'Date selected',
         description: 'An organizer chooses the event date.',
+        icon: 'calendar',
       },
       {
         type: 'DATE_CHANGED',
         label: 'Date changed',
         description: 'A selected event date changes.',
+        icon: 'calendar-outline',
       },
       {
         type: 'DATE_RESET',
         label: 'New date poll',
         description: 'An organizer starts a new availability poll.',
+        icon: 'calendar-clear-outline',
       },
       {
         type: 'EVENT_REMINDER',
         label: 'Event reminders',
         description: 'An event you’re attending is starting soon.',
+        icon: 'alarm-outline',
       },
     ],
   },
@@ -67,16 +73,19 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'NEW_POST',
         label: 'New posts',
         description: 'Someone posts in an event you joined.',
+        icon: 'chatbubble-outline',
       },
       {
         type: 'NEW_REPLY',
         label: 'New replies',
         description: 'Someone replies to a post you follow.',
+        icon: 'arrow-undo-outline',
       },
       {
         type: 'USER_MENTIONED',
         label: 'Mentions',
         description: 'Someone mentions you in a post or reply.',
+        icon: 'at',
       },
     ],
   },
@@ -87,26 +96,31 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'USER_JOINED',
         label: 'Member joined',
         description: 'Someone joins an event you manage.',
+        icon: 'person-add-outline',
       },
       {
         type: 'USER_LEFT',
         label: 'Member left',
         description: 'Someone leaves an event you manage.',
+        icon: 'person-remove-outline',
       },
       {
         type: 'USER_RSVP',
         label: 'RSVP updates',
         description: 'Someone responds to an event you manage.',
+        icon: 'checkmark-circle-outline',
       },
       {
         type: 'USER_PROMOTED',
         label: 'Promoted to moderator',
         description: 'You become a moderator of an event.',
+        icon: 'arrow-up-circle-outline',
       },
       {
         type: 'USER_DEMOTED',
         label: 'Moderator role removed',
         description: 'Your moderator role changes.',
+        icon: 'arrow-down-circle-outline',
       },
     ],
   },
@@ -117,21 +131,25 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'FRIEND_REQUEST_RECEIVED',
         label: 'Friend requests',
         description: 'Someone sends you a friend request.',
+        icon: 'people-outline',
       },
       {
         type: 'FRIEND_REQUEST_ACCEPTED',
         label: 'Accepted requests',
         description: 'Someone accepts your friend request.',
+        icon: 'people',
       },
       {
         type: 'EVENT_INVITE_RECEIVED',
         label: 'Event invitations',
         description: 'Someone invites you to an event.',
+        icon: 'mail-outline',
       },
       {
         type: 'EVENT_INVITE_ACCEPTED',
         label: 'Accepted invitations',
         description: 'Someone accepts your event invitation.',
+        icon: 'mail-open-outline',
       },
     ],
   },
@@ -142,11 +160,13 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'ADDON_CONFIG_RESET',
         label: 'Response resets',
         description: 'An add-on changes and needs a new response from you.',
+        icon: 'extension-puzzle-outline',
       },
       {
         type: 'ADDON_AUTOMATION',
         label: 'Automations',
         description: 'An event add-on sends an automated update.',
+        icon: 'sparkles-outline',
       },
     ],
   },
@@ -400,6 +420,8 @@ export default function NotificationSettingsScreen() {
                       key={item.type}
                       label={item.label}
                       description={item.description}
+                      icon={item.icon}
+                      iconColor={mutedColor}
                       value={
                         selectedMethod.notifications.find(
                           notification =>
@@ -515,6 +537,8 @@ function SettingsHeader() {
 function ToggleRow({
   label,
   description,
+  icon,
+  iconColor,
   value,
   disabled,
   onToggle,
@@ -522,6 +546,8 @@ function ToggleRow({
 }: {
   label: string;
   description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
   value: boolean;
   disabled: boolean;
   onToggle: (value: boolean) => void;
@@ -534,6 +560,9 @@ function ToggleRow({
         showDivider && 'border-b border-border'
       )}
     >
+      <View className='mr-3 h-9 w-9 items-center justify-center rounded-badge bg-muted'>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
       <View className='flex-1 pr-4'>
         <Text className='font-medium text-foreground'>{label}</Text>
         <Text className='mt-0.5 text-sm text-muted-foreground'>

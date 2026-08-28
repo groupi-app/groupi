@@ -59,7 +59,7 @@ export default function EditEventScreen() {
       location !== (event?.location ?? '') ||
       newImageUri !== null ||
       removeExistingImage);
-  useUnsavedChanges(hasChanges);
+  const allowNextNavigation = useUnsavedChanges(hasChanges);
 
   if (headerData === undefined) {
     return (
@@ -124,6 +124,7 @@ export default function EditEventScreen() {
         ...(imageStorageId !== undefined ? { imageStorageId } : {}),
       });
       toast.success('Event updated!');
+      allowNextNavigation();
       router.back();
     } catch {
       toast.error('Failed to update event');

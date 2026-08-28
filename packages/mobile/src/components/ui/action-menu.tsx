@@ -23,9 +23,10 @@ import { Separator } from './separator';
 
 export interface ActionMenuOption {
   label: string;
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   destructive?: boolean;
+  showChevron?: boolean;
 }
 
 interface ActionMenuState {
@@ -126,7 +127,7 @@ export function ActionMenuProvider({ children }: { children: ReactNode }) {
               >
                 {option.icon ? (
                   <Ionicons
-                    name={option.icon as keyof typeof Ionicons.glyphMap}
+                    name={option.icon}
                     size={22}
                     color={option.destructive ? destructiveColor : mutedColor}
                   />
@@ -140,13 +141,13 @@ export function ActionMenuProvider({ children }: { children: ReactNode }) {
                 >
                   {option.label}
                 </Text>
-                {option.destructive ? null : (
+                {!option.destructive && option.showChevron === true ? (
                   <Ionicons
                     name='chevron-forward'
                     size={18}
                     color={mutedColor}
                   />
-                )}
+                ) : null}
               </Pressable>
               {index < state.options.length - 1 ? <Separator /> : null}
             </View>

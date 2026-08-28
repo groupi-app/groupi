@@ -61,12 +61,11 @@ import { expo } from '@better-auth/expo';
 
 // Import local schema for Better Auth component (local install)
 import authSchema from './betterAuth/schema';
+import { resolvePasskeyConfig } from './lib/passkeyConfig';
 
 // Initialize Resend client for email sending
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
-
-const siteUrl = process.env.SITE_URL!;
 
 // Placeholder for auth functions - will be wired up by Convex at runtime
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,6 +131,15 @@ export type AuthUserId = Parameters<typeof authComponent.getAnyUserById>[1];
 export const createAuthOptions = (
   ctx: GenericCtx<DataModel>
 ): BetterAuthOptions => {
+  const passkeyConfig = resolvePasskeyConfig({
+    siteUrl:
+      process.env.SITE_URL ||
+      (process.env.VITEST ? 'http://localhost:3000' : undefined),
+    rpId: process.env.PASSKEY_RP_ID,
+    rpName: process.env.PASSKEY_RP_NAME,
+  });
+  const siteUrl = passkeyConfig.origin;
+
   return {
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
@@ -296,9 +304,9 @@ export const createAuthOptions = (
         : []),
       // Passkey authentication
       passkey({
-        rpID: process.env.PASSKEY_RP_ID || 'localhost',
-        rpName: process.env.PASSKEY_RP_NAME || 'Groupi',
-        origin: siteUrl,
+        rpID: passkeyConfig.rpID,
+        rpName: passkeyConfig.rpName,
+        origin: passkeyConfig.origin,
       }),
       admin(),
       apiKey(),

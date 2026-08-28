@@ -6,9 +6,10 @@ import {
   emailOTPClient,
 } from 'better-auth/client/plugins';
 import { apiKeyClient } from '@better-auth/api-key/client';
-import { passkeyClient } from '@better-auth/passkey/client';
 import { expoClient } from '@better-auth/expo/client';
 import * as SecureStore from 'expo-secure-store';
+
+import { nativePasskeyClient } from '@/lib/native-passkey-client';
 
 const baseURL = process.env.EXPO_PUBLIC_BETTER_AUTH_URL;
 
@@ -27,7 +28,7 @@ const baseAuthClient = createAuthClient({
     magicLinkClient(),
     emailOTPClient(),
     apiKeyClient(),
-    passkeyClient(),
+    nativePasskeyClient(),
     expoClient({
       scheme: 'groupi',
       storagePrefix: 'groupi',
@@ -53,6 +54,10 @@ export const authClient = baseAuthClient as typeof baseAuthClient & {
       email: string;
       callbackURL?: string;
     }) => Promise<{ error?: { message: string } }>;
+    passkey: (options?: { autoFill?: boolean }) => Promise<{
+      data?: unknown;
+      error?: { code?: string; message?: string };
+    }>;
   };
   apiKey: {
     list: () => Promise<{

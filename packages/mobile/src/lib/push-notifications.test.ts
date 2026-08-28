@@ -31,7 +31,7 @@ describe('push notification routing', () => {
   it('maps the server-controlled destination allowlist to native routes', () => {
     expect(
       getPushNotificationDestination({ destination: 'notifications' })
-    ).toBe('/(tabs)/notifications');
+    ).toBe('/notifications');
     expect(getPushNotificationDestination({ destination: 'invites' })).toBe(
       '/invites'
     );

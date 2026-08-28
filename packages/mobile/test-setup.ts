@@ -15,6 +15,7 @@ vi.mock('react-native', () => ({
   Image: 'Image',
   ScrollView: 'ScrollView',
   FlatList: 'FlatList',
+  KeyboardAvoidingView: 'KeyboardAvoidingView',
   Modal: 'Modal',
   Switch: 'Switch',
   ActivityIndicator: 'ActivityIndicator',
@@ -136,6 +137,7 @@ vi.mock('expo-linking', () => ({
 
 vi.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: vi.fn(),
+  openBrowserAsync: vi.fn().mockResolvedValue({ type: 'dismiss' }),
   openAuthSessionAsync: vi.fn(),
   dismissAuthSession: vi.fn(),
 }));

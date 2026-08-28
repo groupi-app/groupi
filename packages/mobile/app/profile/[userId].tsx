@@ -9,6 +9,7 @@ import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 
 import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { LoadingState } from '@/components/molecules';
@@ -27,6 +28,7 @@ import {
   useUnblockUser,
 } from '@/hooks/use-friends';
 import { useCreateReport } from '@/hooks/use-reports';
+import { REPORT_REASON_OPTIONS } from '@/lib/report-options';
 
 export default function ProfileScreen() {
   const { userId: personId } = useLocalSearchParams<{ userId: string }>();
@@ -67,27 +69,19 @@ export default function ProfileScreen() {
       options: [
         {
           label: 'Report User',
+          icon: 'flag-outline',
+          showChevron: true,
           onPress: () => {
-            const reasons = [
-              { label: 'Spam', value: 'SPAM' as const },
-              { label: 'Harassment', value: 'HARASSMENT' as const },
-              { label: 'Hate Speech', value: 'HATE_SPEECH' as const },
-              {
-                label: 'Inappropriate Content',
-                value: 'INAPPROPRIATE_CONTENT' as const,
-              },
-              { label: 'Impersonation', value: 'IMPERSONATION' as const },
-              { label: 'Other', value: 'OTHER' as const },
-            ];
             showActionMenu({
               title: 'Report Reason',
-              options: reasons.map(r => ({
-                label: r.label,
+              options: REPORT_REASON_OPTIONS.map(reason => ({
+                label: reason.label,
+                icon: reason.icon,
                 onPress: () =>
                   createReport({
                     targetType: 'USER',
                     targetId: typedPersonId,
-                    reason: r.value,
+                    reason: reason.reason,
                   }),
               })),
             });
@@ -96,10 +90,12 @@ export default function ProfileScreen() {
         profile?.isBlockedByMe
           ? {
               label: 'Unblock User',
+              icon: 'shield-checkmark-outline' as const,
               onPress: () => unblockUser(typedPersonId),
             }
           : {
               label: 'Block User',
+              icon: 'ban-outline' as const,
               destructive: true,
               onPress: () => {
                 showConfirmDialog({
@@ -276,7 +272,12 @@ export default function ProfileScreen() {
                   onPress={() => router.push(`/profile/${friend.personId}`)}
                   className='flex-row items-center gap-3 rounded-card border border-border px-3 py-2'
                 >
-                  <Avatar src={friend.image} name={friend.name} size='sm' />
+                  <MemberAvatar
+                    personId={friend.personId}
+                    src={friend.image}
+                    name={friend.name}
+                    size='sm'
+                  />
                   <Text className='text-sm font-medium text-foreground'>
                     {friend.name ?? 'Unknown'}
                   </Text>

@@ -80,7 +80,10 @@ describe('event detail post feed', () => {
       if (query === 'getEventHeader') {
         return {
           event: { _id: 'event-123', title: 'Launch Party' },
-          userMembership: { role: 'ORGANIZER' },
+          userMembership: {
+            role: 'ORGANIZER',
+            person: { _id: 'person-current' },
+          },
           permissions: { viewAttendeeList: 'EVERYONE' },
         };
       }
@@ -97,6 +100,8 @@ describe('event detail post feed', () => {
     expect(feed?.props.posts).toBe(mocks.posts);
     expect(feed?.props.status).toBe('CanLoadMore');
     expect(feed?.props.loadMore).toBe(mocks.loadMore);
+    expect(feed?.props.currentPersonId).toBe('person-current');
+    expect(feed?.props.userRole).toBe('ORGANIZER');
     expect(tree.some(element => element.type === 'ScrollView')).toBe(false);
   });
 });

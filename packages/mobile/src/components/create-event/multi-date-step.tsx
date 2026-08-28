@@ -13,6 +13,8 @@ import {
 } from '@/context/create-event-context';
 import { toast } from '@groupi/shared/platform';
 import { EditableDateTimeItem } from './editable-date-time-item';
+import { mergeSmartDateOptions } from './multi-date-options';
+import { SmartDateInput } from './smart-date-input';
 
 interface MultiDateStepProps {
   onNext: () => void;
@@ -43,6 +45,19 @@ function toDateString(date: Date): string {
 
 function todayString(): string {
   return toDateString(new Date());
+}
+
+function getTimezoneString(): string {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offsetMinutes = new Date().getTimezoneOffset();
+  const sign = offsetMinutes > 0 ? '-' : '+';
+  const absoluteMinutes = Math.abs(offsetMinutes);
+  const hours = Math.floor(absoluteMinutes / 60);
+  const minutes = absoluteMinutes % 60;
+  const offset = minutes
+    ? `${hours}:${String(minutes).padStart(2, '0')}`
+    : String(hours);
+  return `${timezone} (UTC${sign}${offset})`;
 }
 
 function parseDateString(ds: string): {
@@ -231,6 +246,21 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
     setSelectedDates(new Set());
   }
 
+  function addSmartOptions(dates: Array<{ start: Date; end?: Date }>) {
+    const result = mergeSmartDateOptions(
+      dateOptions,
+      dates,
+      () => `date-${nextDateId++}`
+    );
+
+    if (result.addedCount === 0) {
+      toast.info('Those date options are already in the list');
+      return;
+    }
+
+    updateFormState({ dateOptions: result.options });
+  }
+
   function updateOption(updated: DateOption) {
     const newOptions = dateOptions
       .map(opt => (opt.id === updated.id ? updated : opt))
@@ -276,8 +306,18 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
           Date Options
         </Text>
         <Text className='text-sm text-muted-foreground'>
-          Tap dates on the calendar, set a time, then add them all at once.
+          Describe your options or choose several dates manually.
         </Text>
+
+        <SmartDateInput onDatesAdded={addSmartOptions} />
+
+        <View className='flex-row items-center gap-3'>
+          <View className='h-px flex-1 bg-border' />
+          <Text className='text-xs text-muted-foreground'>
+            or pick dates manually
+          </Text>
+          <View className='h-px flex-1 bg-border' />
+        </View>
 
         {/* Calendar — multi-select via toggle */}
         <View className='overflow-hidden rounded-card border border-border bg-card'>
@@ -303,41 +343,51 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
         {/* Time + Add card */}
         <View className='gap-3 rounded-card border border-border bg-card p-4'>
           {/* Time pickers row */}
-          <View className='flex-row items-center gap-2'>
-            <Pressable
-              onPress={() =>
-                setActiveTimePicker(
-                  activeTimePicker === 'start' ? null : 'start'
-                )
-              }
-              className='flex-1 flex-row items-center gap-2 rounded-input border border-border bg-background px-3 py-2.5'
-            >
-              <Ionicons name='time-outline' size={16} color={primaryColor} />
-              <Text className='text-sm font-medium text-foreground'>
-                {formatTime(startTime)}
+          <View className='flex-row items-end gap-2'>
+            <View className='flex-1 gap-1.5'>
+              <Text className='text-xs font-medium text-muted-foreground'>
+                {hasEndTime ? 'Start Time' : 'Time'}
               </Text>
-            </Pressable>
+              <Pressable
+                onPress={() =>
+                  setActiveTimePicker(
+                    activeTimePicker === 'start' ? null : 'start'
+                  )
+                }
+                className='flex-row items-center gap-2 rounded-input border border-border bg-background px-3 py-2.5'
+              >
+                <Ionicons name='time-outline' size={16} color={primaryColor} />
+                <Text className='text-sm font-medium text-foreground'>
+                  {formatTime(startTime)}
+                </Text>
+              </Pressable>
+            </View>
 
             {hasEndTime ? (
               <>
-                <Text className='text-xs text-muted-foreground'>to</Text>
-                <Pressable
-                  onPress={() =>
-                    setActiveTimePicker(
-                      activeTimePicker === 'end' ? null : 'end'
-                    )
-                  }
-                  className='flex-1 flex-row items-center gap-2 rounded-input border border-border bg-background px-3 py-2.5'
-                >
-                  <Ionicons
-                    name='time-outline'
-                    size={16}
-                    color={primaryColor}
-                  />
-                  <Text className='text-sm font-medium text-foreground'>
-                    {formatTime(endTime)}
+                <Text className='pb-3 text-xs text-muted-foreground'>to</Text>
+                <View className='flex-1 gap-1.5'>
+                  <Text className='text-xs font-medium text-muted-foreground'>
+                    End Time
                   </Text>
-                </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      setActiveTimePicker(
+                        activeTimePicker === 'end' ? null : 'end'
+                      )
+                    }
+                    className='flex-row items-center gap-2 rounded-input border border-border bg-background px-3 py-2.5'
+                  >
+                    <Ionicons
+                      name='time-outline'
+                      size={16}
+                      color={primaryColor}
+                    />
+                    <Text className='text-sm font-medium text-foreground'>
+                      {formatTime(endTime)}
+                    </Text>
+                  </Pressable>
+                </View>
               </>
             ) : null}
           </View>
@@ -385,11 +435,14 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
           ) : null}
 
           {/* End time toggle */}
-          <View className='flex-row items-center justify-between'>
-            <Text className='text-sm text-muted-foreground'>
-              Include end time
+          <View className='flex-row items-center justify-between gap-3'>
+            <View className='flex-row items-center gap-2'>
+              <Switch checked={hasEndTime} onCheckedChange={toggleEndTime} />
+              <Text className='text-sm text-foreground'>Include end time</Text>
+            </View>
+            <Text className='flex-1 text-right text-xs text-muted-foreground'>
+              {getTimezoneString()}
             </Text>
-            <Switch checked={hasEndTime} onCheckedChange={toggleEndTime} />
           </View>
 
           {/* Add button */}
@@ -420,7 +473,7 @@ export function MultiDateStep({ onNext, onBack }: MultiDateStepProps) {
                 No options added yet
               </Text>
               <Text className='text-xs text-muted-foreground'>
-                Tap dates on the calendar, then press Add
+                Type naturally above or select dates from the calendar
               </Text>
             </View>
           ) : (

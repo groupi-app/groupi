@@ -11,6 +11,7 @@ import { useActionMenu } from '@/components/ui/action-menu';
 import { getPublicBaseUrl } from '@/lib/public-urls';
 import { toast } from '@groupi/shared/platform';
 import { Ionicons } from '@expo/vector-icons';
+import { getProviderIcon } from './linked-account-providers';
 
 type LinkedAccount = {
   id: string;
@@ -30,17 +31,6 @@ function getProviderDisplayName(providerId: string): string {
       return 'Email/Password';
     default:
       return providerId;
-  }
-}
-
-function getProviderIcon(providerId: string): keyof typeof Ionicons.glyphMap {
-  switch (providerId.toLowerCase()) {
-    case 'discord':
-      return 'logo-discord';
-    case 'google':
-      return 'logo-google';
-    default:
-      return 'link-outline';
   }
 }
 
@@ -146,6 +136,8 @@ export function LinkedAccountsSection() {
       message: 'Select a provider to link',
       options: availableProviders.map(provider => ({
         label: `Link ${provider.name}`,
+        icon: getProviderIcon(provider.id),
+        showChevron: false,
         onPress: () => {
           toast.info(
             `To link your ${provider.name} account, please use the web app at ${getPublicBaseUrl()}/settings/account`

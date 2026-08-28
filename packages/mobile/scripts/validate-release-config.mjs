@@ -19,10 +19,24 @@ function assert(condition, message) {
 const eas = JSON.parse(read('eas.json'));
 const appConfig = read('app.config.ts');
 const androidBuild = read('android/app/build.gradle');
+const associationGenerator = read('scripts/generate-link-associations.mjs');
 const linking = JSON.parse(read('linking.config.json'));
 const webConfig = readFileSync(
   join(repositoryDir, 'packages', 'web', 'next.config.mjs'),
   'utf8'
+);
+const appleAssociation = JSON.parse(
+  readFileSync(
+    join(
+      repositoryDir,
+      'packages',
+      'web',
+      'public',
+      '.well-known',
+      'apple-app-site-association'
+    ),
+    'utf8'
+  )
 );
 
 assert(
@@ -60,6 +74,27 @@ assert(
 assert(
   linking.appLinkHost === 'www.groupi.gg',
   'Release links must use the canonical www.groupi.gg host'
+);
+assert(
+  linking.appleApplicationPrefix === 'X2HQQURT9V',
+  'The Apple application prefix must match the registered Groupi App ID'
+);
+assert(
+  appConfig.includes('`webcredentials:${appLinkHost}`'),
+  'iOS must declare the passkey relying-party domain as a web credential association'
+);
+assert(
+  associationGenerator.includes('webcredentials') &&
+    associationGenerator.includes('appleApplicationPrefix'),
+  'The Apple association generator must publish the signed app ID for passkeys'
+);
+const signedAppleApplicationId = `${linking.appleApplicationPrefix}.com.groupi.mobile`;
+assert(
+  appleAssociation.webcredentials?.apps?.includes(signedAppleApplicationId) &&
+    appleAssociation.applinks?.details?.some(detail =>
+      detail.appIDs?.includes(signedAppleApplicationId)
+    ),
+  'The deployed Apple association source must match the signed Groupi application ID'
 );
 assert(
   webConfig.includes("source: '/.well-known/apple-app-site-association'") &&

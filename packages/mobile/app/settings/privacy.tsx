@@ -6,7 +6,7 @@ import { useCSSVariable } from 'uniwind';
 
 import { SettingsScreenTemplate } from '@/components/templates';
 import { LoadingState } from '@/components/molecules';
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { Button } from '@/components/ui/button';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -22,21 +22,25 @@ const FRIEND_REQUEST_OPTIONS: {
   value: FriendRequestOption;
   label: string;
   description: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }[] = [
   {
     value: 'EVERYONE',
     label: 'Everyone',
     description: 'Anyone can send you friend requests',
+    icon: 'globe-outline',
   },
   {
     value: 'EVENT_MEMBERS',
     label: 'Event Members',
     description: 'Only people who share an event with you',
+    icon: 'people-outline',
   },
   {
     value: 'NO_ONE',
     label: 'No One',
     description: 'Nobody can send you friend requests',
+    icon: 'ban-outline',
   },
 ];
 
@@ -44,26 +48,31 @@ const EVENT_INVITE_OPTIONS: {
   value: EventInviteOption;
   label: string;
   description: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }[] = [
   {
     value: 'EVERYONE',
     label: 'Everyone',
     description: 'Anyone can invite you to events',
+    icon: 'globe-outline',
   },
   {
     value: 'EVENT_MEMBERS',
     label: 'Event Members',
     description: 'Only people who share an event with you',
+    icon: 'people-outline',
   },
   {
     value: 'FRIENDS',
     label: 'Friends',
     description: 'Only your friends can invite you',
+    icon: 'heart-outline',
   },
   {
     value: 'NO_ONE',
     label: 'No One',
     description: 'Nobody can invite you to events',
+    icon: 'ban-outline',
   },
 ];
 
@@ -156,7 +165,10 @@ export default function PrivacySettingsScreen() {
                   : ''
               }`}
             >
-              <View className='flex-1 pr-3'>
+              <View className='h-9 w-9 items-center justify-center rounded-badge bg-muted'>
+                <Ionicons name={option.icon} size={18} color={primaryColor} />
+              </View>
+              <View className='flex-1 px-3'>
                 <Text className='text-base font-medium text-foreground'>
                   {option.label}
                 </Text>
@@ -204,7 +216,10 @@ export default function PrivacySettingsScreen() {
                   : ''
               }`}
             >
-              <View className='flex-1 pr-3'>
+              <View className='h-9 w-9 items-center justify-center rounded-badge bg-muted'>
+                <Ionicons name={option.icon} size={18} color={primaryColor} />
+              </View>
+              <View className='flex-1 px-3'>
                 <Text className='text-base font-medium text-foreground'>
                   {option.label}
                 </Text>
@@ -250,7 +265,12 @@ export default function PrivacySettingsScreen() {
                 }`}
               >
                 <View className='flex-row items-center gap-3'>
-                  <Avatar src={user.image} name={user.name} size='sm' />
+                  <MemberAvatar
+                    personId={user.personId}
+                    src={user.image}
+                    name={user.name}
+                    size='sm'
+                  />
                   <Text className='text-base font-medium text-foreground'>
                     {user.name ?? 'Unknown'}
                   </Text>

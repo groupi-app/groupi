@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EventCard } from '../event-card';
+import { GroupiMark } from '../../atoms/groupi-mark';
+import { MutedEventIndicator } from '../muted-event-indicator';
 
 const mocks = vi.hoisted(() => ({
   showActionMenu: vi.fn(),
@@ -27,6 +29,13 @@ vi.mock('../../../hooks/use-events', () => ({
 
 vi.mock('../../../hooks/use-muting', () => ({
   useToggleEventMute: () => mocks.toggleMute,
+}));
+
+vi.mock('uniwind', () => ({
+  useCSSVariable: () => '#6b7280',
+}));
+vi.mock('../../atoms/groupi-mark', () => ({
+  GroupiMark: 'GroupiMark',
 }));
 
 const event = {
@@ -64,6 +73,20 @@ function collectText(node: ReactNode): string[] {
   return collectText(node.props.children);
 }
 
+function findElementByType(
+  node: ReactNode,
+  type: unknown
+): React.ReactElement | null {
+  if (!isValidElement<{ children?: ReactNode }>(node)) return null;
+  if (node.type === type) return node;
+
+  for (const child of Children.toArray(node.props.children)) {
+    const match = findElementByType(child, type);
+    if (match) return match;
+  }
+  return null;
+}
+
 describe('EventCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,6 +116,39 @@ describe('EventCard', () => {
     expect(router.push).toHaveBeenCalledWith('/event/event-123');
   });
 
+  it('renders the event cover image when one is available', () => {
+    const card = EventCard({
+      event: { ...event, imageUrl: 'https://example.com/event-cover.jpg' },
+      membership: { role: 'ATTENDEE', rsvpStatus: 'YES' },
+      organizer: { user: { name: 'Avery' } },
+    });
+    const image = findElementByType(card, 'Image');
+
+    expect(image?.props).toEqual(
+      expect.objectContaining({
+        source: { uri: 'https://example.com/event-cover.jpg' },
+        resizeMode: 'cover',
+      })
+    );
+  });
+
+  it('renders the Groupi mark when no cover image is available', () => {
+    const card = createEventCardTree();
+
+    expect(findElementByType(card, GroupiMark)?.props).toEqual(
+      expect.objectContaining({ size: 56 })
+    );
+  });
+
+  it('shows a subtle indicator and accessible label when muted', () => {
+    const card = createEventCardTree({ isMuted: true });
+
+    expect(findElementByType(card, MutedEventIndicator)?.props).toEqual(
+      expect.objectContaining({ size: 14 })
+    );
+    expect(card.props.accessibilityLabel).toContain('notifications muted');
+  });
+
   it('offers attendee mute and leave actions', () => {
     const card = createEventCardTree({ isMuted: true });
 
@@ -102,8 +158,16 @@ describe('EventCard', () => {
       expect.objectContaining({
         title: 'Launch Party',
         options: [
-          expect.objectContaining({ label: 'Unmute Event' }),
-          expect.objectContaining({ label: 'Leave Event', destructive: true }),
+          expect.objectContaining({
+            label: 'Unmute Event',
+            icon: 'notifications-outline',
+            showChevron: false,
+          }),
+          expect.objectContaining({
+            label: 'Leave Event',
+            icon: 'exit-outline',
+            destructive: true,
+          }),
         ],
       })
     );
@@ -132,6 +196,14 @@ describe('EventCard', () => {
       'Mute Event',
       'Edit Event',
       'Delete Event',
+    ]);
+    expect(options).toEqual([
+      expect.objectContaining({ icon: 'notifications-off-outline' }),
+      expect.objectContaining({
+        icon: 'create-outline',
+        showChevron: true,
+      }),
+      expect.objectContaining({ icon: 'trash-outline', destructive: true }),
     ]);
 
     options[1].onPress();

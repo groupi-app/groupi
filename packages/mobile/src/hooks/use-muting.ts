@@ -1,15 +1,16 @@
 import { useQuery, useMutation } from 'convex/react';
 import { useCallback } from 'react';
 import { toast } from '@groupi/shared/platform';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const { api } = require('convex/_generated/api') as { api: any };
+import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 
 export function useIsEventMuted(eventId: string | undefined) {
-  return useQuery(
+  const result = useQuery(
     api.muting.queries.isEventMuted,
-    eventId ? { eventId } : 'skip'
+    eventId ? { eventId: eventId as Id<'events'> } : 'skip'
   );
+
+  return result?.isMuted ?? false;
 }
 
 export function useToggleEventMute() {
@@ -18,8 +19,8 @@ export function useToggleEventMute() {
   return useCallback(
     async (eventId: string) => {
       try {
-        const result = await mutation({ eventId });
-        toast.success(result?.muted ? 'Event muted' : 'Event unmuted');
+        const result = await mutation({ eventId: eventId as Id<'events'> });
+        toast.success(result?.isMuted ? 'Event muted' : 'Event unmuted');
         return result;
       } catch {
         toast.error('Failed to update mute status');
@@ -34,7 +35,10 @@ export function useMutedEvents() {
 }
 
 export function useIsPostMuted(postId: string | undefined) {
-  return useQuery(api.muting.queries.isPostMuted, postId ? { postId } : 'skip');
+  return useQuery(
+    api.muting.queries.isPostMuted,
+    postId ? { postId: postId as Id<'posts'> } : 'skip'
+  );
 }
 
 export function useTogglePostMute() {
@@ -43,8 +47,8 @@ export function useTogglePostMute() {
   return useCallback(
     async (postId: string) => {
       try {
-        const result = await mutation({ postId });
-        toast.success(result?.muted ? 'Post muted' : 'Post unmuted');
+        const result = await mutation({ postId: postId as Id<'posts'> });
+        toast.success(result?.isMuted ? 'Post muted' : 'Post unmuted');
         return result;
       } catch {
         toast.error('Failed to update mute status');

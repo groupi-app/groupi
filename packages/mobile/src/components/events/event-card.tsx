@@ -1,10 +1,16 @@
-import { View, Pressable } from 'react-native';
+import { Image, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 
+import { GroupiMark } from '@/components/atoms/groupi-mark';
+import { MutedEventIndicator } from './muted-event-indicator';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { useActionMenu } from '@/components/ui/action-menu';
+import {
+  useActionMenu,
+  type ActionMenuOption,
+} from '@/components/ui/action-menu';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToggleEventMute } from '@/hooks/use-muting';
 import { useDeleteEvent, useLeaveEvent } from '@/hooks/use-events';
@@ -68,26 +74,32 @@ export function EventCard({
   const leaveEvent = useLeaveEvent();
   const { showActionMenu } = useActionMenu();
   const isOrganizer = membership.role === 'ORGANIZER';
+  const primaryColor = String(useCSSVariable('--color-primary') ?? '');
+  const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
+  const onPrimaryColor = String(
+    useCSSVariable('--color-primary-foreground') ?? ''
+  );
 
   function handleLongPress() {
-    const options: {
-      label: string;
-      onPress: () => void;
-      destructive?: boolean;
-    }[] = [];
+    const options: ActionMenuOption[] = [];
 
     options.push({
       label: isMuted ? 'Unmute Event' : 'Mute Event',
+      icon: isMuted ? 'notifications-outline' : 'notifications-off-outline',
+      showChevron: false,
       onPress: () => toggleMute(event._id),
     });
 
     if (isOrganizer) {
       options.push({
         label: 'Edit Event',
+        icon: 'create-outline',
+        showChevron: true,
         onPress: () => router.push(`/event/${event._id}/edit`),
       });
       options.push({
         label: 'Delete Event',
+        icon: 'trash-outline',
         destructive: true,
         onPress: () =>
           showConfirmDialog({
@@ -102,6 +114,7 @@ export function EventCard({
     } else {
       options.push({
         label: 'Leave Event',
+        icon: 'exit-outline',
         destructive: true,
         onPress: () =>
           showConfirmDialog({
@@ -125,66 +138,89 @@ export function EventCard({
       onPress={() => router.push(`/event/${event._id}`)}
       onLongPress={handleLongPress}
       accessibilityRole='button'
-      accessibilityLabel={`${event.title}, ${membership.rsvpStatus.toLowerCase()} RSVP${event.location ? `, ${event.location}` : ''}`}
+      accessibilityLabel={`${event.title}, ${membership.rsvpStatus.toLowerCase()} RSVP${event.location ? `, ${event.location}` : ''}${isMuted ? ', notifications muted' : ''}`}
       accessibilityHint='Opens event. Long press for event actions.'
     >
-      <Card className='mb-3'>
-        <View className='flex-row items-start justify-between'>
-          <View className='flex-1 pr-3'>
-            <View className='flex-row items-center gap-2'>
-              <Text className='text-lg font-bold' numberOfLines={2}>
-                {event.title}
-              </Text>
-              {isMuted ? (
-                <Ionicons name='notifications-off' size={14} color='#9ca3af' />
+      <Card className='mb-3 gap-0 overflow-hidden p-0'>
+        <View className='aspect-video w-full items-center justify-center overflow-hidden bg-primary/10'>
+          {event.imageUrl ? (
+            <Image
+              source={{ uri: event.imageUrl }}
+              className='h-full w-full'
+              resizeMode='cover'
+              accessible={false}
+            />
+          ) : (
+            <GroupiMark size={56} color={primaryColor} />
+          )}
+        </View>
+
+        <View className='p-4'>
+          <View className='flex-row items-start justify-between'>
+            <View className='flex-1 pr-3'>
+              <View className='flex-row items-center gap-2'>
+                <Text className='text-lg font-bold' numberOfLines={2}>
+                  {event.title}
+                </Text>
+                {isMuted ? <MutedEventIndicator size={14} /> : null}
+              </View>
+
+              {organizer?.user?.name ? (
+                <Text variant='muted' className='mt-1'>
+                  by {organizer.user.name}
+                </Text>
               ) : null}
             </View>
 
-            {organizer?.user?.name ? (
-              <Text variant='muted' className='mt-1'>
-                by {organizer.user.name}
-              </Text>
+            <View
+              className={`h-3 w-3 rounded-full border-[1.5px] border-card shadow-raised ${getRsvpColor(membership.rsvpStatus)}`}
+            />
+          </View>
+
+          <View className='mt-3 flex-row flex-wrap gap-3'>
+            {formattedDate ? (
+              <View className='flex-row items-center gap-1'>
+                <Ionicons
+                  name='calendar-outline'
+                  size={14}
+                  color={mutedColor}
+                />
+                <Text variant='muted' className='text-sm'>
+                  {formattedDate}
+                </Text>
+              </View>
             ) : null}
-          </View>
 
-          <View
-            className={`h-3 w-3 rounded-full border-[1.5px] border-white shadow-raised ${getRsvpColor(membership.rsvpStatus)}`}
-          />
-        </View>
+            {event.location ? (
+              <View className='flex-row items-center gap-1'>
+                <Ionicons
+                  name='location-outline'
+                  size={14}
+                  color={mutedColor}
+                />
+                <Text variant='muted' className='text-sm' numberOfLines={1}>
+                  {event.location}
+                </Text>
+              </View>
+            ) : null}
 
-        <View className='mt-3 flex-row flex-wrap gap-3'>
-          {formattedDate ? (
             <View className='flex-row items-center gap-1'>
-              <Ionicons name='calendar-outline' size={14} color='#9ca3af' />
-              <Text variant='muted' className='text-sm'>
-                {formattedDate}
-              </Text>
-            </View>
-          ) : null}
-
-          {event.location ? (
-            <View className='flex-row items-center gap-1'>
-              <Ionicons name='location-outline' size={14} color='#9ca3af' />
+              <Ionicons name='people-outline' size={14} color={mutedColor} />
               <Text variant='muted' className='text-sm' numberOfLines={1}>
-                {event.location}
+                {event.memberCount}
+              </Text>
+            </View>
+          </View>
+
+          {isOrganizer ? (
+            <View className='mt-2 self-start flex-row items-center gap-1 rounded-badge border-2 border-background bg-warning px-2 py-0.5 shadow-raised'>
+              <Ionicons name='star' size={10} color={onPrimaryColor} />
+              <Text className='text-xs font-semibold text-primary-foreground'>
+                Organizer
               </Text>
             </View>
           ) : null}
-
-          <View className='flex-row items-center gap-1'>
-            <Ionicons name='people-outline' size={14} color='#9ca3af' />
-            <Text variant='muted' className='text-sm'>
-              {event.memberCount}
-            </Text>
-          </View>
         </View>
-
-        {isOrganizer ? (
-          <View className='mt-2 self-start flex-row items-center gap-1 rounded-badge border-2 border-white bg-warning px-2 py-0.5 shadow-raised'>
-            <Ionicons name='star' size={10} color='#ffffff' />
-            <Text className='text-xs font-semibold text-white'>Organizer</Text>
-          </View>
-        ) : null}
       </Card>
     </Pressable>
   );

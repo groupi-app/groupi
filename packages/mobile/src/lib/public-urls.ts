@@ -28,3 +28,7 @@ export function getPublicBaseUrl(value = process.env.EXPO_PUBLIC_BASE_URL) {
 export function getPublicInviteUrl(token: string) {
   return `${getPublicBaseUrl()}/invite/${encodeURIComponent(token)}`;
 }
+
+export function getPublicGdlUrl() {
+  return `${getPublicBaseUrl()}/gdl`;
+}

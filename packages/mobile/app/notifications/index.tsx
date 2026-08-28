@@ -6,10 +6,11 @@ import { useCSSVariable } from 'uniwind';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { useActionMenu } from '@/components/ui/action-menu';
+import { BackButton } from '@/components/ui/back-button';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { TabBarFilter, Timestamp } from '@/components/molecules';
 import { ListScreenTemplate } from '@/components/templates';
 import {
@@ -94,14 +95,17 @@ export default function NotificationsScreen() {
         notification.read
           ? {
               label: 'Mark as unread',
+              icon: 'mail-unread-outline' as const,
               onPress: () => void markAsUnread(notification._id),
             }
           : {
               label: 'Mark as read',
+              icon: 'mail-open-outline' as const,
               onPress: () => void markAsRead(notification._id),
             },
         {
           label: 'Delete notification',
+          icon: 'trash-outline',
           onPress: () => void deleteNotification(notification._id),
           destructive: true,
         },
@@ -117,12 +121,14 @@ export default function NotificationsScreen() {
           ? [
               {
                 label: 'Mark all as read',
+                icon: 'checkmark-done-circle-outline' as const,
                 onPress: () => void markAllAsRead(),
               },
             ]
           : []),
         {
           label: 'Delete all notifications',
+          icon: 'trash-outline' as const,
           onPress: () =>
             showConfirmDialog({
               title: 'Delete all notifications?',
@@ -140,7 +146,7 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <ListScreenTemplate title='Notifications'>
+      <ListScreenTemplate title='Notifications' headerLeft={<BackButton />}>
         <View className='gap-4 px-4 pt-3'>
           {Array.from({ length: 5 }).map((_, index) => (
             <View key={index} className='flex-row items-center gap-3'>
@@ -159,6 +165,7 @@ export default function NotificationsScreen() {
   return (
     <ListScreenTemplate
       title='Notifications'
+      headerLeft={<BackButton />}
       subtitle={
         hasUnread ? 'New activity is waiting for you' : 'You’re all caught up'
       }
@@ -214,7 +221,8 @@ export default function NotificationsScreen() {
               )}
             >
               {item.author ? (
-                <UserAvatar
+                <MemberAvatar
+                  personId={item.author.id}
                   src={item.author.user.image}
                   name={authorName}
                   size='md'

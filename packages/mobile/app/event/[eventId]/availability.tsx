@@ -5,11 +5,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 import type { Id } from 'convex/_generated/dataModel';
+import { rankAvailabilityOptions } from '@groupi/shared/utils';
 
 import { Button } from '@/components/ui/button';
 import { DetailScreenTemplate } from '@/components/templates';
 import { StatusPicker } from '@/components/molecules';
 import { LoadingState } from '@/components/molecules';
+import { DateVoteBreakdown } from '@/components/events/date-vote-breakdown';
 import {
   useEventAvailabilityData,
   useSubmitAvailability,
@@ -37,14 +39,6 @@ export default function AvailabilityScreen() {
   const mutedColor = String(
     useCSSVariable('--color-muted-foreground') ?? 'transparent'
   );
-  const successColor = String(
-    useCSSVariable('--color-success') ?? 'transparent'
-  );
-  const warningColor = String(
-    useCSSVariable('--color-warning') ?? 'transparent'
-  );
-  const errorColor = String(useCSSVariable('--color-error') ?? 'transparent');
-
   const availabilityData = useEventAvailabilityData(typedEventId);
   const submitAvailability = useSubmitAvailability();
   const chooseDate = useChooseEventDate();
@@ -56,7 +50,8 @@ export default function AvailabilityScreen() {
   );
   const [choosingDateId, setChoosingDateId] =
     useState<Id<'potentialDateTimes'> | null>(null);
-  const [showSummary, setShowSummary] = useState(false);
+  const [expandedDateId, setExpandedDateId] =
+    useState<Id<'potentialDateTimes'> | null>(null);
 
   useEffect(() => {
     if (!availabilityData || initializedEventId === typedEventId) return;
@@ -149,9 +144,14 @@ export default function AvailabilityScreen() {
 
   const potentialDates = availabilityData.potentialDateTimes;
   const isOrganizer = availabilityData.userRole === 'ORGANIZER';
+  const displayedDates = isOrganizer
+    ? rankAvailabilityOptions(potentialDates)
+    : potentialDates.map(date => ({ ...date, rank: undefined }));
 
   return (
-    <DetailScreenTemplate title='Set Availability'>
+    <DetailScreenTemplate
+      title={isOrganizer ? 'Choose Date/Time' : 'Set Availability'}
+    >
       <Text className='mb-4 text-base text-muted-foreground'>
         {isOrganizer
           ? 'Review responses and choose the date that works best.'
@@ -202,25 +202,6 @@ export default function AvailabilityScreen() {
         </View>
       ) : null}
 
-      {/* Summary toggle */}
-      {potentialDates.length > 0 ? (
-        <Pressable
-          onPress={() => setShowSummary(!showSummary)}
-          accessibilityRole='button'
-          accessibilityState={{ expanded: showSummary }}
-          className='mb-4 flex-row items-center justify-between rounded-card border border-border bg-card p-3'
-        >
-          <Text className='text-sm font-medium text-foreground'>
-            {showSummary ? 'Hide response summary' : 'Show response summary'}
-          </Text>
-          <Ionicons
-            name={showSummary ? 'chevron-up' : 'chevron-down'}
-            size={16}
-            color={mutedColor}
-          />
-        </Pressable>
-      ) : null}
-
       {potentialDates.length === 0 ? (
         <View className='items-center py-12'>
           <Ionicons name='calendar-outline' size={48} color={mutedColor} />
@@ -230,25 +211,22 @@ export default function AvailabilityScreen() {
         </View>
       ) : (
         <View className='gap-3'>
-          {potentialDates.map(dt => {
+          {displayedDates.map(dt => {
             const currentVote = votes[dt._id] ?? null;
-            const allAvailabilities = dt.availabilities;
-            const yesCount = allAvailabilities.filter(
-              response => response.status === 'YES'
-            ).length;
-            const maybeCount = allAvailabilities.filter(
-              response => response.status === 'MAYBE'
-            ).length;
-            const noCount = allAvailabilities.filter(
-              response => response.status === 'NO'
-            ).length;
 
             return (
               <View
                 key={dt._id}
                 className='rounded-card border border-border bg-card p-4'
               >
-                <View className='flex-row items-start justify-between'>
+                <View className='flex-row items-center gap-3'>
+                  {dt.rank ? (
+                    <View className='h-11 w-11 shrink-0 items-center justify-center rounded-button bg-muted'>
+                      <Text className='text-base font-bold text-foreground'>
+                        #{dt.rank}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View className='flex-1'>
                     <Text className='text-base font-medium text-foreground'>
                       {formatDate(dt.dateTime)}
@@ -267,7 +245,7 @@ export default function AvailabilityScreen() {
                       disabled={choosingDateId !== null}
                       accessibilityRole='button'
                       accessibilityLabel={`Choose ${formatDate(dt.dateTime)} as the event date`}
-                      className='rounded-button bg-primary/10 px-3 py-1'
+                      className='min-h-10 shrink-0 items-center justify-center rounded-button bg-primary/10 px-4'
                     >
                       <Text className='text-xs font-semibold text-primary'>
                         {choosingDateId === dt._id ? 'Choosing…' : 'Choose'}
@@ -276,41 +254,16 @@ export default function AvailabilityScreen() {
                   ) : null}
                 </View>
 
-                {/* Response summary */}
-                {showSummary ? (
-                  <View className='mt-2 flex-row gap-3'>
-                    <View className='flex-row items-center gap-1'>
-                      <Ionicons
-                        name='checkmark-circle'
-                        size={14}
-                        color={successColor}
-                      />
-                      <Text className='text-xs text-muted-foreground'>
-                        {yesCount}
-                      </Text>
-                    </View>
-                    <View className='flex-row items-center gap-1'>
-                      <Ionicons
-                        name='help-circle'
-                        size={14}
-                        color={warningColor}
-                      />
-                      <Text className='text-xs text-muted-foreground'>
-                        {maybeCount}
-                      </Text>
-                    </View>
-                    <View className='flex-row items-center gap-1'>
-                      <Ionicons
-                        name='close-circle'
-                        size={14}
-                        color={errorColor}
-                      />
-                      <Text className='text-xs text-muted-foreground'>
-                        {noCount}
-                      </Text>
-                    </View>
-                  </View>
-                ) : null}
+                <DateVoteBreakdown
+                  date={dt}
+                  viewerRole={availabilityData.userRole}
+                  expanded={expandedDateId === dt._id}
+                  onToggle={() =>
+                    setExpandedDateId(current =>
+                      current === dt._id ? null : dt._id
+                    )
+                  }
+                />
 
                 {!isOrganizer ? (
                   <StatusPicker

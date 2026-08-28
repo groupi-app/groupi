@@ -4,7 +4,6 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { isEventPast } from '@groupi/shared/utils';
 import { useCSSVariable } from 'uniwind';
 
 import { useGlobalUser } from '@/context/global-user-context';
@@ -16,16 +15,18 @@ import { EventCard } from '@/components/events/event-card';
 import { EventListSkeleton } from '@/components/events/event-list-skeleton';
 import { EmptyEvents } from '@/components/events/empty-events';
 import { CreateEventFab } from '@/components/events/create-event-fab';
-import { TabBarFilter } from '@/components/molecules';
+import { NotificationButton } from '@/components/notifications/notification-button';
+import { EventScopeToggle, TabBarFilter } from '@/components/molecules';
 import { useActionMenu } from '@/components/ui/action-menu';
+import { countHomeEvents, filterHomeEvents } from '@/lib/home-event-filters';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 
 import type { EventTab, SortBy } from '@/stores';
 
 const EVENT_TABS = [
   { key: 'upcoming', label: 'Upcoming' },
-  { key: 'hosting', label: 'Hosting' },
   { key: 'attended', label: 'Attended' },
-];
+] as const;
 
 const SORT_LABELS: Record<SortBy, string> = {
   lastactivity: 'Latest Activity',
@@ -38,8 +39,16 @@ export default function HomeScreen() {
   const { user } = useGlobalUser();
   const eventsData = useUserEvents();
   const inviteCount = usePendingInviteCount();
+  const unreadNotifications = useUnreadNotificationCount();
   const mutedEventsData = useMutedEvents();
-  const { activeTab, sortBy, setActiveTab, setSortBy } = useFilterSortStore();
+  const {
+    activeTab,
+    eventScope,
+    sortBy,
+    setActiveTab,
+    setEventScope,
+    setSortBy,
+  } = useFilterSortStore();
   const { showActionMenu } = useActionMenu();
   const primaryColor = String(useCSSVariable('--color-primary') ?? '');
   const mutedColor = String(useCSSVariable('--color-muted-foreground') ?? '');
@@ -52,29 +61,24 @@ export default function HomeScreen() {
     return new Set(mutedEventsData.map((m: any) => m.eventId));
   }, [mutedEventsData]);
 
-  // Filter events by tab
-  const filteredEvents = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allEvents: any[] = eventsData?.events ?? [];
-    return allEvents.filter(item => {
-      const isPast = isEventPast(
-        item.event.chosenDateTime,
-        item.event.chosenEndDateTime
-      );
-      const isOrganizer = item.membership.role === 'ORGANIZER';
+  const eventCounts = useMemo(() => {
+    return countHomeEvents(eventsData?.events ?? []);
+  }, [eventsData]);
 
-      switch (activeTab) {
-        case 'upcoming':
-          return !isPast;
-        case 'hosting':
-          return isOrganizer && !isPast;
-        case 'attended':
-          return isPast;
-        default:
-          return true;
-      }
-    });
-  }, [eventsData, activeTab]);
+  const eventTabs = EVENT_TABS.map(tab => ({
+    ...tab,
+    badge: eventCounts[tab.key],
+  }));
+
+  // Filter events by time and ownership, matching the web event controls.
+  const filteredEvents = useMemo(() => {
+    const allEvents = eventsData?.events ?? [];
+    return filterHomeEvents<(typeof allEvents)[number]>(
+      allEvents,
+      activeTab,
+      eventScope
+    );
+  }, [eventsData, activeTab, eventScope]);
 
   // Sort events
   const sortedEvents = useMemo(() => {
@@ -106,11 +110,18 @@ export default function HomeScreen() {
       'createdat',
       'title',
     ];
+    const sortIcons: Record<SortBy, keyof typeof Ionicons.glyphMap> = {
+      lastactivity: 'time-outline',
+      eventdate: 'calendar-outline',
+      createdat: 'calendar-number-outline',
+      title: 'text-outline',
+    };
 
     showActionMenu({
       title: 'Sort Events',
       options: sortOptions.map(option => ({
         label: `${SORT_LABELS[option]}${sortBy === option ? ' ✓' : ''}`,
+        icon: sortIcons[option],
         onPress: () => setSortBy(option),
       })),
     });
@@ -120,14 +131,40 @@ export default function HomeScreen() {
     ? `Hey, ${user.name.split(' ')[0]}!`
     : 'Hey there!';
   const pendingInvites = (inviteCount as number) ?? 0;
+  const unreadNotificationCount = unreadNotifications?.count ?? 0;
+  const emptyState = useMemo(() => {
+    if (activeTab === 'upcoming' && eventScope === 'mine') {
+      return {
+        title: "You're not hosting any upcoming events",
+        description: 'Create an event to start hosting.',
+      };
+    }
+    if (activeTab === 'upcoming') {
+      return {
+        title: 'No upcoming events',
+        description: 'Create a new event or wait for invites.',
+      };
+    }
+    if (eventScope === 'mine') {
+      return {
+        title: "You haven't hosted any past events",
+        description: 'Events you organize will appear here after they end.',
+      };
+    }
+    return {
+      title: 'No attended events yet',
+      description: "Events you've attended will appear here after they end.",
+    };
+  }, [activeTab, eventScope]);
 
   if (isLoading) {
     return (
       <SafeAreaView className='flex-1 bg-background'>
-        <View className='px-4 pb-4 pt-2'>
-          <Text variant='h3' className='text-left'>
+        <View className='flex-row items-center justify-between px-4 pb-4 pt-2'>
+          <Text variant='h3' className='flex-1 text-left'>
             {greeting}
           </Text>
+          <NotificationButton unreadCount={unreadNotificationCount} />
         </View>
         <EventListSkeleton />
       </SafeAreaView>
@@ -155,18 +192,7 @@ export default function HomeScreen() {
                   <Text variant='h3' className='text-left'>
                     {greeting}
                   </Text>
-                  <Pressable
-                    onPress={handleSortPress}
-                    className='h-11 w-11 items-center justify-center rounded-badge bg-muted'
-                    accessibilityRole='button'
-                    accessibilityLabel='Sort events'
-                  >
-                    <Ionicons
-                      name='swap-vertical'
-                      size={18}
-                      color={mutedColor}
-                    />
-                  </Pressable>
+                  <NotificationButton unreadCount={unreadNotificationCount} />
                 </View>
 
                 {/* Pending invites banner */}
@@ -195,16 +221,34 @@ export default function HomeScreen() {
               </View>
 
               <TabBarFilter
-                tabs={EVENT_TABS}
+                tabs={eventTabs}
                 activeTab={activeTab}
                 onTabChange={key => setActiveTab(key as EventTab)}
+                stretch
               />
+
+              <View className='flex-row items-center justify-between px-4 pb-3 pt-1'>
+                <EventScopeToggle value={eventScope} onChange={setEventScope} />
+                <Pressable
+                  onPress={handleSortPress}
+                  className='h-10 w-10 items-center justify-center rounded-badge bg-muted active:scale-95'
+                  accessibilityRole='button'
+                  accessibilityLabel='Sort events'
+                >
+                  <Ionicons name='swap-vertical' size={18} color={mutedColor} />
+                </Pressable>
+              </View>
             </View>
           }
-          ListEmptyComponent={<EmptyEvents />}
+          ListEmptyComponent={
+            <EmptyEvents
+              title={emptyState.title}
+              description={emptyState.description}
+            />
+          }
           contentContainerClassName='pb-6'
           contentContainerStyle={
-            sortedEvents.length === 0 ? { flex: 1 } : undefined
+            sortedEvents.length === 0 ? { flexGrow: 1 } : undefined
           }
           className='px-4'
         />

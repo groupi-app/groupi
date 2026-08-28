@@ -9,7 +9,9 @@ const linking = JSON.parse(
   readFileSync(join(mobileDir, 'linking.config.json'), 'utf8')
 );
 
-const appleApplicationPrefix = process.env.APPLE_APPLICATION_PREFIX?.trim();
+const appleApplicationPrefix =
+  process.env.APPLE_APPLICATION_PREFIX?.trim() ??
+  linking.appleApplicationPrefix;
 const androidFingerprint =
   process.env.ANDROID_SHA256_CERT_FINGERPRINT?.trim().toUpperCase();
 
@@ -19,7 +21,10 @@ if (!/^[A-Z0-9]{10}$/.test(appleApplicationPrefix ?? '')) {
   );
 }
 
-if (!/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(androidFingerprint ?? '')) {
+if (
+  androidFingerprint &&
+  !/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(androidFingerprint)
+) {
   throw new Error(
     'ANDROID_SHA256_CERT_FINGERPRINT must be the Play App Signing SHA-256 certificate fingerprint'
   );
@@ -53,6 +58,9 @@ const appleAssociation = {
       },
     ],
   },
+  webcredentials: {
+    apps: [`${appleApplicationPrefix}.${applicationId}`],
+  },
 };
 
 const androidAssociation = [
@@ -71,9 +79,14 @@ writeFileSync(
   join(publicDirectory, 'apple-app-site-association'),
   `${JSON.stringify(appleAssociation, null, 2)}\n`
 );
-writeFileSync(
-  join(publicDirectory, 'assetlinks.json'),
-  `${JSON.stringify(androidAssociation, null, 2)}\n`
-);
 
-process.stdout.write(`Wrote link associations for ${linking.appLinkHost}.\n`);
+if (androidFingerprint) {
+  writeFileSync(
+    join(publicDirectory, 'assetlinks.json'),
+    `${JSON.stringify(androidAssociation, null, 2)}\n`
+  );
+}
+
+process.stdout.write(
+  `Wrote Apple association${androidFingerprint ? ' and Android asset links' : ''} for ${linking.appLinkHost}.\n`
+);

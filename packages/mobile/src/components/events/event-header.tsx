@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { BackButton } from '@/components/ui/back-button';
-import { Badge } from '@/components/ui/badge';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
 import {
   useActionMenu,
@@ -18,6 +17,9 @@ import { useCreateReport } from '@/hooks/use-reports';
 import { EventRsvp } from './event-rsvp';
 import { toast } from '@groupi/shared/platform';
 import { useCSSVariable } from 'uniwind';
+
+import { EventVisibilityBadge } from './event-visibility-badge';
+import { MutedEventIndicator } from './muted-event-indicator';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HeaderData = any;
@@ -96,6 +98,7 @@ export function EventHeader({
       options.push({
         label: 'Edit Event',
         icon: 'create-outline',
+        showChevron: true,
         onPress: () => router.push(`/event/${eventId}/edit`),
       });
     }
@@ -104,10 +107,35 @@ export function EventHeader({
       options.push({
         label: 'Manage Members',
         icon: 'people-outline',
+        showChevron: true,
         onPress: () => router.push(`/event/${eventId}/attendees`),
       });
     }
 
+    // Common options for all users
+    options.push({
+      label: isMuted ? 'Unmute Event' : 'Mute Event',
+      icon: isMuted ? 'notifications-outline' : 'notifications-off-outline',
+      showChevron: false,
+      onPress: () => toggleMute(eventId),
+    });
+
+    if (!isOrganizer) {
+      options.push({
+        label: 'Report Event',
+        icon: 'flag-outline',
+        showChevron: false,
+        onPress: () => {
+          createReport({
+            targetType: 'EVENT',
+            targetId: eventId,
+            reason: 'INAPPROPRIATE_CONTENT',
+          });
+        },
+      });
+    }
+
+    // Destructive actions belong at the bottom of the menu.
     if (permissions?.canDelete) {
       options.push({
         label: 'Delete Event',
@@ -151,27 +179,6 @@ export function EventHeader({
                 toast.error('Failed to leave event');
               }
             },
-          });
-        },
-      });
-    }
-
-    // Common options for all users
-    options.push({
-      label: isMuted ? 'Unmute Event' : 'Mute Event',
-      icon: isMuted ? 'notifications-outline' : 'notifications-off-outline',
-      onPress: () => toggleMute(eventId),
-    });
-
-    if (!isOrganizer) {
-      options.push({
-        label: 'Report Event',
-        icon: 'flag-outline',
-        onPress: () => {
-          createReport({
-            targetType: 'EVENT',
-            targetId: eventId,
-            reason: 'INAPPROPRIATE_CONTENT',
           });
         },
       });
@@ -234,24 +241,19 @@ export function EventHeader({
 
       <View className='px-4'>
         {/* Title */}
-        <Text
-          className={`text-2xl font-bold text-foreground ${imageUrl ? 'mt-4' : ''}`}
+        <View
+          className={`flex-row items-center gap-2 ${imageUrl ? 'mt-4' : ''}`}
         >
-          {title}
-        </Text>
+          <Text
+            className='flex-1 text-2xl font-bold text-foreground'
+            numberOfLines={2}
+          >
+            {title}
+          </Text>
+          {isMuted ? <MutedEventIndicator size={18} /> : null}
+        </View>
 
-        {/* Visibility badge */}
-        {visibility ? (
-          <View className='mt-2'>
-            <Badge variant='secondary'>
-              {visibility === 'PUBLIC'
-                ? 'Public'
-                : visibility === 'FRIENDS'
-                  ? 'Friends'
-                  : 'Private'}
-            </Badge>
-          </View>
-        ) : null}
+        <EventVisibilityBadge visibility={visibility} />
 
         {/* Date */}
         {formattedDate ? (

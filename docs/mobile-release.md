@@ -35,17 +35,21 @@ eas credentials:configure-build --platform android --profile production
 eas credentials:configure-build --platform ios --profile production
 ```
 
-Android managed production signing is configured. iOS managed signing,
-physical-device previews, TestFlight, push entitlements, and App Store release
-require the Apple Account to belong to a paid Apple Developer Program team. A
-free Personal Team can run short-lived local device builds but cannot replace
-the distribution team required by this pipeline.
+Android managed production signing is configured. The iOS App ID belongs to
+Apple team `X2HQQURT9V`; its explicit bundle ID is `com.groupi.mobile`, and
+Associated Domains is enabled. EAS-managed iOS signing is configured for
+physical-device previews, TestFlight, push entitlements, and App Store release.
 
 Create EAS `preview` and `production` environment variables for:
 
 - `EXPO_PUBLIC_CONVEX_URL`
 - `EXPO_PUBLIC_BETTER_AUTH_URL`
 - `EXPO_PUBLIC_BASE_URL=https://www.groupi.gg`
+
+Configure the matching Convex deployments with `SITE_URL=https://www.groupi.gg`,
+`PASSKEY_RP_ID=www.groupi.gg`, and `PASSKEY_RP_NAME=Groupi`. Authentication now
+rejects missing, insecure, or unrelated passkey relying-party configuration
+instead of silently falling back to localhost.
 
 The build worker provides `EAS_BUILD_PROJECT_ID`; local development may still
 set `EAS_PROJECT_ID` in the ignored `packages/mobile/.env.local` file. Configure
@@ -94,27 +98,34 @@ pnpm release:check
 
 ## Universal-link trust files
 
-The native app claims `www.groupi.gg`, but the website must publish association
-files derived from the actual store signing identities. After EAS and Play App
-Signing are configured, obtain:
+The native app claims `www.groupi.gg`, so the website must publish association
+files derived from the actual store signing identities. The Apple application
+prefix was verified in the developer portal as `X2HQQURT9V`. For Android,
+obtain:
 
-1. the 10-character Apple application-identifier prefix from the signed iOS
-   entitlements (often, but not always, the Apple Team ID); and
-2. the **Play App Signing** SHA-256 certificate fingerprint, not merely the EAS
+1. the **Play App Signing** SHA-256 certificate fingerprint, not merely the EAS
    upload-key fingerprint.
 
 Generate the public files, review them, and commit them with the signing setup:
 
 ```bash
-APPLE_APPLICATION_PREFIX=ABCDE12345 \
 ANDROID_SHA256_CERT_FINGERPRINT=AA:BB:...:FF \
 pnpm mobile:link-associations
 ```
+
+Without the Android fingerprint, the command still refreshes the Apple file
+using the verified prefix in `linking.config.json` and leaves Android asset
+links untouched.
 
 Deploy the web app, then verify direct HTTP 200 JSON responses at:
 
 - `https://www.groupi.gg/.well-known/apple-app-site-association`
 - `https://www.groupi.gg/.well-known/assetlinks.json`
+
+The Apple association file must include both the universal-link `applinks`
+details and a `webcredentials.apps` entry for
+`<APPLE_APPLICATION_PREFIX>.com.groupi.mobile`. The latter is required for
+native passkey registration and sign-in.
 
 Finally, uninstall/reinstall signed builds so both operating systems fetch the
 new associations, and test links from Messages/Mail on physical iOS and Android

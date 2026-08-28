@@ -10,7 +10,7 @@ import { DetailScreenTemplate } from '@/components/templates';
 import { LoadingState } from '@/components/molecules';
 import { Timestamp } from '@/components/molecules';
 import { EmptyState } from '@/components/ui/empty-state';
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { Button } from '@/components/ui/button';
 import {
   usePendingEventInvites,
@@ -78,7 +78,8 @@ export default function InvitesScreen() {
         renderItem={({ item }) => (
           <View className='mb-3 rounded-card border border-border bg-card p-4'>
             <View className='flex-row items-start gap-3'>
-              <Avatar
+              <MemberAvatar
+                personId={item.inviter.personId}
                 src={item.inviter.image}
                 name={item.inviter.name}
                 size='md'

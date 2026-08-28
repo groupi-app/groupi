@@ -5,6 +5,7 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { router } from 'expo-router';
 import { useMutation } from 'convex/react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 
 import { useGlobalUser } from '@/context/global-user-context';
 import { signOut } from '@/lib/auth-client';
@@ -82,6 +83,18 @@ export default function YouScreen() {
     }
   }
 
+  async function handleCopyUsername() {
+    const username = user?.username as string | undefined;
+    if (!username) return;
+
+    try {
+      await Clipboard.setStringAsync(`@${username}`);
+      toast.success('Username copied');
+    } catch {
+      toast.error('Failed to copy username');
+    }
+  }
+
   async function handleSignOut() {
     showConfirmDialog({
       title: 'Sign Out',
@@ -122,9 +135,18 @@ export default function YouScreen() {
             {(user?.name as string) || 'Unknown'}
           </Text>
           {user?.username ? (
-            <Text className='mt-1 text-base text-muted-foreground'>
-              @{user.username as string}
-            </Text>
+            <Pressable
+              onPress={handleCopyUsername}
+              accessibilityRole='button'
+              accessibilityLabel={`Copy username @${user.username as string}`}
+              accessibilityHint='Copies your username to the clipboard'
+              hitSlop={8}
+              className='mt-1 rounded-button px-2 py-1 active:bg-muted'
+            >
+              <Text className='text-base text-muted-foreground'>
+                @{user.username as string}
+              </Text>
+            </Pressable>
           ) : null}
           {person?.pronouns ? (
             <Text className='mt-1 text-sm text-muted-foreground'>
@@ -165,6 +187,7 @@ export default function YouScreen() {
             label='Sign Out'
             onPress={handleSignOut}
             destructive
+            showChevron={false}
           />
         </View>
       </ScrollView>
@@ -231,11 +254,13 @@ function MenuItem({
   label,
   onPress,
   destructive = false,
+  showChevron = true,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   destructive?: boolean;
+  showChevron?: boolean;
 }) {
   return (
     <Pressable
@@ -252,7 +277,9 @@ function MenuItem({
       >
         {label}
       </Text>
-      <Ionicons name='chevron-forward' size={18} color='#9ca3af' />
+      {showChevron ? (
+        <Ionicons name='chevron-forward' size={18} color='#9ca3af' />
+      ) : null}
     </Pressable>
   );
 }

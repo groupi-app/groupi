@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface ListScreenTemplateProps {
   title: string;
   subtitle?: string;
+  headerLeft?: ReactNode;
   headerRight?: ReactNode;
   controls?: ReactNode;
   children: ReactNode;
@@ -16,6 +17,7 @@ interface ListScreenTemplateProps {
 export function ListScreenTemplate({
   title,
   subtitle,
+  headerLeft,
   headerRight,
   controls,
   children,
@@ -25,6 +27,7 @@ export function ListScreenTemplate({
     <SafeAreaView className={cn('flex-1 bg-background', className)}>
       <View className='border-b border-border px-4 pb-3 pt-4'>
         <View className='flex-row items-center justify-between'>
+          {headerLeft ? <View>{headerLeft}</View> : null}
           <View className='flex-1'>
             <Text className='text-2xl font-bold text-foreground'>{title}</Text>
             {subtitle ? (

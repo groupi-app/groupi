@@ -477,9 +477,12 @@ export function Editor({
                 type='submit'
                 className='w-full md:w-auto'
                 isLoading={isSaving}
-                loadingText={postData ? 'Updating...' : 'Creating...'}
+                loadingText={postData ? 'Updating...' : 'Posting...'}
+                icon={
+                  postData ? undefined : <Icons.submit className='size-4' />
+                }
               >
-                {postData ? 'Update Post' : 'Create Post'}
+                {postData ? 'Update Post' : 'Post'}
               </Button>
             </div>
           </form>

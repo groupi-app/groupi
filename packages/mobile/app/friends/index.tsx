@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { Id } from 'convex/_generated/dataModel';
 
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TabBarFilter } from '@/components/molecules';
@@ -201,7 +201,12 @@ function FriendsList({
           onPress={() => router.push(`/profile/${item.personId}`)}
           className='flex-row items-center gap-3 border-b border-border px-4 py-3'
         >
-          <Avatar src={item.image} name={item.name} size='md' />
+          <MemberAvatar
+            personId={item.personId}
+            src={item.image}
+            name={item.name}
+            size='md'
+          />
           <View className='flex-1'>
             <Text className='text-base font-medium text-foreground'>
               {item.name ?? 'Unknown'}
@@ -276,7 +281,12 @@ function RequestsList({
             onPress={() => router.push(`/profile/${item.personId}`)}
             className='flex-row flex-1 items-center gap-3'
           >
-            <Avatar src={item.image} name={item.name} size='md' />
+            <MemberAvatar
+              personId={item.personId}
+              src={item.image}
+              name={item.name}
+              size='md'
+            />
             <View className='flex-1'>
               <Text className='text-base font-medium text-foreground'>
                 {item.name ?? 'Unknown'}
@@ -367,7 +377,12 @@ function SentRequestsList({
             onPress={() => router.push(`/profile/${item.personId}`)}
             className='flex-row flex-1 items-center gap-3'
           >
-            <Avatar src={item.image} name={item.name} size='md' />
+            <MemberAvatar
+              personId={item.personId}
+              src={item.image}
+              name={item.name}
+              size='md'
+            />
             <View className='flex-1'>
               <Text className='text-base font-medium text-foreground'>
                 {item.name ?? 'Unknown'}
@@ -456,7 +471,12 @@ function SearchResults({
                   onPress={() => router.push(`/profile/${item.personId}`)}
                   className='flex-row flex-1 items-center gap-3'
                 >
-                  <Avatar src={item.image} name={item.name} size='md' />
+                  <MemberAvatar
+                    personId={item.personId}
+                    src={item.image}
+                    name={item.name}
+                    size='md'
+                  />
                   <View className='flex-1'>
                     <Text className='text-base font-medium text-foreground'>
                       {item.name ?? 'Unknown'}
@@ -527,7 +547,12 @@ function SearchResults({
               onPress={() => router.push(`/profile/${item.personId}`)}
               className='flex-row flex-1 items-center gap-3'
             >
-              <Avatar src={item.image} name={item.name} size='md' />
+              <MemberAvatar
+                personId={item.personId}
+                src={item.image}
+                name={item.name}
+                size='md'
+              />
               <View className='flex-1'>
                 <Text className='text-base font-medium text-foreground'>
                   {item.name ?? 'Unknown'}

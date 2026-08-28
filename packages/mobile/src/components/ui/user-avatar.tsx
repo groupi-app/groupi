@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface UserAvatarProps {
+export interface UserAvatarProps {
   src?: string | null;
   name?: string | null;
   size?: AvatarSize;

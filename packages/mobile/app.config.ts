@@ -23,7 +23,10 @@ export default {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.groupi.mobile',
-    associatedDomains: [`applinks:${appLinkHost}`],
+    associatedDomains: [
+      `applinks:${appLinkHost}`,
+      `webcredentials:${appLinkHost}`,
+    ],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -31,7 +34,7 @@ export default {
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#8200AD',
     },
     package: 'com.groupi.mobile',
     intentFilters: linkingConfig.pathPrefixes.map(pathPrefix => ({

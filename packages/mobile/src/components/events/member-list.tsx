@@ -1,8 +1,9 @@
 import { View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import type { Id } from 'convex/_generated/dataModel';
 
-import { UserAvatar as Avatar } from '@/components/ui/user-avatar';
+import { MemberAvatar } from '@/components/members/member-avatar';
 import { SectionHeader } from '@/components/ui/section-header';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,10 +19,13 @@ export function MemberList({ members, eventId, canManage }: MemberListProps) {
   // The query returns { event: { memberships: [...] }, ... }
   // Extract the actual member list from all possible shapes
   const memberList: {
+    _id?: string;
     personId?: string;
     person?: { _id: string; user?: { name: string; image?: string } } | null;
     user?: { name: string; image?: string } | null;
     role?: string;
+    rsvpStatus?: string;
+    rsvpNote?: string;
     membership?: { role: string };
   }[] =
     members?.event?.memberships ??
@@ -66,12 +70,31 @@ export function MemberList({ members, eventId, canManage }: MemberListProps) {
           if (!personId) return null;
 
           return (
-            <Pressable
+            <MemberAvatar
               key={personId}
-              onPress={() => router.push(`/profile/${personId}`)}
-            >
-              <Avatar src={userImage} name={userName} size='lg' />
-            </Pressable>
+              personId={personId as Id<'persons'>}
+              src={userImage}
+              name={userName}
+              size='lg'
+              eventMembership={
+                member._id
+                  ? {
+                      membershipId: member._id as Id<'memberships'>,
+                      role: (member.role ??
+                        member.membership?.role ??
+                        'ATTENDEE') as 'ORGANIZER' | 'MODERATOR' | 'ATTENDEE',
+                      rsvpStatus: (member.rsvpStatus ?? 'PENDING') as
+                        | 'YES'
+                        | 'MAYBE'
+                        | 'NO'
+                        | 'PENDING',
+                      rsvpNote: member.rsvpNote,
+                      viewerRole: members?.userMembership?.role,
+                      canManage,
+                    }
+                  : undefined
+              }
+            />
           );
         })}
         {canManage ? (
