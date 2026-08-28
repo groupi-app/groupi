@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-08-04T02:52:25.452Z
+ * Generated: 2026-08-22T03:45:13.307Z
  */
 
 export interface ChangelogEntry {
@@ -17,6 +17,18 @@ export interface ChangelogSection {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    "version": "0.3.0",
+    "date": "",
+    "changes": [
+      {
+        "type": "added",
+        "items": [
+          "Default event RSVPs from date-poll availability and include the assigned status in date-selected notifications."
+        ]
+      }
+    ]
+  },
   {
     "version": "0.2.0",
     "date": "",

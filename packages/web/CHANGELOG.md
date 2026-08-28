@@ -1,5 +1,11 @@
 # @groupi/web
 
+## 0.3.0
+
+### Minor Changes
+
+- db6b391: Default event RSVPs from date-poll availability and include the assigned status in date-selected notifications.
+
 ## 0.2.0
 
 ### Minor Changes
