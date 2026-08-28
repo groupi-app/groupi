@@ -200,6 +200,34 @@ export function parseHtml(html: string): ContentBlock[] {
   return blocks;
 }
 
+/** Convert rich post/reply content into readable text for display and checks. */
+export function htmlToPlainText(html: string): string {
+  return parseHtml(html)
+    .map(block => {
+      const text = block.segments.map(segment => segment.text).join('');
+
+      if (block.type !== 'list-item') return text;
+      return block.ordered ? `${block.listIndex ?? 1}. ${text}` : `• ${text}`;
+    })
+    .join('\n');
+}
+
+export function hasRichTextContent(content: string): boolean {
+  return htmlToPlainText(content).trim().length > 0;
+}
+
+/** Convert legacy plain-text replies into HTML before opening a rich editor. */
+export function toRichTextHtml(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) return '<p></p>';
+  if (/<\/?[a-z][^>]*>/i.test(trimmed)) return trimmed;
+
+  return trimmed
+    .split(/\r?\n/)
+    .map(line => `<p>${escapeHtml(line) || '<br>'}</p>`)
+    .join('');
+}
+
 function parseInlineHtml(html: string): TextSegment[] {
   const segments: TextSegment[] = [];
 
@@ -262,4 +290,13 @@ function decodeEntities(text: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ');
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

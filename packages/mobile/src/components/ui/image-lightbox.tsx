@@ -102,21 +102,6 @@ export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
       <StatusBar barStyle='light-content' />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Animated.View style={[{ flex: 1 }, backdropStyle]}>
-          {/* Close button */}
-          <View
-            className='absolute right-4 z-tooltip'
-            style={{ top: insets.top + 8 }}
-          >
-            <Pressable
-              onPress={handleClose}
-              className='h-11 w-11 items-center justify-center rounded-full bg-white/20'
-              accessibilityRole='button'
-              accessibilityLabel='Close image viewer'
-            >
-              <Ionicons name='close' size={24} color='#ffffff' />
-            </Pressable>
-          </View>
-
           {/* Image */}
           <GestureDetector gesture={composed}>
             <Animated.View
@@ -139,6 +124,21 @@ export function ImageLightbox({ uri, visible, onClose }: ImageLightboxProps) {
               />
             </Animated.View>
           </GestureDetector>
+
+          {/* Keep controls above the full-screen gesture surface. */}
+          <View pointerEvents='box-none' className='absolute inset-0 z-tooltip'>
+            <Pressable
+              onPress={handleClose}
+              hitSlop={8}
+              className='absolute right-4 h-12 w-12 items-center justify-center rounded-full bg-white/20 active:bg-white/30'
+              style={{ top: insets.top + 8 }}
+              accessibilityRole='button'
+              accessibilityLabel='Close image viewer'
+              accessibilityHint='Returns to the event'
+            >
+              <Ionicons name='close' size={24} color='#ffffff' />
+            </Pressable>
+          </View>
         </Animated.View>
       </GestureHandlerRootView>
     </Modal>

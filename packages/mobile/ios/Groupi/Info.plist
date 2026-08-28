@@ -79,6 +79,10 @@
     <array>
       <string>arm64</string>
     </array>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>remote-notification</string>
+    </array>
     <key>UIRequiresFullScreen</key>
     <false/>
     <key>UIStatusBarStyle</key>
