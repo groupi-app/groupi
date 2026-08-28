@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { htmlToPlainText, parseHtml } from './html-content';
+import {
+  hasRichTextContent,
+  htmlToPlainText,
+  parseHtml,
+  toRichTextHtml,
+} from './html-content';
 
 describe('parseHtml', () => {
   it('preserves ordered list numbering from web-authored content', () => {
@@ -47,11 +52,28 @@ describe('parseHtml', () => {
     ]);
   });
 
-  it('converts rich replies to readable text for the native reply editor', () => {
+  it('converts rich replies to readable text for content checks', () => {
     expect(
       htmlToPlainText(
         '<p>Hello <strong>there</strong></p><ul><li>First</li><li>Second</li></ul>'
       )
     ).toBe('Hello there\n• First\n• Second');
+  });
+
+  it('recognizes empty editor HTML without rejecting non-Latin content', () => {
+    expect(hasRichTextContent('<p></p>')).toBe(false);
+    expect(hasRichTextContent('<p><br></p>')).toBe(false);
+    expect(hasRichTextContent('<p>&nbsp;</p>')).toBe(false);
+    expect(hasRichTextContent('<p>✨</p>')).toBe(true);
+  });
+
+  it('preserves rich HTML and migrates legacy plain-text replies', () => {
+    expect(toRichTextHtml('<p><strong>Rich</strong></p>')).toBe(
+      '<p><strong>Rich</strong></p>'
+    );
+    expect(toRichTextHtml('First\nSecond & third')).toBe(
+      '<p>First</p><p>Second &amp; third</p>'
+    );
+    expect(toRichTextHtml('')).toBe('<p></p>');
   });
 });

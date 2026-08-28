@@ -1,12 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   View,
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Pressable,
-  ActivityIndicator,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -17,7 +15,6 @@ import type { Id } from 'convex/_generated/dataModel';
 import { useGlobalUser } from '@/context/global-user-context';
 import {
   usePostDetail,
-  useCreateReply,
   useDeletePost,
   useDeleteReply,
   useUpdateReply,
@@ -43,7 +40,17 @@ import { AttachmentButton } from '@/components/attachments/attachment-button';
 import { AttachmentEditList } from '@/components/attachments/attachment-edit-list';
 import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { TypingIndicator } from '@/components/posts/typing-indicator';
-import { HtmlContent, htmlToPlainText } from '@/components/posts/html-content';
+import {
+  MAX_REPLY_LENGTH,
+  REPLY_EDITOR_HEIGHT,
+  ReplyComposer,
+} from '@/components/posts/reply-composer';
+import {
+  hasRichTextContent,
+  HtmlContent,
+  toRichTextHtml,
+} from '@/components/posts/html-content';
+import { RichTextEditor } from '@/components/posts/rich-text-editor';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatTimeAgo, LoadingState } from '@/components/molecules';
 import { toast } from '@groupi/shared/platform';
@@ -58,7 +65,6 @@ export default function PostDetailScreen() {
   const { person } = useGlobalUser();
   const typedPostId = postId as Id<'posts'>;
   const postDetail = usePostDetail(typedPostId);
-  const createReply = useCreateReply();
   const deletePost = useDeletePost();
   const deleteReply = useDeleteReply();
   const updateReply = useUpdateReply();
@@ -86,8 +92,6 @@ export default function PostDetailScreen() {
     return () => setTyping(false);
   }, [setTyping]);
 
-  const [replyText, setReplyText] = useState('');
-  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editingReplyText, setEditingReplyText] = useState('');
   const [
@@ -95,22 +99,6 @@ export default function PostDetailScreen() {
     setEditingReplyAttachmentIdsToDelete,
   ] = useState<Set<string>>(new Set());
 
-  const handleReplyTextChange = useCallback(
-    (text: string) => {
-      setReplyText(text);
-      setTyping(text.trim().length > 0);
-    },
-    [setTyping]
-  );
-
-  const {
-    pendingUploads,
-    isUploading,
-    addFile,
-    removeFile,
-    uploadAll,
-    clearAll,
-  } = useAttachments();
   const {
     pendingUploads: editingReplyUploads,
     isUploading: isUploadingReplyEdit,
@@ -159,40 +147,8 @@ export default function PostDetailScreen() {
   const isAuthor = person?._id && post?.author?.person?._id === person._id;
   const userRole = postDetail.userMembership?.role;
   const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
-
-  async function handleSubmitReply() {
-    if (!replyText.trim() && pendingUploads.length === 0) return;
-    setTyping(false);
-    setIsSubmittingReply(true);
-    try {
-      await createAfterUploading({
-        expectedUploadCount: pendingUploads.length,
-        uploadAll,
-        create: attachments =>
-          createReply({
-            postId: typedPostId,
-            text: replyText.trim(),
-            attachments: attachments.map(r => ({
-              storageId: r.storageId as Id<'_storage'>,
-              filename: r.filename,
-              size: r.size,
-              mimeType: r.mimeType,
-              width: r.width,
-              height: r.height,
-            })),
-          }),
-      });
-
-      clearAll();
-      setReplyText('');
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to send reply'
-      );
-    } finally {
-      setIsSubmittingReply(false);
-    }
-  }
+  const hasEditingReplyText = hasRichTextContent(editingReplyText);
+  const isEditingReplyTooLong = editingReplyText.length > MAX_REPLY_LENGTH;
 
   function handlePostActions() {
     const options: ActionMenuOption[] = [];
@@ -266,7 +222,15 @@ export default function PostDetailScreen() {
       (editingReply?.attachments?.length ?? 0) -
       editingReplyAttachmentIdsToDelete.size +
       editingReplyUploads.length;
-    if (!editingReplyText.trim() && remainingAttachmentCount === 0) return;
+    if (
+      (!hasEditingReplyText && remainingAttachmentCount === 0) ||
+      isEditingReplyTooLong
+    ) {
+      if (isEditingReplyTooLong) {
+        toast.error('Replies must be 5000 characters or less');
+      }
+      return;
+    }
 
     try {
       await createAfterUploading({
@@ -275,7 +239,7 @@ export default function PostDetailScreen() {
         create: attachments =>
           updateReply({
             replyId: editingReplyId as Id<'replies'>,
-            text: editingReplyText.trim(),
+            text: hasEditingReplyText ? editingReplyText.trim() : '',
             attachmentsToAdd: attachments.map(result => ({
               storageId: result.storageId as Id<'_storage'>,
               filename: result.filename,
@@ -313,8 +277,9 @@ export default function PostDetailScreen() {
         label: 'Edit Reply',
         icon: 'create-outline',
         onPress: () => {
+          setTyping(false);
           setEditingReplyId(replyId);
-          setEditingReplyText(htmlToPlainText(replyContent));
+          setEditingReplyText(toRichTextHtml(replyContent));
           setEditingReplyAttachmentIdsToDelete(new Set());
           clearReplyEditFiles();
         },
@@ -506,13 +471,21 @@ export default function PostDetailScreen() {
                     </View>
                     {isEditing ? (
                       <View className='mt-1'>
-                        <TextInput
-                          className='rounded-input border border-primary bg-background px-3 py-2 text-base text-foreground'
-                          value={editingReplyText}
-                          onChangeText={setEditingReplyText}
-                          multiline
-                          autoFocus
+                        <RichTextEditor
+                          key={item._id}
+                          initialContent={editingReplyText}
+                          placeholder='Edit your reply...'
+                          onChange={setEditingReplyText}
+                          variant='compact'
+                          minHeight={REPLY_EDITOR_HEIGHT}
+                          autofocus
+                          accessibilityLabel='Edit reply'
                         />
+                        {isEditingReplyTooLong ? (
+                          <Text className='mt-1 text-xs text-error'>
+                            Reply must be 5000 characters or less
+                          </Text>
+                        ) : null}
                         <AttachmentEditList
                           attachments={replyAttachments.filter(
                             (attachment: { _id: string }) =>
@@ -554,10 +527,22 @@ export default function PostDetailScreen() {
                         <View className='mt-2 flex-row gap-2'>
                           <Pressable
                             onPress={handleSaveEditReply}
-                            disabled={isUploadingReplyEdit}
-                            className='rounded-button bg-primary px-3 py-1.5'
+                            disabled={
+                              isUploadingReplyEdit || isEditingReplyTooLong
+                            }
+                            className={`rounded-button px-3 py-1.5 ${
+                              isUploadingReplyEdit || isEditingReplyTooLong
+                                ? 'bg-muted'
+                                : 'bg-primary'
+                            }`}
                           >
-                            <Text className='text-xs font-medium text-primary-foreground'>
+                            <Text
+                              className={`text-xs font-medium ${
+                                isUploadingReplyEdit || isEditingReplyTooLong
+                                  ? 'text-muted-foreground'
+                                  : 'text-primary-foreground'
+                              }`}
+                            >
                               Save
                             </Text>
                           </Pressable>
@@ -593,74 +578,9 @@ export default function PostDetailScreen() {
         {/* Typing indicator */}
         <TypingIndicator typingUsers={typingUsers} />
 
-        {/* Attachment preview for reply */}
-        <AttachmentPreview uploads={pendingUploads} onRemove={removeFile} />
-
-        {/* Reply input */}
-        <View className='flex-row items-end gap-2 border-t border-border px-2 py-2'>
-          <AttachmentButton
-            onFilesSelected={files => {
-              for (const file of files) {
-                addFile(
-                  file.uri,
-                  file.filename,
-                  file.mimeType,
-                  file.width,
-                  file.height,
-                  file.size
-                );
-              }
-            }}
-            currentCount={pendingUploads.length}
-            disabled={isSubmittingReply || isUploading}
-          />
-          <TextInput
-            className='min-h-[40px] flex-1 rounded-input border border-border bg-background px-3 py-2 text-base text-foreground'
-            placeholder='Write a reply...'
-            placeholderTextColor='#9ca3af'
-            value={replyText}
-            onChangeText={handleReplyTextChange}
-            multiline
-          />
-          <Pressable
-            onPress={handleSubmitReply}
-            disabled={
-              (!replyText.trim() && pendingUploads.length === 0) ||
-              isSubmittingReply ||
-              isUploading
-            }
-            className={`h-11 w-11 items-center justify-center rounded-full ${
-              (replyText.trim() || pendingUploads.length > 0) &&
-              !isSubmittingReply &&
-              !isUploading
-                ? 'bg-primary'
-                : 'bg-muted'
-            }`}
-            accessibilityRole='button'
-            accessibilityLabel='Send reply'
-            accessibilityState={{
-              disabled:
-                (!replyText.trim() && pendingUploads.length === 0) ||
-                isSubmittingReply ||
-                isUploading,
-              busy: isSubmittingReply || isUploading,
-            }}
-          >
-            {isSubmittingReply || isUploading ? (
-              <ActivityIndicator size='small' color='#ffffff' />
-            ) : (
-              <Ionicons
-                name='send'
-                size={18}
-                color={
-                  replyText.trim() || pendingUploads.length > 0
-                    ? '#ffffff'
-                    : '#9ca3af'
-                }
-              />
-            )}
-          </Pressable>
-        </View>
+        {!editingReplyId ? (
+          <ReplyComposer postId={typedPostId} onTypingChange={setTyping} />
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
