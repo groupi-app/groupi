@@ -43,7 +43,7 @@ import { AttachmentButton } from '@/components/attachments/attachment-button';
 import { AttachmentEditList } from '@/components/attachments/attachment-edit-list';
 import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { TypingIndicator } from '@/components/posts/typing-indicator';
-import { HtmlContent } from '@/components/posts/html-content';
+import { HtmlContent, htmlToPlainText } from '@/components/posts/html-content';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatTimeAgo, LoadingState } from '@/components/molecules';
 import { toast } from '@groupi/shared/platform';
@@ -314,7 +314,7 @@ export default function PostDetailScreen() {
         icon: 'create-outline',
         onPress: () => {
           setEditingReplyId(replyId);
-          setEditingReplyText(replyContent);
+          setEditingReplyText(htmlToPlainText(replyContent));
           setEditingReplyAttachmentIdsToDelete(new Set());
           clearReplyEditFiles();
         },
@@ -576,11 +576,9 @@ export default function PostDetailScreen() {
                           </Pressable>
                         </View>
                       </View>
-                    ) : (
-                      <Text className='mt-1 text-base text-foreground'>
-                        {replyContent}
-                      </Text>
-                    )}
+                    ) : replyContent ? (
+                      <HtmlContent html={replyContent} className='mt-1' />
+                    ) : null}
                     {!isEditing && replyAttachments.length > 0 ? (
                       <AttachmentGallery attachments={replyAttachments} />
                     ) : null}

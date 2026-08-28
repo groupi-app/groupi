@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseHtml } from './html-content';
+import { htmlToPlainText, parseHtml } from './html-content';
 
 describe('parseHtml', () => {
   it('preserves ordered list numbering from web-authored content', () => {
@@ -35,5 +35,23 @@ describe('parseHtml', () => {
         listIndex: 2,
       },
     ]);
+  });
+
+  it('renders web-authored reply paragraphs without exposing HTML markup', () => {
+    expect(parseHtml('<p>h</p>')).toEqual([
+      {
+        type: 'paragraph',
+        segments: [{ text: 'h' }],
+        level: undefined,
+      },
+    ]);
+  });
+
+  it('converts rich replies to readable text for the native reply editor', () => {
+    expect(
+      htmlToPlainText(
+        '<p>Hello <strong>there</strong></p><ul><li>First</li><li>Second</li></ul>'
+      )
+    ).toBe('Hello there\n• First\n• Second');
   });
 });

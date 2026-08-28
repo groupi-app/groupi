@@ -200,6 +200,22 @@ export function parseHtml(html: string): ContentBlock[] {
   return blocks;
 }
 
+/**
+ * Converts rich post/reply content into readable text for native text inputs.
+ * Mobile reply editing is currently plain text, so this prevents web-authored
+ * HTML from being exposed as markup when a reply is edited on mobile.
+ */
+export function htmlToPlainText(html: string): string {
+  return parseHtml(html)
+    .map(block => {
+      const text = block.segments.map(segment => segment.text).join('');
+
+      if (block.type !== 'list-item') return text;
+      return block.ordered ? `${block.listIndex ?? 1}. ${text}` : `• ${text}`;
+    })
+    .join('\n');
+}
+
 function parseInlineHtml(html: string): TextSegment[] {
   const segments: TextSegment[] = [];
 
