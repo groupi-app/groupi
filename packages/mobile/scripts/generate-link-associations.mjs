@@ -3,6 +3,11 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {
+  fingerprintToAndroidPasskeyOrigin,
+  normalizeAndroidFingerprints,
+} from './link-association-utils.mjs';
+
 const mobileDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryDir = join(mobileDir, '..', '..');
 const linking = JSON.parse(
@@ -12,21 +17,22 @@ const linking = JSON.parse(
 const appleApplicationPrefix =
   process.env.APPLE_APPLICATION_PREFIX?.trim() ??
   linking.appleApplicationPrefix;
-const androidFingerprint =
-  process.env.ANDROID_SHA256_CERT_FINGERPRINT?.trim().toUpperCase();
+const androidFingerprintInput = [
+  ...(linking.androidSha256CertFingerprints ?? []),
+];
+if (process.env.ANDROID_SHA256_CERT_FINGERPRINTS?.trim()) {
+  androidFingerprintInput.push(process.env.ANDROID_SHA256_CERT_FINGERPRINTS);
+}
+if (process.env.ANDROID_SHA256_CERT_FINGERPRINT?.trim()) {
+  androidFingerprintInput.push(process.env.ANDROID_SHA256_CERT_FINGERPRINT);
+}
+const androidFingerprints = normalizeAndroidFingerprints(
+  androidFingerprintInput
+);
 
 if (!/^[A-Z0-9]{10}$/.test(appleApplicationPrefix ?? '')) {
   throw new Error(
     'APPLE_APPLICATION_PREFIX must be the 10-character prefix from the signed iOS application identifier'
-  );
-}
-
-if (
-  androidFingerprint &&
-  !/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(androidFingerprint)
-) {
-  throw new Error(
-    'ANDROID_SHA256_CERT_FINGERPRINT must be the Play App Signing SHA-256 certificate fingerprint'
   );
 }
 
@@ -69,10 +75,14 @@ const androidAssociation = [
     target: {
       namespace: 'android_app',
       package_name: applicationId,
-      sha256_cert_fingerprints: [androidFingerprint],
+      sha256_cert_fingerprints: androidFingerprints,
     },
   },
 ];
+
+const androidPasskeyOrigins = androidFingerprints.map(
+  fingerprintToAndroidPasskeyOrigin
+);
 
 mkdirSync(publicDirectory, { recursive: true });
 writeFileSync(
@@ -80,7 +90,7 @@ writeFileSync(
   `${JSON.stringify(appleAssociation, null, 2)}\n`
 );
 
-if (androidFingerprint) {
+if (androidFingerprints.length > 0) {
   writeFileSync(
     join(publicDirectory, 'assetlinks.json'),
     `${JSON.stringify(androidAssociation, null, 2)}\n`
@@ -88,5 +98,10 @@ if (androidFingerprint) {
 }
 
 process.stdout.write(
-  `Wrote Apple association${androidFingerprint ? ' and Android asset links' : ''} for ${linking.appLinkHost}.\n`
+  `Wrote Apple association${androidFingerprints.length > 0 ? ' and Android asset links' : ''} for ${linking.appLinkHost}.\n`
 );
+if (androidPasskeyOrigins.length > 0) {
+  process.stdout.write(
+    `Configure PASSKEY_ANDROID_ORIGINS=${androidPasskeyOrigins.join(',')} on the matching Convex deployment.\n`
+  );
+}

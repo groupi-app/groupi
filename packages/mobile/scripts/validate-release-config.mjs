@@ -3,6 +3,11 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {
+  fingerprintToAndroidPasskeyOrigin,
+  normalizeAndroidFingerprints,
+} from './link-association-utils.mjs';
+
 const mobileDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryDir = join(mobileDir, '..', '..');
 
@@ -34,6 +39,19 @@ const appleAssociation = JSON.parse(
       'public',
       '.well-known',
       'apple-app-site-association'
+    ),
+    'utf8'
+  )
+);
+const androidAssociation = JSON.parse(
+  readFileSync(
+    join(
+      repositoryDir,
+      'packages',
+      'web',
+      'public',
+      '.well-known',
+      'assetlinks.json'
     ),
     'utf8'
   )
@@ -80,6 +98,14 @@ assert(
   'The Apple application prefix must match the registered Groupi App ID'
 );
 assert(
+  Array.isArray(linking.androidSha256CertFingerprints) &&
+    linking.androidSha256CertFingerprints.length > 0,
+  'At least one valid signed Android certificate fingerprint must be registered'
+);
+const registeredAndroidFingerprints = normalizeAndroidFingerprints(
+  linking.androidSha256CertFingerprints
+);
+assert(
   appConfig.includes('`webcredentials:${appLinkHost}`'),
   'iOS must declare the passkey relying-party domain as a web credential association'
 );
@@ -95,6 +121,29 @@ assert(
       detail.appIDs?.includes(signedAppleApplicationId)
     ),
   'The deployed Apple association source must match the signed Groupi application ID'
+);
+const androidAppTarget = androidAssociation.find(
+  statement =>
+    statement.relation?.includes(
+      'delegate_permission/common.handle_all_urls'
+    ) &&
+    statement.target?.namespace === 'android_app' &&
+    statement.target?.package_name === 'com.groupi.mobile'
+);
+assert(
+  androidAppTarget,
+  'The Android association source must authorize the Groupi application ID'
+);
+const publishedAndroidFingerprints =
+  androidAppTarget.target.sha256_cert_fingerprints;
+assert(
+  Array.isArray(publishedAndroidFingerprints) &&
+    publishedAndroidFingerprints.length ===
+      registeredAndroidFingerprints.length &&
+    registeredAndroidFingerprints.every(fingerprint =>
+      publishedAndroidFingerprints.includes(fingerprint)
+    ),
+  'Android asset links must exactly match the registered signing certificates'
 );
 assert(
   webConfig.includes("source: '/.well-known/apple-app-site-association'") &&
@@ -160,4 +209,10 @@ assert(
   'Root build:mobile must delegate to the mobile production build script'
 );
 
-process.stdout.write('Mobile release configuration is structurally valid.\n');
+const androidPasskeyOrigins = registeredAndroidFingerprints.map(
+  fingerprintToAndroidPasskeyOrigin
+);
+
+process.stdout.write(
+  `Mobile release configuration is structurally valid. Convex must trust PASSKEY_ANDROID_ORIGINS=${androidPasskeyOrigins.join(',')}.\n`
+);

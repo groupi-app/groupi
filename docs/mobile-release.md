@@ -47,9 +47,11 @@ Create EAS `preview` and `production` environment variables for:
 - `EXPO_PUBLIC_BASE_URL=https://www.groupi.gg`
 
 Configure the matching Convex deployments with `SITE_URL=https://www.groupi.gg`,
-`PASSKEY_RP_ID=www.groupi.gg`, and `PASSKEY_RP_NAME=Groupi`. Authentication now
-rejects missing, insecure, or unrelated passkey relying-party configuration
-instead of silently falling back to localhost.
+`PASSKEY_RP_ID=www.groupi.gg`, `PASSKEY_RP_NAME=Groupi`, and
+`PASSKEY_ANDROID_ORIGINS=android:apk-key-hash:w873D1alwFLJfrrUMIICkiPFCLB24Qxk0lZVeigieX8`.
+Authentication rejects missing, insecure, unrelated relying-party
+configuration, and unregistered Android certificate origins instead of
+silently falling back to localhost.
 
 The build worker provides `EAS_BUILD_PROJECT_ID`; local development may still
 set `EAS_PROJECT_ID` in the ignored `packages/mobile/.env.local` file. Configure
@@ -99,23 +101,33 @@ pnpm release:check
 ## Universal-link trust files
 
 The native app claims `www.groupi.gg`, so the website must publish association
-files derived from the actual store signing identities. The Apple application
-prefix was verified in the developer portal as `X2HQQURT9V`. For Android,
-obtain:
+files derived from the actual signing identities. The Apple application prefix
+was verified in the developer portal as `X2HQQURT9V`. The checked-in Android
+certificate is the EAS-managed certificate used for signed preview and direct
+production artifacts:
 
-1. the **Play App Signing** SHA-256 certificate fingerprint, not merely the EAS
-   upload-key fingerprint.
+- SHA-256 fingerprint:
+  `C3:CE:F7:0F:56:A5:C0:52:C9:7E:BA:D4:30:82:02:92:23:C5:08:B0:76:E1:0C:64:D2:56:55:7A:28:22:79:7F`
+- Android passkey origin:
+  `android:apk-key-hash:w873D1alwFLJfrrUMIICkiPFCLB24Qxk0lZVeigieX8`
+
+When Google Play App Signing is provisioned, add its **app-signing** SHA-256
+fingerprint to `linking.config.json` alongside the EAS certificate. The Play
+certificate is distinct from the EAS upload certificate and is required for
+links and passkeys in Play-distributed builds.
 
 Generate the public files, review them, and commit them with the signing setup:
 
 ```bash
-ANDROID_SHA256_CERT_FINGERPRINT=AA:BB:...:FF \
 pnpm mobile:link-associations
 ```
 
-Without the Android fingerprint, the command still refreshes the Apple file
-using the verified prefix in `linking.config.json` and leaves Android asset
-links untouched.
+The generator refreshes both website files from `linking.config.json`, prints
+the exact `PASSKEY_ANDROID_ORIGINS` value required by Convex, and supports
+temporary additional fingerprints through the comma-separated
+`ANDROID_SHA256_CERT_FINGERPRINTS` environment variable. Persist every trusted
+certificate in `linking.config.json` before release so `pnpm release:check` can
+verify that the published source matches the signed applications exactly.
 
 Deploy the web app, then verify direct HTTP 200 JSON responses at:
 

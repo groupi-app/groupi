@@ -132,13 +132,14 @@ export const createAuthOptions = (
   ctx: GenericCtx<DataModel>
 ): BetterAuthOptions => {
   const passkeyConfig = resolvePasskeyConfig({
+    androidOrigins: process.env.PASSKEY_ANDROID_ORIGINS,
     siteUrl:
       process.env.SITE_URL ||
       (process.env.VITEST ? 'http://localhost:3000' : undefined),
     rpId: process.env.PASSKEY_RP_ID,
     rpName: process.env.PASSKEY_RP_NAME,
   });
-  const siteUrl = passkeyConfig.origin;
+  const siteUrl = passkeyConfig.siteOrigin;
 
   return {
     baseURL: siteUrl,

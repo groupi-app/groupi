@@ -526,15 +526,16 @@ CMD ["node", "packages/web/server.js"]
 
 ### Core (always required)
 
-| Variable                 | Description                               | Default / Generated     |
-| ------------------------ | ----------------------------------------- | ----------------------- |
-| `SITE_URL`               | Public URL of your instance               | `http://localhost:3000` |
-| `BETTER_AUTH_SECRET`     | Random 32-char secret for session signing | Auto-generated          |
-| `BETTER_AUTH_URL`        | Auth callback URL (same as SITE_URL)      | Same as `SITE_URL`      |
-| `PASSKEY_RP_ID`          | Passkey relying party ID (domain)         | Extracted from SITE_URL |
-| `PASSKEY_RP_NAME`        | Passkey display name                      | `Groupi`                |
-| `NEXT_PUBLIC_CONVEX_URL` | Convex backend URL                        | `http://localhost:3210` |
-| `NEXT_PUBLIC_BASE_URL`   | Frontend public URL                       | Same as `SITE_URL`      |
+| Variable                  | Description                                 | Default / Generated     |
+| ------------------------- | ------------------------------------------- | ----------------------- |
+| `SITE_URL`                | Public URL of your instance                 | `http://localhost:3000` |
+| `BETTER_AUTH_SECRET`      | Random 32-char secret for session signing   | Auto-generated          |
+| `BETTER_AUTH_URL`         | Auth callback URL (same as SITE_URL)        | Same as `SITE_URL`      |
+| `PASSKEY_RP_ID`           | Passkey relying party ID (domain)           | Extracted from SITE_URL |
+| `PASSKEY_RP_NAME`         | Passkey display name                        | `Groupi`                |
+| `PASSKEY_ANDROID_ORIGINS` | Comma-separated Android certificate origins | None                    |
+| `NEXT_PUBLIC_CONVEX_URL`  | Convex backend URL                          | `http://localhost:3210` |
+| `NEXT_PUBLIC_BASE_URL`    | Frontend public URL                         | Same as `SITE_URL`      |
 
 ### Email (choose one or skip)
 

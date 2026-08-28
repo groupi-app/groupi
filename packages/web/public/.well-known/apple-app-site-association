@@ -2,24 +2,62 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["X2HQQURT9V.com.groupi.mobile"],
+        "appIDs": [
+          "X2HQQURT9V.com.groupi.mobile"
+        ],
         "components": [
-          { "/": "/invite", "comment": "Open the Groupi route /invite" },
-          { "/": "/invite/*", "comment": "Open Groupi routes under /invite" },
-          { "/": "/event", "comment": "Open the Groupi route /event" },
-          { "/": "/event/*", "comment": "Open Groupi routes under /event" },
-          { "/": "/user", "comment": "Open the Groupi route /user" },
-          { "/": "/user/*", "comment": "Open Groupi routes under /user" },
-          { "/": "/settings", "comment": "Open the Groupi route /settings" },
+          {
+            "/": "/invite",
+            "comment": "Open the Groupi route /invite"
+          },
+          {
+            "/": "/invite/*",
+            "comment": "Open Groupi routes under /invite"
+          },
+          {
+            "/": "/event",
+            "comment": "Open the Groupi route /event"
+          },
+          {
+            "/": "/event/*",
+            "comment": "Open Groupi routes under /event"
+          },
+          {
+            "/": "/user",
+            "comment": "Open the Groupi route /user"
+          },
+          {
+            "/": "/user/*",
+            "comment": "Open Groupi routes under /user"
+          },
+          {
+            "/": "/settings",
+            "comment": "Open the Groupi route /settings"
+          },
           {
             "/": "/settings/*",
             "comment": "Open Groupi routes under /settings"
           },
-          { "/": "/friends", "comment": "Open the Groupi route /friends" },
-          { "/": "/friends/*", "comment": "Open Groupi routes under /friends" },
-          { "/": "/invites", "comment": "Open the Groupi route /invites" },
-          { "/": "/invites/*", "comment": "Open Groupi routes under /invites" },
-          { "/": "/discover", "comment": "Open the Groupi route /discover" },
+          {
+            "/": "/friends",
+            "comment": "Open the Groupi route /friends"
+          },
+          {
+            "/": "/friends/*",
+            "comment": "Open Groupi routes under /friends"
+          },
+          {
+            "/": "/invites",
+            "comment": "Open the Groupi route /invites"
+          },
+          {
+            "/": "/invites/*",
+            "comment": "Open Groupi routes under /invites"
+          },
+          {
+            "/": "/discover",
+            "comment": "Open the Groupi route /discover"
+          },
           {
             "/": "/discover/*",
             "comment": "Open Groupi routes under /discover"
@@ -45,6 +83,8 @@
     ]
   },
   "webcredentials": {
-    "apps": ["X2HQQURT9V.com.groupi.mobile"]
+    "apps": [
+      "X2HQQURT9V.com.groupi.mobile"
+    ]
   }
 }
