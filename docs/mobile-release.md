@@ -168,6 +168,26 @@ files directly on the claimed `www.groupi.gg` domain.
 
 ## Release acceptance
 
+### Activation status (verified 2026-08-28)
+
+- The Expo project is linked and its production environment contains the
+  canonical public base/auth URLs plus the live production Convex URL.
+- The production Convex deployment trusts the EAS project ID, native app ID,
+  and current EAS Android signing origin. `E2E_TESTING` is `false`.
+- The signed preview, production acceptance, and internal-release workflow
+  definitions pass Expo's hosted validator. Hosted Maestro validation is
+  blocked only by the account's paid-plan entitlement.
+- No iOS test devices are registered with Apple team `X2HQQURT9V`, so an ad hoc
+  iOS acceptance artifact cannot include a device until registration is
+  completed.
+- Both live `www.groupi.gg/.well-known` association endpoints still return 404.
+  Their checked-in sources and JSON headers are ready, but the web branch must
+  be deployed before universal links and native passkeys can be accepted on
+  signed devices.
+- The direct EAS Android certificate is published in source. The Google Play
+  app-signing fingerprint must be added after Play App Signing exists; it does
+  not block direct APK acceptance testing.
+
 Before promotion beyond internal testing, exercise native Google, Discord,
 magic-link, and OTP sign-in; invite return; event creation and editing;
 availability and RSVP; add-ons; infinite post loading; attachment rollback;

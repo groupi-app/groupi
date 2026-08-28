@@ -20,13 +20,13 @@ and source-gated signed-device automation. Post-creation cover focal positioning
 was also completed for create, edit, card, and header rendering.
 
 The branch is source-ready to produce signed iOS and Android production
-acceptance artifacts. It is not yet operationally accepted against production:
-the remaining gates require owner-managed EAS/Convex production environment
-values, publishing the checked-in web association files, registered physical
-devices and signing accounts, the Google Play app-signing fingerprint once
-available, and authenticated physical-device verification. EAS-hosted Maestro
-jobs also remain optional behind Expo's paid-plan entitlement; the signed
-acceptance workflow does not depend on them.
+acceptance artifacts. The EAS production environment and production Convex
+native trust allowlists are configured. It is not yet operationally accepted
+against production: the remaining gates are publishing the checked-in web
+association files, registering physical iOS test devices, adding the Google
+Play app-signing fingerprint once available, and authenticated physical-device
+verification. EAS-hosted Maestro jobs also remain optional behind Expo's
+paid-plan entitlement; the signed acceptance workflow does not depend on them.
 
 The broader, non-release-blocking parity backlog remains product work rather
 than broken core flow repair: richer native rendering for arbitrary custom
