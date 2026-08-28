@@ -10,6 +10,7 @@ import { ConvexHttpClient } from 'convex/browser';
  */
 export class ConvexSeeder {
   private client: ConvexHttpClient;
+  private fixtureKey: string;
   private createdIds: {
     users: string[];
     persons: string[];
@@ -17,6 +18,7 @@ export class ConvexSeeder {
     posts: string[];
     invites: string[];
     memberships: string[];
+    verifications: string[];
   };
 
   constructor() {
@@ -29,7 +31,15 @@ export class ConvexSeeder {
       );
     }
 
+    const fixtureKey = process.env.E2E_FIXTURE_KEY;
+    if (!fixtureKey || fixtureKey.length < 32) {
+      throw new Error(
+        'E2E_FIXTURE_KEY with at least 32 characters is required for E2E fixtures'
+      );
+    }
+
     this.client = new ConvexHttpClient(convexUrl);
+    this.fixtureKey = fixtureKey;
     this.createdIds = {
       users: [],
       persons: [],
@@ -37,6 +47,7 @@ export class ConvexSeeder {
       posts: [],
       invites: [],
       memberships: [],
+      verifications: [],
     };
   }
 
@@ -58,6 +69,7 @@ export class ConvexSeeder {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:createTestSession' as any,
       {
+        fixtureKey: this.fixtureKey,
         email: userData.email,
         name: userData.name || 'Test User',
         username: userData.username || userData.email.split('@')[0],
@@ -83,8 +95,10 @@ export class ConvexSeeder {
       const result = await this.client.mutation(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'e2e/mutations:createMagicLinkToken' as any,
-        { email }
+        { fixtureKey: this.fixtureKey, email }
       );
+
+      if (result?.token) this.createdIds.verifications.push(result.token);
 
       return result?.url ?? null;
     } catch (error) {
@@ -102,7 +116,7 @@ export class ConvexSeeder {
     const result = await this.client.query(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:getLastMagicLink' as any,
-      { email }
+      { fixtureKey: this.fixtureKey, email }
     );
 
     return result?.url ?? null;
@@ -145,6 +159,7 @@ export class ConvexSeeder {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:seedEvent' as any,
       {
+        fixtureKey: this.fixtureKey,
         creatorPersonId: data.creatorPersonId,
         title: data.title,
         description: data.description || 'Test event description',
@@ -173,7 +188,7 @@ export class ConvexSeeder {
     const result = await this.client.mutation(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:seedPost' as any,
-      data
+      { fixtureKey: this.fixtureKey, ...data }
     );
 
     this.createdIds.posts.push(result.postId);
@@ -196,7 +211,7 @@ export class ConvexSeeder {
     const result = await this.client.mutation(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:seedInvite' as any,
-      data
+      { fixtureKey: this.fixtureKey, ...data }
     );
 
     this.createdIds.invites.push(result.inviteId);
@@ -219,6 +234,7 @@ export class ConvexSeeder {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:seedMembership' as any,
       {
+        fixtureKey: this.fixtureKey,
         personId: data.personId,
         eventId: data.eventId,
         role: data.role || 'ATTENDEE',
@@ -249,12 +265,14 @@ export class ConvexSeeder {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'e2e/mutations:cleanupTestData' as any,
         {
+          fixtureKey: this.fixtureKey,
           userIds: this.createdIds.users,
           personIds: this.createdIds.persons,
           eventIds: this.createdIds.events,
           postIds: this.createdIds.posts,
           inviteIds: this.createdIds.invites,
           membershipIds: this.createdIds.memberships,
+          verificationIdentifiers: this.createdIds.verifications,
         }
       );
 
@@ -266,6 +284,7 @@ export class ConvexSeeder {
         posts: [],
         invites: [],
         memberships: [],
+        verifications: [],
       };
     } catch (error) {
       console.warn('Failed to cleanup test data:', error);

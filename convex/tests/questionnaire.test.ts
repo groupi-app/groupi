@@ -168,6 +168,49 @@ describe('Questionnaire Add-on', () => {
       expect(myData[0].data).toEqual({ q1: 'Vegetarian', q2: 'Peanuts' });
     });
 
+    test('should reject spoofed reserved response keys even from moderators', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithMultipleUsers(t);
+      const organizerAuth = t.withIdentity({
+        subject: setup.organizer.userId,
+      });
+      const moderatorAuth = t.withIdentity({
+        subject: setup.attendee.userId,
+      });
+
+      await organizerAuth.mutation(api.addons.mutations.enableAddon, {
+        eventId: setup.eventId,
+        addonType: 'questionnaire',
+        config: VALID_CONFIG,
+      });
+      await organizerAuth.mutation(api.addons.mutations.setAddonData, {
+        eventId: setup.eventId,
+        addonType: 'questionnaire',
+        key: `response:${setup.organizer.personId}`,
+        data: { q1: 'Organizer response' },
+      });
+      await t.run(async ctx => {
+        await ctx.db.patch(setup.attendee.membershipId, { role: 'MODERATOR' });
+      });
+
+      await expect(
+        moderatorAuth.mutation(api.addons.mutations.setAddonData, {
+          eventId: setup.eventId,
+          addonType: 'questionnaire',
+          key: `response:${setup.organizer.personId}`,
+          data: { q1: 'Spoofed response' },
+        })
+      ).rejects.toThrow('must belong to the current user');
+
+      await expect(
+        moderatorAuth.mutation(api.addons.mutations.deleteAddonData, {
+          eventId: setup.eventId,
+          addonType: 'questionnaire',
+          key: `response:${setup.organizer.personId}`,
+        })
+      ).rejects.toThrow('must belong to the current user');
+    });
+
     test('should read all responses as any member', async () => {
       const t = createTestInstance();
       const setup = await createTestEventWithMultipleUsers(t);
@@ -394,6 +437,66 @@ describe('Questionnaire Add-on', () => {
         (a: { addonType: string }) => a.addonType === 'questionnaire'
       );
       expect(qAddonAfter?.completed).toBe(true);
+    });
+
+    test('should require response ownership for completion', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithMultipleUsers(t);
+      const organizerAuth = t.withIdentity({
+        subject: setup.organizer.userId,
+      });
+      const attendeeAuth = t.withIdentity({ subject: setup.attendee.userId });
+
+      await organizerAuth.mutation(api.addons.mutations.enableAddon, {
+        eventId: setup.eventId,
+        addonType: 'questionnaire',
+        config: VALID_CONFIG,
+      });
+
+      const spoofedEntryId = await t.run(async ctx => {
+        const now = Date.now();
+        return await ctx.db.insert('addonData', {
+          eventId: setup.eventId,
+          addonType: 'questionnaire',
+          key: `response:${setup.attendee.personId}`,
+          data: { q1: 'Spoofed legacy response' },
+          createdBy: setup.organizer.personId,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+
+      let status = await attendeeAuth.query(
+        api.addons.queries.getAddonCompletionStatus,
+        { eventId: setup.eventId }
+      );
+      expect(
+        status!.addons.find(
+          (addon: { addonType: string }) => addon.addonType === 'questionnaire'
+        )?.completed
+      ).toBe(false);
+
+      await attendeeAuth.mutation(api.addons.mutations.setAddonData, {
+        eventId: setup.eventId,
+        addonType: 'questionnaire',
+        key: `response:${setup.attendee.personId}`,
+        data: { q1: 'Real response' },
+      });
+
+      status = await attendeeAuth.query(
+        api.addons.queries.getAddonCompletionStatus,
+        { eventId: setup.eventId }
+      );
+      expect(
+        status!.addons.find(
+          (addon: { addonType: string }) => addon.addonType === 'questionnaire'
+        )?.completed
+      ).toBe(true);
+
+      const reclaimedEntry = await t.run(async ctx =>
+        ctx.db.get(spoofedEntryId)
+      );
+      expect(reclaimedEntry?.createdBy).toBe(setup.attendee.personId);
     });
 
     test('should mark organizer as organizer', async () => {

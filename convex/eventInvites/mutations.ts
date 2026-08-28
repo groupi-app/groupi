@@ -1,6 +1,6 @@
 import { mutation } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
-import { requireAuth } from '../auth';
+import { requireAuth, requireEventPermission } from '../auth';
 import { createNotification } from '../lib/notifications';
 import { checkCanSendEventInvite } from '../lib/privacy';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -37,19 +37,13 @@ export const sendEventInvite = mutation({
       throw new ConvexError('Event not found');
     }
 
-    // Check if inviter is a member of the event
-    const inviterMembership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!inviterMembership) {
-      throw new ConvexError(
-        'You must be a member of this event to invite others'
-      );
-    }
+    // Enforce the event's configurable invite permission. The returned
+    // membership is also used for the stricter moderator-invite rule below.
+    const inviterMembership = await requireEventPermission(
+      ctx,
+      eventId,
+      'inviteMembers'
+    );
 
     // Only organizers can invite as moderator
     if (role === 'MODERATOR' && inviterMembership.role !== 'ORGANIZER') {

@@ -201,7 +201,7 @@ export const getAddonCompletionStatus = query({
       if (!handler) continue;
 
       // Check if user has a response entry (key starting with 'response:')
-      const responseEntry = await ctx.db
+      const responseEntries = await ctx.db
         .query('addonData')
         .withIndex('by_event_addon_key', q =>
           q
@@ -209,11 +209,13 @@ export const getAddonCompletionStatus = query({
             .eq('addonType', config.addonType)
             .eq('key', `response:${person._id}`)
         )
-        .first();
+        .collect();
 
       addons.push({
         addonType: config.addonType,
-        completed: !!responseEntry,
+        completed: responseEntries.some(
+          entry => entry.createdBy === person._id
+        ),
       });
     }
 

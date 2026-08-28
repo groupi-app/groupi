@@ -1,0 +1,54 @@
+name: Mobile E2E tests
+
+on:
+  pull_request_labeled:
+    labels: ['mobile-e2e']
+
+jobs:
+  build_android:
+    name: Build Android E2E app
+    type: build
+    params:
+      platform: android
+      profile: e2e-test
+
+  build_ios:
+    name: Build iOS E2E app
+    type: build
+    params:
+      platform: ios
+      profile: e2e-test
+
+  test_android:
+    name: Test Android app
+    needs: [build_android]
+    type: maestro
+    environment: preview
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      flow_path:
+        - '.maestro/smoke.yml'
+        - '.maestro/invite-link.yml'
+        - '.maestro/protected-routes.yml'
+        - '.maestro/process-recovery.yml'
+        - '.maestro/authenticated-event.yml'
+      retries: 1
+      retry_failed_only: true
+      record_screen: true
+
+  test_ios:
+    name: Test iOS app
+    needs: [build_ios]
+    type: maestro
+    environment: preview
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      flow_path:
+        - '.maestro/smoke.yml'
+        - '.maestro/invite-link.yml'
+        - '.maestro/protected-routes.yml'
+        - '.maestro/process-recovery.yml'
+        - '.maestro/authenticated-event.yml'
+      retries: 1
+      retry_failed_only: true
+      record_screen: true

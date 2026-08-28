@@ -214,6 +214,10 @@ pnpm build:ios
 pnpm build:android
 ```
 
+See [Mobile Build, Device Test, and Release](docs/mobile-release.md) for EAS
+environments, managed signing, Maestro automation, store submission, and
+universal-link verification.
+
 ### Convex Backend
 
 ```bash

@@ -161,6 +161,30 @@ describe('Bring List Add-on', () => {
       expect(allData[0].data).toEqual({ item1: 1, item2: 2 });
     });
 
+    test('should reject claims keys for another member', async () => {
+      const t = createTestInstance();
+      const setup = await createTestEventWithMultipleUsers(t);
+      const organizerAuth = t.withIdentity({
+        subject: setup.organizer.userId,
+      });
+      const attendeeAuth = t.withIdentity({ subject: setup.attendee.userId });
+
+      await organizerAuth.mutation(api.addons.mutations.enableAddon, {
+        eventId: setup.eventId,
+        addonType: 'bring-list',
+        config: VALID_CONFIG,
+      });
+
+      await expect(
+        attendeeAuth.mutation(api.addons.mutations.setAddonData, {
+          eventId: setup.eventId,
+          addonType: 'bring-list',
+          key: `claims:${setup.organizer.personId}`,
+          data: { item1: 1 },
+        })
+      ).rejects.toThrow('must belong to the current user');
+    });
+
     test('should allow multiple users to claim same item', async () => {
       const t = createTestInstance();
       const setup = await createTestEventWithMultipleUsers(t);

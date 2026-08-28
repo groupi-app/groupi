@@ -5,6 +5,11 @@ import {
   notifyThreadParticipants,
   notifyMentionedUsers,
 } from '../lib/notifications';
+import {
+  attachmentInputValidator,
+  createAttachmentsForParent,
+  deleteAttachmentsForParent,
+} from '../attachments/model';
 
 /**
  * Replies mutations for the Convex backend
@@ -19,9 +24,11 @@ export const createReply = mutation({
   args: {
     postId: v.id('posts'),
     text: v.string(),
+    attachments: v.optional(v.array(attachmentInputValidator)),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { postId, text }) => {
+  returns: v.object({ replyId: v.id('replies') }),
+  handler: async (ctx, { postId, text, attachments = [] }) => {
     const { person } = await requireAuth(ctx);
 
     // Get the post
@@ -42,15 +49,28 @@ export const createReply = mutation({
       throw new Error('You must be a member of this event to reply');
     }
 
+    const normalizedText = text.trim();
+    if (!normalizedText && attachments.length === 0) {
+      throw new Error('Reply text or an attachment is required');
+    }
+
     // Create the reply
     // Note: Don't set updatedAt on creation - only set it when editing
     // This prevents the "edited" indicator from showing on new replies
     const replyId = await ctx.db.insert('replies', {
       postId,
-      text,
+      text: normalizedText,
       authorId: person._id,
       membershipId: membership._id,
     });
+
+    if (attachments.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments,
+        replyId,
+        personId: person._id,
+      });
+    }
 
     // Notify post author and other reply participants
     await notifyThreadParticipants(ctx, {
@@ -62,7 +82,7 @@ export const createReply = mutation({
 
     // Notify mentioned users (separate from thread participant notification)
     await notifyMentionedUsers(ctx, {
-      content: text,
+      content: normalizedText,
       authorId: person._id,
       eventId: post.eventId,
       postId,
@@ -79,9 +99,14 @@ export const updateReply = mutation({
   args: {
     replyId: v.id('replies'),
     text: v.string(),
+    attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
+    attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { replyId, text }) => {
+  handler: async (
+    ctx,
+    { replyId, text, attachmentsToAdd = [], attachmentIdsToDelete = [] }
+  ) => {
     const { person } = await requireAuth(ctx);
 
     // Get the reply
@@ -105,9 +130,26 @@ export const updateReply = mutation({
       throw new Error("You don't have permission to edit this reply");
     }
 
-    // Validate input
-    if (!text.trim()) {
-      throw new Error('Reply text cannot be empty');
+    await deleteAttachmentsForParent(ctx, {
+      attachmentIds: attachmentIdsToDelete,
+      replyId,
+      personId: person._id,
+    });
+
+    if (attachmentsToAdd.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments: attachmentsToAdd,
+        replyId,
+        personId: person._id,
+      });
+    }
+
+    const remainingAttachment = await ctx.db
+      .query('attachments')
+      .withIndex('by_reply', q => q.eq('replyId', replyId))
+      .first();
+    if (!text.trim() && !remainingAttachment) {
+      throw new Error('Reply text or an attachment is required');
     }
 
     // Update the reply with updatedAt timestamp

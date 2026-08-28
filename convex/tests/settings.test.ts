@@ -87,6 +87,58 @@ describe('Settings Domain', () => {
       expect(methods).toHaveLength(2);
     });
 
+    test('should preserve social and add-on notification preferences', async () => {
+      const t = createTestInstance();
+      const { personId, auth } = await TestScenarios.simpleUser(t);
+
+      await auth.mutation(api.settings.mutations.saveNotificationSettings, {
+        notificationMethods: [
+          {
+            type: 'EMAIL',
+            enabled: true,
+            value: 'social@example.com',
+            notifications: [
+              {
+                notificationType: 'FRIEND_REQUEST_RECEIVED',
+                enabled: false,
+              },
+              { notificationType: 'ADDON_AUTOMATION', enabled: true },
+            ],
+          },
+        ],
+      });
+
+      const savedSettings = await t.run(async ctx => {
+        const personSettings = await ctx.db
+          .query('personSettings')
+          .withIndex('by_person', q => q.eq('personId', personId))
+          .first();
+        if (!personSettings) return [];
+        const method = await ctx.db
+          .query('notificationMethods')
+          .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
+          .first();
+        if (!method) return [];
+        return ctx.db
+          .query('notificationSettings')
+          .withIndex('by_method', q => q.eq('methodId', method._id))
+          .collect();
+      });
+
+      expect(savedSettings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            notificationType: 'FRIEND_REQUEST_RECEIVED',
+            enabled: false,
+          }),
+          expect.objectContaining({
+            notificationType: 'ADDON_AUTOMATION',
+            enabled: true,
+          }),
+        ])
+      );
+    });
+
     test('should update existing notification methods', async () => {
       const t = createTestInstance();
       const { personId, auth } = await TestScenarios.simpleUser(t);

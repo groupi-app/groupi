@@ -11,13 +11,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, ControllerRenderProps } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useMutation } from 'convex/react';
 import { useCreateReply, OptimisticUserData } from '@/hooks/convex/use-replies';
 import { useAttachments } from '@/hooks/convex/use-file-upload';
-import {
-  usePendingAttachments,
-  PendingAttachment,
-} from '@/contexts/pending-attachments-context';
 import {
   AttachmentButton,
   AttachmentPreview,
@@ -32,17 +27,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import { Id, Doc } from '@/convex/_generated/dataModel';
 import { useCurrentUserTypingState } from '@/hooks/convex/use-presence';
 import { User } from '@/convex/types';
-
-let attachmentMutations: any;
-
-function initAttachmentApi() {
-  if (!attachmentMutations) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    attachmentMutations = api.attachments?.mutations ?? {};
-  }
-}
-initAttachmentApi();
 
 const formSchema = z.object({
   reply: z.string().max(5000, 'Reply must be 5000 characters or less'),
@@ -98,11 +82,6 @@ export default function ReplyForm({
   }, [userMembership]);
 
   const createReply = useCreateReply(currentUser);
-  const createAttachmentsBatch = useMutation(
-    attachmentMutations.createAttachmentsBatch
-  );
-  const { setPendingAttachments, clearPendingAttachments } =
-    usePendingAttachments();
   const {
     pendingUploads,
     addFiles,
@@ -279,42 +258,11 @@ export default function ReplyForm({
 
     setIsSubmitting(true);
 
-    // Generate a temporary ID for the pending attachments
-    // We'll use the real reply ID once we have it
-    const tempReplyId = `temp_${Date.now()}`;
-
     try {
-      // Capture upload data BEFORE clearing form (we need it for later operations)
       const capturedUploads = [...pendingUploads];
-
-      // Build pending attachments from uploads BEFORE uploading
-      // Store them in context so they persist across Convex data refreshes
-      if (hasAttachments) {
-        const pendingAttachmentData: PendingAttachment[] = capturedUploads.map(
-          (upload, index) => {
-            // Determine attachment type from MIME type
-            let type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' = 'FILE';
-            if (upload.file.type.startsWith('image/')) type = 'IMAGE';
-            else if (upload.file.type.startsWith('video/')) type = 'VIDEO';
-            else if (upload.file.type.startsWith('audio/')) type = 'AUDIO';
-
-            return {
-              _id: `pending_${tempReplyId}_${index}`,
-              type,
-              filename: upload.displayFilename,
-              size: upload.file.size,
-              mimeType: upload.file.type,
-              width: upload.width,
-              height: upload.height,
-              isSpoiler: upload.isSpoiler,
-              altText: upload.altText,
-              url: upload.preview || null,
-            };
-          }
-        );
-
-        // Store pending attachments with temp ID (we'll transfer to real ID after)
-        setPendingAttachments(tempReplyId, pendingAttachmentData);
+      const uploadedAttachments = hasAttachments ? await uploadAll() : [];
+      if (uploadedAttachments.length !== capturedUploads.length) {
+        throw new Error('One or more attachments could not be uploaded');
       }
 
       // Build optimistic attachments for immediate display in Convex optimistic update
@@ -331,80 +279,31 @@ export default function ReplyForm({
           }))
         : undefined;
 
-      // Clear form and editor IMMEDIATELY for optimistic UX (before await)
-      form.reset();
-      editorRef.current?.clear();
-
-      // Create the reply with optimistic attachments
-      const result = await createReply({
+      await createReply({
         text: hasText ? values.reply : '',
         postId: postId as import('@/convex/_generated/dataModel').Id<'posts'>,
         optimisticAttachments,
+        attachments: uploadedAttachments.map(attachment => ({
+          storageId: attachment.storageId,
+          filename: attachment.filename,
+          size: attachment.size,
+          mimeType: attachment.mimeType,
+          width: attachment.width,
+          height: attachment.height,
+          isSpoiler: attachment.isSpoiler,
+          altText: attachment.altText,
+        })),
       });
 
-      // Transfer pending attachments from temp ID to real reply ID
-      if (hasAttachments && result?.replyId) {
-        const realReplyId = String(result.replyId);
-
-        // Rebuild pending attachments with real reply ID
-        const pendingAttachmentData: PendingAttachment[] = capturedUploads.map(
-          (upload, index) => {
-            let type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' = 'FILE';
-            if (upload.file.type.startsWith('image/')) type = 'IMAGE';
-            else if (upload.file.type.startsWith('video/')) type = 'VIDEO';
-            else if (upload.file.type.startsWith('audio/')) type = 'AUDIO';
-
-            return {
-              _id: `pending_${realReplyId}_${index}`,
-              type,
-              filename: upload.displayFilename,
-              size: upload.file.size,
-              mimeType: upload.file.type,
-              width: upload.width,
-              height: upload.height,
-              isSpoiler: upload.isSpoiler,
-              altText: upload.altText,
-              url: upload.preview || null,
-            };
-          }
-        );
-
-        // Store with real reply ID
-        setPendingAttachments(realReplyId, pendingAttachmentData);
-
-        // Clear temp ID
-        clearPendingAttachments(tempReplyId);
-
-        // Now upload attachments
-        const uploadedAttachments = await uploadAll();
-        if (uploadedAttachments.length > 0) {
-          await createAttachmentsBatch({
-            attachments: uploadedAttachments.map(a => ({
-              storageId: a.storageId,
-              filename: a.filename,
-              size: a.size,
-              mimeType: a.mimeType,
-              width: a.width,
-              height: a.height,
-              isSpoiler: a.isSpoiler,
-              altText: a.altText,
-            })),
-            replyId: result.replyId,
-          });
-        }
-
-        // Clear pending attachments - real ones now exist
-        clearPendingAttachments(realReplyId);
-      }
-
-      // Clear pending uploads
       clearAll();
-    } catch {
-      // Clear temp pending attachments on error
-      clearPendingAttachments(tempReplyId);
-
+      form.reset();
+      editorRef.current?.clear();
+    } catch (error) {
       toast.error('Failed to send reply', {
-        description: 'The reply could not be sent. Please try again.',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'The reply could not be sent. Please try again.',
       });
     } finally {
       setIsSubmitting(false);

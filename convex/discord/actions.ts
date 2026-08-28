@@ -2,6 +2,12 @@
 
 import { action, internalAction } from '../_generated/server';
 import { v } from 'convex/values';
+import {
+  partitionManageableGuilds,
+  type DiscordGuild,
+  type DiscordGuildWithPermissions,
+  type GuildResult,
+} from './permissions';
 
 // Use require to avoid deep type instantiation errors with internal references
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
@@ -20,23 +26,11 @@ function buildDescription(description: string | undefined, eventId: string) {
   return base ? `${base}${suffix}` : `View on Groupi: ${groupiLink}`;
 }
 
-interface DiscordGuild {
-  id: string;
-  name: string;
-  icon: string | null;
-}
-
-interface DiscordGuildWithPermissions extends DiscordGuild {
-  permissions: string;
-}
-
-interface GuildResult {
-  available: DiscordGuild[];
-  invitable: DiscordGuild[];
-}
-
-// MANAGE_GUILD permission bit (1 << 5 = 0x20)
-const MANAGE_GUILD = 0x20;
+const discordGuildValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  icon: v.union(v.string(), v.null()),
+});
 
 /**
  * Get guilds available for the Discord addon.
@@ -46,6 +40,10 @@ const MANAGE_GUILD = 0x20;
  */
 export const getAvailableGuilds = action({
   args: {},
+  returns: v.object({
+    available: v.array(discordGuildValidator),
+    invitable: v.array(discordGuildValidator),
+  }),
   handler: async (ctx): Promise<GuildResult> => {
     const empty: GuildResult = { available: [], invitable: [] };
     const botToken = process.env.DISCORD_BOT_TOKEN;
@@ -104,18 +102,28 @@ export const getAvailableGuilds = action({
     const botGuilds: DiscordGuild[] = await botGuildsRes.json();
     const botGuildIds = new Set(botGuilds.map(g => g.id));
 
-    const available: DiscordGuild[] = [];
-    const invitable: DiscordGuild[] = [];
+    const { available, invitable } = partitionManageableGuilds(
+      userGuilds,
+      botGuildIds
+    );
 
-    for (const g of userGuilds) {
-      const guild = { id: g.id, name: g.name, icon: g.icon };
-      if (botGuildIds.has(g.id)) {
-        available.push(guild);
-      } else if (Number(g.permissions) & MANAGE_GUILD) {
-        // User can manage this guild — show it as invitable
-        invitable.push(guild);
+    await ctx.runMutation(
+      internalApi.discord.mutations.replaceGuildAuthorizations,
+      {
+        guilds: [
+          ...available.map(guild => ({
+            guildId: guild.id,
+            guildName: guild.name,
+            botInstalled: true,
+          })),
+          ...invitable.map(guild => ({
+            guildId: guild.id,
+            guildName: guild.name,
+            botInstalled: false,
+          })),
+        ],
       }
-    }
+    );
 
     return { available, invitable };
   },

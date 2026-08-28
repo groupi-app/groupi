@@ -13,9 +13,31 @@ import { ConvexHttpClient } from 'convex/browser';
 // Check if E2E testing is enabled
 const isE2EEnabled = process.env.E2E_TESTING === 'true';
 
+function fixtureKeysMatch(provided: string, expected: string): boolean {
+  if (provided.length !== expected.length) return false;
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1) {
+    difference |= provided.charCodeAt(index) ^ expected.charCodeAt(index);
+  }
+  return difference === 0;
+}
+
 export async function POST(request: NextRequest) {
   // Guard: Only allow in E2E testing mode
   if (!isE2EEnabled) {
+    return NextResponse.json(
+      { error: 'E2E testing is not enabled' },
+      { status: 403 }
+    );
+  }
+
+  const fixtureKey = process.env.E2E_FIXTURE_KEY;
+  const providedFixtureKey = request.headers.get('x-e2e-fixture-key') ?? '';
+  if (
+    !fixtureKey ||
+    fixtureKey.length < 32 ||
+    !fixtureKeysMatch(providedFixtureKey, fixtureKey)
+  ) {
     return NextResponse.json(
       { error: 'E2E testing is not enabled' },
       { status: 403 }
@@ -32,7 +54,7 @@ export async function POST(request: NextRequest) {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!convexUrl) {
       return NextResponse.json(
-        { error: 'CONVEX_URL not configured' },
+        { error: 'E2E fixture access is not configured' },
         { status: 500 }
       );
     }
@@ -43,7 +65,7 @@ export async function POST(request: NextRequest) {
     const tokenResult = await client.mutation(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'e2e/mutations:createMagicLinkToken' as any,
-      { email }
+      { fixtureKey, email }
     );
 
     if (!tokenResult?.url) {

@@ -16,7 +16,13 @@ const notificationTypeValidator = v.union(
   v.literal('USER_DEMOTED'),
   v.literal('USER_RSVP'),
   v.literal('USER_MENTIONED'),
-  v.literal('EVENT_REMINDER')
+  v.literal('EVENT_REMINDER'),
+  v.literal('FRIEND_REQUEST_RECEIVED'),
+  v.literal('FRIEND_REQUEST_ACCEPTED'),
+  v.literal('EVENT_INVITE_RECEIVED'),
+  v.literal('EVENT_INVITE_ACCEPTED'),
+  v.literal('ADDON_CONFIG_RESET'),
+  v.literal('ADDON_AUTOMATION')
 );
 
 // Method type validator

@@ -1,0 +1,21 @@
+appId: com.groupi.mobile
+name: Cold-start authentication recovery
+tags:
+  - smoke
+  - auth
+  - reliability
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- assertVisible: 'Groupi'
+- assertVisible: 'Continue with Email'
+- tapOn: 'you@example.com'
+- inputText: 'temporary@example.com'
+- killApp
+- launchApp
+- assertVisible: 'Groupi'
+- assertVisible: 'Plan events together'
+- assertVisible: 'you@example.com'
+- assertVisible: 'Continue with Email'
+- assertNotVisible: 'temporary@example.com'

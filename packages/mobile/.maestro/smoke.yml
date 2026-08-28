@@ -1,0 +1,20 @@
+appId: com.groupi.mobile
+name: Signed-out authentication smoke test
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- assertVisible: 'Groupi'
+- assertVisible: 'Plan events together'
+- assertVisible: 'Continue with Discord'
+- assertVisible: 'Continue with Google'
+- assertVisible: 'Continue with Email'
+- tapOn: 'you@example.com'
+- inputText: 'not-an-email'
+- tapOn: 'Continue with Email'
+- assertVisible: 'Please enter a valid email address'
+- assertVisible:
+    text: 'Continue with Email'
+    enabled: true

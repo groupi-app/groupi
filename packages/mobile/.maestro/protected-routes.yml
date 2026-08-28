@@ -1,0 +1,40 @@
+appId: com.groupi.mobile
+name: Signed-out protected route guard
+tags:
+  - smoke
+  - auth
+  - routing
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- openLink: 'groupi://create-event'
+- runFlow:
+    when:
+      visible: 'Open in.*Groupi'
+    commands:
+      - tapOn: '^Open$'
+- openLink: 'groupi://create-event'
+- assertVisible: 'Groupi'
+- assertVisible: 'Continue with Email'
+- assertNotVisible: 'Create Event'
+- openLink: 'groupi://settings'
+- runFlow:
+    when:
+      visible: 'Open in.*Groupi'
+    commands:
+      - tapOn: '^Open$'
+- openLink: 'groupi://settings'
+- assertVisible: 'Groupi'
+- assertVisible: 'Continue with Email'
+- assertNotVisible: 'Settings'
+- openLink: 'groupi://event/e2e-automation-event'
+- runFlow:
+    when:
+      visible: 'Open in.*Groupi'
+    commands:
+      - tapOn: '^Open$'
+- openLink: 'groupi://event/e2e-automation-event'
+- assertVisible: 'Groupi'
+- assertVisible: 'Continue with Email'
+- assertNotVisible: 'Event not found'

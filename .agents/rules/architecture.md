@@ -272,6 +272,32 @@ if (Platform.OS === 'web') {
 
 For complete documentation of all available scripts, see [scripts.md](./scripts.md).
 
+## MCP Servers
+
+The project has the following MCP servers configured in `.mcp.json`:
+
+| Server          | Purpose                            | When to Use                                                 |
+| --------------- | ---------------------------------- | ----------------------------------------------------------- |
+| `next-devtools` | Next.js 16+ runtime inspection     | Debugging web app, checking routes, build errors            |
+| `convex`        | Convex backend queries, data, logs | Inspecting tables, running functions, checking logs         |
+| `playwright`    | Browser automation                 | E2E testing, web UI interaction, form filling               |
+| `uniwind`       | Uniwind design system docs         | Looking up Uniwind/NativeWind styling patterns              |
+| `ios-simulator` | iOS simulator interaction          | Mobile QA testing, screenshots, tap/swipe/type on simulator |
+
+### iOS Simulator MCP
+
+The `ios-simulator` MCP server ([ios-simulator-mcp](https://github.com/joshuayoes/ios-simulator-mcp)) enables direct interaction with iOS simulators for mobile QA. Available tools:
+
+- **`ui_describe_all`** / **`ui_describe_point`** — Inspect accessibility elements on screen or at coordinates
+- **`ui_view`** — Get a screenshot of the current simulator view
+- **`ui_tap`** / **`ui_swipe`** / **`ui_type`** — Perform touch gestures and text input
+- **`screenshot`** — Save screenshots in various formats (png, jpeg, tiff, etc.)
+- **`record_video`** / **`stop_recording`** — Record simulator video (h264/hevc)
+- **`install_app`** / **`launch_app`** — Install .app/.ipa bundles and launch by bundle ID
+- **`get_booted_sim_id`** / **`open_simulator`** — Manage simulator lifecycle
+
+**Prerequisites:** Xcode with iOS simulators installed, Facebook IDB tool (`idb`).
+
 When implementing features, always prioritize:
 
 - Real-time data synchronization

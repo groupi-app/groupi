@@ -16,6 +16,7 @@ import {
   dispatchAddonLifecycle,
   dispatchSingleAddonLifecycle,
 } from '../addons/lifecycle';
+import { requireDiscordGuildAuthorization } from '../discord/authorization';
 
 /**
  * Events mutations for the Convex backend
@@ -58,6 +59,23 @@ const dateSelectionSourceValidator = v.union(
   v.literal('POLL'),
   v.literal('MANUAL')
 );
+
+function validateImageFocalPoint(
+  focalPoint: { x: number; y: number } | null | undefined
+) {
+  if (!focalPoint) return;
+
+  if (
+    !Number.isFinite(focalPoint.x) ||
+    !Number.isFinite(focalPoint.y) ||
+    focalPoint.x < 0 ||
+    focalPoint.x > 1 ||
+    focalPoint.y < 0 ||
+    focalPoint.y > 1
+  ) {
+    throw new Error('Image focal point must be between 0 and 1');
+  }
+}
 
 const eventDocumentValidator = v.object({
   _id: v.id('events'),
@@ -175,6 +193,11 @@ export const createEvent = mutation({
     // Validate input
     if (!title.trim()) {
       throw new Error('Event title is required');
+    }
+
+    validateImageFocalPoint(imageFocalPoint);
+    if (imageFocalPoint && !imageStorageId) {
+      throw new Error('An image focal point requires a cover image');
     }
 
     // Handle potential date times - support both legacy and new format
@@ -317,6 +340,13 @@ export const createEvent = mutation({
       const handler = getAddonHandler(addon.addonType);
       if (!handler || !handler.validateConfig(addon.config)) continue;
 
+      await requireDiscordGuildAuthorization(
+        ctx,
+        person._id,
+        addon.addonType,
+        addon.config
+      );
+
       await ctx.db.insert('eventAddonConfigs', {
         eventId,
         addonType: addon.addonType,
@@ -400,6 +430,15 @@ export const updateEvent = mutation({
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new Error('Event not found');
+    }
+
+    validateImageFocalPoint(imageFocalPoint);
+    const willHaveImage =
+      imageStorageId === undefined
+        ? event.imageStorageId !== undefined
+        : imageStorageId !== null;
+    if (imageFocalPoint && !willHaveImage) {
+      throw new Error('An image focal point requires a cover image');
     }
 
     // Prepare update data
@@ -583,11 +622,17 @@ export const updateMemberRole = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+
+    // Moderators can manage attendee/moderator roles, but organizer authority
+    // can only be granted or changed by another organizer.
+    if (
+      currentMembership.role !== 'ORGANIZER' &&
+      (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER')
+    ) {
+      throw new Error('Only organizers can manage the organizer role');
+    }
 
     // Prevent demoting the last organizer
     if (membership.role === 'ORGANIZER' && newRole !== 'ORGANIZER') {
@@ -645,11 +690,15 @@ export const removeMember = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
+
+    if (
+      membership.role === 'ORGANIZER' &&
+      currentMembership.role !== 'ORGANIZER'
+    ) {
+      throw new Error('Only organizers can remove another organizer');
+    }
 
     // Prevent removing the last organizer
     if (membership.role === 'ORGANIZER') {
@@ -1028,15 +1077,19 @@ export const banMember = mutation({
     }
 
     // Require organizer or moderator role in this event (single auth call)
-    const { person: currentPerson } = await requireEventRole(
-      ctx,
-      membership.eventId,
-      'MODERATOR'
-    );
+    const { person: currentPerson, membership: currentMembership } =
+      await requireEventRole(ctx, membership.eventId, 'MODERATOR');
 
     // Prevent banning yourself
     if (membership.personId === currentPerson._id) {
       throw new Error('You cannot ban yourself');
+    }
+
+    if (
+      membership.role === 'ORGANIZER' &&
+      currentMembership.role !== 'ORGANIZER'
+    ) {
+      throw new Error('Only organizers can ban another organizer');
     }
 
     // Prevent banning the last organizer

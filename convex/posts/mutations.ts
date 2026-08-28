@@ -7,6 +7,11 @@ import {
   notifyMentionedUsers,
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
+import {
+  attachmentInputValidator,
+  createAttachmentsForParent,
+  deleteAttachmentsForParent,
+} from '../attachments/model';
 
 /**
  * Posts mutations for the Convex backend
@@ -23,9 +28,10 @@ export const createPost = mutation({
     eventId: v.id('events'),
     title: v.string(),
     content: v.string(),
+    attachments: v.optional(v.array(attachmentInputValidator)),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, title, content }) => {
+  handler: async (ctx, { eventId, title, content, attachments = [] }) => {
     const { person } = await requireAuth(ctx);
     const membership = await requireEventPermission(
       ctx,
@@ -51,6 +57,14 @@ export const createPost = mutation({
       eventId: eventId,
       membershipId: membership._id,
     });
+
+    if (attachments.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments,
+        postId,
+        personId: person._id,
+      });
+    }
 
     // Get the created post with populated data
     const post = await ctx.db.get(postId);
@@ -83,9 +97,20 @@ export const updatePost = mutation({
     postId: v.id('posts'),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
+    attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { postId, title, content }) => {
+  handler: async (
+    ctx,
+    {
+      postId,
+      title,
+      content,
+      attachmentsToAdd = [],
+      attachmentIdsToDelete = [],
+    }
+  ) => {
     // Require authentication
     const { person } = await requireAuth(ctx);
 
@@ -123,6 +148,20 @@ export const updatePost = mutation({
         throw new Error('Post content cannot be empty');
       }
       updateData.content = content.trim();
+    }
+
+    await deleteAttachmentsForParent(ctx, {
+      attachmentIds: attachmentIdsToDelete,
+      postId,
+      personId: person._id,
+    });
+
+    if (attachmentsToAdd.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments: attachmentsToAdd,
+        postId,
+        personId: person._id,
+      });
     }
 
     // Update the post

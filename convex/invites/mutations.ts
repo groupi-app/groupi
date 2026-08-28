@@ -1,6 +1,6 @@
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth, requireEventRole, requireEventPermission } from '../auth';
+import { requireAuth, requireEventPermission } from '../auth';
 import { Doc, Id } from '../_generated/dataModel';
 import { notifyEventModerators } from '../lib/notifications';
 import { internal } from '../_generated/api';
@@ -105,8 +105,7 @@ export const updateInvite = mutation({
       throw new Error('Invite not found');
     }
 
-    // Require organizer or moderator role for the event
-    await requireEventRole(ctx, invite.eventId, 'MODERATOR');
+    await requireEventPermission(ctx, invite.eventId, 'inviteMembers');
 
     // Calculate new usesRemaining if usesTotal changed
     let newUsesRemaining = invite.usesRemaining;
@@ -197,7 +196,7 @@ export const deleteInvites = mutation({
     // Check permissions for all events (invites might be from different events)
     const eventIds = [...new Set(validInvites.map(invite => invite!.eventId))];
     for (const eventId of eventIds) {
-      await requireEventRole(ctx, eventId, 'MODERATOR');
+      await requireEventPermission(ctx, eventId, 'inviteMembers');
     }
 
     // Delete all valid invites
@@ -458,7 +457,7 @@ export const sendPendingEmailInvites = mutation({
   },
   handler: async (ctx, { eventId }) => {
     // Require organizer or moderator role
-    await requireEventRole(ctx, eventId, 'MODERATOR');
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     // Get the event details
     const event = await ctx.db.get(eventId);

@@ -65,6 +65,26 @@ const nextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
+  async headers() {
+    const associationHeaders = [
+      { key: 'Content-Type', value: 'application/json' },
+      {
+        key: 'Cache-Control',
+        value: 'public, max-age=3600, must-revalidate',
+      },
+    ];
+
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: associationHeaders,
+      },
+      {
+        source: '/.well-known/assetlinks.json',
+        headers: associationHeaders,
+      },
+    ];
+  },
   // Enable detailed error output during build
   logging: {
     fetches: {

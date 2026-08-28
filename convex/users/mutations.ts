@@ -329,6 +329,7 @@ export const deleteUserAccount = mutation({
     confirmation: v.string(),
     _traceId: v.optional(v.string()),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { confirmation }) => {
     const { person, user } = await requireAuth(ctx);
 
@@ -461,6 +462,7 @@ export const deleteUserAccount = mutation({
       authoredPosts,
       receivedNotifications,
       personSettings,
+      pushTokens,
     ] = await Promise.all([
       ctx.db
         .query('replies')
@@ -478,7 +480,30 @@ export const deleteUserAccount = mutation({
         .query('personSettings')
         .withIndex('by_person', q => q.eq('personId', person._id))
         .first(),
+      ctx.db
+        .query('pushTokens')
+        .withIndex('by_person', q => q.eq('personId', person._id))
+        .collect(),
     ]);
+
+    // Delete delivery history before tokens/notifications so queued actions
+    // resolve to no work after account deletion.
+    const pushDeliveriesByToken = await Promise.all(
+      pushTokens.map(token =>
+        ctx.db
+          .query('pushDeliveries')
+          .withIndex('by_push_token', q => q.eq('pushTokenId', token._id))
+          .collect()
+      )
+    );
+    for (const deliveries of pushDeliveriesByToken) {
+      for (const delivery of deliveries) {
+        await ctx.db.delete(delivery._id);
+      }
+    }
+    for (const token of pushTokens) {
+      await ctx.db.delete(token._id);
+    }
 
     // Batch-read replies and notifications for each authored post
     const [repliesByPost, notificationsByPost] = await Promise.all([
@@ -518,6 +543,25 @@ export const deleteUserAccount = mutation({
     for (const n of receivedNotifications) notificationIdsToDelete.add(n._id);
     for (const postNotifications of notificationsByPost) {
       for (const n of postNotifications) notificationIdsToDelete.add(n._id);
+    }
+
+    // Authored posts can have notifications (and therefore deliveries) owned
+    // by other people. Delete by notification as well as by this account's
+    // tokens so no orphaned delivery survives the post deletion.
+    const pushDeliveriesByNotification = await Promise.all(
+      [...notificationIdsToDelete].map(notificationId =>
+        ctx.db
+          .query('pushDeliveries')
+          .withIndex('by_notification', q =>
+            q.eq('notificationId', notificationId)
+          )
+          .collect()
+      )
+    );
+    for (const deliveries of pushDeliveriesByNotification) {
+      for (const delivery of deliveries) {
+        await ctx.db.delete(delivery._id);
+      }
     }
 
     for (const id of notificationIdsToDelete) {

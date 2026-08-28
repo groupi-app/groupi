@@ -49,6 +49,7 @@ export type ExtendedIdentity = {
 import {
   username,
   magicLink,
+  emailOTP,
   admin,
   oneTap,
   multiSession,
@@ -56,15 +57,15 @@ import {
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
+import { expo } from '@better-auth/expo';
 
 // Import local schema for Better Auth component (local install)
 import authSchema from './betterAuth/schema';
+import { resolvePasskeyConfig } from './lib/passkeyConfig';
 
 // Initialize Resend client for email sending
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
-
-const siteUrl = process.env.SITE_URL!;
 
 // Placeholder for auth functions - will be wired up by Convex at runtime
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,13 +124,23 @@ export type AuthUser = Awaited<ReturnType<typeof authComponent.getAuthUser>>;
 // This avoids using Id<'user'> which isn't in our schema (user table is in the component)
 export type AuthUserId = Parameters<typeof authComponent.getAnyUserById>[1];
 
+type ResolvedPasskeyConfig = ReturnType<typeof resolvePasskeyConfig>;
+
+const ADAPTER_ANALYSIS_PASSKEY_CONFIG = resolvePasskeyConfig({
+  siteUrl: 'https://www.groupi.gg',
+});
+
 /**
- * Creates the Better Auth options object.
- * Separated from createAuth to allow schema generation and adapter creation.
+ * Builds the shared Better Auth option shape. The local Convex component is
+ * analyzed without deployment environment variables, so callers provide an
+ * already-resolved passkey configuration for their execution context.
  */
-export const createAuthOptions = (
-  ctx: GenericCtx<DataModel>
+const createAuthOptionsInternal = (
+  ctx: GenericCtx<DataModel>,
+  passkeyConfig: ResolvedPasskeyConfig
 ): BetterAuthOptions => {
+  const siteUrl = passkeyConfig.siteOrigin;
+
   return {
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
@@ -231,6 +242,59 @@ export const createAuthOptions = (
           }
         },
       }),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 15 * 60, // 15 minutes
+        async sendVerificationOTP({ email, otp, type }) {
+          if (type !== 'sign-in') return;
+
+          if (process.env.DEBUG_MAGIC_LINKS === 'true') {
+            console.log(`🔢 OTP CODE for ${email}: ${otp}`);
+          }
+
+          if (resendClient) {
+            try {
+              await resendClient.emails.send({
+                from:
+                  process.env.RESEND_FROM_EMAIL || 'Groupi <noreply@groupi.gg>',
+                to: email,
+                subject: `${otp} is your Groupi sign-in code`,
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #8b00b8; margin: 0;">Groupi</h1>
+                      </div>
+                      <h2 style="color: #1f2937;">Your sign-in code</h2>
+                      <p>Enter this code in the app to sign in. It expires in 5 minutes.</p>
+                      <div style="margin: 30px 0; text-align: center;">
+                        <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #8b00b8; background: #f3e8ff; padding: 16px 32px; border-radius: 12px; display: inline-block;">
+                          ${otp}
+                        </span>
+                      </div>
+                      <p style="color: #6b7280; font-size: 14px;">
+                        If you didn't request this code, you can safely ignore it.
+                      </p>
+                    </body>
+                  </html>
+                `,
+              });
+              console.log(`📧 OTP email sent to ${email}`);
+            } catch (error) {
+              console.error(`Failed to send OTP email to ${email}:`, error);
+            }
+          } else if (!process.env.DEBUG_MAGIC_LINKS) {
+            console.warn(
+              `⚠️ OTP requested for ${email} but RESEND_API_KEY is not configured`
+            );
+          }
+        },
+      }),
       // Conditionally add Google One Tap if client ID is configured
       ...(process.env.GOOGLE_CLIENT_ID
         ? [
@@ -241,12 +305,15 @@ export const createAuthOptions = (
         : []),
       // Passkey authentication
       passkey({
-        rpID: process.env.PASSKEY_RP_ID || 'localhost',
-        rpName: process.env.PASSKEY_RP_NAME || 'Groupi',
-        origin: siteUrl,
+        rpID: passkeyConfig.rpID,
+        rpName: passkeyConfig.rpName,
+        origin: passkeyConfig.origin,
       }),
       admin(),
       apiKey(),
+      // Adds the native OAuth state proxy and returns session cookies only on
+      // trusted non-HTTP callback URLs. Ordinary web callbacks remain intact.
+      expo(),
       multiSession({
         maximumSessions: 5,
       }),
@@ -280,8 +347,40 @@ export const createAuthOptions = (
       ...(siteUrl?.includes('://www.')
         ? [siteUrl.replace('://www.', '://')]
         : []),
+      'groupi://',
+      'exp://',
+      'exp://**',
     ].filter(Boolean),
   };
+};
+
+/**
+ * Creates runtime Better Auth options with strict environment validation.
+ */
+export const createAuthOptions = (
+  ctx: GenericCtx<DataModel>
+): BetterAuthOptions => {
+  const passkeyConfig = resolvePasskeyConfig({
+    androidOrigins: process.env.PASSKEY_ANDROID_ORIGINS,
+    siteUrl:
+      process.env.SITE_URL ||
+      (process.env.VITEST ? 'http://localhost:3000' : undefined),
+    rpId: process.env.PASSKEY_RP_ID,
+    rpName: process.env.PASSKEY_RP_NAME,
+  });
+
+  return createAuthOptionsInternal(ctx, passkeyConfig);
+};
+
+/**
+ * Creates the static option shape used while Convex analyzes the locally
+ * installed Better Auth component. Component analysis cannot access process
+ * environment variables; runtime requests never use these placeholder values.
+ */
+export const createAuthOptionsForAdapter = (
+  ctx: GenericCtx<DataModel>
+): BetterAuthOptions => {
+  return createAuthOptionsInternal(ctx, ADAPTER_ANALYSIS_PASSKEY_CONFIG);
 };
 
 /**
