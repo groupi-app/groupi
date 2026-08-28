@@ -8,6 +8,9 @@ import { useAddonConfig } from '@/hooks/use-addons';
 import { ReminderAddon } from '@/components/addons/reminder-addon';
 import { QuestionnaireAddon } from '@/components/addons/questionnaire-addon';
 import { BringListAddon } from '@/components/addons/bring-list-addon';
+import { DiscordAddon } from '@/components/addons/discord-addon';
+import { CustomAddonFallback } from '@/components/addons/custom-addon-fallback';
+import { getCustomAddonSummary } from '@/lib/addon-contracts';
 
 const ADDON_TITLES: Record<string, string> = {
   reminders: 'Reminders',
@@ -23,7 +26,10 @@ export default function AddonDetailScreen() {
   }>();
   const addonConfig = useAddonConfig(eventId, addonType);
 
-  const title = ADDON_TITLES[addonType] ?? 'Add-on';
+  const title =
+    ADDON_TITLES[addonType] ??
+    getCustomAddonSummary(addonConfig?.config)?.name ??
+    'Add-on';
 
   if (addonConfig === undefined) {
     return (
@@ -55,6 +61,14 @@ export default function AddonDetailScreen() {
         <QuestionnaireAddon eventId={eventId} config={config} />
       ) : addonType === 'bring-list' ? (
         <BringListAddon eventId={eventId} config={config} />
+      ) : addonType === 'discord' ? (
+        <DiscordAddon eventId={eventId} config={config} />
+      ) : addonType.startsWith('custom:') ? (
+        <CustomAddonFallback
+          eventId={eventId}
+          addonType={addonType}
+          config={config}
+        />
       ) : (
         <View className='items-center py-12'>
           <Text className='text-base text-muted-foreground'>

@@ -3,6 +3,7 @@ import {
   buildClaimSummaries,
   getBringListItems,
   getClaimsMap,
+  getCustomAddonSummary,
   getPersonClaims,
   getQuestionnaireAnswers,
   getQuestionnaireQuestions,
@@ -12,6 +13,28 @@ import {
   setClaimQuantity,
   toggleCheckboxAnswer,
 } from './addon-contracts';
+
+describe('custom add-on contracts', () => {
+  it('extracts safe presentation metadata', () => {
+    expect(
+      getCustomAddonSummary({
+        templateId: 'template-1',
+        template: {
+          name: 'Meal Poll',
+          description: 'Pick what to eat',
+          iconName: 'utensils',
+        },
+      })
+    ).toEqual({
+      name: 'Meal Poll',
+      description: 'Pick what to eat',
+      iconName: 'utensils',
+    });
+    expect(
+      getCustomAddonSummary({ template: { name: 'Incomplete' } })
+    ).toBeNull();
+  });
+});
 
 describe('questionnaire add-on contracts', () => {
   it('reads the canonical uppercase question types', () => {

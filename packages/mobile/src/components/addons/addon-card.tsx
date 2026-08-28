@@ -3,6 +3,7 @@ import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { getCustomAddonSummary } from '@/lib/addon-contracts';
 
 const ADDON_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   reminders: 'alarm-outline',
@@ -19,7 +20,7 @@ interface AddonCardProps {
   className?: string;
 }
 
-function getAddonName(type: string): string {
+function getAddonName(type: string, config: Record<string, unknown>): string {
   const names: Record<string, string> = {
     reminders: 'Reminders',
     questionnaire: 'Questionnaire',
@@ -27,7 +28,9 @@ function getAddonName(type: string): string {
     discord: 'Discord',
   };
   // Handle custom addons
-  if (type.startsWith('custom:')) return 'Custom Add-on';
+  if (type.startsWith('custom:')) {
+    return getCustomAddonSummary(config)?.name ?? 'Custom Add-on';
+  }
   return names[type] ?? type;
 }
 
@@ -39,7 +42,7 @@ export function AddonCard({
   className,
 }: AddonCardProps) {
   const icon = ADDON_ICONS[addonType] ?? 'extension-puzzle-outline';
-  const name = getAddonName(addonType);
+  const name = getAddonName(addonType, config);
 
   return (
     <Pressable
@@ -116,6 +119,24 @@ function AddonSubtitle({
     return (
       <Text className='text-sm text-muted-foreground'>
         {itemCount} {itemCount === 1 ? 'item' : 'items'} to bring
+      </Text>
+    );
+  }
+
+  if (addonType.startsWith('custom:')) {
+    return (
+      <Text className='text-sm text-muted-foreground' numberOfLines={1}>
+        {getCustomAddonSummary(config)?.description ?? 'Custom event tool'}
+      </Text>
+    );
+  }
+
+  if (addonType === 'discord') {
+    return (
+      <Text className='text-sm text-muted-foreground'>
+        {typeof cfg?.guildName === 'string'
+          ? cfg.guildName
+          : 'Discord event sync'}
       </Text>
     );
   }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getPublicEventAddonUrl,
   getPublicBaseUrl,
   getPublicGdlUrl,
   getPublicInviteUrl,
@@ -14,6 +15,9 @@ describe('public URLs', () => {
       'https://www.groupi.gg/invite/invite-token'
     );
     expect(getPublicGdlUrl()).toBe('https://www.groupi.gg/gdl');
+    expect(getPublicEventAddonUrl('event 1', 'custom:meal poll')).toBe(
+      'https://www.groupi.gg/event/event%201/addon/custom%3Ameal%20poll'
+    );
     expect(PUBLIC_APP_LINK_HOST).toBe('www.groupi.gg');
   });
 

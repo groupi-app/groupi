@@ -59,8 +59,28 @@ export interface ClaimSummary {
   claimants: Claimant[];
 }
 
+export interface CustomAddonSummary {
+  name: string;
+  description: string;
+  iconName?: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function getCustomAddonSummary(
+  config: unknown
+): CustomAddonSummary | null {
+  if (!isRecord(config) || !isRecord(config.template)) return null;
+  const { name, description, iconName } = config.template;
+  if (typeof name !== 'string' || typeof description !== 'string') return null;
+
+  return {
+    name,
+    description,
+    ...(typeof iconName === 'string' ? { iconName } : {}),
+  };
 }
 
 function isQuestionType(value: unknown): value is QuestionType {

@@ -32,3 +32,7 @@ export function getPublicInviteUrl(token: string) {
 export function getPublicGdlUrl() {
   return `${getPublicBaseUrl()}/gdl`;
 }
+
+export function getPublicEventAddonUrl(eventId: string, addonType: string) {
+  return `${getPublicBaseUrl()}/event/${encodeURIComponent(eventId)}/addon/${encodeURIComponent(addonType)}`;
+}
