@@ -124,21 +124,21 @@ export type AuthUser = Awaited<ReturnType<typeof authComponent.getAuthUser>>;
 // This avoids using Id<'user'> which isn't in our schema (user table is in the component)
 export type AuthUserId = Parameters<typeof authComponent.getAnyUserById>[1];
 
+type ResolvedPasskeyConfig = ReturnType<typeof resolvePasskeyConfig>;
+
+const ADAPTER_ANALYSIS_PASSKEY_CONFIG = resolvePasskeyConfig({
+  siteUrl: 'https://www.groupi.gg',
+});
+
 /**
- * Creates the Better Auth options object.
- * Separated from createAuth to allow schema generation and adapter creation.
+ * Builds the shared Better Auth option shape. The local Convex component is
+ * analyzed without deployment environment variables, so callers provide an
+ * already-resolved passkey configuration for their execution context.
  */
-export const createAuthOptions = (
-  ctx: GenericCtx<DataModel>
+const createAuthOptionsInternal = (
+  ctx: GenericCtx<DataModel>,
+  passkeyConfig: ResolvedPasskeyConfig
 ): BetterAuthOptions => {
-  const passkeyConfig = resolvePasskeyConfig({
-    androidOrigins: process.env.PASSKEY_ANDROID_ORIGINS,
-    siteUrl:
-      process.env.SITE_URL ||
-      (process.env.VITEST ? 'http://localhost:3000' : undefined),
-    rpId: process.env.PASSKEY_RP_ID,
-    rpName: process.env.PASSKEY_RP_NAME,
-  });
   const siteUrl = passkeyConfig.siteOrigin;
 
   return {
@@ -352,6 +352,35 @@ export const createAuthOptions = (
       'exp://**',
     ].filter(Boolean),
   };
+};
+
+/**
+ * Creates runtime Better Auth options with strict environment validation.
+ */
+export const createAuthOptions = (
+  ctx: GenericCtx<DataModel>
+): BetterAuthOptions => {
+  const passkeyConfig = resolvePasskeyConfig({
+    androidOrigins: process.env.PASSKEY_ANDROID_ORIGINS,
+    siteUrl:
+      process.env.SITE_URL ||
+      (process.env.VITEST ? 'http://localhost:3000' : undefined),
+    rpId: process.env.PASSKEY_RP_ID,
+    rpName: process.env.PASSKEY_RP_NAME,
+  });
+
+  return createAuthOptionsInternal(ctx, passkeyConfig);
+};
+
+/**
+ * Creates the static option shape used while Convex analyzes the locally
+ * installed Better Auth component. Component analysis cannot access process
+ * environment variables; runtime requests never use these placeholder values.
+ */
+export const createAuthOptionsForAdapter = (
+  ctx: GenericCtx<DataModel>
+): BetterAuthOptions => {
+  return createAuthOptionsInternal(ctx, ADAPTER_ANALYSIS_PASSKEY_CONFIG);
 };
 
 /**
