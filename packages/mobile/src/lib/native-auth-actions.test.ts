@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   magicLink: vi.fn(),
   emailOtp: vi.fn(),
   social: vi.fn(),
+  linkSocial: vi.fn(),
   query: vi.fn(),
   getSession: vi.fn(),
   persistCallbackCookies: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('./auth-client', () => ({
       social: mocks.social,
     },
     getSession: mocks.getSession,
+    linkSocial: mocks.linkSocial,
   },
 }));
 
@@ -36,6 +38,7 @@ vi.mock('convex/_generated/api', () => ({
 
 import {
   completeNativeAuthCallback,
+  linkNativeSocialAccount,
   requestNativeSignIn,
   signInWithNativeSocial,
   verifyNativeEmailOtp,
@@ -48,6 +51,7 @@ describe('native Better Auth actions', () => {
     mocks.magicLink.mockResolvedValue({ error: null });
     mocks.emailOtp.mockResolvedValue({ error: null });
     mocks.social.mockResolvedValue({ error: null });
+    mocks.linkSocial.mockResolvedValue({ error: null });
     mocks.getSession.mockResolvedValue({
       data: { session: { id: 'session-1' } },
     });
@@ -137,6 +141,33 @@ describe('native Better Auth actions', () => {
     ).resolves.toEqual({
       success: false,
       message: 'Authentication was not completed',
+    });
+  });
+
+  it('uses the Expo-aware Better Auth flow to link a social account', async () => {
+    await expect(
+      linkNativeSocialAccount(
+        'discord',
+        '/callback?returnTo=%2Fsettings%2Faccount'
+      )
+    ).resolves.toEqual({ success: true });
+
+    expect(mocks.linkSocial).toHaveBeenCalledWith({
+      provider: 'discord',
+      callbackURL: '/callback?returnTo=%2Fsettings%2Faccount',
+    });
+  });
+
+  it('surfaces a native social account-linking error', async () => {
+    mocks.linkSocial.mockResolvedValue({
+      error: { message: 'Account already linked' },
+    });
+
+    await expect(
+      linkNativeSocialAccount('google', '/callback')
+    ).resolves.toEqual({
+      success: false,
+      message: 'Account already linked',
     });
   });
 

@@ -105,6 +105,30 @@ export async function signInWithNativeSocial(
     : { success: false, message: 'Authentication was not completed' };
 }
 
+export async function linkNativeSocialAccount(
+  provider: 'discord' | 'google',
+  callbackURL: string
+): Promise<NativeAuthActionResult> {
+  try {
+    const result = await authClient.linkSocial({ provider, callbackURL });
+    if (result.error) {
+      return {
+        success: false,
+        message: result.error.message || 'Account linking could not be started',
+      };
+    }
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Account linking could not be started',
+    };
+  }
+}
+
 export async function completeNativeAuthCallback(
   cookieHeader: string
 ): Promise<NativeAuthActionResult> {

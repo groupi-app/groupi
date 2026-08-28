@@ -39,6 +39,13 @@ const baseAuthClient = createAuthClient({
 
 // Type-assert to include plugin methods that TypeScript can't infer
 export const authClient = baseAuthClient as typeof baseAuthClient & {
+  linkSocial: (options: {
+    provider: 'discord' | 'google';
+    callbackURL?: string;
+  }) => Promise<{
+    data?: unknown;
+    error?: { code?: string; message?: string };
+  }>;
   emailOtp: {
     sendVerificationOtp: (options: {
       email: string;

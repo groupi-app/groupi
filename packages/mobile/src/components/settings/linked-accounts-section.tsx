@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useActionMenu } from '@/components/ui/action-menu';
-import { getPublicBaseUrl } from '@/lib/public-urls';
+import { getNativeAuthCallbackPath } from '@/lib/native-auth';
+import { linkNativeSocialAccount } from '@/lib/native-auth-actions';
 import { toast } from '@groupi/shared/platform';
 import { Ionicons } from '@expo/vector-icons';
 import { getProviderIcon } from './linked-account-providers';
@@ -40,6 +41,7 @@ export function LinkedAccountsSection() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
+  const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
   const { showActionMenu } = useActionMenu();
 
@@ -138,10 +140,37 @@ export function LinkedAccountsSection() {
         label: `Link ${provider.name}`,
         icon: getProviderIcon(provider.id),
         showChevron: false,
-        onPress: () => {
-          toast.info(
-            `To link your ${provider.name} account, please use the web app at ${getPublicBaseUrl()}/settings/account`
-          );
+        onPress: async () => {
+          setLinkingProvider(provider.id);
+          try {
+            const result = await linkNativeSocialAccount(
+              provider.id as 'discord' | 'google',
+              getNativeAuthCallbackPath('/settings/account')
+            );
+            if (!result.success) {
+              toast.error(result.message);
+              return;
+            }
+
+            const refreshedAccounts = await fetchAccounts({});
+            setAccounts(refreshedAccounts);
+            if (
+              refreshedAccounts.some(
+                account =>
+                  account.providerId.toLowerCase() === provider.id.toLowerCase()
+              )
+            ) {
+              toast.success(`${provider.name} account linked`);
+            }
+          } catch (error) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : `Failed to link ${provider.name}`
+            );
+          } finally {
+            setLinkingProvider(null);
+          }
         },
       })),
     });
@@ -210,7 +239,12 @@ export function LinkedAccountsSection() {
           </Text>
         )}
 
-        <Button variant='outline' onPress={handleLinkAccount}>
+        <Button
+          variant='outline'
+          onPress={handleLinkAccount}
+          isLoading={linkingProvider !== null}
+          loadingText='Linking...'
+        >
           <Ionicons name='add' size={16} color='#6b7280' />
           <Text>Link Account</Text>
         </Button>
