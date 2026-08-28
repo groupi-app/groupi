@@ -8,7 +8,14 @@
 # - BETTER_AUTH_SECRET (used by Next.js auth handler at runtime)
 #
 # Convex env vars (set once per deployment via CLI or dashboard):
-# - SITE_URL, BETTER_AUTH_SECRET, DISCORD_*, GOOGLE_*
+# - BETTER_AUTH_SECRET, DISCORD_*, GOOGLE_*
+#
+# Convex preview defaults:
+# - SITE_URL=https://www.groupi.gg
+#
+# SITE_URL must exist while Convex analyzes the auth module during initial
+# preview creation. After creation, this script replaces the bootstrap value
+# with the branch-specific Vercel URL.
 #
 # Build requirements:
 # - ENABLE_EXPERIMENTAL_COREPACK=1 must be set in Vercel project settings
@@ -45,18 +52,27 @@ else
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "$BUILD_CMD"
 
-  # Set environment variables on preview deployments
-  echo "Configuring preview environment: $PREVIEW_NAME..."
-  npx convex env set E2E_TESTING true --preview-name "$PREVIEW_NAME" || echo "Warning: Could not set E2E_TESTING env var"
+  PREVIEW_HOST="${VERCEL_BRANCH_URL:-${VERCEL_URL:-}}"
+  if [ -z "$PREVIEW_HOST" ]; then
+    echo "Error: VERCEL_BRANCH_URL or VERCEL_URL is required for preview auth configuration"
+    exit 1
+  fi
+  PREVIEW_SITE_URL="https://$PREVIEW_HOST"
 
-  # Auth needs SITE_URL and BETTER_AUTH_SECRET to create sessions
+  # Set environment variables on preview deployments. These must not be hidden
+  # behind BETTER_AUTH_SECRET because SITE_URL also configures passkeys.
+  echo "Configuring preview environment: $PREVIEW_NAME..."
+  npx convex env set SITE_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME"
+  npx convex env set BETTER_AUTH_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME"
+  npx convex env set PASSKEY_RP_ID "$PREVIEW_HOST" --preview-name "$PREVIEW_NAME"
+  npx convex env set PASSKEY_RP_NAME Groupi --preview-name "$PREVIEW_NAME"
+  npx convex env set E2E_TESTING true --preview-name "$PREVIEW_NAME"
+
+  # Better Auth needs a stable secret to create sessions.
   if [ -n "$BETTER_AUTH_SECRET" ]; then
-    PREVIEW_SITE_URL="${VERCEL_BRANCH_URL:+https://$VERCEL_BRANCH_URL}"
-    if [ -n "$PREVIEW_SITE_URL" ]; then
-      npx convex env set SITE_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME" || true
-      npx convex env set BETTER_AUTH_URL "$PREVIEW_SITE_URL" --preview-name "$PREVIEW_NAME" || true
-    fi
-    npx convex env set BETTER_AUTH_SECRET "$BETTER_AUTH_SECRET" --preview-name "$PREVIEW_NAME" || true
+    npx convex env set BETTER_AUTH_SECRET "$BETTER_AUTH_SECRET" --preview-name "$PREVIEW_NAME"
+  else
+    echo "Warning: BETTER_AUTH_SECRET is not available; preview sign-in may not work"
   fi
 fi
 
