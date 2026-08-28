@@ -89,6 +89,7 @@ async function authenticateUser(
       },
       headers: {
         'Content-Type': 'application/json',
+        'x-e2e-fixture-key': process.env.E2E_FIXTURE_KEY ?? '',
       },
     });
 
@@ -156,8 +157,7 @@ export const test = base.extend<GroupiFixtures>({
 
   // Seeder - auto-cleanup after each test
 
-  // eslint-disable-next-line no-empty-pattern
-  seeder: async ({}, use) => {
+  seeder: async (_deps, use) => {
     const seeder = new ConvexSeeder();
     await use(seeder);
     await seeder.cleanup();

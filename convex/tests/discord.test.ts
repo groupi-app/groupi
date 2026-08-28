@@ -5,18 +5,37 @@ import {
   createTestUser,
 } from './test_helpers';
 import { api } from './_generated/api';
+import type { Id } from '../_generated/dataModel';
 
 const VALID_CONFIG = {
   guildId: '123456789',
   guildName: 'Test Server',
 };
 
+async function authorizeGuild(
+  t: ReturnType<typeof createTestInstance>,
+  personId: Id<'persons'>,
+  config: { guildId: string; guildName: string },
+  options: { botInstalled?: boolean; authorizedAt?: number } = {}
+) {
+  await t.run(async ctx => {
+    await ctx.db.insert('discordGuildAuthorizations', {
+      personId,
+      guildId: config.guildId,
+      guildName: config.guildName,
+      botInstalled: options.botInstalled ?? true,
+      authorizedAt: options.authorizedAt ?? Date.now(),
+    });
+  });
+}
+
 describe('Discord Add-on', () => {
   describe('config validation', () => {
     test('should enable discord with valid config', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       const result = await asUser.mutation(api.addons.mutations.enableAddon, {
         eventId,
@@ -41,8 +60,9 @@ describe('Discord Add-on', () => {
 
     test('should reject config with missing guildId', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       await expect(
         asUser.mutation(api.addons.mutations.enableAddon, {
@@ -55,8 +75,9 @@ describe('Discord Add-on', () => {
 
     test('should reject config with empty guildId', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       await expect(
         asUser.mutation(api.addons.mutations.enableAddon, {
@@ -127,8 +148,9 @@ describe('Discord Add-on', () => {
   describe('enable/disable lifecycle', () => {
     test('should disable addon and mark config as disabled', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       // Enable
       await asUser.mutation(api.addons.mutations.enableAddon, {
@@ -157,8 +179,9 @@ describe('Discord Add-on', () => {
 
     test('should re-enable a previously disabled addon', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       // Enable, disable, re-enable
       await asUser.mutation(api.addons.mutations.enableAddon, {
@@ -173,6 +196,7 @@ describe('Discord Add-on', () => {
       });
 
       const newConfig = { guildId: '987654321', guildName: 'New Server' };
+      await authorizeGuild(t, personId, newConfig);
       await asUser.mutation(api.addons.mutations.enableAddon, {
         eventId,
         addonType: 'discord',
@@ -195,8 +219,9 @@ describe('Discord Add-on', () => {
   describe('config update', () => {
     test('should update config for enabled addon', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       await asUser.mutation(api.addons.mutations.enableAddon, {
         eventId,
@@ -205,6 +230,7 @@ describe('Discord Add-on', () => {
       });
 
       const newConfig = { guildId: '111222333', guildName: 'Updated Server' };
+      await authorizeGuild(t, personId, newConfig);
       await asUser.mutation(api.addons.mutations.updateAddonConfig, {
         eventId,
         addonType: 'discord',
@@ -224,8 +250,9 @@ describe('Discord Add-on', () => {
 
     test('should reject update with invalid config', async () => {
       const t = createTestInstance();
-      const { userId, eventId } = await createTestEventWithUser(t);
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
       const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
 
       await asUser.mutation(api.addons.mutations.enableAddon, {
         eventId,
@@ -240,6 +267,102 @@ describe('Discord Add-on', () => {
           config: { guildId: '', guildName: '' },
         })
       ).rejects.toThrow('Invalid config');
+    });
+  });
+
+  describe('guild authorization', () => {
+    test('rejects enabling a guild without a recent server authorization', async () => {
+      const t = createTestInstance();
+      const { userId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.enableAddon, {
+          eventId,
+          addonType: 'discord',
+          config: VALID_CONFIG,
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
+    });
+
+    test('rejects a manageable guild until the Discord bot is installed', async () => {
+      const t = createTestInstance();
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG, {
+        botInstalled: false,
+      });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.enableAddon, {
+          eventId,
+          addonType: 'discord',
+          config: VALID_CONFIG,
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
+    });
+
+    test('rejects an expired guild authorization', async () => {
+      const t = createTestInstance();
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG, {
+        authorizedAt: Date.now() - 16 * 60 * 1000,
+      });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.enableAddon, {
+          eventId,
+          addonType: 'discord',
+          config: VALID_CONFIG,
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
+    });
+
+    test('rejects updating to a guild that was not authorized', async () => {
+      const t = createTestInstance();
+      const { userId, personId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+      await authorizeGuild(t, personId, VALID_CONFIG);
+      await asUser.mutation(api.addons.mutations.enableAddon, {
+        eventId,
+        addonType: 'discord',
+        config: VALID_CONFIG,
+      });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.updateAddonConfig, {
+          eventId,
+          addonType: 'discord',
+          config: { guildId: 'not-authorized', guildName: 'Other Server' },
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
+    });
+
+    test('rejects Discord in the bulk add-on replacement path without authorization', async () => {
+      const t = createTestInstance();
+      const { userId, eventId } = await createTestEventWithUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await expect(
+        asUser.mutation(api.addons.mutations.replaceBuiltInAddonConfigs, {
+          eventId,
+          addons: [{ addonType: 'discord', config: VALID_CONFIG }],
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
+    });
+
+    test('rejects Discord during initial event creation without authorization', async () => {
+      const t = createTestInstance();
+      const { userId } = await createTestUser(t);
+      const asUser = t.withIdentity({ subject: userId });
+
+      await expect(
+        asUser.mutation(api.events.mutations.createEvent, {
+          title: 'Unauthorized Discord Event',
+          addons: [{ addonType: 'discord', config: VALID_CONFIG }],
+        })
+      ).rejects.toThrow('Discord server authorization expired or missing');
     });
   });
 

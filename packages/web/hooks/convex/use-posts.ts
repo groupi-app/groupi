@@ -17,6 +17,17 @@ export interface OptimisticPostUserData {
   username?: string;
 }
 
+export interface PostAttachmentInput {
+  storageId: Id<'_storage'>;
+  filename: string;
+  size: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isSpoiler?: boolean;
+  altText?: string;
+}
+
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let postQueries: any;
@@ -278,12 +289,18 @@ export function useCreatePost(currentUser?: OptimisticPostUserData) {
   }, [baseMutation, currentUser]);
 
   return useCallback(
-    async (data: { eventId: Id<'events'>; title: string; content: string }) => {
+    async (data: {
+      eventId: Id<'events'>;
+      title: string;
+      content: string;
+      attachments?: PostAttachmentInput[];
+    }) => {
       try {
         const result = await createPost({
           eventId: data.eventId,
           title: data.title,
           content: data.content,
+          attachments: data.attachments,
         });
 
         // No success toast - instant appearance is feedback enough

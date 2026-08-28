@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.13",
+    "@better-auth/expo": "^1.6.13",
     "@better-auth/passkey": "^1.6.13",
     "@blocknote/core": "^0.46.1",
     "@blocknote/react": "^0.46.1",
@@ -91,12 +92,11 @@
     "@tiptap/starter-kit": "^3.9.1",
     "@tiptap/suggestion": "^3.14.0",
     "@types/node": "24.9.2",
-    "@types/react": "19.2.2",
+    "@types/react": "~19.1.0",
     "@types/react-dom": "19.2.2",
     "@vercel/analytics": "^1.0.1",
     "@vercel/speed-insights": "^1.0.10",
     "better-auth": "^1.6.2",
-    "chrono-node": "^2.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -109,7 +109,7 @@
     "react": "19.2.0",
     "react-cool-onclickoutside": "^1.7.0",
     "react-day-picker": "^9.11.1",
-    "react-dom": "19.2.0",
+    "react-dom": "19.1.0",
     "react-easy-crop": "^5.5.3",
     "react-hook-form": "^7.65.0",
     "react-qr-code": "^2.0.18",
@@ -159,7 +159,7 @@
   "overrides": {
     "@radix-ui/react-dismissable-layer": "^1.0.5",
     "@radix-ui/react-focus-scope": "^1.0.4",
-    "@types/react": "19.2.2",
+    "@types/react": "~19.1.0",
     "@types/react-dom": "19.2.2"
   }
 }

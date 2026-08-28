@@ -8,6 +8,8 @@
  * 3. Using 'unknown' would require extensive casting throughout the codebase
  */
 
+import type { FunctionReference } from 'convex/server';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Generic types that will be provided by the consuming app
 export type ConvexApi = any;
@@ -18,6 +20,82 @@ export type ConvexId<T extends string> = string & { __tableName: T };
 export type ConvexQuery<T = unknown> = T;
 export type ConvexMutation<T = unknown> = (...args: unknown[]) => Promise<T>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+type PublicMutation<Args extends object, Result> = FunctionReference<
+  'mutation',
+  'public',
+  Args & Record<string, unknown>,
+  Result
+>;
+
+export interface TracedMutationArgs {
+  _traceId?: string;
+}
+
+export interface AttachmentMutationInput {
+  storageId: ConvexId<'_storage'>;
+  filename: string;
+  size: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isSpoiler?: boolean;
+  altText?: string;
+}
+
+/**
+ * The generated Convex API surface required by the shared post action hooks.
+ * Keeping this domain contract explicit prevents a renamed module or changed
+ * mutation payload from being hidden behind the broader `ConvexApi` escape
+ * hatch used by the legacy shared hooks.
+ */
+export interface PostActionApi {
+  posts: {
+    mutations: {
+      createPost: PublicMutation<
+        TracedMutationArgs & {
+          eventId: ConvexId<'events'>;
+          title: string;
+          content: string;
+          attachments?: AttachmentMutationInput[];
+        },
+        { postId: ConvexId<'posts'>; post: unknown }
+      >;
+      updatePost: PublicMutation<
+        TracedMutationArgs & {
+          postId: ConvexId<'posts'>;
+          title?: string;
+          content?: string;
+        },
+        { post: unknown }
+      >;
+      deletePost: PublicMutation<
+        TracedMutationArgs & { postId: ConvexId<'posts'> },
+        { success: boolean }
+      >;
+    };
+  };
+  replies: {
+    mutations: {
+      createReply: PublicMutation<
+        TracedMutationArgs & {
+          postId: ConvexId<'posts'>;
+          text: string;
+          attachments?: AttachmentMutationInput[];
+        },
+        { replyId: ConvexId<'replies'> }
+      >;
+      updateReply: PublicMutation<
+        TracedMutationArgs & { replyId: ConvexId<'replies'>; text: string },
+        { reply: unknown }
+      >;
+      deleteReply: PublicMutation<
+        TracedMutationArgs & { replyId: ConvexId<'replies'> },
+        { success: boolean }
+      >;
+    };
+  };
+}
 
 // Status and role enums (duplicated to avoid dependencies)
 export type Status = 'YES' | 'MAYBE' | 'NO' | 'PENDING';

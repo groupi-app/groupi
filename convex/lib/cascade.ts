@@ -55,24 +55,35 @@ export async function cascadeDeleteEventData(
       .collect(),
   ]);
 
-  const [availabilitiesByMembership, repliesByPost] = await Promise.all([
-    Promise.all(
-      memberships.map(m =>
-        ctx.db
-          .query('availabilities')
-          .withIndex('by_membership', q => q.eq('membershipId', m._id))
-          .collect()
-      )
-    ),
-    Promise.all(
-      posts.map(p =>
-        ctx.db
-          .query('replies')
-          .withIndex('by_post', q => q.eq('postId', p._id))
-          .collect()
-      )
-    ),
-  ]);
+  const [availabilitiesByMembership, repliesByPost, deliveriesByNotification] =
+    await Promise.all([
+      Promise.all(
+        memberships.map(m =>
+          ctx.db
+            .query('availabilities')
+            .withIndex('by_membership', q => q.eq('membershipId', m._id))
+            .collect()
+        )
+      ),
+      Promise.all(
+        posts.map(p =>
+          ctx.db
+            .query('replies')
+            .withIndex('by_post', q => q.eq('postId', p._id))
+            .collect()
+        )
+      ),
+      Promise.all(
+        notifications.map(notification =>
+          ctx.db
+            .query('pushDeliveries')
+            .withIndex('by_notification', q =>
+              q.eq('notificationId', notification._id)
+            )
+            .collect()
+        )
+      ),
+    ]);
 
   await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
 
@@ -98,6 +109,12 @@ export async function cascadeDeleteEventData(
 
   for (const i of invites) {
     await ctx.db.delete(i._id);
+  }
+
+  for (const deliveries of deliveriesByNotification) {
+    for (const delivery of deliveries) {
+      await ctx.db.delete(delivery._id);
+    }
   }
 
   for (const n of notifications) {

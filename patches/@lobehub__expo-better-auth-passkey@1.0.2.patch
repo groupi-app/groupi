@@ -1,0 +1,17 @@
+diff -ruN a/ios/BetterAuthReactNativePasskeyModule.swift b/ios/BetterAuthReactNativePasskeyModule.swift
+--- a/ios/BetterAuthReactNativePasskeyModule.swift
++++ b/ios/BetterAuthReactNativePasskeyModule.swift
+@@ -22,11 +22,13 @@
+     AsyncFunction("registerPasskey") { (input: [String: Any], promise: Promise) in
+       self.handleCreatePasskey(input: input, promise: promise)
+     }
++    .runOnQueue(.main)
+ 
+     // Native passkey authentication using ASAuthorizationController
+     // Supports only the wrapped shape from TypeScript: { optionsJSON, useAutofill? }
+     AsyncFunction("authenticatePasskey") { (input: [String: Any], promise: Promise) in
+       self.handleGetPasskey(input: input, promise: promise)
+     }
++    .runOnQueue(.main)
+   }
+ }

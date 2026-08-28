@@ -72,7 +72,7 @@ export function TabsList({
       data-slot='tabs-list'
       className={cn(
         // Clean tab container with relative positioning for highlight
-        'relative inline-flex h-10 items-center justify-center rounded-soft bg-muted p-1 text-muted-foreground border border-border/50 shadow-sm',
+        'relative inline-flex h-10 items-center justify-center rounded-soft bg-muted p-1 text-muted-foreground border border-border/50 shadow-raised',
         className
       )}
       {...props}
@@ -100,8 +100,8 @@ export function TabsTrigger({
       data-slot='tabs-trigger'
       value={value}
       className={cn(
-        // Base styles - relative for stacking context, z-10 to appear above highlight
-        'relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-soft px-4 py-1.5 text-sm font-medium ring-offset-background transition-colors duration-fast focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        // Base styles - relative for stacking context, z-lifted to appear above highlight
+        'relative z-lifted inline-flex items-center justify-center whitespace-nowrap rounded-soft px-4 py-1.5 text-sm font-medium ring-offset-background transition-colors duration-fast focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
         // Text color transitions
         'hover:text-foreground data-[state=active]:text-foreground',
         className

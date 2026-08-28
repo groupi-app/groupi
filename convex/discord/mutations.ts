@@ -1,5 +1,47 @@
 import { internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
+import { requireAuth } from '../auth';
+
+/**
+ * Replace the caller's short-lived guild authorization records after a fresh
+ * Discord API guild fetch.
+ */
+export const replaceGuildAuthorizations = internalMutation({
+  args: {
+    guilds: v.array(
+      v.object({
+        guildId: v.string(),
+        guildName: v.string(),
+        botInstalled: v.boolean(),
+      })
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, { guilds }) => {
+    const { person } = await requireAuth(ctx);
+    const existing = await ctx.db
+      .query('discordGuildAuthorizations')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .collect();
+
+    await Promise.all(existing.map(record => ctx.db.delete(record._id)));
+
+    const authorizedAt = Date.now();
+    await Promise.all(
+      guilds.map(guild =>
+        ctx.db.insert('discordGuildAuthorizations', {
+          personId: person._id,
+          guildId: guild.guildId,
+          guildName: guild.guildName,
+          botInstalled: guild.botInstalled,
+          authorizedAt,
+        })
+      )
+    );
+
+    return null;
+  },
+});
 
 /**
  * Store the Discord event ID in addonData for an event.

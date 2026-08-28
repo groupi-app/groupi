@@ -37,6 +37,7 @@
     "test:coverage:shared": "turbo test:coverage --filter=@groupi/shared",
     "e2e": "pnpm --filter @groupi/web e2e",
     "e2e:ui": "pnpm --filter @groupi/web e2e:ui",
+    "mobile:link-associations": "node packages/mobile/scripts/generate-link-associations.mjs",
     "clean": "turbo clean && rm -rf node_modules && pnpm install",
     "clean:deps": "find . -name node_modules -type d -exec rm -rf {} + && pnpm install",
     "check": "pnpm lint && pnpm type-check && pnpm format:check",
@@ -98,13 +99,15 @@
       "next": "16.1.7",
       "react": "19.2.0",
       "react-dom": "19.2.0",
-      "@types/react": "19.2.2",
+      "@types/react": "19.2.14",
       "@types/react-dom": "19.2.2",
+      "react-native-webview": "13.16.0",
       "minimatch": ">=10.0.0",
       "rollup": ">=4.59.0"
     },
     "patchedDependencies": {
-      "@better-auth/kysely-adapter@1.6.13": "patches/@better-auth__kysely-adapter@1.6.13.patch"
+      "@better-auth/kysely-adapter@1.6.13": "patches/@better-auth__kysely-adapter@1.6.13.patch",
+      "@lobehub/expo-better-auth-passkey@1.0.2": "patches/@lobehub__expo-better-auth-passkey@1.0.2.patch"
     }
   },
   "lint-staged": {

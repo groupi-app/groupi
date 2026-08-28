@@ -395,58 +395,80 @@ describe('Posts Domain - Legacy Tests (Updated)', () => {
   });
 
   describe('Post Pagination', () => {
-    test('should paginate post feed correctly', async () => {
+    test('should return distinct post chunks in newest-first order', async () => {
       const t = createTestInstance();
       const { eventId, auth } = await TestScenarios.singleEvent(t);
 
-      // Create 5 posts
+      const postIds: string[] = [];
       for (let i = 0; i < 5; i++) {
-        await auth.mutation(api.posts.mutations.createPost, {
+        const result = await auth.mutation(api.posts.mutations.createPost, {
           eventId,
           title: `Post ${i}`,
           content: `Content ${i}`,
         });
+        postIds.push(result.postId);
       }
 
-      // Get first page - check if API supports pagination parameters
-      try {
-        const firstPage = await auth.query(api.posts.queries.getEventPostFeed, {
+      const firstPage = await auth.query(
+        api.posts.queries.getEventPostFeedPage,
+        {
           eventId,
-          // Note: Only include limit if the API supports it
-        });
-
-        expect(firstPage.event.posts).toHaveLength(5); // All 5 posts if pagination not implemented
-
-        // Test pagination only if API supports it
-        if (firstPage.nextCursor !== undefined) {
-          // API supports pagination
-          const secondPage = await auth.query(
-            api.posts.queries.getEventPostFeed,
-            {
-              eventId,
-              cursor: firstPage.nextCursor,
-            }
-          );
-
-          // Verify pagination works
-          expect(secondPage.event.posts.length).toBeGreaterThanOrEqual(0);
+          paginationOpts: { numItems: 2, cursor: null },
         }
-      } catch (error) {
-        // If pagination parameters aren't supported, test basic functionality
-        if (error.message?.includes('Unexpected field')) {
-          console.log(
-            '⚠️  Pagination parameters not supported - testing basic feed'
-          );
-
-          const result = await auth.query(api.posts.queries.getEventPostFeed, {
-            eventId,
-          });
-
-          expect(result.event.posts).toHaveLength(5); // All posts returned
-        } else {
-          throw error; // Re-throw other errors
+      );
+      const secondPage = await auth.query(
+        api.posts.queries.getEventPostFeedPage,
+        {
+          eventId,
+          paginationOpts: {
+            numItems: 2,
+            cursor: firstPage.continueCursor,
+          },
         }
-      }
+      );
+      const thirdPage = await auth.query(
+        api.posts.queries.getEventPostFeedPage,
+        {
+          eventId,
+          paginationOpts: {
+            numItems: 2,
+            cursor: secondPage.continueCursor,
+          },
+        }
+      );
+
+      expect(firstPage.page.map(post => post._id)).toEqual([
+        postIds[4],
+        postIds[3],
+      ]);
+      expect(secondPage.page.map(post => post._id)).toEqual([
+        postIds[2],
+        postIds[1],
+      ]);
+      expect(thirdPage.page.map(post => post._id)).toEqual([postIds[0]]);
+      expect(
+        new Set(
+          [...firstPage.page, ...secondPage.page, ...thirdPage.page].map(
+            post => post._id
+          )
+        ).size
+      ).toBe(5);
+      expect(firstPage.isDone).toBe(false);
+      expect(secondPage.isDone).toBe(false);
+      expect(thirdPage.isDone).toBe(true);
+      expect(firstPage.page[0].author).toEqual({ name: null, image: null });
+    });
+
+    test('should reject paginated feed access for a non-member', async () => {
+      const t = createTestInstance();
+      const { eventId, outsiderAuth } = await TestScenarios.outsiderUser(t);
+
+      await expect(
+        outsiderAuth.query(api.posts.queries.getEventPostFeedPage, {
+          eventId,
+          paginationOpts: { numItems: 15, cursor: null },
+        })
+      ).rejects.toThrow('You are not a member of this event');
     });
   });
 });

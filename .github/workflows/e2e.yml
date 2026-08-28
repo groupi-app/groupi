@@ -35,6 +35,7 @@ jobs:
     env:
       BETTER_AUTH_SECRET: 'test-secret-key-32-chars-minimum'
       E2E_TESTING: 'true'
+      E2E_FIXTURE_KEY: ${{ secrets.E2E_FIXTURE_KEY }}
 
     steps:
       - name: Get deployment URL
@@ -170,6 +171,7 @@ jobs:
     env:
       BETTER_AUTH_SECRET: 'test-secret-key-32-chars-minimum'
       E2E_TESTING: 'true'
+      E2E_FIXTURE_KEY: ${{ secrets.E2E_FIXTURE_KEY }}
 
     steps:
       - name: Get deployment URL

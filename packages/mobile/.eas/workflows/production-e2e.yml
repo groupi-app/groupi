@@ -1,0 +1,65 @@
+name: Production-backed mobile smoke tests
+
+jobs:
+  validate:
+    name: Validate mobile release source
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - run:
+          name: Validate release configuration
+          command: pnpm release:check
+      - run:
+          name: Check mobile types
+          command: pnpm type-check
+      - run:
+          name: Run mobile unit tests
+          command: pnpm test:run
+
+  build_android:
+    name: Build production-backed Android test app
+    needs: [validate]
+    type: build
+    params:
+      platform: android
+      profile: production-test
+
+  build_ios:
+    name: Build production-backed iOS test app
+    needs: [validate]
+    type: build
+    params:
+      platform: ios
+      profile: production-test
+
+  test_android:
+    name: Test production-backed Android app
+    needs: [build_android]
+    type: maestro
+    environment: production
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      flow_path:
+        - '.maestro/smoke.yml'
+        - '.maestro/invite-link.yml'
+        - '.maestro/protected-routes.yml'
+        - '.maestro/process-recovery.yml'
+      retries: 1
+      retry_failed_only: true
+      record_screen: true
+
+  test_ios:
+    name: Test production-backed iOS app
+    needs: [build_ios]
+    type: maestro
+    environment: production
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      flow_path:
+        - '.maestro/smoke.yml'
+        - '.maestro/invite-link.yml'
+        - '.maestro/protected-routes.yml'
+        - '.maestro/process-recovery.yml'
+      retries: 1
+      retry_failed_only: true
+      record_screen: true

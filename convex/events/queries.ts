@@ -310,8 +310,13 @@ export const getEvent = query({
       throw new Error('Event not found');
     }
 
-    // Check if current user has access to this event
+    // Members may always access their event. Public events remain readable for
+    // discovery, and friends-only events remain readable by accepted friends.
+    // Private events must never become readable merely because the caller is
+    // anonymous.
     const currentPerson = await getCurrentPerson(ctx);
+    let hasAccess = event.visibility === 'PUBLIC';
+
     if (currentPerson) {
       const membership = await ctx.db
         .query('memberships')
@@ -320,9 +325,36 @@ export const getEvent = query({
         )
         .first();
 
-      if (!membership) {
-        throw new Error('Access denied to this event');
+      hasAccess = membership !== null || event.visibility === 'PUBLIC';
+
+      if (!hasAccess && event.visibility === 'FRIENDS') {
+        const [forwardFriendship, reverseFriendship] = await Promise.all([
+          ctx.db
+            .query('friendships')
+            .withIndex('by_requester_addressee', q =>
+              q
+                .eq('requesterId', currentPerson._id)
+                .eq('addresseeId', event.creatorId)
+            )
+            .first(),
+          ctx.db
+            .query('friendships')
+            .withIndex('by_requester_addressee', q =>
+              q
+                .eq('requesterId', event.creatorId)
+                .eq('addresseeId', currentPerson._id)
+            )
+            .first(),
+        ]);
+
+        hasAccess =
+          forwardFriendship?.status === 'ACCEPTED' ||
+          reverseFriendship?.status === 'ACCEPTED';
       }
+    }
+
+    if (!hasAccess) {
+      throw new Error('Access denied to this event');
     }
 
     // Get image URL if event has an image
@@ -347,19 +379,16 @@ export const getEventPotentialDates = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
-    // Verify access to event
-    const currentPerson = await getCurrentPerson(ctx);
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', eventId)
-        )
-        .first();
+    const { person: currentPerson } = await requireAuth(ctx);
+    const membership = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', currentPerson._id).eq('eventId', eventId)
+      )
+      .first();
 
-      if (!membership) {
-        throw new Error('Access denied to this event');
-      }
+    if (!membership) {
+      throw new Error('Access denied to this event');
     }
 
     // Get all potential date times for this event

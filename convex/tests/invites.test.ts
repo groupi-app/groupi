@@ -126,6 +126,34 @@ describe('Invites Domain', () => {
         })
       ).rejects.toThrow();
     });
+
+    test('allows attendees when invite permissions are configured for everyone', async () => {
+      const t = createTestInstance();
+      const { eventId, attendeeAuth } = await TestScenarios.multiUser(t);
+
+      await t.run(async ctx => {
+        await ctx.db.patch(eventId, {
+          permissions: {
+            createPosts: 'EVERYONE',
+            inviteMembers: 'EVERYONE',
+            viewAttendeeList: 'EVERYONE',
+          },
+        });
+      });
+
+      const created = await attendeeAuth.mutation(
+        api.invites.mutations.createInvite,
+        { eventId, name: 'Attendee invite' }
+      );
+      const result = await attendeeAuth.query(
+        api.invites.queries.getEventInvites,
+        { eventId }
+      );
+
+      expect(created.invite.name).toBe('Attendee invite');
+      expect(result.userRole).toBe('ATTENDEE');
+      expect(result.invites).toHaveLength(1);
+    });
   });
 
   describe('getInviteByToken', () => {

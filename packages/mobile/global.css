@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@source './src';
+@source './app';
+
+@theme {
+  /* Border Radius - Component Tokens */
+  --radius-button: 1rem;
+  --radius-card: 1.25rem;
+  --radius-input: 0.75rem;
+  --radius-modal: 1.5rem;
+  --radius-badge: 9999px;
+  --radius-avatar: 50%;
+  --radius-tooltip: 0.75rem;
+  --radius-dropdown: 1rem;
+  --radius-sheet: 1.5rem;
+  --radius-popover: 1rem;
+  --shadow-raised:
+    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-floating:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-overlay:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --z-popover: 50;
+  --z-tooltip: 60;
+}
+
+@layer theme {
+  :root {
+    @variant light {
+      /* Brand */
+      --color-primary: hsl(285, 100%, 34%);
+      --color-primary-hover: hsl(285, 100%, 28%);
+      --color-primary-foreground: hsl(0, 0%, 100%);
+      --color-secondary: hsl(210, 40%, 96.1%);
+      --color-secondary-foreground: hsl(222.2, 47.4%, 11.2%);
+      --color-accent: hsl(260, 40%, 96.1%);
+      --color-accent-foreground: hsl(273.2, 47.4%, 11.2%);
+
+      /* Backgrounds */
+      --color-background: hsl(0, 0%, 100%);
+      --color-foreground: hsl(222.2, 47.4%, 11.2%);
+      --color-card: hsl(0, 0%, 100%);
+      --color-card-foreground: hsl(222.2, 47.4%, 11.2%);
+      --color-popover: hsl(0, 0%, 100%);
+      --color-popover-foreground: hsl(222.2, 47.4%, 11.2%);
+      --color-muted: hsl(210, 40%, 96.1%);
+      --color-muted-foreground: hsl(215.4, 16.3%, 46.9%);
+
+      /* Surfaces */
+      --color-bg-surface: hsl(0, 0%, 100%);
+      --color-bg-elevated: hsl(0, 0%, 100%);
+      --color-bg-sunken: hsl(220, 14%, 96%);
+      --color-bg-interactive: hsl(220, 14%, 96%);
+      --color-bg-overlay: hsla(0, 0%, 0%, 0.5);
+
+      /* Status */
+      --color-success: hsl(145, 80%, 45%);
+      --color-bg-success-subtle: hsl(145, 80%, 90%);
+      --color-warning: hsl(35, 100%, 55%);
+      --color-bg-warning-subtle: hsl(35, 100%, 90%);
+      --color-error: hsl(0, 85%, 55%);
+      --color-bg-error-subtle: hsl(0, 85%, 93%);
+      --color-info: hsl(210, 100%, 50%);
+      --color-bg-info-subtle: hsl(210, 100%, 94%);
+      --color-destructive: hsl(0, 85%, 55%);
+      --color-destructive-foreground: hsl(210, 40%, 98%);
+
+      /* Text */
+      --color-text-secondary: hsl(217, 9%, 40%);
+      --color-text-tertiary: hsl(217, 10%, 50%);
+      --color-text-disabled: hsl(217, 10%, 65%);
+      --color-text-success: hsl(145, 80%, 28%);
+      --color-text-warning: hsl(35, 100%, 36%);
+      --color-text-error: hsl(0, 85%, 46%);
+      --color-text-info: hsl(285, 100%, 34%);
+
+      /* Border */
+      --color-border: hsl(214.3, 31.8%, 91.4%);
+      --color-border-strong: hsl(218, 12%, 83%);
+      --color-border-subtle: hsl(220, 13%, 95%);
+      --color-border-focus: hsl(285, 100%, 34%);
+      --color-border-error: hsl(0, 85%, 55%);
+      --color-border-success: hsl(145, 80%, 45%);
+      --color-input: hsl(214.3, 31.8%, 91.4%);
+      --color-ring: hsl(215, 20.2%, 65.1%);
+
+      /* Fun */
+      --color-fun-celebration: hsl(45, 100%, 50%);
+      --color-fun-party: hsl(330, 100%, 60%);
+    }
+
+    @variant dark {
+      /* Brand */
+      --color-primary: hsl(280, 85%, 60%);
+      --color-primary-hover: hsl(280, 85%, 68%);
+      --color-primary-foreground: hsl(210, 40%, 98%);
+      --color-secondary: hsl(270, 38%, 13%);
+      --color-secondary-foreground: hsl(270, 20%, 94%);
+      --color-accent: hsl(270, 35%, 15%);
+      --color-accent-foreground: hsl(270, 20%, 94%);
+
+      /* Backgrounds */
+      --color-background: hsl(270, 45%, 7%);
+      --color-foreground: hsl(270, 20%, 94%);
+      --color-card: hsl(270, 40%, 11%);
+      --color-card-foreground: hsl(270, 20%, 94%);
+      --color-popover: hsl(270, 35%, 15%);
+      --color-popover-foreground: hsl(270, 20%, 94%);
+      --color-muted: hsl(270, 38%, 13%);
+      --color-muted-foreground: hsl(270, 15%, 55%);
+
+      /* Surfaces */
+      --color-bg-surface: hsl(270, 40%, 11%);
+      --color-bg-elevated: hsl(270, 35%, 15%);
+      --color-bg-sunken: hsl(270, 50%, 5%);
+      --color-bg-interactive: hsl(270, 38%, 13%);
+      --color-bg-overlay: hsla(270, 45%, 4%, 0.85);
+
+      /* Status */
+      --color-success: hsl(145, 70%, 38%);
+      --color-bg-success-subtle: hsl(145, 40%, 14%);
+      --color-warning: hsl(38, 92%, 50%);
+      --color-bg-warning-subtle: hsl(38, 40%, 14%);
+      --color-error: hsl(0, 65%, 50%);
+      --color-bg-error-subtle: hsl(0, 40%, 14%);
+      --color-info: hsl(210, 90%, 52%);
+      --color-bg-info-subtle: hsl(210, 40%, 14%);
+      --color-destructive: hsl(0, 65%, 50%);
+      --color-destructive-foreground: hsl(210, 40%, 98%);
+
+      /* Text */
+      --color-text-secondary: hsl(270, 15%, 55%);
+      --color-text-tertiary: hsl(270, 12%, 45%);
+      --color-text-disabled: hsl(270, 10%, 35%);
+      --color-text-success: hsl(145, 70%, 58%);
+      --color-text-warning: hsl(38, 92%, 62%);
+      --color-text-error: hsl(0, 65%, 62%);
+      --color-text-info: hsl(280, 85%, 70%);
+
+      /* Border */
+      --color-border: hsl(270, 25%, 20%);
+      --color-border-strong: hsl(270, 20%, 30%);
+      --color-border-subtle: hsl(270, 30%, 14%);
+      --color-border-focus: hsl(280, 85%, 60%);
+      --color-border-error: hsl(0, 65%, 50%);
+      --color-border-success: hsl(145, 70%, 38%);
+      --color-input: hsl(270, 25%, 20%);
+      --color-ring: hsl(270, 25%, 40%);
+
+      /* Fun */
+      --color-fun-celebration: hsl(45, 100%, 50%);
+      --color-fun-party: hsl(330, 85%, 62%);
+    }
+  }
+}

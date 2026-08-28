@@ -24,7 +24,7 @@ export class SignInPage extends BasePage {
     // Use id-based selectors for form inputs (more reliable than label matching)
     this.emailInput = page.locator('#identifier');
     this.magicLinkButton = page.getByRole('button', {
-      name: /send magic link/i,
+      name: /continue with email/i,
     });
     this.discordButton = page.getByRole('button', {
       name: /discord/i,

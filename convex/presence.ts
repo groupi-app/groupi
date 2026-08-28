@@ -1,4 +1,9 @@
-import { mutation, query, internalQuery } from './_generated/server';
+import {
+  mutation,
+  query,
+  internalQuery,
+  type MutationCtx,
+} from './_generated/server';
 import { components } from './_generated/api';
 import { v } from 'convex/values';
 import { Presence } from '@convex-dev/presence';
@@ -8,6 +13,8 @@ import {
   ExtendedAuthUser,
   AuthUserId,
   getCurrentPerson,
+  requireAuth,
+  requireEventRole,
 } from './auth';
 
 /**
@@ -24,19 +31,70 @@ import {
 export const presence = new Presence(components.presence);
 
 /**
+ * Authenticate presence writes and validate event-scoped room access. Presence
+ * identity is always derived from the session, never from client input.
+ */
+async function requirePresenceRoomAccess(ctx: MutationCtx, roomId: string) {
+  const { person } = await requireAuth(ctx);
+
+  if (roomId === 'app') {
+    return person;
+  }
+
+  const separatorIndex = roomId.indexOf(':');
+  const roomType = roomId.slice(0, separatorIndex);
+  const resourceId = roomId.slice(separatorIndex + 1);
+
+  if (separatorIndex <= 0 || !resourceId) {
+    throw new Error('Invalid presence room');
+  }
+
+  if (roomType === 'event') {
+    const eventId = ctx.db.normalizeId('events', resourceId);
+    if (!eventId) {
+      throw new Error('Invalid presence room');
+    }
+    await requireEventRole(ctx, eventId, 'ATTENDEE');
+    return person;
+  }
+
+  if (roomType === 'post') {
+    const postId = ctx.db.normalizeId('posts', resourceId);
+    if (!postId) {
+      throw new Error('Invalid presence room');
+    }
+
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      throw new Error('Invalid presence room');
+    }
+    await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+    return person;
+  }
+
+  throw new Error('Invalid presence room');
+}
+
+/**
  * Send a heartbeat to indicate user is present in a room
  */
 export const heartbeat = mutation({
   args: {
     roomId: v.string(),
-    userId: v.string(), // Person ID
+    // Kept optional during the client migration; never trusted by the server.
+    userId: v.optional(v.string()),
     sessionId: v.string(),
     interval: v.number(),
   },
-  handler: async (ctx, { roomId, userId, sessionId, interval }) => {
-    // Note: Auth check could be added here, but we allow anonymous heartbeats
-    // for simpler UX. The userId is the person ID from the client.
-    return await presence.heartbeat(ctx, roomId, userId, sessionId, interval);
+  handler: async (ctx, { roomId, sessionId, interval }) => {
+    const person = await requirePresenceRoomAccess(ctx, roomId);
+    return await presence.heartbeat(
+      ctx,
+      roomId,
+      person._id,
+      sessionId,
+      interval
+    );
   },
 });
 
@@ -46,7 +104,8 @@ export const heartbeat = mutation({
 export const updatePresenceData = mutation({
   args: {
     roomId: v.string(),
-    userId: v.string(),
+    // Kept optional during the client migration; never trusted by the server.
+    userId: v.optional(v.string()),
     data: v.optional(
       v.object({
         isTyping: v.optional(v.boolean()),
@@ -54,8 +113,9 @@ export const updatePresenceData = mutation({
       })
     ),
   },
-  handler: async (ctx, { roomId, userId, data }) => {
-    return await presence.updateRoomUser(ctx, roomId, userId, data);
+  handler: async (ctx, { roomId, data }) => {
+    const person = await requirePresenceRoomAccess(ctx, roomId);
+    return await presence.updateRoomUser(ctx, roomId, person._id, data);
   },
 });
 

@@ -221,7 +221,10 @@ export const handler = httpAction(async (ctx, request) => {
       const modifiedRequest = new Request(honoUrl.toString(), {
         method: request.method,
         headers: request.headers,
-        body: request.body,
+        body:
+          request.method === 'GET' || request.method === 'HEAD'
+            ? undefined
+            : (request.body as unknown as RequestInit['body']),
       });
 
       return app.fetch(modifiedRequest);
@@ -249,7 +252,10 @@ export const handler = httpAction(async (ctx, request) => {
   const publicRequest = new Request(honoUrl.toString(), {
     method: request.method,
     headers: request.headers,
-    body: request.body,
+    body:
+      request.method === 'GET' || request.method === 'HEAD'
+        ? undefined
+        : (request.body as unknown as RequestInit['body']),
   });
 
   return app.fetch(publicRequest);

@@ -1,6 +1,10 @@
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireEventRole, getCurrentPerson, getPersonWithUser } from '../auth';
+import {
+  requireEventPermission,
+  getCurrentPerson,
+  getPersonWithUser,
+} from '../auth';
 
 /**
  * Invites queries for the Convex backend
@@ -19,8 +23,11 @@ export const getEventInvites = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
-    // Require organizer or moderator role to manage invites
-    await requireEventRole(ctx, eventId, 'MODERATOR');
+    const membership = await requireEventPermission(
+      ctx,
+      eventId,
+      'inviteMembers'
+    );
 
     // Get the event
     const event = await ctx.db.get(eventId);
@@ -55,7 +62,7 @@ export const getEventInvites = query({
     return {
       invites: enhancedInvites,
       pendingEmailCount,
-      userRole: 'ORGANIZER' as const, // Will be determined by auth check
+      userRole: membership.role,
     };
   },
 });

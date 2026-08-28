@@ -171,7 +171,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type checking - Mobile
-        continue-on-error: true
         run: |
           cd packages/mobile
           pnpm type-check
@@ -180,6 +179,11 @@ jobs:
         run: |
           cd packages/mobile
           pnpm lint
+
+      - name: Validate mobile release configuration
+        run: |
+          cd packages/mobile
+          pnpm release:check
 
       - name: Run mobile package tests with coverage
         run: |
@@ -261,7 +265,7 @@ jobs:
         run: pnpm lint
 
       - name: Run all type checks
-        run: pnpm turbo type-check --filter=!@groupi/mobile
+        run: pnpm turbo type-check
 
       - name: Format check
         run: pnpm format:check
@@ -297,6 +301,7 @@ jobs:
           if [[ "${{ needs.test-shared.result }}" != "success" || \
                 "${{ needs.test-convex.result }}" != "success" || \
                 "${{ needs.test-web.result }}" != "success" || \
+                "${{ needs.test-mobile.result }}" != "success" || \
                 "${{ needs.test-builds.result }}" != "success" || \
                 "${{ needs.quality-checks.result }}" != "success" ]]; then
             echo "❌ Some tests failed!"

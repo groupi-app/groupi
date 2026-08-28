@@ -23,9 +23,17 @@
     "paths": {
       "@/*": ["./src/*"],
       "@groupi/shared": ["../shared/src"],
-      "@groupi/shared/*": ["../shared/src/*"]
+      "@groupi/shared/*": ["../shared/src/*"],
+      "convex/_generated/*": ["../../convex/_generated/*"]
     }
   },
-  "include": ["src/**/*", "App.tsx", "app.json", "babel.config.js"],
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "app.config.ts",
+    "babel.config.js",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
   "exclude": ["node_modules", "dist", ".expo"]
 }

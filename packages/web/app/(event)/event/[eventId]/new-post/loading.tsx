@@ -16,7 +16,7 @@ export default function Page() {
         disabled
       >
         <Icons.submit className='size-4' />
-        <span>Create Post</span>
+        <span>Post</span>
       </Button>
     </div>
   );

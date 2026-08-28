@@ -6,6 +6,7 @@ import { convexClient } from '@convex-dev/better-auth/client/plugins';
 // Import your existing plugins
 import { usernameClient } from 'better-auth/client/plugins';
 import { magicLinkClient } from 'better-auth/client/plugins';
+import { emailOTPClient } from 'better-auth/client/plugins';
 import { oneTapClient } from 'better-auth/client/plugins';
 import { adminClient } from 'better-auth/client/plugins';
 import { apiKeyClient } from '@better-auth/api-key/client';
@@ -38,6 +39,7 @@ const baseAuthClient = createAuthClient({
     convexClient(),
     usernameClient(),
     magicLinkClient(),
+    emailOTPClient(),
     adminClient(),
     apiKeyClient(),
     passkeyClient(),
@@ -114,7 +116,7 @@ export async function sendMagicLinkWithEmailOrUsername({
       if (!result || !result.email) {
         return {
           error: {
-            message: 'Username not found',
+            message: "We couldn't find that username",
           },
         };
       }
@@ -127,7 +129,7 @@ export async function sendMagicLinkWithEmailOrUsername({
     } catch {
       return {
         error: {
-          message: 'Failed to send magic link',
+          message: 'Unable to send the sign-in link',
         },
       };
     }

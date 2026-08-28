@@ -6,6 +6,7 @@ import {
   authComponent,
   ExtendedAuthUser,
   AuthUserId,
+  requireEventPermission,
 } from '../auth';
 import { Id, Doc } from '../_generated/dataModel';
 import { checkIfFriends } from '../lib/privacy';
@@ -138,17 +139,7 @@ export const getSentEventInvites = query({
       return [];
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return [];
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     // Get all invites for this event
     const invites = await ctx.db
@@ -208,23 +199,24 @@ export const searchUsersForEventInvite = query({
     searchTerm: v.string(),
     _traceId: v.optional(v.string()),
   },
+  returns: v.array(
+    v.object({
+      personId: v.id('persons'),
+      name: v.union(v.string(), v.null()),
+      username: v.union(v.string(), v.null()),
+      image: v.union(v.string(), v.null()),
+      isFriend: v.boolean(),
+      hasPendingInvite: v.boolean(),
+      pendingInviteId: v.union(v.id('eventInvites'), v.null()),
+    })
+  ),
   handler: async (ctx, { eventId, searchTerm }) => {
     const currentPerson = await getCurrentPerson(ctx);
     if (!currentPerson) {
       return [];
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return [];
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     const trimmedSearch = searchTerm.trim().toLowerCase();
     // Minimum search length is 2 characters
@@ -258,7 +250,6 @@ export const searchUsersForEventInvite = query({
             field: 'username',
             operator: 'contains',
             value: trimmedSearch,
-            mode: 'insensitive',
           },
         ],
         paginationOpts: {
@@ -268,7 +259,10 @@ export const searchUsersForEventInvite = query({
       }
     );
 
-    const users = (matchingUsers as { data: ExtendedAuthUser[] }).data ?? [];
+    // Better Auth stores usernames normalized to lowercase. The Convex adapter
+    // therefore performs a case-sensitive search against the normalized input;
+    // `mode: "insensitive"` is explicitly unsupported by the adapter.
+    const users = (matchingUsers as { page: ExtendedAuthUser[] }).page ?? [];
 
     const results: Array<{
       personId: Id<'persons'>;
@@ -297,13 +291,15 @@ export const searchUsersForEventInvite = query({
 
       const isFriend = await checkIfFriends(ctx, currentPerson._id, person._id);
 
-      const pendingInvite = await ctx.db
+      const priorInvites = await ctx.db
         .query('eventInvites')
         .withIndex('by_event_invitee', q =>
           q.eq('eventId', eventId).eq('inviteeId', person._id)
         )
-        .filter(q => q.eq(q.field('status'), 'PENDING'))
-        .first();
+        .collect();
+      const pendingInvite = priorInvites.find(
+        invite => invite.status === 'PENDING'
+      );
 
       results.push({
         personId: person._id,
@@ -337,17 +333,7 @@ export const searchUserByExactUsernameForEventInvite = query({
       return null;
     }
 
-    // Verify user is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', currentPerson._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      return null;
-    }
+    await requireEventPermission(ctx, eventId, 'inviteMembers');
 
     const trimmedSearch = searchTerm.trim().toLowerCase();
     if (trimmedSearch.length < 2) {

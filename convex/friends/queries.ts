@@ -304,6 +304,23 @@ export const searchUsersByUsername = query({
     searchTerm: v.string(),
     _traceId: v.optional(v.string()),
   },
+  returns: v.array(
+    v.object({
+      personId: v.id('persons'),
+      userId: v.string(),
+      name: v.union(v.string(), v.null()),
+      username: v.union(v.string(), v.null()),
+      image: v.union(v.string(), v.null()),
+      friendshipStatus: v.union(
+        v.literal('none'),
+        v.literal('pending_sent'),
+        v.literal('pending_received'),
+        v.literal('friends'),
+        v.literal('declined')
+      ),
+      friendshipId: v.union(v.id('friendships'), v.null()),
+    })
+  ),
   handler: async (ctx, { searchTerm }) => {
     const currentPerson = await getCurrentPerson(ctx);
     if (!currentPerson) {
@@ -327,7 +344,6 @@ export const searchUsersByUsername = query({
             field: 'username',
             operator: 'contains',
             value: trimmedSearch,
-            mode: 'insensitive',
           },
         ],
         paginationOpts: {
@@ -337,7 +353,10 @@ export const searchUsersByUsername = query({
       }
     );
 
-    const users = (matchingUsers as { data: ExtendedAuthUser[] }).data ?? [];
+    // Better Auth stores usernames normalized to lowercase. The Convex adapter
+    // therefore performs a case-sensitive search against the normalized input;
+    // `mode: "insensitive"` is explicitly unsupported by the adapter.
+    const users = (matchingUsers as { page: ExtendedAuthUser[] }).page ?? [];
 
     const results = await Promise.all(
       users.slice(0, MAX_RESULTS + 1).map(async user => {
@@ -369,7 +388,9 @@ export const searchUsersByUsername = query({
       })
     );
 
-    return results.filter(Boolean).slice(0, MAX_RESULTS);
+    return results
+      .flatMap(result => (result ? [result] : []))
+      .slice(0, MAX_RESULTS);
   },
 });
 

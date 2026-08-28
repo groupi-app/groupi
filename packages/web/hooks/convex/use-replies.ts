@@ -26,6 +26,17 @@ export interface OptimisticAttachment {
   previewUrl?: string;
 }
 
+export interface ReplyAttachmentInput {
+  storageId: Id<'_storage'>;
+  filename: string;
+  size: number;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isSpoiler?: boolean;
+  altText?: string;
+}
+
 // ===== API REFERENCES =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let replyQueries: any;
@@ -149,10 +160,6 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
       const now = Date.now();
 
       // Build optimistic attachments from the ref
-      console.log(
-        '[Optimistic Update] pendingAttachmentsRef.current:',
-        pendingAttachmentsRef.current
-      );
       const optimisticAttachments = pendingAttachmentsRef.current.map(
         (att, index) => {
           // Determine attachment type from MIME type
@@ -226,18 +233,17 @@ export function useCreateReply(currentUser?: OptimisticUserData) {
       text: string; // HTML content with mention spans
       /** Optional attachments for optimistic rendering */
       optimisticAttachments?: OptimisticAttachment[];
+      /** Uploaded files registered atomically with the reply */
+      attachments?: ReplyAttachmentInput[];
     }) => {
       try {
         // Store attachments in ref for the optimistic update to access
-        console.log(
-          '[createReply] data.optimisticAttachments:',
-          data.optimisticAttachments
-        );
         pendingAttachmentsRef.current = data.optimisticAttachments || [];
 
         const result = await createReply({
           postId: data.postId,
           text: data.text,
+          attachments: data.attachments,
         });
 
         // Clear the ref after mutation completes
