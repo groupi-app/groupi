@@ -11,9 +11,18 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PostComposerKeyboardView } from '@/components/posts/post-composer-keyboard-view';
 import { PostTitleInput } from '@/components/posts/post-title-input';
 import { RichTextEditor } from '@/components/posts/rich-text-editor';
+import { AttachmentButton } from '@/components/attachments/attachment-button';
+import {
+  AttachmentEditList,
+  type EditableAttachment,
+} from '@/components/attachments/attachment-edit-list';
+import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { usePostDetail, useUpdatePost } from '@/hooks/use-posts';
+import { useAttachments } from '@/hooks/use-file-upload';
+import { useGlobalUser } from '@/context/global-user-context';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { toast } from '@groupi/shared/platform';
+import { createAfterUploading } from '@groupi/shared/utils';
 
 /** Strip empty HTML tags to check if there's real content */
 function hasContent(html: string): boolean {
@@ -32,11 +41,23 @@ export default function EditPostScreen() {
   const typedPostId = postId as Id<'posts'>;
   const postDetail = usePostDetail(typedPostId);
   const updatePost = useUpdatePost();
+  const { person } = useGlobalUser();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [attachmentIdsToDelete, setAttachmentIdsToDelete] = useState<
+    Set<string>
+  >(new Set());
+  const {
+    pendingUploads,
+    isUploading,
+    addFile,
+    removeFile,
+    uploadAll,
+    clearAll,
+  } = useAttachments();
 
   const post = postDetail?.post;
 
@@ -54,7 +75,10 @@ export default function EditPostScreen() {
 
   const hasChanges =
     initialized &&
-    (title.trim() !== (post?.title ?? '') || content !== (post?.content ?? ''));
+    (title.trim() !== (post?.title ?? '') ||
+      content !== (post?.content ?? '') ||
+      attachmentIdsToDelete.size > 0 ||
+      pendingUploads.length > 0);
 
   const allowNextNavigation = useUnsavedChanges(hasChanges);
 
@@ -90,6 +114,28 @@ export default function EditPostScreen() {
     );
   }
 
+  const isAuthor = post.author?.person?._id === person?._id;
+  const role = postDetail.userMembership?.role;
+  const canEdit = isAuthor || role === 'ORGANIZER' || role === 'MODERATOR';
+
+  if (!canEdit) {
+    return (
+      <SafeAreaView className='flex-1 bg-background'>
+        <View className='flex-row items-center px-4 py-3'>
+          <BackButton />
+          <Text className='text-lg font-semibold text-foreground'>
+            Edit Post
+          </Text>
+        </View>
+        <EmptyState
+          icon='lock-closed-outline'
+          title='Editing unavailable'
+          description="You don't have permission to edit this post."
+        />
+      </SafeAreaView>
+    );
+  }
+
   const isValid = title.trim().length > 0 && hasContent(content);
 
   async function handleSubmit() {
@@ -97,11 +143,28 @@ export default function EditPostScreen() {
 
     setIsSubmitting(true);
     try {
-      await updatePost({
-        postId: typedPostId,
-        title: title.trim(),
-        content,
+      await createAfterUploading({
+        expectedUploadCount: pendingUploads.length,
+        uploadAll,
+        create: attachments =>
+          updatePost({
+            postId: typedPostId,
+            title: title.trim(),
+            content,
+            attachmentsToAdd: attachments.map(result => ({
+              storageId: result.storageId as Id<'_storage'>,
+              filename: result.filename,
+              size: result.size,
+              mimeType: result.mimeType,
+              width: result.width,
+              height: result.height,
+            })),
+            attachmentIdsToDelete: [
+              ...attachmentIdsToDelete,
+            ] as Id<'attachments'>[],
+          }),
       });
+      clearAll();
       toast.success('Post updated!');
       allowNextNavigation();
       router.back();
@@ -120,13 +183,13 @@ export default function EditPostScreen() {
         <Text className='text-lg font-semibold text-foreground'>Edit Post</Text>
         <Pressable
           onPress={handleSubmit}
-          disabled={!isValid || !hasChanges || isSubmitting}
+          disabled={!isValid || !hasChanges || isSubmitting || isUploading}
           className={`rounded-button px-4 py-2 ${isValid && hasChanges && !isSubmitting ? 'bg-primary' : 'bg-muted'}`}
         >
           <Text
             className={`text-sm font-semibold ${isValid && hasChanges && !isSubmitting ? 'text-primary-foreground' : 'text-muted-foreground'}`}
           >
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isUploading ? 'Uploading...' : isSubmitting ? 'Saving...' : 'Save'}
           </Text>
         </Pressable>
       </View>
@@ -148,6 +211,42 @@ export default function EditPostScreen() {
           ) : (
             <LoadingState message='Loading content...' />
           )}
+        </View>
+
+        <AttachmentEditList
+          attachments={(post.attachments ?? []).filter(
+            (attachment: EditableAttachment) =>
+              !attachmentIdsToDelete.has(attachment._id)
+          )}
+          onRemove={attachmentId =>
+            setAttachmentIdsToDelete(previous =>
+              new Set(previous).add(attachmentId)
+            )
+          }
+        />
+        <AttachmentPreview uploads={pendingUploads} onRemove={removeFile} />
+        <View className='flex-row items-center border-t border-border px-2 py-1'>
+          <AttachmentButton
+            onFilesSelected={files => {
+              for (const file of files) {
+                addFile(
+                  file.uri,
+                  file.filename,
+                  file.mimeType,
+                  file.width,
+                  file.height,
+                  file.size
+                );
+              }
+            }}
+            currentCount={
+              (post.attachments?.length ?? 0) -
+              attachmentIdsToDelete.size +
+              pendingUploads.length
+            }
+            disabled={isSubmitting || isUploading}
+            showLabel
+          />
         </View>
       </PostComposerKeyboardView>
     </SafeAreaView>

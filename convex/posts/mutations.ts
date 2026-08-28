@@ -10,6 +10,7 @@ import { Doc } from '../_generated/dataModel';
 import {
   attachmentInputValidator,
   createAttachmentsForParent,
+  deleteAttachmentsForParent,
 } from '../attachments/model';
 
 /**
@@ -96,9 +97,20 @@ export const updatePost = mutation({
     postId: v.id('posts'),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
+    attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { postId, title, content }) => {
+  handler: async (
+    ctx,
+    {
+      postId,
+      title,
+      content,
+      attachmentsToAdd = [],
+      attachmentIdsToDelete = [],
+    }
+  ) => {
     // Require authentication
     const { person } = await requireAuth(ctx);
 
@@ -136,6 +148,20 @@ export const updatePost = mutation({
         throw new Error('Post content cannot be empty');
       }
       updateData.content = content.trim();
+    }
+
+    await deleteAttachmentsForParent(ctx, {
+      attachmentIds: attachmentIdsToDelete,
+      postId,
+      personId: person._id,
+    });
+
+    if (attachmentsToAdd.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments: attachmentsToAdd,
+        postId,
+        personId: person._id,
+      });
     }
 
     // Update the post

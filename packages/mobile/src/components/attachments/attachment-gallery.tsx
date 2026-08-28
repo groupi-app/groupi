@@ -7,9 +7,13 @@ import {
   Modal,
   Text,
   useWindowDimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { getSafeExternalUrl } from '@/lib/safe-links';
+import { toast } from '@groupi/shared/platform';
 
 interface Attachment {
   _id: string;
@@ -19,6 +23,7 @@ interface Attachment {
   width?: number;
   height?: number;
   mimeType: string;
+  size?: number;
   isSpoiler?: boolean;
   altText?: string;
 }
@@ -39,6 +44,7 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
   );
 
   const images = attachments.filter(a => a.type === 'IMAGE' && a.url);
+  const files = attachments.filter(a => a.type !== 'IMAGE' && a.url);
 
   const availableWidth = screenWidth - GALLERY_PADDING;
 
@@ -50,7 +56,21 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
     });
   }, [lightboxIndex, screenWidth]);
 
-  if (images.length === 0) return null;
+  if (images.length === 0 && files.length === 0) return null;
+
+  async function handleFilePress(attachment: Attachment) {
+    const safeUrl = getSafeExternalUrl(attachment.url ?? undefined);
+    if (!safeUrl) {
+      toast.error('This attachment link is unavailable');
+      return;
+    }
+
+    try {
+      await Linking.openURL(safeUrl);
+    } catch {
+      toast.error('Unable to open this attachment');
+    }
+  }
 
   function handlePress(attachment: Attachment, index: number) {
     if (attachment.isSpoiler && !revealedSpoilers.has(attachment._id)) {
@@ -178,8 +198,16 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
   }
 
   return (
-    <View className='mt-3'>
-      {renderGrid()}
+    <View className='mt-3 gap-2'>
+      {images.length > 0 ? renderGrid() : null}
+
+      {files.map(file => (
+        <FileAttachment
+          key={file._id}
+          attachment={file}
+          onPress={() => void handleFilePress(file)}
+        />
+      ))}
 
       {/* Lightbox */}
       <Modal
@@ -241,6 +269,60 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
         </SafeAreaView>
       </Modal>
     </View>
+  );
+}
+
+function getFileIcon(type: string): keyof typeof Ionicons.glyphMap {
+  if (type === 'VIDEO') return 'videocam-outline';
+  if (type === 'AUDIO') return 'musical-notes-outline';
+  return 'document-text-outline';
+}
+
+function formatFileSize(size?: number) {
+  if (!size || size <= 0) return null;
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function FileAttachment({
+  attachment,
+  onPress,
+}: {
+  attachment: Attachment;
+  onPress: () => void;
+}) {
+  const primaryColor = String(
+    useCSSVariable('--color-primary') ?? 'transparent'
+  );
+  const fileSize = formatFileSize(attachment.size);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole='link'
+      accessibilityLabel={`Open attachment ${attachment.filename}`}
+      className='flex-row items-center gap-3 rounded-card border border-border bg-card p-3'
+    >
+      <View className='h-10 w-10 items-center justify-center rounded-input bg-primary/10'>
+        <Ionicons
+          name={getFileIcon(attachment.type)}
+          size={21}
+          color={primaryColor}
+        />
+      </View>
+      <View className='flex-1'>
+        <Text
+          className='text-sm font-semibold text-foreground'
+          numberOfLines={1}
+        >
+          {attachment.filename}
+        </Text>
+        <Text className='mt-0.5 text-xs text-muted-foreground'>
+          {[attachment.mimeType, fileSize].filter(Boolean).join(' · ')}
+        </Text>
+      </View>
+      <Ionicons name='open-outline' size={18} color={primaryColor} />
+    </Pressable>
   );
 }
 

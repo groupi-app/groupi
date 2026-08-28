@@ -40,6 +40,7 @@ import {
 import { showConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AttachmentGallery } from '@/components/attachments/attachment-gallery';
 import { AttachmentButton } from '@/components/attachments/attachment-button';
+import { AttachmentEditList } from '@/components/attachments/attachment-edit-list';
 import { AttachmentPreview } from '@/components/attachments/attachment-preview';
 import { TypingIndicator } from '@/components/posts/typing-indicator';
 import { HtmlContent } from '@/components/posts/html-content';
@@ -89,6 +90,10 @@ export default function PostDetailScreen() {
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editingReplyText, setEditingReplyText] = useState('');
+  const [
+    editingReplyAttachmentIdsToDelete,
+    setEditingReplyAttachmentIdsToDelete,
+  ] = useState<Set<string>>(new Set());
 
   const handleReplyTextChange = useCallback(
     (text: string) => {
@@ -105,6 +110,14 @@ export default function PostDetailScreen() {
     removeFile,
     uploadAll,
     clearAll,
+  } = useAttachments();
+  const {
+    pendingUploads: editingReplyUploads,
+    isUploading: isUploadingReplyEdit,
+    addFile: addReplyEditFile,
+    removeFile: removeReplyEditFile,
+    uploadAll: uploadReplyEditFiles,
+    clearAll: clearReplyEditFiles,
   } = useAttachments();
 
   if (postDetail === undefined) {
@@ -245,17 +258,46 @@ export default function PostDetailScreen() {
   }
 
   async function handleSaveEditReply() {
-    if (!editingReplyId || !editingReplyText.trim()) return;
+    if (!editingReplyId) return;
+    const editingReply = replies.find(
+      (reply: { _id: string }) => reply._id === editingReplyId
+    );
+    const remainingAttachmentCount =
+      (editingReply?.attachments?.length ?? 0) -
+      editingReplyAttachmentIdsToDelete.size +
+      editingReplyUploads.length;
+    if (!editingReplyText.trim() && remainingAttachmentCount === 0) return;
+
     try {
-      await updateReply({
-        replyId: editingReplyId as Id<'replies'>,
-        text: editingReplyText.trim(),
+      await createAfterUploading({
+        expectedUploadCount: editingReplyUploads.length,
+        uploadAll: uploadReplyEditFiles,
+        create: attachments =>
+          updateReply({
+            replyId: editingReplyId as Id<'replies'>,
+            text: editingReplyText.trim(),
+            attachmentsToAdd: attachments.map(result => ({
+              storageId: result.storageId as Id<'_storage'>,
+              filename: result.filename,
+              size: result.size,
+              mimeType: result.mimeType,
+              width: result.width,
+              height: result.height,
+            })),
+            attachmentIdsToDelete: [
+              ...editingReplyAttachmentIdsToDelete,
+            ] as Id<'attachments'>[],
+          }),
       });
+      clearReplyEditFiles();
+      setEditingReplyAttachmentIdsToDelete(new Set());
       setEditingReplyId(null);
       setEditingReplyText('');
       toast.success('Reply updated');
-    } catch {
-      toast.error('Failed to update reply');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update reply'
+      );
     }
   }
 
@@ -273,6 +315,8 @@ export default function PostDetailScreen() {
         onPress: () => {
           setEditingReplyId(replyId);
           setEditingReplyText(replyContent);
+          setEditingReplyAttachmentIdsToDelete(new Set());
+          clearReplyEditFiles();
         },
       });
     }
@@ -469,9 +513,48 @@ export default function PostDetailScreen() {
                           multiline
                           autoFocus
                         />
+                        <AttachmentEditList
+                          attachments={replyAttachments.filter(
+                            (attachment: { _id: string }) =>
+                              !editingReplyAttachmentIdsToDelete.has(
+                                attachment._id
+                              )
+                          )}
+                          onRemove={attachmentId =>
+                            setEditingReplyAttachmentIdsToDelete(previous =>
+                              new Set(previous).add(attachmentId)
+                            )
+                          }
+                        />
+                        <AttachmentPreview
+                          uploads={editingReplyUploads}
+                          onRemove={removeReplyEditFile}
+                        />
+                        <AttachmentButton
+                          onFilesSelected={files => {
+                            for (const file of files) {
+                              addReplyEditFile(
+                                file.uri,
+                                file.filename,
+                                file.mimeType,
+                                file.width,
+                                file.height,
+                                file.size
+                              );
+                            }
+                          }}
+                          currentCount={
+                            replyAttachments.length -
+                            editingReplyAttachmentIdsToDelete.size +
+                            editingReplyUploads.length
+                          }
+                          disabled={isUploadingReplyEdit}
+                          showLabel
+                        />
                         <View className='mt-2 flex-row gap-2'>
                           <Pressable
                             onPress={handleSaveEditReply}
+                            disabled={isUploadingReplyEdit}
                             className='rounded-button bg-primary px-3 py-1.5'
                           >
                             <Text className='text-xs font-medium text-primary-foreground'>
@@ -482,6 +565,8 @@ export default function PostDetailScreen() {
                             onPress={() => {
                               setEditingReplyId(null);
                               setEditingReplyText('');
+                              setEditingReplyAttachmentIdsToDelete(new Set());
+                              clearReplyEditFiles();
                             }}
                             className='rounded-button border border-border px-3 py-1.5'
                           >
@@ -496,7 +581,7 @@ export default function PostDetailScreen() {
                         {replyContent}
                       </Text>
                     )}
-                    {replyAttachments.length > 0 ? (
+                    {!isEditing && replyAttachments.length > 0 ? (
                       <AttachmentGallery attachments={replyAttachments} />
                     ) : null}
                   </View>

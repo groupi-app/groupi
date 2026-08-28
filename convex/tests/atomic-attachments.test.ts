@@ -141,4 +141,106 @@ describe('atomic parent and attachment creation', () => {
       })
     ).rejects.toThrow('Reply text or an attachment is required');
   });
+
+  test('replaces post attachments in the same transaction as the edit', async () => {
+    const t = createTestInstance();
+    const { organizerAuth, eventId } = await TestScenarios.multiUser(t);
+    const originalUpload = await storeTextFile(t, 'original');
+    const replacementUpload = await storeTextFile(t, 'replacement');
+    const { postId } = await organizerAuth.mutation(
+      api.posts.mutations.createPost,
+      {
+        eventId,
+        title: 'Before edit',
+        content: 'Original content',
+        attachments: [
+          {
+            ...originalUpload,
+            filename: 'original.txt',
+            mimeType: 'text/plain',
+          },
+        ],
+      }
+    );
+    const [originalAttachment] = await t.run(async ctx =>
+      ctx.db
+        .query('attachments')
+        .withIndex('by_post', q => q.eq('postId', postId))
+        .collect()
+    );
+
+    await organizerAuth.mutation(api.posts.mutations.updatePost, {
+      postId,
+      title: 'After edit',
+      attachmentIdsToDelete: [originalAttachment!._id],
+      attachmentsToAdd: [
+        {
+          ...replacementUpload,
+          filename: 'replacement.txt',
+          mimeType: 'text/plain',
+        },
+      ],
+    });
+
+    const state = await t.run(async ctx => ({
+      post: await ctx.db.get(postId),
+      attachments: await ctx.db
+        .query('attachments')
+        .withIndex('by_post', q => q.eq('postId', postId))
+        .collect(),
+      originalFile: await ctx.db.system.get(
+        '_storage',
+        originalUpload.storageId
+      ),
+    }));
+    expect(state.post?.title).toBe('After edit');
+    expect(state.attachments).toHaveLength(1);
+    expect(state.attachments[0]?.storageId).toBe(replacementUpload.storageId);
+    expect(state.originalFile).toBeNull();
+  });
+
+  test('rolls back attachment removal when a reply edit would become empty', async () => {
+    const t = createTestInstance();
+    const { organizerAuth, eventId } = await TestScenarios.multiUser(t);
+    const { postId } = await organizerAuth.mutation(
+      api.posts.mutations.createPost,
+      { eventId, title: 'Reply thread', content: 'Reply below.' }
+    );
+    const upload = await storeTextFile(t, 'keep me');
+    const { replyId } = await organizerAuth.mutation(
+      api.replies.mutations.createReply,
+      {
+        postId,
+        text: '',
+        attachments: [
+          {
+            ...upload,
+            filename: 'keep.txt',
+            mimeType: 'text/plain',
+          },
+        ],
+      }
+    );
+    const [attachment] = await t.run(async ctx =>
+      ctx.db
+        .query('attachments')
+        .withIndex('by_reply', q => q.eq('replyId', replyId))
+        .collect()
+    );
+
+    await expect(
+      organizerAuth.mutation(api.replies.mutations.updateReply, {
+        replyId,
+        text: '',
+        attachmentIdsToDelete: [attachment!._id],
+      })
+    ).rejects.toThrow('Reply text or an attachment is required');
+
+    const state = await t.run(async ctx => ({
+      attachment: await ctx.db.get(attachment!._id),
+      storedFile: await ctx.db.system.get('_storage', upload.storageId),
+    }));
+    expect(state.attachment).not.toBeNull();
+    expect(state.storedFile).not.toBeNull();
+  });
 });

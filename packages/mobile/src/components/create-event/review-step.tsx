@@ -142,6 +142,10 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
         );
         if (result) {
           imageStorageId = result.storageId;
+        } else {
+          throw new Error(
+            'The cover image could not be uploaded. Check your connection and try again.'
+          );
         }
       }
 

@@ -210,3 +210,47 @@ export async function createAttachmentsForParent(
   }
   return attachmentIds;
 }
+
+export async function deleteAttachmentsForParent(
+  ctx: MutationCtx,
+  args: AttachmentParent & {
+    attachmentIds: Id<'attachments'>[];
+    personId: Id<'persons'>;
+  }
+) {
+  if (args.attachmentIds.length === 0) return;
+
+  await requireAttachmentParentAccess(ctx, args, args.personId, true);
+
+  const attachments = await Promise.all(
+    args.attachmentIds.map(attachmentId => ctx.db.get(attachmentId))
+  );
+
+  for (const attachment of attachments) {
+    if (!attachment) throw new Error('Attachment not found');
+    if (attachment.uploaderId !== args.personId) {
+      throw new Error('You can only delete your own attachments');
+    }
+    if (
+      attachment.postId !== args.postId ||
+      attachment.replyId !== args.replyId
+    ) {
+      throw new Error('Attachment does not belong to this content');
+    }
+  }
+
+  for (const attachment of attachments) {
+    if (!attachment) continue;
+
+    const otherAttachment = await ctx.db
+      .query('attachments')
+      .withIndex('by_storage', q => q.eq('storageId', attachment.storageId))
+      .filter(q => q.neq(q.field('_id'), attachment._id))
+      .first();
+
+    await ctx.db.delete(attachment._id);
+    if (!otherAttachment) {
+      await ctx.storage.delete(attachment.storageId);
+    }
+  }
+}

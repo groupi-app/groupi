@@ -77,6 +77,8 @@ export default function YouScreen() {
       if (result) {
         await updateProfile({ imageStorageId: result.storageId });
         toast.success('Profile photo updated');
+      } else {
+        throw new Error('Profile photo upload failed');
       }
     } catch {
       toast.error('Failed to update photo');

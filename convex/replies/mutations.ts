@@ -8,6 +8,7 @@ import {
 import {
   attachmentInputValidator,
   createAttachmentsForParent,
+  deleteAttachmentsForParent,
 } from '../attachments/model';
 
 /**
@@ -98,9 +99,14 @@ export const updateReply = mutation({
   args: {
     replyId: v.id('replies'),
     text: v.string(),
+    attachmentsToAdd: v.optional(v.array(attachmentInputValidator)),
+    attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { replyId, text }) => {
+  handler: async (
+    ctx,
+    { replyId, text, attachmentsToAdd = [], attachmentIdsToDelete = [] }
+  ) => {
     const { person } = await requireAuth(ctx);
 
     // Get the reply
@@ -124,9 +130,26 @@ export const updateReply = mutation({
       throw new Error("You don't have permission to edit this reply");
     }
 
-    // Validate input
-    if (!text.trim()) {
-      throw new Error('Reply text cannot be empty');
+    await deleteAttachmentsForParent(ctx, {
+      attachmentIds: attachmentIdsToDelete,
+      replyId,
+      personId: person._id,
+    });
+
+    if (attachmentsToAdd.length > 0) {
+      await createAttachmentsForParent(ctx, {
+        attachments: attachmentsToAdd,
+        replyId,
+        personId: person._id,
+      });
+    }
+
+    const remainingAttachment = await ctx.db
+      .query('attachments')
+      .withIndex('by_reply', q => q.eq('replyId', replyId))
+      .first();
+    if (!text.trim() && !remainingAttachment) {
+      throw new Error('Reply text or an attachment is required');
     }
 
     // Update the reply with updatedAt timestamp
