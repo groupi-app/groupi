@@ -1,0 +1,80 @@
+# EAS archives are created from the repository root. Keep this file independent
+# from .gitignore so the checked-in native projects are uploaded while local
+# build products and secrets remain excluded.
+
+# Version control and dependencies
+.git/
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Local environment and credentials
+.env
+.env.*
+*.pem
+credentials.json
+packages/mobile/android/local.properties
+packages/mobile/ios/.xcode.env.local
+
+# Generated caches and build output
+coverage/
+**/coverage/
+.expo/
+**/.expo/
+.turbo/
+**/.turbo/
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
+*.tsbuildinfo
+expo-env.d.ts
+
+# Native build output (native source remains included)
+packages/mobile/android/.gradle/
+packages/mobile/android/.cxx/
+packages/mobile/android/*.hprof
+packages/mobile/android/.idea/
+packages/mobile/android/*.iml
+packages/mobile/ios/Pods/
+packages/mobile/ios/DerivedData/
+packages/mobile/ios/xcuserdata/
+packages/mobile/ios/project.xcworkspace/
+packages/mobile/ios/*.ipa
+packages/mobile/ios/*.xcuserstate
+packages/mobile/**/*.jsbundle
+
+# Local tooling and reports
+.DS_Store
+.vscode/
+.vercel/
+.playwright-mcp/
+packages/web/e2e/playwright-report/
+packages/web/e2e/test-results/
+packages/web/e2e/playwright/.auth/
+packages/web/test-results/
+packages/web/storybook-static/
+packages/web/lighthouse-reports/
+
+# Local databases and migration exports
+docker-compose.yml
+compose.yml
+*.dump
+supabase/.temp/
+supabase_prod_*.sql
+supabase-backup*.sql
+scripts/migration/
+migration_data.json
+clerk_users.json
+
+# Debug logs and editor state
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+launch.json
+*.backup
+__pycache__/
+*.py[cod]
