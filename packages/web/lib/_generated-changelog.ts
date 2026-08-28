@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-08-22T03:45:13.307Z
+ * Generated: 2026-08-28T05:52:26.283Z
  */
 
 export interface ChangelogEntry {
@@ -17,6 +17,27 @@ export interface ChangelogSection {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    "version": "0.4.0",
+    "date": "",
+    "changes": [
+      {
+        "type": "added",
+        "items": [
+          "Bring the native mobile app to production acceptance with native authentication and passkeys, push notifications, universal links, complete event and post workflows, attachment management, mobile-optimized parity, and signed release automation. Align the supporting Convex, shared, and web behavior for secure cross-platform authentication, linking, notifications, permissions, and preview deployments."
+        ]
+      },
+      {
+        "type": "fixed",
+        "items": [
+          "Fix magic-link sign-in for deep links with query parameters and reject unsafe callback redirects.",
+          "Prompt users to sign in again when adding a passkey requires a fresh session.",
+          "Updated dependencies [a1c2752]",
+          "- @groupi/shared@0.4.0"
+        ]
+      }
+    ]
+  },
   {
     "version": "0.3.0",
     "date": "",
