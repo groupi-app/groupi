@@ -27,7 +27,7 @@
     "@hono/zod-openapi": "^1.2.0",
     "better-auth": "^1.6.2",
     "expo-server-sdk": "^7.1.0",
-    "hono": "^4.12.18",
+    "hono": "^4.12.34",
     "resend": "^4.0.0"
   },
   "devDependencies": {
