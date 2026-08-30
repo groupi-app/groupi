@@ -54,7 +54,7 @@ jobs:
           pnpm test:coverage
 
       - name: Upload shared coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/shared/coverage/lcov.info
@@ -135,7 +135,7 @@ jobs:
           pnpm test:coverage
 
       - name: Upload web coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/web/coverage/lcov.info
@@ -191,7 +191,7 @@ jobs:
           pnpm test:coverage
 
       - name: Upload mobile coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/mobile/coverage/lcov.info
