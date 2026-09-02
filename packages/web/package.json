@@ -71,7 +71,7 @@
     "@sentry/nextjs": "^10.38.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tailwindcss/postcss": "^4.1.16",
-    "@tiptap/core": "3.10.7",
+    "@tiptap/core": "3.30.4",
     "@tiptap/extension-bubble-menu": "^3.10.7",
     "@tiptap/extension-character-count": "^3.9.1",
     "@tiptap/extension-color": "^3.10.7",
