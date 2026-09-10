@@ -72,10 +72,11 @@ export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
   owner: 'theiasurette',
-  version: '0.1.0',
-  runtimeVersion: {
-    policy: 'fingerprint' as const,
-  },
+  version: '0.4.0',
+  // This native runtime is intentionally independent from the app/package
+  // version. Keep it stable for JavaScript-only OTA releases and increment it
+  // whenever native dependencies or native configuration change.
+  runtimeVersion: '1',
   updates: {
     url: `https://u.expo.dev/${easProjectId}`,
     checkAutomatically: 'ON_LOAD' as const,
