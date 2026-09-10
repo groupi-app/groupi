@@ -23,10 +23,12 @@ internal-test track. iOS submission uploads to App Store Connect/TestFlight;
 promotion beyond internal testing remains an explicit store-console action.
 
 Preview, acceptance, production-test, and production builds use isolated EAS
-Update channels. The app uses a fingerprint runtime version, so JavaScript,
-styling, copy, and compatible bundled assets can be delivered over the air
-without allowing an update that depends on missing native code. See
-`docs/mobile-update-boundary.md` for the audited server/update/native boundary.
+Update channels. The app uses an explicit native runtime version that stays
+stable across JavaScript-only releases, so styling, copy, behavior, and
+compatible bundled assets can be delivered over the air. Native dependency or
+configuration changes must increment that runtime and ship in a new signed
+binary. See `docs/mobile-update-boundary.md` for the audited
+server/update/native boundary.
 
 ## One-time Expo and signing setup
 

@@ -39,12 +39,33 @@ describe('native app-link configuration', () => {
   });
 
   it('accepts only native-compatible over-the-air updates', () => {
-    expect(appConfig.runtimeVersion).toEqual({ policy: 'fingerprint' });
+    expect(appConfig.runtimeVersion).toBe('1');
     expect(appConfig.updates).toEqual({
       url: 'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f',
       checkAutomatically: 'ON_LOAD',
       fallbackToCacheTimeout: 0,
     });
+
+    const androidResources = readFileSync(
+      new URL(
+        '../android/app/src/main/res/values/strings.xml',
+        import.meta.url
+      ),
+      'utf8'
+    );
+    const iosUpdatesConfig = readFileSync(
+      new URL('../ios/Groupi/Supporting/Expo.plist', import.meta.url),
+      'utf8'
+    );
+
+    expect(androidResources).toContain(
+      `<string name="expo_runtime_version">${appConfig.runtimeVersion}</string>`
+    );
+    expect(iosUpdatesConfig).toMatch(
+      new RegExp(
+        `<key>EXUpdatesRuntimeVersion<\\/key>\\s*<string>${appConfig.runtimeVersion}<\\/string>`
+      )
+    );
   });
 
   it('keeps native passkey ceremonies on the iOS main queue', () => {
