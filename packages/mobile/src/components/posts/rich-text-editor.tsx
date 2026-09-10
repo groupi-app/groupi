@@ -165,6 +165,9 @@ interface RichTextEditorProps {
   onChange?: (html: string) => void;
   editable?: boolean;
   minHeight?: number;
+  variant?: 'full' | 'compact';
+  autofocus?: boolean;
+  accessibilityLabel?: string;
 }
 
 export function RichTextEditor({
@@ -173,7 +176,11 @@ export function RichTextEditor({
   onChange,
   editable = true,
   minHeight = 200,
+  variant = 'full',
+  autofocus = false,
+  accessibilityLabel = 'Rich text editor',
 }: RichTextEditorProps) {
+  const isCompact = variant === 'compact';
   const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const bgColor = useCSSVariable('--color-background') as string | undefined;
@@ -192,9 +199,11 @@ export function RichTextEditor({
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 16px;
       line-height: 1.6;
-      padding: 12px;
-      min-height: ${minHeight}px;
+      box-sizing: border-box;
+      padding: ${isCompact ? '8px 10px' : '12px'};
+      min-height: ${isCompact ? Math.max(minHeight - 2, 1) : minHeight}px;
     }
+    ${isCompact ? 'p { margin: 0; }' : ''}
     .tiptap p.is-editor-empty:first-child::before {
       color: ${mutedColor ?? '#9ca3af'};
       content: ${JSON.stringify(placeholder)};
@@ -223,6 +232,7 @@ export function RichTextEditor({
     [
       bgColor,
       borderColor,
+      isCompact,
       minHeight,
       mutedColor,
       placeholder,
@@ -244,7 +254,7 @@ export function RichTextEditor({
   );
   const editor = useEditorBridge({
     initialContent: initialContent || '<p></p>',
-    autofocus: false,
+    autofocus,
     avoidIosKeyboard: true,
     editable,
     dynamicHeight: false,
@@ -333,41 +343,54 @@ export function RichTextEditor({
   }, [html, onChange]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          minHeight,
-          borderColor: borderColor ?? '#e5e7eb',
-          backgroundColor: bgColor ?? '#ffffff',
-        },
-      ]}
-    >
-      <RichText
-        editor={editor}
-        exclusivelyUseCustomOnMessage={false}
-        onLoad={handleEditorLoad}
-        onLoadStart={handleEditorLoadStart}
-        onMessage={handleEditorMessage}
-        style={styles.editor}
-      />
-      {!isEditorReady ? (
-        <View
-          className='absolute inset-0 bg-background px-3 py-4'
-          pointerEvents='none'
-          accessibilityRole='progressbar'
-          accessibilityLabel='Loading editor'
-          accessibilityLiveRegion='polite'
-        >
-          <Skeleton className='mb-5 h-4 w-2/5 rounded-soft' />
-          <Skeleton className='mb-3 h-3 w-full rounded-soft' />
-          <Skeleton className='mb-3 h-3 w-4/5 rounded-soft' />
-          <Skeleton className='h-3 w-3/5 rounded-soft' />
-        </View>
-      ) : null}
+    <View style={[styles.root, isCompact ? { height: minHeight } : undefined]}>
+      <View
+        style={[
+          styles.editorFrame,
+          {
+            minHeight,
+            borderColor: borderColor ?? '#e5e7eb',
+            backgroundColor: bgColor ?? '#ffffff',
+          },
+        ]}
+      >
+        <RichText
+          editor={editor}
+          exclusivelyUseCustomOnMessage={false}
+          onLoad={handleEditorLoad}
+          onLoadStart={handleEditorLoadStart}
+          onMessage={handleEditorMessage}
+          scrollEnabled={isCompact}
+          bounces={false}
+          style={styles.editor}
+          accessibilityLabel={accessibilityLabel}
+        />
+        {!isEditorReady ? (
+          <View
+            className='absolute inset-0 bg-background px-3 py-3'
+            pointerEvents='none'
+            accessibilityRole='progressbar'
+            accessibilityLabel='Loading editor'
+            accessibilityLiveRegion='polite'
+          >
+            {isCompact ? (
+              <Skeleton className='h-4 w-3/5 rounded-soft' />
+            ) : (
+              <>
+                <Skeleton className='mb-5 h-4 w-2/5 rounded-soft' />
+                <Skeleton className='mb-3 h-3 w-full rounded-soft' />
+                <Skeleton className='mb-3 h-3 w-4/5 rounded-soft' />
+                <Skeleton className='h-3 w-3/5 rounded-soft' />
+              </>
+            )}
+          </View>
+        ) : null}
+      </View>
       {editable && slashQuery !== null ? (
         <View
-          className='absolute left-2 right-2 top-2 overflow-hidden rounded-card border border-border bg-popover shadow-floating'
+          className={`absolute left-2 right-2 z-popover overflow-hidden rounded-card border border-border bg-popover shadow-floating ${
+            isCompact ? 'bottom-full mb-2' : 'top-2'
+          }`}
           accessibilityRole='menu'
           accessibilityLabel='Formatting commands'
         >
@@ -403,7 +426,11 @@ export function RichTextEditor({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
+    flex: 1,
+    overflow: 'visible',
+  },
+  editorFrame: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 12,

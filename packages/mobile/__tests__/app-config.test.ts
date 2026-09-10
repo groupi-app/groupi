@@ -89,6 +89,10 @@ describe('native app-link configuration', () => {
       new URL('../ios/Groupi/Groupi.entitlements', import.meta.url),
       'utf8'
     );
+    const infoPlist = readFileSync(
+      new URL('../ios/Groupi/Info.plist', import.meta.url),
+      'utf8'
+    );
     const manifest = readFileSync(
       new URL('../android/app/src/main/AndroidManifest.xml', import.meta.url),
       'utf8'
@@ -96,6 +100,12 @@ describe('native app-link configuration', () => {
 
     expect(entitlements).toContain('applinks:www.groupi.gg');
     expect(entitlements).toContain('webcredentials:www.groupi.gg');
+    expect(infoPlist).toContain('<key>UIBackgroundModes</key>');
+    expect(infoPlist).toContain('<string>remote-notification</string>');
+    expect(appConfig.plugins).toContainEqual([
+      'expo-notifications',
+      expect.objectContaining({ enableBackgroundRemoteNotifications: true }),
+    ]);
     expect(manifest).toContain('android:autoVerify="true"');
     for (const pathPrefix of APP_LINK_PATH_PREFIXES) {
       expect(manifest).toContain(`android:pathPrefix="${pathPrefix}"`);

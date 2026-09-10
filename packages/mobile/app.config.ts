@@ -117,6 +117,7 @@ export default {
         defaultChannel: 'default',
         icon: './assets/notification-icon.png',
         color: '#6d28d9',
+        enableBackgroundRemoteNotifications: true,
       },
     ],
   ],
