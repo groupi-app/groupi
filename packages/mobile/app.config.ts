@@ -73,6 +73,14 @@ export default {
   slug: 'groupi-mobile',
   owner: 'theiasurette',
   version: '0.1.0',
+  runtimeVersion: {
+    policy: 'fingerprint' as const,
+  },
+  updates: {
+    url: `https://u.expo.dev/${easProjectId}`,
+    checkAutomatically: 'ON_LOAD' as const,
+    fallbackToCacheTimeout: 0,
+  },
   orientation: 'portrait',
   scheme: 'groupi',
   icon: './assets/icon.png',
@@ -83,7 +91,7 @@ export default {
     backgroundColor: '#ffffff',
   },
   ios: {
-    supportsTablet: true,
+    supportsTablet: false,
     bundleIdentifier: 'com.groupi.mobile',
     associatedDomains: [
       `applinks:${appLinkHost}`,
@@ -111,6 +119,16 @@ export default {
     'expo-secure-store',
     '@react-native-community/datetimepicker',
     'expo-font',
+    [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Groupi uses your photo library when you choose images for events, posts, and replies.',
+        cameraPermission:
+          'Groupi uses your camera when you take images for events, posts, and replies.',
+        microphonePermission: false,
+      },
+    ],
     [
       'expo-notifications',
       {

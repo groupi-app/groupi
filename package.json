@@ -38,6 +38,7 @@
     "e2e": "pnpm --filter @groupi/web e2e",
     "e2e:ui": "pnpm --filter @groupi/web e2e:ui",
     "mobile:link-associations": "node packages/mobile/scripts/generate-link-associations.mjs",
+    "mobile:sync-version": "node packages/mobile/scripts/sync-native-version.mjs",
     "clean": "turbo clean && rm -rf node_modules && pnpm install",
     "clean:deps": "find . -name node_modules -type d -exec rm -rf {} + && pnpm install",
     "check": "pnpm lint && pnpm type-check && pnpm format:check",
@@ -49,11 +50,11 @@
     "prepare": "husky",
     "changeset": "changeset",
     "changeset:add": "changeset add",
-    "changeset:version": "changeset version",
+    "changeset:version": "changeset version && pnpm mobile:sync-version",
     "changeset:status": "changeset status",
     "commit": "cz",
-    "version-packages": "changeset version && pnpm generate:changelog",
-    "release": "changeset version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'"
+    "version-packages": "pnpm changeset:version && pnpm generate:changelog",
+    "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
