@@ -72,7 +72,7 @@ export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
   owner: 'theiasurette',
-  version: '0.4.0',
+  version: '0.4.1',
   // This native runtime is intentionally independent from the app/package
   // version. Keep it stable for JavaScript-only OTA releases and increment it
   // whenever native dependencies or native configuration change.
