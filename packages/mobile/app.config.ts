@@ -72,7 +72,7 @@ export default {
   name: 'Groupi',
   slug: 'groupi-mobile',
   owner: 'theiasurette',
-  version: '0.1.0',
+  version: '0.4.0',
   runtimeVersion: {
     policy: 'fingerprint' as const,
   },
