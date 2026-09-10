@@ -57,7 +57,9 @@
         "track": "internal",
         "releaseStatus": "completed"
       },
-      "ios": {}
+      "ios": {
+        "ascAppId": "6810842627"
+      }
     }
   }
 }
