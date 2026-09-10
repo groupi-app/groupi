@@ -121,6 +121,12 @@ assert(
   'Expo ownership/project linkage and native application IDs must remain stable'
 );
 const escapedMobileVersion = mobilePackage.version.replaceAll('.', '\\.');
+const runtimeVersionMatch = appConfig.match(/runtimeVersion: '([^']+)'/);
+const runtimeVersion = runtimeVersionMatch?.[1];
+const escapedRuntimeVersion = runtimeVersion?.replace(
+  /[.*+?^${}()|[\]\\]/g,
+  '\\$&'
+);
 assert(
   new RegExp(`version: '${escapedMobileVersion}'`).test(appConfig) &&
     new RegExp(`versionName "${escapedMobileVersion}"`).test(androidBuild) &&
@@ -136,11 +142,11 @@ assert(
   'The first store release must remain phone-only until iPad QA and screenshots are complete'
 );
 assert(
-  appConfig.includes("policy: 'fingerprint'") &&
+  runtimeVersion !== undefined &&
     appConfig.includes('https://u.expo.dev/${easProjectId}') &&
     appConfig.includes("checkAutomatically: 'ON_LOAD'") &&
     appConfig.includes('fallbackToCacheTimeout: 0'),
-  'EAS Update must use a native-compatible fingerprint and check safely on launch'
+  'EAS Update must use an explicit native runtime and check safely on launch'
 );
 assert(
   androidManifest.includes(
@@ -149,12 +155,16 @@ assert(
     androidManifest.includes(
       'expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"'
     ) &&
-    androidStrings.includes('file:fingerprint') &&
+    androidStrings.includes(
+      `<string name="expo_runtime_version">${runtimeVersion}</string>`
+    ) &&
     iosExpoPlist.includes(
       'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
     ) &&
-    iosExpoPlist.includes('file:fingerprint'),
-  'Checked-in native projects must use the Groupi EAS Update URL and fingerprint runtime'
+    new RegExp(
+      `<key>EXUpdatesRuntimeVersion<\\/key>\\s*<string>${escapedRuntimeVersion}<\\/string>`
+    ).test(iosExpoPlist),
+  'Checked-in native projects must use the Groupi EAS Update URL and matching explicit runtime'
 );
 assert(
   androidManifest.includes(

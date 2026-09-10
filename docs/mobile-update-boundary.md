@@ -12,10 +12,13 @@ App Store or Play Store binary.
 | Mobile update        | screens, styling, copy, navigation logic, client validation, rich-text behavior, bundled JavaScript and compatible assets                  | EAS Update; no store review                 |
 | Native binary        | native dependencies, permissions, entitlements, app identifiers, passkey module, notification capabilities, icons and splash configuration | signed store build and review               |
 
-The mobile app uses a fingerprint runtime version. An update is therefore
-offered only to binaries whose native dependencies and configuration are
-compatible with it. Preview, acceptance, production-test, and production use
-separate update channels so a QA update cannot reach store users.
+The mobile app uses an explicit native runtime version shared by the Expo,
+Android, and iOS projects. It is intentionally independent from the app and
+package version: JavaScript-only releases keep the current runtime and can ship
+over the air, while native dependency or configuration changes increment the
+runtime and require a new signed binary. Preview, acceptance, production-test,
+and production use separate update channels so a QA update cannot reach store
+users.
 
 ## Audit findings
 
@@ -79,5 +82,7 @@ would degrade the mobile experience.
 - bundle identifiers, signing, native dependency versions, app icon, and splash
   assets.
 
-Any pull request touching these areas must create a new runtime fingerprint and
-a signed binary before an update using that code is published.
+Any pull request touching these areas must increment the explicit runtime in
+`app.config.ts`, Android resources, and the iOS Expo plist, then create a signed
+binary before an update using that code is published. The release validation
+fails if those three runtime values diverge.
