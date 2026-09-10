@@ -95,75 +95,93 @@ export function PushNotificationProvider({
     []
   );
 
-  const refresh = useCallback(async (): Promise<void> => {
-    const generation = lifecycleGeneration.current;
-    if (!isCurrentLifecycle(generation)) return;
-
-    if (!isPushSupportedInThisClient()) {
-      setStatus('unsupported');
-      setErrorMessage(
-        'Remote push notifications require a development or production build.'
-      );
-      return;
-    }
-
-    let currentPermission: PushPermissionState;
-    try {
-      currentPermission = await getPushPermissionState();
+  const refresh = useCallback(
+    async (requestIfUndetermined = false): Promise<void> => {
+      const generation = lifecycleGeneration.current;
       if (!isCurrentLifecycle(generation)) return;
-      setPermission(currentPermission);
-    } catch {
-      if (!isCurrentLifecycle(generation)) return;
-      setStatus('error');
-      setErrorMessage('Groupi could not check notification permission.');
-      return;
-    }
 
-    if (currentPermission !== 'granted') {
-      setStatus(currentPermission === 'denied' ? 'denied' : 'not-enabled');
-      setErrorMessage(null);
-      return;
-    }
+      if (!isPushSupportedInThisClient()) {
+        setStatus('unsupported');
+        setErrorMessage(
+          'Remote push notifications require a development or production build.'
+        );
+        return;
+      }
 
-    if (registrationInFlight.current) {
-      const pendingGeneration = registrationGeneration.current;
-      await registrationInFlight.current;
-      if (!isCurrentLifecycle(generation)) return;
-      if (pendingGeneration === generation) return;
-      return refresh();
-    }
-
-    setStatus('registering');
-    setErrorMessage(null);
-    const attempt = Symbol('push-registration');
-    registrationAttempt.current = attempt;
-    registrationGeneration.current = generation;
-    const registration = (async () => {
+      let currentPermission: PushPermissionState;
       try {
-        const device = await registerForPushNotifications();
+        currentPermission = await getPushPermissionState();
         if (!isCurrentLifecycle(generation)) return;
-        await registerDevice(device);
+        setPermission(currentPermission);
+      } catch {
         if (!isCurrentLifecycle(generation)) return;
-        setStatus('registered');
-      } catch (error) {
-        if (!isCurrentLifecycle(generation)) return;
-        const message =
-          error instanceof Error
-            ? error.message
-            : 'Groupi could not register this device.';
-        setStatus(getRegistrationErrorStatus(message));
-        setErrorMessage(message);
-      } finally {
-        if (registrationAttempt.current === attempt) {
-          registrationInFlight.current = null;
-          registrationGeneration.current = null;
-          registrationAttempt.current = null;
+        setStatus('error');
+        setErrorMessage('Groupi could not check notification permission.');
+        return;
+      }
+
+      if (currentPermission === 'undetermined' && requestIfUndetermined) {
+        setStatus('registering');
+        setErrorMessage(null);
+        try {
+          currentPermission = await requestPushPermission();
+          if (!isCurrentLifecycle(generation)) return;
+          setPermission(currentPermission);
+        } catch {
+          if (!isCurrentLifecycle(generation)) return;
+          setStatus('error');
+          setErrorMessage('Groupi could not request notification permission.');
+          return;
         }
       }
-    })();
-    registrationInFlight.current = registration;
-    return registration;
-  }, [isCurrentLifecycle, registerDevice]);
+
+      if (currentPermission !== 'granted') {
+        setStatus(currentPermission === 'denied' ? 'denied' : 'not-enabled');
+        setErrorMessage(null);
+        return;
+      }
+
+      if (registrationInFlight.current) {
+        const pendingGeneration = registrationGeneration.current;
+        await registrationInFlight.current;
+        if (!isCurrentLifecycle(generation)) return;
+        if (pendingGeneration === generation) return;
+        return refresh();
+      }
+
+      setStatus('registering');
+      setErrorMessage(null);
+      const attempt = Symbol('push-registration');
+      registrationAttempt.current = attempt;
+      registrationGeneration.current = generation;
+      const registration = (async () => {
+        try {
+          const device = await registerForPushNotifications();
+          if (!isCurrentLifecycle(generation)) return;
+          await registerDevice(device);
+          if (!isCurrentLifecycle(generation)) return;
+          setStatus('registered');
+        } catch (error) {
+          if (!isCurrentLifecycle(generation)) return;
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Groupi could not register this device.';
+          setStatus(getRegistrationErrorStatus(message));
+          setErrorMessage(message);
+        } finally {
+          if (registrationAttempt.current === attempt) {
+            registrationInFlight.current = null;
+            registrationGeneration.current = null;
+            registrationAttempt.current = null;
+          }
+        }
+      })();
+      registrationInFlight.current = registration;
+      return registration;
+    },
+    [isCurrentLifecycle, registerDevice]
+  );
 
   const resumeRegistration = useCallback(() => {
     if (!activeIdentity.current) return;
@@ -236,7 +254,7 @@ export function PushNotificationProvider({
       setStatus('not-enabled');
       return;
     }
-    void refresh();
+    void refresh(true);
   }, [isAuthenticated, refresh, sessionUserId]);
 
   useEffect(() => {
