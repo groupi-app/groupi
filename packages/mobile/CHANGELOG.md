@@ -1,5 +1,11 @@
 # @groupi/mobile
 
+## 0.4.1
+
+### Patch Changes
+
+- fb39ccf: Use a stable explicit native runtime for reliable store builds and over-the-air updates while enforcing matching runtime configuration across iOS and Android.
+
 ## 0.4.0
 
 ### Minor Changes
