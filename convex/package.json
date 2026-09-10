@@ -35,6 +35,6 @@
     "convex": "^1.43.0",
     "convex-test": "^0.0.41",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.0"
+    "vitest": "^4.1.11"
   }
 }
