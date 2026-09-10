@@ -5,7 +5,7 @@ import appConfig from '../app.config';
 import { APP_LINK_PATH_PREFIXES } from '../src/lib/public-urls';
 
 describe('native app-link configuration', () => {
-  it('uses the shared Groupi brand icon across Expo and checked-in iOS assets', () => {
+  it('uses the shared Groupi brand icon and a store-safe generated iOS asset', () => {
     const webIcon = readFileSync(
       new URL('../../web/public/icons/icon-1024x1024.png', import.meta.url)
     );
@@ -22,7 +22,13 @@ describe('native app-link configuration', () => {
     expect(appConfig.icon).toBe('./assets/icon.png');
     expect(appConfig.android.adaptiveIcon.backgroundColor).toBe('#8200AD');
     expect(expoIcon.equals(webIcon)).toBe(true);
-    expect(iosIcon.equals(webIcon)).toBe(true);
+    // Expo prebuild converts the palette PNG to RGB, so the bytes differ even
+    // though the source pixels are the same. Verify its PNG header, dimensions,
+    // and non-alpha RGB color type instead of its compression representation.
+    expect(iosIcon.subarray(1, 4).toString()).toBe('PNG');
+    expect(iosIcon.readUInt32BE(16)).toBe(1024);
+    expect(iosIcon.readUInt32BE(20)).toBe(1024);
+    expect(iosIcon[25]).toBe(2);
   });
 
   it('is linked to the production Expo project', () => {
@@ -30,6 +36,15 @@ describe('native app-link configuration', () => {
     expect(appConfig.extra.eas.projectId).toBe(
       '15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
     );
+  });
+
+  it('accepts only native-compatible over-the-air updates', () => {
+    expect(appConfig.runtimeVersion).toEqual({ policy: 'fingerprint' });
+    expect(appConfig.updates).toEqual({
+      url: 'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f',
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 0,
+    });
   });
 
   it('keeps native passkey ceremonies on the iOS main queue', () => {
@@ -97,6 +112,10 @@ describe('native app-link configuration', () => {
       new URL('../android/app/src/main/AndroidManifest.xml', import.meta.url),
       'utf8'
     );
+    const expoPlist = readFileSync(
+      new URL('../ios/Groupi/Supporting/Expo.plist', import.meta.url),
+      'utf8'
+    );
 
     expect(entitlements).toContain('applinks:www.groupi.gg');
     expect(entitlements).toContain('webcredentials:www.groupi.gg');
@@ -107,6 +126,29 @@ describe('native app-link configuration', () => {
       expect.objectContaining({ enableBackgroundRemoteNotifications: true }),
     ]);
     expect(manifest).toContain('android:autoVerify="true"');
+    expect(manifest).toContain(
+      'expo.modules.updates.ENABLED" android:value="true"'
+    );
+    expect(manifest).toContain(
+      'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
+    );
+    expect(expoPlist).toContain('<key>EXUpdatesEnabled</key>');
+    expect(expoPlist).toContain('<true/>');
+    expect(expoPlist).toContain(
+      '<string>https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f</string>'
+    );
+    expect(appConfig.ios.supportsTablet).toBe(false);
+    expect(infoPlist).not.toContain('NSMicrophoneUsageDescription');
+    expect(manifest).toContain(
+      'android.permission.RECORD_AUDIO" tools:node="remove"'
+    );
+    expect(manifest).toContain(
+      'android.permission.SYSTEM_ALERT_WINDOW" tools:node="remove"'
+    );
+    expect(appConfig.plugins).toContainEqual([
+      'expo-image-picker',
+      expect.objectContaining({ microphonePermission: false }),
+    ]);
     for (const pathPrefix of APP_LINK_PATH_PREFIXES) {
       expect(manifest).toContain(`android:pathPrefix="${pathPrefix}"`);
     }

@@ -46,7 +46,7 @@ vi.mock('../../lib/auth-client', () => ({
     signOut: mocks.signOut,
   },
 }));
-vi.mock('expo-modules-core', () => ({
+vi.mock('expo', () => ({
   requireOptionalNativeModule: () => ({}),
 }));
 vi.mock('uniwind', () => ({ useCSSVariable: () => '#111827' }));
