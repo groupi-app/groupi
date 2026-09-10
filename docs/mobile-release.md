@@ -22,6 +22,12 @@ automated submission is deliberately limited to the completed Google Play
 internal-test track. iOS submission uploads to App Store Connect/TestFlight;
 promotion beyond internal testing remains an explicit store-console action.
 
+Preview, acceptance, production-test, and production builds use isolated EAS
+Update channels. The app uses a fingerprint runtime version, so JavaScript,
+styling, copy, and compatible bundled assets can be delivered over the air
+without allowing an update that depends on missing native code. See
+`docs/mobile-update-boundary.md` for the audited server/update/native boundary.
+
 ## One-time Expo and signing setup
 
 The app is linked to
@@ -120,6 +126,10 @@ Run the structural release guard without contacting EAS:
 pnpm release:check
 ```
 
+After a changeset version bump, `pnpm changeset:version` synchronizes the Expo,
+Android, and iOS marketing versions automatically. Run
+`pnpm mobile:sync-version` after changing the mobile package version by hand.
+
 ## Universal-link trust files
 
 The native app claims `www.groupi.gg`, so the website must publish association
@@ -168,25 +178,25 @@ files directly on the claimed `www.groupi.gg` domain.
 
 ## Release acceptance
 
-### Activation status (verified 2026-08-28)
+### Activation status (verified 2026-09-10)
 
 - The Expo project is linked and its production environment contains the
   canonical public base/auth URLs plus the live production Convex URL.
 - The production Convex deployment trusts the EAS project ID, native app ID,
   and current EAS Android signing origin. `E2E_TESTING` is `false`.
 - The signed preview, production acceptance, and internal-release workflow
-  definitions pass Expo's hosted validator. Hosted Maestro validation is
-  blocked only by the account's paid-plan entitlement.
-- No iOS test devices are registered with Apple team `X2HQQURT9V`, so an ad hoc
-  iOS acceptance artifact cannot include a device until registration is
-  completed.
-- Both live `www.groupi.gg/.well-known` association endpoints still return 404.
-  Their checked-in sources and JSON headers are ready, but the web branch must
-  be deployed before universal links and native passkeys can be accepted on
-  signed devices.
+  definitions pass Expo's hosted validator. Existing signed acceptance builds
+  have completed successfully for both platforms.
+- Both live `www.groupi.gg/.well-known` association endpoints return HTTP 200
+  JSON with the direct Apple and Android signing identities.
 - The direct EAS Android certificate is published in source. The Google Play
   app-signing fingerprint must be added after Play App Signing exists; it does
   not block direct APK acceptance testing.
+- Store automation still needs an App Store Connect API key and app record, a
+  Google Play service-account key, the Android FCM V1 service account, and the
+  `EXPO_TOKEN` plus `EAS_PROJECT_ID` GitHub secrets. Legal URLs, store listing
+  copy, screenshots, and Apple sign-in must be completed before public review;
+  they do not block TestFlight or Play internal testing.
 
 Before promotion beyond internal testing, exercise native Google, Discord,
 magic-link, and OTP sign-in; invite return; event creation and editing;

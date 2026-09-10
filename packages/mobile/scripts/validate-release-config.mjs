@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -22,8 +22,14 @@ function assert(condition, message) {
 }
 
 const eas = JSON.parse(read('eas.json'));
+const mobilePackage = JSON.parse(read('package.json'));
 const appConfig = read('app.config.ts');
 const androidBuild = read('android/app/build.gradle');
+const androidManifest = read('android/app/src/main/AndroidManifest.xml');
+const androidStrings = read('android/app/src/main/res/values/strings.xml');
+const iosInfoPlist = read('ios/Groupi/Info.plist');
+const iosExpoPlist = read('ios/Groupi/Supporting/Expo.plist');
+const iosProject = read('ios/Groupi.xcodeproj/project.pbxproj');
 const associationGenerator = read('scripts/generate-link-associations.mjs');
 const linking = JSON.parse(read('linking.config.json'));
 const webConfig = readFileSync(
@@ -62,6 +68,10 @@ assert(
   'EAS build versions must be managed remotely'
 );
 assert(
+  eas.cli?.requireCommit === true,
+  'EAS release builds must come from a committed source state'
+);
+assert(
   eas.build?.['e2e-test']?.withoutCredentials === true &&
     eas.build?.['e2e-test']?.ios?.simulator === true &&
     eas.build?.['e2e-test']?.android?.buildType === 'apk',
@@ -83,9 +93,20 @@ assert(
 );
 assert(
   eas.build?.production?.distribution === 'store' &&
-    eas.build?.production?.autoIncrement === true,
+    eas.build?.production?.autoIncrement === true &&
+    eas.build?.production?.channel === 'production',
   'The production profile must create versioned store builds'
 );
+for (const [profile, channel] of [
+  ['preview', 'preview'],
+  ['acceptance', 'acceptance'],
+  ['production-test', 'production-test'],
+]) {
+  assert(
+    eas.build?.[profile]?.channel === channel,
+    `The ${profile} build profile must use the isolated ${channel} update channel`
+  );
+}
 assert(
   eas.submit?.production?.android?.track === 'internal' &&
     eas.submit?.production?.android?.releaseStatus === 'completed',
@@ -98,6 +119,50 @@ assert(
     appConfig.includes("bundleIdentifier: 'com.groupi.mobile'") &&
     appConfig.includes("package: 'com.groupi.mobile'"),
   'Expo ownership/project linkage and native application IDs must remain stable'
+);
+const escapedMobileVersion = mobilePackage.version.replaceAll('.', '\\.');
+assert(
+  new RegExp(`version: '${escapedMobileVersion}'`).test(appConfig) &&
+    new RegExp(`versionName "${escapedMobileVersion}"`).test(androidBuild) &&
+    new RegExp(
+      `<key>CFBundleShortVersionString<\\/key>\\s*<string>${escapedMobileVersion}<\\/string>`
+    ).test(iosInfoPlist) &&
+    new RegExp(`MARKETING_VERSION = ${escapedMobileVersion};`).test(iosProject),
+  'Mobile package, Expo, Android, and iOS marketing versions must match; run pnpm mobile:sync-version'
+);
+assert(
+  appConfig.includes('supportsTablet: false') &&
+    iosProject.match(/TARGETED_DEVICE_FAMILY = 1;/g)?.length === 2,
+  'The first store release must remain phone-only until iPad QA and screenshots are complete'
+);
+assert(
+  appConfig.includes("policy: 'fingerprint'") &&
+    appConfig.includes('https://u.expo.dev/${easProjectId}') &&
+    appConfig.includes("checkAutomatically: 'ON_LOAD'") &&
+    appConfig.includes('fallbackToCacheTimeout: 0'),
+  'EAS Update must use a native-compatible fingerprint and check safely on launch'
+);
+assert(
+  androidManifest.includes(
+    'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
+  ) &&
+    androidManifest.includes(
+      'expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"'
+    ) &&
+    androidStrings.includes('file:fingerprint') &&
+    iosExpoPlist.includes(
+      'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f'
+    ) &&
+    iosExpoPlist.includes('file:fingerprint'),
+  'Checked-in native projects must use the Groupi EAS Update URL and fingerprint runtime'
+);
+assert(
+  androidManifest.includes(
+    'expo.modules.updates.ENABLED" android:value="true"'
+  ) &&
+    iosExpoPlist.includes('<key>EXUpdatesEnabled</key>') &&
+    iosExpoPlist.includes('<true/>'),
+  'EAS Update must remain enabled in both checked-in native projects'
 );
 for (const profile of ['acceptance', 'production', 'production-test']) {
   assert(
@@ -184,6 +249,43 @@ assert(
   !/signingConfig\s+signingConfigs\.debug/.test(releaseBlock),
   'Android release builds must never use the repository debug key'
 );
+for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
+  assert(
+    existsSync(
+      join(
+        mobileDir,
+        'android',
+        'app',
+        'src',
+        'main',
+        'res',
+        `drawable-${density}`,
+        'notification_icon.png'
+      )
+    ),
+    `Android notification icon is missing for ${density}`
+  );
+}
+assert(
+  !iosInfoPlist.includes('NSMicrophoneUsageDescription') &&
+    appConfig.includes('microphonePermission: false') &&
+    androidManifest.includes(
+      'android.permission.RECORD_AUDIO" tools:node="remove"'
+    ) &&
+    androidManifest.includes(
+      'android.permission.SYSTEM_ALERT_WINDOW" tools:node="remove"'
+    ),
+  'Release builds must not request microphone access when Groupi only captures still images'
+);
+for (const metadataName of [
+  'com.google.firebase.messaging.default_notification_icon',
+  'expo.modules.notifications.default_notification_icon',
+]) {
+  assert(
+    androidManifest.includes(metadataName),
+    `Android notification metadata is missing ${metadataName}`
+  );
+}
 
 for (const workflow of [
   '.eas/workflows/e2e-tests.yml',
