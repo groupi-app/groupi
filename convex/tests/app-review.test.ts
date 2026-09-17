@@ -297,10 +297,13 @@ describe('passwordless store-review inbox', () => {
     await insertCode(t);
     const get = await t.fetch('/app-review/inbox');
     expect(await get.text()).not.toContain(email);
+    // Native browser form POSTs must retain their origin; no-referrer can
+    // turn it into null and cause our origin validation to reject the form.
+    expect(get.headers.get('referrer-policy')).toBe('same-origin');
     const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
     const response = await t.fetch('/app-review/inbox', {
       method: 'POST',
-      headers,
+      headers: { ...headers, Origin: 'https://some.convex.site' },
       body: new URLSearchParams({ accessKey }).toString(),
     });
     expect(response.status).toBe(200);
@@ -308,7 +311,7 @@ describe('passwordless store-review inbox', () => {
     expect(html).toContain('123456');
     expect(html).not.toContain(accessKey);
     expect(response.headers.get('cache-control')).toContain('no-store');
-    expect(response.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(response.headers.get('referrer-policy')).toBe('same-origin');
     expect(response.headers.get('content-security-policy')).toContain(
       "frame-ancestors 'none'"
     );
@@ -318,6 +321,12 @@ describe('passwordless store-review inbox', () => {
       body: new URLSearchParams({ accessKey }).toString(),
     });
     expect(crossOrigin.status).toBe(400);
+    const opaqueOrigin = await t.fetch('/app-review/inbox', {
+      method: 'POST',
+      headers: { ...headers, Origin: 'null' },
+      body: new URLSearchParams({ accessKey }).toString(),
+    });
+    expect(opaqueOrigin.status).toBe(400);
     const queryKey = await t.fetch(`/app-review/inbox?accessKey=${accessKey}`);
     expect(queryKey.status).toBe(400);
     const denied = await t.fetch('/app-review/inbox', {

@@ -34,7 +34,10 @@ function page(content: string, status = 200) {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-store, max-age=0',
         Pragma: 'no-cache',
-        'Referrer-Policy': 'no-referrer',
+        // no-referrer makes ordinary browser form POSTs send Origin: null,
+        // which our same-origin check correctly rejects. Keep the origin for
+        // this form while still withholding referrers from other sites.
+        'Referrer-Policy': 'same-origin',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-Robots-Tag': 'noindex, nofollow, noarchive',
