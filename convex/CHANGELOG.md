@@ -1,5 +1,13 @@
 # @groupi/convex
 
+## 0.4.2
+
+### Patch Changes
+
+- ddd4354: Add secure passwordless store-review access with a private sign-in-code inbox, isolated sample events, expiring credentials, and session revocation.
+- 74b8f10: Fix reviewer inbox sign-in-code retrieval in browsers while preserving same-origin request validation and referrer privacy.
+- 7a98adc: Use the newest passwordless reviewer sign-in code after resends so the private inbox matches normal app authentication.
+
 ## 0.4.0
 
 ### Minor Changes
