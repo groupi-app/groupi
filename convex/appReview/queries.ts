@@ -72,8 +72,10 @@ export const readInbox = internalQuery({
     }
     if (difference !== 0) return null;
 
-    const verification = await ctx.runQuery(
-      components.betterAuth.adapter.findOne,
+    // Match Better Auth's findVerificationValue: resends can leave multiple
+    // records, and only the most recently created one is used for verification.
+    const verifications = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
       {
         model: 'verification',
         where: [
@@ -83,8 +85,11 @@ export const readInbox = internalQuery({
             value: `sign-in-otp-${account.email}`,
           },
         ],
+        sortBy: { field: 'createdAt', direction: 'desc' },
+        paginationOpts: { cursor: null, numItems: 1 },
       }
     );
+    const verification = verifications.page[0];
     // Better Auth 1.6 stores normal plain OTPs as code:attempts. Fail closed if
     // its storage format changes. Do not surface reset/verification/magic tokens.
     const match = verification?.value.match(/^(\d{6}):(\d+)$/);
