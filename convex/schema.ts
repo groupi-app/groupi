@@ -32,6 +32,20 @@ export default defineSchema({
 
   // ===== APPLICATION TABLES =====
 
+  // Private store-review delivery configuration. Never exposed by public queries.
+  appReviewAccounts: defineTable({
+    userId: v.string(),
+    email: v.string(),
+    personId: v.id('persons'),
+    accessKeyHash: v.string(),
+    expiresAt: v.number(),
+    revokedAt: v.optional(v.number()),
+    eventIds: v.array(v.id('events')),
+    createdAt: v.number(),
+  })
+    .index('by_user_id', ['userId'])
+    .index('by_email', ['email']),
+
   persons: defineTable({
     // Link to Better Auth component user (stored as string since it's a component table)
     userId: v.string(), // Better Auth component user ID

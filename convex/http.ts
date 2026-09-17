@@ -4,6 +4,7 @@ import { authComponent, createAuth } from './auth';
 import { handler as apiV1Handler } from './api/v1/index';
 import { handler as apiV2Handler } from './api/v2/index';
 import { internal } from './_generated/api';
+import { inbox as appReviewInbox } from './appReview/http';
 
 /**
  * HTTP router for Convex
@@ -14,6 +15,17 @@ import { internal } from './_generated/api';
  */
 
 const http = httpRouter();
+
+http.route({
+  path: '/app-review/inbox',
+  method: 'GET',
+  handler: appReviewInbox,
+});
+http.route({
+  path: '/app-review/inbox',
+  method: 'POST',
+  handler: appReviewInbox,
+});
 
 // Register Better Auth routes
 // This handles all auth endpoints like /api/auth/signin, /api/auth/signout, etc.
