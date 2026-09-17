@@ -36,7 +36,8 @@ async function insertCode(
   t: ReturnType<typeof createTestInstance>,
   identifier = `sign-in-otp-${email}`,
   value = '123456:0',
-  expiresAt = Date.now() + 60_000
+  expiresAt = Date.now() + 60_000,
+  createdAt = Date.now()
 ) {
   return t.mutation(components.betterAuth.adapter.create, {
     input: {
@@ -45,8 +46,8 @@ async function insertCode(
         identifier,
         value,
         expiresAt,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt,
+        updatedAt: createdAt,
       },
     },
   });
@@ -142,6 +143,25 @@ describe('passwordless store-review inbox', () => {
       });
     }
   );
+
+  it.each([
+    { value: '654321:0', expired: false, expected: '654321' },
+    { value: '654321:0', expired: true, expected: null },
+    { value: '654321:3', expired: false, expected: null },
+    { value: 'hashed-otp:0', expired: false, expected: null },
+  ])('uses only the newest sign-in record: %j', async scenario => {
+    const { t } = await setup();
+    const now = Date.now();
+    await insertCode(t, undefined, '111111:0', now + 60_000, now - 2000);
+    await insertCode(
+      t,
+      undefined,
+      scenario.value,
+      scenario.expired ? now - 1 : now + 60_000,
+      now - 1000
+    );
+    expect(await read(t)).toMatchObject({ otp: scenario.expected });
+  });
 
   it('never returns expired or consumed codes', async () => {
     const { t } = await setup();
@@ -290,6 +310,44 @@ describe('passwordless store-review inbox', () => {
       body: JSON.stringify({ email, otp: inbox.otp }),
     });
     expect(reused.status).not.toBe(200);
+  });
+
+  it('returns the code normal Better Auth accepts after a resend', async () => {
+    const { t } = await setup();
+    await insertCode(
+      t,
+      undefined,
+      '111111:0',
+      Date.now() - 1,
+      Date.now() - 2000
+    );
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const headers = {
+      'Content-Type': 'application/json',
+      Origin: 'https://www.groupi.gg',
+    };
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      vi.setSystemTime(Date.now() + 1000);
+      const response = await t.fetch(
+        '/api/auth/email-otp/send-verification-otp',
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ email, type: 'sign-in' }),
+        }
+      );
+      expect(response.status).toBe(200);
+    }
+    const inbox = await read(t);
+    expect(inbox?.otp).toMatch(/^\d{6}$/);
+    const signedIn = await t.fetch('/api/auth/sign-in/email-otp', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, otp: inbox.otp }),
+    });
+    expect(signedIn.status).toBe(200);
+    // Better Auth may retain earlier unconsumed records. The inbox follows
+    // its current verification lookup, rather than changing OTP lifecycle.
   });
 
   it('requires a same-origin POST body and never echoes or caches its credential', async () => {
