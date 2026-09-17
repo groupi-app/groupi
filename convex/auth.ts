@@ -1,6 +1,6 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
-import { components } from './_generated/api';
+import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import { query, QueryCtx, MutationCtx } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
@@ -180,6 +180,14 @@ const createAuthOptionsInternal = (
       username(),
       magicLink({
         sendMagicLink: async ({ email, url }) => {
+          if (
+            process.env.APP_REVIEW_INBOX_ENABLED === 'true' &&
+            email.toLowerCase().startsWith('app-review-') &&
+            (await ctx.runQuery(internal.appReview.queries.usesPrivateInbox, {
+              email,
+            }))
+          )
+            return;
           // Log magic link for development if debug logging is enabled
           if (process.env.DEBUG_MAGIC_LINKS === 'true') {
             console.log(`🔗 MAGIC LINK - URL: ${url}`);
@@ -247,6 +255,15 @@ const createAuthOptionsInternal = (
         expiresIn: 15 * 60, // 15 minutes
         async sendVerificationOTP({ email, otp, type }) {
           if (type !== 'sign-in') return;
+
+          if (
+            process.env.APP_REVIEW_INBOX_ENABLED === 'true' &&
+            email.toLowerCase().startsWith('app-review-') &&
+            (await ctx.runQuery(internal.appReview.queries.usesPrivateInbox, {
+              email,
+            }))
+          )
+            return;
 
           if (process.env.DEBUG_MAGIC_LINKS === 'true') {
             console.log(`🔢 OTP CODE for ${email}: ${otp}`);
