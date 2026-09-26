@@ -14,8 +14,10 @@ does not authorize store submissions, distribution, or publication.
 
 ## Verified status
 
-Checked September 17, 2026 (America/New_York), against production source
-`237a1fdddf569b4b7097beddd14f784a9d6bdaab`.
+Production audit checked September 17, 2026 (America/New_York), against source
+`237a1fdddf569b4b7097beddd14f784a9d6bdaab`. Firebase setup and Android build
+preparation were updated September 26; older artifact evidence below refers to
+the runtime-1 build and does not validate the replacement binary.
 
 | Item                        | Evidence and status                                                                                                                                                                                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -26,7 +28,7 @@ Checked September 17, 2026 (America/New_York), against production source
 | Android certificate         | The downloaded AAB's certificate SHA-256 matches the EAS certificate in `linking.config.json`: `C3:CE:F7:0F:56:A5:C0:52:C9:7E:BA:D4:30:82:02:92:23:C5:08:B0:76:E1:0C:64:D2:56:55:7A:28:22:79:7F`. This does not establish the future Play app-signing certificate. |
 | Artifact integrity          | AAB SHA-256: `500d6dce3b47f2a6f0f4c42375ccbdf4481616d9837884d8f27e15b9adb207d9`. Certificate inspected; complete Android signature verification and device install remain outstanding.                                                                             |
 | Embedded production hosts   | Android bundle contains `trustworthy-warthog-524.convex.cloud` and `www.groupi.gg`. Static inspection does not replace an authenticated device test.                                                                                                               |
-| Android push                | FCM V1 credential is assigned in EAS for `groupi-ae0fa`; native Firebase configuration is prepared locally at runtime 2. Existing runtime-1 AAB lacks that configuration; new signed build and device testing required.                                            |
+| Android push                | FCM V1 is assigned in EAS for `groupi-ae0fa`. The runtime-2 signed baseline finished and its Firebase resources were verified (details below); physical push testing remains outstanding.                                                                          |
 | Play automation             | EAS reports no Google Play submission service-account key assigned.                                                                                                                                                                                                |
 | Association endpoints       | Both canonical `/.well-known` endpoints return direct HTTP 200 JSON. Play app-signing certificate still needs verification and inclusion.                                                                                                                          |
 | Public resources            | `/privacy`, `/terms`, `/support`, and `/delete-account` returned HTTP 404. No corresponding public pages were found in source.                                                                                                                                     |
@@ -79,10 +81,36 @@ in Google Cloud. The organization-wide policy was never changed.
 Device verification is deferred because the owner's current Android device is
 outdated and cannot be updated.
 
-See the [existing EAS build](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/builds/b9443438-d8f9-4f1e-a603-ce647a0de246).
-A new signed binary is required to include the newly prepared native Firebase
-configuration before Android push acceptance. Local `pnpm check`, six mobile
-config tests, and release validation passed; no new binary has been built yet.
+The [existing runtime-1 build](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/builds/b9443438-d8f9-4f1e-a603-ce647a0de246)
+does not include the new native Firebase configuration. Local `pnpm check`, six
+mobile config tests, and release validation passed. Patch changesets for mobile
+push configuration and backend credential cleanup are committed.
+
+The [replacement Android build](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/builds/dea56545-5e07-4733-a34e-440f041e1ab5)
+finished successfully September 26 from commit
+`c44f725d432bfa284bff4fae689d7f38df9eac47`: version `0.4.1`, version code `6`,
+native runtime `2`, production environment/profile/channel, store distribution,
+and the existing EAS-managed signing key. Version code `5` was consumed by a
+pre-upload attempt that stopped when EAS normalized an XML final newline. No
+store submission or backend deployment has occurred.
+
+The signed AAB is available from the build page. Its SHA-256 is
+`25442c4c16c877da4ba505cf320331d4a325afc8bcd284c1cc077b18e28fa52f`.
+Artifact inspection confirmed the new Firebase project number/app ID and the
+production Convex/web hosts. The signing certificate matches the existing EAS
+certificate listed above. OpenSSL verified the signature over the signing
+manifest; the manifest digest and SHA-256 digests of all 1,515 bundle entries
+also passed. Physical-device installation and push acceptance remain outstanding.
+
+Two subsequently reported mobile display fixes are committed in `558fa06` and are
+**not included** in that build: event covers wait for measured layout and source
+dimensions before mounting the native image, and post list text/titles are
+constrained to wrap while feed previews preserve block boundaries. The native
+image is recreated if its displayed size changes, preventing reuse of a tiny
+initial decode. Regression tests and `pnpm check` pass; sharpness and text layout
+still require visual acceptance on the affected phone. The owner approved the
+patch release note, committed in `348908d`. Include these changes in the next
+candidate before final device testing.
 
 ## Release blockers
 
@@ -123,8 +151,10 @@ rollout and design indexed ownership or a durable cleanup flow if needed.
    renew it. Agree an explicit lifecycle that keeps the current account/key
    usable throughout review. Do not rotate or revoke access while reviewers use
    it. Keep credentials out of public testing instructions.
-6. **Android services:** finish Firebase registration, native configuration,
-   FCM V1 credential assignment, and Play account/app/signing setup.
+6. **Android services:** Firebase registration, native configuration, FCM V1
+   credential assignment, and the runtime-2 signed baseline are complete. Finish
+   physical push testing, plus Play account verification, app creation, and
+   signing setup. Rebuild with the subsequent display fixes before final testing.
 7. **Acceptance and declarations:** complete the physical-device matrix,
    screenshots, privacy disclosures, ratings, agreements, and store metadata.
 
