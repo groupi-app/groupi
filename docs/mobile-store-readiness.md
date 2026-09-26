@@ -141,6 +141,25 @@ External beta review has not been submitted for build `6`, and physical-device
 acceptance has not been performed. Internal testers can now update through
 TestFlight to `0.4.1 (6)` to verify cover sharpness and post wrapping.
 
+The owner then reproduced right-edge clipping while **composing** a post in
+build `6`. This is a separate WebView layout path from displayed post content.
+Commit `737e1a5` moves page padding inside the editable area, anchors Tentap's
+viewport-width scroll container, and wraps long text, code, and task-list content.
+All six editor tests and `pnpm check` passed. A real Chromium layout fixture using
+the installed Tentap/ProseMirror CSS reproduced overflow in all 48 original
+cases and passed all 48 fixed cases (240–390px, full/compact, paragraphs, long
+tokens/URLs, lists, task lists, code), preserving text and checking character
+bounds. WebKit/native keyboard behavior still requires the owner's iPhone test.
+
+The [iPhone editor update](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/updates/5817a9c9-8b71-44ef-a6a3-4c8820000874)
+was published to the existing `production` channel/branch for **iOS runtime 2
+only**, update ID `01a0dfe5-639c-70f2-a30f-7af0184f86bb`. It is compatible with
+build `6`; no native changes or new TestFlight binary were required. The existing
+approved mobile display-fix changeset covers this follow-up. Build `4` (runtime
+
+1. and Android do not receive this update. On a network connection, open Groupi
+   to allow the update to download, then fully close and reopen it to test the fix.
+
 ## Release blockers
 
 The local release-preparation branch includes a bounded authentication cleanup
