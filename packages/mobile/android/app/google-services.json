@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665236106441",
+    "project_id": "groupi-ae0fa",
+    "storage_bucket": "groupi-ae0fa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665236106441:android:69d82b8fbf105dd834f118",
+        "android_client_info": {
+          "package_name": "com.groupi.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsFkpNh1PvlcSkMQO9HVvVeR1TGkkuU_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

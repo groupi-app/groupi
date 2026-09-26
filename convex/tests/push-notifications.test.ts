@@ -12,6 +12,7 @@ import {
 import { collectPushData } from '../lib/notifications';
 import { cascadeDeleteEventData } from '../lib/cascade';
 import { createTestInstance, TestScenarios } from './test_helpers';
+import { createAuthAccount, registerBetterAuth } from './auth_helpers';
 
 const TOKEN_A = 'ExpoPushToken[test-device-token-a]';
 const TOKEN_B = 'ExponentPushToken[test-device-token-b]';
@@ -773,8 +774,8 @@ describe('Native push notifications', () => {
 
   test('deletes push credentials and delivery history with the account', async () => {
     const t = createTestInstance();
-    const { userId, personId } = await TestScenarios.simpleUser(t);
-    const auth = t.withIdentity({ subject: userId, username: 'delete-me' });
+    registerBetterAuth(t);
+    const { personId, auth } = await createAuthAccount(t, 'delete-me');
     const registration = await auth.mutation(
       api.pushNotifications.mutations.registerDevice,
       {
@@ -859,10 +860,12 @@ describe('Native push notifications', () => {
       return { notificationId, deliveryId };
     });
 
-    const deletingAuthor = t.withIdentity({
-      subject: setup.attendee.userId,
-      username: 'delete-author',
-    });
+    registerBetterAuth(t);
+    const { auth: deletingAuthor } = await createAuthAccount(
+      t,
+      'delete-author',
+      setup.attendee.personId
+    );
     await deletingAuthor.mutation(api.users.mutations.deleteUserAccount, {
       confirmation: 'delete-author',
     });

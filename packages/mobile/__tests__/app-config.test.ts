@@ -39,7 +39,7 @@ describe('native app-link configuration', () => {
   });
 
   it('accepts only native-compatible over-the-air updates', () => {
-    expect(appConfig.runtimeVersion).toBe('1');
+    expect(appConfig.runtimeVersion).toBe('2');
     expect(appConfig.updates).toEqual({
       url: 'https://u.expo.dev/15aeaffd-755c-4f24-96b9-dd9f1bc25e6f',
       checkAutomatically: 'ON_LOAD',

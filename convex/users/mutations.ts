@@ -1,4 +1,7 @@
 import { mutation } from '../_generated/server';
+import { components } from '../_generated/api';
+import type { PaginationOptions, PaginationResult } from 'convex/server';
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { v } from 'convex/values';
 import {
   requireAuth,
@@ -6,10 +9,60 @@ import {
   ensurePersonRecord,
   authComponent,
   createAuth,
+  type ExtendedAuthUser,
 } from '../auth';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
+
+/** Match the verification formats emitted by the installed auth plugins. */
+function isAccountVerification(
+  verification: AuthDoc<'verification'>,
+  user: ExtendedAuthUser
+): boolean {
+  const email = user.email.toLowerCase();
+  if (
+    ['sign-in', 'email-verification', 'forget-password'].some(
+      type => verification.identifier === `${type}-otp-${email}`
+    )
+  ) {
+    return true;
+  }
+  if (
+    (verification.identifier.startsWith('reset-password:') ||
+      verification.identifier.startsWith('delete-account-')) &&
+    verification.value === user._id
+  ) {
+    return true;
+  }
+
+  let value: unknown;
+  try {
+    value = JSON.parse(verification.value);
+  } catch {
+    return false;
+  }
+  if (!value || typeof value !== 'object') return false;
+
+  // Magic-link tokens store { email, name? } under a random identifier.
+  if (
+    'email' in value &&
+    typeof value.email === 'string' &&
+    value.email.toLowerCase() === email
+  ) {
+    return true;
+  }
+  // Passkey challenges bind the challenge to a user ID when authenticated.
+  return (
+    'expectedChallenge' in value &&
+    typeof value.expectedChallenge === 'string' &&
+    'userData' in value &&
+    value.userData !== null &&
+    typeof value.userData === 'object' &&
+    'id' in value.userData &&
+    value.userData.id === user._id
+  );
+}
 
 /**
  * Users mutations for the Convex backend
@@ -320,7 +373,7 @@ export const completeOnboarding = mutation({
  * - All notifications
  * - Person record and settings
  *
- * Note: Better Auth session/account cleanup is handled by the component.
+ * Better Auth identity and linked credentials are deleted in this transaction.
  * Events where user is the sole organizer will have ownership transferred
  * to another member if possible, otherwise the event is deleted.
  */
@@ -602,6 +655,66 @@ export const deleteUserAccount = mutation({
     }
 
     await ctx.db.delete(person._id);
+
+    // Magic-link identifiers are random and their email lives inside JSON;
+    // the component has no ownership index for verification records. Inspect
+    // every page and delete only exact account matches. This remains inside
+    // the transaction, so exceeding Convex limits fails without partial deletion.
+    const verificationPagination: PaginationOptions = {
+      cursor: null,
+      numItems: 100,
+    };
+    let verificationsDone = false;
+    while (!verificationsDone) {
+      const result: PaginationResult<AuthDoc<'verification'>> =
+        await ctx.runQuery(components.betterAuth.adapter.findMany, {
+          model: 'verification',
+          paginationOpts: verificationPagination,
+        });
+      for (const verification of result.page) {
+        if (isAccountVerification(verification, user)) {
+          await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+            input: {
+              model: 'verification',
+              where: [{ field: '_id', value: verification._id }],
+            },
+          });
+        }
+      }
+      verificationPagination.cursor = result.continueCursor;
+      verificationsDone = result.isDone;
+    }
+
+    // The component adapter does not cascade user deletion. Remove every
+    // user-linked credential explicitly, including plugin tables. Keep these
+    // calls in this mutation and let errors propagate so app data and auth
+    // data roll back together if any cleanup fails.
+    for (const model of ['account', 'session', 'passkey', 'apikey'] as const) {
+      const paginationOpts: PaginationOptions = { cursor: null, numItems: 100 };
+      let isDone = false;
+      while (!isDone) {
+        const result = await ctx.runMutation(
+          components.betterAuth.adapter.deleteMany,
+          {
+            input: {
+              model,
+              where: [{ field: 'userId', value: user._id }],
+            },
+            paginationOpts,
+          }
+        );
+        paginationOpts.cursor = result.continueCursor;
+        isDone = result.isDone;
+      }
+    }
+
+    const deletedUser = await ctx.runMutation(
+      components.betterAuth.adapter.deleteOne,
+      { input: { model: 'user', where: [{ field: '_id', value: user._id }] } }
+    );
+    if (!deletedUser) {
+      throw new Error('Failed to delete authentication account.');
+    }
 
     return { success: true };
   },
