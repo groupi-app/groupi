@@ -21,7 +21,7 @@ the runtime-1 build and does not validate the replacement binary.
 
 | Item                        | Evidence and status                                                                                                                                                                                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| iOS external TestFlight     | Owner reported submission; a fresh console check requires signing in again. Review status, messages, and saved private review notes remain unverified.                                                                                                             |
+| iOS external TestFlight     | EAS verified on September 26 that 0.4.1 (4) is valid and approved for external beta testing. The new iPhone candidate is described below; console messages and private review notes were not rechecked.                                                            |
 | Google Play                 | Personal developer account Groupi Events (`5688705546719346407`) is registered under `theia@groupi.gg`. Identity review and device verification remain pending; no app record or testing track exists.                                                             |
 | Android production artifact | EAS build `b9443438-d8f9-4f1e-a603-ce647a0de246` finished: `com.groupi.mobile`, version `0.4.1`, version code `4`, runtime `1`, production profile/channel, store distribution.                                                                                    |
 | Android artifact source     | `ef704e7d38f32ab831eca345e587bfbb0f4abcee`. The only mobile/shared differences through the checked production source are the iOS submission app ID and iOS plist whitespace.                                                                                       |
@@ -111,6 +111,35 @@ initial decode. Regression tests and `pnpm check` pass; sharpness and text layou
 still require visual acceptance on the affected phone. The owner approved the
 patch release note, committed in `348908d`. Include these changes in the next
 candidate before final device testing.
+
+### iPhone candidate with display fixes
+
+On September 26, App Store Connect status retrieved through EAS confirmed
+`0.4.1 (4)` is valid, unexpired, in internal beta testing, and approved for
+external beta testing. This supersedes the earlier unverified review status.
+
+The [new iPhone build](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/builds/3b5dcc11-1238-4740-812b-dc35c8e59bd1)
+finished from commit `2b0ef867f52f0b6cf28d94b7787d9ec8b4d890f2` with both display
+fixes: `0.4.1 (6)`, runtime `2`, production environment/profile/channel, store
+distribution, bundle `com.groupi.mobile`. EAS confirmed the existing distribution
+certificate and active provisioning profile are available. Build number `5` was
+consumed by a pre-upload attempt that stopped on an XML final-newline
+normalization; no binary was uploaded for that attempt. The downloaded IPA's
+bundle/version/build/runtime matched the expected values, and macOS
+`codesign --verify --deep --strict` passed. The signed entitlements confirm the
+expected Apple team/application ID, production push environment, and canonical
+app-link/passkey domains. IPA SHA-256:
+`91bd0c4aeb1e1b03a91c8983583ab6e9ece47999433bbd5b5093a833c5d9e8a3`.
+
+[TestFlight upload](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/submissions/e6d090ed-4aaf-4a38-9127-acf1a6a7d197)
+finished successfully. Optional CLI test-note upload was rejected by the Expo
+plan before scheduling; retrying without that field succeeded. No tester groups
+were created or changed. Apple subsequently confirmed build `6` is `VALID` and
+`IN_BETA_TESTING` for internal testers. Its external state is
+`READY_FOR_BETA_SUBMISSION`; the previous build `4` remains `BETA_APPROVED`.
+External beta review has not been submitted for build `6`, and physical-device
+acceptance has not been performed. Internal testers can now update through
+TestFlight to `0.4.1 (6)` to verify cover sharpness and post wrapping.
 
 ## Release blockers
 
