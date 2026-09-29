@@ -12,7 +12,7 @@ import {
 import { collectPushData } from '../lib/notifications';
 import { cascadeDeleteEventData } from '../lib/cascade';
 import { createTestInstance, TestScenarios } from './test_helpers';
-import { createAuthAccount, registerBetterAuth } from './auth_helpers';
+import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 
 const TOKEN_A = 'ExpoPushToken[test-device-token-a]';
 const TOKEN_B = 'ExponentPushToken[test-device-token-b]';

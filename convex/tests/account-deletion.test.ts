@@ -4,7 +4,7 @@ import { v } from 'convex/values';
 import { api, components } from '../_generated/api';
 import betterAuthSchema from '../betterAuth/schema';
 import { createTestInstance } from './test_helpers';
-import { createAuthAccount, registerBetterAuth } from './auth_helpers';
+import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 
 async function seedCredentials(
   t: ReturnType<typeof createTestInstance>,

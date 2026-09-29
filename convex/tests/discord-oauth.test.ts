@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api, components } from '../_generated/api';
-import { createAuthAccount, registerBetterAuth } from './auth_helpers';
+import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 
 const TOKEN_URL = 'https://discord.com/api/oauth2/token';
