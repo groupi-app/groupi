@@ -15,9 +15,19 @@
   description: Improvements or additions to documentation
 
 # Status
-- name: triage
+- name: needs-triage
   color: ededed
-  description: Needs triage
+  description: Maintainer evaluation needed
+  aliases: [triage]
+- name: needs-info
+  color: d876e3
+  description: Waiting for reporter information
+- name: ready-for-agent
+  color: 0e8a16
+  description: Fully specified for autonomous implementation
+- name: ready-for-human
+  color: fbca04
+  description: Requires human implementation
 - name: confirmed
   color: 0e8a16
   description: Issue confirmed
@@ -30,6 +40,23 @@
 - name: stale
   color: fef2c0
   description: No recent activity
+
+# Wayfinding
+- name: 'wayfinder:map'
+  color: '5319e7'
+  description: Planning map linking decisions and open questions
+- name: 'wayfinder:research'
+  color: '0075ca'
+  description: Research a question needed to advance the planning map
+- name: 'wayfinder:prototype'
+  color: a2eeef
+  description: Prototype to resolve a design question
+- name: 'wayfinder:grilling'
+  color: d876e3
+  description: Resolve a planning question through discussion with the user
+- name: 'wayfinder:task'
+  color: c5def5
+  description: Bounded task needed to resolve a planning question
 
 # Priority
 - name: 'priority: critical'

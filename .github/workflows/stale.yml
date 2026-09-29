@@ -29,5 +29,5 @@ jobs:
           days-before-close: 14
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
-          exempt-issue-labels: 'pinned,security,help wanted,good first issue'
+          exempt-issue-labels: 'pinned,security,help wanted,good first issue,backlog,ready-for-agent,ready-for-human,wayfinder:map,wayfinder:research,wayfinder:prototype,wayfinder:grilling,wayfinder:task'
           exempt-pr-labels: 'pinned,security'
