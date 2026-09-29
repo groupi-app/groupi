@@ -37,7 +37,10 @@ try {
   const metadata = JSON.parse(
     await readFile(join(installed, 'package.json'), 'utf8')
   );
-  assert.deepEqual(Object.keys(metadata.dependencies), ['commander']);
+  assert.deepEqual(Object.keys(metadata.dependencies), [
+    '@napi-rs/keyring',
+    'commander',
+  ]);
   assert.deepEqual(
     (await readdir(installed))
       .filter(name => !['LICENSE', 'node_modules'].includes(name))
@@ -45,7 +48,17 @@ try {
     ['README.md', 'bin', 'package.json', 'src']
   );
   run(['exec', 'groupi', '--help'], temporary);
-  run(['exec', 'vitest', 'run', 'tests/cli.test.ts'], source, {
+  run(
+    [
+      'exec',
+      'node',
+      '--input-type=module',
+      '-e',
+      'await import("@napi-rs/keyring")',
+    ],
+    installed
+  );
+  run(['exec', 'vitest', 'run', 'tests'], source, {
     ...process.env,
     CLI_TEST_BIN: resolve(installed, metadata.bin.groupi),
   });

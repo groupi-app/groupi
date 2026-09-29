@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -38,7 +39,12 @@ function cli(args: string[], env: Record<string, string> = {}, input = '') {
     (resolveResult, reject) => {
       const child = spawn(
         process.execPath,
-        [process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js'), ...args],
+        [
+          '--import',
+          pathToFileURL(resolve('tests/fixtures/keyring-environment.mjs')).href,
+          process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js'),
+          ...args,
+        ],
         {
           env: {
             ...process.env,
@@ -413,4 +419,175 @@ test('human detail output cannot emit terminal control codes from server field n
   );
   expect(result.code).toBe(0);
   expect(result.stdout).not.toContain('\u001b');
+});
+
+test('browser login refuses JSON and headless input without starting interaction', async () => {
+  const result = await cli(['auth', 'login', '--format', 'json']);
+  expect(result.code).toBe(3);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error.code).toBe(
+    'BROWSER_INTERACTION_REQUIRED'
+  );
+});
+
+test('named profiles retain an explicit validated browser origin', async () => {
+  const result = await cli([
+    'profile',
+    'add',
+    'staging',
+    '--api-url',
+    'https://example.convex.site/api/v2',
+    '--web-url',
+    'https://app.example.com',
+    '--format',
+    'json',
+  ]);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout).webUrl).toBe('https://app.example.com');
+  expect(
+    JSON.parse(await readFile(join(config, 'staging.json'), 'utf8'))
+  ).toEqual({
+    apiUrl: 'https://example.convex.site/api/v2',
+    webUrl: 'https://app.example.com',
+  });
+});
+
+test('authentication status verifies the selected account without printing its temporary key', async () => {
+  const url = await endpoint((req, res) => {
+    expect(req.url).toBe('/api/v2/profile');
+    expect(req.headers['x-api-key']).toBe('status-secret');
+    res.setHeader('content-type', 'application/json');
+    res.end(
+      JSON.stringify({
+        userId: 'user-1',
+        personId: 'person-1',
+        name: 'Account',
+        email: 'one@example.com',
+      })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['--profile', 'local', 'auth', 'status', '--format', 'json'],
+    { GROUPI_API_KEY: 'status-secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({
+    profile: 'local',
+    apiUrl: url,
+    source: 'environment',
+    account: { id: 'user-1', name: 'Account', email: 'one@example.com' },
+  });
+  expect(result.stdout + result.stderr).not.toContain('status-secret');
+});
+
+test('logout removes only the selected saved credential and ignores temporary environment credentials', async () => {
+  let requests = 0;
+  const url = await endpoint((_req, res) => {
+    requests++;
+    res.end('{}');
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['--profile', 'local', 'auth', 'logout', '--format', 'json'],
+    {
+      GROUPI_API_KEY: 'unrelated-temporary-key',
+      GROUPI_API_KEY_PROFILE: 'another',
+      TEST_SAVED_CREDENTIAL: JSON.stringify({
+        apiKey: 'saved-secret',
+        expiresAt: Date.now() + 10000,
+        account: { id: 'one', name: 'One', email: 'one@example.com' },
+      }),
+    }
+  );
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({
+    profile: 'local',
+    removed: true,
+    revoked: false,
+  });
+  expect(requests).toBe(0);
+  expect(result.stdout + result.stderr).not.toMatch(
+    /saved-secret|unrelated-temporary-key/
+  );
+});
+
+test('an expired saved key requires explicit login without a network request', async () => {
+  let requests = 0;
+  const url = await endpoint((_req, res) => {
+    requests++;
+    res.end('{}');
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['--profile', 'local', 'events', 'list', '--format', 'json'],
+    {
+      TEST_SAVED_CREDENTIAL: JSON.stringify({
+        apiKey: 'expired-secret',
+        expiresAt: 1,
+        account: { id: 'one', name: 'One', email: 'one@example.com' },
+      }),
+    }
+  );
+  expect(result.code).toBe(3);
+  expect(JSON.parse(result.stderr).error.code).toBe('AUTH_EXPIRED');
+  expect(result.stdout).toBe('');
+  expect(requests).toBe(0);
+});
+
+test('saved-key status rejects an account mismatch instead of silently changing identity', async () => {
+  const url = await endpoint((_req, res) => {
+    res.setHeader('content-type', 'application/json');
+    res.end(
+      JSON.stringify({
+        userId: 'other',
+        name: 'Other',
+        email: 'other@example.com',
+      })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['--profile', 'local', 'auth', 'status', '--format', 'json'],
+    {
+      TEST_SAVED_CREDENTIAL: JSON.stringify({
+        apiKey: 'saved-secret',
+        expiresAt: Date.now() + 10000,
+        account: { id: 'one', name: 'One', email: 'one@example.com' },
+      }),
+    }
+  );
+  expect(result.code).toBe(3);
+  expect(JSON.parse(result.stderr).error.code).toBe('ACCOUNT_MISMATCH');
+  expect(result.stdout).toBe('');
+});
+
+test('logout --revoke revokes the saved key rather than an environment override', async () => {
+  const keys: (string | string[] | undefined)[] = [];
+  const url = await endpoint((req, res) => {
+    keys.push(req.headers['x-api-key']);
+    expect(req.url).toBe('/api/v2/auth/cli/revoke');
+    res.setHeader('content-type', 'application/json');
+    res.end('{}');
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['--profile', 'local', 'auth', 'logout', '--revoke', '--format', 'json'],
+    {
+      GROUPI_API_KEY: 'temporary-secret',
+      GROUPI_API_KEY_PROFILE: 'local',
+      TEST_SAVED_CREDENTIAL: JSON.stringify({
+        apiKey: 'saved-secret',
+        expiresAt: Date.now() + 10000,
+        account: { id: 'one', name: 'One', email: 'one@example.com' },
+      }),
+    }
+  );
+  expect(result.code).toBe(0);
+  expect(keys).toEqual(['saved-secret']);
+  expect(JSON.parse(result.stdout)).toEqual({
+    profile: 'local',
+    removed: true,
+    revoked: true,
+  });
 });

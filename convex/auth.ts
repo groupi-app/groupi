@@ -327,7 +327,11 @@ const createAuthOptionsInternal = (
         origin: passkeyConfig.origin,
       }),
       admin(),
-      apiKey(),
+      apiKey({
+        // Keep legacy stored ownership and REST verification compatible with
+        // the plugin's referenceId terminology without rewriting existing keys.
+        schema: { apikey: { fields: { referenceId: 'userId' } } },
+      }),
       // Adds the native OAuth state proxy and returns session cookies only on
       // trusted non-HTTP callback URLs. Ordinary web callbacks remain intact.
       expo(),

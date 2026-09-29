@@ -22,6 +22,7 @@
     "test:package": "node scripts/test-package.js"
   },
   "dependencies": {
+    "@napi-rs/keyring": "2.1.0",
     "commander": "^14.0.0"
   },
   "devDependencies": {

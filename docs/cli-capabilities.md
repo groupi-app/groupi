@@ -16,7 +16,7 @@ staging checks, and production deployment status distinct.
 | App capability or release requirement                         | CLI coverage                                                                                                                                     | Owner                                                   | Status                         |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------ |
 | Event list and event details; selected account and deployment | Installable executable, help/version, named profiles, environment/stdin API keys, human/JSON output, bounded pagination and read retries         | [#222](https://github.com/groupi-app/groupi/issues/222) | Verified; merged in #244       |
-| Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Pending                        |
+| Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246    |
 | Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Pending                        |
 | Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Pending                        |
 | RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Pending                        |
@@ -103,3 +103,38 @@ contents. Live authenticated staging workflows remain part of beta/release
 verification; the production smoke check does not establish that evidence.
 Public registry publication belongs to #228. Real OS credential
 store checks belong to #223 and release verification, after secure login exists.
+
+## Secure login implementation (#223)
+
+The implementation adds a session-bound authorization-code/PKCE exchange,
+acknowledged loopback delivery, native OS credential storage per profile and
+endpoint, explicit status/logout/revocation, and expiry without automatic browser
+launch. Better Auth API-key creation now maps its current ownership field to the
+existing schema; new configuration metadata is additive.
+
+Local verification on 2026-09-29 passed the full workspace suite (2,141 assertions),
+including 41 executable CLI tests, 22 browser authorization tests, and 61 focused
+real auth/REST tests. The backend suite still reports its six previously observed
+scheduler errors tolerated by the existing configuration. Packed-install tests
+and actual macOS Keychain roundtrip/isolation checks passed. Review found two
+callback cleanup hangs; executable regressions reproduced both before the fixes
+and pass afterward, and the reviewer rechecked the fixes.
+
+All six [hosted CLI jobs](https://github.com/groupi-app/groupi/actions/runs/36628361247)
+passed at `9a48fd998c0c56592d6bc98d3718ca183086932a` on macOS, Windows, and
+Ubuntu with Node 22 and 24. They exercised actual Keychain, Credential Manager,
+and Secret Service storage, installed-package behavior, and Linux store-unavailable
+errors. A Windows test-fixture import path issue was corrected before this run.
+All PR application tests, quality/build checks, and the Vercel preview passed.
+
+The packed CLI was separately installed and exercised against the deployed
+`codex/cli-secure-login` preview (`combative-sardine-122`). A disposable account
+completed browser onboarding and explicit consent, the real loopback listener
+acknowledged delivery, and a fresh CLI process identified the same account from
+macOS Keychain and fetched its empty event list. Browser cancellation of a repeat
+login preserved the prior saved credential. `auth logout --revoke` removed the
+native credential, and the same key subsequently received HTTP 401. Browser
+presentation was inspected; the profile JSON contained only API and website URLs.
+The temporary browser session was signed out and the test credential revoked.
+This verifies the CLI authorization flow for an authenticated browser account;
+external OAuth provider and email delivery flows were not exercised in this check.

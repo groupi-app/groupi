@@ -23,8 +23,8 @@ async function hashApiKey(raw: string): Promise<string> {
  * in the Better Auth component's apikey table. Quota updates share this mutation
  * transaction so concurrent requests cannot spend the same remaining use.
  *
- * The component currently uses Better Auth's legacy userId schema. Keep this
- * verifier compatible with stored keys until the referenceId/configId migration.
+ * Better Auth maps referenceId to the component's existing userId column.
+ * This verifier therefore accepts legacy keys and newly issued CLI keys alike.
  *
  * This matches Better Auth's own lookup: hash with SHA-256,
  * encode as base64url, query by the `key` field.
@@ -34,6 +34,7 @@ export const validateApiKey = internalMutation({
     apiKey: v.string(),
     resource: v.string(),
     action: v.union(v.literal('read'), v.literal('write')),
+    selfRevoke: v.optional(v.boolean()),
   },
   returns: v.union(
     v.object({ userId: v.string(), personId: v.id('persons') }),
@@ -45,7 +46,7 @@ export const validateApiKey = internalMutation({
       retryAfter: v.optional(v.number()),
     })
   ),
-  handler: async (ctx, { apiKey, resource, action }) => {
+  handler: async (ctx, { apiKey, resource, action, selfRevoke }) => {
     try {
       const hashedKey = await hashApiKey(apiKey);
 
@@ -70,7 +71,7 @@ export const validateApiKey = internalMutation({
         return { error: 'API key has expired.' };
       }
 
-      if (record.permissions != null) {
+      if (!selfRevoke && record.permissions != null) {
         let permissions: unknown;
         try {
           permissions = JSON.parse(record.permissions);
@@ -132,6 +133,9 @@ export const validateApiKey = internalMutation({
       if (!person) {
         return { error: 'User account not found.' };
       }
+
+      // Revoking the presented secret remains possible after its quota is spent.
+      if (selfRevoke) return { userId: record.userId, personId: person._id };
 
       const now = Date.now();
       const update: Partial<AuthDoc<'apikey'>> = {};
