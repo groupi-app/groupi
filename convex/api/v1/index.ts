@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
@@ -66,6 +67,31 @@ export function createApiV1App(
 
   // Error handler
   app.onError((err, c) => {
+    if (err instanceof ConvexError) {
+      let data: unknown = err.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          /* Not a tagged public validation error. */
+        }
+      }
+      if (
+        data &&
+        typeof data === 'object' &&
+        'code' in data &&
+        data.code === 'VALIDATION_ERROR' &&
+        'message' in data &&
+        typeof data.message === 'string'
+      )
+        return c.json(
+          {
+            success: false,
+            error: { code: 'VALIDATION_ERROR', message: data.message },
+          },
+          400
+        );
+    }
     if (err instanceof HTTPException) {
       return c.json(
         {
@@ -228,14 +254,10 @@ export const handler = httpAction(async (ctx, request) => {
       const auth = await validateApiKey(ctx, apiKey, request);
       const app = createApiV1App(ctx, auth.userId, auth.personId);
 
-      const modifiedRequest = new Request(honoUrl.toString(), {
-        method: request.method,
-        headers: request.headers,
-        body:
-          request.method === 'GET' || request.method === 'HEAD'
-            ? undefined
-            : (request.body as unknown as RequestInit['body']),
-      });
+      const modifiedRequest = new Request(
+        honoUrl.toString(),
+        request as unknown as RequestInit
+      );
 
       return app.fetch(modifiedRequest);
     } catch (error) {

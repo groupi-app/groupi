@@ -16,7 +16,7 @@ import {
   CreateEventRequestSchema,
   UpdateEventRequestSchema,
 } from '../schemas/events';
-import { parseGDL } from '../../../lib/gdl_parser';
+import type { Id } from '../../../_generated/dataModel';
 
 // Type for Hono app with Convex context
 type Variables = {
@@ -106,9 +106,11 @@ export function createEventRoutes() {
     path: '/events',
     tags: ['Events'],
     summary: 'Create event',
-    description: 'Create a new event',
+    description:
+      'Create an event. Optional Idempotency-Key (<unix-ms>.<uuid-v4>) provides atomic replay for 24 hours from its timestamp. Reuse returns the original IDs; changed payload or expired key returns 409. Keys over five minutes in the future are rejected. Without a key creation is not replay-safe. Dates require explicit offsets and are stored as UTC instants.',
     security: [{ apiKey: [] }],
     request: {
+      headers: z.object({ 'Idempotency-Key': z.string().optional() }),
       body: {
         content: {
           'application/json': {
@@ -118,6 +120,10 @@ export function createEventRoutes() {
       },
     },
     responses: {
+      409: {
+        description: 'Request identifier conflict or expiry',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       201: {
         description: 'Event created',
         content: {
@@ -146,61 +152,13 @@ export function createEventRoutes() {
   });
 
   app.openapi(createEventRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const body = c.req.valid('json');
-
-    if (body.gdl && body.potentialDateTimeOptions) {
-      return c.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message:
-              'Cannot specify both "gdl" and "potentialDateTimeOptions". Use one or the other.',
-          },
-        },
-        400
-      );
-    }
-
-    let mutationBody = { personId, ...body };
-
-    if (body.gdl) {
-      const gdlResult = parseGDL(body.gdl);
-      if (!gdlResult.success) {
-        return c.json(
-          {
-            error: {
-              code: 'GDL_PARSE_ERROR',
-              message: `Invalid GDL expression: ${gdlResult.error}`,
-            },
-          },
-          400
-        );
-      }
-
-      const { gdl: _gdl, ...rest } = mutationBody;
-      mutationBody = {
-        ...rest,
-        potentialDateTimeOptions: gdlResult.results.map(opt => ({
-          start: opt.start.toISOString(),
-          end: opt.end?.toISOString(),
-        })),
-      };
-    }
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.events.createEvent;
-    const result = await ctx.runMutation(createFn, mutationBody);
-
-    return c.json(
-      {
-        eventId: result.eventId,
-        membershipId: result.membershipId,
-      },
-      201
-    );
+    const result = await c.get('ctx').runMutation(internal.events.rest.create, {
+      personId: c.get('personId') as Id<'persons'>,
+      userId: c.get('userId'),
+      requestId: c.req.header('Idempotency-Key'),
+      body: c.req.valid('json'),
+    });
+    return c.json(result, 201);
   });
 
   // GET /events/:eventId - Get event details
@@ -281,7 +239,8 @@ export function createEventRoutes() {
     path: '/events/{eventId}',
     tags: ['Events'],
     summary: 'Update event',
-    description: 'Update an event (requires MODERATOR role or higher)',
+    description:
+      'Edit basic fields as moderator/organizer, or replace proposed date options as organizer. Replacement deletes previous votes and notifies members. PATCH is not replay-safe. Confirmed dates must be reset before replacing proposed dates. The legacy reminderOffset field updates the reminders add-on; other add-on configuration uses separate operations.',
     security: [{ apiKey: [] }],
     request: {
       params: EventIdParamSchema,
@@ -294,6 +253,15 @@ export function createEventRoutes() {
       },
     },
     responses: {
+      409: {
+        description:
+          'Confirmed date must be reset before replacing poll options',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      400: {
+        description: 'Invalid event fields',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       200: {
         description: 'Event updated',
         content: {
@@ -335,13 +303,11 @@ export function createEventRoutes() {
     const { eventId } = c.req.valid('param');
     const body = c.req.valid('json');
 
-    // Require moderator role
-    await requireEventRole(ctx, eventId, personId, 'MODERATOR');
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.events.updateEvent;
-    const result = await ctx.runMutation(updateFn, { eventId, ...body });
+    const result = await ctx.runMutation(internal.events.rest.update, {
+      personId: personId as Id<'persons'>,
+      eventId: eventId as Id<'events'>,
+      body,
+    });
 
     return c.json(result, 200);
   });

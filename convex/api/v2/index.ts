@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
@@ -59,7 +60,7 @@ export function createApiV2App(
     cors({
       origin: '*',
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'x-api-key'],
+      allowHeaders: ['Content-Type', 'x-api-key', 'Idempotency-Key'],
       exposeHeaders: ['Content-Length', 'Retry-After'],
       maxAge: 86400,
     })
@@ -67,6 +68,38 @@ export function createApiV2App(
 
   // Error handler
   app.onError((err, c) => {
+    if (err instanceof ConvexError) {
+      let data: unknown = err.data;
+      // Convex serializes error data when crossing a function boundary.
+      if (typeof data === 'string') {
+        try {
+          const decoded: unknown = JSON.parse(data);
+          if (decoded && typeof decoded === 'object') data = decoded;
+        } catch {
+          /* Plain string validation message. */
+        }
+      }
+      if (
+        data &&
+        typeof data === 'object' &&
+        'code' in data &&
+        typeof data.code === 'string' &&
+        [
+          'VALIDATION_ERROR',
+          'FORBIDDEN',
+          'IDEMPOTENCY_CONFLICT',
+          'IDEMPOTENCY_EXPIRED',
+          'DATE_RESET_REQUIRED',
+        ].includes(data.code) &&
+        'message' in data &&
+        typeof data.message === 'string'
+      ) {
+        const { code, message } = data;
+        const status =
+          code === 'FORBIDDEN' ? 403 : code === 'VALIDATION_ERROR' ? 400 : 409;
+        return c.json({ error: { code, message } }, status);
+      }
+    }
     if (err instanceof HTTPException) {
       return c.json(
         {
@@ -185,7 +218,14 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
 
   // Health check (no auth required)
   app.get('/health', c => {
-    return c.json({ status: 'ok', version: '2.0.0' });
+    return c.json({
+      status: 'ok',
+      version: '2.0.0',
+      capabilities: {
+        eventWrites: { version: 1 },
+        eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
+      },
+    });
   });
 
   app.route('/', createCliAuthRoutes());

@@ -147,6 +147,8 @@ import type * as eventInvites_mutations from "../eventInvites/mutations.js";
 import type * as eventInvites_queries from "../eventInvites/queries.js";
 import type * as events_mutations from "../events/mutations.js";
 import type * as events_queries from "../events/queries.js";
+import type * as events_rest from "../events/rest.js";
+import type * as events_writes from "../events/writes.js";
 import type * as files_mutations from "../files/mutations.js";
 import type * as files_queries from "../files/queries.js";
 import type * as friends_mutations from "../friends/mutations.js";
@@ -346,6 +348,8 @@ declare const fullApi: ApiFromModules<{
   "eventInvites/queries": typeof eventInvites_queries;
   "events/mutations": typeof events_mutations;
   "events/queries": typeof events_queries;
+  "events/rest": typeof events_rest;
+  "events/writes": typeof events_writes;
   "files/mutations": typeof files_mutations;
   "files/queries": typeof files_queries;
   "friends/mutations": typeof friends_mutations;

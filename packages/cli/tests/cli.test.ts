@@ -24,9 +24,26 @@ afterEach(async () => {
 });
 
 async function endpoint(
-  handler: (req: IncomingMessage, res: ServerResponse) => void
+  handler: (req: IncomingMessage, res: ServerResponse) => void,
+  advertiseReplay = true
 ) {
-  const server = createServer(handler);
+  const server = createServer((req, res) => {
+    if (advertiseReplay && req.url === '/api/v2/health') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          status: 'ok',
+          version: '2.0.0',
+          capabilities: {
+            eventWrites: { version: 1 },
+            eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
+          },
+        })
+      );
+      return;
+    }
+    handler(req, res);
+  });
   servers.push(server);
   await new Promise<void>(done => server.listen(0, '127.0.0.1', done));
   const address = server.address();
@@ -34,14 +51,25 @@ async function endpoint(
   return `http://127.0.0.1:${address.port}/api/v2`;
 }
 
-function cli(args: string[], env: Record<string, string> = {}, input = '') {
+function cli(
+  args: string[],
+  env: Record<string, string> = {},
+  input = '',
+  interactive = false
+) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>(
     (resolveResult, reject) => {
       const child = spawn(
         process.execPath,
         [
           '--import',
-          pathToFileURL(resolve('tests/fixtures/keyring-environment.mjs')).href,
+          pathToFileURL(
+            resolve(
+              interactive
+                ? 'tests/fixtures/interactive-environment.mjs'
+                : 'tests/fixtures/keyring-environment.mjs'
+            )
+          ).href,
           process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js'),
           ...args,
         ],
@@ -590,4 +618,554 @@ test('logout --revoke revokes the saved key rather than an environment override'
     removed: true,
     revoked: true,
   });
+});
+
+test('creates an event headlessly with a reusable request identifier and JSON result', async () => {
+  const writes: {
+    method?: string;
+    requestId?: string | string[];
+    body: unknown;
+  }[] = [];
+  const url = await endpoint(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    writes.push({
+      method: req.method,
+      requestId: req.headers['idempotency-key'],
+      body: JSON.parse(body),
+    });
+    res.writeHead(201, { 'content-type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        eventId: 'event-created',
+        membershipId: 'membership-organizer',
+      })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'local-secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(0);
+  expect(result.stderr).toBe('');
+  const output = JSON.parse(result.stdout);
+  expect(output).toEqual({
+    eventId: 'event-created',
+    membershipId: 'membership-organizer',
+    requestId: expect.stringMatching(/^\d{13}\.[0-9a-f-]{36}$/),
+  });
+  expect(writes).toEqual([
+    { method: 'POST', requestId: output.requestId, body: { title: 'Dinner' } },
+  ]);
+  expect(result.stdout).not.toContain('local-secret');
+});
+
+test('replays event creation after a lost response using the same request identifier and payload', async () => {
+  const writes: { id: unknown; body: string }[] = [];
+  const url = await endpoint(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    writes.push({ id: req.headers['idempotency-key'], body });
+    if (writes.length === 1) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(201, { 'content-type': 'application/json' });
+    res.end(
+      JSON.stringify({ eventId: 'one-event', membershipId: 'one-organizer' })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const id = `${Date.now()}.b5222690-666a-4cfc-92b8-a4a9c4572184`;
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--request-id',
+      id,
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({
+    eventId: 'one-event',
+    membershipId: 'one-organizer',
+    requestId: id,
+  });
+  expect(writes).toEqual([
+    { id, body: '{"title":"Dinner"}' },
+    { id, body: '{"title":"Dinner"}' },
+  ]);
+});
+
+test('creates an event with explicit offset date inputs and basic details', async () => {
+  let payload: unknown;
+  const url = await endpoint(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    payload = JSON.parse(body);
+    res.writeHead(201, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ eventId: 'dinner', membershipId: 'organizer' }));
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--description',
+      'Bring snacks',
+      '--location',
+      'Cafe',
+      '--start',
+      '2027-03-05T18:00:00-05:00',
+      '--end',
+      '2027-03-05T20:00:00-05:00',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(0);
+  expect(payload).toEqual({
+    title: 'Dinner',
+    description: 'Bring snacks',
+    location: 'Cafe',
+    chosenDateTime: '2027-03-05T18:00:00-05:00',
+    chosenEndDateTime: '2027-03-05T20:00:00-05:00',
+  });
+});
+
+test('edits basic event details and reports lost responses without repeating the write', async () => {
+  let attempts = 0;
+  let storedTitle = 'Before';
+  const url = await endpoint(async (req, res) => {
+    attempts++;
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    expect(req.method).toBe('PATCH');
+    expect(req.url).toBe('/api/v2/events/event-1');
+    storedTitle = JSON.parse(body).title;
+    req.socket.destroy();
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'edit',
+      'event-1',
+      '--title',
+      'After',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error).toEqual({
+    code: 'UNCERTAIN_OUTCOME',
+    message: expect.stringContaining('events get event-1'),
+  });
+  expect(storedTitle).toBe('After');
+  expect(attempts).toBe(1);
+});
+
+test.each([
+  ['events', 'create', '--title', '   '],
+  ['events', 'create', '--title', 'Dinner', '--start', '2027-03-05T18:00:00'],
+  ['events', 'create', '--title', 'Dinner', '--start', '2027-02-30T18:00:00Z'],
+  ['events', 'create', '--title', 'Dinner', '--end', '2027-03-05T20:00:00Z'],
+  [
+    'events',
+    'create',
+    '--title',
+    'Dinner',
+    '--start',
+    '2027-03-05T20:00:00Z',
+    '--end',
+    '2027-03-05T18:00:00Z',
+  ],
+  ['events', 'create', '--title', 'Dinner', '--request-id', 'invalid'],
+  ['events', 'edit', 'event-1'],
+  ['events', 'edit', 'event-1', '--title', ' '],
+])(
+  'rejects invalid event input before sending any request: %j',
+  async (...args) => {
+    let requests = 0;
+    const url = await endpoint((_req, res) => {
+      requests++;
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          eventId: 'unexpected',
+          membershipId: 'unexpected',
+          id: 'unexpected',
+          title: 'unexpected',
+        })
+      );
+    });
+    await cli(['profile', 'add', 'local', '--api-url', url]);
+    const result = await cli(
+      [...args, '--profile', 'local', '--format', 'json'],
+      { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+    );
+    expect(result.code).toBe(2);
+    expect(JSON.parse(result.stderr).error.code).toBe('USAGE');
+    expect(result.stdout).toBe('');
+    expect(requests).toBe(0);
+  }
+);
+
+test('replacing proposed dates requires explicit headless confirmation and preserves option notes', async () => {
+  const writes: unknown[] = [];
+  const url = await endpoint(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    writes.push(JSON.parse(body));
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        id: 'event-1',
+        title: 'Dinner',
+        potentialDateTimeOptions: [
+          { id: 'option-1', start: 1804302000000, end: null, note: 'Early' },
+        ],
+      })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const args = [
+    'events',
+    'edit',
+    'event-1',
+    '--date-options',
+    '[{"start":"2027-03-05T18:00:00-05:00","note":"Early"}]',
+    '--profile',
+    'local',
+    '--format',
+    'json',
+  ];
+  const env = { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' };
+  const rejected = await cli(args, env);
+  expect(rejected.code).toBe(2);
+  expect(JSON.parse(rejected.stderr).error.code).toBe('CONFIRMATION_REQUIRED');
+  expect(writes).toEqual([]);
+  const accepted = await cli([...args, '--yes'], env);
+  expect(accepted.code).toBe(0);
+  expect(accepted.stderr).toBe('');
+  expect(JSON.parse(accepted.stdout).potentialDateTimeOptions[0].note).toBe(
+    'Early'
+  );
+  expect(writes).toEqual([
+    {
+      potentialDateTimeOptions: [
+        { start: '2027-03-05T18:00:00-05:00', note: 'Early' },
+      ],
+    },
+  ]);
+});
+
+test('refuses to create against an older server that cannot guarantee safe replay', async () => {
+  let writes = 0;
+  const url = await endpoint((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    if (req.method === 'GET')
+      res.end(JSON.stringify({ status: 'ok', version: '2.0.0' }));
+    else {
+      writes++;
+      res.end(JSON.stringify({ eventId: 'unsafe', membershipId: 'unsafe' }));
+    }
+  }, false);
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
+  expect(writes).toBe(0);
+});
+
+test.each(['no\n', '', '\u0003'])(
+  'interactive proposed-date replacement cancels without a write on decline or closed input: %j',
+  async answer => {
+    let writes = 0;
+    const url = await endpoint((_req, res) => {
+      writes++;
+      res.end('{}');
+    });
+    await cli(['profile', 'add', 'local', '--api-url', url]);
+    const result = await cli(
+      [
+        'events',
+        'edit',
+        'event-1',
+        '--date-options',
+        '[]',
+        '--profile',
+        'local',
+      ],
+      { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' },
+      answer,
+      true
+    );
+    expect(result.code).toBe(2);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('event-1 on profile local');
+    expect(result.stderr).toContain('CANCELLED');
+    expect(writes).toBe(0);
+  }
+);
+
+test('explains that fixed events need an explicit date reset before replacing proposals', async () => {
+  let writes = 0;
+  const url = await endpoint((_req, res) => {
+    writes++;
+    res.writeHead(409, { 'content-type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        error: { code: 'DATE_RESET_REQUIRED', message: 'Do not echo secret' },
+      })
+    );
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'edit',
+      'event-1',
+      '--date-options',
+      '[]',
+      '--yes',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(2);
+  expect(writes).toBe(1);
+  expect(JSON.parse(result.stderr).error.code).toBe('DATE_RESET_REQUIRED');
+  expect(JSON.parse(result.stderr).error.message).toContain(
+    'Reset the confirmed date'
+  );
+  expect(result.stderr).not.toContain('secret');
+});
+
+test('refuses edits against older servers that silently ignore new fields', async () => {
+  let writes = 0;
+  const url = await endpoint((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    if (req.method === 'GET')
+      res.end(JSON.stringify({ status: 'ok', version: '2.0.0' }));
+    else {
+      writes++;
+      res.end(JSON.stringify({ id: 'event-1', title: 'Unchanged' }));
+    }
+  }, false);
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'edit',
+      'event-1',
+      '--title',
+      'Updated',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
+  expect(writes).toBe(0);
+});
+
+test('does not claim an edit succeeded when the response names a different event', async () => {
+  const url = await endpoint((_req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ id: 'another-event', title: 'Unrelated' }));
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'edit',
+      'event-1',
+      '--title',
+      'Updated',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error.code).toBe('UNCERTAIN_OUTCOME');
+});
+
+test('exhausted creation retries preserve the identifier in actionable recovery output', async () => {
+  const ids: unknown[] = [];
+  const url = await endpoint(req => {
+    ids.push(req.headers['idempotency-key']);
+    req.socket.destroy();
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(result.stdout).toBe('');
+  expect(ids).toHaveLength(3);
+  expect(new Set(ids).size).toBe(1);
+  const failure = JSON.parse(result.stderr).error;
+  expect(failure.code).toBe('UNCERTAIN_OUTCOME');
+  expect(failure.message).toContain(`--request-id ${ids[0]}`);
+  expect(failure.message).toContain('profile local');
+  expect(result.stderr).not.toContain('secret');
+});
+
+test.each([
+  [400, 'VALIDATION_ERROR', 2, 'USAGE'],
+  [401, 'UNAUTHORIZED', 3, 'AUTH_REQUIRED'],
+  [403, 'FORBIDDEN', 3, 'FORBIDDEN'],
+  [404, 'NOT_FOUND', 4, 'NOT_FOUND'],
+  [409, 'IDEMPOTENCY_CONFLICT', 2, 'IDEMPOTENCY_CONFLICT'],
+  [409, 'IDEMPOTENCY_EXPIRED', 2, 'IDEMPOTENCY_EXPIRED'],
+  [429, 'RATE_LIMITED', 5, 'RATE_LIMITED'],
+])(
+  'creation handles explicit HTTP %i rejection without retry or reflected secrets',
+  async (status, serverCode, exitCode, code) => {
+    let writes = 0;
+    const url = await endpoint((_req, res) => {
+      writes++;
+      res.writeHead(status, {
+        'content-type': 'application/json',
+        'retry-after': '60',
+      });
+      res.end(
+        JSON.stringify({
+          error: { code: serverCode, message: 'reflected secret' },
+        })
+      );
+    });
+    await cli(['profile', 'add', 'local', '--api-url', url]);
+    const result = await cli(
+      [
+        'events',
+        'create',
+        '--title',
+        'Dinner',
+        '--profile',
+        'local',
+        '--format',
+        'json',
+      ],
+      { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+    );
+    expect(result.code).toBe(exitCode);
+    expect(writes).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr).error.code).toBe(code);
+    expect(result.stderr).not.toContain('secret');
+  }
+);
+
+test('creation refuses redirects without forwarding credentials or retrying the write', async () => {
+  let leaked = 0;
+  let writes = 0;
+  const other = await endpoint((_req, res) => {
+    leaked++;
+    res.end('{}');
+  });
+  const url = await endpoint((_req, res) => {
+    writes++;
+    res.writeHead(307, { location: other + '/events' });
+    res.end();
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    [
+      'events',
+      'create',
+      '--title',
+      'Dinner',
+      '--profile',
+      'local',
+      '--format',
+      'json',
+    ],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' }
+  );
+  expect(result.code).toBe(5);
+  expect(JSON.parse(result.stderr).error.code).toBe('UNCERTAIN_OUTCOME');
+  expect(writes).toBe(1);
+  expect(leaked).toBe(0);
+});
+
+test('interactive confirmation identifies the target and applies one accepted replacement', async () => {
+  let writes = 0;
+  const url = await endpoint((_req, res) => {
+    writes++;
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ id: 'event-1', title: 'Dinner' }));
+  });
+  await cli(['profile', 'add', 'local', '--api-url', url]);
+  const result = await cli(
+    ['events', 'edit', 'event-1', '--date-options', '[]', '--profile', 'local'],
+    { GROUPI_API_KEY: 'secret', GROUPI_API_KEY_PROFILE: 'local' },
+    'yes\n',
+    true
+  );
+  expect(result.code).toBe(0);
+  expect(writes).toBe(1);
+  expect(result.stderr).toContain('clearing existing availability');
+  expect(result.stderr).toContain(`event-1 on profile local (${url})`);
+  expect(result.stdout).toBe('Updated event event-1: Dinner\n');
 });
