@@ -42,12 +42,24 @@ async function createAuthenticatedRestTestInstance() {
   const t = createTestInstance();
   t.registerComponent('betterAuth', betterAuthSchema, betterAuthModules);
 
-  const userId = 'rest-api-user';
   const rawApiKey = 'grp_test_rest_api_key_123456789';
   const now = Date.now();
 
-  await t.run(ctx => ctx.db.insert('persons', { userId }));
-  await t.mutation(components.betterAuth.adapter.create, {
+  const user = await t.mutation(components.betterAuth.adapter.create, {
+    input: {
+      model: 'user',
+      data: {
+        name: 'REST user',
+        email: 'rest@example.com',
+        emailVerified: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+    },
+  });
+  const userId = user._id;
+  const personId = await t.run(ctx => ctx.db.insert('persons', { userId }));
+  const key = await t.mutation(components.betterAuth.adapter.create, {
     input: {
       model: 'apikey',
       data: {
@@ -60,7 +72,7 @@ async function createAuthenticatedRestTestInstance() {
     },
   });
 
-  return { t, rawApiKey };
+  return { t, rawApiKey, personId, userId, keyId: key._id };
 }
 
 describe('REST API version contracts', () => {
@@ -355,5 +367,347 @@ describe('REST API version contracts', () => {
         },
       },
     });
+  });
+});
+
+describe('authenticated event browsing', () => {
+  it('pages only the caller’s events and preserves the legacy array response', async () => {
+    const { t, rawApiKey, personId } =
+      await createAuthenticatedRestTestInstance();
+    await t.run(async ctx => {
+      const otherPerson = await ctx.db.insert('persons', {
+        userId: 'another-user',
+      });
+      for (let i = 0; i < 24; i++) {
+        const owner = i < 23 ? personId : otherPerson;
+        const eventId = await ctx.db.insert('events', {
+          title: `Event ${i}`,
+          creatorId: owner,
+          createdAt: i,
+          updatedAt: i,
+          timezone: 'UTC',
+          potentialDateTimes: [],
+        });
+        await ctx.db.insert('memberships', {
+          personId: owner,
+          eventId,
+          role: 'ORGANIZER',
+          rsvpStatus: 'YES',
+        });
+      }
+    });
+    const headers = { 'x-api-key': rawApiKey };
+    const first = await t.fetch('/api/v2/events?pagination=cursor', {
+      headers,
+    });
+    expect(first.status).toBe(200);
+    const page = await first.json();
+    expect(page.items).toHaveLength(20);
+    expect(page.nextCursor).toEqual(expect.any(String));
+    const second = await t.fetch(
+      `/api/v2/events?pagination=cursor&cursor=${encodeURIComponent(page.nextCursor)}`,
+      { headers }
+    );
+    const last = await second.json();
+    expect(last.items).toHaveLength(3);
+    expect(last.nextCursor).toBeNull();
+    expect(
+      new Set([...page.items, ...last.items].map(event => event.id)).size
+    ).toBe(23);
+    expect(
+      [...page.items, ...last.items].map(event => event.title)
+    ).not.toContain('Event 23');
+    const legacy = await t.fetch('/api/v2/events', { headers });
+    expect(await legacy.json()).toHaveLength(23);
+  });
+});
+
+describe('REST API key restrictions', () => {
+  it('rejects a banned account even when its API key and person still exist', async () => {
+    const { t, rawApiKey, userId } =
+      await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'user',
+        where: [{ field: '_id', value: userId }],
+        update: { banned: true },
+      },
+    });
+    const response = await t.fetch('/api/v2/events?pagination=cursor', {
+      headers: { 'x-api-key': rawApiKey },
+    });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({
+      error: { code: 'UNAUTHORIZED' },
+    });
+  });
+});
+
+describe('scoped API keys', () => {
+  it('limits a key to explicit resource actions without replacing membership checks', async () => {
+    const { t, rawApiKey, keyId } = await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update: { permissions: JSON.stringify({ events: ['read'] }) },
+      },
+    });
+    const headers = {
+      'x-api-key': rawApiKey,
+      'Content-Type': 'application/json',
+    };
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(200);
+    expect((await t.fetch('/api/v2/friends', { headers })).status).toBe(403);
+    expect(
+      (
+        await t.fetch('/api/v2/events', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ title: 'Disallowed write' }),
+        })
+      ).status
+    ).toBe(403);
+  });
+});
+
+describe('API key usage limits', () => {
+  it('consumes a limited-use key and rejects further requests', async () => {
+    const { t, rawApiKey, keyId } = await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update: { remaining: 1 },
+      },
+    });
+    const headers = { 'x-api-key': rawApiKey };
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(200);
+    const exhausted = await t.fetch('/api/v2/events?pagination=cursor', {
+      headers,
+    });
+    expect(exhausted.status).toBe(429);
+    expect(await exhausted.json()).toMatchObject({
+      error: { code: 'RATE_LIMITED' },
+    });
+  });
+});
+
+describe('API key rate limits', () => {
+  it('enforces a key’s request window and returns an actionable retry delay', async () => {
+    const { t, rawApiKey, keyId } = await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update: {
+          rateLimitEnabled: true,
+          rateLimitMax: 1,
+          rateLimitTimeWindow: 60000,
+        },
+      },
+    });
+    const headers = { 'x-api-key': rawApiKey };
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(200);
+    const limited = await t.fetch('/api/v2/events?pagination=cursor', {
+      headers,
+    });
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('Retry-After'))).toBeGreaterThan(0);
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update: { lastRequest: Date.now() - 60001 },
+      },
+    });
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(200);
+  });
+});
+
+describe('authenticated browsing failures', () => {
+  it.each([
+    '?pagination=cursor&limit=0',
+    '?pagination=cursor&limit=101',
+    '?pagination=cursor&limit=1.5',
+    '?pagination=cursor&limit=oops',
+    '?pagination=cursor&cursor=bad-cursor',
+    '?pagination=cursor&cursor=',
+    '?pagination=offset',
+    '?limit=2',
+    '?cursor=unexpected',
+  ])(
+    'rejects invalid pagination %s without exposing server errors',
+    async query => {
+      const { t, rawApiKey } = await createAuthenticatedRestTestInstance();
+      const response = await t.fetch(`/api/v2/events${query}`, {
+        headers: { 'x-api-key': rawApiKey },
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: { code: 'VALIDATION_ERROR' },
+      });
+    }
+  );
+
+  it('returns empty pages and accepts the maximum page size', async () => {
+    const { t, rawApiKey } = await createAuthenticatedRestTestInstance();
+    const response = await t.fetch(
+      '/api/v2/events?pagination=cursor&limit=100',
+      { headers: { 'x-api-key': rawApiKey } }
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ items: [], nextCursor: null });
+  });
+
+  it('enforces event membership and minimum roles with real authenticated requests', async () => {
+    const { t, rawApiKey, personId } =
+      await createAuthenticatedRestTestInstance();
+    const { accessible, inaccessible } = await t.run(async ctx => {
+      const other = await ctx.db.insert('persons', { userId: 'outsider' });
+      const data = {
+        title: 'Private event',
+        creatorId: other,
+        createdAt: 0,
+        updatedAt: 0,
+        timezone: 'UTC',
+        potentialDateTimes: [],
+      };
+      const accessible = await ctx.db.insert('events', data);
+      const inaccessible = await ctx.db.insert('events', data);
+      await ctx.db.insert('memberships', {
+        personId,
+        eventId: accessible,
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
+      });
+      return { accessible, inaccessible };
+    });
+    const headers = { 'x-api-key': rawApiKey };
+    const details = await t.fetch(`/api/v2/events/${accessible}`, { headers });
+    expect(details.status).toBe(200);
+    expect(await details.json()).toMatchObject({
+      id: accessible,
+      title: 'Private event',
+    });
+    expect(
+      (await t.fetch(`/api/v2/events/${inaccessible}`, { headers })).status
+    ).toBe(403);
+    expect(
+      (
+        await t.fetch(`/api/v2/events/${accessible}`, {
+          method: 'DELETE',
+          headers,
+        })
+      ).status
+    ).toBe(403);
+    expect(
+      (await t.fetch(`/api/v2/events/${accessible}`, { headers })).status
+    ).toBe(200);
+  });
+
+  it.each([
+    ['disabled', { enabled: false }],
+    ['expired', { expiresAt: 1 }],
+    ['zero expiration', { expiresAt: 0 }],
+  ])('rejects a %s key', async (_name, update) => {
+    const { t, rawApiKey, keyId } = await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update,
+      },
+    });
+    const response = await t.fetch('/api/v2/events?pagination=cursor', {
+      headers: { 'x-api-key': rawApiKey },
+    });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({
+      error: { code: 'UNAUTHORIZED' },
+    });
+  });
+
+  it.each(['apikey', 'user', 'person'] as const)(
+    'rejects a deleted %s',
+    async model => {
+      const { t, rawApiKey, keyId, userId, personId } =
+        await createAuthenticatedRestTestInstance();
+      if (model === 'person') await t.run(ctx => ctx.db.delete(personId));
+      else
+        await t.mutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model,
+            where: [
+              { field: '_id', value: model === 'apikey' ? keyId : userId },
+            ],
+          },
+        });
+      const response = await t.fetch('/api/v2/events?pagination=cursor', {
+        headers: { 'x-api-key': rawApiKey },
+      });
+      expect(response.status).toBe(401);
+    }
+  );
+
+  it.each(['{}', '{', 'null', '[]', '{"events":"read"}', '{"events":[42]}'])(
+    'fails closed for invalid or non-granting scope %s',
+    async permissions => {
+      const { t, rawApiKey, keyId } =
+        await createAuthenticatedRestTestInstance();
+      await t.mutation(components.betterAuth.adapter.updateOne, {
+        input: {
+          model: 'apikey',
+          where: [{ field: '_id', value: keyId }],
+          update: { permissions },
+        },
+      });
+      const response = await t.fetch('/api/v2/events?pagination=cursor', {
+        headers: { 'x-api-key': rawApiKey },
+      });
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({
+        error: { code: 'FORBIDDEN' },
+      });
+    }
+  );
+
+  it('allows an expired ban and replenishes a refillable key once the interval passes', async () => {
+    const { t, rawApiKey, keyId, userId } =
+      await createAuthenticatedRestTestInstance();
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'user',
+        where: [{ field: '_id', value: userId }],
+        update: { banned: true, banExpires: Date.now() - 1000 },
+      },
+    });
+    await t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'apikey',
+        where: [{ field: '_id', value: keyId }],
+        update: {
+          remaining: 0,
+          refillInterval: 60000,
+          refillAmount: 1,
+          lastRefillAt: Date.now() - 60001,
+        },
+      },
+    });
+    const headers = { 'x-api-key': rawApiKey };
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(200);
+    expect(
+      (await t.fetch('/api/v2/events?pagination=cursor', { headers })).status
+    ).toBe(429);
   });
 });

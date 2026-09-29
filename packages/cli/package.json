@@ -1,0 +1,32 @@
+{
+  "name": "@groupi/cli",
+  "version": "0.1.0",
+  "description": "Groupi event planning from the terminal",
+  "type": "module",
+  "license": "GPL-3.0",
+  "bin": {
+    "groupi": "bin/groupi.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:run": "vitest run",
+    "test:package": "node scripts/test-package.js"
+  },
+  "dependencies": {
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.0"
+  }
+}

@@ -1,0 +1,55 @@
+name: CLI Package Checks
+
+on:
+  push:
+    branches: [main, test, develop]
+  pull_request:
+    branches: [main, test, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: CLI (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [22, 24]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check CLI
+        run: pnpm --filter @groupi/cli type-check
+
+      - name: Lint CLI
+        run: pnpm --filter @groupi/cli lint
+
+      - name: Test CLI commands
+        run: pnpm --filter @groupi/cli test:run
+
+      - name: Verify installed package
+        run: pnpm --filter @groupi/cli test:package

@@ -130,3 +130,25 @@ export const EventCreateResponseSchema = z
     membershipId: z.string(),
   })
   .openapi('EventCreateResponse');
+
+export const EventPageResponseSchema = z
+  .object({
+    items: z.array(EventSummarySchema),
+    nextCursor: z.string().nullable(),
+  })
+  .openapi('EventPageResponse');
+
+export const EventListQuerySchema = z
+  .object({
+    pagination: z.literal('cursor').optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    cursor: z.string().min(1).max(16384).optional(),
+  })
+  .refine(
+    query =>
+      query.pagination === 'cursor' ||
+      (query.limit === undefined && query.cursor === undefined),
+    {
+      message: 'Set pagination=cursor when using limit or cursor',
+    }
+  );
