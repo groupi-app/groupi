@@ -378,11 +378,11 @@ export default function PostDetailScreen() {
 
               {/* Post content */}
               <View className='mt-3 flex-row items-center gap-2'>
-                <Text className='text-xl font-bold text-foreground'>
+                <Text className='min-w-0 shrink text-xl font-bold text-foreground'>
                   {post.title}
                 </Text>
                 {post.updatedAt && post.updatedAt !== post._creationTime ? (
-                  <Text className='text-xs text-muted-foreground'>
+                  <Text className='shrink-0 text-xs text-muted-foreground'>
                     (edited)
                   </Text>
                 ) : null}

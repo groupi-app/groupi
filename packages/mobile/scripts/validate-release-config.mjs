@@ -24,6 +24,7 @@ function assert(condition, message) {
 const eas = JSON.parse(read('eas.json'));
 const mobilePackage = JSON.parse(read('package.json'));
 const appConfig = read('app.config.ts');
+const androidProjectBuild = read('android/build.gradle');
 const androidBuild = read('android/app/build.gradle');
 const androidManifest = read('android/app/src/main/AndroidManifest.xml');
 const androidStrings = read('android/app/src/main/res/values/strings.xml');
@@ -119,6 +120,53 @@ assert(
     appConfig.includes("bundleIdentifier: 'com.groupi.mobile'") &&
     appConfig.includes("package: 'com.groupi.mobile'"),
   'Expo ownership/project linkage and native application IDs must remain stable'
+);
+assert(
+  appConfig.includes("googleServicesFile: './google-services.json'") &&
+    /classpath\(['"]com\.google\.gms:google-services:[^'"]+['"]\)/.test(
+      androidProjectBuild
+    ) &&
+    /apply plugin: ['"]com\.google\.gms\.google-services['"]/.test(
+      androidBuild
+    ),
+  'Android FCM requires the Firebase configuration and Google Services Gradle plugin'
+);
+for (const configPath of [
+  'google-services.json',
+  'android/app/google-services.json',
+]) {
+  assert(
+    existsSync(join(mobileDir, configPath)),
+    `Android Firebase configuration is missing: ${configPath}`
+  );
+}
+const googleServicesSource = read('google-services.json');
+assert(
+  googleServicesSource === read('android/app/google-services.json'),
+  'The native Android Firebase configuration must exactly match google-services.json'
+);
+const googleServices = JSON.parse(googleServicesSource);
+assert(
+  !googleServices.private_key && googleServices.type !== 'service_account',
+  'Use the public Firebase Android configuration, never a service-account private key'
+);
+const firebaseProjectNumber = googleServices.project_info?.project_number;
+const firebaseClient = googleServices.client?.find(
+  client =>
+    client.client_info?.android_client_info?.package_name ===
+    'com.groupi.mobile'
+);
+assert(
+  googleServices.project_info?.project_id === 'groupi-ae0fa' &&
+    typeof firebaseProjectNumber === 'string' &&
+    /^\d+$/.test(firebaseProjectNumber) &&
+    firebaseClient?.client_info?.mobilesdk_app_id?.startsWith(
+      `1:${firebaseProjectNumber}:android:`
+    ) &&
+    firebaseClient.api_key?.some(
+      key => typeof key.current_key === 'string' && key.current_key.length > 0
+    ),
+  'Android Firebase configuration must register com.groupi.mobile in the current Groupi Firebase project'
 );
 const escapedMobileVersion = mobilePackage.version.replaceAll('.', '\\.');
 const runtimeVersionMatch = appConfig.match(/runtimeVersion: '([^']+)'/);

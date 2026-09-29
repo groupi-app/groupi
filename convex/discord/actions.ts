@@ -2,6 +2,7 @@
 
 import { action, internalAction } from '../_generated/server';
 import { v } from 'convex/values';
+import { fetchDiscordUserApi } from './userApi';
 import {
   partitionManageableGuilds,
   type DiscordGuild,
@@ -52,9 +53,9 @@ export const getAvailableGuilds = action({
       return empty;
     }
 
-    // Get the current user's Discord access token
+    // Resolve the current user's linked Discord account without exposing tokens.
     const data = await ctx.runQuery(
-      internalApi.accounts.queries.getAccountsWithTokens,
+      internalApi.accounts.queries.getAccountsForEnrichment,
       {}
     );
 
@@ -66,14 +67,16 @@ export const getAvailableGuilds = action({
       (a: { providerId: string }) => a.providerId === 'discord'
     );
 
-    if (!discordAccount?.accessToken) {
+    if (!discordAccount) {
       return empty;
     }
 
     // Fetch user's guilds (includes permissions)
-    const userGuildsRes = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
-      headers: { Authorization: `Bearer ${discordAccount.accessToken}` },
-    });
+    const userGuildsRes = await fetchDiscordUserApi(
+      ctx,
+      discordAccount.accountId,
+      '/users/@me/guilds'
+    );
 
     if (!userGuildsRes.ok) {
       console.error(

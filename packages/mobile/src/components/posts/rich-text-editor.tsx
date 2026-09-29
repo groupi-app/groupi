@@ -200,8 +200,30 @@ export function RichTextEditor({
       font-size: 16px;
       line-height: 1.6;
       box-sizing: border-box;
-      padding: ${isCompact ? '8px 10px' : '12px'};
+      margin: 0;
+      padding: 0;
       min-height: ${isCompact ? Math.max(minHeight - 2, 1) : minHeight}px;
+    }
+    /* Tentap's scroll container is absolutely positioned at viewport width.
+       Keep spacing inside the editor so it cannot shift that container out of view. */
+    #root > div:nth-of-type(1) {
+      left: 0;
+      right: 0;
+      box-sizing: border-box;
+    }
+    #root .ProseMirror {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      padding: ${isCompact ? '8px 10px' : '12px'};
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    #root .ProseMirror pre {
+      white-space: pre-wrap;
+    }
+    #root .ProseMirror ul[data-type="taskList"] li > div {
+      min-width: 0;
     }
     ${isCompact ? 'p { margin: 0; }' : ''}
     .tiptap p.is-editor-empty:first-child::before {

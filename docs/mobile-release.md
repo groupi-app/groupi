@@ -180,6 +180,11 @@ files directly on the claimed `www.groupi.gg` domain.
 
 ## Release acceptance
 
+See [Mobile Store Readiness](./mobile-store-readiness.md) for the September 17,
+2026 artifact verification, outstanding store blockers, and draft listing copy.
+The activation checklist below is historical and does not establish current
+store readiness.
+
 ### Activation status (verified 2026-09-10)
 
 - The Expo project is linked and its production environment contains the
