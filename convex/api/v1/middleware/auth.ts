@@ -52,6 +52,10 @@ export async function validateApiKey(
       apiKey,
       resource,
       action,
+      ...(request.method === 'POST' &&
+      new URL(request.url).pathname === '/api/v2/auth/cli/revoke'
+        ? { selfRevoke: true }
+        : {}),
     });
 
     if (!result) {

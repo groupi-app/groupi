@@ -17,6 +17,20 @@ export default defineSchema({
   // NOTE: users, sessions, accounts, verifications are managed by Better Auth component
   // See convex.config.ts for betterAuth component registration
 
+  // Short-lived browser consent, bound to a single CLI listener and PKCE verifier.
+  // Only hashes of authorization codes are persisted; API keys live in Better Auth.
+  cliAuthGrants: defineTable({
+    userId: v.string(),
+    personId: v.id('persons'),
+    codeHash: v.string(),
+    challenge: v.string(),
+    state: v.string(),
+    callbackPort: v.number(),
+    expiresAt: v.number(),
+  })
+    .index('by_codeHash', ['codeHash'])
+    .index('by_userId_and_state', ['userId', 'state']),
+
   // Email verification for additional emails (app-managed, not component)
   emailVerifications: defineTable({
     userId: v.string(), // Better Auth component user ID (stored as string)

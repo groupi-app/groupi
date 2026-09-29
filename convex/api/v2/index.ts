@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
 import { validateApiKey, getApiKey } from '../v1/middleware/auth';
+import { createCliAuthRoutes } from './routes/cliAuth';
 import { createEventRoutes } from './routes/events';
 import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
@@ -117,7 +118,8 @@ Groupi REST API for event planning and coordination.
 
 ## Authentication
 
-All API endpoints require authentication via API key. Include your API key in the \`x-api-key\` header:
+All resource endpoints require authentication via API key. The CLI exchange endpoint
+uses a single-use browser authorization code and PKCE proof instead. Include your API key in the \`x-api-key\` header:
 
 \`\`\`
 x-api-key: grp_your_api_key_here
@@ -186,6 +188,8 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
     return c.json({ status: 'ok', version: '2.0.0' });
   });
 
+  app.route('/', createCliAuthRoutes());
+
   // Mount route groups
   app.route('/', createEventRoutes());
   app.route('/', createPostRoutes());
@@ -226,10 +230,14 @@ export const handler = httpAction(async (ctx, request) => {
   const honoUrl = new URL(request.url);
   honoUrl.pathname = strippedPath;
 
+  // Request supplies the Fetch init fields, including duplex for streamed bodies.
+  // The cast bridges React Native's narrower ambient RequestInit body type.
   const publicPaths = ['/docs', '/openapi.json', '/health', '/'];
-  const isPublicPath = publicPaths.some(
-    p => strippedPath === p || strippedPath.startsWith('/docs')
-  );
+  const isPublicPath =
+    (request.method === 'POST' && strippedPath === '/auth/cli/exchange') ||
+    publicPaths.some(
+      p => strippedPath === p || strippedPath.startsWith('/docs')
+    );
 
   if (!isPublicPath) {
     const apiKey = getApiKey(request.headers);
@@ -237,14 +245,10 @@ export const handler = httpAction(async (ctx, request) => {
       const auth = await validateApiKey(ctx, apiKey, request);
       const app = createApiV2App(ctx, auth.userId, auth.personId);
 
-      const modifiedRequest = new Request(honoUrl.toString(), {
-        method: request.method,
-        headers: request.headers,
-        body:
-          request.method === 'GET' || request.method === 'HEAD'
-            ? undefined
-            : (request.body as unknown as RequestInit['body']),
-      });
+      const modifiedRequest = new Request(
+        honoUrl.toString(),
+        request as unknown as RequestInit
+      );
 
       return app.fetch(modifiedRequest);
     } catch (error) {
@@ -281,14 +285,10 @@ export const handler = httpAction(async (ctx, request) => {
   }
 
   const app = createApiV2App(ctx);
-  const publicRequest = new Request(honoUrl.toString(), {
-    method: request.method,
-    headers: request.headers,
-    body:
-      request.method === 'GET' || request.method === 'HEAD'
-        ? undefined
-        : (request.body as unknown as RequestInit['body']),
-  });
+  const publicRequest = new Request(
+    honoUrl.toString(),
+    request as unknown as RequestInit
+  );
 
   return app.fetch(publicRequest);
 });

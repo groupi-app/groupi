@@ -1,6 +1,12 @@
 import { Command, CommanderError, Option } from 'commander';
 import { readFileSync } from 'node:fs';
-import { addProfile, getProfile, credential } from './profiles.js';
+import {
+  addProfile,
+  getProfile,
+  credential,
+  authentication,
+} from './profiles.js';
+import { readApi } from './transport.js';
 import { listEvents, getEvent } from './events.js';
 import { CliError } from './errors.js';
 
@@ -53,14 +59,143 @@ export async function run() {
         );
       program.outputHelp();
     });
+  const auth = program.command('auth').description('Manage authentication');
+  auth
+    .command('login')
+    .description('Explicitly authorize this profile in your browser')
+    .option('--no-browser', 'Show the authorization URL for manual opening')
+    .option(
+      '--timeout <seconds>',
+      'Authorization timeout (10–300 seconds)',
+      '300'
+    )
+    .option(
+      '--web-url <origin>',
+      'Explicit authorization website for this login'
+    )
+    .action(async loginOptions => {
+      if (json || !process.stdin.isTTY || !process.stdout.isTTY)
+        throw new CliError(
+          'BROWSER_INTERACTION_REQUIRED',
+          'Run groupi auth login in an interactive terminal, or supply an existing key through GROUPI_API_KEY or --api-key-stdin.',
+          3
+        );
+      if (
+        !/^[0-9]+$/.test(loginOptions.timeout) ||
+        Number(loginOptions.timeout) < 10 ||
+        Number(loginOptions.timeout) > 300
+      )
+        throw new CliError(
+          'USAGE',
+          '--timeout must be an integer from 10 to 300 seconds.',
+          2
+        );
+      if (program.opts().apiKeyStdin)
+        throw new CliError(
+          'USAGE',
+          'Browser login cannot consume an API key from stdin.',
+          2
+        );
+      const { login } = await import('./login.js');
+      const profile = await getProfile(program.opts().profile);
+      const account = await login(profile, {
+        ...loginOptions,
+        timeout: Number(loginOptions.timeout),
+      });
+      process.stdout.write(
+        `Connected ${plain(account.name)} (${plain(account.email)}) to profile ${plain(profile.name)}.\n`
+      );
+    });
+  auth
+    .command('status')
+    .description(
+      'Verify the selected profile and account without revealing credentials'
+    )
+    .action(async () => {
+      const options = program.opts();
+      const profile = await getProfile(options.profile);
+      const selected = await authentication(profile, !!options.apiKeyStdin);
+      const data = await readApi(profile, selected.apiKey, '/profile');
+      if (
+        !data ||
+        typeof data !== 'object' ||
+        !('userId' in data) ||
+        typeof data.userId !== 'string' ||
+        !('name' in data) ||
+        !(typeof data.name === 'string' || data.name === null) ||
+        !('email' in data) ||
+        !(typeof data.email === 'string' || data.email === null)
+      )
+        throw new CliError(
+          'INVALID_RESPONSE',
+          'The server returned an invalid account profile.',
+          5
+        );
+      if ('account' in selected && selected.account?.id !== data.userId)
+        throw new CliError(
+          'ACCOUNT_MISMATCH',
+          'The saved credential belongs to a different account. Log out and explicitly authorize this profile again.',
+          3
+        );
+      const result = {
+        profile: profile.name,
+        apiUrl: profile.apiUrl,
+        source: selected.source,
+        account: { id: data.userId, name: data.name, email: data.email },
+        ...('expiresAt' in selected ? { expiresAt: selected.expiresAt } : {}),
+      };
+      process.stdout.write(
+        json
+          ? JSON.stringify(result) + '\n'
+          : `Profile ${plain(profile.name)}: ${plain(data.name)} (${plain(data.email)}), using ${selected.source}.\n`
+      );
+    });
+  auth
+    .command('logout')
+    .description(
+      'Remove this profile’s saved credential; temporary keys are unchanged'
+    )
+    .option(
+      '--revoke',
+      'Also revoke this saved key on the server before removing it'
+    )
+    .action(async logoutOptions => {
+      if (program.opts().apiKeyStdin)
+        throw new CliError(
+          'USAGE',
+          'Logout manages the saved credential only; omit --api-key-stdin.',
+          2
+        );
+      const profile = await getProfile(program.opts().profile);
+      const { readCredential, deleteCredential } = await import(
+        './credential-store.js'
+      );
+      const saved = await readCredential(profile);
+      if (saved && logoutOptions.revoke) {
+        const { authRequest } = await import('./login.js');
+        await authRequest(profile, '/auth/cli/revoke', {}, saved.apiKey);
+      }
+      await deleteCredential(profile);
+      const result = {
+        profile: profile.name,
+        removed: !!saved,
+        revoked: !!saved && !!logoutOptions.revoke,
+      };
+      process.stdout.write(
+        json
+          ? JSON.stringify(result) + '\n'
+          : `Profile ${plain(profile.name)}: ${saved ? 'saved credential removed' : 'no saved credential'}. ${result.revoked ? 'Server key revoked.' : 'Server key was not revoked.'} Environment/stdin keys are unchanged.\n`
+      );
+    });
   const profiles = program
     .command('profile')
     .description('Manage connection profiles');
   profiles
     .command('add <name>')
     .requiredOption('--api-url <url>', 'REST v2 API URL')
+    .option('--web-url <url>', 'Authorization website origin for browser login')
     .action(async (name, options) => {
-      const result = await addProfile(name, options.apiUrl);
+      const result = await addProfile(name, options.apiUrl, options.webUrl);
       process.stdout.write(
         json
           ? JSON.stringify(result) + '\n'
@@ -88,7 +223,7 @@ export async function run() {
       const profile = await getProfile(options.profile);
       const result = await listEvents(
         profile,
-        await credential(profile.name, !!options.apiKeyStdin),
+        await credential(profile, !!options.apiKeyStdin),
         { limit: Number(paging.limit), cursor: paging.cursor, all: paging.all }
       );
       if (!result)
@@ -115,7 +250,7 @@ export async function run() {
       const profile = await getProfile(options.profile);
       const result = await getEvent(
         profile,
-        await credential(profile.name, !!options.apiKeyStdin),
+        await credential(profile, !!options.apiKeyStdin),
         id
       );
       process.stdout.write(
