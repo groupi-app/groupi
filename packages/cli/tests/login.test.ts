@@ -3,6 +3,7 @@ import { connect } from 'node:net';
 import { createHash } from 'node:crypto';
 import { createServer, get, type Server } from 'node:http';
 import { mkdtemp, writeFile, rm, readdir, readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
@@ -80,7 +81,7 @@ async function login(
     process.execPath,
     [
       '--import',
-      resolve('tests/fixtures/login-environment.mjs'),
+      pathToFileURL(resolve('tests/fixtures/login-environment.mjs')).href,
       process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js'),
       '--profile',
       'test',

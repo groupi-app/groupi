@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -40,7 +41,7 @@ function cli(args: string[], env: Record<string, string> = {}, input = '') {
         process.execPath,
         [
           '--import',
-          resolve('tests/fixtures/keyring-environment.mjs'),
+          pathToFileURL(resolve('tests/fixtures/keyring-environment.mjs')).href,
           process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js'),
           ...args,
         ],
