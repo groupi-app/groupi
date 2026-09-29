@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
@@ -9,6 +9,8 @@ import {
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   EventListResponseSchema,
+  EventPageResponseSchema,
+  EventListQuerySchema,
   EventResponseSchema,
   EventCreateResponseSchema,
   CreateEventRequestSchema,
@@ -34,16 +36,22 @@ export function createEventRoutes() {
     path: '/events',
     tags: ['Events'],
     summary: 'List events',
-    description: 'Get all events the authenticated user is a member of',
+    description:
+      'Get member events. Without pagination returns the legacy array. Set pagination=cursor for bounded membership-order pages (default 20, maximum 100); continue until nextCursor is null, including after an empty page.',
+    request: { query: EventListQuerySchema },
     security: [{ apiKey: [] }],
     responses: {
       200: {
         description: 'List of events',
         content: {
           'application/json': {
-            schema: EventListResponseSchema,
+            schema: z.union([EventListResponseSchema, EventPageResponseSchema]),
           },
         },
+      },
+      400: {
+        description: 'Invalid pagination',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -59,6 +67,29 @@ export function createEventRoutes() {
   app.openapi(listEventsRoute, async c => {
     const ctx = c.get('ctx');
     const personId = c.get('personId');
+    const query = c.req.valid('query');
+    if (query.pagination === 'cursor') {
+      const result = await ctx.runQuery(
+        internal.api.v1.internal.events.listUserEventsPage,
+        {
+          personId:
+            personId as import('../../../_generated/dataModel').Id<'persons'>,
+          limit: query.limit ?? 20,
+          cursor: query.cursor ?? null,
+        }
+      );
+      if ('error' in result)
+        return c.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Invalid event cursor. Start again without a cursor.',
+            },
+          },
+          400
+        );
+      return c.json(result, 200);
+    }
 
     // Get user's events via internal query
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
