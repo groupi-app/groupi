@@ -137,9 +137,8 @@ plan before scheduling; retrying without that field succeeded. No tester groups
 were created or changed. Apple subsequently confirmed build `6` is `VALID` and
 `IN_BETA_TESTING` for internal testers. Its external state is
 `READY_FOR_BETA_SUBMISSION`; the previous build `4` remains `BETA_APPROVED`.
-External beta review has not been submitted for build `6`, and physical-device
-acceptance has not been performed. Internal testers can now update through
-TestFlight to `0.4.1 (6)` to verify cover sharpness and post wrapping.
+External beta review has not been submitted for build `6`. Physical-device
+acceptance was pending at upload; subsequent owner testing is recorded below.
 
 The owner then reproduced right-edge clipping while **composing** a post in
 build `6`. This is a separate WebView layout path from displayed post content.
@@ -149,16 +148,48 @@ All six editor tests and `pnpm check` passed. A real Chromium layout fixture usi
 the installed Tentap/ProseMirror CSS reproduced overflow in all 48 original
 cases and passed all 48 fixed cases (240–390px, full/compact, paragraphs, long
 tokens/URLs, lists, task lists, code), preserving text and checking character
-bounds. WebKit/native keyboard behavior still requires the owner's iPhone test.
+bounds. The owner subsequently confirmed the fix on their iPhone.
 
 The [iPhone editor update](https://expo.dev/accounts/theiasurette/projects/groupi-mobile/updates/5817a9c9-8b71-44ef-a6a3-4c8820000874)
 was published to the existing `production` channel/branch for **iOS runtime 2
 only**, update ID `01a0dfe5-639c-70f2-a30f-7af0184f86bb`. It is compatible with
 build `6`; no native changes or new TestFlight binary were required. The existing
 approved mobile display-fix changeset covers this follow-up. Build `4` (runtime
+`1`) and Android do not receive this update.
 
-1. and Android do not receive this update. On a network connection, open Groupi
-   to allow the update to download, then fully close and reopen it to test the fix.
+### Owner-reported iPhone acceptance
+
+On September 29, the owner confirmed that notifications, passkeys, and invites
+appear to work on their iPhone. They also previously confirmed the event image
+and post composer fixes. This records the owner's functional testing of the
+current TestFlight candidate and editor update; the individual notification
+lifecycle and invite scenarios in the full acceptance matrix have not been
+separately recorded. Android acceptance remains pending.
+
+Discord reconnection is the currently reported functional issue; its backend
+repair is described below and still awaits deployment and device verification.
+
+### Discord connection renewal
+
+On September 29, the owner reported that a linked Discord account loses its
+username on a later visit and the server picker stops working until relinking.
+Both backend lookups were using the original access token without refreshing it.
+The local fix routes them through Better Auth's expiry-aware token retrieval,
+which saves renewed access and refresh credentials. Seven regression tests use
+the real authentication component to cover expiry, subsequent visits, guild
+loading, failed authorization, and account isolation.
+
+Validation: `pnpm check` passed; all 499 backend tests passed, with the six
+previously known scheduler transaction errors still reported by the test harness.
+`pnpm generate` could not run because `CONVEX_DEPLOYMENT` is unset. No schema or
+public function signature changed; generated types still pass the type check.
+
+This backend fix has **not been deployed** and needs no mobile binary or OTA
+update. After deployment, verify the existing linked account's username and
+Discord server picker on the phone. Revoked authorization or missing refresh
+credentials can still require relinking. The separate explicit-refresh API is
+not used: the installed Better Auth version sends an account ID in its update
+payload, which the Convex adapter rejects.
 
 ## Release blockers
 
