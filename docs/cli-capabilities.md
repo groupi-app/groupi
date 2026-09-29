@@ -75,14 +75,18 @@ tests. CLI/backend lint and typechecking passed. The direct backend suite passed
 its existing test configuration. Code review found and resolved premature retries
 when a server supplies a long `Retry-After` value.
 
-The repository-wide run passed 1,013 web, 266 shared, and 249 mobile assertions;
-two mobile suites failed during loading. `pnpm check` stopped at web Zod/resolver
-type incompatibilities. The normal Convex test/codegen command requires an unset
-`CONVEX_DEPLOYMENT`; direct backend tests supplied the local behavioral evidence.
-These limitations mean the complete repository check is not green.
-The web's 13 Zod diagnostics and both mobile loading failures also reproduce on
-unchanged baseline `2a340a1` using the same installed dependencies; this comparison
-isolates source changes, rather than claiming a fresh baseline dependency install.
+The initial repository-wide run passed 1,013 web, 266 shared, and 249 mobile
+assertions, but two mobile suites failed during loading and web typechecking hit
+Zod/resolver incompatibilities. Both also reproduced on unchanged baseline source
+with the same local dependencies. Refreshing dependencies with
+`pnpm install --frozen-lockfile` resolved the web errors and all six tests in the
+two mobile suites passed. Clean hosted backend and mobile jobs also passed on
+Node 22 and 24. The normal local Convex test/codegen command still requires an
+unset `CONVEX_DEPLOYMENT`; direct backend tests supplied local behavioral evidence.
+
+The first Windows CLI jobs exposed checkout conversion to CRLF. A package-scoped
+Git attributes rule now keeps CLI text files in LF; a simulated Windows checkout
+verified the rule before rerunning hosted checks.
 
 The CLI workflow defines Node 22 and 24 checks on macOS, Windows and Linux for
 types, lint, command tests and installed-package smoke tests. Adding the workflow
