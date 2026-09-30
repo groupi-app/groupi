@@ -161,5 +161,6 @@ was rejected without changing its chosen date. Test events were deleted, test AP
 keys revoked, and successful test sessions signed out. No external invitation
 emails were sent; the attendee joined using the existing app link-invite path.
 
-Hosted CI and the approved changeset are still required before #224 is marked
-verified and merged. The draft PR does not imply production availability.
+All six hosted OS/runtime CLI checks, application tests, build, quality checks
+and Vercel preview passed at `3ac6336`. The release note was subsequently approved
+and added. Production availability remains dependent on merge and deployment.
