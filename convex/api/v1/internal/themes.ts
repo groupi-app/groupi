@@ -1,5 +1,6 @@
+import { saveThemePreferenceForPerson } from '../../../themes/mutations';
 import { internalQuery, internalMutation } from '../../../_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
 
 /**
@@ -196,33 +197,22 @@ export const setThemePreference = internalMutation({
       systemDarkThemeId,
     }
   ) => {
-    const pId = personId as Id<'persons'>;
-    const now = Date.now();
-
-    const existing = await ctx.db
-      .query('themePreferences')
-      .withIndex('by_person', q => q.eq('personId', pId))
-      .first();
-
-    const prefsData = {
-      personId: pId,
+    const customId = selectedCustomThemeId
+      ? ctx.db.normalizeId('customThemes', selectedCustomThemeId)
+      : undefined;
+    if (selectedCustomThemeId && !customId)
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'Provide a valid custom theme ID.',
+      });
+    await saveThemePreferenceForPerson(ctx, personId as Id<'persons'>, {
       selectedThemeType,
       selectedThemeId,
-      selectedCustomThemeId:
-        selectedCustomThemeId && selectedCustomThemeId !== null
-          ? (selectedCustomThemeId as Id<'customThemes'>)
-          : undefined,
+      selectedCustomThemeId: customId ?? undefined,
       useSystemPreference,
       systemLightThemeId,
       systemDarkThemeId,
-      updatedAt: now,
-    };
-
-    if (existing) {
-      await ctx.db.patch(existing._id, prefsData);
-    } else {
-      await ctx.db.insert('themePreferences', prefsData);
-    }
+    });
 
     return {
       selectedThemeType,

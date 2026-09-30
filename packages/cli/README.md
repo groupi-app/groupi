@@ -9,6 +9,22 @@ and installed locally; public registry publication belongs to #228. Supports Nod
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
 compiler, React, Expo, or Next.js runtime.
 
+## Agent guidance and command reference
+
+The package ships a portable [agent usage skill](./skills/groupi/SKILL.md),
+[generated versioned command reference](./docs/command-reference.md), and
+[tested workflow examples](./docs/workflow-examples.md). These files travel with
+the executable, including commands added after the initial browsing milestone.
+Use `groupi --version` and per-command `--help` to check your installed surface.
+
+Maintainers regenerate with `pnpm --filter @groupi/cli docs:generate` and verify
+with `pnpm --filter @groupi/cli docs:check`. Packing rejects stale references.
+Installed-package tests execute the same planning and inspection example arguments
+with synthetic credentials, isolated organizer/attendee profiles, and a local HTTP
+fixture; no real credentials are recorded. This verifies public instructions and
+streams, while staging, live agent-client integration, and platform credential-store
+checks require separate release evidence.
+
 ## Authentication
 
 ```sh

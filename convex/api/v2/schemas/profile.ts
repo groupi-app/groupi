@@ -40,6 +40,11 @@ export const UpdateProfileRequestSchema = z
       description: 'Preferred pronouns',
     }),
   })
+  .strict()
+  .refine(
+    data => Object.keys(data).length > 0,
+    'Provide at least one profile field'
+  )
   .openapi('UpdateProfileRequest');
 
 // Username path parameter

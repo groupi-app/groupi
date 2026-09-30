@@ -1,9 +1,15 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
+import type { Id } from '../../../_generated/dataModel';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema, MessageResponseSchema } from '../schemas/common';
 import {
+  FriendPageResponseSchema,
+  RequestPageResponseSchema,
+  SocialPageQuerySchema,
+  FriendSummarySchema,
+  FriendRequestSchema,
   FriendListResponseSchema,
   FriendRequestListResponseSchema,
   UserSearchResponseSchema,
@@ -34,14 +40,29 @@ export function createFriendRoutes() {
     summary: 'List friends',
     description: 'Get list of all friends for the authenticated user',
     security: [{ apiKey: [] }],
+    request: { query: SocialPageQuerySchema },
     responses: {
       200: {
         description: 'List of friends',
         content: {
           'application/json': {
-            schema: FriendListResponseSchema,
+            schema: z.union([
+              FriendListResponseSchema,
+              z.object({
+                items: z.array(FriendSummarySchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      400: {
+        description: 'Invalid cursor or pagination',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -57,6 +78,19 @@ export function createFriendRoutes() {
   app.openapi(listFriendsRoute, async c => {
     const ctx = c.get('ctx');
     const personId = c.get('personId');
+    const q = c.req.valid('query');
+    if (q.pagination === 'cursor')
+      return c.json(
+        FriendPageResponseSchema.parse(
+          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+            personId: personId as Id<'persons'>,
+            kind: 'friends',
+            limit: q.limit ?? 20,
+            cursor: q.cursor ?? null,
+          })
+        ),
+        200
+      );
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
@@ -74,14 +108,29 @@ export function createFriendRoutes() {
     summary: 'List incoming requests',
     description: 'Get list of pending friend requests received',
     security: [{ apiKey: [] }],
+    request: { query: SocialPageQuerySchema },
     responses: {
       200: {
         description: 'List of incoming friend requests',
         content: {
           'application/json': {
-            schema: FriendRequestListResponseSchema,
+            schema: z.union([
+              FriendRequestListResponseSchema,
+              z.object({
+                items: z.array(FriendRequestSchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      400: {
+        description: 'Invalid cursor or pagination',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -97,6 +146,19 @@ export function createFriendRoutes() {
   app.openapi(listIncomingRequestsRoute, async c => {
     const ctx = c.get('ctx');
     const personId = c.get('personId');
+    const q = c.req.valid('query');
+    if (q.pagination === 'cursor')
+      return c.json(
+        RequestPageResponseSchema.parse(
+          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+            personId: personId as Id<'persons'>,
+            kind: 'incoming',
+            limit: q.limit ?? 20,
+            cursor: q.cursor ?? null,
+          })
+        ),
+        200
+      );
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
@@ -114,14 +176,29 @@ export function createFriendRoutes() {
     summary: 'List outgoing requests',
     description: 'Get list of pending friend requests sent',
     security: [{ apiKey: [] }],
+    request: { query: SocialPageQuerySchema },
     responses: {
       200: {
         description: 'List of outgoing friend requests',
         content: {
           'application/json': {
-            schema: FriendRequestListResponseSchema,
+            schema: z.union([
+              FriendRequestListResponseSchema,
+              z.object({
+                items: z.array(FriendRequestSchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      400: {
+        description: 'Invalid cursor or pagination',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -137,6 +214,19 @@ export function createFriendRoutes() {
   app.openapi(listOutgoingRequestsRoute, async c => {
     const ctx = c.get('ctx');
     const personId = c.get('personId');
+    const q = c.req.valid('query');
+    if (q.pagination === 'cursor')
+      return c.json(
+        RequestPageResponseSchema.parse(
+          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+            personId: personId as Id<'persons'>,
+            kind: 'outgoing',
+            limit: q.limit ?? 20,
+            cursor: q.cursor ?? null,
+          })
+        ),
+        200
+      );
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
@@ -165,6 +255,10 @@ export function createFriendRoutes() {
             schema: UserSearchResponseSchema,
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -211,6 +305,10 @@ export function createFriendRoutes() {
             schema: FriendshipStatusResponseSchema,
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -270,6 +368,10 @@ export function createFriendRoutes() {
           },
         },
       },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       401: {
         description: 'Unauthorized',
         content: {
@@ -324,6 +426,10 @@ export function createFriendRoutes() {
             schema: ErrorResponseSchema,
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -385,6 +491,10 @@ export function createFriendRoutes() {
           },
         },
       },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       401: {
         description: 'Unauthorized',
         content: {
@@ -440,6 +550,10 @@ export function createFriendRoutes() {
           },
         },
       },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       401: {
         description: 'Unauthorized',
         content: {
@@ -494,6 +608,10 @@ export function createFriendRoutes() {
             schema: ErrorResponseSchema,
           },
         },
+      },
+      403: {
+        description: 'Forbidden for this identity or API key',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',

@@ -1,3 +1,4 @@
+import { canDiscoverEventForPerson } from './management';
 import { canViewAttendance, privateNote } from './attendance';
 import { latestResponses } from '../availability/reads';
 import { query, internalQuery } from '../_generated/server';
@@ -780,9 +781,18 @@ export const getDiscoverableEvents = query({
       return true;
     });
 
+    const eligibility = await Promise.all(
+      candidateEvents.map(event =>
+        canDiscoverEventForPerson(ctx, currentPerson._id, event, now)
+      )
+    );
+    const eligibleEvents = candidateEvents.filter(
+      (_, index) => eligibility[index]
+    );
+
     // Fetch member counts, images, and organizer data in parallel per event
     const discoverableEvents = await Promise.all(
-      candidateEvents.map(async event => {
+      eligibleEvents.map(async event => {
         const [imageUrl, organizerData] = await Promise.all([
           event.imageStorageId
             ? ctx.storage.getUrl(event.imageStorageId)

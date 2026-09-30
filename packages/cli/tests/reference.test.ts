@@ -1,0 +1,223 @@
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { expect, test } from 'vitest';
+
+const executable = process.env.CLI_TEST_BIN ?? resolve('bin/groupi.js');
+const packageRoot = resolve(executable, '../..');
+
+test('distributed versioned reference stays current with executable command definitions', () => {
+  const result = spawnSync(
+    process.execPath,
+    [resolve(packageRoot, 'scripts/generate-reference.js'), '--check'],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, GROUPI_PROFILE: 'unrelated-profile' },
+    }
+  );
+  expect(result.stderr).toBe('');
+  expect(result.status).toBe(0);
+  const reference = JSON.parse(
+    readFileSync(resolve(packageRoot, 'docs/command-reference.json'), 'utf8')
+  );
+  const version = spawnSync(process.execPath, [executable, '--version'], {
+    encoding: 'utf8',
+  });
+  expect(reference.version).toBe(version.stdout.trim());
+  expect(
+    reference.commands.some(
+      (command: { path: string }) => command.path === 'groupi events create'
+    )
+  ).toBe(true);
+});
+
+test('distributed agent examples execute a planning and inspection workflow without secret output', async () => {
+  const { createServer } = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const { mkdtemp, rm } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { randomUUID } = await import('node:crypto');
+  const directory = await mkdtemp(resolve(tmpdir(), 'groupi-guidance-'));
+  let accepted = false;
+  let response = 'PENDING';
+  const unexpected: string[] = [];
+  const server = createServer((request, reply) => {
+    let body = '';
+    request.on('data', chunk => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      const path = new URL(request.url!, 'http://local').pathname;
+      const identity =
+        request.headers['x-api-key'] === 'synthetic-organizer'
+          ? 'organizer'
+          : 'attendee';
+      const rsvp = {
+        membershipId: 'membership-1',
+        rsvpStatus: response,
+        rsvpNote: null,
+      };
+      let data: unknown;
+      if (path === '/api/v2/health')
+        data = {
+          capabilities: {
+            eventWrites: { version: 1 },
+            eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
+            inviteWrites: { version: 1, retentionMs: 86400000 },
+            attendanceWrites: { version: 1 },
+          },
+        };
+      else if (path === '/api/v2/profile')
+        data = {
+          userId: identity,
+          name: identity,
+          email: `${identity}@example.com`,
+        };
+      else if (path === '/api/v2/events' && request.method === 'POST')
+        data = { eventId: 'event-1', membershipId: 'organizer-membership' };
+      else if (path === '/api/v2/events/event-1/member-invites')
+        data = { inviteId: 'invite-1', status: 'PENDING' };
+      else if (path === '/api/v2/member-invites/invite-1')
+        data = {
+          inviteId: 'invite-1',
+          eventId: 'event-1',
+          eventTitle: 'Dinner',
+          inviterId: 'organizer',
+          inviteeId: 'attendee',
+          role: 'ATTENDEE',
+          status: 'PENDING',
+          message: null,
+          createdAt: 1,
+          respondedAt: null,
+        };
+      else if (path === '/api/v2/member-invites/invite-1/accept') {
+        accepted = true;
+        data = { eventId: 'event-1', membershipId: 'membership-1' };
+      } else if (path === '/api/v2/events/event-1/rsvp') {
+        if (request.method === 'PATCH') response = JSON.parse(body).rsvpStatus;
+        data = { ...rsvp, rsvpStatus: response };
+      } else if (path === '/api/v2/events/event-1/members')
+        data = {
+          items: [
+            {
+              id: 'membership-1',
+              personId: 'attendee-1',
+              role: 'ATTENDEE',
+              rsvpStatus: response,
+              rsvpNote: null,
+              joinedAt: 1,
+              user: null,
+            },
+          ],
+          nextCursor: null,
+        };
+      else if (path === '/api/v2/events')
+        data = {
+          items: [{ id: 'event-1', title: 'Dinner' }],
+          nextCursor: null,
+        };
+      else if (path === '/api/v2/events/event-1')
+        data = { id: 'event-1', title: 'Dinner' };
+      else {
+        unexpected.push(`${request.method} ${path}`);
+        reply.writeHead(404);
+        data = {};
+      }
+      reply.setHeader('content-type', 'application/json');
+      reply.end(JSON.stringify(data));
+    });
+  });
+  await new Promise<void>(done => server.listen(0, '127.0.0.1', done));
+  const address = server.address();
+  if (!address || typeof address === 'string')
+    throw new Error('No fixture port');
+  const apiUrl = `http://127.0.0.1:${address.port}/api/v2`;
+  async function invoke(args: string[], identity = 'organizer') {
+    return await new Promise<{
+      code: number | null;
+      stdout: string;
+      stderr: string;
+    }>((done, reject) => {
+      const child = spawn(process.execPath, [executable, ...args], {
+        env: {
+          ...process.env,
+          GROUPI_CONFIG_DIR: directory,
+          GROUPI_PROFILE: '',
+          GROUPI_API_KEY: `synthetic-${identity}`,
+          GROUPI_API_KEY_PROFILE: identity,
+        },
+        stdio: 'pipe',
+      });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', chunk => {
+        stdout += chunk;
+      });
+      child.stderr.on('data', chunk => {
+        stderr += chunk;
+      });
+      child.on('error', reject);
+      child.on('close', code => done({ code, stdout, stderr }));
+      child.stdin.end();
+    });
+  }
+  try {
+    for (const identity of ['organizer', 'attendee'])
+      expect(
+        (await invoke(['profile', 'add', identity, '--api-url', apiUrl])).code
+      ).toBe(0);
+    const substitutions: Record<string, string> = {
+      $EVENT_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
+      $INVITE_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
+      $ATTENDEE_USERNAME: 'guest',
+    };
+    const workflows = JSON.parse(
+      readFileSync(resolve(packageRoot, 'docs/agent-workflows.json'), 'utf8')
+    ) as Record<string, { identity: string; args: string[] }[]>;
+    for (const step of Object.values(workflows).flat()) {
+      const args = step.args.map(
+        argument => substitutions[argument] ?? argument
+      );
+      const result = await invoke(
+        ['--profile', step.identity, ...args],
+        step.identity
+      );
+      expect(result.stderr).toBe('');
+      expect(result.code).toBe(0);
+      expect(result.stdout).not.toContain('synthetic-');
+      const data = JSON.parse(result.stdout);
+      if (data.eventId) substitutions.$EVENT_ID = data.eventId;
+      if (data.inviteId) substitutions.$INVITE_ID = data.inviteId;
+      if (step.args[0] === 'events' && step.args[1] === 'members')
+        expect(data.items[0].rsvpStatus).toBe('YES');
+    }
+    expect(accepted).toBe(true);
+    expect(response).toBe('YES');
+    expect(unexpected).toEqual([]);
+  } finally {
+    await new Promise<void>(done => server.close(() => done()));
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('portable agent JSON instructions produce actionable errors without interactive login', () => {
+  const result = spawnSync(
+    process.execPath,
+    [executable, 'auth', 'login', '--format', 'json'],
+    {
+      encoding: 'utf8',
+      input: '',
+      env: {
+        ...process.env,
+        GROUPI_API_KEY: 'synthetic-secret-never-print',
+        GROUPI_PROFILE: '',
+      },
+    }
+  );
+  expect(result.status).toBe(3);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error.code).toBe(
+    'BROWSER_INTERACTION_REQUIRED'
+  );
+  expect(result.stderr).not.toContain('synthetic-secret-never-print');
+});

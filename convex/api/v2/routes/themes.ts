@@ -105,6 +105,69 @@ export function createThemeRoutes() {
     return c.json(result, 200);
   });
 
+  // PUT /themes/preferences - Set theme preference
+  const setPreferenceRoute = createRoute({
+    method: 'put',
+    path: '/themes/preferences',
+    tags: ['Themes'],
+    summary: 'Set theme preferences',
+    description:
+      "Set the authenticated user's active theme and system preferences",
+    security: [{ apiKey: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: SetThemePreferenceRequestSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Updated theme preferences',
+        content: {
+          'application/json': {
+            schema: ThemePreferencesResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad request',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+  });
+
+  app.openapi(setPreferenceRoute, async c => {
+    const ctx = c.get('ctx');
+    const personId = c.get('personId');
+    const body = c.req.valid('json');
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - Type instantiation is excessively deep (TS2589)
+    const setFn = internal.api.v1.internal.themes.setThemePreference;
+    const result = await ctx.runMutation(setFn, {
+      personId,
+      ...body,
+      selectedCustomThemeId: body.selectedCustomThemeId ?? undefined,
+    });
+
+    return c.json(result, 200);
+  });
+
   // POST /themes - Create custom theme
   const createThemeRoute = createRoute({
     method: 'post',
@@ -300,69 +363,6 @@ export function createThemeRoutes() {
     await ctx.runMutation(deleteFn, { themeId, personId });
 
     return c.body(null, 204);
-  });
-
-  // PUT /themes/preferences - Set theme preference
-  const setPreferenceRoute = createRoute({
-    method: 'put',
-    path: '/themes/preferences',
-    tags: ['Themes'],
-    summary: 'Set theme preferences',
-    description:
-      "Set the authenticated user's active theme and system preferences",
-    security: [{ apiKey: [] }],
-    request: {
-      body: {
-        content: {
-          'application/json': {
-            schema: SetThemePreferenceRequestSchema,
-          },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Updated theme preferences',
-        content: {
-          'application/json': {
-            schema: ThemePreferencesResponseSchema,
-          },
-        },
-      },
-      400: {
-        description: 'Bad request',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(setPreferenceRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const body = c.req.valid('json');
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const setFn = internal.api.v1.internal.themes.setThemePreference;
-    const result = await ctx.runMutation(setFn, {
-      personId,
-      ...body,
-      selectedCustomThemeId: body.selectedCustomThemeId ?? undefined,
-    });
-
-    return c.json(result, 200);
   });
 
   return app;

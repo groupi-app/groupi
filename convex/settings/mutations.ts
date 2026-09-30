@@ -1,5 +1,5 @@
-import { mutation } from '../_generated/server';
-import { v } from 'convex/values';
+import { mutation, type MutationCtx } from '../_generated/server';
+import { v, ConvexError, type Infer } from 'convex/values';
 import { requireAuth, getPersonForUser } from '../auth';
 
 // Notification type validator matching schema
@@ -48,7 +48,7 @@ const notificationSettingValidator = v.object({
 });
 
 // Full notification method validator for updates
-const notificationMethodValidator = v.object({
+export const notificationMethodValidator = v.object({
   id: v.optional(v.id('notificationMethods')), // Optional for new methods
   type: methodTypeValidator,
   enabled: v.boolean(),
@@ -77,132 +77,168 @@ export const saveNotificationSettings = mutation({
       throw new Error('Person not found for user');
     }
 
-    // Get or create person settings
-    let personSettings = await ctx.db
-      .query('personSettings')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .first();
-
-    if (!personSettings) {
-      const settingsId = await ctx.db.insert('personSettings', {
-        personId: person._id,
-        updatedAt: Date.now(),
-      });
-      personSettings = await ctx.db.get(settingsId);
-      if (!personSettings) {
-        throw new Error('Failed to create person settings');
-      }
-    }
-
-    // Get existing methods to determine what to update/delete
-    const existingMethods = await ctx.db
-      .query('notificationMethods')
-      .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
-      .collect();
-
-    const existingMethodIds = new Set(existingMethods.map(m => m._id));
-    const incomingMethodIds = new Set(
-      notificationMethods.filter(m => m.id !== undefined).map(m => m.id!)
+    return saveNotificationSettingsForPerson(
+      ctx,
+      person._id,
+      notificationMethods
     );
-
-    // Delete methods that are no longer in the list
-    for (const existingMethod of existingMethods) {
-      if (!incomingMethodIds.has(existingMethod._id)) {
-        // Delete associated notification settings first
-        const settings = await ctx.db
-          .query('notificationSettings')
-          .withIndex('by_method', q => q.eq('methodId', existingMethod._id))
-          .collect();
-        for (const setting of settings) {
-          await ctx.db.delete(setting._id);
-        }
-        // Delete the method
-        await ctx.db.delete(existingMethod._id);
-      }
-    }
-
-    // Process each notification method
-    for (const method of notificationMethods) {
-      let methodId = method.id;
-
-      // Parse webhook headers if provided
-      let webhookHeaders = undefined;
-      if (method.webhookHeaders) {
-        try {
-          webhookHeaders = JSON.parse(method.webhookHeaders);
-        } catch {
-          // Keep as undefined if invalid JSON
-        }
-      }
-
-      if (methodId && existingMethodIds.has(methodId)) {
-        // Update existing method
-        await ctx.db.patch(methodId, {
-          type: method.type,
-          enabled: method.enabled,
-          name: method.name,
-          value: method.value,
-          webhookFormat: method.webhookFormat,
-          customTemplate: method.customTemplate,
-          webhookHeaders,
-          updatedAt: Date.now(),
-        });
-      } else {
-        // Create new method
-        methodId = await ctx.db.insert('notificationMethods', {
-          settingsId: personSettings._id,
-          type: method.type,
-          enabled: method.enabled,
-          name: method.name,
-          value: method.value,
-          webhookFormat: method.webhookFormat,
-          customTemplate: method.customTemplate,
-          webhookHeaders,
-          updatedAt: Date.now(),
-        });
-      }
-
-      // Update notification settings for this method
-      // First, get existing settings for this method
-      const existingSettings = await ctx.db
-        .query('notificationSettings')
-        .withIndex('by_method', q => q.eq('methodId', methodId))
-        .collect();
-
-      const existingSettingsMap = new Map(
-        existingSettings.map(s => [s.notificationType, s])
-      );
-
-      // Update or create notification settings
-      for (const notification of method.notifications) {
-        const existing = existingSettingsMap.get(notification.notificationType);
-        if (existing) {
-          // Update existing setting
-          await ctx.db.patch(existing._id, {
-            enabled: notification.enabled,
-            updatedAt: Date.now(),
-          });
-          existingSettingsMap.delete(notification.notificationType);
-        } else {
-          // Create new setting
-          await ctx.db.insert('notificationSettings', {
-            methodId,
-            notificationType: notification.notificationType,
-            enabled: notification.enabled,
-            updatedAt: Date.now(),
-          });
-        }
-      }
-
-      // Delete any settings that are no longer in the list
-      for (const [, setting] of existingSettingsMap) {
-        await ctx.db.delete(setting._id);
-      }
-    }
-
-    return { success: true };
   },
 });
+
+export async function saveNotificationSettingsForPerson(
+  ctx: MutationCtx,
+  personId: import('../_generated/dataModel').Id<'persons'>,
+  notificationMethods: Infer<typeof notificationMethodValidator>[]
+) {
+  // Get or create person settings
+  let personSettings = await ctx.db
+    .query('personSettings')
+    .withIndex('by_person', q => q.eq('personId', personId))
+    .first();
+
+  if (!personSettings) {
+    const settingsId = await ctx.db.insert('personSettings', {
+      personId: personId,
+      updatedAt: Date.now(),
+    });
+    personSettings = await ctx.db.get(settingsId);
+    if (!personSettings) {
+      throw new Error('Failed to create person settings');
+    }
+  }
+
+  // Get existing methods to determine what to update/delete
+  const existingMethods = await ctx.db
+    .query('notificationMethods')
+    .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
+    .collect();
+
+  const existingMethodIds = new Set(existingMethods.map(m => m._id));
+  for (const method of notificationMethods) {
+    if (method.id && !existingMethodIds.has(method.id))
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'Notification method does not belong to this account.',
+      });
+  }
+  const ids = notificationMethods.flatMap(m => (m.id ? [m.id] : []));
+  if (new Set(ids).size !== ids.length)
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Duplicate notification method IDs.',
+    });
+
+  const incomingMethodIds = new Set(
+    notificationMethods.filter(m => m.id !== undefined).map(m => m.id!)
+  );
+
+  // Delete methods that are no longer in the list
+  for (const existingMethod of existingMethods) {
+    if (!incomingMethodIds.has(existingMethod._id)) {
+      // Delete associated notification settings first
+      const settings = await ctx.db
+        .query('notificationSettings')
+        .withIndex('by_method', q => q.eq('methodId', existingMethod._id))
+        .collect();
+      for (const setting of settings) {
+        await ctx.db.delete(setting._id);
+      }
+      // Delete the method
+      await ctx.db.delete(existingMethod._id);
+    }
+  }
+
+  // Process each notification method
+  for (const method of notificationMethods) {
+    let methodId = method.id;
+
+    // Parse webhook headers if provided
+    let webhookHeaders = undefined;
+    if (method.webhookHeaders) {
+      try {
+        webhookHeaders = JSON.parse(method.webhookHeaders);
+      } catch {
+        // Keep as undefined if invalid JSON
+      }
+    }
+
+    if (methodId && existingMethodIds.has(methodId)) {
+      // Update existing method
+      await ctx.db.patch(methodId, {
+        type: method.type,
+        enabled: method.enabled,
+        name: method.name,
+        value: method.value,
+        webhookFormat: method.webhookFormat,
+        customTemplate:
+          method.customTemplate ??
+          existingMethods.find(m => m._id === methodId)?.customTemplate,
+        webhookHeaders:
+          method.webhookHeaders === undefined
+            ? existingMethods.find(m => m._id === methodId)?.webhookHeaders
+            : webhookHeaders,
+        updatedAt: Date.now(),
+      });
+    } else {
+      // Create new method
+      methodId = await ctx.db.insert('notificationMethods', {
+        settingsId: personSettings._id,
+        type: method.type,
+        enabled: method.enabled,
+        name: method.name,
+        value: method.value,
+        webhookFormat: method.webhookFormat,
+        customTemplate:
+          method.customTemplate ??
+          existingMethods.find(m => m._id === methodId)?.customTemplate,
+        webhookHeaders:
+          method.webhookHeaders === undefined
+            ? existingMethods.find(m => m._id === methodId)?.webhookHeaders
+            : webhookHeaders,
+        updatedAt: Date.now(),
+      });
+    }
+
+    // Update notification settings for this method
+    // First, get existing settings for this method
+    const existingSettings = await ctx.db
+      .query('notificationSettings')
+      .withIndex('by_method', q => q.eq('methodId', methodId))
+      .collect();
+
+    const existingSettingsMap = new Map(
+      existingSettings.map(s => [s.notificationType, s])
+    );
+
+    // Update or create notification settings
+    for (const notification of method.notifications) {
+      const existing = existingSettingsMap.get(notification.notificationType);
+      if (existing) {
+        // Update existing setting
+        await ctx.db.patch(existing._id, {
+          enabled: notification.enabled,
+          updatedAt: Date.now(),
+        });
+        existingSettingsMap.delete(notification.notificationType);
+      } else {
+        // Create new setting
+        await ctx.db.insert('notificationSettings', {
+          methodId,
+          notificationType: notification.notificationType,
+          enabled: notification.enabled,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
+    // Delete any settings that are no longer in the list
+    for (const [, setting] of existingSettingsMap) {
+      await ctx.db.delete(setting._id);
+    }
+  }
+
+  return { success: true };
+}
 
 /**
  * Delete a specific notification method

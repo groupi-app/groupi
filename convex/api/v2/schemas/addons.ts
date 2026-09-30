@@ -47,16 +47,16 @@ export const AddonConfigSchema = z.record(z.string(), z.unknown()).openapi({
   description: `Freeform JSON config object. Shape depends on addon type:
 
 - **reminders**: \`{ reminderOffset: "1_HOUR" | "1_DAY" | "2_DAYS" | ... }\`
-- **questionnaire**: \`{ questions: [{ id: string, type: "text" | "single_choice" | "multi_choice", label: string, required?: boolean, options?: string[] }] }\`
+- **questionnaire**: \`{ questions: [{ id: string, type: "SHORT_ANSWER" | "LONG_ANSWER" | "MULTIPLE_CHOICE" | "CHECKBOXES" | "NUMBER" | "DROPDOWN" | "YES_NO", label: string, required: boolean, options?: string[] }] }\`
 - **bring-list**: \`{ items: [{ id: string, name: string, quantity: number }] }\`
 - **discord**: \`{ guildId: string, guildName: string }\`
 
-Config is validated server-side by the addon's handler.`,
+Custom add-ons use \`custom:{templateId}\` with \`{templateId}\` to attach an owned published template, or \`{templateId, template}\` for permitted event settings. Definition and webhook secret fields are protected. Config is validated server-side by the addon's handler.`,
   example: {
     questions: [
       {
         id: 'q1',
-        type: 'text',
+        type: 'SHORT_ANSWER',
         label: 'Dietary restrictions?',
         required: true,
       },

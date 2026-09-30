@@ -10,7 +10,7 @@ import {
   EnableAddonRequestSchema,
   UpdateAddonConfigRequestSchema,
   SetAddonDataRequestSchema,
-  AddonListResponseSchema,
+  AddonConfigResponseSchema,
   AddonConfigSingleResponseSchema,
   AddonDataListResponseSchema,
   AddonDataSingleResponseSchema,
@@ -27,6 +27,68 @@ type Variables = {
 export function createAddonRoutes() {
   const app = new OpenAPIHono<{ Variables: Variables }>();
 
+  const paging = z.object({
+    pagination: z.literal('cursor').optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: z.string().min(1).optional(),
+  });
+  const templateSchema = z.object({
+    id: z.string(),
+    addonType: z.string(),
+    name: z.string(),
+    description: z.string(),
+    version: z.number(),
+    template: z.unknown(),
+  });
+  const templatesRoute = createRoute({
+    method: 'get',
+    path: '/addon-templates',
+    tags: ['Add-ons'],
+    summary: 'List existing published templates owned by this identity',
+    security: [{ apiKey: [] }],
+    request: { query: paging },
+    responses: {
+      200: {
+        description: 'Available custom templates',
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                z.array(templateSchema),
+                z.object({
+                  items: z.array(templateSchema),
+                  nextCursor: z.string().nullable(),
+                }),
+              ]),
+            }),
+          },
+        },
+      },
+    },
+  });
+  app.openapi(templatesRoute, async c => {
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await c
+            .get('ctx')
+            .runQuery(
+              internal.api.v1.internal.addons.listPublishedTemplatesPage,
+              {
+                personId: c.get('personId'),
+                limit: query.limit,
+                cursor: query.cursor ?? null,
+              }
+            )
+        : await c
+            .get('ctx')
+            .runQuery(internal.api.v1.internal.addons.listPublishedTemplates, {
+              personId: c.get('personId'),
+            });
+    return c.json({ success: true as const, data: result }, 200);
+  });
+
   // ===== ADDON CONFIG ROUTES =====
 
   // GET /events/:eventId/addons - List all addon configs
@@ -35,17 +97,28 @@ export function createAddonRoutes() {
     path: '/events/{eventId}/addons',
     tags: ['Add-ons'],
     summary: 'List add-ons',
-    description: 'Get all add-on configurations for an event',
+    description:
+      'Get all add-on configurations for an event, including disabled add-ons',
     security: [{ apiKey: [] }],
     request: {
       params: EventIdParamSchema,
+      query: paging,
     },
     responses: {
       200: {
         description: 'List of add-on configs',
         content: {
           'application/json': {
-            schema: AddonListResponseSchema,
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                z.array(AddonConfigResponseSchema),
+                z.object({
+                  items: z.array(AddonConfigResponseSchema),
+                  nextCursor: z.string().nullable(),
+                }),
+              ]),
+            }),
           },
         },
       },
@@ -78,7 +151,14 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const listFn = internal.api.v1.internal.addons.listEventAddons;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await ctx.runQuery(
+            internal.api.v1.internal.addons.listEventAddonsPage,
+            { eventId, limit: query.limit, cursor: query.cursor ?? null }
+          )
+        : await ctx.runQuery(listFn, { eventId });
 
     return c.json(
       {
@@ -96,7 +176,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Enable add-on',
     description:
-      'Enable an add-on for an event with the given config. Requires MODERATOR role or higher.',
+      'Enable an add-on for an event with validated config. Existing custom add-ons can use {templateId} from /addon-templates; only app-supported configurable template settings are mutable. Re-enabling an enabled add-on updates config through its lifecycle. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
@@ -233,7 +313,7 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const disableFn = internal.api.v1.internal.addons.disableAddon;
-    await ctx.runMutation(disableFn, { eventId, addonType });
+    await ctx.runMutation(disableFn, { eventId, addonType, personId });
 
     return c.json(
       {
@@ -251,7 +331,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Update add-on config',
     description:
-      'Update the configuration for an enabled add-on. Requires MODERATOR role or higher.',
+      'Replace the configuration for an enabled add-on, invoking its response-reset and notification lifecycle. Custom definition fields are protected. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,

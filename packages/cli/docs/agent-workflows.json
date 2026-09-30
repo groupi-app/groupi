@@ -1,0 +1,75 @@
+{
+  "planning": [
+    {
+      "identity": "organizer",
+      "args": [
+        "events",
+        "create",
+        "--title",
+        "Dinner",
+        "--request-id",
+        "$EVENT_REQUEST_ID",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": [
+        "invites",
+        "members",
+        "send",
+        "$EVENT_ID",
+        "--username",
+        "$ATTENDEE_USERNAME",
+        "--request-id",
+        "$INVITE_REQUEST_ID",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "attendee",
+      "args": ["invites", "members", "get", "$INVITE_ID", "--format", "json"]
+    },
+    {
+      "identity": "attendee",
+      "args": ["invites", "members", "accept", "$INVITE_ID", "--format", "json"]
+    },
+    {
+      "identity": "attendee",
+      "args": [
+        "events",
+        "rsvp",
+        "set",
+        "$EVENT_ID",
+        "--status",
+        "YES",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": ["events", "members", "$EVENT_ID", "--all", "--format", "json"]
+    }
+  ],
+  "inspection": [
+    {
+      "identity": "organizer",
+      "args": ["auth", "status", "--format", "json"]
+    },
+    {
+      "identity": "organizer",
+      "args": ["events", "list", "--limit", "20", "--format", "json"]
+    },
+    {
+      "identity": "organizer",
+      "args": ["events", "get", "$EVENT_ID", "--format", "json"]
+    },
+    {
+      "identity": "attendee",
+      "args": ["events", "rsvp", "get", "$EVENT_ID", "--format", "json"]
+    }
+  ]
+}

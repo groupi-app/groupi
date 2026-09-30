@@ -1,3 +1,4 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
@@ -394,8 +395,11 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.events.deleteEvent;
-    await ctx.runMutation(deleteFn, { eventId });
+    const deleteFn = internal.events.managementRest.removeEvent;
+    await ctx.runMutation(deleteFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {

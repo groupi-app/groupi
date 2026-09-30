@@ -7,12 +7,15 @@ import { httpAction } from '../../_generated/server';
 import { validateApiKey, getApiKey } from '../v1/middleware/auth';
 import { createCliAuthRoutes } from './routes/cliAuth';
 import { createEventRoutes } from './routes/events';
+import { createEventManagementRoutes } from './routes/eventManagement';
 import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
 import { createMemberRoutes } from './routes/members';
 import { createAvailabilityRoutes } from './routes/availability';
 import { createFriendRoutes } from './routes/friends';
+import { createBlockRoutes } from './routes/blocks';
 import { createAddonRoutes } from './routes/addons';
+import { createAddonDiscordRoutes } from './routes/addonDiscord';
 import { createNotificationRoutes } from './routes/notifications';
 import { createMutingRoutes } from './routes/muting';
 import { createProfileRoutes } from './routes/profile';
@@ -88,6 +91,7 @@ export function createApiV2App(
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'IDEMPOTENCY_CONFLICT',
+          'CONFLICT',
           'IDEMPOTENCY_EXPIRED',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
@@ -231,6 +235,10 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       version: '2.0.0',
       capabilities: {
         eventWrites: { version: 1 },
+        eventManagement: { version: 1 },
+        socialWrites: { version: 1 },
+        addonConfiguration: { version: 1 },
+        discordGuilds: { version: 1 },
         attendanceWrites: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
@@ -241,13 +249,16 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createCliAuthRoutes());
 
   // Mount route groups
+  app.route('/', createEventManagementRoutes());
   app.route('/', createEventRoutes());
   app.route('/', createPostRoutes());
   app.route('/', createReplyRoutes());
   app.route('/', createMemberRoutes());
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
+  app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
+  app.route('/', createAddonDiscordRoutes());
   app.route('/', createNotificationRoutes());
   app.route('/', createMutingRoutes());
   app.route('/', createProfileRoutes());

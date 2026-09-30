@@ -1,0 +1,1421 @@
+# Groupi command reference
+
+Generated from @groupi/cli 0.1.0. Run `groupi --version` to verify the installed version.
+Regenerate with `pnpm --filter @groupi/cli docs:generate`; CI checks for stale definitions.
+
+Global options are inherited by commands. Live defaults can reflect `GROUPI_PROFILE`; this reference shows the packaged default.
+
+## Table of Contents
+
+- [groupi](#groupi)
+- [groupi auth](#groupi-auth)
+- [groupi auth login](#groupi-auth-login)
+- [groupi auth status](#groupi-auth-status)
+- [groupi auth logout](#groupi-auth-logout)
+- [groupi profile](#groupi-profile)
+- [groupi profile add](#groupi-profile-add)
+- [groupi events](#groupi-events)
+- [groupi events create](#groupi-events-create)
+- [groupi events edit](#groupi-events-edit)
+- [groupi events list](#groupi-events-list)
+- [groupi events get](#groupi-events-get)
+- [groupi events rsvp](#groupi-events-rsvp)
+- [groupi events rsvp get](#groupi-events-rsvp-get)
+- [groupi events rsvp set](#groupi-events-rsvp-set)
+- [groupi events availability](#groupi-events-availability)
+- [groupi events availability set](#groupi-events-availability-set)
+- [groupi events availability clear](#groupi-events-availability-clear)
+- [groupi events availability get](#groupi-events-availability-get)
+- [groupi events availability responses](#groupi-events-availability-responses)
+- [groupi events dates](#groupi-events-dates)
+- [groupi events dates choose](#groupi-events-dates-choose)
+- [groupi events dates reset](#groupi-events-dates-reset)
+- [groupi events dates list](#groupi-events-dates-list)
+- [groupi events members](#groupi-events-members)
+- [groupi events discover](#groupi-events-discover)
+- [groupi events join](#groupi-events-join)
+- [groupi events leave](#groupi-events-leave)
+- [groupi events delete](#groupi-events-delete)
+- [groupi events membership](#groupi-events-membership)
+- [groupi events membership role](#groupi-events-membership-role)
+- [groupi events membership remove](#groupi-events-membership-remove)
+- [groupi events settings](#groupi-events-settings)
+- [groupi events settings get](#groupi-events-settings-get)
+- [groupi events settings set](#groupi-events-settings-set)
+- [groupi discord](#groupi-discord)
+- [groupi discord guilds](#groupi-discord-guilds)
+- [groupi discord guilds list](#groupi-discord-guilds-list)
+- [groupi discord guilds refresh](#groupi-discord-guilds-refresh)
+- [groupi addons](#groupi-addons)
+- [groupi addons get](#groupi-addons-get)
+- [groupi addons list](#groupi-addons-list)
+- [groupi addons templates](#groupi-addons-templates)
+- [groupi addons enable](#groupi-addons-enable)
+- [groupi addons configure](#groupi-addons-configure)
+- [groupi addons disable](#groupi-addons-disable)
+- [groupi friends](#groupi-friends)
+- [groupi friends list](#groupi-friends-list)
+- [groupi friends incoming](#groupi-friends-incoming)
+- [groupi friends outgoing](#groupi-friends-outgoing)
+- [groupi friends status](#groupi-friends-status)
+- [groupi friends request](#groupi-friends-request)
+- [groupi friends accept](#groupi-friends-accept)
+- [groupi friends decline](#groupi-friends-decline)
+- [groupi friends cancel](#groupi-friends-cancel)
+- [groupi friends remove](#groupi-friends-remove)
+- [groupi blocks](#groupi-blocks)
+- [groupi blocks list](#groupi-blocks-list)
+- [groupi blocks status](#groupi-blocks-status)
+- [groupi blocks block](#groupi-blocks-block)
+- [groupi blocks unblock](#groupi-blocks-unblock)
+- [groupi account](#groupi-account)
+- [groupi account get](#groupi-account-get)
+- [groupi account edit](#groupi-account-edit)
+- [groupi account passkeys](#groupi-account-passkeys)
+- [groupi account linked-accounts](#groupi-account-linked-accounts)
+- [groupi account delete](#groupi-account-delete)
+- [groupi settings](#groupi-settings)
+- [groupi settings privacy](#groupi-settings-privacy)
+- [groupi settings privacy get](#groupi-settings-privacy-get)
+- [groupi settings privacy set](#groupi-settings-privacy-set)
+- [groupi settings notifications](#groupi-settings-notifications)
+- [groupi settings notifications get](#groupi-settings-notifications-get)
+- [groupi settings notifications set](#groupi-settings-notifications-set)
+- [groupi settings theme](#groupi-settings-theme)
+- [groupi settings theme get](#groupi-settings-theme-get)
+- [groupi settings theme set](#groupi-settings-theme-set)
+- [groupi invites](#groupi-invites)
+- [groupi invites links](#groupi-invites-links)
+- [groupi invites links create](#groupi-invites-links-create)
+- [groupi invites links edit](#groupi-invites-links-edit)
+- [groupi invites links accept](#groupi-invites-links-accept)
+- [groupi invites links revoke](#groupi-invites-links-revoke)
+- [groupi invites links get](#groupi-invites-links-get)
+- [groupi invites links list](#groupi-invites-links-list)
+- [groupi invites email](#groupi-invites-email)
+- [groupi invites email send](#groupi-invites-email-send)
+- [groupi invites email send-pending](#groupi-invites-email-send-pending)
+- [groupi invites members](#groupi-invites-members)
+- [groupi invites members send](#groupi-invites-members-send)
+- [groupi invites members accept](#groupi-invites-members-accept)
+- [groupi invites members decline](#groupi-invites-members-decline)
+- [groupi invites members revoke](#groupi-invites-members-revoke)
+- [groupi invites members get](#groupi-invites-members-get)
+- [groupi invites members list](#groupi-invites-members-list)
+
+## groupi
+
+```text
+Usage: groupi [options] [command]
+
+Groupi event planning
+
+Options:
+  -V, --version      output the version number
+  --profile <name>   Named connection profile (default: "default")
+  --api-key-stdin    Read one temporary API key from stdin (overrides environment)
+  --format <format>  Output format (choices: "human", "json", default: "human")
+  -h, --help         display help for command
+
+Commands:
+  auth               Manage authentication
+  profile            Manage connection profiles
+  events             Browse and manage your events
+  discord            Discover authorized Discord servers using your linked account
+  addons             Configure existing built-in and custom event add-ons
+  friends            Manage friendships and friend requests
+  blocks             Manage blocked users
+  account            Read/update your account and open explicit browser exceptions
+  settings           Manage ordinary preferences without a browser
+  invites            Manage bearer link/email and recipient-bound username invitations
+```
+
+## groupi auth
+
+```text
+Usage: groupi auth [options] [command]
+
+Manage authentication
+
+Options:
+  -h, --help        display help for command
+
+Commands:
+  login [options]   Explicitly authorize this profile in your browser
+  status            Verify the selected profile and account without revealing credentials
+  logout [options]  Remove this profile’s saved credential; temporary keys are unchanged
+  help [command]    display help for command
+```
+
+## groupi auth login
+
+```text
+Usage: groupi auth login [options]
+
+Explicitly authorize this profile in your browser
+
+Options:
+  --no-browser         Show the authorization URL for manual opening
+  --timeout <seconds>  Authorization timeout (10–300 seconds) (default: "300")
+  --web-url <origin>   Explicit authorization website for this login
+  -h, --help           display help for command
+```
+
+## groupi auth status
+
+```text
+Usage: groupi auth status [options]
+
+Verify the selected profile and account without revealing credentials
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi auth logout
+
+```text
+Usage: groupi auth logout [options]
+
+Remove this profile’s saved credential; temporary keys are unchanged
+
+Options:
+  --revoke    Also revoke this saved key on the server before removing it
+  -h, --help  display help for command
+```
+
+## groupi profile
+
+```text
+Usage: groupi profile [options] [command]
+
+Manage connection profiles
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  add [options] <name>
+  help [command]        display help for command
+```
+
+## groupi profile add
+
+```text
+Usage: groupi profile add [options] <name>
+
+Options:
+  --api-url <url>  REST v2 API URL
+  --web-url <url>  Authorization website origin for browser login
+  -h, --help       display help for command
+```
+
+## groupi events
+
+```text
+Usage: groupi events [options] [command]
+
+Browse and manage your events
+
+Options:
+  -h, --help                    display help for command
+
+Commands:
+  create [options]              Create an event with replay-safe request identification
+  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically
+  list [options]
+  get <event-id>                Read one accessible event
+  rsvp                          Read and update your own attendance response
+  availability                  Provide your availability and inspect permitted responses
+  dates                         Inspect proposed dates and manage the chosen date
+  members [options] <event-id>  List attendance when event permissions allow
+  discover [options]            Browse upcoming friends events you can join
+  join <event-id>               join an event
+  leave [options] <event-id>    leave an event
+  delete [options] <event-id>   delete an event
+  membership                    Manage event member roles and removal; inspect using events members
+  settings                      Inspect and update event visibility and supported permissions
+  help [command]                display help for command
+```
+
+## groupi events create
+
+```text
+Usage: groupi events create [options]
+
+Create an event with replay-safe request identification
+
+Options:
+  --title <title>        Event title
+  --description <text>   Event description
+  --location <text>      Event location
+  --start <iso>          Fixed start with explicit UTC offset or Z
+  --end <iso>            Fixed end with explicit UTC offset or Z
+  --date-options <json>  Proposed dates as [{start,end?,note?}] with explicit offsets
+  --request-id <id>      Reuse the identifier from a previous attempt with the same inputs
+  -h, --help             display help for command
+```
+
+## groupi events edit
+
+```text
+Usage: groupi events edit [options] <event-id>
+
+Edit event details; uncertain writes are never retried automatically
+
+Options:
+  --title <title>        New event title
+  --description <text>   New description; empty string clears it
+  --location <text>      New location; empty string clears it
+  --date-options <json>  Replace proposed dates and clear availability; requires confirmation
+  --yes                  Confirm replacing proposed dates and clearing availability
+  -h, --help             display help for command
+```
+
+## groupi events list
+
+```text
+Usage: groupi events list [options]
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a previous page
+  --all              Explicitly retrieve every page
+  -h, --help         display help for command
+```
+
+## groupi events get
+
+```text
+Usage: groupi events get [options] <event-id>
+
+Read one accessible event
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events rsvp
+
+```text
+Usage: groupi events rsvp [options] [command]
+
+Read and update your own attendance response
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <event-id>
+  set [options] <event-id>
+  help [command]            display help for command
+```
+
+## groupi events rsvp get
+
+```text
+Usage: groupi events rsvp get [options] <event-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events rsvp set
+
+```text
+Usage: groupi events rsvp set [options] <event-id>
+
+Options:
+  --status <status>  RSVP response (choices: "YES", "MAYBE", "NO", "PENDING")
+  --note <text>      Note (up to 200 characters); omitted or empty clears it
+  -h, --help         display help for command
+```
+
+## groupi events availability
+
+```text
+Usage: groupi events availability [options] [command]
+
+Provide your availability and inspect permitted responses
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  set [options] <event-id>
+  clear [options] <event-id>      Remove your availability responses and notes; RSVP is unchanged
+  get [options] <event-id>        List proposed dates with your own responses
+  responses [options] <event-id>  List member responses for one proposed date when permitted
+  help [command]                  display help for command
+```
+
+## groupi events availability set
+
+```text
+Usage: groupi events availability set [options] <event-id>
+
+Options:
+  --responses <json>  Array of {potentialDateTimeId,status:YES|MAYBE|NO,note?}
+  -h, --help          display help for command
+```
+
+## groupi events availability clear
+
+```text
+Usage: groupi events availability clear [options] <event-id>
+
+Remove your availability responses and notes; RSVP is unchanged
+
+Options:
+  --yes       Confirm clearing your responses
+  -h, --help  display help for command
+```
+
+## groupi events availability get
+
+```text
+Usage: groupi events availability get [options] <event-id>
+
+List proposed dates with your own responses
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Explicitly retrieve every page
+  -h, --help         display help for command
+```
+
+## groupi events availability responses
+
+```text
+Usage: groupi events availability responses [options] <event-id>
+
+List member responses for one proposed date when permitted
+
+Options:
+  --option <id>      Proposed date ID
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Explicitly retrieve every page
+  -h, --help         display help for command
+```
+
+## groupi events dates
+
+```text
+Usage: groupi events dates [options] [command]
+
+Inspect proposed dates and manage the chosen date
+
+Options:
+  -h, --help                   display help for command
+
+Commands:
+  choose [options] <event-id>  Choose a proposed poll date or manually set a future date (organizer
+                               only)
+  reset [options] <event-id>   Clear the chosen date while preserving responses (organizer only)
+  list [options] <event-id>    List proposed dates and their notes
+  help [command]               display help for command
+```
+
+## groupi events dates choose
+
+```text
+Usage: groupi events dates choose [options] <event-id>
+
+Choose a proposed poll date or manually set a future date (organizer only)
+
+Options:
+  --option <id>  Proposed date ID from dates list
+  --start <iso>  Manual start with explicit offset or Z
+  --end <iso>    Optional manual end with explicit offset or Z
+  --yes          Confirm choosing the event date and applying its response transitions
+  -h, --help     display help for command
+```
+
+## groupi events dates reset
+
+```text
+Usage: groupi events dates reset [options] <event-id>
+
+Clear the chosen date while preserving responses (organizer only)
+
+Options:
+  --yes       Confirm clearing the chosen date
+  -h, --help  display help for command
+```
+
+## groupi events dates list
+
+```text
+Usage: groupi events dates list [options] <event-id>
+
+List proposed dates and their notes
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Explicitly retrieve every page
+  -h, --help         display help for command
+```
+
+## groupi events members
+
+```text
+Usage: groupi events members [options] <event-id>
+
+List attendance when event permissions allow
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Explicitly retrieve every page
+  -h, --help         display help for command
+```
+
+## groupi events discover
+
+```text
+Usage: groupi events discover [options]
+
+Browse upcoming friends events you can join
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a previous page
+  --all              Retrieve every page explicitly
+  -h, --help         display help for command
+```
+
+## groupi events join
+
+```text
+Usage: groupi events join [options] <event-id>
+
+join an event
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events leave
+
+```text
+Usage: groupi events leave [options] <event-id>
+
+leave an event
+
+Options:
+  --yes       Confirm leave for the named event
+  -h, --help  display help for command
+```
+
+## groupi events delete
+
+```text
+Usage: groupi events delete [options] <event-id>
+
+delete an event
+
+Options:
+  --yes       Confirm delete for the named event
+  -h, --help  display help for command
+```
+
+## groupi events membership
+
+```text
+Usage: groupi events membership [options] [command]
+
+Manage event member roles and removal; inspect using events members
+
+Options:
+  -h, --help                               display help for command
+
+Commands:
+  role [options] <event-id> <member-id>
+  remove [options] <event-id> <member-id>
+  help [command]                           display help for command
+```
+
+## groupi events membership role
+
+```text
+Usage: groupi events membership role [options] <event-id> <member-id>
+
+Options:
+  --role <role>  New event role (choices: "ORGANIZER", "MODERATOR", "ATTENDEE")
+  --yes          Confirm role change for the named member
+  -h, --help     display help for command
+```
+
+## groupi events membership remove
+
+```text
+Usage: groupi events membership remove [options] <event-id> <member-id>
+
+Options:
+  --yes       Confirm removal of the named member
+  -h, --help  display help for command
+```
+
+## groupi events settings
+
+```text
+Usage: groupi events settings [options] [command]
+
+Inspect and update event visibility and supported permissions
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <event-id>
+  set [options] <event-id>
+  help [command]            display help for command
+```
+
+## groupi events settings get
+
+```text
+Usage: groupi events settings get [options] <event-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events settings set
+
+```text
+Usage: groupi events settings set [options] <event-id>
+
+Options:
+  --visibility <visibility>     Event visibility (choices: "PRIVATE", "FRIENDS", "PUBLIC")
+  --create-posts <level>        create-posts permission (choices: "EVERYONE", "MODERATOR",
+                                "ORGANIZER")
+  --invite-members <level>      invite-members permission (choices: "EVERYONE", "MODERATOR",
+                                "ORGANIZER")
+  --view-attendee-list <level>  view-attendee-list permission (choices: "EVERYONE", "MODERATOR",
+                                "ORGANIZER")
+  -h, --help                    display help for command
+```
+
+## groupi discord
+
+```text
+Usage: groupi discord [options] [command]
+
+Discover authorized Discord servers using your linked account
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  guilds          Inspect and refresh guild eligibility; linking requires the app browser flow
+  help [command]  display help for command
+```
+
+## groupi discord guilds
+
+```text
+Usage: groupi discord guilds [options] [command]
+
+Inspect and refresh guild eligibility; linking requires the app browser flow
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  list [options]  List cached available/invitable servers; expiresAt marks freshness
+  refresh         Refresh your authorization cache from Discord (no event changes, no automatic
+                  retries)
+  help [command]  display help for command
+```
+
+## groupi discord guilds list
+
+```text
+Usage: groupi discord guilds list [options]
+
+List cached available/invitable servers; expiresAt marks freshness
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi discord guilds refresh
+
+```text
+Usage: groupi discord guilds refresh [options]
+
+Refresh your authorization cache from Discord (no event changes, no automatic retries)
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi addons
+
+```text
+Usage: groupi addons [options] [command]
+
+Configure existing built-in and custom event add-ons
+
+Options:
+  -h, --help                                   display help for command
+
+Commands:
+  get <event-id> <addon-type>                  Inspect enabled or disabled config
+  list [options] <event-id>                    List event add-on configs, including disabled ones
+  templates [options]                          List your existing published custom templates
+  enable [options] <event-id> <addon-type>     enable an existing add-on
+  configure [options] <event-id> <addon-type>  Replace config; may reset participant responses
+  disable [options] <event-id> <addon-type>    disable an existing add-on
+  help [command]                               display help for command
+```
+
+## groupi addons get
+
+```text
+Usage: groupi addons get [options] <event-id> <addon-type>
+
+Inspect enabled or disabled config
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi addons list
+
+```text
+Usage: groupi addons list [options] <event-id>
+
+List event add-on configs, including disabled ones
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  --all              Deliberately retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi addons templates
+
+```text
+Usage: groupi addons templates [options]
+
+List your existing published custom templates
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  --all              Deliberately retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi addons enable
+
+```text
+Usage: groupi addons enable [options] <event-id> <addon-type>
+
+enable an existing add-on
+
+Options:
+  --yes                       Confirm config replacement, response reset, or disable
+  --config <json>             Validated JSON config object
+  --config-file <path>        Read JSON configuration from a local file
+  --reminder-offset <offset>  Reminders offset, e.g. 1_HOUR
+  --questions <json>          Questionnaire questions array
+  --items <json>              Bring-list items array
+  --guild-id <id>             Discord guild ID (recent authorization required)
+  --guild-name <name>         Discord guild name
+  --template-id <id>          Existing published custom template ID; use custom:<id>
+  -h, --help                  display help for command
+```
+
+## groupi addons configure
+
+```text
+Usage: groupi addons configure [options] <event-id> <addon-type>
+
+Replace config; may reset participant responses
+
+Options:
+  --yes                       Confirm config replacement, response reset, or disable
+  --config <json>             Validated JSON config object
+  --config-file <path>        Read JSON configuration from a local file
+  --reminder-offset <offset>  Reminders offset, e.g. 1_HOUR
+  --questions <json>          Questionnaire questions array
+  --items <json>              Bring-list items array
+  --guild-id <id>             Discord guild ID (recent authorization required)
+  --guild-name <name>         Discord guild name
+  --template-id <id>          Existing published custom template ID; use custom:<id>
+  -h, --help                  display help for command
+```
+
+## groupi addons disable
+
+```text
+Usage: groupi addons disable [options] <event-id> <addon-type>
+
+disable an existing add-on
+
+Options:
+  --yes       Confirm config replacement, response reset, or disable
+  -h, --help  display help for command
+```
+
+## groupi friends
+
+```text
+Usage: groupi friends [options] [command]
+
+Manage friendships and friend requests
+
+Options:
+  -h, --help                         display help for command
+
+Commands:
+  list [options]                     List accepted friendships
+  incoming [options]                 Inspect received pending requests
+  outgoing [options]                 Inspect sent pending requests
+  status <person-id>                 Inspect your relationship with a person
+  request <person-id>                request social relationship
+  accept <friendship-id>             accept social relationship
+  decline [options] <friendship-id>  decline social relationship
+  cancel [options] <friendship-id>   cancel social relationship
+  remove [options] <friendship-id>   remove social relationship
+  help [command]                     display help for command
+```
+
+## groupi friends list
+
+```text
+Usage: groupi friends list [options]
+
+List accepted friendships
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi friends incoming
+
+```text
+Usage: groupi friends incoming [options]
+
+Inspect received pending requests
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi friends outgoing
+
+```text
+Usage: groupi friends outgoing [options]
+
+Inspect sent pending requests
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi friends status
+
+```text
+Usage: groupi friends status [options] <person-id>
+
+Inspect your relationship with a person
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi friends request
+
+```text
+Usage: groupi friends request [options] <person-id>
+
+request social relationship
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi friends accept
+
+```text
+Usage: groupi friends accept [options] <friendship-id>
+
+accept social relationship
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi friends decline
+
+```text
+Usage: groupi friends decline [options] <friendship-id>
+
+decline social relationship
+
+Options:
+  --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi friends cancel
+
+```text
+Usage: groupi friends cancel [options] <friendship-id>
+
+cancel social relationship
+
+Options:
+  --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi friends remove
+
+```text
+Usage: groupi friends remove [options] <friendship-id>
+
+remove social relationship
+
+Options:
+  --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi blocks
+
+```text
+Usage: groupi blocks [options] [command]
+
+Manage blocked users
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  list [options]                 List users you blocked
+  status <person-id>             Inspect your relationship with a person
+  block [options] <person-id>    block social relationship
+  unblock [options] <person-id>  unblock social relationship
+  help [command]                 display help for command
+```
+
+## groupi blocks list
+
+```text
+Usage: groupi blocks list [options]
+
+List users you blocked
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a prior page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi blocks status
+
+```text
+Usage: groupi blocks status [options] <person-id>
+
+Inspect your relationship with a person
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi blocks block
+
+```text
+Usage: groupi blocks block [options] <person-id>
+
+block social relationship
+
+Options:
+  --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi blocks unblock
+
+```text
+Usage: groupi blocks unblock [options] <person-id>
+
+unblock social relationship
+
+Options:
+  --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi account
+
+```text
+Usage: groupi account [options] [command]
+
+Read/update your account and open explicit browser exceptions
+
+Options:
+  -h, --help       display help for command
+
+Commands:
+  get              Read your selected identity’s profile
+  edit [options]   Update ordinary profile fields without browser interaction
+  passkeys         Explicitly open account settings; complete this action in the browser/device
+  linked-accounts  Explicitly open account settings; complete this action in the browser/device
+  delete           Explicitly open account settings; complete this action in the browser/device
+  help [command]   display help for command
+```
+
+## groupi account get
+
+```text
+Usage: groupi account get [options]
+
+Read your selected identity’s profile
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account edit
+
+```text
+Usage: groupi account edit [options]
+
+Update ordinary profile fields without browser interaction
+
+Options:
+  --name <text>      Display name
+  --username <text>  Unique username
+  --bio <text>       Bio; empty text clears it
+  --pronouns <text>  Pronouns; empty text clears them
+  -h, --help         display help for command
+```
+
+## groupi account passkeys
+
+```text
+Usage: groupi account passkeys [options]
+
+Explicitly open account settings; complete this action in the browser/device
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account linked-accounts
+
+```text
+Usage: groupi account linked-accounts [options]
+
+Explicitly open account settings; complete this action in the browser/device
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account delete
+
+```text
+Usage: groupi account delete [options]
+
+Explicitly open account settings; complete this action in the browser/device
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi settings
+
+```text
+Usage: groupi settings [options] [command]
+
+Manage ordinary preferences without a browser
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  privacy         Who may send friend requests and event invitations
+  notifications   Notification delivery methods and per-type settings
+  theme           Saved theme and system light/dark preferences
+  help [command]  display help for command
+```
+
+## groupi settings privacy
+
+```text
+Usage: groupi settings privacy [options] [command]
+
+Who may send friend requests and event invitations
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  get
+  set [options]
+  help [command]  display help for command
+```
+
+## groupi settings privacy get
+
+```text
+Usage: groupi settings privacy get [options]
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi settings privacy set
+
+```text
+Usage: groupi settings privacy set [options]
+
+Options:
+  --friend-requests <permission>  EVERYONE, EVENT_MEMBERS, or NO_ONE
+  --event-invites <permission>    EVERYONE, EVENT_MEMBERS, FRIENDS, or NO_ONE
+  -h, --help                      display help for command
+```
+
+## groupi settings notifications
+
+```text
+Usage: groupi settings notifications [options] [command]
+
+Notification delivery methods and per-type settings
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  get
+  set [options]
+  help [command]  display help for command
+```
+
+## groupi settings notifications get
+
+```text
+Usage: groupi settings notifications get [options]
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi settings notifications set
+
+```text
+Usage: groupi settings notifications set [options]
+
+Options:
+  --data <json>  JSON object with notificationMethods array; omitted methods are deleted
+  --yes          Confirm replacing methods and removing omitted methods
+  -h, --help     display help for command
+```
+
+## groupi settings theme
+
+```text
+Usage: groupi settings theme [options] [command]
+
+Saved theme and system light/dark preferences
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  get
+  set [options]
+  help [command]  display help for command
+```
+
+## groupi settings theme get
+
+```text
+Usage: groupi settings theme get [options]
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi settings theme set
+
+```text
+Usage: groupi settings theme set [options]
+
+Options:
+  --data <json>  JSON with selectedThemeType, selectedThemeId, useSystemPreference,
+                 systemLightThemeId, systemDarkThemeId; selectedCustomThemeId optional
+  -h, --help     display help for command
+```
+
+## groupi invites
+
+```text
+Usage: groupi invites [options] [command]
+
+Manage bearer link/email and recipient-bound username invitations
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  links           Create, inspect and manage link/email bearer invitations
+  email           Create email bearer invitations and queue delivery
+  members         Send and respond to recipient-bound username invitations
+  help [command]  display help for command
+```
+
+## groupi invites links
+
+```text
+Usage: groupi invites links [options] [command]
+
+Create, inspect and manage link/email bearer invitations
+
+Options:
+  -h, --help                    display help for command
+
+Commands:
+  create [options] <event-id>   Create a shareable bearer invitation
+  edit [options] <invite-id>    Change an invitation label, access limit, or expiry; requires
+                                confirmation
+  accept [options] <token>
+  revoke [options] <invite-id>
+  get <token>                   Inspect the invitation using the selected identity
+  list [options] <event-id>     List all bearer invitations, including email invitations
+  help [command]                display help for command
+```
+
+## groupi invites links create
+
+```text
+Usage: groupi invites links create [options] <event-id>
+
+Create a shareable bearer invitation
+
+Options:
+  --name <name>      Invitation label
+  --uses <number>    Maximum uses (at least 1)
+  --expires <iso>    Expiry with explicit UTC offset or Z
+  --request-id <id>  Reuse the identifier and original inputs after an uncertain attempt
+  -h, --help         display help for command
+```
+
+## groupi invites links edit
+
+```text
+Usage: groupi invites links edit [options] <invite-id>
+
+Change an invitation label, access limit, or expiry; requires confirmation
+
+Options:
+  --name <name>    New invitation label
+  --uses <number>  New maximum uses (1–10000)
+  --unlimited      Remove the usage limit
+  --expires <iso>  New future expiry with explicit offset or Z
+  --no-expiry      Remove the expiry
+  --yes            Confirm changing this invitation
+  -h, --help       display help for command
+```
+
+## groupi invites links accept
+
+```text
+Usage: groupi invites links accept [options] <token>
+
+Options:
+  --yes       Confirm revoking this invitation
+  -h, --help  display help for command
+```
+
+## groupi invites links revoke
+
+```text
+Usage: groupi invites links revoke [options] <invite-id>
+
+Options:
+  --yes       Confirm revoking this invitation
+  -h, --help  display help for command
+```
+
+## groupi invites links get
+
+```text
+Usage: groupi invites links get [options] <token>
+
+Inspect the invitation using the selected identity
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invites links list
+
+```text
+Usage: groupi invites links list [options] <event-id>
+
+List all bearer invitations, including email invitations
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a previous page
+  --all              Retrieve all pages explicitly
+  --kind <kind>      Filter bearer invitation kind (choices: "link", "email", "all")
+  -h, --help         display help for command
+```
+
+## groupi invites email
+
+```text
+Usage: groupi invites email [options] [command]
+
+Create email bearer invitations and queue delivery
+
+Options:
+  -h, --help                         display help for command
+
+Commands:
+  send [options] <event-id>
+  send-pending [options] <event-id>  Queue unsent email invitations once per request ID
+  help [command]                     display help for command
+```
+
+## groupi invites email send
+
+```text
+Usage: groupi invites email send [options] <event-id>
+
+Options:
+  --invites <json>   Array of {email,recipientName?,plusOnes?}
+  --message <text>   Message included with email invitations
+  --expires <iso>    Expiry with explicit offset or Z
+  --no-send          Create the batch without queuing any new or existing pending email
+  --request-id <id>  Reuse a prior request ID with identical inputs
+  -h, --help         display help for command
+```
+
+## groupi invites email send-pending
+
+```text
+Usage: groupi invites email send-pending [options] <event-id>
+
+Queue unsent email invitations once per request ID
+
+Options:
+  --request-id <id>  Reuse a prior request ID
+  -h, --help         display help for command
+```
+
+## groupi invites members
+
+```text
+Usage: groupi invites members [options] [command]
+
+Send and respond to recipient-bound username invitations
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  send [options] <event-id>
+  accept [options] <invite-id>
+  decline [options] <invite-id>
+  revoke [options] <invite-id>
+  get <invite-id>                Inspect the invitation using the selected identity
+  list [options] [event-id]      List received pending invitations, or invitations sent for an event
+  help [command]                 display help for command
+```
+
+## groupi invites members send
+
+```text
+Usage: groupi invites members send [options] <event-id>
+
+Options:
+  --username <username>  Recipient username without @
+  --role <role>          Granted event role (choices: "ATTENDEE", "MODERATOR")
+  --message <text>       Invitation message
+  --request-id <id>      Reuse a prior request ID with identical inputs
+  -h, --help             display help for command
+```
+
+## groupi invites members accept
+
+```text
+Usage: groupi invites members accept [options] <invite-id>
+
+Options:
+  --yes       Confirm declining or revoking this invitation
+  -h, --help  display help for command
+```
+
+## groupi invites members decline
+
+```text
+Usage: groupi invites members decline [options] <invite-id>
+
+Options:
+  --yes       Confirm declining or revoking this invitation
+  -h, --help  display help for command
+```
+
+## groupi invites members revoke
+
+```text
+Usage: groupi invites members revoke [options] <invite-id>
+
+Options:
+  --yes       Confirm declining or revoking this invitation
+  -h, --help  display help for command
+```
+
+## groupi invites members get
+
+```text
+Usage: groupi invites members get [options] <invite-id>
+
+Inspect the invitation using the selected identity
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invites members list
+
+```text
+Usage: groupi invites members list [options] [event-id]
+
+List received pending invitations, or invitations sent for an event
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a previous page
+  --all              Retrieve all pages explicitly
+  --status <status>  Status filter; received defaults to PENDING, event list to all (choices:
+                     "PENDING", "ACCEPTED", "DECLINED", "all")
+  -h, --help         display help for command
+```

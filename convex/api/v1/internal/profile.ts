@@ -1,5 +1,5 @@
 import { internalQuery, internalMutation } from '../../../_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
 import { components } from '../../../_generated/api';
 import { authComponent, AuthUserId } from '../../../auth';
@@ -81,6 +81,12 @@ export const updateProfile = internalMutation({
   },
   handler: async (ctx, { personId, userId, name, username, bio, pronouns }) => {
     const pId = personId as Id<'persons'>;
+    const current = await ctx.db.get(pId);
+    if (!current || current.userId !== userId)
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'Profile belongs to another account.',
+      });
 
     // Update user-level fields via Better Auth component adapter
     const userUpdates: Record<string, unknown> = {};
@@ -88,13 +94,30 @@ export const updateProfile = internalMutation({
     if (username !== undefined) {
       const trimmed = username.trim().toLowerCase();
       if (trimmed.length < 3 || trimmed.length > 50) {
-        throw new Error('Username must be between 3 and 50 characters');
+        throw new ConvexError({
+          code: 'VALIDATION_ERROR',
+          message: 'Username must be between 3 and 50 characters',
+        });
       }
       if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
-        throw new Error(
-          'Username can only contain letters, numbers, underscores, and dashes'
-        );
+        throw new ConvexError({
+          code: 'VALIDATION_ERROR',
+          message:
+            'Username can only contain letters, numbers, underscores, and dashes',
+        });
       }
+      const existing = await ctx.runQuery(
+        components.betterAuth.adapter.findOne,
+        {
+          model: 'user',
+          where: [{ field: 'username', operator: 'eq', value: trimmed }],
+        }
+      );
+      if (existing && existing._id !== userId)
+        throw new ConvexError({
+          code: 'CONFLICT',
+          message: 'Username is already taken.',
+        });
       userUpdates.username = trimmed;
     }
 
