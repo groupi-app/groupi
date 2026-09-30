@@ -11,6 +11,7 @@ import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema, MessageResponseSchema } from '../schemas/common';
 import {
   NotificationIdParamSchema,
+  NotificationSchema,
   NotificationListResponseSchema,
   UnreadCountResponseSchema,
 } from '../schemas/notifications';
@@ -36,21 +37,43 @@ export function createNotificationRoutes() {
       'Get all notifications for the authenticated user. Optionally filter to unread only.',
     security: [{ apiKey: [] }],
     request: {
-      query: z.object({
-        unread: z.string().optional().openapi({
-          example: 'true',
-          description: 'Filter to unread notifications only',
-        }),
-      }),
+      query: z
+        .object({
+          unread: z.enum(['true', 'false']).optional(),
+          pagination: z.literal('cursor').optional(),
+          limit: z
+            .string()
+            .regex(/^[1-9]\d*$/)
+            .transform(Number)
+            .pipe(z.number().int().min(1).max(100))
+            .optional(),
+          cursor: z.string().min(1).max(8192).optional(),
+        })
+        .refine(
+          q =>
+            q.pagination === 'cursor' ||
+            (q.limit === undefined && q.cursor === undefined),
+          'Set pagination=cursor when using limit or cursor'
+        ),
     },
     responses: {
       200: {
         description: 'List of notifications',
         content: {
           'application/json': {
-            schema: NotificationListResponseSchema,
+            schema: z.union([
+              NotificationListResponseSchema,
+              z.object({
+                items: z.array(NotificationSchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
           },
         },
+      },
+      400: {
+        description: 'Invalid pagination',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
         description: 'Unauthorized',
@@ -66,7 +89,30 @@ export function createNotificationRoutes() {
   app.openapi(listNotificationsRoute, async c => {
     const ctx = c.get('ctx');
     const personId = c.get('personId');
-    const { unread } = c.req.valid('query');
+    const { unread, pagination, limit, cursor } = c.req.valid('query');
+    if (pagination === 'cursor') {
+      const result = await ctx.runQuery(
+        internal.api.v1.internal.notifications.listNotificationsPage,
+        {
+          personId:
+            personId as import('../../../_generated/dataModel').Id<'persons'>,
+          unreadOnly: unread === 'true',
+          limit: limit ?? 20,
+          cursor: cursor ?? null,
+        }
+      );
+      if ('error' in result)
+        return c.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Invalid notification cursor. Restart without a cursor.',
+            },
+          },
+          400
+        );
+      return c.json(result, 200);
+    }
 
     const unreadOnly = unread === 'true';
 
@@ -367,5 +413,62 @@ export function createNotificationRoutes() {
     return c.body(null, 204);
   });
 
+  for (const scope of ['events', 'posts'] as const) {
+    const route = createRoute({
+      method: 'post',
+      path: `/notifications/${scope}/{scopeId}/read`,
+      tags: ['Notifications'],
+      summary: `Mark ${scope} notifications read`,
+      security: [{ apiKey: [] }],
+      request: { params: z.object({ scopeId: z.string() }) },
+      responses: {
+        200: {
+          description: 'Notifications marked read',
+          content: {
+            'application/json': {
+              schema: z.object({ success: z.boolean(), count: z.number() }),
+            },
+          },
+        },
+        400: {
+          description: 'Invalid scope',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    });
+    app.openapi(route, async c => {
+      const ctx = c.get('ctx');
+      try {
+        const result = await ctx.runMutation(
+          internal.api.v1.internal.notifications.markScopeAsRead,
+          {
+            personId: c.get(
+              'personId'
+            ) as import('../../../_generated/dataModel').Id<'persons'>,
+            ...(scope === 'events'
+              ? {
+                  eventId: c.req.valid('param')
+                    .scopeId as import('../../../_generated/dataModel').Id<'events'>,
+                }
+              : {
+                  postId: c.req.valid('param')
+                    .scopeId as import('../../../_generated/dataModel').Id<'posts'>,
+                }),
+          }
+        );
+        return c.json(result, 200);
+      } catch {
+        return c.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Invalid notification scope',
+            },
+          },
+          400
+        );
+      }
+    });
+  }
   return app;
 }

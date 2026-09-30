@@ -20,7 +20,7 @@ staging checks, and production deployment status distinct.
 | Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Implemented; verification pending |
 | Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Implemented; verification pending |
 | RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Pending                           |
-| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Pending                           |
+| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Implemented; verification pending |
 | First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
 | Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Pending                           |
 | Event posts                                                   | Create/read/edit/delete, text/Markdown/explicit sanitized HTML, validated mentions, notifications, shared limits and legacy-content preservation | [#230](https://github.com/groupi-app/groupi/issues/230) | Pending                           |
@@ -183,3 +183,21 @@ scheduler errors remain tolerated by the existing test configuration. CLI and ba
 reviews approved without remaining findings, and `pnpm check` passed. Hosted
 checks and live preview evidence are pending; this does not claim production
 availability.
+
+## Notifications and muting (#227)
+
+The CLI adds bounded all/unread notification pages, unread counts, individual and
+scoped read actions, confirmed clear actions, and event/discussion mute controls
+with inspectable effective state. App and REST mutations share ownership checks
+and queued-push cleanup. Muting requires current membership; historical
+recipient-owned notifications preserve app behavior, while stale muted-item
+metadata is hidden after losing access.
+
+Local verification on 2026-09-30 passed 2,273 workspace assertions, including 596
+backend and 121 executable CLI tests. All 121 CLI tests also passed against the
+separately installed package. The focused backend run passed 69 assertions, and
+both independent reviews approved. `pnpm check` passed after linking the isolated
+worktree's package dependencies. The backend's six previously documented ignored
+scheduler errors remain. Hosted/live verification and release-note approval are
+pending. Tests establish queued-work cleanup and notification suppression, not
+external provider delivery or cancellation of an already-dispatched request.

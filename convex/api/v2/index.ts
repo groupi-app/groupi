@@ -231,6 +231,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       version: '2.0.0',
       capabilities: {
         eventWrites: { version: 1 },
+        notificationControls: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
       },

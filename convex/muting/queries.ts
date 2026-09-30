@@ -1,3 +1,4 @@
+import { hasEventAccess, requireEventAccess, requirePostAccess } from './model';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -17,6 +18,7 @@ export const isEventMuted = query({
   },
   handler: async (ctx, { eventId }) => {
     const { person } = await requireAuth(ctx);
+    await requireEventAccess(ctx, person._id, eventId);
 
     const existingMute = await ctx.db
       .query('mutedEvents')
@@ -38,6 +40,7 @@ export const isPostMuted = query({
   },
   handler: async (ctx, { postId }) => {
     const { person } = await requireAuth(ctx);
+    await requirePostAccess(ctx, person._id, postId);
 
     const existingMute = await ctx.db
       .query('mutedPosts')
@@ -69,7 +72,10 @@ export const getMutedEvents = query({
         const event = await ctx.db.get(mute.eventId);
         return {
           ...mute,
-          event,
+          event:
+            event && (await hasEventAccess(ctx, person._id, event._id))
+              ? event
+              : null,
         };
       })
     );
@@ -97,7 +103,10 @@ export const getMutedPosts = query({
         const post = await ctx.db.get(mute.postId);
         return {
           ...mute,
-          post,
+          post:
+            post && (await hasEventAccess(ctx, person._id, post.eventId))
+              ? post
+              : null,
         };
       })
     );
