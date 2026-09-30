@@ -1,5 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
+import { ConvexError } from 'convex/values';
+import type { Id } from '../../../_generated/dataModel';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { requireEventMembership } from '../middleware/auth';
@@ -73,7 +75,10 @@ export function createInviteRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const listFn = internal.api.v1.internal.invites.listEventInvites;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const result = await ctx.runQuery(listFn, {
+      eventId,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {
@@ -233,6 +238,7 @@ export function createInviteRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to delete invite';
       return c.json(
@@ -373,6 +379,7 @@ export function createInviteRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to accept invite';
 

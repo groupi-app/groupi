@@ -2,37 +2,50 @@ import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
 import { getPersonWithUser } from '../../../auth';
-
-/**
- * Internal queries and mutations for invite routes
- */
-
+import * as writes from '../../../invites/writes';
+import {
+  requireInvitePermission,
+  inviteError,
+} from '../../../invites/permissions';
+const legacySummary = v.object({
+  id: v.id('invites'),
+  eventId: v.id('events'),
+  token: v.string(),
+  name: v.union(v.string(), v.null()),
+  maxUses: v.union(v.number(), v.null()),
+  usesTotal: v.union(v.number(), v.null()),
+  usesRemaining: v.union(v.number(), v.null()),
+  expiresAt: v.union(v.number(), v.null()),
+  createdAt: v.number(),
+});
 export const listEventInvites = internalQuery({
-  args: {
-    eventId: v.string(),
-  },
-  handler: async (ctx, { eventId }) => {
-    const invites = await ctx.db
+  args: { eventId: v.string(), personId: v.id('persons') },
+  returns: v.object({ invites: v.array(legacySummary) }),
+  handler: async (ctx, { eventId, personId }) => {
+    const id = eventId as Id<'events'>;
+    await requireInvitePermission(ctx, id, personId);
+    const rows = await ctx.db
       .query('invites')
-      .withIndex('by_event', q => q.eq('eventId', eventId as Id<'events'>))
+      .withIndex('by_event', q => q.eq('eventId', id))
       .collect();
-
     return {
-      invites: invites.map(invite => ({
-        id: invite._id,
-        eventId: invite.eventId,
-        token: invite.token,
-        name: invite.name ?? null,
-        maxUses: invite.maxUses ?? null,
-        usesTotal: invite.usesTotal ?? null,
-        usesRemaining: invite.usesRemaining ?? null,
-        expiresAt: invite.expiresAt ?? null,
-        createdAt: invite._creationTime,
-      })),
+      invites: rows.map(row => {
+        const capacity = writes.inviteCapacity(row);
+        return {
+          id: row._id,
+          eventId: row.eventId,
+          token: row.token,
+          name: row.name ?? null,
+          maxUses: capacity ?? null,
+          usesTotal: writes.inviteConsumed(row),
+          usesRemaining: row.usesRemaining ?? null,
+          expiresAt: row.expiresAt ?? null,
+          createdAt: row._creationTime,
+        };
+      }),
     };
   },
 });
-
 export const createInvite = internalMutation({
   args: {
     eventId: v.string(),
@@ -41,99 +54,69 @@ export const createInvite = internalMutation({
     name: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
   },
+  returns: v.object({ id: v.id('invites'), token: v.string() }),
   handler: async (
     ctx,
     { eventId, creatorMembershipId, maxUses, name, expiresAt }
   ) => {
-    const token = crypto.randomUUID();
-    const now = Date.now();
-
-    const inviteId = await ctx.db.insert('invites', {
-      eventId: eventId as Id<'events'>,
-      createdById: creatorMembershipId as Id<'memberships'>,
-      token,
-      maxUses,
-      usesRemaining: maxUses,
-      usesTotal: 0,
-      name: name?.trim(),
-      expiresAt,
-      updatedAt: now,
-    });
-
-    return {
-      id: inviteId,
-      token,
-    };
+    const membership = await ctx.db.get(
+      creatorMembershipId as Id<'memberships'>
+    );
+    if (!membership || membership.eventId !== eventId)
+      inviteError('FORBIDDEN', 'Event membership required');
+    const result = await writes.createInviteForPerson(
+      ctx,
+      membership.personId,
+      { eventId: membership.eventId, usesTotal: maxUses, name, expiresAt }
+    );
+    return { id: result.invite.id, token: result.invite.token };
   },
 });
-
 export const deleteInvite = internalMutation({
-  args: {
-    inviteId: v.string(),
-    personId: v.string(),
-  },
+  args: { inviteId: v.string(), personId: v.string() },
+  returns: v.object({ success: v.literal(true) }),
   handler: async (ctx, { inviteId, personId }) => {
-    const invite = await ctx.db.get(inviteId as Id<'invites'>);
-    if (!invite) {
-      throw new Error('Invite not found');
-    }
-
-    // Verify the person is a member of the event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', invite.eventId)
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error('Not a member of this event');
-    }
-
-    await ctx.db.delete(inviteId as Id<'invites'>);
-
-    return { success: true };
+    await writes.deleteInvitesForPerson(ctx, personId as Id<'persons'>, {
+      inviteIds: [inviteId as Id<'invites'>],
+    });
+    return { success: true as const };
   },
 });
-
 export const getInviteByToken = internalQuery({
-  args: {
-    token: v.string(),
-  },
+  args: { token: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      id: v.id('invites'),
+      eventId: v.id('events'),
+      eventTitle: v.string(),
+      eventDescription: v.union(v.string(), v.null()),
+      eventLocation: v.union(v.string(), v.null()),
+      name: v.union(v.string(), v.null()),
+      expired: v.boolean(),
+      maxUsesReached: v.boolean(),
+    })
+  ),
   handler: async (ctx, { token }) => {
-    const invite = await ctx.db
+    const row = await ctx.db
       .query('invites')
       .withIndex('by_token', q => q.eq('token', token))
-      .first();
-
-    if (!invite) {
-      return null;
-    }
-
-    // Get event info for public display
-    const event = await ctx.db.get(invite.eventId);
-
-    const expired = invite.expiresAt ? invite.expiresAt < Date.now() : false;
-    const maxUsesReached =
-      invite.maxUses !== undefined &&
-      invite.usesTotal !== undefined &&
-      invite.usesTotal >= invite.maxUses;
-
+      .unique();
+    if (!row) return null;
+    const event = await ctx.db.get(row.eventId);
+    if (!event) return null;
     return {
-      id: invite._id,
-      eventTitle: event?.title ?? 'Unknown Event',
-      eventDescription: event?.description ?? null,
-      eventLocation: event?.location ?? null,
-      eventId: invite.eventId,
-      name: invite.name ?? null,
-      expired,
-      maxUsesReached: maxUsesReached ?? false,
+      id: row._id,
+      eventId: event._id,
+      eventTitle: event.title,
+      eventDescription: event.description ?? null,
+      eventLocation: event.location ?? null,
+      name: row.name ?? null,
+      expired: row.expiresAt !== undefined && row.expiresAt <= Date.now(),
+      maxUsesReached: row.usesRemaining !== undefined && row.usesRemaining <= 0,
     };
   },
 });
-
 /**
  * Get minimal invite metadata for OpenGraph previews.
  * Returns only non-sensitive event info (title, location, date, creator name).
@@ -143,6 +126,16 @@ export const getInviteOgMeta = internalQuery({
   args: {
     token: v.string(),
   },
+  returns: v.union(
+    v.null(),
+    v.object({
+      title: v.string(),
+      location: v.union(v.string(), v.null()),
+      chosenDateTime: v.union(v.number(), v.null()),
+      chosenEndDateTime: v.union(v.number(), v.null()),
+      creatorName: v.union(v.string(), v.null()),
+    })
+  ),
   handler: async (ctx, { token }) => {
     const invite = await ctx.db
       .query('invites')
@@ -177,81 +170,17 @@ export const getInviteOgMeta = internalQuery({
 });
 
 export const acceptInvite = internalMutation({
-  args: {
-    token: v.string(),
-    personId: v.string(),
-  },
+  args: { token: v.string(), personId: v.string() },
+  returns: v.object({
+    eventId: v.id('events'),
+    membershipId: v.id('memberships'),
+  }),
   handler: async (ctx, { token, personId }) => {
-    const invite = await ctx.db
-      .query('invites')
-      .withIndex('by_token', q => q.eq('token', token))
-      .first();
-
-    if (!invite) {
-      throw new Error('Invite not found');
-    }
-
-    // Check if expired
-    if (invite.expiresAt && invite.expiresAt < Date.now()) {
-      throw new Error('Invite has expired');
-    }
-
-    // Check if max uses reached
-    if (
-      invite.maxUses !== undefined &&
-      invite.usesTotal !== undefined &&
-      invite.usesTotal >= invite.maxUses
-    ) {
-      throw new Error('Invite has reached maximum uses');
-    }
-
-    // Check if already a member
-    const existingMembership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', invite.eventId)
-      )
-      .first();
-
-    if (existingMembership) {
-      throw new Error('Already a member of this event');
-    }
-
-    const now = Date.now();
-
-    // Create membership
-    const membershipId = await ctx.db.insert('memberships', {
-      personId: personId as Id<'persons'>,
-      eventId: invite.eventId,
-      role: 'ATTENDEE',
-      rsvpStatus: 'YES',
-      updatedAt: now,
-    });
-
-    // Update invite usage
-    await ctx.db.patch(invite._id, {
-      usesTotal: (invite.usesTotal ?? 0) + 1,
-      usesRemaining:
-        invite.usesRemaining !== undefined
-          ? invite.usesRemaining - 1
-          : undefined,
-      updatedAt: now,
-    });
-
-    // Increment event member count
-    const event = await ctx.db.get(invite.eventId);
-    if (event) {
-      await ctx.db.patch(invite.eventId, {
-        memberCount: (event.memberCount ?? 0) + 1,
-        updatedAt: now,
-      });
-    }
-
-    return {
-      eventId: invite.eventId,
-      membershipId,
-    };
+    const result = await writes.acceptInviteForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      { token }
+    );
+    return { eventId: result.event.id, membershipId: result.membership.id };
   },
 });

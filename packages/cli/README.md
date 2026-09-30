@@ -1,8 +1,9 @@
 # Groupi CLI
 
 Development milestones [#222](https://github.com/groupi-app/groupi/issues/222),
-[#223](https://github.com/groupi-app/groupi/issues/223), and
-[#224](https://github.com/groupi-app/groupi/issues/224). The package can be packed
+[#223](https://github.com/groupi-app/groupi/issues/223),
+[#224](https://github.com/groupi-app/groupi/issues/224), and
+[#225](https://github.com/groupi-app/groupi/issues/225). The package can be packed
 and installed locally; public registry publication belongs to #228. Supports Node 22 and 24 on macOS, Windows, and Linux.
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
 compiler, React, Expo, or Next.js runtime.
@@ -164,6 +165,107 @@ side effects are not safely replayable. A lost, malformed, redirected, or server
 failed edit returns `UNCERTAIN_OUTCOME` and an `events get <id> --profile <name>`
 inspection command. Read the event before deciding whether another edit is
 needed; do not blindly repeat it.
+
+## Invitations
+
+Three explicit groups distinguish bearer invitations from recipient-bound username
+invitations. All commands use the selected profile and the same authentication,
+JSON output, and exit-code rules as events.
+
+```sh
+# Shareable links and email bearer invitations
+groupi invites links create <event-id> --name "Friends" --uses 10 --format json
+groupi invites links list <event-id> --kind all --limit 20 --format json
+groupi invites links get <token> --format json
+groupi invites links accept <token> --format json
+groupi invites links edit <invite-id> --uses 5 --expires "2027-03-01T00:00:00Z" --yes
+groupi invites links edit <invite-id> --unlimited --no-expiry --yes
+groupi invites links revoke <invite-id> --yes
+
+# Email batches (queued delivery, or create pending invitations with --no-send)
+groupi invites email send <event-id> --invites '[{"email":"guest@example.com","recipientName":"Guest","plusOnes":1}]' --message "Join us" --format json
+groupi invites email send <event-id> --invites '[{"email":"guest@example.com"}]' --no-send
+groupi invites email send-pending <event-id> --format json
+
+# Username invitations: only the intended recipient can accept or decline
+groupi invites members send <event-id> --username guest --role ATTENDEE --message "Join us"
+groupi invites members list --format json
+groupi invites members list <event-id> --status all --all --format json
+groupi invites members get <invite-id> --format json
+groupi invites members accept <invite-id> --format json
+groupi invites members decline <invite-id> --yes
+groupi invites members revoke <invite-id> --yes
+```
+
+`links list` includes email bearer invitations by default; `--kind link`, `email`,
+or `all` filters it. `members list` without an event lists the current identity's
+received invitations, defaulting to `PENDING`. With an event ID it lists that
+accessible event's invitations, defaulting to all statuses. Its `--status` accepts
+`PENDING`, `ACCEPTED`, `DECLINED`, or `all`. Both lists support `--limit 1..100`,
+`--cursor`, and `--all`, returning `{items, nextCursor}` (default page size 20).
+An empty page can still contain a cursor. Cursors cannot be reused across another
+identity, event, invitation kind, or filter.
+
+Link/email invitations are bearer credentials: anyone possessing a valid token
+can accept under the app's rules. Email addresses describe delivery and do not
+bind acceptance to that account; plus-ones increase the permitted uses. There is
+no bearer invitation decline operation. Treat returned tokens and list output as
+private, and share only with intended guests. `get`/`accept` require the token,
+while `edit`/`revoke` require the invitation ID. Username invitations are instead
+bound to their recipient; member revocation cancels the sent invitation.
+
+All link edits, link revocation, member decline, and member revocation display the
+target, profile, and server and ask for confirmation interactively. JSON/headless
+mode requires `--yes`. Server permissions still apply: CLI confirmation never
+grants permission to create, manage, or respond to an invitation. Acceptance uses
+the app's membership, notification, expiry, usage, and blocked-relationship rules.
+
+Names allow 200 characters. Link `--uses` accepts 1–10,000; omit it for no limit.
+Expiry must be a valid future ISO timestamp with seconds and an explicit offset
+or `Z`; `--no-expiry` removes it during editing. Email batches contain 1–100
+`{email, recipientName?, plusOnes?}` objects; plus-ones accept 0–99. `--message`
+allows 480 characters. Member roles are `ATTENDEE` or `MODERATOR`; usernames are
+trimmed, normalized to lowercase, and may include a leading `@`.
+
+Creation and send commands, including `email send-pending`, always send a reusable
+request ID and accept `--request-id`. They require `inviteWrites` version 1 with
+24-hour retention, binding replay to the identity, operation, and original payload.
+Keep the same profile, identity, identifier, and inputs after a lost response.
+Within retention, an explicit original request ID can replay even after the
+invitation's own expiry. A new expired invitation still fails server validation.
+Expired request IDs cannot be replayed: inspect the applicable invitation list
+before deliberately starting again with a new ID. Ordinary edits, accept, decline,
+and revoke are sent once; an uncertain result explains how to inspect before
+repeating. Raw server errors and bearer tokens are excluded from diagnostics.
+
+JSON creation results are `{id, token, requestId}` for links,
+`{createdCount, inviteIds, queuedCount, requestId}` for email batches, and
+`{inviteId, status, requestId}` for usernames. Sending pending emails returns
+`{queuedCount, requestId}`. By default, an email batch queues both the new invitations and any existing
+pending email invitations for that event, matching the app; `queuedCount` can
+therefore exceed `createdCount`. `--no-send` creates the batch without queuing any
+new or existing pending invitations. Queued means scheduled for sending, never
+confirmed delivery. Both acceptance commands return `{eventId, membershipId}`. A link edit
+returns the updated bearer summary; link revocation returns `{id, revoked:true}`;
+member decline/revocation returns `{success:true}`. Read results contain only the
+following fields; unrelated server fields are discarded:
+
+- Bearer summaries: `id`, `eventId`, `token`, `name`, `maxUses`, `usesTotal`,
+  `usesRemaining`, `expiresAt`, `createdAt`, `kind`, `email`, `recipientName`,
+  `customMessage`, and `emailStatus` (`pending`, `queued`, or `null`).
+- Token inspection: `id`, `eventId`, `eventTitle`, `eventDescription`,
+  `eventLocation`, `name`, `expired`, and `maxUsesReached`.
+- Member summaries: `inviteId`, `eventId`, `eventTitle`, `inviterId`, `inviteeId`,
+  `role`, `status`, `message`, `createdAt`, and `respondedAt`.
+
+Missing optional values are `null`; timestamps are Unix milliseconds.
+
+For restricted API keys, event-nested invitation creation/listing and email sends
+need the appropriate `events:read`/`events:write` grants. Token lookup/acceptance
+and bearer management additionally use `invites:read`/`invites:write`; received
+username invitations and member responses use
+`member-invites:read`/`member-invites:write`. Event grants alone do not cover these
+other resources. Every grant is further limited by the caller's app permissions.
 
 ## Output contract
 

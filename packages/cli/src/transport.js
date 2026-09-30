@@ -24,7 +24,7 @@ function responseError(status) {
   if (status === 404)
     return new CliError(
       'NOT_FOUND',
-      'The requested event or API endpoint was not found.',
+      'The requested resource or API endpoint was not found.',
       4
     );
   if (status === 429)

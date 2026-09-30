@@ -1,3 +1,4 @@
+import { hash } from '../lib/requestId';
 import {
   enableAddonConfiguration,
   disableAddonConfiguration,
@@ -42,25 +43,6 @@ const ids = v.object({
   membershipId: v.id('memberships'),
 });
 const DAY = 24 * 60 * 60 * 1000;
-function canonical(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object')
-    return Object.fromEntries(
-      Object.entries(value)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, item]) => [key, canonical(item)])
-    );
-  return value;
-}
-async function hash(value: unknown) {
-  const bytes = new Uint8Array(
-    await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(JSON.stringify(canonical(value)))
-    )
-  );
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-}
 export const create = internalMutation({
   args: {
     personId: v.id('persons'),

@@ -1,3 +1,4 @@
+import { registerInviteCommands } from './invite-commands.js';
 import { eventInput, validateRequestId } from './event-input.js';
 import { Command, CommanderError, Option } from 'commander';
 import { readFileSync } from 'node:fs';
@@ -333,6 +334,7 @@ export async function run() {
               .join('\n') + '\n'
       );
     });
+  registerInviteCommands(program, json);
   try {
     await program.parseAsync(argv, { from: 'user' });
   } catch (error) {

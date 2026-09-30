@@ -45,7 +45,7 @@ async function confirm(confirmation) {
 
 /** Mutation transport never follows redirects; retries require server-side deduplication.
  * @param {{apiUrl:string}} profile @param {string} key @param {string} path
- * @param {{method:'POST'|'PATCH', body:unknown, requestId?:string, recovery:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
+ * @param {{method:'POST'|'PATCH'|'DELETE', body:unknown, requestId?:string, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
 export async function mutateApi(profile, key, path, options) {
   if (options.confirmation) await confirm(options.confirmation);
   const body = JSON.stringify(options.body);
@@ -71,7 +71,7 @@ export async function mutateApi(profile, key, path, options) {
             ? { 'idempotency-key': options.requestId }
             : {}),
         },
-        body,
+        ...(options.method !== 'DELETE' ? { body } : {}),
         signal: AbortSignal.timeout(10000),
       });
     } catch {
@@ -91,6 +91,7 @@ export async function mutateApi(profile, key, path, options) {
       );
     }
     if (response.ok) {
+      if (response.status === 204) return null;
       try {
         return await response.json();
       } catch {
@@ -140,7 +141,7 @@ export async function mutateApi(profile, key, path, options) {
       if (code === 'IDEMPOTENCY_EXPIRED')
         throw new CliError(
           'IDEMPOTENCY_EXPIRED',
-          `Request ID ${options.requestId} has expired. Inspect events list on the selected profile before deliberately starting a new creation; do not blindly repeat it with a new identifier.`,
+          `Request ID ${options.requestId} has expired and must not be retried. ${options.expiredRecovery ?? 'Inspect prior creations on the selected profile before deliberately starting a new creation with a new identifier.'}`,
           2
         );
       if (code === 'IDEMPOTENCY_CONFLICT')
@@ -151,14 +152,14 @@ export async function mutateApi(profile, key, path, options) {
         );
       throw new CliError(
         'CONFLICT',
-        'The write conflicts with current server state. Inspect the event before deciding whether another write is needed.',
+        'The write conflicts with current server state. Inspect the target before deciding whether another write is needed.',
         2
       );
     }
     if (response.status === 400 || response.status === 422)
       throw new CliError(
         'USAGE',
-        'The server rejected the event inputs. Check the title and date options with events create --help or events edit --help.',
+        'The server rejected the write inputs. Use this command’s --help to check the supported inputs, then inspect the target and its current state.',
         2
       );
     if (response.status === 401 || response.status === 403)
@@ -170,7 +171,7 @@ export async function mutateApi(profile, key, path, options) {
     if (response.status === 404)
       throw new CliError(
         'NOT_FOUND',
-        'The event or API endpoint was not found. Check the event ID and profile.',
+        'The target or API endpoint was not found. Check its ID and the selected profile.',
         4
       );
     throw new CliError(

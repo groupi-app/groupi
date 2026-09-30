@@ -90,13 +90,21 @@ export function createApiV2App(
           'IDEMPOTENCY_CONFLICT',
           'IDEMPOTENCY_EXPIRED',
           'DATE_RESET_REQUIRED',
+          'NOT_FOUND',
+          'INVITE_UNAVAILABLE',
         ].includes(data.code) &&
         'message' in data &&
         typeof data.message === 'string'
       ) {
         const { code, message } = data;
         const status =
-          code === 'FORBIDDEN' ? 403 : code === 'VALIDATION_ERROR' ? 400 : 409;
+          code === 'NOT_FOUND'
+            ? 404
+            : code === 'FORBIDDEN'
+              ? 403
+              : code === 'VALIDATION_ERROR'
+                ? 400
+                : 409;
         return c.json({ error: { code, message } }, status);
       }
     }
@@ -223,6 +231,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       version: '2.0.0',
       capabilities: {
         eventWrites: { version: 1 },
+        inviteWrites: { version: 1, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
       },
     });
