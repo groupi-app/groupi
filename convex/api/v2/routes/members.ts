@@ -1,12 +1,12 @@
+import type { Id } from '../../../_generated/dataModel';
+import { EventListQuerySchema } from '../schemas/events';
+import { MemberPageSchema } from '../schemas/members';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import {
-  requireEventMembership,
-  requireEventRole,
-} from '../../v1/middleware/auth';
+import { requireEventRole } from '../../v1/middleware/auth';
 import {
   ErrorResponseSchema,
   EventIdParamSchema,
@@ -41,13 +41,14 @@ export function createMemberRoutes() {
     security: [{ apiKey: [] }],
     request: {
       params: EventIdParamSchema,
+      query: EventListQuerySchema,
     },
     responses: {
       200: {
         description: 'List of members',
         content: {
           'application/json': {
-            schema: MemberListResponseSchema,
+            schema: z.union([MemberListResponseSchema, MemberPageSchema]),
           },
         },
       },
@@ -75,14 +76,14 @@ export function createMemberRoutes() {
     const personId = c.get('personId');
     const { eventId } = c.req.valid('param');
 
-    await requireEventMembership(ctx, eventId, personId);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.members.listEventMembers;
-    const result = await ctx.runQuery(listFn, { eventId });
-
-    return c.json(result.members, 200);
+    const query = c.req.valid('query');
+    const result = await ctx.runQuery(internal.availability.rest.members, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      limit: query.pagination === 'cursor' ? (query.limit ?? 20) : undefined,
+      cursor: query.cursor,
+    });
+    return c.json(result, 200);
   });
 
   // PATCH /events/:eventId/members/:memberId - Update member role
@@ -328,17 +329,19 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateRsvpFn = internal.api.v1.internal.members.updateRsvp;
+    const updateRsvpFn = internal.availability.rest.updateRsvp;
     const result = await ctx.runMutation(updateRsvpFn, {
-      eventId,
-      personId,
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
       rsvpStatus: body.rsvpStatus,
+      rsvpNote: body.rsvpNote,
     });
 
     return c.json(
       {
         membershipId: result.membershipId,
         rsvpStatus: result.rsvpStatus,
+        rsvpNote: result.rsvpNote,
       },
       200
     );

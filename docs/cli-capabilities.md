@@ -17,9 +17,9 @@ staging checks, and production deployment status distinct.
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | --------------------------------- |
 | Event list and event details; selected account and deployment | Installable executable, help/version, named profiles, environment/stdin API keys, human/JSON output, bounded pagination and read retries         | [#222](https://github.com/groupi-app/groupi/issues/222) | Verified; merged in #244          |
 | Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246       |
-| Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Implemented; verification pending |
-| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Implemented; verification pending |
-| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Pending                           |
+| Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Verified; merged in #247          |
+| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Verified; merged in #248          |
+| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Implemented; verification pending |
 | Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Implemented; verification pending |
 | First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
 | Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Pending                           |
@@ -161,8 +161,9 @@ was rejected without changing its chosen date. Test events were deleted, test AP
 keys revoked, and successful test sessions signed out. No external invitation
 emails were sent; the attendee joined using the existing app link-invite path.
 
-Hosted CI and the approved changeset are still required before #224 is marked
-verified and merged. The draft PR does not imply production availability.
+All six hosted OS/runtime CLI checks, application tests, build, quality checks
+and Vercel preview passed at `3ac6336`. The release note was subsequently approved
+and added. Production availability remains dependent on merge and deployment.
 
 ## Invitations (#225)
 
@@ -180,9 +181,52 @@ tests and the initial 20 authenticated REST cases. Four subsequent test-only
 additions passed in the final backend run: 591 assertions, including all 24 new
 REST cases. The six previously documented backend
 scheduler errors remain tolerated by the existing test configuration. CLI and backend
-reviews approved without remaining findings, and `pnpm check` passed. Hosted
-checks and live preview evidence are pending; this does not claim production
-availability.
+reviews approved without remaining findings, and `pnpm check` passed. Hosted and live preview evidence is recorded below; production availability
+remains dependent on merge and deployment.
+
+All six hosted CLI jobs and the application tests, build, quality checks and
+Vercel preview passed at `a302647` in PR #248. Live verification against the
+`codex/cli-invitations` preview used a separately installed package and three
+disposable accounts. A successful username-invitation response was dropped;
+automatic retry and explicit replay still produced one invitation. The wrong
+recipient was denied, acceptance created app-visible membership and one organizer
+notification, bearer-link acceptance worked, and decline created no membership.
+Pending email invitations were listed through pagination and revoked without
+sending mail. Test events were deleted, CLI credentials revoked, and sessions
+signed out. Provider delivery was not exercised.
+
+The initial test used a generic Better Auth API key and reached its default
+10-request/day quota after the earlier scenarios passed. The complete successful
+run used the normal CLI authorization flow and its configured 120-request/minute
+limit. #228 records the generic-key policy/documentation follow-up. These results
+verify the preview, not production deployment.
+
+PR #247 merged at `efd77cd` and PR #248 merged at `e9f3b75` on 2026-09-30
+after their final checks passed. The #224 production attempt failed because
+Convex reported a schema overwritten by another push. The subsequent #225
+production deployment, which includes both changes, reached READY at `e9f3b75`
+and received the public domains. Its production REST health response advertises
+`eventWrites` and `inviteWrites` version 1; post-merge GitHub checks also passed.
+
+## RSVP, attendance and date management (#226)
+
+The CLI adds RSVP read/update with notes, paginated attendance and availability,
+response submission/clearing, and organizer poll/manual date selection and reset.
+Both REST versions share the app's scheduling and response mutations. Attendance
+reads honor `viewAttendeeList`; private RSVP and availability notes are visible
+only to their author or an organizer/moderator. Restricted members retain access
+to their own responses and proposed dates. The existing app event-feed read now
+uses the same private-note projection.
+
+Local verification on 2026-09-30 passed 2,309 workspace assertions, including 606
+backend tests and 147 executable CLI tests. All 147 CLI tests also passed against
+the separately installed package. Fifteen new authenticated REST tests cover
+permissions, private notes, polling/manual/reset transitions, atomic validation,
+pagination and reminder lifecycle scheduling; 41 new command tests cover the CLI.
+Both independent reviews approved after the event-feed privacy regression was
+reproduced and fixed. The backend's six previously documented ignored scheduler
+errors remain. Hosted and live preview verification are pending; actual reminder
+delivery is not established by scheduling tests alone.
 
 ## Notifications and muting (#227)
 
@@ -201,3 +245,8 @@ worktree's package dependencies. The backend's six previously documented ignored
 scheduler errors remain. Hosted/live verification and release-note approval are
 pending. Tests establish queued-work cleanup and notification suppression, not
 external provider delivery or cancellation of an already-dispatched request.
+
+Integration with #226 passed `pnpm check`, all 2,329 workspace assertions
+(including 611 backend and 162 CLI tests), and all 162 tests against the
+separately installed CLI. Both capability declarations and command registrations
+are retained; generated API bindings were refreshed after combining the tracks.
