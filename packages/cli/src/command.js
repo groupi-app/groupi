@@ -1,3 +1,4 @@
+import { eventInput, validateRequestId } from './event-input.js';
 import { Command, CommanderError, Option } from 'commander';
 import { readFileSync } from 'node:fs';
 import {
@@ -7,7 +8,7 @@ import {
   authentication,
 } from './profiles.js';
 import { readApi } from './transport.js';
-import { listEvents, getEvent } from './events.js';
+import { listEvents, getEvent, createEvent, editEvent } from './events.js';
 import { CliError } from './errors.js';
 
 /** @param {unknown} value */
@@ -202,7 +203,75 @@ export async function run() {
           : `Created profile ${plain(result.name)}: ${plain(result.apiUrl)}\n`
       );
     });
-  const events = program.command('events').description('Browse your events');
+  const events = program
+    .command('events')
+    .description('Browse and manage your events');
+  events
+    .command('create')
+    .description('Create an event with replay-safe request identification')
+    .requiredOption('--title <title>', 'Event title')
+    .option('--description <text>', 'Event description')
+    .option('--location <text>', 'Event location')
+    .option('--start <iso>', 'Fixed start with explicit UTC offset or Z')
+    .option('--end <iso>', 'Fixed end with explicit UTC offset or Z')
+    .option(
+      '--date-options <json>',
+      'Proposed dates as [{start,end?,note?}] with explicit offsets'
+    )
+    .option(
+      '--request-id <id>',
+      'Reuse the identifier from a previous attempt with the same inputs'
+    )
+    .action(async input => {
+      const body = eventInput(input, true);
+      if (input.requestId !== undefined) validateRequestId(input.requestId);
+      const options = program.opts();
+      const profile = await getProfile(options.profile);
+      const result = await createEvent(
+        profile,
+        await credential(profile, !!options.apiKeyStdin),
+        body,
+        input.requestId
+      );
+      process.stdout.write(
+        json
+          ? JSON.stringify(result) + '\n'
+          : `Created event ${plain(result.eventId)}. Request ID: ${plain(result.requestId)}\n`
+      );
+    });
+  events
+    .command('edit <event-id>')
+    .description(
+      'Edit event details; uncertain writes are never retried automatically'
+    )
+    .option('--title <title>', 'New event title')
+    .option('--description <text>', 'New description; empty string clears it')
+    .option('--location <text>', 'New location; empty string clears it')
+    .option(
+      '--date-options <json>',
+      'Replace proposed dates and clear availability; requires confirmation'
+    )
+    .option(
+      '--yes',
+      'Confirm replacing proposed dates and clearing availability'
+    )
+    .action(async (id, input) => {
+      const body = eventInput(input, false);
+      const options = program.opts();
+      const profile = await getProfile(options.profile);
+      const result = await editEvent(
+        profile,
+        await credential(profile, !!options.apiKeyStdin),
+        id,
+        body,
+        { yes: input.yes, json }
+      );
+      process.stdout.write(
+        json
+          ? JSON.stringify(result) + '\n'
+          : `Updated event ${plain(result.id)}: ${plain(result.title)}\n`
+      );
+    });
   events
     .command('list')
     .option('--limit <number>', 'Page size (1–100)', '20')

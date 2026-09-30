@@ -44,6 +44,22 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_email', ['email']),
 
+  // Replay records last 24h from the caller timestamp. Expired request keys
+  // are rejected independently of row retention, even after scheduled cleanup.
+  eventCreationRequests: defineTable({
+    userId: v.string(),
+    operation: v.literal('events.create'),
+    requestId: v.string(),
+    payloadHash: v.string(),
+    expiresAt: v.number(),
+    eventId: v.id('events'),
+    membershipId: v.id('memberships'),
+  }).index('by_userId_and_operation_and_requestId', [
+    'userId',
+    'operation',
+    'requestId',
+  ]),
+
   // ===== APPLICATION TABLES =====
 
   // Private store-review delivery configuration. Never exposed by public queries.

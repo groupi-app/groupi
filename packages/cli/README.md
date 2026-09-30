@@ -1,7 +1,8 @@
 # Groupi CLI
 
-Development milestones [#222](https://github.com/groupi-app/groupi/issues/222) and
-[#223](https://github.com/groupi-app/groupi/issues/223). The package can be packed
+Development milestones [#222](https://github.com/groupi-app/groupi/issues/222),
+[#223](https://github.com/groupi-app/groupi/issues/223), and
+[#224](https://github.com/groupi-app/groupi/issues/224). The package can be packed
 and installed locally; public registry publication belongs to #228. Supports Node 22 and 24 on macOS, Windows, and Linux.
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
 compiler, React, Expo, or Next.js runtime.
@@ -87,6 +88,83 @@ an explicit `--web-url`; existing profiles can pass it to `auth login` for that
 invocation. The authorization website must be an origin without a path. It is
 never inferred from a REST hostname.
 
+## Create and edit events
+
+```sh
+groupi events create --title "Dinner" --description "Bring snacks" --location "Cafe" --format json
+groupi events create --title "Dinner" --start "2027-03-05T18:00:00-05:00" --end "2027-03-05T20:00:00-05:00"
+groupi events create --title "Choose a date" --date-options '[{"start":"2027-03-05T18:00:00Z","note":"Early option"}]'
+groupi events edit <event-id> --title "Updated dinner" --description "" --format json
+groupi events edit <event-id> --date-options '[{"start":"2027-03-06T18:00:00Z"}]' --yes --format json
+```
+
+`create` requires a nonempty `--title`. Basic fields are `--description` and
+`--location`; an empty string clears either field during an edit. Titles,
+descriptions, and locations allow at most 200, 5,000, and 500 trimmed characters.
+An edit needs at least one change. Basic edits permit organizers and moderators.
+
+Supply either a fixed `--start`/`--end` or `--date-options`, a JSON array of
+`{start, end?, note?}` objects. Dates use ISO strings with seconds and an explicit
+UTC offset or `Z`; ambiguous local times and invalid calendar dates are rejected.
+Offsets are converted to UTC, matching the apps; there is no independent event
+time-zone override. End times must follow their start; notes allow 200 characters.
+The server also enforces app scheduling rules, including future creation dates.
+
+Replacing proposed dates requires organizer permission. It deletes the previous
+options and availability, creates the new options and organizer responses, and
+notifies members. Interactive mode identifies the event, profile, and server and
+asks for confirmation; JSON/headless mode requires `--yes`. Declining, Ctrl-C,
+or closing the prompt sends no write. An empty array clears the proposed dates.
+An event with a confirmed date must first have that date explicitly reset in the
+app; CLI date selection/reset belongs to #226. Visibility/permissions, media,
+and general add-on configuration are later CLI milestones.
+
+Both write commands check the server's advertised `eventWrites` version before
+submitting. Creation additionally requires version 1 replay protection with a
+24-hour window. An older server fails with `UNSUPPORTED_SERVER` instead of
+silently ignoring fields or creating duplicate events.
+
+### Creation recovery
+
+A creation returns `{eventId, membershipId, requestId}`. The CLI generates a
+request ID in `<Unix-milliseconds>.<UUID-v4>` form and sends it as
+`Idempotency-Key`. `--request-id` lets you repeat an attempt with the exact same
+inputs. For jobs that may be terminated before they return output, generate and
+retain the identifier before running the command:
+
+```sh
+REQUEST_ID=$(node -e 'console.log(Date.now()+"."+require("node:crypto").randomUUID())')
+groupi events create --title "Dinner" --request-id "$REQUEST_ID" --format json
+```
+
+The server binds the identifier to the authenticated identity, operation, and
+canonical request payload. Concurrent submissions and replay return the original
+event and organizer membership; event writes and replay records commit together.
+Different inputs with the same identifier return `IDEMPOTENCY_CONFLICT`. Keep the
+same selected profile, account, request ID, and inputs when recovering.
+
+Identifiers expire 24 hours after their embedded timestamp (with at most five
+minutes of future clock skew accepted). Expired identifiers return
+`IDEMPOTENCY_EXPIRED` even after replay-record cleanup; they never create a fresh
+event. Cleanup is scheduled after expiry. Inspect existing events before
+intentionally creating again with a new identifier. REST callers that omit the
+header retain non-deduplicated legacy behavior; the CLI always supplies it.
+
+Creation uses at most three identical attempts for connection failures,
+unreadable successful responses, HTTP 5xx, or short HTTP 429 delays. Each attempt
+has a 10-second timeout; retry delays never exceed two seconds, and longer
+`Retry-After` values are respected by returning an error. Redirects are refused.
+An unresolved write returns `UNCERTAIN_OUTCOME` with the request identifier and
+inspection/replay instructions. It never claims that a lost response means no
+event was created.
+
+Edits return the updated event document, including proposed date options with
+millisecond timestamps. Edits are sent once because notifications and scheduling
+side effects are not safely replayable. A lost, malformed, redirected, or server-
+failed edit returns `UNCERTAIN_OUTCOME` and an `events get <id> --profile <name>`
+inspection command. Read the event before deciding whether another edit is
+needed; do not blindly repeat it.
+
 ## Output contract
 
 Human-readable output is the default. `--format json` emits one success document
@@ -98,14 +176,14 @@ Default page size is 20; `--limit` accepts 1–100. `--all` follows cursors from
 requested starting page and reports success only after full retrieval.
 Event detail returns the REST v2 event document directly.
 
-| Exit | Meaning                                       |
-| ---- | --------------------------------------------- |
-| 0    | Success                                       |
-| 1    | Unexpected internal failure                   |
-| 2    | Usage, profile, endpoint, or validation error |
-| 3    | Authentication or permission error            |
-| 4    | Resource or API endpoint not found            |
-| 5    | Network, rate limit, or invalid server reply  |
+| Exit | Meaning                                                       |
+| ---- | ------------------------------------------------------------- |
+| 0    | Success                                                       |
+| 1    | Unexpected internal failure                                   |
+| 2    | Usage, validation, conflict, or cancelled confirmation        |
+| 3    | Authentication or permission error                            |
+| 4    | Resource or API endpoint not found                            |
+| 5    | Network, rate limit, unsupported server, or uncertain outcome |
 
 Read requests have a 10-second attempt timeout and at most three attempts for
 network failures, HTTP 429, 502, 503, or 504. Retry delays are bounded to two
@@ -113,7 +191,7 @@ seconds; a longer server `Retry-After` returns an actionable failure immediately
 instead of retrying before the server allows. Other HTTP failures are not retried. Raw server error bodies are never
 echoed, preventing reflected credentials from entering diagnostics.
 Authentication exchanges and revocations have a 10-second network timeout and
-are never retried. This milestone has no event write commands or interactive TUI.
+are never retried. The interactive TUI remains a later milestone.
 
 Command names, JSON fields, and exit codes are stable within a major version;
 breaking changes require a major release and migration notes. Experimental

@@ -1,4 +1,4 @@
-import { mutation } from '../_generated/server';
+import { mutation, type MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import { requireAuth, requireEventRole, authComponent } from '../auth';
@@ -122,46 +122,56 @@ export const enableAddon = mutation({
     validateDataSize(config);
     await requireDiscordGuildAuthorization(ctx, person._id, addonType, config);
 
-    const now = Date.now();
-
-    // Check for existing config
-    const existing = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event_addon', q =>
-        q.eq('eventId', eventId).eq('addonType', addonType)
-      )
-      .first();
-
-    if (existing) {
-      // Re-enable and update config
-      await ctx.db.patch(existing._id, {
-        enabled: true,
-        config,
-        updatedAt: now,
-      });
-    } else {
-      await ctx.db.insert('eventAddonConfigs', {
-        eventId,
-        addonType,
-        enabled: true,
-        config,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    // Dispatch lifecycle
-    await dispatchSingleAddonLifecycle(
-      ctx,
-      eventId,
-      addonType,
-      'onEnabled',
-      config
-    );
-
-    return { success: true };
+    return enableAddonConfiguration(ctx, eventId, addonType, config);
   },
 });
+
+/** Shared persistence/lifecycle core. Callers must authorize and validate config. */
+export async function enableAddonConfiguration(
+  ctx: MutationCtx,
+  eventId: Id<'events'>,
+  addonType: string,
+  config: unknown
+) {
+  const now = Date.now();
+
+  // Check for existing config
+  const existing = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event_addon', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType)
+    )
+    .first();
+
+  if (existing) {
+    // Re-enable and update config
+    await ctx.db.patch(existing._id, {
+      enabled: true,
+      config,
+      updatedAt: now,
+    });
+  } else {
+    await ctx.db.insert('eventAddonConfigs', {
+      eventId,
+      addonType,
+      enabled: true,
+      config,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // Dispatch lifecycle
+  await dispatchSingleAddonLifecycle(
+    ctx,
+    eventId,
+    addonType,
+    'onEnabled',
+    config
+  );
+
+  return { success: true };
+}
 
 /**
  * Disable an add-on for an event.
@@ -176,28 +186,37 @@ export const disableAddon = mutation({
   handler: async (ctx, { eventId, addonType }) => {
     await requireEventRole(ctx, eventId, 'MODERATOR');
 
-    const existing = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event_addon', q =>
-        q.eq('eventId', eventId).eq('addonType', addonType)
-      )
-      .first();
-
-    if (!existing || !existing.enabled) {
-      return { success: true };
-    }
-
-    await ctx.db.patch(existing._id, {
-      enabled: false,
-      updatedAt: Date.now(),
-    });
-
-    // Dispatch lifecycle
-    await dispatchSingleAddonLifecycle(ctx, eventId, addonType, 'onDisabled');
-
-    return { success: true };
+    return disableAddonConfiguration(ctx, eventId, addonType);
   },
 });
+
+/** Shared disable lifecycle. Callers must authorize the event write first. */
+export async function disableAddonConfiguration(
+  ctx: MutationCtx,
+  eventId: Id<'events'>,
+  addonType: string
+) {
+  const existing = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event_addon', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType)
+    )
+    .first();
+
+  if (!existing || !existing.enabled) {
+    return { success: true };
+  }
+
+  await ctx.db.patch(existing._id, {
+    enabled: false,
+    updatedAt: Date.now(),
+  });
+
+  // Dispatch lifecycle
+  await dispatchSingleAddonLifecycle(ctx, eventId, addonType, 'onDisabled');
+
+  return { success: true };
+}
 
 /**
  * Update the config for an already-enabled add-on.

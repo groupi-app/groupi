@@ -1,3 +1,11 @@
+import {
+  createEventArgs,
+  createEventForPerson,
+  updateEventArgs,
+  updateEventForPerson,
+  updatePotentialDateTimesArgs,
+  updatePotentialDateTimesForPerson,
+} from './writes';
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth, requireEventRole } from '../auth';
@@ -11,12 +19,7 @@ import { checkIfFriends } from '../lib/privacy';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
 import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
-import { getAddonHandler } from '../addons/registry';
-import {
-  dispatchAddonLifecycle,
-  dispatchSingleAddonLifecycle,
-} from '../addons/lifecycle';
-import { requireDiscordGuildAuthorization } from '../discord/authorization';
+import { dispatchAddonLifecycle } from '../addons/lifecycle';
 
 /**
  * Events mutations for the Convex backend
@@ -28,11 +31,6 @@ import { requireDiscordGuildAuthorization } from '../discord/authorization';
 /**
  * Date time option for potential event dates
  */
-const dateTimeOptionValidator = v.object({
-  start: v.string(), // ISO date string
-  end: v.optional(v.string()), // ISO date string (optional end time)
-});
-
 /**
  * Reminder offset validator - how far before the event to send reminders
  */
@@ -59,23 +57,6 @@ const dateSelectionSourceValidator = v.union(
   v.literal('POLL'),
   v.literal('MANUAL')
 );
-
-function validateImageFocalPoint(
-  focalPoint: { x: number; y: number } | null | undefined
-) {
-  if (!focalPoint) return;
-
-  if (
-    !Number.isFinite(focalPoint.x) ||
-    !Number.isFinite(focalPoint.y) ||
-    focalPoint.x < 0 ||
-    focalPoint.x > 1 ||
-    focalPoint.y < 0 ||
-    focalPoint.y > 1
-  ) {
-    throw new Error('Image focal point must be between 0 and 1');
-  }
-}
 
 const eventDocumentValidator = v.object({
   _id: v.id('events'),
@@ -131,245 +112,15 @@ function compareAvailabilityRecency(
  * Create a new event
  */
 export const createEvent = mutation({
-  args: {
-    title: v.string(),
-    description: v.optional(v.string()),
-    location: v.optional(v.string()),
-    imageStorageId: v.optional(v.id('_storage')), // Optional cover image
-    imageFocalPoint: v.optional(
-      v.object({
-        x: v.number(), // 0-1 normalized (0.5 = center)
-        y: v.number(), // 0-1 normalized (0.5 = center)
-      })
-    ), // Focal point for cropping cover image
-    // Legacy: array of ISO date strings (backward compatible)
-    potentialDateTimes: v.optional(v.array(v.string())),
-    // New: array of objects with start/end times
-    potentialDateTimeOptions: v.optional(v.array(dateTimeOptionValidator)),
-    chosenDateTime: v.optional(v.string()), // ISO date string for single-date events
-    chosenEndDateTime: v.optional(v.string()), // ISO date string for end time
-    reminderOffset: v.optional(reminderOffsetValidator), // Legacy: kept for backward compat
-    addons: v.optional(
-      v.array(
-        v.object({
-          addonType: v.string(),
-          config: v.any(),
-        })
-      )
-    ),
-    visibility: v.optional(
-      v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
-    ),
-    permissions: v.optional(
-      v.object({
-        createPosts: v.optional(permissionLevelValidator),
-        inviteMembers: v.optional(permissionLevelValidator),
-        viewAttendeeList: v.optional(permissionLevelValidator),
-      })
-    ),
-    _traceId: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    {
-      title,
-      description,
-      location,
-      imageStorageId,
-      imageFocalPoint,
-      potentialDateTimes,
-      potentialDateTimeOptions,
-      chosenDateTime,
-      chosenEndDateTime,
-      reminderOffset,
-      addons,
-      visibility,
-      permissions,
-    }
-  ) => {
-    // Require authentication
+  args: createEventArgs.fields,
+  returns: v.object({
+    eventId: v.id('events'),
+    membershipId: v.id('memberships'),
+    event: v.union(eventDocumentValidator, v.null()),
+  }),
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-
-    // Validate input
-    if (!title.trim()) {
-      throw new Error('Event title is required');
-    }
-
-    validateImageFocalPoint(imageFocalPoint);
-    if (imageFocalPoint && !imageStorageId) {
-      throw new Error('An image focal point requires a cover image');
-    }
-
-    // Handle potential date times - support both legacy and new format
-    let dateTimeOptions: Array<{ start: number; end?: number }> = [];
-
-    if (potentialDateTimeOptions && potentialDateTimeOptions.length > 0) {
-      // New format: objects with start/end
-      dateTimeOptions = potentialDateTimeOptions.map(opt => ({
-        start: new Date(opt.start).getTime(),
-        end: opt.end ? new Date(opt.end).getTime() : undefined,
-      }));
-    } else if (potentialDateTimes && potentialDateTimes.length > 0) {
-      // Legacy format: array of strings (just start times)
-      dateTimeOptions = potentialDateTimes.map(dateStr => ({
-        start: new Date(dateStr).getTime(),
-      }));
-    }
-
-    // Validate all potential date time options have end > start
-    for (const opt of dateTimeOptions) {
-      if (opt.end && opt.end <= opt.start) {
-        throw new Error(
-          'End time must be after start time for all date options'
-        );
-      }
-    }
-
-    // Convert chosen date time if provided
-    const chosenTimestamp = chosenDateTime
-      ? new Date(chosenDateTime).getTime()
-      : undefined;
-    const chosenEndTimestamp = chosenEndDateTime
-      ? new Date(chosenEndDateTime).getTime()
-      : undefined;
-
-    // Validate chosen end time is after start time if both provided
-    if (
-      chosenTimestamp &&
-      chosenEndTimestamp &&
-      chosenEndTimestamp <= chosenTimestamp
-    ) {
-      throw new Error('End time must be after start time');
-    }
-
-    // Validate dates are in the future
-    const now = Date.now();
-    if (chosenTimestamp && chosenTimestamp <= now) {
-      throw new Error('Event date must be in the future');
-    }
-    for (const opt of dateTimeOptions) {
-      if (opt.start <= now) {
-        throw new Error('All date options must be in the future');
-      }
-    }
-
-    // Validate reminder offset won't result in a past reminder time
-    if (reminderOffset && chosenTimestamp) {
-      const offsetMs = REMINDER_OFFSETS[reminderOffset as ReminderOffset];
-      if (offsetMs && chosenTimestamp - offsetMs <= now) {
-        throw new Error(
-          'Reminder time would be in the past. Choose a shorter reminder offset.'
-        );
-      }
-    }
-
-    // Create the event
-    const eventId = await ctx.db.insert('events', {
-      title: title.trim(),
-      description: description?.trim() || '',
-      location: location?.trim() || '',
-      imageStorageId: imageStorageId,
-      imageFocalPoint: imageFocalPoint,
-      creatorId: person._id,
-      createdAt: now,
-      updatedAt: now,
-      timezone: 'UTC', // Default timezone, can be updated later
-      potentialDateTimes: dateTimeOptions.map(opt => opt.start), // Legacy array field
-      chosenDateTime: chosenTimestamp,
-      chosenEndDateTime: chosenEndTimestamp,
-      reminderOffset: reminderOffset,
-      visibility: visibility,
-      permissions: permissions,
-      memberCount: 1,
-    });
-
-    // Create the creator's membership as ORGANIZER
-    const membershipId = await ctx.db.insert('memberships', {
-      personId: person._id,
-      eventId: eventId,
-      role: 'ORGANIZER',
-      rsvpStatus: 'YES', // Creator auto-accepts
-      updatedAt: now,
-    });
-
-    // Create potentialDateTimes records and default availabilities for the organizer
-    if (dateTimeOptions.length > 0) {
-      const potentialDateTimeIds = await Promise.all(
-        dateTimeOptions.map(async opt => {
-          return await ctx.db.insert('potentialDateTimes', {
-            eventId: eventId,
-            dateTime: opt.start,
-            endDateTime: opt.end,
-            updatedAt: now,
-          });
-        })
-      );
-
-      // Create "YES" availabilities for the organizer for all date options
-      await Promise.all(
-        potentialDateTimeIds.map(async potentialDateTimeId => {
-          await ctx.db.insert('availabilities', {
-            membershipId: membershipId,
-            potentialDateTimeId: potentialDateTimeId,
-            status: 'YES',
-            updatedAt: now,
-          });
-        })
-      );
-    }
-
-    // Get the created event
-    const event = await ctx.db.get(eventId);
-
-    // Build the list of add-ons to enable
-    // Support both new `addons` arg and legacy `reminderOffset` arg
-    const addonEntries: Array<{ addonType: string; config: unknown }> = [];
-
-    if (addons && addons.length > 0) {
-      addonEntries.push(...addons);
-    } else if (reminderOffset) {
-      // Legacy backward compat: convert reminderOffset to addon config
-      addonEntries.push({
-        addonType: 'reminders',
-        config: { reminderOffset },
-      });
-    }
-
-    // Create addon config rows and dispatch onEnabled lifecycle
-    for (const addon of addonEntries) {
-      const handler = getAddonHandler(addon.addonType);
-      if (!handler || !handler.validateConfig(addon.config)) continue;
-
-      await requireDiscordGuildAuthorization(
-        ctx,
-        person._id,
-        addon.addonType,
-        addon.config
-      );
-
-      await ctx.db.insert('eventAddonConfigs', {
-        eventId,
-        addonType: addon.addonType,
-        enabled: true,
-        config: addon.config,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      await dispatchSingleAddonLifecycle(
-        ctx,
-        eventId,
-        addon.addonType,
-        'onEnabled',
-        addon.config
-      );
-    }
-
-    return {
-      eventId,
-      membershipId,
-      event,
-    };
+    return createEventForPerson(ctx, person._id, args);
   },
 });
 
@@ -377,140 +128,11 @@ export const createEvent = mutation({
  * Update an existing event
  */
 export const updateEvent = mutation({
-  args: {
-    eventId: v.id('events'),
-    title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    location: v.optional(v.string()),
-    imageStorageId: v.optional(
-      v.union(
-        v.id('_storage'),
-        v.null() // Allow null to remove the image
-      )
-    ),
-    imageFocalPoint: v.optional(
-      v.union(
-        v.object({
-          x: v.number(),
-          y: v.number(),
-        }),
-        v.null() // Allow null to clear the focal point
-      )
-    ),
-    visibility: v.optional(
-      v.union(
-        v.literal('PRIVATE'),
-        v.literal('FRIENDS'),
-        v.literal('PUBLIC'),
-        v.null()
-      )
-    ),
-    _traceId: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    {
-      eventId,
-      title,
-      description,
-      location,
-      imageStorageId,
-      imageFocalPoint,
-      visibility,
-    }
-  ) => {
-    // Require organizer or moderator role (single auth call)
-    const { person, membership } = await requireEventRole(
-      ctx,
-      eventId,
-      'MODERATOR'
-    );
-
-    // Get the event
-    const event = await ctx.db.get(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
-
-    validateImageFocalPoint(imageFocalPoint);
-    const willHaveImage =
-      imageStorageId === undefined
-        ? event.imageStorageId !== undefined
-        : imageStorageId !== null;
-    if (imageFocalPoint && !willHaveImage) {
-      throw new Error('An image focal point requires a cover image');
-    }
-
-    // Prepare update data
-    const updateData: Partial<Doc<'events'>> = {};
-
-    if (title !== undefined) {
-      if (!title.trim()) {
-        throw new Error('Event title cannot be empty');
-      }
-      updateData.title = title.trim();
-    }
-
-    if (description !== undefined) {
-      updateData.description = description.trim();
-    }
-
-    if (location !== undefined) {
-      updateData.location = location.trim();
-    }
-
-    // Handle image updates
-    if (imageStorageId !== undefined) {
-      // Delete old image from storage if it exists
-      if (event.imageStorageId) {
-        try {
-          await ctx.storage.delete(event.imageStorageId);
-        } catch {
-          // Ignore errors - file may already be deleted
-        }
-      }
-      // Set new image or clear if null
-      updateData.imageStorageId =
-        imageStorageId === null ? undefined : imageStorageId;
-      // If image is being removed, also clear the focal point
-      if (imageStorageId === null) {
-        updateData.imageFocalPoint = undefined;
-      }
-    }
-
-    // Handle focal point updates
-    if (imageFocalPoint !== undefined) {
-      updateData.imageFocalPoint =
-        imageFocalPoint === null ? undefined : imageFocalPoint;
-    }
-
-    if (visibility !== undefined) {
-      // Visibility changes require ORGANIZER role (not just MODERATOR)
-      if (membership.role !== 'ORGANIZER') {
-        throw new Error('Only organizers can change event visibility');
-      }
-
-      updateData.visibility = visibility === null ? undefined : visibility;
-    }
-
-    // Update the event
-    updateData.updatedAt = Date.now();
-    await ctx.db.patch(eventId, updateData);
-
-    // Get the updated event
-    const updatedEvent = await ctx.db.get(eventId);
-
-    // Notify all event members about the edit
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'EVENT_EDITED',
-      authorId: person._id,
-    });
-
-    // Dispatch onEventUpdated to all enabled add-ons (e.g. sync Discord event)
-    await dispatchAddonLifecycle(ctx, eventId, 'onEventUpdated');
-
-    return { event: updatedEvent };
+  args: updateEventArgs.fields,
+  returns: v.object({ event: v.union(eventDocumentValidator, v.null()) }),
+  handler: async (ctx, args) => {
+    const { person } = await requireAuth(ctx);
+    return updateEventForPerson(ctx, person._id, args);
   },
 });
 
@@ -1196,133 +818,24 @@ export const unbanMember = mutation({
  * Update potential date times for an event (organizer only)
  */
 export const updatePotentialDateTimes = mutation({
-  args: {
-    eventId: v.id('events'),
-    // Legacy: array of Unix timestamps (backward compatible)
-    potentialDateTimes: v.optional(v.array(v.number())),
-    // New: array of objects with start/end times and optional notes
-    potentialDateTimeOptions: v.optional(
-      v.array(
-        v.object({
-          start: v.number(), // Unix timestamp
-          end: v.optional(v.number()), // Unix timestamp for end time
-          note: v.optional(v.string()), // Optional note (max 200 chars)
-        })
-      )
-    ),
-    _traceId: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    { eventId, potentialDateTimes, potentialDateTimeOptions }
-  ) => {
-    // Require organizer role (single auth call, also provides membership)
-    const { person, membership: organizerMembership } = await requireEventRole(
-      ctx,
-      eventId,
-      'ORGANIZER'
-    );
-
-    // Handle both legacy and new format
-    let dateTimeOptions: Array<{
-      start: number;
-      end?: number;
-      note?: string;
-    }> = [];
-
-    if (potentialDateTimeOptions && potentialDateTimeOptions.length > 0) {
-      // New format: objects with start/end/note
-      dateTimeOptions = potentialDateTimeOptions;
-    } else if (potentialDateTimes && potentialDateTimes.length > 0) {
-      // Legacy format: array of timestamps (just start times)
-      dateTimeOptions = potentialDateTimes.map(timestamp => ({
-        start: timestamp,
-      }));
-    }
-
-    // Validate end times are after start times and note lengths
-    const now = Date.now();
-    for (const opt of dateTimeOptions) {
-      if (opt.start <= now) {
-        throw new Error('All date options must be in the future');
-      }
-      if (opt.end && opt.end <= opt.start) {
-        throw new Error('End time must be after start time');
-      }
-      if (opt.note && opt.note.length > 200) {
-        throw new Error('Note must be 200 characters or less');
-      }
-    }
-
-    // Delete all existing potential date times for this event
-    const existingDates = await ctx.db
-      .query('potentialDateTimes')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
-
-    for (const date of existingDates) {
-      // Delete all availabilities for this potential date time
-      const availabilities = await ctx.db
-        .query('availabilities')
-        .withIndex('by_potential_date', q =>
-          q.eq('potentialDateTimeId', date._id)
-        )
-        .collect();
-
-      for (const availability of availabilities) {
-        await ctx.db.delete(availability._id);
-      }
-
-      await ctx.db.delete(date._id);
-    }
-
-    // Create new potential date times
-    const newPotentialDateTimeIds = await Promise.all(
-      dateTimeOptions.map(async opt => {
-        return await ctx.db.insert('potentialDateTimes', {
-          eventId: eventId,
-          dateTime: opt.start,
-          endDateTime: opt.end,
-          note: opt.note || undefined,
-          updatedAt: now,
-        });
+  args: updatePotentialDateTimesArgs.fields,
+  returns: v.object({
+    success: v.boolean(),
+    potentialDates: v.array(
+      v.object({
+        _id: v.id('potentialDateTimes'),
+        _creationTime: v.number(),
+        eventId: v.id('events'),
+        dateTime: v.number(),
+        endDateTime: v.optional(v.number()),
+        note: v.optional(v.string()),
+        updatedAt: v.optional(v.number()),
       })
-    );
-
-    // Create "YES" availabilities for the organizer for all new date options
-    if (organizerMembership) {
-      await Promise.all(
-        newPotentialDateTimeIds.map(async potentialDateTimeId => {
-          await ctx.db.insert('availabilities', {
-            membershipId: organizerMembership._id,
-            potentialDateTimeId: potentialDateTimeId,
-            status: 'YES',
-            updatedAt: now,
-          });
-        })
-      );
-    }
-
-    // Get the updated potential date times
-    const updatedPotentialDates = await Promise.all(
-      newPotentialDateTimeIds.map(id => ctx.db.get(id))
-    );
-
-    // Dispatch onDateReset to all enabled add-ons since we're starting a new poll
-    // (the chosen date will likely change, so any existing reminder is invalid)
-    await dispatchAddonLifecycle(ctx, eventId, 'onDateReset');
-
-    // Notify all members about new date options (using DATE_CHANGED type)
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'DATE_CHANGED',
-      authorId: person._id,
-    });
-
-    return {
-      potentialDates: updatedPotentialDates.filter(d => d !== null),
-      success: true,
-    };
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const { person } = await requireAuth(ctx);
+    return updatePotentialDateTimesForPerson(ctx, person._id, args);
   },
 });
 

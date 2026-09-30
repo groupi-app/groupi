@@ -91,6 +91,10 @@ describe('REST API version contracts', () => {
     await expect(v2Response.json()).resolves.toEqual({
       status: 'ok',
       version: '2.0.0',
+      capabilities: {
+        eventWrites: { version: 1 },
+        eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
+      },
     });
   });
 
