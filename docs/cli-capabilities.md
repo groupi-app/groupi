@@ -19,7 +19,7 @@ staging checks, and production deployment status distinct.
 | Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246       |
 | Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Verified; merged in #247          |
 | Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Verified; merged in #248          |
-| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Implemented; verification pending |
+| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Verified; PR #249                 |
 | Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Implemented; verification pending |
 | First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
 | Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Pending                           |
@@ -225,8 +225,19 @@ permissions, private notes, polling/manual/reset transitions, atomic validation,
 pagination and reminder lifecycle scheduling; 41 new command tests cover the CLI.
 Both independent reviews approved after the event-feed privacy regression was
 reproduced and fixed. The backend's six previously documented ignored scheduler
-errors remain. Hosted and live preview verification are pending; actual reminder
-delivery is not established by scheduling tests alone.
+errors remain. All six hosted CLI jobs, the application suites, quality checks,
+build and Vercel preview passed at `66572c1`.
+
+Live verification against the `codex/cli-attendance` preview used the separately
+installed CLI with organizer, attendee and peer identities. Paginated date and
+own-response reads matched app state. Private RSVP/availability notes were hidden
+from the peer and visible to their author and organizer; restricting attendance
+blocked peer lists while preserving own-response access. Poll selection copied
+availability into RSVP, manual selection preserved it, and reset/clear retained
+the expected notes and responses. App reads confirmed RSVP/date notifications.
+Fixture events were deleted, CLI credentials revoked and sessions signed out.
+Actual reminder delivery is not established by scheduling tests alone.
+Production deployment remains pending merge.
 
 ## Notifications and muting (#227)
 
