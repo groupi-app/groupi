@@ -2,8 +2,9 @@
 
 Development milestones [#222](https://github.com/groupi-app/groupi/issues/222),
 [#223](https://github.com/groupi-app/groupi/issues/223),
-[#224](https://github.com/groupi-app/groupi/issues/224), and
-[#225](https://github.com/groupi-app/groupi/issues/225). The package can be packed
+[#224](https://github.com/groupi-app/groupi/issues/224),
+[#225](https://github.com/groupi-app/groupi/issues/225), and
+[#226](https://github.com/groupi-app/groupi/issues/226). The package can be packed
 and installed locally; public registry publication belongs to #228. Supports Node 22 and 24 on macOS, Windows, and Linux.
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
 compiler, React, Expo, or Next.js runtime.
@@ -116,8 +117,8 @@ options and availability, creates the new options and organizer responses, and
 notifies members. Interactive mode identifies the event, profile, and server and
 asks for confirmation; JSON/headless mode requires `--yes`. Declining, Ctrl-C,
 or closing the prompt sends no write. An empty array clears the proposed dates.
-An event with a confirmed date must first have that date explicitly reset in the
-app; CLI date selection/reset belongs to #226. Visibility/permissions, media,
+An event with a confirmed date must first have that date explicitly reset with
+`events dates reset <event-id> --yes` (or in the app). Visibility/permissions, media,
 and general add-on configuration are later CLI milestones.
 
 Both write commands check the server's advertised `eventWrites` version before
@@ -266,6 +267,78 @@ and bearer management additionally use `invites:read`/`invites:write`; received
 username invitations and member responses use
 `member-invites:read`/`member-invites:write`. Event grants alone do not cover these
 other resources. Every grant is further limited by the caller's app permissions.
+
+## RSVP, availability, and attendance
+
+```sh
+groupi events rsvp get <event-id> --format json
+groupi events rsvp set <event-id> --status YES --note "Bringing snacks" --format json
+groupi events members <event-id> --all --format json
+groupi events dates list <event-id> --format json
+groupi events availability get <event-id> --all --format json
+groupi events availability set <event-id> --responses '[{"potentialDateTimeId":"<option-id>","status":"YES","note":"Can bring food"}]'
+groupi events availability responses <event-id> --option <option-id> --all --format json
+groupi events availability clear <event-id> --yes
+groupi events dates choose <event-id> --option <option-id> --yes
+groupi events dates choose <event-id> --start "2029-03-05T18:00:00-05:00" --end "2029-03-05T20:00:00-05:00" --yes
+groupi events dates reset <event-id> --yes
+```
+
+RSVP applies to the selected identity's event membership. `--status` accepts `YES`,
+`MAYBE`, `NO`, or `PENDING`. RSVP and availability notes allow 200 characters.
+An omitted or empty RSVP `--note` clears the previous note, matching the app.
+`rsvp get` and `set` return `{membershipId, rsvpStatus, rsvpNote}`.
+
+Availability submissions contain unique `potentialDateTimeId` values with a
+`YES`, `MAYBE`, or `NO` status and optional `note`. `PENDING` is a read state for
+missing responses, not a submission status. An omitted/empty note clears the
+submitted option's previous note. Options omitted from a submission are unchanged;
+an empty array is the app-supported no-op. Use `availability clear` to remove all
+of your responses for the event. Submission returns `{created, updated}`; clearing
+returns `{deletedCount, membershipId}` and leaves your RSVP status and note
+unchanged. Notes and counts never imply permission
+to see another participant's response.
+
+`members`, `dates list`, `availability get`, and `availability responses` use
+`--limit 1..100` (default 20), `--cursor`, and `--all`. Every list returns
+`{items, nextCursor}`; continue until `nextCursor` is `null`, even after an empty
+page. Attendance and per-option member responses obey the event's member-list
+permissions. Own availability remains available to an event member even when
+other members' responses are restricted. Cross-event date IDs are rejected by
+the server. The returned fields are:
+
+- Members: `id`, `personId`, `role`, `rsvpStatus`, `rsvpNote`, `joinedAt`, `user`.
+- Proposed dates: `id`, `dateTime`, `endDateTime`, `note`.
+- Own availability: `potentialDateTime` (a proposed date), `status`, `note`,
+  `availabilityId`; missing responses have `PENDING` status and null ID/note.
+- Per-option responses: `membershipId`, `personId`, `user`, `status`, `note`;
+  members with no response appear as `PENDING`.
+
+User summaries contain `id`, `name`, `email`, `image`, and `username`; deleted users
+are represented as `null`. Optional data is `null`, timestamps are Unix
+milliseconds, and unrelated server fields are omitted from CLI output.
+
+Only organizers can choose or reset an event date. Choose either an existing
+poll option with `--option`, or a manual future `--start` with optional `--end`.
+Manual dates require seconds and an explicit UTC offset or `Z`; the end must
+follow the start. Omitting `--end` removes a previously chosen end. The server
+resolves poll option membership atomically. Poll selection copies each member's
+availability status to their RSVP (missing response becomes `PENDING`) and leaves
+RSVP notes unchanged. Manual selection preserves all RSVP statuses and notes.
+Reset removes the chosen start/end and cancels scheduled reminders while retaining
+RSVPs, proposed dates, availability, and their notes. These operations send the
+app's date notifications. Date choose/reset return the updated
+REST event detail, including proposed options and chosen timestamps.
+
+Clearing availability, choosing a date, and resetting a date show the event,
+profile, and server and require confirmation. JSON/headless mode requires `--yes`.
+All attendance writes require `attendanceWrites` version 1. They are sent once,
+including RSVP and repeated reset requests, because the app's notifications and
+other side effects must not be duplicated automatically. An ambiguous outcome
+returns `UNCERTAIN_OUTCOME` and an inspection command. Read the current RSVP,
+availability, or event before deciding whether another write is necessary.
+Restricted keys need `events:read` for these reads and `events:write` for writes;
+those grants never override event membership or role permissions.
 
 ## Output contract
 
