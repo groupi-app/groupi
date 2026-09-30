@@ -138,3 +138,28 @@ presentation was inspected; the profile JSON contained only API and website URLs
 The temporary browser session was signed out and the test credential revoked.
 This verifies the CLI authorization flow for an authenticated browser account;
 external OAuth provider and email delivery flows were not exercised in this check.
+
+## Event creation and editing (#224)
+
+PR #247 adds shared app/REST event writes, transactional creation replay records,
+24-hour request identifiers, explicit proposed-date replacement confirmation, and
+capability checks before CLI writes. Local validation passed `pnpm check`, 2,194
+workspace assertions, 71 source/installed CLI tests, and 68 focused REST tests.
+Backend and CLI reviews approved after resolving compatibility and cancellation
+findings. The backend suite retains its previously documented scheduler errors.
+
+On 2026-09-30, the packed CLI was installed separately and exercised against the
+`codex/cli-event-writes` preview (`quaint-trout-371`) at commit `2820bed`.
+Disposable organizer and attendee accounts used the real authentication, REST,
+and app query/mutation boundaries. A proxy dropped the first successful create
+response; the CLI retried with the identical request identifier and received the
+original event. An explicit subsequent replay still left one event, confirmed by
+CLI listing and app queries. Organizer edits and proposed-date replacement were
+visible to the attendee with `EVENT_EDITED` and `DATE_CHANGED` notifications;
+attendee editing was denied. Replacing proposed dates on a confirmed-date event
+was rejected without changing its chosen date. Test events were deleted, test API
+keys revoked, and successful test sessions signed out. No external invitation
+emails were sent; the attendee joined using the existing app link-invite path.
+
+Hosted CI and the approved changeset are still required before #224 is marked
+verified and merged. The draft PR does not imply production availability.
