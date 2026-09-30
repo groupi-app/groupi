@@ -6,7 +6,7 @@ function invalid(message) {
 }
 
 /** @param {unknown} value @returns {number} */
-function date(value) {
+export function parseDateTime(value) {
   if (typeof value !== 'string')
     return invalid(
       'Dates must be ISO strings with an explicit UTC offset or Z.'
@@ -67,10 +67,12 @@ export function validateEventInput(body, creating) {
       );
   }
   const start =
-    body.chosenDateTime === undefined ? undefined : date(body.chosenDateTime);
+    body.chosenDateTime === undefined
+      ? undefined
+      : parseDateTime(body.chosenDateTime);
   if (body.chosenEndDateTime !== undefined) {
     if (start === undefined) invalid('--end requires --start.');
-    if (date(body.chosenEndDateTime) <= /** @type {number} */ (start))
+    if (parseDateTime(body.chosenEndDateTime) <= /** @type {number} */ (start))
       invalid('The end time must be after the start time.');
   }
   if (body.potentialDateTimeOptions !== undefined) {
@@ -96,8 +98,8 @@ export function validateEventInput(body, creating) {
       const item = /** @type {{start:unknown,end?:unknown,note?:unknown}} */ (
         option
       );
-      const optionStart = date(item.start);
-      if (item.end !== undefined && date(item.end) <= optionStart)
+      const optionStart = parseDateTime(item.start);
+      if (item.end !== undefined && parseDateTime(item.end) <= optionStart)
         invalid('Every proposed end time must be after its start time.');
       if (
         item.note !== undefined &&

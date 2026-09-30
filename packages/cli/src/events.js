@@ -91,6 +91,7 @@ export async function createEvent(
     body,
     requestId,
     recovery,
+    expiredRecovery: `Inspect events list on profile ${profile.name} before deliberately creating again with a new request identifier.`,
   });
   if (
     !result ||

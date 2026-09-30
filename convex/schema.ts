@@ -1,3 +1,4 @@
+import { creationResult } from './invites/contracts';
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
@@ -13,6 +14,21 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  // Retry records expire 24h after the timestamp embedded in the request ID.
+  // Expired IDs remain invalid even after this row is removed.
+  inviteCreationRequests: defineTable({
+    userId: v.string(),
+    operation: v.string(),
+    requestId: v.string(),
+    payloadHash: v.string(),
+    expiresAt: v.number(),
+    result: creationResult,
+  }).index('by_userId_and_operation_and_requestId', [
+    'userId',
+    'operation',
+    'requestId',
+  ]),
+
   // ===== AUTHENTICATION TABLES =====
   // NOTE: users, sessions, accounts, verifications are managed by Better Auth component
   // See convex.config.ts for betterAuth component registration
@@ -280,6 +296,7 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     usesRemaining: v.optional(v.number()),
     maxUses: v.optional(v.number()),
+    usesConsumed: v.optional(v.number()), // Canonical usage; old REST/app rows normalize lazily.
     usesTotal: v.optional(v.number()), // Total number of uses
     name: v.optional(v.string()),
     token: v.string(), // Invite token for sharing

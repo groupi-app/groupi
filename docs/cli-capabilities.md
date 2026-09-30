@@ -18,7 +18,7 @@ staging checks, and production deployment status distinct.
 | Event list and event details; selected account and deployment | Installable executable, help/version, named profiles, environment/stdin API keys, human/JSON output, bounded pagination and read retries         | [#222](https://github.com/groupi-app/groupi/issues/222) | Verified; merged in #244          |
 | Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246       |
 | Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Implemented; verification pending |
-| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Pending                           |
+| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Implemented; verification pending |
 | RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Pending                           |
 | Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Pending                           |
 | First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
@@ -164,3 +164,39 @@ emails were sent; the attendee joined using the existing app link-invite path.
 All six hosted OS/runtime CLI checks, application tests, build, quality checks
 and Vercel preview passed at `3ac6336`. The release note was subsequently approved
 and added. Production availability remains dependent on merge and deployment.
+
+## Invitations (#225)
+
+The CLI adds separate bearer link/email and recipient-bound username invitation
+commands. Both REST versions and the apps share creation, management and response
+logic. Legacy invite usage counters are normalized without a backfill, with an
+optional consumed-count field preserving limits through later edits. Creation and
+email queueing use the same 24-hour replay contract as event creation. Email
+results report queueing, not confirmed delivery; the default email send action
+queues all pending invitations for the event, matching the app.
+
+Local verification on 2026-09-30 passed 2,249 workspace assertions and 106 tests
+against the packed, separately installed CLI, including 35 new invitation command
+tests and the initial 20 authenticated REST cases. Four subsequent test-only
+additions passed in the final backend run: 591 assertions, including all 24 new
+REST cases. The six previously documented backend
+scheduler errors remain tolerated by the existing test configuration. CLI and backend
+reviews approved without remaining findings, and `pnpm check` passed. Hosted and live preview evidence is recorded below; production availability
+remains dependent on merge and deployment.
+
+All six hosted CLI jobs and the application tests, build, quality checks and
+Vercel preview passed at `a302647` in PR #248. Live verification against the
+`codex/cli-invitations` preview used a separately installed package and three
+disposable accounts. A successful username-invitation response was dropped;
+automatic retry and explicit replay still produced one invitation. The wrong
+recipient was denied, acceptance created app-visible membership and one organizer
+notification, bearer-link acceptance worked, and decline created no membership.
+Pending email invitations were listed through pagination and revoked without
+sending mail. Test events were deleted, CLI credentials revoked, and sessions
+signed out. Provider delivery was not exercised.
+
+The initial test used a generic Better Auth API key and reached its default
+10-request/day quota after the earlier scenarios passed. The complete successful
+run used the normal CLI authorization flow and its configured 120-request/minute
+limit. #228 records the generic-key policy/documentation follow-up. These results
+verify the preview, not production deployment.

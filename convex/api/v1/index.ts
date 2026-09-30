@@ -80,16 +80,30 @@ export function createApiV1App(
         data &&
         typeof data === 'object' &&
         'code' in data &&
-        data.code === 'VALIDATION_ERROR' &&
+        typeof data.code === 'string' &&
+        [
+          'VALIDATION_ERROR',
+          'FORBIDDEN',
+          'NOT_FOUND',
+          'INVITE_UNAVAILABLE',
+        ].includes(data.code) &&
         'message' in data &&
         typeof data.message === 'string'
       )
         return c.json(
           {
             success: false,
-            error: { code: 'VALIDATION_ERROR', message: data.message },
+            error: {
+              code:
+                data.code === 'INVITE_UNAVAILABLE' ? 'BAD_REQUEST' : data.code,
+              message: data.message,
+            },
           },
-          400
+          data.code === 'FORBIDDEN'
+            ? 403
+            : data.code === 'NOT_FOUND'
+              ? 404
+              : 400
         );
     }
     if (err instanceof HTTPException) {
