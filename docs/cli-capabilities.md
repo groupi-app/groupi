@@ -253,11 +253,23 @@ backend and 121 executable CLI tests. All 121 CLI tests also passed against the
 separately installed package. The focused backend run passed 69 assertions, and
 both independent reviews approved. `pnpm check` passed after linking the isolated
 worktree's package dependencies. The backend's six previously documented ignored
-scheduler errors remain. Hosted/live verification and release-note approval are
-pending. Tests establish queued-work cleanup and notification suppression, not
+scheduler errors remain. Live preview evidence is recorded below; final hosted
+checks and release-note approval remain pending. Tests establish queued-work cleanup and notification suppression, not
 external provider delivery or cancellation of an already-dispatched request.
 
 Integration with #226 passed `pnpm check`, all 2,329 workspace assertions
 (including 611 backend and 162 CLI tests), and all 162 tests against the
 separately installed CLI. Both capability declarations and command registrations
 are retained; generated API bindings were refreshed after combining the tracks.
+
+A live run against the `codex/cli-notifications` preview at source commit
+`9f9d29d` passed using the separately installed integrated package and two
+disposable accounts. CLI pagination, unread filtering and read/unread/scoped
+actions matched app reads. Cross-account cursors and notification changes were
+denied; clear required confirmation and removed the recipient's app records.
+Nonmembers could not inspect or change subscriptions. Muting suppressed
+app-created posts/replies; unmuting restored notifications, and parent-event
+muting stayed effective after unmuting a discussion. Fixture events, notices,
+subscriptions and local profiles were cleaned up; key revocation and session
+sign-out were verified. Disposable account records remain. This establishes
+in-app notification delivery, not external push/email provider delivery.
