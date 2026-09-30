@@ -161,6 +161,7 @@ was rejected without changing its chosen date. Test events were deleted, test AP
 keys revoked, and successful test sessions signed out. No external invitation
 emails were sent; the attendee joined using the existing app link-invite path.
 
+<<<<<<< HEAD
 Hosted CI and the approved changeset are still required before #224 is marked
 verified and merged. The draft PR does not imply production availability.
 
@@ -180,6 +181,28 @@ tests and the initial 20 authenticated REST cases. Four subsequent test-only
 additions passed in the final backend run: 591 assertions, including all 24 new
 REST cases. The six previously documented backend
 scheduler errors remain tolerated by the existing test configuration. CLI and backend
-reviews approved without remaining findings, and `pnpm check` passed. Hosted
-checks and live preview evidence are pending; this does not claim production
-availability.
+reviews approved without remaining findings, and `pnpm check` passed. Hosted and live preview evidence is recorded below; production availability
+remains dependent on merge and deployment.
+=======
+All six hosted OS/runtime CLI checks, application tests, build, quality checks
+and Vercel preview passed at `3ac6336`. The release note was subsequently approved
+and added. Production availability remains dependent on merge and deployment.
+
+> > > > > > > origin/codex/cli-event-writes
+
+All six hosted CLI jobs and the application tests, build, quality checks and
+Vercel preview passed at `a302647` in PR #248. Live verification against the
+`codex/cli-invitations` preview used a separately installed package and three
+disposable accounts. A successful username-invitation response was dropped;
+automatic retry and explicit replay still produced one invitation. The wrong
+recipient was denied, acceptance created app-visible membership and one organizer
+notification, bearer-link acceptance worked, and decline created no membership.
+Pending email invitations were listed through pagination and revoked without
+sending mail. Test events were deleted, CLI credentials revoked, and sessions
+signed out. Provider delivery was not exercised.
+
+The initial test used a generic Better Auth API key and reached its default
+10-request/day quota after the earlier scenarios passed. The complete successful
+run used the normal CLI authorization flow and its configured 120-request/minute
+limit. #228 records the generic-key policy/documentation follow-up. These results
+verify the preview, not production deployment.
