@@ -161,9 +161,9 @@ was rejected without changing its chosen date. Test events were deleted, test AP
 keys revoked, and successful test sessions signed out. No external invitation
 emails were sent; the attendee joined using the existing app link-invite path.
 
-<<<<<<< HEAD
-Hosted CI and the approved changeset are still required before #224 is marked
-verified and merged. The draft PR does not imply production availability.
+All six hosted OS/runtime CLI checks, application tests, build, quality checks
+and Vercel preview passed at `3ac6336`. The release note was subsequently approved
+and added. Production availability remains dependent on merge and deployment.
 
 ## Invitations (#225)
 
@@ -183,12 +183,6 @@ REST cases. The six previously documented backend
 scheduler errors remain tolerated by the existing test configuration. CLI and backend
 reviews approved without remaining findings, and `pnpm check` passed. Hosted and live preview evidence is recorded below; production availability
 remains dependent on merge and deployment.
-=======
-All six hosted OS/runtime CLI checks, application tests, build, quality checks
-and Vercel preview passed at `3ac6336`. The release note was subsequently approved
-and added. Production availability remains dependent on merge and deployment.
-
-> > > > > > > origin/codex/cli-event-writes
 
 All six hosted CLI jobs and the application tests, build, quality checks and
 Vercel preview passed at `a302647` in PR #248. Live verification against the
