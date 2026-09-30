@@ -1,3 +1,4 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
@@ -68,7 +69,10 @@ export function createAvailabilityRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const getGridFn = internal.api.v1.internal.availability.getAvailabilityGrid;
-    const result = await ctx.runQuery(getGridFn, { eventId });
+    const result = await ctx.runQuery(getGridFn, {
+      eventId,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {
@@ -214,7 +218,10 @@ export function createAvailabilityRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const getDatesFn = internal.api.v1.internal.availability.getPotentialDates;
-    const result = await ctx.runQuery(getDatesFn, { eventId });
+    const result = await ctx.runQuery(getDatesFn, {
+      eventId,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(
       {

@@ -1,3 +1,10 @@
+import {
+  eventViewer,
+  requireAttendanceVisibility,
+} from '../../../events/attendance';
+import { attendeeSummary } from '../../../availability/reads';
+import { attendanceMember, ownRsvp } from '../../../availability/contracts';
+import { updateRSVPForPerson } from '../../../events/scheduling';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
@@ -9,39 +16,22 @@ import { getOrComputeMemberCount } from '../../../lib/memberCount';
  */
 
 export const listEventMembers = internalQuery({
-  args: {
-    eventId: v.string(),
-  },
-  handler: async (ctx, { eventId }) => {
-    const memberships = await ctx.db
+  args: { eventId: v.string(), personId: v.id('persons') },
+  returns: v.object({ members: v.array(attendanceMember) }),
+  handler: async (ctx, { eventId, personId }) => {
+    const id = eventId as Id<'events'>;
+    const viewer = await eventViewer(ctx, id, personId);
+    requireAttendanceVisibility(viewer);
+    const members = await ctx.db
       .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId as Id<'events'>))
+      .withIndex('by_event', q => q.eq('eventId', id))
       .collect();
-
-    const membersWithUsers = await Promise.all(
-      memberships.map(async membership => {
-        const memberData = await getPersonWithUser(ctx, membership.personId);
-        return {
-          id: membership._id,
-          role: membership.role,
-          rsvpStatus: membership.rsvpStatus,
-          joinedAt: membership._creationTime,
-          personId: membership.personId,
-          user: memberData
-            ? {
-                id: memberData.user._id,
-                name: memberData.user.name ?? null,
-                email: memberData.user.email ?? null,
-                image: memberData.user.image ?? null,
-                username: memberData.user.username ?? null,
-              }
-            : null,
-        };
-      })
-    );
-
     return {
-      members: membersWithUsers.filter(m => m.user !== null),
+      members: (
+        await Promise.all(
+          members.map(member => attendeeSummary(ctx, member, viewer.membership))
+        )
+      ).filter(member => member.user !== null),
     };
   },
 });
@@ -225,33 +215,23 @@ export const updateRsvp = internalMutation({
     personId: v.string(),
     rsvpStatus: v.union(
       v.literal('YES'),
-      v.literal('MAYBE'),
       v.literal('NO'),
+      v.literal('MAYBE'),
       v.literal('PENDING')
     ),
+    rsvpNote: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, personId, rsvpStatus }) => {
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', eventId as Id<'events'>)
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    await ctx.db.patch(membership._id, {
+  returns: ownRsvp,
+  handler: async (ctx, { personId, eventId, rsvpStatus, rsvpNote }) => {
+    const result = await updateRSVPForPerson(ctx, personId as Id<'persons'>, {
+      eventId: eventId as Id<'events'>,
       rsvpStatus,
-      updatedAt: Date.now(),
+      rsvpNote,
     });
-
     return {
-      membershipId: membership._id,
-      rsvpStatus,
+      membershipId: result.membership!._id,
+      rsvpStatus: result.membership!.rsvpStatus,
+      rsvpNote: result.membership!.rsvpNote ?? null,
     };
   },
 });

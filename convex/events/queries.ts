@@ -1,3 +1,5 @@
+import { canViewAttendance, privateNote } from './attendance';
+import { latestResponses } from '../availability/reads';
 import { query, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import {
@@ -6,7 +8,6 @@ import {
   getPersonWithUser,
   resolveEventPermissions,
 } from '../auth';
-import { DEFAULT_EVENT_PERMISSIONS } from '../types';
 import { checkCanSendEventInvite } from '../lib/privacy';
 
 /**
@@ -99,32 +100,14 @@ export const getEventAttendeesData = query({
       throw new Error('You are not a member of this event');
     }
 
-    // Check viewAttendeeList permission
-    const viewLevel =
-      event.permissions?.viewAttendeeList ??
-      DEFAULT_EVENT_PERMISSIONS.viewAttendeeList;
-    const roleHierarchy: Record<string, number> = {
-      ATTENDEE: 1,
-      MODERATOR: 2,
-      ORGANIZER: 3,
-    };
-    const requiredLevel =
-      roleHierarchy[viewLevel === 'EVERYONE' ? 'ATTENDEE' : viewLevel] ?? 1;
-    const userLevel = roleHierarchy[userMembership.role] ?? 0;
-    if (userLevel < requiredLevel) {
+    if (!canViewAttendance(event, userMembership))
       throw new Error('You do not have permission to view the attendee list');
-    }
 
     // Get all event memberships
     const memberships = await ctx.db
       .query('memberships')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect();
-
-    // Determine if current user can see private rsvpNotes (organizer/moderator)
-    const canSeeAllRsvpNotes =
-      userMembership.role === 'ORGANIZER' ||
-      userMembership.role === 'MODERATOR';
 
     // Pre-fetch all potential dates and availabilities to avoid N+1
     const potentialDateTimes = await ctx.db
@@ -187,13 +170,16 @@ export const getEventAttendeesData = query({
         availabilitiesByMembership.get(membership._id as string) || [];
       const availabilitiesWithDates = memberAvailabilities.map(avail => ({
         ...avail,
+        note: privateNote(avail.note, userMembership, membership),
         potentialDateTime:
           potentialDateTimeMap.get(avail.potentialDateTimeId) ?? null,
       }));
 
-      const isOwnMembership = membership.personId === currentPerson._id;
-      const visibleRsvpNote =
-        isOwnMembership || canSeeAllRsvpNotes ? membership.rsvpNote : undefined;
+      const visibleRsvpNote = privateNote(
+        membership.rsvpNote,
+        userMembership,
+        membership
+      );
 
       return {
         ...membership,
@@ -440,10 +426,12 @@ export const getEventAvailabilityData = query({
       .collect();
 
     // Get all memberships
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
+    const memberships = canViewAttendance(event, userMembership)
+      ? await ctx.db
+          .query('memberships')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      : [userMembership];
 
     // Get user data for each member - nest user inside person AND at top level for compatibility
     const membersWithUsers = await Promise.all(
@@ -451,6 +439,11 @@ export const getEventAvailabilityData = query({
         const memberData = await getPersonWithUser(ctx, membership.personId);
         return {
           ...membership,
+          rsvpNote: privateNote(
+            membership.rsvpNote,
+            userMembership,
+            membership
+          ),
           person: memberData
             ? {
                 ...memberData.person,
@@ -465,11 +458,6 @@ export const getEventAvailabilityData = query({
     const validMembers = membersWithUsers.filter(
       m => m.person && m.person.user
     );
-
-    // Determine if current user can see private notes (organizer/moderator)
-    const canSeeAllNotes =
-      userMembership.role === 'ORGANIZER' ||
-      userMembership.role === 'MODERATOR';
 
     // Build a membership lookup map for efficient member resolution
     const membershipMap = new Map(validMembers.map(m => [m._id, m]));
@@ -487,13 +475,13 @@ export const getEventAvailabilityData = query({
 
         return {
           potentialDateTime: date,
-          availabilities: dateAvailabilities
+          availabilities: latestResponses(dateAvailabilities)
             .map(avail => {
               const member = membershipMap.get(avail.membershipId);
               // Availability notes are visible to the author + organizers/moderators
-              const isAuthor = member?.personId === currentPerson._id;
-              const visibleNote =
-                isAuthor || canSeeAllNotes ? avail.note : undefined;
+              const visibleNote = member
+                ? privateNote(avail.note, userMembership, member)
+                : undefined;
               return {
                 ...avail,
                 note: visibleNote,

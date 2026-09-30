@@ -1,3 +1,4 @@
+import { registerAttendanceCommands } from './attendance-commands.js';
 import { registerInviteCommands } from './invite-commands.js';
 import { eventInput, validateRequestId } from './event-input.js';
 import { Command, CommanderError, Option } from 'commander';
@@ -335,6 +336,7 @@ export async function run() {
       );
     });
   registerInviteCommands(program, json);
+  registerAttendanceCommands(program, events, json);
   try {
     await program.parseAsync(argv, { from: 'user' });
   } catch (error) {

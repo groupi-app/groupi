@@ -135,7 +135,7 @@ export async function mutateApi(profile, key, path, options) {
       if (code === 'DATE_RESET_REQUIRED')
         throw new CliError(
           'DATE_RESET_REQUIRED',
-          'Reset the confirmed date in the app before replacing proposed dates. CLI date reset is not available yet; no edit was applied.',
+          'Reset the confirmed date with events dates reset <event-id> before replacing proposed dates. The reset requires confirmation; no edit was applied.',
           2
         );
       if (code === 'IDEMPOTENCY_EXPIRED')

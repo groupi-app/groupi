@@ -1,3 +1,6 @@
+import * as scheduling from './scheduling';
+import { eventDocumentValidator } from './validators';
+import { membershipDocumentValidator } from '../availability/contracts';
 import {
   createEventArgs,
   createEventForPerson,
@@ -9,16 +12,10 @@ import {
 import { mutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth, requireEventRole } from '../auth';
-import {
-  notifyEventMembers,
-  notifyEventModerators,
-  notifyPerson,
-} from '../lib/notifications';
-import { Doc } from '../_generated/dataModel';
+import { notifyEventModerators, notifyPerson } from '../lib/notifications';
 import { checkIfFriends } from '../lib/privacy';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
-import { REMINDER_OFFSETS, type ReminderOffset } from '../types';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 
 /**
@@ -34,79 +31,11 @@ import { dispatchAddonLifecycle } from '../addons/lifecycle';
 /**
  * Reminder offset validator - how far before the event to send reminders
  */
-const reminderOffsetValidator = v.union(
-  v.literal('30_MINUTES'),
-  v.literal('1_HOUR'),
-  v.literal('2_HOURS'),
-  v.literal('4_HOURS'),
-  v.literal('1_DAY'),
-  v.literal('2_DAYS'),
-  v.literal('3_DAYS'),
-  v.literal('1_WEEK'),
-  v.literal('2_WEEKS'),
-  v.literal('4_WEEKS')
-);
-
 const permissionLevelValidator = v.union(
   v.literal('EVERYONE'),
   v.literal('MODERATOR'),
   v.literal('ORGANIZER')
 );
-
-const dateSelectionSourceValidator = v.union(
-  v.literal('POLL'),
-  v.literal('MANUAL')
-);
-
-const eventDocumentValidator = v.object({
-  _id: v.id('events'),
-  _creationTime: v.number(),
-  title: v.string(),
-  description: v.optional(v.string()),
-  location: v.optional(v.string()),
-  imageStorageId: v.optional(v.id('_storage')),
-  imageFocalPoint: v.optional(
-    v.object({
-      x: v.number(),
-      y: v.number(),
-    })
-  ),
-  chosenDateTime: v.optional(v.number()),
-  chosenEndDateTime: v.optional(v.number()),
-  creatorId: v.id('persons'),
-  memberCount: v.optional(v.number()),
-  createdAt: v.number(),
-  updatedAt: v.number(),
-  timezone: v.string(),
-  potentialDateTimes: v.array(v.number()),
-  visibility: v.optional(
-    v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
-  ),
-  reminderOffset: v.optional(reminderOffsetValidator),
-  permissions: v.optional(
-    v.object({
-      createPosts: v.optional(permissionLevelValidator),
-      inviteMembers: v.optional(permissionLevelValidator),
-      viewAttendeeList: v.optional(permissionLevelValidator),
-    })
-  ),
-});
-
-function compareAvailabilityRecency(
-  left: Doc<'availabilities'>,
-  right: Doc<'availabilities'>
-): number {
-  const timestampDifference =
-    (left.updatedAt ?? left._creationTime) -
-    (right.updatedAt ?? right._creationTime);
-
-  if (timestampDifference !== 0) return timestampDifference;
-
-  const creationTimeDifference = left._creationTime - right._creationTime;
-  if (creationTimeDifference !== 0) return creationTimeDifference;
-
-  return String(left._id).localeCompare(String(right._id));
-}
 
 /**
  * Create a new event
@@ -170,56 +99,13 @@ export const deleteEvent = mutation({
  * Update user's RSVP status for an event
  */
 export const updateRSVP = mutation({
-  args: {
-    eventId: v.id('events'),
-    rsvpStatus: v.union(
-      v.literal('YES'),
-      v.literal('MAYBE'),
-      v.literal('NO'),
-      v.literal('PENDING')
-    ),
-    rsvpNote: v.optional(v.string()),
-    _traceId: v.optional(v.string()),
-  },
-  handler: async (ctx, { eventId, rsvpStatus, rsvpNote }) => {
-    // Require authentication and membership
+  args: scheduling.updateRSVPArgs,
+  returns: v.object({
+    membership: v.union(membershipDocumentValidator, v.null()),
+  }),
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    // Validate note length
-    if (rsvpNote && rsvpNote.length > 200) {
-      throw new Error('RSVP note must be 200 characters or less');
-    }
-
-    // Update the RSVP status and note
-    await ctx.db.patch(membership._id, {
-      rsvpStatus: rsvpStatus,
-      rsvpNote: rsvpNote || undefined,
-      updatedAt: Date.now(),
-    });
-
-    // Get the updated membership
-    const updatedMembership = await ctx.db.get(membership._id);
-
-    // Notify organizers/moderators about RSVP change
-    await notifyEventModerators(ctx, {
-      eventId,
-      type: 'USER_RSVP',
-      authorId: person._id,
-      rsvp: rsvpStatus,
-    });
-
-    return { membership: updatedMembership };
+    return scheduling.updateRSVPForPerson(ctx, person._id, args);
   },
 });
 
@@ -466,181 +352,11 @@ export const leaveEvent = mutation({
  *                                  '2_DAYS', '3_DAYS', '1_WEEK', '2_WEEKS', '4_WEEKS'
  */
 export const chooseEventDate = mutation({
-  args: {
-    eventId: v.id('events'),
-    chosenDateTime: v.number(), // Unix timestamp
-    chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end time
-    potentialDateTimeId: v.optional(v.id('potentialDateTimes')),
-    selectionSource: v.optional(dateSelectionSourceValidator),
-    reminderOffset: v.optional(reminderOffsetValidator),
-    _traceId: v.optional(v.string()),
-  },
-  returns: v.object({
-    event: v.union(eventDocumentValidator, v.null()),
-  }),
-  handler: async (
-    ctx,
-    {
-      eventId,
-      chosenDateTime,
-      chosenEndDateTime,
-      potentialDateTimeId,
-      selectionSource,
-      reminderOffset,
-    }
-  ) => {
-    // Require organizer role (single auth call)
-    const { person } = await requireEventRole(ctx, eventId, 'ORGANIZER');
-
-    // Validate end time is after start time if provided
-    if (chosenEndDateTime && chosenEndDateTime <= chosenDateTime) {
-      throw new Error('End time must be after start time');
-    }
-
-    // Validate chosen date is in the future
-    if (chosenDateTime <= Date.now()) {
-      throw new Error('Event date must be in the future');
-    }
-
-    if (selectionSource === 'POLL' && !potentialDateTimeId) {
-      throw new Error('A potential date time is required for poll selections');
-    }
-
-    if (selectionSource === 'MANUAL' && potentialDateTimeId) {
-      throw new Error('Manual date selections cannot include a poll option');
-    }
-
-    // Current clients explicitly identify poll/manual selections. Legacy
-    // clients omit the source and potential date ID, so infer a poll selection
-    // only when its exact start/end pair identifies one unique event option.
-    let selectedPotentialDateTimeId = potentialDateTimeId;
-    if (!selectedPotentialDateTimeId && selectionSource !== 'MANUAL') {
-      const matchingPotentialDateTimes = (
-        await ctx.db
-          .query('potentialDateTimes')
-          .withIndex('by_event', q => q.eq('eventId', eventId))
-          .collect()
-      ).filter(
-        potentialDateTime =>
-          potentialDateTime.dateTime === chosenDateTime &&
-          potentialDateTime.endDateTime === chosenEndDateTime
-      );
-
-      if (matchingPotentialDateTimes.length > 1) {
-        throw new Error(
-          'This date option is ambiguous. Refresh the event and select it again.'
-        );
-      }
-
-      selectedPotentialDateTimeId = matchingPotentialDateTimes[0]?._id;
-    }
-
-    if (selectedPotentialDateTimeId) {
-      const potentialDateTime = await ctx.db.get(selectedPotentialDateTimeId);
-      if (!potentialDateTime || potentialDateTime.eventId !== eventId) {
-        throw new Error('Potential date time does not belong to this event');
-      }
-
-      if (
-        potentialDateTime.dateTime !== chosenDateTime ||
-        potentialDateTime.endDateTime !== chosenEndDateTime
-      ) {
-        throw new Error('Chosen date time does not match the selected option');
-      }
-    }
-
-    // Validate reminder offset won't result in a past reminder time
-    if (reminderOffset) {
-      const offsetMs = REMINDER_OFFSETS[reminderOffset as ReminderOffset];
-      if (offsetMs && chosenDateTime - offsetMs <= Date.now()) {
-        throw new Error(
-          'Reminder time would be in the past. Choose a shorter reminder offset.'
-        );
-      }
-    }
-
-    // Update the event with chosen date
-    // Always set both fields together to prevent sync issues
-    // If endDateTime not provided, explicitly clear it
-    const now = Date.now();
-    await ctx.db.patch(eventId, {
-      chosenDateTime: chosenDateTime,
-      chosenEndDateTime: chosenEndDateTime ?? undefined,
-      updatedAt: now,
-    });
-
-    if (selectedPotentialDateTimeId) {
-      const [memberships, availabilities] = await Promise.all([
-        ctx.db
-          .query('memberships')
-          .withIndex('by_event', q => q.eq('eventId', eventId))
-          .collect(),
-        ctx.db
-          .query('availabilities')
-          .withIndex('by_potential_date', q =>
-            q.eq('potentialDateTimeId', selectedPotentialDateTimeId)
-          )
-          .collect(),
-      ]);
-
-      const latestAvailabilityByMembership = new Map<
-        Doc<'availabilities'>['membershipId'],
-        Doc<'availabilities'>
-      >();
-      for (const availability of availabilities) {
-        const existing = latestAvailabilityByMembership.get(
-          availability.membershipId
-        );
-        if (
-          !existing ||
-          compareAvailabilityRecency(availability, existing) > 0
-        ) {
-          latestAvailabilityByMembership.set(
-            availability.membershipId,
-            availability
-          );
-        }
-      }
-
-      const duplicateAvailabilities = availabilities.filter(
-        availability =>
-          latestAvailabilityByMembership.get(availability.membershipId)?._id !==
-          availability._id
-      );
-
-      await Promise.all([
-        ...memberships.map(membership =>
-          ctx.db.patch(membership._id, {
-            rsvpStatus:
-              latestAvailabilityByMembership.get(membership._id)?.status ??
-              'PENDING',
-            updatedAt: now,
-          })
-        ),
-        ...duplicateAvailabilities.map(availability =>
-          ctx.db.delete(availability._id)
-        ),
-      ]);
-    }
-
-    // Get the updated event
-    const updatedEvent = await ctx.db.get(eventId);
-
-    // Notify all members about date being chosen
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'DATE_CHOSEN',
-      authorId: person._id,
-      datetime: chosenDateTime,
-      rsvpFromMembership: selectedPotentialDateTimeId !== undefined,
-    });
-
-    // Dispatch onDateChosen to all enabled add-ons
-    await dispatchAddonLifecycle(ctx, eventId, 'onDateChosen', {
-      chosenDateTime,
-    });
-
-    return { event: updatedEvent };
+  args: scheduling.chooseEventDateArgs,
+  returns: v.object({ event: v.union(eventDocumentValidator, v.null()) }),
+  handler: async (ctx, args) => {
+    const { person } = await requireAuth(ctx);
+    return scheduling.chooseEventDateForPerson(ctx, person._id, args);
   },
 });
 
@@ -649,35 +365,11 @@ export const chooseEventDate = mutation({
  * Also cancels any scheduled reminders via add-on lifecycle
  */
 export const resetEventDate = mutation({
-  args: {
-    eventId: v.id('events'),
-    _traceId: v.optional(v.string()),
-  },
-  handler: async (ctx, { eventId }) => {
-    // Require organizer role (single auth call)
-    const { person } = await requireEventRole(ctx, eventId, 'ORGANIZER');
-
-    // Dispatch onDateReset to all enabled add-ons (e.g. cancel reminders)
-    await dispatchAddonLifecycle(ctx, eventId, 'onDateReset');
-
-    // Update the event to remove chosen date and end date
-    await ctx.db.patch(eventId, {
-      chosenDateTime: undefined,
-      chosenEndDateTime: undefined,
-      updatedAt: Date.now(),
-    });
-
-    // Get the updated event
-    const updatedEvent = await ctx.db.get(eventId);
-
-    // Notify all members about date being reset
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'DATE_RESET',
-      authorId: person._id,
-    });
-
-    return { event: updatedEvent };
+  args: scheduling.resetEventDateArgs,
+  returns: v.object({ event: v.union(eventDocumentValidator, v.null()) }),
+  handler: async (ctx, args) => {
+    const { person } = await requireAuth(ctx);
+    return scheduling.resetEventDateForPerson(ctx, person._id, args);
   },
 });
 
