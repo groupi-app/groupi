@@ -1,3 +1,4 @@
+import { registerImageCommands } from './image-commands.js';
 import { getProfile, credential } from './profiles.js';
 import { CliError } from './errors.js';
 import {
@@ -42,6 +43,7 @@ export function registerAccountCommands(program, json) {
     .description(
       'Read/update your account and open explicit browser exceptions'
     );
+  registerImageCommands(program, account, 'avatar', json);
   account
     .command('get')
     .description('Read your selected identity’s profile')

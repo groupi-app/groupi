@@ -140,7 +140,8 @@ export function ReviewStep({ onBack }: ReviewStepProps) {
         const result = await uploadFile(
           imageFile.uri,
           imageFile.filename,
-          imageFile.mimeType
+          imageFile.mimeType,
+          'cover'
         );
         if (result) {
           imageStorageId = result.storageId;

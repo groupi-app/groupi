@@ -121,7 +121,7 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
     try {
       let imageStorageId: string | undefined;
       if (imageFile) {
-        const uploadResult = await uploadFile(imageFile);
+        const uploadResult = await uploadFile(imageFile, 'cover');
         if (!uploadResult) {
           toast.error('Failed to upload image.');
           setIsSaving(false);

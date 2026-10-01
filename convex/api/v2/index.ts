@@ -7,6 +7,7 @@ import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
 import { validateApiKey, getApiKey } from '../v1/middleware/auth';
 import { createCliAuthRoutes } from './routes/cliAuth';
+import { createImageRoutes } from './routes/images';
 import { createEventRoutes } from './routes/events';
 import { createEventManagementRoutes } from './routes/eventManagement';
 import { createPostRoutes } from './routes/posts';
@@ -237,6 +238,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       capabilities: {
         discussion: { version: 1 },
         eventWrites: { version: 1 },
+        imageWrites: { version: 1 },
         eventManagement: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
@@ -255,6 +257,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   // Mount route groups
   app.route('/', createEventManagementRoutes());
   app.route('/', createEventRoutes());
+  app.route('/', createImageRoutes());
   app.route('/', createPostRoutes());
   app.route('/', createReplyRoutes());
   app.route('/', createMemberRoutes());

@@ -1,3 +1,5 @@
+import { claimUpload } from '../files/uploads';
+import { validateImageMetadata } from '../files/imageRules';
 import { z } from '@hono/zod-openapi';
 import { v, ConvexError, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
@@ -175,6 +177,20 @@ export async function createEventForPerson(
   validateImageFocalPoint(imageFocalPoint);
   if (imageFocalPoint && !imageStorageId) {
     throw eventValidationError('An image focal point requires a cover image');
+  }
+
+  if (imageStorageId) {
+    const metadata = await ctx.db.system.get(imageStorageId);
+    if (!metadata) throw eventValidationError('Uploaded cover not found');
+    const upload = await claimUpload(ctx, personId, imageStorageId, 'cover');
+    validateImageMetadata('cover', upload.mimeType, metadata.size);
+    if (
+      metadata.size !== upload.size ||
+      (metadata.contentType && metadata.contentType !== upload.mimeType)
+    )
+      throw eventValidationError(
+        'Cover metadata does not match the uploaded image'
+      );
   }
 
   // Handle potential date times - support both legacy and new format
@@ -450,7 +466,20 @@ export async function updateEventForPerson(
   }
 
   // Handle image updates
-  if (imageStorageId !== undefined) {
+  if (imageStorageId !== undefined && imageStorageId !== event.imageStorageId) {
+    if (imageStorageId) {
+      const metadata = await ctx.db.system.get(imageStorageId);
+      if (!metadata) throw eventValidationError('Uploaded cover not found');
+      const upload = await claimUpload(ctx, personId, imageStorageId, 'cover');
+      validateImageMetadata('cover', upload.mimeType, metadata.size);
+      if (
+        metadata.size !== upload.size ||
+        (metadata.contentType && metadata.contentType !== upload.mimeType)
+      )
+        throw eventValidationError(
+          'Cover metadata does not match the uploaded image'
+        );
+    }
     // Delete old image from storage if it exists
     if (event.imageStorageId) {
       try {

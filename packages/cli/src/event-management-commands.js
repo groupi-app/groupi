@@ -1,3 +1,4 @@
+import { registerImageCommands } from './image-commands.js';
 import { Option } from 'commander';
 import { getProfile, credential } from './profiles.js';
 import { CliError } from './errors.js';
@@ -13,6 +14,7 @@ function plain(value) {
 }
 /** @param {import('commander').Command} program @param {import('commander').Command} events @param {boolean} json */
 export function registerEventManagementCommands(program, events, json) {
+  registerImageCommands(program, events, 'cover', json);
   const connect = async () => {
     const options = program.opts();
     const profile = await getProfile(options.profile);

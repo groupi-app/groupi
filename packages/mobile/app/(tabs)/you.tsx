@@ -72,7 +72,8 @@ export default function YouScreen() {
       const result = await uploadFile(
         image.uri,
         image.filename,
-        image.mimeType
+        image.mimeType,
+        'avatar'
       );
       if (result) {
         await updateProfile({ imageStorageId: result.storageId });

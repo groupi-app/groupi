@@ -4,7 +4,7 @@
   "commands": [
     {
       "path": "groupi",
-      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure existing built-in and custom event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n  posts              Manage event discussions\n"
+      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure existing built-in and custom event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  posts              Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  replies            Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n"
     },
     {
       "path": "groupi tui",
@@ -36,7 +36,7 @@
     },
     {
       "path": "groupi events",
-      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               join an event\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility and supported permissions\n  help [command]                display help for command\n"
+      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  cover                         Inspect, replace, or remove cover images from local files\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               join an event\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility and supported permissions\n  help [command]                display help for command\n"
     },
     {
       "path": "groupi events create",
@@ -117,6 +117,22 @@
     {
       "path": "groupi events members",
       "help": "Usage: groupi events members [options] <event-id>\n\nList attendance when event permissions allow\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events cover",
+      "help": "Usage: groupi events cover [options] [command]\n\nInspect, replace, or remove cover images from local files\n\nOptions:\n  -h, --help                   display help for command\n\nCommands:\n  get <event-id>\n  set [options] <event-id>\n  remove [options] <event-id>\n  help [command]               display help for command\n"
+    },
+    {
+      "path": "groupi events cover get",
+      "help": "Usage: groupi events cover get [options] <event-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events cover set",
+      "help": "Usage: groupi events cover set [options] <event-id>\n\nOptions:\n  --file <path>       Local JPEG, PNG, GIF, WebP, or SVG image, at most 10 MiB\n  --focal-x <number>  Horizontal focal point (0–1)\n  --focal-y <number>  Vertical focal point (0–1)\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi events cover remove",
+      "help": "Usage: groupi events cover remove [options] <event-id>\n\nOptions:\n  --yes       Confirm removing this image\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi events discover",
@@ -304,7 +320,23 @@
     },
     {
       "path": "groupi account",
-      "help": "Usage: groupi account [options] [command]\n\nRead/update your account and open explicit browser exceptions\n\nOptions:\n  -h, --help       display help for command\n\nCommands:\n  get              Read your selected identity’s profile\n  edit [options]   Update ordinary profile fields without browser interaction\n  passkeys         Explicitly open account settings; complete this action in the browser/device\n  linked-accounts  Explicitly open account settings; complete this action in the browser/device\n  delete           Explicitly open account settings; complete this action in the browser/device\n  help [command]   display help for command\n"
+      "help": "Usage: groupi account [options] [command]\n\nRead/update your account and open explicit browser exceptions\n\nOptions:\n  -h, --help       display help for command\n\nCommands:\n  avatar           Inspect, replace, or remove avatar images from local files\n  get              Read your selected identity’s profile\n  edit [options]   Update ordinary profile fields without browser interaction\n  passkeys         Explicitly open account settings; complete this action in the browser/device\n  linked-accounts  Explicitly open account settings; complete this action in the browser/device\n  delete           Explicitly open account settings; complete this action in the browser/device\n  help [command]   display help for command\n"
+    },
+    {
+      "path": "groupi account avatar",
+      "help": "Usage: groupi account avatar [options] [command]\n\nInspect, replace, or remove avatar images from local files\n\nOptions:\n  -h, --help        display help for command\n\nCommands:\n  get\n  set [options]\n  remove [options]\n  help [command]    display help for command\n"
+    },
+    {
+      "path": "groupi account avatar get",
+      "help": "Usage: groupi account avatar get [options]\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account avatar set",
+      "help": "Usage: groupi account avatar set [options]\n\nOptions:\n  --file <path>  Local JPEG, PNG, GIF, WebP, or SVG image, at most 10 MiB\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi account avatar remove",
+      "help": "Usage: groupi account avatar remove [options]\n\nOptions:\n  --yes       Confirm removing this image\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi account get",
@@ -365,6 +397,90 @@
     {
       "path": "groupi settings theme set",
       "help": "Usage: groupi settings theme set [options]\n\nOptions:\n  --data <json>  JSON with selectedThemeType, selectedThemeId, useSystemPreference,\n                 systemLightThemeId, systemDarkThemeId; selectedCustomThemeId optional\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi posts",
+      "help": "Usage: groupi posts [options] [command]\n\nRead/write safe discussion content; use explicit HTML files to preserve rich formatting on edits\n\nOptions:\n  -h, --help                  display help for command\n\nCommands:\n  list [options] <parent-id>\n  get <id>                    Read full original HTML and attachment metadata; JSON preserves\n                              formatting for editing\n  create [options] <id>       Create atomically in the event/post ID\n  edit [options] <id>         Edit only supplied fields; omitted rich content is preserved\n  delete [options] <id>\n  attachments                 Inspect/remove attachment metadata on accessible parent content\n  mute <post-id>              Mute discussion notifications\n  unmute <post-id>            Unmute discussion notifications\n  mute-status <post-id>       Inspect discussion notifications\n  help [command]              display help for command\n"
+    },
+    {
+      "path": "groupi posts list",
+      "help": "Usage: groupi posts list [options] <parent-id>\n\nOptions:\n  --limit <n>        Page size, 1–100 (default: \"20\")\n  --cursor <cursor>\n  --all              Explicitly retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi posts get",
+      "help": "Usage: groupi posts get [options] <id>\n\nRead full original HTML and attachment metadata; JSON preserves formatting for editing\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts create",
+      "help": "Usage: groupi posts create [options] <id>\n\nCreate atomically in the event/post ID\n\nOptions:\n  --content <text>\n  --file <path>                Read UTF-8 content file\n  --stdin                      Read UTF-8 content from stdin\n  --content-format <format>    text, markdown, or explicit html (default: \"text\")\n  --attach <path...>           Upload local files before atomic publication\n  --remove-attachment <id...>  Remove attachment IDs while editing\n  --yes                        Confirm attachment removal\n  --title <text>\n  -h, --help                   display help for command\n"
+    },
+    {
+      "path": "groupi posts edit",
+      "help": "Usage: groupi posts edit [options] <id>\n\nEdit only supplied fields; omitted rich content is preserved\n\nOptions:\n  --content <text>\n  --file <path>                Read UTF-8 content file\n  --stdin                      Read UTF-8 content from stdin\n  --content-format <format>    text, markdown, or explicit html (default: \"text\")\n  --attach <path...>           Upload local files before atomic publication\n  --remove-attachment <id...>  Remove attachment IDs while editing\n  --yes                        Confirm attachment removal\n  --title <text>\n  -h, --help                   display help for command\n"
+    },
+    {
+      "path": "groupi posts delete",
+      "help": "Usage: groupi posts delete [options] <id>\n\nOptions:\n  --yes       Confirm deletion\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts attachments",
+      "help": "Usage: groupi posts attachments [options] [command]\n\nInspect/remove attachment metadata on accessible parent content\n\nOptions:\n  -h, --help                             display help for command\n\nCommands:\n  list <id>\n  remove [options] <id> <attachment-id>\n  help [command]                         display help for command\n"
+    },
+    {
+      "path": "groupi posts attachments list",
+      "help": "Usage: groupi posts attachments list [options] <id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts attachments remove",
+      "help": "Usage: groupi posts attachments remove [options] <id> <attachment-id>\n\nOptions:\n  --yes       Confirm removal\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts mute",
+      "help": "Usage: groupi posts mute [options] <post-id>\n\nMute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts unmute",
+      "help": "Usage: groupi posts unmute [options] <post-id>\n\nUnmute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts mute-status",
+      "help": "Usage: groupi posts mute-status [options] <post-id>\n\nInspect discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi replies",
+      "help": "Usage: groupi replies [options] [command]\n\nRead/write safe discussion content; use explicit HTML files to preserve rich formatting on edits\n\nOptions:\n  -h, --help                  display help for command\n\nCommands:\n  list [options] <parent-id>\n  get <id>                    Read full original HTML and attachment metadata; JSON preserves\n                              formatting for editing\n  create [options] <id>       Create atomically in the event/post ID\n  edit [options] <id>         Edit only supplied fields; omitted rich content is preserved\n  delete [options] <id>\n  attachments                 Inspect/remove attachment metadata on accessible parent content\n  help [command]              display help for command\n"
+    },
+    {
+      "path": "groupi replies list",
+      "help": "Usage: groupi replies list [options] <parent-id>\n\nOptions:\n  --limit <n>        Page size, 1–100 (default: \"20\")\n  --cursor <cursor>\n  --all              Explicitly retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi replies get",
+      "help": "Usage: groupi replies get [options] <id>\n\nRead full original HTML and attachment metadata; JSON preserves formatting for editing\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi replies create",
+      "help": "Usage: groupi replies create [options] <id>\n\nCreate atomically in the event/post ID\n\nOptions:\n  --content <text>\n  --file <path>                Read UTF-8 content file\n  --stdin                      Read UTF-8 content from stdin\n  --content-format <format>    text, markdown, or explicit html (default: \"text\")\n  --attach <path...>           Upload local files before atomic publication\n  --remove-attachment <id...>  Remove attachment IDs while editing\n  --yes                        Confirm attachment removal\n  -h, --help                   display help for command\n"
+    },
+    {
+      "path": "groupi replies edit",
+      "help": "Usage: groupi replies edit [options] <id>\n\nEdit only supplied fields; omitted rich content is preserved\n\nOptions:\n  --content <text>\n  --file <path>                Read UTF-8 content file\n  --stdin                      Read UTF-8 content from stdin\n  --content-format <format>    text, markdown, or explicit html (default: \"text\")\n  --attach <path...>           Upload local files before atomic publication\n  --remove-attachment <id...>  Remove attachment IDs while editing\n  --yes                        Confirm attachment removal\n  -h, --help                   display help for command\n"
+    },
+    {
+      "path": "groupi replies delete",
+      "help": "Usage: groupi replies delete [options] <id>\n\nOptions:\n  --yes       Confirm deletion\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi replies attachments",
+      "help": "Usage: groupi replies attachments [options] [command]\n\nInspect/remove attachment metadata on accessible parent content\n\nOptions:\n  -h, --help                             display help for command\n\nCommands:\n  list <id>\n  remove [options] <id> <attachment-id>\n  help [command]                         display help for command\n"
+    },
+    {
+      "path": "groupi replies attachments list",
+      "help": "Usage: groupi replies attachments list [options] <id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi replies attachments remove",
+      "help": "Usage: groupi replies attachments remove [options] <id> <attachment-id>\n\nOptions:\n  --yes       Confirm removal\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi invites",
@@ -477,22 +593,6 @@
     {
       "path": "groupi notifications clear-all",
       "help": "Usage: groupi notifications clear-all [options]\n\nOptions:\n  --yes       Confirm permanently clearing notifications\n  -h, --help  display help for command\n"
-    },
-    {
-      "path": "groupi posts",
-      "help": "Usage: groupi posts [options] [command]\n\nManage event discussions\n\nOptions:\n  -h, --help             display help for command\n\nCommands:\n  mute <post-id>         Mute discussion notifications\n  unmute <post-id>       Unmute discussion notifications\n  mute-status <post-id>  Inspect discussion notifications\n  help [command]         display help for command\n"
-    },
-    {
-      "path": "groupi posts mute",
-      "help": "Usage: groupi posts mute [options] <post-id>\n\nMute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
-    },
-    {
-      "path": "groupi posts unmute",
-      "help": "Usage: groupi posts unmute [options] <post-id>\n\nUnmute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
-    },
-    {
-      "path": "groupi posts mute-status",
-      "help": "Usage: groupi posts mute-status [options] <post-id>\n\nInspect discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
     }
   ]
 }

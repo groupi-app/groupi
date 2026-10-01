@@ -36,6 +36,10 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events dates reset](#groupi-events-dates-reset)
 - [groupi events dates list](#groupi-events-dates-list)
 - [groupi events members](#groupi-events-members)
+- [groupi events cover](#groupi-events-cover)
+- [groupi events cover get](#groupi-events-cover-get)
+- [groupi events cover set](#groupi-events-cover-set)
+- [groupi events cover remove](#groupi-events-cover-remove)
 - [groupi events discover](#groupi-events-discover)
 - [groupi events join](#groupi-events-join)
 - [groupi events leave](#groupi-events-leave)
@@ -83,6 +87,10 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi blocks block](#groupi-blocks-block)
 - [groupi blocks unblock](#groupi-blocks-unblock)
 - [groupi account](#groupi-account)
+- [groupi account avatar](#groupi-account-avatar)
+- [groupi account avatar get](#groupi-account-avatar-get)
+- [groupi account avatar set](#groupi-account-avatar-set)
+- [groupi account avatar remove](#groupi-account-avatar-remove)
 - [groupi account get](#groupi-account-get)
 - [groupi account edit](#groupi-account-edit)
 - [groupi account passkeys](#groupi-account-passkeys)
@@ -98,6 +106,27 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi settings theme](#groupi-settings-theme)
 - [groupi settings theme get](#groupi-settings-theme-get)
 - [groupi settings theme set](#groupi-settings-theme-set)
+- [groupi posts](#groupi-posts)
+- [groupi posts list](#groupi-posts-list)
+- [groupi posts get](#groupi-posts-get)
+- [groupi posts create](#groupi-posts-create)
+- [groupi posts edit](#groupi-posts-edit)
+- [groupi posts delete](#groupi-posts-delete)
+- [groupi posts attachments](#groupi-posts-attachments)
+- [groupi posts attachments list](#groupi-posts-attachments-list)
+- [groupi posts attachments remove](#groupi-posts-attachments-remove)
+- [groupi posts mute](#groupi-posts-mute)
+- [groupi posts unmute](#groupi-posts-unmute)
+- [groupi posts mute-status](#groupi-posts-mute-status)
+- [groupi replies](#groupi-replies)
+- [groupi replies list](#groupi-replies-list)
+- [groupi replies get](#groupi-replies-get)
+- [groupi replies create](#groupi-replies-create)
+- [groupi replies edit](#groupi-replies-edit)
+- [groupi replies delete](#groupi-replies-delete)
+- [groupi replies attachments](#groupi-replies-attachments)
+- [groupi replies attachments list](#groupi-replies-attachments-list)
+- [groupi replies attachments remove](#groupi-replies-attachments-remove)
 - [groupi invites](#groupi-invites)
 - [groupi invites links](#groupi-invites-links)
 - [groupi invites links create](#groupi-invites-links-create)
@@ -126,10 +155,6 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi notifications read-post](#groupi-notifications-read-post)
 - [groupi notifications clear](#groupi-notifications-clear)
 - [groupi notifications clear-all](#groupi-notifications-clear-all)
-- [groupi posts](#groupi-posts)
-- [groupi posts mute](#groupi-posts-mute)
-- [groupi posts unmute](#groupi-posts-unmute)
-- [groupi posts mute-status](#groupi-posts-mute-status)
 
 ## groupi
 
@@ -157,9 +182,12 @@ Commands:
   blocks             Manage blocked users
   account            Read/update your account and open explicit browser exceptions
   settings           Manage ordinary preferences without a browser
+  posts              Read/write safe discussion content; use explicit HTML files to preserve rich
+                     formatting on edits
+  replies            Read/write safe discussion content; use explicit HTML files to preserve rich
+                     formatting on edits
   invites            Manage bearer link/email and recipient-bound username invitations
   notifications      Read and clear your notifications
-  posts              Manage event discussions
 ```
 
 ## groupi tui
@@ -275,6 +303,7 @@ Commands:
   availability                  Provide your availability and inspect permitted responses
   dates                         Inspect proposed dates and manage the chosen date
   members [options] <event-id>  List attendance when event permissions allow
+  cover                         Inspect, replace, or remove cover images from local files
   discover [options]            Browse upcoming friends events you can join
   join <event-id>               join an event
   leave [options] <event-id>    leave an event
@@ -550,6 +579,54 @@ Options:
   --cursor <cursor>  Continue a prior page
   --all              Explicitly retrieve every page
   -h, --help         display help for command
+```
+
+## groupi events cover
+
+```text
+Usage: groupi events cover [options] [command]
+
+Inspect, replace, or remove cover images from local files
+
+Options:
+  -h, --help                   display help for command
+
+Commands:
+  get <event-id>
+  set [options] <event-id>
+  remove [options] <event-id>
+  help [command]               display help for command
+```
+
+## groupi events cover get
+
+```text
+Usage: groupi events cover get [options] <event-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events cover set
+
+```text
+Usage: groupi events cover set [options] <event-id>
+
+Options:
+  --file <path>       Local JPEG, PNG, GIF, WebP, or SVG image, at most 10 MiB
+  --focal-x <number>  Horizontal focal point (0–1)
+  --focal-y <number>  Vertical focal point (0–1)
+  -h, --help          display help for command
+```
+
+## groupi events cover remove
+
+```text
+Usage: groupi events cover remove [options] <event-id>
+
+Options:
+  --yes       Confirm removing this image
+  -h, --help  display help for command
 ```
 
 ## groupi events discover
@@ -1229,12 +1306,59 @@ Options:
   -h, --help       display help for command
 
 Commands:
+  avatar           Inspect, replace, or remove avatar images from local files
   get              Read your selected identity’s profile
   edit [options]   Update ordinary profile fields without browser interaction
   passkeys         Explicitly open account settings; complete this action in the browser/device
   linked-accounts  Explicitly open account settings; complete this action in the browser/device
   delete           Explicitly open account settings; complete this action in the browser/device
   help [command]   display help for command
+```
+
+## groupi account avatar
+
+```text
+Usage: groupi account avatar [options] [command]
+
+Inspect, replace, or remove avatar images from local files
+
+Options:
+  -h, --help        display help for command
+
+Commands:
+  get
+  set [options]
+  remove [options]
+  help [command]    display help for command
+```
+
+## groupi account avatar get
+
+```text
+Usage: groupi account avatar get [options]
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account avatar set
+
+```text
+Usage: groupi account avatar set [options]
+
+Options:
+  --file <path>  Local JPEG, PNG, GIF, WebP, or SVG image, at most 10 MiB
+  -h, --help     display help for command
+```
+
+## groupi account avatar remove
+
+```text
+Usage: groupi account avatar remove [options]
+
+Options:
+  --yes       Confirm removing this image
+  -h, --help  display help for command
 ```
 
 ## groupi account get
@@ -1419,6 +1543,294 @@ Options:
   --data <json>  JSON with selectedThemeType, selectedThemeId, useSystemPreference,
                  systemLightThemeId, systemDarkThemeId; selectedCustomThemeId optional
   -h, --help     display help for command
+```
+
+## groupi posts
+
+```text
+Usage: groupi posts [options] [command]
+
+Read/write safe discussion content; use explicit HTML files to preserve rich formatting on edits
+
+Options:
+  -h, --help                  display help for command
+
+Commands:
+  list [options] <parent-id>
+  get <id>                    Read full original HTML and attachment metadata; JSON preserves
+                              formatting for editing
+  create [options] <id>       Create atomically in the event/post ID
+  edit [options] <id>         Edit only supplied fields; omitted rich content is preserved
+  delete [options] <id>
+  attachments                 Inspect/remove attachment metadata on accessible parent content
+  mute <post-id>              Mute discussion notifications
+  unmute <post-id>            Unmute discussion notifications
+  mute-status <post-id>       Inspect discussion notifications
+  help [command]              display help for command
+```
+
+## groupi posts list
+
+```text
+Usage: groupi posts list [options] <parent-id>
+
+Options:
+  --limit <n>        Page size, 1–100 (default: "20")
+  --cursor <cursor>
+  --all              Explicitly retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi posts get
+
+```text
+Usage: groupi posts get [options] <id>
+
+Read full original HTML and attachment metadata; JSON preserves formatting for editing
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts create
+
+```text
+Usage: groupi posts create [options] <id>
+
+Create atomically in the event/post ID
+
+Options:
+  --content <text>
+  --file <path>                Read UTF-8 content file
+  --stdin                      Read UTF-8 content from stdin
+  --content-format <format>    text, markdown, or explicit html (default: "text")
+  --attach <path...>           Upload local files before atomic publication
+  --remove-attachment <id...>  Remove attachment IDs while editing
+  --yes                        Confirm attachment removal
+  --title <text>
+  -h, --help                   display help for command
+```
+
+## groupi posts edit
+
+```text
+Usage: groupi posts edit [options] <id>
+
+Edit only supplied fields; omitted rich content is preserved
+
+Options:
+  --content <text>
+  --file <path>                Read UTF-8 content file
+  --stdin                      Read UTF-8 content from stdin
+  --content-format <format>    text, markdown, or explicit html (default: "text")
+  --attach <path...>           Upload local files before atomic publication
+  --remove-attachment <id...>  Remove attachment IDs while editing
+  --yes                        Confirm attachment removal
+  --title <text>
+  -h, --help                   display help for command
+```
+
+## groupi posts delete
+
+```text
+Usage: groupi posts delete [options] <id>
+
+Options:
+  --yes       Confirm deletion
+  -h, --help  display help for command
+```
+
+## groupi posts attachments
+
+```text
+Usage: groupi posts attachments [options] [command]
+
+Inspect/remove attachment metadata on accessible parent content
+
+Options:
+  -h, --help                             display help for command
+
+Commands:
+  list <id>
+  remove [options] <id> <attachment-id>
+  help [command]                         display help for command
+```
+
+## groupi posts attachments list
+
+```text
+Usage: groupi posts attachments list [options] <id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts attachments remove
+
+```text
+Usage: groupi posts attachments remove [options] <id> <attachment-id>
+
+Options:
+  --yes       Confirm removal
+  -h, --help  display help for command
+```
+
+## groupi posts mute
+
+```text
+Usage: groupi posts mute [options] <post-id>
+
+Mute discussion notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts unmute
+
+```text
+Usage: groupi posts unmute [options] <post-id>
+
+Unmute discussion notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts mute-status
+
+```text
+Usage: groupi posts mute-status [options] <post-id>
+
+Inspect discussion notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi replies
+
+```text
+Usage: groupi replies [options] [command]
+
+Read/write safe discussion content; use explicit HTML files to preserve rich formatting on edits
+
+Options:
+  -h, --help                  display help for command
+
+Commands:
+  list [options] <parent-id>
+  get <id>                    Read full original HTML and attachment metadata; JSON preserves
+                              formatting for editing
+  create [options] <id>       Create atomically in the event/post ID
+  edit [options] <id>         Edit only supplied fields; omitted rich content is preserved
+  delete [options] <id>
+  attachments                 Inspect/remove attachment metadata on accessible parent content
+  help [command]              display help for command
+```
+
+## groupi replies list
+
+```text
+Usage: groupi replies list [options] <parent-id>
+
+Options:
+  --limit <n>        Page size, 1–100 (default: "20")
+  --cursor <cursor>
+  --all              Explicitly retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi replies get
+
+```text
+Usage: groupi replies get [options] <id>
+
+Read full original HTML and attachment metadata; JSON preserves formatting for editing
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi replies create
+
+```text
+Usage: groupi replies create [options] <id>
+
+Create atomically in the event/post ID
+
+Options:
+  --content <text>
+  --file <path>                Read UTF-8 content file
+  --stdin                      Read UTF-8 content from stdin
+  --content-format <format>    text, markdown, or explicit html (default: "text")
+  --attach <path...>           Upload local files before atomic publication
+  --remove-attachment <id...>  Remove attachment IDs while editing
+  --yes                        Confirm attachment removal
+  -h, --help                   display help for command
+```
+
+## groupi replies edit
+
+```text
+Usage: groupi replies edit [options] <id>
+
+Edit only supplied fields; omitted rich content is preserved
+
+Options:
+  --content <text>
+  --file <path>                Read UTF-8 content file
+  --stdin                      Read UTF-8 content from stdin
+  --content-format <format>    text, markdown, or explicit html (default: "text")
+  --attach <path...>           Upload local files before atomic publication
+  --remove-attachment <id...>  Remove attachment IDs while editing
+  --yes                        Confirm attachment removal
+  -h, --help                   display help for command
+```
+
+## groupi replies delete
+
+```text
+Usage: groupi replies delete [options] <id>
+
+Options:
+  --yes       Confirm deletion
+  -h, --help  display help for command
+```
+
+## groupi replies attachments
+
+```text
+Usage: groupi replies attachments [options] [command]
+
+Inspect/remove attachment metadata on accessible parent content
+
+Options:
+  -h, --help                             display help for command
+
+Commands:
+  list <id>
+  remove [options] <id> <attachment-id>
+  help [command]                         display help for command
+```
+
+## groupi replies attachments list
+
+```text
+Usage: groupi replies attachments list [options] <id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi replies attachments remove
+
+```text
+Usage: groupi replies attachments remove [options] <id> <attachment-id>
+
+Options:
+  --yes       Confirm removal
+  -h, --help  display help for command
 ```
 
 ## groupi invites
@@ -1780,55 +2192,5 @@ Usage: groupi notifications clear-all [options]
 
 Options:
   --yes       Confirm permanently clearing notifications
-  -h, --help  display help for command
-```
-
-## groupi posts
-
-```text
-Usage: groupi posts [options] [command]
-
-Manage event discussions
-
-Options:
-  -h, --help             display help for command
-
-Commands:
-  mute <post-id>         Mute discussion notifications
-  unmute <post-id>       Unmute discussion notifications
-  mute-status <post-id>  Inspect discussion notifications
-  help [command]         display help for command
-```
-
-## groupi posts mute
-
-```text
-Usage: groupi posts mute [options] <post-id>
-
-Mute discussion notifications
-
-Options:
-  -h, --help  display help for command
-```
-
-## groupi posts unmute
-
-```text
-Usage: groupi posts unmute [options] <post-id>
-
-Unmute discussion notifications
-
-Options:
-  -h, --help  display help for command
-```
-
-## groupi posts mute-status
-
-```text
-Usage: groupi posts mute-status [options] <post-id>
-
-Inspect discussion notifications
-
-Options:
   -h, --help  display help for command
 ```

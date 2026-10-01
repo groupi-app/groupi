@@ -464,3 +464,21 @@ These commands require the server health capability
 operation so unsupported pagination or controls cannot silently appear to work.
 Existing REST clients retain the unpaginated array without `pagination=cursor`,
 and REST v1 keeps its success envelope.
+
+### Covers and avatars
+
+Use `events cover set <event-id> --file cover.png` or
+`account avatar set --file avatar.jpg` to upload and replace an image. Both
+accept the app image formats (JPEG, PNG, GIF, WebP, SVG) up to 10 MiB; documents,
+video, and audio attachment formats are not images. The server verifies the
+image format and ownership. SVG images cannot contain executable or external
+content. Avatar cropping remains an optional preparation step; the CLI does not
+silently crop or transform your file.
+
+Cover uploads accept `--focal-x 0.5 --focal-y 0.5` with coordinates in [0,1].
+Replacing a cover without coordinates clears the previous focal point.
+Use `events cover get <event-id>` or `account avatar get` to inspect the result.
+The corresponding `remove` commands require confirmation (`--yes` for scripts).
+Image writes are not retried automatically. After an uncertain outcome, inspect
+before repeating. Failed replacements preserve the current image and discard
+only the caller's unclaimed upload; abandoned uploads expire after 24 hours.
