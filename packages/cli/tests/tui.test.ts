@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { act } from 'react';
 import { render, cleanup } from 'ink-testing-library';
 import { afterEach, expect, test, vi } from 'vitest';
 import { TerminalApp } from '../src/tui/app.js';
@@ -115,6 +115,7 @@ test('confirmed writes serialize, refresh immediately, and do not replay uncerta
 });
 
 test('keyboard form defaults to cancellation, shows target/profile, and saves only after explicit confirmation', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const saved: Record<string, string>[] = [];
   let reads = 0;
   const session = new TerminalSession({
@@ -138,40 +139,48 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
       };
     },
   });
-  const ui = render(React.createElement(TerminalApp, { session, profile }));
-  // Ink selection, React effects, and text-input state settle independently.
-  // Wait for each observable transition before sending its next keystroke.
+  let ui!: ReturnType<typeof render>;
+  await act(async () => {
+    ui = render(React.createElement(TerminalApp, { session, profile }));
+  });
+  // Rendering the prompt precedes Ink's passive input-subscription effect.
+  // act flushes that effect and pending input state before the next keystroke.
+  const press = async (input: string) => {
+    await act(async () => {
+      ui.stdin.write(input);
+    });
+  };
   const waitForFrame = (text: string) =>
     vi.waitFor(() => expect(ui.lastFrame()).toContain(text));
   await waitForFrame('❯ Edit event picnic-1');
   expect(ui.lastFrame()).toContain('staging-organizer');
-  ui.stdin.write('\r');
+  await press('\r');
   await waitForFrame('New title');
-  ui.stdin.write('Updated picnic');
+  await press('Updated picnic');
   await waitForFrame('Updated picnic');
-  ui.stdin.write('\r');
+  await press('\r');
   await waitForFrame('Confirm Edit event picnic-1');
   expect(ui.lastFrame()).toContain('title: Updated picnic');
   expect(ui.lastFrame()).toContain('❯ Cancel');
-  ui.stdin.write('\r');
+  await press('\r');
   await waitForFrame('❯ Edit event picnic-1');
   expect(ui.lastFrame()).not.toContain('Confirm Edit');
   expect(saved).toEqual([]);
-  ui.stdin.write('\r');
+  await press('\r');
   await waitForFrame('New title');
-  ui.stdin.write('Final title');
+  await press('Final title');
   await waitForFrame('Final title');
-  ui.stdin.write('\r');
+  await press('\r');
   await waitForFrame('title: Final title');
   expect(ui.lastFrame()).toContain('❯ Cancel');
-  ui.stdin.write('\u001b[B');
+  await press('\u001b[B');
   await waitForFrame('❯ Confirm');
-  ui.stdin.write('\r');
+  await press('\r');
   await vi.waitFor(() => expect(saved).toEqual([{ title: 'Final title' }]));
   await waitForFrame('Completed: Edit event picnic-1');
   await vi.waitFor(() => expect(session.state.loading).toBe(false));
   expect(reads).toBe(2);
-  ui.stdin.write('q');
+  await press('q');
   await vi.waitFor(() => expect(session.disposed).toBe(true));
 });
 
