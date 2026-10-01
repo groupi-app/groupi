@@ -14,6 +14,31 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  uploads: defineTable({
+    storageId: v.id('_storage'),
+    personId: v.id('persons'),
+    mimeType: v.string(),
+    size: v.number(),
+    purpose: v.union(
+      v.literal('attachment'),
+      v.literal('avatar'),
+      v.literal('cover')
+    ),
+    createdAt: v.number(),
+    claimed: v.boolean(),
+  })
+    .index('by_storage', ['storageId'])
+    .index('by_createdAt', ['createdAt']),
+  uploadTickets: defineTable({
+    purpose: v.union(
+      v.literal('attachment'),
+      v.literal('avatar'),
+      v.literal('cover')
+    ),
+    token: v.string(),
+    personId: v.id('persons'),
+    expiresAt: v.number(),
+  }).index('by_token', ['token']),
   // Retry records expire 24h after the timestamp embedded in the request ID.
   // Expired IDs remain invalid even after this row is removed.
   inviteCreationRequests: defineTable({

@@ -1,4 +1,5 @@
 'use client';
+import { discussionLengthAllowed } from '@groupi/shared';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Type casts needed for:
@@ -71,12 +72,16 @@ function initAttachmentApi() {
 }
 initAttachmentApi();
 
-const formSchema = z.object({
-  reply: z
-    .string()
-    .min(1, 'Reply must be at least 1 character')
-    .max(5000, 'Reply must be 5000 characters or less'),
-});
+const replySchema = (previous: string) =>
+  z.object({
+    reply: z
+      .string()
+      .min(1, 'Reply must be at least 1 character')
+      .refine(
+        value => discussionLengthAllowed(value, 5000, previous),
+        'Reply exceeds its visible-text limit; oversized legacy replies must shrink'
+      ),
+  });
 
 // Strip leading and trailing empty paragraph tags that BlockNote adds
 const stripEmptyParagraphs = (html: string): string => {
@@ -386,6 +391,7 @@ export default function ReplyComponent({
 
   // Migrate plaintext to HTML if needed
   const replyContent = migratePlaintextToHtml(reply.text);
+  const formSchema = replySchema(replyContent);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

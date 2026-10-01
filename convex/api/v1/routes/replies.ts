@@ -270,7 +270,11 @@ export function createReplyRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const updateFn = internal.api.v1.internal.replies.updateReply;
-    const result = await ctx.runMutation(updateFn, { replyId, ...body });
+    const result = await ctx.runMutation(updateFn, {
+      replyId,
+      personId,
+      ...body,
+    });
 
     return c.json(
       {
@@ -346,7 +350,7 @@ export function createReplyRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const deleteFn = internal.api.v1.internal.replies.deleteReply;
-    await ctx.runMutation(deleteFn, { replyId });
+    await ctx.runMutation(deleteFn, { replyId, personId });
 
     return c.json(
       {

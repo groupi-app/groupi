@@ -1,3 +1,5 @@
+import { safeDiscussionContent } from '../../packages/shared/src/utils/discussion-content';
+import { checkIsBlocked } from './privacy';
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
@@ -245,19 +247,11 @@ export type RsvpStatus = 'YES' | 'MAYBE' | 'NO' | 'PENDING';
  * Mentions are formatted as: <span class="mention" data-id="personId">@label</span>
  */
 export function extractMentionedPersonIds(content: string): string[] {
-  // Match data-id attributes in mention spans
-  const mentionRegex = /data-id=["']([^"']+)["']/g;
-  const personIds: string[] = [];
-  let match;
-
-  while ((match = mentionRegex.exec(content)) !== null) {
-    const personId = match[1];
-    if (personId && !personIds.includes(personId)) {
-      personIds.push(personId);
-    }
+  try {
+    return safeDiscussionContent(content).mentions;
+  } catch {
+    return [];
   }
-
-  return personIds;
 }
 
 /**
@@ -282,7 +276,9 @@ export async function notifyMentionedUsers(
     return { sent: 0, skipped: 0 };
   }
 
-  const personIds = filteredIds.map(id => id as Id<'persons'>);
+  const personIds = filteredIds
+    .map(id => ctx.db.normalizeId('persons', id))
+    .filter((id): id is Id<'persons'> => id !== null);
 
   const [
     persons,
@@ -320,7 +316,11 @@ export async function notifyMentionedUsers(
     const person = persons[i];
     const membership = memberships[i];
 
-    if (!person || !membership) {
+    if (
+      !person ||
+      !membership ||
+      (await checkIsBlocked(ctx, data.authorId, personId))
+    ) {
       skipped++;
       continue;
     }

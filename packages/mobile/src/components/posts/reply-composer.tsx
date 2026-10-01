@@ -1,3 +1,4 @@
+import { discussionLengthAllowed } from '@groupi/shared';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,7 +44,7 @@ export function ReplyComposer({ postId, onTypingChange }: ReplyComposerProps) {
   } = useAttachments();
 
   const hasText = hasRichTextContent(content);
-  const isTooLong = content.length > MAX_REPLY_LENGTH;
+  const isTooLong = !discussionLengthAllowed(content, MAX_REPLY_LENGTH);
   const isBusy = isSubmitting || isUploading;
   const canSubmit = (hasText || pendingUploads.length > 0) && !isTooLong;
 

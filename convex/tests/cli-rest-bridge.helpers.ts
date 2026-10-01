@@ -48,8 +48,9 @@ export async function cliRestBridge() {
   const config = await mkdtemp(join(tmpdir(), 'groupi-cli-rest-'));
   const server = createServer(async (req, res) => {
     try {
-      let body = '';
-      for await (const chunk of req) body += chunk;
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      const body = Buffer.concat(chunks);
       const headers = new Headers();
       for (const [name, value] of Object.entries(req.headers)) {
         if (value !== undefined)
@@ -70,8 +71,14 @@ export async function cliRestBridge() {
       const response = await t.fetch(url.pathname + url.search, {
         method: req.method,
         headers,
-        ...(body
-          ? { body: JSON.stringify(translate(JSON.parse(body), 'fixture')) }
+        ...(body.length
+          ? {
+              body: headers.get('content-type')?.includes('application/json')
+                ? JSON.stringify(
+                    translate(JSON.parse(body.toString()), 'fixture')
+                  )
+                : body,
+            }
           : {}),
       });
       res.writeHead(response.status, Object.fromEntries(response.headers));

@@ -1,6 +1,11 @@
-import { mutation } from '../_generated/server';
-import { v } from 'convex/values';
-import { requireAuth, hasEventRole, requireEventPermission } from '../auth';
+import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
+import type { Id } from '../_generated/dataModel';
+import { validateContent, validateTitle } from '../lib/discussionContent';
+import { requireDiscussionRole } from '../lib/discussionAccess';
+import { resolveEventPermissions } from '../auth';
+import { mutation, type MutationCtx } from '../_generated/server';
+import { v, ConvexError } from 'convex/values';
+import { requireAuth } from '../auth';
 import {
   notifyEventMembers,
   notifyPerson,
@@ -8,6 +13,7 @@ import {
 } from '../lib/notifications';
 import { Doc } from '../_generated/dataModel';
 import {
+  type AttachmentInput,
   attachmentInputValidator,
   createAttachmentsForParent,
   deleteAttachmentsForParent,
@@ -31,61 +37,9 @@ export const createPost = mutation({
     attachments: v.optional(v.array(attachmentInputValidator)),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, title, content, attachments = [] }) => {
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-    const membership = await requireEventPermission(
-      ctx,
-      eventId,
-      'createPosts'
-    );
-
-    // Validate input
-    if (!title.trim()) {
-      throw new Error('Post title is required');
-    }
-    if (!content.trim()) {
-      throw new Error('Post content is required');
-    }
-
-    // Create the post
-    // Note: Don't set editedAt on creation - only set it when editing
-    // This prevents the "edited" indicator from showing on new posts
-    const postId = await ctx.db.insert('posts', {
-      title: title.trim(),
-      content: content.trim(),
-      authorId: person._id,
-      eventId: eventId,
-      membershipId: membership._id,
-    });
-
-    if (attachments.length > 0) {
-      await createAttachmentsForParent(ctx, {
-        attachments,
-        postId,
-        personId: person._id,
-      });
-    }
-
-    // Get the created post with populated data
-    const post = await ctx.db.get(postId);
-
-    // Notify all event members about the new post
-    await notifyEventMembers(ctx, {
-      eventId,
-      type: 'NEW_POST',
-      authorId: person._id,
-      postId,
-    });
-
-    // Notify mentioned users (separate from general post notification)
-    await notifyMentionedUsers(ctx, {
-      content,
-      authorId: person._id,
-      eventId,
-      postId,
-    });
-
-    return { postId, post };
+    return createPostForPerson(ctx, person._id, args);
   },
 });
 
@@ -101,87 +55,9 @@ export const updatePost = mutation({
     attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     _traceId: v.optional(v.string()),
   },
-  handler: async (
-    ctx,
-    {
-      postId,
-      title,
-      content,
-      attachmentsToAdd = [],
-      attachmentIdsToDelete = [],
-    }
-  ) => {
-    // Require authentication
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-
-    // Get the post
-    const post = await ctx.db.get(postId);
-    if (!post) {
-      throw new Error('Post not found');
-    }
-
-    // Check if user can edit this post
-    // User can edit if they are the author OR have moderator/organizer role in the event
-    const isAuthor = post.authorId === person._id;
-    const hasModeratorRole = await hasEventRole(ctx, post.eventId, 'MODERATOR');
-
-    if (!isAuthor && !hasModeratorRole) {
-      throw new Error("You don't have permission to edit this post");
-    }
-
-    // Prepare update data
-    const now = Date.now();
-    const updateData: Partial<Doc<'posts'>> = {
-      editedAt: now,
-      updatedAt: now,
-    };
-
-    if (title !== undefined) {
-      if (!title.trim()) {
-        throw new Error('Post title cannot be empty');
-      }
-      updateData.title = title.trim();
-    }
-
-    if (content !== undefined) {
-      if (!content.trim()) {
-        throw new Error('Post content cannot be empty');
-      }
-      updateData.content = content.trim();
-    }
-
-    await deleteAttachmentsForParent(ctx, {
-      attachmentIds: attachmentIdsToDelete,
-      postId,
-      personId: person._id,
-    });
-
-    if (attachmentsToAdd.length > 0) {
-      await createAttachmentsForParent(ctx, {
-        attachments: attachmentsToAdd,
-        postId,
-        personId: person._id,
-      });
-    }
-
-    // Update the post
-    await ctx.db.patch(postId, updateData);
-
-    // Get the updated post
-    const updatedPost = await ctx.db.get(postId);
-
-    // If someone other than the author edited, notify the author
-    if (!isAuthor && post.authorId) {
-      await notifyPerson(ctx, {
-        personId: post.authorId,
-        type: 'EVENT_EDITED', // Reusing EVENT_EDITED for post edits by moderators
-        authorId: person._id,
-        eventId: post.eventId,
-        postId,
-      });
-    }
-
-    return { post: updatedPost };
+    return updatePostForPerson(ctx, person._id, args);
   },
 });
 
@@ -193,70 +69,281 @@ export const deletePost = mutation({
     postId: v.id('posts'),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { postId }) => {
-    // Require authentication
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
+    return deletePostForPerson(ctx, person._id, args);
+  },
+});
 
-    // Get the post
-    const post = await ctx.db.get(postId);
-    if (!post) {
-      throw new Error('Post not found');
+export async function createPostForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  {
+    eventId,
+    title,
+    content,
+    attachments = [],
+  }: {
+    eventId: Id<'events'>;
+    title: string;
+    content: string;
+    attachments?: AttachmentInput[];
+  }
+) {
+  const person = { _id: personId };
+  const membership = await requireDiscussionRole(
+    ctx,
+    eventId,
+    personId,
+    'ATTENDEE'
+  );
+  const event = await ctx.db.get(eventId);
+  await requireDiscussionRole(
+    ctx,
+    eventId,
+    personId,
+    resolveEventPermissions(event!).createPosts === 'EVERYONE'
+      ? 'ATTENDEE'
+      : (resolveEventPermissions(event!).createPosts as
+          | 'ORGANIZER'
+          | 'MODERATOR')
+  );
+
+  // Validate input
+  title = validateTitle(title);
+  content = await validateContent(ctx, personId, eventId, content, 3000);
+  if (!hasDiscussionText(content) && !attachments.length)
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Post content or attachment is required',
+    });
+
+  // Create the post
+  // Note: Don't set editedAt on creation - only set it when editing
+  // This prevents the "edited" indicator from showing on new posts
+  const postId = await ctx.db.insert('posts', {
+    title: title.trim(),
+    content: content.trim(),
+    authorId: person._id,
+    eventId: eventId,
+    membershipId: membership._id,
+  });
+
+  if (attachments.length > 0) {
+    await createAttachmentsForParent(ctx, {
+      attachments,
+      postId,
+      personId: person._id,
+    });
+  }
+
+  // Get the created post with populated data
+  const post = await ctx.db.get(postId);
+
+  // Notify all event members about the new post
+  await notifyEventMembers(ctx, {
+    eventId,
+    type: 'NEW_POST',
+    authorId: person._id,
+    postId,
+  });
+
+  // Notify mentioned users (separate from general post notification)
+  await notifyMentionedUsers(ctx, {
+    content,
+    authorId: person._id,
+    eventId,
+    postId,
+  });
+
+  return { postId, post };
+}
+export async function updatePostForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  {
+    postId,
+    title,
+    content,
+    attachmentsToAdd = [],
+    attachmentIdsToDelete = [],
+  }: {
+    postId: Id<'posts'>;
+    title?: string;
+    content?: string;
+    attachmentsToAdd?: AttachmentInput[];
+    attachmentIdsToDelete?: Id<'attachments'>[];
+  }
+) {
+  // Require authentication
+  const person = { _id: personId };
+
+  // Get the post
+  const post = await ctx.db.get(postId);
+  if (!post) {
+    throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
+  }
+
+  // Check if user can edit this post
+  // User can edit if they are the author OR have moderator/organizer role in the event
+  const isAuthor = post.authorId === person._id;
+  const hasModeratorRole =
+    (await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE'))
+      .role !== 'ATTENDEE';
+
+  if (!isAuthor && !hasModeratorRole) {
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: "You don't have permission to edit this post",
+    });
+  }
+
+  // Prepare update data
+  const now = Date.now();
+  const updateData: Partial<Doc<'posts'>> = {
+    editedAt: now,
+    updatedAt: now,
+  };
+
+  if (title !== undefined) {
+    if (!title.trim()) {
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'Post title cannot be empty',
+      });
     }
+    updateData.title = validateTitle(title, post.title);
+  }
 
-    // Check if user can delete this post
-    // User can delete if they are the author OR have moderator/organizer role in the event
-    const isAuthor = post.authorId === person._id;
-    const hasModeratorRole = await hasEventRole(ctx, post.eventId, 'MODERATOR');
+  if (content !== undefined) {
+    updateData.content = await validateContent(
+      ctx,
+      personId,
+      post.eventId,
+      content,
+      3000,
+      post.content
+    );
+  }
 
-    if (!isAuthor && !hasModeratorRole) {
-      throw new Error("You don't have permission to delete this post");
-    }
+  await deleteAttachmentsForParent(ctx, {
+    attachmentIds: attachmentIdsToDelete,
+    postId,
+    personId: person._id,
+  });
 
-    // Delete all replies and their attachments first
-    const replies = await ctx.db
-      .query('replies')
-      .withIndex('by_post', q => q.eq('postId', postId))
-      .collect();
+  if (attachmentsToAdd.length > 0) {
+    await createAttachmentsForParent(ctx, {
+      attachments: attachmentsToAdd,
+      postId,
+      personId: person._id,
+    });
+  }
 
-    for (const reply of replies) {
-      // Delete reply attachments and storage files
-      const replyAttachments = await ctx.db
-        .query('attachments')
-        .withIndex('by_reply', q => q.eq('replyId', reply._id))
-        .collect();
+  const remainingAttachment = await ctx.db
+    .query('attachments')
+    .withIndex('by_post', q => q.eq('postId', postId))
+    .first();
+  if (
+    !hasDiscussionText(updateData.content ?? post.content) &&
+    !remainingAttachment
+  )
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Post content or an attachment is required',
+    });
 
-      for (const attachment of replyAttachments) {
-        await ctx.storage.delete(attachment.storageId);
-        await ctx.db.delete(attachment._id);
-      }
+  // Update the post
+  await ctx.db.patch(postId, updateData);
 
-      await ctx.db.delete(reply._id);
-    }
+  // Get the updated post
+  const updatedPost = await ctx.db.get(postId);
 
-    // Delete post attachments and storage files
-    const postAttachments = await ctx.db
+  // If someone other than the author edited, notify the author
+  if (!isAuthor && post.authorId) {
+    await notifyPerson(ctx, {
+      personId: post.authorId,
+      type: 'EVENT_EDITED', // Reusing EVENT_EDITED for post edits by moderators
+      authorId: person._id,
+      eventId: post.eventId,
+      postId,
+    });
+  }
+
+  return { post: updatedPost };
+}
+export async function deletePostForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  { postId }: { postId: Id<'posts'> }
+) {
+  // Require authentication
+  const person = { _id: personId };
+
+  // Get the post
+  const post = await ctx.db.get(postId);
+  if (!post) {
+    throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
+  }
+
+  // Check if user can delete this post
+  // User can delete if they are the author OR have moderator/organizer role in the event
+  const isAuthor = post.authorId === person._id;
+  const hasModeratorRole =
+    (await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE'))
+      .role !== 'ATTENDEE';
+
+  if (!isAuthor && !hasModeratorRole) {
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: "You don't have permission to delete this post",
+    });
+  }
+
+  // Delete all replies and their attachments first
+  const replies = await ctx.db
+    .query('replies')
+    .withIndex('by_post', q => q.eq('postId', postId))
+    .collect();
+
+  for (const reply of replies) {
+    // Delete reply attachments and storage files
+    const replyAttachments = await ctx.db
       .query('attachments')
-      .withIndex('by_post', q => q.eq('postId', postId))
+      .withIndex('by_reply', q => q.eq('replyId', reply._id))
       .collect();
 
-    for (const attachment of postAttachments) {
+    for (const attachment of replyAttachments) {
       await ctx.storage.delete(attachment.storageId);
       await ctx.db.delete(attachment._id);
     }
 
-    // Delete any notifications related to this post
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_post', q => q.eq('postId', postId))
-      .collect();
+    await ctx.db.delete(reply._id);
+  }
 
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
+  // Delete post attachments and storage files
+  const postAttachments = await ctx.db
+    .query('attachments')
+    .withIndex('by_post', q => q.eq('postId', postId))
+    .collect();
 
-    // Delete the post
-    await ctx.db.delete(postId);
+  for (const attachment of postAttachments) {
+    await ctx.storage.delete(attachment.storageId);
+    await ctx.db.delete(attachment._id);
+  }
 
-    return { success: true };
-  },
-});
+  // Delete any notifications related to this post
+  const notifications = await ctx.db
+    .query('notifications')
+    .withIndex('by_post', q => q.eq('postId', postId))
+    .collect();
+
+  for (const notification of notifications) {
+    await ctx.db.delete(notification._id);
+  }
+
+  // Delete the post
+  await ctx.db.delete(postId);
+
+  return { success: true };
+}

@@ -1,3 +1,4 @@
+import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
@@ -234,6 +235,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        discussion: { version: 1 },
         eventWrites: { version: 1 },
         eventManagement: { version: 1 },
         socialWrites: { version: 1 },
@@ -269,6 +271,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createInviteRoutes());
   app.route('/', createReportRoutes());
   app.route('/', createAdminRoutes());
+  app.route('/', createUploadRoutes());
 
   // Register OpenAPI security scheme
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {
