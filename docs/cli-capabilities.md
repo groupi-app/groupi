@@ -30,7 +30,7 @@ staging checks, and production deployment status distinct.
 | Friendships and blocked users                                 | Requests, acceptance/decline/cancellation, friendship list/removal, block/unblock and privacy side effects                                       | [#234](https://github.com/groupi-app/groupi/issues/234) | Implemented; verification pending |
 | Profile and preferences; security-sensitive account actions   | Profile fields, privacy, notification/theme preferences and the approved browser handoffs below                                                  | [#235](https://github.com/groupi-app/groupi/issues/235) | Implemented; verification pending |
 | Existing event add-on configuration                           | Enable/disable/inspect/configure bring lists, questionnaires, reminders, Discord and existing custom add-ons with app lifecycle rules            | [#236](https://github.com/groupi-app/groupi/issues/236) | Implemented; verification pending |
-| Existing event add-on participation                           | Supported submissions, opt-outs, built-in workflows and custom field actions with participant isolation                                          | [#237](https://github.com/groupi-app/groupi/issues/237) | Pending                           |
+| Existing event add-on participation                           | Supported submissions, opt-outs, built-in workflows and custom field actions with participant isolation                                          | [#237](https://github.com/groupi-app/groupi/issues/237) | Implemented; local CLI/REST verified; staging pending                           |
 | Everyday interactive planning                                 | Keyboard event/invitation/RSVP screens using shared command services, periodic/manual refresh and stale/offline state                            | [#238](https://github.com/groupi-app/groupi/issues/238) | Pending                           |
 | Everyday interactive discussion                               | Post/reply and attachment workflows, safe editing and documented advanced editor/CLI fallback                                                    | [#239](https://github.com/groupi-app/groupi/issues/239) | Pending                           |
 | Everyday interactive social activity                          | Friends and notifications with shared confirmation, refresh and reconnect behavior                                                               | [#240](https://github.com/groupi-app/groupi/issues/240) | Pending                           |
@@ -331,3 +331,15 @@ muting stayed effective after unmuting a discussion. Fixture events, notices,
 subscriptions and local profiles were cleaned up; key revocation and session
 sign-out were verified. Disposable account records remain. This establishes
 in-app notification delivery, not external push/email provider delivery.
+
+## Add-on participation (#237)
+
+See [participant workflow inventory and commands](../packages/cli/docs/addon-participation.md).
+Bring-list claims, questionnaire answers, reminder opt-in/out, and existing custom
+forms/votes/list items/toggles/action buttons are implemented and exercised through
+the public CLI and authenticated REST fixtures. Discord has no independent
+participant action; its organizer configuration and event lifecycle remain covered
+by #236. Shared app/REST mutations enforce identity-bearing keys, configured
+submission types, required answers and remaining claim capacity, and dispatch
+custom inline/on-submit actions even without an automation list. No live staging
+or external delivery claim is made; complete that evidence before closing #237.

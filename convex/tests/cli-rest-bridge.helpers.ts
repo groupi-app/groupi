@@ -17,6 +17,7 @@ export async function cliRestBridge() {
   const wireIds = new Map<string, string>();
   const fixtureIds = new Map<string, string>();
   function wireId(value: string) {
+    if (value.startsWith('custom:')) return `custom:${wireId(value.slice(7))}`;
     if (!/^\d+;[A-Za-z_][A-Za-z0-9_]*$/.test(value)) return value;
     let wire = wireIds.get(value);
     if (!wire) {
@@ -30,7 +31,9 @@ export async function cliRestBridge() {
     if (typeof value === 'string')
       return direction === 'wire'
         ? wireId(value)
-        : (fixtureIds.get(value) ?? value);
+        : value.startsWith('custom:')
+          ? `custom:${fixtureIds.get(value.slice(7)) ?? value.slice(7)}`
+          : (fixtureIds.get(value) ?? value);
     if (Array.isArray(value))
       return value.map(item => translate(item, direction));
     if (value && typeof value === 'object')
@@ -57,11 +60,13 @@ export async function cliRestBridge() {
         .split('/')
         .map(segment =>
           encodeURIComponent(
-            fixtureIds.get(decodeURIComponent(segment)) ??
-              decodeURIComponent(segment)
+            String(translate(decodeURIComponent(segment), 'fixture'))
           )
         )
         .join('/');
+      const cursor = url.searchParams.get('cursor');
+      if (cursor && fixtureIds.has(cursor))
+        url.searchParams.set('cursor', fixtureIds.get(cursor)!);
       const response = await t.fetch(url.pathname + url.search, {
         method: req.method,
         headers,

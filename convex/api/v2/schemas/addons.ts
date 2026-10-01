@@ -82,7 +82,8 @@ export const UpdateAddonConfigRequestSchema = z
 export const SetAddonDataRequestSchema = z
   .object({
     data: z.unknown().openapi({
-      description: 'Arbitrary data payload for this addon entry',
+      description:
+        'Participant payload validated against the enabled add-on configuration',
       example: { answer: 'No dietary restrictions' },
     }),
   })

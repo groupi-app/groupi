@@ -172,7 +172,7 @@
     },
     {
       "path": "groupi addons",
-      "help": "Usage: groupi addons [options] [command]\n\nConfigure existing built-in and custom event add-ons\n\nOptions:\n  -h, --help                                   display help for command\n\nCommands:\n  get <event-id> <addon-type>                  Inspect enabled or disabled config\n  list [options] <event-id>                    List event add-on configs, including disabled ones\n  templates [options]                          List your existing published custom templates\n  enable [options] <event-id> <addon-type>     enable an existing add-on\n  configure [options] <event-id> <addon-type>  Replace config; may reset participant responses\n  disable [options] <event-id> <addon-type>    disable an existing add-on\n  help [command]                               display help for command\n"
+      "help": "Usage: groupi addons [options] [command]\n\nConfigure existing built-in and custom event add-ons\n\nOptions:\n  -h, --help                                        display help for command\n\nCommands:\n  get <event-id> <addon-type>                       Inspect enabled or disabled config\n  list [options] <event-id>                         List event add-on configs, including disabled\n                                                    ones\n  templates [options]                               List your existing published custom templates\n  enable [options] <event-id> <addon-type>          enable an existing add-on\n  configure [options] <event-id> <addon-type>       Replace config; may reset participant responses\n  disable [options] <event-id> <addon-type>         disable an existing add-on\n  data [options] <event-id> <addon-type>            Inspect participant data and submission recovery\n                                                    state\n  respond [options] <event-id> <addon-type>         Participant respond; always acts as the\n                                                    authenticated identity\n  claim [options] <event-id> <addon-type>           Participant claim; always acts as the\n                                                    authenticated identity\n  vote [options] <event-id> <addon-type>            Participant vote; always acts as the\n                                                    authenticated identity\n  toggle [options] <event-id> <addon-type>          Participant toggle; always acts as the\n                                                    authenticated identity\n  execute [options] <event-id> <addon-type>         Participant execute; always acts as the\n                                                    authenticated identity\n  opt-in [options] <event-id> <addon-type>          Participant opt-in; always acts as the\n                                                    authenticated identity\n  opt-out [options] <event-id> <addon-type>         Participant opt-out; always acts as the\n                                                    authenticated identity\n  clear-response [options] <event-id> <addon-type>  Participant clear-response; always acts as the\n                                                    authenticated identity\n  clear-claims [options] <event-id> <addon-type>    Participant clear-claims; always acts as the\n                                                    authenticated identity\n  help [command]                                    display help for command\n"
     },
     {
       "path": "groupi addons get",
@@ -197,6 +197,46 @@
     {
       "path": "groupi addons disable",
       "help": "Usage: groupi addons disable [options] <event-id> <addon-type>\n\ndisable an existing add-on\n\nOptions:\n  --yes       Confirm config replacement, response reset, or disable\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi addons data",
+      "help": "Usage: groupi addons data [options] <event-id> <addon-type>\n\nInspect participant data and submission recovery state\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  --all              Retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi addons respond",
+      "help": "Usage: groupi addons respond [options] <event-id> <addon-type>\n\nParticipant respond; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons claim",
+      "help": "Usage: groupi addons claim [options] <event-id> <addon-type>\n\nParticipant claim; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons vote",
+      "help": "Usage: groupi addons vote [options] <event-id> <addon-type>\n\nParticipant vote; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons toggle",
+      "help": "Usage: groupi addons toggle [options] <event-id> <addon-type>\n\nParticipant toggle; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons execute",
+      "help": "Usage: groupi addons execute [options] <event-id> <addon-type>\n\nParticipant execute; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons opt-in",
+      "help": "Usage: groupi addons opt-in [options] <event-id> <addon-type>\n\nParticipant opt-in; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons opt-out",
+      "help": "Usage: groupi addons opt-out [options] <event-id> <addon-type>\n\nParticipant opt-out; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons clear-response",
+      "help": "Usage: groupi addons clear-response [options] <event-id> <addon-type>\n\nParticipant clear-response; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi addons clear-claims",
+      "help": "Usage: groupi addons clear-claims [options] <event-id> <addon-type>\n\nParticipant clear-claims; always acts as the authenticated identity\n\nOptions:\n  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}\n  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)\n  --field <id>        Custom vote, toggle, or action-button field ID\n  --yes               Confirm clearing data or executing configured actions\n  -h, --help          display help for command\n"
     },
     {
       "path": "groupi friends",

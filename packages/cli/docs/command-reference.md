@@ -56,6 +56,16 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi addons enable](#groupi-addons-enable)
 - [groupi addons configure](#groupi-addons-configure)
 - [groupi addons disable](#groupi-addons-disable)
+- [groupi addons data](#groupi-addons-data)
+- [groupi addons respond](#groupi-addons-respond)
+- [groupi addons claim](#groupi-addons-claim)
+- [groupi addons vote](#groupi-addons-vote)
+- [groupi addons toggle](#groupi-addons-toggle)
+- [groupi addons execute](#groupi-addons-execute)
+- [groupi addons opt-in](#groupi-addons-opt-in)
+- [groupi addons opt-out](#groupi-addons-opt-out)
+- [groupi addons clear-response](#groupi-addons-clear-response)
+- [groupi addons clear-claims](#groupi-addons-clear-claims)
 - [groupi friends](#groupi-friends)
 - [groupi friends list](#groupi-friends-list)
 - [groupi friends incoming](#groupi-friends-incoming)
@@ -720,16 +730,37 @@ Usage: groupi addons [options] [command]
 Configure existing built-in and custom event add-ons
 
 Options:
-  -h, --help                                   display help for command
+  -h, --help                                        display help for command
 
 Commands:
-  get <event-id> <addon-type>                  Inspect enabled or disabled config
-  list [options] <event-id>                    List event add-on configs, including disabled ones
-  templates [options]                          List your existing published custom templates
-  enable [options] <event-id> <addon-type>     enable an existing add-on
-  configure [options] <event-id> <addon-type>  Replace config; may reset participant responses
-  disable [options] <event-id> <addon-type>    disable an existing add-on
-  help [command]                               display help for command
+  get <event-id> <addon-type>                       Inspect enabled or disabled config
+  list [options] <event-id>                         List event add-on configs, including disabled
+                                                    ones
+  templates [options]                               List your existing published custom templates
+  enable [options] <event-id> <addon-type>          enable an existing add-on
+  configure [options] <event-id> <addon-type>       Replace config; may reset participant responses
+  disable [options] <event-id> <addon-type>         disable an existing add-on
+  data [options] <event-id> <addon-type>            Inspect participant data and submission recovery
+                                                    state
+  respond [options] <event-id> <addon-type>         Participant respond; always acts as the
+                                                    authenticated identity
+  claim [options] <event-id> <addon-type>           Participant claim; always acts as the
+                                                    authenticated identity
+  vote [options] <event-id> <addon-type>            Participant vote; always acts as the
+                                                    authenticated identity
+  toggle [options] <event-id> <addon-type>          Participant toggle; always acts as the
+                                                    authenticated identity
+  execute [options] <event-id> <addon-type>         Participant execute; always acts as the
+                                                    authenticated identity
+  opt-in [options] <event-id> <addon-type>          Participant opt-in; always acts as the
+                                                    authenticated identity
+  opt-out [options] <event-id> <addon-type>         Participant opt-out; always acts as the
+                                                    authenticated identity
+  clear-response [options] <event-id> <addon-type>  Participant clear-response; always acts as the
+                                                    authenticated identity
+  clear-claims [options] <event-id> <addon-type>    Participant clear-claims; always acts as the
+                                                    authenticated identity
+  help [command]                                    display help for command
 ```
 
 ## groupi addons get
@@ -821,6 +852,155 @@ disable an existing add-on
 Options:
   --yes       Confirm config replacement, response reset, or disable
   -h, --help  display help for command
+```
+
+## groupi addons data
+
+```text
+Usage: groupi addons data [options] <event-id> <addon-type>
+
+Inspect participant data and submission recovery state
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  --all              Retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi addons respond
+
+```text
+Usage: groupi addons respond [options] <event-id> <addon-type>
+
+Participant respond; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons claim
+
+```text
+Usage: groupi addons claim [options] <event-id> <addon-type>
+
+Participant claim; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons vote
+
+```text
+Usage: groupi addons vote [options] <event-id> <addon-type>
+
+Participant vote; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons toggle
+
+```text
+Usage: groupi addons toggle [options] <event-id> <addon-type>
+
+Participant toggle; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons execute
+
+```text
+Usage: groupi addons execute [options] <event-id> <addon-type>
+
+Participant execute; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons opt-in
+
+```text
+Usage: groupi addons opt-in [options] <event-id> <addon-type>
+
+Participant opt-in; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons opt-out
+
+```text
+Usage: groupi addons opt-out [options] <event-id> <addon-type>
+
+Participant opt-out; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons clear-response
+
+```text
+Usage: groupi addons clear-response [options] <event-id> <addon-type>
+
+Participant clear-response; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
+```
+
+## groupi addons clear-claims
+
+```text
+Usage: groupi addons clear-claims [options] <event-id> <addon-type>
+
+Participant clear-claims; always acts as the authenticated identity
+
+Options:
+  --data <json>       Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}
+  --data-file <path>  Read submission JSON from a local file (64 KiB maximum)
+  --field <id>        Custom vote, toggle, or action-button field ID
+  --yes               Confirm clearing data or executing configured actions
+  -h, --help          display help for command
 ```
 
 ## groupi friends
