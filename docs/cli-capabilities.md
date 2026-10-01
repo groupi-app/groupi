@@ -370,3 +370,10 @@ cover upload claims, validation, ownership, expiry, and cleanup. Twelve terminal
 keyboard tests cover navigation, confirmation, and offline cancellation/reconnect.
 These results establish local behavior; live staging, manual terminal acceptance,
 registry permissions, publication, and registry-installed verification remain pending.
+
+An actual PTY session against a loopback HTTP fixture verified default Cancel sent
+no event update, explicit Confirm sent exactly one update, and a socket failure
+closed the open confirmation with stale/error state and hid write actions.
+Restoring the fixture and pressing refresh returned Connected with actions.
+Discussion and friendship screens retained the selected profile and loopback
+server. This uses synthetic local fixture responses, not staging identities.
