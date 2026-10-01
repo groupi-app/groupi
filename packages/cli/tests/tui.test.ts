@@ -139,34 +139,40 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
     },
   });
   const ui = render(React.createElement(TerminalApp, { session, profile }));
-  await pause();
+  // Ink selection, React effects, and text-input state settle independently.
+  // Wait for each observable transition before sending its next keystroke.
+  const waitForFrame = (text: string) =>
+    vi.waitFor(() => expect(ui.lastFrame()).toContain(text));
+  await waitForFrame('❯ Edit event picnic-1');
   expect(ui.lastFrame()).toContain('staging-organizer');
   ui.stdin.write('\r');
-  await pause();
+  await waitForFrame('New title');
   ui.stdin.write('Updated picnic');
-  await pause();
+  await waitForFrame('Updated picnic');
   ui.stdin.write('\r');
-  await pause();
-  expect(ui.lastFrame()).toContain('Confirm Edit event picnic-1');
-  expect(ui.lastFrame()).toContain('Updated picnic');
+  await waitForFrame('Confirm Edit event picnic-1');
+  expect(ui.lastFrame()).toContain('title: Updated picnic');
+  expect(ui.lastFrame()).toContain('❯ Cancel');
   ui.stdin.write('\r');
-  await pause();
+  await waitForFrame('❯ Edit event picnic-1');
+  expect(ui.lastFrame()).not.toContain('Confirm Edit');
   expect(saved).toEqual([]);
   ui.stdin.write('\r');
-  await pause();
+  await waitForFrame('New title');
   ui.stdin.write('Final title');
-  await pause();
+  await waitForFrame('Final title');
   ui.stdin.write('\r');
-  await pause();
+  await waitForFrame('title: Final title');
+  expect(ui.lastFrame()).toContain('❯ Cancel');
   ui.stdin.write('\u001b[B');
-  await pause();
+  await waitForFrame('❯ Confirm');
   ui.stdin.write('\r');
-  await pause();
-  expect(saved).toEqual([{ title: 'Final title' }]);
+  await vi.waitFor(() => expect(saved).toEqual([{ title: 'Final title' }]));
+  await waitForFrame('Completed: Edit event picnic-1');
+  await vi.waitFor(() => expect(session.state.loading).toBe(false));
   expect(reads).toBe(2);
   ui.stdin.write('q');
-  await pause();
-  expect(session.disposed).toBe(true);
+  await vi.waitFor(() => expect(session.disposed).toBe(true));
 });
 
 test('piped and JSON public invocations never open the terminal interface', () => {
