@@ -23,7 +23,12 @@ Groupi uses [Changesets](https://github.com/changesets/changesets) to:
 3. Generate CHANGELOG entries automatically
 4. Coordinate versioning across the monorepo
 
-All `@groupi/*` packages are **linked** - they version together as a single unit.
+The web, mobile, shared, and Convex packages retain their **linked** version group.
+`@groupi/cli` versions independently. Select only the packages changed by a
+changeset; a CLI-only release must not bump the application group. Public access
+is set on the CLI package alone; the workspace default remains restricted.
+See [CLI release verification](cli-release.md) for the separate, manually gated
+publication process.
 
 ## When to Create a Changeset
 

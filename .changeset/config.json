@@ -3,7 +3,9 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@groupi/*"]],
+  "linked": [
+    ["@groupi/convex", "@groupi/mobile", "@groupi/shared", "@groupi/web"]
+  ],
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

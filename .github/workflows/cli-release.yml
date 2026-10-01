@@ -1,0 +1,124 @@
+name: Publish CLI beta
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact approved package version (for example 0.1.0-beta.1)'
+        required: true
+        type: string
+      evidence_url:
+        description: 'GitHub issue/comment with approved staging and release evidence'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: groupi-cli-publication
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: github.ref == 'refs/heads/main' && vars.GROUPI_CLI_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Validate approved release target
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_EVIDENCE: ${{ inputs.evidence_url }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const pkg = JSON.parse(readFileSync('packages/cli/package.json', 'utf8'));
+          assert.equal(pkg.name, '@groupi/cli');
+          assert.equal(pkg.version, process.env.RELEASE_VERSION);
+          assert.match(pkg.version, /^\d+\.\d+\.\d+-beta\.\d+$/);
+          assert.equal(pkg.publishConfig.access, 'public');
+          assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
+          assert.match(process.env.RELEASE_EVIDENCE ?? '', /^https:\/\/github\.com\/groupi-app\/groupi\/issues\/\d+(?:#issuecomment-\d+)?$/);
+          JS
+
+  verify:
+    needs: gate
+    uses: ./.github/workflows/cli.yml
+
+  package:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Retain the exact tested archive
+        env:
+          GROUPI_PACKAGE_OUTPUT_DIR: ${{ runner.temp }}/cli-release
+        run: pnpm --filter @groupi/cli test:package
+      - name: Record artifact identity
+        working-directory: ${{ runner.temp }}/cli-release
+        run: |
+          sha256sum *.tgz > SHA256SUMS
+          node --input-type=module <<'JS'
+          import { writeFileSync } from 'node:fs';
+          writeFileSync('release-manifest.json', JSON.stringify({
+            commit: process.env.GITHUB_SHA,
+            run: process.env.GITHUB_RUN_ID,
+            attempt: process.env.GITHUB_RUN_ATTEMPT,
+          }, null, 2) + '\n');
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: groupi-cli-release
+          path: ${{ runner.temp }}/cli-release/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Configure required reviewers and main-only deployment before enabling.
+    environment: cli-release
+    steps:
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: groupi-cli-release
+          path: release
+      - name: Publish only the verified CLI archive to beta
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GROUPI_CLI_NPM_TOKEN }}
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          (cd release && sha256sum --check SHA256SUMS)
+          archives=(release/*.tgz)
+          test "${#archives[@]}" -eq 1
+          pnpm publish "${archives[0]}" --access public --tag beta --no-git-checks --ignore-scripts
+      - name: Smoke install the exact public registry version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          mkdir registry-smoke
+          cd registry-smoke
+          printf '{"private":true}\n' > package.json
+          pnpm add --ignore-scripts --registry=https://registry.npmjs.org "@groupi/cli@$RELEASE_VERSION"
+          test "$(pnpm exec groupi --version)" = "$RELEASE_VERSION"
+          pnpm exec groupi --help
+          pnpm exec groupi events --help
