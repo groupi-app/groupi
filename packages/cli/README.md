@@ -388,3 +388,56 @@ three platforms in CI, including an unavailable Linux session bus. Deterministic
 CLI callback tests substitute only the external native binding; they do not
 establish OS integration on their own. The native store smoke script can be run
 with `node packages/cli/scripts/test-credential-store.js` from the repository root.
+
+### Notifications and discussion subscriptions
+
+```sh
+groupi notifications list --unread --limit 20
+groupi notifications list --cursor '<nextCursor>'
+groupi notifications list --all --format json
+groupi notifications count
+groupi notifications read <notification-id>
+groupi notifications unread <notification-id>
+groupi notifications read-all
+groupi notifications read-event <event-id>
+groupi notifications read-post <post-id>
+groupi notifications clear <notification-id> --yes
+groupi notifications clear-all --yes
+groupi events mute <event-id>
+groupi events unmute <event-id>
+groupi events mute-status <event-id>
+groupi posts mute <post-id>
+groupi posts unmute <post-id>
+groupi posts mute-status <post-id>
+```
+
+Notification lists default to 20 newest items, with `--limit` from 1–100.
+JSON is `{items,nextCursor}`; each item contains `id`, `type`, `read`,
+`createdAt`, and nullable `event`, `post`, and `author` references. Continue
+until `nextCursor` is null, including after an empty page. A cursor belongs
+to its account and unread-filter setting; preserve `--unread` when continuing
+an unread list. `--all` deliberately collects all pages and stops on repeated
+cursors. Counts return `{count}`; writes return `{success:true}`, with `count`
+for event/post-scoped read actions.
+
+Clearing permanently removes your notification records and their queued push
+work. Interactive clearing displays the target and asks for confirmation;
+JSON/headless clearing requires `--yes`. Read/unread and mute changes do not
+prompt. These writes are sent once. If a response is lost or incomplete, the
+CLI reports `UNCERTAIN_OUTCOME`: inspect `notifications list --all` or the
+appropriate `mute-status` before deciding whether to repeat the action.
+Already-unmuted targets retain the existing API's not-found response.
+
+Mute status returns `{isMuted,effectiveMuted}` for an event and additionally
+`eventMuted` for a discussion. A discussion can remain effectively muted by
+its parent event after its own mute is removed. Muting and status require
+current event membership. Muted-list details are hidden after membership is
+lost. Historical notifications belong to their recipient and retain the app's
+existing related-item references, including invitations received before
+joining an event. Clear and read actions only affect the selected identity.
+
+These commands require the server health capability
+`notificationControls: {version:1}`. Older servers are rejected before the
+operation so unsupported pagination or controls cannot silently appear to work.
+Existing REST clients retain the unpaginated array without `pagination=cursor`,
+and REST v1 keeps its success envelope.

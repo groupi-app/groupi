@@ -1,3 +1,4 @@
+import { registerNotificationCommands } from './notification-commands.js';
 import { registerAttendanceCommands } from './attendance-commands.js';
 import { registerInviteCommands } from './invite-commands.js';
 import { eventInput, validateRequestId } from './event-input.js';
@@ -336,6 +337,7 @@ export async function run() {
       );
     });
   registerInviteCommands(program, json);
+  registerNotificationCommands(program, events, json);
   registerAttendanceCommands(program, events, json);
   try {
     await program.parseAsync(argv, { from: 'user' });

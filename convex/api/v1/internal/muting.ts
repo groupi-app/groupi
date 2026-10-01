@@ -1,3 +1,16 @@
+import {
+  muteEventForPerson,
+  unmuteEventForPerson,
+  mutePostForPerson,
+  unmutePostForPerson,
+  requireEventAccess,
+  requirePostAccess,
+  hasEventAccess,
+} from '../../../muting/model';
+import {
+  isEventMutedByPerson,
+  isPostMutedByPerson,
+} from '../../../lib/notifications';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
@@ -46,14 +59,16 @@ export const listMuted = internalQuery({
             id: mute._id,
             eventId: mute.eventId,
             mutedAt: mute.mutedAt,
-            event: event
-              ? {
-                  id: event._id,
-                  title: event.title,
-                  description: event.description ?? null,
-                  location: event.location ?? null,
-                }
-              : null,
+            event:
+              event &&
+              (await hasEventAccess(ctx, personId as Id<'persons'>, event._id))
+                ? {
+                    id: event._id,
+                    title: event.title,
+                    description: event.description ?? null,
+                    location: event.location ?? null,
+                  }
+                : null,
           };
         })
       );
@@ -74,7 +89,15 @@ export const listMuted = internalQuery({
             id: mute._id,
             postId: mute.postId,
             mutedAt: mute.mutedAt,
-            post: post ? { id: post._id, title: post.title } : null,
+            post:
+              post &&
+              (await hasEventAccess(
+                ctx,
+                personId as Id<'persons'>,
+                post.eventId
+              ))
+                ? { id: post._id, title: post.title }
+                : null,
           };
         })
       );
@@ -89,49 +112,14 @@ export const muteEvent = internalMutation({
     personId: v.string(),
     eventId: v.string(),
   },
+  returns: v.object({ alreadyMuted: v.boolean() }),
   handler: async (ctx, { personId, eventId }) => {
-    const event = await ctx.db.get(eventId as Id<'events'>);
-    if (!event) {
-      throw new Error('Event not found');
-    }
-
-    // Verify membership
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', eventId as Id<'events'>)
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    // Check if already muted
-    const existing = await ctx.db
-      .query('mutedEvents')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', eventId as Id<'events'>)
-      )
-      .first();
-
-    if (existing) {
-      return { alreadyMuted: true };
-    }
-
-    const now = Date.now();
-    await ctx.db.insert('mutedEvents', {
-      personId: personId as Id<'persons'>,
-      eventId: eventId as Id<'events'>,
-      mutedAt: now,
-      updatedAt: now,
-    });
-
-    return { alreadyMuted: false };
+    const result = await muteEventForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      eventId as Id<'events'>
+    );
+    return { alreadyMuted: result.alreadyMuted };
   },
 });
 
@@ -140,22 +128,14 @@ export const unmuteEvent = internalMutation({
     personId: v.string(),
     eventId: v.string(),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { personId, eventId }) => {
-    const existing = await ctx.db
-      .query('mutedEvents')
-      .withIndex('by_person_event', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('eventId', eventId as Id<'events'>)
-      )
-      .first();
-
-    if (!existing) {
-      throw new Error('Event is not muted');
-    }
-
-    await ctx.db.delete(existing._id);
-
+    const result = await unmuteEventForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      eventId as Id<'events'>
+    );
+    if (result.wasNotMuted) throw Error('Event is not muted');
     return { success: true };
   },
 });
@@ -165,47 +145,14 @@ export const mutePost = internalMutation({
     personId: v.string(),
     postId: v.string(),
   },
+  returns: v.object({ alreadyMuted: v.boolean() }),
   handler: async (ctx, { personId, postId }) => {
-    const post = await ctx.db.get(postId as Id<'posts'>);
-    if (!post) {
-      throw new Error('Post not found');
-    }
-
-    // Verify membership via the post's event
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', personId as Id<'persons'>).eq('eventId', post.eventId)
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    // Check if already muted
-    const existing = await ctx.db
-      .query('mutedPosts')
-      .withIndex('by_person_post', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('postId', postId as Id<'posts'>)
-      )
-      .first();
-
-    if (existing) {
-      return { alreadyMuted: true };
-    }
-
-    const now = Date.now();
-    await ctx.db.insert('mutedPosts', {
-      personId: personId as Id<'persons'>,
-      postId: postId as Id<'posts'>,
-      mutedAt: now,
-      updatedAt: now,
-    });
-
-    return { alreadyMuted: false };
+    const result = await mutePostForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      postId as Id<'posts'>
+    );
+    return { alreadyMuted: result.alreadyMuted };
   },
 });
 
@@ -214,22 +161,38 @@ export const unmutePost = internalMutation({
     personId: v.string(),
     postId: v.string(),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, { personId, postId }) => {
-    const existing = await ctx.db
-      .query('mutedPosts')
-      .withIndex('by_person_post', q =>
-        q
-          .eq('personId', personId as Id<'persons'>)
-          .eq('postId', postId as Id<'posts'>)
-      )
-      .first();
-
-    if (!existing) {
-      throw new Error('Post is not muted');
-    }
-
-    await ctx.db.delete(existing._id);
-
+    const result = await unmutePostForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      postId as Id<'posts'>
+    );
+    if (result.wasNotMuted) throw Error('Post is not muted');
     return { success: true };
+  },
+});
+
+export const eventMuteStatus = internalQuery({
+  args: { personId: v.id('persons'), eventId: v.id('events') },
+  returns: v.object({ isMuted: v.boolean(), effectiveMuted: v.boolean() }),
+  handler: async (ctx, { personId, eventId }) => {
+    await requireEventAccess(ctx, personId, eventId);
+    const isMuted = await isEventMutedByPerson(ctx, personId, eventId);
+    return { isMuted, effectiveMuted: isMuted };
+  },
+});
+export const postMuteStatus = internalQuery({
+  args: { personId: v.id('persons'), postId: v.id('posts') },
+  returns: v.object({
+    isMuted: v.boolean(),
+    eventMuted: v.boolean(),
+    effectiveMuted: v.boolean(),
+  }),
+  handler: async (ctx, { personId, postId }) => {
+    const post = await requirePostAccess(ctx, personId, postId);
+    const isMuted = await isPostMutedByPerson(ctx, personId, postId);
+    const eventMuted = await isEventMutedByPerson(ctx, personId, post.eventId);
+    return { isMuted, eventMuted, effectiveMuted: isMuted || eventMuted };
   },
 });

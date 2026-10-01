@@ -357,5 +357,79 @@ export function createMutingRoutes() {
     }
   });
 
+  for (const scope of ['events', 'posts'] as const) {
+    const route = createRoute({
+      method: 'get',
+      path: `/muting/${scope}/{targetId}`,
+      tags: ['Muting'],
+      summary: `Inspect ${scope} mute status`,
+      security: [{ apiKey: [] }],
+      request: { params: z.object({ targetId: z.string() }) },
+      responses: {
+        200: {
+          description: 'Mute state (effective includes parent event)',
+          content: {
+            'application/json': {
+              schema: z.object({
+                isMuted: z.boolean(),
+                eventMuted: z.boolean().optional(),
+                effectiveMuted: z.boolean(),
+              }),
+            },
+          },
+        },
+        403: {
+          description: 'Not a member',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+        404: {
+          description: 'Not found',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    });
+    app.openapi(route, async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get(
+        'personId'
+      ) as import('../../../_generated/dataModel').Id<'persons'>;
+      const id = c.req.valid('param').targetId;
+      try {
+        const result =
+          scope === 'events'
+            ? await ctx.runQuery(
+                internal.api.v1.internal.muting.eventMuteStatus,
+                {
+                  personId,
+                  eventId:
+                    id as import('../../../_generated/dataModel').Id<'events'>,
+                }
+              )
+            : await ctx.runQuery(
+                internal.api.v1.internal.muting.postMuteStatus,
+                {
+                  personId,
+                  postId:
+                    id as import('../../../_generated/dataModel').Id<'posts'>,
+                }
+              );
+        return c.json(result, 200);
+      } catch (error) {
+        const forbidden =
+          error instanceof Error && error.message.includes('not a member');
+        return c.json(
+          {
+            error: {
+              code: forbidden ? 'FORBIDDEN' : 'NOT_FOUND',
+              message: forbidden
+                ? 'You are not a member of this event'
+                : 'Target not found',
+            },
+          },
+          forbidden ? 403 : 404
+        );
+      }
+    });
+  }
   return app;
 }
