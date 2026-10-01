@@ -90,6 +90,8 @@ try {
       'exec',
       'vitest',
       'run',
+      // These spawn installed CLI processes; avoid saturating hosted OS runners.
+      '--maxWorkers=1',
       'tests/social-cli-rest.test.ts',
       'tests/cli-workflows-rest.test.ts',
       'tests/discord-cli-rest.test.ts',
