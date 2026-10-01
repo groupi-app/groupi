@@ -45,9 +45,20 @@ try {
     (await readdir(installed))
       .filter(name => !['LICENSE', 'node_modules'].includes(name))
       .sort(),
-    ['README.md', 'bin', 'package.json', 'src']
+    ['README.md', 'bin', 'docs', 'package.json', 'scripts', 'skills', 'src']
   );
   run(['exec', 'groupi', '--help'], temporary);
+  run(['exec', 'node', 'scripts/generate-reference.js', '--check'], installed);
+  assert(
+    (
+      await readFile(join(installed, 'skills/groupi/SKILL.md'), 'utf8')
+    ).includes('name: groupi')
+  );
+  assert(
+    (
+      await readFile(join(installed, 'docs/agent-workflows.json'), 'utf8')
+    ).includes('planning')
+  );
   run(
     [
       'exec',
@@ -62,6 +73,25 @@ try {
     ...process.env,
     CLI_TEST_BIN: resolve(installed, metadata.bin.groupi),
   });
+  run(
+    [
+      '--filter',
+      '@groupi/convex',
+      'exec',
+      'vitest',
+      'run',
+      // These spawn installed CLI processes; avoid saturating hosted OS runners.
+      '--maxWorkers=1',
+      'tests/social-cli-rest.test.ts',
+      'tests/cli-workflows-rest.test.ts',
+      'tests/discord-cli-rest.test.ts',
+    ],
+    source,
+    {
+      ...process.env,
+      CLI_TEST_BIN: resolve(installed, metadata.bin.groupi),
+    }
+  );
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

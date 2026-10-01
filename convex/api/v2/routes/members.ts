@@ -153,9 +153,11 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateRoleFn = internal.api.v1.internal.members.updateMemberRole;
+    const updateRoleFn = internal.events.managementRest.updateRole;
     const result = await ctx.runMutation(updateRoleFn, {
-      membershipId: memberId,
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      membershipId: memberId as Id<'memberships'>,
       newRole: body.role,
     });
 
@@ -217,8 +219,12 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const removeFn = internal.api.v1.internal.members.removeMember;
-    await ctx.runMutation(removeFn, { membershipId: memberId });
+    const removeFn = internal.events.managementRest.remove;
+    await ctx.runMutation(removeFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+      membershipId: memberId as Id<'memberships'>,
+    });
 
     return c.body(null, 204);
   });
@@ -269,8 +275,11 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const leaveFn = internal.api.v1.internal.members.leaveEvent;
-    await ctx.runMutation(leaveFn, { eventId, personId });
+    const leaveFn = internal.events.managementRest.leave;
+    await ctx.runMutation(leaveFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json({ message: 'Left event successfully' }, 200);
   });

@@ -10,7 +10,10 @@
   "files": [
     "bin",
     "src",
-    "README.md"
+    "README.md",
+    "docs",
+    "skills",
+    "scripts/generate-reference.js"
   ],
   "engines": {
     "node": "^22.0.0 || ^24.0.0"
@@ -19,7 +22,10 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
     "test:run": "vitest run",
-    "test:package": "node scripts/test-package.js"
+    "test:package": "node scripts/test-package.js",
+    "docs:generate": "node scripts/generate-reference.js",
+    "docs:check": "node scripts/generate-reference.js --check",
+    "prepack": "node scripts/generate-reference.js --check"
   },
   "dependencies": {
     "@napi-rs/keyring": "2.1.0",

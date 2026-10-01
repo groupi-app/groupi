@@ -1,3 +1,8 @@
+import { registerDiscordCommands } from './discord-commands.js';
+import { registerAddonCommands } from './addon-commands.js';
+import { registerEventManagementCommands } from './event-management-commands.js';
+import { registerSocialCommands } from './social-commands.js';
+import { registerAccountCommands } from './account-commands.js';
 import { registerNotificationCommands } from './notification-commands.js';
 import { registerAttendanceCommands } from './attendance-commands.js';
 import { registerInviteCommands } from './invite-commands.js';
@@ -21,12 +26,9 @@ function plain(value) {
   return String(value ?? '').replace(/[\x00-\x1f\x7f-\x9f]/g, ' ');
 }
 
-export async function run() {
-  const argv = process.argv.slice(2);
-  const json = argv.some(
-    (arg, i) =>
-      arg === '--format=json' || (arg === '--format' && argv[i + 1] === 'json')
-  );
+/** Build the public command tree without parsing or performing any operation.
+ * @param {boolean} json */
+export function createProgram(json = false) {
   const metadata = JSON.parse(
     readFileSync(new URL('../package.json', import.meta.url), 'utf8')
   );
@@ -336,9 +338,24 @@ export async function run() {
               .join('\n') + '\n'
       );
     });
+  registerDiscordCommands(program, json);
+  registerAddonCommands(program, json);
+  registerSocialCommands(program, json);
+  registerAccountCommands(program, json);
   registerInviteCommands(program, json);
   registerNotificationCommands(program, events, json);
   registerAttendanceCommands(program, events, json);
+  registerEventManagementCommands(program, events, json);
+  return program;
+}
+
+export async function run() {
+  const argv = process.argv.slice(2);
+  const json = argv.some(
+    (arg, i) =>
+      arg === '--format=json' || (arg === '--format' && argv[i + 1] === 'json')
+  );
+  const program = createProgram(json);
   try {
     await program.parseAsync(argv, { from: 'user' });
   } catch (error) {

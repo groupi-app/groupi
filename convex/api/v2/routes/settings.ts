@@ -1,3 +1,4 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
@@ -7,6 +8,7 @@ import {
   PrivacySettingsSchema,
   UpdatePrivacySettingsRequestSchema,
   NotificationSettingsSchema,
+  UpdateNotificationSettingsRequestSchema,
 } from '../schemas/settings';
 
 // Type for Hono app with Convex context
@@ -160,5 +162,61 @@ export function createSettingsRoutes() {
     return c.json(result, 200);
   });
 
+  app.openapi(
+    createRoute({
+      method: 'put',
+      path: '/settings/notifications',
+      tags: ['Settings'],
+      summary: 'Save notification preferences',
+      security: [{ apiKey: [] }],
+      request: {
+        body: {
+          content: {
+            'application/json': {
+              schema: UpdateNotificationSettingsRequestSchema,
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Saved preferences',
+          content: {
+            'application/json': { schema: NotificationSettingsSchema },
+          },
+        },
+        400: {
+          description: 'Invalid preferences',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+        403: {
+          description: 'Method belongs to another account',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId');
+      const body = c.req.valid('json');
+      await ctx.runMutation(
+        internal.api.v1.internal.settings.saveNotificationSettings,
+        {
+          personId: personId as Id<'persons'>,
+          notificationMethods: body.notificationMethods.map(m => ({
+            ...m,
+            id: m.id as Id<'notificationMethods'> | undefined,
+          })),
+        }
+      );
+      return c.json(
+        await ctx.runQuery(
+          internal.api.v1.internal.settings.getNotificationSettings,
+          { personId }
+        ),
+        200
+      );
+    }
+  );
   return app;
 }

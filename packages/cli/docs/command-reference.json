@@ -1,0 +1,454 @@
+{
+  "package": "@groupi/cli",
+  "version": "0.1.0",
+  "commands": [
+    {
+      "path": "groupi",
+      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure existing built-in and custom event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n  posts              Manage event discussions\n"
+    },
+    {
+      "path": "groupi auth",
+      "help": "Usage: groupi auth [options] [command]\n\nManage authentication\n\nOptions:\n  -h, --help        display help for command\n\nCommands:\n  login [options]   Explicitly authorize this profile in your browser\n  status            Verify the selected profile and account without revealing credentials\n  logout [options]  Remove this profile’s saved credential; temporary keys are unchanged\n  help [command]    display help for command\n"
+    },
+    {
+      "path": "groupi auth login",
+      "help": "Usage: groupi auth login [options]\n\nExplicitly authorize this profile in your browser\n\nOptions:\n  --no-browser         Show the authorization URL for manual opening\n  --timeout <seconds>  Authorization timeout (10–300 seconds) (default: \"300\")\n  --web-url <origin>   Explicit authorization website for this login\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi auth status",
+      "help": "Usage: groupi auth status [options]\n\nVerify the selected profile and account without revealing credentials\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi auth logout",
+      "help": "Usage: groupi auth logout [options]\n\nRemove this profile’s saved credential; temporary keys are unchanged\n\nOptions:\n  --revoke    Also revoke this saved key on the server before removing it\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi profile",
+      "help": "Usage: groupi profile [options] [command]\n\nManage connection profiles\n\nOptions:\n  -h, --help            display help for command\n\nCommands:\n  add [options] <name>\n  help [command]        display help for command\n"
+    },
+    {
+      "path": "groupi profile add",
+      "help": "Usage: groupi profile add [options] <name>\n\nOptions:\n  --api-url <url>  REST v2 API URL\n  --web-url <url>  Authorization website origin for browser login\n  -h, --help       display help for command\n"
+    },
+    {
+      "path": "groupi events",
+      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               join an event\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility and supported permissions\n  help [command]                display help for command\n"
+    },
+    {
+      "path": "groupi events create",
+      "help": "Usage: groupi events create [options]\n\nCreate an event with replay-safe request identification\n\nOptions:\n  --title <title>        Event title\n  --description <text>   Event description\n  --location <text>      Event location\n  --start <iso>          Fixed start with explicit UTC offset or Z\n  --end <iso>            Fixed end with explicit UTC offset or Z\n  --date-options <json>  Proposed dates as [{start,end?,note?}] with explicit offsets\n  --request-id <id>      Reuse the identifier from a previous attempt with the same inputs\n  -h, --help             display help for command\n"
+    },
+    {
+      "path": "groupi events edit",
+      "help": "Usage: groupi events edit [options] <event-id>\n\nEdit event details; uncertain writes are never retried automatically\n\nOptions:\n  --title <title>        New event title\n  --description <text>   New description; empty string clears it\n  --location <text>      New location; empty string clears it\n  --date-options <json>  Replace proposed dates and clear availability; requires confirmation\n  --yes                  Confirm replacing proposed dates and clearing availability\n  -h, --help             display help for command\n"
+    },
+    {
+      "path": "groupi events list",
+      "help": "Usage: groupi events list [options]\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events get",
+      "help": "Usage: groupi events get [options] <event-id>\n\nRead one accessible event\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events mute",
+      "help": "Usage: groupi events mute [options] <event-id>\n\nMute event notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events unmute",
+      "help": "Usage: groupi events unmute [options] <event-id>\n\nUnmute event notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events mute-status",
+      "help": "Usage: groupi events mute-status [options] <event-id>\n\nInspect event notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events rsvp",
+      "help": "Usage: groupi events rsvp [options] [command]\n\nRead and update your own attendance response\n\nOptions:\n  -h, --help                display help for command\n\nCommands:\n  get <event-id>\n  set [options] <event-id>\n  help [command]            display help for command\n"
+    },
+    {
+      "path": "groupi events rsvp get",
+      "help": "Usage: groupi events rsvp get [options] <event-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events rsvp set",
+      "help": "Usage: groupi events rsvp set [options] <event-id>\n\nOptions:\n  --status <status>  RSVP response (choices: \"YES\", \"MAYBE\", \"NO\", \"PENDING\")\n  --note <text>      Note (up to 200 characters); omitted or empty clears it\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events availability",
+      "help": "Usage: groupi events availability [options] [command]\n\nProvide your availability and inspect permitted responses\n\nOptions:\n  -h, --help                      display help for command\n\nCommands:\n  set [options] <event-id>\n  clear [options] <event-id>      Remove your availability responses and notes; RSVP is unchanged\n  get [options] <event-id>        List proposed dates with your own responses\n  responses [options] <event-id>  List member responses for one proposed date when permitted\n  help [command]                  display help for command\n"
+    },
+    {
+      "path": "groupi events availability set",
+      "help": "Usage: groupi events availability set [options] <event-id>\n\nOptions:\n  --responses <json>  Array of {potentialDateTimeId,status:YES|MAYBE|NO,note?}\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi events availability clear",
+      "help": "Usage: groupi events availability clear [options] <event-id>\n\nRemove your availability responses and notes; RSVP is unchanged\n\nOptions:\n  --yes       Confirm clearing your responses\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events availability get",
+      "help": "Usage: groupi events availability get [options] <event-id>\n\nList proposed dates with your own responses\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events availability responses",
+      "help": "Usage: groupi events availability responses [options] <event-id>\n\nList member responses for one proposed date when permitted\n\nOptions:\n  --option <id>      Proposed date ID\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events dates",
+      "help": "Usage: groupi events dates [options] [command]\n\nInspect proposed dates and manage the chosen date\n\nOptions:\n  -h, --help                   display help for command\n\nCommands:\n  choose [options] <event-id>  Choose a proposed poll date or manually set a future date (organizer\n                               only)\n  reset [options] <event-id>   Clear the chosen date while preserving responses (organizer only)\n  list [options] <event-id>    List proposed dates and their notes\n  help [command]               display help for command\n"
+    },
+    {
+      "path": "groupi events dates choose",
+      "help": "Usage: groupi events dates choose [options] <event-id>\n\nChoose a proposed poll date or manually set a future date (organizer only)\n\nOptions:\n  --option <id>  Proposed date ID from dates list\n  --start <iso>  Manual start with explicit offset or Z\n  --end <iso>    Optional manual end with explicit offset or Z\n  --yes          Confirm choosing the event date and applying its response transitions\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi events dates reset",
+      "help": "Usage: groupi events dates reset [options] <event-id>\n\nClear the chosen date while preserving responses (organizer only)\n\nOptions:\n  --yes       Confirm clearing the chosen date\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events dates list",
+      "help": "Usage: groupi events dates list [options] <event-id>\n\nList proposed dates and their notes\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events members",
+      "help": "Usage: groupi events members [options] <event-id>\n\nList attendance when event permissions allow\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Explicitly retrieve every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events discover",
+      "help": "Usage: groupi events discover [options]\n\nBrowse upcoming friends events you can join\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve every page explicitly\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events join",
+      "help": "Usage: groupi events join [options] <event-id>\n\njoin an event\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events leave",
+      "help": "Usage: groupi events leave [options] <event-id>\n\nleave an event\n\nOptions:\n  --yes       Confirm leave for the named event\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events delete",
+      "help": "Usage: groupi events delete [options] <event-id>\n\ndelete an event\n\nOptions:\n  --yes       Confirm delete for the named event\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events membership",
+      "help": "Usage: groupi events membership [options] [command]\n\nManage event member roles and removal; inspect using events members\n\nOptions:\n  -h, --help                               display help for command\n\nCommands:\n  role [options] <event-id> <member-id>\n  remove [options] <event-id> <member-id>\n  help [command]                           display help for command\n"
+    },
+    {
+      "path": "groupi events membership role",
+      "help": "Usage: groupi events membership role [options] <event-id> <member-id>\n\nOptions:\n  --role <role>  New event role (choices: \"ORGANIZER\", \"MODERATOR\", \"ATTENDEE\")\n  --yes          Confirm role change for the named member\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi events membership remove",
+      "help": "Usage: groupi events membership remove [options] <event-id> <member-id>\n\nOptions:\n  --yes       Confirm removal of the named member\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events settings",
+      "help": "Usage: groupi events settings [options] [command]\n\nInspect and update event visibility and supported permissions\n\nOptions:\n  -h, --help                display help for command\n\nCommands:\n  get <event-id>\n  set [options] <event-id>\n  help [command]            display help for command\n"
+    },
+    {
+      "path": "groupi events settings get",
+      "help": "Usage: groupi events settings get [options] <event-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events settings set",
+      "help": "Usage: groupi events settings set [options] <event-id>\n\nOptions:\n  --visibility <visibility>     Event visibility (choices: \"PRIVATE\", \"FRIENDS\", \"PUBLIC\")\n  --create-posts <level>        create-posts permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --invite-members <level>      invite-members permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --view-attendee-list <level>  view-attendee-list permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  -h, --help                    display help for command\n"
+    },
+    {
+      "path": "groupi discord",
+      "help": "Usage: groupi discord [options] [command]\n\nDiscover authorized Discord servers using your linked account\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  guilds          Inspect and refresh guild eligibility; linking requires the app browser flow\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi discord guilds",
+      "help": "Usage: groupi discord guilds [options] [command]\n\nInspect and refresh guild eligibility; linking requires the app browser flow\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  list [options]  List cached available/invitable servers; expiresAt marks freshness\n  refresh         Refresh your authorization cache from Discord (no event changes, no automatic\n                  retries)\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi discord guilds list",
+      "help": "Usage: groupi discord guilds list [options]\n\nList cached available/invitable servers; expiresAt marks freshness\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi discord guilds refresh",
+      "help": "Usage: groupi discord guilds refresh [options]\n\nRefresh your authorization cache from Discord (no event changes, no automatic retries)\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi addons",
+      "help": "Usage: groupi addons [options] [command]\n\nConfigure existing built-in and custom event add-ons\n\nOptions:\n  -h, --help                                   display help for command\n\nCommands:\n  get <event-id> <addon-type>                  Inspect enabled or disabled config\n  list [options] <event-id>                    List event add-on configs, including disabled ones\n  templates [options]                          List your existing published custom templates\n  enable [options] <event-id> <addon-type>     enable an existing add-on\n  configure [options] <event-id> <addon-type>  Replace config; may reset participant responses\n  disable [options] <event-id> <addon-type>    disable an existing add-on\n  help [command]                               display help for command\n"
+    },
+    {
+      "path": "groupi addons get",
+      "help": "Usage: groupi addons get [options] <event-id> <addon-type>\n\nInspect enabled or disabled config\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi addons list",
+      "help": "Usage: groupi addons list [options] <event-id>\n\nList event add-on configs, including disabled ones\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  --all              Deliberately retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi addons templates",
+      "help": "Usage: groupi addons templates [options]\n\nList your existing published custom templates\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  --all              Deliberately retrieve all pages\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi addons enable",
+      "help": "Usage: groupi addons enable [options] <event-id> <addon-type>\n\nenable an existing add-on\n\nOptions:\n  --yes                       Confirm config replacement, response reset, or disable\n  --config <json>             Validated JSON config object\n  --config-file <path>        Read JSON configuration from a local file\n  --reminder-offset <offset>  Reminders offset, e.g. 1_HOUR\n  --questions <json>          Questionnaire questions array\n  --items <json>              Bring-list items array\n  --guild-id <id>             Discord guild ID (recent authorization required)\n  --guild-name <name>         Discord guild name\n  --template-id <id>          Existing published custom template ID; use custom:<id>\n  -h, --help                  display help for command\n"
+    },
+    {
+      "path": "groupi addons configure",
+      "help": "Usage: groupi addons configure [options] <event-id> <addon-type>\n\nReplace config; may reset participant responses\n\nOptions:\n  --yes                       Confirm config replacement, response reset, or disable\n  --config <json>             Validated JSON config object\n  --config-file <path>        Read JSON configuration from a local file\n  --reminder-offset <offset>  Reminders offset, e.g. 1_HOUR\n  --questions <json>          Questionnaire questions array\n  --items <json>              Bring-list items array\n  --guild-id <id>             Discord guild ID (recent authorization required)\n  --guild-name <name>         Discord guild name\n  --template-id <id>          Existing published custom template ID; use custom:<id>\n  -h, --help                  display help for command\n"
+    },
+    {
+      "path": "groupi addons disable",
+      "help": "Usage: groupi addons disable [options] <event-id> <addon-type>\n\ndisable an existing add-on\n\nOptions:\n  --yes       Confirm config replacement, response reset, or disable\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends",
+      "help": "Usage: groupi friends [options] [command]\n\nManage friendships and friend requests\n\nOptions:\n  -h, --help                         display help for command\n\nCommands:\n  list [options]                     List accepted friendships\n  incoming [options]                 Inspect received pending requests\n  outgoing [options]                 Inspect sent pending requests\n  status <person-id>                 Inspect your relationship with a person\n  request <person-id>                request social relationship\n  accept <friendship-id>             accept social relationship\n  decline [options] <friendship-id>  decline social relationship\n  cancel [options] <friendship-id>   cancel social relationship\n  remove [options] <friendship-id>   remove social relationship\n  help [command]                     display help for command\n"
+    },
+    {
+      "path": "groupi friends list",
+      "help": "Usage: groupi friends list [options]\n\nList accepted friendships\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi friends incoming",
+      "help": "Usage: groupi friends incoming [options]\n\nInspect received pending requests\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi friends outgoing",
+      "help": "Usage: groupi friends outgoing [options]\n\nInspect sent pending requests\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi friends status",
+      "help": "Usage: groupi friends status [options] <person-id>\n\nInspect your relationship with a person\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends request",
+      "help": "Usage: groupi friends request [options] <person-id>\n\nrequest social relationship\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends accept",
+      "help": "Usage: groupi friends accept [options] <friendship-id>\n\naccept social relationship\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends decline",
+      "help": "Usage: groupi friends decline [options] <friendship-id>\n\ndecline social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends cancel",
+      "help": "Usage: groupi friends cancel [options] <friendship-id>\n\ncancel social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi friends remove",
+      "help": "Usage: groupi friends remove [options] <friendship-id>\n\nremove social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi blocks",
+      "help": "Usage: groupi blocks [options] [command]\n\nManage blocked users\n\nOptions:\n  -h, --help                     display help for command\n\nCommands:\n  list [options]                 List users you blocked\n  status <person-id>             Inspect your relationship with a person\n  block [options] <person-id>    block social relationship\n  unblock [options] <person-id>  unblock social relationship\n  help [command]                 display help for command\n"
+    },
+    {
+      "path": "groupi blocks list",
+      "help": "Usage: groupi blocks list [options]\n\nList users you blocked\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a prior page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi blocks status",
+      "help": "Usage: groupi blocks status [options] <person-id>\n\nInspect your relationship with a person\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi blocks block",
+      "help": "Usage: groupi blocks block [options] <person-id>\n\nblock social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi blocks unblock",
+      "help": "Usage: groupi blocks unblock [options] <person-id>\n\nunblock social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account",
+      "help": "Usage: groupi account [options] [command]\n\nRead/update your account and open explicit browser exceptions\n\nOptions:\n  -h, --help       display help for command\n\nCommands:\n  get              Read your selected identity’s profile\n  edit [options]   Update ordinary profile fields without browser interaction\n  passkeys         Explicitly open account settings; complete this action in the browser/device\n  linked-accounts  Explicitly open account settings; complete this action in the browser/device\n  delete           Explicitly open account settings; complete this action in the browser/device\n  help [command]   display help for command\n"
+    },
+    {
+      "path": "groupi account get",
+      "help": "Usage: groupi account get [options]\n\nRead your selected identity’s profile\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account edit",
+      "help": "Usage: groupi account edit [options]\n\nUpdate ordinary profile fields without browser interaction\n\nOptions:\n  --name <text>      Display name\n  --username <text>  Unique username\n  --bio <text>       Bio; empty text clears it\n  --pronouns <text>  Pronouns; empty text clears them\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi account passkeys",
+      "help": "Usage: groupi account passkeys [options]\n\nExplicitly open account settings; complete this action in the browser/device\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account linked-accounts",
+      "help": "Usage: groupi account linked-accounts [options]\n\nExplicitly open account settings; complete this action in the browser/device\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account delete",
+      "help": "Usage: groupi account delete [options]\n\nExplicitly open account settings; complete this action in the browser/device\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi settings",
+      "help": "Usage: groupi settings [options] [command]\n\nManage ordinary preferences without a browser\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  privacy         Who may send friend requests and event invitations\n  notifications   Notification delivery methods and per-type settings\n  theme           Saved theme and system light/dark preferences\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi settings privacy",
+      "help": "Usage: groupi settings privacy [options] [command]\n\nWho may send friend requests and event invitations\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  get\n  set [options]\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi settings privacy get",
+      "help": "Usage: groupi settings privacy get [options]\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi settings privacy set",
+      "help": "Usage: groupi settings privacy set [options]\n\nOptions:\n  --friend-requests <permission>  EVERYONE, EVENT_MEMBERS, or NO_ONE\n  --event-invites <permission>    EVERYONE, EVENT_MEMBERS, FRIENDS, or NO_ONE\n  -h, --help                      display help for command\n"
+    },
+    {
+      "path": "groupi settings notifications",
+      "help": "Usage: groupi settings notifications [options] [command]\n\nNotification delivery methods and per-type settings\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  get\n  set [options]\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi settings notifications get",
+      "help": "Usage: groupi settings notifications get [options]\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi settings notifications set",
+      "help": "Usage: groupi settings notifications set [options]\n\nOptions:\n  --data <json>  JSON object with notificationMethods array; omitted methods are deleted\n  --yes          Confirm replacing methods and removing omitted methods\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi settings theme",
+      "help": "Usage: groupi settings theme [options] [command]\n\nSaved theme and system light/dark preferences\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  get\n  set [options]\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi settings theme get",
+      "help": "Usage: groupi settings theme get [options]\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi settings theme set",
+      "help": "Usage: groupi settings theme set [options]\n\nOptions:\n  --data <json>  JSON with selectedThemeType, selectedThemeId, useSystemPreference,\n                 systemLightThemeId, systemDarkThemeId; selectedCustomThemeId optional\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi invites",
+      "help": "Usage: groupi invites [options] [command]\n\nManage bearer link/email and recipient-bound username invitations\n\nOptions:\n  -h, --help      display help for command\n\nCommands:\n  links           Create, inspect and manage link/email bearer invitations\n  email           Create email bearer invitations and queue delivery\n  members         Send and respond to recipient-bound username invitations\n  help [command]  display help for command\n"
+    },
+    {
+      "path": "groupi invites links",
+      "help": "Usage: groupi invites links [options] [command]\n\nCreate, inspect and manage link/email bearer invitations\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options] <event-id>   Create a shareable bearer invitation\n  edit [options] <invite-id>    Change an invitation label, access limit, or expiry; requires\n                                confirmation\n  accept [options] <token>\n  revoke [options] <invite-id>\n  get <token>                   Inspect the invitation using the selected identity\n  list [options] <event-id>     List all bearer invitations, including email invitations\n  help [command]                display help for command\n"
+    },
+    {
+      "path": "groupi invites links create",
+      "help": "Usage: groupi invites links create [options] <event-id>\n\nCreate a shareable bearer invitation\n\nOptions:\n  --name <name>      Invitation label\n  --uses <number>    Maximum uses (at least 1)\n  --expires <iso>    Expiry with explicit UTC offset or Z\n  --request-id <id>  Reuse the identifier and original inputs after an uncertain attempt\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi invites links edit",
+      "help": "Usage: groupi invites links edit [options] <invite-id>\n\nChange an invitation label, access limit, or expiry; requires confirmation\n\nOptions:\n  --name <name>    New invitation label\n  --uses <number>  New maximum uses (1–10000)\n  --unlimited      Remove the usage limit\n  --expires <iso>  New future expiry with explicit offset or Z\n  --no-expiry      Remove the expiry\n  --yes            Confirm changing this invitation\n  -h, --help       display help for command\n"
+    },
+    {
+      "path": "groupi invites links accept",
+      "help": "Usage: groupi invites links accept [options] <token>\n\nOptions:\n  --yes       Confirm revoking this invitation\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites links revoke",
+      "help": "Usage: groupi invites links revoke [options] <invite-id>\n\nOptions:\n  --yes       Confirm revoking this invitation\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites links get",
+      "help": "Usage: groupi invites links get [options] <token>\n\nInspect the invitation using the selected identity\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites links list",
+      "help": "Usage: groupi invites links list [options] <event-id>\n\nList all bearer invitations, including email invitations\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve all pages explicitly\n  --kind <kind>      Filter bearer invitation kind (choices: \"link\", \"email\", \"all\")\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi invites email",
+      "help": "Usage: groupi invites email [options] [command]\n\nCreate email bearer invitations and queue delivery\n\nOptions:\n  -h, --help                         display help for command\n\nCommands:\n  send [options] <event-id>\n  send-pending [options] <event-id>  Queue unsent email invitations once per request ID\n  help [command]                     display help for command\n"
+    },
+    {
+      "path": "groupi invites email send",
+      "help": "Usage: groupi invites email send [options] <event-id>\n\nOptions:\n  --invites <json>   Array of {email,recipientName?,plusOnes?}\n  --message <text>   Message included with email invitations\n  --expires <iso>    Expiry with explicit offset or Z\n  --no-send          Create the batch without queuing any new or existing pending email\n  --request-id <id>  Reuse a prior request ID with identical inputs\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi invites email send-pending",
+      "help": "Usage: groupi invites email send-pending [options] <event-id>\n\nQueue unsent email invitations once per request ID\n\nOptions:\n  --request-id <id>  Reuse a prior request ID\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi invites members",
+      "help": "Usage: groupi invites members [options] [command]\n\nSend and respond to recipient-bound username invitations\n\nOptions:\n  -h, --help                     display help for command\n\nCommands:\n  send [options] <event-id>\n  accept [options] <invite-id>\n  decline [options] <invite-id>\n  revoke [options] <invite-id>\n  get <invite-id>                Inspect the invitation using the selected identity\n  list [options] [event-id]      List received pending invitations, or invitations sent for an event\n  help [command]                 display help for command\n"
+    },
+    {
+      "path": "groupi invites members send",
+      "help": "Usage: groupi invites members send [options] <event-id>\n\nOptions:\n  --username <username>  Recipient username without @\n  --role <role>          Granted event role (choices: \"ATTENDEE\", \"MODERATOR\")\n  --message <text>       Invitation message\n  --request-id <id>      Reuse a prior request ID with identical inputs\n  -h, --help             display help for command\n"
+    },
+    {
+      "path": "groupi invites members accept",
+      "help": "Usage: groupi invites members accept [options] <invite-id>\n\nOptions:\n  --yes       Confirm declining or revoking this invitation\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites members decline",
+      "help": "Usage: groupi invites members decline [options] <invite-id>\n\nOptions:\n  --yes       Confirm declining or revoking this invitation\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites members revoke",
+      "help": "Usage: groupi invites members revoke [options] <invite-id>\n\nOptions:\n  --yes       Confirm declining or revoking this invitation\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites members get",
+      "help": "Usage: groupi invites members get [options] <invite-id>\n\nInspect the invitation using the selected identity\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invites members list",
+      "help": "Usage: groupi invites members list [options] [event-id]\n\nList received pending invitations, or invitations sent for an event\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve all pages explicitly\n  --status <status>  Status filter; received defaults to PENDING, event list to all (choices:\n                     \"PENDING\", \"ACCEPTED\", \"DECLINED\", \"all\")\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi notifications",
+      "help": "Usage: groupi notifications [options] [command]\n\nRead and clear your notifications\n\nOptions:\n  -h, --help                         display help for command\n\nCommands:\n  list [options]                     List notifications (default 20, newest first)\n  count                              Show unread count\n  read <notification-id>\n  unread <notification-id>\n  read-all\n  read-event <event-id>\n  read-post <post-id>\n  clear [options] <notification-id>\n  clear-all [options]\n  help [command]                     display help for command\n"
+    },
+    {
+      "path": "groupi notifications list",
+      "help": "Usage: groupi notifications list [options]\n\nList notifications (default 20, newest first)\n\nOptions:\n  --unread           Only unread notifications\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi notifications count",
+      "help": "Usage: groupi notifications count [options]\n\nShow unread count\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications read",
+      "help": "Usage: groupi notifications read [options] <notification-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications unread",
+      "help": "Usage: groupi notifications unread [options] <notification-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications read-all",
+      "help": "Usage: groupi notifications read-all [options]\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications read-event",
+      "help": "Usage: groupi notifications read-event [options] <event-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications read-post",
+      "help": "Usage: groupi notifications read-post [options] <post-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications clear",
+      "help": "Usage: groupi notifications clear [options] <notification-id>\n\nOptions:\n  --yes       Confirm permanently clearing notifications\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi notifications clear-all",
+      "help": "Usage: groupi notifications clear-all [options]\n\nOptions:\n  --yes       Confirm permanently clearing notifications\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts",
+      "help": "Usage: groupi posts [options] [command]\n\nManage event discussions\n\nOptions:\n  -h, --help             display help for command\n\nCommands:\n  mute <post-id>         Mute discussion notifications\n  unmute <post-id>       Unmute discussion notifications\n  mute-status <post-id>  Inspect discussion notifications\n  help [command]         display help for command\n"
+    },
+    {
+      "path": "groupi posts mute",
+      "help": "Usage: groupi posts mute [options] <post-id>\n\nMute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts unmute",
+      "help": "Usage: groupi posts unmute [options] <post-id>\n\nUnmute discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi posts mute-status",
+      "help": "Usage: groupi posts mute-status [options] <post-id>\n\nInspect discussion notifications\n\nOptions:\n  -h, --help  display help for command\n"
+    }
+  ]
+}

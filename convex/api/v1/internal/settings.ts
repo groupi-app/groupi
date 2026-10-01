@@ -1,5 +1,9 @@
+import {
+  notificationMethodValidator,
+  saveNotificationSettingsForPerson,
+} from '../../../settings/mutations';
 import { internalQuery, internalMutation } from '../../../_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
 
 /**
@@ -17,8 +21,8 @@ export const getPrivacySettings = internalQuery({
       .first();
 
     return {
-      allowFriendRequestsFrom: settings?.allowFriendRequestsFrom ?? null,
-      allowEventInvitesFrom: settings?.allowEventInvitesFrom ?? null,
+      allowFriendRequestsFrom: settings?.allowFriendRequestsFrom ?? 'EVERYONE',
+      allowEventInvitesFrom: settings?.allowEventInvitesFrom ?? 'EVERYONE',
     };
   },
 });
@@ -89,8 +93,8 @@ export const updatePrivacySettings = internalMutation({
       .first();
 
     return {
-      allowFriendRequestsFrom: updated?.allowFriendRequestsFrom ?? null,
-      allowEventInvitesFrom: updated?.allowEventInvitesFrom ?? null,
+      allowFriendRequestsFrom: updated?.allowFriendRequestsFrom ?? 'EVERYONE',
+      allowEventInvitesFrom: updated?.allowEventInvitesFrom ?? 'EVERYONE',
     };
   },
 });
@@ -147,5 +151,32 @@ export const getNotificationSettings = internalQuery({
         enabled: ts.enabled,
       })),
     };
+  },
+});
+
+export const saveNotificationSettings = internalMutation({
+  args: {
+    personId: v.id('persons'),
+    notificationMethods: v.array(
+      v.object({
+        ...notificationMethodValidator.fields,
+        id: v.optional(v.string()),
+      })
+    ),
+  },
+  returns: v.object({ success: v.boolean() }),
+  handler: async (ctx, { personId, notificationMethods }) => {
+    const methods = notificationMethods.map(method => {
+      const id = method.id
+        ? ctx.db.normalizeId('notificationMethods', method.id)
+        : undefined;
+      if (method.id && !id)
+        throw new ConvexError({
+          code: 'VALIDATION_ERROR',
+          message: 'Provide valid notification method IDs.',
+        });
+      return { ...method, id: id ?? undefined };
+    });
+    return saveNotificationSettingsForPerson(ctx, personId, methods);
   },
 });

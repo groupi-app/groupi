@@ -19,22 +19,22 @@ staging checks, and production deployment status distinct.
 | Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246       |
 | Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Verified; merged in #247          |
 | Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Verified; merged in #248          |
-| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Verified; PR #249                 |
-| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Implemented; verification pending |
+| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Verified; merged in #249          |
+| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Verified; merged in #250          |
 | First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
-| Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Pending                           |
+| Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Implemented; verification pending |
 | Event posts                                                   | Create/read/edit/delete, text/Markdown/explicit sanitized HTML, validated mentions, notifications, shared limits and legacy-content preservation | [#230](https://github.com/groupi-app/groupi/issues/230) | Pending                           |
 | Discussion replies                                            | Create/read/edit/delete with the same content, permission, mention, notification and legacy-limit rules                                          | [#231](https://github.com/groupi-app/groupi/issues/231) | Pending                           |
 | Post/reply file attachments                                   | Local upload, list/remove, ownership validation, atomic submission and orphan cleanup                                                            | [#232](https://github.com/groupi-app/groupi/issues/232) | Pending                           |
 | Event covers and account avatars                              | Image upload, replacement/removal, distinct media rules, ownership and cleanup                                                                   | [#233](https://github.com/groupi-app/groupi/issues/233) | Pending                           |
-| Friendships and blocked users                                 | Requests, acceptance/decline/cancellation, friendship list/removal, block/unblock and privacy side effects                                       | [#234](https://github.com/groupi-app/groupi/issues/234) | Pending                           |
-| Profile and preferences; security-sensitive account actions   | Profile fields, privacy, notification/theme preferences and the approved browser handoffs below                                                  | [#235](https://github.com/groupi-app/groupi/issues/235) | Pending                           |
-| Existing event add-on configuration                           | Enable/disable/inspect/configure bring lists, questionnaires, reminders, Discord and existing custom add-ons with app lifecycle rules            | [#236](https://github.com/groupi-app/groupi/issues/236) | Pending                           |
+| Friendships and blocked users                                 | Requests, acceptance/decline/cancellation, friendship list/removal, block/unblock and privacy side effects                                       | [#234](https://github.com/groupi-app/groupi/issues/234) | Implemented; verification pending |
+| Profile and preferences; security-sensitive account actions   | Profile fields, privacy, notification/theme preferences and the approved browser handoffs below                                                  | [#235](https://github.com/groupi-app/groupi/issues/235) | Implemented; verification pending |
+| Existing event add-on configuration                           | Enable/disable/inspect/configure bring lists, questionnaires, reminders, Discord and existing custom add-ons with app lifecycle rules            | [#236](https://github.com/groupi-app/groupi/issues/236) | Implemented; verification pending |
 | Existing event add-on participation                           | Supported submissions, opt-outs, built-in workflows and custom field actions with participant isolation                                          | [#237](https://github.com/groupi-app/groupi/issues/237) | Pending                           |
 | Everyday interactive planning                                 | Keyboard event/invitation/RSVP screens using shared command services, periodic/manual refresh and stale/offline state                            | [#238](https://github.com/groupi-app/groupi/issues/238) | Pending                           |
 | Everyday interactive discussion                               | Post/reply and attachment workflows, safe editing and documented advanced editor/CLI fallback                                                    | [#239](https://github.com/groupi-app/groupi/issues/239) | Pending                           |
 | Everyday interactive social activity                          | Friends and notifications with shared confirmation, refresh and reconnect behavior                                                               | [#240](https://github.com/groupi-app/groupi/issues/240) | Pending                           |
-| Agent use of supported app workflows                          | Portable usage skill, generated versioned command reference, JSON/error and safe-mutation guidance                                               | [#241](https://github.com/groupi-app/groupi/issues/241) | Pending                           |
+| Agent use of supported app workflows                          | Portable usage skill, generated versioned command reference, JSON/error and safe-mutation guidance                                               | [#241](https://github.com/groupi-app/groupi/issues/241) | Implemented; verification pending |
 | Complete ordinary-user and event-manager release              | Capability audit, installed staging workflows, real OS credential stores, manual TUI checks and public release verification                      | [#242](https://github.com/groupi-app/groupi/issues/242) | Pending                           |
 | Custom add-on definition authoring                            | Definition creation/editing and validated import/export                                                                                          | [#243](https://github.com/groupi-app/groupi/issues/243) | Pending; explicitly deferrable    |
 
@@ -42,8 +42,10 @@ staging checks, and production deployment status distinct.
 
 Passkey setup, linked-account OAuth authorization, and account deletion require
 explicit browser/device handoffs under #235. Headless/JSON commands must return an
-actionable browser-interaction-required error. The handoff is currently pending;
-these exceptions do not imply that commands already exist.
+actionable browser-interaction-required error. The explicit `account passkeys`, `account linked-accounts`, and `account delete`
+commands open the selected profile’s account settings. Headless and JSON usage
+returns `BROWSER_INTERACTION_REQUIRED`; completion still occurs in the browser.
+Live browser/device verification remains pending.
 
 Custom add-on definition creation/editing and import/export (#243) may be deferred
 without blocking core release #242. Enabling, configuring and using existing
@@ -237,7 +239,63 @@ availability into RSVP, manual selection preserved it, and reset/clear retained
 the expected notes and responses. App reads confirmed RSVP/date notifications.
 Fixture events were deleted, CLI credentials revoked and sessions signed out.
 Actual reminder delivery is not established by scheduling tests alone.
-Production deployment remains pending merge.
+PR #249 merged at `7b3b1e5`; post-merge production verification remains separate.
+
+## Parallel capability implementation (#229, #234, #235, #236, #241)
+
+The next CLI batch adds remaining event management (`events discover`, join,
+leave, deletion, membership roles/removal, visibility and permissions), social
+requests/friendships/blocking, account/profile/privacy/notification/theme settings,
+existing add-on configuration and portable agent guidance. Public commands retain
+selected profiles, human/JSON streams, bounded cursor paging, destructive
+confirmation and explicit inspection after uncertain writes. The generated
+Markdown/JSON command reference comes from the actual Commander definitions and
+package version; stale-reference checks run before packing.
+
+Discord guild discovery uses `discord guilds refresh` and paginated
+`discord guilds list`. Refresh checks the selected identity’s linked Discord
+account, manageable guild permissions and bot membership, then replaces only
+that identity’s short-lived authorization cache. Cached results include expiry
+metadata. Account linking remains the explicit browser exception.
+
+App and REST mutations share event lifecycle, friendship/blocking, notification
+settings and theme logic. The batch repairs cross-event member mutations,
+friend-request privacy enforcement, shadowed theme preference routes, foreign
+notification-method/theme references and preservation of omitted webhook
+settings. Existing custom add-ons preserve definition metadata and protected
+webhook fields while permitting app-supported event configuration changes.
+
+Local verification includes real API-key-authenticated REST/domain tests and
+public executable tests. Additional CLI-to-REST HTTP bridge tests exercise real
+Better Auth/router/database behavior for event discovery/join/leave/deletion,
+social requests/notifications/blocking, preference identity isolation and
+questionnaire configuration/reset/cleanup. The bridge translates the in-memory
+test database's synthetic IDs to production-compatible wire identifiers; it
+preserves the authentication and domain operations. Package verification runs
+these bridge suites against the separately installed CLI as well as the public
+command and generated-guidance suites.
+
+These capabilities remain **Implemented; verification pending**. Live staging
+checks with distinct identities, actual account browser/device handoffs,
+independent agent-client installation, hosted OS/runtime results and publication
+remain separate release evidence. The checkout has no `CONVEX_DEPLOYMENT`, so
+`pnpm generate` cannot run; additive API module declarations were updated locally
+and standalone typechecking verifies them. Backend suites run directly without
+the deployment-dependent codegen pre-step. Existing scheduler errors tolerated by
+the backend test configuration remain recorded with final suite results.
+
+Final local checks on 2026-09-30 passed 2,368 assertions: 636 backend, 1,035 web,
+255 mobile, 266 shared and 176 CLI. The separately packed and installed CLI passed
+176 command/guidance tests and eight real authenticated CLI-to-REST bridge tests.
+The six previously recorded backend scheduler errors remain tolerated by its
+existing configuration. An oversubscribed parallel backend run hit five-second
+timeouts and cascading fixture failures; a complete rerun with two workers passed
+all 44 backend files using the normal assertion and timeout settings. Cross-package
+typechecking exposed the mobile type environment's missing `AbortSignal.timeout`;
+the bounded Discord fetch now uses `AbortController` with explicit timer cleanup.
+Independent correctness/spec and security reviews approved after their findings
+were fixed. The final quality gate and commit identify the delivered source; no
+staging, registry or new hosted platform result is inferred from these local runs.
 
 ## Notifications and muting (#227)
 
@@ -253,8 +311,8 @@ backend and 121 executable CLI tests. All 121 CLI tests also passed against the
 separately installed package. The focused backend run passed 69 assertions, and
 both independent reviews approved. `pnpm check` passed after linking the isolated
 worktree's package dependencies. The backend's six previously documented ignored
-scheduler errors remain. Live preview evidence is recorded below; final hosted
-checks and release-note approval remain pending. Tests establish queued-work cleanup and notification suppression, not
+scheduler errors remain. Live preview evidence is recorded below. All hosted
+checks passed on release-note commit `c0a163c`; PR #250 merged at `c3d4ee1`. Tests establish queued-work cleanup and notification suppression, not
 external provider delivery or cancellation of an already-dispatched request.
 
 Integration with #226 passed `pnpm check`, all 2,329 workspace assertions

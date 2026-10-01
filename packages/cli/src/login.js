@@ -58,7 +58,7 @@ export async function authRequest(profile, path, body, key, signal) {
 }
 
 /** @param {string} url */
-async function openBrowser(url) {
+export async function openBrowser(url) {
   const executable =
     process.platform === 'darwin'
       ? 'open'

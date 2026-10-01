@@ -3,7 +3,12 @@ import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
 import { getAddonHandler } from '../../../addons/registry';
 import { dispatchSingleAddonLifecycle } from '../../../addons/lifecycle';
-import { requireDiscordGuildAuthorization } from '../../../discord/authorization';
+import {
+  validatedConfiguration,
+  publicConfiguration,
+  requireConfigurationRole,
+} from './addonConfiguration';
+import { disableAddonConfiguration } from '../../../addons/mutations';
 
 /** Max size for addon config/data payloads (64KB stringified) */
 const MAX_DATA_SIZE = 64 * 1024;
@@ -34,7 +39,7 @@ export const listEventAddons = internalQuery({
       id: c._id,
       addonType: c.addonType,
       enabled: c.enabled,
-      config: c.config,
+      config: publicConfiguration(c.addonType, c.config),
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     }));
@@ -55,20 +60,13 @@ export const enableAddon = internalMutation({
   handler: async (ctx, { eventId, personId, addonType, config }) => {
     const typedEventId = eventId as Id<'events'>;
 
-    const handler = getAddonHandler(addonType);
-    if (!handler) {
-      throw new Error(`Unknown add-on type: ${addonType}`);
-    }
-    if (!handler.validateConfig(config)) {
-      throw new Error(`Invalid config for add-on: ${addonType}`);
-    }
-
-    validateDataSize(config);
-    await requireDiscordGuildAuthorization(
+    config = await validatedConfiguration(
       ctx,
+      typedEventId,
       personId as Id<'persons'>,
       addonType,
-      config
+      config,
+      true
     );
 
     const now = Date.now();
@@ -101,8 +99,11 @@ export const enableAddon = internalMutation({
       ctx,
       typedEventId,
       addonType,
-      'onEnabled',
-      config
+      existing?.enabled ? 'onConfigUpdated' : 'onEnabled',
+      config,
+      existing?.config,
+      undefined,
+      personId as Id<'persons'>
     );
 
     return { success: true };
@@ -116,34 +117,17 @@ export const disableAddon = internalMutation({
   args: {
     eventId: v.string(),
     addonType: v.string(),
+    personId: v.string(),
   },
-  handler: async (ctx, { eventId, addonType }) => {
+  handler: async (ctx, { eventId, addonType, personId }) => {
     const typedEventId = eventId as Id<'events'>;
 
-    const existing = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event_addon', q =>
-        q.eq('eventId', typedEventId).eq('addonType', addonType)
-      )
-      .first();
-
-    if (!existing || !existing.enabled) {
-      return { success: true };
-    }
-
-    await ctx.db.patch(existing._id, {
-      enabled: false,
-      updatedAt: Date.now(),
-    });
-
-    await dispatchSingleAddonLifecycle(
+    await requireConfigurationRole(
       ctx,
       typedEventId,
-      addonType,
-      'onDisabled'
+      personId as Id<'persons'>
     );
-
-    return { success: true };
+    return disableAddonConfiguration(ctx, typedEventId, addonType);
   },
 });
 
@@ -160,20 +144,13 @@ export const updateAddonConfig = internalMutation({
   handler: async (ctx, { eventId, personId, addonType, config }) => {
     const typedEventId = eventId as Id<'events'>;
 
-    const handler = getAddonHandler(addonType);
-    if (!handler) {
-      throw new Error(`Unknown add-on type: ${addonType}`);
-    }
-    if (!handler.validateConfig(config)) {
-      throw new Error(`Invalid config for add-on: ${addonType}`);
-    }
-
-    validateDataSize(config);
-    await requireDiscordGuildAuthorization(
+    config = await validatedConfiguration(
       ctx,
+      typedEventId,
       personId as Id<'persons'>,
       addonType,
-      config
+      config,
+      false
     );
 
     const existing = await ctx.db
@@ -200,7 +177,9 @@ export const updateAddonConfig = internalMutation({
       addonType,
       'onConfigUpdated',
       config,
-      oldConfig
+      oldConfig,
+      undefined,
+      personId as Id<'persons'>
     );
 
     // Return updated config
@@ -209,7 +188,7 @@ export const updateAddonConfig = internalMutation({
       id: updated!._id,
       addonType: updated!.addonType,
       enabled: updated!.enabled,
-      config: updated!.config,
+      config: publicConfiguration(updated!.addonType, updated!.config),
       createdAt: updated!.createdAt,
       updatedAt: updated!.updatedAt,
     };
@@ -388,5 +367,85 @@ export const deleteAddonData = internalMutation({
 
     await ctx.db.delete(entry._id);
     return { success: true };
+  },
+});
+
+/** Existing owned published templates available to attach to an event. */
+export const listPublishedTemplates = internalQuery({
+  args: { personId: v.string() },
+  handler: async (ctx, { personId }) => {
+    const templates = await ctx.db
+      .query('addonTemplates')
+      .withIndex('by_owner_published', q =>
+        q.eq('ownerId', personId as Id<'persons'>).eq('isPublished', true)
+      )
+      .collect();
+    return templates.map(t => ({
+      id: t._id,
+      addonType: `custom:${t._id}`,
+      name: t.name,
+      description: t.description,
+      version: t.version,
+      template: (
+        publicConfiguration(`custom:${t._id}`, {
+          template: t.template,
+        }) as Record<string, unknown>
+      ).template,
+    }));
+  },
+});
+
+export const listEventAddonsPage = internalQuery({
+  args: {
+    eventId: v.string(),
+    limit: v.number(),
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, { eventId, limit, cursor }) => {
+    const page = await ctx.db
+      .query('eventAddonConfigs')
+      .withIndex('by_event', q => q.eq('eventId', eventId as Id<'events'>))
+      .paginate({ numItems: limit, cursor });
+    return {
+      items: page.page.map(c => ({
+        id: c._id,
+        addonType: c.addonType,
+        enabled: c.enabled,
+        config: publicConfiguration(c.addonType, c.config),
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      })),
+      nextCursor: page.isDone ? null : page.continueCursor,
+    };
+  },
+});
+export const listPublishedTemplatesPage = internalQuery({
+  args: {
+    personId: v.string(),
+    limit: v.number(),
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, { personId, limit, cursor }) => {
+    const page = await ctx.db
+      .query('addonTemplates')
+      .withIndex('by_owner_published', q =>
+        q.eq('ownerId', personId as Id<'persons'>).eq('isPublished', true)
+      )
+      .paginate({ numItems: limit, cursor });
+    return {
+      items: page.page.map(t => ({
+        id: t._id,
+        addonType: `custom:${t._id}`,
+        name: t.name,
+        description: t.description,
+        version: t.version,
+        template: (
+          publicConfiguration(`custom:${t._id}`, {
+            template: t.template,
+          }) as Record<string, unknown>
+        ).template,
+      })),
+      nextCursor: page.isDone ? null : page.continueCursor,
+    };
   },
 });

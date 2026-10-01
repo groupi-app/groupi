@@ -364,8 +364,11 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.events.deleteEvent;
-    await ctx.runMutation(deleteFn, { eventId });
+    const deleteFn = internal.events.managementRest.removeEvent;
+    await ctx.runMutation(deleteFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     return c.body(null, 204);
   });

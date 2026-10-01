@@ -119,3 +119,42 @@ export const SearchQuerySchema = z.object({
     description: 'Search query (min 2 characters)',
   }),
 });
+
+export const SocialPageQuerySchema = z
+  .object({
+    pagination: z.literal('cursor').optional(),
+    limit: z
+      .string()
+      .regex(/^\d+$/)
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(100))
+      .optional(),
+    cursor: z.string().min(1).max(8192).optional(),
+  })
+  .refine(
+    value =>
+      value.pagination === 'cursor' ||
+      (value.limit === undefined && value.cursor === undefined),
+    { message: 'Paging requires pagination=cursor.' }
+  );
+export const BlockSummarySchema = z.object({
+  personId: z.string(),
+  userId: z.string(),
+  name: z.string().nullable(),
+  username: z.string().nullable(),
+  image: z.string().nullable(),
+  blockedAt: TimestampSchema,
+});
+
+export const FriendPageResponseSchema = z.object({
+  items: z.array(FriendSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export const RequestPageResponseSchema = z.object({
+  items: z.array(FriendRequestSchema),
+  nextCursor: z.string().nullable(),
+});
+export const BlockPageResponseSchema = z.object({
+  items: z.array(BlockSummarySchema),
+  nextCursor: z.string().nullable(),
+});
