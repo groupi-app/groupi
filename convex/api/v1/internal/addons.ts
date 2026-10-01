@@ -1,7 +1,11 @@
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
-import { getAddonHandler } from '../../../addons/registry';
+import {
+  setAddonDataForPerson,
+  deleteAddonDataForPerson,
+  executeFieldActionsForPerson,
+} from '../../../addons/mutations';
 import { dispatchSingleAddonLifecycle } from '../../../addons/lifecycle';
 import {
   validatedConfiguration,
@@ -9,18 +13,6 @@ import {
   requireConfigurationRole,
 } from './addonConfiguration';
 import { disableAddonConfiguration } from '../../../addons/mutations';
-
-/** Max size for addon config/data payloads (64KB stringified) */
-const MAX_DATA_SIZE = 64 * 1024;
-
-function validateDataSize(data: unknown): void {
-  const size = JSON.stringify(data).length;
-  if (size > MAX_DATA_SIZE) {
-    throw new Error(
-      `Data payload too large (${size} bytes). Maximum is ${MAX_DATA_SIZE} bytes.`
-    );
-  }
-}
 
 /**
  * List all addon configs for an event.
@@ -234,89 +226,22 @@ export const setAddonData = internalMutation({
     personId: v.string(),
   },
   handler: async (ctx, { eventId, addonType, key, data, personId }) => {
-    const typedEventId = eventId as Id<'events'>;
-    const typedPersonId = personId as Id<'persons'>;
-
-    // Verify addon type is registered
-    const handler = getAddonHandler(addonType);
-    if (!handler) {
-      throw new Error(`Unknown add-on type: ${addonType}`);
-    }
-
-    // Verify addon is enabled
-    const addonConfig = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event_addon', q =>
-        q.eq('eventId', typedEventId).eq('addonType', addonType)
-      )
-      .first();
-    if (!addonConfig?.enabled) {
-      throw new Error(`Add-on ${addonType} is not enabled for this event`);
-    }
-
-    validateDataSize(data);
-
-    const now = Date.now();
-
-    const existing = await ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon_key', q =>
-        q.eq('eventId', typedEventId).eq('addonType', addonType).eq('key', key)
-      )
-      .first();
-
-    if (existing) {
-      // Only the creator or a MODERATOR+ can update
-      if (existing.createdBy !== typedPersonId) {
-        // Check role — caller must be MODERATOR+
-        const membership = await ctx.db
-          .query('memberships')
-          .withIndex('by_person_event', q =>
-            q.eq('personId', typedPersonId).eq('eventId', typedEventId)
-          )
-          .first();
-        const roleHierarchy: Record<string, number> = {
-          ORGANIZER: 3,
-          MODERATOR: 2,
-          ATTENDEE: 1,
-        };
-        if (!membership || (roleHierarchy[membership.role] ?? 0) < 2) {
-          throw new Error(
-            'Only the creator or a moderator can update this entry'
-          );
-        }
-      }
-
-      await ctx.db.patch(existing._id, { data, updatedAt: now });
-      return {
-        id: existing._id,
-        key: existing.key,
-        data,
-        createdBy: (existing.createdBy as string) ?? null,
-        createdAt: existing.createdAt,
-        updatedAt: now,
-        created: false,
-      };
-    } else {
-      const id = await ctx.db.insert('addonData', {
-        eventId: typedEventId,
-        addonType,
-        key,
-        data,
-        createdBy: typedPersonId,
-        createdAt: now,
-        updatedAt: now,
-      });
-      return {
-        id,
-        key,
-        data,
-        createdBy: personId,
-        createdAt: now,
-        updatedAt: now,
-        created: true,
-      };
-    }
+    const result = await setAddonDataForPerson(ctx, personId as Id<'persons'>, {
+      eventId: eventId as Id<'events'>,
+      addonType,
+      key,
+      data,
+    });
+    const entry = (await ctx.db.get(result.id))!;
+    return {
+      id: entry._id,
+      key: entry.key,
+      data: entry.data,
+      createdBy: entry.createdBy ?? null,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+      created: result.created,
+    };
   },
 });
 
@@ -331,42 +256,11 @@ export const deleteAddonData = internalMutation({
     personId: v.string(),
   },
   handler: async (ctx, { eventId, addonType, key, personId }) => {
-    const typedEventId = eventId as Id<'events'>;
-    const typedPersonId = personId as Id<'persons'>;
-
-    const entry = await ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon_key', q =>
-        q.eq('eventId', typedEventId).eq('addonType', addonType).eq('key', key)
-      )
-      .first();
-
-    if (!entry) {
-      return { success: true };
-    }
-
-    // Only the creator or MODERATOR+ can delete
-    if (entry.createdBy !== typedPersonId) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', typedPersonId).eq('eventId', typedEventId)
-        )
-        .first();
-      const roleHierarchy: Record<string, number> = {
-        ORGANIZER: 3,
-        MODERATOR: 2,
-        ATTENDEE: 1,
-      };
-      if (!membership || (roleHierarchy[membership.role] ?? 0) < 2) {
-        throw new Error(
-          'Only the creator or a moderator can delete this entry'
-        );
-      }
-    }
-
-    await ctx.db.delete(entry._id);
-    return { success: true };
+    return deleteAddonDataForPerson(ctx, personId as Id<'persons'>, {
+      eventId: eventId as Id<'events'>,
+      addonType,
+      key,
+    });
   },
 });
 
@@ -446,6 +340,164 @@ export const listPublishedTemplatesPage = internalQuery({
         ).template,
       })),
       nextCursor: page.isDone ? null : page.continueCursor,
+    };
+  },
+});
+
+export const participate = internalMutation({
+  args: {
+    eventId: v.string(),
+    personId: v.string(),
+    addonType: v.string(),
+    action: v.string(),
+    data: v.any(),
+    fieldId: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { eventId, personId, addonType, action, data, fieldId }
+  ) => {
+    const eid = eventId as Id<'events'>,
+      pid = personId as Id<'persons'>;
+    const member = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', pid).eq('eventId', eid)
+      )
+      .first();
+    if (!member) throw new Error('Event membership required');
+    const config = await ctx.db
+      .query('eventAddonConfigs')
+      .withIndex('by_event_addon', q =>
+        q.eq('eventId', eid).eq('addonType', addonType)
+      )
+      .first();
+    if (!config?.enabled) throw new Error('Add-on is not enabled');
+    const allowed =
+      addonType === 'reminders'
+        ? ['opt-in', 'opt-out']
+        : addonType === 'questionnaire'
+          ? ['respond', 'clear-response']
+          : addonType === 'bring-list'
+            ? ['claim', 'clear-claims']
+            : addonType.startsWith('custom:')
+              ? [
+                  'respond',
+                  'claim',
+                  'vote',
+                  'toggle',
+                  'execute',
+                  'clear-response',
+                  'clear-claims',
+                ]
+              : [];
+    if (!allowed.includes(action))
+      throw new Error('This add-on does not support that participant action');
+
+    if (action === 'opt-out' || action === 'opt-in') {
+      if (addonType !== 'reminders')
+        throw new Error('Only reminders supports opt-out');
+      const row = await ctx.db
+        .query('addonOptOuts')
+        .withIndex('by_person_event_addon', q =>
+          q.eq('personId', pid).eq('eventId', eid).eq('addonType', addonType)
+        )
+        .first();
+      if (action === 'opt-out' && !row)
+        await ctx.db.insert('addonOptOuts', {
+          personId: pid,
+          eventId: eid,
+          addonType,
+          optedOutAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      if (action === 'opt-in' && row) await ctx.db.delete(row._id);
+      return { isOptedOut: action === 'opt-out' };
+    }
+    if (action === 'execute') {
+      if (!addonType.startsWith('custom:') || !fieldId)
+        throw new Error('Provide a custom action button fieldId');
+      return executeFieldActionsForPerson(ctx, pid, {
+        eventId: eid,
+        addonType,
+        fieldId,
+      });
+    }
+    if (
+      ![
+        'respond',
+        'claim',
+        'vote',
+        'toggle',
+        'clear-response',
+        'clear-claims',
+      ].includes(action)
+    )
+      throw new Error('Unsupported participant action');
+    if ((action === 'vote' || action === 'toggle') && !fieldId)
+      throw new Error('Provide fieldId');
+    const key =
+      action.includes('response') || action === 'respond'
+        ? `response:${personId}`
+        : action.includes('claim')
+          ? `claims:${personId}`
+          : `${action}:${fieldId}:${personId}`;
+    if (action.startsWith('clear-'))
+      return deleteAddonDataForPerson(ctx, pid, {
+        eventId: eid,
+        addonType,
+        key,
+      });
+    return setAddonDataForPerson(ctx, pid, {
+      eventId: eid,
+      addonType,
+      key,
+      data,
+    });
+  },
+});
+
+export const participantDataPage = internalQuery({
+  args: {
+    eventId: v.string(),
+    addonType: v.string(),
+    personId: v.string(),
+    limit: v.number(),
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, { eventId, addonType, personId, limit, cursor }) => {
+    const eid = eventId as Id<'events'>,
+      pid = personId as Id<'persons'>;
+    const member = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', pid).eq('eventId', eid)
+      )
+      .first();
+    if (!member) throw new Error('Event membership required');
+    const page = await ctx.db
+      .query('addonData')
+      .withIndex('by_event_addon', q =>
+        q.eq('eventId', eid).eq('addonType', addonType)
+      )
+      .paginate({ numItems: limit, cursor });
+    const optout = await ctx.db
+      .query('addonOptOuts')
+      .withIndex('by_person_event_addon', q =>
+        q.eq('personId', pid).eq('eventId', eid).eq('addonType', addonType)
+      )
+      .first();
+    return {
+      items: page.page.map(e => ({
+        id: e._id,
+        key: e.key,
+        data: e.data,
+        createdBy: e.createdBy ?? null,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      })),
+      nextCursor: page.isDone ? null : page.continueCursor,
+      isOptedOut: !!optout,
     };
   },
 });

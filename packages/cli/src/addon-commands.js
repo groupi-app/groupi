@@ -1,6 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { CliError } from './errors.js';
 import { getProfile, credential } from './profiles.js';
+import { participate, participationData } from './addon-participation.js';
 import { listAddons, getAddon, changeAddon } from './addons.js';
 
 /** @param {unknown} value */
@@ -93,6 +94,70 @@ export function registerAddonCommands(program, json) {
       );
     });
   }
+  addons
+    .command('data <event-id> <addon-type>')
+    .description('Inspect participant data and submission recovery state')
+    .option('--limit <number>', 'Page size (1–100)', '20')
+    .option('--cursor <cursor>', 'Continue page')
+    .option('--all', 'Retrieve all pages')
+    .action(async (id, type, input) => {
+      const { profile, key } = await connection();
+      output(await participationData(profile, key, id, type, input));
+    });
+  for (const action of [
+    'respond',
+    'claim',
+    'vote',
+    'toggle',
+    'execute',
+    'opt-in',
+    'opt-out',
+    'clear-response',
+    'clear-claims',
+  ]) {
+    addons
+      .command(`${action} <event-id> <addon-type>`)
+      .description(
+        `Participant ${action}; always acts as the authenticated identity`
+      )
+      .option(
+        '--data <json>',
+        'Answers/claims object, vote {options:[]}, or toggle {enabled:boolean}'
+      )
+      .option(
+        '--data-file <path>',
+        'Read submission JSON from a local file (64 KiB maximum)'
+      )
+      .option('--field <id>', 'Custom vote, toggle, or action-button field ID')
+      .option('--yes', 'Confirm clearing data or executing configured actions')
+      .action(async (id, type, input) => {
+        if (input.data !== undefined && input.dataFile !== undefined)
+          throw new CliError('USAGE', 'Choose --data or --data-file.', 2);
+        let data = null;
+        if (input.data !== undefined) data = parse(input.data, '--data');
+        if (input.dataFile !== undefined) {
+          try {
+            const info = await stat(input.dataFile);
+            if (!info.isFile() || info.size > 65536) throw Error();
+            data = parse(await readFile(input.dataFile, 'utf8'), '--data-file');
+          } catch {
+            throw new CliError(
+              'USAGE',
+              '--data-file must be a readable JSON file of at most 64 KiB.',
+              2
+            );
+          }
+        }
+        const { profile, key } = await connection();
+        output(
+          await participate(profile, key, id, type, action, data, {
+            fieldId: input.field,
+            yes: input.yes,
+            json,
+          })
+        );
+      });
+  }
   async function connection() {
     const opts = program.opts();
     const profile = await getProfile(opts.profile);
@@ -105,6 +170,8 @@ export function registerAddonCommands(program, json) {
       return;
     }
     const result = /** @type {Record<string,unknown>} */ (value);
+    if (typeof result.isOptedOut === 'boolean')
+      process.stdout.write(`Opted out: ${result.isOptedOut ? 'yes' : 'no'}\n`);
     const rows = Array.isArray(result.items) ? result.items : [result];
     process.stdout.write(
       rows.length

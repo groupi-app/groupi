@@ -1,3 +1,12 @@
+import type * as api_v2_routes_images from "../api/v2/routes/images.js";
+import type * as files_images from "../files/images.js";
+import type * as files_imageRules from "../files/imageRules.js";
+import type * as addons_participation from "../addons/participation.js";
+import type * as api_v2_routes_discussion from "../api/v2/routes/discussion.js";
+import type * as discussion_rest from "../discussion/rest.js";
+import type * as lib_discussionContent from "../lib/discussionContent.js";
+import type * as api_v2_routes_uploads from "../api/v2/routes/uploads.js";
+import type * as files_uploads from "../files/uploads.js";
 /* eslint-disable */
 /**
  * Generated `api` utility.
@@ -234,6 +243,16 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "api/v2/routes/images": typeof api_v2_routes_images;
+  "files/images": typeof files_images;
+  "files/imageRules": typeof files_imageRules;
+  "addons/participation": typeof addons_participation;
+
+  "api/v2/routes/discussion": typeof api_v2_routes_discussion;
+  "discussion/rest": typeof discussion_rest;
+  "lib/discussionContent": typeof lib_discussionContent;
+  "api/v2/routes/uploads": typeof api_v2_routes_uploads;
+  "files/uploads": typeof files_uploads;
   "accounts/mutations": typeof accounts_mutations;
   "accounts/queries": typeof accounts_queries;
   "addonTemplates/mutations": typeof addonTemplates_mutations;

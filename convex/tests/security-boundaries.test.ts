@@ -129,8 +129,18 @@ describe('attachment boundaries', () => {
     );
     const { storageId, size } = await t.run(async ctx => {
       const file = new Blob(['safe attachment'], { type: 'text/plain' });
+      const storageId = await ctx.storage.store(file);
+      await ctx.db.insert('uploads', {
+        storageId,
+        personId: organizer.personId,
+        purpose: 'attachment',
+        mimeType: 'text/plain',
+        size: file.size,
+        createdAt: Date.now(),
+        claimed: false,
+      });
       return {
-        storageId: await ctx.storage.store(file),
+        storageId,
         size: file.size,
       };
     });

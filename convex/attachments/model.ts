@@ -1,8 +1,9 @@
-import { type Infer, v } from 'convex/values';
+import { type Infer, v, ConvexError } from 'convex/values';
 
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
-import { requireEventRole } from '../auth';
+import { requireDiscussionRole } from '../lib/discussionAccess';
+import { claimUpload } from '../files/uploads';
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 10;
@@ -81,29 +82,50 @@ export async function requireAttachmentParentAccess(
     (parent.postId && parent.replyId) ||
     (!parent.postId && !parent.replyId)
   ) {
-    throw new Error('Exactly one of postId or replyId must be specified');
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Exactly one of postId or replyId must be specified',
+    });
   }
 
   if (parent.postId) {
     const post = await ctx.db.get(parent.postId);
-    if (!post) throw new Error('Attachment parent not found');
+    if (!post)
+      throw new ConvexError({
+        code: 'NOT_FOUND',
+        message: 'Attachment parent not found',
+      });
 
-    await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+    await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
     if (requireParentAuthor && post.authorId !== personId) {
-      throw new Error('You can only attach files to your own content');
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'You can only attach files to your own content',
+      });
     }
     return;
   }
 
   const reply = await ctx.db.get(parent.replyId!);
-  if (!reply) throw new Error('Attachment parent not found');
+  if (!reply)
+    throw new ConvexError({
+      code: 'NOT_FOUND',
+      message: 'Attachment parent not found',
+    });
 
   const post = await ctx.db.get(reply.postId);
-  if (!post) throw new Error('Attachment parent not found');
+  if (!post)
+    throw new ConvexError({
+      code: 'NOT_FOUND',
+      message: 'Attachment parent not found',
+    });
 
-  await requireEventRole(ctx, post.eventId, 'ATTENDEE');
+  await requireDiscussionRole(ctx, post.eventId, personId, 'ATTENDEE');
   if (requireParentAuthor && reply.authorId !== personId) {
-    throw new Error('You can only attach files to your own content');
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: 'You can only attach files to your own content',
+    });
   }
 }
 
@@ -112,10 +134,17 @@ async function requireValidStoredFile(
   attachment: AttachmentInput
 ) {
   const storedFile = await ctx.db.system.get('_storage', attachment.storageId);
-  if (!storedFile) throw new Error('Uploaded file not found');
+  if (!storedFile)
+    throw new ConvexError({
+      code: 'NOT_FOUND',
+      message: 'Uploaded file not found',
+    });
 
   if (storedFile.size !== attachment.size) {
-    throw new Error('Uploaded file size does not match');
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Uploaded file size does not match',
+    });
   }
   if (storedFile.size > MAX_FILE_SIZE) {
     throw new Error(
@@ -126,12 +155,18 @@ async function requireValidStoredFile(
     storedFile.contentType &&
     storedFile.contentType !== attachment.mimeType
   ) {
-    throw new Error('Uploaded file type does not match');
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Uploaded file type does not match',
+    });
   }
 
   const effectiveMimeType = storedFile.contentType || attachment.mimeType;
   if (!isAllowedMimeType(effectiveMimeType)) {
-    throw new Error(`File type ${effectiveMimeType} is not allowed`);
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: `File type ${effectiveMimeType} is not allowed`,
+    });
   }
 }
 
@@ -144,7 +179,10 @@ async function requireUnclaimedStorage(
     .withIndex('by_storage', q => q.eq('storageId', storageId))
     .first();
   if (existingAttachment) {
-    throw new Error('Uploaded file is already attached');
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: 'Uploaded file is already attached',
+    });
   }
 }
 
@@ -158,7 +196,10 @@ export async function createAttachmentsForParent(
   await requireAttachmentParentAccess(ctx, args, args.personId, true);
 
   if (args.attachments.length > MAX_ATTACHMENTS) {
-    throw new Error(`Maximum of ${MAX_ATTACHMENTS} attachments allowed`);
+    throw new ConvexError({
+      code: 'VALIDATION_ERROR',
+      message: `Maximum of ${MAX_ATTACHMENTS} attachments allowed`,
+    });
   }
 
   const existingAttachments = args.postId
@@ -180,11 +221,28 @@ export async function createAttachmentsForParent(
   const storageIds = new Set<string>();
   for (const attachment of args.attachments) {
     if (storageIds.has(attachment.storageId)) {
-      throw new Error('The same uploaded file cannot be attached twice');
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'The same uploaded file cannot be attached twice',
+      });
     }
     storageIds.add(attachment.storageId);
     await requireValidStoredFile(ctx, attachment);
     await requireUnclaimedStorage(ctx, attachment.storageId);
+    const upload = await claimUpload(
+      ctx,
+      args.personId,
+      attachment.storageId,
+      'attachment'
+    );
+    if (
+      upload.mimeType !== attachment.mimeType ||
+      upload.size !== attachment.size
+    )
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'Upload metadata mismatch',
+      });
   }
 
   const createdAt = Date.now();
@@ -227,15 +285,25 @@ export async function deleteAttachmentsForParent(
   );
 
   for (const attachment of attachments) {
-    if (!attachment) throw new Error('Attachment not found');
+    if (!attachment)
+      throw new ConvexError({
+        code: 'NOT_FOUND',
+        message: 'Attachment not found',
+      });
     if (attachment.uploaderId !== args.personId) {
-      throw new Error('You can only delete your own attachments');
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'You can only delete your own attachments',
+      });
     }
     if (
       attachment.postId !== args.postId ||
       attachment.replyId !== args.replyId
     ) {
-      throw new Error('Attachment does not belong to this content');
+      throw new ConvexError({
+        code: 'VALIDATION_ERROR',
+        message: 'Attachment does not belong to this content',
+      });
     }
   }
 

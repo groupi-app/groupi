@@ -1,3 +1,4 @@
+import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
@@ -6,6 +7,7 @@ import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
 import { validateApiKey, getApiKey } from '../v1/middleware/auth';
 import { createCliAuthRoutes } from './routes/cliAuth';
+import { createImageRoutes } from './routes/images';
 import { createEventRoutes } from './routes/events';
 import { createEventManagementRoutes } from './routes/eventManagement';
 import { createPostRoutes } from './routes/posts';
@@ -234,10 +236,13 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        discussion: { version: 1 },
         eventWrites: { version: 1 },
+        imageWrites: { version: 1 },
         eventManagement: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
+        addonParticipation: { version: 1 },
         discordGuilds: { version: 1 },
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
@@ -252,6 +257,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   // Mount route groups
   app.route('/', createEventManagementRoutes());
   app.route('/', createEventRoutes());
+  app.route('/', createImageRoutes());
   app.route('/', createPostRoutes());
   app.route('/', createReplyRoutes());
   app.route('/', createMemberRoutes());
@@ -268,6 +274,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createInviteRoutes());
   app.route('/', createReportRoutes());
   app.route('/', createAdminRoutes());
+  app.route('/', createUploadRoutes());
 
   // Register OpenAPI security scheme
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {

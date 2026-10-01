@@ -64,6 +64,7 @@
   "dependencies": {
     "chrono-node": "^2.9.0",
     "clsx": "^2.1.1",
+    "htmlparser2": "8.0.2",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

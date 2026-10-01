@@ -160,7 +160,7 @@ export default function EditEventInfo({
 
       if (imageFile) {
         // Upload new file
-        const uploadResult = await uploadFile(imageFile);
+        const uploadResult = await uploadFile(imageFile, 'cover');
         if (!uploadResult) {
           toast.error('Failed to upload image.');
           return;

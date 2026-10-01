@@ -17,6 +17,7 @@ export async function cliRestBridge() {
   const wireIds = new Map<string, string>();
   const fixtureIds = new Map<string, string>();
   function wireId(value: string) {
+    if (value.startsWith('custom:')) return `custom:${wireId(value.slice(7))}`;
     if (!/^\d+;[A-Za-z_][A-Za-z0-9_]*$/.test(value)) return value;
     let wire = wireIds.get(value);
     if (!wire) {
@@ -30,7 +31,9 @@ export async function cliRestBridge() {
     if (typeof value === 'string')
       return direction === 'wire'
         ? wireId(value)
-        : (fixtureIds.get(value) ?? value);
+        : value.startsWith('custom:')
+          ? `custom:${fixtureIds.get(value.slice(7)) ?? value.slice(7)}`
+          : (fixtureIds.get(value) ?? value);
     if (Array.isArray(value))
       return value.map(item => translate(item, direction));
     if (value && typeof value === 'object')
@@ -45,8 +48,9 @@ export async function cliRestBridge() {
   const config = await mkdtemp(join(tmpdir(), 'groupi-cli-rest-'));
   const server = createServer(async (req, res) => {
     try {
-      let body = '';
-      for await (const chunk of req) body += chunk;
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      const body = Buffer.concat(chunks);
       const headers = new Headers();
       for (const [name, value] of Object.entries(req.headers)) {
         if (value !== undefined)
@@ -57,16 +61,24 @@ export async function cliRestBridge() {
         .split('/')
         .map(segment =>
           encodeURIComponent(
-            fixtureIds.get(decodeURIComponent(segment)) ??
-              decodeURIComponent(segment)
+            String(translate(decodeURIComponent(segment), 'fixture'))
           )
         )
         .join('/');
+      const cursor = url.searchParams.get('cursor');
+      if (cursor && fixtureIds.has(cursor))
+        url.searchParams.set('cursor', fixtureIds.get(cursor)!);
       const response = await t.fetch(url.pathname + url.search, {
         method: req.method,
         headers,
-        ...(body
-          ? { body: JSON.stringify(translate(JSON.parse(body), 'fixture')) }
+        ...(body.length
+          ? {
+              body: headers.get('content-type')?.includes('application/json')
+                ? JSON.stringify(
+                    translate(JSON.parse(body.toString()), 'fixture')
+                  )
+                : body,
+            }
           : {}),
       });
       res.writeHead(response.status, Object.fromEntries(response.headers));

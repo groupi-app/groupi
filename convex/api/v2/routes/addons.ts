@@ -95,6 +95,81 @@ export function createAddonRoutes() {
     return c.json(result, 200);
   });
 
+  const participationRoute = createRoute({
+    method: 'post',
+    path: '/events/{eventId}/addons/{addonType}/participation',
+    tags: ['Add-ons'],
+    summary:
+      'Perform an app-supported participant action as the current identity',
+    security: [{ apiKey: [] }],
+    request: {
+      params: EventAddonParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: z
+              .object({
+                action: z.enum([
+                  'respond',
+                  'claim',
+                  'vote',
+                  'toggle',
+                  'execute',
+                  'opt-in',
+                  'opt-out',
+                  'clear-response',
+                  'clear-claims',
+                ]),
+                data: z.unknown().optional(),
+                fieldId: z.string().min(1).optional(),
+              })
+              .strict(),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Participant action completed',
+        content: { 'application/json': { schema: z.unknown() } },
+      },
+      400: {
+        description: 'Invalid submission',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+  app.openapi(participationRoute, async c => {
+    const { eventId, addonType } = c.req.valid('param');
+    await requireEventMembership(c.get('ctx'), eventId, c.get('personId'));
+    try {
+      const input = c.req.valid('json');
+      const result = await c
+        .get('ctx')
+        .runMutation(internal.api.v1.internal.addons.participate, {
+          ...input,
+          data: input.data ?? null,
+          eventId,
+          addonType,
+          personId: c.get('personId'),
+        });
+      return c.json(result, 200);
+    } catch (error) {
+      return c.json(
+        {
+          error: {
+            code: 'BAD_REQUEST',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Participant action failed',
+          },
+        },
+        400
+      );
+    }
+  });
+
   // ===== ADDON CONFIG ROUTES =====
 
   // GET /events/:eventId/addons - List all addon configs
@@ -412,13 +487,21 @@ export function createAddonRoutes() {
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
+      query: paging,
     },
     responses: {
       200: {
         description: 'List of data entries',
         content: {
           'application/json': {
-            schema: AddonDataListResponseSchema,
+            schema: z.union([
+              AddonDataListResponseSchema,
+              z.object({
+                items: AddonDataListResponseSchema,
+                nextCursor: z.string().nullable(),
+                isOptedOut: z.boolean(),
+              }),
+            ]),
           },
         },
       },
@@ -451,7 +534,20 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const getDataFn = internal.api.v1.internal.addons.getAddonData;
-    const result = await ctx.runQuery(getDataFn, { eventId, addonType });
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await ctx.runQuery(
+            internal.api.v1.internal.addons.participantDataPage,
+            {
+              eventId,
+              addonType,
+              personId,
+              limit: query.limit,
+              cursor: query.cursor ?? null,
+            }
+          )
+        : await ctx.runQuery(getDataFn, { eventId, addonType });
 
     return c.json(result, 200);
   });
@@ -463,7 +559,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Set add-on data',
     description:
-      'Create or update a data entry for an add-on. The key is used for upsert. Updating an existing entry requires being the creator or MODERATOR+.',
+      'Create or update a validated participant entry for an enabled add-on. Response, claims, vote and toggle keys must belong to the authenticated identity, including for moderators. Dispatches the same submission lifecycle as the apps.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonDataKeyParamSchema,
@@ -561,7 +657,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Delete add-on data',
     description:
-      'Delete a data entry for an add-on. Requires being the creator or MODERATOR+.',
+      'Clear an owned participant record for an enabled add-on. Other participants and system records cannot be deleted.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonDataKeyParamSchema,

@@ -1,3 +1,4 @@
+import { discussionLengthAllowed } from '@groupi/shared';
 import { useState, useMemo, useEffect } from 'react';
 import {
   View,
@@ -148,7 +149,13 @@ export default function PostDetailScreen() {
   const userRole = postDetail.userMembership?.role;
   const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
   const hasEditingReplyText = hasRichTextContent(editingReplyText);
-  const isEditingReplyTooLong = editingReplyText.length > MAX_REPLY_LENGTH;
+  const isEditingReplyTooLong = !discussionLengthAllowed(
+    editingReplyText,
+    MAX_REPLY_LENGTH,
+    replies.find(
+      (reply: { _id: string; text: string }) => reply._id === editingReplyId
+    )?.text
+  );
 
   function handlePostActions() {
     const options: ActionMenuOption[] = [];

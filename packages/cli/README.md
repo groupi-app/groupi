@@ -7,7 +7,14 @@ Development milestones [#222](https://github.com/groupi-app/groupi/issues/222),
 [#226](https://github.com/groupi-app/groupi/issues/226). The package can be packed
 and installed locally; public registry publication belongs to #228. Supports Node 22 and 24 on macOS, Windows, and Linux.
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
-compiler, React, Expo, or Next.js runtime.
+compiler, Expo, or Next.js runtime. The optional terminal interface uses Ink and
+React, loaded when the interface opens.
+
+Run `groupi tui --profile <name>` for keyboard-driven planning, discussions,
+friends and notifications. A bare `groupi` also opens it in an interactive
+terminal. See the [terminal guide](./docs/terminal.md) for keyboard controls,
+confirmations, refresh behavior and advanced-command fallbacks. Piped/JSON calls
+never open the interface; `--non-interactive` explicitly disables implicit launch.
 
 ## Agent guidance and command reference
 
@@ -457,3 +464,21 @@ These commands require the server health capability
 operation so unsupported pagination or controls cannot silently appear to work.
 Existing REST clients retain the unpaginated array without `pagination=cursor`,
 and REST v1 keeps its success envelope.
+
+### Covers and avatars
+
+Use `events cover set <event-id> --file cover.png` or
+`account avatar set --file avatar.jpg` to upload and replace an image. Both
+accept the app image formats (JPEG, PNG, GIF, WebP, SVG) up to 10 MiB; documents,
+video, and audio attachment formats are not images. The server verifies the
+image format and ownership. SVG images cannot contain executable or external
+content. Avatar cropping remains an optional preparation step; the CLI does not
+silently crop or transform your file.
+
+Cover uploads accept `--focal-x 0.5 --focal-y 0.5` with coordinates in [0,1].
+Replacing a cover without coordinates clears the previous focal point.
+Use `events cover get <event-id>` or `account avatar get` to inspect the result.
+The corresponding `remove` commands require confirmation (`--yes` for scripts).
+Image writes are not retried automatically. After an uncertain outcome, inspect
+before repeating. Failed replacements preserve the current image and discard
+only the caller's unclaimed upload; abandoned uploads expire after 24 hours.

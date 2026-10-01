@@ -1,3 +1,6 @@
+import { claimUpload } from '../files/uploads';
+import { validateImageMetadata } from '../files/imageRules';
+import { saveAvatarForUser } from '../files/images';
 import { mutation } from '../_generated/server';
 import { components } from '../_generated/api';
 import type { PaginationOptions, PaginationResult } from 'convex/server';
@@ -96,14 +99,33 @@ export const updateUserProfile = mutation({
     const userUpdates: Record<string, unknown> = {};
     if (args.name !== undefined) userUpdates.name = args.name;
 
-    // Handle image updates
+    // Storage avatars share REST ownership and lifecycle checks. Never swallow
+    // failures: the mutation must leave the previous avatar intact.
     if (args.clearImage) {
-      userUpdates.image = null;
+      await saveAvatarForUser(ctx, person.userId, null, null);
     } else if (args.imageStorageId !== undefined) {
-      // New image uploaded via Convex storage - get URL
-      const imageUrl = await ctx.storage.getUrl(args.imageStorageId);
-      userUpdates.image = imageUrl;
+      const metadata = await ctx.db.system.get(args.imageStorageId);
+      if (!metadata) throw new Error('Uploaded avatar not found');
+      const upload = await claimUpload(
+        ctx,
+        person._id,
+        args.imageStorageId,
+        'avatar'
+      );
+      validateImageMetadata('avatar', upload.mimeType, metadata.size);
+      if (
+        metadata.size !== upload.size ||
+        (metadata.contentType && metadata.contentType !== upload.mimeType)
+      )
+        throw new Error('Avatar metadata does not match the uploaded image');
+      await saveAvatarForUser(
+        ctx,
+        person.userId,
+        args.imageStorageId,
+        await ctx.storage.getUrl(args.imageStorageId)
+      );
     } else if (args.image !== undefined) {
+      // Existing external avatar URL support remains separate from owned uploads.
       userUpdates.image = args.image;
     }
 

@@ -315,7 +315,11 @@ export function createPostRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const updateFn = internal.api.v1.internal.posts.updatePost;
-    const result = await ctx.runMutation(updateFn, { postId, ...body });
+    const result = await ctx.runMutation(updateFn, {
+      postId,
+      personId,
+      ...body,
+    });
 
     return c.json(
       {
@@ -391,7 +395,7 @@ export function createPostRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const deleteFn = internal.api.v1.internal.posts.deletePost;
-    await ctx.runMutation(deleteFn, { postId });
+    await ctx.runMutation(deleteFn, { postId, personId });
 
     return c.json(
       {

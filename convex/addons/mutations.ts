@@ -7,6 +7,7 @@ import { getAddonHandler } from './registry';
 import { dispatchSingleAddonLifecycle } from './lifecycle';
 import { createTrustedAddonContext } from './context';
 import type { AutomationAction } from './automations/types';
+import { validateParticipationData, claimItems } from './participation';
 import { ADDON_TYPES } from './types';
 import { requireDiscordGuildAuthorization } from '../discord/authorization';
 
@@ -32,7 +33,7 @@ const BUILT_IN_ADDON_TYPES = [
 type BuiltInAddonType = (typeof BUILT_IN_ADDON_TYPES)[number];
 
 function validateDataSize(data: unknown): void {
-  const size = JSON.stringify(data).length;
+  const size = new TextEncoder().encode(JSON.stringify(data)).byteLength;
   if (size > MAX_DATA_SIZE) {
     throw new Error(
       `Data payload too large (${size} bytes). Maximum is ${MAX_DATA_SIZE} bytes.`
@@ -91,6 +92,13 @@ function requireOwnedReservedKey(key: string, personId: string): boolean {
       }
       return true;
     }
+  }
+  if (/^(vote|toggle):/.test(key)) {
+    if (!key.endsWith(`:${personId}`))
+      throw new Error(
+        'Reserved add-on data key must belong to the current user'
+      );
+    return true;
   }
   return false;
 }
@@ -498,96 +506,135 @@ export const setAddonData = mutation({
     data: v.any(),
   },
   returns: v.object({ id: v.id('addonData'), created: v.boolean() }),
-  handler: async (ctx, { eventId, addonType, key, data }) => {
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
+    return setAddonDataForPerson(ctx, person._id, args);
+  },
+});
 
-    // Verify addon type is registered
-    const handler = getAddonHandler(addonType);
-    if (!handler) {
-      throw new Error(`Unknown add-on type: ${addonType}`);
-    }
+export async function setAddonDataForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  {
+    eventId,
+    addonType,
+    key,
+    data,
+  }: { eventId: Id<'events'>; addonType: string; key: string; data: unknown }
+) {
+  // Verify addon type is registered
+  const handler = getAddonHandler(addonType);
+  if (!handler) {
+    throw new Error(`Unknown add-on type: ${addonType}`);
+  }
 
-    // Verify membership
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
+  // Verify membership
+  const membership = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', personId).eq('eventId', eventId)
+    )
+    .first();
+  if (!membership) {
+    throw new Error('You are not a member of this event');
+  }
 
-    const isOwnedReservedKey = requireOwnedReservedKey(key, person._id);
+  const isOwnedReservedKey = requireOwnedReservedKey(key, personId);
 
-    // Verify addon is enabled
-    const addonConfig = await ctx.db
-      .query('eventAddonConfigs')
+  // Verify addon is enabled
+  const addonConfig = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event_addon', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType)
+    )
+    .first();
+  if (!addonConfig?.enabled) {
+    throw new Error(`Add-on ${addonType} is not enabled for this event`);
+  }
+
+  validateParticipationData(addonType, addonConfig.config, key, data, personId);
+
+  // Validate data size
+  validateDataSize(data);
+  if (key === `claims:${personId}`) {
+    const entries = await ctx.db
+      .query('addonData')
       .withIndex('by_event_addon', q =>
         q.eq('eventId', eventId).eq('addonType', addonType)
       )
-      .first();
-    if (!addonConfig?.enabled) {
-      throw new Error(`Add-on ${addonType} is not enabled for this event`);
+      .collect();
+    for (const item of claimItems(addonType, addonConfig.config)) {
+      const requested = (data as Record<string, number>)[item.id] ?? 0;
+      const others = entries
+        .filter(e => e.key.startsWith('claims:') && e.key !== key)
+        .reduce(
+          (total, e) =>
+            total +
+            (typeof e.data?.[item.id] === 'number' ? e.data[item.id] : 0),
+          0
+        );
+      if (requested > 0 && requested + others > item.quantity)
+        throw new Error(`Not enough remaining quantity for ${item.id}`);
+    }
+  }
+
+  const now = Date.now();
+
+  // Check for existing entry
+  const existing = await ctx.db
+    .query('addonData')
+    .withIndex('by_event_addon_key', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType).eq('key', key)
+    )
+    .first();
+
+  let resultId: Id<'addonData'>;
+  let created;
+
+  if (existing) {
+    // Only the creator or a MODERATOR+ can update existing entries
+    const isCreator = existing.createdBy === personId || isOwnedReservedKey;
+    if (!isCreator) {
+      if (membership.role !== 'MODERATOR' && membership.role !== 'ORGANIZER')
+        throw new Error(
+          'Only the creator or a moderator can change this entry'
+        );
     }
 
-    // Validate data size
-    validateDataSize(data);
-
-    const now = Date.now();
-
-    // Check for existing entry
-    const existing = await ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon_key', q =>
-        q.eq('eventId', eventId).eq('addonType', addonType).eq('key', key)
-      )
-      .first();
-
-    let resultId: Id<'addonData'>;
-    let created;
-
-    if (existing) {
-      // Only the creator or a MODERATOR+ can update existing entries
-      const isCreator = existing.createdBy === person._id || isOwnedReservedKey;
-      if (!isCreator) {
-        await requireEventRole(ctx, eventId, 'MODERATOR');
-      }
-
-      await ctx.db.patch(existing._id, {
-        data,
-        ...(isOwnedReservedKey && { createdBy: person._id }),
-        updatedAt: now,
-      });
-      resultId = existing._id;
-      created = false;
-    } else {
-      resultId = await ctx.db.insert('addonData', {
-        eventId,
-        addonType,
-        key,
-        data,
-        createdBy: person._id,
-        createdAt: now,
-        updatedAt: now,
-      });
-      created = true;
-    }
-
-    // Dispatch onDataSubmitted lifecycle to all enabled addons of this type
-    await dispatchSingleAddonLifecycle(
-      ctx,
+    await ctx.db.patch(existing._id, {
+      data,
+      ...(isOwnedReservedKey && { createdBy: personId }),
+      updatedAt: now,
+    });
+    resultId = existing._id;
+    created = false;
+  } else {
+    resultId = await ctx.db.insert('addonData', {
       eventId,
       addonType,
-      'onDataSubmitted',
-      undefined,
-      undefined,
-      { key, data, submitterId: person._id }
-    );
+      key,
+      data,
+      createdBy: personId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    created = true;
+  }
 
-    return { id: resultId, created };
-  },
-});
+  // Dispatch onDataSubmitted lifecycle to all enabled addons of this type
+  await dispatchSingleAddonLifecycle(
+    ctx,
+    eventId,
+    addonType,
+    'onDataSubmitted',
+    undefined,
+    undefined,
+    { key, data, submitterId: personId },
+    personId
+  );
+
+  return { id: resultId, created };
+}
 
 /**
  * Delete a data entry for an add-on.
@@ -601,43 +648,68 @@ export const deleteAddonData = mutation({
     key: v.string(),
   },
   returns: successValidator,
-  handler: async (ctx, { eventId, addonType, key }) => {
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-
-    // Verify membership first
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    const isOwnedReservedKey = requireOwnedReservedKey(key, person._id);
-
-    const entry = await ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon_key', q =>
-        q.eq('eventId', eventId).eq('addonType', addonType).eq('key', key)
-      )
-      .first();
-
-    if (!entry) {
-      return { success: true };
-    }
-
-    // Only the creator or a MODERATOR+ can delete
-    const isCreator = entry.createdBy === person._id || isOwnedReservedKey;
-    if (!isCreator) {
-      await requireEventRole(ctx, eventId, 'MODERATOR');
-    }
-
-    await ctx.db.delete(entry._id);
-    return { success: true };
+    return deleteAddonDataForPerson(ctx, person._id, args);
   },
 });
+
+export async function deleteAddonDataForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  {
+    eventId,
+    addonType,
+    key,
+  }: { eventId: Id<'events'>; addonType: string; key: string }
+) {
+  // Verify membership first
+  const membership = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', personId).eq('eventId', eventId)
+    )
+    .first();
+  if (!membership) {
+    throw new Error('You are not a member of this event');
+  }
+
+  const isOwnedReservedKey = requireOwnedReservedKey(key, personId);
+  const config = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event_addon', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType)
+    )
+    .first();
+  if (!config?.enabled) throw new Error('Add-on is not enabled');
+  if (
+    !isOwnedReservedKey ||
+    addonType === 'discord' ||
+    addonType === 'reminders'
+  )
+    throw new Error('Only participant records can be cleared');
+
+  const entry = await ctx.db
+    .query('addonData')
+    .withIndex('by_event_addon_key', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType).eq('key', key)
+    )
+    .first();
+
+  if (!entry) {
+    return { success: true };
+  }
+
+  // Only the creator or a MODERATOR+ can delete
+  const isCreator = entry.createdBy === personId || isOwnedReservedKey;
+  if (!isCreator) {
+    if (membership.role !== 'MODERATOR' && membership.role !== 'ORGANIZER')
+      throw new Error('Only the creator or a moderator can change this entry');
+  }
+
+  await ctx.db.delete(entry._id);
+  return { success: true };
+}
 
 /**
  * Execute inline actions for a field (e.g., action_button click).
@@ -652,99 +724,115 @@ export const executeFieldActions = mutation({
     fieldId: v.string(),
   },
   returns: successValidator,
-  handler: async (ctx, { eventId, addonType, fieldId }) => {
+  handler: async (ctx, args) => {
     const { person } = await requireAuth(ctx);
-
-    // Verify membership
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', person._id).eq('eventId', eventId)
-      )
-      .first();
-    if (!membership) {
-      throw new Error('You are not a member of this event');
-    }
-
-    // Load addon config
-    const addonConfig = await ctx.db
-      .query('eventAddonConfigs')
-      .withIndex('by_event_addon', q =>
-        q.eq('eventId', eventId).eq('addonType', addonType)
-      )
-      .first();
-    if (!addonConfig?.enabled || !addonConfig.config) {
-      throw new Error(`Add-on ${addonType} is not enabled for this event`);
-    }
-
-    // Extract template and find the field
-    const config = addonConfig.config as Record<string, unknown>;
-    const template = config.template as Record<string, unknown> | undefined;
-    if (!template?.sections) {
-      throw new Error('Invalid addon config');
-    }
-
-    const sections = template.sections as Array<{
-      fields: Array<{
-        id: string;
-        type: string;
-        actions?: Array<Record<string, unknown>>;
-      }>;
-    }>;
-
-    let field: (typeof sections)[0]['fields'][0] | undefined;
-    for (const section of sections) {
-      field = section.fields.find(f => f.id === fieldId);
-      if (field) break;
-    }
-
-    if (!field) {
-      throw new Error('Field not found');
-    }
-    if (field.type !== 'action_button') {
-      throw new Error('Field is not an action button');
-    }
-    if (!field.actions || field.actions.length === 0) {
-      throw new Error('No actions configured for this button');
-    }
-
-    // Build context and dispatch actions
-    const trustedCtx = createTrustedAddonContext(ctx, addonType, eventId);
-
-    const { buildVariableContext } = await import('./automations/resolve');
-    const { dispatchActions } = await import('./automations/dispatch');
-
-    // Build variable context
-    const event = await ctx.db.get(eventId);
-    let memberName = '';
-    const personDoc = await ctx.db.get(person._id);
-    if (personDoc) {
-      try {
-        const user = await authComponent.getAnyUserById(
-          ctx,
-          personDoc.userId as AuthUserId
-        );
-        memberName = user?.name ?? user?.email ?? '';
-      } catch {
-        // ignore
-      }
-    }
-
-    const variableCtx = buildVariableContext({
-      memberName,
-      memberRole: membership.role,
-      eventTitle: event?.title ?? '',
-      eventLocation: event?.location ?? '',
-      addonName: (template.name as string) ?? '',
-    });
-
-    await dispatchActions(
-      trustedCtx,
-      field.actions as unknown as AutomationAction[],
-      variableCtx,
-      person._id
-    );
-
-    return { success: true };
+    return executeFieldActionsForPerson(ctx, person._id, args);
   },
 });
+
+export async function executeFieldActionsForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  {
+    eventId,
+    addonType,
+    fieldId,
+  }: { eventId: Id<'events'>; addonType: string; fieldId: string }
+) {
+  // Verify membership
+  const membership = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', personId).eq('eventId', eventId)
+    )
+    .first();
+  if (!membership) {
+    throw new Error('You are not a member of this event');
+  }
+
+  // Load addon config
+  const addonConfig = await ctx.db
+    .query('eventAddonConfigs')
+    .withIndex('by_event_addon', q =>
+      q.eq('eventId', eventId).eq('addonType', addonType)
+    )
+    .first();
+  if (!addonConfig?.enabled || !addonConfig.config) {
+    throw new Error(`Add-on ${addonType} is not enabled for this event`);
+  }
+
+  // Extract template and find the field
+  const config = addonConfig.config as Record<string, unknown>;
+  const template = config.template as Record<string, unknown> | undefined;
+  if (!template?.sections) {
+    throw new Error('Invalid addon config');
+  }
+
+  const sections = template.sections as Array<{
+    fields: Array<{
+      id: string;
+      type: string;
+      actions?: Array<Record<string, unknown>>;
+    }>;
+  }>;
+
+  let field: (typeof sections)[0]['fields'][0] | undefined;
+  for (const section of sections) {
+    field = section.fields.find(f => f.id === fieldId);
+    if (field) break;
+  }
+
+  if (!field) {
+    throw new Error('Field not found');
+  }
+  if (field.type !== 'action_button') {
+    throw new Error('Field is not an action button');
+  }
+  if (!field.actions || field.actions.length === 0) {
+    throw new Error('No actions configured for this button');
+  }
+
+  // Build context and dispatch actions
+  const trustedCtx = createTrustedAddonContext(
+    ctx,
+    addonType,
+    eventId,
+    personId
+  );
+
+  const { buildVariableContext } = await import('./automations/resolve');
+  const { dispatchActions } = await import('./automations/dispatch');
+
+  // Build variable context
+  const event = await ctx.db.get(eventId);
+  let memberName = '';
+  const personDoc = await ctx.db.get(personId);
+  if (personDoc) {
+    try {
+      const user = await authComponent.getAnyUserById(
+        ctx,
+        personDoc.userId as AuthUserId
+      );
+      memberName = user?.name ?? user?.email ?? '';
+    } catch {
+      // ignore
+    }
+  }
+
+  const variableCtx = buildVariableContext({
+    memberName,
+    memberRole: membership.role,
+    eventTitle: event?.title ?? '',
+    eventLocation: event?.location ?? '',
+    addonName: (template.name as string) ?? '',
+  });
+
+  await dispatchActions(
+    trustedCtx,
+    field.actions as unknown as AutomationAction[],
+    variableCtx,
+    personId
+  );
+
+  return { success: true };
+}

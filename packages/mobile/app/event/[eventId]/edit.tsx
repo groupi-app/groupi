@@ -149,7 +149,8 @@ export default function EditEventScreen() {
         const result = await uploadFile(
           newImageFile.uri,
           newImageFile.filename,
-          newImageFile.mimeType
+          newImageFile.mimeType,
+          'cover'
         );
         if (result) {
           imageStorageId = result.storageId;

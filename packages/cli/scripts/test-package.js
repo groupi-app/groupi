@@ -1,8 +1,17 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { auditPackage } from './audit-package.js';
 
 const pnpm = process.env.npm_execpath;
 assert(pnpm, 'Run through pnpm --filter @groupi/cli test:package');
@@ -37,15 +46,16 @@ try {
   const metadata = JSON.parse(
     await readFile(join(installed, 'package.json'), 'utf8')
   );
-  assert.deepEqual(Object.keys(metadata.dependencies), [
-    '@napi-rs/keyring',
-    'commander',
-  ]);
-  assert.deepEqual(
-    (await readdir(installed))
-      .filter(name => !['LICENSE', 'node_modules'].includes(name))
-      .sort(),
-    ['README.md', 'bin', 'docs', 'package.json', 'scripts', 'skills', 'src']
+  const original = JSON.parse(
+    await readFile(join(source, 'package.json'), 'utf8')
+  );
+  assert.deepEqual(metadata.dependencies, original.dependencies);
+  assert.equal(metadata.version, original.version);
+  assert.equal(metadata.publishConfig.access, 'public');
+  assert.equal(metadata.publishConfig.registry, 'https://registry.npmjs.org/');
+  const files = await auditPackage(installed);
+  process.stdout.write(
+    `Audited ${files.length} packed runtime and guidance files.\n`
   );
   run(['exec', 'groupi', '--help'], temporary);
   run(['exec', 'node', 'scripts/generate-reference.js', '--check'], installed);
@@ -85,6 +95,9 @@ try {
       'tests/social-cli-rest.test.ts',
       'tests/cli-workflows-rest.test.ts',
       'tests/discord-cli-rest.test.ts',
+      'tests/discussion-cli-rest.test.ts',
+      'tests/images-cli-rest.test.ts',
+      'tests/addon-participation-rest.test.ts',
     ],
     source,
     {
@@ -92,6 +105,12 @@ try {
       CLI_TEST_BIN: resolve(installed, metadata.bin.groupi),
     }
   );
+  // Retain only a successfully audited and tested artifact for manual release.
+  if (process.env.GROUPI_PACKAGE_OUTPUT_DIR) {
+    const destination = resolve(process.env.GROUPI_PACKAGE_OUTPUT_DIR);
+    await mkdir(destination, { recursive: true });
+    await copyFile(join(temporary, archive), join(destination, archive));
+  }
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

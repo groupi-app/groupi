@@ -92,10 +92,13 @@ describe('REST API version contracts', () => {
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        discussion: { version: 1 },
         eventWrites: { version: 1 },
         eventManagement: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
+        addonParticipation: { version: 1 },
+        imageWrites: { version: 1 },
         discordGuilds: { version: 1 },
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },

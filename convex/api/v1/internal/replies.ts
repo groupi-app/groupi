@@ -1,3 +1,8 @@
+import {
+  createReplyForPerson,
+  updateReplyForPerson,
+  deleteReplyForPerson,
+} from '../../../replies/mutations';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
@@ -70,46 +75,25 @@ export const createReply = internalMutation({
     text: v.string(),
   },
   handler: async (ctx, { postId, personId, text }) => {
-    const post = await ctx.db.get(postId as Id<'posts'>);
-    if (!post) return null;
-
-    // Get membership
-    const membership = await ctx.db
-      .query('memberships')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', personId as Id<'persons'>).eq('eventId', post.eventId)
-      )
-      .first();
-
-    if (!membership) return null;
-
-    const replyId = await ctx.db.insert('replies', {
-      text: text.trim(),
-      authorId: personId as Id<'persons'>,
+    const result = await createReplyForPerson(ctx, personId as Id<'persons'>, {
       postId: postId as Id<'posts'>,
-      membershipId: membership._id,
+      text,
     });
-
-    return { replyId };
+    return { replyId: result.replyId };
   },
 });
 
 export const updateReply = internalMutation({
   args: {
+    personId: v.string(),
     replyId: v.string(),
     text: v.string(),
   },
-  handler: async (ctx, { replyId, text }) => {
-    const reply = await ctx.db.get(replyId as Id<'replies'>);
-    if (!reply) {
-      throw new Error('Reply not found');
-    }
-
-    await ctx.db.patch(replyId as Id<'replies'>, {
-      text: text.trim(),
-      updatedAt: Date.now(),
+  handler: async (ctx, { replyId, personId, text }) => {
+    await updateReplyForPerson(ctx, personId as Id<'persons'>, {
+      replyId: replyId as Id<'replies'>,
+      text,
     });
-
     const updatedReply = await ctx.db.get(replyId as Id<'replies'>);
     const authorData = updatedReply
       ? await getPersonWithUser(ctx, updatedReply.authorId)
@@ -139,28 +123,12 @@ export const updateReply = internalMutation({
 
 export const deleteReply = internalMutation({
   args: {
+    personId: v.string(),
     replyId: v.string(),
   },
-  handler: async (ctx, { replyId }) => {
-    const reply = await ctx.db.get(replyId as Id<'replies'>);
-    if (!reply) {
-      throw new Error('Reply not found');
-    }
-
-    // Delete attachments
-    const attachments = await ctx.db
-      .query('attachments')
-      .withIndex('by_reply', q => q.eq('replyId', replyId as Id<'replies'>))
-      .collect();
-
-    for (const attachment of attachments) {
-      await ctx.storage.delete(attachment.storageId);
-      await ctx.db.delete(attachment._id);
-    }
-
-    // Delete the reply
-    await ctx.db.delete(replyId as Id<'replies'>);
-
-    return { success: true };
+  handler: async (ctx, { replyId, personId }) => {
+    return deleteReplyForPerson(ctx, personId as Id<'persons'>, {
+      replyId: replyId as Id<'replies'>,
+    });
   },
 });
