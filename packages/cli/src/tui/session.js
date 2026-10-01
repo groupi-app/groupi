@@ -107,7 +107,7 @@ export class TerminalSession {
   /** Called only after the UI's target/profile confirmation.
    * @param {Action} action @param {Record<string,string>} values */
   async execute(action, values) {
-    if (this.disposed || this.state.busy) return;
+    if (this.disposed || this.state.busy || this.state.error) return;
     clearTimeout(this.timer);
     ++this.generation;
     this.update({ busy: true, loading: false, error: null, notice: null });

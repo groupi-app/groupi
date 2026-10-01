@@ -35,6 +35,13 @@ export function TerminalApp({ session, profile }) {
     void session.refresh();
     return () => session.dispose();
   }, [session]);
+  useEffect(
+    () =>
+      session.subscribe(() => {
+        if (session.snapshot().error) setForm(null);
+      }),
+    [session]
+  );
   useInput((input, key) => {
     if (state.busy) return;
     if (key.escape) {

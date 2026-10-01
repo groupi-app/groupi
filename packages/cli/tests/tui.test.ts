@@ -362,7 +362,7 @@ test('attachment forms use shared atomic orchestration and preserve cleanup afte
     const create = screen.actions!.find(action => action.id === 'create')!;
     await expect(
       create.run({ title: 'Files', body: 'hello', attachment: file })
-    ).rejects.toThrow('Upload rejected');
+    ).rejects.toThrow('cannot upload files');
     expect(parents).toBe(0);
     rejectUpload = false;
     await expect(
@@ -373,4 +373,107 @@ test('attachment forms use shared atomic orchestration and preserve cleanup afte
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test('offline refresh cancels an open confirmation and reconnect restores actions', async () => {
+  let connected = true;
+  const write = vi.fn(async () => undefined);
+  const session = new TerminalSession({
+    id: 'offline',
+    load: async () => {
+      if (!connected) throw new Error('private network details');
+      return {
+        title: 'Cached picnic',
+        entries: [],
+        actions: [
+          {
+            id: 'remove',
+            label: 'Remove friend person1',
+            command: 'friends remove',
+            run: write,
+          },
+        ],
+      };
+    },
+  });
+  const ui = render(React.createElement(TerminalApp, { session, profile }));
+  await pause();
+  ui.stdin.write('\r');
+  await pause();
+  expect(ui.lastFrame()).toContain('Confirm Remove friend person1');
+  connected = false;
+  await session.refresh();
+  await pause();
+  expect(ui.lastFrame()).toContain('Disconnected / stale');
+  expect(ui.lastFrame()).toContain('Cached picnic');
+  expect(ui.lastFrame()).not.toContain('Confirm Remove');
+  expect(ui.lastFrame()).not.toContain('private network');
+  ui.stdin.write('\u001b[B');
+  ui.stdin.write('\r');
+  await pause();
+  await session.execute({ id: 'stale', label: 'Stale write', run: write }, {});
+  expect(write).not.toHaveBeenCalled();
+  connected = true;
+  ui.stdin.write('r');
+  await pause();
+  expect(ui.lastFrame()).toContain('Connected');
+  expect(ui.lastFrame()).toContain('Remove friend person1');
+  ui.stdin.write('q');
+  await pause();
+});
+
+test('keyboard navigation preserves profile through planning, discussion, social, and advanced fallback', async () => {
+  vi.stubGlobal('fetch', async (url: string) => {
+    expect(url.startsWith(profile.apiUrl)).toBe(true);
+    const path = url.slice(profile.apiUrl.length);
+    if (path === '/health')
+      return Response.json({ capabilities: { discussion: { version: 1 } } });
+    if (path === '/events/event1')
+      return Response.json({ id: 'event1', title: 'Picnic' });
+    if (path.startsWith('/events/event1/posts'))
+      return Response.json({
+        items: [{ id: 'post1', title: 'Thread', content: '<p>Welcome</p>' }],
+        nextCursor: null,
+      });
+    return Response.json({ items: [], nextCursor: null });
+  });
+  const screens = planningScreens(profile, 'fixture-key');
+  const session = new TerminalSession(screens.home);
+  const ui = render(React.createElement(TerminalApp, { session, profile }));
+  await pause();
+  ui.stdin.write('\r');
+  await pause();
+  expect(ui.lastFrame()).toContain('Your events');
+  expect(ui.lastFrame()).toContain('Create event');
+  session.open(screens.event('event1'));
+  await pause();
+  for (let i = 0; i < 4; i++) {
+    ui.stdin.write('\u001b[B');
+    await pause();
+  }
+  ui.stdin.write('\r');
+  await pause();
+  expect(ui.lastFrame()).toContain('Event discussion');
+  expect(ui.lastFrame()).toContain('Thread');
+  expect(ui.lastFrame()).toContain(profile.name);
+  ui.stdin.write('b');
+  await pause();
+  expect(ui.lastFrame()).toContain('Picnic');
+  session.open(screens.social('incoming'));
+  await pause();
+  expect(ui.lastFrame()).toContain('Send friend request');
+  expect(ui.lastFrame()).toContain(profile.apiUrl);
+  session.open(screens.home);
+  await pause();
+  for (let i = 0; i < 8; i++) {
+    ui.stdin.write('\u001b[B');
+    await pause();
+  }
+  ui.stdin.write('\r');
+  await pause();
+  expect(ui.lastFrame()).toContain('Advanced commands');
+  expect(ui.lastFrame()).toContain('groupi --profile staging-organizer');
+  expect(ui.lastFrame()).not.toContain('fixture-key');
+  ui.stdin.write('q');
+  await pause();
 });

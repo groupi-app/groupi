@@ -195,7 +195,8 @@ export async function readUploadBlob(request: Request) {
 export const expireTicket = internalMutation({
   args: { id: v.id('uploadTickets') },
   handler: async (ctx, { id }) => {
-    await ctx.db.delete(id);
+    // Successful and rejected uploads consume their ticket before expiry runs.
+    if (await ctx.db.get(id)) await ctx.db.delete(id);
     return null;
   },
 });

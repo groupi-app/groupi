@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { imageFixtures } from './image-fixtures';
+import { imageFixtures } from './image_fixtures';
 import { components, api } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';

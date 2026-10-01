@@ -57,7 +57,9 @@ and CLI share upload/cleanup orchestration, including rejected-parent cleanup.
 
 The server enforces event roles, visibility and social permissions. An action
 being present in a menu does not grant permission. Read failures hide mutation
-actions until a successful refresh; cached details are explicitly marked stale.
+actions until a successful refresh and cancel open forms; cached details are
+explicitly marked stale. Reopen an action after reconnecting to review and confirm
+it again.
 
 ## Advanced command boundary
 

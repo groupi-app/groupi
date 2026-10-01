@@ -95,6 +95,9 @@ try {
       'tests/social-cli-rest.test.ts',
       'tests/cli-workflows-rest.test.ts',
       'tests/discord-cli-rest.test.ts',
+      'tests/discussion-cli-rest.test.ts',
+      'tests/images-cli-rest.test.ts',
+      'tests/addon-participation-rest.test.ts',
     ],
     source,
     {
