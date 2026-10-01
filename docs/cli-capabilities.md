@@ -13,30 +13,30 @@ is not delivered. Mark an entry **Verified** only with a commit, check results, 
 any required installed-package or staging evidence. Keep local tests, hosted CI,
 staging checks, and production deployment status distinct.
 
-| App capability or release requirement                         | CLI coverage                                                                                                                                     | Owner                                                   | Status                                      |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------- |
-| Event list and event details; selected account and deployment | Installable executable, help/version, named profiles, environment/stdin API keys, human/JSON output, bounded pagination and read retries         | [#222](https://github.com/groupi-app/groupi/issues/222) | Verified; merged in #244                    |
-| Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246                 |
-| Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Verified; merged in #247                    |
-| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Verified; merged in #248                    |
-| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Verified; merged in #249                    |
-| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Implemented in draft PR #250; merge pending |
-| First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                                     |
-| Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Implemented; verification pending           |
-| Event posts                                                   | Create/read/edit/delete, text/Markdown/explicit sanitized HTML, validated mentions, notifications, shared limits and legacy-content preservation | [#230](https://github.com/groupi-app/groupi/issues/230) | Pending                                     |
-| Discussion replies                                            | Create/read/edit/delete with the same content, permission, mention, notification and legacy-limit rules                                          | [#231](https://github.com/groupi-app/groupi/issues/231) | Pending                                     |
-| Post/reply file attachments                                   | Local upload, list/remove, ownership validation, atomic submission and orphan cleanup                                                            | [#232](https://github.com/groupi-app/groupi/issues/232) | Pending                                     |
-| Event covers and account avatars                              | Image upload, replacement/removal, distinct media rules, ownership and cleanup                                                                   | [#233](https://github.com/groupi-app/groupi/issues/233) | Pending                                     |
-| Friendships and blocked users                                 | Requests, acceptance/decline/cancellation, friendship list/removal, block/unblock and privacy side effects                                       | [#234](https://github.com/groupi-app/groupi/issues/234) | Implemented; verification pending           |
-| Profile and preferences; security-sensitive account actions   | Profile fields, privacy, notification/theme preferences and the approved browser handoffs below                                                  | [#235](https://github.com/groupi-app/groupi/issues/235) | Implemented; verification pending           |
-| Existing event add-on configuration                           | Enable/disable/inspect/configure bring lists, questionnaires, reminders, Discord and existing custom add-ons with app lifecycle rules            | [#236](https://github.com/groupi-app/groupi/issues/236) | Implemented; verification pending           |
-| Existing event add-on participation                           | Supported submissions, opt-outs, built-in workflows and custom field actions with participant isolation                                          | [#237](https://github.com/groupi-app/groupi/issues/237) | Pending                                     |
-| Everyday interactive planning                                 | Keyboard event/invitation/RSVP screens using shared command services, periodic/manual refresh and stale/offline state                            | [#238](https://github.com/groupi-app/groupi/issues/238) | Pending                                     |
-| Everyday interactive discussion                               | Post/reply and attachment workflows, safe editing and documented advanced editor/CLI fallback                                                    | [#239](https://github.com/groupi-app/groupi/issues/239) | Pending                                     |
-| Everyday interactive social activity                          | Friends and notifications with shared confirmation, refresh and reconnect behavior                                                               | [#240](https://github.com/groupi-app/groupi/issues/240) | Pending                                     |
-| Agent use of supported app workflows                          | Portable usage skill, generated versioned command reference, JSON/error and safe-mutation guidance                                               | [#241](https://github.com/groupi-app/groupi/issues/241) | Implemented; verification pending           |
-| Complete ordinary-user and event-manager release              | Capability audit, installed staging workflows, real OS credential stores, manual TUI checks and public release verification                      | [#242](https://github.com/groupi-app/groupi/issues/242) | Pending                                     |
-| Custom add-on definition authoring                            | Definition creation/editing and validated import/export                                                                                          | [#243](https://github.com/groupi-app/groupi/issues/243) | Pending; explicitly deferrable              |
+| App capability or release requirement                         | CLI coverage                                                                                                                                     | Owner                                                   | Status                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | --------------------------------- |
+| Event list and event details; selected account and deployment | Installable executable, help/version, named profiles, environment/stdin API keys, human/JSON output, bounded pagination and read retries         | [#222](https://github.com/groupi-app/groupi/issues/222) | Verified; merged in #244          |
+| Explicit sign-in and account credential management            | Session-bound browser authorization, OS credential storage, status, logout, expiry, and profile isolation                                        | [#223](https://github.com/groupi-app/groupi/issues/223) | Verified; delivered in #246       |
+| Create/edit an event and its basic schedule                   | App-equivalent validation and authorization, organizer membership, duplicate prevention and lost-response recovery                               | [#224](https://github.com/groupi-app/groupi/issues/224) | Verified; merged in #247          |
+| Invite people and respond to invitations                      | Supported email, username and link invitations; inspect/manage, accept/decline, membership transitions and notifications                         | [#225](https://github.com/groupi-app/groupi/issues/225) | Verified; merged in #248          |
+| RSVP, availability, attendance and date selection             | Submit responses, inspect permitted attendance, finalize/reset dates with time-zone and notification parity                                      | [#226](https://github.com/groupi-app/groupi/issues/226) | Verified; merged in #249          |
+| Notifications and event/discussion subscriptions              | Paginated unread/all notifications, read/clear actions, mute/unmute and delivery suppression                                                     | [#227](https://github.com/groupi-app/groupi/issues/227) | Verified; merged in #250          |
+| First complete planning workflow                              | Installed staging workflow with organizer/attendee identities; independent versioning, registry rights and public beta publication               | [#228](https://github.com/groupi-app/groupi/issues/228) | Pending                           |
+| Event discovery and membership management                     | Browse/join discoverable events, visibility, event permissions, roles, member removal/leaving and event deletion                                 | [#229](https://github.com/groupi-app/groupi/issues/229) | Implemented; verification pending |
+| Event posts                                                   | Create/read/edit/delete, text/Markdown/explicit sanitized HTML, validated mentions, notifications, shared limits and legacy-content preservation | [#230](https://github.com/groupi-app/groupi/issues/230) | Pending                           |
+| Discussion replies                                            | Create/read/edit/delete with the same content, permission, mention, notification and legacy-limit rules                                          | [#231](https://github.com/groupi-app/groupi/issues/231) | Pending                           |
+| Post/reply file attachments                                   | Local upload, list/remove, ownership validation, atomic submission and orphan cleanup                                                            | [#232](https://github.com/groupi-app/groupi/issues/232) | Pending                           |
+| Event covers and account avatars                              | Image upload, replacement/removal, distinct media rules, ownership and cleanup                                                                   | [#233](https://github.com/groupi-app/groupi/issues/233) | Pending                           |
+| Friendships and blocked users                                 | Requests, acceptance/decline/cancellation, friendship list/removal, block/unblock and privacy side effects                                       | [#234](https://github.com/groupi-app/groupi/issues/234) | Implemented; verification pending |
+| Profile and preferences; security-sensitive account actions   | Profile fields, privacy, notification/theme preferences and the approved browser handoffs below                                                  | [#235](https://github.com/groupi-app/groupi/issues/235) | Implemented; verification pending |
+| Existing event add-on configuration                           | Enable/disable/inspect/configure bring lists, questionnaires, reminders, Discord and existing custom add-ons with app lifecycle rules            | [#236](https://github.com/groupi-app/groupi/issues/236) | Implemented; verification pending |
+| Existing event add-on participation                           | Supported submissions, opt-outs, built-in workflows and custom field actions with participant isolation                                          | [#237](https://github.com/groupi-app/groupi/issues/237) | Pending                           |
+| Everyday interactive planning                                 | Keyboard event/invitation/RSVP screens using shared command services, periodic/manual refresh and stale/offline state                            | [#238](https://github.com/groupi-app/groupi/issues/238) | Pending                           |
+| Everyday interactive discussion                               | Post/reply and attachment workflows, safe editing and documented advanced editor/CLI fallback                                                    | [#239](https://github.com/groupi-app/groupi/issues/239) | Pending                           |
+| Everyday interactive social activity                          | Friends and notifications with shared confirmation, refresh and reconnect behavior                                                               | [#240](https://github.com/groupi-app/groupi/issues/240) | Pending                           |
+| Agent use of supported app workflows                          | Portable usage skill, generated versioned command reference, JSON/error and safe-mutation guidance                                               | [#241](https://github.com/groupi-app/groupi/issues/241) | Implemented; verification pending |
+| Complete ordinary-user and event-manager release              | Capability audit, installed staging workflows, real OS credential stores, manual TUI checks and public release verification                      | [#242](https://github.com/groupi-app/groupi/issues/242) | Pending                           |
+| Custom add-on definition authoring                            | Definition creation/editing and validated import/export                                                                                          | [#243](https://github.com/groupi-app/groupi/issues/243) | Pending; explicitly deferrable    |
 
 ## Approved boundaries
 
@@ -296,3 +296,38 @@ the bounded Discord fetch now uses `AbortController` with explicit timer cleanup
 Independent correctness/spec and security reviews approved after their findings
 were fixed. The final quality gate and commit identify the delivered source; no
 staging, registry or new hosted platform result is inferred from these local runs.
+
+## Notifications and muting (#227)
+
+The CLI adds bounded all/unread notification pages, unread counts, individual and
+scoped read actions, confirmed clear actions, and event/discussion mute controls
+with inspectable effective state. App and REST mutations share ownership checks
+and queued-push cleanup. Muting requires current membership; historical
+recipient-owned notifications preserve app behavior, while stale muted-item
+metadata is hidden after losing access.
+
+Local verification on 2026-09-30 passed 2,273 workspace assertions, including 596
+backend and 121 executable CLI tests. All 121 CLI tests also passed against the
+separately installed package. The focused backend run passed 69 assertions, and
+both independent reviews approved. `pnpm check` passed after linking the isolated
+worktree's package dependencies. The backend's six previously documented ignored
+scheduler errors remain. Live preview evidence is recorded below. All hosted
+checks passed on release-note commit `c0a163c`; PR #250 merged at `c3d4ee1`. Tests establish queued-work cleanup and notification suppression, not
+external provider delivery or cancellation of an already-dispatched request.
+
+Integration with #226 passed `pnpm check`, all 2,329 workspace assertions
+(including 611 backend and 162 CLI tests), and all 162 tests against the
+separately installed CLI. Both capability declarations and command registrations
+are retained; generated API bindings were refreshed after combining the tracks.
+
+A live run against the `codex/cli-notifications` preview at source commit
+`9f9d29d` passed using the separately installed integrated package and two
+disposable accounts. CLI pagination, unread filtering and read/unread/scoped
+actions matched app reads. Cross-account cursors and notification changes were
+denied; clear required confirmation and removed the recipient's app records.
+Nonmembers could not inspect or change subscriptions. Muting suppressed
+app-created posts/replies; unmuting restored notifications, and parent-event
+muting stayed effective after unmuting a discussion. Fixture events, notices,
+subscriptions and local profiles were cleaned up; key revocation and session
+sign-out were verified. Disposable account records remain. This establishes
+in-app notification delivery, not external push/email provider delivery.

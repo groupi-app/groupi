@@ -194,9 +194,11 @@ import type * as migration_dedupeAvailabilities from "../migration/dedupeAvailab
 import type * as migration_index from "../migration/index.js";
 import type * as migration_mutations from "../migration/mutations.js";
 import type * as migration_uploadAndMigrate from "../migration/uploadAndMigrate.js";
+import type * as muting_model from "../muting/model.js";
 import type * as muting_mutations from "../muting/mutations.js";
 import type * as muting_queries from "../muting/queries.js";
 import type * as notifications_actions from "../notifications/actions.js";
+import type * as notifications_model from "../notifications/model.js";
 import type * as notifications_mutations from "../notifications/mutations.js";
 import type * as notifications_queries from "../notifications/queries.js";
 import type * as posts_mutations from "../posts/mutations.js";
@@ -418,9 +420,11 @@ declare const fullApi: ApiFromModules<{
   "migration/index": typeof migration_index;
   "migration/mutations": typeof migration_mutations;
   "migration/uploadAndMigrate": typeof migration_uploadAndMigrate;
+  "muting/model": typeof muting_model;
   "muting/mutations": typeof muting_mutations;
   "muting/queries": typeof muting_queries;
   "notifications/actions": typeof notifications_actions;
+  "notifications/model": typeof notifications_model;
   "notifications/mutations": typeof notifications_mutations;
   "notifications/queries": typeof notifications_queries;
   "posts/mutations": typeof posts_mutations;

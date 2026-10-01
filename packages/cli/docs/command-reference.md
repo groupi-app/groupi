@@ -19,6 +19,9 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events edit](#groupi-events-edit)
 - [groupi events list](#groupi-events-list)
 - [groupi events get](#groupi-events-get)
+- [groupi events mute](#groupi-events-mute)
+- [groupi events unmute](#groupi-events-unmute)
+- [groupi events mute-status](#groupi-events-mute-status)
 - [groupi events rsvp](#groupi-events-rsvp)
 - [groupi events rsvp get](#groupi-events-rsvp-get)
 - [groupi events rsvp set](#groupi-events-rsvp-set)
@@ -102,6 +105,20 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi invites members revoke](#groupi-invites-members-revoke)
 - [groupi invites members get](#groupi-invites-members-get)
 - [groupi invites members list](#groupi-invites-members-list)
+- [groupi notifications](#groupi-notifications)
+- [groupi notifications list](#groupi-notifications-list)
+- [groupi notifications count](#groupi-notifications-count)
+- [groupi notifications read](#groupi-notifications-read)
+- [groupi notifications unread](#groupi-notifications-unread)
+- [groupi notifications read-all](#groupi-notifications-read-all)
+- [groupi notifications read-event](#groupi-notifications-read-event)
+- [groupi notifications read-post](#groupi-notifications-read-post)
+- [groupi notifications clear](#groupi-notifications-clear)
+- [groupi notifications clear-all](#groupi-notifications-clear-all)
+- [groupi posts](#groupi-posts)
+- [groupi posts mute](#groupi-posts-mute)
+- [groupi posts unmute](#groupi-posts-unmute)
+- [groupi posts mute-status](#groupi-posts-mute-status)
 
 ## groupi
 
@@ -128,6 +145,8 @@ Commands:
   account            Read/update your account and open explicit browser exceptions
   settings           Manage ordinary preferences without a browser
   invites            Manage bearer link/email and recipient-bound username invitations
+  notifications      Read and clear your notifications
+  posts              Manage event discussions
 ```
 
 ## groupi auth
@@ -225,6 +244,9 @@ Commands:
   edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically
   list [options]
   get <event-id>                Read one accessible event
+  mute <event-id>               Mute event notifications
+  unmute <event-id>             Unmute event notifications
+  mute-status <event-id>        Inspect event notifications
   rsvp                          Read and update your own attendance response
   availability                  Provide your availability and inspect permitted responses
   dates                         Inspect proposed dates and manage the chosen date
@@ -290,6 +312,39 @@ Options:
 Usage: groupi events get [options] <event-id>
 
 Read one accessible event
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events mute
+
+```text
+Usage: groupi events mute [options] <event-id>
+
+Mute event notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events unmute
+
+```text
+Usage: groupi events unmute [options] <event-id>
+
+Unmute event notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events mute-status
+
+```text
+Usage: groupi events mute-status [options] <event-id>
+
+Inspect event notifications
 
 Options:
   -h, --help  display help for command
@@ -1418,4 +1473,168 @@ Options:
   --status <status>  Status filter; received defaults to PENDING, event list to all (choices:
                      "PENDING", "ACCEPTED", "DECLINED", "all")
   -h, --help         display help for command
+```
+
+## groupi notifications
+
+```text
+Usage: groupi notifications [options] [command]
+
+Read and clear your notifications
+
+Options:
+  -h, --help                         display help for command
+
+Commands:
+  list [options]                     List notifications (default 20, newest first)
+  count                              Show unread count
+  read <notification-id>
+  unread <notification-id>
+  read-all
+  read-event <event-id>
+  read-post <post-id>
+  clear [options] <notification-id>
+  clear-all [options]
+  help [command]                     display help for command
+```
+
+## groupi notifications list
+
+```text
+Usage: groupi notifications list [options]
+
+List notifications (default 20, newest first)
+
+Options:
+  --unread           Only unread notifications
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a previous page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi notifications count
+
+```text
+Usage: groupi notifications count [options]
+
+Show unread count
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications read
+
+```text
+Usage: groupi notifications read [options] <notification-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications unread
+
+```text
+Usage: groupi notifications unread [options] <notification-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications read-all
+
+```text
+Usage: groupi notifications read-all [options]
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications read-event
+
+```text
+Usage: groupi notifications read-event [options] <event-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications read-post
+
+```text
+Usage: groupi notifications read-post [options] <post-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi notifications clear
+
+```text
+Usage: groupi notifications clear [options] <notification-id>
+
+Options:
+  --yes       Confirm permanently clearing notifications
+  -h, --help  display help for command
+```
+
+## groupi notifications clear-all
+
+```text
+Usage: groupi notifications clear-all [options]
+
+Options:
+  --yes       Confirm permanently clearing notifications
+  -h, --help  display help for command
+```
+
+## groupi posts
+
+```text
+Usage: groupi posts [options] [command]
+
+Manage event discussions
+
+Options:
+  -h, --help             display help for command
+
+Commands:
+  mute <post-id>         Mute discussion notifications
+  unmute <post-id>       Unmute discussion notifications
+  mute-status <post-id>  Inspect discussion notifications
+  help [command]         display help for command
+```
+
+## groupi posts mute
+
+```text
+Usage: groupi posts mute [options] <post-id>
+
+Mute discussion notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts unmute
+
+```text
+Usage: groupi posts unmute [options] <post-id>
+
+Unmute discussion notifications
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi posts mute-status
+
+```text
+Usage: groupi posts mute-status [options] <post-id>
+
+Inspect discussion notifications
+
+Options:
+  -h, --help  display help for command
 ```

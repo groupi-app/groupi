@@ -97,6 +97,7 @@ describe('REST API version contracts', () => {
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         discordGuilds: { version: 1 },
+        notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },

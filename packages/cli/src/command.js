@@ -3,6 +3,7 @@ import { registerAddonCommands } from './addon-commands.js';
 import { registerEventManagementCommands } from './event-management-commands.js';
 import { registerSocialCommands } from './social-commands.js';
 import { registerAccountCommands } from './account-commands.js';
+import { registerNotificationCommands } from './notification-commands.js';
 import { registerAttendanceCommands } from './attendance-commands.js';
 import { registerInviteCommands } from './invite-commands.js';
 import { eventInput, validateRequestId } from './event-input.js';
@@ -342,6 +343,7 @@ export function createProgram(json = false) {
   registerSocialCommands(program, json);
   registerAccountCommands(program, json);
   registerInviteCommands(program, json);
+  registerNotificationCommands(program, events, json);
   registerAttendanceCommands(program, events, json);
   registerEventManagementCommands(program, events, json);
   return program;
