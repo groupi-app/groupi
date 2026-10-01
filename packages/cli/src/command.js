@@ -45,6 +45,7 @@ export function createProgram(json = false) {
       '--api-key-stdin',
       'Read one temporary API key from stdin (overrides environment)'
     )
+    .option('--non-interactive', 'Never open the terminal interface')
     .addOption(
       new Option('--format <format>', 'Output format')
         .choices(['human', 'json'])
@@ -56,14 +57,29 @@ export function createProgram(json = false) {
         process.stdout.write(json ? JSON.stringify({ text }) + '\n' : text),
       writeErr: () => {},
     })
-    .action(() => {
+    .action(async () => {
       if (json)
         throw new CliError(
           'USAGE',
           'Select a command; use --help to discover commands.',
           2
         );
-      program.outputHelp();
+      if (
+        process.stdin.isTTY &&
+        process.stdout.isTTY &&
+        !program.opts().nonInteractive &&
+        !program.opts().apiKeyStdin
+      ) {
+        const { launchTerminal } = await import('./tui/app.js');
+        await launchTerminal(program.opts());
+      } else program.outputHelp();
+    });
+  program
+    .command('tui')
+    .description('Open the keyboard-driven terminal interface')
+    .action(async () => {
+      const { launchTerminal } = await import('./tui/app.js');
+      await launchTerminal(program.opts());
     });
   const auth = program.command('auth').description('Manage authentication');
   auth

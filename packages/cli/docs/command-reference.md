@@ -8,6 +8,7 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 ## Table of Contents
 
 - [groupi](#groupi)
+- [groupi tui](#groupi-tui)
 - [groupi auth](#groupi-auth)
 - [groupi auth login](#groupi-auth-login)
 - [groupi auth status](#groupi-auth-status)
@@ -141,10 +142,12 @@ Options:
   -V, --version      output the version number
   --profile <name>   Named connection profile (default: "default")
   --api-key-stdin    Read one temporary API key from stdin (overrides environment)
+  --non-interactive  Never open the terminal interface
   --format <format>  Output format (choices: "human", "json", default: "human")
   -h, --help         display help for command
 
 Commands:
+  tui                Open the keyboard-driven terminal interface
   auth               Manage authentication
   profile            Manage connection profiles
   events             Browse and manage your events
@@ -157,6 +160,17 @@ Commands:
   invites            Manage bearer link/email and recipient-bound username invitations
   notifications      Read and clear your notifications
   posts              Manage event discussions
+```
+
+## groupi tui
+
+```text
+Usage: groupi tui [options]
+
+Open the keyboard-driven terminal interface
+
+Options:
+  -h, --help  display help for command
 ```
 
 ## groupi auth

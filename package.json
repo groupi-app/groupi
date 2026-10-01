@@ -59,6 +59,7 @@
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
     "convex": "^1.43.0",
+    "htmlparser2": "8.0.2",
     "next": "16.1.7"
   },
   "devDependencies": {

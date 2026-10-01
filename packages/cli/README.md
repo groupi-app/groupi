@@ -7,7 +7,14 @@ Development milestones [#222](https://github.com/groupi-app/groupi/issues/222),
 [#226](https://github.com/groupi-app/groupi/issues/226). The package can be packed
 and installed locally; public registry publication belongs to #228. Supports Node 22 and 24 on macOS, Windows, and Linux.
 Runtime files are plain JavaScript checked by TypeScript, so installation needs no
-compiler, React, Expo, or Next.js runtime.
+compiler, Expo, or Next.js runtime. The optional terminal interface uses Ink and
+React, loaded when the interface opens.
+
+Run `groupi tui --profile <name>` for keyboard-driven planning, discussions,
+friends and notifications. A bare `groupi` also opens it in an interactive
+terminal. See the [terminal guide](./docs/terminal.md) for keyboard controls,
+confirmations, refresh behavior and advanced-command fallbacks. Piped/JSON calls
+never open the interface; `--non-interactive` explicitly disables implicit launch.
 
 ## Agent guidance and command reference
 
