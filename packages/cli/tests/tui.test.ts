@@ -116,6 +116,8 @@ test('confirmed writes serialize, refresh immediately, and do not replay uncerta
 
 test('keyboard form defaults to cancellation, shows target/profile, and saves only after explicit confirmation', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  // Ink uses the Windows ASCII pointer and Unicode elsewhere.
+  const pointer = process.platform === 'win32' ? '>' : '❯';
   const saved: Record<string, string>[] = [];
   let reads = 0;
   const session = new TerminalSession({
@@ -152,7 +154,7 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
   };
   const waitForFrame = (text: string) =>
     vi.waitFor(() => expect(ui.lastFrame()).toContain(text));
-  await waitForFrame('❯ Edit event picnic-1');
+  await waitForFrame(`${pointer} Edit event picnic-1`);
   expect(ui.lastFrame()).toContain('staging-organizer');
   await press('\r');
   await waitForFrame('New title');
@@ -161,9 +163,9 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
   await press('\r');
   await waitForFrame('Confirm Edit event picnic-1');
   expect(ui.lastFrame()).toContain('title: Updated picnic');
-  expect(ui.lastFrame()).toContain('❯ Cancel');
+  expect(ui.lastFrame()).toContain(`${pointer} Cancel`);
   await press('\r');
-  await waitForFrame('❯ Edit event picnic-1');
+  await waitForFrame(`${pointer} Edit event picnic-1`);
   expect(ui.lastFrame()).not.toContain('Confirm Edit');
   expect(saved).toEqual([]);
   await press('\r');
@@ -172,9 +174,9 @@ test('keyboard form defaults to cancellation, shows target/profile, and saves on
   await waitForFrame('Final title');
   await press('\r');
   await waitForFrame('title: Final title');
-  expect(ui.lastFrame()).toContain('❯ Cancel');
+  expect(ui.lastFrame()).toContain(`${pointer} Cancel`);
   await press('\u001b[B');
-  await waitForFrame('❯ Confirm');
+  await waitForFrame(`${pointer} Confirm`);
   await press('\r');
   await vi.waitFor(() => expect(saved).toEqual([{ title: 'Final title' }]));
   await waitForFrame('Completed: Edit event picnic-1');
