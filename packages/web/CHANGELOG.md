@@ -1,5 +1,17 @@
 # @groupi/web
 
+## 0.5.0
+
+### Patch Changes
+
+- eaec01b: Support validated CLI add-on participation with participant isolation and consistent app automation behavior.
+- eaec01b: Add CLI cover and avatar upload, replacement, and removal with validated owned images and safe recovery.
+- eaec01b: Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.
+- e729fa1: Add secure CLI browser login with OS credential storage and profile-isolated authentication
+- Updated dependencies [eaec01b]
+- Updated dependencies [eaec01b]
+  - @groupi/shared@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
