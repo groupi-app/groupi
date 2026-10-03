@@ -98,6 +98,7 @@ describe('REST API version contracts', () => {
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
+        addonAuthoring: { version: 1 },
         imageWrites: { version: 1 },
         discordGuilds: { version: 1 },
         notificationControls: { version: 1 },

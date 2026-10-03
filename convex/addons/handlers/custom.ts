@@ -515,7 +515,7 @@ export function isValidCustomConfig(
 }
 
 // Export for use in template mutations
-export { isValidTemplate };
+export { isValidTemplate, isValidField };
 export type {
   CustomAddonTemplate,
   CustomAddonConfig,

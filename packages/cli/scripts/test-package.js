@@ -98,6 +98,7 @@ try {
       'tests/discussion-cli-rest.test.ts',
       'tests/images-cli-rest.test.ts',
       'tests/addon-participation-rest.test.ts',
+      'tests/addon-authoring-cli-rest.test.ts',
     ],
     source,
     {

@@ -55,6 +55,16 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi discord guilds list](#groupi-discord-guilds-list)
 - [groupi discord guilds refresh](#groupi-discord-guilds-refresh)
 - [groupi addons](#groupi-addons)
+- [groupi addons definitions](#groupi-addons-definitions)
+- [groupi addons definitions create](#groupi-addons-definitions-create)
+- [groupi addons definitions import](#groupi-addons-definitions-import)
+- [groupi addons definitions get](#groupi-addons-definitions-get)
+- [groupi addons definitions export](#groupi-addons-definitions-export)
+- [groupi addons definitions list](#groupi-addons-definitions-list)
+- [groupi addons definitions edit](#groupi-addons-definitions-edit)
+- [groupi addons definitions publish](#groupi-addons-definitions-publish)
+- [groupi addons definitions unpublish](#groupi-addons-definitions-unpublish)
+- [groupi addons definitions delete](#groupi-addons-definitions-delete)
 - [groupi addons get](#groupi-addons-get)
 - [groupi addons list](#groupi-addons-list)
 - [groupi addons templates](#groupi-addons-templates)
@@ -177,7 +187,7 @@ Commands:
   profile            Manage connection profiles
   events             Browse and manage your events
   discord            Discover authorized Discord servers using your linked account
-  addons             Configure existing built-in and custom event add-ons
+  addons             Configure, use and author event add-ons
   friends            Manage friendships and friend requests
   blocks             Manage blocked users
   account            Read/update your account and open explicit browser exceptions
@@ -818,12 +828,13 @@ Options:
 ```text
 Usage: groupi addons [options] [command]
 
-Configure existing built-in and custom event add-ons
+Configure, use and author event add-ons
 
 Options:
   -h, --help                                        display help for command
 
 Commands:
+  definitions                                       Author your custom add-on definitions
   get <event-id> <addon-type>                       Inspect enabled or disabled config
   list [options] <event-id>                         List event add-on configs, including disabled
                                                     ones
@@ -852,6 +863,147 @@ Commands:
   clear-claims [options] <event-id> <addon-type>    Participant clear-claims; always acts as the
                                                     authenticated identity
   help [command]                                    display help for command
+```
+
+## groupi addons definitions
+
+```text
+Usage: groupi addons definitions [options] [command]
+
+Author your custom add-on definitions
+
+Options:
+  -h, --help                         display help for command
+
+Commands:
+  create [options]                   Import a portable definition as a new draft
+  import [options]                   Import a portable definition as a new draft
+  get <template-id>                  Inspect your definition and its current version
+  export <template-id>               Write portable definition JSON to stdout; excludes owner and
+                                     lifecycle metadata
+  list [options]                     List all your draft and published definitions
+  edit [options] <template-id>       Replace your definition using its inspected version; existing
+                                     event copies are unchanged
+  publish [options] <template-id>    publish your definition using its inspected version
+  unpublish [options] <template-id>  unpublish your definition using its inspected version
+  delete [options] <template-id>     delete your definition using its inspected version
+  help [command]                     display help for command
+```
+
+## groupi addons definitions create
+
+```text
+Usage: groupi addons definitions create [options]
+
+Import a portable definition as a new draft
+
+Options:
+  --file <path>  Read a portable definition JSON file (64 KiB maximum)
+  --stdin        Read a portable definition from piped standard input
+  -h, --help     display help for command
+```
+
+## groupi addons definitions import
+
+```text
+Usage: groupi addons definitions import [options]
+
+Import a portable definition as a new draft
+
+Options:
+  --file <path>  Read a portable definition JSON file (64 KiB maximum)
+  --stdin        Read a portable definition from piped standard input
+  -h, --help     display help for command
+```
+
+## groupi addons definitions get
+
+```text
+Usage: groupi addons definitions get [options] <template-id>
+
+Inspect your definition and its current version
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi addons definitions export
+
+```text
+Usage: groupi addons definitions export [options] <template-id>
+
+Write portable definition JSON to stdout; excludes owner and lifecycle metadata
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi addons definitions list
+
+```text
+Usage: groupi addons definitions list [options]
+
+List all your draft and published definitions
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Deliberately retrieve all pages
+  -h, --help         display help for command
+```
+
+## groupi addons definitions edit
+
+```text
+Usage: groupi addons definitions edit [options] <template-id>
+
+Replace your definition using its inspected version; existing event copies are unchanged
+
+Options:
+  --expected-version <number>  Version returned by definitions get; rejects concurrent changes
+  --yes                        Confirm definition replacement or lifecycle change
+  --file <path>                Read replacement portable JSON (64 KiB maximum)
+  --stdin                      Read replacement portable JSON from piped standard input
+  -h, --help                   display help for command
+```
+
+## groupi addons definitions publish
+
+```text
+Usage: groupi addons definitions publish [options] <template-id>
+
+publish your definition using its inspected version
+
+Options:
+  --expected-version <number>  Version returned by definitions get; rejects concurrent changes
+  --yes                        Confirm definition replacement or lifecycle change
+  -h, --help                   display help for command
+```
+
+## groupi addons definitions unpublish
+
+```text
+Usage: groupi addons definitions unpublish [options] <template-id>
+
+unpublish your definition using its inspected version
+
+Options:
+  --expected-version <number>  Version returned by definitions get; rejects concurrent changes
+  --yes                        Confirm definition replacement or lifecycle change
+  -h, --help                   display help for command
+```
+
+## groupi addons definitions delete
+
+```text
+Usage: groupi addons definitions delete [options] <template-id>
+
+delete your definition using its inspected version
+
+Options:
+  --expected-version <number>  Version returned by definitions get; rejects concurrent changes
+  --yes                        Confirm definition replacement or lifecycle change
+  -h, --help                   display help for command
 ```
 
 ## groupi addons get

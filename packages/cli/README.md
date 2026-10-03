@@ -482,3 +482,14 @@ The corresponding `remove` commands require confirmation (`--yes` for scripts).
 Image writes are not retried automatically. After an uncertain outcome, inspect
 before repeating. Failed replacements preserve the current image and discard
 only the caller's unclaimed upload; abandoned uploads expire after 24 hours.
+
+## Custom add-on authoring
+
+Use `groupi addons definitions` to list, inspect, create, edit, import/export,
+publish, unpublish and delete your own complete custom definitions. Portable JSON
+preserves supported configuration; owner-only access, inspected-version checks
+and explicit lifecycle confirmation protect existing data. See
+[definition format, examples and limitations](docs/addon-authoring.md).
+Existing webhook definitions can be exported faithfully, but webhook actions are
+unsupported for new authoring writes. Existing event add-on use and configuration
+remain separate commands.
