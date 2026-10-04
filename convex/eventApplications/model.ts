@@ -68,10 +68,9 @@ export async function getForm(
   const { settings, access, canReview } = await context(ctx, eventId, personId);
   const pending = await ctx.db
     .query('eventApplications')
-    .withIndex('by_event_person', q =>
-      q.eq('eventId', eventId).eq('personId', personId)
+    .withIndex('by_event_person_status', q =>
+      q.eq('eventId', eventId).eq('personId', personId).eq('status', 'PENDING')
     )
-    .filter(q => q.eq(q.field('status'), 'PENDING'))
     .first();
   if (!access.canRead && !pending && !canReview) {
     const previous = await ctx.db
@@ -188,10 +187,9 @@ export async function submit(
   if (!access.canApply) fail('You are not currently eligible to apply');
   const pending = await ctx.db
     .query('eventApplications')
-    .withIndex('by_event_person', q =>
-      q.eq('eventId', eventId).eq('personId', personId)
+    .withIndex('by_event_person_status', q =>
+      q.eq('eventId', eventId).eq('personId', personId).eq('status', 'PENDING')
     )
-    .filter(q => q.eq(q.field('status'), 'PENDING'))
     .first();
   try {
     validateAnswers(pending?.questions ?? settings.questions, answers);

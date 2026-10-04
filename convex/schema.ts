@@ -273,6 +273,7 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_person', ['personId'])
     .index('by_event_person', ['eventId', 'personId'])
+    .index('by_event_person_status', ['eventId', 'personId', 'status'])
     .index('by_event_status', ['eventId', 'status']),
   events: defineTable({
     title: v.string(),

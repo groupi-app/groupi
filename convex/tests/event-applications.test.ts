@@ -516,3 +516,63 @@ it('queue notifications honor Organizer-only review and ordinary Event muting', 
     ).notifications.filter(n => n.type === 'EVENT_APPLICATION_DECLINED')
   ).toHaveLength(1);
 });
+it('creates, edits and withdraws the current request alongside substantial retained finalized history', async () => {
+  const f = await fixture();
+  await f.t.run(async ctx => {
+    for (let index = 0; index < 250; index++) {
+      await ctx.db.insert('eventApplications', {
+        eventId: f.eventId,
+        personId: f.applicant.personId,
+        questions: f.questions,
+        answers: { why: `Previous ${index}` },
+        status: 'DECLINED',
+        submittedAt: Date.now() - 1000 - index,
+        updatedAt: Date.now() - 1000 - index,
+        decisions: [
+          {
+            status: 'DECLINED',
+            actorId: f.owner.personId,
+            at: Date.now() - 1000 - index,
+          },
+        ],
+      });
+    }
+  });
+  const request = await f.applicant.auth.mutation(
+    api.eventApplications.mutations.submit,
+    { eventId: f.eventId, answers: { why: 'Current' } }
+  );
+  const edit = await f.applicant.auth.mutation(
+    api.eventApplications.mutations.submit,
+    { eventId: f.eventId, answers: { why: 'Edited' } }
+  );
+  expect(edit.applicationId).toBe(request.applicationId);
+  expect(
+    (
+      await f.applicant.auth.query(api.eventApplications.queries.getForm, {
+        eventId: f.eventId,
+      })
+    ).pending?.answers
+  ).toEqual({ why: 'Edited' });
+  await f.applicant.auth.mutation(api.eventApplications.mutations.withdraw, {
+    applicationId: request.applicationId,
+  });
+  expect(
+    (
+      await f.applicant.auth.query(api.eventApplications.queries.getForm, {
+        eventId: f.eventId,
+      })
+    ).pending
+  ).toBeNull();
+  const history = await f.applicant.auth.query(
+    api.eventApplications.queries.history,
+    { eventId: f.eventId, paginationOpts: { numItems: 20, cursor: null } }
+  );
+  expect(history.page).toHaveLength(20);
+  expect(history.page[0]).toMatchObject({
+    _id: request.applicationId,
+    status: 'WITHDRAWN',
+    answers: { why: 'Edited' },
+  });
+  expect(history.isDone).toBe(false);
+});
