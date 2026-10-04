@@ -22,14 +22,22 @@ afterEach(async () => {
 });
 async function endpoint(
   handler: (req: IncomingMessage, res: ServerResponse) => void,
-  capability = true
+  capability = true,
+  pendingRsvpJoin = true
 ) {
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'application/json');
     if (req.url === '/api/v2/health') {
       res.end(
         JSON.stringify({
-          capabilities: capability ? { eventManagement: { version: 1 } } : {},
+          capabilities: capability
+            ? {
+                eventManagement: {
+                  version: 1,
+                  ...(pendingRsvpJoin ? { pendingRsvpJoin: true } : {}),
+                },
+              }
+            : {},
         })
       );
     } else handler(req, res);
@@ -312,4 +320,21 @@ test('membership removal and leave require explicit confirmation and preserve ta
   const left = await cli(['events', 'leave', 'event-1', '--yes']);
   expect(left.code).toBe(0);
   expect(JSON.parse(left.stdout)).toEqual({ eventId: 'event-1', left: true });
+});
+
+test('refuses an old automatic-Yes server before sending the join', async () => {
+  let joins = 0;
+  await endpoint(
+    (req, res) => {
+      if (req.url?.endsWith('/join')) joins++;
+      res.end(JSON.stringify({ membershipId: 'member-1', success: true }));
+    },
+    true,
+    false
+  );
+  const result = await cli(['events', 'join', 'event-1']);
+  expect(result.code).toBe(5);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
+  expect(joins).toBe(0);
 });

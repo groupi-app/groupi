@@ -44,8 +44,8 @@ function settingsResult(value) {
     },
   };
 }
-/** @param {Profile} profile @param {string} key */
-async function supported(profile, key) {
+/** @param {Profile} profile @param {string} key @param {boolean} [pendingJoin] */
+async function supported(profile, key, pendingJoin = false) {
   const health = record(await readApi(profile, key, '/health'));
   const capabilities = record(health.capabilities ?? {});
   const version = capabilities.eventManagement;
@@ -58,6 +58,15 @@ async function supported(profile, key) {
     throw new CliError(
       'UNSUPPORTED_SERVER',
       'This server does not advertise eventManagement version 1. Update the server; no write was sent.',
+      5
+    );
+  if (
+    pendingJoin &&
+    (!('pendingRsvpJoin' in version) || version.pendingRsvpJoin !== true)
+  )
+    throw new CliError(
+      'UNSUPPORTED_SERVER',
+      'This server does not advertise Pending RSVP joins. Update the server; no join was sent.',
       5
     );
 }
@@ -113,7 +122,7 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
         throw new CliError('USAGE', 'Invalid event permissions.', 2);
     }
   }
-  await supported(profile, key);
+  await supported(profile, key, action === 'join');
   const suffix =
     action === 'role' || action === 'remove'
       ? `/members/${options.memberId}`

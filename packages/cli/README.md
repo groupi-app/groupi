@@ -493,3 +493,15 @@ and explicit lifecycle confirmation protect existing data. See
 Existing webhook definitions can be exported faithfully, but webhook actions are
 unsupported for new authoring writes. Existing event add-on use and configuration
 remain separate commands.
+
+## Discover joins
+
+`groupi events join <event-id>` creates Attendee membership with Pending RSVP.
+Text and JSON results report `role` and `rsvpStatus`; joining does not confirm
+attendance. For a dated event, use `events rsvp set`; for an undated event,
+provide availability until a date is chosen. Poll date selection derives RSVP
+from availability, while manual date selection preserves the current response.
+
+Join requires the server's `eventManagement.pendingRsvpJoin: true` capability
+before sending a write. Other event management commands remain compatible with
+`eventManagement.version: 1` servers.

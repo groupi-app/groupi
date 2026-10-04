@@ -94,7 +94,7 @@ describe('REST API version contracts', () => {
       capabilities: {
         discussion: { version: 1 },
         eventWrites: { version: 1 },
-        eventManagement: { version: 1 },
+        eventManagement: { version: 1, pendingRsvpJoin: true },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
