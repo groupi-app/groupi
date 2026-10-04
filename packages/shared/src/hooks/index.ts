@@ -39,3 +39,5 @@ export function createEventHooks(api: ConvexApi) {
     ...actionHooks,
   };
 }
+
+export { createGroupHooks } from './useGroups';

@@ -1,3 +1,7 @@
+import {
+  assertNoOwnedGroups,
+  removeGroupMembershipsForPerson,
+} from '../groups/model';
 import { claimUpload } from '../files/uploads';
 import { validateImageMetadata } from '../files/imageRules';
 import { saveAvatarForUser } from '../files/images';
@@ -420,6 +424,8 @@ export const deleteUserAccount = mutation({
       );
     }
 
+    await assertNoOwnedGroups(ctx, person._id);
+
     // Get all memberships for this person
     const memberships = await ctx.db
       .query('memberships')
@@ -676,6 +682,7 @@ export const deleteUserAccount = mutation({
       await ctx.db.delete(personSettings._id);
     }
 
+    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     // Magic-link identifiers are random and their email lives inside JSON;

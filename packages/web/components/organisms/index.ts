@@ -17,3 +17,7 @@
 // For now, components remain in their original locations
 // and can be imported directly. Once refactored to use molecules,
 // they can be moved here.
+
+export { GroupsPanel } from './groups-panel';
+export { GroupDetail } from './group-detail';
+export { GroupLanding } from './group-landing';

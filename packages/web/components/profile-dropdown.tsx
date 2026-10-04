@@ -118,7 +118,7 @@ export function ProfileDropdown({
           >
             <div className='flex items-center gap-2 w-full'>
               <Icons.people className='size-4' />
-              <span>Friends</span>
+              <span>Friends &amp; Groups</span>
               {pendingCount > 0 && (
                 <Badge
                   variant='destructive'

@@ -177,7 +177,7 @@ export default function YouScreen() {
         <View className='mt-8 px-4'>
           <MenuItem
             icon='people-outline'
-            label='Friends'
+            label='Friends & Groups'
             onPress={() => router.push('/friends')}
           />
           <MenuItem

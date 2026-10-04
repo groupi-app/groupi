@@ -505,3 +505,26 @@ from availability, while manual date selection preserves the current response.
 Join requires the server's `eventManagement.pendingRsvpJoin: true` capability
 before sending a write. Other event management commands remain compatible with
 `eventManagement.version: 1` servers.
+
+## Groups
+
+Groups are formal communities independent of Events, friendships and Invite Lists.
+Create an owner-only Group and retain its returned stable `groupId`:
+
+```sh
+groupi groups create --name "Readers" --description "Monthly books"
+groupi groups list --limit 20 --all
+groupi groups get <group-id>
+groupi groups edit <group-id> --name "Book club" --clear-description
+groupi groups delete <group-id> --yes
+```
+
+Names are trimmed and contain 1–100 characters; duplicate display names are allowed.
+Descriptions are limited to 2000 characters; `--image` accepts an HTTPS URL up to
+2048 characters. Renaming preserves identity and links. Only the owner can edit or
+delete a Group. Deletion is explicit and does not delete independent Events.
+Pagination returns `items` and `nextCursor`; `--all` deliberately follows pages.
+REST API keys use the `groups` collection with `read` / `write` permissions.
+Writes require the server's `groups` version 1 capability and are never retried;
+inspect `groups list --all` after an uncertain creation before repeating it.
+Invitation, application and tool commands are unavailable in this initial Group path.

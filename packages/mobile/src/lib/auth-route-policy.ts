@@ -16,7 +16,7 @@ interface AuthRouteState {
 }
 
 const SAFE_RETURN_PATH =
-  /^\/(?:invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
+  /^\/(?:g\/[^/?#]+|groups\/[^/?#]+|invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
 
 export function getSafeAuthReturnPath(value?: string): string | null {
   const rawCandidate = value?.trim();
@@ -51,7 +51,7 @@ export function getAuthRouteDecision({
   if (isLoading) return { kind: 'loading' };
 
   const isAuthRoute = rootSegment === '(auth)';
-  const isInviteRoute = rootSegment === 'invite';
+  const isInviteRoute = rootSegment === 'invite' || rootSegment === 'g';
 
   if (!isAuthenticated) {
     if (isAuthRoute || isInviteRoute) return { kind: 'allow' };

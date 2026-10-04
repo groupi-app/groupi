@@ -1,3 +1,7 @@
+import {
+  assertNoOwnedGroups,
+  removeGroupMembershipsForPerson,
+} from '../groups/model';
 import { mutation, MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { getCurrentPerson, isAdmin } from '../auth';
@@ -216,6 +220,8 @@ export const deletePerson = mutation({
       throw new Error('Person not found');
     }
 
+    await assertNoOwnedGroups(ctx, person._id);
+
     // Delete all related data in order
 
     // 1. Delete all replies by this person
@@ -306,6 +312,7 @@ export const deletePerson = mutation({
     }
 
     // 7. Delete the person record
+    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true, deletedUserId: person.userId };

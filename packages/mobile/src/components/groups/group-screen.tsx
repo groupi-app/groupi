@@ -1,0 +1,208 @@
+import { useState } from 'react';
+import { Image, ScrollView, Share, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import type { Id } from 'convex/_generated/dataModel';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  useGroup,
+  useGroupLanding,
+  useUpdateGroup,
+  useDeleteGroup,
+} from '@/hooks/use-groups';
+import { useGlobalUser } from '@/context/global-user-context';
+import { getPublicGroupUrl } from '@/lib/public-urls';
+import { GroupForm } from './group-form';
+
+export function GroupDetailScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const id = groupId as Id<'groups'>;
+  const group = useGroup(id);
+  const updateGroup = useUpdateGroup();
+  const deleteGroup = useDeleteGroup();
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  async function remove() {
+    setDeleting(true);
+    setError('');
+    try {
+      await deleteGroup({ groupId: id });
+      router.replace('/friends');
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : 'Could not delete Group. Try again.'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <SafeAreaView className='flex-1 bg-background'>
+      <View className='border-b border-border px-4 py-3'>
+        <BackButton />
+      </View>
+      <ScrollView contentContainerClassName='gap-4 p-4'>
+        {group === undefined ? (
+          <Text className='text-muted-foreground'>Loading Group…</Text>
+        ) : !group ? (
+          <Text className='text-foreground'>
+            Group unavailable. It may have been deleted or you may not have
+            access.
+          </Text>
+        ) : (
+          <>
+            <Text
+              accessibilityRole='header'
+              className='text-2xl font-bold text-foreground'
+            >
+              {group.name}
+            </Text>
+            {group.image ? (
+              <Image
+                source={{ uri: group.image }}
+                accessibilityLabel={`${group.name} image`}
+                className='h-48 w-full rounded-card'
+              />
+            ) : null}
+            {group.description ? (
+              <Text className='text-foreground'>{group.description}</Text>
+            ) : null}
+            <Text className='text-muted-foreground'>
+              Your role: {group.viewerRole.toLowerCase()}
+            </Text>
+            <Text className='text-muted-foreground'>
+              {group.memberCount}{' '}
+              {group.memberCount === 1 ? 'member' : 'members'}
+            </Text>
+            <Text className='text-muted-foreground'>
+              Owner ID: {group.ownerId}
+            </Text>
+            <Button
+              variant='outline'
+              onPress={async () => {
+                try {
+                  await Share.share({ message: getPublicGroupUrl(id) });
+                } catch {
+                  setError('Could not share Group link. Try again.');
+                }
+              }}
+            >
+              Share Group link
+            </Button>
+            {group.canManageIdentity ? (
+              editing ? (
+                <GroupForm
+                  initial={group}
+                  onCancel={() => setEditing(false)}
+                  onSave={async identity => {
+                    await updateGroup({
+                      groupId: id,
+                      name: identity.name,
+                      description: identity.description || null,
+                      image: identity.image || null,
+                    });
+                    setEditing(false);
+                  }}
+                />
+              ) : (
+                <>
+                  <Button onPress={() => setEditing(true)} disabled={deleting}>
+                    Edit Group
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    disabled={deleting}
+                    isLoading={deleting}
+                    onPress={() =>
+                      showConfirmDialog({
+                        title: 'Delete Group',
+                        message: `Permanently delete ${group.name}? This cannot be undone.`,
+                        confirmLabel: 'Delete Group',
+                        destructive: true,
+                        onConfirm: remove,
+                      })
+                    }
+                  >
+                    Delete Group
+                  </Button>
+                </>
+              )
+            ) : null}
+          </>
+        )}
+        {error ? (
+          <Text accessibilityRole='alert' className='text-destructive'>
+            {error}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+export function GroupLandingScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const group = useGroupLanding(groupId as Id<'groups'>);
+  const { isAuthenticated } = useGlobalUser();
+
+  return (
+    <SafeAreaView className='flex-1 bg-background'>
+      <ScrollView contentContainerClassName='gap-4 p-6'>
+        <Text className='text-sm text-muted-foreground'>Group</Text>
+        {group === undefined ? (
+          <Text className='text-muted-foreground'>Loading Group…</Text>
+        ) : !group ? (
+          <Text className='text-foreground'>
+            Group unavailable. This link may no longer be valid.
+          </Text>
+        ) : (
+          <>
+            <Text
+              accessibilityRole='header'
+              className='text-2xl font-bold text-foreground'
+            >
+              {group.name}
+            </Text>
+            {group.image ? (
+              <Image
+                source={{ uri: group.image }}
+                accessibilityLabel={`${group.name} image`}
+                className='h-48 w-full rounded-card'
+              />
+            ) : null}
+            {group.description ? (
+              <Text className='text-foreground'>{group.description}</Text>
+            ) : null}
+            {isAuthenticated ? (
+              <Button
+                variant='outline'
+                onPress={() => router.push(`/groups/${groupId}`)}
+              >
+                View Group
+              </Button>
+            ) : (
+              <Button
+                onPress={() =>
+                  router.push({
+                    pathname: '/(auth)/sign-in',
+                    params: { returnTo: `/g/${groupId}` },
+                  })
+                }
+              >
+                Sign in or sign up
+              </Button>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

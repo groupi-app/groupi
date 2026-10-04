@@ -36,3 +36,7 @@ export function getPublicGdlUrl() {
 export function getPublicEventAddonUrl(eventId: string, addonType: string) {
   return `${getPublicBaseUrl()}/event/${encodeURIComponent(eventId)}/addon/${encodeURIComponent(addonType)}`;
 }
+
+export function getPublicGroupUrl(groupId: string) {
+  return `${getPublicBaseUrl()}/g/${encodeURIComponent(groupId)}`;
+}

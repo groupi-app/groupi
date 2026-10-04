@@ -139,6 +139,15 @@ and own RSVP without writes. These examples are exercised against the installed
 package using synthetic credentials and a local HTTP fixture; they are not proof
 of staging authorization, delivery, or notification parity.
 
+The initial `groups create|list|get|edit|delete` path manages formal communities.
+Creation returns a stable `groupId`, admits the creator as the single owner and
+creates no Event participation or friendship. Names may repeat; use IDs rather
+than display names. `groups list` is paginated; use `--all` deliberately. Identity
+writes require owner authority and the server's `groups` version 1 capability.
+Deletion requires explicit confirmation and is independent of Events. After an
+uncertain create, inspect `groups list --all` before repeating. Invitations,
+applications and tools are unavailable until their own commands are implemented.
+
 The generated command tree is the authoritative implemented surface for this
 version, including newly registered lifecycle, social, settings, and add-on
 commands. Read each command's help before use. Do not infer features from a REST

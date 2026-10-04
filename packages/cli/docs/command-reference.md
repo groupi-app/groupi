@@ -96,6 +96,12 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi blocks status](#groupi-blocks-status)
 - [groupi blocks block](#groupi-blocks-block)
 - [groupi blocks unblock](#groupi-blocks-unblock)
+- [groupi groups](#groupi-groups)
+- [groupi groups list](#groupi-groups-list)
+- [groupi groups get](#groupi-groups-get)
+- [groupi groups create](#groupi-groups-create)
+- [groupi groups edit](#groupi-groups-edit)
+- [groupi groups delete](#groupi-groups-delete)
 - [groupi account](#groupi-account)
 - [groupi account avatar](#groupi-account-avatar)
 - [groupi account avatar get](#groupi-account-avatar-get)
@@ -190,6 +196,7 @@ Commands:
   addons             Configure, use and author event add-ons
   friends            Manage friendships and friend requests
   blocks             Manage blocked users
+  groups             Manage formal Group communities independently of events
   account            Read/update your account and open explicit browser exceptions
   settings           Manage ordinary preferences without a browser
   posts              Read/write safe discussion content; use explicit HTML files to preserve rich
@@ -1444,6 +1451,92 @@ unblock social relationship
 
 Options:
   --yes       Confirm this social change
+  -h, --help  display help for command
+```
+
+## groupi groups
+
+```text
+Usage: groupi groups [options] [command]
+
+Manage formal Group communities independently of events
+
+Options:
+  -h, --help                   display help for command
+
+Commands:
+  list [options]               List your admitted Groups
+  get <group-id>               Read an admitted Group
+  create [options]             Create an owner-only Group
+  edit [options] <group-id>    Update Group identity as owner
+  delete [options] <group-id>  Explicitly delete an owned Group
+  help [command]               display help for command
+```
+
+## groupi groups list
+
+```text
+Usage: groupi groups list [options]
+
+List your admitted Groups
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups get
+
+```text
+Usage: groupi groups get [options] <group-id>
+
+Read an admitted Group
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups create
+
+```text
+Usage: groupi groups create [options]
+
+Create an owner-only Group
+
+Options:
+  --name <name>         Trimmed Group name (1–100 characters)
+  --description <text>  Description (at most 2000 characters)
+  --image <url>         HTTPS image URL
+  -h, --help            display help for command
+```
+
+## groupi groups edit
+
+```text
+Usage: groupi groups edit [options] <group-id>
+
+Update Group identity as owner
+
+Options:
+  --name <name>         Trimmed Group name (1–100 characters)
+  --description <text>  Description (at most 2000 characters)
+  --image <url>         HTTPS image URL
+  --clear-description   Remove description
+  --clear-image         Remove image
+  -h, --help            display help for command
+```
+
+## groupi groups delete
+
+```text
+Usage: groupi groups delete [options] <group-id>
+
+Explicitly delete an owned Group
+
+Options:
+  --yes       Confirm Group deletion
   -h, --help  display help for command
 ```
 

@@ -14,6 +14,28 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groups: defineTable({
+    memberCount: v.number(),
+    ownerId: v.id('persons'),
+    name: v.string(),
+    description: v.optional(v.string()),
+    image: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_ownerId', ['ownerId']),
+  groupMemberships: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    role: v.union(
+      v.literal('OWNER'),
+      v.literal('MODERATOR'),
+      v.literal('MEMBER')
+    ),
+    joinedAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId']),
   uploads: defineTable({
     storageId: v.id('_storage'),
     personId: v.id('persons'),

@@ -8,6 +8,11 @@
  * @module
  */
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 import type * as accounts_mutations from "../accounts/mutations.js";
 import type * as accounts_queries from "../accounts/queries.js";
 import type * as addonTemplates_definition from "../addonTemplates/definition.js";
@@ -102,6 +107,7 @@ import type * as api_v2_routes_discussion from "../api/v2/routes/discussion.js";
 import type * as api_v2_routes_eventManagement from "../api/v2/routes/eventManagement.js";
 import type * as api_v2_routes_events from "../api/v2/routes/events.js";
 import type * as api_v2_routes_friends from "../api/v2/routes/friends.js";
+import type * as api_v2_routes_groups from "../api/v2/routes/groups.js";
 import type * as api_v2_routes_images from "../api/v2/routes/images.js";
 import type * as api_v2_routes_invites from "../api/v2/routes/invites.js";
 import type * as api_v2_routes_members from "../api/v2/routes/members.js";
@@ -181,6 +187,11 @@ import type * as files_queries from "../files/queries.js";
 import type * as files_uploads from "../files/uploads.js";
 import type * as friends_mutations from "../friends/mutations.js";
 import type * as friends_queries from "../friends/queries.js";
+import type * as groups_contracts from "../groups/contracts.js";
+import type * as groups_model from "../groups/model.js";
+import type * as groups_mutations from "../groups/mutations.js";
+import type * as groups_queries from "../groups/queries.js";
+import type * as groups_rest from "../groups/rest.js";
 import type * as http from "../http.js";
 import type * as invites_actions from "../invites/actions.js";
 import type * as invites_contracts from "../invites/contracts.js";
@@ -241,12 +252,14 @@ import type * as types from "../types.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
+/**
+ * A utility for referencing Convex functions in your app's API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 declare const fullApi: ApiFromModules<{
   "accounts/mutations": typeof accounts_mutations;
   "accounts/queries": typeof accounts_queries;
@@ -342,6 +355,7 @@ declare const fullApi: ApiFromModules<{
   "api/v2/routes/eventManagement": typeof api_v2_routes_eventManagement;
   "api/v2/routes/events": typeof api_v2_routes_events;
   "api/v2/routes/friends": typeof api_v2_routes_friends;
+  "api/v2/routes/groups": typeof api_v2_routes_groups;
   "api/v2/routes/images": typeof api_v2_routes_images;
   "api/v2/routes/invites": typeof api_v2_routes_invites;
   "api/v2/routes/members": typeof api_v2_routes_members;
@@ -421,6 +435,11 @@ declare const fullApi: ApiFromModules<{
   "files/uploads": typeof files_uploads;
   "friends/mutations": typeof friends_mutations;
   "friends/queries": typeof friends_queries;
+  "groups/contracts": typeof groups_contracts;
+  "groups/model": typeof groups_model;
+  "groups/mutations": typeof groups_mutations;
+  "groups/queries": typeof groups_queries;
+  "groups/rest": typeof groups_rest;
   http: typeof http;
   "invites/actions": typeof invites_actions;
   "invites/contracts": typeof invites_contracts;
@@ -481,28 +500,10 @@ declare const fullApi: ApiFromModules<{
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
 }>;
-
-/**
- * A utility for referencing Convex functions in your app's public API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
 >;
-
-/**
- * A utility for referencing Convex functions in your app's internal API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = internal.myModule.myFunction;
- * ```
- */
 export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">

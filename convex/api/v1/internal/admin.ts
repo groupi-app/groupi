@@ -1,3 +1,7 @@
+import {
+  assertNoOwnedGroups,
+  removeGroupMembershipsForPerson,
+} from '../../../groups/model';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { components } from '../../../_generated/api';
@@ -87,6 +91,8 @@ export const deleteUser = internalMutation({
       throw new Error('User not found');
     }
 
+    await assertNoOwnedGroups(ctx, person._id);
+
     // Delete person settings
     const settings = await ctx.db
       .query('personSettings')
@@ -124,6 +130,7 @@ export const deleteUser = internalMutation({
     }
 
     // Delete person record
+    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true };

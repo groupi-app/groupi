@@ -1,3 +1,4 @@
+import { createGroupRoutes } from './routes/groups';
 import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
 import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
@@ -91,6 +92,7 @@ export function createApiV2App(
         'code' in data &&
         typeof data.code === 'string' &&
         [
+          'UNAUTHORIZED',
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'IDEMPOTENCY_CONFLICT',
@@ -105,13 +107,15 @@ export function createApiV2App(
       ) {
         const { code, message } = data;
         const status =
-          code === 'NOT_FOUND'
-            ? 404
-            : code === 'FORBIDDEN'
-              ? 403
-              : code === 'VALIDATION_ERROR'
-                ? 400
-                : 409;
+          code === 'UNAUTHORIZED'
+            ? 401
+            : code === 'NOT_FOUND'
+              ? 404
+              : code === 'FORBIDDEN'
+                ? 403
+                : code === 'VALIDATION_ERROR'
+                  ? 400
+                  : 409;
         return c.json({ error: { code, message } }, status);
       }
     }
@@ -215,6 +219,10 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Replies', description: 'Post replies' },
       { name: 'Members', description: 'Event member management' },
       { name: 'Availability', description: 'Date availability voting' },
+      {
+        name: 'Groups',
+        description: 'Formal community identity and ownership',
+      },
       { name: 'Friends', description: 'Friend management' },
       { name: 'Add-ons', description: 'Event add-on management' },
       { name: 'Notifications', description: 'User notifications' },
@@ -237,6 +245,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        groups: { version: 1 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
         imageWrites: { version: 1 },
@@ -265,6 +274,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createMemberRoutes());
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
+  app.route('/', createGroupRoutes());
   app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
   app.route('/', createAddonDefinitionRoutes());

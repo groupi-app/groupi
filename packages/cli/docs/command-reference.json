@@ -4,7 +4,7 @@
   "commands": [
     {
       "path": "groupi",
-      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure, use and author event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  posts              Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  replies            Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n"
+      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure, use and author event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  groups             Manage formal Group communities independently of events\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  posts              Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  replies            Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n"
     },
     {
       "path": "groupi tui",
@@ -357,6 +357,30 @@
     {
       "path": "groupi blocks unblock",
       "help": "Usage: groupi blocks unblock [options] <person-id>\n\nunblock social relationship\n\nOptions:\n  --yes       Confirm this social change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups",
+      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                   display help for command\n\nCommands:\n  list [options]               List your admitted Groups\n  get <group-id>               Read an admitted Group\n  create [options]             Create an owner-only Group\n  edit [options] <group-id>    Update Group identity as owner\n  delete [options] <group-id>  Explicitly delete an owned Group\n  help [command]               display help for command\n"
+    },
+    {
+      "path": "groupi groups list",
+      "help": "Usage: groupi groups list [options]\n\nList your admitted Groups\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups get",
+      "help": "Usage: groupi groups get [options] <group-id>\n\nRead an admitted Group\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups create",
+      "help": "Usage: groupi groups create [options]\n\nCreate an owner-only Group\n\nOptions:\n  --name <name>         Trimmed Group name (1–100 characters)\n  --description <text>  Description (at most 2000 characters)\n  --image <url>         HTTPS image URL\n  -h, --help            display help for command\n"
+    },
+    {
+      "path": "groupi groups edit",
+      "help": "Usage: groupi groups edit [options] <group-id>\n\nUpdate Group identity as owner\n\nOptions:\n  --name <name>         Trimmed Group name (1–100 characters)\n  --description <text>  Description (at most 2000 characters)\n  --image <url>         HTTPS image URL\n  --clear-description   Remove description\n  --clear-image         Remove image\n  -h, --help            display help for command\n"
+    },
+    {
+      "path": "groupi groups delete",
+      "help": "Usage: groupi groups delete [options] <group-id>\n\nExplicitly delete an owned Group\n\nOptions:\n  --yes       Confirm Group deletion\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi account",
