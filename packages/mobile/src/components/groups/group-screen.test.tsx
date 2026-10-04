@@ -1,3 +1,6 @@
+vi.mock('./group-ownership-transfer', () => ({
+  GroupOwnershipTransfer: () => null,
+}));
 vi.mock('./group-leave-control', () => ({ GroupLeaveControl: () => null }));
 import {
   Children,
@@ -100,6 +103,6 @@ describe('Native Group screens', () => {
     expect(mocks.deleteGroup).not.toHaveBeenCalled();
     await mocks.confirm.mock.calls[0][0].onConfirm();
     expect(mocks.deleteGroup).toHaveBeenCalledWith({ groupId: 'group-123' });
-    expect(mocks.replace).toHaveBeenCalledWith('/friends');
+    expect(mocks.replace).toHaveBeenCalledWith('/g/group-123');
   });
 });

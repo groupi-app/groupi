@@ -1,3 +1,4 @@
+import { transferStatus } from './groupTransfers/contracts';
 import {
   applicationSettingsValidator,
   questionValidator,
@@ -56,6 +57,18 @@ export default defineSchema({
     .index('by_inviterId', ['inviterId'])
     .index('by_inviteeId_and_status', ['inviteeId', 'status'])
     .index('by_groupId_and_status', ['groupId', 'status']),
+  groupTransfers: defineTable({
+    groupId: v.id('groups'),
+    offeredById: v.optional(v.id('persons')),
+    recipientId: v.optional(v.id('persons')),
+    status: transferStatus,
+    offeredAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_group_status', ['groupId', 'status'])
+    .index('by_offeredBy', ['offeredById'])
+    .index('by_recipient', ['recipientId']),
   groups: defineTable({
     invitationsEnabled: v.optional(v.boolean()),
     memberCount: v.number(),
@@ -78,7 +91,8 @@ export default defineSchema({
   })
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
-    .index('by_groupId_and_personId', ['groupId', 'personId']),
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_role', ['groupId', 'role']),
   // Private saved selections contain stable identities, never profile snapshots.
   inviteLists: defineTable({
     creatorId: v.id('persons'),

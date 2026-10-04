@@ -709,3 +709,26 @@ require `eventApplications.version: 1` before sending a write. Scoped keys use
 ordinary `events` read/write permissions. Preview and Discover report `APPLY`
 when that is the current entry action. Decisions and new-request notifications
 use existing channels, mute/DND behavior and type-specific preferences.
+
+## Group responsibility and retirement
+
+`groupi groups transfer offer <group-id> <person-id> --yes` offers ownership to an
+eligible admitted member. The current owner remains responsible while pending;
+this cannot resolve account deletion or departure. Only the recipient can run
+`groups transfer accept <group-id> <transfer-id> --yes`. Acceptance atomically
+installs the single new owner and makes the former owner a Moderator, preserving
+Group identity, links, membership IDs, count and configuration. No Event authority
+is inherited. Invitations and applications are not ownership consent.
+
+Read `groups transfer status <group-id>` for truthful pending, accepted, declined
+or cancelled outcomes. The recipient can `transfer decline`; the offering owner
+can `transfer cancel`, both using the observed transfer ID. Current account,
+membership, Group bans and owner/recipient blocks are rechecked at offer and
+acceptance. Stale offers cannot take ownership.
+
+`groups delete <group-id> --yes` explicitly retires an owned Group and purges its
+Group data and audience grants. Independent Events, invitations, memberships and
+RSVP survive. Transfer writes require `groupTransfers.version: 1`;
+retirement additionally requires `groupTransfers.retirement: true` before any
+write. Both use ordinary `groups` read/write API-key permissions. In headless/JSON
+mode, offers, acceptance and deletion require explicit `--yes` confirmation.

@@ -1,3 +1,4 @@
+import { requireGroupTransferCapability } from './group-transfers.js';
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
 import { mutateApi } from './mutations.js';
@@ -112,6 +113,8 @@ export async function changeGroup(
       'Server must advertise Groups version 1; no write was sent.',
       5
     );
+  if (operation === 'delete')
+    await requireGroupTransferCapability(profile, key, true);
   const recovery = `Inspect groups list --all on profile ${profile.name} before repeating; this write was not retried.`;
   const value = await mutateApi(
     profile,
@@ -129,7 +132,7 @@ export async function changeGroup(
       ...(operation === 'delete'
         ? {
             confirmation: {
-              target: `delete Group ${id}`,
+              target: `retire Group ${id} and its data/audience grants; independent Events, invitations, memberships and RSVP remain unchanged`,
               yes: options.yes,
               json: options.json,
             },

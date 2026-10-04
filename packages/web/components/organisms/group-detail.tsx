@@ -1,4 +1,5 @@
 'use client';
+import { GroupOwnershipTransfer } from './group-ownership-transfer';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -117,10 +118,12 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
             <a href='#delete-group' className='text-primary underline'>
               delete the Group
             </a>
-            . Ownership transfer is not available yet.
+            or offer ownership below. Responsibility remains yours until
+            acceptance.
           </p>
         )
       )}
+      <GroupOwnershipTransfer groupId={groupId} />
       <GroupMemberRoster groupId={groupId} />
       {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (
@@ -157,7 +160,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           >
             <h2 className='font-semibold'>Delete Group</h2>
             <p className='text-sm text-muted-foreground'>
-              Permanently delete this Group and its data. This cannot be undone.
+              Permanently retire this Group and remove its data and audience
+              grants. Independent Events, invitations, memberships and RSVP
+              remain unchanged. This cannot be undone.
             </p>
             {deleting ? (
               <form
@@ -168,7 +173,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
                   setError('');
                   try {
                     await remove({ groupId });
-                    router.push('/events');
+                    router.push(`/g/${groupId}`);
                     openFriends('groups');
                   } catch (cause) {
                     setError(

@@ -113,6 +113,12 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi blocks block](#groupi-blocks-block)
 - [groupi blocks unblock](#groupi-blocks-unblock)
 - [groupi groups](#groupi-groups)
+- [groupi groups transfer](#groupi-groups-transfer)
+- [groupi groups transfer status](#groupi-groups-transfer-status)
+- [groupi groups transfer offer](#groupi-groups-transfer-offer)
+- [groupi groups transfer accept](#groupi-groups-transfer-accept)
+- [groupi groups transfer decline](#groupi-groups-transfer-decline)
+- [groupi groups transfer cancel](#groupi-groups-transfer-cancel)
 - [groupi groups list](#groupi-groups-list)
 - [groupi groups get](#groupi-groups-get)
 - [groupi groups create](#groupi-groups-create)
@@ -1720,11 +1726,14 @@ Options:
   -h, --help                                      display help for command
 
 Commands:
+  transfer                                        Offer consensual Group responsibility; pending
+                                                  offers remain unresolved
   list [options]                                  List your admitted Groups
   get <group-id>                                  Read an admitted Group
   create [options]                                Create an owner-only Group
   edit [options] <group-id>                       Update Group identity as owner
-  delete [options] <group-id>                     Explicitly delete an owned Group
+  delete [options] <group-id>                     Explicitly retire an owned Group and its data;
+                                                  independent Events remain
   members [options] <group-id>                    Read admitted Group roster
   invites [options] <group-id>                    Inspect Group invitations as manager
   invite <group-id> <person-id>                   Invite an existing user to your Group
@@ -1736,6 +1745,86 @@ Commands:
   leave [options] <group-id>                      Leave your own Group membership
   bans [options] <group-id>                       List private active Group bans as manager
   help [command]                                  display help for command
+```
+
+## groupi groups transfer
+
+```text
+Usage: groupi groups transfer [options] [command]
+
+Offer consensual Group responsibility; pending offers remain unresolved
+
+Options:
+  -h, --help                                  display help for command
+
+Commands:
+  status <group-id>                           Read the current participant-only transfer status
+  offer [options] <group-id> <person-id>      Offer to an admitted member without changing ownership
+                                              yet
+  accept [options] <group-id> <transfer-id>   Accept responsibility as the single owner; former
+                                              owner becomes Moderator
+  decline [options] <group-id> <transfer-id>  Decline the observed offer without changing ownership
+  cancel [options] <group-id> <transfer-id>   Cancel the observed pending offer as owner
+  help [command]                              display help for command
+```
+
+## groupi groups transfer status
+
+```text
+Usage: groupi groups transfer status [options] <group-id>
+
+Read the current participant-only transfer status
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups transfer offer
+
+```text
+Usage: groupi groups transfer offer [options] <group-id> <person-id>
+
+Offer to an admitted member without changing ownership yet
+
+Options:
+  --yes       Confirm offering responsibility
+  -h, --help  display help for command
+```
+
+## groupi groups transfer accept
+
+```text
+Usage: groupi groups transfer accept [options] <group-id> <transfer-id>
+
+Accept responsibility as the single owner; former owner becomes Moderator
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
+```
+
+## groupi groups transfer decline
+
+```text
+Usage: groupi groups transfer decline [options] <group-id> <transfer-id>
+
+Decline the observed offer without changing ownership
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
+```
+
+## groupi groups transfer cancel
+
+```text
+Usage: groupi groups transfer cancel [options] <group-id> <transfer-id>
+
+Cancel the observed pending offer as owner
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
 ```
 
 ## groupi groups list
@@ -1798,7 +1887,7 @@ Options:
 ```text
 Usage: groupi groups delete [options] <group-id>
 
-Explicitly delete an owned Group
+Explicitly retire an owned Group and its data; independent Events remain
 
 Options:
   --yes       Confirm Group deletion

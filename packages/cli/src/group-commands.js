@@ -1,3 +1,4 @@
+import { registerGroupTransferCommands } from './group-transfer-commands.js';
 import { getProfile, credential } from './profiles.js';
 import { getGroup, listGroups, changeGroup } from './groups.js';
 /** @param {import('commander').Command} program @param {boolean} json */
@@ -5,6 +6,7 @@ export function registerGroupCommands(program, json) {
   const groups = program
     .command('groups')
     .description('Manage formal Group communities independently of events');
+  registerGroupTransferCommands(program, groups, json);
   groups
     .command('list')
     .description('List your admitted Groups')
@@ -62,7 +64,9 @@ export function registerGroupCommands(program, json) {
   }
   groups
     .command('delete <group-id>')
-    .description('Explicitly delete an owned Group')
+    .description(
+      'Explicitly retire an owned Group and its data; independent Events remain'
+    )
     .option('--yes', 'Confirm Group deletion')
     .action(async (id, input) => {
       const { profile, key } = await connection();

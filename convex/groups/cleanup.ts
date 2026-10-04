@@ -1,0 +1,19 @@
+import type { MutationCtx } from '../_generated/server';
+import type { Id } from '../_generated/dataModel';
+import { removeInvitationsForGroup } from '../groupInvites/cleanup';
+import { removeModerationForGroup } from '../groupModeration/cleanup';
+import { removeTransfersForGroup } from '../groupTransfers/cleanup';
+/** All Group-producing slices extend this atomic retirement boundary. Independent Events are not Group data. */
+export async function cascadeDeleteGroupData(
+  ctx: MutationCtx,
+  groupId: Id<'groups'>
+) {
+  for await (const membership of ctx.db
+    .query('groupMemberships')
+    .withIndex('by_groupId', q => q.eq('groupId', groupId)))
+    await ctx.db.delete(membership._id);
+  await removeInvitationsForGroup(ctx, groupId);
+  await removeModerationForGroup(ctx, groupId);
+  await removeTransfersForGroup(ctx, groupId);
+  await ctx.db.delete(groupId);
+}

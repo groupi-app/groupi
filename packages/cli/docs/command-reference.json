@@ -424,7 +424,31 @@
     },
     {
       "path": "groupi groups",
-      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                      display help for command\n\nCommands:\n  list [options]                                  List your admitted Groups\n  get <group-id>                                  Read an admitted Group\n  create [options]                                Create an owner-only Group\n  edit [options] <group-id>                       Update Group identity as owner\n  delete [options] <group-id>                     Explicitly delete an owned Group\n  members [options] <group-id>                    Read admitted Group roster\n  invites [options] <group-id>                    Inspect Group invitations as manager\n  invite <group-id> <person-id>                   Invite an existing user to your Group\n  invitation-policy [options] <group-id>          Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership\n  leave [options] <group-id>                      Leave your own Group membership\n  bans [options] <group-id>                       List private active Group bans as manager\n  help [command]                                  display help for command\n"
+      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                      display help for command\n\nCommands:\n  transfer                                        Offer consensual Group responsibility; pending\n                                                  offers remain unresolved\n  list [options]                                  List your admitted Groups\n  get <group-id>                                  Read an admitted Group\n  create [options]                                Create an owner-only Group\n  edit [options] <group-id>                       Update Group identity as owner\n  delete [options] <group-id>                     Explicitly retire an owned Group and its data;\n                                                  independent Events remain\n  members [options] <group-id>                    Read admitted Group roster\n  invites [options] <group-id>                    Inspect Group invitations as manager\n  invite <group-id> <person-id>                   Invite an existing user to your Group\n  invitation-policy [options] <group-id>          Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership\n  leave [options] <group-id>                      Leave your own Group membership\n  bans [options] <group-id>                       List private active Group bans as manager\n  help [command]                                  display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer",
+      "help": "Usage: groupi groups transfer [options] [command]\n\nOffer consensual Group responsibility; pending offers remain unresolved\n\nOptions:\n  -h, --help                                  display help for command\n\nCommands:\n  status <group-id>                           Read the current participant-only transfer status\n  offer [options] <group-id> <person-id>      Offer to an admitted member without changing ownership\n                                              yet\n  accept [options] <group-id> <transfer-id>   Accept responsibility as the single owner; former\n                                              owner becomes Moderator\n  decline [options] <group-id> <transfer-id>  Decline the observed offer without changing ownership\n  cancel [options] <group-id> <transfer-id>   Cancel the observed pending offer as owner\n  help [command]                              display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer status",
+      "help": "Usage: groupi groups transfer status [options] <group-id>\n\nRead the current participant-only transfer status\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer offer",
+      "help": "Usage: groupi groups transfer offer [options] <group-id> <person-id>\n\nOffer to an admitted member without changing ownership yet\n\nOptions:\n  --yes       Confirm offering responsibility\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer accept",
+      "help": "Usage: groupi groups transfer accept [options] <group-id> <transfer-id>\n\nAccept responsibility as the single owner; former owner becomes Moderator\n\nOptions:\n  --yes       Confirm acceptance\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer decline",
+      "help": "Usage: groupi groups transfer decline [options] <group-id> <transfer-id>\n\nDecline the observed offer without changing ownership\n\nOptions:\n  --yes       Confirm acceptance\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups transfer cancel",
+      "help": "Usage: groupi groups transfer cancel [options] <group-id> <transfer-id>\n\nCancel the observed pending offer as owner\n\nOptions:\n  --yes       Confirm acceptance\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi groups list",
@@ -444,7 +468,7 @@
     },
     {
       "path": "groupi groups delete",
-      "help": "Usage: groupi groups delete [options] <group-id>\n\nExplicitly delete an owned Group\n\nOptions:\n  --yes       Confirm Group deletion\n  -h, --help  display help for command\n"
+      "help": "Usage: groupi groups delete [options] <group-id>\n\nExplicitly retire an owned Group and its data; independent Events remain\n\nOptions:\n  --yes       Confirm Group deletion\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi groups members",

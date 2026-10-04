@@ -56,7 +56,8 @@ export function GroupLeaveControl({
         </Button>
       ) : (
         <Text className='text-muted-foreground'>
-          The owner cannot leave their Group. Use Delete Group to close it
+          The owner cannot leave their Group. Offer ownership to an admitted
+          member and wait for acceptance, or use Delete Group to retire it
           permanently.
         </Text>
       )}

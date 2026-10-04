@@ -1,3 +1,4 @@
+import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { useState } from 'react';
 import { Image, ScrollView, Share, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -34,7 +35,7 @@ export function GroupDetailScreen() {
     setError('');
     try {
       await deleteGroup({ groupId: id });
-      router.replace('/friends');
+      router.replace(`/g/${id}`);
     } catch (failure) {
       setError(
         failure instanceof Error
@@ -124,6 +125,7 @@ export function GroupDetailScreen() {
                 Manage bans
               </Button>
             ) : null}
+            <GroupOwnershipTransfer groupId={id} />
             <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (
@@ -152,7 +154,7 @@ export function GroupDetailScreen() {
                     onPress={() =>
                       showConfirmDialog({
                         title: 'Delete Group',
-                        message: `Permanently delete ${group.name}? This cannot be undone.`,
+                        message: `Permanently retire ${group.name} and remove its Group data and audience grants? Independent Events, invitations, memberships and RSVP remain unchanged. This cannot be undone.`,
                         confirmLabel: 'Delete Group',
                         destructive: true,
                         onConfirm: remove,

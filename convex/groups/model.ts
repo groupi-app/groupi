@@ -1,12 +1,8 @@
-import {
-  removeModerationForGroup,
-  removeModerationForPerson,
-} from '../groupModeration/cleanup';
+import { cascadeDeleteGroupData } from './cleanup';
+import { removeTransfersForPerson } from '../groupTransfers/cleanup';
+import { removeModerationForPerson } from '../groupModeration/cleanup';
 import { authComponent, type AuthUserId } from '../auth';
-import {
-  removeInvitationsForGroup,
-  removeInvitationsForPerson,
-} from '../groupInvites/cleanup';
+import { removeInvitationsForPerson } from '../groupInvites/cleanup';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -153,13 +149,7 @@ export async function remove(
   groupId: Id<'groups'>
 ) {
   await requireOwner(ctx, groupId, personId);
-  for await (const membership of ctx.db
-    .query('groupMemberships')
-    .withIndex('by_groupId', q => q.eq('groupId', groupId)))
-    await ctx.db.delete(membership._id);
-  await removeInvitationsForGroup(ctx, groupId);
-  await removeModerationForGroup(ctx, groupId);
-  await ctx.db.delete(groupId);
+  await cascadeDeleteGroupData(ctx, groupId);
   return null;
 }
 export async function detail(
@@ -227,6 +217,7 @@ export async function removeGroupMembershipsForPerson(
   personId: Id<'persons'>
 ) {
   await assertNoOwnedGroups(ctx, personId);
+  await removeTransfersForPerson(ctx, personId);
   await removeInvitationsForPerson(ctx, personId);
   await removeModerationForPerson(ctx, personId);
   for await (const membership of ctx.db
