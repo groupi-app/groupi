@@ -1,3 +1,4 @@
+import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
 import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
@@ -243,6 +244,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
+        addonAuthoring: { version: 1 },
         discordGuilds: { version: 1 },
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
@@ -265,6 +267,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createFriendRoutes());
   app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
+  app.route('/', createAddonDefinitionRoutes());
   app.route('/', createAddonDiscordRoutes());
   app.route('/', createNotificationRoutes());
   app.route('/', createMutingRoutes());

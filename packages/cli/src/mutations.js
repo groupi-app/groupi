@@ -45,7 +45,7 @@ async function confirm(confirmation) {
 
 /** Mutation transport never follows redirects; retries require server-side deduplication.
  * @param {{apiUrl:string}} profile @param {string} key @param {string} path
- * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, requestId?:string, validationGuidance?:string, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
+ * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, requestId?:string, validationGuidance?:string, validationIssues?:boolean, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
 export async function mutateApi(profile, key, path, options) {
   if (options.confirmation) await confirm(options.confirmation);
   const body = JSON.stringify(options.body);
@@ -125,8 +125,32 @@ export async function mutateApi(profile, key, path, options) {
       );
     }
     let code;
+    let details = '';
     try {
-      code = (await response.json())?.error?.code;
+      const remote = (await response.json())?.error;
+      code = remote?.code;
+      if (
+        options.validationIssues &&
+        code === 'VALIDATION_ERROR' &&
+        Array.isArray(remote?.issues)
+      ) {
+        details = remote.issues
+          .slice(0, 10)
+          .filter(
+            (/** @type {{path?:unknown,message?:unknown}|null} */ issue) =>
+              issue &&
+              typeof issue.path === 'string' &&
+              /^[a-zA-Z0-9_.]{1,200}$/.test(issue.path) &&
+              typeof issue.message === 'string'
+          )
+          .map((/** @type {{path:string,message:string}} */ issue) => {
+            // Only bounded structured schema diagnostics are displayed. Never echo a credential or terminal control.
+            const redact = (/** @type {string} */ text) =>
+              text.replaceAll(key, '[redacted]').replace(/[^\x20-\x7e]/g, ' ');
+            return `${redact(issue.path)}: ${redact(issue.message).slice(0, 240)}`;
+          })
+          .join('; ');
+      }
     } catch {
       /* The status still describes an explicit rejection. */
     }
@@ -159,7 +183,7 @@ export async function mutateApi(profile, key, path, options) {
     if (response.status === 400 || response.status === 422)
       throw new CliError(
         'USAGE',
-        `${options.validationGuidance ?? 'The server rejected the write inputs. Use this command’s --help to check the supported inputs, then inspect the target and its current state.'}`,
+        `${details ? details + ' ' : ''}${options.validationGuidance ?? 'The server rejected the write inputs. Use this command’s --help to check the supported inputs, then inspect the target and its current state.'}`,
         2
       );
     if (response.status === 401 || response.status === 403)

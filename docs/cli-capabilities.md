@@ -36,7 +36,7 @@ staging checks, and production deployment status distinct.
 | Everyday interactive social activity                          | Friends and notifications with shared confirmation, refresh and reconnect behavior                                                               | [#240](https://github.com/groupi-app/groupi/issues/240) | Implemented; local verification passed; staging pending |
 | Agent use of supported app workflows                          | Portable usage skill, generated versioned command reference, JSON/error and safe-mutation guidance                                               | [#241](https://github.com/groupi-app/groupi/issues/241) | Implemented; verification pending                       |
 | Complete ordinary-user and event-manager release              | Capability audit, installed staging workflows, real OS credential stores, manual TUI checks and public release verification                      | [#242](https://github.com/groupi-app/groupi/issues/242) | Pending                                                 |
-| Custom add-on definition authoring                            | Definition creation/editing and validated import/export                                                                                          | [#243](https://github.com/groupi-app/groupi/issues/243) | Pending; explicitly deferrable                          |
+| Custom add-on definition authoring                            | Definition creation/editing and validated import/export                                                                                          | [#243](https://github.com/groupi-app/groupi/issues/243) | Implemented; local CLI/REST verified; staging pending   |
 
 ## Approved boundaries
 
@@ -377,3 +377,26 @@ closed the open confirmation with stale/error state and hid write actions.
 Restoring the fixture and pressing refresh returned Connected with actions.
 Discussion and friendship screens retained the selected profile and loopback
 server. This uses synthetic local fixture responses, not staging identities.
+
+## Custom definition authoring (#243)
+
+`addons definitions` implements owner-scoped list/get/create/import/export/edit,
+publish/unpublish and deletion through authenticated REST v2. Portable JSON
+preserves supported configuration, strict validation rejects unsafe/unknown
+content, and inspected-version writes detect concurrent CLI or web changes.
+Existing event configurations and participant data remain snapshots. See
+[authoring format and limits](../packages/cli/docs/addon-authoring.md).
+Webhook actions remain explicitly unsupported for authoring writes; existing
+webhook definitions remain readable/exportable without lossy conversion.
+Executable and authenticated REST tests establish local behavior; staging,
+publication and final release-commit evidence remain separate gates.
+
+The authoring change adds executable import/export, versioned lifecycle, input
+validation and uncertain-write checks, plus authenticated REST ownership and
+configuration tests. The installed artifact audit includes 53 runtime/guidance
+files and passes 237 CLI tests plus 19 CLI-to-REST integration tests. A real macOS
+credential-store round-trip verified deployment/profile isolation and removed all
+synthetic local entries. Independent correctness/security and spec reviews
+approved after regressions for configurable sections, field identifiers, selection
+limits and actionable schema diagnostics were fixed. This is local evidence;
+new-commit OS/runtime CI, live staging and public publication remain pending.

@@ -142,9 +142,14 @@ of staging authorization, delivery, or notification parity.
 The generated command tree is the authoritative implemented surface for this
 version, including newly registered lifecycle, social, settings, and add-on
 commands. Read each command's help before use. Do not infer features from a REST
-route or from the parent roadmap. Discussion/media commands, an everyday TUI, and
-custom add-on definition authoring are deferred unless explicitly present in the
-installed command tree; generic existing add-on usage does not imply authoring.
+route or from the parent roadmap. Discussion/media commands and the everyday TUI are implemented. Custom definition
+authoring uses `addons definitions`; read [its portable format and limits](../../docs/addon-authoring.md)
+before writing. Export a definition before replacing it, inspect its saved version,
+and pass `--expected-version` with explicit confirmation for edits/lifecycle changes.
+An uncertain creation must be inspected with `definitions list --all` before any
+repeat import. Webhook authoring is unsupported; never strip unsupported fields
+to make an imported document pass validation. Existing add-on configuration/use
+is distinct from definition ownership.
 
 Passkey setup, linked-account authorization, and account deletion are approved
 browser/device exceptions. Use a documented explicit interactive account command

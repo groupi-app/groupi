@@ -1,3 +1,4 @@
+import { registerAuthoringCommands } from './addon-authoring-commands.js';
 import { readFile, stat } from 'node:fs/promises';
 import { CliError } from './errors.js';
 import { getProfile, credential } from './profiles.js';
@@ -13,7 +14,8 @@ function plain(value) {
 export function registerAddonCommands(program, json) {
   const addons = program
     .command('addons')
-    .description('Configure existing built-in and custom event add-ons');
+    .description('Configure, use and author event add-ons');
+  registerAuthoringCommands(addons, program, json);
   addons
     .command('get <event-id> <addon-type>')
     .description('Inspect enabled or disabled config')
