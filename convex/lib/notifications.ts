@@ -229,6 +229,9 @@ export type NotificationType =
   | 'DATE_CHOSEN'
   | 'DATE_CHANGED'
   | 'DATE_RESET'
+  | 'EVENT_APPLICATION_RECEIVED'
+  | 'EVENT_APPLICATION_APPROVED'
+  | 'EVENT_APPLICATION_DECLINED'
   | 'USER_JOINED'
   | 'USER_LEFT'
   | 'USER_PROMOTED'
@@ -462,6 +465,12 @@ export function getNotificationEmailSubject(
       return `${prefix}Event date changed`;
     case 'DATE_RESET':
       return `${prefix}Event date reset`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return authorName
         ? `${prefix}${authorName} joined`
@@ -545,6 +554,12 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
       return `The date poll for ${event} has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined ${event}`;
     case 'USER_LEFT':
@@ -622,6 +637,12 @@ function getNotificationMessageMarkdown(
       return `The date for ${event} has been changed`;
     case 'DATE_RESET':
       return `The date poll for ${event} has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined ${event}`;
     case 'USER_LEFT':
@@ -698,6 +719,12 @@ export function getNotificationMessagePlain(
       return `The date for "${event}" has been changed`;
     case 'DATE_RESET':
       return `The date poll for "${event}" has been reopened`;
+    case 'EVENT_APPLICATION_RECEIVED':
+      return 'New event application';
+    case 'EVENT_APPLICATION_APPROVED':
+      return 'Your event application was approved';
+    case 'EVENT_APPLICATION_DECLINED':
+      return 'Your event application was declined';
     case 'USER_JOINED':
       return `${author} joined "${event}"`;
     case 'USER_LEFT':
@@ -787,6 +814,15 @@ function buildNotificationUrl(
   postId?: string
 ): string {
   const siteUrl = process.env.SITE_URL || 'https://groupi.gg';
+
+  if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
+    return `${siteUrl}/event/${eventId}/settings/applications`;
+  if (
+    eventId &&
+    (type === 'EVENT_APPLICATION_APPROVED' ||
+      type === 'EVENT_APPLICATION_DECLINED')
+  )
+    return `${siteUrl}/event/${eventId}/apply`;
 
   // Friend-related notifications link to the friends page
   if (
@@ -1218,10 +1254,20 @@ function getPushDestination(
     | 'friends'
     | 'event'
     | 'post'
-    | 'group';
+    | 'group'
+    | 'eventApplications'
+    | 'eventApplication';
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
 } {
+  if (eventId && type === 'EVENT_APPLICATION_RECEIVED')
+    return { destination: 'eventApplications', eventId };
+  if (
+    eventId &&
+    (type === 'EVENT_APPLICATION_APPROVED' ||
+      type === 'EVENT_APPLICATION_DECLINED')
+  )
+    return { destination: 'eventApplication', eventId };
   if (
     type === 'FRIEND_REQUEST_RECEIVED' ||
     type === 'FRIEND_REQUEST_ACCEPTED'

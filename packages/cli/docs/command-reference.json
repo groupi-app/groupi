@@ -36,7 +36,7 @@
     },
     {
       "path": "groupi events",
-      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  cover                         Inspect, replace, or remove cover images from local files\n  transfer                      Consensual Event ownership; Friends audience follows accepted new\n                                Organizer\n  preview <event-id>            Read safe event logistics and entry action without joining\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility, admission and supported\n                                permissions\n  help [command]                display help for command\n"
+      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  cover                         Inspect, replace, or remove cover images from local files\n  transfer                      Consensual Event ownership; Friends audience follows accepted new\n                                Organizer\n  applications                  Configure, submit, or review private Event applications\n  preview <event-id>            Read safe event logistics and entry action without joining\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility, admission and supported\n                                permissions\n  help [command]                display help for command\n"
     },
     {
       "path": "groupi events create",
@@ -159,6 +159,42 @@
       "help": "Usage: groupi events transfer cancel [options] <event-id> <transfer-id>\n\ncancel the named ownership offer\n\nOptions:\n  --yes       Confirm ownership action and Friends audience consequence\n  -h, --help  display help for command\n"
     },
     {
+      "path": "groupi events applications",
+      "help": "Usage: groupi events applications [options] [command]\n\nConfigure, submit, or review private Event applications\n\nOptions:\n  -h, --help                          display help for command\n\nCommands:\n  form <event-id>                     Read current questions, your pending request, and action flags\n  history [options] <event-id>        Read your private history\n  list [options] <event-id>           Read current authorized reviewer queue and history\n  configure [options] <event-id>      Set core admission form without changing add-ons or admission\n                                      policy\n  submit [options] <event-id>\n  withdraw <application-id>\n  approve [options] <application-id>  Admit immediately as Attendee/Pending, with no second\n                                      acceptance\n  decline [options] <application-id>  Decline this application; eligible people can reapply\n  help [command]                      display help for command\n"
+    },
+    {
+      "path": "groupi events applications form",
+      "help": "Usage: groupi events applications form [options] <event-id>\n\nRead current questions, your pending request, and action flags\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events applications history",
+      "help": "Usage: groupi events applications history [options] <event-id>\n\nRead your private history\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events applications list",
+      "help": "Usage: groupi events applications list [options] <event-id>\n\nRead current authorized reviewer queue and history\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events applications configure",
+      "help": "Usage: groupi events applications configure [options] <event-id>\n\nSet core admission form without changing add-ons or admission policy\n\nOptions:\n  --questions <json>          Question array; [] means no questions\n  --reviewer-policy <policy>  ORGANIZERS_AND_MODERATORS or ORGANIZER_ONLY (default:\n                              \"ORGANIZERS_AND_MODERATORS\")\n  -h, --help                  display help for command\n"
+    },
+    {
+      "path": "groupi events applications submit",
+      "help": "Usage: groupi events applications submit [options] <event-id>\n\nOptions:\n  --answers <json>  Answers object; pending submissions edit retained questions\n  -h, --help        display help for command\n"
+    },
+    {
+      "path": "groupi events applications withdraw",
+      "help": "Usage: groupi events applications withdraw [options] <application-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events applications approve",
+      "help": "Usage: groupi events applications approve [options] <application-id>\n\nAdmit immediately as Attendee/Pending, with no second acceptance\n\nOptions:\n  --reason <reason>  Private decision reason\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi events applications decline",
+      "help": "Usage: groupi events applications decline [options] <application-id>\n\nDecline this application; eligible people can reapply\n\nOptions:\n  --reason <reason>  Private decision reason\n  -h, --help         display help for command\n"
+    },
+    {
       "path": "groupi events preview",
       "help": "Usage: groupi events preview [options] <event-id>\n\nRead safe event logistics and entry action without joining\n\nOptions:\n  -h, --help  display help for command\n"
     },
@@ -200,7 +236,7 @@
     },
     {
       "path": "groupi events settings set",
-      "help": "Usage: groupi events settings set [options] <event-id>\n\nOptions:\n  --visibility <visibility>     Event visibility (choices: \"PRIVATE\", \"FRIENDS\", \"PUBLIC\")\n  --admission-policy <policy>   Entry policy, independent of visibility (choices: \"INVITATION_ONLY\",\n                                \"DIRECT\")\n  --create-posts <level>        create-posts permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --invite-members <level>      invite-members permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --view-attendee-list <level>  view-attendee-list permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  -h, --help                    display help for command\n"
+      "help": "Usage: groupi events settings set [options] <event-id>\n\nOptions:\n  --visibility <visibility>     Event visibility (choices: \"PRIVATE\", \"FRIENDS\", \"PUBLIC\")\n  --admission-policy <policy>   Entry policy, independent of visibility (choices: \"INVITATION_ONLY\",\n                                \"DIRECT\", \"APPLY\")\n  --create-posts <level>        create-posts permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --invite-members <level>      invite-members permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  --view-attendee-list <level>  view-attendee-list permission (choices: \"EVERYONE\", \"MODERATOR\",\n                                \"ORGANIZER\")\n  -h, --help                    display help for command\n"
     },
     {
       "path": "groupi discord",

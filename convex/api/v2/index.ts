@@ -2,6 +2,7 @@ import { createGroupModerationRoutes } from './routes/groupModeration';
 import { createGroupInviteRoutes } from './routes/groupInvites';
 import { createGroupRoutes } from './routes/groups';
 import { createEventTransferRoutes } from './routes/eventTransfers';
+import { createEventApplicationRoutes } from './routes/eventApplications';
 import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
 import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
@@ -258,6 +259,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         eventManagement: { version: 1, pendingRsvpJoin: true },
         eventTransfers: { version: 1 },
         eventAdmission: { version: 1 },
+        eventApplications: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
@@ -276,6 +278,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   // Mount route groups
   app.route('/', createEventTransferRoutes());
   app.route('/', createEventManagementRoutes());
+  app.route('/', createEventApplicationRoutes());
   app.route('/', createEventRoutes());
   app.route('/', createImageRoutes());
   app.route('/', createPostRoutes());

@@ -185,7 +185,11 @@ const discoveredEvent = v.object({
   id: v.id('events'),
   title: v.string(),
   admissionPolicy: admissionPolicyValidator,
-  entryAction: v.union(v.literal('JOIN'), v.literal('INVITATION_ONLY')),
+  entryAction: v.union(
+    v.literal('JOIN'),
+    v.literal('APPLY'),
+    v.literal('INVITATION_ONLY')
+  ),
   description: v.union(v.string(), v.null()),
   location: v.union(v.string(), v.null()),
   chosenDateTime: v.union(v.number(), v.null()),
@@ -242,7 +246,9 @@ export const discover = internalQuery({
         entryAction:
           resolveAdmissionPolicy(event) === 'DIRECT'
             ? ('JOIN' as const)
-            : ('INVITATION_ONLY' as const),
+            : resolveAdmissionPolicy(event) === 'APPLY'
+              ? ('APPLY' as const)
+              : ('INVITATION_ONLY' as const),
         description: event.description ?? null,
         location: event.location ?? null,
         chosenDateTime: event.chosenDateTime ?? null,

@@ -2,7 +2,8 @@ import { v } from 'convex/values';
 
 export const admissionPolicyValidator = v.union(
   v.literal('INVITATION_ONLY'),
-  v.literal('DIRECT')
+  v.literal('DIRECT'),
+  v.literal('APPLY')
 );
 
 export const logisticsEventValidator = v.object({
@@ -48,6 +49,7 @@ export const eventLogisticsValidator = v.object({
   entryAction: v.union(
     v.literal('MEMBER'),
     v.literal('JOIN'),
+    v.literal('APPLY'),
     v.literal('INVITATION_ONLY'),
     v.literal('SIGN_IN'),
     v.literal('UNAVAILABLE')

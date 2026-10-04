@@ -1,4 +1,8 @@
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import {
+  deleteEventApplications,
+  deletePersonApplications,
+} from '../eventApplications/cleanup';
 /**
  * Migration mutations for importing data from Supabase.
  *
@@ -254,8 +258,12 @@ export const clearAppTablesBatch3 = internalMutation({
     ) => {
       const docs = await ctx.db.query(tableName).collect();
       for (const doc of docs) {
-        if (tableName === 'events')
+        if (tableName === 'events') {
           await deleteEventTransfers(ctx, doc._id as Id<'events'>);
+          await deleteEventApplications(ctx, doc._id as Id<'events'>);
+        }
+        if (tableName === 'persons')
+          await deletePersonApplications(ctx, doc._id as Id<'persons'>);
         await ctx.db.delete(doc._id);
       }
       console.log(`Cleared ${docs.length} records from ${tableName}`);

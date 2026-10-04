@@ -1,3 +1,4 @@
+import { ApplicationSettings } from '@/components/events/application-settings';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -40,7 +41,9 @@ function AdmissionOptions({ eventId }: { eventId: Id<'events'> }) {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
-  async function update(admissionPolicy: 'INVITATION_ONLY' | 'DIRECT') {
+  async function update(
+    admissionPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY'
+  ) {
     setSaving(true);
     setSaved(false);
     setError('');
@@ -105,6 +108,16 @@ function AdmissionOptions({ eventId }: { eventId: Id<'events'> }) {
       <Text className='text-muted-foreground'>
         Eligible viewers can join with a Pending RSVP.
       </Text>
+      <Button
+        accessibilityLabel='Apply for approval'
+        accessibilityRole='radio'
+        accessibilityState={{ checked: current === 'APPLY' }}
+        disabled={saving || current === 'APPLY'}
+        onPress={() => update('APPLY')}
+      >
+        Apply for approval
+      </Button>
+      <ApplicationSettings eventId={eventId} />
       {saved ? (
         <Text accessibilityLiveRegion='polite' className='text-success'>
           Admission updated.

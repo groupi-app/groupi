@@ -39,6 +39,12 @@ export function getNotificationMessage(
   const postTitle = notification.post?.title ?? 'a post';
 
   switch (notification.type) {
+    case 'EVENT_APPLICATION_RECEIVED':
+      return `A new application to ${eventTitle} is ready for review`;
+    case 'EVENT_APPLICATION_APPROVED':
+      return `Your application to ${eventTitle} was approved`;
+    case 'EVENT_APPLICATION_DECLINED':
+      return `Your application to ${eventTitle} was declined`;
     case 'EVENT_EDITED':
       return `${eventTitle} was updated`;
     case 'DATE_CHOSEN':
@@ -113,6 +119,13 @@ export function getNotificationDestination(
     return '/friends';
   }
   if (!notification.eventId) return null;
+  if (notification.type === 'EVENT_APPLICATION_RECEIVED')
+    return `/event/${notification.eventId}/applications`;
+  if (
+    notification.type === 'EVENT_APPLICATION_APPROVED' ||
+    notification.type === 'EVENT_APPLICATION_DECLINED'
+  )
+    return `/event/${notification.eventId}/application`;
   if (notification.postId) {
     return `/event/${notification.eventId}/post/${notification.postId}`;
   }

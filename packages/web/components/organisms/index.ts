@@ -31,3 +31,4 @@ export { GroupMemberRoster } from './group-member-roster';
 
 export { GroupBanManagement } from './group-ban-management';
 export { GroupConfirmedAction } from './group-confirmed-action';
+export { EventApplications } from './event-applications';

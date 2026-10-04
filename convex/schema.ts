@@ -1,3 +1,10 @@
+import {
+  applicationSettingsValidator,
+  questionValidator,
+  answersValidator,
+  applicationStatusValidator,
+  decisionValidator,
+} from './eventApplications/contracts';
 import { admissionPolicyValidator } from './events/admissionContracts';
 import { creationResult } from './invites/contracts';
 import { defineSchema, defineTable } from 'convex/server';
@@ -247,6 +254,26 @@ export default defineSchema({
     .index('by_event', ['eventId'])
     .index('by_event_status', ['eventId', 'status']),
 
+  eventApplicationActors: defineTable({
+    applicationId: v.id('eventApplications'),
+    personId: v.id('persons'),
+  })
+    .index('by_person', ['personId'])
+    .index('by_application', ['applicationId']),
+  eventApplications: defineTable({
+    eventId: v.id('events'),
+    personId: v.id('persons'),
+    questions: v.array(questionValidator),
+    answers: answersValidator,
+    status: applicationStatusValidator,
+    submittedAt: v.number(),
+    updatedAt: v.number(),
+    decisions: v.array(decisionValidator),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_person', ['personId'])
+    .index('by_event_person', ['eventId', 'personId'])
+    .index('by_event_status', ['eventId', 'status']),
   events: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
@@ -275,6 +302,7 @@ export default defineSchema({
       v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
     ),
     admissionPolicy: v.optional(admissionPolicyValidator),
+    applicationSettings: v.optional(applicationSettingsValidator),
     // Reminder offset - how far before the event to remind attendees (undefined = never)
     reminderOffset: v.optional(
       v.union(
@@ -426,6 +454,9 @@ export default defineSchema({
       v.literal('DATE_CHOSEN'),
       v.literal('DATE_CHANGED'),
       v.literal('DATE_RESET'),
+      v.literal('EVENT_APPLICATION_RECEIVED'),
+      v.literal('EVENT_APPLICATION_APPROVED'),
+      v.literal('EVENT_APPLICATION_DECLINED'),
       v.literal('USER_JOINED'),
       v.literal('USER_LEFT'),
       v.literal('USER_PROMOTED'),
@@ -496,6 +527,9 @@ export default defineSchema({
       v.literal('DATE_CHOSEN'),
       v.literal('DATE_CHANGED'),
       v.literal('DATE_RESET'),
+      v.literal('EVENT_APPLICATION_RECEIVED'),
+      v.literal('EVENT_APPLICATION_APPROVED'),
+      v.literal('EVENT_APPLICATION_DECLINED'),
       v.literal('USER_JOINED'),
       v.literal('USER_LEFT'),
       v.literal('USER_PROMOTED'),
@@ -556,6 +590,8 @@ export default defineSchema({
       v.literal('invites'),
       v.literal('friends'),
       v.literal('event'),
+      v.literal('eventApplications'),
+      v.literal('eventApplication'),
       v.literal('post')
     ),
     groupId: v.optional(v.id('groups')),

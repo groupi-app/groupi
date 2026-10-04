@@ -52,6 +52,17 @@ export function normalizeNativeIntentPath(path: string): string {
       return `${candidatePath}${url.search}`;
     }
 
+    const applicationMatch =
+      /^\/event\/([a-zA-Z0-9_-]+)\/(apply|settings\/applications)$/.exec(
+        candidatePath
+      );
+    if (applicationMatch)
+      return (
+        getSafeAuthReturnPath(
+          `/event/${applicationMatch[1]}/${applicationMatch[2] === 'apply' ? 'application' : 'applications'}`
+        ) ?? FALLBACK_ROUTE
+      );
+
     const legacyProfileMatch = /^\/user\/([^/]+)$/.exec(candidatePath);
     const appPath = legacyProfileMatch
       ? `/profile/${legacyProfileMatch[1]}`

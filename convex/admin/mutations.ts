@@ -3,6 +3,8 @@ import {
   removeGroupMembershipsForPerson,
 } from '../groups/model';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deletePersonApplications } from '../eventApplications/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import { mutation, MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { getCurrentPerson, isAdmin } from '../auth';
@@ -109,6 +111,7 @@ async function deleteEventAndRelatedData(
   }
 
   // 6. Finally, delete the event itself
+  await deleteEventApplications(ctx, eventId);
   await ctx.db.delete(eventId);
 }
 
@@ -316,6 +319,7 @@ export const deletePerson = mutation({
     }
 
     // 7. Delete the person record
+    await deletePersonApplications(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true, deletedUserId: person.userId };

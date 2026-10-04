@@ -36,6 +36,8 @@ export function isEventGateExemptPath(
 
   return (
     suffix === '/preview' ||
+    suffix === '/application' ||
+    suffix === '/applications' ||
     suffix === '/availability' ||
     suffix === '/addons/questionnaire'
   );

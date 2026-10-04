@@ -37,7 +37,9 @@ function settingsResult(value) {
   return {
     eventId: row.eventId,
     visibility: row.visibility,
-    ...(['DIRECT', 'INVITATION_ONLY'].includes(String(row.admissionPolicy))
+    ...(['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+      String(row.admissionPolicy)
+    )
       ? { admissionPolicy: row.admissionPolicy }
       : {}),
     permissions: {
@@ -124,11 +126,13 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
       throw new CliError('USAGE', 'Invalid event visibility.', 2);
     if (
       body.admissionPolicy !== undefined &&
-      !['DIRECT', 'INVITATION_ONLY'].includes(String(body.admissionPolicy))
+      !['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+        String(body.admissionPolicy)
+      )
     )
       throw new CliError(
         'USAGE',
-        'Admission policy must be DIRECT or INVITATION_ONLY.',
+        'Admission policy must be DIRECT, INVITATION_ONLY, or APPLY.',
         2
       );
     if (body.permissions !== undefined) {
@@ -151,6 +155,12 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
     action === 'join',
     action === 'settings' && options.body?.admissionPolicy !== undefined
   );
+  if (action === 'settings' && options.body?.admissionPolicy === 'APPLY') {
+    const { requireApplicationCapability } = await import(
+      './event-applications.js'
+    );
+    await requireApplicationCapability(profile, key);
+  }
   const suffix =
     action === 'role' || action === 'remove'
       ? `/members/${options.memberId}`
@@ -258,10 +268,14 @@ export async function discoverEvents(profile, key, options) {
       items.push({
         id: row.id,
         title: row.title,
-        ...(['DIRECT', 'INVITATION_ONLY'].includes(String(row.admissionPolicy))
+        ...(['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+          String(row.admissionPolicy)
+        )
           ? { admissionPolicy: row.admissionPolicy }
           : {}),
-        ...(['JOIN', 'INVITATION_ONLY'].includes(String(row.entryAction))
+        ...(['JOIN', 'APPLY', 'INVITATION_ONLY'].includes(
+          String(row.entryAction)
+        )
           ? { entryAction: row.entryAction }
           : {}),
         description: row.description,
@@ -302,10 +316,17 @@ export async function getEventLogistics(profile, key, eventId) {
   if (
     event._id !== eventId ||
     typeof event.title !== 'string' ||
-    !['DIRECT', 'INVITATION_ONLY'].includes(String(event.admissionPolicy)) ||
-    !['MEMBER', 'JOIN', 'INVITATION_ONLY', 'SIGN_IN', 'UNAVAILABLE'].includes(
-      String(result.entryAction)
+    !['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+      String(event.admissionPolicy)
     ) ||
+    ![
+      'MEMBER',
+      'JOIN',
+      'APPLY',
+      'INVITATION_ONLY',
+      'SIGN_IN',
+      'UNAVAILABLE',
+    ].includes(String(result.entryAction)) ||
     !Array.isArray(event.potentialDateTimeOptions)
   )
     throw new CliError('INVALID_RESPONSE', 'Invalid event logistics.', 5);

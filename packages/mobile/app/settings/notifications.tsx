@@ -164,6 +164,24 @@ const NOTIFICATION_CATEGORIES: Array<{
         icon: 'ban-outline',
       },
       {
+        type: 'EVENT_APPLICATION_RECEIVED',
+        label: 'New applications',
+        description: 'An applicant requests admission.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'EVENT_APPLICATION_APPROVED',
+        label: 'Approved applications',
+        description: 'Your application is approved.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'EVENT_APPLICATION_DECLINED',
+        label: 'Declined applications',
+        description: 'Your application is declined.',
+        icon: 'mail-outline',
+      },
+      {
         type: 'EVENT_INVITE_RECEIVED',
         label: 'Event invitations',
         description: 'Someone invites you to an event.',

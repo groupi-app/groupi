@@ -42,6 +42,9 @@ export type NotificationType =
   | 'DATE_CHOSEN' // When the organizer of an event that the receiving user is a member of chooses a date
   | 'DATE_CHANGED' // When the organizer of an event that the receiving user is a member of changes the chosen date to a new single date
   | 'DATE_RESET' // When the organizer of an event that the receiving user is a member of starts a new poll for the date
+  | 'EVENT_APPLICATION_RECEIVED'
+  | 'EVENT_APPLICATION_APPROVED'
+  | 'EVENT_APPLICATION_DECLINED'
   | 'USER_JOINED' // When another user joins an event that the receiving user owns or moderates
   | 'USER_LEFT' // When another user leaves an event that the receiving user owns or moderates
   | 'USER_PROMOTED' // When the receiving user is promoted to moderator of an event

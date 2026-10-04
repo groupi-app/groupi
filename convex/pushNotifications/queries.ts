@@ -63,6 +63,8 @@ const deliveryJobValidator = v.object({
     v.literal('invites'),
     v.literal('friends'),
     v.literal('event'),
+    v.literal('eventApplications'),
+    v.literal('eventApplication'),
     v.literal('post')
   ),
   groupId: v.optional(v.id('groups')),

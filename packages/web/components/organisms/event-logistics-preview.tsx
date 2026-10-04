@@ -168,6 +168,17 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
             <Link href={`/event/${eventId}`}>Open Event</Link>
           </Button>
         )}
+        {entryAction === 'APPLY' && (
+          <>
+            <p>
+              Apply before joining. Approval admits you as an Attendee with a
+              Pending RSVP.
+            </p>
+            <Button asChild>
+              <Link href={`/event/${eventId}/apply`}>Apply for approval</Link>
+            </Button>
+          </>
+        )}
         {entryAction === 'JOIN' && (
           <>
             <p>

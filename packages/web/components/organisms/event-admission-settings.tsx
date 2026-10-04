@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { EventApplicationSettings } from './event-application-settings';
 import {
   useEventLogistics,
   useUpdateAdmissionPolicy,
@@ -24,11 +25,14 @@ function OrganizerAdmissionSettings({ eventId }: { eventId: Id<'events'> }) {
   const logistics = useEventLogistics(eventId);
   if (!logistics) return <p role='status'>Loading admission settings…</p>;
   return (
-    <AdmissionForm
-      key={logistics.event.admissionPolicy}
-      eventId={eventId}
-      initialPolicy={logistics.event.admissionPolicy}
-    />
+    <>
+      <AdmissionForm
+        key={logistics.event.admissionPolicy}
+        eventId={eventId}
+        initialPolicy={logistics.event.admissionPolicy}
+      />
+      <EventApplicationSettings eventId={eventId} />
+    </>
   );
 }
 
@@ -37,7 +41,7 @@ function AdmissionForm({
   initialPolicy,
 }: {
   eventId: Id<'events'>;
-  initialPolicy: 'INVITATION_ONLY' | 'DIRECT';
+  initialPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY';
 }) {
   const update = useUpdateAdmissionPolicy();
   const [policy, setPolicy] = useState(initialPolicy);
@@ -91,11 +95,14 @@ function AdmissionForm({
         >
           <option value='INVITATION_ONLY'>Invitation only</option>
           <option value='DIRECT'>Join directly</option>
+          <option value='APPLY'>Apply for approval</option>
         </select>
         <p className='text-sm text-muted-foreground'>
           {policy === 'DIRECT'
             ? 'Eligible viewers can explicitly join with a Pending RSVP.'
-            : 'Viewers need an invitation to join.'}
+            : policy === 'APPLY'
+              ? 'Eligible viewers apply before membership. Approval admits them as an Attendee with a Pending RSVP.'
+              : 'Viewers need an invitation to join.'}
         </p>
         <Button disabled={pending || policy === initialPolicy}>
           {pending ? 'Saving…' : 'Save admission policy'}

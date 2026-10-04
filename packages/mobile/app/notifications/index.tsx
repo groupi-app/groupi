@@ -33,6 +33,9 @@ const NOTIFICATION_ICONS: Record<
   NotificationItem['type'],
   keyof typeof Ionicons.glyphMap
 > = {
+  EVENT_APPLICATION_RECEIVED: 'mail-outline',
+  EVENT_APPLICATION_APPROVED: 'checkmark-circle-outline',
+  EVENT_APPLICATION_DECLINED: 'close-circle-outline',
   NEW_POST: 'chatbubble-outline',
   NEW_REPLY: 'arrow-undo-outline',
   EVENT_EDITED: 'create-outline',

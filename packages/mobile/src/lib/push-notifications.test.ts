@@ -28,6 +28,26 @@ const constants = Constants as unknown as MutableConstants;
 const platform = Platform as { OS: string };
 
 describe('push notification routing', () => {
+  it('opens only safe private application and reviewer routes', () => {
+    expect(
+      getPushNotificationDestination({
+        destination: 'eventApplication',
+        eventId: 'event-123',
+      })
+    ).toBe('/event/event-123/application');
+    expect(
+      getPushNotificationDestination({
+        destination: 'eventApplications',
+        eventId: 'event-123',
+      })
+    ).toBe('/event/event-123/applications');
+    expect(
+      getPushNotificationDestination({
+        destination: 'eventApplication',
+        eventId: '../settings',
+      })
+    ).toBeNull();
+  });
   it('maps the server-controlled destination allowlist to native routes', () => {
     expect(
       getPushNotificationDestination({ destination: 'notifications' })

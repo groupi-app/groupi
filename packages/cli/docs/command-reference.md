@@ -46,6 +46,15 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events transfer accept](#groupi-events-transfer-accept)
 - [groupi events transfer decline](#groupi-events-transfer-decline)
 - [groupi events transfer cancel](#groupi-events-transfer-cancel)
+- [groupi events applications](#groupi-events-applications)
+- [groupi events applications form](#groupi-events-applications-form)
+- [groupi events applications history](#groupi-events-applications-history)
+- [groupi events applications list](#groupi-events-applications-list)
+- [groupi events applications configure](#groupi-events-applications-configure)
+- [groupi events applications submit](#groupi-events-applications-submit)
+- [groupi events applications withdraw](#groupi-events-applications-withdraw)
+- [groupi events applications approve](#groupi-events-applications-approve)
+- [groupi events applications decline](#groupi-events-applications-decline)
 - [groupi events preview](#groupi-events-preview)
 - [groupi events discover](#groupi-events-discover)
 - [groupi events join](#groupi-events-join)
@@ -346,6 +355,7 @@ Commands:
   cover                         Inspect, replace, or remove cover images from local files
   transfer                      Consensual Event ownership; Friends audience follows accepted new
                                 Organizer
+  applications                  Configure, submit, or review private Event applications
   preview <event-id>            Read safe event logistics and entry action without joining
   discover [options]            Browse upcoming friends events you can join
   join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately
@@ -751,6 +761,124 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi events applications
+
+```text
+Usage: groupi events applications [options] [command]
+
+Configure, submit, or review private Event applications
+
+Options:
+  -h, --help                          display help for command
+
+Commands:
+  form <event-id>                     Read current questions, your pending request, and action flags
+  history [options] <event-id>        Read your private history
+  list [options] <event-id>           Read current authorized reviewer queue and history
+  configure [options] <event-id>      Set core admission form without changing add-ons or admission
+                                      policy
+  submit [options] <event-id>
+  withdraw <application-id>
+  approve [options] <application-id>  Admit immediately as Attendee/Pending, with no second
+                                      acceptance
+  decline [options] <application-id>  Decline this application; eligible people can reapply
+  help [command]                      display help for command
+```
+
+## groupi events applications form
+
+```text
+Usage: groupi events applications form [options] <event-id>
+
+Read current questions, your pending request, and action flags
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events applications history
+
+```text
+Usage: groupi events applications history [options] <event-id>
+
+Read your private history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi events applications list
+
+```text
+Usage: groupi events applications list [options] <event-id>
+
+Read current authorized reviewer queue and history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi events applications configure
+
+```text
+Usage: groupi events applications configure [options] <event-id>
+
+Set core admission form without changing add-ons or admission policy
+
+Options:
+  --questions <json>          Question array; [] means no questions
+  --reviewer-policy <policy>  ORGANIZERS_AND_MODERATORS or ORGANIZER_ONLY (default:
+                              "ORGANIZERS_AND_MODERATORS")
+  -h, --help                  display help for command
+```
+
+## groupi events applications submit
+
+```text
+Usage: groupi events applications submit [options] <event-id>
+
+Options:
+  --answers <json>  Answers object; pending submissions edit retained questions
+  -h, --help        display help for command
+```
+
+## groupi events applications withdraw
+
+```text
+Usage: groupi events applications withdraw [options] <application-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events applications approve
+
+```text
+Usage: groupi events applications approve [options] <application-id>
+
+Admit immediately as Attendee/Pending, with no second acceptance
+
+Options:
+  --reason <reason>  Private decision reason
+  -h, --help         display help for command
+```
+
+## groupi events applications decline
+
+```text
+Usage: groupi events applications decline [options] <application-id>
+
+Decline this application; eligible people can reapply
+
+Options:
+  --reason <reason>  Private decision reason
+  -h, --help         display help for command
+```
+
 ## groupi events preview
 
 ```text
@@ -881,7 +1009,7 @@ Usage: groupi events settings set [options] <event-id>
 Options:
   --visibility <visibility>     Event visibility (choices: "PRIVATE", "FRIENDS", "PUBLIC")
   --admission-policy <policy>   Entry policy, independent of visibility (choices: "INVITATION_ONLY",
-                                "DIRECT")
+                                "DIRECT", "APPLY")
   --create-posts <level>        create-posts permission (choices: "EVERYONE", "MODERATOR",
                                 "ORGANIZER")
   --invite-members <level>      invite-members permission (choices: "EVERYONE", "MODERATOR",

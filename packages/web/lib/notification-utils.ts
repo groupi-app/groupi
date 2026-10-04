@@ -6,6 +6,9 @@ import type { NotificationType } from '@/convex/types';
 export function getNotificationTypeDisplayName(type: NotificationType): string {
   const displayNames: Record<NotificationType, string> = {
     EVENT_EDITED: 'Event Edited',
+    EVENT_APPLICATION_RECEIVED: 'Application Received',
+    EVENT_APPLICATION_APPROVED: 'Application Approved',
+    EVENT_APPLICATION_DECLINED: 'Application Declined',
     DATE_CHANGED: 'Date Changed',
     DATE_CHOSEN: 'Date Chosen',
     DATE_RESET: 'Date Reset',

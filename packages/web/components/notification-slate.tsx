@@ -84,6 +84,11 @@ export function NotificationSlate({
     const eventId = event.id;
 
     switch (type) {
+      case 'EVENT_APPLICATION_RECEIVED':
+        return `/event/${eventId}/settings/applications`;
+      case 'EVENT_APPLICATION_APPROVED':
+      case 'EVENT_APPLICATION_DECLINED':
+        return `/event/${eventId}/apply`;
       case 'EVENT_EDITED':
       case 'DATE_CHOSEN':
       case 'DATE_CHANGED':
@@ -141,6 +146,25 @@ export function NotificationSlate({
     const postTitle = post?.title || 'Post';
 
     switch (type) {
+      case 'EVENT_APPLICATION_RECEIVED':
+        return (
+          <>
+            New application to <strong>{eventTitle}</strong> awaits review
+          </>
+        );
+      case 'EVENT_APPLICATION_APPROVED':
+        return (
+          <>
+            Your application to <strong>{eventTitle}</strong> was approved. Your
+            RSVP is Pending.
+          </>
+        );
+      case 'EVENT_APPLICATION_DECLINED':
+        return (
+          <>
+            Your application to <strong>{eventTitle}</strong> was declined
+          </>
+        );
       case 'EVENT_EDITED':
         return (
           <>

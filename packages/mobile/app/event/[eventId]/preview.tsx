@@ -135,7 +135,9 @@ function EventLogistics({ eventId }: { eventId: Id<'events'> }) {
           Admission:{' '}
           {event.admissionPolicy === 'DIRECT'
             ? 'Join directly'
-            : 'Invitation only'}
+            : event.admissionPolicy === 'APPLY'
+              ? 'Apply for approval'
+              : 'Invitation only'}
         </Text>
         {entryAction === 'JOIN' ? (
           <>
@@ -153,6 +155,13 @@ function EventLogistics({ eventId }: { eventId: Id<'events'> }) {
               Join Event
             </Button>
           </>
+        ) : entryAction === 'APPLY' ? (
+          <Button
+            accessibilityLabel={`Apply to ${event.title}`}
+            onPress={() => router.push(`/event/${eventId}/application`)}
+          >
+            Apply for approval
+          </Button>
         ) : entryAction === 'SIGN_IN' ? (
           <Button
             accessibilityLabel={`Sign in to view entry options for ${event.title}`}
@@ -181,6 +190,13 @@ function EventLogistics({ eventId }: { eventId: Id<'events'> }) {
             Joining is unavailable for this event.
           </Text>
         )}
+        <Button
+          variant='outline'
+          accessibilityLabel='My application history'
+          onPress={() => router.push(`/event/${eventId}/application`)}
+        >
+          My application history
+        </Button>
         {error ? (
           <Text accessibilityRole='alert' className='text-destructive'>
             {error}

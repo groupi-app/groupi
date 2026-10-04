@@ -606,3 +606,31 @@ Admission writes require `eventAdmission.version: 1` before a write is sent.
 `JOIN` is available only after current audience, block and ban checks; a preview
 can report `INVITATION_ONLY`, `UNAVAILABLE`, or `MEMBER` instead. Ordinary authorized
 invitations and their Pending acceptance remain independent admission grants.
+
+## Event applications
+
+Choose Apply for approval with
+`groupi events settings set <event-id> --admission-policy APPLY`.
+Configure core questions independently of tools using
+`groupi events applications configure <event-id> --questions '<question-array>'`.
+The seven existing questionnaire field types are supported; `[]` is a valid
+question-free application. Review defaults to Organizer and Moderators;
+`--reviewer-policy ORGANIZER_ONLY` restricts review to the Organizer.
+
+Read `applications form <event-id>`, then `applications submit <event-id>
+--answers '{"question-id":"answer"}'`. Submitting again edits only a pending
+application, against its retained questions. A changed Event form never rewrites
+reviewed answers or an existing pending definition. Use `applications withdraw
+<application-id>` or read paginated `applications history <event-id> --limit 20
+--cursor <cursor>`. Your private history remains readable after audience loss.
+
+Current reviewers use `applications list <event-id>` and
+`applications approve|decline <application-id> [--reason <reason>]`.
+Approval rechecks current audience, blocks and bans, immediately creates
+Attendee/Pending, and requires no second acceptance. Declined/withdrawn applicants
+can reapply under the current form if eligible. Authorized manager invitations
+remain independent grants. All application writes, including choosing APPLY,
+require `eventApplications.version: 1` before sending a write. Scoped keys use
+ordinary `events` read/write permissions. Preview and Discover report `APPLY`
+when that is the current entry action. Decisions and new-request notifications
+use existing channels, mute/DND behavior and type-specific preferences.

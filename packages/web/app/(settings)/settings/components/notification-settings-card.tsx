@@ -66,6 +66,18 @@ const notificationTypeLabels: Record<
     label: 'Group Invitation Accepted',
     description: 'someone accepts my Group invitation.',
   },
+  EVENT_APPLICATION_RECEIVED: {
+    label: 'New Event Applications',
+    description: 'When someone applies to an Event you review',
+  },
+  EVENT_APPLICATION_APPROVED: {
+    label: 'Application Approved',
+    description: 'When your Event application is approved',
+  },
+  EVENT_APPLICATION_DECLINED: {
+    label: 'Application Declined',
+    description: 'When your Event application is declined',
+  },
   NEW_POST: {
     label: 'New Post',
     description: "someone posts in an event I'm in.",

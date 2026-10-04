@@ -2,6 +2,7 @@ import {
   assertNoOwnedGroups,
   removeGroupMembershipsForPerson,
 } from '../groups/model';
+import { deletePersonApplications } from '../eventApplications/cleanup';
 import { claimUpload } from '../files/uploads';
 import { validateImageMetadata } from '../files/imageRules';
 import { saveAvatarForUser } from '../files/images';
@@ -188,6 +189,9 @@ export const updateUserNotificationSettings = mutation({
                 v.literal('DATE_CHOSEN'),
                 v.literal('DATE_CHANGED'),
                 v.literal('DATE_RESET'),
+                v.literal('EVENT_APPLICATION_RECEIVED'),
+                v.literal('EVENT_APPLICATION_APPROVED'),
+                v.literal('EVENT_APPLICATION_DECLINED'),
                 v.literal('USER_JOINED'),
                 v.literal('USER_LEFT'),
                 v.literal('USER_PROMOTED'),
@@ -683,6 +687,7 @@ export const deleteUserAccount = mutation({
       await ctx.db.delete(personSettings._id);
     }
 
+    await deletePersonApplications(ctx, person._id);
     await ctx.db.delete(person._id);
 
     // Magic-link identifiers are random and their email lives inside JSON;

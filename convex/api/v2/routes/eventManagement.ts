@@ -13,7 +13,7 @@ const permissions = z.object({
   inviteMembers: level,
   viewAttendeeList: level,
 });
-const admissionPolicy = z.enum(['INVITATION_ONLY', 'DIRECT']);
+const admissionPolicy = z.enum(['INVITATION_ONLY', 'DIRECT', 'APPLY']);
 const settings = z.object({
   eventId: z.string(),
   visibility,
@@ -97,6 +97,7 @@ export function createEventManagementRoutes() {
                 entryAction: z.enum([
                   'MEMBER',
                   'JOIN',
+                  'APPLY',
                   'INVITATION_ONLY',
                   'SIGN_IN',
                   'UNAVAILABLE',
@@ -138,7 +139,7 @@ export function createEventManagementRoutes() {
                     id: z.string(),
                     title: z.string(),
                     admissionPolicy,
-                    entryAction: z.enum(['JOIN', 'INVITATION_ONLY']),
+                    entryAction: z.enum(['JOIN', 'APPLY', 'INVITATION_ONLY']),
                     description: z.string().nullable(),
                     location: z.string().nullable(),
                     chosenDateTime: z.number().nullable(),

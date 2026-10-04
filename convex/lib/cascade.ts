@@ -1,4 +1,5 @@
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -144,5 +145,6 @@ export async function cascadeDeleteEventData(
     await ctx.db.delete(m._id);
   }
 
+  await deleteEventApplications(ctx, eventId);
   await ctx.db.delete(eventId);
 }

@@ -59,6 +59,14 @@ export async function eventAdmissionAccess(
     canRead: Boolean(
       membership || (audience && (event.visibility === 'PUBLIC' || !ban))
     ),
+    canApply: Boolean(
+      personId &&
+        !membership &&
+        audience &&
+        !ban &&
+        !blocked &&
+        resolveAdmissionPolicy(event) === 'APPLY'
+    ),
     canJoin: Boolean(
       personId &&
         !membership &&
@@ -100,9 +108,11 @@ export async function eventLogisticsForPerson(
       ? ('INVITATION_ONLY' as const)
       : !personId
         ? ('SIGN_IN' as const)
-        : access.canJoin
-          ? ('JOIN' as const)
-          : ('UNAVAILABLE' as const);
+        : access.canApply
+          ? ('APPLY' as const)
+          : access.canJoin
+            ? ('JOIN' as const)
+            : ('UNAVAILABLE' as const);
   return {
     event: {
       _id: event._id,
@@ -145,7 +155,7 @@ export async function updateAdmissionPolicyForPerson(
   ctx: MutationCtx,
   personId: Id<'persons'>,
   eventId: Id<'events'>,
-  admissionPolicy: 'INVITATION_ONLY' | 'DIRECT'
+  admissionPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY'
 ) {
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
   await ctx.db.patch(eventId, { admissionPolicy, updatedAt: Date.now() });

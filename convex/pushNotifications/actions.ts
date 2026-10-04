@@ -31,7 +31,9 @@ type DeliveryJob = {
     | 'friends'
     | 'event'
     | 'post'
-    | 'group';
+    | 'group'
+    | 'eventApplications'
+    | 'eventApplication';
   groupId?: Id<'groups'>;
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;

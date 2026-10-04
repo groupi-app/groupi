@@ -315,35 +315,9 @@ export async function joinDiscoverableEventForPerson(
     });
   }
 
-  const countBeforeInsert = await getOrComputeMemberCount(ctx, eventId, event);
-
-  const now = Date.now();
-  const membershipId = await ctx.db.insert('memberships', {
-    personId: person._id,
-    eventId: eventId,
-    role: 'ATTENDEE',
-    rsvpStatus: 'PENDING',
-    updatedAt: now,
-  });
-  await ctx.db.patch(eventId, {
-    memberCount: countBeforeInsert + 1,
-  });
-
-  // Notify organizers/moderators about the new member
-  await notifyEventModerators(ctx, {
-    eventId,
-    type: 'USER_JOINED',
-    authorId: person._id,
-  });
-
-  // Dispatch onMemberJoined lifecycle
-  await dispatchAddonLifecycle(ctx, eventId, 'onMemberJoined', {
-    personId: person._id,
-  });
-
+  const result = await admitAttendeeForPerson(ctx, personId, eventId);
   return {
-    membershipId,
-    success: true,
+    ...result,
     role: 'ATTENDEE' as const,
     rsvpStatus: 'PENDING' as const,
   };
@@ -416,4 +390,53 @@ export async function canDiscoverEventForPerson(
       .first(),
   ]);
   return membership === null && ban === null;
+}
+
+/** The one ordinary admission writer: existing membership never repeats side effects. */
+export async function admitAttendeeForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  eventId: Id<'events'>
+) {
+  const existing = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', personId).eq('eventId', eventId)
+    )
+    .first();
+  if (existing) return { membershipId: existing._id, success: true };
+  const event = await ctx.db.get(eventId);
+  if (!event) throw new Error('Event not found');
+  const countBeforeInsert = await getOrComputeMemberCount(ctx, eventId, event);
+
+  const now = Date.now();
+  const membershipId = await ctx.db.insert('memberships', {
+    personId: personId,
+    eventId: eventId,
+    role: 'ATTENDEE',
+    rsvpStatus: 'PENDING',
+    updatedAt: now,
+  });
+  await ctx.db.patch(eventId, {
+    memberCount: countBeforeInsert + 1,
+  });
+
+  // Notify organizers/moderators about the new member
+  await notifyEventModerators(ctx, {
+    eventId,
+    type: 'USER_JOINED',
+    authorId: personId,
+  });
+
+  // Dispatch onMemberJoined lifecycle
+  await dispatchAddonLifecycle(ctx, eventId, 'onMemberJoined', {
+    personId: personId,
+  });
+
+  return {
+    membershipId,
+    success: true,
+    role: 'ATTENDEE' as const,
+    rsvpStatus: 'PENDING' as const,
+  };
 }

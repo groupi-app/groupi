@@ -1,4 +1,5 @@
 import { deleteEventTransfers } from '../../../eventTransfers/cleanup';
+import { deleteEventApplications } from '../../../eventApplications/cleanup';
 import type { QueryCtx } from '../../../_generated/server';
 import {
   reminderOffsetValidator,
@@ -470,6 +471,7 @@ export const deleteEvent = internalMutation({
     }
 
     // Delete event
+    await deleteEventApplications(ctx, eventId as Id<'events'>);
     await ctx.db.delete(eventId as Id<'events'>);
 
     return { success: true };

@@ -2,6 +2,7 @@ import {
   assertNoOwnedGroups,
   removeGroupMembershipsForPerson,
 } from '../../../groups/model';
+import { deletePersonApplications } from '../../../eventApplications/cleanup';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { components } from '../../../_generated/api';
@@ -131,6 +132,7 @@ export const deleteUser = internalMutation({
     }
 
     // Delete person record
+    await deletePersonApplications(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true };

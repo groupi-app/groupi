@@ -32,9 +32,15 @@ const SETTINGS = [
   {
     key: 'admission',
     label: 'Admission',
-    description: 'Choose invitation only or join directly',
+    description: 'Choose invitations, direct joining, or applications',
     icon: 'enter-outline',
     organizerOnly: true,
+  },
+  {
+    key: 'applications',
+    label: 'Review applications',
+    description: 'Review private admission requests',
+    icon: 'mail-outline',
   },
   {
     key: 'permissions',
@@ -85,9 +91,11 @@ export default function EventSettingsScreen() {
           const destination =
             item.key === 'details'
               ? `/event/${eventId}/edit`
-              : item.key === 'addons'
-                ? `/event/${eventId}/addons/manage`
-                : `/event/${eventId}/settings/${item.key}`;
+              : item.key === 'applications'
+                ? `/event/${eventId}/applications`
+                : item.key === 'addons'
+                  ? `/event/${eventId}/addons/manage`
+                  : `/event/${eventId}/settings/${item.key}`;
 
           return (
             <Pressable

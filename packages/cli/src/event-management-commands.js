@@ -1,4 +1,5 @@
 import { registerEventTransferCommands } from './event-transfer-commands.js';
+import { registerEventApplicationCommands } from './event-application-commands.js';
 import { registerImageCommands } from './image-commands.js';
 import { Option } from 'commander';
 import { getProfile, credential } from './profiles.js';
@@ -18,6 +19,7 @@ function plain(value) {
 export function registerEventManagementCommands(program, events, json) {
   registerImageCommands(program, events, 'cover', json);
   registerEventTransferCommands(program, events, json);
+  registerEventApplicationCommands(program, events, json);
   const connect = async () => {
     const options = program.opts();
     const profile = await getProfile(options.profile);
@@ -158,7 +160,7 @@ export function registerEventManagementCommands(program, events, json) {
     new Option(
       '--admission-policy <policy>',
       'Entry policy, independent of visibility'
-    ).choices(['INVITATION_ONLY', 'DIRECT'])
+    ).choices(['INVITATION_ONLY', 'DIRECT', 'APPLY'])
   );
   for (const name of ['create-posts', 'invite-members', 'view-attendee-list'])
     update.addOption(

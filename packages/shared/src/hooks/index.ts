@@ -46,3 +46,8 @@ export { createEventAdmissionHooks } from './useEventAdmission';
 export { createGroupInvitationHooks } from './useGroupInvitations';
 
 export { createGroupModerationHooks } from './useGroupModeration';
+export { createEventApplicationHooks } from './useEventApplications';
+export type {
+  ApplicationQuestion,
+  ApplicationAnswers,
+} from '../utils/application-questions';

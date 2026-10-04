@@ -48,9 +48,20 @@ function clientFor(data: unknown = fixture) {
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
-  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+  vi.spyOn(client, 'watchQuery').mockImplementation((...args) => ({
     onUpdate: () => () => {},
-    localQueryResult: () => data,
+    localQueryResult: () =>
+      getFunctionName(args[0]) === 'eventApplications/queries:getForm'
+        ? {
+            settings: {
+              questions: [],
+              reviewerPolicy: 'ORGANIZERS_AND_MODERATORS',
+            },
+            pending: null,
+            canApply: false,
+            canReview: true,
+          }
+        : data,
     journal: () => undefined,
   }));
   const mutation = vi

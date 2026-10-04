@@ -23,6 +23,9 @@ type QueriedNotificationType =
   QueriedNotificationMethod['notifications'][number]['notificationType'];
 
 export const SUPPORTED_NOTIFICATION_TYPES: readonly NotificationType[] = [
+  'EVENT_APPLICATION_RECEIVED',
+  'EVENT_APPLICATION_APPROVED',
+  'EVENT_APPLICATION_DECLINED',
   'EVENT_EDITED',
   'NEW_POST',
   'NEW_REPLY',
@@ -52,6 +55,9 @@ function isSupportedNotificationType(
   type: QueriedNotificationType
 ): type is NotificationType {
   switch (type) {
+    case 'EVENT_APPLICATION_RECEIVED':
+    case 'EVENT_APPLICATION_APPROVED':
+    case 'EVENT_APPLICATION_DECLINED':
     case 'EVENT_EDITED':
     case 'NEW_POST':
     case 'NEW_REPLY':
