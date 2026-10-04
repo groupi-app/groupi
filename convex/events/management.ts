@@ -49,40 +49,13 @@ export async function updateMemberRoleForPerson(
 
   // Require organizer or moderator role in this event (single auth call)
   const currentPerson = { _id: personId };
-  const currentMembership = await requireWriteRole(
-    ctx,
-    membership.eventId,
-    personId,
-    'MODERATOR'
-  );
+  await requireWriteRole(ctx, membership.eventId, personId, 'MODERATOR');
 
-  // Moderators can manage attendee/moderator roles, but organizer authority
-  // can only be granted or changed by another organizer.
-  if (
-    currentMembership.role !== 'ORGANIZER' &&
-    (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER')
-  ) {
+  if (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER') {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message: 'Only organizers can manage the organizer role',
+      message: 'Use an accepted ownership transfer to change the Organizer',
     });
-  }
-
-  // Prevent demoting the last organizer
-  if (membership.role === 'ORGANIZER' && newRole !== 'ORGANIZER') {
-    const organizers = await ctx.db
-      .query('memberships')
-      .withIndex('by_event_role', q =>
-        q.eq('eventId', membership.eventId).eq('role', 'ORGANIZER')
-      )
-      .collect();
-
-    if (organizers.length <= 1) {
-      throw new ConvexError({
-        code: 'FORBIDDEN',
-        message: 'Cannot demote the last organizer',
-      });
-    }
   }
 
   // Update the role
@@ -96,9 +69,7 @@ export async function updateMemberRoleForPerson(
 
   // Notify the affected user about their role change
   const notificationType =
-    newRole === 'ORGANIZER' || newRole === 'MODERATOR'
-      ? 'USER_PROMOTED'
-      : 'USER_DEMOTED';
+    newRole === 'MODERATOR' ? 'USER_PROMOTED' : 'USER_DEMOTED';
 
   await notifyPerson(ctx, {
     personId: membership.personId,

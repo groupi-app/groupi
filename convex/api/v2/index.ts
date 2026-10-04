@@ -1,4 +1,5 @@
 import { createGroupRoutes } from './routes/groups';
+import { createEventTransferRoutes } from './routes/eventTransfers';
 import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
 import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
@@ -250,6 +251,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         eventWrites: { version: 1 },
         imageWrites: { version: 1 },
         eventManagement: { version: 1, pendingRsvpJoin: true },
+        eventTransfers: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
@@ -266,6 +268,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createCliAuthRoutes());
 
   // Mount route groups
+  app.route('/', createEventTransferRoutes());
   app.route('/', createEventManagementRoutes());
   app.route('/', createEventRoutes());
   app.route('/', createImageRoutes());

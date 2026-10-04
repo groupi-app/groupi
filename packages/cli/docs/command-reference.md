@@ -40,6 +40,12 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events cover get](#groupi-events-cover-get)
 - [groupi events cover set](#groupi-events-cover-set)
 - [groupi events cover remove](#groupi-events-cover-remove)
+- [groupi events transfer](#groupi-events-transfer)
+- [groupi events transfer status](#groupi-events-transfer-status)
+- [groupi events transfer offer](#groupi-events-transfer-offer)
+- [groupi events transfer accept](#groupi-events-transfer-accept)
+- [groupi events transfer decline](#groupi-events-transfer-decline)
+- [groupi events transfer cancel](#groupi-events-transfer-cancel)
 - [groupi events discover](#groupi-events-discover)
 - [groupi events join](#groupi-events-join)
 - [groupi events leave](#groupi-events-leave)
@@ -321,6 +327,8 @@ Commands:
   dates                         Inspect proposed dates and manage the chosen date
   members [options] <event-id>  List attendance when event permissions allow
   cover                         Inspect, replace, or remove cover images from local files
+  transfer                      Consensual Event ownership; Friends audience follows accepted new
+                                Organizer
   discover [options]            Browse upcoming friends events you can join
   join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately
   leave [options] <event-id>    leave an event
@@ -646,6 +654,84 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi events transfer
+
+```text
+Usage: groupi events transfer [options] [command]
+
+Consensual Event ownership; Friends audience follows accepted new Organizer
+
+Options:
+  -h, --help                                  display help for command
+
+Commands:
+  status <event-id>                           Inspect pending/resolved ownership
+  offer [options] <event-id> <recipient-id>   offer the named ownership offer
+  accept [options] <event-id> <transfer-id>   accept the named ownership offer
+  decline [options] <event-id> <transfer-id>  decline the named ownership offer
+  cancel [options] <event-id> <transfer-id>   cancel the named ownership offer
+  help [command]                              display help for command
+```
+
+## groupi events transfer status
+
+```text
+Usage: groupi events transfer status [options] <event-id>
+
+Inspect pending/resolved ownership
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events transfer offer
+
+```text
+Usage: groupi events transfer offer [options] <event-id> <recipient-id>
+
+offer the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer accept
+
+```text
+Usage: groupi events transfer accept [options] <event-id> <transfer-id>
+
+accept the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer decline
+
+```text
+Usage: groupi events transfer decline [options] <event-id> <transfer-id>
+
+decline the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer cancel
+
+```text
+Usage: groupi events transfer cancel [options] <event-id> <transfer-id>
+
+cancel the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
 ## groupi events discover
 
 ```text
@@ -717,7 +803,7 @@ Commands:
 Usage: groupi events membership role [options] <event-id> <member-id>
 
 Options:
-  --role <role>  New event role (choices: "ORGANIZER", "MODERATOR", "ATTENDEE")
+  --role <role>  New event role (choices: "MODERATOR", "ATTENDEE")
   --yes          Confirm role change for the named member
   -h, --help     display help for command
 ```

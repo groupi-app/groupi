@@ -6,6 +6,12 @@ export async function cascadeDeleteEventData(
   ctx: MutationCtx,
   eventId: Id<'events'>
 ) {
+  const transfers = await ctx.db
+    .query('eventTransfers')
+    .withIndex('by_event', q => q.eq('eventId', eventId))
+    .collect();
+  for (const transfer of transfers) await ctx.db.delete(transfer._id);
+
   const [
     memberships,
     potentialDates,

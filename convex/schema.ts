@@ -192,6 +192,22 @@ export default defineSchema({
     ),
   }).index('by_person', ['personId']),
 
+  eventTransfers: defineTable({
+    eventId: v.id('events'),
+    offeredById: v.id('persons'),
+    recipientId: v.id('persons'),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_event_status', ['eventId', 'status']),
+
   events: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
@@ -208,7 +224,8 @@ export default defineSchema({
     // INVARIANT: chosenEndDateTime must be > chosenDateTime when both are set
     chosenDateTime: v.optional(v.number()), // Unix timestamp for start
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end (optional)
-    creatorId: v.id('persons'), // Person who created the event
+    creatorId: v.id('persons'), // Current responsible Organizer / Friends principal
+    createdById: v.optional(v.id('persons')), // Immutable creation provenance
     memberCount: v.optional(v.number()), // Denormalized count of memberships
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.number(), // Unix timestamp

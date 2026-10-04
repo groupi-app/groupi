@@ -71,5 +71,37 @@
       "identity": "attendee",
       "args": ["events", "rsvp", "get", "$EVENT_ID", "--format", "json"]
     }
+  ],
+  "event-ownership-transfer": [
+    {
+      "identity": "organizer",
+      "args": [
+        "events",
+        "transfer",
+        "offer",
+        "$EVENT_ID",
+        "$RECIPIENT_PERSON_ID",
+        "--yes"
+      ]
+    },
+    {
+      "identity": "attendee",
+      "args": ["events", "transfer", "status", "$EVENT_ID"]
+    },
+    {
+      "identity": "attendee",
+      "args": [
+        "events",
+        "transfer",
+        "accept",
+        "$EVENT_ID",
+        "$TRANSFER_ID",
+        "--yes"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": ["events", "transfer", "status", "$EVENT_ID"]
+    }
   ]
 }

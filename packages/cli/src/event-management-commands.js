@@ -1,3 +1,4 @@
+import { registerEventTransferCommands } from './event-transfer-commands.js';
 import { registerImageCommands } from './image-commands.js';
 import { Option } from 'commander';
 import { getProfile, credential } from './profiles.js';
@@ -15,6 +16,7 @@ function plain(value) {
 /** @param {import('commander').Command} program @param {import('commander').Command} events @param {boolean} json */
 export function registerEventManagementCommands(program, events, json) {
   registerImageCommands(program, events, 'cover', json);
+  registerEventTransferCommands(program, events, json);
   const connect = async () => {
     const options = program.opts();
     const profile = await getProfile(options.profile);
@@ -98,7 +100,7 @@ export function registerEventManagementCommands(program, events, json) {
     .command('role <event-id> <member-id>')
     .addOption(
       new Option('--role <role>', 'New event role')
-        .choices(['ORGANIZER', 'MODERATOR', 'ATTENDEE'])
+        .choices(['MODERATOR', 'ATTENDEE'])
         .makeOptionMandatory()
     )
     .option('--yes', 'Confirm role change for the named member')

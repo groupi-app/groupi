@@ -36,7 +36,7 @@
     },
     {
       "path": "groupi events",
-      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  cover                         Inspect, replace, or remove cover images from local files\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility and supported permissions\n  help [command]                display help for command\n"
+      "help": "Usage: groupi events [options] [command]\n\nBrowse and manage your events\n\nOptions:\n  -h, --help                    display help for command\n\nCommands:\n  create [options]              Create an event with replay-safe request identification\n  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically\n  list [options]\n  get <event-id>                Read one accessible event\n  mute <event-id>               Mute event notifications\n  unmute <event-id>             Unmute event notifications\n  mute-status <event-id>        Inspect event notifications\n  rsvp                          Read and update your own attendance response\n  availability                  Provide your availability and inspect permitted responses\n  dates                         Inspect proposed dates and manage the chosen date\n  members [options] <event-id>  List attendance when event permissions allow\n  cover                         Inspect, replace, or remove cover images from local files\n  transfer                      Consensual Event ownership; Friends audience follows accepted new\n                                Organizer\n  discover [options]            Browse upcoming friends events you can join\n  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately\n  leave [options] <event-id>    leave an event\n  delete [options] <event-id>   delete an event\n  membership                    Manage event member roles and removal; inspect using events members\n  settings                      Inspect and update event visibility and supported permissions\n  help [command]                display help for command\n"
     },
     {
       "path": "groupi events create",
@@ -135,6 +135,30 @@
       "help": "Usage: groupi events cover remove [options] <event-id>\n\nOptions:\n  --yes       Confirm removing this image\n  -h, --help  display help for command\n"
     },
     {
+      "path": "groupi events transfer",
+      "help": "Usage: groupi events transfer [options] [command]\n\nConsensual Event ownership; Friends audience follows accepted new Organizer\n\nOptions:\n  -h, --help                                  display help for command\n\nCommands:\n  status <event-id>                           Inspect pending/resolved ownership\n  offer [options] <event-id> <recipient-id>   offer the named ownership offer\n  accept [options] <event-id> <transfer-id>   accept the named ownership offer\n  decline [options] <event-id> <transfer-id>  decline the named ownership offer\n  cancel [options] <event-id> <transfer-id>   cancel the named ownership offer\n  help [command]                              display help for command\n"
+    },
+    {
+      "path": "groupi events transfer status",
+      "help": "Usage: groupi events transfer status [options] <event-id>\n\nInspect pending/resolved ownership\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events transfer offer",
+      "help": "Usage: groupi events transfer offer [options] <event-id> <recipient-id>\n\noffer the named ownership offer\n\nOptions:\n  --yes       Confirm ownership action and Friends audience consequence\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events transfer accept",
+      "help": "Usage: groupi events transfer accept [options] <event-id> <transfer-id>\n\naccept the named ownership offer\n\nOptions:\n  --yes       Confirm ownership action and Friends audience consequence\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events transfer decline",
+      "help": "Usage: groupi events transfer decline [options] <event-id> <transfer-id>\n\ndecline the named ownership offer\n\nOptions:\n  --yes       Confirm ownership action and Friends audience consequence\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi events transfer cancel",
+      "help": "Usage: groupi events transfer cancel [options] <event-id> <transfer-id>\n\ncancel the named ownership offer\n\nOptions:\n  --yes       Confirm ownership action and Friends audience consequence\n  -h, --help  display help for command\n"
+    },
+    {
       "path": "groupi events discover",
       "help": "Usage: groupi events discover [options]\n\nBrowse upcoming friends events you can join\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve every page explicitly\n  -h, --help         display help for command\n"
     },
@@ -156,7 +180,7 @@
     },
     {
       "path": "groupi events membership role",
-      "help": "Usage: groupi events membership role [options] <event-id> <member-id>\n\nOptions:\n  --role <role>  New event role (choices: \"ORGANIZER\", \"MODERATOR\", \"ATTENDEE\")\n  --yes          Confirm role change for the named member\n  -h, --help     display help for command\n"
+      "help": "Usage: groupi events membership role [options] <event-id> <member-id>\n\nOptions:\n  --role <role>  New event role (choices: \"MODERATOR\", \"ATTENDEE\")\n  --yes          Confirm role change for the named member\n  -h, --help     display help for command\n"
     },
     {
       "path": "groupi events membership remove",

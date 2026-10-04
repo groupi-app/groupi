@@ -279,6 +279,7 @@ export async function createEventForPerson(
     imageStorageId: imageStorageId,
     imageFocalPoint: imageFocalPoint,
     creatorId: personId,
+    createdById: personId,
     createdAt: now,
     updatedAt: now,
     timezone: 'UTC', // Default timezone, can be updated later

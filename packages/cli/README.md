@@ -528,3 +528,7 @@ REST API keys use the `groups` collection with `read` / `write` permissions.
 Writes require the server's `groups` version 1 capability and are never retried;
 inspect `groups list --all` after an uncertain creation before repeating it.
 Invitation, application and tool commands are unavailable in this initial Group path.
+
+## Event ownership transfers
+
+Event ownership requires recipient consent. Use `events transfer offer EVENT PERSON --yes`, then the named recipient runs `events transfer accept EVENT OFFER --yes`. Inspect `events transfer status EVENT` after any uncertain write. A pending offer remains unresolved: the current Organizer keeps responsibility until acceptance. Acceptance makes the former Organizer a Moderator and moves Friends visibility to the new Organizer's friends; membership and RSVP are preserved. The recipient may `decline`, and the current Organizer may `cancel`, using the offer ID and `--yes`.

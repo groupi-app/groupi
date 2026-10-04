@@ -26,6 +26,7 @@ export const eventDocumentValidator = v.object({
   chosenDateTime: v.optional(v.number()),
   chosenEndDateTime: v.optional(v.number()),
   creatorId: v.id('persons'),
+  createdById: v.optional(v.id('persons')),
   memberCount: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),

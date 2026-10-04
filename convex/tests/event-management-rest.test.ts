@@ -684,6 +684,19 @@ describe('Organizer transfer and moderator safeguards', () => {
         `/events/${eventId}/members/${target.id}`,
         'PATCH',
         { role: 'ORGANIZER' }
+      ),
+      403
+    );
+    const offer = await body(
+      await organizer.request(`/events/${eventId}/ownership-transfer`, 'POST', {
+        recipientId: attendee.personId,
+      })
+    );
+    await body(
+      await attendee.request(
+        `/events/${eventId}/ownership-transfer/accept`,
+        'POST',
+        { transferId: offer.transferId }
       )
     );
     await body(
@@ -702,8 +715,15 @@ describe('Organizer transfer and moderator safeguards', () => {
         )
       ).status
     ).toBe(403);
+    expect(
+      (
+        await organizer.auth.query(api.events.queries.getEventHeader, {
+          eventId,
+        })
+      ).userMembership.role
+    ).toBe('MODERATOR');
     await body(
-      await organizer.request(`/events/${eventId}/members/${own.id}`, 'PATCH', {
+      await attendee.request(`/events/${eventId}/members/${own.id}`, 'PATCH', {
         role: 'ATTENDEE',
       })
     );

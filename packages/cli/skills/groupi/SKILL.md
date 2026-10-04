@@ -167,3 +167,11 @@ is not completion: describe the remaining operator action. Platform administrati
 is outside the ordinary CLI scope. The release still requires staging workflows
 with distinct identities and successful OS/runtime credential-store and package
 verification; this skill does not claim those external checks have run.
+
+Event ownership uses `events transfer offer|status|accept|decline|cancel`.
+The Organizer offers to an eligible existing Event member; only that recipient
+can accept. Pending is unresolved ownership. Acceptance makes the former
+Organizer a Moderator, preserves membership/RSVP, and moves Friends visibility
+to the new Organizer's friends. Inspect status after uncertain writes; do not
+substitute ordinary role changes or repeat writes blindly. Named write commands
+require confirmation and use `--yes` in headless mode.
