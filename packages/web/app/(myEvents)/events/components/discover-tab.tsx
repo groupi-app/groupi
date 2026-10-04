@@ -7,7 +7,7 @@ import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { StickerIcon } from '@/components/atoms';
 import { Id } from '@/convex/_generated/dataModel';
 import { useState } from 'react';
-import { useJoinDiscoverableEvent } from '@/hooks/convex/use-events';
+import { useJoinDiscoverableEvent } from '@/hooks/convex/use-join-discoverable-event';
 import { useRouter } from 'next/navigation';
 
 interface DiscoverableEvent {
@@ -163,6 +163,10 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
             Hosted by <span className='font-medium'>{organizerName}</span>
           </span>
         </div>
+
+        <p className='text-xs text-muted-foreground'>
+          Joining leaves your RSVP Pending.
+        </p>
 
         {/* Join button */}
         <div className='pt-2'>

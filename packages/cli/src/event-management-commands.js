@@ -72,7 +72,11 @@ export function registerEventManagementCommands(program, events, json) {
   for (const action of /** @type {const} */ (['join', 'leave', 'delete'])) {
     const command = events
       .command(`${action} <event-id>`)
-      .description(`${action} an event`);
+      .description(
+        action === 'join'
+          ? 'Join as an Attendee with Pending RSVP; confirm attendance separately'
+          : `${action} an event`
+      );
     if (action !== 'join')
       command.option('--yes', `Confirm ${action} for the named event`);
     command.action(async (eventId, input) => {

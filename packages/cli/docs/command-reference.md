@@ -315,7 +315,7 @@ Commands:
   members [options] <event-id>  List attendance when event permissions allow
   cover                         Inspect, replace, or remove cover images from local files
   discover [options]            Browse upcoming friends events you can join
-  join <event-id>               join an event
+  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately
   leave [options] <event-id>    leave an event
   delete [options] <event-id>   delete an event
   membership                    Manage event member roles and removal; inspect using events members
@@ -658,7 +658,7 @@ Options:
 ```text
 Usage: groupi events join [options] <event-id>
 
-join an event
+Join as an Attendee with Pending RSVP; confirm attendance separately
 
 Options:
   -h, --help  display help for command

@@ -98,7 +98,7 @@ export function createEventManagementRoutes() {
       security: [{ apiKey: [] }],
       summary: 'Join a discoverable event',
       description:
-        'Uses app friendship, visibility and ban rules; creates attendee RSVP YES and dispatches notifications/add-on lifecycle. Not replay-safe.',
+        'Uses app friendship, visibility and ban rules; creates Attendee membership with Pending RSVP (joining does not confirm attendance) and dispatches notifications/add-on lifecycle. Not replay-safe.',
       request: { params: EventIdParamSchema },
       responses: {
         ...errors,
@@ -109,6 +109,8 @@ export function createEventManagementRoutes() {
               schema: z.object({
                 membershipId: z.string(),
                 success: z.boolean(),
+                role: z.literal('ATTENDEE'),
+                rsvpStatus: z.literal('PENDING'),
               }),
             },
           },

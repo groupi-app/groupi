@@ -264,7 +264,7 @@ describe('Discovery, settings, leave and event deletion parity', () => {
     );
   });
   it('pages eligible friends events and joining emits app notifications and hides the joined event', async () => {
-    const { organizer, outsider, eventId } = await fixture();
+    const { organizer, outsider, eventId, event } = await fixture();
     await body(
       await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
         visibility: 'FRIENDS',
@@ -295,6 +295,59 @@ describe('Discovery, settings, leave and event deletion parity', () => {
       );
       expect(final).toEqual({ items: [], nextCursor: null });
     }
+    const definition = await body(
+      await organizer.request('/addon-template-definitions', 'POST', {
+        schemaVersion: 1,
+        name: 'Welcome',
+        description: 'Welcome new members',
+        iconName: 'listChecks',
+        template: {
+          name: 'Welcome',
+          description: 'Welcome new members',
+          iconName: 'listChecks',
+          sections: [
+            {
+              id: 's',
+              title: 'Welcome',
+              fields: [
+                { id: 'note', type: 'text', label: 'Note', required: false },
+              ],
+            },
+          ],
+          automations: [
+            {
+              id: 'welcome',
+              name: 'Welcome member',
+              enabled: true,
+              trigger: { type: 'member_joined' },
+              conditions: [],
+              actions: [
+                {
+                  type: 'create_post',
+                  title: 'Welcome member',
+                  message: 'Welcome to the event',
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      201
+    );
+    await body(
+      await organizer.request(
+        `/addon-template-definitions/${definition.id}/publish`,
+        'POST',
+        { expectedVersion: 1 }
+      )
+    );
+    await body(
+      await organizer.request(
+        `/events/${eventId}/addons/custom:${definition.id}/enable`,
+        'POST',
+        { config: { templateId: definition.id } }
+      )
+    );
     const joined = await body(
       await outsider.request(`/events/${eventId}/join`, 'POST')
     );
@@ -304,8 +357,15 @@ describe('Discovery, settings, leave and event deletion parity', () => {
         await outsider.auth.query(api.events.queries.getEventHeader, {
           eventId,
         })
+      ).event.memberCount
+    ).toBe(4);
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventHeader, {
+          eventId,
+        })
       ).userMembership
-    ).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'YES' });
+    ).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'PENDING' });
     expect(
       (
         await organizer.auth.query(
@@ -318,6 +378,63 @@ describe('Discovery, settings, leave and event deletion parity', () => {
       (await body(await outsider.request('/events/discover', 'GET'))).items
     ).toEqual([]);
     await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    const notices = await organizer.auth.query(
+      api.notifications.queries.fetchNotificationsForPerson,
+      {}
+    );
+    expect(
+      notices.notifications.filter(
+        n => n.type === 'USER_JOINED' && n.author?.id === outsider.personId
+      )
+    ).toHaveLength(1);
+    expect(
+      notices.notifications.filter(n => n.type === 'USER_RSVP')
+    ).toHaveLength(0);
+    const members = await body(
+      await organizer.request(`/events/${eventId}/members`, 'GET')
+    );
+    expect(
+      members.filter(
+        (m: { personId: string }) => m.personId === outsider.personId
+      )
+    ).toHaveLength(1);
+    const posts = await outsider.auth.query(
+      api.posts.queries.getEventPostFeed,
+      { eventId }
+    );
+    expect(
+      posts.event.posts.filter(post => post.title === 'Welcome member')
+    ).toHaveLength(1);
+    // Undated participants vote availability; selecting a poll date derives RSVP.
+    const option = event.potentialDateTimeOptions[0];
+    await body(
+      await outsider.request(`/events/${eventId}/availability`, 'POST', {
+        responses: [{ potentialDateTimeId: option.id, status: 'MAYBE' }],
+      })
+    );
+    await body(
+      await organizer.request(`/events/${eventId}/date`, 'POST', {
+        selectionSource: 'POLL',
+        potentialDateTimeId: option.id,
+      })
+    );
+    expect(
+      await body(await outsider.request(`/events/${eventId}/rsvp`, 'GET'))
+    ).toMatchObject({ rsvpStatus: 'MAYBE' });
+    await body(
+      await outsider.request(`/events/${eventId}/rsvp`, 'PATCH', {
+        rsvpStatus: 'YES',
+      })
+    );
+    await body(
+      await organizer.request(`/events/${eventId}/date`, 'POST', {
+        selectionSource: 'MANUAL',
+        chosenDateTime: new Date(Date.now() + 14 * 86400000).toISOString(),
+      })
+    );
+    expect(
+      await body(await outsider.request(`/events/${eventId}/rsvp`, 'GET'))
+    ).toMatchObject({ rsvpStatus: 'YES' });
   });
   it('filters blocks, bans, private/public events, existing memberships and past friends events', async () => {
     const { organizer, attendee, outsider, eventId } = await fixture();

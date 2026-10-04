@@ -38,7 +38,7 @@ export default function DiscoverScreen() {
     setJoiningId(eventId);
     try {
       await joinEvent({ eventId });
-      toast.success('Joined event!');
+      toast.success('Joined event. Your RSVP is Pending.');
       router.push(`/event/${eventId}`);
     } catch (error) {
       const message =

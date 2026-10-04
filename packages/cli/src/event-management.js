@@ -155,9 +155,20 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
       return { eventId, left: true };
     }
     if (action === 'join') {
-      if (typeof result.membershipId !== 'string' || result.success !== true)
+      if (
+        typeof result.membershipId !== 'string' ||
+        result.success !== true ||
+        result.role !== 'ATTENDEE' ||
+        result.rsvpStatus !== 'PENDING'
+      )
         throw Error('Invalid join result');
-      return { eventId, membershipId: result.membershipId, joined: true };
+      return {
+        eventId,
+        membershipId: result.membershipId,
+        joined: true,
+        role: result.role,
+        rsvpStatus: result.rsvpStatus,
+      };
     }
     if (action === 'role') {
       if (result.id !== options.memberId || result.role !== options.role)

@@ -350,7 +350,7 @@ export async function joinDiscoverableEventForPerson(
     personId: person._id,
     eventId: eventId,
     role: 'ATTENDEE',
-    rsvpStatus: 'YES',
+    rsvpStatus: 'PENDING',
     updatedAt: now,
   });
   await ctx.db.patch(eventId, {
@@ -369,7 +369,12 @@ export async function joinDiscoverableEventForPerson(
     personId: person._id,
   });
 
-  return { membershipId, success: true };
+  return {
+    membershipId,
+    success: true,
+    role: 'ATTENDEE' as const,
+    rsvpStatus: 'PENDING' as const,
+  };
 }
 
 export async function updateEventPermissionsForPerson(

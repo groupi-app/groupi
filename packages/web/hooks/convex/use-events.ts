@@ -433,39 +433,7 @@ export function useDiscoverableEvents() {
   return result;
 }
 
-/**
- * Join a discoverable event (friends-visible)
- */
-export function useJoinDiscoverableEvent() {
-  const joinEvent = useMutation(eventMutations.joinDiscoverableEvent);
-  const { toast } = useToast();
-
-  return useCallback(
-    async (eventId: Id<'events'>) => {
-      try {
-        const result = await joinEvent({ eventId });
-
-        toast({
-          title: 'Joined event',
-          description: "You've joined the event successfully!",
-        });
-
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description:
-            error instanceof Error
-              ? error.message
-              : 'Failed to join event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
-    },
-    [joinEvent, toast]
-  );
-}
+export { useJoinDiscoverableEvent } from './use-join-discoverable-event';
 
 // ===== HOOK ALIASES FOR COMPONENT COMPATIBILITY =====
 

@@ -151,6 +151,8 @@ test('join, settings and membership role expose stable result fields', async () 
         JSON.stringify({
           membershipId: 'member-1',
           success: true,
+          role: 'ATTENDEE',
+          rsvpStatus: 'PENDING',
           secret: 'private-test-key',
         })
       );
@@ -181,7 +183,12 @@ test('join, settings and membership role expose stable result fields', async () 
     eventId: 'event-1',
     membershipId: 'member-1',
     joined: true,
+    role: 'ATTENDEE',
+    rsvpStatus: 'PENDING',
   });
+  const joinedText = await cli(['events', 'join', 'event-1'], false);
+  expect(joinedText.code).toBe(0);
+  expect(joinedText.stdout).toContain('PENDING');
   const changed = await cli([
     'events',
     'settings',
@@ -214,6 +221,7 @@ test('join, settings and membership role expose stable result fields', async () 
     role: 'MODERATOR',
   });
   expect(writes).toEqual([
+    { method: 'POST', path: '/api/v2/events/event-1/join', body: {} },
     { method: 'POST', path: '/api/v2/events/event-1/join', body: {} },
     {
       method: 'PATCH',

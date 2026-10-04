@@ -90,7 +90,9 @@ describe('Public CLI workflows against authenticated Convex REST', () => {
       { id: event.eventId, title: 'Friends picnic' },
     ]);
     expect(discover.nextCursor).toBeNull();
-    await success(attendee.rawKey, ['events', 'join', event.eventId]);
+    expect(
+      await success(attendee.rawKey, ['events', 'join', event.eventId])
+    ).toMatchObject({ joined: true, role: 'ATTENDEE', rsvpStatus: 'PENDING' });
     const eventId = bridge.id<'events'>(event.eventId);
     expect(
       (
@@ -98,7 +100,7 @@ describe('Public CLI workflows against authenticated Convex REST', () => {
           eventId,
         })
       ).userMembership
-    ).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'YES' });
+    ).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'PENDING' });
     expect(
       (await success(attendee.rawKey, ['events', 'discover', '--all'])).items
     ).toEqual([]);

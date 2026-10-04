@@ -372,28 +372,32 @@ describe('Events Operations', () => {
 
       // Friend joins the event
       const asFriend = t.withIdentity({ subject: friendUserId });
-      const result = await asFriend.mutation(
-        api.events.mutations.joinDiscoverableEvent,
-        {
+      const attempts = await Promise.allSettled([
+        asFriend.mutation(api.events.mutations.joinDiscoverableEvent, {
           eventId: eventResult.eventId,
-        }
-      );
-
-      expect(result.membershipId).toBeDefined();
-      expect(result.success).toBe(true);
-
-      // Verify membership was created
-      const membership = await t.run(async ctx => {
-        return await ctx.db
-          .query('memberships')
-          .withIndex('by_person_event', q =>
-            q.eq('personId', friendPersonId).eq('eventId', eventResult.eventId)
-          )
-          .first();
+        }),
+        asFriend.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId: eventResult.eventId,
+        }),
+      ]);
+      const admitted = attempts.filter(result => result.status === 'fulfilled');
+      expect(admitted).toHaveLength(1);
+      expect(
+        attempts.filter(result => result.status === 'rejected')
+      ).toHaveLength(1);
+      expect(admitted[0].value).toMatchObject({
+        success: true,
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
       });
 
-      expect(membership?.role).toBe('ATTENDEE');
-      expect(membership?.rsvpStatus).toBe('YES');
+      const header = await asFriend.query(api.events.queries.getEventHeader, {
+        eventId: eventResult.eventId,
+      });
+      expect(header.userMembership).toMatchObject({
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
+      });
     });
 
     test('should reject joining PRIVATE event', async () => {
