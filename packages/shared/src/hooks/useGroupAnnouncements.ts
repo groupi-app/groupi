@@ -1,6 +1,5 @@
-import type { useQuery, useMutation, ReactMutation } from 'convex/react';
-import type { FunctionReference, FunctionReturnType } from 'convex/server';
-import type { ConvexId } from './types';
+import type { useQuery, useMutation } from 'convex/react';
+import type { FunctionReference, FunctionArgs } from 'convex/server';
 interface AnnouncementApi {
   groupAnnouncements: {
     queries: { getAnnouncement: FunctionReference<'query'> };
@@ -13,24 +12,18 @@ export function createGroupAnnouncementHooks<Api extends AnnouncementApi>(
   hooks: { useQuery: typeof useQuery; useMutation: typeof useMutation }
 ) {
   function useAnnouncement(
-    groupId: ConvexId<'groups'>,
-    requestId: string | null
+    args:
+      | FunctionArgs<Api['groupAnnouncements']['queries']['getAnnouncement']>
+      | 'skip'
   ) {
-    return hooks.useQuery(
-      api.groupAnnouncements.queries.getAnnouncement,
-      requestId ? { groupId, requestId } : 'skip'
-    ) as
-      | FunctionReturnType<
-          Api['groupAnnouncements']['queries']['getAnnouncement']
-        >
-      | undefined;
+    return hooks.useQuery<
+      Api['groupAnnouncements']['queries']['getAnnouncement']
+    >(api.groupAnnouncements.queries.getAnnouncement, args);
   }
   function useSendAnnouncement() {
-    return hooks.useMutation(
-      api.groupAnnouncements.mutations.sendAnnouncement
-    ) as ReactMutation<
+    return hooks.useMutation<
       Api['groupAnnouncements']['mutations']['sendAnnouncement']
-    >;
+    >(api.groupAnnouncements.mutations.sendAnnouncement);
   }
   return { useAnnouncement, useSendAnnouncement };
 }

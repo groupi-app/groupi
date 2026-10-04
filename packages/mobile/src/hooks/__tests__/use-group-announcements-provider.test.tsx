@@ -50,10 +50,10 @@ vi.mock('../../lib/auth-client', () => ({
   },
 }));
 
-vi.mock('react-native', () => ({ View: 'View' }));
-vi.mock('../../components/ui/text', () => ({ Text: 'Text' }));
-vi.mock('../../components/ui/input', () => ({ Input: 'Input' }));
-vi.mock('../../components/ui/button', () => ({ Button: 'Button' }));
+// Use production controls over the existing mocked native host primitives.
+vi.unmock('../../components/ui/text');
+vi.unmock('../../components/ui/input');
+vi.unmock('../../components/ui/button');
 import { GroupAnnouncementComposer } from '../../components/groups/group-announcement-composer';
 import { ConvexClientProvider } from '../../providers/convex-provider';
 import {
@@ -89,7 +89,10 @@ describe('production native Group announcement provider binding', () => {
     let result: ReturnType<typeof useAnnouncement>;
     let createGroup: ReturnType<typeof useSendAnnouncement> | undefined;
     function Probe() {
-      const groups = useAnnouncement('group-123' as never, 'request-123');
+      const groups = useAnnouncement({
+        groupId: 'group-123' as never,
+        requestId: 'request-123',
+      });
       const create = useSendAnnouncement();
       useEffect(() => {
         result = groups;
@@ -146,7 +149,10 @@ describe('production native Group announcement provider binding', () => {
 
   it('detects missing provider rather than allowing a mocked SDK to hide it', async () => {
     function UnprovidedProbe() {
-      useAnnouncement('group-123' as never, 'request-123');
+      useAnnouncement({
+        groupId: 'group-123' as never,
+        requestId: 'request-123',
+      });
       return null;
     }
     let failure: unknown;
@@ -193,7 +199,7 @@ it('native accessible composer explicitly sends through the production provider'
       .props.onChangeText('Bring a book');
   });
   const send = mounted!.root
-    .findAllByType('Button')
+    .findAllByType('Pressable')
     .find(button => button.props.disabled === false);
   expect(send).toBeTruthy();
   await act(async () => {

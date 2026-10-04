@@ -20,7 +20,7 @@ export function GroupAnnouncementComposer({
   const [requestId, setRequestId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  const status = useAnnouncement(groupId, requestId);
+  const status = useAnnouncement(requestId ? { groupId, requestId } : 'skip');
   return (
     <View className='rounded-card bg-card p-4 gap-3'>
       <Text accessibilityRole='header' className='font-semibold'>

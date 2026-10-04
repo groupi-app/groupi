@@ -21,7 +21,7 @@ export function GroupAnnouncementComposer({
   const [requestId, setRequestId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  const status = useAnnouncement(groupId, requestId);
+  const status = useAnnouncement(requestId ? { groupId, requestId } : 'skip');
   return (
     <section
       className='rounded-card bg-card p-4 space-y-3'
