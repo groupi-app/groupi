@@ -119,13 +119,13 @@ describe('Reviewed Invite list recipients', () => {
     ).toBe('MODERATOR');
   });
   it('checks current event permission before protected replay', async () => {
-    const { t, owner, recipient, eventId, ownerMembershipId } = await setup();
+    const { t, owner, recipient, eventId } = await setup();
     const otherOrganizer = await createAuthAccount(t, 'other-organizer');
     await t.run(ctx =>
       ctx.db.insert('memberships', {
         personId: otherOrganizer.personId,
         eventId,
-        role: 'ORGANIZER',
+        role: 'ATTENDEE',
         rsvpStatus: 'YES',
       })
     );
@@ -146,13 +146,20 @@ describe('Reviewed Invite list recipients', () => {
         )
       ).sentCount
     ).toBe(1);
-    await otherOrganizer.auth.mutation(
-      api.events.mutations.updateEventPermissions,
-      { eventId, inviteMembers: 'ORGANIZER' }
+    await owner.auth.mutation(api.events.mutations.updateEventPermissions, {
+      eventId,
+      inviteMembers: 'ORGANIZER',
+    });
+    const offer = await owner.auth.mutation(
+      api.eventTransfers.mutations.offer,
+      {
+        eventId,
+        recipientId: otherOrganizer.personId,
+      }
     );
-    await otherOrganizer.auth.mutation(api.events.mutations.updateMemberRole, {
-      membershipId: ownerMembershipId,
-      newRole: 'MODERATOR',
+    await otherOrganizer.auth.mutation(api.eventTransfers.mutations.accept, {
+      eventId,
+      transferId: offer!.transferId!,
     });
     await expect(
       owner.auth.mutation(api.inviteLists.mutations.inviteListToEvent, args)
