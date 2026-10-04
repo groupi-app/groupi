@@ -52,9 +52,12 @@ export function getAuthRouteDecision({
 
   const isAuthRoute = rootSegment === '(auth)';
   const isInviteRoute = rootSegment === 'invite' || rootSegment === 'g';
+  const isEventPreview =
+    rootSegment === 'event' && /^\/event\/[^/?#]+\/preview$/.test(pathname);
 
   if (!isAuthenticated) {
-    if (isAuthRoute || isInviteRoute) return { kind: 'allow' };
+    if (isAuthRoute || isInviteRoute || isEventPreview)
+      return { kind: 'allow' };
     return {
       kind: 'sign-in',
       returnTo: getSafeAuthReturnPath(pathname),

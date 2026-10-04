@@ -1,12 +1,10 @@
-import { useState } from 'react';
 import { View, FlatList } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { router } from 'expo-router';
 import { useCSSVariable } from 'uniwind';
 import { api } from 'convex/_generated/api';
-import type { Id } from 'convex/_generated/dataModel';
 
 import { ListScreenTemplate } from '@/components/templates';
 import { LoadingState } from '@/components/molecules';
@@ -14,7 +12,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { MemberAvatar } from '@/components/members/member-avatar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@groupi/shared/platform';
 
 function formatEventDate(timestamp: number) {
   return new Date(timestamp).toLocaleDateString(undefined, {
@@ -28,26 +25,9 @@ function formatEventDate(timestamp: number) {
 
 export default function DiscoverScreen() {
   const events = useQuery(api.events.queries.getDiscoverableEvents, {});
-  const joinEvent = useMutation(api.events.mutations.joinDiscoverableEvent);
-  const [joiningId, setJoiningId] = useState<Id<'events'> | null>(null);
   const mutedColor = String(
     useCSSVariable('--color-muted-foreground') ?? 'transparent'
   );
-
-  async function handleJoin(eventId: Id<'events'>) {
-    setJoiningId(eventId);
-    try {
-      await joinEvent({ eventId });
-      toast.success('Joined event. Your RSVP is Pending.');
-      router.push(`/event/${eventId}`);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to join event';
-      toast.error(message);
-    } finally {
-      setJoiningId(null);
-    }
-  }
 
   if (events === undefined) {
     return (
@@ -71,8 +51,6 @@ export default function DiscoverScreen() {
           (events?.length ?? 0) === 0 ? { flex: 1 } : undefined
         }
         renderItem={({ item }) => {
-          const isJoining = joiningId === item.eventId;
-
           return (
             <Card className='mb-3'>
               <Text className='text-lg font-bold text-foreground'>
@@ -145,12 +123,11 @@ export default function DiscoverScreen() {
               <View className='mt-3'>
                 <Button
                   size='sm'
-                  onPress={() => handleJoin(item.eventId)}
-                  isLoading={isJoining}
-                  loadingText='Joining...'
-                  accessibilityLabel={`Join ${item.title}`}
+                  onPress={() => router.push(`/event/${item.eventId}/preview`)}
+                  accessibilityLabel={`View ${item.title}`}
+                  accessibilityHint='Read event details and available entry options'
                 >
-                  Join Event
+                  View Event
                 </Button>
               </View>
             </Card>
@@ -160,7 +137,7 @@ export default function DiscoverScreen() {
           <EmptyState
             icon='compass-outline'
             title='No events to discover'
-            description='Friends-only events you can join will appear here'
+            description='Events shared with you will appear here'
           />
         }
       />

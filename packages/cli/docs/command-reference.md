@@ -46,6 +46,7 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events transfer accept](#groupi-events-transfer-accept)
 - [groupi events transfer decline](#groupi-events-transfer-decline)
 - [groupi events transfer cancel](#groupi-events-transfer-cancel)
+- [groupi events preview](#groupi-events-preview)
 - [groupi events discover](#groupi-events-discover)
 - [groupi events join](#groupi-events-join)
 - [groupi events leave](#groupi-events-leave)
@@ -329,12 +330,14 @@ Commands:
   cover                         Inspect, replace, or remove cover images from local files
   transfer                      Consensual Event ownership; Friends audience follows accepted new
                                 Organizer
+  preview <event-id>            Read safe event logistics and entry action without joining
   discover [options]            Browse upcoming friends events you can join
   join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately
   leave [options] <event-id>    leave an event
   delete [options] <event-id>   delete an event
   membership                    Manage event member roles and removal; inspect using events members
-  settings                      Inspect and update event visibility and supported permissions
+  settings                      Inspect and update event visibility, admission and supported
+                                permissions
   help [command]                display help for command
 ```
 
@@ -732,6 +735,17 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi events preview
+
+```text
+Usage: groupi events preview [options] <event-id>
+
+Read safe event logistics and entry action without joining
+
+Options:
+  -h, --help  display help for command
+```
+
 ## groupi events discover
 
 ```text
@@ -823,7 +837,7 @@ Options:
 ```text
 Usage: groupi events settings [options] [command]
 
-Inspect and update event visibility and supported permissions
+Inspect and update event visibility, admission and supported permissions
 
 Options:
   -h, --help                display help for command
@@ -850,6 +864,8 @@ Usage: groupi events settings set [options] <event-id>
 
 Options:
   --visibility <visibility>     Event visibility (choices: "PRIVATE", "FRIENDS", "PUBLIC")
+  --admission-policy <policy>   Entry policy, independent of visibility (choices: "INVITATION_ONLY",
+                                "DIRECT")
   --create-posts <level>        create-posts permission (choices: "EVERYONE", "MODERATOR",
                                 "ORGANIZER")
   --invite-members <level>      invite-members permission (choices: "EVERYONE", "MODERATOR",

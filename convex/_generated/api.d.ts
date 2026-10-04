@@ -177,6 +177,8 @@ import type * as eventTransfers_model from "../eventTransfers/model.js";
 import type * as eventTransfers_mutations from "../eventTransfers/mutations.js";
 import type * as eventTransfers_queries from "../eventTransfers/queries.js";
 import type * as eventTransfers_rest from "../eventTransfers/rest.js";
+import type * as events_admission from "../events/admission.js";
+import type * as events_admissionContracts from "../events/admissionContracts.js";
 import type * as events_attendance from "../events/attendance.js";
 import type * as events_management from "../events/management.js";
 import type * as events_managementRest from "../events/managementRest.js";
@@ -431,6 +433,8 @@ declare const fullApi: ApiFromModules<{
   "eventTransfers/mutations": typeof eventTransfers_mutations;
   "eventTransfers/queries": typeof eventTransfers_queries;
   "eventTransfers/rest": typeof eventTransfers_rest;
+  "events/admission": typeof events_admission;
+  "events/admissionContracts": typeof events_admissionContracts;
   "events/attendance": typeof events_attendance;
   "events/management": typeof events_management;
   "events/managementRest": typeof events_managementRest;

@@ -436,6 +436,262 @@ describe('Discovery, settings, leave and event deletion parity', () => {
       await body(await outsider.request(`/events/${eventId}/rsvp`, 'GET'))
     ).toMatchObject({ rsvpStatus: 'YES' });
   });
+  it('keeps readable logistics separate from configurable admission and protects participation APIs', async () => {
+    const { organizer, moderator, outsider, eventId } = await fixture();
+    await body(
+      await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
+        visibility: 'PUBLIC',
+      })
+    );
+    const logistics = await body(
+      await outsider.request(`/events/${eventId}/logistics`, 'GET')
+    );
+    expect(logistics.event).toMatchObject({
+      _id: eventId,
+      title: 'Attendance',
+      admissionPolicy: 'INVITATION_ONLY',
+    });
+    expect(logistics.entryAction).toBe('INVITATION_ONLY');
+    expect(Object.keys(logistics).sort()).toEqual([
+      'entryAction',
+      'event',
+      'organizer',
+    ]);
+    expect(logistics.event).not.toHaveProperty('memberships');
+    expect(logistics.event).not.toHaveProperty('permissions');
+    expect(logistics.event.potentialDateTimeOptions).toHaveLength(2);
+    const app = await outsider.auth.query(
+      api.events.queries.getEventLogistics,
+      { eventId }
+    );
+    expect(app).toEqual(logistics);
+    expect(
+      (await outsider.auth.query(api.events.queries.getUserEvents, {})).events
+    ).toEqual([]);
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    for (const path of ['posts', 'members', 'availability', 'addons']) {
+      await body(
+        await outsider.request(`/events/${eventId}/${path}`, 'GET'),
+        403
+      );
+    }
+    for (const query of [
+      api.events.queries.getEventHeader,
+      api.events.queries.getEventAttendeesData,
+      api.events.queries.getEventAvailabilityData,
+      api.availability.queries.getEventAvailabilityData,
+      api.posts.queries.getEventPostFeed,
+      api.addons.queries.getEventAddons,
+    ]) {
+      await expect(outsider.auth.query(query, { eventId })).rejects.toThrow();
+    }
+    await body(
+      await moderator.request(`/events/${eventId}/settings`, 'PATCH', {
+        admissionPolicy: 'DIRECT',
+      }),
+      403
+    );
+    await organizer.auth.mutation(api.events.mutations.updateAdmissionPolicy, {
+      eventId,
+      admissionPolicy: 'DIRECT',
+    });
+    expect(
+      (
+        await body(
+          await outsider.request(`/events/${eventId}/logistics`, 'GET')
+        )
+      ).entryAction
+    ).toBe('JOIN');
+    const settings = await body(
+      await organizer.request(`/events/${eventId}/settings`, 'GET')
+    );
+    expect(settings).toMatchObject({
+      visibility: 'PUBLIC',
+      admissionPolicy: 'DIRECT',
+    });
+    await body(
+      await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
+        admissionPolicy: 'INVITATION_ONLY',
+      })
+    );
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    const invite = await body(
+      await organizer.request(`/events/${eventId}/invites`, 'POST', {}),
+      201
+    );
+    await body(
+      await outsider.request(`/invites/${invite.token}/accept`, 'POST')
+    );
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventHeader, {
+          eventId,
+        })
+      ).userMembership.rsvpStatus
+    ).toBe('PENDING');
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('MEMBER');
+  });
+  it('requires explicit Public direct admission and rechecks blocks and bans at joining time', async () => {
+    const { organizer, outsider, eventId } = await fixture();
+    await body(
+      await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
+        visibility: 'PUBLIC',
+        admissionPolicy: 'DIRECT',
+      })
+    );
+    expect(
+      (
+        await organizer.t.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('SIGN_IN');
+    await outsider.auth.mutation(api.friends.mutations.blockUser, {
+      personId: organizer.personId,
+    });
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('UNAVAILABLE');
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    await outsider.auth.mutation(api.friends.mutations.unblockUser, {
+      personId: organizer.personId,
+    });
+    const joined = await body(
+      await outsider.request(`/events/${eventId}/join`, 'POST')
+    );
+    expect(joined).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'PENDING' });
+    await organizer.auth.mutation(api.events.mutations.banMember, {
+      membershipId: joined.membershipId,
+    });
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('UNAVAILABLE');
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+  });
+  it('qualifies Friends logistics against the current Organizer and preserves independent membership', async () => {
+    const { organizer, moderator, outsider, eventId } = await fixture();
+    await body(
+      await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
+        visibility: 'FRIENDS',
+        admissionPolicy: 'INVITATION_ONLY',
+      })
+    );
+    const friend = await organizer.auth.mutation(
+      api.friends.mutations.sendFriendRequest,
+      { addresseePersonId: outsider.personId }
+    );
+    await outsider.auth.mutation(api.friends.mutations.acceptFriendRequest, {
+      friendshipId: friend.friendshipId,
+    });
+    const readable = await outsider.auth.query(
+      api.events.queries.getEventLogistics,
+      { eventId }
+    );
+    expect(readable.entryAction).toBe('INVITATION_ONLY');
+    expect(readable.organizer?.personId).toBe(organizer.personId);
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getDiscoverableEvents, {})
+      )[0]
+    ).toMatchObject({
+      eventId,
+      admissionPolicy: 'INVITATION_ONLY',
+      entryAction: 'INVITATION_ONLY',
+    });
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    // Fixture models an accepted Organizer transfer; authority-specific transfer is #266.
+    await organizer.t.run(ctx =>
+      ctx.db.patch(eventId, { creatorId: moderator.personId })
+    );
+    await expect(
+      outsider.auth.query(api.events.queries.getEventLogistics, { eventId })
+    ).rejects.toThrow('Access denied');
+    await body(await outsider.request(`/events/${eventId}/join`, 'POST'), 403);
+    expect(
+      (
+        await organizer.auth.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('MEMBER');
+  });
+  it('does not expose member discussions through attachment or file URL APIs to logistics viewers', async () => {
+    const { organizer, outsider, eventId } = await fixture();
+    await body(
+      await organizer.request(`/events/${eventId}/settings`, 'PATCH', {
+        visibility: 'PUBLIC',
+      })
+    );
+    const { postId } = await organizer.auth.mutation(
+      api.posts.mutations.createPost,
+      { eventId, title: 'Private discussion', content: 'Members only' }
+    );
+    const uploaded = await body(
+      await organizer.t.fetch('/api/v2/uploads?purpose=attachment', {
+        method: 'POST',
+        headers: {
+          'x-api-key': organizer.rawKey,
+          'content-type': 'text/plain',
+        },
+        body: 'Private attachment',
+      }),
+      201
+    );
+    const { attachmentId } = await organizer.auth.mutation(
+      api.attachments.mutations.createAttachment,
+      {
+        postId,
+        storageId: uploaded.storageId,
+        filename: 'private.txt',
+        size: 18,
+        mimeType: 'text/plain',
+      }
+    );
+    expect(
+      await organizer.auth.query(api.attachments.queries.getAttachment, {
+        attachmentId,
+      })
+    ).toMatchObject({ filename: 'private.txt' });
+    expect(
+      (
+        await outsider.auth.query(api.events.queries.getEventLogistics, {
+          eventId,
+        })
+      ).entryAction
+    ).toBe('INVITATION_ONLY');
+    await expect(
+      outsider.auth.query(api.attachments.queries.getPostAttachments, {
+        postId,
+      })
+    ).rejects.toThrow();
+    await expect(
+      outsider.auth.query(api.attachments.queries.getAttachment, {
+        attachmentId,
+      })
+    ).rejects.toThrow();
+    await expect(
+      outsider.auth.query(api.files.queries.getFileUrl, {
+        storageId: uploaded.storageId,
+      })
+    ).rejects.toThrow();
+    await expect(
+      organizer.t.query(api.attachments.queries.getAttachment, { attachmentId })
+    ).rejects.toThrow();
+  });
   it('filters blocks, bans, private/public events, existing memberships and past friends events', async () => {
     const { organizer, attendee, outsider, eventId } = await fixture();
     expect(

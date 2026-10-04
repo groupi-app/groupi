@@ -252,6 +252,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         imageWrites: { version: 1 },
         eventManagement: { version: 1, pendingRsvpJoin: true },
         eventTransfers: { version: 1 },
+        eventAdmission: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },

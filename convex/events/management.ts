@@ -1,3 +1,4 @@
+import { resolveAdmissionPolicy, hasEventAudience } from './admission';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
@@ -262,25 +263,25 @@ export async function joinDiscoverableEventForPerson(
     throw new ConvexError({ code: 'FORBIDDEN', message: 'Event not found' });
   }
 
-  if (event.visibility !== 'FRIENDS') {
+  if (resolveAdmissionPolicy(event) !== 'DIRECT') {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message: 'This event is not open for discovery',
+      message:
+        'This event is not open for discovery: an invitation is required',
     });
   }
-
-  // Verify the user is friends with the event creator
-  const isFriends = await checkIfFriends(ctx, person._id, event.creatorId);
   if (await checkIsBlocked(ctx, personId, event.creatorId))
     throw new ConvexError({
       code: 'FORBIDDEN',
       message: 'This event is not available to join',
     });
-  if (!isFriends) {
+  if (!(await hasEventAudience(ctx, event, personId))) {
     throw new ConvexError({
       code: 'FORBIDDEN',
       message:
-        'You must be friends with the event organizer to join this event',
+        event.visibility === 'FRIENDS'
+          ? 'You must be friends with the event organizer to join this event'
+          : 'This event is not available to join',
     });
   }
 

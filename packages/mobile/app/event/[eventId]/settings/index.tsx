@@ -30,6 +30,13 @@ const SETTINGS = [
     icon: 'extension-puzzle-outline',
   },
   {
+    key: 'admission',
+    label: 'Admission',
+    description: 'Choose invitation only or join directly',
+    icon: 'enter-outline',
+    organizerOnly: true,
+  },
+  {
     key: 'permissions',
     label: 'Permissions',
     description: 'Control what event members can do',

@@ -131,6 +131,61 @@ describe('Public CLI workflows against authenticated Convex REST', () => {
     );
   }, 30_000);
 
+  it('reads logistics without membership and changes admission independently before joining', async () => {
+    const organizer = await bridge.actor('admission-organizer');
+    const viewer = await bridge.actor('admission-viewer');
+    const event = await success(organizer.rawKey, [
+      'events',
+      'create',
+      '--title',
+      'Public picnic',
+    ]);
+    await success(organizer.rawKey, [
+      'events',
+      'settings',
+      'set',
+      event.eventId,
+      '--visibility',
+      'PUBLIC',
+    ]);
+    const preview = await success(viewer.rawKey, [
+      'events',
+      'preview',
+      event.eventId,
+    ]);
+    expect(preview).toMatchObject({
+      event: {
+        title: 'Public picnic',
+        visibility: 'PUBLIC',
+        admissionPolicy: 'INVITATION_ONLY',
+      },
+      entryAction: 'INVITATION_ONLY',
+    });
+    expect(
+      (await viewer.auth.query(api.events.queries.getUserEvents, {})).events
+    ).toEqual([]);
+    await denied(viewer.rawKey, ['events', 'join', event.eventId], 'FORBIDDEN');
+    await success(organizer.rawKey, [
+      'events',
+      'settings',
+      'set',
+      event.eventId,
+      '--admission-policy',
+      'DIRECT',
+    ]);
+    expect(
+      (await success(viewer.rawKey, ['events', 'preview', event.eventId]))
+        .entryAction
+    ).toBe('JOIN');
+    expect(
+      await success(viewer.rawKey, ['events', 'join', event.eventId])
+    ).toMatchObject({ role: 'ATTENDEE', rsvpStatus: 'PENDING' });
+    expect(
+      (await success(viewer.rawKey, ['events', 'preview', event.eventId]))
+        .entryAction
+    ).toBe('MEMBER');
+  });
+
   it('enforces event settings, role and deletion authority and removes public event resources', async () => {
     const { organizer, attendee, eventId, membershipId } = await joinedEvent();
     await denied(

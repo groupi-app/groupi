@@ -1,3 +1,8 @@
+import {
+  eventLogisticsValidator,
+  logisticsEventValidator,
+} from './admissionContracts';
+import { eventLogisticsForPerson, resolveAdmissionPolicy } from './admission';
 import { canDiscoverEventForPerson } from './management';
 import { canViewAttendance, privateNote } from './attendance';
 import { latestResponses } from '../availability/reads';
@@ -291,68 +296,20 @@ export const getEvent = query({
     eventId: v.id('events'),
     _traceId: v.optional(v.string()),
   },
+  returns: logisticsEventValidator,
   handler: async (ctx, { eventId }) => {
-    const event = await ctx.db.get(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    const person = await getCurrentPerson(ctx);
+    return (await eventLogisticsForPerson(ctx, eventId, person?._id)).event;
+  },
+});
 
-    // Members may always access their event. Public events remain readable for
-    // discovery, and friends-only events remain readable by accepted friends.
-    // Private events must never become readable merely because the caller is
-    // anonymous.
-    const currentPerson = await getCurrentPerson(ctx);
-    let hasAccess = event.visibility === 'PUBLIC';
-
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', eventId)
-        )
-        .first();
-
-      hasAccess = membership !== null || event.visibility === 'PUBLIC';
-
-      if (!hasAccess && event.visibility === 'FRIENDS') {
-        const [forwardFriendship, reverseFriendship] = await Promise.all([
-          ctx.db
-            .query('friendships')
-            .withIndex('by_requester_addressee', q =>
-              q
-                .eq('requesterId', currentPerson._id)
-                .eq('addresseeId', event.creatorId)
-            )
-            .first(),
-          ctx.db
-            .query('friendships')
-            .withIndex('by_requester_addressee', q =>
-              q
-                .eq('requesterId', event.creatorId)
-                .eq('addresseeId', currentPerson._id)
-            )
-            .first(),
-        ]);
-
-        hasAccess =
-          forwardFriendship?.status === 'ACCEPTED' ||
-          reverseFriendship?.status === 'ACCEPTED';
-      }
-    }
-
-    if (!hasAccess) {
-      throw new Error('Access denied to this event');
-    }
-
-    // Get image URL if event has an image
-    const imageUrl = event.imageStorageId
-      ? await ctx.storage.getUrl(event.imageStorageId)
-      : null;
-
-    return {
-      ...event,
-      imageUrl,
-    };
+/** Viewer-safe logistics; reading never creates membership or an RSVP. */
+export const getEventLogistics = query({
+  args: { eventId: v.id('events') },
+  returns: eventLogisticsValidator,
+  handler: async (ctx, { eventId }) => {
+    const person = await getCurrentPerson(ctx);
+    return eventLogisticsForPerson(ctx, eventId, person?._id);
   },
 });
 
@@ -810,6 +767,11 @@ export const getDiscoverableEvents = query({
           imageUrl,
           memberCount: event.memberCount ?? 0,
           createdAt: event.createdAt,
+          admissionPolicy: resolveAdmissionPolicy(event),
+          entryAction:
+            resolveAdmissionPolicy(event) === 'DIRECT'
+              ? ('JOIN' as const)
+              : ('INVITATION_ONLY' as const),
           organizer: organizerData
             ? {
                 personId: organizerData.person._id,

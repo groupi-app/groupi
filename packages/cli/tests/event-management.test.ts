@@ -23,7 +23,8 @@ afterEach(async () => {
 async function endpoint(
   handler: (req: IncomingMessage, res: ServerResponse) => void,
   capability = true,
-  pendingRsvpJoin = true
+  pendingRsvpJoin = true,
+  eventAdmission = true
 ) {
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'application/json');
@@ -32,6 +33,7 @@ async function endpoint(
         JSON.stringify({
           capabilities: capability
             ? {
+                ...(eventAdmission ? { eventAdmission: { version: 1 } } : {}),
                 eventManagement: {
                   version: 1,
                   ...(pendingRsvpJoin ? { pendingRsvpJoin: true } : {}),
@@ -337,4 +339,112 @@ test('refuses an old automatic-Yes server before sending the join', async () => 
   expect(result.stdout).toBe('');
   expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
   expect(joins).toBe(0);
+});
+
+test('reads safe logistics and configures admission independently of visibility', async () => {
+  const writes: unknown[] = [];
+  await endpoint(async (req, res) => {
+    let text = '';
+    for await (const chunk of req) text += chunk;
+    if (req.method === 'PATCH') writes.push(JSON.parse(text));
+    if (req.url?.endsWith('/logistics'))
+      res.end(
+        JSON.stringify({
+          event: {
+            _id: 'event-1',
+            _creationTime: 1,
+            title: 'Friends picnic',
+            description: 'Lunch',
+            location: 'Park',
+            creatorId: 'person-1',
+            timezone: 'UTC',
+            visibility: 'FRIENDS',
+            admissionPolicy: 'INVITATION_ONLY',
+            chosenDateTime: null,
+            chosenEndDateTime: null,
+            imageUrl: null,
+            createdAt: 1,
+            updatedAt: 1,
+            potentialDateTimeOptions: [
+              { id: 'date-1', start: 1900000000000, end: null, note: null },
+            ],
+            memberships: [{ personId: 'private' }],
+          },
+          organizer: {
+            personId: 'person-1',
+            name: 'Avery',
+            username: 'avery',
+            image: null,
+            email: 'private@example.com',
+          },
+          entryAction: 'INVITATION_ONLY',
+          submissions: ['private'],
+        })
+      );
+    else
+      res.end(
+        JSON.stringify({
+          eventId: 'event-1',
+          visibility: 'FRIENDS',
+          admissionPolicy: 'DIRECT',
+          permissions: {
+            createPosts: 'EVERYONE',
+            inviteMembers: 'MODERATOR',
+            viewAttendeeList: 'EVERYONE',
+          },
+        })
+      );
+  });
+  const preview = await cli(['events', 'preview', 'event-1']);
+  expect(preview.code).toBe(0);
+  const result = JSON.parse(preview.stdout);
+  expect(result).toMatchObject({
+    event: {
+      _id: 'event-1',
+      title: 'Friends picnic',
+      admissionPolicy: 'INVITATION_ONLY',
+    },
+    entryAction: 'INVITATION_ONLY',
+  });
+  expect(result.event).not.toHaveProperty('memberships');
+  expect(result).not.toHaveProperty('submissions');
+  expect(result.organizer).not.toHaveProperty('email');
+  const configured = await cli([
+    'events',
+    'settings',
+    'set',
+    'event-1',
+    '--admission-policy',
+    'DIRECT',
+  ]);
+  expect(configured.code).toBe(0);
+  expect(JSON.parse(configured.stdout)).toMatchObject({
+    visibility: 'FRIENDS',
+    admissionPolicy: 'DIRECT',
+  });
+  expect(writes).toEqual([{ admissionPolicy: 'DIRECT' }]);
+});
+
+test('admission settings refuse an older server before attempting a write', async () => {
+  let writes = 0;
+  await endpoint(
+    (req, res) => {
+      if (req.method === 'PATCH') writes++;
+      res.end(JSON.stringify({ eventId: 'event1', admissionPolicy: 'DIRECT' }));
+    },
+    true,
+    true,
+    false
+  );
+  const result = await cli([
+    'events',
+    'settings',
+    'set',
+    'event1',
+    '--admission-policy',
+    'DIRECT',
+  ]);
+  expect(result.code).not.toBe(0);
+  expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
+  expect(writes).toBe(0);
 });

@@ -1,3 +1,4 @@
+import { admissionPolicyValidator } from './admissionContracts';
 import { v } from 'convex/values';
 import { reminderOffsetValidator } from './writes';
 const permissionLevelValidator = v.union(
@@ -35,6 +36,7 @@ export const eventDocumentValidator = v.object({
   visibility: v.optional(
     v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
   ),
+  admissionPolicy: v.optional(admissionPolicyValidator),
   reminderOffset: v.optional(reminderOffsetValidator),
   permissions: v.optional(
     v.object({

@@ -42,3 +42,4 @@ export function createEventHooks(api: ConvexApi) {
 
 export { createGroupHooks } from './useGroups';
 export { createEventTransferHooks } from './useEventTransfers';
+export { createEventAdmissionHooks } from './useEventAdmission';

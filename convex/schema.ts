@@ -1,3 +1,4 @@
+import { admissionPolicyValidator } from './events/admissionContracts';
 import { creationResult } from './invites/contracts';
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
@@ -235,6 +236,7 @@ export default defineSchema({
     visibility: v.optional(
       v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
     ),
+    admissionPolicy: v.optional(admissionPolicyValidator),
     // Reminder offset - how far before the event to remind attendees (undefined = never)
     reminderOffset: v.optional(
       v.union(

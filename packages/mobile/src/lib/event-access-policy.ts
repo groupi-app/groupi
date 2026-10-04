@@ -23,7 +23,7 @@ function getEventRouteSuffix(pathname: string, eventId: string): string | null {
 }
 
 /**
- * Only mandatory completion forms remain reachable while the event content
+ * Safe logistics and mandatory completion forms remain reachable while the event content
  * gate is active. Organizers are exempt through completion status, so their
  * management routes do not need a pathname exemption.
  */
@@ -34,7 +34,11 @@ export function isEventGateExemptPath(
   const suffix = getEventRouteSuffix(pathname, eventId);
   if (suffix === null) return false;
 
-  return suffix === '/availability' || suffix === '/addons/questionnaire';
+  return (
+    suffix === '/preview' ||
+    suffix === '/availability' ||
+    suffix === '/addons/questionnaire'
+  );
 }
 
 export function getRequiredEventRedirect(

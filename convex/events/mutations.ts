@@ -1,3 +1,8 @@
+import { updateAdmissionPolicyForPerson } from './admission';
+import {
+  admissionPolicyValidator,
+  admissionPolicyResultValidator,
+} from './admissionContracts';
 import {
   updateEventPermissionsForPerson,
   deleteEventForPerson,
@@ -368,5 +373,20 @@ export const updateEventPermissions = mutation({
       inviteMembers,
       viewAttendeeList,
     });
+  },
+});
+
+/** Event admission authority is independent of visibility and ordinary invitation permission. */
+export const updateAdmissionPolicy = mutation({
+  args: { eventId: v.id('events'), admissionPolicy: admissionPolicyValidator },
+  returns: admissionPolicyResultValidator,
+  handler: async (ctx, { eventId, admissionPolicy }) => {
+    const { person } = await requireAuth(ctx);
+    return updateAdmissionPolicyForPerson(
+      ctx,
+      person._id,
+      eventId,
+      admissionPolicy
+    );
   },
 });

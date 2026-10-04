@@ -6,9 +6,7 @@ import { Icons } from '@/components/icons';
 import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { StickerIcon } from '@/components/atoms';
 import { Id } from '@/convex/_generated/dataModel';
-import { useState } from 'react';
-import { useJoinDiscoverableEvent } from '@/hooks/convex/use-join-discoverable-event';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface DiscoverableEvent {
   eventId: Id<'events'>;
@@ -38,22 +36,6 @@ const gradientPatterns = [
 ];
 
 function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
-  const [isJoining, setIsJoining] = useState(false);
-  const joinEvent = useJoinDiscoverableEvent();
-  const router = useRouter();
-
-  const handleJoin = async () => {
-    setIsJoining(true);
-    try {
-      await joinEvent(event.eventId);
-      router.push(`/event/${event.eventId}`);
-    } catch {
-      // Error toast handled by hook
-    } finally {
-      setIsJoining(false);
-    }
-  };
-
   // Consistent gradient based on event ID
   const gradientIndex =
     event.eventId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
@@ -165,22 +147,11 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
         </div>
 
         <p className='text-xs text-muted-foreground'>
-          Joining leaves your RSVP Pending.
+          Read event details before choosing whether to join.
         </p>
-
-        {/* Join button */}
         <div className='pt-2'>
-          <Button
-            className='w-full rounded-button'
-            onClick={handleJoin}
-            disabled={isJoining}
-          >
-            {isJoining ? (
-              <Icons.spinner className='size-4 animate-spin mr-2' />
-            ) : (
-              <Icons.check className='size-4 mr-2' />
-            )}
-            Join Event
+          <Button className='w-full rounded-button' asChild>
+            <Link href={`/event/${event.eventId}/preview`}>View Event</Link>
           </Button>
         </div>
       </div>

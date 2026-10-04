@@ -6,6 +6,7 @@ import { CliError } from './errors.js';
 import {
   discoverEvents,
   getEventSettings,
+  getEventLogistics,
   manageEvent,
 } from './event-management.js';
 /** @param {unknown} value */
@@ -34,6 +35,13 @@ export function registerEventManagementCommands(program, events, json) {
             )
             .join('\n') + '\n'
     );
+  events
+    .command('preview <event-id>')
+    .description('Read safe event logistics and entry action without joining')
+    .action(async eventId => {
+      const { profile, key } = await connect();
+      print(await getEventLogistics(profile, key, eventId));
+    });
   events
     .command('discover')
     .description('Browse upcoming friends events you can join')
@@ -131,7 +139,7 @@ export function registerEventManagementCommands(program, events, json) {
   const settings = events
     .command('settings')
     .description(
-      'Inspect and update event visibility and supported permissions'
+      'Inspect and update event visibility, admission and supported permissions'
     );
   settings.command('get <event-id>').action(async eventId => {
     const { profile, key } = await connect();
@@ -146,6 +154,12 @@ export function registerEventManagementCommands(program, events, json) {
         'PUBLIC',
       ])
     );
+  update.addOption(
+    new Option(
+      '--admission-policy <policy>',
+      'Entry policy, independent of visibility'
+    ).choices(['INVITATION_ONLY', 'DIRECT'])
+  );
   for (const name of ['create-posts', 'invite-members', 'view-attendee-list'])
     update.addOption(
       new Option(`--${name} <level>`, `${name} permission`).choices([
@@ -161,6 +175,9 @@ export function registerEventManagementCommands(program, events, json) {
         .map(name => [name, input[name]])
     );
     const body = {
+      ...(input.admissionPolicy !== undefined
+        ? { admissionPolicy: input.admissionPolicy }
+        : {}),
       ...(input.visibility !== undefined
         ? { visibility: input.visibility }
         : {}),
@@ -169,7 +186,7 @@ export function registerEventManagementCommands(program, events, json) {
     if (!Object.keys(body).length)
       throw new CliError(
         'USAGE',
-        'Specify visibility or at least one permission.',
+        'Specify visibility, admission policy or at least one permission.',
         2
       );
     const { profile, key } = await connect();

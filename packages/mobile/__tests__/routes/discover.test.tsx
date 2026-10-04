@@ -12,10 +12,6 @@ const mocks = vi.hoisted(() => ({
   success: vi.fn(),
   error: vi.fn(),
 }));
-vi.mock('react', async importOriginal => ({
-  ...(await importOriginal<typeof import('react')>()),
-  useState: <T,>(initial: T) => [initial, vi.fn()],
-}));
 vi.mock('@rn-primitives/slot', () => ({ Text: 'Text' }));
 vi.mock('uniwind', () => ({
   useCSSVariable: () => 'transparent',
@@ -52,20 +48,18 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.join.mockResolvedValue({ success: true, membershipId: 'member-1' });
 });
-it('joins from the native Discover control with an honest Pending confirmation', async () => {
+it('opens native Discover logistics without joining or changing RSVP', async () => {
   const list = elements(DiscoverScreen()).find(
     element => element.type === 'FlatList'
   );
   const card = (
     list!.props.renderItem as (args: { item: unknown }) => ReactNode
   )({ item: { eventId: 'event-1', title: 'Friends picnic', memberCount: 1 } });
-  const join = elements(card).find(
-    element => element.props.accessibilityLabel === 'Join Friends picnic'
+  const view = elements(card).find(
+    element => element.props.accessibilityLabel === 'View Friends picnic'
   );
-  await (join!.props.onPress as () => Promise<void>)();
-  expect(mocks.join).toHaveBeenCalledExactlyOnceWith({ eventId: 'event-1' });
-  expect(mocks.success).toHaveBeenCalledWith(
-    'Joined event. Your RSVP is Pending.'
-  );
-  expect(mocks.push).toHaveBeenCalledWith('/event/event-1');
+  await (view!.props.onPress as () => Promise<void>)();
+  expect(mocks.join).not.toHaveBeenCalled();
+  expect(mocks.success).not.toHaveBeenCalled();
+  expect(mocks.push).toHaveBeenCalledWith('/event/event-1/preview');
 });

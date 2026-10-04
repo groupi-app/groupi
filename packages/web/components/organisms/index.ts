@@ -22,3 +22,5 @@ export { GroupsPanel } from './groups-panel';
 export { GroupDetail } from './group-detail';
 export { GroupLanding } from './group-landing';
 export { EventOwnershipTransfer } from './event-ownership-transfer';
+export { EventLogisticsPreview } from './event-logistics-preview';
+export { EventAdmissionSettings } from './event-admission-settings';

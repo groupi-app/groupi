@@ -532,3 +532,21 @@ Invitation, application and tool commands are unavailable in this initial Group 
 ## Event ownership transfers
 
 Event ownership requires recipient consent. Use `events transfer offer EVENT PERSON --yes`, then the named recipient runs `events transfer accept EVENT OFFER --yes`. Inspect `events transfer status EVENT` after any uncertain write. A pending offer remains unresolved: the current Organizer keeps responsibility until acceptance. Acceptance makes the former Organizer a Moderator and moves Friends visibility to the new Organizer's friends; membership and RSVP are preserved. The recipient may `decline`, and the current Organizer may `cancel`, using the offer ID and `--yes`.
+
+## Event logistics and admission
+
+Read before joining with `groupi events preview <event-id>`. The safe JSON/text
+result includes Event identity, description, current Organizer, location, dates,
+resolved admission policy and `entryAction`. Reading creates no membership or RSVP
+and returns no discussion, roster, availability responses or tool submissions.
+
+As the Organizer, configure
+`groupi events settings set <event-id> --admission-policy INVITATION_ONLY` or
+`--admission-policy DIRECT`. Admission is independent of visibility. Unconfigured
+Friends events preserve Direct entry; unconfigured Public/Private events remain
+Invitation only. Public readability alone does not allow self-joining.
+
+Admission writes require `eventAdmission.version: 1` before a write is sent.
+`JOIN` is available only after current audience, block and ban checks; a preview
+can report `INVITATION_ONLY`, `UNAVAILABLE`, or `MEMBER` instead. Ordinary authorized
+invitations and their Pending acceptance remain independent admission grants.
