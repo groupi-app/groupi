@@ -149,6 +149,8 @@ export const join = internalMutation({
   returns: v.object({
     membershipId: v.id('memberships'),
     success: v.boolean(),
+    role: v.literal('ATTENDEE'),
+    rsvpStatus: v.literal('PENDING'),
   }),
   handler: async (ctx, args) =>
     joinDiscoverableEventForPerson(ctx, args.personId, args.eventId),
