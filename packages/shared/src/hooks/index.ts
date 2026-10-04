@@ -19,6 +19,8 @@ export * from './usePostData';
 export * from './usePostActions';
 
 // Type exports
+export { createInviteListHooks } from './useInviteLists';
+
 export type { ConvexApi, ConvexDataModel, ConvexId } from './types';
 
 // Combined hook factories for convenience

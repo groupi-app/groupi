@@ -6,6 +6,7 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
+import { trackNavigationHistory } from '@/lib/navigation-history';
 
 interface NavigationGuardContextValue {
   shouldBlockNavigation: () => boolean;
@@ -18,6 +19,7 @@ const NavigationGuardContext =
   createContext<NavigationGuardContextValue | null>(null);
 
 export function NavigationGuardProvider({ children }: { children: ReactNode }) {
+  React.useEffect(() => trackNavigationHistory(), []);
   const activeGuardRef = React.useRef<NavigationGuardContextValue | null>(null);
 
   const registerGuard = useCallback((guard: NavigationGuardContextValue) => {

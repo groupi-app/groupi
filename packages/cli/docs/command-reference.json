@@ -4,7 +4,7 @@
   "commands": [
     {
       "path": "groupi",
-      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure, use and author event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  groups             Manage formal Group communities independently of events\n  group-invites      Inspect and respond to your private Group invitations\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  posts              Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  replies            Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  invites            Manage bearer link/email and recipient-bound username invitations\n  notifications      Read and clear your notifications\n"
+      "help": "Usage: groupi [options] [command]\n\nGroupi event planning\n\nOptions:\n  -V, --version      output the version number\n  --profile <name>   Named connection profile (default: \"default\")\n  --api-key-stdin    Read one temporary API key from stdin (overrides environment)\n  --non-interactive  Never open the terminal interface\n  --format <format>  Output format (choices: \"human\", \"json\", default: \"human\")\n  -h, --help         display help for command\n\nCommands:\n  tui                Open the keyboard-driven terminal interface\n  auth               Manage authentication\n  profile            Manage connection profiles\n  events             Browse and manage your events\n  discord            Discover authorized Discord servers using your linked account\n  addons             Configure, use and author event add-ons\n  friends            Manage friendships and friend requests\n  blocks             Manage blocked users\n  groups             Manage formal Group communities independently of events\n  group-invites      Inspect and respond to your private Group invitations\n  account            Read/update your account and open explicit browser exceptions\n  settings           Manage ordinary preferences without a browser\n  posts              Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  replies            Read/write safe discussion content; use explicit HTML files to preserve rich\n                     formatting on edits\n  invites            Manage bearer link/email and recipient-bound username invitations\n  invite-lists       Create and inspect private saved selections of existing people\n  notifications      Read and clear your notifications\n"
     },
     {
       "path": "groupi tui",
@@ -741,6 +741,38 @@
     {
       "path": "groupi invites members list",
       "help": "Usage: groupi invites members list [options] [event-id]\n\nList received pending invitations, or invitations sent for an event\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a previous page\n  --all              Retrieve all pages explicitly\n  --status <status>  Status filter; received defaults to PENDING, event list to all (choices:\n                     \"PENDING\", \"ACCEPTED\", \"DECLINED\", \"all\")\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists",
+      "help": "Usage: groupi invite-lists [options] [command]\n\nCreate and inspect private saved selections of existing people\n\nOptions:\n  -h, --help                  display help for command\n\nCommands:\n  create [options]            Save people privately; sends no invitations or notifications\n  list                        Browse all owned lists (up to 100), including Needs attention status\n  get <list-id>               Inspect current people; missing profiles are anonymous and all-missing\n                              lists Need attention\n  edit [options] <list-id>    Rename a private list or replace its saved people without sending\n                              invitations\n  delete [options] <list-id>  Delete a private list; requires confirmation and leaves prior\n                              invitations unchanged\n  invite [options] <list-id>  Explicitly invite current people with 24-hour recovery; repair Needs\n                              attention lists before a fresh send\n  people [options]            Find existing selectable people without an event; friendship is\n                              optional\n  help [command]              display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists create",
+      "help": "Usage: groupi invite-lists create [options]\n\nSave people privately; sends no invitations or notifications\n\nOptions:\n  --name <name>        Creator-unique list name, 1–100 trimmed characters\n  --person-ids <json>  JSON array of 1–100 distinct existing person IDs\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists list",
+      "help": "Usage: groupi invite-lists list [options]\n\nBrowse all owned lists (up to 100), including Needs attention status\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists get",
+      "help": "Usage: groupi invite-lists get [options] <list-id>\n\nInspect current people; missing profiles are anonymous and all-missing lists Need attention\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists edit",
+      "help": "Usage: groupi invite-lists edit [options] <list-id>\n\nRename a private list or replace its saved people without sending invitations\n\nOptions:\n  --name <name>        New creator-unique name, 1–100 trimmed characters\n  --person-ids <json>  Replace people with 1–100 distinct IDs; include an existing person to repair\n                       Needs attention\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists delete",
+      "help": "Usage: groupi invite-lists delete [options] <list-id>\n\nDelete a private list; requires confirmation and leaves prior invitations unchanged\n\nOptions:\n  --yes       Confirm deleting this private invite list\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists invite",
+      "help": "Usage: groupi invite-lists invite [options] <list-id>\n\nExplicitly invite current people with 24-hour recovery; repair Needs attention lists before a fresh\nsend\n\nOptions:\n  --event <event-id>  Target event; requires existing event invitation permission\n  --role <role>       Common event role; MODERATOR is organizer-only (choices: \"ATTENDEE\",\n                      \"MODERATOR\", default: \"ATTENDEE\")\n  --message <text>    Common invitation message, at most 480 characters\n  --request-id <id>   Retain and reuse this identifier with original inputs after an uncertain send\n  -h, --help          display help for command\n"
+    },
+    {
+      "path": "groupi invite-lists people",
+      "help": "Usage: groupi invite-lists people [options]\n\nFind existing selectable people without an event; friendship is optional\n\nOptions:\n  --search <username>  Username search, at least 2 trimmed characters\n  --friends            List accepted friends as convenient choices\n  -h, --help           display help for command\n"
     },
     {
       "path": "groupi notifications",

@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Icons } from '@/components/icons';
-import { EventInviteSearch } from '@/components/event-invite-search';
+import { EventPeopleInvite } from '@/components/organisms/event-people-invite';
 import {
   LocalEmailInviteItem,
   EmailInviteItem,
@@ -69,7 +69,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-type InviteTab = 'link' | 'email' | 'username';
+type InviteTab = 'link' | 'email' | 'username' | 'list';
 
 const MAX_MESSAGE_LENGTH = 480;
 
@@ -85,10 +85,16 @@ function AnimatedTabsContent({
   eventId,
   defaultTab,
   setTab,
+  onProtectedChange,
+  editorActive,
+  registerEditorDismiss,
 }: {
   eventId: Id<'events'>;
   defaultTab: InviteTab;
   setTab: (tab: InviteTab) => void;
+  onProtectedChange: (protectedSend: boolean) => void;
+  editorActive: boolean;
+  registerEditorDismiss: (dismiss: (() => void) | undefined) => void;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const previousHeightRef = useRef<number | null>(null);
@@ -166,20 +172,42 @@ function AnimatedTabsContent({
       onValueChange={handleTabChange}
       className='flex-1 flex flex-col min-h-0'
     >
-      <TabsList className='grid w-full grid-cols-3'>
-        <TabsTrigger value='link' className='flex items-center gap-1.5'>
-          <Link2 className='size-4' />
-          <span className='hidden sm:inline'>Link</span>
-        </TabsTrigger>
-        <TabsTrigger value='email' className='flex items-center gap-1.5'>
-          <Mail className='size-4' />
-          <span className='hidden sm:inline'>Email</span>
-        </TabsTrigger>
-        <TabsTrigger value='username' className='flex items-center gap-1.5'>
-          <AtSign className='size-4' />
-          <span className='hidden sm:inline'>Username</span>
-        </TabsTrigger>
-      </TabsList>
+      <div hidden={editorActive}>
+        <TabsList className='grid w-full grid-cols-4'>
+          <TabsTrigger
+            value='link'
+            aria-label='Link'
+            className='flex items-center gap-1.5'
+          >
+            <Link2 className='size-4' />
+            <span className='hidden sm:inline'>Link</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value='email'
+            aria-label='Email'
+            className='flex items-center gap-1.5'
+          >
+            <Mail className='size-4' />
+            <span className='hidden sm:inline'>Email</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value='username'
+            aria-label='Username'
+            className='flex items-center gap-1.5'
+          >
+            <AtSign className='size-4' />
+            <span className='hidden sm:inline'>Username</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value='list'
+            aria-label='From list'
+            className='flex items-center gap-1.5'
+          >
+            <Users className='size-4' />
+            <span className='hidden sm:inline'>From list</span>
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <div
         ref={contentRef}
@@ -194,6 +222,7 @@ function AnimatedTabsContent({
         <TabsContent
           value='link'
           forceMount
+          hidden={defaultTab !== 'link'}
           className='mt-0 data-[state=inactive]:hidden'
         >
           <LinkInviteTab eventId={eventId} />
@@ -202,17 +231,25 @@ function AnimatedTabsContent({
         <TabsContent
           value='email'
           forceMount
+          hidden={defaultTab !== 'email'}
           className='mt-0 data-[state=inactive]:hidden'
         >
           <EmailInviteTab eventId={eventId} />
         </TabsContent>
 
         <TabsContent
-          value='username'
+          value={defaultTab === 'list' ? 'list' : 'username'}
           forceMount
+          hidden={defaultTab !== 'username' && defaultTab !== 'list'}
           className='mt-0 data-[state=inactive]:hidden'
         >
-          <EventInviteSearch eventId={eventId} />
+          <EventPeopleInvite
+            eventId={eventId}
+            source={defaultTab === 'list' ? 'list' : 'username'}
+            onProtectedChange={onProtectedChange}
+            registerEditorDismiss={registerEditorDismiss}
+            onInspectPending={() => setTab('username')}
+          />
         </TabsContent>
       </div>
     </Tabs>
@@ -227,12 +264,49 @@ function AnimatedTabsContent({
  */
 export function UnifiedInviteDialog() {
   const { open, eventId, defaultTab, setOpen, setTab } = useInviteDialogStore();
+  const [protectedSend, setProtectedSend] = useState(false);
+  const protectedSendRef = useRef(false);
+  const editorDismissRef = useRef<(() => void) | undefined>(undefined);
+  const [editorActive, setEditorActive] = useState(false);
+  const registerEditorDismiss = useCallback(
+    (dismiss: (() => void) | undefined) => {
+      editorDismissRef.current = dismiss;
+      setEditorActive(dismiss !== undefined);
+    },
+    []
+  );
+  const handleProtectedChange = useCallback((value: boolean) => {
+    protectedSendRef.current = value;
+    setProtectedSend(value);
+  }, []);
 
   if (!eventId) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className='sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden'>
+    <Dialog
+      open={open}
+      onOpenChange={nextOpen => {
+        if (!nextOpen && editorDismissRef.current) editorDismissRef.current();
+        else if (!protectedSendRef.current) setOpen(nextOpen);
+      }}
+    >
+      <DialogContent
+        preventOverlayClose={protectedSend || editorActive}
+        onEscapeKeyDown={event => {
+          if (editorDismissRef.current) {
+            event.preventDefault();
+            editorDismissRef.current();
+          } else if (protectedSendRef.current) event.preventDefault();
+        }}
+        onInteractOutside={event => {
+          if (editorDismissRef.current) {
+            event.preventDefault();
+            event.detail.originalEvent.preventDefault();
+            editorDismissRef.current();
+          } else if (protectedSendRef.current) event.preventDefault();
+        }}
+        className='sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden'
+      >
         <DialogHeader className='flex-shrink-0'>
           <DialogTitle className='flex items-center gap-2'>
             <Icons.invite className='size-5' />
@@ -247,6 +321,9 @@ export function UnifiedInviteDialog() {
           eventId={eventId}
           defaultTab={defaultTab}
           setTab={setTab}
+          onProtectedChange={handleProtectedChange}
+          editorActive={editorActive}
+          registerEditorDismiss={registerEditorDismiss}
         />
       </DialogContent>
     </Dialog>

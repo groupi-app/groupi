@@ -113,6 +113,81 @@ an explicit `--web-url`; existing profiles can pass it to `auth login` for that
 invocation. The authorization website must be an origin without a path. It is
 never inferred from a REST hostname.
 
+## Private invite lists
+
+```sh
+groupi invite-lists people --search guest --format json
+groupi invite-lists people --friends --format json
+groupi invite-lists create --name "Dinner guests" --person-ids '["<person-id>"]' --format json
+groupi invite-lists list --format json
+groupi invite-lists get <list-id> --format json
+groupi invite-lists edit <list-id> --name "Weekend guests" --format json
+groupi invite-lists edit <list-id> --person-ids '["<person-id>"]' --format json
+groupi invite-lists invite <list-id> --event <event-id> --request-id <retained-request-id> --format json
+groupi invite-lists delete <list-id> --yes --format json
+```
+
+Choose existing `personId` values from username search or accepted-friend choices.
+Search requires at least two trimmed characters and does not require friendship
+or an event. Lists belong privately to the selected authenticated identity; API
+keys need `invite-lists:read` for browsing/discovery and `invite-lists:write` for
+creation, editing, deletion, and explicit event use. Event use additionally
+requires existing event invitation permission and ownership of the list. The
+server must advertise `inviteLists` capability version 1 or later for foundation
+commands, and version 2 or later with 24-hour replay retention for management and
+event use.
+
+Names contain 1–100 characters after trimming and must be unique among your lists
+ignoring case. You can own up to 100 lists. Creation requires 1–100 distinct
+existing people; duplicate IDs are collapsed. Saving a list sends no invitation
+or notification and changes no event participation. Collection/discovery responses
+are `{items}` without pagination; detail returns current people and the list's
+counts and `needsAttention` status. `edit` accepts a name, a complete replacement
+people array, or both; it does not send invitations. `delete` requires destructive
+confirmation (`--yes` in JSON/headless mode) and returns
+`{deleted:true,inviteListId}`. Deleting a previously used list leaves its prior
+invitations and event participation unchanged.
+
+Deleted recipients remain anonymous unavailable entries: their `name`, `username`,
+and `image` are null. `personCount` includes saved unavailable entries, while
+`availablePersonCount` counts existing people. When that count reaches zero, the
+named list remains visible with `needsAttention:true` and text output says
+“Needs attention.” A fresh event-use request is rejected until repaired.
+Discover an existing person, then use
+`invite-lists edit <list-id> --person-ids '["<existing-person-id>"]'` to replace the
+selection. You may retain already saved unavailable IDs alongside at least one
+existing person; they remain anonymous and are skipped during a new send. Ordinary
+creation/save cannot contain only unavailable people, and the 100-person limit
+still includes those retained entries. Repair changes no invitations or event
+participation. Deleting the owner's account removes owned lists and prevents
+access through the old identity.
+
+Creation is sent once and has no request-ID replay support. If the outcome is
+uncertain, inspect `invite-lists list` on the original profile before deciding
+whether another creation is needed. Editing and deletion also send once; inspect
+the original list/profile after an uncertain result before deciding whether
+another write is needed.
+
+`invite` explicitly sends ordinary event invitations to the list's current
+people in one request. Choose `--role ATTENDEE` (default) or `MODERATOR`
+(organizers only), and optionally `--message` with up to 480 characters. At most
+100 distinct recipients are allowed; the server rechecks ordinary eligibility.
+JSON reports `eventId`, `totalCount`, `sentCount`, `skippedCount`, and per-person
+`results` with status `sent`/`skipped`; the CLI includes the `requestId`. Skip
+reasons are `ALREADY_MEMBER`, `INVITATION_PENDING`, or generic `UNAVAILABLE`.
+Zero sent recipients means no invitations were sent. List use does not create
+membership or RSVP, and later list changes do not alter prior invitations.
+
+Generate and retain `<Unix-milliseconds>.<UUID v4>` before the send, then pass
+`--request-id`. Protected retries preserve the original result and recipients
+despite later list edits/deletion or recipient disappearance. A protected replay
+does not expand current people again or require a current usable list. After an uncertain send, inspect
+`invites members list <event-id>` on the original profile or retry identical
+original inputs with the same request ID within 24 hours. A new identifier can
+send to a different current selection. Changed inputs return
+`IDEMPOTENCY_CONFLICT`; expired identifiers return `IDEMPOTENCY_EXPIRED` and
+require inspection before deliberately starting another send.
+
 ## Create and edit events
 
 ```sh

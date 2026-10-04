@@ -399,6 +399,38 @@ http.route({
   handler: apiV2Handler,
 });
 
+// Private Invite list collection and lookup routes.
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'PATCH',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'DELETE',
+  handler: apiV2Handler,
+});
+http.route({
+  path: '/api/v2/invite-lists',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+http.route({
+  path: '/api/v2/invite-lists',
+  method: 'POST',
+  handler: apiV2Handler,
+});
+http.route({
+  pathPrefix: '/api/v2/invite-lists/',
+  method: 'GET',
+  handler: apiV2Handler,
+});
+
 http.route({
   pathPrefix: '/api/v2/friends/',
   method: 'GET',

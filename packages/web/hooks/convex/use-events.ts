@@ -3,6 +3,7 @@
 /* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
 
 import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,8 +20,6 @@ let userQueries: any;
 
 function initApi() {
   if (!eventQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
     eventQueries = api.events?.queries ?? {};
     eventMutations = api.events?.mutations ?? {};
     userQueries = api.users?.queries ?? {};

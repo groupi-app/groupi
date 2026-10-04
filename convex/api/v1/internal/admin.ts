@@ -8,6 +8,7 @@ import { v } from 'convex/values';
 import { components } from '../../../_generated/api';
 import { authComponent, type AuthUserId } from '../../../auth';
 import { isAdminRole } from '../../../lib/constants';
+import { deleteListsForPerson } from '../../../inviteLists/model';
 
 /**
  * Internal queries and mutations for admin routes
@@ -133,6 +134,7 @@ export const deleteUser = internalMutation({
 
     // Delete person record
     await deletePersonApplications(ctx, person._id);
+    await deleteListsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true };

@@ -10,6 +10,7 @@ import { registerAccountCommands } from './account-commands.js';
 import { registerNotificationCommands } from './notification-commands.js';
 import { registerAttendanceCommands } from './attendance-commands.js';
 import { registerInviteCommands } from './invite-commands.js';
+import { registerInviteListCommands } from './invite-list-commands.js';
 import { eventInput, validateRequestId } from './event-input.js';
 import { Command, CommanderError, Option } from 'commander';
 import { readFileSync } from 'node:fs';
@@ -367,6 +368,7 @@ export function createProgram(json = false) {
   registerAccountCommands(program, json);
   registerDiscussionCommands(program, json);
   registerInviteCommands(program, json);
+  registerInviteListCommands(program, json);
   registerNotificationCommands(program, events, json);
   registerAttendanceCommands(program, events, json);
   registerEventManagementCommands(program, events, json);

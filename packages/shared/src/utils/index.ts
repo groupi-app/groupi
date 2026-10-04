@@ -14,6 +14,7 @@ export * from './attachment-submission';
 export * from './date-parser';
 export * from './date-voting';
 export * from './event-permissions';
+export * from './invite-list-draft';
 
 // Date and time utilities
 export function formatDate(date: Date | number): string {

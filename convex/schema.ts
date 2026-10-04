@@ -79,6 +79,17 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_groupId_and_personId', ['groupId', 'personId']),
+  // Private saved selections contain stable identities, never profile snapshots.
+  inviteLists: defineTable({
+    creatorId: v.id('persons'),
+    name: v.string(),
+    normalizedName: v.string(),
+    personIds: v.array(v.id('persons')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_creator', ['creatorId'])
+    .index('by_creator_normalizedName', ['creatorId', 'normalizedName']),
   uploads: defineTable({
     storageId: v.id('_storage'),
     personId: v.id('persons'),

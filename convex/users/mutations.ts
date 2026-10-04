@@ -22,6 +22,7 @@ import {
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
+import { deleteListsForPerson } from '../inviteLists/model';
 
 /** Match the verification formats emitted by the installed auth plugins. */
 function isAccountVerification(
@@ -688,6 +689,7 @@ export const deleteUserAccount = mutation({
     }
 
     await deletePersonApplications(ctx, person._id);
+    await deleteListsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     // Magic-link identifiers are random and their email lives inside JSON;

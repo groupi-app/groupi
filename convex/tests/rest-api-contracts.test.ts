@@ -105,6 +105,7 @@ describe('REST API version contracts', () => {
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
+        inviteLists: { version: 2, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
       },
     });

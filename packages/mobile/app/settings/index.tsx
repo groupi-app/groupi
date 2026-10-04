@@ -22,6 +22,9 @@ function SettingsItem({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole='button'
+      accessibilityLabel={label}
+      accessibilityHint={description}
       className='flex-row items-center gap-3 border-b border-border px-4 py-4'
     >
       <View className='h-10 w-10 items-center justify-center rounded-card bg-muted'>
@@ -72,6 +75,12 @@ export default function SettingsScreen() {
           label='Privacy'
           description='Friend requests, invites, blocked users'
           onPress={() => router.push('/settings/privacy')}
+        />
+        <SettingsItem
+          icon='people-outline'
+          label='Invite lists'
+          description='Private saved selections of Groupi people'
+          onPress={() => router.push('/settings/invite-lists')}
         />
         <SettingsItem
           icon='megaphone-outline'

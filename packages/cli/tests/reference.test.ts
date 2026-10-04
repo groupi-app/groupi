@@ -29,6 +29,12 @@ test('distributed versioned reference stays current with executable command defi
       (command: { path: string }) => command.path === 'groupi events create'
     )
   ).toBe(true);
+  expect(
+    reference.commands.some(
+      (command: { path: string }) =>
+        command.path === 'groupi invite-lists create'
+    )
+  ).toBe(true);
 });
 
 test('distributed agent examples execute a planning and inspection workflow without secret output', async () => {
@@ -57,6 +63,22 @@ test('distributed agent examples execute a planning and inspection workflow with
         rsvpStatus: response,
         rsvpNote: null,
       };
+      const inviteListPerson = {
+        personId: 'attendee-1',
+        name: 'Guest',
+        username: 'guest',
+        image: null,
+        available: true,
+      };
+      const inviteList = {
+        inviteListId: 'list-1',
+        name: 'Dinner guests',
+        personCount: 1,
+        availablePersonCount: 1,
+        needsAttention: false,
+        createdAt: 1,
+        updatedAt: 1,
+      };
       let data: unknown;
       if (path === '/api/v2/health')
         data = {
@@ -65,7 +87,43 @@ test('distributed agent examples execute a planning and inspection workflow with
             eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
             inviteWrites: { version: 1, retentionMs: 86400000 },
             attendanceWrites: { version: 1 },
+            inviteLists: { version: 2, retentionMs: 86400000 },
           },
+        };
+      else if (path === '/api/v2/invite-lists/people/search')
+        data = { items: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists' && request.method === 'POST')
+        data = { ...inviteList, people: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists') data = { items: [inviteList] };
+      else if (
+        path === '/api/v2/invite-lists/list-1' &&
+        request.method === 'PATCH'
+      )
+        data = {
+          ...inviteList,
+          name: JSON.parse(body).name,
+          people: [inviteListPerson],
+        };
+      else if (
+        path === '/api/v2/invite-lists/list-1' &&
+        request.method === 'DELETE'
+      )
+        data = { deleted: true, inviteListId: 'list-1' };
+      else if (path === '/api/v2/invite-lists/list-1')
+        data = { ...inviteList, people: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists/list-1/invite-to-event')
+        data = {
+          eventId: 'event-1',
+          totalCount: 1,
+          sentCount: 0,
+          skippedCount: 1,
+          results: [
+            {
+              personId: 'attendee-1',
+              status: 'skipped',
+              reason: 'INVITATION_PENDING',
+            },
+          ],
         };
       else if (path === '/api/v2/profile')
         data = {
@@ -169,6 +227,7 @@ test('distributed agent examples execute a planning and inspection workflow with
     const substitutions: Record<string, string> = {
       $EVENT_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
       $INVITE_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
+      $INVITE_LIST_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
       $ATTENDEE_USERNAME: 'guest',
     };
     const workflows = JSON.parse(
@@ -188,8 +247,20 @@ test('distributed agent examples execute a planning and inspection workflow with
       const data = JSON.parse(result.stdout);
       if (data.eventId) substitutions.$EVENT_ID = data.eventId;
       if (data.inviteId) substitutions.$INVITE_ID = data.inviteId;
+      if (data.inviteListId) substitutions.$INVITE_LIST_ID = data.inviteListId;
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'people')
+        substitutions.$INVITE_LIST_PERSON_IDS = JSON.stringify(
+          data.items.map((person: { personId: string }) => person.personId)
+        );
       if (step.args[0] === 'events' && step.args[1] === 'members')
         expect(data.items[0].rsvpStatus).toBe('YES');
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'invite') {
+        expect(data.sentCount).toBe(0);
+        expect(data.skippedCount).toBe(1);
+        expect(data.requestId).toBe(substitutions.$INVITE_LIST_REQUEST_ID);
+      }
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'delete')
+        expect(data.deleted).toBe(true);
     }
     expect(accepted).toBe(true);
     expect(response).toBe('YES');

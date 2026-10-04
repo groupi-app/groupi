@@ -80,6 +80,12 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      'convex/react': fileURLToPath(
+        new URL(
+          './node_modules/convex/dist/esm/react/index.js',
+          import.meta.url
+        )
+      ),
       '@groupi/shared/hooks': fileURLToPath(
         new URL('../shared/src/hooks/index.ts', import.meta.url)
       ),

@@ -192,6 +192,14 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi invites members revoke](#groupi-invites-members-revoke)
 - [groupi invites members get](#groupi-invites-members-get)
 - [groupi invites members list](#groupi-invites-members-list)
+- [groupi invite-lists](#groupi-invite-lists)
+- [groupi invite-lists create](#groupi-invite-lists-create)
+- [groupi invite-lists list](#groupi-invite-lists-list)
+- [groupi invite-lists get](#groupi-invite-lists-get)
+- [groupi invite-lists edit](#groupi-invite-lists-edit)
+- [groupi invite-lists delete](#groupi-invite-lists-delete)
+- [groupi invite-lists invite](#groupi-invite-lists-invite)
+- [groupi invite-lists people](#groupi-invite-lists-people)
 - [groupi notifications](#groupi-notifications)
 - [groupi notifications list](#groupi-notifications-list)
 - [groupi notifications count](#groupi-notifications-count)
@@ -236,6 +244,7 @@ Commands:
   replies            Read/write safe discussion content; use explicit HTML files to preserve rich
                      formatting on edits
   invites            Manage bearer link/email and recipient-bound username invitations
+  invite-lists       Create and inspect private saved selections of existing people
   notifications      Read and clear your notifications
 ```
 
@@ -2776,6 +2785,123 @@ Options:
   --status <status>  Status filter; received defaults to PENDING, event list to all (choices:
                      "PENDING", "ACCEPTED", "DECLINED", "all")
   -h, --help         display help for command
+```
+
+## groupi invite-lists
+
+```text
+Usage: groupi invite-lists [options] [command]
+
+Create and inspect private saved selections of existing people
+
+Options:
+  -h, --help                  display help for command
+
+Commands:
+  create [options]            Save people privately; sends no invitations or notifications
+  list                        Browse all owned lists (up to 100), including Needs attention status
+  get <list-id>               Inspect current people; missing profiles are anonymous and all-missing
+                              lists Need attention
+  edit [options] <list-id>    Rename a private list or replace its saved people without sending
+                              invitations
+  delete [options] <list-id>  Delete a private list; requires confirmation and leaves prior
+                              invitations unchanged
+  invite [options] <list-id>  Explicitly invite current people with 24-hour recovery; repair Needs
+                              attention lists before a fresh send
+  people [options]            Find existing selectable people without an event; friendship is
+                              optional
+  help [command]              display help for command
+```
+
+## groupi invite-lists create
+
+```text
+Usage: groupi invite-lists create [options]
+
+Save people privately; sends no invitations or notifications
+
+Options:
+  --name <name>        Creator-unique list name, 1–100 trimmed characters
+  --person-ids <json>  JSON array of 1–100 distinct existing person IDs
+  -h, --help           display help for command
+```
+
+## groupi invite-lists list
+
+```text
+Usage: groupi invite-lists list [options]
+
+Browse all owned lists (up to 100), including Needs attention status
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invite-lists get
+
+```text
+Usage: groupi invite-lists get [options] <list-id>
+
+Inspect current people; missing profiles are anonymous and all-missing lists Need attention
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invite-lists edit
+
+```text
+Usage: groupi invite-lists edit [options] <list-id>
+
+Rename a private list or replace its saved people without sending invitations
+
+Options:
+  --name <name>        New creator-unique name, 1–100 trimmed characters
+  --person-ids <json>  Replace people with 1–100 distinct IDs; include an existing person to repair
+                       Needs attention
+  -h, --help           display help for command
+```
+
+## groupi invite-lists delete
+
+```text
+Usage: groupi invite-lists delete [options] <list-id>
+
+Delete a private list; requires confirmation and leaves prior invitations unchanged
+
+Options:
+  --yes       Confirm deleting this private invite list
+  -h, --help  display help for command
+```
+
+## groupi invite-lists invite
+
+```text
+Usage: groupi invite-lists invite [options] <list-id>
+
+Explicitly invite current people with 24-hour recovery; repair Needs attention lists before a fresh
+send
+
+Options:
+  --event <event-id>  Target event; requires existing event invitation permission
+  --role <role>       Common event role; MODERATOR is organizer-only (choices: "ATTENDEE",
+                      "MODERATOR", default: "ATTENDEE")
+  --message <text>    Common invitation message, at most 480 characters
+  --request-id <id>   Retain and reuse this identifier with original inputs after an uncertain send
+  -h, --help          display help for command
+```
+
+## groupi invite-lists people
+
+```text
+Usage: groupi invite-lists people [options]
+
+Find existing selectable people without an event; friendship is optional
+
+Options:
+  --search <username>  Username search, at least 2 trimmed characters
+  --friends            List accepted friends as convenient choices
+  -h, --help           display help for command
 ```
 
 ## groupi notifications

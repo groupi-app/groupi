@@ -30,6 +30,7 @@ import { createProfileRoutes } from './routes/profile';
 import { createSettingsRoutes } from './routes/settings';
 import { createThemeRoutes } from './routes/themes';
 import { createInviteRoutes } from './routes/invites';
+import { createInviteListRoutes } from './routes/inviteLists';
 import { createReportRoutes } from './routes/reports';
 import { createAdminRoutes } from './routes/admin';
 
@@ -236,6 +237,11 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Settings', description: 'User settings' },
       { name: 'Themes', description: 'Custom themes' },
       { name: 'Invites', description: 'Event invitations' },
+      {
+        name: 'Invite lists',
+        description:
+          'Private creator-owned saved selections of existing people',
+      },
       { name: 'Reports', description: 'Content reporting' },
       { name: 'Admin', description: 'Administrative operations' },
     ],
@@ -268,6 +274,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
+        inviteLists: { version: 2, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
       },
     });
@@ -299,6 +306,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createSettingsRoutes());
   app.route('/', createThemeRoutes());
   app.route('/', createInviteRoutes());
+  app.route('/', createInviteListRoutes());
   app.route('/', createReportRoutes());
   app.route('/', createAdminRoutes());
   app.route('/', createUploadRoutes());

@@ -15,6 +15,7 @@ automation tool, or agent-specific installer is required.
 - [Identity and credentials](#identity-and-credentials)
 - [Command contract](#command-contract)
 - [Safe mutations and recovery](#safe-mutations-and-recovery)
+- [Private invite lists](#private-invite-lists)
 - [Workflows and scope](#workflows-and-scope)
 
 ## Installation and version
@@ -126,6 +127,76 @@ After an expired deduplicated request, inspect the relevant list before delibera
 issuing a new ID. Check backend state and side effects where applicable; a queued
 email is not proof of delivery. Treat invite tokens as bearer secrets, sharing only
 with intended recipients and excluding tokens from agent transcripts/logs.
+
+## Private invite lists
+
+Use `invite-lists people --search <username>` to discover existing people without
+an event, or `invite-lists people --friends` for accepted-friend choices. Search
+requires at least two trimmed characters; friendship is optional. Choose intended
+`personId` values from the result, then pass their JSON array to
+`invite-lists create --name <name> --person-ids <json>`. Use `invite-lists list` and
+`invite-lists get <list-id>` to inspect the selected identity's private lists.
+Use `invite-lists edit <list-id> --name <name>` to rename, or `--person-ids <json>`
+to replace the complete saved selection; at least one field is required. Ordinary
+edits do not prompt. `invite-lists delete <list-id> --yes` deletes an owned list
+after destructive confirmation and returns `{deleted:true,inviteListId}`. It
+leaves existing invitations and event participation unchanged. Use `--format json`
+throughout. The tested workflow includes discovery, creation, browsing, editing,
+explicit event use, and deletion.
+
+List names have 1–100 trimmed characters and are unique for their creator ignoring
+case. Each creator can own 100 lists; creation requires 1–100 distinct existing
+people and collapses duplicate identities. Lists contain people only. Saving
+sends no invitations or notifications and changes no event access, membership,
+role, or RSVP. Reads/discovery require `invite-lists:read`, creation requires
+`invite-lists:write`; editing, deletion, and event use also require
+`invite-lists:write`. Event use rechecks actual event invitation permission and
+list ownership. Foundation commands require `inviteLists` version 1 or later;
+management and protected use require version 2 or later with `retentionMs:86400000`.
+Collection/discovery return `{items}` without cursors; detail resolves current
+profile fields and includes `needsAttention` and available-person counts.
+
+Deleted recipients have `available:false` and null `name`, `username`, and `image`;
+never reconstruct deleted profile details from earlier output. `personCount`
+includes saved unavailable entries, while `availablePersonCount` counts existing
+people. An all-unavailable list retains its name with `needsAttention:true` and
+text “Needs attention”; a fresh send is rejected until at least one existing person
+is added. Discover a current person, then repair with
+`invite-lists edit <list-id> --person-ids <json>`, replacing the saved selection.
+Already saved unavailable IDs may remain alongside at least one existing person;
+they remain anonymous, count toward the 100-person limit, and are skipped during
+new sends. Ordinary creation/save cannot contain only unavailable people. Repair
+does not invite anyone. Delete an unwanted list with the existing confirmed delete
+command. Owner account deletion removes owned lists and denies the old identity.
+
+Invite-list creation, editing, and deletion are sent once, without request-ID
+replay support. After
+`UNCERTAIN_OUTCOME`, inspect `invite-lists list` with the original profile before
+deciding whether another creation is needed; after uncertain edits/deletion,
+inspect the original list and profile before deciding on another write.
+
+`invite-lists invite <list-id> --event <event-id>` explicitly sends the list's
+current people in one request. Choose `--role ATTENDEE` (default) or `MODERATOR`
+(organizers only), with optional `--message` of at most 480 characters. There is
+a 100-distinct-recipient limit, and eligibility is rechecked at send time. The
+JSON result contains `totalCount`, `sentCount`, `skippedCount`, per-person
+`results`, `eventId`, and the retained `requestId`. A sent row includes `inviteId`;
+a skipped row uses `ALREADY_MEMBER`, `INVITATION_PENDING`, or generic `UNAVAILABLE`.
+Never infer confidential block or invitation-preference details from unavailability.
+Zero sent recipients means no invitations were sent. Ordinary invitation
+acceptance still controls participation; sending creates no membership or RSVP.
+
+Retain a `<Unix-milliseconds>.<UUID v4>` identifier before the job and pass
+`--request-id`. Protected replay uses the original recipients/result even after
+list edits/deletion while checking current event authority. After uncertain
+sending, inspect `invites members list <event-id>` on the original profile or
+retry the exact original inputs and identifier within 24 hours. Never silently
+generate a new identifier for recovery. Handle `IDEMPOTENCY_CONFLICT` and
+`IDEMPOTENCY_EXPIRED` as described above; only a deliberate new send expands the
+list's current selection again.
+Recipient deletion also leaves protected replay's original historical outcome
+intact. Replay needs no current-list lookup or repair; preserve the original
+request ID and inputs rather than expanding changed people before recovery.
 
 ## Workflows and scope
 
