@@ -126,6 +126,8 @@ export async function shouldSkipNotification(
  */
 interface PreFetchedMessageContext {
   groupTitle?: string;
+  announcementTitle?: string;
+  announcementMessage?: string;
   eventTitle?: string;
   postTitle?: string;
   authorName?: string;
@@ -245,6 +247,7 @@ export type NotificationType =
   | 'GROUP_INVITE_RECEIVED'
   | 'GROUP_INVITE_ACCEPTED'
   | 'GROUP_MEMBER_REMOVED'
+  | 'GROUP_ANNOUNCEMENT'
   | 'GROUP_MEMBER_BANNED'
   | 'GROUP_APPLICATION_RECEIVED'
   | 'GROUP_APPLICATION_APPROVED'
@@ -423,6 +426,8 @@ async function getEnabledEmailsForNotification(
 export interface NotificationMessageContext {
   type: NotificationType;
   groupTitle?: string;
+  announcementTitle?: string;
+  announcementMessage?: string;
   eventTitle?: string;
   authorName?: string;
   postTitle?: string;
@@ -515,6 +520,8 @@ export function getNotificationEmailSubject(
       return `Your application to ${groupTitle || 'a Group'} was approved`;
     case 'GROUP_APPLICATION_DECLINED':
       return `Your application to ${groupTitle || 'a Group'} was declined`;
+    case 'GROUP_ANNOUNCEMENT':
+      return ctx.announcementTitle || 'Group announcement';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -605,6 +612,10 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return 'Your Group application was approved';
     case 'GROUP_APPLICATION_DECLINED':
       return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -694,6 +705,10 @@ function getNotificationMessageMarkdown(
       return 'Your Group application was approved';
     case 'GROUP_APPLICATION_DECLINED':
       return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -782,6 +797,10 @@ export function getNotificationMessagePlain(
       return 'Your Group application was approved';
     case 'GROUP_APPLICATION_DECLINED':
       return 'Your Group application was declined';
+    case 'GROUP_ANNOUNCEMENT':
+      return [ctx.announcementTitle, ctx.announcementMessage]
+        .filter(Boolean)
+        .join(': ');
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -890,7 +909,7 @@ function buildNotificationUrl(
 /**
  * Collect email data for a notification (to be sent via action)
  */
-async function collectEmailData(
+export async function collectEmailData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
@@ -921,6 +940,8 @@ async function collectEmailData(
     messageContext = {
       type: data.type,
       groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1168,7 +1189,7 @@ function formatWebhookPayload(
 /**
  * Collect webhook data for a notification (to be sent via action)
  */
-async function collectWebhookData(
+export async function collectWebhookData(
   ctx: MutationCtx,
   data: {
     personId: Id<'persons'>;
@@ -1205,6 +1226,8 @@ async function collectWebhookData(
     messageContext = {
       type: data.type,
       groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1350,6 +1373,8 @@ async function resolveNotificationMessageContext(
     return {
       type: data.type,
       groupTitle: preFetchedCtx.groupTitle,
+      announcementTitle: preFetchedCtx.announcementTitle,
+      announcementMessage: preFetchedCtx.announcementMessage,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,

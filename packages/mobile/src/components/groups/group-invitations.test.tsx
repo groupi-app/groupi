@@ -1,3 +1,6 @@
+vi.mock('./group-announcement-composer', () => ({
+  GroupAnnouncementComposer: () => null,
+}));
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 import { act, createElement, type ReactNode } from 'react';

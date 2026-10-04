@@ -6,6 +6,7 @@ export interface NotificationPresentationInput
     'type' | 'eventId' | 'postId' | 'rsvp' | 'groupId'
   > {
   group?: { id: Id<'groups'>; title: string } | null;
+  groupAnnouncement?: { title: string; message: string } | null;
   groupInvite?: {
     id: Id<'groupInvites'>;
     status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
@@ -88,6 +89,10 @@ export function getNotificationMessage(
         ? `Group invitation to ${title}: ${status.toLowerCase()}`
         : `${authorName} invited you to ${title}`;
     }
+    case 'GROUP_ANNOUNCEMENT':
+      return notification.groupAnnouncement
+        ? `${notification.groupAnnouncement.title}: ${notification.groupAnnouncement.message}`
+        : 'Group announcement unavailable';
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from the Group.';
     case 'GROUP_MEMBER_BANNED':
@@ -127,6 +132,8 @@ export function getNotificationDestination(
     const groupId = notification.group?.id ?? notification.groupId;
     return groupId ? `/g/${groupId}` : null;
   }
+  if (notification.type === 'GROUP_ANNOUNCEMENT')
+    return notification.groupId ? `/groups/${notification.groupId}` : null;
   if (notification.type === 'EVENT_INVITE_RECEIVED') return '/invites';
   if (
     notification.type === 'FRIEND_REQUEST_RECEIVED' ||

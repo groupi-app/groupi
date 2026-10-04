@@ -1,4 +1,5 @@
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
+import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
 import { Image, ScrollView, Share, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -159,6 +160,9 @@ export function GroupDetailScreen() {
                 questions={group.applicationQuestions}
               />
             ) : null}
+            {group.viewerRole !== 'MEMBER' && (
+              <GroupAnnouncementComposer groupId={id} />
+            )}
             <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (

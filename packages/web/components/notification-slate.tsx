@@ -24,6 +24,7 @@ interface EnrichedNotification extends Doc<'notifications'> {
   post?: { id: string; title: string };
   author?: { user?: { name?: string; email?: string | null } };
   group?: { id: string; title: string } | null;
+  groupAnnouncement?: { title: string; message: string } | null;
   groupInvite?: { id: string; status: string } | null;
   groupApplication?: {
     id: string;
@@ -92,6 +93,10 @@ export function NotificationSlate({
       type === 'GROUP_MEMBER_BANNED'
     )
       return notification.group ? `/g/${notification.group.id}` : '/events';
+    if (type === 'GROUP_ANNOUNCEMENT')
+      return notification.group
+        ? `/groups/${notification.group.id}`
+        : '/events';
     if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
 
     if (!event) return '/';
@@ -323,6 +328,17 @@ export function NotificationSlate({
           <>
             Your application to{' '}
             <strong>{notification.group?.title ?? 'Group'}</strong> was declined
+          </>
+        );
+      case 'GROUP_ANNOUNCEMENT':
+        return (
+          <>
+            <strong>
+              {notification.groupAnnouncement?.title || 'Group announcement'}
+            </strong>
+            {notification.groupAnnouncement?.message
+              ? `: ${notification.groupAnnouncement.message}`
+              : ' — unavailable'}
           </>
         );
       case 'GROUP_MEMBER_REMOVED':

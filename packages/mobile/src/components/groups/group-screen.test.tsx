@@ -7,6 +7,9 @@ vi.mock('./group-questionnaire', () => ({
 vi.mock('./group-application-settings', () => ({
   GroupApplicationSettings: 'GroupApplicationSettings',
 }));
+vi.mock('./group-announcement-composer', () => ({
+  GroupAnnouncementComposer: () => null,
+}));
 vi.mock('./group-leave-control', () => ({ GroupLeaveControl: () => null }));
 import {
   Children,

@@ -3,6 +3,7 @@ import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
 import { cascadeDeleteGroupData } from './cleanup';
 import { removeTransfersForPerson } from '../groupTransfers/cleanup';
 import { removeModerationForPerson } from '../groupModeration/cleanup';
+import { removeAnnouncementsForPerson } from '../groupAnnouncements/cleanup';
 import { authComponent, type AuthUserId } from '../auth';
 import { removeInvitationsForPerson } from '../groupInvites/cleanup';
 import { ConvexError } from 'convex/values';
@@ -222,6 +223,7 @@ export async function removeGroupMembershipsForPerson(
 ) {
   await assertNoOwnedGroups(ctx, personId);
   await removeTransfersForPerson(ctx, personId);
+  await removeAnnouncementsForPerson(ctx, personId);
   await removeInvitationsForPerson(ctx, personId);
   await removeModerationForPerson(ctx, personId);
   await removeQuestionnairesForPerson(ctx, personId);

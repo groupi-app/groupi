@@ -1,4 +1,5 @@
 import { membershipFor } from '../groups/policy';
+import { eligible } from '../groupAnnouncements/model';
 import type { QueryCtx } from '../_generated/server';
 import type { Doc } from '../_generated/dataModel';
 export async function groupNotificationReferences(
@@ -24,10 +25,25 @@ export async function groupNotificationReferences(
     application &&
     (application.personId === notification.personId ||
       (membership && membership.role !== 'MEMBER'));
+  const announcement = notification.groupAnnouncementId
+    ? await ctx.db.get(notification.groupAnnouncementId)
+    : null;
+  const canReadAnnouncement =
+    announcement?.senderId &&
+    (await eligible(
+      ctx,
+      announcement.groupId,
+      announcement.senderId,
+      notification.personId
+    ));
   return {
     groupApplication: canSeeApplication
       ? { id: application._id, status: application.status }
       : null,
+    groupAnnouncement:
+      announcement && canReadAnnouncement
+        ? { title: announcement.title, message: announcement.message }
+        : null,
     group: group ? { id: group._id, title: group.name } : null,
     groupInvite: permitted ? { id: invite._id, status: invite.status } : null,
   };

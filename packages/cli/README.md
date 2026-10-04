@@ -798,3 +798,21 @@ retried. API keys use ordinary `groups:read` and `groups:write` scopes. After an
 uncertain outcome, inspect own history or the current manager queue before
 repeating. Group and account deletion remove private application records; deleted
 reviewers are anonymized in surviving decisions.
+
+## Explicit Group announcements
+
+Current owners/moderators deliberately send with
+`groupi groups announce GROUP --title 'Reading' --message 'Bring a book' --request-id UNIX_MS.UUID_V4`.
+Preserve the timestamped UUID-v4 request ID and exact body on recovery. Repeating
+that request returns the same aggregate result; changed content conflicts and
+keys expire after 24 hours. Inspect with
+`groupi groups announcement-status GROUP --request-id UNIX_MS.UUID_V4`.
+
+Send requires `groups:write`, status requires `groups:read`, and the current
+manager role is checked inside the write. The CLI checks
+`capabilities.groups.announcements: 1` before sending. Results contain only the
+announcement ID, processing/completed/cancelled state, created notification count
+and skipped membership count. External delivery is not confirmed. Current
+membership, bans, account availability, privacy, DND and recipient preferences
+apply. Routine Event/tool publication stays silent. Existing in-app/email/push/
+webhook channels apply; SMS and manager automation are not included.

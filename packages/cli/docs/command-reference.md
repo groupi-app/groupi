@@ -124,6 +124,8 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups create](#groupi-groups-create)
 - [groupi groups edit](#groupi-groups-edit)
 - [groupi groups delete](#groupi-groups-delete)
+- [groupi groups announce](#groupi-groups-announce)
+- [groupi groups announcement-status](#groupi-groups-announcement-status)
 - [groupi groups members](#groupi-groups-members)
 - [groupi groups invites](#groupi-groups-invites)
 - [groupi groups invite](#groupi-groups-invite)
@@ -1748,6 +1750,8 @@ Commands:
   create [options]                                            Create an owner-only Group
   edit [options] <group-id>                                   Update Group identity as owner
   delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain
+  announce [options] <group-id>                               Explicitly announce to permitted members; reports queued notifications
+  announcement-status [options] <group-id>                    Recover your aggregate announcement status
   members [options] <group-id>                                Read admitted Group roster
   invites [options] <group-id>                                Inspect Group invitations as manager
   invite <group-id> <person-id>                               Invite an existing user to your Group
@@ -1916,6 +1920,32 @@ Explicitly retire an owned Group and its data; independent Events remain
 Options:
   --yes       Confirm Group deletion
   -h, --help  display help for command
+```
+
+## groupi groups announce
+
+```text
+Usage: groupi groups announce [options] <group-id>
+
+Explicitly announce to permitted members; reports queued notifications
+
+Options:
+  --title <title>      Announcement title (1–100 characters)
+  --message <message>  Announcement message (1–2000 characters)
+  --request-id <id>    Stable <unix-ms>.<uuid-v4> key; preserve body on recovery
+  -h, --help           display help for command
+```
+
+## groupi groups announcement-status
+
+```text
+Usage: groupi groups announcement-status [options] <group-id>
+
+Recover your aggregate announcement status
+
+Options:
+  --request-id <id>  Original announcement request key
+  -h, --help         display help for command
 ```
 
 ## groupi groups members

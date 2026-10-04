@@ -1,5 +1,6 @@
 'use client';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
+import { GroupAnnouncementComposer } from './group-announcement-composer';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -140,6 +141,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         />
       )}
       {group.canManageMembers && <GroupApplications groupId={groupId} review />}
+      {group.viewerRole !== 'MEMBER' && (
+        <GroupAnnouncementComposer groupId={groupId} />
+      )}
       <GroupMemberRoster groupId={groupId} />
       {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (

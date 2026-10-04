@@ -57,3 +57,5 @@ export { createGroupTransferHooks } from './useGroupTransfer';
 export { createGroupQuestionnaireHooks } from './useGroupQuestionnaire';
 
 export { createGroupApplicationHooks } from './useGroupApplications';
+export { createGroupAnnouncementHooks } from './useGroupAnnouncements';
+export { announcementRequestId } from '../utils/announcement-request';

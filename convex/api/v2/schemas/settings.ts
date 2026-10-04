@@ -119,6 +119,7 @@ export const UpdateNotificationSettingsRequestSchema = z
                   'GROUP_APPLICATION_RECEIVED',
                   'GROUP_APPLICATION_APPROVED',
                   'GROUP_APPLICATION_DECLINED',
+                  'GROUP_ANNOUNCEMENT',
                   'EVENT_INVITE_RECEIVED',
                   'EVENT_INVITE_ACCEPTED',
                   'ADDON_CONFIG_RESET',

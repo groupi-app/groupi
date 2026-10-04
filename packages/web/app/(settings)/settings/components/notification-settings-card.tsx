@@ -66,6 +66,10 @@ const notificationTypeLabels: Record<
     label: 'Removed from Group',
     description: 'a manager removes me from a Group.',
   },
+  GROUP_ANNOUNCEMENT: {
+    label: 'Group Announcement',
+    description: 'a Group manager explicitly announces to permitted members.',
+  },
   GROUP_MEMBER_BANNED: {
     label: 'Banned from Group',
     description: 'a manager bans me from a Group.',
@@ -629,6 +633,7 @@ export function NotificationSettingsCard({
                         NotificationTypeEnum.GROUP_INVITE_ACCEPTED,
                         NotificationTypeEnum.GROUP_MEMBER_REMOVED,
                         NotificationTypeEnum.GROUP_MEMBER_BANNED,
+                        NotificationTypeEnum.GROUP_ANNOUNCEMENT,
                       ].map(type => renderCheckbox(type))}
                     </div>
                   </div>

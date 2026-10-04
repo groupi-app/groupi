@@ -1,4 +1,5 @@
 import { registerGroupTransferCommands } from './group-transfer-commands.js';
+import { sendAnnouncement, announcementStatus } from './group-announcements.js';
 import { getProfile, credential } from './profiles.js';
 import { getGroup, listGroups, changeGroup } from './groups.js';
 /** @param {import('commander').Command} program @param {boolean} json */
@@ -80,6 +81,38 @@ export function registerGroupCommands(program, json) {
           { yes: input.yes, json }
         )
       );
+    });
+  groups
+    .command('announce <group-id>')
+    .description(
+      'Explicitly announce to permitted members; reports queued notifications'
+    )
+    .requiredOption('--title <title>', 'Announcement title (1–100 characters)')
+    .requiredOption(
+      '--message <message>',
+      'Announcement message (1–2000 characters)'
+    )
+    .requiredOption(
+      '--request-id <id>',
+      'Stable <unix-ms>.<uuid-v4> key; preserve body on recovery'
+    )
+    .action(async (id, input) => {
+      const { profile, key } = await connection();
+      output(await sendAnnouncement(profile, key, id, input));
+    });
+  groups
+    .command('announcement-status <group-id>')
+    .description('Recover your aggregate announcement status')
+    .requiredOption('--request-id <id>', 'Original announcement request key')
+    .action(async (id, input) => {
+      const { profile, key } = await connection();
+      const result = await announcementStatus(
+        profile,
+        key,
+        id,
+        input.requestId
+      );
+      output(result ?? { state: 'NOT_FOUND' });
     });
   async function connection() {
     const options = program.opts();

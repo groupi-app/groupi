@@ -59,6 +59,7 @@ const NOTIFICATION_ICONS: Record<
   GROUP_INVITE_RECEIVED: 'people-outline',
   GROUP_INVITE_ACCEPTED: 'people',
   GROUP_MEMBER_REMOVED: 'person-remove-outline',
+  GROUP_ANNOUNCEMENT: 'megaphone-outline',
   GROUP_MEMBER_BANNED: 'ban-outline',
   ADDON_CONFIG_RESET: 'extension-puzzle-outline',
   ADDON_AUTOMATION: 'sparkles-outline',

@@ -4,6 +4,7 @@ import {
   record as groupQuestionnaireRecord,
   answerFields as groupQuestionnaireAnswerFields,
 } from './groupQuestionnaires/contracts';
+import { state as announcementState } from './groupAnnouncements/contracts';
 import {
   applicationSettingsValidator,
   questionValidator,
@@ -86,6 +87,28 @@ export default defineSchema({
   })
     .index('by_applicationId', ['applicationId'])
     .index('by_personId', ['personId']),
+  groupAnnouncements: defineTable({
+    groupId: v.id('groups'),
+    senderId: v.optional(v.id('persons')),
+    requestId: v.string(),
+    title: v.string(),
+    message: v.string(),
+    state: announcementState,
+    notified: v.number(),
+    skipped: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    cutoff: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_senderId', ['senderId'])
+    .index('by_groupId_and_senderId_and_requestId', [
+      'groupId',
+      'senderId',
+      'requestId',
+    ]),
+
   groupBans: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),
@@ -564,12 +587,15 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_RECEIVED'),
       v.literal('GROUP_APPLICATION_APPROVED'),
       v.literal('GROUP_APPLICATION_DECLINED'),
+      v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
       v.literal('ADDON_AUTOMATION')
     ),
     groupId: v.optional(v.id('groups')),
+    groupAnnouncementId: v.optional(v.id('groupAnnouncements')),
+    announcementDispatched: v.optional(v.boolean()),
     groupInviteId: v.optional(v.id('groupInvites')),
     groupApplicationId: v.optional(v.id('groupApplications')),
     eventId: v.optional(v.id('events')),
@@ -587,11 +613,13 @@ export default defineSchema({
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
     .index('by_groupId', ['groupId'])
+    .index('by_groupAnnouncementId', ['groupAnnouncementId'])
     .index('by_groupInviteId', ['groupInviteId'])
     .index('by_groupApplicationId', ['groupApplicationId'])
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
+    .index('by_person_and_type', ['personId', 'type'])
     .index('by_person_read', ['personId', 'read']),
 
   notificationMethods: defineTable({
@@ -642,6 +670,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_RECEIVED'),
       v.literal('GROUP_APPLICATION_APPROVED'),
       v.literal('GROUP_APPLICATION_DECLINED'),
+      v.literal('GROUP_ANNOUNCEMENT'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),

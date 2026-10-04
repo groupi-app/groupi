@@ -67,6 +67,7 @@ export const getNotificationSettings = query({
                 'GROUP_APPLICATION_RECEIVED',
                 'GROUP_APPLICATION_APPROVED',
                 'GROUP_APPLICATION_DECLINED',
+                'GROUP_ANNOUNCEMENT',
               ] as const
             )
               .filter(

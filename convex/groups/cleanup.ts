@@ -1,3 +1,4 @@
+import { removeAnnouncementsForGroup } from '../groupAnnouncements/cleanup';
 import { removeApplicationsForGroup } from '../groupApplications/cleanup';
 import { removeQuestionnairesForGroup } from '../groupQuestionnaires/cleanup';
 import type { MutationCtx } from '../_generated/server';
@@ -19,5 +20,6 @@ export async function cascadeDeleteGroupData(
   await removeTransfersForGroup(ctx, groupId);
   await removeQuestionnairesForGroup(ctx, groupId);
   await removeApplicationsForGroup(ctx, groupId);
+  await removeAnnouncementsForGroup(ctx, groupId);
   await ctx.db.delete(groupId);
 }
