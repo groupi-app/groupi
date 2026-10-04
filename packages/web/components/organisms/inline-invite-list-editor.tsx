@@ -34,6 +34,8 @@ export function InlineInviteListEditor({
   const nameRef = useRef<HTMLDivElement>(null);
   const confirmationRef = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const lastEditorFocus = useRef<HTMLElement | null>(null);
   const wasConfirming = useRef(false);
   const requestRef = useRef<() => void>(() => {});
   const dirty = name !== '' || people.length > 0;
@@ -41,18 +43,44 @@ export function InlineInviteListEditor({
     nameRef.current?.querySelector('input')?.focus();
   }, []);
   useLayoutEffect(() => {
-    if (confirming) confirmationRef.current?.focus();
-    else if (wasConfirming.current) returnFocus.current?.focus();
+    if (confirming) {
+      const heading = confirmationRef.current;
+      heading?.focus();
+      wasConfirming.current = true;
+      // Native fragment focus settles after popstate. Repair body focus once;
+      // cleanup and the active-control check preserve subsequent user choices.
+      const frame = requestAnimationFrame(() => {
+        if (
+          heading?.isConnected &&
+          (document.activeElement === document.body ||
+            document.activeElement === document.documentElement)
+        )
+          heading.focus();
+      });
+      return () => cancelAnimationFrame(frame);
+    } else if (wasConfirming.current) {
+      if (returnFocus.current?.isConnected) returnFocus.current.focus();
+      else nameRef.current?.querySelector('input')?.focus();
+    }
     wasConfirming.current = confirming;
   }, [confirming]);
 
-  function requestLeave() {
+  function requestLeave(fromHistory = false) {
     if (saving || confirming) return;
     if (!dirty) {
       finish();
       return;
     }
-    returnFocus.current = document.activeElement as HTMLElement;
+    const active = document.activeElement;
+    const previous = lastEditorFocus.current;
+    returnFocus.current =
+      fromHistory ||
+      active === document.body ||
+      active === document.documentElement
+        ? previous?.isConnected && editorRef.current?.contains(previous)
+          ? previous
+          : (nameRef.current?.querySelector('input') ?? null)
+        : (active as HTMLElement);
     setConfirming(true);
   }
   useLayoutEffect(() => {
@@ -63,7 +91,11 @@ export function InlineInviteListEditor({
     return () => registerDismiss(undefined);
   }, [registerDismiss]);
   // Browser navigation returns to the prior invitation screen after Discard.
-  const historyNotice = useInviteListNavigationGuard(true, requestLeave, dirty);
+  const historyNotice = useInviteListNavigationGuard(
+    true,
+    () => requestLeave(true),
+    dirty
+  );
 
   async function save(use: boolean) {
     setError('');
@@ -119,12 +151,20 @@ export function InlineInviteListEditor({
           </div>
         </section>
       )}
-      <fieldset disabled={saving} hidden={confirming} className='space-y-4'>
+      <fieldset
+        ref={editorRef}
+        onFocusCapture={event => {
+          lastEditorFocus.current = event.target as HTMLElement;
+        }}
+        disabled={saving}
+        hidden={confirming}
+        className='space-y-4'
+      >
         <h2 className='font-heading text-xl'>Create invite list</h2>
         <p className='text-sm text-muted-foreground'>
           Saving a private list does not send invitations or notify anyone.
         </p>
-        <Button variant='outline' onClick={requestLeave}>
+        <Button variant='outline' onClick={() => requestLeave()}>
           Back to invitations
         </Button>
         <div ref={nameRef} className='space-y-2'>
@@ -207,7 +247,7 @@ export function InlineInviteListEditor({
           <Button onClick={() => save(true)} disabled={saving}>
             Save and use
           </Button>
-          <Button variant='outline' onClick={requestLeave}>
+          <Button variant='outline' onClick={() => requestLeave()}>
             Cancel
           </Button>
         </div>

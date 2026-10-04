@@ -6,6 +6,7 @@ import {
   getNavigationHistoryIndex,
   getBrowserHistoryIndex,
   getNavigationHistoryScope,
+  subscribeNavigationHistory,
 } from '@/lib/navigation-history';
 
 /** Protect a draft before Next's popstate handler can unmount its page. */
@@ -141,11 +142,11 @@ export function useInviteListNavigationGuard(
     }
     document.addEventListener('click', click, true);
     window.addEventListener('beforeunload', unload);
-    window.addEventListener('popstate', pop, true);
+    const unsubscribeHistory = subscribeNavigationHistory(pop);
     return () => {
       document.removeEventListener('click', click, true);
       window.removeEventListener('beforeunload', unload);
-      window.removeEventListener('popstate', pop, true);
+      unsubscribeHistory();
     };
   }, [dirty, warnBeforeUnload, router]);
   return dirty && untrackedHistory

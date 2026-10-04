@@ -148,6 +148,8 @@ export function InviteListsSettings() {
   const createRef = useRef<HTMLDivElement>(null);
   const confirmationRef = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const lastEditorFocus = useRef<HTMLElement | null>(null);
   const pendingLeave = useRef<() => void>(() => {});
   const wasConfirming = useRef(false);
   const editing = view === 'create' || view === 'edit';
@@ -166,8 +168,25 @@ export function InviteListsSettings() {
     if (view === 'delete') deleteHeading.current?.focus();
   }, [view]);
   useLayoutEffect(() => {
-    if (confirming) confirmationRef.current?.focus();
-    else if (wasConfirming.current) returnFocus.current?.focus();
+    if (confirming) {
+      const heading = confirmationRef.current;
+      heading?.focus();
+      wasConfirming.current = true;
+      // Fragment default focus can run after popstate and React's layout effect.
+      // Settle once, while respecting a user's subsequent focus/leave choice.
+      const frame = requestAnimationFrame(() => {
+        if (
+          heading?.isConnected &&
+          (document.activeElement === document.body ||
+            document.activeElement === document.documentElement)
+        )
+          heading.focus();
+      });
+      return () => cancelAnimationFrame(frame);
+    } else if (wasConfirming.current) {
+      if (returnFocus.current?.isConnected) returnFocus.current.focus();
+      else nameRef.current?.querySelector('input')?.focus();
+    }
     wasConfirming.current = confirming;
   }, [confirming]);
 
@@ -188,14 +207,23 @@ export function InviteListsSettings() {
     }
   }
 
-  function requestLeave(action: () => void = abandon) {
+  function requestLeave(action: () => void = abandon, fromHistory = false) {
     if (saving) return;
     if (!dirty) {
       action();
       return;
     }
     if (confirming) return;
-    returnFocus.current = document.activeElement as HTMLElement;
+    const active = document.activeElement;
+    const previous = lastEditorFocus.current;
+    returnFocus.current =
+      fromHistory ||
+      active === document.body ||
+      active === document.documentElement
+        ? previous?.isConnected && editorRef.current?.contains(previous)
+          ? previous
+          : (nameRef.current?.querySelector('input') ?? null)
+        : (active as HTMLElement);
     pendingLeave.current = action;
     setConfirming(true);
   }
@@ -212,7 +240,9 @@ export function InviteListsSettings() {
     return () => document.removeEventListener('keydown', escape);
   });
 
-  const historyNotice = useInviteListNavigationGuard(dirty, requestLeave);
+  const historyNotice = useInviteListNavigationGuard(dirty, leave =>
+    requestLeave(leave, true)
+  );
 
   async function save() {
     setError('');
@@ -427,7 +457,15 @@ export function InviteListsSettings() {
           </section>
         )}
         {editing && (
-          <fieldset disabled={saving} hidden={confirming} className='space-y-4'>
+          <fieldset
+            ref={editorRef}
+            onFocusCapture={event => {
+              lastEditorFocus.current = event.target as HTMLElement;
+            }}
+            disabled={saving}
+            hidden={confirming}
+            className='space-y-4'
+          >
             <h2 className='text-xl font-heading'>
               {view === 'edit' ? 'Edit invite list' : 'Create invite list'}
             </h2>

@@ -320,6 +320,12 @@ describe('From list invitation flow', () => {
       );
       await user.type(screen.getByLabelText('List name'), 'Keep my draft');
       await user.click(screen.getByRole('button', { name: 'Add Ada Friend' }));
+      if (action === 'Browser Back') {
+        await user.click(
+          screen.getByRole('textbox', { name: 'Search by username' })
+        );
+        screen.getByRole('textbox', { name: 'Search by username' }).blur();
+      }
       const dismiss = async () => {
         if (action === 'Escape') await user.keyboard('{Escape}');
         else if (action === 'Outside')
@@ -342,6 +348,10 @@ describe('From list invitation flow', () => {
         );
       await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
       expect(screen.getByLabelText('List name')).toHaveValue('Keep my draft');
+      if (action === 'Browser Back')
+        expect(
+          screen.getByRole('textbox', { name: 'Search by username' })
+        ).toHaveFocus();
       expect(
         screen.getByRole('button', { name: 'Remove Ada Friend' })
       ).toBeVisible();

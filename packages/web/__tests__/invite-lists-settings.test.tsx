@@ -13,8 +13,12 @@ import SettingsPage from '@/app/(settings)/settings/page';
 import { SettingsNav } from '@/app/(settings)/settings/components/settings-nav';
 import { NavigationGuardProvider } from '@/app/(settings)/settings/components/navigation-guard-context';
 import { ConvexError } from 'convex/values';
-import { useEffect } from 'react';
+import { StrictMode, useEffect, useState } from 'react';
 import APIReferencePage from '@/app/docs/api/page';
+import { navigationHistoryBootstrapScript } from '@/lib/navigation-history';
+import { useNavigationGuard } from '@/hooks/use-navigation-guard';
+import { useRegisterNavigationGuard } from '@/app/(settings)/settings/components/navigation-guard-context';
+import { GlobalNavigationGuard } from '@/components/global-navigation-guard';
 
 const boundary = vi.hoisted(() => ({
   collection: undefined as unknown,
@@ -231,6 +235,246 @@ describe('Invite lists Settings', () => {
     expect(boundary.push).toHaveBeenCalledWith('/settings');
   });
 
+  it('retains the existing dirty editor link and unload protection after adopting the root-head tracker', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, '', '/settings/profile');
+    const releaseHead = new Function(
+      `return ${navigationHistoryBootstrapScript}`
+    )() as () => void;
+    function ExistingEditor() {
+      const [name, setName] = useState('');
+      const guard = useNavigationGuard(name !== '');
+      useRegisterNavigationGuard(guard);
+      return (
+        <>
+          <label>
+            Existing profile name
+            <input
+              value={name}
+              onChange={event => setName(event.target.value)}
+            />
+          </label>
+          <a href='/events'>Events</a>
+          {guard.shouldFlash && (
+            <p role='alert'>Keep your unsaved profile changes.</p>
+          )}
+        </>
+      );
+    }
+    const view = render(
+      <NavigationGuardProvider>
+        <GlobalNavigationGuard />
+        <ExistingEditor />
+      </NavigationGuardProvider>
+    );
+    try {
+      await user.type(
+        screen.getByLabelText('Existing profile name'),
+        'Keep existing editor'
+      );
+      await user.click(screen.getByRole('link', { name: 'Events' }));
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Keep your unsaved profile changes'
+      );
+      expect(window.location.pathname).toBe('/settings/profile');
+      const unload = new Event('beforeunload', { cancelable: true });
+      act(() => window.dispatchEvent(unload));
+      expect(unload.defaultPrevented).toBe(true);
+      expect(screen.getByLabelText('Existing profile name')).toHaveValue(
+        'Keep existing editor'
+      );
+      // The global tracker must leave the existing bubble pop handler active.
+      act(() =>
+        window.dispatchEvent(
+          new PopStateEvent('popstate', { state: window.history.state })
+        )
+      );
+      expect(screen.getByLabelText('Existing profile name')).toHaveValue(
+        'Keep existing editor'
+      );
+    } finally {
+      view.unmount();
+      releaseHead();
+    }
+  });
+
+  it('adopts the root-head tracker after early native links and preserves dirty Back and Forward through StrictMode cleanup', async () => {
+    vi.stubGlobal('navigation', undefined);
+    const user = userEvent.setup();
+    window.history.replaceState(null, '', '/docs/api');
+    const initialLength = window.history.length;
+    // Execute the actual inline-script response before mounting client providers.
+    const releaseHead = new Function(
+      `return ${navigationHistoryBootstrapScript}`
+    )() as (() => void) | undefined;
+    const view = render(<APIReferencePage />);
+    // Next registers its Window handler before a dirty editor's React effect.
+    // Model the SDK's observable reload/traverse boundary, not its internals.
+    const nextNavigation = vi.fn();
+    const nextPop = (event: PopStateEvent) => {
+      if (!event.state) return;
+      nextNavigation(event.state.__NA ? 'traverse' : 'reload');
+    };
+    try {
+      expect(window.location.pathname).toBe('/docs/api');
+      expect(window.history.length).toBe(initialLength);
+      for (const name of ['Profile', 'Members']) {
+        await user.click(
+          within(screen.getByRole('navigation')).getByRole('link', { name })
+        );
+        await waitFor(() =>
+          expect(window.location.hash).toBe(`#${name.toLowerCase()}`)
+        );
+      }
+      const earlyScope = window.history.state?.__groupiNavigationScope;
+      window.addEventListener('popstate', nextPop, true);
+      view.rerender(
+        <StrictMode>
+          <NavigationGuardProvider>
+            <APIReferencePage />
+          </NavigationGuardProvider>
+        </StrictMode>
+      );
+      // Next's hydration/replace boundary supplies only its real current tree.
+      window.history.replaceState(
+        {
+          __NA: true,
+          __PRIVATE_NEXTJS_INTERNALS_TREE: ['settings', 'invite-lists'],
+        },
+        '',
+        '/settings/invite-lists'
+      );
+      const originalState = window.history.state;
+      const length = window.history.length;
+      view.rerender(
+        <StrictMode>
+          <NavigationGuardProvider>
+            <InviteListsSettings />
+          </NavigationGuardProvider>
+        </StrictMode>
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'Create invite list' })
+      );
+      await user.type(screen.getByLabelText('List name'), 'Before hydration');
+      // Native fragment traversal can blur a control before its popstate event.
+      screen.getByLabelText('List name').blur();
+      act(() => window.history.back());
+      await screen.findByRole('button', { name: 'Keep Editing' });
+      expect(window.location.pathname).toBe('/settings/invite-lists');
+      expect(window.history.state).toEqual(originalState);
+      expect(nextNavigation).not.toHaveBeenCalled();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
+      expect(nextNavigation).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('List name')).toHaveValue(
+        'Before hydration'
+      );
+      expect(screen.getByLabelText('List name')).toHaveFocus();
+      act(() => window.history.back());
+      await user.click(await screen.findByRole('button', { name: 'Discard' }));
+      await waitFor(() => expect(window.location.hash).toBe('#profile'));
+      expect(nextNavigation).toHaveBeenCalledExactlyOnceWith('reload');
+      expect(window.history.state.__groupiNavigationScope).toBe(earlyScope);
+      expect(window.history.state).not.toHaveProperty('__NA');
+      expect(window.history.state).not.toHaveProperty(
+        '__PRIVATE_NEXTJS_INTERNALS_TREE'
+      );
+      act(() => window.history.forward());
+      await waitFor(() =>
+        expect(window.location.pathname).toBe('/settings/invite-lists')
+      );
+      expect(window.history.state).toEqual(originalState);
+      expect(nextNavigation).toHaveBeenLastCalledWith('traverse');
+      expect(window.history.length).toBe(length);
+      // Client teardown releases only its lease; the root-head owner remains.
+      view.unmount();
+      window.history.pushState(
+        { __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: ['events'] },
+        '',
+        '/events'
+      );
+      expect(window.history.state.__groupiNavigationScope).toBe(earlyScope);
+      expect(window.history.state.__PRIVATE_NEXTJS_INTERNALS_TREE).toEqual([
+        'events',
+      ]);
+    } finally {
+      window.removeEventListener('popstate', nextPop, true);
+      view.unmount();
+      releaseHead?.();
+    }
+  });
+
+  it.each(['push', 'replace'])(
+    'preserves a dirty draft without inferring distance across an unindexed fragment before a tracked %s',
+    async operation => {
+      vi.stubGlobal('navigation', undefined);
+      const user = userEvent.setup();
+      window.history.replaceState(null, '', '/docs/api');
+      const releaseHead = new Function(
+        `return ${navigationHistoryBootstrapScript}`
+      )() as () => void;
+      const view = render(<APIReferencePage />);
+      try {
+        for (const name of ['Profile', 'Members']) {
+          await user.click(
+            within(screen.getByRole('navigation')).getByRole('link', { name })
+          );
+          await waitFor(() =>
+            expect(window.location.hash).toBe(`#${name.toLowerCase()}`)
+          );
+        }
+        const membersState = window.history.state;
+        act(() => {
+          window.location.hash = 'unattributed';
+        });
+        await waitFor(() => expect(window.history.state == null).toBe(true));
+        window.history[operation === 'push' ? 'pushState' : 'replaceState'](
+          { __NA: true, tree: 'settings' },
+          '',
+          '/settings/invite-lists'
+        );
+        const settingsState = window.history.state;
+        const length = window.history.length;
+        view.rerender(
+          <NavigationGuardProvider>
+            <InviteListsSettings />
+          </NavigationGuardProvider>
+        );
+        await user.click(
+          screen.getByRole('button', { name: 'Create invite list' })
+        );
+        await user.type(screen.getByLabelText('List name'), 'Across a gap');
+        act(() => window.history.go(operation === 'push' ? -2 : -1));
+        await screen.findByRole('button', { name: 'Keep Editing' });
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'cannot safely restore an untracked history entry'
+        );
+        expect(window.location.hash).toBe('#members');
+        expect(window.history.state).toEqual(membersState);
+        expect(window.history.length).toBe(length);
+        const heading = screen.getByRole('heading', {
+          name: 'Discard this invite list?',
+        });
+        // Native fragment default focus runs after the popstate confirmation.
+        heading.blur();
+        await waitFor(() => expect(heading).toHaveFocus());
+        await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
+        expect(screen.getByLabelText('List name')).toHaveValue('Across a gap');
+        act(() => window.history.go(operation === 'push' ? 2 : 1));
+        await waitFor(() =>
+          expect(window.location.pathname).toBe('/settings/invite-lists')
+        );
+        expect(window.history.state).toEqual(settingsState);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('List name')).toHaveValue('Across a gap');
+      } finally {
+        view.unmount();
+        releaseHead();
+      }
+    }
+  );
+
   it('restores the Settings entry after Back to an earlier native API fragment and preserves Forward history', async () => {
     vi.stubGlobal('navigation', undefined);
     const user = userEvent.setup();
@@ -290,6 +534,50 @@ describe('Invite lists Settings', () => {
     expect(window.history.state).toEqual(originalState);
     expect(window.history.length).toBe(length);
   });
+
+  it.each(['Keep Editing', 'Discard', 'move focus'])(
+    'respects %s before the browser settles confirmation focus',
+    async choice => {
+      // Control only the browser's frame boundary so a fast user choice precedes
+      // the late native-fragment focus correction.
+      const frames = new Map<number, FrameRequestCallback>();
+      let nextFrame = 0;
+      vi.stubGlobal(
+        'requestAnimationFrame',
+        (callback: FrameRequestCallback) => {
+          frames.set(++nextFrame, callback);
+          return nextFrame;
+        }
+      );
+      vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+      const user = userEvent.setup();
+      render(<InviteListsSettings />);
+      await user.click(
+        screen.getByRole('button', { name: 'Create invite list' })
+      );
+      await user.type(screen.getByLabelText('List name'), 'Focus stays here');
+      await user.keyboard('{Escape}');
+      screen.getByRole('heading', { name: 'Discard this invite list?' }).blur();
+      if (choice === 'move focus') await user.tab();
+      else await user.click(screen.getByRole('button', { name: choice }));
+      await act(async () => {
+        const pending = Array.from(frames.values());
+        frames.clear();
+        pending.forEach(callback => callback(performance.now()));
+      });
+      if (choice === 'move focus')
+        expect(screen.getByRole('link', { name: 'Settings' })).toHaveFocus();
+      else if (choice === 'Keep Editing') {
+        expect(screen.getByLabelText('List name')).toHaveFocus();
+        expect(screen.getByLabelText('List name')).toHaveValue(
+          'Focus stays here'
+        );
+      } else
+        expect(
+          screen.getByRole('button', { name: 'Create invite list' })
+        ).toHaveFocus();
+    }
+  );
 
   it.each(['Back', 'Forward'])(
     'restores browser %s across app entries created on mount before opening Settings without the Navigation API',
