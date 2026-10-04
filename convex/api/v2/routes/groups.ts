@@ -1,3 +1,4 @@
+import { GroupApplicationQuestionSchema } from '../schemas/groupApplications';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { HTTPException } from 'hono/http-exception';
 import { internal } from '../../../_generated/api';
@@ -27,6 +28,8 @@ const group = z.object({
   canManageIdentity: z.boolean(),
   memberCount: z.number(),
   invitationsEnabled: z.boolean(),
+  applicationsEnabled: z.boolean(),
+  applicationQuestions: z.array(GroupApplicationQuestionSchema),
   canManageInvitations: z.boolean(),
   canManageMembers: z.boolean(),
   canManageRoles: z.boolean(),

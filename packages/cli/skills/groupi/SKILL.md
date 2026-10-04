@@ -225,8 +225,7 @@ IDs are not admission credentials. Accepting grants Group membership without
 friendship or Event participation. Use `groups invitation-policy --enabled` for
 owner entry control and `settings privacy set --group-invites` for the independent
 incoming preference. Preserve other privacy choices. Inspect status after an
-uncertain write rather than automatically retrying. Applications and tools remain
-unavailable.
+uncertain write rather than automatically retrying. Group applications have their own commands below; tools remain unavailable.
 
 The generated command tree is the authoritative implemented surface for this
 version, including newly registered lifecycle, social, settings, and add-on
@@ -265,3 +264,18 @@ permits later entry, while ban blocks entry until lifted; lift does not admit.
 Accepted invitation IDs cannot restore departed membership. These actions never
 change independent Event authority or RSVP. Private ban pages expose no reasons
 or contact details. Inspect membership/bans after uncertain writes before retrying.
+
+Group applications use `groups application-settings`, `application-form`, `apply`,
+`application-history`, `application-get`, `application-edit`,
+`application-withdraw`, `applications` and `application-review`. Applications
+start disabled; only the owner configures questions, while current owner/moderators
+review. Read the saved form before answering. Submit again or edit only a pending
+record, against its saved definitions; reviewed history is immutable. Authors
+retain own records after departure, without roster/content access. Approval admits
+one Member immediately and never grants Event authority or friendship. Incoming
+invitation preferences do not block voluntary applications; current Group bans
+and application settings do. Withdraw/history remain available when disabled.
+Declined applicants may reapply when eligible. Writes require `groupApplications`
+version 1; inspect own history or manager queue after uncertain writes before
+repeating. Use explicit confirmation for withdrawal/review. All operations use
+ordinary Group read/write scopes and preserve the separate invitation path.

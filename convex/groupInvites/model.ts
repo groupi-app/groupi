@@ -1,4 +1,5 @@
 import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
+import { admitGroupMember } from '../groups/admission';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -146,19 +147,7 @@ export async function accept(
   if (!(await canAccept(ctx, invite))) unavailable();
   const group = await ctx.db.get(invite.groupId);
   if (!group) unavailable();
-  const membershipId =
-    existing?._id ??
-    (await ctx.db.insert('groupMemberships', {
-      groupId: invite.groupId,
-      personId: actorId,
-      role: 'MEMBER',
-      joinedAt: Date.now(),
-    }));
-  if (!existing)
-    await ctx.db.patch(group._id, {
-      memberCount: group.memberCount + 1,
-      updatedAt: Date.now(),
-    });
+  const { membershipId } = await admitGroupMember(ctx, invite.groupId, actorId);
   await ctx.db.patch(inviteId, { status: 'ACCEPTED', respondedAt: Date.now() });
   await createNotification(
     ctx,

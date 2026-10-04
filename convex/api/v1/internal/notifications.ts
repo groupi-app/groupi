@@ -28,6 +28,20 @@ const notificationSummary = v.object({
   read: v.boolean(),
   createdAt: v.number(),
   group: v.optional(reference),
+  groupApplication: v.optional(
+    v.union(
+      v.null(),
+      v.object({
+        id: v.id('groupApplications'),
+        status: v.union(
+          v.literal('PENDING'),
+          v.literal('APPROVED'),
+          v.literal('DECLINED'),
+          v.literal('WITHDRAWN')
+        ),
+      })
+    )
+  ),
   groupInvite: v.optional(
     v.union(v.object({ id: v.string(), status: v.string() }), v.null())
   ),

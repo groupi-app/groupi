@@ -96,6 +96,7 @@ describe('REST API version contracts', () => {
         groupInvites: { version: 1 },
         groupModeration: { version: 1 },
         groupQuestionnaire: { version: 1 },
+        groupApplications: { version: 1 },
         groupTransfers: { version: 1, retirement: true },
         eventTransfers: { version: 1 },
         eventApplications: { version: 1 },

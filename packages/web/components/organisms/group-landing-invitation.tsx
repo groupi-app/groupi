@@ -43,8 +43,8 @@ export function GroupLandingInvitation({ groupId }: { groupId: Id<'groups'> }) {
         </Button>
       ) : (
         <p className='text-sm text-muted-foreground'>
-          This page is not an invitation. You need a manager invitation to
-          become a member.
+          This page is not an invitation. A manager invitation or an approved
+          application is required to become a member.
         </p>
       )}
     </div>

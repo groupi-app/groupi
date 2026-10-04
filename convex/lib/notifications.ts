@@ -181,6 +181,7 @@ async function fetchMessageContext(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -245,6 +246,9 @@ export type NotificationType =
   | 'GROUP_INVITE_ACCEPTED'
   | 'GROUP_MEMBER_REMOVED'
   | 'GROUP_MEMBER_BANNED'
+  | 'GROUP_APPLICATION_RECEIVED'
+  | 'GROUP_APPLICATION_APPROVED'
+  | 'GROUP_APPLICATION_DECLINED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -505,6 +509,12 @@ export function getNotificationEmailSubject(
       return `${authorName || 'Someone'} invited you to ${groupTitle || 'a Group'}`;
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return `New application to ${groupTitle || 'a Group'}`;
+    case 'GROUP_APPLICATION_APPROVED':
+      return `Your application to ${groupTitle || 'a Group'} was approved`;
+    case 'GROUP_APPLICATION_DECLINED':
+      return `Your application to ${groupTitle || 'a Group'} was declined`;
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -589,6 +599,12 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} invited you to a Group`;
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -672,6 +688,12 @@ function getNotificationMessageMarkdown(
       return `${author} invited you to a Group`;
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -754,6 +776,12 @@ export function getNotificationMessagePlain(
       return `${author} invited you to a Group`;
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from a Group';
+    case 'GROUP_APPLICATION_RECEIVED':
+      return 'New Group application';
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -870,6 +898,7 @@ async function collectEmailData(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1147,6 +1176,7 @@ async function collectWebhookData(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1255,6 +1285,8 @@ function getPushDestination(
     | 'event'
     | 'post'
     | 'group'
+    | 'groupApplication'
+    | 'groupApplications'
     | 'eventApplications'
     | 'eventApplication';
   eventId?: Id<'events'>;
@@ -1274,6 +1306,14 @@ function getPushDestination(
   ) {
     return { destination: 'friends' };
   }
+  if (groupId && type === 'GROUP_APPLICATION_RECEIVED')
+    return { destination: 'groupApplications', groupId };
+  if (
+    groupId &&
+    (type === 'GROUP_APPLICATION_APPROVED' ||
+      type === 'GROUP_APPLICATION_DECLINED')
+  )
+    return { destination: 'groupApplication', groupId };
   if (groupId && type.startsWith('GROUP_'))
     return { destination: 'group', groupId };
   if (type === 'EVENT_INVITE_RECEIVED') {
@@ -1299,6 +1339,7 @@ async function resolveNotificationMessageContext(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1363,6 +1404,7 @@ export async function collectPushData(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1458,6 +1500,7 @@ export async function createNotification(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;
@@ -1477,6 +1520,7 @@ export async function createNotification(
     authorId: data.authorId,
     groupId: data.groupId,
     groupInviteId: data.groupInviteId,
+    groupApplicationId: data.groupApplicationId,
     eventId: data.eventId,
     postId: data.postId,
     datetime: data.datetime,
@@ -1495,6 +1539,7 @@ export async function createNotification(
     authorId: data.authorId,
     groupId: data.groupId,
     groupInviteId: data.groupInviteId,
+    groupApplicationId: data.groupApplicationId,
     eventId: data.eventId,
     postId: data.postId,
     rsvp: data.rsvp,
@@ -1711,6 +1756,7 @@ export async function notifyPerson(
     authorId?: Id<'persons'>;
     groupId?: Id<'groups'>;
     groupInviteId?: Id<'groupInvites'>;
+    groupApplicationId?: Id<'groupApplications'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;

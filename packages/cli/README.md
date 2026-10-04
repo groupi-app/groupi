@@ -628,7 +628,7 @@ Disabling invitations prevents both new sends and pending acceptance. Invitation
 IDs are identifiers, not bearer credentials, and Group links do not admit visitors.
 After an uncertain write, inspect the own inbox or owner's invitation list before
 repeating; writes are never automatically retried. Group deletion removes its
-invitations and memberships. Applications and tools remain unavailable.
+invitations and memberships. Group applications use the separate path below; tools remain unavailable.
 
 ### Group moderation
 
@@ -750,3 +750,51 @@ answered definitions and prior revisions. Current owners/moderators use
 IDs and semantic versions preserve valid answers across cosmetic changes and
 returning membership. Material changes preserve old history without reusing old
 answers. There is no required Group gate setting in this interface.
+
+## Group applications
+
+Applications default disabled. The owner enables them and configures admission
+questions without disabling manager invitations. These questions are distinct
+from any joining questionnaire after admission. Read the form before submitting:
+
+```sh
+groupi groups application-settings <group-id> --enabled true --questions '[{"id":"why","label":"Why join?","type":"SHORT_ANSWER","required":true}]'
+groupi groups application-form <group-id>
+groupi groups apply <group-id> --answers '{"why":"Reading together"}'
+groupi groups application-history <group-id> --all --limit 20
+groupi groups application-get <group-id> <application-id>
+groupi groups application-edit <group-id> <application-id> --answers '{"why":"Updated answer"}'
+groupi groups application-withdraw <group-id> <application-id> --yes
+groupi groups applications <group-id> --status PENDING --all
+groupi groups application-review <group-id> <application-id> --decision APPROVED --yes
+```
+
+Seven existing field types are supported: SHORT_ANSWER, LONG_ANSWER,
+MULTIPLE_CHOICE, CHECKBOXES, NUMBER, DROPDOWN and YES_NO. Definitions allow at most
+50 unique questions; question IDs are limited to 100 characters, labels to 1000,
+and option lists to 100 unique nonempty strings of at most 500 characters.
+Short answers allow 1000 characters, long answers 10000. Zero and false are valid
+required answers. Unknown fields/options and duplicate selections are rejected.
+
+Submitting again edits the single pending application. Pending edits use its
+saved question definitions even if the owner changes the current form. Reviewed
+questions, answers and decisions remain immutable; withdrawal retains history.
+Declined or withdrawn applicants may reapply under current policy unless banned.
+Disabling applications blocks new submissions, edits and approvals while private
+history and withdrawal remain available. Incoming invitation preferences do not
+restrict voluntary applications.
+
+Only the author and current Group owner/moderators can read personal records.
+Authors retain private history after leaving or removal while the Group exists;
+applicants gain no roster or Group content access. Approval creates one Member
+immediately without a second acceptance, Event participation or friendship.
+Racing invitation acceptance cannot duplicate membership. Repeating historical
+approval cannot restore membership after departure. Managers receive new-request
+notifications and applicants receive decisions through existing notification
+methods, DND and type preferences.
+
+All writes preflight `groupApplications` version 1 and are never automatically
+retried. API keys use ordinary `groups:read` and `groups:write` scopes. After an
+uncertain outcome, inspect own history or the current manager queue before
+repeating. Group and account deletion remove private application records; deleted
+reviewers are anonymized in surviving decisions.

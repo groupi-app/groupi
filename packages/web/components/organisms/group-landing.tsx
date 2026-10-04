@@ -5,6 +5,7 @@ import { useConvexAuth } from 'convex/react';
 import { Id } from '@/convex/_generated/dataModel';
 import { useGroupLanding } from '@/hooks/convex/use-groups';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { GroupApplications } from './group-applications';
 import { GroupLandingInvitation } from './group-landing-invitation';
 import { Button } from '@/components/ui/button';
 
@@ -27,7 +28,10 @@ export function GroupLanding({ groupId }: { groupId: Id<'groups'> }) {
       )}
       {!isLoading &&
         (isAuthenticated ? (
-          <GroupLandingInvitation groupId={group.groupId} />
+          <>
+            <GroupLandingInvitation groupId={group.groupId} />
+            <GroupApplications groupId={group.groupId} />
+          </>
         ) : (
           <Button asChild>
             <Link href={`/sign-in?redirect=${encodeURIComponent(returnPath)}`}>

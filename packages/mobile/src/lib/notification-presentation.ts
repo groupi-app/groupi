@@ -75,6 +75,12 @@ export function getNotificationMessage(
       return `${authorName} sent you a friend request`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${authorName} accepted your friend request`;
+    case 'GROUP_APPLICATION_RECEIVED':
+      return `A new Group application is ready for review`;
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved.';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined.';
     case 'GROUP_INVITE_RECEIVED': {
       const title = notification.group?.title ?? 'a Group';
       const status = notification.groupInvite?.status;
@@ -102,6 +108,16 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (
+    notification.type === 'GROUP_APPLICATION_RECEIVED' ||
+    notification.type === 'GROUP_APPLICATION_APPROVED' ||
+    notification.type === 'GROUP_APPLICATION_DECLINED'
+  ) {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId
+      ? `/groups/${groupId}/${notification.type === 'GROUP_APPLICATION_RECEIVED' ? 'applications' : 'apply'}`
+      : null;
+  }
   if (
     notification.type === 'GROUP_INVITE_RECEIVED' ||
     notification.type === 'GROUP_INVITE_ACCEPTED' ||

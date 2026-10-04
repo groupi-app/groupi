@@ -19,6 +19,14 @@ describe('normalizeNativeIntentPath', () => {
       'https://groupi.gg/event/event-123/settings/applications',
       '/event/event-123/applications',
     ],
+    [
+      'https://groupi.gg/g/group-123#group-applications',
+      '/groups/group-123/apply',
+    ],
+    [
+      'https://groupi.gg/groups/group-123#group-applications',
+      '/groups/group-123/applications',
+    ],
     ['groupi:///settings/privacy', '/settings/privacy'],
     ['groupi://invite/invite-token', '/invite/invite-token'],
   ])('routes supported Groupi link %s', (path, expected) => {

@@ -16,6 +16,8 @@ import {
 } from '@/hooks/convex/use-groups';
 import { useLeaveGroup } from '@/hooks/convex/use-group-moderation';
 import { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
+import { GroupApplications } from './group-applications';
+import { GroupApplicationSettings } from './group-application-settings';
 import { GroupBanManagement } from './group-ban-management';
 import { GroupConfirmedAction } from './group-confirmed-action';
 import { GroupMemberRoster } from './group-member-roster';
@@ -126,6 +128,18 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
       )}
       <GroupOwnershipTransfer groupId={groupId} />
       <GroupJoiningQuestionnaire groupId={groupId} />
+      {group.canManageRoles && (
+        <GroupApplicationSettings
+          key={JSON.stringify([
+            group.applicationsEnabled,
+            group.applicationQuestions,
+          ])}
+          groupId={groupId}
+          applicationsEnabled={group.applicationsEnabled}
+          questions={group.applicationQuestions}
+        />
+      )}
+      {group.canManageMembers && <GroupApplications groupId={groupId} review />}
       <GroupMemberRoster groupId={groupId} />
       {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (

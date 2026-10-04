@@ -50,6 +50,18 @@ const notificationTypeLabels: Record<
   NotificationType,
   { label: string; description: string }
 > = {
+  GROUP_APPLICATION_RECEIVED: {
+    label: 'New Group applications',
+    description: 'When someone applies to a Group you manage',
+  },
+  GROUP_APPLICATION_APPROVED: {
+    label: 'Group application approved',
+    description: 'When your Group application is approved',
+  },
+  GROUP_APPLICATION_DECLINED: {
+    label: 'Group application declined',
+    description: 'When your Group application is declined',
+  },
   GROUP_MEMBER_REMOVED: {
     label: 'Removed from Group',
     description: 'a manager removes me from a Group.',
@@ -610,6 +622,9 @@ export function NotificationSettingsCard({
                         Groups
                       </div>
                       {[
+                        NotificationTypeEnum.GROUP_APPLICATION_RECEIVED,
+                        NotificationTypeEnum.GROUP_APPLICATION_APPROVED,
+                        NotificationTypeEnum.GROUP_APPLICATION_DECLINED,
                         NotificationTypeEnum.GROUP_INVITE_RECEIVED,
                         NotificationTypeEnum.GROUP_INVITE_ACCEPTED,
                         NotificationTypeEnum.GROUP_MEMBER_REMOVED,

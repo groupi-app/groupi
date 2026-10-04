@@ -116,3 +116,13 @@ describe('getAuthRouteDecision', () => {
     });
   });
 });
+
+it('retains bounded private Group application return paths', () => {
+  expect(getSafeAuthReturnPath('/groups/group-123/apply')).toBe(
+    '/groups/group-123/apply'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/applications')).toBe(
+    '/groups/group-123/applications'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/apply/private')).toBeNull();
+});

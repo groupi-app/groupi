@@ -1,3 +1,4 @@
+import { removeApplicationsForGroup } from '../groupApplications/cleanup';
 import { removeQuestionnairesForGroup } from '../groupQuestionnaires/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -17,5 +18,6 @@ export async function cascadeDeleteGroupData(
   await removeModerationForGroup(ctx, groupId);
   await removeTransfersForGroup(ctx, groupId);
   await removeQuestionnairesForGroup(ctx, groupId);
+  await removeApplicationsForGroup(ctx, groupId);
   await ctx.db.delete(groupId);
 }

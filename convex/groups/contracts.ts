@@ -1,3 +1,4 @@
+import { questionValidator } from '../eventApplications/contracts';
 import { v } from 'convex/values';
 export const role = v.union(
   v.literal('OWNER'),
@@ -32,6 +33,8 @@ export const group = v.object({
   canManageRoles: v.boolean(),
   canLeave: v.boolean(),
   invitationsEnabled: v.boolean(),
+  applicationsEnabled: v.boolean(),
+  applicationQuestions: v.array(questionValidator),
   memberCount: v.number(),
 });
 export const landing = v.object({

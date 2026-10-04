@@ -61,6 +61,31 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupApplications: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    questions: v.array(questionValidator),
+    answers: answersValidator,
+    status: applicationStatusValidator,
+    submittedAt: v.number(),
+    updatedAt: v.number(),
+    decisions: v.array(decisionValidator),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_status', ['groupId', 'status'])
+    .index('by_groupId_and_personId_and_status', [
+      'groupId',
+      'personId',
+      'status',
+    ]),
+  groupApplicationActors: defineTable({
+    applicationId: v.id('groupApplications'),
+    personId: v.id('persons'),
+  })
+    .index('by_applicationId', ['applicationId'])
+    .index('by_personId', ['personId']),
   groupBans: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),
@@ -109,6 +134,8 @@ export default defineSchema({
     .index('by_recipient', ['recipientId']),
   groups: defineTable({
     invitationsEnabled: v.optional(v.boolean()),
+    applicationsEnabled: v.optional(v.boolean()),
+    applicationQuestions: v.optional(v.array(questionValidator)),
     memberCount: v.number(),
     ownerId: v.id('persons'),
     name: v.string(),
@@ -534,6 +561,9 @@ export default defineSchema({
       v.literal('GROUP_INVITE_ACCEPTED'),
       v.literal('GROUP_MEMBER_REMOVED'),
       v.literal('GROUP_MEMBER_BANNED'),
+      v.literal('GROUP_APPLICATION_RECEIVED'),
+      v.literal('GROUP_APPLICATION_APPROVED'),
+      v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -541,6 +571,7 @@ export default defineSchema({
     ),
     groupId: v.optional(v.id('groups')),
     groupInviteId: v.optional(v.id('groupInvites')),
+    groupApplicationId: v.optional(v.id('groupApplications')),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
     read: v.boolean(),
@@ -557,6 +588,7 @@ export default defineSchema({
   })
     .index('by_groupId', ['groupId'])
     .index('by_groupInviteId', ['groupInviteId'])
+    .index('by_groupApplicationId', ['groupApplicationId'])
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
@@ -607,6 +639,9 @@ export default defineSchema({
       v.literal('GROUP_INVITE_ACCEPTED'),
       v.literal('GROUP_MEMBER_REMOVED'),
       v.literal('GROUP_MEMBER_BANNED'),
+      v.literal('GROUP_APPLICATION_RECEIVED'),
+      v.literal('GROUP_APPLICATION_APPROVED'),
+      v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -650,6 +685,8 @@ export default defineSchema({
     body: v.string(),
     destination: v.union(
       v.literal('group'),
+      v.literal('groupApplication'),
+      v.literal('groupApplications'),
       v.literal('notifications'),
       v.literal('invites'),
       v.literal('friends'),

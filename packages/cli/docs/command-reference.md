@@ -141,6 +141,15 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups questionnaire responses](#groupi-groups-questionnaire-responses)
 - [groupi groups questionnaire configure](#groupi-groups-questionnaire-configure)
 - [groupi groups questionnaire submit](#groupi-groups-questionnaire-submit)
+- [groupi groups application-form](#groupi-groups-application-form)
+- [groupi groups application-get](#groupi-groups-application-get)
+- [groupi groups application-history](#groupi-groups-application-history)
+- [groupi groups applications](#groupi-groups-applications)
+- [groupi groups application-settings](#groupi-groups-application-settings)
+- [groupi groups apply](#groupi-groups-apply)
+- [groupi groups application-edit](#groupi-groups-application-edit)
+- [groupi groups application-withdraw](#groupi-groups-application-withdraw)
+- [groupi groups application-review](#groupi-groups-application-review)
 - [groupi group-invites](#groupi-group-invites)
 - [groupi group-invites list](#groupi-group-invites-list)
 - [groupi group-invites accept](#groupi-group-invites-accept)
@@ -1730,30 +1739,36 @@ Usage: groupi groups [options] [command]
 Manage formal Group communities independently of events
 
 Options:
-  -h, --help                                      display help for command
+  -h, --help                                                  display help for command
 
 Commands:
-  transfer                                        Offer consensual Group responsibility; pending
-                                                  offers remain unresolved
-  list [options]                                  List your admitted Groups
-  get <group-id>                                  Read an admitted Group
-  create [options]                                Create an owner-only Group
-  edit [options] <group-id>                       Update Group identity as owner
-  delete [options] <group-id>                     Explicitly retire an owned Group and its data;
-                                                  independent Events remain
-  members [options] <group-id>                    Read admitted Group roster
-  invites [options] <group-id>                    Inspect Group invitations as manager
-  invite <group-id> <person-id>                   Invite an existing user to your Group
-  invitation-policy [options] <group-id>          Configure Group invitations as owner
-  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner
-  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning
-  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember
-  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership
-  leave [options] <group-id>                      Leave your own Group membership
-  bans [options] <group-id>                       List private active Group bans as manager
-  questionnaire                                   Optional post-admission questionnaire and private
-                                                  retained records
-  help [command]                                  display help for command
+  transfer                                                    Offer consensual Group responsibility; pending offers remain unresolved
+  list [options]                                              List your admitted Groups
+  get <group-id>                                              Read an admitted Group
+  create [options]                                            Create an owner-only Group
+  edit [options] <group-id>                                   Update Group identity as owner
+  delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain
+  members [options] <group-id>                                Read admitted Group roster
+  invites [options] <group-id>                                Inspect Group invitations as manager
+  invite <group-id> <person-id>                               Invite an existing user to your Group
+  invitation-policy [options] <group-id>                      Configure Group invitations as owner
+  member-role [options] <group-id> <person-id>                Appoint or demote a moderator as owner
+  remove-member [options] <group-id> <person-id>              Remove an ordinary member without banning
+  ban [options] <group-id> <person-id>                        Ban an ordinary member or nonmember
+  lift-ban [options] <group-id> <person-id>                   Lift a Group ban without admitting membership
+  leave [options] <group-id>                                  Leave your own Group membership
+  bans [options] <group-id>                                   List private active Group bans as manager
+  questionnaire                                               Optional post-admission questionnaire and private retained records
+  application-form <group-id>                                 Read admission form and your private pending application
+  application-get <group-id> <application-id>                 Read a private application as author or current manager
+  application-history [options] <group-id>                    Read your retained private application history
+  applications [options] <group-id>                           Review private Group applications as manager
+  application-settings [options] <group-id>                   Configure Group applications as owner
+  apply [options] <group-id>                                  Apply for Group membership
+  application-edit [options] <group-id> <application-id>      Edit your pending saved answers
+  application-withdraw [options] <group-id> <application-id>  Withdraw your pending application
+  application-review [options] <group-id> <application-id>    Record an application decision as current manager
+  help [command]                                              display help for command
 ```
 
 ## groupi groups transfer
@@ -2124,6 +2139,119 @@ Options:
   --form-version <number>  Current questionnaire version from get
   --answers <json>         Current answer object, replacing optional values
   -h, --help               display help for command
+```
+
+## groupi groups application-form
+
+```text
+Usage: groupi groups application-form [options] <group-id>
+
+Read admission form and your private pending application
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups application-get
+
+```text
+Usage: groupi groups application-get [options] <group-id> <application-id>
+
+Read a private application as author or current manager
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups application-history
+
+```text
+Usage: groupi groups application-history [options] <group-id>
+
+Read your retained private application history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups applications
+
+```text
+Usage: groupi groups applications [options] <group-id>
+
+Review private Group applications as manager
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, WITHDRAWN, APPROVED or DECLINED
+  -h, --help         display help for command
+```
+
+## groupi groups application-settings
+
+```text
+Usage: groupi groups application-settings [options] <group-id>
+
+Configure Group applications as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --questions <json>   JSON admission question array
+  -h, --help           display help for command
+```
+
+## groupi groups apply
+
+```text
+Usage: groupi groups apply [options] <group-id>
+
+Apply for Group membership
+
+Options:
+  --answers <json>  JSON answer object
+  -h, --help        display help for command
+```
+
+## groupi groups application-edit
+
+```text
+Usage: groupi groups application-edit [options] <group-id> <application-id>
+
+Edit your pending saved answers
+
+Options:
+  --answers <json>  JSON answer object
+  -h, --help        display help for command
+```
+
+## groupi groups application-withdraw
+
+```text
+Usage: groupi groups application-withdraw [options] <group-id> <application-id>
+
+Withdraw your pending application
+
+Options:
+  --yes       Confirm application resolution
+  -h, --help  display help for command
+```
+
+## groupi groups application-review
+
+```text
+Usage: groupi groups application-review [options] <group-id> <application-id>
+
+Record an application decision as current manager
+
+Options:
+  --decision <decision>  APPROVED or DECLINED
+  --yes                  Confirm application resolution
+  -h, --help             display help for command
 ```
 
 ## groupi group-invites

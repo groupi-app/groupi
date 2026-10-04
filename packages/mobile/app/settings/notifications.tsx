@@ -140,6 +140,24 @@ const NOTIFICATION_CATEGORIES: Array<{
         icon: 'people',
       },
       {
+        type: 'GROUP_APPLICATION_RECEIVED',
+        label: 'New Group applications',
+        description: 'An applicant requests Group admission.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'GROUP_APPLICATION_APPROVED',
+        label: 'Group application approved',
+        description: 'Your Group application is approved.',
+        icon: 'checkmark-circle-outline',
+      },
+      {
+        type: 'GROUP_APPLICATION_DECLINED',
+        label: 'Group application declined',
+        description: 'Your Group application is declined.',
+        icon: 'close-circle-outline',
+      },
+      {
         type: 'GROUP_INVITE_RECEIVED',
         label: 'Group invitations',
         description: 'Someone invites you to a Group.',

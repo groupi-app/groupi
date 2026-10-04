@@ -19,6 +19,7 @@ import { getPublicGroupUrl } from '@/lib/public-urls';
 import { GroupLandingInvitation } from './group-invitation-panels';
 import { GroupLeaveControl } from './group-leave-control';
 import { GroupJoiningQuestionnairePrompt } from './group-questionnaire';
+import { GroupApplicationSettings } from './group-application-settings';
 import { GroupForm } from './group-form';
 
 export function GroupDetailScreen() {
@@ -135,6 +136,29 @@ export function GroupDetailScreen() {
             >
               My joining questionnaire
             </Button>
+            {group.canManageMembers ? (
+              <Button
+                accessibilityLabel='Review Group applications'
+                variant='outline'
+                onPress={() => router.push(`/groups/${id}/applications`)}
+              >
+                Review applications
+              </Button>
+            ) : null}
+            <Button
+              accessibilityLabel='My Group application history'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/apply`)}
+            >
+              My application history
+            </Button>
+            {group.canManageRoles ? (
+              <GroupApplicationSettings
+                groupId={id}
+                applicationsEnabled={group.applicationsEnabled}
+                questions={group.applicationQuestions}
+              />
+            ) : null}
             <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (
@@ -220,6 +244,19 @@ export function GroupLandingScreen() {
             {group.description ? (
               <Text className='text-foreground'>{group.description}</Text>
             ) : null}
+            <Button
+              accessibilityLabel='Apply to Group or view private status'
+              onPress={() =>
+                isAuthenticated
+                  ? router.push(`/groups/${groupId}/apply`)
+                  : router.push({
+                      pathname: '/(auth)/sign-in',
+                      params: { returnTo: `/groups/${groupId}/apply` },
+                    })
+              }
+            >
+              Apply or view my application
+            </Button>
             {isAuthenticated ? (
               <>
                 <GroupLandingInvitation groupId={groupId as Id<'groups'>} />

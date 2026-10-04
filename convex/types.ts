@@ -36,6 +36,9 @@ export type NotificationType =
   | 'GROUP_INVITE_ACCEPTED'
   | 'GROUP_MEMBER_REMOVED'
   | 'GROUP_MEMBER_BANNED'
+  | 'GROUP_APPLICATION_RECEIVED'
+  | 'GROUP_APPLICATION_APPROVED'
+  | 'GROUP_APPLICATION_DECLINED'
   | 'EVENT_EDITED' // When the details of an event that the receiving user is a member of is edited
   | 'NEW_POST' // When a new post is created in an event that the receiving user is a member of
   | 'NEW_REPLY' // When a new reply is created in a post that the receiving user has interacted with
@@ -110,6 +113,9 @@ export const ConvexEnums = {
     GROUP_INVITE_ACCEPTED: 'GROUP_INVITE_ACCEPTED' as const,
     GROUP_MEMBER_REMOVED: 'GROUP_MEMBER_REMOVED' as const,
     GROUP_MEMBER_BANNED: 'GROUP_MEMBER_BANNED' as const,
+    GROUP_APPLICATION_RECEIVED: 'GROUP_APPLICATION_RECEIVED' as const,
+    GROUP_APPLICATION_APPROVED: 'GROUP_APPLICATION_APPROVED' as const,
+    GROUP_APPLICATION_DECLINED: 'GROUP_APPLICATION_DECLINED' as const,
     EVENT_EDITED: 'EVENT_EDITED' as const,
     NEW_POST: 'NEW_POST' as const,
     NEW_REPLY: 'NEW_REPLY' as const,

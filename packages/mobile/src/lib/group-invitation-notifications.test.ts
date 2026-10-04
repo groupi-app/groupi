@@ -14,6 +14,35 @@ describe('native Group invitation notifications', () => {
     group: { id: 'group-123' as Id<'groups'>, title: 'Book club' },
     groupInvite: { id: 'invite-123' as Id<'groupInvites'>, status: 'PENDING' },
   };
+  it.each([
+    'GROUP_APPLICATION_RECEIVED',
+    'GROUP_APPLICATION_APPROVED',
+    'GROUP_APPLICATION_DECLINED',
+  ] as const)('routes %s to private status or authorized review', type => {
+    const path =
+      type === 'GROUP_APPLICATION_RECEIVED'
+        ? '/groups/group-123/applications'
+        : '/groups/group-123/apply';
+    expect(getNotificationDestination({ ...invite, type })).toBe(path);
+    expect(getNotificationMessage({ ...invite, type })).toContain(
+      'application'
+    );
+    expect(
+      getPushNotificationDestination({
+        destination:
+          type === 'GROUP_APPLICATION_RECEIVED'
+            ? 'groupApplications'
+            : 'groupApplication',
+        groupId: 'group-123',
+      })
+    ).toBe(path);
+    expect(
+      getPushNotificationDestination({
+        destination: 'groupApplication',
+        groupId: '../secret',
+      })
+    ).toBeNull();
+  });
   it('describes a Group invitation and opens its identity landing', () => {
     expect(getNotificationMessage(invite)).toBe(
       'Someone invited you to Book club'

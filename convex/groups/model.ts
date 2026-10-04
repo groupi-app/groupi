@@ -1,3 +1,4 @@
+import { removeApplicationsForPerson } from '../groupApplications/cleanup';
 import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
 import { cascadeDeleteGroupData } from './cleanup';
 import { removeTransfersForPerson } from '../groupTransfers/cleanup';
@@ -174,6 +175,8 @@ export async function detail(
     canManageIdentity: group.ownerId === personId,
     memberCount: group.memberCount,
     invitationsEnabled: group.invitationsEnabled ?? true,
+    applicationsEnabled: group.applicationsEnabled ?? false,
+    applicationQuestions: group.applicationQuestions ?? [],
     canManageInvitations: membership.role !== 'MEMBER',
     canManageMembers: membership.role !== 'MEMBER',
     canManageRoles: group.ownerId === personId,
@@ -222,6 +225,7 @@ export async function removeGroupMembershipsForPerson(
   await removeInvitationsForPerson(ctx, personId);
   await removeModerationForPerson(ctx, personId);
   await removeQuestionnairesForPerson(ctx, personId);
+  await removeApplicationsForPerson(ctx, personId);
   for await (const membership of ctx.db
     .query('groupMemberships')
     .withIndex('by_personId', q => q.eq('personId', personId))) {

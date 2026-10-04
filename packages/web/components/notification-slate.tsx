@@ -25,6 +25,10 @@ interface EnrichedNotification extends Doc<'notifications'> {
   author?: { user?: { name?: string; email?: string | null } };
   group?: { id: string; title: string } | null;
   groupInvite?: { id: string; status: string } | null;
+  groupApplication?: {
+    id: string;
+    status: Doc<'groupApplications'>['status'];
+  } | null;
 }
 
 export function NotificationSlate({
@@ -70,6 +74,17 @@ export function NotificationSlate({
 
   const getNotificationLink = (): string => {
     // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
+    if (type === 'GROUP_APPLICATION_RECEIVED')
+      return notification.group
+        ? `/groups/${notification.group.id}#group-applications`
+        : '/events';
+    if (
+      type === 'GROUP_APPLICATION_APPROVED' ||
+      type === 'GROUP_APPLICATION_DECLINED'
+    )
+      return notification.group
+        ? `/g/${notification.group.id}#group-applications`
+        : '/events';
     if (
       type === 'GROUP_INVITE_RECEIVED' ||
       type === 'GROUP_INVITE_ACCEPTED' ||
@@ -287,6 +302,29 @@ export function NotificationSlate({
           </>
         );
 
+      case 'GROUP_APPLICATION_RECEIVED':
+        return (
+          <>
+            New application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> awaits
+            review
+          </>
+        );
+      case 'GROUP_APPLICATION_APPROVED':
+        return (
+          <>
+            Your application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> was
+            approved. You are now a Group member.
+          </>
+        );
+      case 'GROUP_APPLICATION_DECLINED':
+        return (
+          <>
+            Your application to{' '}
+            <strong>{notification.group?.title ?? 'Group'}</strong> was declined
+          </>
+        );
       case 'GROUP_MEMBER_REMOVED':
       case 'GROUP_MEMBER_BANNED':
         return (

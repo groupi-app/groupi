@@ -4,6 +4,9 @@ vi.mock('./group-ownership-transfer', () => ({
 vi.mock('./group-questionnaire', () => ({
   GroupJoiningQuestionnairePrompt: () => null,
 }));
+vi.mock('./group-application-settings', () => ({
+  GroupApplicationSettings: 'GroupApplicationSettings',
+}));
 vi.mock('./group-leave-control', () => ({ GroupLeaveControl: () => null }));
 import {
   Children,

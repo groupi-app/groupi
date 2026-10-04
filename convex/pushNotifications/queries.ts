@@ -59,6 +59,8 @@ const deliveryJobValidator = v.object({
   body: v.string(),
   destination: v.union(
     v.literal('group'),
+    v.literal('groupApplication'),
+    v.literal('groupApplications'),
     v.literal('notifications'),
     v.literal('invites'),
     v.literal('friends'),

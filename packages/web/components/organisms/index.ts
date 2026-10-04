@@ -46,3 +46,5 @@ export { GroupQuestionnaireRecords } from './group-questionnaire-records';
 export { GroupQuestionnaireSettings } from './group-questionnaire-settings';
 export { GroupQuestionnaireReview } from './group-questionnaire-review';
 export { GroupQuestionnaireHistory } from './group-questionnaire-history';
+export { GroupApplications } from './group-applications';
+export { GroupApplicationSettings } from './group-application-settings';

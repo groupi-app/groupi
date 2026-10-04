@@ -61,6 +61,23 @@ function groupInvitationReference(value) {
   return { id: invite.id, status: invite.status };
 }
 /** @param {unknown} value */
+function groupApplicationReference(value) {
+  if (value === null) return null;
+  const app = record(value);
+  if (
+    typeof app.id !== 'string' ||
+    !['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED'].includes(
+      String(app.status)
+    )
+  )
+    throw new CliError(
+      'INVALID_RESPONSE',
+      'Invalid Group application reference.',
+      5
+    );
+  return { id: app.id, status: app.status };
+}
+/** @param {unknown} value */
 function notification(value) {
   const item = record(value);
   if (
@@ -93,6 +110,9 @@ function notification(value) {
     read: item.read,
     createdAt: item.createdAt,
     ...(item.group !== undefined ? { group: reference(item.group) } : {}),
+    ...(item.groupApplication !== undefined
+      ? { groupApplication: groupApplicationReference(item.groupApplication) }
+      : {}),
     ...(item.groupInvite !== undefined
       ? { groupInvite: groupInvitationReference(item.groupInvite) }
       : {}),

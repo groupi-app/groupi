@@ -85,6 +85,8 @@ const detail = {
   canManageIdentity: true,
   canManageInvitations: true,
   invitationsEnabled: true,
+  applicationsEnabled: false,
+  applicationQuestions: [],
   canManageMembers: true,
   canManageRoles: true,
   canLeave: true,
@@ -137,6 +139,16 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupApplications/queries:getGroupApplicationForm': {
+      applicationsEnabled: false,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    'groupApplications/queries:listMyGroupApplications': emptyPage,
+    'groupApplications/queries:listGroupApplications': emptyPage,
+    'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
       page: [invite],
       isDone: true,
@@ -611,7 +623,9 @@ it('does not query another person’s form or review records from a public Group
     </AppProvider>
   );
   expect(
-    await screen.findByText(/need a manager invitation/)
+    await screen.findByText(
+      /manager invitation or an approved application is required/
+    )
   ).toBeInTheDocument();
   const names = vi
     .mocked(client.watchQuery)

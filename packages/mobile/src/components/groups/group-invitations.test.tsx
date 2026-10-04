@@ -138,6 +138,8 @@ function result(name: string, args: Record<string, unknown>) {
           ownerId: 'person-owner',
           viewerRole: network.manager ? 'OWNER' : 'MEMBER',
           canManageIdentity: network.manager && !network.moderator,
+          applicationsEnabled: false,
+          applicationQuestions: [],
           canManageRoles: network.manager && !network.moderator,
           canManageMembers: network.manager,
           canLeave: !network.manager || network.moderator,
@@ -327,6 +329,59 @@ describe('native Group invitations with production providers', () => {
     );
     await act(async () => mounted!.unmount());
   });
+  it.each([false, true])(
+    'keeps application landing joining flow for authenticated=%s without reading roster',
+    async authenticated => {
+      network.authenticated = authenticated;
+      network.member = false;
+      let mounted: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(GroupLandingScreen));
+      });
+      await act(async () => {
+        (
+          control(mounted!, 'Apply to Group or view private status').props
+            .onPress as () => void
+        )();
+      });
+      expect(network.push).toHaveBeenCalledWith(
+        authenticated
+          ? '/groups/group-123/apply'
+          : {
+              pathname: '/(auth)/sign-in',
+              params: { returnTo: '/groups/group-123/apply' },
+            }
+      );
+      expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
+        'groups/queries:listGroupMembers'
+      );
+      expect(network.mutation).not.toHaveBeenCalled();
+      await act(async () => mounted!.unmount());
+    }
+  );
+  it.each([false, true])(
+    'keeps owner configuration distinct from moderator=%s review navigation',
+    async moderator => {
+      network.moderator = moderator;
+      let mounted: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(GroupDetailScreen));
+      });
+      expect(
+        Boolean(control(mounted!, 'Save Group application settings'))
+      ).toBe(!moderator);
+      await act(async () => {
+        (
+          control(mounted!, 'Review Group applications').props
+            .onPress as () => void
+        )();
+      });
+      expect(network.push).toHaveBeenCalledWith(
+        '/groups/group-123/applications'
+      );
+      await act(async () => mounted!.unmount());
+    }
+  );
   it('shows only the current caller invitation on a landing and sharing never admits the viewer', async () => {
     network.member = false;
     let mounted: Mounted;

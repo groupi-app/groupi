@@ -164,6 +164,23 @@ describe('Group landing authentication return through production routes', () => 
             return external.needsOnboarding;
           if (name === 'auth/queries:getCurrentUser') return existingUser.user;
           if (name === 'groups/queries:getGroupLanding') return landing;
+          if (name === 'groupApplications/queries:getGroupApplicationForm')
+            return {
+              applicationsEnabled: true,
+              questions: [
+                {
+                  id: 'why',
+                  label: 'Why join?',
+                  type: 'SHORT_ANSWER',
+                  required: true,
+                },
+              ],
+              pending: null,
+              canApply: true,
+              canReview: false,
+            };
+          if (name === 'groupApplications/queries:listMyGroupApplications')
+            return { page: [], isDone: true, continueCursor: '' };
           if (
             name === 'groupQuestionnaires/queries:getJoiningQuestionnaireAccess'
           )
@@ -244,6 +261,35 @@ describe('Group landing authentication return through production routes', () => 
           : 'Neighbors',
       });
       expect(external.path).toBe(destination);
+      if (!destination.endsWith('/questionnaire')) {
+        await user.type(
+          screen.getByRole('textbox', { name: 'Why join?' }),
+          'Meet neighbors'
+        );
+        await user.click(
+          screen.getByRole('button', { name: 'Submit application' })
+        );
+        expect(
+          await screen.findByText('Application submitted for review.')
+        ).toBeInTheDocument();
+        const submission = mutation.mock.calls.find(
+          ([ref]) =>
+            getFunctionName(ref) ===
+            'groupApplications/mutations:submitGroupApplication'
+        );
+        expect(submission?.[1]).toEqual({
+          groupId: 'group-one',
+          answers: { why: 'Meet neighbors' },
+        });
+        expect(
+          mutation.mock.calls.every(([ref]) =>
+            [
+              'users/mutations:completeOnboarding',
+              'groupApplications/mutations:submitGroupApplication',
+            ].includes(getFunctionName(ref))
+          )
+        ).toBe(true);
+      }
       mounted.unmount();
       availability.mockRestore();
       await client.close();

@@ -81,6 +81,8 @@ const detail = {
   invitationsEnabled: true,
   canManageRoles: true,
   canManageMembers: true,
+  applicationsEnabled: false,
+  applicationQuestions: [],
   canLeave: false,
 };
 const emptyPage = { page: [], isDone: true, continueCursor: '' };
@@ -110,6 +112,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
       page: [invite],
       isDone: true,
@@ -147,6 +150,15 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
       canConfigure: false,
       canReview: false,
     },
+    'groupApplications/queries:getGroupApplicationForm': {
+      applicationsEnabled: false,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    'groupApplications/queries:listGroupApplications': emptyPage,
+    'groupApplications/queries:listMyGroupApplications': emptyPage,
     'friends/queries:searchUsersByUsername': [invite.invitee],
     'friends/queries:getBlockedUsers': [],
     'settings/queries:getPrivacySettings': {
@@ -311,6 +323,8 @@ describe('Group invitations through production screens', () => {
       'groups/queries:getGroup': {
         ...detail,
         viewerRole: 'MEMBER',
+        canManageRoles: false,
+        canManageMembers: false,
         canManageIdentity: false,
         canManageInvitations: false,
       },
@@ -616,3 +630,57 @@ it('saves independent Group notification preferences without changing Event pref
   mounted.unmount();
   await client.close();
 });
+
+it.each([
+  'GROUP_APPLICATION_RECEIVED',
+  'GROUP_APPLICATION_APPROVED',
+  'GROUP_APPLICATION_DECLINED',
+] as const)(
+  'routes %s to the appropriate private Group application flow',
+  async type => {
+    const { client } = fixtureClient();
+    const mounted = render(
+      <AppProvider client={client}>
+        <NotificationSlate
+          notification={{
+            _id: 'notification-one' as Id<'notifications'>,
+            _creationTime: 1,
+            id: 'notification-one',
+            createdAt: 1,
+            personId: 'member-one' as Id<'persons'>,
+            type,
+            read: true,
+            groupId,
+            group: { id: groupId, title: 'Neighbors' },
+            groupApplication: {
+              id: 'application-one',
+              status:
+                type === 'GROUP_APPLICATION_RECEIVED'
+                  ? 'PENDING'
+                  : type === 'GROUP_APPLICATION_APPROVED'
+                    ? 'APPROVED'
+                    : 'DECLINED',
+            },
+          }}
+        />
+      </AppProvider>
+    );
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute(
+      'href',
+      type === 'GROUP_APPLICATION_RECEIVED'
+        ? '/groups/group-one#group-applications'
+        : '/g/group-one#group-applications'
+    );
+    expect(link).toHaveTextContent('Neighbors');
+    expect(link).toHaveTextContent(
+      type === 'GROUP_APPLICATION_RECEIVED'
+        ? 'awaits review'
+        : type === 'GROUP_APPLICATION_APPROVED'
+          ? 'approved'
+          : 'declined'
+    );
+    mounted.unmount();
+    await client.close();
+  }
+);

@@ -76,6 +76,8 @@ const detail = {
   canManageInvitations: true,
   invitationsEnabled: true,
   canManageMembers: true,
+  applicationsEnabled: false,
+  applicationQuestions: [],
   canManageRoles: true,
   canLeave: false,
 };
@@ -106,6 +108,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
       page: [invite],
       isDone: true,
@@ -152,6 +155,15 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
       canConfigure: false,
       canReview: false,
     },
+    'groupApplications/queries:getGroupApplicationForm': {
+      applicationsEnabled: false,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    'groupApplications/queries:listGroupApplications': emptyPage,
+    'groupApplications/queries:listMyGroupApplications': emptyPage,
     'friends/queries:searchUsersByUsername': [invite.invitee],
     'friends/queries:getBlockedUsers': [],
     'settings/queries:getPrivacySettings': {

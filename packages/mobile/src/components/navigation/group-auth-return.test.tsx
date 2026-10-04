@@ -197,6 +197,56 @@ describe('production Group auth return screens', () => {
     await act(async () => mounted!.unmount());
   });
 
+  it.each(['/groups/group-123/apply', '/groups/group-123/applications'])(
+    'preserves bounded %s through callback, session guard, and onboarding',
+    async returnTo => {
+      external.route.params.returnTo = returnTo;
+      let mounted: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(NativeAuthCallbackScreen));
+      });
+      expect(external.replace).toHaveBeenLastCalledWith(returnTo);
+      follow(returnTo);
+      external.route.segments = ['groups'];
+      external.session.isAuthenticated = true;
+      external.session.needsOnboarding = true;
+      await act(async () => {
+        mounted!.update(screen(RootNavigator));
+      });
+      const redirect = mounted!.root.findByType('Redirect');
+      expect(redirect.props.href).toEqual({
+        pathname: '/onboarding',
+        params: { returnTo },
+      });
+      follow(redirect.props.href as Parameters<typeof follow>[0]);
+      await act(async () => {
+        mounted!.update(screen(OnboardingScreen));
+      });
+      await act(async () => {
+        (
+          mounted!.root.findByProps({ label: 'Username *' }).props
+            .onChangeText as (value: string) => void
+        )('reader');
+      });
+      await act(async () => {
+        await (
+          mounted!.root.findByType('Button').props
+            .onPress as () => Promise<void>
+        )();
+      });
+      expect(external.replace).toHaveBeenLastCalledWith(returnTo);
+      follow(returnTo);
+      external.route.segments = ['groups'];
+      external.session.needsOnboarding = false;
+      await act(async () => {
+        for (const listener of external.subscribers) listener();
+        mounted!.update(screen(RootNavigator));
+      });
+      expect(mounted!.root.findByType('Stack')).toBeDefined();
+      await act(async () => mounted!.unmount());
+    }
+  );
+
   it('preserves the Group landing after the actual onboarding submit handler completes', async () => {
     external.session = {
       ...external.session,

@@ -31,6 +31,9 @@ export const NotificationTypeSchema = z
     'GROUP_INVITE_ACCEPTED',
     'GROUP_MEMBER_REMOVED',
     'GROUP_MEMBER_BANNED',
+    'GROUP_APPLICATION_RECEIVED',
+    'GROUP_APPLICATION_APPROVED',
+    'GROUP_APPLICATION_DECLINED',
     'EVENT_INVITE_RECEIVED',
     'EVENT_INVITE_ACCEPTED',
     'ADDON_CONFIG_RESET',
@@ -78,6 +81,13 @@ export const NotificationSchema = z
     read: z.boolean(),
     createdAt: TimestampSchema,
     group: NotificationEventSchema.optional(),
+    groupApplication: z
+      .object({
+        id: z.string(),
+        status: z.enum(['PENDING', 'APPROVED', 'DECLINED', 'WITHDRAWN']),
+      })
+      .nullable()
+      .optional(),
     groupInvite: z
       .object({
         id: z.string(),
