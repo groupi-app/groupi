@@ -1,7 +1,15 @@
 import type { Doc, Id } from 'convex/_generated/dataModel';
 
 export interface NotificationPresentationInput
-  extends Pick<Doc<'notifications'>, 'type' | 'eventId' | 'postId' | 'rsvp'> {
+  extends Pick<
+    Doc<'notifications'>,
+    'type' | 'eventId' | 'postId' | 'rsvp' | 'groupId'
+  > {
+  group?: { id: Id<'groups'>; title: string } | null;
+  groupInvite?: {
+    id: Id<'groupInvites'>;
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
+  } | null;
   event?: { id: Id<'events'>; title: string } | null;
   post?: { id: Id<'posts'>; title: string } | null;
   author?: {
@@ -61,6 +69,15 @@ export function getNotificationMessage(
       return `${authorName} sent you a friend request`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${authorName} accepted your friend request`;
+    case 'GROUP_INVITE_RECEIVED': {
+      const title = notification.group?.title ?? 'a Group';
+      const status = notification.groupInvite?.status;
+      return status && status !== 'PENDING'
+        ? `Group invitation to ${title}: ${status.toLowerCase()}`
+        : `${authorName} invited you to ${title}`;
+    }
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${authorName} accepted your invitation to ${notification.group?.title ?? 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
       return `${authorName} invited you to ${eventTitle}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -75,6 +92,13 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (
+    notification.type === 'GROUP_INVITE_RECEIVED' ||
+    notification.type === 'GROUP_INVITE_ACCEPTED'
+  ) {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/g/${groupId}` : null;
+  }
   if (notification.type === 'EVENT_INVITE_RECEIVED') return '/invites';
   if (
     notification.type === 'FRIEND_REQUEST_RECEIVED' ||

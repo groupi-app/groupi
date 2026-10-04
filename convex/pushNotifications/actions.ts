@@ -25,7 +25,14 @@ type DeliveryJob = {
   token: string;
   title: string;
   body: string;
-  destination: 'notifications' | 'invites' | 'friends' | 'event' | 'post';
+  destination:
+    | 'notifications'
+    | 'invites'
+    | 'friends'
+    | 'event'
+    | 'post'
+    | 'group';
+  groupId?: Id<'groups'>;
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
   notificationId: Id<'notifications'>;
@@ -107,6 +114,7 @@ function makeMessage(job: DeliveryJob): ExpoPushMessage {
     priority: 'high',
     data: {
       destination: job.destination,
+      ...(job.groupId ? { groupId: job.groupId } : {}),
       ...(job.eventId ? { eventId: job.eventId } : {}),
       ...(job.postId ? { postId: job.postId } : {}),
       notificationId: job.notificationId,

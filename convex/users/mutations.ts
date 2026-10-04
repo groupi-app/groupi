@@ -425,6 +425,7 @@ export const deleteUserAccount = mutation({
     }
 
     await assertNoOwnedGroups(ctx, person._id);
+    await removeGroupMembershipsForPerson(ctx, person._id);
 
     // Get all memberships for this person
     const memberships = await ctx.db
@@ -682,7 +683,6 @@ export const deleteUserAccount = mutation({
       await ctx.db.delete(personSettings._id);
     }
 
-    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     // Magic-link identifiers are random and their email lives inside JSON;

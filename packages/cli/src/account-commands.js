@@ -102,6 +102,7 @@ export function registerAccountCommands(program, json) {
       '--friend-requests <permission>',
       'EVERYONE, EVENT_MEMBERS, or NO_ONE'
     )
+    .option('--group-invites <permission>', 'EVERYONE, FRIENDS, or NO_ONE')
     .option(
       '--event-invites <permission>',
       'EVERYONE, EVENT_MEMBERS, FRIENDS, or NO_ONE'
@@ -110,6 +111,9 @@ export function registerAccountCommands(program, json) {
       const body = {
         ...(input.friendRequests !== undefined
           ? { allowFriendRequestsFrom: input.friendRequests }
+          : {}),
+        ...(input.groupInvites
+          ? { allowGroupInvitesFrom: input.groupInvites }
           : {}),
         ...(input.eventInvites !== undefined
           ? { allowEventInvitesFrom: input.eventInvites }

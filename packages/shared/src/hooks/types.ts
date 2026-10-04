@@ -105,7 +105,9 @@ export type NotificationType =
   | 'POST_MENTION'
   | 'EVENT_UPDATE'
   | 'POST_REPLY'
-  | 'AVAILABILITY_REMINDER';
+  | 'AVAILABILITY_REMINDER'
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED';
 
 export const ConvexEnums = {
   Status: {
@@ -125,5 +127,7 @@ export const ConvexEnums = {
     EVENT_UPDATE: 'EVENT_UPDATE' as const,
     POST_REPLY: 'POST_REPLY' as const,
     AVAILABILITY_REMINDER: 'AVAILABILITY_REMINDER' as const,
+    GROUP_INVITE_RECEIVED: 'GROUP_INVITE_RECEIVED' as const,
+    GROUP_INVITE_ACCEPTED: 'GROUP_INVITE_ACCEPTED' as const,
   },
 } as const;

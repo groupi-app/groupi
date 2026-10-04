@@ -44,6 +44,23 @@ function reference(value) {
   return { id: item.id, title: item.title };
 }
 /** @param {unknown} value */
+function groupInvitationReference(value) {
+  if (value === null) return null;
+  const invite = record(value);
+  if (
+    typeof invite.id !== 'string' ||
+    !['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED'].includes(
+      String(invite.status)
+    )
+  )
+    throw new CliError(
+      'INVALID_RESPONSE',
+      'Invalid Group invitation reference.',
+      5
+    );
+  return { id: invite.id, status: invite.status };
+}
+/** @param {unknown} value */
 function notification(value) {
   const item = record(value);
   if (
@@ -75,6 +92,10 @@ function notification(value) {
     type: item.type,
     read: item.read,
     createdAt: item.createdAt,
+    ...(item.group !== undefined ? { group: reference(item.group) } : {}),
+    ...(item.groupInvite !== undefined
+      ? { groupInvite: groupInvitationReference(item.groupInvite) }
+      : {}),
     event: reference(item.event),
     post: reference(item.post),
     author,

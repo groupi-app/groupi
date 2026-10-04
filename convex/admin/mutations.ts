@@ -224,6 +224,7 @@ export const deletePerson = mutation({
     }
 
     await assertNoOwnedGroups(ctx, person._id);
+    await removeGroupMembershipsForPerson(ctx, person._id);
 
     // Delete all related data in order
 
@@ -315,7 +316,6 @@ export const deletePerson = mutation({
     }
 
     // 7. Delete the person record
-    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true, deletedUserId: person.userId };

@@ -15,6 +15,13 @@ export function GroupsPanel() {
   return (
     <ScrollView contentContainerClassName='gap-4 p-4'>
       <Text className='text-xl font-bold text-foreground'>Your Groups</Text>
+      <Button
+        variant='outline'
+        accessibilityLabel='View your Group invitations'
+        onPress={() => router.push('/friends/group-invites')}
+      >
+        Group invitations
+      </Button>
       {creating ? (
         <GroupForm
           onCancel={() => setCreating(false)}

@@ -151,6 +151,11 @@ describe('Group landing authentication return through production routes', () => 
             return external.needsOnboarding;
           if (name === 'auth/queries:getCurrentUser') return existingUser.user;
           if (name === 'groups/queries:getGroupLanding') return landing;
+          if (
+            name === 'groups/queries:getGroup' ||
+            name === 'groupInvites/queries:getMyGroupInviteForGroup'
+          )
+            return null;
           throw new Error(`Unexpected query ${name}`);
         },
       }));

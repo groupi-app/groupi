@@ -24,6 +24,8 @@ export const NotificationTypeSchema = z
     'EVENT_REMINDER',
     'FRIEND_REQUEST_RECEIVED',
     'FRIEND_REQUEST_ACCEPTED',
+    'GROUP_INVITE_RECEIVED',
+    'GROUP_INVITE_ACCEPTED',
     'EVENT_INVITE_RECEIVED',
     'EVENT_INVITE_ACCEPTED',
     'ADDON_CONFIG_RESET',
@@ -70,6 +72,14 @@ export const NotificationSchema = z
     type: NotificationTypeSchema,
     read: z.boolean(),
     createdAt: TimestampSchema,
+    group: NotificationEventSchema.optional(),
+    groupInvite: z
+      .object({
+        id: z.string(),
+        status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED']),
+      })
+      .nullable()
+      .optional(),
     event: NotificationEventSchema,
     post: NotificationPostSchema,
     author: NotificationAuthorSchema,

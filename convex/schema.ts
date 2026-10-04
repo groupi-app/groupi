@@ -15,7 +15,27 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupInvites: defineTable({
+    groupId: v.id('groups'),
+    inviterId: v.id('persons'),
+    inviteeId: v.id('persons'),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
+    ),
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_inviteeId', ['groupId', 'inviteeId'])
+    .index('by_inviteeId', ['inviteeId'])
+    .index('by_inviterId', ['inviterId'])
+    .index('by_inviteeId_and_status', ['inviteeId', 'status'])
+    .index('by_groupId_and_status', ['groupId', 'status']),
   groups: defineTable({
+    invitationsEnabled: v.optional(v.boolean()),
     memberCount: v.number(),
     ownerId: v.id('persons'),
     name: v.string(),
@@ -182,6 +202,9 @@ export default defineSchema({
         v.literal('EVENT_MEMBERS'),
         v.literal('NO_ONE')
       )
+    ),
+    allowGroupInvitesFrom: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NO_ONE'))
     ),
     allowEventInvitesFrom: v.optional(
       v.union(
@@ -397,11 +420,15 @@ export default defineSchema({
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
       v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('GROUP_INVITE_RECEIVED'),
+      v.literal('GROUP_INVITE_ACCEPTED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
       v.literal('ADDON_AUTOMATION')
     ),
+    groupId: v.optional(v.id('groups')),
+    groupInviteId: v.optional(v.id('groupInvites')),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
     read: v.boolean(),
@@ -416,6 +443,8 @@ export default defineSchema({
     ),
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupInviteId', ['groupInviteId'])
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
@@ -459,6 +488,8 @@ export default defineSchema({
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
       v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('GROUP_INVITE_RECEIVED'),
+      v.literal('GROUP_INVITE_ACCEPTED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -501,12 +532,14 @@ export default defineSchema({
     title: v.string(),
     body: v.string(),
     destination: v.union(
+      v.literal('group'),
       v.literal('notifications'),
       v.literal('invites'),
       v.literal('friends'),
       v.literal('event'),
       v.literal('post')
     ),
+    groupId: v.optional(v.id('groups')),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
     status: v.union(

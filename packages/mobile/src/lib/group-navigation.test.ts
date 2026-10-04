@@ -28,6 +28,12 @@ describe('Group navigation and sign-in handoff', () => {
     expect(getSafeAuthReturnPath('/groups/group-123')).toBe(
       '/groups/group-123'
     );
+    expect(getSafeAuthReturnPath('/groups/group-123/members')).toBe(
+      '/groups/group-123/members'
+    );
+    expect(getSafeAuthReturnPath('/groups/group-123/invitations')).toBe(
+      '/groups/group-123/invitations'
+    );
     expect(
       getAuthRouteDecision({
         isLoading: false,

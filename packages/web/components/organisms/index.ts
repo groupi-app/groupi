@@ -24,3 +24,7 @@ export { GroupLanding } from './group-landing';
 export { EventOwnershipTransfer } from './event-ownership-transfer';
 export { EventLogisticsPreview } from './event-logistics-preview';
 export { EventAdmissionSettings } from './event-admission-settings';
+
+export { GroupInvitationInbox } from './group-invitation-inbox';
+export { GroupInvitationManagement } from './group-invitation-management';
+export { GroupMemberRoster } from './group-member-roster';

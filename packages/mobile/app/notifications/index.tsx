@@ -50,6 +50,8 @@ const NOTIFICATION_ICONS: Record<
   FRIEND_REQUEST_ACCEPTED: 'people',
   EVENT_INVITE_RECEIVED: 'mail-outline',
   EVENT_INVITE_ACCEPTED: 'mail-open-outline',
+  GROUP_INVITE_RECEIVED: 'people-outline',
+  GROUP_INVITE_ACCEPTED: 'people',
   ADDON_CONFIG_RESET: 'extension-puzzle-outline',
   ADDON_AUTOMATION: 'sparkles-outline',
 };

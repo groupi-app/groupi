@@ -40,6 +40,8 @@ export const SUPPORTED_NOTIFICATION_TYPES: readonly NotificationType[] = [
   'FRIEND_REQUEST_ACCEPTED',
   'EVENT_INVITE_RECEIVED',
   'EVENT_INVITE_ACCEPTED',
+  'GROUP_INVITE_RECEIVED',
+  'GROUP_INVITE_ACCEPTED',
   'ADDON_CONFIG_RESET',
   'ADDON_AUTOMATION',
 ];
@@ -65,6 +67,8 @@ function isSupportedNotificationType(
     case 'FRIEND_REQUEST_ACCEPTED':
     case 'EVENT_INVITE_RECEIVED':
     case 'EVENT_INVITE_ACCEPTED':
+    case 'GROUP_INVITE_RECEIVED':
+    case 'GROUP_INVITE_ACCEPTED':
     case 'ADDON_CONFIG_RESET':
     case 'ADDON_AUTOMATION':
       return true;

@@ -1,3 +1,4 @@
+import { registerGroupInvitationCommands } from './group-invitation-commands.js';
 import { registerGroupCommands } from './group-commands.js';
 import { registerDiscussionCommands } from './discussion-commands.js';
 import { registerDiscordCommands } from './discord-commands.js';
@@ -360,6 +361,7 @@ export function createProgram(json = false) {
   registerAddonCommands(program, json);
   registerSocialCommands(program, json);
   registerGroupCommands(program, json);
+  registerGroupInvitationCommands(program, json);
   registerAccountCommands(program, json);
   registerDiscussionCommands(program, json);
   registerInviteCommands(program, json);

@@ -13,6 +13,8 @@ import {
   useGroup,
   useUpdateGroup,
 } from '@/hooks/convex/use-groups';
+import { GroupMemberRoster } from './group-member-roster';
+import { GroupInvitationManagement } from './group-invitation-management';
 import { GroupIdentityForm } from './group-identity-form';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 
@@ -89,6 +91,13 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           /g/{group._id}
         </Link>
       </div>
+      <GroupMemberRoster groupId={groupId} />
+      {group.canManageInvitations && (
+        <GroupInvitationManagement
+          groupId={groupId}
+          invitationsEnabled={group.invitationsEnabled}
+        />
+      )}
       {group.canManageIdentity && (
         <>
           {editing ? (

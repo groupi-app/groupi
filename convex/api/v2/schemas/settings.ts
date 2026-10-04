@@ -23,6 +23,7 @@ export const EventInvitePermissionSchema = z
 // Privacy settings schema
 export const PrivacySettingsSchema = z
   .object({
+    allowGroupInvitesFrom: z.enum(['EVERYONE', 'FRIENDS', 'NO_ONE']).optional(),
     allowFriendRequestsFrom: FriendRequestPermissionSchema.nullable(),
     allowEventInvitesFrom: EventInvitePermissionSchema.nullable(),
   })
@@ -31,6 +32,7 @@ export const PrivacySettingsSchema = z
 // Update privacy settings request
 export const UpdatePrivacySettingsRequestSchema = z
   .object({
+    allowGroupInvitesFrom: z.enum(['EVERYONE', 'FRIENDS', 'NO_ONE']).optional(),
     allowFriendRequestsFrom: FriendRequestPermissionSchema.optional().openapi({
       description: 'Who can send friend requests',
     }),
@@ -110,6 +112,8 @@ export const UpdateNotificationSettingsRequestSchema = z
                   'EVENT_REMINDER',
                   'FRIEND_REQUEST_RECEIVED',
                   'FRIEND_REQUEST_ACCEPTED',
+                  'GROUP_INVITE_RECEIVED',
+                  'GROUP_INVITE_ACCEPTED',
                   'EVENT_INVITE_RECEIVED',
                   'EVENT_INVITE_ACCEPTED',
                   'ADDON_CONFIG_RESET',

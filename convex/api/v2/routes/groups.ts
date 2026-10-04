@@ -26,6 +26,8 @@ const group = z.object({
   viewerRole: z.enum(['OWNER', 'MODERATOR', 'MEMBER']),
   canManageIdentity: z.boolean(),
   memberCount: z.number(),
+  invitationsEnabled: z.boolean(),
+  canManageInvitations: z.boolean(),
 });
 const params = z.object({ groupId: z.string().min(1).max(512) });
 const errors = {

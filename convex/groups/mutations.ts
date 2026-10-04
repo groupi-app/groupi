@@ -21,3 +21,16 @@ export const deleteGroup = mutation({
   handler: async (ctx, args) =>
     model.remove(ctx, (await requireAuth(ctx)).person._id, args.groupId),
 });
+
+import { policy } from '../groupInvites/model';
+export const updateGroupInvitationPolicy = mutation({
+  args: { groupId: v.id('groups'), invitationsEnabled: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) =>
+    policy(
+      ctx,
+      (await requireAuth(ctx)).person._id,
+      args.groupId,
+      args.invitationsEnabled
+    ),
+});

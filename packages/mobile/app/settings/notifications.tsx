@@ -125,7 +125,7 @@ const NOTIFICATION_CATEGORIES: Array<{
     ],
   },
   {
-    title: 'Friends and invitations',
+    title: 'Friends, Groups and invitations',
     items: [
       {
         type: 'FRIEND_REQUEST_RECEIVED',
@@ -137,6 +137,18 @@ const NOTIFICATION_CATEGORIES: Array<{
         type: 'FRIEND_REQUEST_ACCEPTED',
         label: 'Accepted requests',
         description: 'Someone accepts your friend request.',
+        icon: 'people',
+      },
+      {
+        type: 'GROUP_INVITE_RECEIVED',
+        label: 'Group invitations',
+        description: 'Someone invites you to a Group.',
+        icon: 'people-outline',
+      },
+      {
+        type: 'GROUP_INVITE_ACCEPTED',
+        label: 'Accepted Group invitations',
+        description: 'Someone accepts your Group invitation.',
         icon: 'people',
       },
       {

@@ -1,3 +1,4 @@
+import { createGroupInviteRoutes } from './routes/groupInvites';
 import { createGroupRoutes } from './routes/groups';
 import { createEventTransferRoutes } from './routes/eventTransfers';
 import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
@@ -98,6 +99,7 @@ export function createApiV2App(
           'FORBIDDEN',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
+          'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
@@ -246,6 +248,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        groupInvites: { version: 1 },
         groups: { version: 1 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
@@ -279,6 +282,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
   app.route('/', createGroupRoutes());
+  app.route('/', createGroupInviteRoutes());
   app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
   app.route('/', createAddonDefinitionRoutes());

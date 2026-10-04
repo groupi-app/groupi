@@ -33,3 +33,17 @@ export const getGroupLanding = query({
       : null;
   },
 });
+
+import { memberPage } from '../groupInvites/contracts';
+import { roster } from '../groupInvites/model';
+export const listGroupMembers = query({
+  args: { groupId: v.id('groups'), paginationOpts: paginationOptsValidator },
+  returns: memberPage,
+  handler: async (ctx, args) =>
+    roster(
+      ctx,
+      (await requireAuth(ctx)).person._id,
+      args.groupId,
+      args.paginationOpts
+    ),
+});

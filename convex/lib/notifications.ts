@@ -125,6 +125,7 @@ export async function shouldSkipNotification(
  * Avoids redundant event/post/author lookups when sending to multiple recipients.
  */
 interface PreFetchedMessageContext {
+  groupTitle?: string;
   eventTitle?: string;
   postTitle?: string;
   authorName?: string;
@@ -178,6 +179,8 @@ async function fetchMessageContext(
   data: {
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -235,6 +238,8 @@ export type NotificationType =
   | 'EVENT_REMINDER'
   | 'FRIEND_REQUEST_RECEIVED'
   | 'FRIEND_REQUEST_ACCEPTED'
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -408,6 +413,7 @@ async function getEnabledEmailsForNotification(
  */
 export interface NotificationMessageContext {
   type: NotificationType;
+  groupTitle?: string;
   eventTitle?: string;
   authorName?: string;
   postTitle?: string;
@@ -434,7 +440,7 @@ function getRsvpDisplayText(rsvp: RsvpStatus): string {
 export function getNotificationEmailSubject(
   ctx: NotificationMessageContext
 ): string {
-  const { type, eventTitle, authorName, postTitle } = ctx;
+  const { type, eventTitle, authorName, postTitle, groupTitle } = ctx;
   const prefix = eventTitle ? `[${eventTitle}] ` : '';
 
   switch (type) {
@@ -484,6 +490,10 @@ export function getNotificationEmailSubject(
       return authorName
         ? `${authorName} accepted your friend request`
         : 'Friend request accepted';
+    case 'GROUP_INVITE_RECEIVED':
+      return `${authorName || 'Someone'} invited you to ${groupTitle || 'a Group'}`;
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${authorName || 'Someone'} accepted your invitation to ${groupTitle || 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
       return authorName
         ? `${prefix}${authorName} invited you`
@@ -554,6 +564,10 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to ${event}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -623,6 +637,10 @@ function getNotificationMessageMarkdown(
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to ${event}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -691,6 +709,10 @@ export function getNotificationMessagePlain(
       return `${author} wants to be your friend`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${author} accepted your friend request. You're now friends!`;
+    case 'GROUP_INVITE_RECEIVED':
+      return `${author} invited you to a Group`;
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
       return `${author} invited you to "${event}"`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -792,6 +814,8 @@ async function collectEmailData(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -813,6 +837,7 @@ async function collectEmailData(
   if (preFetchedCtx) {
     messageContext = {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1066,6 +1091,8 @@ async function collectWebhookData(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1093,6 +1120,7 @@ async function collectWebhookData(
   if (preFetchedCtx) {
     messageContext = {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1162,9 +1190,17 @@ export type PushNotificationRequest = {
 function getPushDestination(
   type: NotificationType,
   eventId?: Id<'events'>,
-  postId?: Id<'posts'>
+  postId?: Id<'posts'>,
+  groupId?: Id<'groups'>
 ): {
-  destination: 'notifications' | 'invites' | 'friends' | 'event' | 'post';
+  groupId?: Id<'groups'>;
+  destination:
+    | 'notifications'
+    | 'invites'
+    | 'friends'
+    | 'event'
+    | 'post'
+    | 'group';
   eventId?: Id<'events'>;
   postId?: Id<'posts'>;
 } {
@@ -1174,6 +1210,11 @@ function getPushDestination(
   ) {
     return { destination: 'friends' };
   }
+  if (
+    groupId &&
+    (type === 'GROUP_INVITE_RECEIVED' || type === 'GROUP_INVITE_ACCEPTED')
+  )
+    return { destination: 'group', groupId };
   if (type === 'EVENT_INVITE_RECEIVED') {
     return { destination: 'invites' };
   }
@@ -1195,6 +1236,8 @@ async function resolveNotificationMessageContext(
   data: {
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1204,6 +1247,7 @@ async function resolveNotificationMessageContext(
   if (preFetchedCtx) {
     return {
       type: data.type,
+      groupTitle: preFetchedCtx.groupTitle,
       eventTitle: preFetchedCtx.eventTitle,
       authorName: preFetchedCtx.authorName,
       postTitle: preFetchedCtx.postTitle,
@@ -1256,6 +1300,8 @@ export async function collectPushData(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     rsvp?: RsvpStatus;
@@ -1307,7 +1353,12 @@ export async function collectPushData(
   );
   const title = getNotificationEmailSubject(messageContext).slice(0, 120);
   const body = getNotificationMessagePlain(messageContext).slice(0, 1_000);
-  const destination = getPushDestination(data.type, data.eventId, data.postId);
+  const destination = getPushDestination(
+    data.type,
+    data.eventId,
+    data.postId,
+    data.groupId
+  );
   const now = Date.now();
 
   return await Promise.all(
@@ -1344,6 +1395,8 @@ export async function createNotification(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;
@@ -1361,6 +1414,8 @@ export async function createNotification(
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
+    groupId: data.groupId,
+    groupInviteId: data.groupInviteId,
     eventId: data.eventId,
     postId: data.postId,
     datetime: data.datetime,
@@ -1377,6 +1432,8 @@ export async function createNotification(
     personId: data.personId,
     type: data.type,
     authorId: data.authorId,
+    groupId: data.groupId,
+    groupInviteId: data.groupInviteId,
     eventId: data.eventId,
     postId: data.postId,
     rsvp: data.rsvp,
@@ -1591,6 +1648,8 @@ export async function notifyPerson(
     personId: Id<'persons'>;
     type: NotificationType;
     authorId?: Id<'persons'>;
+    groupId?: Id<'groups'>;
+    groupInviteId?: Id<'groupInvites'>;
     eventId?: Id<'events'>;
     postId?: Id<'posts'>;
     datetime?: number;

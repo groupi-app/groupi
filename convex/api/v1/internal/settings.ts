@@ -23,6 +23,7 @@ export const getPrivacySettings = internalQuery({
     return {
       allowFriendRequestsFrom: settings?.allowFriendRequestsFrom ?? 'EVERYONE',
       allowEventInvitesFrom: settings?.allowEventInvitesFrom ?? 'EVERYONE',
+      allowGroupInvitesFrom: settings?.allowGroupInvitesFrom ?? 'EVERYONE',
     };
   },
 });
@@ -37,6 +38,9 @@ export const updatePrivacySettings = internalMutation({
         v.literal('NO_ONE')
       )
     ),
+    allowGroupInvitesFrom: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NO_ONE'))
+    ),
     allowEventInvitesFrom: v.optional(
       v.union(
         v.literal('EVERYONE'),
@@ -48,7 +52,12 @@ export const updatePrivacySettings = internalMutation({
   },
   handler: async (
     ctx,
-    { personId, allowFriendRequestsFrom, allowEventInvitesFrom }
+    {
+      personId,
+      allowFriendRequestsFrom,
+      allowEventInvitesFrom,
+      allowGroupInvitesFrom,
+    }
   ) => {
     const pId = personId as Id<'persons'>;
 
@@ -68,6 +77,8 @@ export const updatePrivacySettings = internalMutation({
       updateData.allowEventInvitesFrom = allowEventInvitesFrom;
     }
 
+    if (allowGroupInvitesFrom !== undefined)
+      updateData.allowGroupInvitesFrom = allowGroupInvitesFrom;
     if (existing) {
       await ctx.db.patch(existing._id, updateData);
     } else {

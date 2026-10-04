@@ -32,6 +32,8 @@ export const DEFAULT_EVENT_PERMISSIONS: Record<
 
 // Notification Types
 export type NotificationType =
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED'
   | 'EVENT_EDITED' // When the details of an event that the receiving user is a member of is edited
   | 'NEW_POST' // When a new post is created in an event that the receiving user is a member of
   | 'NEW_REPLY' // When a new reply is created in a post that the receiving user has interacted with
@@ -99,6 +101,8 @@ export const ConvexEnums = {
     ATTENDEE: 'ATTENDEE' as const,
   },
   NotificationType: {
+    GROUP_INVITE_RECEIVED: 'GROUP_INVITE_RECEIVED' as const,
+    GROUP_INVITE_ACCEPTED: 'GROUP_INVITE_ACCEPTED' as const,
     EVENT_EDITED: 'EVENT_EDITED' as const,
     NEW_POST: 'NEW_POST' as const,
     NEW_REPLY: 'NEW_REPLY' as const,

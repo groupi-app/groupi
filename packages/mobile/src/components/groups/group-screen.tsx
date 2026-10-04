@@ -15,6 +15,7 @@ import {
 } from '@/hooks/use-groups';
 import { useGlobalUser } from '@/context/global-user-context';
 import { getPublicGroupUrl } from '@/lib/public-urls';
+import { GroupLandingInvitation } from './group-invitation-panels';
 import { GroupForm } from './group-form';
 
 export function GroupDetailScreen() {
@@ -97,6 +98,22 @@ export function GroupDetailScreen() {
             >
               Share Group link
             </Button>
+            <Button
+              variant='outline'
+              accessibilityLabel='View Group members'
+              onPress={() => router.push(`/groups/${id}/members`)}
+            >
+              View members
+            </Button>
+            {group.canManageInvitations ? (
+              <Button
+                variant='outline'
+                accessibilityLabel='Manage Group invitations'
+                onPress={() => router.push(`/groups/${id}/invitations`)}
+              >
+                Manage invitations
+              </Button>
+            ) : null}
             {group.canManageIdentity ? (
               editing ? (
                 <GroupForm
@@ -180,6 +197,9 @@ export function GroupLandingScreen() {
             ) : null}
             {group.description ? (
               <Text className='text-foreground'>{group.description}</Text>
+            ) : null}
+            {isAuthenticated ? (
+              <GroupLandingInvitation groupId={groupId as Id<'groups'>} />
             ) : null}
             {isAuthenticated ? (
               <Button

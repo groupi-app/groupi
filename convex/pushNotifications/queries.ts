@@ -58,12 +58,14 @@ const deliveryJobValidator = v.object({
   title: v.string(),
   body: v.string(),
   destination: v.union(
+    v.literal('group'),
     v.literal('notifications'),
     v.literal('invites'),
     v.literal('friends'),
     v.literal('event'),
     v.literal('post')
   ),
+  groupId: v.optional(v.id('groups')),
   eventId: v.optional(v.id('events')),
   postId: v.optional(v.id('posts')),
   notificationId: v.id('notifications'),
@@ -121,6 +123,7 @@ export const resolveDeliveryJobs = internalQuery({
         title: delivery.title,
         body: delivery.body,
         destination: delivery.destination,
+        groupId: delivery.groupId,
         eventId: delivery.eventId,
         postId: delivery.postId,
         notificationId: delivery.notificationId,

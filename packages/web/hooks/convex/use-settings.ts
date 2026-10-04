@@ -34,7 +34,10 @@ export type NotificationType =
   | 'USER_DEMOTED'
   | 'USER_RSVP'
   | 'USER_MENTIONED'
-  | 'EVENT_REMINDER';
+  | 'ADDON_CONFIG_RESET'
+  | 'EVENT_REMINDER'
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED';
 
 export type NotificationMethodType = 'EMAIL' | 'PUSH' | 'WEBHOOK';
 
@@ -167,6 +170,7 @@ export function useNotificationMethodSettingsManagement() {
 
 // ===== PRIVACY SETTINGS =====
 
+export type GroupInvitePolicy = 'EVERYONE' | 'FRIENDS' | 'NO_ONE';
 export type FriendRequestPolicy = 'EVERYONE' | 'EVENT_MEMBERS' | 'NO_ONE';
 export type EventInvitePolicy =
   | 'EVERYONE'
@@ -182,6 +186,7 @@ export function usePrivacySettings() {
     | {
         allowFriendRequestsFrom: FriendRequestPolicy;
         allowEventInvitesFrom: EventInvitePolicy;
+        allowGroupInvitesFrom: GroupInvitePolicy;
       }
     | null
     | undefined;
@@ -198,6 +203,7 @@ export function useSavePrivacySettings() {
     async (data: {
       allowFriendRequestsFrom: FriendRequestPolicy;
       allowEventInvitesFrom: EventInvitePolicy;
+      allowGroupInvitesFrom?: GroupInvitePolicy;
     }) => {
       try {
         await saveSettings(data);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCreateGroup, useGroups } from '@/hooks/convex/use-groups';
+import { GroupInvitationInbox } from './group-invitation-inbox';
 import { GroupIdentityForm } from './group-identity-form';
 
 export function GroupsPanel({
@@ -42,6 +43,7 @@ export function GroupsPanel({
 
   return (
     <div className='space-y-4'>
+      <GroupInvitationInbox onOpenGroup={onOpenGroup} />
       <div className='flex items-center justify-between gap-2'>
         <h2 className='font-semibold'>Your Groups</h2>
         <Button onClick={() => setCreating(true)}>Create Group</Button>

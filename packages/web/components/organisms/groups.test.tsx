@@ -6,21 +6,44 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupInvites: {
+      queries: {
+        listMyGroupInvites: 'inbox',
+        listGroupInvites: 'sent',
+        getMyGroupInviteForGroup: 'ownInvite',
+      },
+      mutations: {
+        sendGroupInvite: 'send',
+        acceptGroupInvite: 'accept',
+        declineGroupInvite: 'decline',
+        cancelGroupInvite: 'cancel',
+      },
+    },
     groups: {
       queries: {
         listGroups: 'list',
         getGroup: 'detail',
         getGroupLanding: 'landing',
+        listGroupMembers: 'members',
       },
       mutations: {
         createGroup: 'create',
         updateGroup: 'update',
         deleteGroup: 'delete',
+        updateGroupInvitationPolicy: 'policy',
       },
     },
   },
 }));
 
+function setQueryResult(result: unknown) {
+  vi.mocked(useQuery).mockImplementation((...[query]) => {
+    if (String(query) === 'members' || String(query) === 'inbox')
+      return { page: [], isDone: true, continueCursor: '' };
+    if (String(query) === 'ownInvite') return null;
+    return result;
+  });
+}
 const create = vi.fn();
 const auth = vi.hoisted(() => ({ isAuthenticated: true, isLoading: false }));
 vi.mock('convex/react', async importOriginal => ({
@@ -32,7 +55,7 @@ vi.mock('convex/react', async importOriginal => ({
 describe('Friends & Groups creation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockReturnValue({
+    setQueryResult({
       page: [],
       isDone: true,
       continueCursor: '',
@@ -58,6 +81,9 @@ describe('Friends & Groups creation', () => {
   });
   it('browses the next page of Groups', async () => {
     vi.mocked(useQuery).mockImplementation((_query, args?) => {
+      if (String(_query) === 'members' || String(_query) === 'inbox')
+        return { page: [], isDone: true, continueCursor: '' };
+      if (String(_query) === 'ownInvite') return null;
       const cursor = typeof args === 'object' && args.paginationOpts.cursor;
       return cursor
         ? {
@@ -119,7 +145,7 @@ describe('Group identity and authority', () => {
     create.mockResolvedValue(null);
   });
   it('lets the owner rename and clear optional identity while retaining the stable link', async () => {
-    vi.mocked(useQuery).mockReturnValue(group);
+    setQueryResult(group);
     const user = userEvent.setup();
     render(<GroupDetail groupId={groupId} />);
     expect(screen.getByRole('link', { name: '/g/group-one' })).toHaveAttribute(
@@ -141,7 +167,7 @@ describe('Group identity and authority', () => {
     );
   });
   it('withholds identity and deletion controls from a member', () => {
-    vi.mocked(useQuery).mockReturnValue({
+    setQueryResult({
       ...group,
       viewerRole: 'MEMBER',
       canManageIdentity: false,
@@ -155,7 +181,7 @@ describe('Group identity and authority', () => {
     ).not.toBeInTheDocument();
   });
   it('requires explicit deletion confirmation before deleting a Group', async () => {
-    vi.mocked(useQuery).mockReturnValue(group);
+    setQueryResult(group);
     const user = userEvent.setup();
     render(<GroupDetail groupId={groupId} />);
     await user.click(screen.getByRole('button', { name: 'Delete Group' }));
@@ -170,7 +196,7 @@ describe('Group identity and authority', () => {
   });
   it('preserves the landing path through sign-in and signup', () => {
     auth.isAuthenticated = false;
-    vi.mocked(useQuery).mockReturnValue({
+    setQueryResult({
       groupId,
       name: 'Neighbors',
       description: 'Our block',
@@ -183,7 +209,7 @@ describe('Group identity and authority', () => {
     auth.isAuthenticated = true;
   });
   it('shows the unlisted identity without exposing a roster', () => {
-    vi.mocked(useQuery).mockReturnValue({
+    setQueryResult({
       groupId,
       name: 'Neighbors',
       description: 'Our block',

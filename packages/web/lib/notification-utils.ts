@@ -19,6 +19,8 @@ export function getNotificationTypeDisplayName(type: NotificationType): string {
     USER_MENTIONED: 'Mentioned',
     EVENT_REMINDER: 'Event Reminder',
     ADDON_CONFIG_RESET: 'Add-on Updated',
+    GROUP_INVITE_RECEIVED: 'Group Invitation Received',
+    GROUP_INVITE_ACCEPTED: 'Group Invitation Accepted',
   };
 
   return displayNames[type] || type;

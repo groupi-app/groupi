@@ -1,3 +1,8 @@
+import { authComponent, type AuthUserId } from '../auth';
+import {
+  removeInvitationsForGroup,
+  removeInvitationsForPerson,
+} from '../groupInvites/cleanup';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -51,9 +56,24 @@ export function cleanIdentity(input: {
   }
   return output;
 }
+export async function livePerson(ctx: ReadCtx, personId: Id<'persons'>) {
+  const person = await ctx.db.get(personId);
+  if (!person) return null;
+  const user = await authComponent.getAnyUserById(
+    ctx,
+    person.userId as AuthUserId
+  );
+  if (
+    !user ||
+    (user.banned && (user.banExpires == null || user.banExpires > Date.now()))
+  )
+    return null;
+  return { person, user };
+}
 export async function requirePerson(ctx: ReadCtx, personId: Id<'persons'>) {
-  if (!(await ctx.db.get(personId)))
-    fail('UNAUTHORIZED', 'Account is unavailable.');
+  const identity = await livePerson(ctx, personId);
+  if (!identity) fail('UNAUTHORIZED', 'Account is unavailable.');
+  return identity;
 }
 export async function requireOwner(
   ctx: ReadCtx,
@@ -133,6 +153,7 @@ export async function remove(
     .query('groupMemberships')
     .withIndex('by_groupId', q => q.eq('groupId', groupId)))
     await ctx.db.delete(membership._id);
+  await removeInvitationsForGroup(ctx, groupId);
   await ctx.db.delete(groupId);
   return null;
 }
@@ -156,6 +177,8 @@ export async function detail(
     viewerRole: membership.role,
     canManageIdentity: group.ownerId === personId,
     memberCount: group.memberCount,
+    invitationsEnabled: group.invitationsEnabled ?? true,
+    canManageInvitations: group.ownerId === personId,
   };
 }
 export async function list(
@@ -196,6 +219,7 @@ export async function removeGroupMembershipsForPerson(
   personId: Id<'persons'>
 ) {
   await assertNoOwnedGroups(ctx, personId);
+  await removeInvitationsForPerson(ctx, personId);
   for await (const membership of ctx.db
     .query('groupMemberships')
     .withIndex('by_personId', q => q.eq('personId', personId))) {

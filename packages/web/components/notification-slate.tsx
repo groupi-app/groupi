@@ -22,7 +22,9 @@ interface EnrichedNotification extends Doc<'notifications'> {
   createdAt: number; // Alias for _creationTime
   event?: { id: string; title: string };
   post?: { id: string; title: string };
-  author?: { user?: { name?: string; email?: string } };
+  author?: { user?: { name?: string; email?: string | null } };
+  group?: { id: string; title: string } | null;
+  groupInvite?: { id: string; status: string } | null;
 }
 
 export function NotificationSlate({
@@ -68,6 +70,8 @@ export function NotificationSlate({
 
   const getNotificationLink = (): string => {
     // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
+    if (type === 'GROUP_INVITE_RECEIVED' || type === 'GROUP_INVITE_ACCEPTED')
+      return notification.group ? `/g/${notification.group.id}` : '/events';
     if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
 
     if (!event) return '/';
@@ -251,6 +255,26 @@ export function NotificationSlate({
         return (
           <>
             <strong>{authorName}</strong> accepted your friend request
+          </>
+        );
+
+      case 'GROUP_INVITE_RECEIVED':
+        return (
+          <>
+            {' '}
+            <strong>{authorName}</strong> invited you to{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
+            {notification.groupInvite?.status &&
+            notification.groupInvite.status !== 'PENDING'
+              ? ` — ${notification.groupInvite.status.toLowerCase()}`
+              : ''}
+          </>
+        );
+      case 'GROUP_INVITE_ACCEPTED':
+        return (
+          <>
+            <strong>{authorName}</strong> accepted your invitation to{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
           </>
         );
 

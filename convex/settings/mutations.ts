@@ -19,6 +19,8 @@ const notificationTypeValidator = v.union(
   v.literal('EVENT_REMINDER'),
   v.literal('FRIEND_REQUEST_RECEIVED'),
   v.literal('FRIEND_REQUEST_ACCEPTED'),
+  v.literal('GROUP_INVITE_RECEIVED'),
+  v.literal('GROUP_INVITE_ACCEPTED'),
   v.literal('EVENT_INVITE_RECEIVED'),
   v.literal('EVENT_INVITE_ACCEPTED'),
   v.literal('ADDON_CONFIG_RESET'),
@@ -299,9 +301,15 @@ export const savePrivacySettings = mutation({
       v.literal('FRIENDS'),
       v.literal('NO_ONE')
     ),
+    allowGroupInvitesFrom: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NO_ONE'))
+    ),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { allowFriendRequestsFrom, allowEventInvitesFrom }) => {
+  handler: async (
+    ctx,
+    { allowFriendRequestsFrom, allowEventInvitesFrom, allowGroupInvitesFrom }
+  ) => {
     const { user } = await requireAuth(ctx);
 
     const person = await getPersonForUser(ctx, user._id);
@@ -318,6 +326,9 @@ export const savePrivacySettings = mutation({
       await ctx.db.patch(existingSettings._id, {
         allowFriendRequestsFrom,
         allowEventInvitesFrom,
+        ...(allowGroupInvitesFrom !== undefined
+          ? { allowGroupInvitesFrom }
+          : {}),
         updatedAt: Date.now(),
       });
     } else {
@@ -325,6 +336,9 @@ export const savePrivacySettings = mutation({
         personId: person._id,
         allowFriendRequestsFrom,
         allowEventInvitesFrom,
+        ...(allowGroupInvitesFrom !== undefined
+          ? { allowGroupInvitesFrom }
+          : {}),
         updatedAt: Date.now(),
       });
     }

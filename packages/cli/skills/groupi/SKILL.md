@@ -145,8 +145,17 @@ creates no Event participation or friendship. Names may repeat; use IDs rather
 than display names. `groups list` is paginated; use `--all` deliberately. Identity
 writes require owner authority and the server's `groups` version 1 capability.
 Deletion requires explicit confirmation and is independent of Events. After an
-uncertain create, inspect `groups list --all` before repeating. Invitations,
-applications and tools are unavailable until their own commands are implemented.
+uncertain create, inspect `groups list --all` before repeating. `groups invite`
+sends to an existing person's ID; `groups invites` gives owner-only status and
+`groups members` gives an admitted member's private roster. `group-invites list`
+is the current identity's inbox; only that recipient may accept or decline.
+Invitation commands require `groupInvites` version 1. Group links and invitation
+IDs are not admission credentials. Accepting grants Group membership without
+friendship or Event participation. Use `groups invitation-policy --enabled` for
+owner entry control and `settings privacy set --group-invites` for the independent
+incoming preference. Preserve other privacy choices. Inspect status after an
+uncertain write rather than automatically retrying. Applications and tools remain
+unavailable.
 
 The generated command tree is the authoritative implemented surface for this
 version, including newly registered lifecycle, social, settings, and add-on

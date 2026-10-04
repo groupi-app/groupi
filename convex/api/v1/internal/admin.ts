@@ -92,6 +92,7 @@ export const deleteUser = internalMutation({
     }
 
     await assertNoOwnedGroups(ctx, person._id);
+    await removeGroupMembershipsForPerson(ctx, person._id);
 
     // Delete person settings
     const settings = await ctx.db
@@ -130,7 +131,6 @@ export const deleteUser = internalMutation({
     }
 
     // Delete person record
-    await removeGroupMembershipsForPerson(ctx, person._id);
     await ctx.db.delete(person._id);
 
     return { success: true };

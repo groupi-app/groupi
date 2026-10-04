@@ -11,7 +11,7 @@ function result(value, fields) {
     !value ||
     typeof value !== 'object' ||
     Array.isArray(value) ||
-    fields.some(field => !(field in value))
+    fields.some(field => field !== 'allowGroupInvitesFrom' && !(field in value))
   )
     throw new CliError(
       'INVALID_RESPONSE',
@@ -19,7 +19,9 @@ function result(value, fields) {
       5
     );
   const record = /** @type {Record<string, unknown>} */ (value);
-  return Object.fromEntries(fields.map(field => [field, record[field]]));
+  return Object.fromEntries(
+    fields.filter(field => field in record).map(field => [field, record[field]])
+  );
 }
 export const profileFields = [
   'personId',
@@ -34,6 +36,7 @@ export const profileFields = [
 export const privacyFields = [
   'allowFriendRequestsFrom',
   'allowEventInvitesFrom',
+  'allowGroupInvitesFrom',
 ];
 export const themeFields = [
   'selectedThemeType',

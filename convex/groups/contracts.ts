@@ -27,6 +27,8 @@ export const group = v.object({
   role,
   viewerRole: role,
   canManageIdentity: v.boolean(),
+  canManageInvitations: v.boolean(),
+  invitationsEnabled: v.boolean(),
   memberCount: v.number(),
 });
 export const landing = v.object({

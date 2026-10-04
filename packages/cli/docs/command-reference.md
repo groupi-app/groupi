@@ -109,6 +109,15 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups create](#groupi-groups-create)
 - [groupi groups edit](#groupi-groups-edit)
 - [groupi groups delete](#groupi-groups-delete)
+- [groupi groups members](#groupi-groups-members)
+- [groupi groups invites](#groupi-groups-invites)
+- [groupi groups invite](#groupi-groups-invite)
+- [groupi groups invitation-policy](#groupi-groups-invitation-policy)
+- [groupi group-invites](#groupi-group-invites)
+- [groupi group-invites list](#groupi-group-invites-list)
+- [groupi group-invites accept](#groupi-group-invites-accept)
+- [groupi group-invites decline](#groupi-group-invites-decline)
+- [groupi group-invites cancel](#groupi-group-invites-cancel)
 - [groupi account](#groupi-account)
 - [groupi account avatar](#groupi-account-avatar)
 - [groupi account avatar get](#groupi-account-avatar-get)
@@ -204,6 +213,7 @@ Commands:
   friends            Manage friendships and friend requests
   blocks             Manage blocked users
   groups             Manage formal Group communities independently of events
+  group-invites      Inspect and respond to your private Group invitations
   account            Read/update your account and open explicit browser exceptions
   settings           Manage ordinary preferences without a browser
   posts              Read/write safe discussion content; use explicit HTML files to preserve rich
@@ -1564,15 +1574,19 @@ Usage: groupi groups [options] [command]
 Manage formal Group communities independently of events
 
 Options:
-  -h, --help                   display help for command
+  -h, --help                              display help for command
 
 Commands:
-  list [options]               List your admitted Groups
-  get <group-id>               Read an admitted Group
-  create [options]             Create an owner-only Group
-  edit [options] <group-id>    Update Group identity as owner
-  delete [options] <group-id>  Explicitly delete an owned Group
-  help [command]               display help for command
+  list [options]                          List your admitted Groups
+  get <group-id>                          Read an admitted Group
+  create [options]                        Create an owner-only Group
+  edit [options] <group-id>               Update Group identity as owner
+  delete [options] <group-id>             Explicitly delete an owned Group
+  members [options] <group-id>            Read admitted Group roster
+  invites [options] <group-id>            Inspect Group invitations as owner
+  invite <group-id> <person-id>           Invite an existing user to your Group
+  invitation-policy [options] <group-id>  Configure Group invitations as owner
+  help [command]                          display help for command
 ```
 
 ## groupi groups list
@@ -1639,6 +1653,126 @@ Explicitly delete an owned Group
 
 Options:
   --yes       Confirm Group deletion
+  -h, --help  display help for command
+```
+
+## groupi groups members
+
+```text
+Usage: groupi groups members [options] <group-id>
+
+Read admitted Group roster
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups invites
+
+```text
+Usage: groupi groups invites [options] <group-id>
+
+Inspect Group invitations as owner
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED
+  -h, --help         display help for command
+```
+
+## groupi groups invite
+
+```text
+Usage: groupi groups invite [options] <group-id> <person-id>
+
+Invite an existing user to your Group
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups invitation-policy
+
+```text
+Usage: groupi groups invitation-policy [options] <group-id>
+
+Configure Group invitations as owner
+
+Options:
+  --enabled <boolean>  true or false
+  -h, --help           display help for command
+```
+
+## groupi group-invites
+
+```text
+Usage: groupi group-invites [options] [command]
+
+Inspect and respond to your private Group invitations
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  list [options]                 List your own Group invitation states
+  accept <invite-id>             accept your Group invitation
+  decline [options] <invite-id>  decline your Group invitation
+  cancel [options] <invite-id>   Cancel a pending invitation as Group manager
+  help [command]                 display help for command
+```
+
+## groupi group-invites list
+
+```text
+Usage: groupi group-invites list [options]
+
+List your own Group invitation states
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED
+  -h, --help         display help for command
+```
+
+## groupi group-invites accept
+
+```text
+Usage: groupi group-invites accept [options] <invite-id>
+
+accept your Group invitation
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi group-invites decline
+
+```text
+Usage: groupi group-invites decline [options] <invite-id>
+
+decline your Group invitation
+
+Options:
+  --yes       Confirm invitation resolution
+  -h, --help  display help for command
+```
+
+## groupi group-invites cancel
+
+```text
+Usage: groupi group-invites cancel [options] <invite-id>
+
+Cancel a pending invitation as Group manager
+
+Options:
+  --yes       Confirm invitation resolution
   -h, --help  display help for command
 ```
 
@@ -1816,6 +1950,7 @@ Usage: groupi settings privacy set [options]
 
 Options:
   --friend-requests <permission>  EVERYONE, EVENT_MEMBERS, or NO_ONE
+  --group-invites <permission>    EVERYONE, FRIENDS, or NO_ONE
   --event-invites <permission>    EVERYONE, EVENT_MEMBERS, FRIENDS, or NO_ONE
   -h, --help                      display help for command
 ```

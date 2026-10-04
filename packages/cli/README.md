@@ -527,7 +527,33 @@ Pagination returns `items` and `nextCursor`; `--all` deliberately follows pages.
 REST API keys use the `groups` collection with `read` / `write` permissions.
 Writes require the server's `groups` version 1 capability and are never retried;
 inspect `groups list --all` after an uncertain creation before repeating it.
-Invitation, application and tool commands are unavailable in this initial Group path.
+Owners can invite existing people; invitations grant Group membership only:
+
+```sh
+groupi groups invite <group-id> <person-id>
+groupi groups invites <group-id> --status PENDING --all
+groupi groups invitation-policy <group-id> --enabled false
+groupi group-invites list --status PENDING --all
+groupi group-invites accept <invite-id>
+groupi group-invites decline <invite-id> --yes
+groupi group-invites cancel <invite-id> --yes
+groupi groups members <group-id> --all
+groupi settings privacy set --group-invites FRIENDS
+```
+
+Invitation commands require the server's `groupInvites` version 1 capability.
+Sending and changing policy require `groups:write`; owner invitation status and
+member roster require `groups:read`. Own invitation inbox requires
+`group-invites:read`; accept, decline and owner cancellation require
+`group-invites:write`. Roster access requires admitted membership. Only the intended
+recipient can accept or decline. Blocking and incoming Group privacy settings can
+make a recipient unavailable without disclosing why; incoming choices are
+`EVERYONE` (default), `FRIENDS`, and `NO_ONE`, independent of Event invitations.
+Disabling invitations prevents both new sends and pending acceptance. Invitation
+IDs are identifiers, not bearer credentials, and Group links do not admit visitors.
+After an uncertain write, inspect the own inbox or owner's invitation list before
+repeating; writes are never automatically retried. Group deletion removes its
+invitations and memberships. Applications and tools remain unavailable.
 
 ## Event ownership transfers
 

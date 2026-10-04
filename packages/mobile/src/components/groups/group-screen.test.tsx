@@ -47,6 +47,9 @@ vi.mock('../ui/button', () => ({ Button: 'Button' }));
 vi.mock('../ui/back-button', () => ({ BackButton: 'BackButton' }));
 vi.mock('../ui/safe-area-view', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('../ui/confirm-dialog', () => ({ showConfirmDialog: mocks.confirm }));
+vi.mock('./group-invitation-panels', () => ({
+  GroupLandingInvitation: 'GroupLandingInvitation',
+}));
 vi.mock('./group-form', () => ({ GroupForm: 'GroupForm' }));
 import { GroupDetailScreen, GroupLandingScreen } from './group-screen';
 function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
