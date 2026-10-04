@@ -235,6 +235,128 @@ describe('Invite lists Settings', () => {
     expect(boundary.push).toHaveBeenCalledWith('/settings');
   });
 
+  it.each([
+    ['create', 'router'],
+    ['edit', 'router'],
+    ['create', 'null-state history'],
+    ['edit', 'null-state history'],
+  ])(
+    'discards the %s draft locally when %s leaves Settings mounted',
+    async (mode, navigation) => {
+      vi.stubGlobal('navigation', undefined);
+      const user = userEvent.setup();
+      const list = {
+        inviteListId: 'saved',
+        name: 'Weekend',
+        personCount: 1,
+        availablePersonCount: 1,
+        needsAttention: false,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      const savedDetail = { ...list, people: [friend] };
+      boundary.collection = { items: [list] };
+      boundary.detail = savedDetail;
+      const nextTraversal = vi.fn();
+      // Next deliberately ignores a native fragment's null state. Neither this
+      // SDK boundary nor the mocked router push unmounts the rendered editor.
+      const nextPop = (event: PopStateEvent) => {
+        if (event.state) nextTraversal(event.state);
+      };
+      window.addEventListener('popstate', nextPop);
+      const view = render(
+        <NavigationGuardProvider>
+          <InviteListsSettings />
+        </NavigationGuardProvider>
+      );
+      try {
+        if (mode === 'edit') {
+          await user.click(
+            screen.getByRole('button', { name: 'View Weekend, 1 person' })
+          );
+          await user.click(screen.getByRole('button', { name: 'Edit list' }));
+          await user.clear(screen.getByLabelText('List name'));
+          await user.click(
+            screen.getByRole('button', { name: 'Remove Ada Friend' })
+          );
+        } else
+          await user.click(
+            screen.getByRole('button', { name: 'Create invite list' })
+          );
+        await user.type(
+          screen.getByLabelText('List name'),
+          'Discard this unsaved name'
+        );
+        await user.type(screen.getByLabelText('Search by username'), 'sam');
+        await user.click(screen.getByRole('button', { name: 'Search' }));
+        await user.click(screen.getByRole('button', { name: 'Add Sam Other' }));
+        if (navigation === 'router')
+          await user.click(screen.getByRole('link', { name: 'Settings' }));
+        else {
+          act(() => {
+            window.location.hash = 'unknown-discard';
+          });
+          await screen.findByRole('button', { name: 'Discard' });
+          expect(window.history.state == null).toBe(true);
+          expect(screen.getByRole('alert')).toHaveTextContent(
+            'cannot safely restore an untracked history entry'
+          );
+        }
+        await user.click(
+          await screen.findByRole('button', { name: 'Discard' })
+        );
+        expect(screen.queryByLabelText('List name')).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole('button', { name: 'Remove Sam Other' })
+        ).not.toBeInTheDocument();
+        expect(boundary.create).not.toHaveBeenCalled();
+        expect(boundary.update).not.toHaveBeenCalled();
+        expect(boundary.delete).not.toHaveBeenCalled();
+        expect(boundary.detail).toEqual(savedDetail);
+        if (navigation === 'router')
+          expect(boundary.push).toHaveBeenCalledExactlyOnceWith('/settings');
+        else {
+          expect(nextTraversal).not.toHaveBeenCalled();
+          expect(window.location.hash).toBe('#unknown-discard');
+          expect(boundary.push).not.toHaveBeenCalled();
+        }
+        const unload = new Event('beforeunload', { cancelable: true });
+        window.dispatchEvent(unload);
+        expect(unload.defaultPrevented).toBe(false);
+        const opener = screen.getByRole('button', {
+          name: mode === 'edit' ? 'Edit list' : 'Create invite list',
+        });
+        await waitFor(() => expect(opener).toHaveFocus());
+        if (mode === 'edit') {
+          expect(
+            screen.getByRole('heading', { name: 'Weekend' })
+          ).toBeVisible();
+          expect(screen.getByText('@ada')).toBeVisible();
+          expect(screen.queryByText('@sam')).not.toBeInTheDocument();
+        }
+        await user.click(opener);
+        expect(screen.getByLabelText('List name')).toHaveValue(
+          mode === 'edit' ? 'Weekend' : ''
+        );
+        expect(screen.getByLabelText('Search by username')).toHaveValue('');
+        expect(
+          screen.queryByRole('button', { name: 'Remove Sam Other' })
+        ).not.toBeInTheDocument();
+        if (mode === 'edit')
+          expect(
+            screen.getByRole('button', { name: 'Remove Ada Friend' })
+          ).toBeVisible();
+        else
+          expect(
+            screen.getByRole('heading', { name: 'Selected people (0/100)' })
+          ).toBeVisible();
+      } finally {
+        view.unmount();
+        window.removeEventListener('popstate', nextPop);
+      }
+    }
+  );
+
   it('retains the existing dirty editor link and unload protection after adopting the root-head tracker', async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, '', '/settings/profile');

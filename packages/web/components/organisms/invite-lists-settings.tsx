@@ -150,7 +150,7 @@ export function InviteListsSettings() {
   const returnFocus = useRef<HTMLElement | null>(null);
   const editorRef = useRef<HTMLFieldSetElement>(null);
   const lastEditorFocus = useRef<HTMLElement | null>(null);
-  const pendingLeave = useRef<() => void>(() => {});
+  const pendingLeave = useRef<(() => void) | undefined>(undefined);
   const wasConfirming = useRef(false);
   const editing = view === 'create' || view === 'edit';
   const dirty =
@@ -207,10 +207,11 @@ export function InviteListsSettings() {
     }
   }
 
-  function requestLeave(action: () => void = abandon, fromHistory = false) {
+  function requestLeave(action?: () => void, fromHistory = false) {
     if (saving) return;
     if (!dirty) {
-      action();
+      if (action) action();
+      else abandon();
       return;
     }
     if (confirming) return;
@@ -447,8 +448,11 @@ export function InviteListsSettings() {
               <Button
                 variant='destructive'
                 onClick={() => {
+                  const leave = pendingLeave.current;
+                  pendingLeave.current = undefined;
                   setConfirming(false);
-                  pendingLeave.current();
+                  abandon();
+                  leave?.();
                 }}
               >
                 Discard
