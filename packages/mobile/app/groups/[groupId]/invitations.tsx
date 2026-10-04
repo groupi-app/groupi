@@ -88,7 +88,7 @@ function ManagerInvitations({
 
   return (
     <View className='gap-4 pt-4'>
-      {group.canManageIdentity ? (
+      {group.canManageRoles ? (
         <View className='flex-row items-center justify-between gap-3 rounded-card border border-border p-4'>
           <Text className='flex-1 font-semibold text-foreground'>
             Enable Group invitations

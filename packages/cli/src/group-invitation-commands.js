@@ -20,7 +20,7 @@ export function registerGroupInvitationCommands(program, json) {
   page(
     groups
       .command('invites <group-id>')
-      .description('Inspect Group invitations as owner'),
+      .description('Inspect Group invitations as manager'),
     'invites'
   );
   page(

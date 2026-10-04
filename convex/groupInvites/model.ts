@@ -4,6 +4,12 @@ import type { Doc, Id } from '../_generated/dataModel';
 import { livePerson, requirePerson, requireOwner } from '../groups/model';
 import { checkIfFriends, checkIsBlocked } from '../lib/privacy';
 import { createNotification } from '../lib/notifications';
+import {
+  requireManager as managerGate,
+  canEnterGroup,
+  memberActions,
+  membershipFor,
+} from '../groups/policy';
 type ReadCtx = QueryCtx | MutationCtx;
 function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
@@ -16,7 +22,7 @@ export async function requireManager(
   groupId: Id<'groups'>,
   actorId: Id<'persons'>
 ) {
-  return requireOwner(ctx, groupId, actorId);
+  return managerGate(ctx, groupId, actorId);
 }
 async function membership(
   ctx: ReadCtx,
@@ -35,7 +41,7 @@ async function canAccept(ctx: ReadCtx, invite: Doc<'groupInvites'>) {
   if (
     !group ||
     group.invitationsEnabled === false ||
-    !(await livePerson(ctx, invite.inviteeId)) ||
+    !(await canEnterGroup(ctx, invite.groupId, invite.inviteeId)) ||
     !(await livePerson(ctx, invite.inviterId)) ||
     (await checkIsBlocked(ctx, invite.inviterId, invite.inviteeId))
   )
@@ -53,7 +59,7 @@ export async function send(
     fail('FORBIDDEN', 'Group invitations are disabled.');
   if (
     actorId === inviteePersonId ||
-    !(await livePerson(ctx, inviteePersonId)) ||
+    !(await canEnterGroup(ctx, groupId, inviteePersonId)) ||
     (await checkIsBlocked(ctx, actorId, inviteePersonId))
   )
     unavailable();
@@ -205,10 +211,25 @@ async function profile(ctx: ReadCtx, personId: Id<'persons'>) {
     image: identity?.user.image ?? null,
   };
 }
-async function project(ctx: ReadCtx, invite: Doc<'groupInvites'>) {
+async function project(
+  ctx: ReadCtx,
+  invite: Doc<'groupInvites'>,
+  viewerId: Id<'persons'>
+) {
   const group = await ctx.db.get(invite.groupId);
   if (!group) return null;
+  const viewer = await membershipFor(ctx, invite.groupId, viewerId);
+  const target = await membershipFor(ctx, invite.groupId, invite.inviteeId);
   return {
+    canBan:
+      invite.status === 'PENDING' &&
+      Boolean(
+        viewer &&
+          viewer.role !== 'MEMBER' &&
+          viewerId !== invite.inviteeId &&
+          group.ownerId !== invite.inviteeId &&
+          (!target || target.role === 'MEMBER')
+      ),
     inviteId: invite._id,
     status: invite.status,
     createdAt: invite.createdAt,
@@ -261,7 +282,7 @@ export async function listInvites(
     fail('VALIDATION_ERROR', 'Invalid invitation cursor.');
   }
   const projected = await Promise.all(
-    result.page.map(invite => project(ctx, invite))
+    result.page.map(invite => project(ctx, invite, actorId))
   );
   return {
     page: projected.filter(value => value !== null),
@@ -282,7 +303,7 @@ export async function ownForGroup(
     )
     .order('desc')
     .first();
-  return invite ? project(ctx, invite) : null;
+  return invite ? project(ctx, invite, actorId) : null;
 }
 export async function roster(
   ctx: ReadCtx,
@@ -292,7 +313,8 @@ export async function roster(
 ) {
   await requirePerson(ctx, actorId);
   validatePage(paginationOpts);
-  if (!(await membership(ctx, groupId, actorId)))
+  const viewer = await membershipFor(ctx, groupId, actorId);
+  if (!viewer)
     fail('FORBIDDEN', 'Group membership is required to view members.');
   let result;
   try {
@@ -307,6 +329,7 @@ export async function roster(
     page: await Promise.all(
       result.page.map(async m => ({
         ...(await profile(ctx, m.personId)),
+        ...memberActions(actorId, viewer.role, m.personId, m.role),
         role: m.role,
         joinedAt: m.joinedAt,
       }))

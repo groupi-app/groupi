@@ -58,7 +58,14 @@ export const getNotificationSettings = query({
               notificationType: ns.notificationType,
               enabled: ns.enabled,
             })),
-            ...(['GROUP_INVITE_RECEIVED', 'GROUP_INVITE_ACCEPTED'] as const)
+            ...(
+              [
+                'GROUP_INVITE_RECEIVED',
+                'GROUP_INVITE_ACCEPTED',
+                'GROUP_MEMBER_REMOVED',
+                'GROUP_MEMBER_BANNED',
+              ] as const
+            )
               .filter(
                 type =>
                   !notificationSettings.some(ns => ns.notificationType === type)

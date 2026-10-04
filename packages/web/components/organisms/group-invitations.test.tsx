@@ -79,6 +79,9 @@ const detail = {
   canManageIdentity: true,
   canManageInvitations: true,
   invitationsEnabled: true,
+  canManageRoles: true,
+  canManageMembers: true,
+  canLeave: false,
 };
 const emptyPage = { page: [], isDone: true, continueCursor: '' };
 const authToken = async () => 'fixture-token';
@@ -125,6 +128,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
       isDone: true,
       continueCursor: '',
     },
+    'groupModeration/queries:listGroupBans': emptyPage,
     'friends/queries:searchUsersByUsername': [invite.invitee],
     'friends/queries:getBlockedUsers': [],
     'settings/queries:getPrivacySettings': {

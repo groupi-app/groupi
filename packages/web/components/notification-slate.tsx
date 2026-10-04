@@ -70,7 +70,12 @@ export function NotificationSlate({
 
   const getNotificationLink = (): string => {
     // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
-    if (type === 'GROUP_INVITE_RECEIVED' || type === 'GROUP_INVITE_ACCEPTED')
+    if (
+      type === 'GROUP_INVITE_RECEIVED' ||
+      type === 'GROUP_INVITE_ACCEPTED' ||
+      type === 'GROUP_MEMBER_REMOVED' ||
+      type === 'GROUP_MEMBER_BANNED'
+    )
       return notification.group ? `/g/${notification.group.id}` : '/events';
     if (type === 'EVENT_INVITE_RECEIVED') return '/events?tab=invited';
 
@@ -258,6 +263,17 @@ export function NotificationSlate({
           </>
         );
 
+      case 'GROUP_MEMBER_REMOVED':
+      case 'GROUP_MEMBER_BANNED':
+        return (
+          <>
+            <strong>{authorName}</strong>{' '}
+            {type === 'GROUP_MEMBER_REMOVED'
+              ? 'removed you from'
+              : 'banned you from'}{' '}
+            <strong>{notification.group?.title || 'Group'}</strong>
+          </>
+        );
       case 'GROUP_INVITE_RECEIVED':
         return (
           <>

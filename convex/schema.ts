@@ -15,6 +15,21 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupBans: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    liftedBy: v.optional(v.id('persons')),
+    active: v.boolean(),
+    bannedAt: v.number(),
+    liftedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_actorId', ['actorId'])
+    .index('by_liftedBy', ['liftedBy'])
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_active', ['groupId', 'active']),
   groupInvites: defineTable({
     groupId: v.id('groups'),
     inviterId: v.id('persons'),
@@ -422,6 +437,8 @@ export default defineSchema({
       v.literal('FRIEND_REQUEST_ACCEPTED'),
       v.literal('GROUP_INVITE_RECEIVED'),
       v.literal('GROUP_INVITE_ACCEPTED'),
+      v.literal('GROUP_MEMBER_REMOVED'),
+      v.literal('GROUP_MEMBER_BANNED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -490,6 +507,8 @@ export default defineSchema({
       v.literal('FRIEND_REQUEST_ACCEPTED'),
       v.literal('GROUP_INVITE_RECEIVED'),
       v.literal('GROUP_INVITE_ACCEPTED'),
+      v.literal('GROUP_MEMBER_REMOVED'),
+      v.literal('GROUP_MEMBER_BANNED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),

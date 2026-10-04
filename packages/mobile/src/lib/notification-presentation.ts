@@ -76,6 +76,10 @@ export function getNotificationMessage(
         ? `Group invitation to ${title}: ${status.toLowerCase()}`
         : `${authorName} invited you to ${title}`;
     }
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from the Group.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from the Group.';
     case 'GROUP_INVITE_ACCEPTED':
       return `${authorName} accepted your invitation to ${notification.group?.title ?? 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
@@ -94,7 +98,9 @@ export function getNotificationDestination(
 ): string | null {
   if (
     notification.type === 'GROUP_INVITE_RECEIVED' ||
-    notification.type === 'GROUP_INVITE_ACCEPTED'
+    notification.type === 'GROUP_INVITE_ACCEPTED' ||
+    notification.type === 'GROUP_MEMBER_REMOVED' ||
+    notification.type === 'GROUP_MEMBER_BANNED'
   ) {
     const groupId = notification.group?.id ?? notification.groupId;
     return groupId ? `/g/${groupId}` : null;

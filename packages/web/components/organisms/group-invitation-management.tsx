@@ -12,16 +12,21 @@ import {
   useSendGroupInvite,
   useUpdateGroupInvitationPolicy,
 } from '@/hooks/convex/use-group-invitations';
+import { useBanGroupPerson } from '@/hooks/convex/use-group-moderation';
+import { GroupConfirmedAction } from './group-confirmed-action';
 import { GroupInvitationCard } from './group-invitation-card';
 import { GroupPagination } from './group-pagination';
 
 export function GroupInvitationManagement({
   groupId,
   invitationsEnabled,
+  canManagePolicies,
 }: {
   groupId: Id<'groups'>;
   invitationsEnabled: boolean;
+  canManagePolicies: boolean;
 }) {
+  const ban = useBanGroupPerson();
   const [cursor, setCursor] = useState<string | null>(null);
   const invitations = useGroupInvites(groupId, { numItems: 20, cursor });
   return (
@@ -35,10 +40,12 @@ export function GroupInvitationManagement({
       >
         Group invitations
       </h2>
-      <GroupInvitationPolicy
-        groupId={groupId}
-        invitationsEnabled={invitationsEnabled}
-      />
+      {canManagePolicies && (
+        <GroupInvitationPolicy
+          groupId={groupId}
+          invitationsEnabled={invitationsEnabled}
+        />
+      )}
       {invitationsEnabled ? (
         <GroupInviteSearch groupId={groupId} />
       ) : (
@@ -57,11 +64,19 @@ export function GroupInvitationManagement({
             </p>
           )}
           {invitations.page.map(invitation => (
-            <GroupInvitationCard
-              key={invitation.inviteId}
-              invitation={invitation}
-              manager
-            />
+            <div key={invitation.inviteId} className='space-y-2'>
+              <GroupInvitationCard invitation={invitation} manager />
+              {invitation.canBan && (
+                <GroupConfirmedAction
+                  label={`Ban invited user ${invitation.invitee.name || invitation.invitee.username || 'Unavailable user'}`}
+                  confirmation={`Confirm ban of invited user ${invitation.invitee.name || invitation.invitee.username || 'Unavailable user'}`}
+                  explanation='This pending invitation cannot be accepted after a ban. New invitations and re-entry stay blocked until a manager lifts the ban. Independent Events remain unchanged.'
+                  onConfirm={() =>
+                    ban({ groupId, personId: invitation.invitee.personId })
+                  }
+                />
+              )}
+            </div>
           ))}
           <GroupPagination
             cursor={cursor}

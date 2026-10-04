@@ -25,10 +25,14 @@ export const GroupInviteSchema = z.object({
   inviter: GroupPersonSchema,
   invitee: GroupPersonSchema,
   available: z.boolean(),
+  canBan: z.boolean(),
 });
 export const GroupMemberSchema = GroupPersonSchema.extend({
   role: z.enum(['OWNER', 'MODERATOR', 'MEMBER']),
   joinedAt: z.number(),
+  canRemove: z.boolean(),
+  canBan: z.boolean(),
+  canChangeRole: z.boolean(),
 });
 export const GroupPageQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

@@ -240,6 +240,8 @@ export type NotificationType =
   | 'FRIEND_REQUEST_ACCEPTED'
   | 'GROUP_INVITE_RECEIVED'
   | 'GROUP_INVITE_ACCEPTED'
+  | 'GROUP_MEMBER_REMOVED'
+  | 'GROUP_MEMBER_BANNED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -492,6 +494,10 @@ export function getNotificationEmailSubject(
         : 'Friend request accepted';
     case 'GROUP_INVITE_RECEIVED':
       return `${authorName || 'Someone'} invited you to ${groupTitle || 'a Group'}`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
       return `${authorName || 'Someone'} accepted your invitation to ${groupTitle || 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
@@ -566,6 +572,10 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return `${author} accepted your friend request. You're now friends!`;
     case 'GROUP_INVITE_RECEIVED':
       return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
       return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
@@ -639,6 +649,10 @@ function getNotificationMessageMarkdown(
       return `${author} accepted your friend request. You're now friends!`;
     case 'GROUP_INVITE_RECEIVED':
       return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
       return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
@@ -711,6 +725,10 @@ export function getNotificationMessagePlain(
       return `${author} accepted your friend request. You're now friends!`;
     case 'GROUP_INVITE_RECEIVED':
       return `${author} invited you to a Group`;
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from a Group';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
       return `${author} accepted your Group invitation`;
     case 'EVENT_INVITE_RECEIVED':
@@ -1210,10 +1228,7 @@ function getPushDestination(
   ) {
     return { destination: 'friends' };
   }
-  if (
-    groupId &&
-    (type === 'GROUP_INVITE_RECEIVED' || type === 'GROUP_INVITE_ACCEPTED')
-  )
+  if (groupId && type.startsWith('GROUP_'))
     return { destination: 'group', groupId };
   if (type === 'EVENT_INVITE_RECEIVED') {
     return { destination: 'invites' };

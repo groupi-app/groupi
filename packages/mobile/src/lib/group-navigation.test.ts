@@ -44,6 +44,10 @@ describe('Group navigation and sign-in handoff', () => {
         returnTo: '/g/group-123',
       })
     ).toEqual({ kind: 'return-to', destination: '/g/group-123' });
+    expect(getSafeAuthReturnPath('/groups/group-123/bans')).toBe(
+      '/groups/group-123/bans'
+    );
+    expect(getSafeAuthReturnPath('/groups/group-123/bans/extra')).toBeNull();
     expect(getSafeAuthReturnPath('//evil.example/g/group-123')).toBeNull();
   });
 });

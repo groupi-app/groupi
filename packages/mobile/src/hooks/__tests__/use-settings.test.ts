@@ -93,12 +93,16 @@ describe('normalizeNotificationMethods', () => {
         notifications: [
           { notificationType: 'GROUP_INVITE_RECEIVED', enabled: false },
           { notificationType: 'GROUP_INVITE_ACCEPTED', enabled: true },
+          { notificationType: 'GROUP_MEMBER_REMOVED', enabled: false },
+          { notificationType: 'GROUP_MEMBER_BANNED', enabled: false },
         ],
       },
     ]);
     expect(normalizeNotificationMethods(methods)[0].notifications).toEqual([
       { notificationType: 'GROUP_INVITE_RECEIVED', enabled: false },
       { notificationType: 'GROUP_INVITE_ACCEPTED', enabled: true },
+      { notificationType: 'GROUP_MEMBER_REMOVED', enabled: false },
+      { notificationType: 'GROUP_MEMBER_BANNED', enabled: false },
     ]);
   });
 });

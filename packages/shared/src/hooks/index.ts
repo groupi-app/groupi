@@ -44,3 +44,5 @@ export { createGroupHooks } from './useGroups';
 export { createEventTransferHooks } from './useEventTransfers';
 export { createEventAdmissionHooks } from './useEventAdmission';
 export { createGroupInvitationHooks } from './useGroupInvitations';
+
+export { createGroupModerationHooks } from './useGroupModeration';

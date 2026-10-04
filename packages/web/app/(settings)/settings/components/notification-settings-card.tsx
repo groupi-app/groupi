@@ -50,6 +50,14 @@ const notificationTypeLabels: Record<
   NotificationType,
   { label: string; description: string }
 > = {
+  GROUP_MEMBER_REMOVED: {
+    label: 'Removed from Group',
+    description: 'a manager removes me from a Group.',
+  },
+  GROUP_MEMBER_BANNED: {
+    label: 'Banned from Group',
+    description: 'a manager bans me from a Group.',
+  },
   GROUP_INVITE_RECEIVED: {
     label: 'Group Invitation Received',
     description: 'I receive a Group invitation.',
@@ -587,11 +595,13 @@ export function NotificationSettingsCard({
                     </div>
                     <div className='flex flex-col gap-2'>
                       <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
-                        Group Invitations
+                        Groups
                       </div>
                       {[
                         NotificationTypeEnum.GROUP_INVITE_RECEIVED,
                         NotificationTypeEnum.GROUP_INVITE_ACCEPTED,
+                        NotificationTypeEnum.GROUP_MEMBER_REMOVED,
+                        NotificationTypeEnum.GROUP_MEMBER_BANNED,
                       ].map(type => renderCheckbox(type))}
                     </div>
                   </div>

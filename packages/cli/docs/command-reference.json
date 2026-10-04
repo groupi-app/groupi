@@ -388,7 +388,7 @@
     },
     {
       "path": "groupi groups",
-      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                              display help for command\n\nCommands:\n  list [options]                          List your admitted Groups\n  get <group-id>                          Read an admitted Group\n  create [options]                        Create an owner-only Group\n  edit [options] <group-id>               Update Group identity as owner\n  delete [options] <group-id>             Explicitly delete an owned Group\n  members [options] <group-id>            Read admitted Group roster\n  invites [options] <group-id>            Inspect Group invitations as owner\n  invite <group-id> <person-id>           Invite an existing user to your Group\n  invitation-policy [options] <group-id>  Configure Group invitations as owner\n  help [command]                          display help for command\n"
+      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                      display help for command\n\nCommands:\n  list [options]                                  List your admitted Groups\n  get <group-id>                                  Read an admitted Group\n  create [options]                                Create an owner-only Group\n  edit [options] <group-id>                       Update Group identity as owner\n  delete [options] <group-id>                     Explicitly delete an owned Group\n  members [options] <group-id>                    Read admitted Group roster\n  invites [options] <group-id>                    Inspect Group invitations as manager\n  invite <group-id> <person-id>                   Invite an existing user to your Group\n  invitation-policy [options] <group-id>          Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership\n  leave [options] <group-id>                      Leave your own Group membership\n  bans [options] <group-id>                       List private active Group bans as manager\n  help [command]                                  display help for command\n"
     },
     {
       "path": "groupi groups list",
@@ -416,7 +416,7 @@
     },
     {
       "path": "groupi groups invites",
-      "help": "Usage: groupi groups invites [options] <group-id>\n\nInspect Group invitations as owner\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Retrieve every page deliberately\n  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED\n  -h, --help         display help for command\n"
+      "help": "Usage: groupi groups invites [options] <group-id>\n\nInspect Group invitations as manager\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Retrieve every page deliberately\n  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED\n  -h, --help         display help for command\n"
     },
     {
       "path": "groupi groups invite",
@@ -425,6 +425,30 @@
     {
       "path": "groupi groups invitation-policy",
       "help": "Usage: groupi groups invitation-policy [options] <group-id>\n\nConfigure Group invitations as owner\n\nOptions:\n  --enabled <boolean>  true or false\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi groups member-role",
+      "help": "Usage: groupi groups member-role [options] <group-id> <person-id>\n\nAppoint or demote a moderator as owner\n\nOptions:\n  --yes          Confirm Group membership or moderation change\n  --role <role>  MODERATOR or MEMBER\n  -h, --help     display help for command\n"
+    },
+    {
+      "path": "groupi groups remove-member",
+      "help": "Usage: groupi groups remove-member [options] <group-id> <person-id>\n\nRemove an ordinary member without banning\n\nOptions:\n  --yes       Confirm Group membership or moderation change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups ban",
+      "help": "Usage: groupi groups ban [options] <group-id> <person-id>\n\nBan an ordinary member or nonmember\n\nOptions:\n  --yes       Confirm Group membership or moderation change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups lift-ban",
+      "help": "Usage: groupi groups lift-ban [options] <group-id> <person-id>\n\nLift a Group ban without admitting membership\n\nOptions:\n  --yes       Confirm Group membership or moderation change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups leave",
+      "help": "Usage: groupi groups leave [options] <group-id>\n\nLeave your own Group membership\n\nOptions:\n  --yes       Confirm Group membership or moderation change\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups bans",
+      "help": "Usage: groupi groups bans [options] <group-id>\n\nList private active Group bans as manager\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
     },
     {
       "path": "groupi group-invites",

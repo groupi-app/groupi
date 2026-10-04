@@ -114,6 +114,8 @@ export const UpdateNotificationSettingsRequestSchema = z
                   'FRIEND_REQUEST_ACCEPTED',
                   'GROUP_INVITE_RECEIVED',
                   'GROUP_INVITE_ACCEPTED',
+                  'GROUP_MEMBER_REMOVED',
+                  'GROUP_MEMBER_BANNED',
                   'EVENT_INVITE_RECEIVED',
                   'EVENT_INVITE_ACCEPTED',
                   'ADDON_CONFIG_RESET',

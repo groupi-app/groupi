@@ -26,6 +26,19 @@ describe('native Group invitation notifications', () => {
       })
     ).toBe('/g/group-123');
   });
+  it('routes removals and bans to the Group landing', () => {
+    for (const type of [
+      'GROUP_MEMBER_REMOVED',
+      'GROUP_MEMBER_BANNED',
+    ] as const) {
+      expect(getNotificationDestination({ ...invite, type })).toBe(
+        '/g/group-123'
+      );
+      expect(getNotificationMessage({ ...invite, type })).toContain(
+        type === 'GROUP_MEMBER_REMOVED' ? 'removed' : 'banned'
+      );
+    }
+  });
   it('reflects resolved invitations and refuses unsafe push destinations', () => {
     expect(
       getNotificationMessage({

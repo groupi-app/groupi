@@ -1,3 +1,7 @@
+import {
+  removeModerationForGroup,
+  removeModerationForPerson,
+} from '../groupModeration/cleanup';
 import { authComponent, type AuthUserId } from '../auth';
 import {
   removeInvitationsForGroup,
@@ -154,6 +158,7 @@ export async function remove(
     .withIndex('by_groupId', q => q.eq('groupId', groupId)))
     await ctx.db.delete(membership._id);
   await removeInvitationsForGroup(ctx, groupId);
+  await removeModerationForGroup(ctx, groupId);
   await ctx.db.delete(groupId);
   return null;
 }
@@ -178,7 +183,10 @@ export async function detail(
     canManageIdentity: group.ownerId === personId,
     memberCount: group.memberCount,
     invitationsEnabled: group.invitationsEnabled ?? true,
-    canManageInvitations: group.ownerId === personId,
+    canManageInvitations: membership.role !== 'MEMBER',
+    canManageMembers: membership.role !== 'MEMBER',
+    canManageRoles: group.ownerId === personId,
+    canLeave: membership.role !== 'OWNER',
   };
 }
 export async function list(
@@ -220,6 +228,7 @@ export async function removeGroupMembershipsForPerson(
 ) {
   await assertNoOwnedGroups(ctx, personId);
   await removeInvitationsForPerson(ctx, personId);
+  await removeModerationForPerson(ctx, personId);
   for await (const membership of ctx.db
     .query('groupMemberships')
     .withIndex('by_personId', q => q.eq('personId', personId))) {

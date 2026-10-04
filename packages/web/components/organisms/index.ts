@@ -28,3 +28,6 @@ export { EventAdmissionSettings } from './event-admission-settings';
 export { GroupInvitationInbox } from './group-invitation-inbox';
 export { GroupInvitationManagement } from './group-invitation-management';
 export { GroupMemberRoster } from './group-member-roster';
+
+export { GroupBanManagement } from './group-ban-management';
+export { GroupConfirmedAction } from './group-confirmed-action';

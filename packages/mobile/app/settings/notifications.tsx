@@ -152,6 +152,18 @@ const NOTIFICATION_CATEGORIES: Array<{
         icon: 'people',
       },
       {
+        type: 'GROUP_MEMBER_REMOVED',
+        label: 'Group removals',
+        description: 'You are removed from a Group.',
+        icon: 'person-remove-outline',
+      },
+      {
+        type: 'GROUP_MEMBER_BANNED',
+        label: 'Group bans',
+        description: 'You are banned from a Group.',
+        icon: 'ban-outline',
+      },
+      {
         type: 'EVENT_INVITE_RECEIVED',
         label: 'Event invitations',
         description: 'Someone invites you to an event.',

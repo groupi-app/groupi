@@ -21,6 +21,8 @@ const notificationTypeValidator = v.union(
   v.literal('FRIEND_REQUEST_ACCEPTED'),
   v.literal('GROUP_INVITE_RECEIVED'),
   v.literal('GROUP_INVITE_ACCEPTED'),
+  v.literal('GROUP_MEMBER_REMOVED'),
+  v.literal('GROUP_MEMBER_BANNED'),
   v.literal('EVENT_INVITE_RECEIVED'),
   v.literal('EVENT_INVITE_ACCEPTED'),
   v.literal('ADDON_CONFIG_RESET'),

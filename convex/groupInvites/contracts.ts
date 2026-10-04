@@ -26,6 +26,7 @@ export const summary = v.object({
   inviter: person,
   invitee: person,
   available: v.boolean(),
+  canBan: v.boolean(),
 });
 export const page = v.object({
   page: v.array(summary),
@@ -36,6 +37,9 @@ export const member = v.object({
   ...person.fields,
   role,
   joinedAt: v.number(),
+  canRemove: v.boolean(),
+  canBan: v.boolean(),
+  canChangeRole: v.boolean(),
 });
 export const memberPage = v.object({
   page: v.array(member),

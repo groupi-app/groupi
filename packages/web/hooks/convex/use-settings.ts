@@ -37,7 +37,9 @@ export type NotificationType =
   | 'ADDON_CONFIG_RESET'
   | 'EVENT_REMINDER'
   | 'GROUP_INVITE_RECEIVED'
-  | 'GROUP_INVITE_ACCEPTED';
+  | 'GROUP_INVITE_ACCEPTED'
+  | 'GROUP_MEMBER_REMOVED'
+  | 'GROUP_MEMBER_BANNED';
 
 export type NotificationMethodType = 'EMAIL' | 'PUSH' | 'WEBHOOK';
 

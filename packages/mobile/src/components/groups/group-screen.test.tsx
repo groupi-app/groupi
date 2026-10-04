@@ -1,3 +1,4 @@
+vi.mock('./group-leave-control', () => ({ GroupLeaveControl: () => null }));
 import {
   Children,
   isValidElement,

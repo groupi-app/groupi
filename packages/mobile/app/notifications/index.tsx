@@ -52,6 +52,8 @@ const NOTIFICATION_ICONS: Record<
   EVENT_INVITE_ACCEPTED: 'mail-open-outline',
   GROUP_INVITE_RECEIVED: 'people-outline',
   GROUP_INVITE_ACCEPTED: 'people',
+  GROUP_MEMBER_REMOVED: 'person-remove-outline',
+  GROUP_MEMBER_BANNED: 'ban-outline',
   ADDON_CONFIG_RESET: 'extension-puzzle-outline',
   ADDON_AUTOMATION: 'sparkles-outline',
 };

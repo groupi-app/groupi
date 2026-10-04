@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/ui/text';
+import { showConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useBanGroupPerson } from '@/hooks/use-group-moderation';
 import { Button } from '@/components/ui/button';
 import {
   useAcceptGroupInvite,
@@ -19,9 +21,11 @@ export function GroupInvitationCard({
   invite: Invitation;
   manager?: boolean;
 }) {
+  const ban = useBanGroupPerson();
   const accept = useAcceptGroupInvite();
   const decline = useDeclineGroupInvite();
   const cancel = useCancelGroupInvite();
+  const [banned, setBanned] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [resolvedStatus, setResolvedStatus] = useState<
@@ -66,16 +70,61 @@ export function GroupInvitationCard({
       <Text accessibilityLiveRegion='polite' className='text-muted-foreground'>
         Invitation {status.toLowerCase()}
       </Text>
+      {banned ? (
+        <Text className='text-muted-foreground'>
+          This person is banned. The pending invitation cannot be accepted while
+          the ban remains.
+        </Text>
+      ) : null}
       {status === 'PENDING' ? (
         manager ? (
-          <Button
-            variant='outline'
-            accessibilityLabel={`Cancel invitation for ${invite.invitee.name ?? invite.invitee.username ?? 'Groupi user'}`}
-            onPress={() => respond('cancel')}
-            disabled={busy}
-          >
-            Cancel invitation
-          </Button>
+          <>
+            <Button
+              variant='outline'
+              accessibilityLabel={`Cancel invitation for ${invite.invitee.name ?? invite.invitee.username ?? 'Groupi user'}`}
+              onPress={() => respond('cancel')}
+              disabled={busy}
+            >
+              Cancel invitation
+            </Button>
+            {invite.canBan && !banned ? (
+              <Button
+                variant='destructive'
+                disabled={busy}
+                accessibilityLabel={`Ban invitee ${invite.invitee.name ?? invite.invitee.username ?? 'Groupi user'}`}
+                onPress={() =>
+                  showConfirmDialog({
+                    title: 'Ban from Group',
+                    message:
+                      'Ban this person from the Group? Their pending invitation cannot be accepted until the ban is lifted.',
+                    confirmLabel: 'Ban from Group',
+                    destructive: true,
+                    onConfirm: async () => {
+                      setBusy(true);
+                      setError('');
+                      try {
+                        await ban({
+                          groupId: invite.group.groupId,
+                          personId: invite.invitee.personId,
+                        });
+                        setBanned(true);
+                      } catch (failure) {
+                        setError(
+                          failure instanceof Error
+                            ? failure.message
+                            : 'Could not ban this person. Try again.'
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
+                    },
+                  })
+                }
+              >
+                Ban from Group
+              </Button>
+            ) : null}
+          </>
         ) : (
           <>
             {!invite.available ? (

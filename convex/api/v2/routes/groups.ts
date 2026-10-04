@@ -28,6 +28,9 @@ const group = z.object({
   memberCount: z.number(),
   invitationsEnabled: z.boolean(),
   canManageInvitations: z.boolean(),
+  canManageMembers: z.boolean(),
+  canManageRoles: z.boolean(),
+  canLeave: z.boolean(),
 });
 const params = z.object({ groupId: z.string().min(1).max(512) });
 const errors = {

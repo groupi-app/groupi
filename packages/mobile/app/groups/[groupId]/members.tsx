@@ -6,6 +6,7 @@ import { DetailScreenTemplate } from '@/components/templates/detail-screen-templ
 import { Text } from '@/components/ui/text';
 import { useGroup } from '@/hooks/use-groups';
 import { useGroupMembers } from '@/hooks/use-group-invitations';
+import { GroupMemberActions } from '@/components/groups/group-member-actions';
 import { GroupPageControls } from '@/components/groups/group-page-controls';
 
 export default function GroupMembersScreen() {
@@ -60,6 +61,7 @@ function GroupRoster({ groupId }: { groupId: Id<'groups'> }) {
               <Text className='text-muted-foreground'>
                 {roles[member.role]}
               </Text>
+              <GroupMemberActions groupId={groupId} member={member} />
             </View>
           </View>
         ))

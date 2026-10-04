@@ -184,3 +184,13 @@ Organizer a Moderator, preserves membership/RSVP, and moves Friends visibility
 to the new Organizer's friends. Inspect status after uncertain writes; do not
 substitute ordinary role changes or repeat writes blindly. Named write commands
 require confirmation and use `--yes` in headless mode.
+
+Group moderation uses `groups member-role`, `remove-member`, `ban`, `lift-ban`,
+`bans` and `leave`. Writes require the server's `groupModeration` version 1
+capability and explicit confirmation. Only the owner appoints/demotes moderators
+or edits policies; managers may remove or ban ordinary members. Demote a moderator
+before removal/ban. The owner cannot leave with unresolved ownership. Removal
+permits later entry, while ban blocks entry until lifted; lift does not admit.
+Accepted invitation IDs cannot restore departed membership. These actions never
+change independent Event authority or RSVP. Private ban pages expose no reasons
+or contact details. Inspect membership/bans after uncertain writes before retrying.

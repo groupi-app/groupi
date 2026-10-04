@@ -13,6 +13,9 @@ import {
   useGroup,
   useUpdateGroup,
 } from '@/hooks/convex/use-groups';
+import { useLeaveGroup } from '@/hooks/convex/use-group-moderation';
+import { GroupBanManagement } from './group-ban-management';
+import { GroupConfirmedAction } from './group-confirmed-action';
 import { GroupMemberRoster } from './group-member-roster';
 import { GroupInvitationManagement } from './group-invitation-management';
 import { GroupIdentityForm } from './group-identity-form';
@@ -22,6 +25,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
   const group = useGroup(groupId);
   const update = useUpdateGroup();
   const remove = useDeleteGroup();
+  const leave = useLeaveGroup();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -52,7 +56,11 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         <div>
           <h1 className='text-3xl font-bold'>{group.name}</h1>
           <p className='text-muted-foreground'>
-            {group.viewerRole === 'OWNER' ? 'Owner' : 'Group member'}
+            {group.viewerRole === 'OWNER'
+              ? 'Owner'
+              : group.viewerRole === 'MODERATOR'
+                ? 'Moderator'
+                : 'Group member'}
           </p>
         </div>
       </div>
@@ -91,11 +99,35 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           /g/{group._id}
         </Link>
       </div>
+      {group.canLeave ? (
+        <GroupConfirmedAction
+          label='Leave Group'
+          confirmation={`Confirm leaving ${group.name}`}
+          explanation='Leaving ends your Group membership. A later invitation is allowed under the current policy. Independent Event membership and RSVP remain unchanged.'
+          onConfirm={async () => {
+            await leave({ groupId });
+            router.push(`/g/${groupId}`);
+          }}
+        />
+      ) : (
+        group.viewerRole === 'OWNER' && (
+          <p className='text-sm text-muted-foreground'>
+            The owner cannot leave or delete their account while they own this
+            Group. You can{' '}
+            <a href='#delete-group' className='text-primary underline'>
+              delete the Group
+            </a>
+            . Ownership transfer is not available yet.
+          </p>
+        )
+      )}
       <GroupMemberRoster groupId={groupId} />
+      {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (
         <GroupInvitationManagement
           groupId={groupId}
           invitationsEnabled={group.invitationsEnabled}
+          canManagePolicies={group.canManageRoles}
         />
       )}
       {group.canManageIdentity && (
@@ -119,7 +151,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           ) : (
             <Button onClick={() => setEditing(true)}>Edit Group</Button>
           )}
-          <div className='rounded-card border border-border p-4 space-y-3'>
+          <div
+            id='delete-group'
+            className='rounded-card border border-border p-4 space-y-3'
+          >
             <h2 className='font-semibold'>Delete Group</h2>
             <p className='text-sm text-muted-foreground'>
               Permanently delete this Group and its data. This cannot be undone.

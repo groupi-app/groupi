@@ -16,6 +16,7 @@ import {
 import { useGlobalUser } from '@/context/global-user-context';
 import { getPublicGroupUrl } from '@/lib/public-urls';
 import { GroupLandingInvitation } from './group-invitation-panels';
+import { GroupLeaveControl } from './group-leave-control';
 import { GroupForm } from './group-form';
 
 export function GroupDetailScreen() {
@@ -114,6 +115,16 @@ export function GroupDetailScreen() {
                 Manage invitations
               </Button>
             ) : null}
+            {group.canManageMembers ? (
+              <Button
+                variant='outline'
+                accessibilityLabel='Manage Group bans'
+                onPress={() => router.push(`/groups/${id}/bans`)}
+              >
+                Manage bans
+              </Button>
+            ) : null}
+            <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (
                 <GroupForm

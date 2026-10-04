@@ -6,6 +6,16 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupModeration: {
+      queries: { listGroupBans: 'bans' },
+      mutations: {
+        leaveGroup: 'leave',
+        setGroupMemberRole: 'role',
+        removeGroupMember: 'removeMember',
+        banGroupPerson: 'ban',
+        liftGroupBan: 'lift',
+      },
+    },
     groupInvites: {
       queries: {
         listMyGroupInvites: 'inbox',

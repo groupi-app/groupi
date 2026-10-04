@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 import { act, createElement, type ReactNode } from 'react';
 import { setToastAdapter } from '@groupi/shared/platform';
+import { Alert } from 'react-native';
 import { getFunctionName } from 'convex/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const require = createRequire(import.meta.url);
@@ -25,6 +26,9 @@ const network = vi.hoisted(() => ({
   authenticated: true,
   member: true,
   manager: true,
+  moderator: false,
+  targetRole: 'MEMBER',
+  banState: 'populated',
   enabled: true,
   available: true,
   status: 'PENDING',
@@ -119,6 +123,7 @@ function invite() {
       image: null,
     },
     available: network.available,
+    canBan: network.manager && !network.moderator,
   };
 }
 function result(name: string, args: Record<string, unknown>) {
@@ -132,7 +137,10 @@ function result(name: string, args: Record<string, unknown>) {
           name: 'Book club',
           ownerId: 'person-owner',
           viewerRole: network.manager ? 'OWNER' : 'MEMBER',
-          canManageIdentity: network.manager,
+          canManageIdentity: network.manager && !network.moderator,
+          canManageRoles: network.manager && !network.moderator,
+          canManageMembers: network.manager,
+          canLeave: !network.manager || network.moderator,
           canManageInvitations: network.manager,
           invitationsEnabled: network.enabled,
           memberCount: 1,
@@ -155,11 +163,17 @@ function result(name: string, args: Record<string, unknown>) {
     return {
       page: [
         {
-          personId: 'person-owner',
+          personId: 'person-target',
           name: 'Alex',
           username: 'alex',
           image: null,
-          role: 'OWNER',
+          role: network.targetRole,
+          canChangeRole:
+            network.manager &&
+            !network.moderator &&
+            network.targetRole !== 'OWNER',
+          canRemove: network.manager && network.targetRole === 'MEMBER',
+          canBan: network.manager && network.targetRole === 'MEMBER',
           joinedAt: 1900000000000,
         },
       ],
@@ -167,6 +181,24 @@ function result(name: string, args: Record<string, unknown>) {
         (args.paginationOpts as { cursor: string | null }).cursor !== null,
       continueCursor: 'next-members',
     };
+  if (name === 'groupModeration/queries:listGroupBans')
+    return network.banState === 'loading'
+      ? undefined
+      : network.banState === 'empty'
+        ? { page: [], isDone: true, continueCursor: '' }
+        : {
+            page: [
+              {
+                personId: 'person-banned',
+                name: 'Banned person',
+                username: 'banned',
+                image: null,
+                bannedAt: 1,
+              },
+            ],
+            isDone: true,
+            continueCursor: '',
+          };
   if (name === 'settings/queries:getPrivacySettings')
     return {
       allowFriendRequestsFrom: 'EVENT_MEMBERS',
@@ -195,6 +227,7 @@ vi.mock(
 vi.mock('../molecules', () => ({ LoadingState: 'LoadingState' }));
 import PrivacySettingsScreen from '../../../app/settings/privacy';
 import GroupInvitationsScreen from '../../../app/groups/[groupId]/invitations';
+import GroupBansScreen from '../../../app/groups/[groupId]/bans';
 import GroupMembersScreen from '../../../app/groups/[groupId]/members';
 import { GroupsPanel } from './groups-panel';
 import { GroupDetailScreen, GroupLandingScreen } from './group-screen';
@@ -227,6 +260,8 @@ describe('native Group invitations with production providers', () => {
     network.authenticated = true;
     network.member = true;
     network.manager = true;
+    network.moderator = false;
+    network.targetRole = 'MEMBER';
     network.enabled = true;
     network.available = true;
     network.status = 'PENDING';
@@ -341,7 +376,7 @@ describe('native Group invitations with production providers', () => {
       .map(node => node.props.children);
     expect(text).toContain('Alex');
     expect(text).toContain('@alex');
-    expect(text).toContain('Owner');
+    expect(text).toContain('Member');
     await act(async () => {
       (control(mounted!, 'Next Group members').props.onPress as () => void)();
     });
@@ -579,4 +614,242 @@ describe('native Group invitations with production providers', () => {
     expect(network.mutation).not.toHaveBeenCalled();
     await act(async () => mounted!.unmount());
   });
+});
+
+describe('native moderation with production SDK and providers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    network.authenticated = true;
+    network.member = true;
+    network.manager = true;
+    network.moderator = false;
+    network.targetRole = 'MEMBER';
+    network.mutation.mockResolvedValue({ left: true });
+  });
+  async function mount(component: () => ReactNode) {
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(component));
+    });
+    return mounted!;
+  }
+  async function press(mounted: Mounted, label: string) {
+    await act(async () => {
+      await (control(mounted, label).props.onPress as () => unknown)();
+    });
+  }
+  async function confirm() {
+    const buttons = vi.mocked(Alert.alert).mock.calls.at(-1)![2]!;
+    expect(buttons[1].style).toBe('destructive');
+    await act(async () => {
+      await buttons[1].onPress!();
+    });
+  }
+  it('owner promotes only an eligible member through the actual injected mutation', async () => {
+    const mounted = await mount(GroupMembersScreen);
+    await press(mounted, 'Promote Alex');
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'groupModeration/mutations:setGroupMemberRole',
+      { groupId: 'group-123', personId: 'person-target', role: 'MODERATOR' }
+    );
+    await act(async () => mounted.unmount());
+  });
+  it('confirms removal before mutation and displays server failures', async () => {
+    const mounted = await mount(GroupMembersScreen);
+    network.mutation.mockRejectedValue(new Error('Permission changed'));
+    await press(mounted, 'Remove Alex');
+    expect(network.mutation).not.toHaveBeenCalled();
+    await confirm();
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'groupModeration/mutations:removeGroupMember',
+      { groupId: 'group-123', personId: 'person-target' }
+    );
+    expect(
+      mounted.root.findAll(node => node.props.accessibilityRole === 'alert')
+        .length
+    ).toBeGreaterThan(0);
+    await act(async () => mounted.unmount());
+  });
+  it('confirms ban and uses only Group mutation', async () => {
+    const mounted = await mount(GroupMembersScreen);
+    await press(mounted, 'Ban Alex');
+    expect(network.mutation).not.toHaveBeenCalled();
+    await confirm();
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'groupModeration/mutations:banGroupPerson',
+      { groupId: 'group-123', personId: 'person-target' }
+    );
+    await act(async () => mounted.unmount());
+  });
+  it('moderators cannot promote or act on peer moderators', async () => {
+    network.moderator = true;
+    network.targetRole = 'MODERATOR';
+    const mounted = await mount(GroupMembersScreen);
+    expect(control(mounted, 'Demote Alex')).toBeUndefined();
+    expect(control(mounted, 'Remove Alex')).toBeUndefined();
+    expect(control(mounted, 'Ban Alex')).toBeUndefined();
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => mounted.unmount());
+  });
+  it('owner cannot leave, while moderator can confirm voluntary leave', async () => {
+    let mounted = await mount(GroupDetailScreen);
+    expect(control(mounted, 'Leave Group')).toBeUndefined();
+    await act(async () => mounted.unmount());
+    network.moderator = true;
+    mounted = await mount(GroupDetailScreen);
+    await press(mounted, 'Leave Group');
+    expect(network.mutation).not.toHaveBeenCalled();
+    await confirm();
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'groupModeration/mutations:leaveGroup',
+      { groupId: 'group-123' }
+    );
+    expect(network.replace).toHaveBeenCalledWith('/friends');
+    await act(async () => mounted.unmount());
+  });
+  it('member cannot query private bans; manager lifts one without restoring membership', async () => {
+    network.manager = false;
+    let mounted = await mount(GroupBansScreen);
+    expect(
+      network.watches.mock.calls.some(
+        ([name]) => name === 'groupModeration/queries:listGroupBans'
+      )
+    ).toBe(false);
+    await act(async () => mounted.unmount());
+    network.manager = true;
+    mounted = await mount(GroupBansScreen);
+    await press(mounted, 'Lift ban for Banned person');
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'groupModeration/mutations:liftGroupBan',
+      { groupId: 'group-123', personId: 'person-banned' }
+    );
+    await act(async () => mounted.unmount());
+  });
+});
+
+it('confirms banning a pending invitee without inventing cancellation', async () => {
+  vi.clearAllMocks();
+  network.authenticated = true;
+  network.member = true;
+  network.manager = true;
+  network.moderator = false;
+  network.status = 'PENDING';
+  network.mutation.mockResolvedValue({ banned: true });
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupInvitationsScreen));
+  });
+  await act(async () => {
+    (control(mounted!, 'Ban invitee Robin').props.onPress as () => void)();
+  });
+  expect(network.mutation).not.toHaveBeenCalled();
+  await act(async () => {
+    await vi.mocked(Alert.alert).mock.calls.at(-1)![2]![1].onPress!();
+  });
+  expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+    'groupModeration/mutations:banGroupPerson',
+    { groupId: 'group-123', personId: 'person-123' }
+  );
+  expect(control(mounted!, 'Ban invitee Robin')).toBeUndefined();
+  expect(control(mounted!, 'Cancel invitation for Robin')).toBeDefined();
+  await act(async () => mounted!.unmount());
+});
+
+it('owner must demote a moderator before removal or ban; owner target has no actions', async () => {
+  vi.clearAllMocks();
+  network.manager = true;
+  network.moderator = false;
+  network.targetRole = 'MODERATOR';
+  network.mutation.mockResolvedValue({ role: 'MEMBER' });
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupMembersScreen));
+  });
+  expect(control(mounted!, 'Remove Alex')).toBeUndefined();
+  expect(control(mounted!, 'Ban Alex')).toBeUndefined();
+  await act(async () => {
+    (control(mounted!, 'Demote Alex').props.onPress as () => void)();
+  });
+  expect(network.mutation).not.toHaveBeenCalled();
+  await act(async () => {
+    await vi.mocked(Alert.alert).mock.calls.at(-1)![2]![1].onPress!();
+  });
+  expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+    'groupModeration/mutations:setGroupMemberRole',
+    { groupId: 'group-123', personId: 'person-target', role: 'MEMBER' }
+  );
+  await act(async () => mounted!.unmount());
+  network.targetRole = 'OWNER';
+  await act(async () => {
+    mounted = renderer.create(screen(GroupMembersScreen));
+  });
+  expect(control(mounted!, 'Promote Alex')).toBeUndefined();
+  expect(control(mounted!, 'Remove Alex')).toBeUndefined();
+  expect(control(mounted!, 'Ban Alex')).toBeUndefined();
+  await act(async () => mounted!.unmount());
+});
+it('keeps moderator invitation policy owner-only and disables controls while a mutation is pending', async () => {
+  vi.clearAllMocks();
+  network.manager = true;
+  network.moderator = true;
+  network.targetRole = 'MEMBER';
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupInvitationsScreen));
+  });
+  expect(
+    control(mounted!, 'Enable Group invitations', 'Switch')
+  ).toBeUndefined();
+  await act(async () => mounted!.unmount());
+  let resolve: (value: unknown) => void = () => {};
+  network.mutation.mockImplementation(
+    () =>
+      new Promise(done => {
+        resolve = done;
+      })
+  );
+  await act(async () => {
+    mounted = renderer.create(screen(GroupMembersScreen));
+  });
+  await act(async () => {
+    (control(mounted!, 'Ban Alex').props.onPress as () => void)();
+  });
+  await act(async () => {
+    void vi.mocked(Alert.alert).mock.calls.at(-1)![2]![1].onPress!();
+  });
+  expect(control(mounted!, 'Remove Alex').props.accessibilityState).toEqual(
+    expect.objectContaining({ disabled: true })
+  );
+  await act(async () => resolve({ banned: true }));
+  await act(async () => mounted!.unmount());
+});
+
+it('shows truthful loading and empty private ban pages', async () => {
+  vi.clearAllMocks();
+  network.manager = true;
+  network.banState = 'loading';
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupBansScreen));
+  });
+  expect(
+    mounted!.root.findAll(
+      node => node.type === 'Text' && node.props.children === 'Loading bans…'
+    ).length
+  ).toBeGreaterThan(0);
+  await act(async () => mounted!.unmount());
+  network.banState = 'empty';
+  await act(async () => {
+    mounted = renderer.create(screen(GroupBansScreen));
+  });
+  expect(
+    mounted!.root.findAll(
+      node =>
+        node.type === 'Text' &&
+        node.props.children === 'No banned people on this page.'
+    ).length
+  ).toBeGreaterThan(0);
+  expect(network.mutation).not.toHaveBeenCalled();
+  await act(async () => mounted!.unmount());
+  network.banState = 'populated';
 });

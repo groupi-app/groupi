@@ -555,6 +555,36 @@ After an uncertain write, inspect the own inbox or owner's invitation list befor
 repeating; writes are never automatically retried. Group deletion removes its
 invitations and memberships. Applications and tools remain unavailable.
 
+### Group moderation
+
+```sh
+groupi groups member-role <group-id> <person-id> --role MODERATOR --yes
+groupi groups member-role <group-id> <person-id> --role MEMBER --yes
+groupi groups remove-member <group-id> <person-id> --yes
+groupi groups ban <group-id> <person-id> --yes
+groupi groups bans <group-id> --limit 20 --all
+groupi groups lift-ban <group-id> <person-id> --yes
+groupi groups leave <group-id> --yes
+```
+
+Only the owner appoints or demotes moderators and changes Group policies.
+Owners and moderators manage invitations and ordinary member removal/bans;
+moderators cannot manage the owner, peer moderators or their own role. Demote a
+moderator before ordinary removal or banning. Nonowners, including moderators,
+may leave voluntarily. Resolve ownership before the owner leaves or deletes their
+account. Group moderation preserves independent Event authority, memberships,
+RSVPs and friendships.
+
+Removal and leaving permit later invitations under current policy. A ban blocks
+new invitations and pending acceptance until a manager lifts it; lifting does not
+admit membership. Previously accepted invitations cannot readmit departed members.
+Ban lists are private to managers and paginated, with names, usernames, avatars
+and dates only. Moderation writes require `groupModeration` version 1 and
+`groups:write`; ban lists require `groups:read`. An older server receives no writes.
+Inspect current membership and bans after an uncertain result before repeating;
+these operations are never automatically retried. Removal and ban notices follow
+the affected person's existing notification methods and preferences.
+
 ## Event ownership transfers
 
 Event ownership requires recipient consent. Use `events transfer offer EVENT PERSON --yes`, then the named recipient runs `events transfer accept EVENT OFFER --yes`. Inspect `events transfer status EVENT` after any uncertain write. A pending offer remains unresolved: the current Organizer keeps responsibility until acceptance. Acceptance makes the former Organizer a Moderator and moves Friends visibility to the new Organizer's friends; membership and RSVP are preserved. The recipient may `decline`, and the current Organizer may `cancel`, using the offer ID and `--yes`.

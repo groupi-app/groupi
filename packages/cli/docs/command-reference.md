@@ -113,6 +113,12 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups invites](#groupi-groups-invites)
 - [groupi groups invite](#groupi-groups-invite)
 - [groupi groups invitation-policy](#groupi-groups-invitation-policy)
+- [groupi groups member-role](#groupi-groups-member-role)
+- [groupi groups remove-member](#groupi-groups-remove-member)
+- [groupi groups ban](#groupi-groups-ban)
+- [groupi groups lift-ban](#groupi-groups-lift-ban)
+- [groupi groups leave](#groupi-groups-leave)
+- [groupi groups bans](#groupi-groups-bans)
 - [groupi group-invites](#groupi-group-invites)
 - [groupi group-invites list](#groupi-group-invites-list)
 - [groupi group-invites accept](#groupi-group-invites-accept)
@@ -1574,19 +1580,25 @@ Usage: groupi groups [options] [command]
 Manage formal Group communities independently of events
 
 Options:
-  -h, --help                              display help for command
+  -h, --help                                      display help for command
 
 Commands:
-  list [options]                          List your admitted Groups
-  get <group-id>                          Read an admitted Group
-  create [options]                        Create an owner-only Group
-  edit [options] <group-id>               Update Group identity as owner
-  delete [options] <group-id>             Explicitly delete an owned Group
-  members [options] <group-id>            Read admitted Group roster
-  invites [options] <group-id>            Inspect Group invitations as owner
-  invite <group-id> <person-id>           Invite an existing user to your Group
-  invitation-policy [options] <group-id>  Configure Group invitations as owner
-  help [command]                          display help for command
+  list [options]                                  List your admitted Groups
+  get <group-id>                                  Read an admitted Group
+  create [options]                                Create an owner-only Group
+  edit [options] <group-id>                       Update Group identity as owner
+  delete [options] <group-id>                     Explicitly delete an owned Group
+  members [options] <group-id>                    Read admitted Group roster
+  invites [options] <group-id>                    Inspect Group invitations as manager
+  invite <group-id> <person-id>                   Invite an existing user to your Group
+  invitation-policy [options] <group-id>          Configure Group invitations as owner
+  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner
+  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning
+  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember
+  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership
+  leave [options] <group-id>                      Leave your own Group membership
+  bans [options] <group-id>                       List private active Group bans as manager
+  help [command]                                  display help for command
 ```
 
 ## groupi groups list
@@ -1675,7 +1687,7 @@ Options:
 ```text
 Usage: groupi groups invites [options] <group-id>
 
-Inspect Group invitations as owner
+Inspect Group invitations as manager
 
 Options:
   --limit <number>   Page size (1–100) (default: "20")
@@ -1706,6 +1718,81 @@ Configure Group invitations as owner
 Options:
   --enabled <boolean>  true or false
   -h, --help           display help for command
+```
+
+## groupi groups member-role
+
+```text
+Usage: groupi groups member-role [options] <group-id> <person-id>
+
+Appoint or demote a moderator as owner
+
+Options:
+  --yes          Confirm Group membership or moderation change
+  --role <role>  MODERATOR or MEMBER
+  -h, --help     display help for command
+```
+
+## groupi groups remove-member
+
+```text
+Usage: groupi groups remove-member [options] <group-id> <person-id>
+
+Remove an ordinary member without banning
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups ban
+
+```text
+Usage: groupi groups ban [options] <group-id> <person-id>
+
+Ban an ordinary member or nonmember
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups lift-ban
+
+```text
+Usage: groupi groups lift-ban [options] <group-id> <person-id>
+
+Lift a Group ban without admitting membership
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups leave
+
+```text
+Usage: groupi groups leave [options] <group-id>
+
+Leave your own Group membership
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups bans
+
+```text
+Usage: groupi groups bans [options] <group-id>
+
+List private active Group bans as manager
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
 ```
 
 ## groupi group-invites
