@@ -213,7 +213,7 @@ describe('consensual Event ownership transfer', () => {
     ).toBe('PENDING');
   });
   it('moves Friends audience only after acceptance and survives removal of the former creator identity', async () => {
-    const { t, actor, owner, recipient, outsider, eventId } = await fixture();
+    const { actor, owner, recipient, outsider, eventId } = await fixture();
     const nextFriend = await actor('new-friend');
     const oldRequest = await body(
       await owner.request('/friends/requests', 'POST', {
@@ -259,8 +259,14 @@ describe('consensual Event ownership transfer', () => {
     );
     expect(await discover(outsider)).toBe(false);
     expect(await discover(nextFriend)).toBe(true);
-    // Simulate identity cleanup only; central account-deletion resolution has its own ticket.
-    await t.run(ctx => ctx.db.delete(owner.personId));
+    await expect(
+      owner.auth.mutation(api.users.mutations.deleteUserAccount, {
+        confirmation: 'owner',
+      })
+    ).resolves.toEqual({ success: true });
+    await expect(
+      owner.auth.query(api.events.queries.getEventHeader, { eventId })
+    ).rejects.toThrow();
     expect(await discover(nextFriend)).toBe(true);
     expect(
       (
@@ -320,4 +326,62 @@ describe('consensual Event ownership transfer', () => {
       403
     );
   });
+  it.each(['ordinary', 'admin-event', 'admin-person', 'admin-rest'] as const)(
+    'removes transfer references when authenticated %s deletion removes the Event',
+    async boundary => {
+      const { t, owner, recipient, outsider, eventId } = await fixture();
+      const pending = await owner.auth.mutation(
+        api.eventTransfers.mutations.offer,
+        { eventId, recipientId: recipient.personId }
+      );
+      expect(pending!.status).toBe('PENDING');
+      await t.mutation(components.betterAuth.adapter.updateOne, {
+        input: {
+          model: 'user',
+          where: [{ field: '_id', value: outsider.user._id }],
+          update: { role: 'admin' },
+        },
+      });
+      if (boundary === 'admin-rest')
+        await t.run(async ctx => {
+          for (let index = 0; index < 151; index++)
+            await ctx.db.insert('eventTransfers', {
+              eventId,
+              offeredById: owner.personId,
+              recipientId: recipient.personId,
+              status: 'CANCELLED',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+        });
+      if (boundary === 'ordinary')
+        await owner.auth.mutation(api.events.mutations.deleteEvent, {
+          eventId,
+        });
+      if (boundary === 'admin-event')
+        await outsider.auth.mutation(api.admin.mutations.deleteEvent, {
+          eventId,
+        });
+      if (boundary === 'admin-person')
+        await outsider.auth.mutation(api.admin.mutations.deletePerson, {
+          personId: owner.personId,
+        });
+      if (boundary === 'admin-rest')
+        expect(
+          (await outsider.request(`/admin/events/${eventId}`, 'DELETE')).status
+        ).toBe(204);
+      await expect(
+        recipient.auth.query(api.events.queries.getEventHeader, { eventId })
+      ).rejects.toThrow();
+      // Approved cleanup/privacy persistence seam: durable participant references must not survive public deletion.
+      expect(
+        await t.run(ctx =>
+          ctx.db
+            .query('eventTransfers')
+            .withIndex('by_event', q => q.eq('eventId', eventId))
+            .collect()
+        )
+      ).toEqual([]);
+    }
+  );
 });

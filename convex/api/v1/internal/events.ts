@@ -1,3 +1,4 @@
+import { deleteEventTransfers } from '../../../eventTransfers/cleanup';
 import type { QueryCtx } from '../../../_generated/server';
 import {
   reminderOffsetValidator,
@@ -400,6 +401,8 @@ export const deleteEvent = internalMutation({
         // Ignore
       }
     }
+
+    await deleteEventTransfers(ctx, eventId as Id<'events'>);
 
     // Delete all related data
     const memberships = await ctx.db

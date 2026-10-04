@@ -1,76 +1,126 @@
-vi.unmock('@/convex/_generated/api');
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
+import { ConvexReactClient } from 'convex/react';
+import { getFunctionName } from 'convex/server';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventOwnershipTransfer } from './event-ownership-transfer';
+import { ConvexClientProvider } from '@/providers/convex-provider';
 import type { Id } from '@/convex/_generated/dataModel';
-const state = vi.hoisted(() => ({
-  status: {} as Record<string, unknown>,
-  offer: vi.fn(),
-  accept: vi.fn(),
-  decline: vi.fn(),
-  cancel: vi.fn(),
+vi.unmock('convex/react');
+vi.unmock('@/convex/_generated/api');
+vi.unmock('@convex-dev/better-auth/react');
+vi.mock('@/lib/convex', () => ({ isDevelopment: false }));
+vi.mock('@/lib/auth-client', () => ({
+  authClient: {
+    useSession: () => ({
+      data: {
+        user: { id: 'fixture-user' },
+        session: { id: 'fixture-session' },
+      },
+      isPending: false,
+    }),
+    convex: { token: async () => ({ data: { token: 'fixture-token' } }) },
+  },
 }));
-vi.mock('convex/react', async () => {
-  const { getFunctionName } = await import('convex/server');
-  return {
-    useQuery: () => state.status,
-    useMutation: (ref: Parameters<typeof getFunctionName>[0]) => {
-      const name = getFunctionName(ref).split(':')[1] as
-        | 'offer'
-        | 'accept'
-        | 'decline'
-        | 'cancel';
-      return state[name];
-    },
-  };
-});
 const eventId = 'event' as Id<'events'>,
   ownerId = 'owner' as Id<'persons'>,
   recipientId = 'recipient' as Id<'persons'>;
 const members = [
   { personId: recipientId, role: 'ATTENDEE', user: { name: 'Recipient' } },
 ];
-describe('accessible Event ownership controls', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    state.status = {
-      organizerId: ownerId,
-      status: 'NONE',
-      explanation:
-        'Friends visibility follows the new Organizer after acceptance.',
-    };
-  });
-  it('explains the Friends change and offers ownership to the selected existing member', async () => {
-    render(
+let result: Record<string, unknown>;
+const observers = new Set<() => void>();
+let writes: { name: string; args: unknown }[];
+beforeEach(() => {
+  observers.clear();
+  writes = [];
+  result = {
+    eventId,
+    organizerId: ownerId,
+    status: 'NONE',
+    transferId: null,
+    explanation:
+      'Friends visibility follows the new Organizer after acceptance.',
+  };
+  vi.spyOn(ConvexReactClient.prototype, 'watchQuery').mockImplementation(
+    () => ({
+      localQueryResult: () => result,
+      onUpdate: callback => {
+        observers.add(callback);
+        return () => observers.delete(callback);
+      },
+      journal: () => undefined,
+    })
+  );
+  vi.spyOn(ConvexReactClient.prototype, 'setAuth').mockImplementation(
+    (_token, onChange) => {
+      onChange?.(true);
+    }
+  );
+  vi.spyOn(ConvexReactClient.prototype, 'clearAuth').mockImplementation(
+    () => {}
+  );
+  vi.spyOn(ConvexReactClient.prototype, 'mutation').mockImplementation(
+    async (...call) => {
+      const [reference, args] = call;
+      const name = getFunctionName(reference);
+      writes.push({ name, args });
+      result = name.endsWith(':offer')
+        ? { ...result, recipientId, transferId: 'offer', status: 'PENDING' }
+        : { ...result, organizerId: recipientId, status: 'ACCEPTED' };
+      for (const update of observers) update();
+      return result;
+    }
+  );
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+function mount(personId: Id<'persons'>) {
+  return render(
+    <ConvexClientProvider>
       <EventOwnershipTransfer
         eventId={eventId}
-        personId={ownerId}
+        personId={personId}
         members={members}
       />
-    );
+    </ConvexClientProvider>
+  );
+}
+describe('mounted ownership controls through the production authenticated provider and SDK', () => {
+  it('explains Friends visibility and submits the selected recipient through the production transfer hook', async () => {
+    const mounted = mount(ownerId);
     expect(screen.getByText(/Friends visibility follows/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Offer ownership to'), {
       target: { value: recipientId },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Offer ownership' }));
     await waitFor(() =>
-      expect(state.offer).toHaveBeenCalledWith({ eventId, recipientId })
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'current Organizer remains responsible'
+      )
     );
+    expect(writes).toEqual([
+      {
+        name: 'eventTransfers/mutations:offer',
+        args: { eventId, recipientId },
+      },
+    ]);
+    expect(
+      screen.getByRole('button', { name: 'Cancel offer' })
+    ).toBeInTheDocument();
+    mounted.unmount();
   });
-  it('labels pending responsibility and provides recipient accept/decline without cancelling', async () => {
-    state.status = {
-      ...state.status,
-      status: 'PENDING',
-      recipientId,
-      transferId: 'offer',
-    };
-    render(
-      <EventOwnershipTransfer
-        eventId={eventId}
-        personId={recipientId}
-        members={members}
-      />
-    );
+  it('mounts accessible recipient controls and reacts to accepted ownership without replacing React state or SDK hooks', async () => {
+    result = { ...result, status: 'PENDING', recipientId, transferId: 'offer' };
+    const mounted = mount(recipientId);
     expect(screen.getByRole('status')).toHaveTextContent(
       'current Organizer remains responsible'
     );
@@ -79,13 +129,28 @@ describe('accessible Event ownership controls', () => {
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Accept ownership' }));
     await waitFor(() =>
-      expect(state.accept).toHaveBeenCalledWith({
-        eventId,
-        transferId: 'offer',
-      })
+      expect(screen.getByRole('status')).toHaveTextContent('accepted')
     );
+    expect(writes).toEqual([
+      {
+        name: 'eventTransfers/mutations:accept',
+        args: { eventId, transferId: 'offer' },
+      },
+    ]);
     expect(
-      screen.getByRole('button', { name: 'Decline offer' })
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: 'Accept ownership' })
+    ).not.toBeInTheDocument();
+    await act(async () => mounted.unmount());
+  });
+  it('fails without the SDK provider instead of hiding a broken binding behind hook mocks', () => {
+    expect(() =>
+      render(
+        <EventOwnershipTransfer
+          eventId={eventId}
+          personId={ownerId}
+          members={members}
+        />
+      )
+    ).toThrow('Could not find Convex client');
   });
 });

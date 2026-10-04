@@ -1,3 +1,4 @@
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { v } from 'convex/values';
 import { makeSignature } from 'better-auth/crypto';
 import { mutation, query } from '../_generated/server';
@@ -849,6 +850,7 @@ export const cleanupTestData = mutation({
           await ctx.db.delete(reminder._id);
         }
 
+        await deleteEventTransfers(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted

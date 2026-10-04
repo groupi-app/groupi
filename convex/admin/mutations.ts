@@ -2,6 +2,7 @@ import {
   assertNoOwnedGroups,
   removeGroupMembershipsForPerson,
 } from '../groups/model';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { mutation, MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { getCurrentPerson, isAdmin } from '../auth';
@@ -48,6 +49,8 @@ async function deleteEventAndRelatedData(
   if (!event) {
     return; // Event doesn't exist, nothing to delete
   }
+
+  await deleteEventTransfers(ctx, eventId);
 
   // Delete all related data in order (to handle dependencies)
 

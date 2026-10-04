@@ -1,3 +1,4 @@
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -6,11 +7,7 @@ export async function cascadeDeleteEventData(
   ctx: MutationCtx,
   eventId: Id<'events'>
 ) {
-  const transfers = await ctx.db
-    .query('eventTransfers')
-    .withIndex('by_event', q => q.eq('eventId', eventId))
-    .collect();
-  for (const transfer of transfers) await ctx.db.delete(transfer._id);
+  await deleteEventTransfers(ctx, eventId);
 
   const [
     memberships,
