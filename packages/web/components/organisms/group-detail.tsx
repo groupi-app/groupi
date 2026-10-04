@@ -15,6 +15,7 @@ import {
   useUpdateGroup,
 } from '@/hooks/convex/use-groups';
 import { useLeaveGroup } from '@/hooks/convex/use-group-moderation';
+import { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
 import { GroupBanManagement } from './group-ban-management';
 import { GroupConfirmedAction } from './group-confirmed-action';
 import { GroupMemberRoster } from './group-member-roster';
@@ -124,6 +125,7 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         )
       )}
       <GroupOwnershipTransfer groupId={groupId} />
+      <GroupJoiningQuestionnaire groupId={groupId} />
       <GroupMemberRoster groupId={groupId} />
       {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (

@@ -40,7 +40,11 @@ export function GroupInvitationCard({
       if (action === 'accept') {
         const result = await accept({ inviteId: invite.inviteId });
         setResolvedStatus(result.status);
-        router.replace(`/groups/${result.groupId}`);
+        router.replace(
+          result.joiningQuestionnaire.shouldPrompt
+            ? `/groups/${result.groupId}/questionnaire`
+            : `/groups/${result.groupId}`
+        );
       } else if (action === 'decline') {
         setResolvedStatus(
           (await decline({ inviteId: invite.inviteId })).status

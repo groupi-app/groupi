@@ -1,3 +1,4 @@
+import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
 import { cascadeDeleteGroupData } from './cleanup';
 import { removeTransfersForPerson } from '../groupTransfers/cleanup';
 import { removeModerationForPerson } from '../groupModeration/cleanup';
@@ -220,6 +221,7 @@ export async function removeGroupMembershipsForPerson(
   await removeTransfersForPerson(ctx, personId);
   await removeInvitationsForPerson(ctx, personId);
   await removeModerationForPerson(ctx, personId);
+  await removeQuestionnairesForPerson(ctx, personId);
   for await (const membership of ctx.db
     .query('groupMemberships')
     .withIndex('by_personId', q => q.eq('personId', personId))) {

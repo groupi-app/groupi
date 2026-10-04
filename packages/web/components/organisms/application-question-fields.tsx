@@ -143,10 +143,14 @@ export function ApplicationQuestionEditor({
   questions,
   onChange,
   disabled,
+  title = 'Admission questions',
+  requiredLabel = 'Required',
 }: {
   questions: ApplicationQuestion[];
   onChange: (questions: ApplicationQuestion[]) => void;
   disabled?: boolean;
+  title?: string;
+  requiredLabel?: string;
 }) {
   const update = (index: number, patch: Partial<ApplicationQuestion>) =>
     onChange(
@@ -156,7 +160,7 @@ export function ApplicationQuestionEditor({
     );
   return (
     <fieldset disabled={disabled} className='space-y-4'>
-      <legend className='font-semibold'>Admission questions</legend>
+      <legend className='font-semibold'>{title}</legend>
       {questions.map((q, index) => (
         <fieldset
           key={q.id}
@@ -208,7 +212,7 @@ export function ApplicationQuestionEditor({
                 update(index, { required: event.target.checked })
               }
             />
-            Required
+            {requiredLabel}
           </label>
           {choices(q.type) && (
             <>

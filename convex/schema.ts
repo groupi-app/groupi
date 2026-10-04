@@ -1,5 +1,10 @@
 import { transferStatus } from './groupTransfers/contracts';
 import {
+  configuration as groupQuestionnaireConfiguration,
+  record as groupQuestionnaireRecord,
+  answerFields as groupQuestionnaireAnswerFields,
+} from './groupQuestionnaires/contracts';
+import {
   applicationSettingsValidator,
   questionValidator,
   answersValidator,
@@ -23,6 +28,39 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupQuestionnaires: defineTable(groupQuestionnaireConfiguration).index(
+    'by_groupId',
+    ['groupId']
+  ),
+  groupQuestionnaireRecords: defineTable(groupQuestionnaireRecord)
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupQuestionnaireIdentities: defineTable({
+    groupId: v.id('groups'),
+    questionId: v.string(),
+    version: v.number(),
+    fingerprint: v.string(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_questionId', ['groupId', 'questionId']),
+  groupQuestionnaireAnswers: defineTable({
+    ...groupQuestionnaireAnswerFields,
+    questionId: v.string(),
+    semanticVersion: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_group_person_question_version', [
+      'groupId',
+      'personId',
+      'questionId',
+      'semanticVersion',
+    ]),
+  groupQuestionnaireHistory: defineTable(groupQuestionnaireAnswerFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId']),
   groupBans: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),

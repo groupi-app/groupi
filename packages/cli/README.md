@@ -732,3 +732,21 @@ RSVP survive. Transfer writes require `groupTransfers.version: 1`;
 retirement additionally requires `groupTransfers.retirement: true` before any
 write. Both use ordinary `groups` read/write API-key permissions. In headless/JSON
 mode, offers, acceptance and deletion require explicit `--yes` confirmation.
+
+### Optional Group joining questionnaire
+
+`groups questionnaire get <group-id>` reads your private current form and saved
+question definitions; `status` reports optional completion. After immediate
+membership, invitation acceptance reports the optional questionnaire prompt.
+Incomplete answers do not gate Group or independent Event access.
+
+Owners use `configure <group-id> --enabled true|false --questions '<json>'`.
+Admitted members use `submit <group-id> --form-version <number> --answers '<json>'`
+to submit or edit without admission review. Both writes require advertised
+`groupQuestionnaire.version: 1` before mutation. Disabling preserves answers.
+Authors can read retained own records after leaving; `history --limit 20` pages
+answered definitions and prior revisions. Current owners/moderators use
+`responses` or `history --author-id <person-id>` for private review. Stable question
+IDs and semantic versions preserve valid answers across cosmetic changes and
+returning membership. Material changes preserve old history without reusing old
+answers. There is no required Group gate setting in this interface.

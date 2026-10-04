@@ -233,6 +233,23 @@ export async function changeGroupInvitation(
         groupId: result.groupId,
         membershipId: result.membershipId,
         status: result.status,
+        ...(result.joiningQuestionnaire &&
+        typeof result.joiningQuestionnaire === 'object' &&
+        !Array.isArray(result.joiningQuestionnaire) &&
+        ['enabled', 'completed', 'shouldPrompt'].every(
+          field =>
+            typeof (
+              /** @type {Record<string,unknown>} */ (
+                result.joiningQuestionnaire
+              )[field]
+            ) === 'boolean'
+        ) &&
+        typeof (
+          /** @type {Record<string,unknown>} */ (result.joiningQuestionnaire)
+            .version
+        ) === 'number'
+          ? { joiningQuestionnaire: result.joiningQuestionnaire }
+          : {}),
       };
     }
     valid(

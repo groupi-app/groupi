@@ -505,3 +505,8 @@ export function createErrorMessage(operation: string, error: unknown): string {
 }
 
 export * from './discussion-content';
+export { validateQuestions, validateAnswers } from './application-questions';
+export type {
+  ApplicationQuestion,
+  ApplicationAnswers,
+} from './application-questions';

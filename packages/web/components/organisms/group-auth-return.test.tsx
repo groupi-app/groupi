@@ -5,6 +5,7 @@ import { ConvexProviderWithAuth, ConvexReactClient } from 'convex/react';
 import { ConvexHttpClient } from 'convex/browser';
 import { getFunctionName } from 'convex/server';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import GroupQuestionnairePage from '@/app/(groups)/groups/[groupId]/questionnaire/page';
 import SignInPage from '@/app/(auth)/sign-in/[[...sign-in]]/page';
 import { OnboardingContent } from '@/app/(auth)/onboarding/onboarding-content';
 import { OnboardingGuard } from '@/app/(auth)/onboarding/components/onboarding-guard';
@@ -46,6 +47,7 @@ const external = vi.hoisted(() => ({
   magicLink: vi.fn(),
 }));
 vi.mock('next/navigation', () => ({
+  useParams: () => ({ groupId: 'group-one' }),
   useRouter: () => ({ push: external.navigate, replace: external.navigate }),
   usePathname: () => new URL(external.path, 'https://fixture.local').pathname,
   useSearchParams: () =>
@@ -106,6 +108,8 @@ function FixtureRoutes({ client }: { client: ConvexReactClient }) {
           <OnboardingGuard>
             <OnboardingContent />
           </OnboardingGuard>
+        ) : pathname.endsWith('/questionnaire') ? (
+          <GroupQuestionnairePage />
         ) : (
           <GroupLanding groupId={'group-one' as Id<'groups'>} />
         )}
@@ -121,9 +125,18 @@ describe('Group landing authentication return through production routes', () => 
     external.magicLink.mockReset();
     external.magicLink.mockResolvedValue({ error: null });
   });
-  it.each(['existing account', 'new account'] as const)(
-    'returns %s to its Group after email authentication',
-    async account => {
+  it.each([
+    { account: 'existing account', destination: '/g/group-one' },
+    { account: 'new account', destination: '/g/group-one' },
+    {
+      account: 'existing account',
+      destination: '/groups/group-one/questionnaire',
+    },
+    { account: 'new account', destination: '/groups/group-one/questionnaire' },
+  ])(
+    'returns $account to $destination after email authentication',
+    async ({ account, destination }) => {
+      external.path = `/sign-in?redirect=${encodeURIComponent(destination)}`;
       external.needsOnboarding = account === 'new account';
       const client = new ConvexReactClient('https://fixture.convex.cloud', {
         unsavedChangesWarning: false,
@@ -151,6 +164,28 @@ describe('Group landing authentication return through production routes', () => 
             return external.needsOnboarding;
           if (name === 'auth/queries:getCurrentUser') return existingUser.user;
           if (name === 'groups/queries:getGroupLanding') return landing;
+          if (
+            name === 'groupQuestionnaires/queries:getJoiningQuestionnaireAccess'
+          )
+            return {
+              canRead: destination.endsWith('/questionnaire'),
+              hasRecord: true,
+              isMember: false,
+            };
+          if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
+            return {
+              groupId: 'group-one',
+              enabled: false,
+              version: 1,
+              questions: [],
+              answers: {},
+              savedQuestions: [],
+              completed: true,
+              shouldPrompt: false,
+              canEdit: false,
+              canConfigure: false,
+              canReview: false,
+            };
           if (
             name === 'groups/queries:getGroup' ||
             name === 'groupInvites/queries:getMyGroupInviteForGroup'
@@ -203,8 +238,12 @@ describe('Group landing authentication return through production routes', () => 
         });
         expect(availability).toHaveBeenCalled();
       }
-      await screen.findByRole('heading', { name: 'Neighbors' });
-      expect(external.path).toBe('/g/group-one');
+      await screen.findByRole('heading', {
+        name: destination.endsWith('/questionnaire')
+          ? 'Your Group questionnaire records'
+          : 'Neighbors',
+      });
+      expect(external.path).toBe(destination);
       mounted.unmount();
       availability.mockRestore();
       await client.close();

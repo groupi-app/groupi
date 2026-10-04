@@ -1,3 +1,4 @@
+import { registerGroupQuestionnaireCommands } from './group-questionnaire-commands.js';
 import { registerGroupModerationCommands } from './group-moderation-commands.js';
 import { registerGroupInvitationCommands } from './group-invitation-commands.js';
 import { registerGroupCommands } from './group-commands.js';
@@ -365,6 +366,7 @@ export function createProgram(json = false) {
   registerGroupCommands(program, json);
   registerGroupInvitationCommands(program, json);
   registerGroupModerationCommands(program, json);
+  registerGroupQuestionnaireCommands(program, json);
   registerAccountCommands(program, json);
   registerDiscussionCommands(program, json);
   registerInviteCommands(program, json);

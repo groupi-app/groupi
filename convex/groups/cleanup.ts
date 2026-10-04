@@ -1,3 +1,4 @@
+import { removeQuestionnairesForGroup } from '../groupQuestionnaires/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { removeInvitationsForGroup } from '../groupInvites/cleanup';
@@ -15,5 +16,6 @@ export async function cascadeDeleteGroupData(
   await removeInvitationsForGroup(ctx, groupId);
   await removeModerationForGroup(ctx, groupId);
   await removeTransfersForGroup(ctx, groupId);
+  await removeQuestionnairesForGroup(ctx, groupId);
   await ctx.db.delete(groupId);
 }

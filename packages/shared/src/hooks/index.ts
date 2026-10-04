@@ -54,3 +54,4 @@ export type {
   ApplicationAnswers,
 } from '../utils/application-questions';
 export { createGroupTransferHooks } from './useGroupTransfer';
+export { createGroupQuestionnaireHooks } from './useGroupQuestionnaire';

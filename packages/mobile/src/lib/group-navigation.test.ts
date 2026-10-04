@@ -48,6 +48,13 @@ describe('Group navigation and sign-in handoff', () => {
       '/groups/group-123/bans'
     );
     expect(getSafeAuthReturnPath('/groups/group-123/bans/extra')).toBeNull();
+    for (const suffix of ['', '/settings', '/answers', '/history'])
+      expect(
+        getSafeAuthReturnPath(`/groups/group-123/questionnaire${suffix}`)
+      ).toBe(`/groups/group-123/questionnaire${suffix}`);
+    expect(
+      getSafeAuthReturnPath('/groups/group-123/questionnaire/unknown')
+    ).toBeNull();
     expect(getSafeAuthReturnPath('//evil.example/g/group-123')).toBeNull();
   });
 });

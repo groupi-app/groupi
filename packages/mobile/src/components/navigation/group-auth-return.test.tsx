@@ -242,3 +242,96 @@ describe('production Group auth return screens', () => {
     await act(async () => mounted!.unmount());
   });
 });
+
+describe('production private questionnaire auth return', () => {
+  it.each([
+    '/groups/group-123/questionnaire',
+    '/groups/group-123/questionnaire/settings',
+    '/groups/group-123/questionnaire/answers',
+    '/groups/group-123/questionnaire/history',
+  ])('protects %s and finishes actual auth callback return', async path => {
+    vi.clearAllMocks();
+    external.route.pathname = path;
+    external.route.segments = ['groups'];
+    external.route.params = {} as typeof external.route.params;
+    external.session = {
+      isAuthenticated: false,
+      isLoading: false,
+      needsOnboarding: null,
+      user: null,
+    };
+    external.getSession.mockResolvedValue({
+      data: { user: { id: 'user-123' }, session: { id: 'session-123' } },
+    });
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(RootNavigator));
+    });
+    const destination = mounted!.root.findByType('Redirect').props.href;
+    expect(destination).toEqual({
+      pathname: '/(auth)/sign-in',
+      params: { returnTo: path },
+    });
+    external.route.pathname = '/callback';
+    external.route.segments = ['(auth)'];
+    external.route.params = {
+      cookie: 'better-auth.session_token=test-token; Path=/; HttpOnly',
+      returnTo: path,
+    };
+    await act(async () => {
+      mounted!.update(screen(NativeAuthCallbackScreen));
+    });
+    expect(external.replace).toHaveBeenLastCalledWith(path);
+    external.route.pathname = path;
+    external.route.segments = ['groups'];
+    external.route.params = {} as typeof external.route.params;
+    external.session.isAuthenticated = true;
+    external.session.needsOnboarding = false;
+    await act(async () => {
+      mounted!.update(screen(RootNavigator));
+    });
+    expect(mounted!.root.findByType('Stack')).toBeDefined();
+    await act(async () => mounted!.unmount());
+  });
+  it('actual onboarding preserves questionnaire history return', async () => {
+    vi.clearAllMocks();
+    external.session = {
+      isAuthenticated: true,
+      isLoading: false,
+      needsOnboarding: true,
+      user: null,
+    };
+    external.route.pathname = '/groups/group-123/questionnaire/history';
+    external.route.segments = ['groups'];
+    external.route.params = {} as typeof external.route.params;
+    external.completeOnboarding.mockResolvedValue(null);
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(RootNavigator));
+    });
+    const redirect = mounted!.root.findByType('Redirect').props.href;
+    expect(redirect).toEqual({
+      pathname: '/onboarding',
+      params: { returnTo: '/groups/group-123/questionnaire/history' },
+    });
+    follow(redirect as Parameters<typeof follow>[0]);
+    await act(async () => {
+      mounted!.update(screen(OnboardingScreen));
+    });
+    await act(async () => {
+      (
+        mounted!.root.findByProps({ label: 'Username *' }).props
+          .onChangeText as (value: string) => void
+      )('returningreader');
+    });
+    await act(async () => {
+      await (
+        mounted!.root.findByType('Button').props.onPress as () => Promise<void>
+      )();
+    });
+    expect(external.replace).toHaveBeenLastCalledWith(
+      '/groups/group-123/questionnaire/history'
+    );
+    await act(async () => mounted!.unmount());
+  });
+});

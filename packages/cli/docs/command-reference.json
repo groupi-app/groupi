@@ -424,7 +424,7 @@
     },
     {
       "path": "groupi groups",
-      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                      display help for command\n\nCommands:\n  transfer                                        Offer consensual Group responsibility; pending\n                                                  offers remain unresolved\n  list [options]                                  List your admitted Groups\n  get <group-id>                                  Read an admitted Group\n  create [options]                                Create an owner-only Group\n  edit [options] <group-id>                       Update Group identity as owner\n  delete [options] <group-id>                     Explicitly retire an owned Group and its data;\n                                                  independent Events remain\n  members [options] <group-id>                    Read admitted Group roster\n  invites [options] <group-id>                    Inspect Group invitations as manager\n  invite <group-id> <person-id>                   Invite an existing user to your Group\n  invitation-policy [options] <group-id>          Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership\n  leave [options] <group-id>                      Leave your own Group membership\n  bans [options] <group-id>                       List private active Group bans as manager\n  help [command]                                  display help for command\n"
+      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                      display help for command\n\nCommands:\n  transfer                                        Offer consensual Group responsibility; pending\n                                                  offers remain unresolved\n  list [options]                                  List your admitted Groups\n  get <group-id>                                  Read an admitted Group\n  create [options]                                Create an owner-only Group\n  edit [options] <group-id>                       Update Group identity as owner\n  delete [options] <group-id>                     Explicitly retire an owned Group and its data;\n                                                  independent Events remain\n  members [options] <group-id>                    Read admitted Group roster\n  invites [options] <group-id>                    Inspect Group invitations as manager\n  invite <group-id> <person-id>                   Invite an existing user to your Group\n  invitation-policy [options] <group-id>          Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>    Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>  Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>            Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership\n  leave [options] <group-id>                      Leave your own Group membership\n  bans [options] <group-id>                       List private active Group bans as manager\n  questionnaire                                   Optional post-admission questionnaire and private\n                                                  retained records\n  help [command]                                  display help for command\n"
     },
     {
       "path": "groupi groups transfer",
@@ -509,6 +509,34 @@
     {
       "path": "groupi groups bans",
       "help": "Usage: groupi groups bans [options] <group-id>\n\nList private active Group bans as manager\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Retrieve every page deliberately\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire",
+      "help": "Usage: groupi groups questionnaire [options] [command]\n\nOptional post-admission questionnaire and private retained records\n\nOptions:\n  -h, --help                      display help for command\n\nCommands:\n  get <group-id>                  Read your private current form and saved definitions\n  status <group-id>               Read optional completion status without changing access\n  history [options] <group-id>    Read paginated retained own answered definitions\n  responses [options] <group-id>  Review private responses as current owner or moderator\n  configure [options] <group-id>  Configure exactly one optional joining form as owner; preserves\n                                  retained answers\n  submit [options] <group-id>     Submit or edit private answers as a currently admitted member\n  help [command]                  display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire get",
+      "help": "Usage: groupi groups questionnaire get [options] <group-id>\n\nRead your private current form and saved definitions\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire status",
+      "help": "Usage: groupi groups questionnaire status [options] <group-id>\n\nRead optional completion status without changing access\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire history",
+      "help": "Usage: groupi groups questionnaire history [options] <group-id>\n\nRead paginated retained own answered definitions\n\nOptions:\n  --limit <number>         Page size (1–100) (default: \"20\")\n  --cursor <cursor>        Continue page\n  --author-id <person-id>  Review this author as current manager\n  -h, --help               display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire responses",
+      "help": "Usage: groupi groups questionnaire responses [options] <group-id>\n\nReview private responses as current owner or moderator\n\nOptions:\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire configure",
+      "help": "Usage: groupi groups questionnaire configure [options] <group-id>\n\nConfigure exactly one optional joining form as owner; preserves retained answers\n\nOptions:\n  --enabled <boolean>  true or false; disabling preserves records\n  --questions <json>   At most 50 stable-ID core questions\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi groups questionnaire submit",
+      "help": "Usage: groupi groups questionnaire submit [options] <group-id>\n\nSubmit or edit private answers as a currently admitted member\n\nOptions:\n  --form-version <number>  Current questionnaire version from get\n  --answers <json>         Current answer object, replacing optional values\n  -h, --help               display help for command\n"
     },
     {
       "path": "groupi group-invites",

@@ -1,3 +1,4 @@
+import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -134,6 +135,11 @@ export async function accept(
       groupId: invite.groupId,
       membershipId: existing._id,
       status: 'ACCEPTED' as const,
+      joiningQuestionnaire: await getJoiningQuestionnaireStatus(
+        ctx,
+        invite.groupId,
+        actorId
+      ),
     };
   if (invite.status !== 'PENDING')
     fail('CONFLICT', 'This invitation has already been resolved.');
@@ -171,7 +177,16 @@ export async function accept(
       },
     }
   );
-  return { groupId: invite.groupId, membershipId, status: 'ACCEPTED' as const };
+  return {
+    groupId: invite.groupId,
+    membershipId,
+    status: 'ACCEPTED' as const,
+    joiningQuestionnaire: await getJoiningQuestionnaireStatus(
+      ctx,
+      invite.groupId,
+      actorId
+    ),
+  };
 }
 export async function decline(
   ctx: MutationCtx,

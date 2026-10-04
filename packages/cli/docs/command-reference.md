@@ -134,6 +134,13 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups lift-ban](#groupi-groups-lift-ban)
 - [groupi groups leave](#groupi-groups-leave)
 - [groupi groups bans](#groupi-groups-bans)
+- [groupi groups questionnaire](#groupi-groups-questionnaire)
+- [groupi groups questionnaire get](#groupi-groups-questionnaire-get)
+- [groupi groups questionnaire status](#groupi-groups-questionnaire-status)
+- [groupi groups questionnaire history](#groupi-groups-questionnaire-history)
+- [groupi groups questionnaire responses](#groupi-groups-questionnaire-responses)
+- [groupi groups questionnaire configure](#groupi-groups-questionnaire-configure)
+- [groupi groups questionnaire submit](#groupi-groups-questionnaire-submit)
 - [groupi group-invites](#groupi-group-invites)
 - [groupi group-invites list](#groupi-group-invites-list)
 - [groupi group-invites accept](#groupi-group-invites-accept)
@@ -1744,6 +1751,8 @@ Commands:
   lift-ban [options] <group-id> <person-id>       Lift a Group ban without admitting membership
   leave [options] <group-id>                      Leave your own Group membership
   bans [options] <group-id>                       List private active Group bans as manager
+  questionnaire                                   Optional post-admission questionnaire and private
+                                                  retained records
   help [command]                                  display help for command
 ```
 
@@ -2019,6 +2028,102 @@ Options:
   --cursor <cursor>  Continue a page
   --all              Retrieve every page deliberately
   -h, --help         display help for command
+```
+
+## groupi groups questionnaire
+
+```text
+Usage: groupi groups questionnaire [options] [command]
+
+Optional post-admission questionnaire and private retained records
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  get <group-id>                  Read your private current form and saved definitions
+  status <group-id>               Read optional completion status without changing access
+  history [options] <group-id>    Read paginated retained own answered definitions
+  responses [options] <group-id>  Review private responses as current owner or moderator
+  configure [options] <group-id>  Configure exactly one optional joining form as owner; preserves
+                                  retained answers
+  submit [options] <group-id>     Submit or edit private answers as a currently admitted member
+  help [command]                  display help for command
+```
+
+## groupi groups questionnaire get
+
+```text
+Usage: groupi groups questionnaire get [options] <group-id>
+
+Read your private current form and saved definitions
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups questionnaire status
+
+```text
+Usage: groupi groups questionnaire status [options] <group-id>
+
+Read optional completion status without changing access
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups questionnaire history
+
+```text
+Usage: groupi groups questionnaire history [options] <group-id>
+
+Read paginated retained own answered definitions
+
+Options:
+  --limit <number>         Page size (1–100) (default: "20")
+  --cursor <cursor>        Continue page
+  --author-id <person-id>  Review this author as current manager
+  -h, --help               display help for command
+```
+
+## groupi groups questionnaire responses
+
+```text
+Usage: groupi groups questionnaire responses [options] <group-id>
+
+Review private responses as current owner or moderator
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups questionnaire configure
+
+```text
+Usage: groupi groups questionnaire configure [options] <group-id>
+
+Configure exactly one optional joining form as owner; preserves retained answers
+
+Options:
+  --enabled <boolean>  true or false; disabling preserves records
+  --questions <json>   At most 50 stable-ID core questions
+  -h, --help           display help for command
+```
+
+## groupi groups questionnaire submit
+
+```text
+Usage: groupi groups questionnaire submit [options] <group-id>
+
+Submit or edit private answers as a currently admitted member
+
+Options:
+  --form-version <number>  Current questionnaire version from get
+  --answers <json>         Current answer object, replacing optional values
+  -h, --help               display help for command
 ```
 
 ## groupi group-invites

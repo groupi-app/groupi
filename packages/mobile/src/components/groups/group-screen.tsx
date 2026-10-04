@@ -18,6 +18,7 @@ import { useGlobalUser } from '@/context/global-user-context';
 import { getPublicGroupUrl } from '@/lib/public-urls';
 import { GroupLandingInvitation } from './group-invitation-panels';
 import { GroupLeaveControl } from './group-leave-control';
+import { GroupJoiningQuestionnairePrompt } from './group-questionnaire';
 import { GroupForm } from './group-form';
 
 export function GroupDetailScreen() {
@@ -62,6 +63,7 @@ export function GroupDetailScreen() {
           </Text>
         ) : (
           <>
+            <GroupJoiningQuestionnairePrompt groupId={id} />
             <Text
               accessibilityRole='header'
               className='text-2xl font-bold text-foreground'
@@ -126,6 +128,13 @@ export function GroupDetailScreen() {
               </Button>
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
+            <Button
+              variant='outline'
+              accessibilityLabel='My joining questionnaire'
+              onPress={() => router.push(`/groups/${id}/questionnaire`)}
+            >
+              My joining questionnaire
+            </Button>
             <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (
@@ -212,7 +221,18 @@ export function GroupLandingScreen() {
               <Text className='text-foreground'>{group.description}</Text>
             ) : null}
             {isAuthenticated ? (
-              <GroupLandingInvitation groupId={groupId as Id<'groups'>} />
+              <>
+                <GroupLandingInvitation groupId={groupId as Id<'groups'>} />
+                <Button
+                  variant='outline'
+                  accessibilityLabel='My retained questionnaire records'
+                  onPress={() =>
+                    router.push(`/groups/${groupId}/questionnaire`)
+                  }
+                >
+                  My questionnaire records, if previously submitted
+                </Button>
+              </>
             ) : null}
             {isAuthenticated ? (
               <Button

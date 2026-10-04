@@ -1,3 +1,4 @@
+import { status as questionnaireStatus } from '../groupQuestionnaires/contracts';
 import { v } from 'convex/values';
 import { role } from '../groups/contracts';
 export const status = v.union(
@@ -51,6 +52,7 @@ export const sent = v.object({
   status: v.literal('PENDING'),
 });
 export const accepted = v.object({
+  joiningQuestionnaire: questionnaireStatus,
   groupId: v.id('groups'),
   membershipId: v.id('groupMemberships'),
   status: v.literal('ACCEPTED'),

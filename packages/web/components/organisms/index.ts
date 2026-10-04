@@ -40,3 +40,9 @@ export {
   InviteListPersonChoices,
   InviteListSelectedPeople,
 } from './invite-list-people';
+
+export { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
+export { GroupQuestionnaireRecords } from './group-questionnaire-records';
+export { GroupQuestionnaireSettings } from './group-questionnaire-settings';
+export { GroupQuestionnaireReview } from './group-questionnaire-review';
+export { GroupQuestionnaireHistory } from './group-questionnaire-history';

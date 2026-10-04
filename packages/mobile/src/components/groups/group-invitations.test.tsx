@@ -269,6 +269,7 @@ describe('native Group invitations with production providers', () => {
     network.mutation.mockResolvedValue({
       groupId: 'group-123',
       status: 'ACCEPTED',
+      joiningQuestionnaire: { shouldPrompt: false },
     });
   });
   it('accepts an own private invitation explicitly without a friendship or Event action', async () => {
@@ -852,4 +853,41 @@ it('shows truthful loading and empty private ban pages', async () => {
   expect(network.mutation).not.toHaveBeenCalled();
   await act(async () => mounted!.unmount());
   network.banState = 'populated';
+});
+
+it('accepted membership opens an optional questionnaire prompt without second admission', async () => {
+  vi.clearAllMocks();
+  network.authenticated = true;
+  network.member = true;
+  network.manager = false;
+  network.status = 'PENDING';
+  network.available = true;
+  network.mutation.mockResolvedValue({
+    groupId: 'group-123',
+    status: 'ACCEPTED',
+    joiningQuestionnaire: {
+      enabled: true,
+      completed: false,
+      shouldPrompt: true,
+      version: 1,
+    },
+  });
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupInviteInbox));
+  });
+  await act(async () => {
+    await (
+      control(mounted!, 'Accept invitation to Book club').props
+        .onPress as () => Promise<void>
+    )();
+  });
+  expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+    'groupInvites/mutations:acceptGroupInvite',
+    { inviteId: 'invite-123' }
+  );
+  expect(network.replace).toHaveBeenCalledWith(
+    '/groups/group-123/questionnaire'
+  );
+  await act(async () => mounted!.unmount());
 });

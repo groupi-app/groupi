@@ -92,6 +92,13 @@ describe('REST API version contracts', () => {
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        groups: { version: 1 },
+        groupInvites: { version: 1 },
+        groupModeration: { version: 1 },
+        groupQuestionnaire: { version: 1 },
+        groupTransfers: { version: 1, retirement: true },
+        eventTransfers: { version: 1 },
+        eventApplications: { version: 1 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
         eventManagement: { version: 1, pendingRsvpJoin: true },

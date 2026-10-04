@@ -6,6 +6,18 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupQuestionnaires: {
+      queries: {
+        getJoiningQuestionnaire: 'questionnaire',
+        getJoiningQuestionnaireAccess: 'questionnaireAccess',
+        listJoiningQuestionnaireAnswers: 'questionnaireReview',
+        listJoiningQuestionnaireHistory: 'questionnaireHistory',
+      },
+      mutations: {
+        configureJoiningQuestionnaire: 'configureQuestionnaire',
+        submitJoiningQuestionnaire: 'submitQuestionnaire',
+      },
+    },
     groupModeration: {
       queries: { listGroupBans: 'bans' },
       mutations: {
@@ -51,6 +63,21 @@ function setQueryResult(result: unknown) {
     if (String(query) === 'members' || String(query) === 'inbox')
       return { page: [], isDone: true, continueCursor: '' };
     if (String(query) === 'ownInvite') return null;
+    if (String(query) === 'questionnaireAccess')
+      return { canRead: false, hasRecord: false, isMember: false };
+    if (String(query) === 'questionnaire')
+      return {
+        enabled: false,
+        version: 0,
+        questions: [],
+        answers: {},
+        savedQuestions: [],
+        completed: false,
+        shouldPrompt: false,
+        canEdit: false,
+        canConfigure: false,
+        canReview: false,
+      };
     return result;
   });
 }

@@ -222,6 +222,12 @@ export function createGroupInviteRoutes() {
                 groupId: z.string(),
                 membershipId: z.string(),
                 status: z.literal('ACCEPTED'),
+                joiningQuestionnaire: z.object({
+                  enabled: z.boolean(),
+                  version: z.number(),
+                  completed: z.boolean(),
+                  shouldPrompt: z.boolean(),
+                }),
               }),
             },
           },
