@@ -19,7 +19,9 @@ const NavigationGuardContext =
   createContext<NavigationGuardContextValue | null>(null);
 
 export function NavigationGuardProvider({ children }: { children: ReactNode }) {
-  React.useEffect(() => trackNavigationHistory(), []);
+  // This provider is mounted once by the root layout. Install before child
+  // passive effects can create app entries during authentication redirects.
+  React.useLayoutEffect(() => trackNavigationHistory(), []);
   const activeGuardRef = React.useRef<NavigationGuardContextValue | null>(null);
 
   const registerGuard = useCallback((guard: NavigationGuardContextValue) => {

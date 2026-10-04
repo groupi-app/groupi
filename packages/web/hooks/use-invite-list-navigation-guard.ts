@@ -82,9 +82,12 @@ export function useInviteListNavigationGuard(
     function pop(event: PopStateEvent) {
       if (allowedLeave.current) return;
       event.stopImmediatePropagation();
+      // The global tracker can annotate a newly created native fragment entry
+      // during this capture phase; event.state retains its original null value.
+      const currentState = window.history.state;
       const currentIndex =
-        getNavigationHistoryScope(event.state) === originalScope
-          ? getNavigationHistoryIndex(event.state)
+        getNavigationHistoryScope(currentState) === originalScope
+          ? getNavigationHistoryIndex(currentState)
           : undefined;
       if (restoring) {
         const currentBrowserIndex = getBrowserHistoryIndex();

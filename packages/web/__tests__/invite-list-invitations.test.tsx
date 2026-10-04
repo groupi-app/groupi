@@ -854,10 +854,14 @@ describe('From list invitation flow', () => {
     screen.getByLabelText('Invite as').focus();
     await user.keyboard('{Enter}');
     await user.click(await screen.findByRole('option', { name: 'Moderator' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    );
     boundary.role = 'MODERATOR';
     view.rerender(<UnifiedInviteDialog />);
     screen.getByLabelText('Invite as').focus();
     await user.keyboard('{Enter}');
+    await screen.findByRole('option', { name: 'Attendee' });
     expect(
       screen.queryByRole('option', { name: 'Moderator' })
     ).not.toBeInTheDocument();

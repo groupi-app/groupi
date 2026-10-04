@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, cleanup, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  act,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InviteListsSettings from '@/app/(settings)/settings/invite-lists/page';
 import SettingsPage from '@/app/(settings)/settings/page';
 import { SettingsNav } from '@/app/(settings)/settings/components/settings-nav';
 import { NavigationGuardProvider } from '@/app/(settings)/settings/components/navigation-guard-context';
 import { ConvexError } from 'convex/values';
+import { useEffect } from 'react';
+import APIReferencePage from '@/app/docs/api/page';
 
 const boundary = vi.hoisted(() => ({
   collection: undefined as unknown,
@@ -222,6 +231,136 @@ describe('Invite lists Settings', () => {
     expect(boundary.push).toHaveBeenCalledWith('/settings');
   });
 
+  it('restores the Settings entry after Back to an earlier native API fragment and preserves Forward history', async () => {
+    vi.stubGlobal('navigation', undefined);
+    const user = userEvent.setup();
+    const nextState = { __NA: true, tree: { route: '/docs/api' } };
+    window.history.replaceState(nextState, '', '/docs/api');
+    const view = render(
+      <NavigationGuardProvider>
+        <APIReferencePage />
+      </NavigationGuardProvider>
+    );
+    await user.click(
+      within(screen.getByRole('navigation')).getByRole('link', {
+        name: 'Profile',
+      })
+    );
+    await waitFor(() => expect(window.location.hash).toBe('#profile'));
+    window.history.pushState(
+      { __NA: true, tree: 'settings' },
+      '',
+      '/settings/invite-lists'
+    );
+    const originalState = window.history.state;
+    const length = window.history.length;
+    view.rerender(
+      <NavigationGuardProvider>
+        <InviteListsSettings />
+      </NavigationGuardProvider>
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Create invite list' })
+    );
+    await user.type(screen.getByLabelText('List name'), 'From API reference');
+    act(() => window.history.back());
+    await screen.findByRole('button', { name: 'Keep Editing' });
+    expect(window.location.pathname).toBe('/settings/invite-lists');
+    expect(window.location.hash).toBe('');
+    expect(window.history.state).toEqual(originalState);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
+    expect(screen.getByLabelText('List name')).toHaveValue(
+      'From API reference'
+    );
+    act(() => window.history.back());
+    await user.click(await screen.findByRole('button', { name: 'Discard' }));
+    await waitFor(() => expect(window.location.hash).toBe('#profile'));
+    expect(window.location.pathname).toBe('/docs/api');
+    expect(window.history.state).toMatchObject(nextState);
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.hash).toBe(''));
+    act(() => window.history.forward());
+    await waitFor(() => expect(window.location.hash).toBe('#profile'));
+    expect(window.history.state).toMatchObject(nextState);
+    act(() => window.history.forward());
+    await waitFor(() =>
+      expect(window.location.pathname).toBe('/settings/invite-lists')
+    );
+    expect(window.history.state).toEqual(originalState);
+    expect(window.history.length).toBe(length);
+  });
+
+  it.each(['Back', 'Forward'])(
+    'restores browser %s across app entries created on mount before opening Settings without the Navigation API',
+    async direction => {
+      vi.stubGlobal('navigation', undefined);
+      const user = userEvent.setup();
+      window.history.replaceState(
+        { __NA: true, tree: 'landing' },
+        '',
+        '/landing'
+      );
+      function InitialAppNavigation() {
+        useEffect(() => {
+          window.history.pushState(
+            { __NA: true, tree: 'first-route' },
+            '',
+            direction === 'Back' ? '/events' : '/settings/invite-lists'
+          );
+          window.history.pushState(
+            { __NA: true, tree: 'second-route' },
+            '',
+            direction === 'Back' ? '/settings/invite-lists' : '/events'
+          );
+        }, []);
+        return <p>Opening app</p>;
+      }
+      const view = render(
+        <NavigationGuardProvider>
+          <InitialAppNavigation />
+        </NavigationGuardProvider>
+      );
+      if (direction === 'Forward') {
+        act(() => window.history.back());
+        await waitFor(() =>
+          expect(window.location.pathname).toBe('/settings/invite-lists')
+        );
+      }
+      const originalState = window.history.state;
+      const length = window.history.length;
+      view.rerender(
+        <NavigationGuardProvider>
+          <InviteListsSettings />
+        </NavigationGuardProvider>
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'Create invite list' })
+      );
+      await user.type(screen.getByLabelText('List name'), 'Before Settings');
+      act(() =>
+        direction === 'Back' ? window.history.back() : window.history.forward()
+      );
+      await screen.findByRole('button', { name: 'Keep Editing' });
+      expect(window.location.pathname).toBe('/settings/invite-lists');
+      expect(window.history.state).toEqual(originalState);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
+      expect(screen.getByLabelText('List name')).toHaveValue('Before Settings');
+      expect(window.history.length).toBe(length);
+      act(() =>
+        direction === 'Back' ? window.history.back() : window.history.forward()
+      );
+      await user.click(await screen.findByRole('button', { name: 'Discard' }));
+      await waitFor(() => expect(window.location.pathname).toBe('/events'));
+      expect(window.history.state).toMatchObject({
+        __NA: true,
+        tree: direction === 'Back' ? 'first-route' : 'second-route',
+      });
+      expect(window.history.length).toBe(length);
+    }
+  );
+
   it.each(['Back', 'Forward'])(
     'preserves a dirty draft on browser %s and replays navigation after Discard',
     async direction => {
@@ -324,6 +463,42 @@ describe('Invite lists Settings', () => {
       );
     }
   );
+
+  it('keeps a dirty draft recoverable when a user-typed fragment creates an unindexed entry without the Navigation API', async () => {
+    vi.stubGlobal('navigation', undefined);
+    const user = userEvent.setup();
+    render(
+      <NavigationGuardProvider>
+        <InviteListsSettings />
+      </NavigationGuardProvider>
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Create invite list' })
+    );
+    await user.type(screen.getByLabelText('List name'), 'Typed fragment draft');
+    act(() => {
+      window.location.hash = 'typed-fragment';
+    });
+    await screen.findByRole('button', { name: 'Keep Editing' });
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'cannot safely restore an untracked history entry'
+    );
+    expect(window.location.hash).toBe('#typed-fragment');
+    const length = window.history.length;
+    const state = window.history.state;
+    await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
+    expect(screen.getByLabelText('List name')).toHaveValue(
+      'Typed fragment draft'
+    );
+    expect(window.history.state).toEqual(state);
+    expect(window.history.length).toBe(length);
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.hash).toBe(''));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('List name')).toHaveValue(
+      'Typed fragment draft'
+    );
+  });
 
   it.each(['Back', 'Forward'])(
     'uses browser Navigation API positions for unindexed %s entries',
