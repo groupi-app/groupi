@@ -27,6 +27,27 @@ export async function eligible(
     !(await isPersonInDndMode(ctx, personId))
   );
 }
+/** Recheck announcement state, current manager authority and recipient content access at delivery. */
+export async function canDeliverAnnouncement(
+  ctx: QueryCtx | MutationCtx,
+  announcementId: Id<'groupAnnouncements'>,
+  personId: Id<'persons'>
+) {
+  const announcement = await ctx.db.get(announcementId);
+  if (!announcement?.senderId || announcement.state === 'CANCELLED')
+    return false;
+  try {
+    await requireManager(ctx, announcement.groupId, announcement.senderId);
+    return await eligible(
+      ctx,
+      announcement.groupId,
+      announcement.senderId,
+      personId
+    );
+  } catch {
+    return false;
+  }
+}
 export async function send(
   ctx: MutationCtx,
   senderId: Id<'persons'>,

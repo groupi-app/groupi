@@ -1,5 +1,4 @@
-import { eligible as announcementEligible } from '../groupAnnouncements/model';
-import { requireManager as requireGroupManager } from '../groups/policy';
+import { canDeliverAnnouncement } from '../groupAnnouncements/model';
 import { makeFunctionReference } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -382,25 +381,11 @@ export const claimDeliveries = internalMutation({
       }
 
       if (notification.groupAnnouncementId) {
-        const announcement = await ctx.db.get(notification.groupAnnouncementId);
-        let permitted = false;
-        if (announcement?.senderId && announcement.state !== 'CANCELLED') {
-          try {
-            await requireGroupManager(
-              ctx,
-              announcement.groupId,
-              announcement.senderId
-            );
-            permitted = await announcementEligible(
-              ctx,
-              announcement.groupId,
-              announcement.senderId,
-              notification.personId
-            );
-          } catch {
-            permitted = false;
-          }
-        }
+        const permitted = await canDeliverAnnouncement(
+          ctx,
+          notification.groupAnnouncementId,
+          notification.personId
+        );
         if (!permitted) {
           await ctx.db.patch(deliveryId, {
             status: 'TICKET_ERROR',
