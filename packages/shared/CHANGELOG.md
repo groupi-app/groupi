@@ -1,5 +1,12 @@
 # @groupi/shared
 
+## 0.5.0
+
+### Patch Changes
+
+- eaec01b: Support validated CLI add-on participation with participant isolation and consistent app automation behavior.
+- eaec01b: Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.
+
 ## 0.4.0
 
 ### Minor Changes
