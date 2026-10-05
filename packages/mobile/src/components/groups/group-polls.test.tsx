@@ -180,12 +180,25 @@ function result(name: string, _args: Record<string, unknown>) {
 }
 import { ConvexClientProvider } from '../../providers/convex-provider';
 import { GlobalUserProvider } from '../../context/global-user-context';
-import PollScreen from '../../../app/groups/[groupId]/polls/[toolId]';
-import HistoryScreen from '../../../app/groups/[groupId]/polls/[toolId]/history';
-import ResultsScreen from '../../../app/groups/[groupId]/polls/[toolId]/results';
-import CreateScreen from '../../../app/groups/[groupId]/polls/create';
-import HubScreen from '../../../app/groups/[groupId]/polls';
-import ManageScreen from '../../../app/groups/[groupId]/polls/[toolId]/manage';
+import PollScreen, {
+  ErrorBoundary as PollError,
+} from '../../../app/groups/[groupId]/polls/[toolId]';
+import HistoryScreen, {
+  ErrorBoundary as HistoryError,
+} from '../../../app/groups/[groupId]/polls/[toolId]/history';
+import ResultsScreen, {
+  ErrorBoundary as ResultsError,
+} from '../../../app/groups/[groupId]/polls/[toolId]/results';
+import CreateScreen, {
+  ErrorBoundary as CreateError,
+} from '../../../app/groups/[groupId]/polls/create';
+import HubScreen, {
+  ErrorBoundary as HubError,
+} from '../../../app/groups/[groupId]/polls';
+import ManageScreen, {
+  ErrorBoundary as ManageError,
+} from '../../../app/groups/[groupId]/polls/[toolId]/manage';
+import { ErrorBoundary as PolicyError } from '../../../app/groups/[groupId]/polls/policy';
 function screen(component: () => ReactNode) {
   return createElement(
     ConvexClientProvider,
@@ -429,6 +442,49 @@ it.each(['MANAGERS', 'MEMBERS'] as const)(
       visibility === 'MANAGERS'
         ? 'Account deletion purges your private votes and history.'
         : 'Account deletion preserves shared latest votes anonymously and purges private history.'
+    );
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => m.unmount());
+  }
+);
+
+it.each([
+  ['hub', HubError],
+  ['poll', PollError],
+  ['history', HistoryError],
+  ['results', ResultsError],
+  ['create', CreateError],
+  ['manage', ManageError],
+  ['policy', PolicyError],
+] as const)(
+  'native %s route boundary retains current retry, policy and private-history recovery',
+  async (_route, Boundary) => {
+    const retry = vi.fn(async () => {});
+    const m = await mount(() =>
+      createElement(Boundary, {
+        error: new Error('Current poll access denied'),
+        retry,
+      })
+    );
+    expect(
+      m.root
+        .findAll(
+          n => n.type === 'Text' && n.props.accessibilityRole === 'alert'
+        )
+        .map(n => n.props.children)
+    ).toContain('Current poll access denied');
+    const retryControl = m.root.findAll(
+      n => n.type === 'Pressable' && n.props.onPress === retry
+    )[0];
+    await act(async () => {
+      await (retryControl.props.onPress as () => Promise<void>)();
+    });
+    expect(retry).toHaveBeenCalledOnce();
+    await press(m, 'Polls and owner policy');
+    expect(network.push).toHaveBeenLastCalledWith('/groups/group-123/polls');
+    await press(m, 'My retained vote history');
+    expect(network.push).toHaveBeenLastCalledWith(
+      '/groups/group-123/polls/tool-123/history'
     );
     expect(network.mutation).not.toHaveBeenCalled();
     await act(async () => m.unmount());
