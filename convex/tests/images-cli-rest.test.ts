@@ -27,6 +27,8 @@ async function success(key: string, args: string[]) {
   expect(result.stderr).toBe('');
   return JSON.parse(result.stdout);
 }
+// This workflow launches 16 CLI processes. Windows runner startup overhead can
+// exceed Vitest's five-second default; retain the bridge's 15s per-command bound.
 it('public executable uploads, replaces and removes account/event images with actual storage and authenticated reads', async () => {
   const owner = await bridge.actor('images-owner');
   const other = await bridge.actor('images-other');
@@ -131,7 +133,7 @@ it('public executable uploads, replaces and removes account/event images with ac
   expect(missingConfirm.code).toBe(2);
   await success(owner.rawKey, ['account', 'avatar', 'remove', '--yes']);
   expect((await success(owner.rawKey, ['account', 'get'])).image).toBeNull();
-});
+}, 30000);
 it('rejects invalid local image files and focal points without changing the existing cover', async () => {
   const owner = await bridge.actor('bad-images');
   const event = await success(owner.rawKey, [
