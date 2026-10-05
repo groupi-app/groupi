@@ -50,7 +50,10 @@ export async function readApplications(
     if (
       typeof result.canApply !== 'boolean' ||
       typeof result.canReview !== 'boolean' ||
-      !result.settings ||
+      (result.settings !== null &&
+        (!result.settings ||
+          typeof result.settings !== 'object' ||
+          Array.isArray(result.settings))) ||
       !('pending' in result)
     )
       throw new CliError('INVALID_RESPONSE', 'Invalid application form.', 5);
@@ -107,6 +110,8 @@ export async function writeApplication(profile, key, id, action, body = {}) {
     await mutateApi(profile, key, path, {
       method: action === 'configure' ? 'PUT' : 'POST',
       body: payload,
+      forbiddenGuidance:
+        'Check the selected profile, API key, current Event reviewer authority and current audience eligibility. Refresh the application form/history or review queue before retrying; a manager invitation is a separate operation.',
       recovery:
         'Read the application form/history or review queue before retrying.',
     })

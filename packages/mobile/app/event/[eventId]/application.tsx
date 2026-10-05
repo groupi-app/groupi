@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, TextInput } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { EventApplicationBoundary } from '@/components/events/event-application-boundary';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { Id } from 'convex/_generated/dataModel';
 import type { ApplicationAnswers } from '@groupi/shared/hooks';
 import { DetailScreenTemplate } from '@/components/templates/detail-screen-template';
@@ -14,6 +15,13 @@ import {
 } from '@/hooks/use-event-applications';
 
 export default function ApplicationScreen() {
+  return (
+    <EventApplicationBoundary>
+      <ApplicationContent />
+    </EventApplicationBoundary>
+  );
+}
+function ApplicationContent() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const id = eventId as Id<'events'>;
   const form = useApplicationForm({ eventId: id });
@@ -50,100 +58,102 @@ export default function ApplicationScreen() {
           <>
             <Text>
               Approval adds you as an Attendee with a Pending RSVP. Event
-              questionnaires remain separate.
+              questionnaires remain separate. Current audience eligibility,
+              including required Group onboarding, is checked at submission and
+              approval. Group managers do not gain Event review authority.
             </Text>
             {form.pending || form.canApply ? (
               <>
-                {(form.pending?.questions ?? form.settings.questions).map(
-                  question => (
-                    <View key={question.id} className='gap-2'>
-                      <Text>
-                        {question.label}
-                        {question.required ? ' (required)' : ''}
-                      </Text>
-                      {question.type === 'YES_NO' ||
-                      ['MULTIPLE_CHOICE', 'DROPDOWN', 'CHECKBOXES'].includes(
-                        question.type
-                      ) ? (
-                        (question.type === 'YES_NO'
-                          ? ['Yes', 'No']
-                          : (question.options ?? [])
-                        ).map(option => {
-                          const value =
-                            question.type === 'YES_NO'
-                              ? option === 'Yes'
-                              : option;
-                          const checked =
-                            question.type === 'CHECKBOXES'
-                              ? Array.isArray(answers[question.id]) &&
-                                (answers[question.id] as string[]).includes(
-                                  option
-                                )
-                              : answers[question.id] === value;
-                          return (
-                            <Button
-                              key={option}
-                              variant={checked ? 'default' : 'outline'}
-                              accessibilityLabel={`${question.label}: ${option}`}
-                              accessibilityRole={
-                                question.type === 'CHECKBOXES'
-                                  ? 'checkbox'
-                                  : 'radio'
-                              }
-                              accessibilityState={{ checked }}
-                              disabled={busy}
-                              onPress={() =>
-                                setDraft({
-                                  ...answers,
-                                  [question.id]:
-                                    question.type === 'CHECKBOXES'
-                                      ? checked
-                                        ? (
-                                            answers[question.id] as string[]
-                                          ).filter(v => v !== option)
-                                        : [
-                                            ...(Array.isArray(
-                                              answers[question.id]
-                                            )
-                                              ? (answers[
-                                                  question.id
-                                                ] as string[])
-                                              : []),
-                                            option,
-                                          ]
-                                      : value,
-                                })
-                              }
-                            >
-                              {option}
-                            </Button>
-                          );
-                        })
-                      ) : (
-                        <TextInput
-                          accessibilityLabel={question.label}
-                          className='rounded-input border border-border p-3 text-foreground'
-                          multiline={question.type === 'LONG_ANSWER'}
-                          keyboardType={
-                            question.type === 'NUMBER' ? 'numeric' : 'default'
-                          }
-                          editable={!busy}
-                          value={String(answers[question.id] ?? '')}
-                          onChangeText={value => {
-                            const next = { ...answers };
-                            if (value === '') delete next[question.id];
-                            else
-                              next[question.id] =
-                                question.type === 'NUMBER'
-                                  ? Number(value)
-                                  : value;
-                            setDraft(next);
-                          }}
-                        />
-                      )}
-                    </View>
-                  )
-                )}
+                {(
+                  form.pending?.questions ??
+                  form.settings?.questions ??
+                  []
+                ).map(question => (
+                  <View key={question.id} className='gap-2'>
+                    <Text>
+                      {question.label}
+                      {question.required ? ' (required)' : ''}
+                    </Text>
+                    {question.type === 'YES_NO' ||
+                    ['MULTIPLE_CHOICE', 'DROPDOWN', 'CHECKBOXES'].includes(
+                      question.type
+                    ) ? (
+                      (question.type === 'YES_NO'
+                        ? ['Yes', 'No']
+                        : (question.options ?? [])
+                      ).map(option => {
+                        const value =
+                          question.type === 'YES_NO'
+                            ? option === 'Yes'
+                            : option;
+                        const checked =
+                          question.type === 'CHECKBOXES'
+                            ? Array.isArray(answers[question.id]) &&
+                              (answers[question.id] as string[]).includes(
+                                option
+                              )
+                            : answers[question.id] === value;
+                        return (
+                          <Button
+                            key={option}
+                            variant={checked ? 'default' : 'outline'}
+                            accessibilityLabel={`${question.label}: ${option}`}
+                            accessibilityRole={
+                              question.type === 'CHECKBOXES'
+                                ? 'checkbox'
+                                : 'radio'
+                            }
+                            accessibilityState={{ checked }}
+                            disabled={busy || !form.canApply}
+                            onPress={() =>
+                              setDraft({
+                                ...answers,
+                                [question.id]:
+                                  question.type === 'CHECKBOXES'
+                                    ? checked
+                                      ? (
+                                          answers[question.id] as string[]
+                                        ).filter(v => v !== option)
+                                      : [
+                                          ...(Array.isArray(
+                                            answers[question.id]
+                                          )
+                                            ? (answers[question.id] as string[])
+                                            : []),
+                                          option,
+                                        ]
+                                    : value,
+                              })
+                            }
+                          >
+                            {option}
+                          </Button>
+                        );
+                      })
+                    ) : (
+                      <TextInput
+                        accessibilityLabel={question.label}
+                        className='rounded-input border border-border p-3 text-foreground'
+                        multiline={question.type === 'LONG_ANSWER'}
+                        keyboardType={
+                          question.type === 'NUMBER' ? 'numeric' : 'default'
+                        }
+                        editable={!busy && form.canApply}
+                        value={String(answers[question.id] ?? '')}
+                        onChangeText={value => {
+                          const next = { ...answers };
+                          if (value === '') delete next[question.id];
+                          else
+                            next[question.id] =
+                              question.type === 'NUMBER'
+                                ? Number(value)
+                                : value;
+                          setDraft(next);
+                        }}
+                      />
+                    )}
+                  </View>
+                ))}
                 <Button
                   accessibilityLabel={
                     form.pending ? 'Update application' : 'Submit application'
@@ -177,7 +187,7 @@ export default function ApplicationScreen() {
             ) : (
               <Text>
                 Applying is currently unavailable. Your private history remains
-                below.
+                below. Restore a qualifying audience to apply again.
               </Text>
             )}
           </>
@@ -190,6 +200,21 @@ export default function ApplicationScreen() {
             className='gap-2 rounded-card border border-border p-3'
           >
             <Text>{application.status}</Text>
+            {application.status === 'APPROVED' ? (
+              <>
+                <Text>
+                  Admitted as an Attendee with a Pending RSVP. Event membership
+                  remains independent of Group eligibility; no second acceptance
+                  is needed.
+                </Text>
+                <Button
+                  accessibilityLabel='Open admitted Event'
+                  onPress={() => router.push(`/event/${id}`)}
+                >
+                  Open Event
+                </Button>
+              </>
+            ) : null}
             {application.questions.map(question => (
               <Text key={question.id}>
                 {question.label}:{' '}

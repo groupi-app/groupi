@@ -58,7 +58,7 @@ export const applicationResultValidator = v.object({
   status: applicationStatusValidator,
 });
 export const applicationFormValidator = v.object({
-  settings: applicationSettingsValidator,
+  settings: v.union(applicationSettingsValidator, v.null()),
   pending: v.union(applicationValidator, v.null()),
   canApply: v.boolean(),
   canReview: v.boolean(),

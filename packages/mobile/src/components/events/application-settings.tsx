@@ -28,6 +28,12 @@ export function ApplicationSettings({ eventId }: { eventId: Id<'events'> }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   if (!form) return <Text>Loading application settings…</Text>;
+  if (form.settings === null)
+    return (
+      <Text accessibilityRole='alert'>
+        Application settings are unavailable under your current Event authority.
+      </Text>
+    );
   const questions = draft ?? form.settings.questions;
   const reviewerPolicy = policy ?? form.settings.reviewerPolicy;
   function update(index: number, patch: Partial<ApplicationQuestion>) {

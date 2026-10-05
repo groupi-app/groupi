@@ -21,6 +21,8 @@ const renderer = require(
   })
 ) as { create: (element: ReactNode) => Mounted };
 const network = vi.hoisted(() => ({
+  settingsAvailable: true,
+  ownHistory: [] as Record<string, unknown>[],
   reviewPage: [] as Record<string, unknown>[],
   canApply: true,
   canReview: false,
@@ -29,6 +31,8 @@ const network = vi.hoisted(() => ({
   entryAction: 'JOIN',
   admissionPolicy: 'DIRECT',
   role: 'ORGANIZER',
+  visibility: 'PUBLIC',
+  applicationQueryError: null as Error | null,
   queryError: null as Error | null,
   mutation: vi.fn(),
   watches: vi.fn(),
@@ -84,19 +88,26 @@ vi.mock('../../../lib/convex', () => ({
         localQueryResult: () => {
           if (network.queryError && name === 'events/queries:getEventLogistics')
             throw network.queryError;
+          if (
+            network.applicationQueryError &&
+            name.startsWith('eventApplications/')
+          )
+            throw network.applicationQueryError;
           if (name === 'eventApplications/queries:getForm')
             return {
-              settings: {
-                questions: [
-                  {
-                    id: 'why',
-                    label: 'Why join?',
-                    type: 'SHORT_ANSWER',
-                    required: true,
-                  },
-                ],
-                reviewerPolicy: 'ORGANIZERS_AND_MODERATORS',
-              },
+              settings: network.settingsAvailable
+                ? {
+                    questions: [
+                      {
+                        id: 'why',
+                        label: 'Why join?',
+                        type: 'SHORT_ANSWER',
+                        required: true,
+                      },
+                    ],
+                    reviewerPolicy: 'ORGANIZERS_AND_MODERATORS',
+                  }
+                : null,
               pending: network.pending,
               canApply: network.canApply,
               canReview: network.canReview,
@@ -106,7 +117,9 @@ vi.mock('../../../lib/convex', () => ({
             name === 'eventApplications/queries:list'
           )
             return {
-              page: name.endsWith(':list') ? network.reviewPage : [],
+              page: name.endsWith(':list')
+                ? network.reviewPage
+                : network.ownHistory,
               isDone: false,
               continueCursor: 'page-two',
             };
@@ -140,7 +153,7 @@ const logistics = () => ({
     description: 'Bring lunch',
     location: 'Riverside park',
     timezone: 'America/New_York',
-    visibility: 'PUBLIC',
+    visibility: network.visibility,
     admissionPolicy: network.admissionPolicy,
     chosenDateTime: 1900000000000,
     chosenEndDateTime: 1900003600000,
@@ -174,11 +187,15 @@ function pressable(mounted: Mounted, label: string) {
 describe('native safe event admission', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    network.settingsAvailable = true;
+    network.ownHistory = [];
     network.reviewPage = [];
     network.canApply = true;
     network.canReview = false;
     network.pending = null;
     network.queryError = null;
+    network.applicationQueryError = null;
+    network.visibility = 'PUBLIC';
     network.pathname = '/event/event-123/preview';
     network.entryAction = 'JOIN';
     network.admissionPolicy = 'DIRECT';
@@ -190,6 +207,7 @@ describe('native safe event admission', () => {
   });
   it('opens the private application route from safe logistics without joining', async () => {
     network.entryAction = 'APPLY';
+    network.visibility = 'PRIVATE';
     network.admissionPolicy = 'APPLY';
     let mounted: Mounted;
     await act(async () => {
@@ -247,6 +265,7 @@ describe('native safe event admission', () => {
   });
   it('keeps retained questions and withdrawal available after eligibility loss', async () => {
     network.canApply = false;
+    network.settingsAvailable = false;
     network.pending = {
       _id: 'application-1',
       applicant: {
@@ -277,6 +296,13 @@ describe('native safe event admission', () => {
       )[0].props.value
     ).toBe('Original answer');
     expect(pressable(mounted!, 'Update application').props.disabled).toBe(true);
+    expect(
+      mounted!.root.findAll(
+        node =>
+          node.type === 'TextInput' &&
+          node.props.accessibilityLabel === 'Original question'
+      )[0].props.editable
+    ).toBe(false);
     await act(async () => {
       await (
         pressable(mounted!, 'Withdraw application').props
@@ -664,6 +690,179 @@ describe('native safe event admission', () => {
     expect(text).not.toContain('Park picnic');
     expect(pressable(mounted!, 'Join Park picnic')).toBeUndefined();
     expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => mounted!.unmount());
+  });
+  it('restores retained pending editing when Group eligibility returns without private member queries', async () => {
+    network.settingsAvailable = false;
+    network.canApply = false;
+    network.pending = {
+      _id: 'application-1',
+      questions: [
+        {
+          id: 'old',
+          label: 'Original question',
+          type: 'SHORT_ANSWER',
+          required: true,
+        },
+      ],
+      answers: { old: 'Retained answer' },
+    };
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(ApplicationScreen));
+    });
+    let input = mounted!.root.findAll(
+      node =>
+        node.type === 'TextInput' &&
+        node.props.accessibilityLabel === 'Original question'
+    )[0];
+    expect(input.props.editable).toBe(false);
+    await act(async () => {
+      network.settingsAvailable = true;
+      network.canApply = true;
+      network.subscribers.forEach(listener => listener());
+    });
+    input = mounted!.root.findAll(
+      node =>
+        node.type === 'TextInput' &&
+        node.props.accessibilityLabel === 'Original question'
+    )[0];
+    expect(input.props.editable).toBe(true);
+    await act(async () => {
+      await (
+        pressable(mounted!, 'Update application').props
+          .onPress as () => Promise<void>
+      )();
+    });
+    expect(network.mutation).toHaveBeenCalledWith(
+      'eventApplications/mutations:submit',
+      { eventId: 'event-123', answers: { old: 'Retained answer' } }
+    );
+    expect(
+      network.watches.mock.calls.every(([name]) =>
+        [
+          'eventApplications/queries:getForm',
+          'eventApplications/queries:history',
+        ].includes(name)
+      )
+    ).toBe(true);
+    await act(async () => mounted!.unmount());
+  });
+  it('opens independent admitted Event membership after Group eligibility is lost', async () => {
+    network.canApply = false;
+    network.settingsAvailable = false;
+    network.ownHistory = [
+      {
+        _id: 'approved-one',
+        status: 'APPROVED',
+        questions: [{ id: 'why', label: 'Why join?' }],
+        answers: { why: 'Retained answer' },
+        decisions: [{ status: 'APPROVED', actorId: 'organizer', at: 1 }],
+      },
+    ];
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(ApplicationScreen));
+    });
+    expect(pressable(mounted!, 'Submit application')).toBeUndefined();
+    await act(async () => {
+      (
+        pressable(mounted!, 'Open admitted Event').props.onPress as () => void
+      )();
+    });
+    expect(network.push).toHaveBeenCalledWith('/event/event-123');
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => mounted!.unmount());
+  });
+  it('recovers a revoked review query with current authority and no private queue subscription', async () => {
+    network.applicationQueryError = new Error(
+      'Current Event authority required'
+    );
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(ApplicationsScreen));
+    });
+    expect(pressable(mounted!, 'Retry applications')).toBeDefined();
+    network.applicationQueryError = null;
+    network.settingsAvailable = false;
+    network.canReview = false;
+    await act(async () => {
+      (pressable(mounted!, 'Retry applications').props.onPress as () => void)();
+    });
+    expect(pressable(mounted!, 'Next review page')).toBeUndefined();
+    expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
+      'eventApplications/queries:list'
+    );
+    await act(async () => mounted!.unmount());
+    report.mockRestore();
+  });
+  it('permits a stale approval retry only through the Event decision mutation and removes controls on authority loss', async () => {
+    network.canReview = true;
+    network.reviewPage = [
+      {
+        _id: 'application-1',
+        applicant: { name: 'Jordan' },
+        status: 'PENDING',
+        questions: [],
+        answers: {},
+        decisions: [],
+      },
+    ];
+    network.mutation.mockRejectedValueOnce(
+      new Error('Applicant no longer has a qualifying audience')
+    );
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(ApplicationsScreen));
+    });
+    await act(async () => {
+      await (
+        pressable(mounted!, 'Approve Jordan').props
+          .onPress as () => Promise<void>
+      )();
+    });
+    expect(
+      mounted!.root
+        .findAll(node => node.type === 'Text')
+        .map(node => node.props.children)
+    ).toContain('Applicant no longer has a qualifying audience');
+    expect(pressable(mounted!, 'Approve Jordan').props.disabled).toBe(false);
+    await act(async () => {
+      await (
+        pressable(mounted!, 'Approve Jordan').props
+          .onPress as () => Promise<void>
+      )();
+    });
+    expect(
+      network.mutation.mock.calls.every(
+        ([name]) => name === 'eventApplications/mutations:decide'
+      )
+    ).toBe(true);
+    await act(async () => {
+      network.canReview = false;
+      network.settingsAvailable = false;
+      network.subscribers.forEach(listener => listener());
+    });
+    expect(pressable(mounted!, 'Approve Jordan')).toBeUndefined();
+    await act(async () => mounted!.unmount());
+  });
+
+  it('does not invent a reviewer policy when current admission settings are unavailable', async () => {
+    network.settingsAvailable = false;
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(EventAdmissionSettingsScreen));
+    });
+    expect(
+      mounted!.root
+        .findAll(node => node.type === 'Text')
+        .map(node => node.props.children)
+    ).toContain(
+      'Application settings are unavailable under your current Event authority.'
+    );
+    expect(pressable(mounted!, 'Add admission question')).toBeUndefined();
+    expect(pressable(mounted!, 'Organizer only reviews')).toBeUndefined();
     await act(async () => mounted!.unmount());
   });
 });

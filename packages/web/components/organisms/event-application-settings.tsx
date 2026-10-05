@@ -17,6 +17,12 @@ export function EventApplicationSettings({
   const form = useApplicationForm({ eventId });
   if (form === undefined)
     return <p role='status'>Loading application settings…</p>;
+  if (form.settings === null)
+    return (
+      <p role='alert'>
+        Application settings are unavailable under your current Event authority.
+      </p>
+    );
   return (
     <ApplicationSettingsForm
       key={JSON.stringify(form.settings)}

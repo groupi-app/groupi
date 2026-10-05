@@ -3,8 +3,7 @@ import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
 import { type PaginationOptions } from 'convex/server';
-import { eventAdmissionAccess, hasEventAudience } from '../events/admission';
-import { checkIsBlocked } from '../lib/privacy';
+import { eventAdmissionAccess } from '../events/admission';
 import { requireWriteRole } from '../events/writes';
 import { notifyPerson } from '../lib/notifications';
 import { admitAttendeeForPerson } from '../events/management';
@@ -81,10 +80,8 @@ export async function getForm(
       .first();
     if (!previous) fail('Event is not available');
   }
-  const visibleSettings =
-    access.canRead || canReview
-      ? settings
-      : { ...settings, questions: pending?.questions ?? [] };
+  // Historical ownership grants access to the submission, not current settings.
+  const visibleSettings = access.canRead || canReview ? settings : null;
   return {
     settings: visibleSettings,
     canApply: access.canApply,
@@ -293,16 +290,9 @@ export async function decide(
   if (reason && reason.length > 2000) fail('Decision reason is too long');
   if (decision === 'APPROVED') {
     await requireActivePerson(ctx, application.personId);
-    const ban = await ctx.db
-      .query('eventBans')
-      .withIndex('by_person_event', q =>
-        q.eq('personId', application.personId).eq('eventId', event._id)
-      )
-      .first();
     if (
-      !(await hasEventAudience(ctx, event, application.personId)) ||
-      ban ||
-      (await checkIsBlocked(ctx, application.personId, event.creatorId))
+      !(await eventAdmissionAccess(ctx, event, application.personId))
+        .hasApplicationAudience
     )
       fail('Applicant is no longer eligible');
     await admitAttendeeForPerson(ctx, application.personId, event._id);

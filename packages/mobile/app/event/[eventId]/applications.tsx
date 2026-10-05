@@ -1,3 +1,4 @@
+import { EventApplicationBoundary } from '@/components/events/event-application-boundary';
 import { useState } from 'react';
 import { View, TextInput } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -11,6 +12,13 @@ import {
   useDecideApplication,
 } from '@/hooks/use-event-applications';
 export default function ApplicationsScreen() {
+  return (
+    <EventApplicationBoundary>
+      <ReviewContent />
+    </EventApplicationBoundary>
+  );
+}
+function ReviewContent() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const id = eventId as Id<'events'>;
   const form = useApplicationForm({ eventId: id });
@@ -58,6 +66,16 @@ export default function ApplicationsScreen() {
           <Text>You cannot review applications for this event.</Text>
         ) : (
           <>
+            <Text>
+              Only current Event reviewers decide applications. Approval
+              rechecks current audience eligibility, including Group onboarding.
+              A manager invitation is a separate independent grant.
+            </Text>
+            {queue === undefined ? (
+              <Text>Loading application queue…</Text>
+            ) : queue.page.length === 0 ? (
+              <Text>No applications on this page.</Text>
+            ) : null}
             {queue?.page.map(application => (
               <View
                 key={application._id}

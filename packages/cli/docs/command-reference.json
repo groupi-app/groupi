@@ -176,11 +176,11 @@
     },
     {
       "path": "groupi events applications",
-      "help": "Usage: groupi events applications [options] [command]\n\nConfigure, submit, or review private Event applications\n\nOptions:\n  -h, --help                          display help for command\n\nCommands:\n  form <event-id>                     Read current questions, your pending request, and action flags\n  history [options] <event-id>        Read your private history\n  list [options] <event-id>           Read current authorized reviewer queue and history\n  configure [options] <event-id>      Set core admission form without changing add-ons or admission\n                                      policy\n  submit [options] <event-id>\n  withdraw <application-id>\n  approve [options] <application-id>  Admit immediately as Attendee/Pending, with no second\n                                      acceptance\n  decline [options] <application-id>  Decline this application; eligible people can reapply\n  help [command]                      display help for command\n"
+      "help": "Usage: groupi events applications [options] [command]\n\nConfigure, submit, or review private Event applications\n\nOptions:\n  -h, --help                          display help for command\n\nCommands:\n  form <event-id>                     Read permitted current settings (null after audience loss),\n                                      your pending request, and action flags\n  history [options] <event-id>        Read your private history\n  list [options] <event-id>           Read current authorized reviewer queue and history\n  configure [options] <event-id>      Set core admission form without changing add-ons or admission\n                                      policy\n  submit [options] <event-id>\n  withdraw <application-id>\n  approve [options] <application-id>  Admit immediately as Attendee/Pending, with no second\n                                      acceptance\n  decline [options] <application-id>  Decline this application; eligible people can reapply\n  help [command]                      display help for command\n"
     },
     {
       "path": "groupi events applications form",
-      "help": "Usage: groupi events applications form [options] <event-id>\n\nRead current questions, your pending request, and action flags\n\nOptions:\n  -h, --help  display help for command\n"
+      "help": "Usage: groupi events applications form [options] <event-id>\n\nRead permitted current settings (null after audience loss), your pending request, and action flags\n\nOptions:\n  -h, --help  display help for command\n"
     },
     {
       "path": "groupi events applications history",

@@ -25,9 +25,18 @@ class ApplicationBoundary extends Component<
   }
   render() {
     return this.state.failed ? (
-      <p role='alert'>
-        Applications are unavailable or you do not have permission to view them.
-      </p>
+      <div className='space-y-3'>
+        <p role='alert'>
+          Applications are unavailable or you do not have permission to view
+          them.
+        </p>
+        <Button
+          variant='outline'
+          onClick={() => this.setState({ failed: false })}
+        >
+          Retry applications
+        </Button>
+      </div>
     ) : (
       this.props.children
     );
@@ -69,18 +78,25 @@ function ApplicationContent({
       <p>
         Your answers are private to you and authorized Event reviewers. Approval
         admits you as an Attendee with a Pending RSVP; no second acceptance is
-        needed.
+        needed. Current audience eligibility, including required Group
+        onboarding, is checked at submission and approval. Group managers do not
+        gain Event review authority.
       </p>
       {form.canApply || form.pending ? (
         <ApplicantForm
-          key={form.pending?._id ?? JSON.stringify(form.settings.questions)}
+          key={
+            form.pending?._id ?? JSON.stringify(form.settings?.questions ?? [])
+          }
           eventId={eventId}
           pending={form.pending}
-          questions={form.pending?.questions ?? form.settings.questions}
+          questions={form.pending?.questions ?? form.settings?.questions ?? []}
           canApply={form.canApply}
         />
       ) : (
-        <p role='status'>You cannot apply to this Event at this time.</p>
+        <p role='status'>
+          You cannot apply to this Event at this time. Your private history
+          remains available below. Restore a qualifying audience to apply again.
+        </p>
       )}
       <ApplicationRecords eventId={eventId} review={false} />
     </section>
@@ -201,6 +217,14 @@ function ApplicationRecords({
       <h2 className='text-xl font-semibold'>
         {review ? 'Review applications' : 'Your application history'}
       </h2>
+      {review && (
+        <p>
+          Only current Event reviewers decide these applications. Approval
+          rechecks current audience eligibility, including Group onboarding. A
+          manager invitation is a separate independent grant; member
+          questionnaires follow admission.
+        </p>
+      )}
       {records === undefined ? (
         <p role='status'>Loading application records…</p>
       ) : (

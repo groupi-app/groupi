@@ -29,7 +29,7 @@ export function registerEventApplicationCommands(program, events, json) {
   command
     .command('form <event-id>')
     .description(
-      'Read current questions, your pending request, and action flags'
+      'Read permitted current settings (null after audience loss), your pending request, and action flags'
     )
     .action(async id => {
       const { profile, key } = await connect();

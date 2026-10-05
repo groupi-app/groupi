@@ -200,6 +200,22 @@ request ID and inputs rather than expanding changed people before recovery.
 
 ## Workflows and scope
 
+Core Event applications use `events applications form|submit|history|list|approve|decline`
+under the Organizer's APPLY admission policy. Public, selected Friends and
+currently eligible whole-Group audiences combine by OR at submission and approval.
+Required Group onboarding and current bans/blocks can remove eligibility; losing
+one path leaves other qualifying paths effective. Group management grants no
+Event reviewer authority. An independent Event manager invitation is a separate
+operation, not a substitute for stale application approval.
+
+After audience loss, `applications form` returns `settings: null` but the author's
+pending snapshot and private paginated history remain available. Inspect those
+records and current Event reviewer/audience permission after a denied write.
+Approval creates Attendee/Pending once without a second acceptance; later Group
+loss leaves Event membership/RSVP independent, and replay cannot readmit a
+departed participant. This flow is separate from Group applications and Event
+questionnaires shown after admission.
+
 Use [the tested planning workflow](../../docs/workflow-examples.md): organizer
 creates an event and username invitation, the distinct intended attendee accepts
 and RSVPs, and organizer inspects attendance. Bind separate profiles/credentials

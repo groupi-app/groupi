@@ -698,11 +698,24 @@ application, against its retained questions. A changed Event form never rewrites
 reviewed answers or an existing pending definition. Use `applications withdraw
 <application-id>` or read paginated `applications history <event-id> --limit 20
 --cursor <cursor>`. Your private history remains readable after audience loss.
+The form's `settings` is `null` when current Event read/review access is lost;
+your pending questions/answers and historical snapshots remain private and
+readable. Use the Event application route directly even if its logistics preview
+is no longer available.
 
 Current reviewers use `applications list <event-id>` and
 `applications approve|decline <application-id> [--reason <reason>]`.
 Approval rechecks current audience, blocks and bans, immediately creates
-Attendee/Pending, and requires no second acceptance. Declined/withdrawn applicants
+Attendee/Pending, and requires no second acceptance.
+Qualifying Public, selected Friends and currently eligible whole-Group audiences
+combine by OR at both submission and approval. Required Group onboarding,
+leaving/removal/ban, Group retirement or audience withdrawal removes only that
+Group's path. A remaining qualifying path can still permit approval. Group
+management grants no Event review authority, and accepting a separate permitted
+Event invitation cannot make stale application approval eligible. After approval,
+Event membership and RSVP survive later Group eligibility loss. Replaying a
+terminal approval never admits again after Event departure/removal.
+Declined/withdrawn applicants
 can reapply under the current form if eligible. Authorized manager invitations
 remain independent grants. All application writes, including choosing APPLY,
 require `eventApplications.version: 1` before sending a write. Scoped keys use

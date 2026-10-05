@@ -59,7 +59,7 @@ const record = z.object({
 });
 const result = z.object({ applicationId: z.string(), status });
 const form = z.object({
-  settings,
+  settings: settings.nullable(),
   pending: record.nullable(),
   canApply: z.boolean(),
   canReview: z.boolean(),

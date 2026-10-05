@@ -422,7 +422,25 @@ Safe logistics projection never includes participation/private tools or creates
 Event invitations, membership or RSVP. Whole Groups and Friends combine by OR;
 required onboarding or lost Group eligibility revokes only that Group grant.
 Public basic details and independent Event membership remain independent. A Group
-Event list provides read-only previews; Group Discover/direct-entry and Group
-Event applications are still separately owned by #274/#275. The generated CLI
+Event list provides read-only previews; Group Event applications use the core
+engine described below. Group Discover/direct entry is separately owned by #274.
+The generated CLI
 reference and packaged skill document selection limits, visible associations,
 nullable unavailable Friends settings, scopes and uncertain-write recovery.
+
+## Group audience Event applications (#275)
+
+Group-only viewers see `APPLY` through safe Event logistics when the core policy
+permits applications. Existing Event application commands/HTTP routes use current
+Public/Friends/eligible Group audiences by OR at submission and approval, with
+live onboarding, bans, blocks and identity checks. Group roles grant no Event
+review authority. Approval admits once as Attendee/Pending; later Group loss
+does not remove independent Event membership. Separate Event invitations do not
+make stale application approval eligible, and finalized approval replay never
+readmits a departed participant.
+
+Own form/history remains accessible after audience loss. Current form `settings`
+becomes `null`, while private pending/history snapshots remain. The CLI accepts
+that nullable result and gives current-audience/reviewer guidance after a denied
+write. Local authenticated Convex/REST, provider clients and real CLI HTTP tests
+cover this slice; deployment and device verification remain pending.

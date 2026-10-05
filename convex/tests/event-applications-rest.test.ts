@@ -60,6 +60,94 @@ async function fixture() {
   });
   return { t, owner, author, readonly, eventId };
 }
+it('events-scoped HTTP composes current Group APPLY, private own records and stale approval without Group review authority', async () => {
+  const f = await fixture();
+  await f.owner.auth.mutation(api.events.mutations.updateEvent, {
+    eventId: f.eventId,
+    visibility: 'PRIVATE',
+  });
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'HTTP application audience' }
+  );
+  const invite = await f.owner.auth.mutation(
+    api.groupInvites.mutations.sendGroupInvite,
+    { groupId, inviteePersonId: f.author.personId }
+  );
+  await f.author.auth.mutation(api.groupInvites.mutations.acceptGroupInvite, {
+    inviteId: invite.inviteId,
+  });
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { eventId: f.eventId, groupId }
+  );
+  const preview = await f.author.request(`/events/${f.eventId}/logistics`);
+  expect(preview.status).toBe(200);
+  expect(await preview.json()).toMatchObject({ entryAction: 'APPLY' });
+  const submitted = await f.author.request(
+    `/events/${f.eventId}/applications`,
+    'POST',
+    { answers: {} }
+  );
+  expect(submitted.status).toBe(200);
+  const request = await submitted.json();
+  expect(
+    (await f.author.request(`/events/${f.eventId}/applications/list`)).status
+  ).toBe(403);
+  await f.owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    {
+      groupId,
+      enabled: true,
+      requiredCompletion: true,
+      questions: [
+        {
+          id: 'required',
+          label: 'Required Group consent',
+          type: 'YES_NO',
+          required: true,
+        },
+      ],
+    }
+  );
+  expect(
+    (
+      await f.owner.request(
+        `/event-applications/${request.applicationId}/decision`,
+        'POST',
+        { decision: 'APPROVED' }
+      )
+    ).status
+  ).toBe(403);
+  const own = await f.author.request(`/events/${f.eventId}/applications/form`);
+  expect(own.status).toBe(200);
+  expect(await own.json()).toMatchObject({
+    settings: null,
+    canApply: false,
+    pending: { status: 'PENDING' },
+  });
+  await f.owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    { groupId, enabled: false, questions: [] }
+  );
+  const responses = await Promise.all(
+    [0, 1].map(() =>
+      f.owner.request(
+        `/event-applications/${request.applicationId}/decision`,
+        'POST',
+        { decision: 'APPROVED' }
+      )
+    )
+  );
+  expect(responses.map(response => response.status)).toEqual([200, 200]);
+  expect(
+    await f.author.auth.query(api.events.queries.getEventHeader, {
+      eventId: f.eventId,
+    })
+  ).toMatchObject({
+    userMembership: { role: 'ATTENDEE', rsvpStatus: 'PENDING' },
+  });
+});
 it('REST scopes permit ordinary events writes, privacy rejects unauthorized queue, and strict inputs validate', async () => {
   const f = await fixture();
   expect(

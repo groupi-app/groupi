@@ -56,8 +56,13 @@ export async function eventAdmissionAccess(
     : false;
   const audience = await hasEventAudience(ctx, event, personId);
   const groupAudience = await hasGroupAudience(ctx, event, personId);
+  // A lost Group path does not cancel another current audience grant.
+  const hasApplicationAudience = Boolean(
+    personId && (audience || groupAudience) && !ban && !blocked
+  );
   return {
     membership,
+    hasApplicationAudience,
     canRead: Boolean(
       membership ||
         ((audience || (groupAudience && !blocked)) &&
@@ -66,7 +71,7 @@ export async function eventAdmissionAccess(
     canApply: Boolean(
       personId &&
         !membership &&
-        audience &&
+        hasApplicationAudience &&
         !ban &&
         !blocked &&
         resolveAdmissionPolicy(event) === 'APPLY'

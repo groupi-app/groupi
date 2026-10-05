@@ -326,7 +326,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ eventId: 'event-one' }),
   useRouter: () => ({ push: vi.fn() }),
 }));
-it('opens Apply from readable logistics before membership and submits from the viewer route', async () => {
+it('opens Group-only Apply from readable logistics before membership and submits from the viewer route', async () => {
   const client = new ConvexReactClient('https://fixture.convex.cloud', {
     unsavedChangesWarning: false,
   });
@@ -345,7 +345,7 @@ it('opens Apply from readable logistics before membership and submits from the v
             imageUrl: null,
             chosenDateTime: null,
             potentialDateTimeOptions: [],
-            visibility: 'PUBLIC',
+            visibility: 'PRIVATE',
             admissionPolicy: 'APPLY',
           },
           organizer: null,
@@ -410,6 +410,296 @@ it('opens Apply from readable logistics before membership and submits from the v
     answers: { why: 'Meet neighbors' },
   });
   expect(mutation).toHaveBeenCalledTimes(1);
+  mounted.unmount();
+  await client.close();
+});
+
+import { EventApplicationSettings } from './event-application-settings';
+it('withholds current admission definitions when Event settings become unavailable', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => ({
+      settings: null,
+      pending: null,
+      canApply: false,
+      canReview: false,
+    }),
+  }));
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <EventApplicationSettings eventId={eventId} />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Application settings are unavailable'
+  );
+  expect(
+    screen.queryByRole('combobox', { name: 'Application reviewers' })
+  ).not.toBeInTheDocument();
+  mounted.unmount();
+  await client.close();
+});
+
+it('preserves private pending history after Group grant loss and re-enables edits on restored eligibility', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  const listeners = new Set<() => void>();
+  let eligible = false;
+  const pending = {
+    _id: 'application-one',
+    eventId,
+    personId: 'person-one',
+    status: 'PENDING',
+    questions: [question],
+    answers: { why: 'Retained answer' },
+    decisions: [],
+  };
+  vi.spyOn(client, 'watchQuery').mockImplementation((...args) => ({
+    onUpdate: listener => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    journal: () => undefined,
+    localQueryResult: () =>
+      getFunctionName(args[0]).endsWith(':getForm')
+        ? {
+            settings: eligible
+              ? { questions: [], reviewerPolicy: 'ORGANIZER_ONLY' }
+              : null,
+            pending,
+            canApply: eligible,
+            canReview: false,
+          }
+        : { page: [pending], isDone: true, continueCursor: '' },
+  }));
+  const mutation = vi
+    .spyOn(client, 'mutation')
+    .mockResolvedValue({ status: 'PENDING' });
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <EventApplications eventId={eventId} />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('textbox', { name: 'Why join?' })).toHaveValue(
+    'Retained answer'
+  );
+  expect(screen.getByRole('textbox', { name: 'Why join?' })).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Save application' })
+  ).toBeDisabled();
+  expect(
+    screen.getByRole('button', { name: 'Withdraw application' })
+  ).toBeEnabled();
+  expect(screen.getByText('Retained answer')).toBeInTheDocument();
+  const { act } = await import('@testing-library/react');
+  await act(async () => {
+    eligible = true;
+    listeners.forEach(listener => listener());
+  });
+  expect(screen.getByRole('textbox', { name: 'Why join?' })).toBeEnabled();
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Save application' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalled());
+  expect(mutation.mock.calls[0][1]).toEqual({
+    eventId,
+    answers: { why: 'Retained answer' },
+  });
+  expect(
+    vi
+      .mocked(client.watchQuery)
+      .mock.calls.every(([ref]) =>
+        [
+          'eventApplications/queries:getForm',
+          'eventApplications/queries:history',
+        ].includes(getFunctionName(ref))
+      )
+  ).toBe(true);
+  mounted.unmount();
+  await client.close();
+});
+it('retains reviewed own records and admitted Event navigation after Group eligibility loss', async () => {
+  const { client, mutation, mounted } = fixture(
+    { settings: null, pending: null, canApply: false, canReview: false },
+    [
+      {
+        _id: 'approved-one',
+        eventId,
+        personId: 'person-one',
+        status: 'APPROVED',
+        questions: [question],
+        answers: { why: 'Retained answer' },
+        decisions: [{ status: 'APPROVED', actorId: 'organizer', at: 1 }],
+      },
+    ]
+  );
+  expect(screen.getByRole('link', { name: 'Open Event' })).toHaveAttribute(
+    'href',
+    '/event/event-one'
+  );
+  expect(screen.getByText('Retained answer')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Submit application' })
+  ).not.toBeInTheDocument();
+  expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});
+it('recovers stale approval through current Event reviewer authority and eligibility', async () => {
+  const pending = {
+    _id: 'application-one',
+    eventId,
+    personId: 'person-one',
+    status: 'PENDING',
+    questions: [question],
+    answers: { why: 'Retained answer' },
+    decisions: [],
+  };
+  const { client, mutation, mounted } = fixture(
+    {
+      settings: { questions: [], reviewerPolicy: 'ORGANIZER_ONLY' },
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    [pending],
+    true
+  );
+  mutation.mockRejectedValueOnce(
+    new Error('Applicant no longer has a qualifying audience')
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Approve application' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'no longer has a qualifying audience'
+  );
+  expect(
+    screen.getByRole('button', { name: 'Approve application' })
+  ).toBeEnabled();
+  await user.click(screen.getByRole('button', { name: 'Approve application' }));
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Approved as Attendee with Pending RSVP.'
+  );
+  expect(
+    mutation.mock.calls.every(
+      ([ref]) => getFunctionName(ref) === 'eventApplications/mutations:decide'
+    )
+  ).toBe(true);
+  mounted.unmount();
+  await client.close();
+});
+it('retries a revoked review query without retaining private queue access', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  let revoked = true;
+  vi.spyOn(client, 'watchQuery').mockImplementation(() => ({
+    onUpdate: () => () => {},
+    journal: () => undefined,
+    localQueryResult: () => {
+      if (revoked) throw new Error('Current Event authority required');
+      return {
+        settings: null,
+        pending: null,
+        canApply: false,
+        canReview: false,
+      };
+    },
+  }));
+  const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <EventApplications eventId={eventId} review />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Applications are unavailable'
+  );
+  revoked = false;
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Retry applications' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Only authorized Event reviewers'
+  );
+  expect(
+    vi
+      .mocked(client.watchQuery)
+      .mock.calls.every(
+        ([ref]) => getFunctionName(ref) === 'eventApplications/queries:getForm'
+      )
+  ).toBe(true);
+  mounted.unmount();
+  await client.close();
+  report.mockRestore();
+});
+
+it('removes reviewer answers and decisions when live Event policy excludes the moderator', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  let canReview = true;
+  const listeners = new Set<() => void>();
+  vi.spyOn(client, 'watchQuery').mockImplementation((...args) => ({
+    onUpdate: listener => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    journal: () => undefined,
+    localQueryResult: () =>
+      getFunctionName(args[0]).endsWith(':getForm')
+        ? {
+            settings: {
+              questions: [],
+              reviewerPolicy: canReview
+                ? 'ORGANIZERS_AND_MODERATORS'
+                : 'ORGANIZER_ONLY',
+            },
+            pending: null,
+            canApply: false,
+            canReview,
+          }
+        : {
+            page: [
+              {
+                _id: 'application-one',
+                status: 'PENDING',
+                questions: [question],
+                answers: { why: 'Private answer' },
+                decisions: [],
+              },
+            ],
+            isDone: true,
+            continueCursor: '',
+          },
+  }));
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <EventApplications eventId={eventId} review />
+    </ConvexProvider>
+  );
+  expect(screen.getByText('Private answer')).toBeInTheDocument();
+  const { act } = await import('@testing-library/react');
+  await act(async () => {
+    canReview = false;
+    listeners.forEach(listener => listener());
+  });
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Only authorized Event reviewers'
+  );
+  expect(screen.queryByText('Private answer')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Approve application' })
+  ).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();
 });

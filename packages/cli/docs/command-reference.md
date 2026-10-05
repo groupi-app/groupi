@@ -892,7 +892,8 @@ Options:
   -h, --help                          display help for command
 
 Commands:
-  form <event-id>                     Read current questions, your pending request, and action flags
+  form <event-id>                     Read permitted current settings (null after audience loss),
+                                      your pending request, and action flags
   history [options] <event-id>        Read your private history
   list [options] <event-id>           Read current authorized reviewer queue and history
   configure [options] <event-id>      Set core admission form without changing add-ons or admission
@@ -910,7 +911,7 @@ Commands:
 ```text
 Usage: groupi events applications form [options] <event-id>
 
-Read current questions, your pending request, and action flags
+Read permitted current settings (null after audience loss), your pending request, and action flags
 
 Options:
   -h, --help  display help for command
