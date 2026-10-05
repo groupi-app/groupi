@@ -30,7 +30,10 @@ async function endpoint(
       res.end(
         JSON.stringify({
           capabilities: capability
-            ? { notificationControls: { version: 1 } }
+            ? {
+                notificationControls: { version: 1 },
+                groupApplications: { version: 1 },
+              }
             : {},
         })
       );
@@ -134,4 +137,48 @@ test('private Group application summaries strip unrelated contacts from manager 
     applicant: { personId: 'p1', username: 'alex' },
   });
   expect(response.stdout).not.toContain('private@example.com');
+});
+
+test('preserves a validated optional joining status and rejects malformed status after an application review', async () => {
+  let malformed = false;
+  await endpoint((_req, res) =>
+    res.end(
+      JSON.stringify({
+        applicationId: 'a1',
+        status: 'APPROVED',
+        joiningQuestionnaire: {
+          enabled: true,
+          completed: false,
+          shouldPrompt: malformed ? 'yes' : true,
+          version: 3,
+          answers: { secret: 'private' },
+        },
+      })
+    )
+  );
+  const args = [
+    'groups',
+    'application-review',
+    'g1',
+    'a1',
+    '--decision',
+    'APPROVED',
+    '--yes',
+  ];
+  const good = await cli(args);
+  expect(good.code).toBe(0);
+  expect(JSON.parse(good.stdout)).toEqual({
+    applicationId: 'a1',
+    status: 'APPROVED',
+    joiningQuestionnaire: {
+      enabled: true,
+      completed: false,
+      shouldPrompt: true,
+      version: 3,
+    },
+  });
+  malformed = true;
+  const bad = await cli(args);
+  expect(bad.code).not.toBe(0);
+  expect(bad.stdout).not.toContain('private');
 });

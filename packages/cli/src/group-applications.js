@@ -320,6 +320,26 @@ export async function writeGroupApplication(
           ? options.decision
           : 'PENDING';
     valid(typeof value.applicationId === 'string' && value.status === expected);
+    if (value.joiningQuestionnaire !== undefined) {
+      const status = record(value.joiningQuestionnaire);
+      valid(
+        typeof status.enabled === 'boolean' &&
+          typeof status.completed === 'boolean' &&
+          typeof status.shouldPrompt === 'boolean' &&
+          Number.isInteger(status.version) &&
+          Number(status.version) >= 0
+      );
+      return {
+        applicationId: value.applicationId,
+        status: value.status,
+        joiningQuestionnaire: {
+          enabled: status.enabled,
+          completed: status.completed,
+          shouldPrompt: status.shouldPrompt,
+          version: status.version,
+        },
+      };
+    }
     return { applicationId: value.applicationId, status: value.status };
   } catch {
     throw new CliError(

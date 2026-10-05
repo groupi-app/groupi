@@ -1,3 +1,4 @@
+import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -233,8 +234,26 @@ export async function review(
   const application = await ctx.db.get(applicationId);
   if (!application) fail('NOT_FOUND', 'Application not found.');
   const group = await requireManager(ctx, application.groupId, actorId);
-  if (application.status === decision)
+  const result = async () => {
+    if (
+      decision === 'APPROVED' &&
+      (await livePerson(ctx, application.personId)) &&
+      (await membershipFor(ctx, application.groupId, application.personId)) &&
+      (await canEnterGroup(ctx, application.groupId, application.personId))
+    ) {
+      return {
+        applicationId,
+        status: decision,
+        joiningQuestionnaire: await getJoiningQuestionnaireStatus(
+          ctx,
+          application.groupId,
+          application.personId
+        ),
+      };
+    }
     return { applicationId, status: decision };
+  };
+  if (application.status === decision) return result();
   if (application.status !== 'PENDING')
     fail('CONFLICT', 'Application is no longer pending.');
   await requirePerson(ctx, application.personId);
@@ -266,7 +285,7 @@ export async function review(
       ? 'GROUP_APPLICATION_APPROVED'
       : 'GROUP_APPLICATION_DECLINED'
   );
-  return { applicationId, status: decision };
+  return result();
 }
 function validatePage(opts: { numItems: number; cursor: string | null }) {
   if (

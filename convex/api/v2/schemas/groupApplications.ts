@@ -60,4 +60,12 @@ export const GroupApplicationFormSchema = z.object({
 export const GroupApplicationResultSchema = z.object({
   applicationId: z.string(),
   status: GroupApplicationStatusSchema,
+  joiningQuestionnaire: z
+    .object({
+      enabled: z.boolean(),
+      completed: z.boolean(),
+      shouldPrompt: z.boolean(),
+      version: z.number().int().nonnegative(),
+    })
+    .optional(),
 });

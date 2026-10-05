@@ -28,6 +28,7 @@ const renderer = require(
 const network = vi.hoisted(() => ({
   authenticated: true,
   member: true,
+  questionnairePrompt: false,
   manager: true,
   moderator: false,
   targetRole: 'MEMBER',
@@ -132,6 +133,20 @@ function invite() {
 function result(name: string, args: Record<string, unknown>) {
   if (name === 'auth/queries:getCurrentUserAndPerson') return profile;
   if (name === 'users/queries:checkNeedsOnboarding') return false;
+  if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
+    return {
+      groupId: 'group-123',
+      enabled: true,
+      version: 1,
+      completed: false,
+      shouldPrompt: network.questionnairePrompt,
+      questions: [],
+      answers: {},
+      savedQuestions: [],
+      canEdit: true,
+      canConfigure: false,
+      canReview: false,
+    };
   if (name === 'groups/queries:getGroupLanding') return groupIdentity;
   if (name === 'groups/queries:getGroup')
     return network.member
@@ -948,4 +963,37 @@ it('accepted membership opens an optional questionnaire prompt without second ad
     '/groups/group-123/questionnaire'
   );
   await act(async () => mounted!.unmount());
+});
+
+it('application admission makes Group detail and the optional prompt available without another mutation', async () => {
+  vi.clearAllMocks();
+  network.authenticated = true;
+  network.member = false;
+  network.manager = false;
+  network.questionnairePrompt = false;
+  let mounted!: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupDetailScreen));
+  });
+  expect(
+    control(mounted, 'Answer optional joining questionnaire')
+  ).toBeUndefined();
+  await act(async () => {
+    network.member = true;
+    network.questionnairePrompt = true;
+    network.subscribers.forEach(listener => listener());
+  });
+  expect(
+    control(mounted, 'Answer optional joining questionnaire')
+  ).toBeDefined();
+  await act(async () => {
+    (
+      control(mounted, 'Answer optional joining questionnaire').props
+        .onPress as () => void
+    )();
+  });
+  expect(network.push).toHaveBeenCalledWith('/groups/group-123/questionnaire');
+  expect(network.mutation).not.toHaveBeenCalled();
+  await act(async () => mounted.unmount());
+  network.questionnairePrompt = false;
 });

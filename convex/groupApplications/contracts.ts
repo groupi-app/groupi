@@ -1,3 +1,4 @@
+import { status as questionnaireStatus } from '../groupQuestionnaires/contracts';
 import { v } from 'convex/values';
 import {
   questionValidator,
@@ -21,6 +22,7 @@ export const application = v.object({
 export const result = v.object({
   applicationId: v.id('groupApplications'),
   status: applicationStatusValidator,
+  joiningQuestionnaire: v.optional(questionnaireStatus),
 });
 export const form = v.object({
   applicationsEnabled: v.boolean(),

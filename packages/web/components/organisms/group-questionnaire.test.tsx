@@ -898,3 +898,31 @@ it('does not request a private questionnaire when its own-record entitlement is 
   mounted.unmount();
   await client.close();
 });
+
+it('shows the optional questionnaire when application approval makes Group detail available in realtime', async () => {
+  const { client, mutation, setData } = fixtureClient({
+    'groups/queries:getGroup': null,
+  });
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Group unavailable'
+  );
+  await act(async () => {
+    setData('groups/queries:getGroup', {
+      ...detail,
+      canManageIdentity: false,
+      canManageInvitations: false,
+      canManageMembers: false,
+      canManageRoles: false,
+    });
+  });
+  expect(await screen.findByText(/already a Group member/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Introduce yourself')).toBeInTheDocument();
+  expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});

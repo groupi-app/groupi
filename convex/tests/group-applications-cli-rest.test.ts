@@ -18,6 +18,23 @@ it('CLI configures questions and edits, reviews and retains private Group applic
       '--name',
       'CLI applications',
     ]);
+    await run(owner.rawKey, [
+      'groups',
+      'questionnaire',
+      'configure',
+      groupId,
+      '--enabled',
+      'true',
+      '--questions',
+      JSON.stringify([
+        {
+          id: 'book',
+          label: 'Favorite book',
+          required: true,
+          type: 'SHORT_ANSWER',
+        },
+      ]),
+    ]);
     const question = JSON.stringify([
       { id: 'why', label: 'Why?', type: 'SHORT_ANSWER', required: true },
     ]);
@@ -102,7 +119,7 @@ it('CLI configures questions and edits, reviews and retains private Group applic
       '--answers',
       '{"why":"Third"}',
     ]);
-    await run(owner.rawKey, [
+    const approved = await run(owner.rawKey, [
       'groups',
       'application-review',
       groupId,
@@ -111,6 +128,13 @@ it('CLI configures questions and edits, reviews and retains private Group applic
       'APPROVED',
       '--yes',
     ]);
+    expect(approved).toMatchObject({
+      joiningQuestionnaire: {
+        enabled: true,
+        completed: false,
+        shouldPrompt: true,
+      },
+    });
     await run(owner.rawKey, [
       'groups',
       'application-review',
@@ -124,6 +148,20 @@ it('CLI configures questions and edits, reviews and retains private Group applic
       memberCount: 2,
     });
     await run(person.rawKey, ['groups', 'leave', groupId, '--yes']);
+    expect(
+      await run(owner.rawKey, [
+        'groups',
+        'application-review',
+        groupId,
+        third.applicationId,
+        '--decision',
+        'APPROVED',
+        '--yes',
+      ])
+    ).toEqual({ applicationId: third.applicationId, status: 'APPROVED' });
+    expect(await run(owner.rawKey, ['groups', 'get', groupId])).toMatchObject({
+      memberCount: 1,
+    });
     expect(
       (
         await run(person.rawKey, [

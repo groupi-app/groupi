@@ -799,6 +799,13 @@ uncertain outcome, inspect own history or the current manager queue before
 repeating. Group and account deletion remove private application records; deleted
 reviewers are anonymized in surviving decisions.
 
+Application approval immediately creates Group membership. An approval response may
+include `joiningQuestionnaire` (`enabled`, `completed`, `shouldPrompt`, `version`)
+for the applicant's current optional joining form. Use `groups questionnaire get`
+to read your own form after joining; no further admission approval is needed.
+A repeated approved decision after departure remains approved without rejoining
+and omits this current-member status.
+
 ## Explicit Group announcements
 
 Current owners/moderators deliberately send with
