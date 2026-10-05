@@ -135,6 +135,145 @@ describe('consensual Event ownership transfer', () => {
       })
     ).rejects.toThrow();
   });
+  it.each(['session', 'rest'] as const)(
+    'permits expired temporary bans through authenticated %s transfer boundaries',
+    async boundary => {
+      const { t, owner, recipient, eventId } = await fixture();
+      const before = await recipient.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
+      );
+      for (const actor of [owner, recipient])
+        await t.mutation(components.betterAuth.adapter.updateOne, {
+          input: {
+            model: 'user',
+            where: [{ field: '_id', value: actor.user._id }],
+            update: { banned: true, banExpires: Date.now() - 1 },
+          },
+        });
+      const path = `/events/${eventId}/ownership-transfer`;
+      const pending =
+        boundary === 'session'
+          ? await owner.auth.mutation(api.eventTransfers.mutations.offer, {
+              eventId,
+              recipientId: recipient.personId,
+            })
+          : await body(
+              await owner.request(path, 'POST', {
+                recipientId: recipient.personId,
+              })
+            );
+      expect(pending!.organizerId).toBe(owner.personId);
+      const status =
+        boundary === 'session'
+          ? await recipient.auth.query(api.eventTransfers.queries.status, {
+              eventId,
+            })
+          : await body(await recipient.request(path));
+      expect(status!.status).toBe('PENDING');
+      const accepted =
+        boundary === 'session'
+          ? await recipient.auth.mutation(api.eventTransfers.mutations.accept, {
+              eventId,
+              transferId: pending!.transferId!,
+            })
+          : await body(
+              await recipient.request(`${path}/accept`, 'POST', {
+                transferId: pending!.transferId!,
+              })
+            );
+      expect(accepted!.organizerId).toBe(recipient.personId);
+      expect(accepted!.createdById).toBe(owner.personId);
+      const after = await recipient.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
+      );
+      expect(after.userMembership._id).toBe(before.userMembership._id);
+      expect(after.userMembership.rsvpStatus).toBe(
+        before.userMembership.rsvpStatus
+      );
+      expect(after.userMembership.role).toBe('ORGANIZER');
+      expect(
+        (await owner.auth.query(api.events.queries.getEventHeader, { eventId }))
+          .userMembership.role
+      ).toBe('MODERATOR');
+    }
+  );
+  it.each([null, 'future'] as const)(
+    'rejects active bans with expiry %s for either transfer participant',
+    async expiry => {
+      const { t, owner, recipient, eventId } = await fixture();
+      const setBan = async (actor: typeof owner, banned: boolean) =>
+        t.mutation(components.betterAuth.adapter.updateOne, {
+          input: {
+            model: 'user',
+            where: [{ field: '_id', value: actor.user._id }],
+            update: {
+              banned,
+              banExpires: expiry === 'future' ? Date.now() + 60_000 : null,
+            },
+          },
+        });
+      await setBan(recipient, true);
+      await expect(
+        owner.auth.mutation(api.eventTransfers.mutations.offer, {
+          eventId,
+          recipientId: recipient.personId,
+        })
+      ).rejects.toThrow();
+      const path = `/events/${eventId}/ownership-transfer`;
+      await body(
+        await owner.request(path, 'POST', { recipientId: recipient.personId }),
+        403
+      );
+      await setBan(recipient, false);
+      const pending = await owner.auth.mutation(
+        api.eventTransfers.mutations.offer,
+        { eventId, recipientId: recipient.personId }
+      );
+      await setBan(owner, true);
+      await expect(
+        owner.auth.query(api.eventTransfers.queries.status, { eventId })
+      ).rejects.toThrow();
+      await expect(
+        recipient.auth.mutation(api.eventTransfers.mutations.accept, {
+          eventId,
+          transferId: pending!.transferId!,
+        })
+      ).rejects.toThrow();
+      await body(
+        await recipient.request(`${path}/accept`, 'POST', {
+          transferId: pending!.transferId!,
+        }),
+        403
+      );
+      await setBan(owner, false);
+      await setBan(recipient, true);
+      await expect(
+        recipient.auth.mutation(api.eventTransfers.mutations.accept, {
+          eventId,
+          transferId: pending!.transferId!,
+        })
+      ).rejects.toThrow();
+      await setBan(recipient, false);
+      expect(
+        (await owner.auth.query(api.eventTransfers.queries.status, {
+          eventId,
+        }))!.status
+      ).toBe('PENDING');
+      expect(
+        (await owner.auth.query(api.events.queries.getEventHeader, { eventId }))
+          .userMembership.role
+      ).toBe('ORGANIZER');
+      expect(
+        (
+          await recipient.auth.query(api.events.queries.getEventHeader, {
+            eventId,
+          })
+        ).userMembership.role
+      ).toBe('ATTENDEE');
+    }
+  );
   it('exposes truthful REST pending, declined, cancelled outcomes and rejects stale or duplicate actions', async () => {
     const { owner, recipient, outsider, eventId } = await fixture();
     const path = `/events/${eventId}/ownership-transfer`;

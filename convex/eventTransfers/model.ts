@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
-import { authComponent } from '../auth';
+import { livePerson } from '../groups/model';
 import { eventViewer } from '../events/attendance';
 import { checkIsBlocked } from '../lib/privacy';
 
@@ -30,11 +30,7 @@ async function currentActor(
   ctx: QueryCtx | MutationCtx,
   personId: Id<'persons'>
 ) {
-  const person = await ctx.db.get(personId);
-  const user = person
-    ? await authComponent.getAnyUserById(ctx, person.userId)
-    : null;
-  if (!person || !user || user.banned)
+  if (!(await livePerson(ctx, personId)))
     fail('FORBIDDEN', 'Current eligible profile required');
 }
 export async function statusForPerson(
@@ -72,8 +68,8 @@ async function eligible(
   ownerId: Id<'persons'>,
   recipientId: Id<'persons'>
 ) {
-  const [person, member, ban, blocked] = await Promise.all([
-    ctx.db.get(recipientId),
+  const [identity, member, ban, blocked] = await Promise.all([
+    livePerson(ctx, recipientId),
     ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -88,13 +84,8 @@ async function eligible(
       .first(),
     checkIsBlocked(ctx, ownerId, recipientId),
   ]);
-  const user = person
-    ? await authComponent.getAnyUserById(ctx, person.userId)
-    : null;
   if (
-    !user ||
-    user.banned ||
-    !person ||
+    !identity ||
     !member ||
     recipientId === ownerId ||
     member.role === 'ORGANIZER' ||
