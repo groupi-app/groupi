@@ -155,7 +155,10 @@ function result(name: string, args: Record<string, unknown>) {
       creation: 'MANAGERS',
       canConfigure: network.manager && !network.moderator,
     };
-  if (name === 'groupForms/queries:getForm')
+  if (
+    name === 'groupForms/queries:getForm' ||
+    name === 'groupForms/queries:getFormForManagement'
+  )
     return {
       ...form(),
       _id: 'tool-123',
@@ -239,6 +242,7 @@ import PolicyScreen from '../../../app/groups/[groupId]/forms/policy';
 import HistoryScreen from '../../../app/groups/[groupId]/forms/[toolId]/history';
 import ResultsScreen from '../../../app/groups/[groupId]/forms/[toolId]/results';
 import CreateScreen from '../../../app/groups/[groupId]/forms/create';
+import HubScreen from '../../../app/groups/[groupId]/forms';
 import ManageScreen from '../../../app/groups/[groupId]/forms/[toolId]/manage';
 import { Alert } from 'react-native';
 function screen(component: () => ReactNode) {
@@ -496,6 +500,66 @@ it('deletion is confirmed before calling the production deletion mutation', asyn
   expect(network.mutation).toHaveBeenCalledWith(
     'groupForms/mutations:deleteForm',
     { toolId: 'tool-123' }
+  );
+  alert.mockRestore();
+});
+
+it('current moderator reaches preserved form settings and deletion while forms are disabled', async () => {
+  network.moderator = true;
+  network.enabled = false;
+  const mounted = await mount(ManageScreen);
+  expect(control(mounted, 'Save Group form')).toBeDefined();
+  await press(mounted, 'Save Group form');
+  expect(network.mutation).toHaveBeenCalledWith(
+    'groupForms/mutations:configureForm',
+    expect.objectContaining({ toolId: 'tool-123' })
+  );
+});
+
+it('disabled moderator list links directly to preserved settings without enabling interactions', async () => {
+  network.moderator = true;
+  network.enabled = false;
+  const mounted = await mount(HubScreen);
+  expect(control(mounted, 'Create Group form')).toBeUndefined();
+  await press(mounted, 'Manage form Feedback');
+  expect(network.push).toHaveBeenCalledWith(
+    '/groups/group-123/forms/tool-123/manage'
+  );
+});
+it.each([
+  { manager: false, required: false },
+  { manager: true, required: true },
+])(
+  'disabled settings deny member/required-incomplete manager $manager $required',
+  async ({ manager, required }) => {
+    network.manager = manager;
+    network.requiredOnboarding = required;
+    network.enabled = false;
+    const mounted = await mount(ManageScreen);
+    expect(control(mounted, 'Save Group form')).toBeUndefined();
+    expect(control(mounted, 'Delete Group form')).toBeUndefined();
+    expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
+      'groupForms/queries:getFormForManagement'
+    );
+  }
+);
+it('disabled moderator confirms deletion directly from preserved settings', async () => {
+  network.moderator = true;
+  network.enabled = false;
+  const alert = vi.spyOn(Alert, 'alert');
+  const mounted = await mount(ManageScreen);
+  await press(mounted, 'Delete Group form');
+  expect(network.mutation).not.toHaveBeenCalled();
+  await act(async () => {
+    alert.mock.calls.at(-1)?.[2]?.[1].onPress?.();
+  });
+  expect(network.mutation).toHaveBeenCalledWith(
+    'groupForms/mutations:deleteForm',
+    { toolId: 'tool-123' }
+  );
+  expect(network.enabled).toBe(false);
+  expect(network.mutation.mock.calls.map(([name]) => name)).not.toContain(
+    'groupTools/mutations:configureFormPolicy'
   );
   alert.mockRestore();
 });

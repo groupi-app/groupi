@@ -31,6 +31,7 @@ export function registerGroupFormCommands(program, json) {
   for (const operation of /** @type {const} */ ([
     'list',
     'get',
+    'settings',
     'history',
     'results',
   ])) {
@@ -39,9 +40,9 @@ export function registerGroupFormCommands(program, json) {
         `${operation} <group-id>${operation === 'list' ? '' : ' <tool-id>'}`
       )
       .description(
-        `${operation} persistent forms${operation === 'history' ? ' (your retained response snapshots)' : operation === 'results' ? ' (stated results visibility applies)' : ''}`
+        `${operation} persistent forms${operation === 'settings' ? ' (eligible managers; disabled forms remain manageable)' : operation === 'history' ? ' (your retained response snapshots)' : operation === 'results' ? ' (stated results visibility applies)' : ''}`
       );
-    if (operation !== 'get')
+    if (operation !== 'get' && operation !== 'settings')
       command
         .option('--limit <number>', 'Page size (1–100)', '20')
         .option('--cursor <cursor>', 'Continue page');

@@ -7,6 +7,7 @@ import {
   createInput,
   configInput,
   form,
+  managementForm,
   responsePage,
   historyPage,
 } from './contracts';
@@ -170,4 +171,15 @@ export const configurePolicy = internalMutation({
   returns: v.null(),
   handler: (ctx, { personId, ...input }) =>
     setPolicy(ctx, personId, { ...input, groupId: group(ctx, input.groupId) }),
+});
+
+export const settings = internalQuery({
+  args: target,
+  returns: managementForm,
+  handler: async (ctx, args) =>
+    model.management(
+      ctx,
+      args.personId,
+      await scoped(ctx, args.groupId, args.toolId)
+    ),
 });

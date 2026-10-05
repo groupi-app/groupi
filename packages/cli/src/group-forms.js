@@ -14,7 +14,7 @@ function path(groupId, toolId) {
   if (toolId !== undefined) managementId(toolId);
   return `/groups/${encodeURIComponent(groupId)}/forms${toolId === undefined ? '' : '/' + encodeURIComponent(toolId)}`;
 }
-/** @param {{apiUrl:string}} profile @param {string} key @param {string} groupId @param {'list'|'get'|'history'|'results'|'policy'} operation @param {string} [toolId] @param {{limit?:number,cursor?:string}} [options] */
+/** @param {{apiUrl:string}} profile @param {string} key @param {string} groupId @param {'list'|'get'|'settings'|'history'|'results'|'policy'} operation @param {string} [toolId] @param {{limit?:number,cursor?:string}} [options] */
 export async function readGroupForms(
   profile,
   key,
@@ -26,7 +26,11 @@ export async function readGroupForms(
   let target = path(groupId, toolId);
   if (operation === 'policy')
     target = `/groups/${encodeURIComponent(groupId)}/form-policy`;
-  if (operation === 'history' || operation === 'results')
+  if (
+    operation === 'settings' ||
+    operation === 'history' ||
+    operation === 'results'
+  )
     target += '/' + operation;
   if (['list', 'history', 'results'].includes(operation)) {
     const limit = options.limit ?? 20;

@@ -125,6 +125,22 @@ export async function configure(
   });
   return null;
 }
+/** Manager settings do not grant ordinary interaction/results while disabled. */
+export async function management(
+  ctx: ReadCtx,
+  personId: Id<'persons'>,
+  toolId: Id<'groupTools'>
+) {
+  const { tool, config } = await instance(ctx, toolId);
+  await requireGroupMemberContent(ctx, tool.groupId, personId);
+  await requireManager(ctx, tool.groupId, personId);
+  return {
+    ...tool,
+    version: config.version,
+    questions: config.questions,
+    canManage: true as const,
+  };
+}
 export async function get(
   ctx: ReadCtx,
   personId: Id<'persons'>,
@@ -281,7 +297,9 @@ export async function list(
   groupId: Id<'groups'>,
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
-  await requireToolInteraction(ctx, personId, groupId, 'FORM');
+  await requireGroupMemberContent(ctx, groupId, personId);
+  if (!(await getPolicy(ctx, groupId, 'FORM')).enabled)
+    await requireManager(ctx, groupId, personId);
   try {
     return await ctx.db
       .query('groupTools')

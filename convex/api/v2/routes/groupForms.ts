@@ -56,6 +56,11 @@ const formSchema = toolSchema.extend({
   canReview: z.boolean(),
   enabled: z.boolean(),
 });
+const managementSchema = toolSchema.extend({
+  version: z.number(),
+  questions: z.array(ApplicationQuestionSchema),
+  canManage: z.literal(true),
+});
 const responseSchema = z.object({
   _id: z.string(),
   _creationTime: z.number(),
@@ -159,6 +164,32 @@ export function createGroupFormRoutes() {
             numItems: c.req.valid('query').limit,
             cursor: c.req.valid('query').cursor ?? null,
           },
+        }),
+        200
+      )
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/forms/{toolId}/settings',
+      tags: ['Groups'],
+      summary:
+        'Read preserved form configuration as a current eligible manager, including while disabled',
+      security: [{ apiKey: [] }],
+      request: { params },
+      responses: {
+        200: {
+          description: 'Manager configuration without response data',
+          content: { 'application/json': { schema: managementSchema } },
+        },
+        ...errors,
+      },
+    }),
+    async c =>
+      c.json(
+        await c.get('ctx').runQuery(internal.groupForms.rest.settings, {
+          personId: c.get('personId') as Id<'persons'>,
+          ...c.req.valid('param'),
         }),
         200
       )

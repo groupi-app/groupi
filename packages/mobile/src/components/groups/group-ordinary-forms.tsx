@@ -28,9 +28,11 @@ function valueText(value: Form['answers'][string] | undefined) {
 export function OrdinaryFormGate({
   groupId,
   children,
+  management = false,
 }: {
   groupId: GroupId;
   children: ReactNode;
+  management?: boolean;
 }) {
   const group = useGroup(groupId);
   const policy = hooks.useFormPolicy(group ? { groupId } : 'skip');
@@ -49,7 +51,7 @@ export function OrdinaryFormGate({
       </View>
     );
   if (policy === undefined) return <Text>Loading forms policy…</Text>;
-  if (!policy.enabled)
+  if (!policy.enabled && !(management && group.canManageMembers))
     return (
       <Text>
         Forms are disabled. Your own saved history remains available through its
@@ -67,7 +69,7 @@ export function GroupFormsHub({ groupId }: { groupId: GroupId }) {
       >
         Forms policy
       </Button>
-      <OrdinaryFormGate groupId={groupId}>
+      <OrdinaryFormGate groupId={groupId} management>
         <FormsList groupId={groupId} />
       </OrdinaryFormGate>
     </View>
@@ -83,7 +85,14 @@ function FormsList({ groupId }: { groupId: GroupId }) {
   const group = useGroup(groupId);
   return (
     <View className='gap-3'>
-      {policy && (policy.creation === 'MEMBERS' || group?.canManageMembers) ? (
+      {policy && !policy.enabled && (
+        <Text>
+          Forms are disabled. Eligible managers can manage preserved
+          configurations.
+        </Text>
+      )}
+      {policy?.enabled &&
+      (policy.creation === 'MEMBERS' || group?.canManageMembers) ? (
         <Button
           accessibilityLabel='Create Group form'
           onPress={() => router.push(`/groups/${groupId}/forms/create`)}
@@ -100,8 +109,14 @@ function FormsList({ groupId }: { groupId: GroupId }) {
           <Button
             key={form._id}
             variant='outline'
-            accessibilityLabel={`Open form ${form.title}`}
-            onPress={() => router.push(`/groups/${groupId}/forms/${form._id}`)}
+            accessibilityLabel={`${policy?.enabled ? 'Open' : 'Manage'} form ${form.title}`}
+            onPress={() =>
+              router.push(
+                policy?.enabled
+                  ? `/groups/${groupId}/forms/${form._id}`
+                  : `/groups/${groupId}/forms/${form._id}/manage`
+              )
+            }
           >
             {form.title}
           </Button>
@@ -181,7 +196,7 @@ export function GroupOrdinaryFormEditor({
   toolId?: ToolId;
 }) {
   return (
-    <OrdinaryFormGate groupId={groupId}>
+    <OrdinaryFormGate groupId={groupId} management>
       <EditorLoader groupId={groupId} toolId={toolId} />
     </OrdinaryFormGate>
   );
@@ -193,9 +208,15 @@ function EditorLoader({
   groupId: GroupId;
   toolId?: ToolId;
 }) {
-  const form = hooks.useForm(toolId ? { toolId } : 'skip');
-  const policy = hooks.useFormPolicy({ groupId });
   const group = useGroup(groupId);
+  const form = hooks.useFormManagement(
+    toolId && group?.canManageMembers ? { toolId } : 'skip'
+  );
+  const policy = hooks.useFormPolicy({ groupId });
+  if (toolId && group && !group.canManageMembers)
+    return <Text>Current eligible managers can manage this form.</Text>;
+  if (!toolId && policy && !policy.enabled)
+    return <Text>Form creation is unavailable while forms are disabled.</Text>;
   if (toolId && !form) return <Text>Loading form…</Text>;
   if (form && form.groupId !== groupId)
     return <Text>Form belongs to another Group.</Text>;
@@ -209,7 +230,13 @@ function EditorLoader({
     <FormEditor key={form?.version ?? 'new'} groupId={groupId} form={form} />
   );
 }
-function FormEditor({ groupId, form }: { groupId: GroupId; form?: Form }) {
+function FormEditor({
+  groupId,
+  form,
+}: {
+  groupId: GroupId;
+  form?: NonNullable<ReturnType<typeof hooks.useFormManagement>>;
+}) {
   const create = hooks.useCreateForm();
   const configure = hooks.useConfigureForm();
   const remove = hooks.useDeleteForm();

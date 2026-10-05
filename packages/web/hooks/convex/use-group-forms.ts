@@ -4,6 +4,7 @@ import { api } from '@/convex/_generated/api';
 import { createGroupFormHooks } from '@groupi/shared/hooks';
 export const {
   useForm,
+  useFormManagement,
   useForms,
   useFormHistory,
   useFormResults,

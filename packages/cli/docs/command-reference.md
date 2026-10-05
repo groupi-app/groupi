@@ -150,6 +150,7 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups forms](#groupi-groups-forms)
 - [groupi groups forms list](#groupi-groups-forms-list)
 - [groupi groups forms get](#groupi-groups-forms-get)
+- [groupi groups forms settings](#groupi-groups-forms-settings)
 - [groupi groups forms history](#groupi-groups-forms-history)
 - [groupi groups forms results](#groupi-groups-forms-results)
 - [groupi groups forms create](#groupi-groups-forms-create)
@@ -2275,6 +2276,8 @@ Options:
 Commands:
   list [options] <group-id>                              list persistent forms
   get <group-id> <tool-id>                               get persistent forms
+  settings <group-id> <tool-id>                          settings persistent forms (eligible
+                                                         managers; disabled forms remain manageable)
   history [options] <group-id> <tool-id>                 history persistent forms (your retained
                                                          response snapshots)
   results [options] <group-id> <tool-id>                 results persistent forms (stated results
@@ -2310,6 +2313,17 @@ Options:
 Usage: groupi groups forms get [options] <group-id> <tool-id>
 
 get persistent forms
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms settings
+
+```text
+Usage: groupi groups forms settings [options] <group-id> <tool-id>
+
+settings persistent forms (eligible managers; disabled forms remain manageable)
 
 Options:
   -h, --help  display help for command

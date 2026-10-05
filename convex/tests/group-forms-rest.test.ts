@@ -268,3 +268,107 @@ it.each(['self', 'admin-session', 'admin-rest'] as const)(
     );
   }
 );
+
+it('scopes disabled management reads/writes to current eligible managers without restoring interaction', async () => {
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const owner = await actor(t, 'rest-disabled-owner');
+  const moderator = await actor(t, 'rest-disabled-mod');
+  const member = await actor(t, 'rest-disabled-member');
+  const groupId = await owner.auth.mutation(api.groups.mutations.createGroup, {
+    name: 'Disabled REST settings',
+  });
+  await t.run(async ctx => {
+    for (const [personId, role] of [
+      [moderator.personId, 'MODERATOR'],
+      [member.personId, 'MEMBER'],
+    ] as const)
+      await ctx.db.insert('groupMemberships', {
+        groupId,
+        personId,
+        role,
+        joinedAt: Date.now(),
+      });
+  });
+  const toolId = await owner.auth.mutation(
+    api.groupForms.mutations.createForm,
+    {
+      groupId,
+      title: 'Preserved form',
+      resultsVisibility: 'MANAGERS',
+      questions: [],
+    }
+  );
+  await owner.auth.mutation(api.groupTools.mutations.configureFormPolicy, {
+    groupId,
+    enabled: false,
+    creation: 'MANAGERS',
+  });
+  const path = `/groups/${groupId}/forms/${toolId}`;
+  const settings = await body(await moderator.request(`${path}/settings`));
+  expect(settings).toMatchObject({
+    title: 'Preserved form',
+    version: 1,
+    canManage: true,
+  });
+  expect(settings).not.toHaveProperty('answers');
+  await body(await member.request(`${path}/settings`), 403);
+  await body(await member.request(`/groups/${groupId}/forms`), 403);
+  expect(
+    (await body(await moderator.request(`/groups/${groupId}/forms`))).page.map(
+      (row: { _id: string }) => row._id
+    )
+  ).toEqual([toolId]);
+  await body(await moderator.request(path), 403);
+  await body(await moderator.request(`${path}/results`), 403);
+  await body(
+    await moderator.request(`${path}/response`, 'PUT', {
+      version: 1,
+      expectedRevision: 0,
+      answers: {},
+    }),
+    403
+  );
+  await body(
+    await moderator.request(path, 'PATCH', {
+      version: 1,
+      title: 'Managed while disabled',
+      questions: [],
+    }),
+    204
+  );
+  expect(
+    (await body(await owner.request(`/groups/${groupId}/form-policy`))).enabled
+  ).toBe(false);
+  await owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    {
+      groupId,
+      enabled: true,
+      requiredCompletion: true,
+      questions: [
+        {
+          id: 'intro',
+          label: 'Required',
+          type: 'SHORT_ANSWER',
+          required: true,
+        },
+      ],
+    }
+  );
+  await body(await moderator.request(`${path}/settings`), 403);
+  await body(
+    await moderator.request(path, 'PATCH', {
+      version: 2,
+      title: 'Denied',
+      questions: [],
+    }),
+    403
+  );
+  await body(await moderator.request(path, 'DELETE'), 403);
+  await owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    { groupId, enabled: true, requiredCompletion: false, questions: [] }
+  );
+  await body(await moderator.request(path, 'DELETE'), 204);
+});

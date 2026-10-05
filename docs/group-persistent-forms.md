@@ -16,7 +16,10 @@ have no exemption from the onboarding gate. Core owner policy recovery and one's
 own saved snapshots/removal are narrow exceptions. Disabling forms blocks their
 ordinary use and creation while preserving their configuration and records;
 current eligible managers can still configure or explicitly delete preserved
-forms. Policy recovery remains available to the owner before onboarding.
+forms. The manager form list remains available while disabled and links directly
+to preserved settings. The dedicated manager configuration read returns definitions
+without latest answers or results; ordinary reads, submission and results stay
+disabled. Policy recovery remains available to the owner before onboarding.
 
 ## Interaction and visibility
 
@@ -83,12 +86,12 @@ The discriminator and policy helpers are extension seams; they expose no runnabl
 poll/list behavior or automation. Static reusable templates live in shared
 utilities. Indexed pages accept 1–100 records with opaque cursors.
 
-REST uses `/api/v2/groups/{groupId}/forms`, individual `/{toolId}`, `/history`,
+REST uses `/api/v2/groups/{groupId}/forms`, individual `/{toolId}`, manager `/settings`, `/history`,
 `/results`, `/response` and `/results/{responseId}`. The owner policy is
 `/groups/{groupId}/form-policy`. Reads require Group read scope; writes require
 Group write scope and recheck current live role/content eligibility inside the
 mutation. REST tool/result IDs are scoped to the specified Group and form.
-CLI `groups forms` exposes list/get/history/results/create/configure/submit,
+CLI `groups forms` exposes list/get/settings/history/results/create/configure/submit,
 remove-own/delete/moderate and policy get/set. `--form-version` and
 `--expected-revision` pass explicit versions; destructive operations use the
 existing confirmation/`--yes` pattern. The generated CLI reference documents

@@ -5,6 +5,7 @@ export function createGroupFormHooks<
     groupForms: {
       queries: {
         getForm: FunctionReference<'query'>;
+        getFormForManagement: FunctionReference<'query'>;
         listForms: FunctionReference<'query'>;
         getOwnHistory: FunctionReference<'query'>;
         listResults: FunctionReference<'query'>;
@@ -32,6 +33,16 @@ export function createGroupFormHooks<
   ) {
     return hooks.useQuery<Api['groupForms']['queries']['getForm']>(
       api.groupForms.queries.getForm,
+      args
+    );
+  }
+  function useFormManagement(
+    args:
+      | FunctionArgs<Api['groupForms']['queries']['getFormForManagement']>
+      | 'skip'
+  ) {
+    return hooks.useQuery<Api['groupForms']['queries']['getFormForManagement']>(
+      api.groupForms.queries.getFormForManagement,
       args
     );
   }
@@ -104,6 +115,7 @@ export function createGroupFormHooks<
   }
   return {
     useForm,
+    useFormManagement,
     useForms,
     useFormHistory,
     useFormResults,

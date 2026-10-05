@@ -11,6 +11,7 @@ import {
 import { useGroup } from '@/hooks/convex/use-groups';
 import {
   useForm,
+  useFormManagement,
   useForms,
   useFormHistory,
   useFormResults,
@@ -43,8 +44,10 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
   const [error, setError] = useState('');
   const canAccess =
     group && group.joiningQuestionnaire?.canAccessMemberContent !== false;
+  const canManage =
+    group?.viewerRole === 'OWNER' || group?.viewerRole === 'MODERATOR';
   const forms = useForms(
-    canAccess && policy?.enabled
+    canAccess && (policy?.enabled || canManage)
       ? { groupId, paginationOpts: { numItems: 20, cursor } }
       : 'skip'
   );
@@ -104,13 +107,15 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
           Complete required onboarding before using ordinary forms. Your own
           saved history remains available by its original form link.
         </p>
-      ) : !policy.enabled ? (
-        <p>
-          Forms are disabled. Configuration and saved responses are preserved.
-        </p>
       ) : (
         <>
-          {(policy.creation === 'MEMBERS' || group.viewerRole !== 'MEMBER') && (
+          {!policy.enabled && (
+            <p>
+              Forms are disabled. Configuration and saved responses are
+              preserved. Current eligible managers can manage preserved forms.
+            </p>
+          )}
+          {policy.enabled && (policy.creation === 'MEMBERS' || canManage) && (
             <Link
               className='text-primary underline'
               href={`/groups/${groupId}/forms/new`}
@@ -125,9 +130,13 @@ export function GroupForms({ groupId }: { groupId: Id<'groups'> }) {
             >
               <Link
                 className='text-primary underline'
-                href={`/groups/${groupId}/forms/${form._id}`}
+                href={
+                  policy.enabled
+                    ? `/groups/${groupId}/forms/${form._id}`
+                    : `/groups/${groupId}/forms/${form._id}/settings`
+                }
               >
-                {form.title}
+                {policy.enabled ? form.title : `Manage ${form.title}`}
               </Link>
               <p>{form.description}</p>
               <p>
@@ -155,8 +164,21 @@ export function GroupFormEditor({
   groupId: Id<'groups'>;
   toolId?: Id<'groupTools'>;
 }) {
-  const form = useForm(toolId ? { toolId } : 'skip');
+  const group = useGroup(groupId);
+  const eligible =
+    group &&
+    group.joiningQuestionnaire?.canAccessMemberContent !== false &&
+    (group.viewerRole === 'OWNER' || group.viewerRole === 'MODERATOR');
+  const form = useFormManagement(toolId && eligible ? { toolId } : 'skip');
   if (!toolId) return <NewFormEditor groupId={groupId} />;
+  if (group === undefined) return <p role='status'>Loading Group…</p>;
+  if (!eligible)
+    return (
+      <p role='alert'>
+        Current eligible managers can manage this form after completing required
+        onboarding.
+      </p>
+    );
   if (toolId && !form) return <p role='status'>Loading form settings…</p>;
   if (form && form.groupId !== groupId)
     return <p role='alert'>Form unavailable in this Group.</p>;
@@ -196,10 +218,11 @@ function FormEditor({
   initial,
 }: {
   groupId: Id<'groups'>;
-  initial: ReturnType<typeof useForm>;
+  initial: ReturnType<typeof useFormManagement>;
 }) {
   const create = useCreateForm();
   const configure = useConfigureForm();
+  const deleteForm = useDeleteForm();
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? 'New form');
   const [description, setDescription] = useState(initial?.description ?? '');
@@ -246,7 +269,7 @@ function FormEditor({
                 description,
                 questions,
               });
-              router.push(`/groups/${groupId}/forms/${initial._id}`);
+              router.push(`/groups/${groupId}/forms`);
             } else {
               const id = await create({
                 groupId,
@@ -322,6 +345,17 @@ function FormEditor({
         </Button>
         {error && <p role='alert'>{error}</p>}
       </form>
+      {initial && (
+        <GroupConfirmedAction
+          label='Delete form'
+          confirmation='Confirm deleting form and all responses'
+          explanation='This permanently removes the preserved form and all response history.'
+          onConfirm={async () => {
+            await deleteForm({ toolId: initial._id });
+            router.push(`/groups/${groupId}/forms`);
+          }}
+        />
+      )}
     </main>
   );
 }

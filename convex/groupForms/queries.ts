@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { requireAuth } from '../auth';
 import { tool } from '../groupTools/contracts';
-import { form, responsePage, historyPage } from './contracts';
+import { form, managementForm, responsePage, historyPage } from './contracts';
 import * as model from './model';
 export const getForm = query({
   args: { toolId: v.id('groupTools') },
@@ -47,4 +47,11 @@ export const listResults = query({
       args.toolId,
       args.paginationOpts
     ),
+});
+
+export const getFormForManagement = query({
+  args: { toolId: v.id('groupTools') },
+  returns: managementForm,
+  handler: async (ctx, args) =>
+    model.management(ctx, (await requireAuth(ctx)).person._id, args.toolId),
 });

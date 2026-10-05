@@ -1,3 +1,4 @@
+import GroupFormSettingsPage from '@/app/(groups)/groups/[groupId]/forms/[toolId]/settings/page';
 import { createRequire } from 'node:module';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -87,6 +88,7 @@ function fixture(overrides: Record<string, unknown> = {}) {
   });
   const data: Record<string, unknown> = {
     'groupForms/queries:getForm': form,
+    'groupForms/queries:getFormForManagement': { ...form, canManage: true },
     'groupForms/queries:getOwnHistory': emptyPage,
     'groupForms/queries:listResults': emptyPage,
     'groupForms/queries:listForms': { ...emptyPage, page: [form] },
@@ -220,7 +222,11 @@ it('explains personal visibility before submitting and confirms own removal', as
 });
 it('manages current form configuration without a mutable visibility control', async () => {
   const { client, mutation, Provider } = fixture({
-    'groupForms/queries:getForm': { ...form, canManage: true, version: 3 },
+    'groupForms/queries:getFormForManagement': {
+      ...form,
+      canManage: true,
+      version: 3,
+    },
   });
   const mounted = render(
     <Provider>
@@ -431,3 +437,107 @@ it('keeps a stale response draft visible and reports revision conflicts without 
   mounted.unmount();
   await client.close();
 });
+
+it('disabled forms expose moderator settings and confirmed deletion through the actual route and provider', async () => {
+  const { client, mutation, watch, Provider } = fixture({
+    'groups/queries:getGroup': {
+      _id: groupId,
+      viewerRole: 'MODERATOR',
+      joiningQuestionnaire: { canAccessMemberContent: true },
+    },
+    'groupTools/queries:getFormPolicy': {
+      groupId,
+      kind: 'FORM',
+      enabled: false,
+      creation: 'MANAGERS',
+      canConfigure: false,
+    },
+    'groupForms/queries:getForm': undefined,
+  });
+  const hub = render(
+    <Provider>
+      <GroupForms groupId={groupId} />
+    </Provider>
+  );
+  expect(
+    screen.getByRole('link', { name: 'Manage Book feedback' })
+  ).toHaveAttribute('href', '/groups/group-one/forms/tool-one/settings');
+  expect(
+    screen.queryByRole('link', { name: 'Create form' })
+  ).not.toBeInTheDocument();
+  hub.unmount();
+  const mounted = render(
+    <Provider>
+      <GroupFormSettingsPage />
+    </Provider>
+  );
+  const user = userEvent.setup();
+  await user.clear(screen.getByLabelText('Form title'));
+  await user.type(screen.getByLabelText('Form title'), 'Preserved settings');
+  await user.click(screen.getByRole('button', { name: 'Save form settings' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'groupForms/mutations:configureForm'
+  );
+  await user.click(screen.getByRole('button', { name: 'Delete form' }));
+  expect(mutation).toHaveBeenCalledTimes(1);
+  await user.click(
+    screen.getByRole('button', {
+      name: 'Confirm deleting form and all responses',
+    })
+  );
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
+  expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
+    'groupForms/mutations:deleteForm'
+  );
+  const names = watch.mock.calls.map(([ref]) => getFunctionName(ref));
+  expect(names).toContain('groupForms/queries:getFormForManagement');
+  expect(names).not.toContain('groupForms/queries:getForm');
+  expect(names).not.toContain('groupForms/queries:listResults');
+  expect(
+    mutation.mock.calls.map(([ref]) => getFunctionName(ref))
+  ).not.toContain('groupTools/mutations:configureFormPolicy');
+  mounted.unmount();
+  await client.close();
+});
+it.each([
+  { viewerRole: 'MEMBER', canAccess: true },
+  { viewerRole: 'MODERATOR', canAccess: false },
+])(
+  'denies disabled settings mounting for $viewerRole with content eligibility $canAccess',
+  async ({ viewerRole, canAccess }) => {
+    const { client, watch, Provider } = fixture({
+      'groups/queries:getGroup': {
+        _id: groupId,
+        viewerRole,
+        joiningQuestionnaire: { canAccessMemberContent: canAccess },
+      },
+      'groupTools/queries:getFormPolicy': {
+        groupId,
+        kind: 'FORM',
+        enabled: false,
+        creation: 'MANAGERS',
+        canConfigure: false,
+      },
+    });
+    const mounted = render(
+      <Provider>
+        <GroupFormSettingsPage />
+      </Provider>
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Current eligible managers'
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Save form settings' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Delete form' })
+    ).not.toBeInTheDocument();
+    expect(watch.mock.calls.map(([ref]) => getFunctionName(ref))).not.toContain(
+      'groupForms/queries:getFormForManagement'
+    );
+    mounted.unmount();
+    await client.close();
+  }
+);

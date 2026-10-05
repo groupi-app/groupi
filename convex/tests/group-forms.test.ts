@@ -641,3 +641,158 @@ it('serializes competing configuration versions and validates bounded page curso
     })
   ).rejects.toThrow('cursor');
 });
+
+it('lets eligible moderators read/manage preserved configuration while interaction remains disabled', async () => {
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const owner = await createAuthAccount(t, 'forms-disabled-owner');
+  const moderator = await createAuthAccount(t, 'forms-disabled-mod');
+  const member = await createAuthAccount(t, 'forms-disabled-member');
+  const groupId = await owner.auth.mutation(api.groups.mutations.createGroup, {
+    name: 'Disabled management',
+  });
+  await t.run(async ctx => {
+    for (const [personId, role] of [
+      [moderator.personId, 'MODERATOR'],
+      [member.personId, 'MEMBER'],
+    ] as const)
+      await ctx.db.insert('groupMemberships', {
+        groupId,
+        personId,
+        role,
+        joinedAt: Date.now(),
+      });
+  });
+  const toolId = await owner.auth.mutation(
+    api.groupForms.mutations.createForm,
+    {
+      groupId,
+      title: 'Preserved',
+      resultsVisibility: 'MANAGERS',
+      questions: [
+        {
+          id: 'old',
+          label: 'Private preserved definition',
+          type: 'SHORT_ANSWER',
+          required: false,
+        },
+      ],
+    }
+  );
+  await owner.auth.mutation(api.groupTools.mutations.configureFormPolicy, {
+    groupId,
+    enabled: false,
+    creation: 'MANAGERS',
+  });
+  expect(
+    await moderator.auth.query(api.groupForms.queries.getFormForManagement, {
+      toolId,
+    })
+  ).toMatchObject({
+    title: 'Preserved',
+    questions: [{ label: 'Private preserved definition' }],
+  });
+  expect(
+    (
+      await moderator.auth.query(api.groupForms.queries.listForms, {
+        groupId,
+        paginationOpts: { numItems: 20, cursor: null },
+      })
+    ).page.map(row => row._id)
+  ).toEqual([toolId]);
+  const settings = await moderator.auth.query(
+    api.groupForms.queries.getFormForManagement,
+    { toolId }
+  );
+  expect(settings).not.toHaveProperty('answers');
+  expect(settings).not.toHaveProperty('savedQuestions');
+  await expect(
+    member.auth.query(api.groupForms.queries.getFormForManagement, { toolId })
+  ).rejects.toThrow();
+  await expect(
+    member.auth.query(api.groupForms.queries.listForms, {
+      groupId,
+      paginationOpts: { numItems: 20, cursor: null },
+    })
+  ).rejects.toThrow();
+  await expect(
+    moderator.auth.query(api.groupForms.queries.getForm, { toolId })
+  ).rejects.toThrow('disabled');
+  await expect(
+    moderator.auth.query(api.groupForms.queries.listResults, {
+      toolId,
+      paginationOpts: { numItems: 20, cursor: null },
+    })
+  ).rejects.toThrow('disabled');
+  await expect(
+    moderator.auth.mutation(api.groupForms.mutations.submitResponse, {
+      toolId,
+      version: 1,
+      expectedRevision: 0,
+      answers: {},
+    })
+  ).rejects.toThrow('disabled');
+  await moderator.auth.mutation(api.groupForms.mutations.configureForm, {
+    toolId,
+    version: 1,
+    title: 'Managed while disabled',
+    questions: settings.questions,
+  });
+  expect(
+    (
+      await moderator.auth.query(api.groupForms.queries.getFormForManagement, {
+        toolId,
+      })
+    ).title
+  ).toBe('Managed while disabled');
+  expect(
+    (await owner.auth.query(api.groupTools.queries.getFormPolicy, { groupId }))
+      .enabled
+  ).toBe(false);
+  await owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    {
+      groupId,
+      enabled: true,
+      requiredCompletion: true,
+      questions: [
+        {
+          id: 'intro',
+          label: 'Required introduction',
+          type: 'SHORT_ANSWER',
+          required: true,
+        },
+      ],
+    }
+  );
+  await expect(
+    moderator.auth.query(api.groupForms.queries.getFormForManagement, {
+      toolId,
+    })
+  ).rejects.toThrow('onboarding');
+  await expect(
+    moderator.auth.query(api.groupForms.queries.listForms, {
+      groupId,
+      paginationOpts: { numItems: 20, cursor: null },
+    })
+  ).rejects.toThrow('onboarding');
+  await expect(
+    moderator.auth.mutation(api.groupForms.mutations.configureForm, {
+      toolId,
+      version: 2,
+      title: 'Denied',
+      questions: [],
+    })
+  ).rejects.toThrow('onboarding');
+  await expect(
+    moderator.auth.mutation(api.groupForms.mutations.deleteForm, { toolId })
+  ).rejects.toThrow('onboarding');
+  await owner.auth.mutation(
+    api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+    { groupId, enabled: true, requiredCompletion: false, questions: [] }
+  );
+  await moderator.auth.mutation(api.groupForms.mutations.deleteForm, {
+    toolId,
+  });
+  expect(await t.run(ctx => ctx.db.get(toolId))).toBeNull();
+});

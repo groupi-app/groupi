@@ -97,6 +97,32 @@ it('persistent forms CLI crosses real HTTP into backend with revision and author
     expect(
       JSON.parse((await run(['policy', 'get', groupId])).stdout)
     ).toMatchObject({ enabled: false, creation: 'MANAGERS' });
+    expect((await run(['get', groupId, toolId])).code).toBe(3);
+    const disabledSettings = await run(['settings', groupId, toolId]);
+    expect(disabledSettings.code, disabledSettings.stderr).toBe(0);
+    expect(JSON.parse(disabledSettings.stdout)).toMatchObject({
+      version: 2,
+      title: 'New survey',
+    });
+    expect(JSON.parse(disabledSettings.stdout)).not.toHaveProperty('answers');
+    expect(
+      (
+        await run([
+          'configure',
+          groupId,
+          toolId,
+          '--title',
+          'Preserved settings',
+          '--form-version',
+          '2',
+          '--questions-json',
+          '[]',
+        ])
+      ).code
+    ).toBe(0);
+    expect(
+      JSON.parse((await run(['settings', groupId, toolId])).stdout)
+    ).toMatchObject({ version: 3, title: 'Preserved settings' });
     expect((await run(['delete', groupId, toolId, '--yes'])).code).toBe(0);
     expect((await run(['get', groupId, toolId])).code).toBe(4);
   } finally {

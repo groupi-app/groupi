@@ -57,3 +57,11 @@ export const historyPage = v.object({
   isDone: v.boolean(),
   continueCursor: v.string(),
 });
+
+/** Current manager configuration, without response/result data. */
+export const managementForm = v.object({
+  ...tool.fields,
+  version: v.number(),
+  questions: v.array(questionValidator),
+  canManage: v.literal(true),
+});
