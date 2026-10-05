@@ -11,16 +11,18 @@ joining and confirming attendance are separate actions.
 
 ## Visibility and admission
 
-`visibility` controls the existing audience: Public basic logistics remain public,
+`visibility` controls the ordinary audience: Public basic logistics remain public,
 and Friends viewers must be accepted, unblocked friends of the current Organizer
-(`events.creatorId`). Private events have no general nonmember audience.
+(`events.creatorId`). Private events have no general nonmember audience. Selected
+whole-Group audiences can independently grant access to eligible current members;
+qualifying ordinary and Group audiences combine with OR semantics.
 Independent Event membership retains access when an audience grant changes.
 
-The Organizer alone configures `admissionPolicy` as `INVITATION_ONLY` or `DIRECT`.
-It does not alter visibility. An absent policy preserves historical behavior:
-Friends events resolve to Direct; Public and Private events resolve to Invitation
-only. Making a legacy event Public does not silently enable self-joining.
-Applications are a later admission extension and are not exposed by this contract.
+The Organizer alone configures `admissionPolicy` as `INVITATION_ONLY`, `DIRECT` or
+`APPLY`. It does not alter visibility. An absent policy preserves historical
+behavior: Friends events resolve to Direct; Public and Private events resolve to
+Invitation only. Making a legacy event Public does not silently enable
+self-joining.
 
 Direct joining rechecks the policy, current audience, blocks, bans and existing
 membership in the write transaction. It creates Attendee membership with Pending
@@ -28,6 +30,13 @@ RSVP and the existing member count, join notification and member-joined lifecycl
 Ordinary authorized invitations remain independent grants: sending does not create
 membership or RSVP, and acceptance remains Pending. Admission does not change
 invitation authority, link/email transport, or Invite List replay semantics.
+
+Apply admission lets eligible current viewers submit a private Event application.
+Configured Event reviewers approve it only after rechecking current eligibility;
+approval creates Attendee membership with Pending RSVP without a second acceptance.
+Group roles do not confer Event reviewer authority. See
+[Group audience Event applications](group-event-applications.md) for dynamic
+audiences, reviewer authority, private history and recovery rules.
 
 ## Reading before joining
 
@@ -38,9 +47,10 @@ chosen/proposed dates and resolved admission policy. It reports an `entryAction`
 
 - `MEMBER`: the caller already belongs to the Event.
 - `JOIN`: the authenticated caller is currently eligible for Direct admission.
+- `APPLY`: the authenticated caller is currently eligible to apply for approval.
 - `INVITATION_ONLY`: an explicit invitation is required.
-- `SIGN_IN`: a public Direct event needs an authenticated identity before joining.
-- `UNAVAILABLE`: the readable public event cannot currently admit this caller.
+- `SIGN_IN`: a public Direct or Apply event needs an authenticated identity.
+- `UNAVAILABLE`: the readable Event cannot currently admit this caller.
 
 Reading does not create or update membership or RSVP. Discussion, attendee
 identities, availability responses, add-on configuration/submissions and discussion
@@ -57,10 +67,12 @@ include the effective policy. `createEventAdmissionHooks` binds each app's own
 Convex SDK hooks, preserving its authenticated provider context.
 
 CLI clients use `events preview <event-id>` and
-`events settings set <event-id> --admission-policy DIRECT|INVITATION_ONLY`.
+`events settings set <event-id> --admission-policy DIRECT|INVITATION_ONLY|APPLY`.
 Admission writes require `eventAdmission.version: 1`; join writes still require
 `eventManagement.pendingRsvpJoin: true` before sending the request. Other existing
 Event management operations remain compatible with version 1 servers.
+The existing Event application commands require `eventApplications.version: 1`
+before writing; previewing or applying does not confirm attendance.
 
 Pending join RSVP remains distinct from scheduling: dated Events support explicit
 RSVP, undated Events support availability. Poll date selection derives RSVP from
