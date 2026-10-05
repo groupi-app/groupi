@@ -130,6 +130,18 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         )
       )}
       <GroupOwnershipTransfer groupId={groupId} />
+      <Link
+        className='text-primary underline'
+        href={`/groups/${groupId}/forms`}
+      >
+        Forms and form settings
+      </Link>
+      <Link
+        className='text-primary underline'
+        href={`/groups/${groupId}/forms/new`}
+      >
+        Create form
+      </Link>
       <GroupJoiningQuestionnaire groupId={groupId} />
       {group.canManageRoles && (
         <GroupApplicationSettings

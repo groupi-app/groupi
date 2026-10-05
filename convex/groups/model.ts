@@ -1,5 +1,7 @@
 import { anonymizeAudienceActor } from '../groupEventAudiences/cleanup';
 import { canShare } from '../groupEventAudiences/model';
+
+import { removeToolsForPerson } from '../groupTools/cleanup';
 import { removeApplicationsForPerson } from '../groupApplications/cleanup';
 import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
@@ -232,6 +234,7 @@ export async function removeGroupMembershipsForPerson(
   personId: Id<'persons'>
 ) {
   await assertNoOwnedGroups(ctx, personId);
+  await removeToolsForPerson(ctx, personId);
   await removeTransfersForPerson(ctx, personId);
   await anonymizeAudienceActor(ctx, personId);
   await removeAnnouncementsForPerson(ctx, personId);

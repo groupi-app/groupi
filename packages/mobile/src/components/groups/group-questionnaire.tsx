@@ -32,7 +32,7 @@ export function GroupQuestionField({
   onChange,
   disabled,
 }: {
-  question: Question;
+  question: Omit<Question, 'version'>;
   value: Answer | undefined;
   onChange: (value: Answer | undefined) => void;
   disabled: boolean;

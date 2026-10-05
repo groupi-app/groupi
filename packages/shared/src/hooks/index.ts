@@ -64,3 +64,6 @@ export { createAccountResolutionHooks } from './useAccountResolution';
 export { AccountResolutionBoundary } from './account-resolution-boundary';
 
 export { createGroupEventAudienceHooks } from './useGroupEventAudiences';
+
+export { createGroupFormHooks } from './useGroupForms';
+export { groupFormTemplates } from '../utils/group-form-templates';

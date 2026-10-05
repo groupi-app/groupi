@@ -510,3 +510,5 @@ export type {
   ApplicationQuestion,
   ApplicationAnswers,
 } from './application-questions';
+
+export { groupFormTemplates } from './group-form-templates';

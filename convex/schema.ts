@@ -1,3 +1,5 @@
+import { toolFields, policyFields } from './groupTools/contracts';
+import { responseFields as formResponseFields } from './groupForms/contracts';
 import { transferStatus } from './groupTransfers/contracts';
 import {
   configuration as groupQuestionnaireConfiguration,
@@ -29,6 +31,33 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupToolPolicies: defineTable(policyFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_kind', ['groupId', 'kind']),
+  groupTools: defineTable(toolFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_kind', ['groupId', 'kind'])
+    .index('by_creatorId', ['creatorId']),
+  groupForms: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    questions: v.array(questionValidator),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupFormResponses: defineTable(formResponseFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupFormRevisions: defineTable(formResponseFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+
   groupOnboardingJobs: defineTable({
     groupId: v.id('groups'),
     actorId: v.optional(v.id('persons')),

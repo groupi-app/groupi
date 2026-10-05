@@ -147,6 +147,20 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups questionnaire responses](#groupi-groups-questionnaire-responses)
 - [groupi groups questionnaire configure](#groupi-groups-questionnaire-configure)
 - [groupi groups questionnaire submit](#groupi-groups-questionnaire-submit)
+- [groupi groups forms](#groupi-groups-forms)
+- [groupi groups forms list](#groupi-groups-forms-list)
+- [groupi groups forms get](#groupi-groups-forms-get)
+- [groupi groups forms history](#groupi-groups-forms-history)
+- [groupi groups forms results](#groupi-groups-forms-results)
+- [groupi groups forms create](#groupi-groups-forms-create)
+- [groupi groups forms configure](#groupi-groups-forms-configure)
+- [groupi groups forms submit](#groupi-groups-forms-submit)
+- [groupi groups forms remove-own](#groupi-groups-forms-remove-own)
+- [groupi groups forms delete](#groupi-groups-forms-delete)
+- [groupi groups forms moderate](#groupi-groups-forms-moderate)
+- [groupi groups forms policy](#groupi-groups-forms-policy)
+- [groupi groups forms policy get](#groupi-groups-forms-policy-get)
+- [groupi groups forms policy set](#groupi-groups-forms-policy-set)
 - [groupi groups application-form](#groupi-groups-application-form)
 - [groupi groups application-get](#groupi-groups-application-get)
 - [groupi groups application-history](#groupi-groups-application-history)
@@ -1835,6 +1849,7 @@ Commands:
   leave [options] <group-id>                                  Leave your own Group membership
   bans [options] <group-id>                                   List private active Group bans as manager
   questionnaire                                               Post-admission questionnaire and private retained records
+  forms                                                       Persistent ordinary forms, separate from the joining questionnaire
   application-form <group-id>                                 Read admission form and your private pending application
   application-get <group-id> <application-id>                 Read a private application as author or current manager
   application-history [options] <group-id>                    Read your retained private application history
@@ -2245,6 +2260,205 @@ Options:
   --form-version <number>  Current questionnaire version from get
   --answers <json>         Current answer object, replacing optional values
   -h, --help               display help for command
+```
+
+## groupi groups forms
+
+```text
+Usage: groupi groups forms [options] [command]
+
+Persistent ordinary forms, separate from the joining questionnaire
+
+Options:
+  -h, --help                                             display help for command
+
+Commands:
+  list [options] <group-id>                              list persistent forms
+  get <group-id> <tool-id>                               get persistent forms
+  history [options] <group-id> <tool-id>                 history persistent forms (your retained
+                                                         response snapshots)
+  results [options] <group-id> <tool-id>                 results persistent forms (stated results
+                                                         visibility applies)
+  create [options] <group-id>                            create a persistent Group form
+  configure [options] <group-id> <tool-id>               configure a persistent Group form
+  submit [options] <group-id> <tool-id>                  submit a persistent Group form
+  remove-own [options] <group-id> <tool-id>              remove-own a persistent Group form response
+                                                         and retained history
+  delete [options] <group-id> <tool-id>                  delete a persistent Group form
+  moderate [options] <group-id> <tool-id> <response-id>  moderate a persistent Group form
+  policy                                                 Owner controls ordinary form availability
+                                                         and creation
+  help [command]                                         display help for command
+```
+
+## groupi groups forms list
+
+```text
+Usage: groupi groups forms list [options] <group-id>
+
+list persistent forms
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms get
+
+```text
+Usage: groupi groups forms get [options] <group-id> <tool-id>
+
+get persistent forms
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms history
+
+```text
+Usage: groupi groups forms history [options] <group-id> <tool-id>
+
+history persistent forms (your retained response snapshots)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms results
+
+```text
+Usage: groupi groups forms results [options] <group-id> <tool-id>
+
+results persistent forms (stated results visibility applies)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms create
+
+```text
+Usage: groupi groups forms create [options] <group-id>
+
+create a persistent Group form
+
+Options:
+  --title <text>                     Form title
+  --description <text>               Form description
+  --questions-json <json>            Stable-ID core questions JSON (at most 50)
+  --results-visibility <visibility>  Immutable MANAGERS or MEMBERS results visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups forms configure
+
+```text
+Usage: groupi groups forms configure [options] <group-id> <tool-id>
+
+configure a persistent Group form
+
+Options:
+  --title <text>           Form title
+  --description <text>     Form description
+  --questions-json <json>  Stable-ID core questions JSON (at most 50)
+  --form-version <number>  Current form version from get
+  -h, --help               display help for command
+```
+
+## groupi groups forms submit
+
+```text
+Usage: groupi groups forms submit [options] <group-id> <tool-id>
+
+submit a persistent Group form
+
+Options:
+  --form-version <number>       Current form version from get
+  --expected-revision <number>  Current own response revision; 0 for first submission
+  --answers-json <json>         Answers JSON object
+  -h, --help                    display help for command
+```
+
+## groupi groups forms remove-own
+
+```text
+Usage: groupi groups forms remove-own [options] <group-id> <tool-id>
+
+remove-own a persistent Group form response and retained history
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms delete
+
+```text
+Usage: groupi groups forms delete [options] <group-id> <tool-id>
+
+delete a persistent Group form
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms moderate
+
+```text
+Usage: groupi groups forms moderate [options] <group-id> <tool-id> <response-id>
+
+moderate a persistent Group form
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms policy
+
+```text
+Usage: groupi groups forms policy [options] [command]
+
+Owner controls ordinary form availability and creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>            Read forms policy
+  set [options] <group-id>  Set forms policy as owner
+  help [command]            display help for command
+```
+
+## groupi groups forms policy get
+
+```text
+Usage: groupi groups forms policy get [options] <group-id>
+
+Read forms policy
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms policy set
+
+```text
+Usage: groupi groups forms policy set [options] <group-id>
+
+Set forms policy as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
 ```
 
 ## groupi groups application-form

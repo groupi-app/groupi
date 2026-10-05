@@ -147,6 +147,22 @@ export function GroupDetailScreen() {
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
             <Button
+              accessibilityLabel='Group forms'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/forms`)}
+            >
+              Forms
+            </Button>
+            {group.viewerRole === 'OWNER' ? (
+              <Button
+                accessibilityLabel='Group form policy'
+                variant='outline'
+                onPress={() => router.push(`/groups/${id}/forms/policy`)}
+              >
+                Forms policy
+              </Button>
+            ) : null}
+            <Button
               variant='outline'
               accessibilityLabel='My joining questionnaire'
               onPress={() => router.push(`/groups/${id}/questionnaire`)}

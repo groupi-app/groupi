@@ -1,6 +1,8 @@
 import { createAccountResolutionRoutes } from './routes/accountResolution';
 
 import { createGroupEventAudienceRoutes } from './routes/groupEventAudiences';
+
+import { createGroupFormRoutes } from './routes/groupForms';
 import { createGroupTransferRoutes } from './routes/groupTransfers';
 import { createGroupQuestionnaireRoutes } from './routes/groupQuestionnaires';
 import { createGroupApplicationRoutes } from './routes/groupApplications';
@@ -274,7 +276,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         groupTransfers: { version: 1, retirement: true },
         groupApplications: { version: 1 },
         groupEventAudiences: { version: 1 },
-        groups: { version: 1, announcements: 1 },
+        groups: { version: 1, announcements: 1, forms: 1 },
         groupQuestionnaire: { version: 2 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
@@ -312,6 +314,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
   app.route('/', createGroupAnnouncementRoutes());
+  app.route('/', createGroupFormRoutes());
   app.route('/', createGroupRoutes());
   app.route('/', createGroupQuestionnaireRoutes());
   app.route('/', createGroupInviteRoutes());
