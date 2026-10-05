@@ -62,16 +62,16 @@ export function normalizeNativeIntentPath(path: string): string {
         ) ?? FALLBACK_ROUTE
       );
 
-    const pollMatch =
-      /^\/groups\/([a-zA-Z0-9_-]+)\/polls\/(?:new|([^/?#]+)\/settings)$/.exec(
+    const toolMatch =
+      /^\/groups\/([a-zA-Z0-9_-]+)\/(polls|forms|lists)\/(?:new|([^/?#]+)\/settings)$/.exec(
         candidatePath
       );
-    if (pollMatch)
+    if (toolMatch)
       return (
         getSafeAuthReturnPath(
-          pollMatch[2]
-            ? `/groups/${pollMatch[1]}/polls/${pollMatch[2]}/manage`
-            : `/groups/${pollMatch[1]}/polls/create`
+          toolMatch[3]
+            ? `/groups/${toolMatch[1]}/${toolMatch[2]}/${toolMatch[3]}/manage`
+            : `/groups/${toolMatch[1]}/${toolMatch[2]}/create`
         ) ?? FALLBACK_ROUTE
       );
 

@@ -16,7 +16,7 @@ interface AuthRouteState {
 }
 
 const SAFE_RETURN_PATH =
-  /^\/(?:g\/[^/?#]+|groups\/[^/?#]+(?:\/(?:members|invitations|bans|apply|applications|events|polls(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|history|results))?))?|lists(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|own))?))?|questionnaire(?:\/(?:settings|answers|history))?))?|invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
+  /^\/(?:g\/[^/?#]+|groups\/[^/?#]+(?:\/(?:members|invitations|bans|apply|applications|events|forms(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|history|results))?))?|polls(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|history|results))?))?|lists(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|own))?))?|questionnaire(?:\/(?:settings|answers|history))?))?|invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
 
 export function getSafeAuthReturnPath(value?: string): string | null {
   const rawCandidate = value?.trim();

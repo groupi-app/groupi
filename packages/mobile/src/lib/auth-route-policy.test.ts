@@ -154,3 +154,22 @@ it.each([
 ])('rejects unknown nested poll route %s', path =>
   expect(getSafeAuthReturnPath(path)).toBeNull()
 );
+
+it.each([
+  '/groups/group-123/forms',
+  '/groups/group-123/forms/create',
+  '/groups/group-123/forms/policy',
+  '/groups/group-123/forms/tool-123',
+  '/groups/group-123/forms/tool-123/manage',
+  '/groups/group-123/forms/tool-123/history',
+  '/groups/group-123/forms/tool-123/results',
+])('preserves existing native Forms return route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBe(path)
+);
+it.each([
+  '/groups/group-123/forms/tool-123/history/private',
+  '/groups/group-123/forms/policy/private',
+  '/groups/group-123/forms/tool-123/unknown',
+])('rejects unbounded Forms return route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBeNull()
+);

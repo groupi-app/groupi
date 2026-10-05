@@ -35,6 +35,22 @@ describe('normalizeNativeIntentPath', () => {
       'https://groupi.gg/groups/group-123/polls/poll-123/settings',
       '/groups/group-123/polls/poll-123/manage',
     ],
+    [
+      'https://groupi.gg/groups/group-123/forms/new',
+      '/groups/group-123/forms/create',
+    ],
+    [
+      'https://groupi.gg/groups/group-123/forms/tool-123/settings',
+      '/groups/group-123/forms/tool-123/manage',
+    ],
+    [
+      'groupi:///groups/group-123/forms/tool-123/history',
+      '/groups/group-123/forms/tool-123/history',
+    ],
+    [
+      'https://groupi.gg/groups/group-123/forms/tool-123/results',
+      '/groups/group-123/forms/tool-123/results',
+    ],
     ['groupi:///settings/privacy', '/settings/privacy'],
     ['groupi://invite/invite-token', '/invite/invite-token'],
   ])('routes supported Groupi link %s', (path, expected) => {
@@ -80,4 +96,52 @@ describe('normalizeNativeIntentPath', () => {
   ])('fails closed for unsupported intent %s', path => {
     expect(normalizeNativeIntentPath(path)).toBe('/');
   });
+});
+
+it.each([
+  '/groups/group-123/forms',
+  '/groups/group-123/forms/create',
+  '/groups/group-123/forms/policy',
+  '/groups/group-123/forms/tool-123',
+  '/groups/group-123/forms/tool-123/manage',
+  '/groups/group-123/forms/tool-123/history',
+  '/groups/group-123/forms/tool-123/results',
+])('routes bounded Forms intent through actual Expo handler %s', async path => {
+  const { redirectSystemPath } = await import('../../app/+native-intent');
+  expect(redirectSystemPath({ path: `groupi://${path}`, initial: true })).toBe(
+    path
+  );
+});
+it.each([
+  'https://groupi.gg/groups/group-123/forms/tool-123/history/private',
+  'https://evil.test/groups/group-123/forms/tool-123/history',
+])('actual Expo handler rejects unsupported Forms intent %s', async path => {
+  const { redirectSystemPath } = await import('../../app/+native-intent');
+  expect(redirectSystemPath({ path, initial: true })).toBe('/');
+});
+
+it.each([
+  [
+    'https://groupi.gg/groups/group-123/lists/new',
+    '/groups/group-123/lists/create',
+  ],
+  [
+    'https://groupi.gg/groups/group-123/lists/tool-123/settings',
+    '/groups/group-123/lists/tool-123/manage',
+  ],
+])(
+  'maps existing web List controls through production intent handler %s',
+  async (path, expected) => {
+    const { redirectSystemPath } = await import('../../app/+native-intent');
+    expect(normalizeNativeIntentPath(path)).toBe(expected);
+    expect(redirectSystemPath({ path, initial: true })).toBe(expected);
+  }
+);
+it.each([
+  'https://groupi.gg/groups/group-123/lists/tool-123/settings/private',
+  'https://groupi.gg/groups/group-123/lists/tool-123/manage/private',
+  'https://evil.test/groups/group-123/lists/tool-123/settings',
+])('rejects unbounded or untrusted List intent %s', async path => {
+  const { redirectSystemPath } = await import('../../app/+native-intent');
+  expect(redirectSystemPath({ path, initial: true })).toBe('/');
 });
