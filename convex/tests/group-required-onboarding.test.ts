@@ -713,3 +713,138 @@ it('purges pending onboarding recipient data through all three account deletion 
     vi.useRealTimers();
   }
 });
+
+it.each(['none', 'self', 'app', 'rest'] as const)(
+  'continues required-change notices across ownership transfers and former-owner deletion=%s',
+  async deletionPath => {
+    const deleteFormerOwner = deletionPath !== 'none';
+    vi.useFakeTimers();
+    try {
+      const t = createTestInstance();
+      registerBetterAuth(t);
+      const owner = await actor(t, 'continuity-owner');
+      const groupId = await owner.auth.mutation(
+        api.groups.mutations.createGroup,
+        { name: 'Continuity' }
+      );
+      const members = [];
+      for (let index = 0; index < 22; index++) {
+        const member = await actor(t, `continuity-member-${index}`);
+        const invite = await owner.auth.mutation(
+          api.groupInvites.mutations.sendGroupInvite,
+          { groupId, inviteePersonId: member.personId }
+        );
+        await member.auth.mutation(
+          api.groupInvites.mutations.acceptGroupInvite,
+          { inviteId: invite.inviteId }
+        );
+        members.push(member);
+      }
+      await owner.auth.mutation(
+        api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+        {
+          groupId,
+          enabled: true,
+          requiredCompletion: true,
+          questions: [
+            {
+              id: 'required',
+              label: 'Current required answer',
+              type: 'SHORT_ANSWER',
+              required: true,
+            },
+          ],
+        }
+      );
+      const job = await t.run(ctx =>
+        ctx.db
+          .query('groupOnboardingJobs')
+          .withIndex('by_groupId', q => q.eq('groupId', groupId))
+          .unique()
+      );
+      const offer = await owner.auth.mutation(
+        api.groupTransfers.mutations.offer,
+        { groupId, recipientId: members[0].personId }
+      );
+      await members[0].auth.mutation(api.groupTransfers.mutations.accept, {
+        groupId,
+        transferId: offer!.transferId!,
+      });
+      expect(
+        await owner.auth.query(api.groups.queries.getGroup, { groupId })
+      ).toMatchObject({
+        viewerRole: 'MODERATOR',
+        joiningQuestionnaire: { requiresCompletion: true },
+      });
+      if (deleteFormerOwner) {
+        if (deletionPath === 'self')
+          await owner.auth.mutation(api.users.mutations.deleteUserAccount, {
+            confirmation: 'continuity-owner',
+          });
+        else {
+          const admin = await actor(t, 'continuity-admin');
+          await t.mutation(components.betterAuth.adapter.updateOne, {
+            input: {
+              model: 'user',
+              where: [{ field: '_id', value: admin.user._id }],
+              update: { role: 'admin' },
+            },
+          });
+          if (deletionPath === 'app')
+            await admin.auth.mutation(api.admin.mutations.deletePerson, {
+              personId: owner.personId,
+            });
+          else
+            await body(
+              await admin.request('/admin/users/' + owner.user._id, 'DELETE'),
+              204
+            );
+        }
+        expect(
+          (await t.run(ctx => ctx.db.get(job!._id)))?.actorId
+        ).toBeUndefined();
+      }
+      await t.mutation(
+        internal.groupQuestionnaires.notifications.deliverRequiredChanges,
+        { jobId: job!._id }
+      );
+      const recipients = deleteFormerOwner ? members : [owner, ...members];
+      const readNotices = async () =>
+        Promise.all(
+          recipients.map(async recipient =>
+            (
+              await recipient.auth.query(
+                api.notifications.queries.fetchNotificationsForPerson,
+                {}
+              )
+            ).notifications.filter(n => n.type === 'GROUP_ONBOARDING_REQUIRED')
+          )
+        );
+      const firstNotices = (await readNotices()).flat();
+      expect(firstNotices).toHaveLength(20);
+      for (const notice of firstNotices)
+        expect(notice.author?.id).toBe(members[0].personId);
+      const continuation = await t.run(ctx => ctx.db.get(job!._id));
+      expect(continuation?.cursor).not.toBeNull();
+      const nextOffer = await members[0].auth.mutation(
+        api.groupTransfers.mutations.offer,
+        { groupId, recipientId: members[1].personId }
+      );
+      await members[1].auth.mutation(api.groupTransfers.mutations.accept, {
+        groupId,
+        transferId: nextOffer!.transferId!,
+      });
+      await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+      const delivered = (await readNotices()).flat();
+      expect(delivered).toHaveLength(deleteFormerOwner ? 22 : 23);
+      for (const notices of await readNotices())
+        expect(notices).toHaveLength(1);
+      const firstIds = new Set(firstNotices.map(n => n._id));
+      for (const notice of delivered.filter(n => !firstIds.has(n._id)))
+        expect(notice.author?.id).toBe(members[1].personId);
+      expect(await t.run(ctx => ctx.db.get(job!._id))).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+);

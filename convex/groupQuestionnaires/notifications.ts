@@ -4,9 +4,8 @@ import { makeFunctionReference } from 'convex/server';
 import {
   requiredNotificationKey,
   needsCurrentOnboarding,
+  currentOnboardingOwnerGroup,
 } from './notificationJobs';
-import { livePerson } from '../groups/model';
-import { membershipFor, isGroupBanned } from '../groups/policy';
 import {
   createNotification,
   collectEmailData,
@@ -19,24 +18,14 @@ export const deliverRequiredChanges = internalMutation({
   handler: async (ctx, { jobId }) => {
     const job = await ctx.db.get(jobId);
     if (!job) return null;
-    const [group, actor, member, config, actorBanned] = await Promise.all([
-      ctx.db.get(job.groupId),
-      livePerson(ctx, job.actorId),
-      membershipFor(ctx, job.groupId, job.actorId),
+    const [group, config] = await Promise.all([
+      currentOnboardingOwnerGroup(ctx, job.groupId),
       ctx.db
         .query('groupQuestionnaires')
         .withIndex('by_groupId', q => q.eq('groupId', job.groupId))
         .unique(),
-      isGroupBanned(ctx, job.groupId, job.actorId),
     ]);
-    if (
-      !group ||
-      !actor ||
-      actorBanned ||
-      member?.role !== 'OWNER' ||
-      group.ownerId !== job.actorId ||
-      requiredNotificationKey(config) !== job.semanticKey
-    ) {
+    if (!group || requiredNotificationKey(config) !== job.semanticKey) {
       await ctx.db.delete(jobId);
       return null;
     }
@@ -52,7 +41,7 @@ export const deliverRequiredChanges = internalMutation({
         {
           personId: recipient.personId,
           type: 'GROUP_ONBOARDING_REQUIRED',
-          authorId: job.actorId,
+          authorId: group.ownerId,
           groupId: job.groupId,
         },
         {

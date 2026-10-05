@@ -114,3 +114,18 @@ export async function allowsCurrentOnboardingPush(
   }
   return false;
 }
+
+/** Pending policy work follows the current live Owner across accepted transfers. */
+export async function currentOnboardingOwnerGroup(
+  ctx: MutationCtx | QueryCtx,
+  groupId: Id<'groups'>
+) {
+  const group = await ctx.db.get(groupId);
+  if (!group) return null;
+  const [owner, member, banned] = await Promise.all([
+    livePerson(ctx, group.ownerId),
+    membershipFor(ctx, groupId, group.ownerId),
+    isGroupBanned(ctx, groupId, group.ownerId),
+  ]);
+  return owner && member?.role === 'OWNER' && !banned ? group : null;
+}

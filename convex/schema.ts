@@ -31,7 +31,7 @@ import { v } from 'convex/values';
 export default defineSchema({
   groupOnboardingJobs: defineTable({
     groupId: v.id('groups'),
-    actorId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
     semanticKey: v.string(),
     cursor: v.union(v.string(), v.null()),
   })

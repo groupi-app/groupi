@@ -1,5 +1,9 @@
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
+import {
+  currentOnboardingOwnerGroup,
+  requiredNotificationKey,
+} from './notificationJobs';
 export async function removeQuestionnairesForGroup(
   ctx: MutationCtx,
   groupId: Id<'groups'>
@@ -31,8 +35,23 @@ export async function removeQuestionnairesForPerson(
   }
   for await (const job of ctx.db
     .query('groupOnboardingJobs')
-    .withIndex('by_actorId', q => q.eq('actorId', personId)))
-    await ctx.db.delete(job._id);
+    .withIndex('by_actorId', q => q.eq('actorId', personId))) {
+    const [group, config] = await Promise.all([
+      currentOnboardingOwnerGroup(ctx, job.groupId),
+      ctx.db
+        .query('groupQuestionnaires')
+        .withIndex('by_groupId', q => q.eq('groupId', job.groupId))
+        .unique(),
+    ]);
+    // Admission/configuration belong to the surviving Group, not a departed Owner.
+    if (
+      group &&
+      group.ownerId !== personId &&
+      requiredNotificationKey(config) === job.semanticKey
+    )
+      await ctx.db.patch(job._id, { actorId: undefined });
+    else await ctx.db.delete(job._id);
+  }
   for (const table of [
     'groupQuestionnaireRecords',
     'groupQuestionnaireAnswers',

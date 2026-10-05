@@ -52,8 +52,12 @@ or definitions. Delivery resolves current eligibility and channel preferences;
 completion or disabling prevents pending external delivery. Existing in-app
 notices retain historical truth and link to current recovery state. Group deletion
 purges jobs, dispatches and questionnaire data immediately. All three account
-deletion paths purge author records and recipient dispatches, cancel actor jobs
-and anonymize surviving notification actor references.
+deletion paths purge author records and recipient dispatches and anonymize surviving
+notification actor references. Pending policy work authorizes each page against
+the current live, unbanned Owner, so accepted transfers preserve required notices
+including cursor continuation. Deleting a former Owner clears job provenance while
+preserving a matching Group policy under its valid successor; obsolete work is
+removed. Jobs never retain a deleted actor ID.
 
 ## Integration contract
 
