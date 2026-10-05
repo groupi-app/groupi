@@ -295,6 +295,7 @@ describe('From list invitation flow', () => {
     }
   );
 
+  // Allow coverage overhead for the serial interaction and history workflow.
   it.each([
     'Close',
     'Escape',
@@ -370,7 +371,8 @@ describe('From list invitation flow', () => {
       await waitFor(() =>
         expect(screen.getByRole('button', { name: /Sam Other/ })).toBeVisible()
       );
-    }
+    },
+    15_000
   );
 
   it('prevents using Needs attention lists and anonymizes unavailable picker entries', async () => {
@@ -495,7 +497,7 @@ describe('From list invitation flow', () => {
     expect(
       await screen.findByText('1 invitation sent. 0 skipped.')
     ).toBeVisible();
-  });
+  }, 15_000);
 
   it('retains an expired original attempt until acknowledgement, then starts a new review without sending', async () => {
     const user = userEvent.setup();
