@@ -1,3 +1,4 @@
+import type { Id } from 'convex/_generated/dataModel';
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 import { act, createElement, type ReactNode } from 'react';
@@ -33,6 +34,7 @@ const network = vi.hoisted(() => ({
   answers: {} as Record<string, string | number | boolean | string[]>,
   saved: false,
   requiredOnboarding: false,
+  applicationApproved: false,
   formVersion: 3,
   enabled: true,
   available: true,
@@ -140,6 +142,32 @@ function form() {
   };
 }
 function result(name: string, args: Record<string, unknown>) {
+  if (name === 'groupApplications/queries:getGroupApplicationForm')
+    return {
+      applicationsEnabled: true,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: false,
+    };
+  if (name === 'groupApplications/queries:listMyGroupApplications')
+    return {
+      page: [
+        {
+          _id: 'approved-application',
+          groupId: 'group-123',
+          personId: 'person-123',
+          status: network.applicationApproved ? 'APPROVED' : 'PENDING',
+          questions: [],
+          answers: {},
+          decisions: [],
+          submittedAt: 1,
+          updatedAt: 2,
+        },
+      ],
+      isDone: true,
+      continueCursor: '',
+    };
   if (name === 'auth/queries:getCurrentUserAndPerson') return profile;
   if (name === 'users/queries:checkNeedsOnboarding') return false;
   if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
@@ -182,6 +210,7 @@ function result(name: string, args: Record<string, unknown>) {
 }
 import { ConvexClientProvider } from '../../providers/convex-provider';
 import { GlobalUserProvider } from '../../context/global-user-context';
+import { GroupApplicationScreen } from './group-application-screen';
 import QuestionnaireScreen from '../../../app/groups/[groupId]/questionnaire';
 import {
   GroupJoiningQuestionnairePrompt,
@@ -496,4 +525,45 @@ it('required onboarding keeps recovery reachable and removes the misleading skip
   expect(network.mutation).toHaveBeenCalledTimes(1);
   expect(control(mounted, 'Continue without questionnaire')).toBeDefined();
   await act(async () => mounted.unmount());
+});
+
+it('approved application opens required native completion through production provider screens without a second admission write', async () => {
+  vi.clearAllMocks();
+  network.manager = false;
+  network.saved = false;
+  network.requiredOnboarding = true;
+  network.applicationApproved = true;
+  const application = await mount(GroupApplicationScreen);
+  await press(application, 'Open approved Group');
+  expect(network.push).toHaveBeenCalledWith('/groups/group-123');
+  await act(async () => application.unmount());
+  const prompt = await mount(() =>
+    createElement(GroupJoiningQuestionnairePrompt, {
+      groupId: 'group-123' as Id<'groups'>,
+    })
+  );
+  expect(
+    control(prompt, 'Skip optional joining questionnaire for now')
+  ).toBeUndefined();
+  await press(prompt, 'Complete required joining questionnaire');
+  expect(network.push).toHaveBeenCalledWith('/groups/group-123/questionnaire');
+  await act(async () => prompt.unmount());
+  network.mutation.mockImplementation(async () => {
+    network.saved = true;
+    network.subscribers.forEach(callback => callback());
+    return form();
+  });
+  const questionnaire = await mount(QuestionnaireScreen);
+  expect(
+    control(questionnaire, 'Continue without questionnaire')
+  ).toBeUndefined();
+  await press(questionnaire, 'Save joining questionnaire answers');
+  expect(
+    control(questionnaire, 'Continue without questionnaire')
+  ).toBeDefined();
+  expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+    'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
+    expect.any(Object)
+  );
+  await act(async () => questionnaire.unmount());
 });

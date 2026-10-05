@@ -2,8 +2,8 @@ import { ConvexError } from 'convex/values';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
-import { requireManager, membershipFor, isGroupBanned } from '../groups/policy';
-import { livePerson } from '../groups/model';
+import { requireManager } from '../groups/policy';
+import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import { checkIsBlocked } from '../lib/privacy';
 import { isPersonInDndMode } from '../lib/notifications';
 import { requestExpiry } from '../lib/requestId';
@@ -13,7 +13,7 @@ export const summary = (row: Doc<'groupAnnouncements'>) => ({
   notified: row.notified,
   skipped: row.skipped,
 });
-/** Simple permitted-member seam; onboarding composition belongs to T10. */
+/** Announcement recipients require this Group content grant; manager recovery remains separate. */
 export async function eligible(
   ctx: QueryCtx | MutationCtx,
   groupId: Id<'groups'>,
@@ -22,9 +22,7 @@ export async function eligible(
 ) {
   return (
     personId !== senderId &&
-    Boolean(await membershipFor(ctx, groupId, personId)) &&
-    Boolean(await livePerson(ctx, personId)) &&
-    !(await isGroupBanned(ctx, groupId, personId)) &&
+    (await canAccessGroupMemberContent(ctx, groupId, personId)) &&
     !(await checkIsBlocked(ctx, senderId, personId)) &&
     !(await isPersonInDndMode(ctx, personId))
   );

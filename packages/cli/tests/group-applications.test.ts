@@ -182,3 +182,58 @@ test('preserves a validated optional joining status and rejects malformed status
   expect(bad.code).not.toBe(0);
   expect(bad.stdout).not.toContain('private');
 });
+
+for (const flags of [
+  {
+    requiredCompletion: true,
+    requiresCompletion: true,
+    canAccessMemberContent: false,
+  },
+  { requiredCompletion: true },
+  {
+    requiredCompletion: 'true',
+    requiresCompletion: true,
+    canAccessMemberContent: false,
+  },
+]) {
+  test(`validates complete required onboarding status ${JSON.stringify(flags)} after approval`, async () => {
+    await endpoint((_req, res) =>
+      res.end(
+        JSON.stringify({
+          applicationId: 'a1',
+          status: 'APPROVED',
+          joiningQuestionnaire: {
+            enabled: true,
+            completed: false,
+            shouldPrompt: true,
+            version: 1,
+            ...flags,
+            answers: { secret: 'private' },
+          },
+        })
+      )
+    );
+    const result = await cli([
+      'groups',
+      'application-review',
+      'g1',
+      'a1',
+      '--decision',
+      'APPROVED',
+      '--yes',
+    ]);
+    if (
+      Object.keys(flags).length === 3 &&
+      typeof flags.requiredCompletion === 'boolean'
+    ) {
+      expect(result.code).toBe(0);
+      expect(JSON.parse(result.stdout).joiningQuestionnaire).toMatchObject(
+        flags
+      );
+    } else {
+      expect(result.code).toBe(5);
+      expect(result.stderr).toContain('UNCERTAIN_OUTCOME');
+    }
+    expect(result.stdout).not.toContain('private');
+  });
+}

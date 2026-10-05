@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -1018,6 +1018,117 @@ it('shows the optional questionnaire when application approval makes Group detai
   expect(await screen.findByText(/already a Group member/)).toBeInTheDocument();
   expect(screen.getByLabelText('Introduce yourself')).toBeInTheDocument();
   expect(mutation).not.toHaveBeenCalled();
+  mounted.unmount();
+  await client.close();
+});
+
+it('opens an approved application into required recovery without a second admission action through production routes', async () => {
+  const required = {
+    ...questionnaire,
+    requiredCompletion: true,
+    requiresCompletion: true,
+    canAccessMemberContent: false,
+  };
+  const group = {
+    ...detail,
+    viewerRole: 'MEMBER',
+    canManageMembers: false,
+    canManageIdentity: false,
+    canManageInvitations: false,
+    joiningQuestionnaire: required,
+  };
+  const approved = {
+    _id: 'approved-one',
+    groupId,
+    personId: 'member-one',
+    questions: [],
+    answers: {},
+    status: 'APPROVED',
+    submittedAt: 1,
+    updatedAt: 2,
+    decisions: [{ status: 'APPROVED', at: 2, actorId: 'owner-one' }],
+  };
+  const { client, mutation, setData } = fixtureClient({
+    'groups/queries:getGroup': group,
+    'groupInvites/queries:getMyGroupInviteForGroup': null,
+    'groupApplications/queries:getGroupApplicationForm': {
+      applicationsEnabled: true,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: false,
+    },
+    'groupApplications/queries:listMyGroupApplications': {
+      ...emptyPage,
+      page: [approved],
+    },
+    'groupQuestionnaires/queries:getJoiningQuestionnaire': required,
+  });
+  function Routes() {
+    const [path, setPath] = useState('/g/group-one');
+    return (
+      <div
+        onClickCapture={event => {
+          const link = (event.target as HTMLElement).closest('a');
+          if (link?.getAttribute('href') === '/groups/group-one') {
+            event.preventDefault();
+            setPath('/groups/group-one');
+          }
+        }}
+      >
+        {path.startsWith('/groups/') ? (
+          <GroupDetail groupId={groupId} />
+        ) : (
+          <GroupLanding groupId={groupId} />
+        )}
+      </div>
+    );
+  }
+  const mounted = render(
+    <AppProvider client={client}>
+      <Routes />
+    </AppProvider>
+  );
+  await userEvent.click(
+    within(
+      await screen.findByRole('article', { name: 'Application approved-one' })
+    ).getByRole('link', { name: 'Open Group' })
+  );
+  expect(
+    (
+      await screen.findAllByText(
+        /Complete required onboarding before accessing Group member content/
+      )
+    ).length
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getByRole('button', { name: 'Leave Group' })
+  ).toBeInTheDocument();
+  expect(
+    vi.mocked(client.watchQuery).mock.calls.map(([ref]) => getFunctionName(ref))
+  ).not.toContain('groups/queries:listGroupMembers');
+  mutation.mockImplementation(async () => {
+    const completed = {
+      ...required,
+      completed: true,
+      requiresCompletion: false,
+      canAccessMemberContent: true,
+    };
+    setData('groupQuestionnaires/queries:getJoiningQuestionnaire', completed);
+    setData('groups/queries:getGroup', {
+      ...group,
+      joiningQuestionnaire: completed,
+    });
+    return completed;
+  });
+  await userEvent.type(screen.getByLabelText(/Introduce yourself/), 'Current');
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Save questionnaire answers' })
+  );
+  expect(await screen.findByText('Alex')).toBeInTheDocument();
+  expect(mutation.mock.calls.map(([ref]) => getFunctionName(ref))).toEqual([
+    'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
+  ]);
   mounted.unmount();
   await client.close();
 });

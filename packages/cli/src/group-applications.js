@@ -329,10 +329,27 @@ export async function writeGroupApplication(
           Number.isInteger(status.version) &&
           Number(status.version) >= 0
       );
+      const accessFlags = [
+        'requiredCompletion',
+        'requiresCompletion',
+        'canAccessMemberContent',
+      ];
+      const hasAccess = accessFlags.some(flag => status[flag] !== undefined);
+      valid(
+        !hasAccess ||
+          accessFlags.every(flag => typeof status[flag] === 'boolean')
+      );
       return {
         applicationId: value.applicationId,
         status: value.status,
         joiningQuestionnaire: {
+          ...(hasAccess
+            ? {
+                requiredCompletion: status.requiredCompletion,
+                requiresCompletion: status.requiresCompletion,
+                canAccessMemberContent: status.canAccessMemberContent,
+              }
+            : {}),
           enabled: status.enabled,
           completed: status.completed,
           shouldPrompt: status.shouldPrompt,

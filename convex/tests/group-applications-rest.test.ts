@@ -1,3 +1,4 @@
+import { GroupApplicationResultSchema } from '../api/v2/schemas/groupApplications';
 import { describe, expect, it } from 'vitest';
 import { api, components } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
@@ -316,4 +317,86 @@ describe('authenticated Group application REST', () => {
       }))
     ).toEqual({ applications: [], actors: [], notifications: [] });
   });
+});
+
+it('REST approval preserves required status through the published schema and completion without replaying admission', async () => {
+  vi.useFakeTimers();
+  try {
+    const t = createTestInstance();
+    registerBetterAuth(t);
+    const owner = await actor(t, 'required-rest-owner'),
+      person = await actor(t, 'required-rest-applicant');
+    const { groupId } = await body(
+      await owner.request('/groups', 'POST', { name: 'Required approval' }),
+      201
+    );
+    const base = `/groups/${groupId}`;
+    await body(
+      await owner.request(base + '/application-settings', 'PUT', {
+        applicationsEnabled: true,
+        questions: [],
+      })
+    );
+    await body(
+      await owner.request(base + '/joining-questionnaire', 'PUT', {
+        enabled: true,
+        requiredCompletion: true,
+        questions: [
+          {
+            id: 'required',
+            label: 'Required private answer',
+            type: 'SHORT_ANSWER',
+            required: true,
+          },
+        ],
+      })
+    );
+    const application = await body(
+      await person.request(base + '/applications', 'POST', { answers: {} }),
+      200
+    );
+    const endpoint =
+      base + '/applications/' + application.applicationId + '/review';
+    const approved = await body(
+      await owner.request(endpoint, 'POST', { decision: 'APPROVED' })
+    );
+    const flags = {
+      requiredCompletion: true,
+      requiresCompletion: true,
+      canAccessMemberContent: false,
+    };
+    expect(approved.joiningQuestionnaire).toMatchObject(flags);
+    expect(
+      GroupApplicationResultSchema.parse(approved).joiningQuestionnaire
+    ).toMatchObject(flags);
+    expect(JSON.stringify(approved)).not.toContain('Required private answer');
+    await body(await person.request(base + '/members'), 403);
+    const form = await body(
+      await person.request(base + '/joining-questionnaire')
+    );
+    await body(
+      await person.request(base + '/joining-questionnaire/answers', 'PUT', {
+        version: form.version,
+        answers: { required: 'Saved' },
+      })
+    );
+    expect(
+      (await body(await person.request(base + '/members'))).items
+    ).toHaveLength(2);
+    await owner.auth.mutation(api.groupModeration.mutations.banGroupPerson, {
+      groupId,
+      personId: person.personId,
+    });
+    expect(
+      await body(
+        await owner.request(endpoint, 'POST', { decision: 'APPROVED' })
+      )
+    ).toEqual({ applicationId: application.applicationId, status: 'APPROVED' });
+    expect(
+      await person.auth.query(api.groups.queries.getGroup, { groupId })
+    ).toBeNull();
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+  } finally {
+    vi.useRealTimers();
+  }
 });

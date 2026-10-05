@@ -17,11 +17,11 @@ groupi groups announcement-status GROUP --request-id UNIX_MS.UUID_V4
 
 ## Audience and channels
 
-The send fixes an indexed membership creation boundary and processes 25 memberships per transaction. Every page rechecks sender authority and current recipient membership, active Group bans, live Auth account, blocking and Do Not Disturb. Members joining after the send boundary are excluded. The simple eligibility seam can later compose the separate required-onboarding policy.
+The send fixes an indexed membership creation boundary and processes 25 memberships per transaction. Every page rechecks sender authority and current recipient membership, active Group bans, live Auth account, blocking and Do Not Disturb. Members joining after the send boundary are excluded. Required joining-questionnaire completion is checked through the common Group member-content eligibility seam. Incomplete recipients, including owners, receive no Group announcement content until completion. Existing notices hide their content while access is gated and become readable again after completion. Current managers retain send and status recovery operations. Independent Group and Event access remains unaffected.
 
 Recipients get in-app notifications; existing enabled EMAIL, PUSH and WEBHOOK methods apply their private `GROUP_ANNOUNCEMENT` preference, defaulting to enabled when no type preference exists. The settings screens expose this preference. There is no SMS, phone integration, custom manager automation, or public contact/preference response.
 
-Mutation scheduling and cursor updates are atomic. Replayed or concurrent requests/pages do not create duplicate notifications. Announcement dispatch persists only a notification ID, rechecks eligibility and preferences, then claims dispatch once. Existing external actions execute at most once and are never blindly retried by announcement recovery. Existing push delivery rules apply, with an additional current announcement-eligibility check at push claim.
+Mutation scheduling and cursor updates are atomic. Replayed or concurrent requests/pages do not create duplicate notifications. Announcement dispatch persists only a notification ID, rechecks eligibility and preferences, then claims dispatch once. Existing external actions execute at most once and are never blindly retried by announcement recovery. Existing push delivery rules apply, with an additional current announcement-eligibility check at push claim and immediately before resolving provider delivery.
 
 ## Cleanup and verification
 

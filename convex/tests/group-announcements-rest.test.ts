@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { api, components } from '../_generated/api';
+import { api, components, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 
@@ -202,3 +202,193 @@ it.each(['self', 'admin-session', 'admin-rest'] as const)(
     vi.useRealTimers();
   }
 );
+
+it('required onboarding gates prior announcement content, fanout, dispatch and already-claimed push while manager recovery remains reachable', async () => {
+  vi.useFakeTimers();
+  try {
+    const t = createTestInstance();
+    registerBetterAuth(t);
+    const owner = await actor(t, 'ann-required-owner'),
+      member = await actor(t, 'ann-required-member'),
+      mod = await actor(t, 'ann-required-mod');
+    const groupId = await owner.auth.mutation(
+      api.groups.mutations.createGroup,
+      { name: 'Required recipients' }
+    );
+    for (const person of [member, mod]) {
+      const invitation = await owner.auth.mutation(
+        api.groupInvites.mutations.sendGroupInvite,
+        { groupId, inviteePersonId: person.personId }
+      );
+      await person.auth.mutation(api.groupInvites.mutations.acceptGroupInvite, {
+        inviteId: invitation.inviteId,
+      });
+    }
+    await owner.auth.mutation(
+      api.groupModeration.mutations.setGroupMemberRole,
+      { groupId, personId: mod.personId, role: 'MODERATOR' }
+    );
+    await member.auth.mutation(api.pushNotifications.mutations.registerDevice, {
+      token: 'ExpoPushToken[announcement-required-test]',
+      deviceId: 'ann-required-device',
+      platform: 'ios',
+      projectId: 'ann-required-project',
+      appId: 'gg.groupi.mobile',
+    });
+    const endpoint = `/groups/${groupId}/announcements`;
+    const first = await body(
+      await owner.request(endpoint, 'POST', {
+        title: 'Prior private content',
+        message: 'Private Group detail',
+      }),
+      202
+    );
+    await t.mutation(internal.groupAnnouncements.mutations.processPage, {
+      announcementId: first.announcementId,
+    });
+    const notices = () =>
+      member.auth.query(
+        api.notifications.queries.fetchNotificationsForPerson,
+        {}
+      );
+    const old = (await notices()).notifications.find(
+      n => n.type === 'GROUP_ANNOUNCEMENT'
+    )!;
+    await t.mutation(internal.groupAnnouncements.dispatch.collect, {
+      notificationId: old._id,
+    });
+    const pushes = await t.run(ctx =>
+      ctx.db
+        .query('pushDeliveries')
+        .withIndex('by_notification', q => q.eq('notificationId', old._id))
+        .collect()
+    );
+    expect(pushes).toHaveLength(1);
+    await t.mutation(internal.pushNotifications.mutations.claimDeliveries, {
+      deliveryIds: pushes.map(p => p._id),
+    });
+    vi.setSystemTime(Date.now() + 1);
+    const second = await body(
+      await owner.request(endpoint, 'POST', {
+        title: 'Queued private content',
+        message: 'Do not leak after gate',
+      }),
+      202
+    );
+    await t.mutation(internal.groupAnnouncements.mutations.processPage, {
+      announcementId: second.announcementId,
+    });
+    const queued = (await notices()).notifications.find(
+      n => n.groupAnnouncementId === second.announcementId
+    )!;
+    await owner.auth.mutation(
+      api.groupQuestionnaires.mutations.configureJoiningQuestionnaire,
+      {
+        groupId,
+        enabled: true,
+        requiredCompletion: true,
+        questions: [
+          {
+            id: 'required',
+            label: 'Required',
+            type: 'SHORT_ANSWER',
+            required: true,
+          },
+        ],
+      }
+    );
+    const independentGroup = await member.auth.mutation(
+      api.groups.mutations.createGroup,
+      {
+        name: 'Independent Group grant',
+      }
+    );
+    expect(
+      (
+        await member.auth.query(api.groups.queries.listGroupMembers, {
+          groupId: independentGroup,
+          paginationOpts: { numItems: 20, cursor: null },
+        })
+      ).page
+    ).toHaveLength(1);
+    const gated = (await notices()).notifications.find(n => n._id === old._id)!;
+    expect(gated.groupAnnouncement).toBeNull();
+    const rest = await body(await member.request('/notifications'));
+    expect(JSON.stringify(rest)).not.toContain('Private Group detail');
+    expect(
+      await t.mutation(internal.groupAnnouncements.dispatch.collect, {
+        notificationId: queued._id,
+      })
+    ).toEqual({ emails: [], webhooks: [] });
+    expect(
+      (
+        await t.query(internal.pushNotifications.queries.resolveDeliveryJobs, {
+          deliveryIds: pushes.map(p => p._id),
+          purpose: 'send',
+        })
+      ).cancelled
+    ).toHaveLength(1);
+    await member.auth.mutation(
+      api.pushNotifications.mutations.unregisterDevice,
+      { deviceId: 'ann-required-device' }
+    );
+    vi.setSystemTime(Date.now() + 1);
+    const skipped = await body(
+      await mod.request(endpoint, 'POST', {
+        title: 'Still incomplete',
+        message: 'Must not deliver',
+      }),
+      202
+    );
+    await t.mutation(internal.groupAnnouncements.mutations.processPage, {
+      announcementId: skipped.announcementId,
+    });
+    expect(
+      await mod.auth.query(api.groupAnnouncements.queries.getAnnouncement, {
+        groupId,
+        requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      })
+    ).toMatchObject({ notified: 0, skipped: 3 });
+    const form = await member.auth.query(
+      api.groupQuestionnaires.queries.getJoiningQuestionnaire,
+      { groupId }
+    );
+    await member.auth.mutation(
+      api.groupQuestionnaires.mutations.submitJoiningQuestionnaire,
+      { groupId, version: form.version, answers: { required: 'Current' } }
+    );
+    expect(
+      (await notices()).notifications.find(n => n._id === old._id)
+        ?.groupAnnouncement
+    ).toMatchObject({ message: 'Private Group detail' });
+    vi.setSystemTime(Date.now() + 1);
+    const restored = await body(
+      await mod.request(endpoint, 'POST', {
+        title: 'Restored',
+        message: 'Only completed recipients',
+      }),
+      202
+    );
+    await t.mutation(internal.groupAnnouncements.mutations.processPage, {
+      announcementId: restored.announcementId,
+    });
+    expect(
+      await mod.auth.query(api.groupAnnouncements.queries.getAnnouncement, {
+        groupId,
+        requestId: `${Date.now()}.12345678-1234-4123-8123-123456789abc`,
+      })
+    ).toMatchObject({ notified: 1, skipped: 2 });
+    const independent = await member.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Independent Event', chosenDateTime: '2027-01-01T12:00:00Z' }
+    );
+    expect(
+      await member.auth.query(api.events.queries.getEventHeader, {
+        eventId: independent.eventId,
+      })
+    ).toMatchObject({ event: { title: 'Independent Event' } });
+    await t.finishAllScheduledFunctions(() => vi.runAllTimers());
+  } finally {
+    vi.useRealTimers();
+  }
+});

@@ -76,3 +76,5 @@ Configure requires `--enabled true|false --questions <json>`; submit requires
 current managers. Basic writes accept advertised `groupQuestionnaire.version: 1` or `2`; explicit
 `--required-completion true|false` requires version `2` before mutation, and uncertain writes are not automatically retried. Legacy
 invitation operations remain compatible without this capability.
+
+Application approval admits the member immediately and returns `requiredCompletion`, `requiresCompletion`, and `canAccessMemberContent` with questionnaire status. Required completion gates Group content after admission without a second approval. Terminal application replay after departure or a ban neither readmits the author nor returns current questionnaire status. CLI accepts legacy status only when all three access flags are absent; partial or nonboolean flags report an uncertain outcome and require inspection rather than retry.

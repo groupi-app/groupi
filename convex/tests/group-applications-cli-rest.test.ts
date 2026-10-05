@@ -25,6 +25,8 @@ it('CLI configures questions and edits, reviews and retains private Group applic
       groupId,
       '--enabled',
       'true',
+      '--required-completion',
+      'true',
       '--questions',
       JSON.stringify([
         {
@@ -131,10 +133,39 @@ it('CLI configures questions and edits, reviews and retains private Group applic
     expect(approved).toMatchObject({
       joiningQuestionnaire: {
         enabled: true,
+        requiredCompletion: true,
+        requiresCompletion: true,
+        canAccessMemberContent: false,
         completed: false,
         shouldPrompt: true,
       },
     });
+    const denied = await bridge.cli(person.rawKey, [
+      'groups',
+      'members',
+      groupId,
+    ]);
+    expect(denied.code).not.toBe(0);
+    expect(denied.stderr).toContain('ONBOARDING_REQUIRED');
+    const form = await run(person.rawKey, [
+      'groups',
+      'questionnaire',
+      'get',
+      groupId,
+    ]);
+    await run(person.rawKey, [
+      'groups',
+      'questionnaire',
+      'submit',
+      groupId,
+      '--form-version',
+      String(form.version),
+      '--answers',
+      '{"book":"Dune"}',
+    ]);
+    expect(
+      (await run(person.rawKey, ['groups', 'members', groupId])).items
+    ).toHaveLength(2);
     await run(owner.rawKey, [
       'groups',
       'application-review',

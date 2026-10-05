@@ -1,3 +1,5 @@
+import { eligible as announcementEligible } from '../groupAnnouncements/model';
+import { requireManager as requireGroupManager } from '../groups/policy';
 import {
   needsCurrentOnboarding,
   allowsCurrentOnboardingPush,
@@ -137,6 +139,31 @@ export const resolveDeliveryJobs = internalQuery({
       ) {
         cancelled.push({ deliveryId, attempts: delivery.attempts });
         continue;
+      }
+      if (notification.groupAnnouncementId) {
+        const announcement = await ctx.db.get(notification.groupAnnouncementId);
+        let permitted = false;
+        if (announcement?.senderId && announcement.state !== 'CANCELLED') {
+          try {
+            await requireGroupManager(
+              ctx,
+              announcement.groupId,
+              announcement.senderId
+            );
+            permitted = await announcementEligible(
+              ctx,
+              announcement.groupId,
+              announcement.senderId,
+              notification.personId
+            );
+          } catch {
+            permitted = false;
+          }
+        }
+        if (!permitted) {
+          cancelled.push({ deliveryId, attempts: delivery.attempts });
+          continue;
+        }
       }
       ready.push({
         deliveryId,

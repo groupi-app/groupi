@@ -62,6 +62,9 @@ export const GroupApplicationResultSchema = z.object({
   status: GroupApplicationStatusSchema,
   joiningQuestionnaire: z
     .object({
+      requiredCompletion: z.boolean(),
+      requiresCompletion: z.boolean(),
+      canAccessMemberContent: z.boolean(),
       enabled: z.boolean(),
       completed: z.boolean(),
       shouldPrompt: z.boolean(),
