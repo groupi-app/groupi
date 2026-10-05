@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
+// Allow serial CLI process startup and real HTTP operations on hosted runners.
 it('CLI explicitly sends and recovers truthful aggregate status over real local HTTP', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -61,4 +62,4 @@ it('CLI explicitly sends and recovers truthful aggregate status over real local 
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);

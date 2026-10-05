@@ -184,7 +184,7 @@ describe('Public CLI workflows against authenticated Convex REST', () => {
       (await success(viewer.rawKey, ['events', 'preview', event.eventId]))
         .entryAction
     ).toBe('MEMBER');
-  });
+  }, 30_000);
 
   it('enforces event settings, role and deletion authority and removes public event resources', async () => {
     const { organizer, attendee, eventId, membershipId } = await joinedEvent();

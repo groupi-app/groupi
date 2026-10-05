@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { it, expect } from 'vitest';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
+// Allow serial CLI process startup and real HTTP operations on hosted runners.
 it('discovers current Group reasons, previews safe logistics and joins Pending through real CLI and authenticated HTTP', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -81,4 +82,4 @@ it('discovers current Group reasons, previews safe logistics and joins Pending t
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);

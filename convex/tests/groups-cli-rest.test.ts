@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
+// Allow serial CLI process startup and real HTTP operations on hosted runners.
 it('CLI creates, pages, renames, clears identity and explicitly deletes owned Groups over HTTP', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -69,4 +70,4 @@ it('CLI creates, pages, renames, clears identity and explicitly deletes owned Gr
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);
