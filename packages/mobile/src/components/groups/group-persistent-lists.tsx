@@ -586,6 +586,7 @@ function EntryRow({
           />
           <Button
             disabled={busy}
+            role='checkbox'
             accessibilityRole='checkbox'
             accessibilityState={{ checked: completed }}
             accessibilityLabel={`Completed: ${entry.text}`}

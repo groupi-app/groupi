@@ -404,7 +404,28 @@ function ListInteraction({
           {attempt ? 'Retry original entry' : 'Add entry'}
         </Button>
       </form>
-      {attempt && <p>Request ID: {attempt.requestId}</p>}
+      {attempt && !busy && (
+        <>
+          <p>
+            {attempt.version !== list.version
+              ? 'List settings changed since the original attempt. Inspect the current list before starting another request.'
+              : 'Retry keeps the original contribution. Inspect saved entries before starting another request.'}
+          </p>
+          <GroupConfirmedAction
+            key={attempt.requestId}
+            label='Start new request after inspection'
+            confirmation='Confirm starting a new entry request'
+            explanation='Inspect saved entries and the current list settings first. A previous request may have succeeded; using a new request can create a duplicate. Your draft will be retained.'
+            onConfirm={async () => {
+              setText(attempt.text);
+              setAttempt(null);
+              setMessage(
+                'Draft retained. Inspect the current list before submitting a new request.'
+              );
+            }}
+          />
+        </>
+      )}
       {message && <p role='status'>{message}</p>}
       {list.canManage && (
         <Link

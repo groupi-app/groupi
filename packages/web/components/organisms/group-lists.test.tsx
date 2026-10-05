@@ -1,6 +1,6 @@
 import GroupListSettingsPage from '@/app/(groups)/groups/[groupId]/lists/[toolId]/settings/page';
 import { createRequire } from 'node:module';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ConvexProviderWithAuth,
@@ -95,10 +95,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
     onChange?.(true)
   );
   vi.spyOn(client, 'clearAuth').mockImplementation(() => {});
+  const subscribers = new Set<() => void>();
   const watch = vi
     .spyOn(client, 'watchQuery')
     .mockImplementation((...[query]) => ({
-      onUpdate: () => () => {},
+      onUpdate: callback => {
+        subscribers.add(callback);
+        return () => subscribers.delete(callback);
+      },
       localQueryResult: () => {
         const name = getFunctionName(query);
         if (!(name in data)) throw new Error(`Unexpected query ${name}`);
@@ -116,7 +120,14 @@ function fixture(overrides: Record<string, unknown> = {}) {
       </ConvexProviderWithAuth>
     );
   }
-  return { client, mutation, watch, Provider };
+  return {
+    client,
+    mutation,
+    watch,
+    Provider,
+    data,
+    notify: () => subscribers.forEach(callback => callback()),
+  };
 }
 it('creates a list through consuming SDK and real accessible controls', async () => {
   const sharedSdk = createRequire(import.meta.url)(
@@ -305,6 +316,60 @@ it('own recovery reads original snapshots without current private configuration'
   expect([
     ...new Set(watch.mock.calls.map(c => getFunctionName(c[0]))),
   ]).toEqual(['groupLists/queries:getOwnEntries']);
+  mounted.unmount();
+  await client.close();
+});
+
+it('recovers a stale or expired add with a confirmed fresh request after inspection', async () => {
+  const { client, mutation, Provider, data, notify } = fixture();
+  mutation
+    .mockRejectedValueOnce(Error('List configuration changed'))
+    .mockRejectedValueOnce(Error('Request expired'))
+    .mockResolvedValue({ entryId: 'entry-one', state: 'PRESENT' });
+  const mounted = render(
+    <Provider>
+      <GroupListInteraction groupId={groupId} toolId={toolId} />
+    </Provider>
+  );
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('New entry'), 'Keep this draft');
+  await user.click(screen.getByRole('button', { name: 'Add entry' }));
+  await screen.findByRole('button', { name: 'Retry original entry' });
+  const first = mutation.mock.calls[0][1];
+  data['groupLists/queries:getList'] = { ...list, version: 2 };
+  act(notify);
+  expect(
+    screen.getByText(/List settings changed since the original attempt/)
+  ).toBeInTheDocument();
+  mounted.rerender(
+    <Provider>
+      <GroupListInteraction groupId={groupId} toolId={toolId} />
+    </Provider>
+  );
+  await user.click(
+    screen.getByRole('button', { name: 'Retry original entry' })
+  );
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
+  expect(mutation.mock.calls[1][1]).toEqual(first);
+  await user.click(
+    screen.getByRole('button', { name: 'Start new request after inspection' })
+  );
+  expect(mutation).toHaveBeenCalledTimes(2);
+  expect(
+    screen.getByText(/A previous request may have succeeded/)
+  ).toBeInTheDocument();
+  await user.click(
+    screen.getByRole('button', { name: 'Confirm starting a new entry request' })
+  );
+  expect(screen.getByLabelText('New entry')).toHaveValue('Keep this draft');
+  expect(screen.getByLabelText('New entry')).not.toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Add entry' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(3));
+  expect(mutation.mock.calls[2][1]).toMatchObject({
+    version: 2,
+    text: 'Keep this draft',
+  });
+  expect(mutation.mock.calls[2][1].requestId).not.toBe(first.requestId);
   mounted.unmount();
   await client.close();
 });

@@ -290,7 +290,14 @@ it('edits text and completion with the current entry revision', async () => {
   network.manager = false;
   const mounted = await mount();
   await type(mounted, 'Edit entry Dune', 'Dune revised');
+  expect(control(mounted, 'Completed: Dune').props.role).toBe('checkbox');
+  expect(
+    control(mounted, 'Completed: Dune').props.accessibilityState
+  ).toMatchObject({ checked: false });
   await press(mounted, 'Completed: Dune');
+  expect(
+    control(mounted, 'Completed: Dune').props.accessibilityState
+  ).toMatchObject({ checked: true });
   await press(mounted, 'Save entry Dune');
   expect(network.mutation).toHaveBeenCalledWith(
     'groupLists/mutations:editEntry',
