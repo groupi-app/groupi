@@ -154,6 +154,18 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
       >
         Create poll
       </Link>
+      <Link
+        className='text-primary underline'
+        href={`/groups/${groupId}/lists`}
+      >
+        Community lists and settings
+      </Link>
+      <Link
+        className='text-primary underline'
+        href={`/groups/${groupId}/lists/new`}
+      >
+        Create community list
+      </Link>
       <GroupJoiningQuestionnaire groupId={groupId} />
       {group.canManageRoles && (
         <GroupApplicationSettings

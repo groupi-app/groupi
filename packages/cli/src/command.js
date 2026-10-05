@@ -1,4 +1,5 @@
 import { registerGroupPollCommands } from './group-poll-commands.js';
+import { registerGroupListCommands } from './group-list-commands.js';
 import { registerGroupEventAudienceCommands } from './group-event-audience-commands.js';
 
 import { registerGroupFormCommands } from './group-form-commands.js';
@@ -374,6 +375,7 @@ export function createProgram(json = false) {
   registerGroupQuestionnaireCommands(program, json);
   registerGroupFormCommands(program, json);
   registerGroupPollCommands(program, json);
+  registerGroupListCommands(program, json);
   registerGroupApplicationCommands(program, json);
   registerGroupEventAudienceCommands(program, json);
   registerAccountCommands(program, json);

@@ -69,3 +69,4 @@ export { createGroupFormHooks } from './useGroupForms';
 export { groupFormTemplates } from '../utils/group-form-templates';
 
 export { createGroupPollHooks } from './useGroupPolls';
+export { createGroupListHooks } from './useGroupLists';

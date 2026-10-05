@@ -1,6 +1,10 @@
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { purgePoll } from '../groupPolls/model';
+import {
+  purge as purgeList,
+  cleanupPerson as cleanupListPerson,
+} from '../groupLists/model';
 import { purgeTool } from '../groupForms/model';
 export async function removeToolsForGroup(
   ctx: MutationCtx,
@@ -11,6 +15,7 @@ export async function removeToolsForGroup(
     .withIndex('by_groupId', q => q.eq('groupId', groupId)))
     if (tool.kind === 'FORM') await purgeTool(ctx, tool._id);
     else if (tool.kind === 'POLL') await purgePoll(ctx, tool._id);
+    else if (tool.kind === 'LIST') await purgeList(ctx, tool._id);
   for await (const policy of ctx.db
     .query('groupToolPolicies')
     .withIndex('by_groupId', q => q.eq('groupId', groupId)))
@@ -20,6 +25,7 @@ export async function removeToolsForPerson(
   ctx: MutationCtx,
   personId: Id<'persons'>
 ) {
+  await cleanupListPerson(ctx, personId);
   for await (const response of ctx.db
     .query('groupFormResponses')
     .withIndex('by_personId', q => q.eq('personId', personId))) {

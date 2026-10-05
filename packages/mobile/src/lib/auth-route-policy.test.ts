@@ -12,6 +12,12 @@ describe('getSafeAuthReturnPath', () => {
     '/settings/privacy',
     '/profile/person-123',
     '/notifications',
+    '/groups/group-123/lists',
+    '/groups/group-123/lists/create',
+    '/groups/group-123/lists/policy',
+    '/groups/group-123/lists/tool-123',
+    '/groups/group-123/lists/tool-123/manage',
+    '/groups/group-123/lists/tool-123/own',
     '%2Finvite%2Finvite-token',
     '/',
   ])('allows internal app destination %s', destination => {

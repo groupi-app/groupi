@@ -41,3 +41,23 @@ export const getPollPolicy = query({
     return { ...policy, kind: 'POLL' as const };
   },
 });
+
+export const getListPolicy = query({
+  args: { groupId: v.id('groups') },
+  returns: v.object({
+    groupId: v.id('groups'),
+    kind: v.literal('LIST'),
+    enabled: v.boolean(),
+    creation,
+    canConfigure: v.boolean(),
+  }),
+  handler: async (ctx, args) => ({
+    ...(await readPolicy(
+      ctx,
+      (await requireAuth(ctx)).person._id,
+      args.groupId,
+      'LIST'
+    )),
+    kind: 'LIST' as const,
+  }),
+});

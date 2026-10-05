@@ -3,6 +3,7 @@ import {
   mode as pollMode,
   option as pollOption,
 } from './groupPolls/contracts';
+import { entryFields as groupListEntryFields } from './groupLists/contracts';
 import { toolFields, policyFields } from './groupTools/contracts';
 import { responseFields as formResponseFields } from './groupForms/contracts';
 import { transferStatus } from './groupTransfers/contracts';
@@ -43,6 +44,37 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind'])
     .index('by_creatorId', ['creatorId']),
+  groupLists: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupListEntries: defineTable(groupListEntryFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_actorId', ['actorId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupListRequests: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    requestId: v.string(),
+    fingerprint: v.string(),
+    entryId: v.id('groupListEntries'),
+    expiresAt: v.number(),
+    scheduledId: v.optional(v.id('_scheduled_functions')),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId_and_requestId', [
+      'toolId',
+      'personId',
+      'requestId',
+    ]),
   groupForms: defineTable({
     toolId: v.id('groupTools'),
     groupId: v.id('groups'),

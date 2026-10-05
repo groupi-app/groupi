@@ -177,6 +177,21 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups polls policy](#groupi-groups-polls-policy)
 - [groupi groups polls policy get](#groupi-groups-polls-policy-get)
 - [groupi groups polls policy set](#groupi-groups-polls-policy-set)
+- [groupi groups lists](#groupi-groups-lists)
+- [groupi groups lists list](#groupi-groups-lists-list)
+- [groupi groups lists get](#groupi-groups-lists-get)
+- [groupi groups lists settings](#groupi-groups-lists-settings)
+- [groupi groups lists entries](#groupi-groups-lists-entries)
+- [groupi groups lists own](#groupi-groups-lists-own)
+- [groupi groups lists create](#groupi-groups-lists-create)
+- [groupi groups lists configure](#groupi-groups-lists-configure)
+- [groupi groups lists add](#groupi-groups-lists-add)
+- [groupi groups lists edit](#groupi-groups-lists-edit)
+- [groupi groups lists remove](#groupi-groups-lists-remove)
+- [groupi groups lists delete](#groupi-groups-lists-delete)
+- [groupi groups lists policy](#groupi-groups-lists-policy)
+- [groupi groups lists policy get](#groupi-groups-lists-policy-get)
+- [groupi groups lists policy set](#groupi-groups-lists-policy-set)
 - [groupi groups application-form](#groupi-groups-application-form)
 - [groupi groups application-get](#groupi-groups-application-get)
 - [groupi groups application-history](#groupi-groups-application-history)
@@ -1868,6 +1883,7 @@ Commands:
   questionnaire                                               Post-admission questionnaire and private retained records
   forms                                                       Persistent ordinary forms, separate from the joining questionnaire
   polls                                                       Persistent independent polls; never selects Event dates or RSVP
+  lists                                                       Persistent community lists, independent of Invite Lists and Event Bring Lists
   application-form <group-id>                                 Read admission form and your private pending application
   application-get <group-id> <application-id>                 Read a private application as author or current manager
   application-history [options] <group-id>                    Read your retained private application history
@@ -2701,6 +2717,215 @@ Options:
 Usage: groupi groups polls policy set [options] <group-id>
 
 Set polls policy as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
+```
+
+## groupi groups lists
+
+```text
+Usage: groupi groups lists [options] [command]
+
+Persistent community lists, independent of Invite Lists and Event Bring Lists
+
+Options:
+  -h, --help                                        display help for command
+
+Commands:
+  list [options] <group-id>                         list Group lists; stated visibility applies
+  get <group-id> <tool-id>                          get Group lists; stated visibility applies
+  settings <group-id> <tool-id>                     Current eligible managers read settings even
+                                                    while disabled
+  entries [options] <group-id> <tool-id>            entries Group lists; stated visibility applies
+  own [options] <group-id> <tool-id>                Read only your retained list contributions
+  create [options] <group-id>                       create a persistent list
+  configure [options] <group-id> <tool-id>          configure a persistent list
+  add [options] <group-id> <tool-id>                add a persistent list entry: MANAGERS personal
+                                                    to author/managers; MEMBERS shared latest
+                                                    survives anonymously on account deletion
+  edit [options] <group-id> <tool-id> <entry-id>    edit a persistent list
+  remove [options] <group-id> <tool-id> <entry-id>  remove a persistent list
+  delete [options] <group-id> <tool-id>             delete a persistent list
+  policy                                            Owner controls list availability/creation
+  help [command]                                    display help for command
+```
+
+## groupi groups lists list
+
+```text
+Usage: groupi groups lists list [options] <group-id>
+
+list Group lists; stated visibility applies
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists get
+
+```text
+Usage: groupi groups lists get [options] <group-id> <tool-id>
+
+get Group lists; stated visibility applies
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists settings
+
+```text
+Usage: groupi groups lists settings [options] <group-id> <tool-id>
+
+Current eligible managers read settings even while disabled
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists entries
+
+```text
+Usage: groupi groups lists entries [options] <group-id> <tool-id>
+
+entries Group lists; stated visibility applies
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists own
+
+```text
+Usage: groupi groups lists own [options] <group-id> <tool-id>
+
+Read only your retained list contributions
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists create
+
+```text
+Usage: groupi groups lists create [options] <group-id>
+
+create a persistent list
+
+Options:
+  --title <text>                     List title
+  --description <text>               List description
+  --results-visibility <visibility>  Fixed MANAGERS personal or MEMBERS shared visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups lists configure
+
+```text
+Usage: groupi groups lists configure [options] <group-id> <tool-id>
+
+configure a persistent list
+
+Options:
+  --title <text>           List title
+  --description <text>     List description
+  --list-version <number>  Current configuration version
+  -h, --help               display help for command
+```
+
+## groupi groups lists add
+
+```text
+Usage: groupi groups lists add [options] <group-id> <tool-id>
+
+add a persistent list entry: MANAGERS personal to author/managers; MEMBERS shared latest survives
+anonymously on account deletion
+
+Options:
+  --list-version <number>  Current configuration version
+  --text <text>            Entry text1–2000 characters
+  --request-id <id>        <unix-ms>.<uuid-v4>, reuse only for exact original request
+  -h, --help               display help for command
+```
+
+## groupi groups lists edit
+
+```text
+Usage: groupi groups lists edit [options] <group-id> <tool-id> <entry-id>
+
+edit a persistent list
+
+Options:
+  --list-version <number>       Current configuration version
+  --text <text>                 Entry text1–2000 characters
+  --expected-revision <number>  Current entry revision
+  --completed <boolean>         true or false, a list status only
+  -h, --help                    display help for command
+```
+
+## groupi groups lists remove
+
+```text
+Usage: groupi groups lists remove [options] <group-id> <tool-id> <entry-id>
+
+remove a persistent list
+
+Options:
+  --expected-revision <number>  Current entry revision, stale removals conflict
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups lists delete
+
+```text
+Usage: groupi groups lists delete [options] <group-id> <tool-id>
+
+delete a persistent list
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups lists policy
+
+```text
+Usage: groupi groups lists policy [options] [command]
+
+Owner controls list availability/creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>
+  set [options] <group-id>
+  help [command]            display help for command
+```
+
+## groupi groups lists policy get
+
+```text
+Usage: groupi groups lists policy get [options] <group-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists policy set
+
+```text
+Usage: groupi groups lists policy set [options] <group-id>
 
 Options:
   --enabled <boolean>  true or false

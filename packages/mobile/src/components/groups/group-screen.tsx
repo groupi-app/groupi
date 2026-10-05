@@ -167,6 +167,22 @@ export function GroupDetailScreen() {
             >
               Forms
             </Button>
+            <Button
+              accessibilityLabel='Group lists'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/lists`)}
+            >
+              Lists
+            </Button>
+            {group.viewerRole === 'OWNER' ? (
+              <Button
+                accessibilityLabel='Group list policy'
+                variant='outline'
+                onPress={() => router.push(`/groups/${id}/lists/policy`)}
+              >
+                Lists policy
+              </Button>
+            ) : null}
             {group.viewerRole === 'OWNER' ? (
               <Button
                 accessibilityLabel='Group form policy'

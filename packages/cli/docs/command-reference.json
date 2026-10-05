@@ -440,7 +440,7 @@
     },
     {
       "path": "groupi groups",
-      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                                  display help for command\n\nCommands:\n  transfer                                                    Offer consensual Group responsibility; pending offers remain unresolved\n  list [options]                                              List your admitted Groups\n  get <group-id>                                              Read an admitted Group\n  create [options]                                            Create an owner-only Group\n  edit [options] <group-id>                                   Update Group identity as owner\n  delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain\n  announce [options] <group-id>                               Explicitly announce to permitted members; reports queued notifications\n  announcement-status [options] <group-id>                    Recover your aggregate announcement status\n  members [options] <group-id>                                Read admitted Group roster\n  invites [options] <group-id>                                Inspect Group invitations as manager\n  invite <group-id> <person-id>                               Invite an existing user to your Group\n  invitation-policy [options] <group-id>                      Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>                Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>              Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>                        Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>                   Lift a Group ban without admitting membership\n  leave [options] <group-id>                                  Leave your own Group membership\n  bans [options] <group-id>                                   List private active Group bans as manager\n  questionnaire                                               Post-admission questionnaire and private retained records\n  forms                                                       Persistent ordinary forms, separate from the joining questionnaire\n  polls                                                       Persistent independent polls; never selects Event dates or RSVP\n  application-form <group-id>                                 Read admission form and your private pending application\n  application-get <group-id> <application-id>                 Read a private application as author or current manager\n  application-history [options] <group-id>                    Read your retained private application history\n  applications [options] <group-id>                           Review private Group applications as manager\n  application-settings [options] <group-id>                   Configure Group applications as owner\n  apply [options] <group-id>                                  Apply for Group membership\n  application-edit [options] <group-id> <application-id>      Edit your pending saved answers\n  application-withdraw [options] <group-id> <application-id>  Withdraw your pending application\n  application-review [options] <group-id> <application-id>    Record an application decision as current manager\n  events [options] <group-id>                                 Page safe upcoming/undated shared Events; no participation effects\n  withdraw-event [options] <group-id> <event-id>              Withdraw only this Group audience as current Group manager\n  event-sharing [options] <group-id>                          Owner sets managers-only (default) or all eligible members sharing\n  help [command]                                              display help for command\n"
+      "help": "Usage: groupi groups [options] [command]\n\nManage formal Group communities independently of events\n\nOptions:\n  -h, --help                                                  display help for command\n\nCommands:\n  transfer                                                    Offer consensual Group responsibility; pending offers remain unresolved\n  list [options]                                              List your admitted Groups\n  get <group-id>                                              Read an admitted Group\n  create [options]                                            Create an owner-only Group\n  edit [options] <group-id>                                   Update Group identity as owner\n  delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain\n  announce [options] <group-id>                               Explicitly announce to permitted members; reports queued notifications\n  announcement-status [options] <group-id>                    Recover your aggregate announcement status\n  members [options] <group-id>                                Read admitted Group roster\n  invites [options] <group-id>                                Inspect Group invitations as manager\n  invite <group-id> <person-id>                               Invite an existing user to your Group\n  invitation-policy [options] <group-id>                      Configure Group invitations as owner\n  member-role [options] <group-id> <person-id>                Appoint or demote a moderator as owner\n  remove-member [options] <group-id> <person-id>              Remove an ordinary member without banning\n  ban [options] <group-id> <person-id>                        Ban an ordinary member or nonmember\n  lift-ban [options] <group-id> <person-id>                   Lift a Group ban without admitting membership\n  leave [options] <group-id>                                  Leave your own Group membership\n  bans [options] <group-id>                                   List private active Group bans as manager\n  questionnaire                                               Post-admission questionnaire and private retained records\n  forms                                                       Persistent ordinary forms, separate from the joining questionnaire\n  polls                                                       Persistent independent polls; never selects Event dates or RSVP\n  lists                                                       Persistent community lists, independent of Invite Lists and Event Bring Lists\n  application-form <group-id>                                 Read admission form and your private pending application\n  application-get <group-id> <application-id>                 Read a private application as author or current manager\n  application-history [options] <group-id>                    Read your retained private application history\n  applications [options] <group-id>                           Review private Group applications as manager\n  application-settings [options] <group-id>                   Configure Group applications as owner\n  apply [options] <group-id>                                  Apply for Group membership\n  application-edit [options] <group-id> <application-id>      Edit your pending saved answers\n  application-withdraw [options] <group-id> <application-id>  Withdraw your pending application\n  application-review [options] <group-id> <application-id>    Record an application decision as current manager\n  events [options] <group-id>                                 Page safe upcoming/undated shared Events; no participation effects\n  withdraw-event [options] <group-id> <event-id>              Withdraw only this Group audience as current Group manager\n  event-sharing [options] <group-id>                          Owner sets managers-only (default) or all eligible members sharing\n  help [command]                                              display help for command\n"
     },
     {
       "path": "groupi groups transfer",
@@ -681,6 +681,66 @@
     {
       "path": "groupi groups polls policy set",
       "help": "Usage: groupi groups polls policy set [options] <group-id>\n\nSet polls policy as owner\n\nOptions:\n  --enabled <boolean>  true or false\n  --creation <role>    MANAGERS or MEMBERS\n  -h, --help           display help for command\n"
+    },
+    {
+      "path": "groupi groups lists",
+      "help": "Usage: groupi groups lists [options] [command]\n\nPersistent community lists, independent of Invite Lists and Event Bring Lists\n\nOptions:\n  -h, --help                                        display help for command\n\nCommands:\n  list [options] <group-id>                         list Group lists; stated visibility applies\n  get <group-id> <tool-id>                          get Group lists; stated visibility applies\n  settings <group-id> <tool-id>                     Current eligible managers read settings even\n                                                    while disabled\n  entries [options] <group-id> <tool-id>            entries Group lists; stated visibility applies\n  own [options] <group-id> <tool-id>                Read only your retained list contributions\n  create [options] <group-id>                       create a persistent list\n  configure [options] <group-id> <tool-id>          configure a persistent list\n  add [options] <group-id> <tool-id>                add a persistent list entry: MANAGERS personal\n                                                    to author/managers; MEMBERS shared latest\n                                                    survives anonymously on account deletion\n  edit [options] <group-id> <tool-id> <entry-id>    edit a persistent list\n  remove [options] <group-id> <tool-id> <entry-id>  remove a persistent list\n  delete [options] <group-id> <tool-id>             delete a persistent list\n  policy                                            Owner controls list availability/creation\n  help [command]                                    display help for command\n"
+    },
+    {
+      "path": "groupi groups lists list",
+      "help": "Usage: groupi groups lists list [options] <group-id>\n\nlist Group lists; stated visibility applies\n\nOptions:\n  --limit <number>   Page size 1–100 (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups lists get",
+      "help": "Usage: groupi groups lists get [options] <group-id> <tool-id>\n\nget Group lists; stated visibility applies\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups lists settings",
+      "help": "Usage: groupi groups lists settings [options] <group-id> <tool-id>\n\nCurrent eligible managers read settings even while disabled\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups lists entries",
+      "help": "Usage: groupi groups lists entries [options] <group-id> <tool-id>\n\nentries Group lists; stated visibility applies\n\nOptions:\n  --limit <number>   Page size 1–100 (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups lists own",
+      "help": "Usage: groupi groups lists own [options] <group-id> <tool-id>\n\nRead only your retained list contributions\n\nOptions:\n  --limit <number>   Page size 1–100 (default: \"20\")\n  --cursor <cursor>  Continue page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi groups lists create",
+      "help": "Usage: groupi groups lists create [options] <group-id>\n\ncreate a persistent list\n\nOptions:\n  --title <text>                     List title\n  --description <text>               List description\n  --results-visibility <visibility>  Fixed MANAGERS personal or MEMBERS shared visibility\n  -h, --help                         display help for command\n"
+    },
+    {
+      "path": "groupi groups lists configure",
+      "help": "Usage: groupi groups lists configure [options] <group-id> <tool-id>\n\nconfigure a persistent list\n\nOptions:\n  --title <text>           List title\n  --description <text>     List description\n  --list-version <number>  Current configuration version\n  -h, --help               display help for command\n"
+    },
+    {
+      "path": "groupi groups lists add",
+      "help": "Usage: groupi groups lists add [options] <group-id> <tool-id>\n\nadd a persistent list entry: MANAGERS personal to author/managers; MEMBERS shared latest survives\nanonymously on account deletion\n\nOptions:\n  --list-version <number>  Current configuration version\n  --text <text>            Entry text1–2000 characters\n  --request-id <id>        <unix-ms>.<uuid-v4>, reuse only for exact original request\n  -h, --help               display help for command\n"
+    },
+    {
+      "path": "groupi groups lists edit",
+      "help": "Usage: groupi groups lists edit [options] <group-id> <tool-id> <entry-id>\n\nedit a persistent list\n\nOptions:\n  --list-version <number>       Current configuration version\n  --text <text>                 Entry text1–2000 characters\n  --expected-revision <number>  Current entry revision\n  --completed <boolean>         true or false, a list status only\n  -h, --help                    display help for command\n"
+    },
+    {
+      "path": "groupi groups lists remove",
+      "help": "Usage: groupi groups lists remove [options] <group-id> <tool-id> <entry-id>\n\nremove a persistent list\n\nOptions:\n  --expected-revision <number>  Current entry revision, stale removals conflict\n  --yes                         Confirm permanent removal\n  -h, --help                    display help for command\n"
+    },
+    {
+      "path": "groupi groups lists delete",
+      "help": "Usage: groupi groups lists delete [options] <group-id> <tool-id>\n\ndelete a persistent list\n\nOptions:\n  --yes       Confirm permanent removal\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups lists policy",
+      "help": "Usage: groupi groups lists policy [options] [command]\n\nOwner controls list availability/creation\n\nOptions:\n  -h, --help                display help for command\n\nCommands:\n  get <group-id>\n  set [options] <group-id>\n  help [command]            display help for command\n"
+    },
+    {
+      "path": "groupi groups lists policy get",
+      "help": "Usage: groupi groups lists policy get [options] <group-id>\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi groups lists policy set",
+      "help": "Usage: groupi groups lists policy set [options] <group-id>\n\nOptions:\n  --enabled <boolean>  true or false\n  --creation <role>    MANAGERS or MEMBERS\n  -h, --help           display help for command\n"
     },
     {
       "path": "groupi groups application-form",
