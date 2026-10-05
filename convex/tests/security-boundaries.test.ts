@@ -76,20 +76,31 @@ describe('event role boundaries', () => {
     });
 
     const moderatorAuth = createAuthenticatedUser(t, attendee.userId);
+    const originalEvent = await t.run(ctx => ctx.db.get(eventId));
 
     await expect(
       moderatorAuth.mutation(api.events.mutations.updateMemberRole, {
         membershipId: attendee.membershipId,
         newRole: 'ORGANIZER',
       })
-    ).rejects.toThrow('Only organizers');
+    ).rejects.toMatchObject({
+      data: JSON.stringify({
+        code: 'FORBIDDEN',
+        message: 'Use an accepted ownership transfer to change the Organizer',
+      }),
+    });
 
     await expect(
       moderatorAuth.mutation(api.events.mutations.updateMemberRole, {
         membershipId: secondOrganizerMembershipId,
         newRole: 'MODERATOR',
       })
-    ).rejects.toThrow('Only organizers');
+    ).rejects.toMatchObject({
+      data: JSON.stringify({
+        code: 'FORBIDDEN',
+        message: 'Use an accepted ownership transfer to change the Organizer',
+      }),
+    });
 
     await expect(
       moderatorAuth.mutation(api.events.mutations.removeMember, {
@@ -107,10 +118,13 @@ describe('event role boundaries', () => {
       moderator: await ctx.db.get(attendee.membershipId),
       organizer: await ctx.db.get(organizer.membershipId),
       secondOrganizer: await ctx.db.get(secondOrganizerMembershipId),
+      event: await ctx.db.get(eventId),
     }));
     expect(memberships.moderator?.role).toBe('MODERATOR');
     expect(memberships.organizer?.role).toBe('ORGANIZER');
     expect(memberships.secondOrganizer?.role).toBe('ORGANIZER');
+    expect(memberships.event?.creatorId).toBe(originalEvent?.creatorId);
+    expect(memberships.event?.createdById).toBe(originalEvent?.createdById);
   });
 });
 
