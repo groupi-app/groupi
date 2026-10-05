@@ -33,6 +33,9 @@ const NOTIFICATION_ICONS: Record<
   NotificationItem['type'],
   keyof typeof Ionicons.glyphMap
 > = {
+  EVENT_APPLICATION_RECEIVED: 'mail-outline',
+  EVENT_APPLICATION_APPROVED: 'checkmark-circle-outline',
+  EVENT_APPLICATION_DECLINED: 'close-circle-outline',
   NEW_POST: 'chatbubble-outline',
   NEW_REPLY: 'arrow-undo-outline',
   EVENT_EDITED: 'create-outline',
@@ -50,6 +53,15 @@ const NOTIFICATION_ICONS: Record<
   FRIEND_REQUEST_ACCEPTED: 'people',
   EVENT_INVITE_RECEIVED: 'mail-outline',
   EVENT_INVITE_ACCEPTED: 'mail-open-outline',
+  GROUP_APPLICATION_RECEIVED: 'mail-outline',
+  GROUP_APPLICATION_APPROVED: 'checkmark-circle-outline',
+  GROUP_APPLICATION_DECLINED: 'close-circle-outline',
+  GROUP_INVITE_RECEIVED: 'people-outline',
+  GROUP_INVITE_ACCEPTED: 'people',
+  GROUP_MEMBER_REMOVED: 'person-remove-outline',
+  GROUP_ANNOUNCEMENT: 'megaphone-outline',
+  GROUP_MEMBER_BANNED: 'ban-outline',
+  GROUP_ONBOARDING_REQUIRED: 'document-text-outline',
   ADDON_CONFIG_RESET: 'extension-puzzle-outline',
   ADDON_AUTOMATION: 'sparkles-outline',
 };

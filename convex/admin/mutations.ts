@@ -1,10 +1,18 @@
+import { deleteResolvedAccount } from '../users/mutations';
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import { mutation, MutationCtx } from '../_generated/server';
 import { v } from 'convex/values';
-import { getCurrentPerson, isAdmin } from '../auth';
+import {
+  getCurrentPerson,
+  isAdmin,
+  authComponent,
+  type AuthUserId,
+} from '../auth';
 import { Id } from '../_generated/dataModel';
 import { components } from '../_generated/api';
 import { UserRole } from '../lib/constants';
-import { getOrComputeMemberCount } from '../lib/memberCount';
 
 /**
  * Admin mutations for the Convex backend
@@ -33,7 +41,7 @@ async function requireAdmin(ctx: MutationCtx) {
 
 /**
  * Helper function to delete an event and all related data
- * This is shared between deleteEvent mutation and deletePerson mutation
+ * Used only for explicit administrator Event deletion.
  */
 async function deleteEventAndRelatedData(
   ctx: MutationCtx,
@@ -44,6 +52,9 @@ async function deleteEventAndRelatedData(
   if (!event) {
     return; // Event doesn't exist, nothing to delete
   }
+
+  await deleteEventTransfers(ctx, eventId);
+  await removeAudiencesForEvent(ctx, eventId);
 
   // Delete all related data in order (to handle dependencies)
 
@@ -102,6 +113,7 @@ async function deleteEventAndRelatedData(
   }
 
   // 6. Finally, delete the event itself
+  await deleteEventApplications(ctx, eventId);
   await ctx.db.delete(eventId);
 }
 
@@ -216,97 +228,11 @@ export const deletePerson = mutation({
       throw new Error('Person not found');
     }
 
-    // Delete all related data in order
-
-    // 1. Delete all replies by this person
-    const replies = await ctx.db
-      .query('replies')
-      .withIndex('by_author', q => q.eq('authorId', person._id))
-      .collect();
-
-    for (const reply of replies) {
-      await ctx.db.delete(reply._id);
-    }
-
-    // 2. Delete all posts by this person (and their replies)
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_author', q => q.eq('authorId', person._id))
-      .collect();
-
-    for (const post of posts) {
-      // Delete replies to this post
-      const postReplies = await ctx.db
-        .query('replies')
-        .withIndex('by_post', q => q.eq('postId', post._id))
-        .collect();
-
-      for (const reply of postReplies) {
-        await ctx.db.delete(reply._id);
-      }
-
-      // Delete the post
-      await ctx.db.delete(post._id);
-    }
-
-    // 3. Delete all memberships for this person
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-
-    for (const membership of memberships) {
-      const event = await ctx.db.get(membership.eventId);
-      const countBeforeDelete = event
-        ? await getOrComputeMemberCount(ctx, membership.eventId, event)
-        : 0;
-
-      await ctx.db.delete(membership._id);
-
-      if (event) {
-        await ctx.db.patch(membership.eventId, {
-          memberCount: Math.max(0, countBeforeDelete - 1),
-        });
-      }
-    }
-
-    // 4. Delete all availability records for this person (via their memberships)
-    for (const membership of memberships) {
-      const availabilities = await ctx.db
-        .query('availabilities')
-        .withIndex('by_membership', q => q.eq('membershipId', membership._id))
-        .collect();
-
-      for (const availability of availabilities) {
-        await ctx.db.delete(availability._id);
-      }
-    }
-
-    // 5. Delete all invites created by this person's memberships
-    for (const membership of memberships) {
-      const membershipInvites = await ctx.db
-        .query('invites')
-        .withIndex('by_creator', q => q.eq('createdById', membership._id))
-        .collect();
-
-      for (const invite of membershipInvites) {
-        await ctx.db.delete(invite._id);
-      }
-    }
-
-    // 6. Delete events created by this person (and all their data)
-    const events = await ctx.db
-      .query('events')
-      .withIndex('by_creator', q => q.eq('creatorId', person._id))
-      .collect();
-
-    for (const event of events) {
-      // Delete each event and all related data
-      await deleteEventAndRelatedData(ctx, event._id);
-    }
-
-    // 7. Delete the person record
-    await ctx.db.delete(person._id);
+    const user = await authComponent.getAnyUserById(
+      ctx,
+      person.userId as AuthUserId
+    );
+    await deleteResolvedAccount(ctx, person, user);
 
     return { success: true, deletedUserId: person.userId };
   },

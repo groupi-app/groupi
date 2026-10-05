@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
 import { api } from '../_generated/api';
+// Allow real CLI process startup and serial authenticated HTTP/storage work.
 describe('Discussion public CLI through authenticated REST and storage', () => {
   let b: Awaited<ReturnType<typeof cliRestBridge>>;
   let temp: string;
@@ -108,7 +109,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
       (await b.cli(member.rawKey, ['replies', 'delete', reply.replyId])).code
     ).toBe(2);
     await ok(member.rawKey, ['replies', 'delete', reply.replyId, '--yes']);
-  });
+  }, 30_000);
   it('preserves the historical post PATCH detail response with replies and attachment metadata', async () => {
     const { owner, member, eventId } = await setup();
     const post = await ok(owner.rawKey, [
@@ -164,7 +165,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
     );
     expect(empty.status).toBe(200);
     expect(await empty.json()).toMatchObject({ replyCount: 0, replies: [] });
-  });
+  }, 30_000);
   it('validates safe markup, mentions, exact visible limits, and legacy reductions across app and REST', async () => {
     const { owner, member, eventId } = await setup();
     const id = b.id<'events'>(eventId);
@@ -226,7 +227,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
         content: 'x'.repeat(3001),
       })
     ).rejects.toThrow();
-  });
+  }, 30_000);
   it('uploads local files atomically, binds ownership, handles attachment-only replies, removes and cleans abandoned uploads', async () => {
     const { owner, member, eventId } = await setup();
     const file = join(temp, 'notes.txt');
@@ -299,7 +300,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
       (await ok(owner.rawKey, ['posts', 'attachments', 'list', post.postId]))
         .items
     ).toEqual([]);
-  });
+  }, 30_000);
   it('rejects empty HTML and fake/blocked mentions, and proves ownership of unassociated uploads', async () => {
     const { owner, member, eventId } = await setup();
     const realEvent = b.id<'events'>(eventId);
@@ -380,7 +381,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
         message: 'Uploaded file is already attached',
       },
     });
-  });
+  }, 30_000);
 });
 
 describe('discussion response transaction boundary', () => {

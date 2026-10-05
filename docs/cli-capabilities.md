@@ -40,12 +40,15 @@ staging checks, and production deployment status distinct.
 
 ## Approved boundaries
 
-Passkey setup, linked-account OAuth authorization, and account deletion require
-explicit browser/device handoffs under #235. Headless/JSON commands must return an
-actionable browser-interaction-required error. The explicit `account passkeys`, `account linked-accounts`, and `account delete`
-commands open the selected profile’s account settings. Headless and JSON usage
-returns `BROWSER_INTERACTION_REQUIRED`; completion still occurs in the browser.
-Live browser/device verification remains pending.
+Passkey setup and linked-account OAuth authorization require explicit browser/device
+handoffs under #235. The `account passkeys` and `account linked-accounts` commands
+open the selected profile's settings; headless/JSON usage returns
+`BROWSER_INTERACTION_REQUIRED`. Account ownership resolution and final deletion
+now have authenticated REST/CLI equivalents under #281. `account responsibilities`
+pages current Group/Event principals, `account readiness` checks live ownership,
+and `account delete --confirm-username <username> --yes` revalidates all ownership
+before atomically deleting profile, private records and credentials. Pending
+transfer offers remain unresolved. Live browser/device verification remains pending.
 
 Custom add-on definition creation/editing and import/export (#243) may be deferred
 without blocking core release #242. Enabling, configuring and using existing
@@ -400,3 +403,50 @@ synthetic local entries. Independent correctness/security and spec reviews
 approved after regressions for configurable sections, field identifiers, selection
 limits and actionable schema diagnostics were fixed. This is local evidence;
 new-commit OS/runtime CI, live staging and public publication remain pending.
+
+## Whole-Group Event audiences (#273)
+
+Implemented; local authenticated session/REST, consuming web/native SDK, and
+CLI-to-HTTP verification complete; release/staging verification pending.
+REST health advertises `groupEventAudiences: { version: 1 }`. CLI writes check
+this before mutation and reject older servers without sending a write.
+
+`events share-group`, `events unshare-group`, `events friends-audience` and
+`events audiences` use Event read/write scopes and current Organizer/Group policy
+checks. `groups event-sharing` is owner-only; `groups withdraw-event` permits a
+current Group manager to withdraw only that grant. These Group writes require
+`groups:write`; `groups events` uses `groups:read` and truthful bounded pagination,
+including empty pages with continuation cursors.
+
+Safe logistics projection never includes participation/private tools or creates
+Event invitations, membership or RSVP. Whole Groups and Friends combine by OR;
+required onboarding or lost Group eligibility revokes only that Group grant.
+Public basic details and independent Event membership remain independent. A Group
+Event list provides read-only previews; Group Event applications use the core
+engine described below. Group Discover/direct entry is separately owned by #274.
+The generated CLI
+reference and packaged skill document selection limits, visible associations,
+nullable unavailable Friends settings, scopes and uncertain-write recovery.
+
+## Group audience Event applications (#275)
+
+Group-only viewers see `APPLY` through safe Event logistics when the core policy
+permits applications. Existing Event application commands/HTTP routes use current
+Public/Friends/eligible Group audiences by OR at submission and approval, with
+live onboarding, bans, blocks and identity checks. Group roles grant no Event
+review authority. Approval admits once as Attendee/Pending; later Group loss
+does not remove independent Event membership. Separate Event invitations do not
+make stale application approval eligible, and finalized approval replay never
+readmits a departed participant.
+
+Own form/history remains accessible after audience loss. Current form `settings`
+becomes `null`, while private pending/history snapshots remain. The CLI accepts
+that nullable result and gives current-audience/reviewer guidance after a denied
+write. Local authenticated Convex/REST, provider clients and real CLI HTTP tests
+cover this slice; deployment and device verification remain pending.
+
+## Group discovery and Direct admission (#274)
+
+Implemented locally; release/staging verification pending. REST health advertises `groupDiscovery: { version: 1 }`. Discover pages deduplicated current Group/Friends eligibility and private viewer-applicable `accessReasons`, excludes current Event members and past chosen dates, includes undated Events, and never acts as a Public directory. Empty pages may have continuation cursors. Direct joins revalidate current Group onboarding, bans/blocks and independent Event entry policy, then use ordinary Attendee/Pending admission. Event participation survives later loss of Group eligibility. Group-only Apply uses the current-audience application flow delivered by #275.
+
+CLI generic joins require both `groupDiscovery.version: 1` and `eventManagement.pendingRsvpJoin: true`, including Friends-only joins; missing/malformed capabilities cause zero writes and require a server update. Legacy discovery reads may omit reasons without fabricating Group access. Authenticated session/REST, actual consuming SDK clients, and CLI-to-localhost HTTP are the local verification seams; no live provider/device claims are made.

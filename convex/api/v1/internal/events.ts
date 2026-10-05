@@ -1,3 +1,6 @@
+import { removeAudiencesForEvent } from '../../../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../../../eventTransfers/cleanup';
+import { deleteEventApplications } from '../../../eventApplications/cleanup';
 import type { QueryCtx } from '../../../_generated/server';
 import {
   reminderOffsetValidator,
@@ -401,6 +404,9 @@ export const deleteEvent = internalMutation({
       }
     }
 
+    await deleteEventTransfers(ctx, eventId as Id<'events'>);
+    await removeAudiencesForEvent(ctx, eventId as Id<'events'>);
+
     // Delete all related data
     const memberships = await ctx.db
       .query('memberships')
@@ -467,6 +473,7 @@ export const deleteEvent = internalMutation({
     }
 
     // Delete event
+    await deleteEventApplications(ctx, eventId as Id<'events'>);
     await ctx.db.delete(eventId as Id<'events'>);
 
     return { success: true };

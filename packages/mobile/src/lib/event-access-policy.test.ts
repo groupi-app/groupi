@@ -37,8 +37,9 @@ describe('event access policy', () => {
     ).toBeNull();
   });
 
-  it('exempts only mandatory completion routes', () => {
+  it('exempts only safe logistics and mandatory completion routes', () => {
     const exemptPaths = [
+      '/event/event-1/preview',
       '/event/event-1/availability',
       '/event/event-1/addons/questionnaire',
     ];

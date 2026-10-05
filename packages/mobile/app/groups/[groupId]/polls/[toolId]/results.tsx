@@ -1,0 +1,33 @@
+import { GroupPollError } from '@/components/groups/group-poll-error';
+import { type ErrorBoundaryProps, useLocalSearchParams } from 'expo-router';
+import type { Id } from 'convex/_generated/dataModel';
+import { DetailScreenTemplate } from '@/components/templates/detail-screen-template';
+import { GroupOrdinaryPollResults } from '@/components/groups/group-polls';
+export default function Screen() {
+  const { groupId, toolId } = useLocalSearchParams<{
+    groupId: string;
+    toolId: string;
+  }>();
+  return (
+    <DetailScreenTemplate title='Group polls'>
+      <GroupOrdinaryPollResults
+        groupId={groupId as Id<'groups'>}
+        toolId={toolId as Id<'groupTools'>}
+      />
+    </DetailScreenTemplate>
+  );
+}
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const { groupId, toolId } = useLocalSearchParams<{
+    groupId: string;
+    toolId?: string;
+  }>();
+  return (
+    <GroupPollError
+      error={error}
+      retry={retry}
+      groupId={groupId}
+      toolId={toolId}
+    />
+  );
+}

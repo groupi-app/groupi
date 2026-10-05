@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { AccountResolutionBoundary } from '@groupi/shared/hooks';
+import { AccountResponsibilities } from '@/components/settings/account-responsibilities';
+import { useAccountReadiness } from '@/hooks/use-account-resolution';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -22,6 +25,29 @@ import { ApiKeysSection } from '@/components/settings/api-keys-section';
 import { api } from 'convex/_generated/api';
 
 export default function AccountSettingsScreen() {
+  return (
+    <AccountResolutionBoundary
+      fallback={retry => (
+        <SafeAreaView className='flex-1 bg-background'>
+          <View className='gap-3 p-4'>
+            <Text accessibilityRole='alert'>
+              Could not check account ownership. Reconnect and retry the check
+              before deleting.
+            </Text>
+            <Button variant='outline' onPress={retry}>
+              Retry ownership check
+            </Button>
+          </View>
+        </SafeAreaView>
+      )}
+    >
+      <AccountSettingsContent />
+    </AccountResolutionBoundary>
+  );
+}
+
+function AccountSettingsContent() {
+  const readiness = useAccountReadiness();
   const { user } = useGlobalUser();
   const deleteAccount = useMutation(api.users.mutations.deleteUserAccount);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -33,7 +59,7 @@ export default function AccountSettingsScreen() {
     confirmation.trim().toLowerCase() === username.trim().toLowerCase();
 
   async function handleDeleteAccount() {
-    if (!usernameMatches || isDeleting) return;
+    if (!usernameMatches || isDeleting || !readiness?.canDelete) return;
 
     setIsDeleting(true);
     try {
@@ -81,6 +107,7 @@ export default function AccountSettingsScreen() {
               Once you delete your account, there is no going back. Please be
               certain.
             </Text>
+            <AccountResponsibilities />
             {showDeleteConfirmation ? (
               <View className='gap-3'>
                 <LabeledInput
@@ -107,7 +134,7 @@ export default function AccountSettingsScreen() {
                     variant='destructive'
                     className='flex-1'
                     onPress={handleDeleteAccount}
-                    disabled={!usernameMatches}
+                    disabled={!usernameMatches || !readiness?.canDelete}
                     isLoading={isDeleting}
                     loadingText='Deleting...'
                   >

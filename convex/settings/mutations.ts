@@ -10,6 +10,9 @@ const notificationTypeValidator = v.union(
   v.literal('DATE_CHOSEN'),
   v.literal('DATE_CHANGED'),
   v.literal('DATE_RESET'),
+  v.literal('EVENT_APPLICATION_RECEIVED'),
+  v.literal('EVENT_APPLICATION_APPROVED'),
+  v.literal('EVENT_APPLICATION_DECLINED'),
   v.literal('USER_JOINED'),
   v.literal('USER_LEFT'),
   v.literal('USER_PROMOTED'),
@@ -19,6 +22,15 @@ const notificationTypeValidator = v.union(
   v.literal('EVENT_REMINDER'),
   v.literal('FRIEND_REQUEST_RECEIVED'),
   v.literal('FRIEND_REQUEST_ACCEPTED'),
+  v.literal('GROUP_INVITE_RECEIVED'),
+  v.literal('GROUP_INVITE_ACCEPTED'),
+  v.literal('GROUP_MEMBER_REMOVED'),
+  v.literal('GROUP_MEMBER_BANNED'),
+  v.literal('GROUP_APPLICATION_RECEIVED'),
+  v.literal('GROUP_APPLICATION_APPROVED'),
+  v.literal('GROUP_APPLICATION_DECLINED'),
+  v.literal('GROUP_ANNOUNCEMENT'),
+  v.literal('GROUP_ONBOARDING_REQUIRED'),
   v.literal('EVENT_INVITE_RECEIVED'),
   v.literal('EVENT_INVITE_ACCEPTED'),
   v.literal('ADDON_CONFIG_RESET'),
@@ -299,9 +311,15 @@ export const savePrivacySettings = mutation({
       v.literal('FRIENDS'),
       v.literal('NO_ONE')
     ),
+    allowGroupInvitesFrom: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NO_ONE'))
+    ),
     _traceId: v.optional(v.string()),
   },
-  handler: async (ctx, { allowFriendRequestsFrom, allowEventInvitesFrom }) => {
+  handler: async (
+    ctx,
+    { allowFriendRequestsFrom, allowEventInvitesFrom, allowGroupInvitesFrom }
+  ) => {
     const { user } = await requireAuth(ctx);
 
     const person = await getPersonForUser(ctx, user._id);
@@ -318,6 +336,9 @@ export const savePrivacySettings = mutation({
       await ctx.db.patch(existingSettings._id, {
         allowFriendRequestsFrom,
         allowEventInvitesFrom,
+        ...(allowGroupInvitesFrom !== undefined
+          ? { allowGroupInvitesFrom }
+          : {}),
         updatedAt: Date.now(),
       });
     } else {
@@ -325,6 +346,9 @@ export const savePrivacySettings = mutation({
         personId: person._id,
         allowFriendRequestsFrom,
         allowEventInvitesFrom,
+        ...(allowGroupInvitesFrom !== undefined
+          ? { allowGroupInvitesFrom }
+          : {}),
         updatedAt: Date.now(),
       });
     }

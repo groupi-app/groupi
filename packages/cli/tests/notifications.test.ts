@@ -300,3 +300,39 @@ test('human summaries strip remote terminal controls and JSON counts remain one 
   expect(JSON.parse(count.stdout)).toEqual({ count: 7 });
   expect(count.stderr).toBe('');
 });
+
+test('Group notification metadata projects current status without private extra fields', async () => {
+  await endpoint((_req, res) => {
+    res.end(
+      JSON.stringify({
+        items: [
+          {
+            id: 'group-notification',
+            type: 'GROUP_INVITE_RECEIVED',
+            read: false,
+            createdAt: 10,
+            event: null,
+            post: null,
+            author: null,
+            group: { id: 'g1', title: 'Readers', email: 'private@example.com' },
+            groupInvite: {
+              id: 'gi1',
+              status: 'ACCEPTED',
+              email: 'private@example.com',
+              answers: { private: true },
+            },
+          },
+        ],
+        nextCursor: null,
+      })
+    );
+  });
+  const result = await cli(['notifications', 'list']);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout).items[0]).toMatchObject({
+    group: { id: 'g1', title: 'Readers' },
+    groupInvite: { id: 'gi1', status: 'ACCEPTED' },
+  });
+  expect(result.stdout).not.toContain('private@example.com');
+  expect(result.stdout).not.toContain('answers');
+});

@@ -45,7 +45,9 @@ export async function validateApiKey(
     // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex internal function types
     const validateFn = internal.api.v1.internal.auth.validateApiKey;
     // Scopes follow the top-level REST collection; read = GET/HEAD, write = all other methods.
-    const resource = new URL(request.url).pathname.split('/')[3] ?? '';
+    const collection = new URL(request.url).pathname.split('/')[3] ?? '';
+    const resource =
+      collection === 'event-applications' ? 'events' : collection;
     const action =
       request.method === 'GET' || request.method === 'HEAD' ? 'read' : 'write';
     const result = await ctx.runMutation(validateFn, {

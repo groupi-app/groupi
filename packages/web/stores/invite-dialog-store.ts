@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { Id } from '@/convex/_generated/dataModel';
 
-type InviteDialogTab = 'link' | 'email' | 'username';
+type InviteDialogTab = 'link' | 'email' | 'username' | 'list';
 
 interface InviteDialogStore {
   open: boolean;

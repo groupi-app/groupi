@@ -31,10 +31,13 @@ import {
   useRemoveFriend,
 } from '@/hooks/use-friends';
 
-type Tab = 'friends' | 'requests' | 'sent' | 'search';
+import { GroupsPanel } from '@/components/groups/groups-panel';
+
+type Tab = 'groups' | 'friends' | 'requests' | 'sent' | 'search';
 
 const TABS = [
   { key: 'friends', label: 'Friends' },
+  { key: 'groups', label: 'Groups' },
   { key: 'requests', label: 'Requests' },
   { key: 'sent', label: 'Sent' },
   { key: 'search', label: 'Search' },
@@ -82,7 +85,9 @@ export default function FriendsScreen() {
     <SafeAreaView className='flex-1 bg-background'>
       <View className='flex-row items-center justify-between border-b border-border px-4 py-3'>
         <BackButton />
-        <Text className='text-lg font-semibold text-foreground'>Friends</Text>
+        <Text className='text-lg font-semibold text-foreground'>
+          Friends & Groups
+        </Text>
         <View className='w-10' />
       </View>
 
@@ -114,7 +119,9 @@ export default function FriendsScreen() {
         </View>
       ) : null}
 
-      {activeTab === 'friends' ? (
+      {activeTab === 'groups' ? (
+        <GroupsPanel />
+      ) : activeTab === 'friends' ? (
         <FriendsList
           friends={friends}
           onRemove={(friendshipId: Id<'friendships'>) => {

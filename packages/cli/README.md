@@ -113,6 +113,81 @@ an explicit `--web-url`; existing profiles can pass it to `auth login` for that
 invocation. The authorization website must be an origin without a path. It is
 never inferred from a REST hostname.
 
+## Private invite lists
+
+```sh
+groupi invite-lists people --search guest --format json
+groupi invite-lists people --friends --format json
+groupi invite-lists create --name "Dinner guests" --person-ids '["<person-id>"]' --format json
+groupi invite-lists list --format json
+groupi invite-lists get <list-id> --format json
+groupi invite-lists edit <list-id> --name "Weekend guests" --format json
+groupi invite-lists edit <list-id> --person-ids '["<person-id>"]' --format json
+groupi invite-lists invite <list-id> --event <event-id> --request-id <retained-request-id> --format json
+groupi invite-lists delete <list-id> --yes --format json
+```
+
+Choose existing `personId` values from username search or accepted-friend choices.
+Search requires at least two trimmed characters and does not require friendship
+or an event. Lists belong privately to the selected authenticated identity; API
+keys need `invite-lists:read` for browsing/discovery and `invite-lists:write` for
+creation, editing, deletion, and explicit event use. Event use additionally
+requires existing event invitation permission and ownership of the list. The
+server must advertise `inviteLists` capability version 1 or later for foundation
+commands, and version 2 or later with 24-hour replay retention for management and
+event use.
+
+Names contain 1–100 characters after trimming and must be unique among your lists
+ignoring case. You can own up to 100 lists. Creation requires 1–100 distinct
+existing people; duplicate IDs are collapsed. Saving a list sends no invitation
+or notification and changes no event participation. Collection/discovery responses
+are `{items}` without pagination; detail returns current people and the list's
+counts and `needsAttention` status. `edit` accepts a name, a complete replacement
+people array, or both; it does not send invitations. `delete` requires destructive
+confirmation (`--yes` in JSON/headless mode) and returns
+`{deleted:true,inviteListId}`. Deleting a previously used list leaves its prior
+invitations and event participation unchanged.
+
+Deleted recipients remain anonymous unavailable entries: their `name`, `username`,
+and `image` are null. `personCount` includes saved unavailable entries, while
+`availablePersonCount` counts existing people. When that count reaches zero, the
+named list remains visible with `needsAttention:true` and text output says
+“Needs attention.” A fresh event-use request is rejected until repaired.
+Discover an existing person, then use
+`invite-lists edit <list-id> --person-ids '["<existing-person-id>"]'` to replace the
+selection. You may retain already saved unavailable IDs alongside at least one
+existing person; they remain anonymous and are skipped during a new send. Ordinary
+creation/save cannot contain only unavailable people, and the 100-person limit
+still includes those retained entries. Repair changes no invitations or event
+participation. Deleting the owner's account removes owned lists and prevents
+access through the old identity.
+
+Creation is sent once and has no request-ID replay support. If the outcome is
+uncertain, inspect `invite-lists list` on the original profile before deciding
+whether another creation is needed. Editing and deletion also send once; inspect
+the original list/profile after an uncertain result before deciding whether
+another write is needed.
+
+`invite` explicitly sends ordinary event invitations to the list's current
+people in one request. Choose `--role ATTENDEE` (default) or `MODERATOR`
+(organizers only), and optionally `--message` with up to 480 characters. At most
+100 distinct recipients are allowed; the server rechecks ordinary eligibility.
+JSON reports `eventId`, `totalCount`, `sentCount`, `skippedCount`, and per-person
+`results` with status `sent`/`skipped`; the CLI includes the `requestId`. Skip
+reasons are `ALREADY_MEMBER`, `INVITATION_PENDING`, or generic `UNAVAILABLE`.
+Zero sent recipients means no invitations were sent. List use does not create
+membership or RSVP, and later list changes do not alter prior invitations.
+
+Generate and retain `<Unix-milliseconds>.<UUID v4>` before the send, then pass
+`--request-id`. Protected retries preserve the original result and recipients
+despite later list edits/deletion or recipient disappearance. A protected replay
+does not expand current people again or require a current usable list. After an uncertain send, inspect
+`invites members list <event-id>` on the original profile or retry identical
+original inputs with the same request ID within 24 hours. A new identifier can
+send to a different current selection. Changed inputs return
+`IDEMPOTENCY_CONFLICT`; expired identifiers return `IDEMPOTENCY_EXPIRED` and
+require inspection before deliberately starting another send.
+
 ## Create and edit events
 
 ```sh
@@ -493,3 +568,355 @@ and explicit lifecycle confirmation protect existing data. See
 Existing webhook definitions can be exported faithfully, but webhook actions are
 unsupported for new authoring writes. Existing event add-on use and configuration
 remain separate commands.
+
+## Discover joins
+
+`groupi events join <event-id>` creates Attendee membership with Pending RSVP.
+Text and JSON results report `role` and `rsvpStatus`; joining does not confirm
+attendance. For a dated event, use `events rsvp set`; for an undated event,
+provide availability until a date is chosen. Poll date selection derives RSVP
+from availability, while manual date selection preserves the current response.
+
+Join requires `eventManagement.pendingRsvpJoin: true` and `groupDiscovery.version: 1` before sending a write. This newer CLI conservatively requires the updated server even for Friends-only joins; older or malformed capabilities cause zero writes. Other event management commands remain compatible with
+`eventManagement.version: 1` servers.
+
+## Groups
+
+Groups are formal communities independent of Events, friendships and Invite Lists.
+Create an owner-only Group and retain its returned stable `groupId`:
+
+```sh
+groupi groups create --name "Readers" --description "Monthly books"
+groupi groups list --limit 20 --all
+groupi groups get <group-id>
+groupi groups edit <group-id> --name "Book club" --clear-description
+groupi groups delete <group-id> --yes
+```
+
+Names are trimmed and contain 1–100 characters; duplicate display names are allowed.
+Descriptions are limited to 2000 characters; `--image` accepts an HTTPS URL up to
+2048 characters. Renaming preserves identity and links. Only the owner can edit or
+delete a Group. Deletion is explicit and does not delete independent Events.
+Pagination returns `items` and `nextCursor`; `--all` deliberately follows pages.
+REST API keys use the `groups` collection with `read` / `write` permissions.
+Writes require the server's `groups` version 1 capability and are never retried;
+inspect `groups list --all` after an uncertain creation before repeating it.
+Owners can invite existing people; invitations grant Group membership only:
+
+```sh
+groupi groups invite <group-id> <person-id>
+groupi groups invites <group-id> --status PENDING --all
+groupi groups invitation-policy <group-id> --enabled false
+groupi group-invites list --status PENDING --all
+groupi group-invites accept <invite-id>
+groupi group-invites decline <invite-id> --yes
+groupi group-invites cancel <invite-id> --yes
+groupi groups members <group-id> --all
+groupi settings privacy set --group-invites FRIENDS
+```
+
+Invitation commands require the server's `groupInvites` version 1 capability.
+Sending and changing policy require `groups:write`; owner invitation status and
+member roster require `groups:read`. Own invitation inbox requires
+`group-invites:read`; accept, decline and owner cancellation require
+`group-invites:write`. Roster access requires admitted membership. Only the intended
+recipient can accept or decline. Blocking and incoming Group privacy settings can
+make a recipient unavailable without disclosing why; incoming choices are
+`EVERYONE` (default), `FRIENDS`, and `NO_ONE`, independent of Event invitations.
+Disabling invitations prevents both new sends and pending acceptance. Invitation
+IDs are identifiers, not bearer credentials, and Group links do not admit visitors.
+After an uncertain write, inspect the own inbox or owner's invitation list before
+repeating; writes are never automatically retried. Group deletion removes its
+invitations and memberships. Group applications use the separate path below; tools remain unavailable.
+
+### Group moderation
+
+```sh
+groupi groups member-role <group-id> <person-id> --role MODERATOR --yes
+groupi groups member-role <group-id> <person-id> --role MEMBER --yes
+groupi groups remove-member <group-id> <person-id> --yes
+groupi groups ban <group-id> <person-id> --yes
+groupi groups bans <group-id> --limit 20 --all
+groupi groups lift-ban <group-id> <person-id> --yes
+groupi groups leave <group-id> --yes
+```
+
+Only the owner appoints or demotes moderators and changes Group policies.
+Owners and moderators manage invitations and ordinary member removal/bans;
+moderators cannot manage the owner, peer moderators or their own role. Demote a
+moderator before ordinary removal or banning. Nonowners, including moderators,
+may leave voluntarily. Resolve ownership before the owner leaves or deletes their
+account. Group moderation preserves independent Event authority, memberships,
+RSVPs and friendships.
+
+Removal and leaving permit later invitations under current policy. A ban blocks
+new invitations and pending acceptance until a manager lifts it; lifting does not
+admit membership. Previously accepted invitations cannot readmit departed members.
+Ban lists are private to managers and paginated, with names, usernames, avatars
+and dates only. Moderation writes require `groupModeration` version 1 and
+`groups:write`; ban lists require `groups:read`. An older server receives no writes.
+Inspect current membership and bans after an uncertain result before repeating;
+these operations are never automatically retried. Removal and ban notices follow
+the affected person's existing notification methods and preferences.
+
+## Event ownership transfers
+
+Event ownership requires recipient consent. Use `events transfer offer EVENT PERSON --yes`, then the named recipient runs `events transfer accept EVENT OFFER --yes`. Inspect `events transfer status EVENT` after any uncertain write. A pending offer remains unresolved: the current Organizer keeps responsibility until acceptance. Acceptance makes the former Organizer a Moderator and moves Friends visibility to the new Organizer's friends; membership and RSVP are preserved. The recipient may `decline`, and the current Organizer may `cancel`, using the offer ID and `--yes`.
+
+## Event logistics and admission
+
+Read before joining with `groupi events preview <event-id>`. The safe JSON/text
+result includes Event identity, description, current Organizer, location, dates,
+resolved admission policy and `entryAction`. Reading creates no membership or RSVP
+and returns no discussion, roster, availability responses or tool submissions.
+
+As the Organizer, configure
+`groupi events settings set <event-id> --admission-policy INVITATION_ONLY` or
+`--admission-policy DIRECT`. Admission is independent of visibility. Unconfigured
+Friends events preserve Direct entry; unconfigured Public/Private events remain
+Invitation only. Public readability alone does not allow self-joining.
+
+Admission writes require `eventAdmission.version: 1` before a write is sent.
+`JOIN` is available only after current audience, block and ban checks; a preview
+can report `INVITATION_ONLY`, `UNAVAILABLE`, or `MEMBER` instead. Ordinary authorized
+invitations and their Pending acceptance remain independent admission grants.
+
+## Event applications
+
+Choose Apply for approval with
+`groupi events settings set <event-id> --admission-policy APPLY`.
+Configure core questions independently of tools using
+`groupi events applications configure <event-id> --questions '<question-array>'`.
+The seven existing questionnaire field types are supported; `[]` is a valid
+question-free application. Review defaults to Organizer and Moderators;
+`--reviewer-policy ORGANIZER_ONLY` restricts review to the Organizer.
+
+Read `applications form <event-id>`, then `applications submit <event-id>
+--answers '{"question-id":"answer"}'`. Submitting again edits only a pending
+application, against its retained questions. A changed Event form never rewrites
+reviewed answers or an existing pending definition. Use `applications withdraw
+<application-id>` or read paginated `applications history <event-id> --limit 20
+--cursor <cursor>`. Your private history remains readable after audience loss.
+The form's `settings` is `null` when current Event read/review access is lost;
+your pending questions/answers and historical snapshots remain private and
+readable. Use the Event application route directly even if its logistics preview
+is no longer available.
+
+Current reviewers use `applications list <event-id>` and
+`applications approve|decline <application-id> [--reason <reason>]`.
+Approval rechecks current audience, blocks and bans, immediately creates
+Attendee/Pending, and requires no second acceptance.
+Qualifying Public, selected Friends and currently eligible whole-Group audiences
+combine by OR at both submission and approval. Required Group onboarding,
+leaving/removal/ban, Group retirement or audience withdrawal removes only that
+Group's path. A remaining qualifying path can still permit approval. Group
+management grants no Event review authority, and accepting a separate permitted
+Event invitation cannot make stale application approval eligible. After approval,
+Event membership and RSVP survive later Group eligibility loss. Replaying a
+terminal approval never admits again after Event departure/removal.
+Declined/withdrawn applicants
+can reapply under the current form if eligible. Authorized manager invitations
+remain independent grants. All application writes, including choosing APPLY,
+require `eventApplications.version: 1` before sending a write. Scoped keys use
+ordinary `events` read/write permissions. Preview and Discover report `APPLY`
+when that is the current entry action. Decisions and new-request notifications
+use existing channels, mute/DND behavior and type-specific preferences.
+
+## Group responsibility and retirement
+
+`groupi groups transfer offer <group-id> <person-id> --yes` offers ownership to an
+eligible admitted member. The current owner remains responsible while pending;
+this cannot resolve account deletion or departure. Only the recipient can run
+`groups transfer accept <group-id> <transfer-id> --yes`. Acceptance atomically
+installs the single new owner and makes the former owner a Moderator, preserving
+Group identity, links, membership IDs, count and configuration. No Event authority
+is inherited. Invitations and applications are not ownership consent.
+
+Read `groups transfer status <group-id>` for truthful pending, accepted, declined
+or cancelled outcomes. The recipient can `transfer decline`; the offering owner
+can `transfer cancel`, both using the observed transfer ID. Current account,
+membership, Group bans and owner/recipient blocks are rechecked at offer and
+acceptance. Stale offers cannot take ownership.
+
+`groups delete <group-id> --yes` explicitly retires an owned Group and purges its
+Group data and audience grants. Independent Events, invitations, memberships and
+RSVP survive. Transfer writes require `groupTransfers.version: 1`;
+retirement additionally requires `groupTransfers.retirement: true` before any
+write. Both use ordinary `groups` read/write API-key permissions. In headless/JSON
+mode, offers, acceptance and deletion require explicit `--yes` confirmation.
+
+### Group joining questionnaire
+
+`groups questionnaire get <group-id>` reads your private current form and saved
+question definitions; `status` reports optional completion. After immediate
+membership, invitation acceptance reports the current questionnaire state. Optional remains the default. Owners may add `--required-completion true` to configuration; this requires advertised capability version 2 before writing. Required incompletion blocks only Group-granted member content. Read `groups questionnaire status` and complete current answers with `submit` to recover; independent Event grants and own records remain available.
+Incomplete answers do not gate Group or independent Event access.
+
+Owners use `configure <group-id> --enabled true|false --questions '<json>'`.
+Admitted members use `submit <group-id> --form-version <number> --answers '<json>'`
+to submit or edit without admission review. Both writes require advertised
+`groupQuestionnaire.version: 1` before mutation. Disabling preserves answers.
+Authors can read retained own records after leaving; `history --limit 20` pages
+answered definitions and prior revisions. Current owners/moderators use
+`responses` or `history --author-id <person-id>` for private review. Stable question
+IDs and semantic versions preserve valid answers across cosmetic changes and
+returning membership. Material changes preserve old history without reusing old
+answers. There is no required Group gate setting in this interface.
+
+## Group applications
+
+Applications default disabled. The owner enables them and configures admission
+questions without disabling manager invitations. These questions are distinct
+from any joining questionnaire after admission. Read the form before submitting:
+
+```sh
+groupi groups application-settings <group-id> --enabled true --questions '[{"id":"why","label":"Why join?","type":"SHORT_ANSWER","required":true}]'
+groupi groups application-form <group-id>
+groupi groups apply <group-id> --answers '{"why":"Reading together"}'
+groupi groups application-history <group-id> --all --limit 20
+groupi groups application-get <group-id> <application-id>
+groupi groups application-edit <group-id> <application-id> --answers '{"why":"Updated answer"}'
+groupi groups application-withdraw <group-id> <application-id> --yes
+groupi groups applications <group-id> --status PENDING --all
+groupi groups application-review <group-id> <application-id> --decision APPROVED --yes
+```
+
+Seven existing field types are supported: SHORT_ANSWER, LONG_ANSWER,
+MULTIPLE_CHOICE, CHECKBOXES, NUMBER, DROPDOWN and YES_NO. Definitions allow at most
+50 unique questions; question IDs are limited to 100 characters, labels to 1000,
+and option lists to 100 unique nonempty strings of at most 500 characters.
+Short answers allow 1000 characters, long answers 10000. Zero and false are valid
+required answers. Unknown fields/options and duplicate selections are rejected.
+
+Submitting again edits the single pending application. Pending edits use its
+saved question definitions even if the owner changes the current form. Reviewed
+questions, answers and decisions remain immutable; withdrawal retains history.
+Declined or withdrawn applicants may reapply under current policy unless banned.
+Disabling applications blocks new submissions, edits and approvals while private
+history and withdrawal remain available. Incoming invitation preferences do not
+restrict voluntary applications.
+
+Only the author and current Group owner/moderators can read personal records.
+Authors retain private history after leaving or removal while the Group exists;
+applicants gain no roster or Group content access. Approval creates one Member
+immediately without a second acceptance, Event participation or friendship.
+Racing invitation acceptance cannot duplicate membership. Repeating historical
+approval cannot restore membership after departure. Managers receive new-request
+notifications and applicants receive decisions through existing notification
+methods, DND and type preferences.
+
+All writes preflight `groupApplications` version 1 and are never automatically
+retried. API keys use ordinary `groups:read` and `groups:write` scopes. After an
+uncertain outcome, inspect own history or the current manager queue before
+repeating. Group and account deletion remove private application records; deleted
+reviewers are anonymized in surviving decisions.
+
+Application approval immediately creates Group membership. An approval response may
+include `joiningQuestionnaire` (`enabled`, `completed`, `shouldPrompt`, `version`)
+for the applicant's current optional joining form. Use `groups questionnaire get`
+to read your own form after joining; no further admission approval is needed.
+A repeated approved decision after departure remains approved without rejoining
+and omits this current-member status.
+
+## Explicit Group announcements
+
+Current owners/moderators deliberately send with
+`groupi groups announce GROUP --title 'Reading' --message 'Bring a book' --request-id UNIX_MS.UUID_V4`.
+Preserve the timestamped UUID-v4 request ID and exact body on recovery. Repeating
+that request returns the same aggregate result; changed content conflicts and
+keys expire after 24 hours. Inspect with
+`groupi groups announcement-status GROUP --request-id UNIX_MS.UUID_V4`.
+
+Send requires `groups:write`, status requires `groups:read`, and the current
+manager role is checked inside the write. The CLI checks
+`capabilities.groups.announcements: 1` before sending. Results contain only the
+announcement ID, processing/completed/cancelled state, created notification count
+and skipped membership count. External delivery is not confirmed. Current
+membership, bans, account availability, privacy, DND and recipient preferences
+apply. Routine Event/tool publication stays silent. Existing in-app/email/push/
+webhook channels apply; SMS and manager automation are not included.
+
+## Resolve account ownership before deletion
+
+List both resource kinds completely on the selected profile:
+
+```sh
+groupi account responsibilities --kind GROUP --all --limit 20
+groupi account responsibilities --kind EVENT --all --limit 20
+groupi account readiness
+```
+
+Each page includes current resource identity, title, transfer status and
+`resolved: false`. `nextCursor` is null only when enumeration completes; `--all`
+follows every page and rejects repeated cursors. An offered, declined or cancelled
+transfer does not resolve ownership. Use `groups transfer` or `events transfer`
+and have the recipient accept; Event membership/RSVP stays intact and Friends
+visibility follows the accepting Organizer. Explicitly retire a Group with
+`groups delete <group-id> --yes` (independent Events remain), or an owned Event with
+`account delete-event <event-id> --yes`.
+
+```sh
+groupi account delete --confirm-username <current-username> --yes
+```
+
+Final deletion always rechecks current Group `ownerId` and Event `creatorId`,
+including ownership acquired after listing. It never automatically appoints a
+successor or deletes an owned resource. Use `account:read` for enumeration/readiness
+and `account:write` for final deletion and account-resolution Event deletion;
+resource transfer and Group deletion use their existing `groups`/`events` scopes.
+Headless/JSON destructive commands require `--yes`; username confirmation is also
+required. The success response confirms deletion of the account and its credentials;
+a subsequent request using the old API key or session is unauthorized. An ambiguous
+write is never automatically retried. Passkey/OAuth handoffs remain browser/device
+operations.
+
+## Whole-Group Event audiences
+
+Event Organizers can share safe logistics with eligible whole Groups while keeping
+Event ownership and participation independent:
+
+```sh
+groupi groups event-sharing GROUP --policy MEMBERS
+groupi events share-group EVENT GROUP
+groupi events friends-audience EVENT --enabled true
+groupi events audiences EVENT
+groupi groups events GROUP --all --limit 20
+groupi events preview EVENT
+groupi groups withdraw-event GROUP EVENT --yes
+```
+
+Group sharing defaults to `MANAGERS`; only the Group owner may choose `MEMBERS`.
+Sharing requires both current Event Organizer authority and the Group's current
+sharing permission and completed required onboarding. At most 100 whole Groups
+may be selected per Event. Group managers may withdraw their own audience without
+gaining Event edit/delete/review authority. Withdrawal preserves other audiences.
+
+Friends and selected Groups combine by OR for logistics reads. An explicit Friends
+selection defaults to legacy `FRIENDS` visibility when absent. An actual visibility
+change synchronizes that legacy selection; saving an unchanged visibility retains
+an explicit selection. Public basic details remain public. Friends settings are
+`null` in audience output when the caller lacks Event Organizer authority; only
+Group associations visible to the caller are returned.
+
+Group Event pages scan at most `--limit` associations in sharing order, omitting
+past or currently unreadable Events. Continue `nextCursor` even after an empty
+page; `--all` does this with repeated-cursor protection. Output includes only safe
+logistics, with no attendee identities, private RSVP notes, discussions or tool
+submissions. Reading/sharing never creates Event invitations, memberships or RSVP.
+Current Group grants also appear in Discover and permit Direct entry when the Event policy allows it. Group-only Apply stays unavailable until the Group application slice is supported.
+Required onboarding, leave/removal/ban, Group deletion and audience withdrawal
+revoke only that Group's grant; independent Event membership and other audiences
+continue to apply.
+
+Writes require advertised `groupEventAudiences` version 1 and fail before sending
+mutations on older servers. Event-path commands require `events` read/write scopes;
+Group lists require `groups:read`, and policy/Group-manager withdrawal require
+`groups:write`. Scopes never replace current domain authority. Withdrawal requires
+`--yes` in headless use. Writes are not automatically retried; inspect the current
+audiences and Group Events if a response has an uncertain outcome.
+
+`events discover --all` pages current Friends and Group sources, deduplicated by Event ID. `accessReasons` contains only this viewer's Friends eligibility and eligible Group IDs/names; legacy read responses may omit reasons. No Public directory is created. Existing members and past chosen dates are excluded; undated Events remain discoverable. Use `events preview EVENT` before the advertised action; a discovery card is never an invitation. Current onboarding, bans, blocks, entry policy and audience grants are checked again at admission. Joining preserves Pending RSVP and independent accepted Event participation after Group access is lost.
+
+### Persistent Group polls
+
+`groups polls` provides independent persistent polls, separate from Event scheduling and the joining questionnaire. Use `create`/`configure` with `--mode SINGLE|MULTIPLE`, stable `{id,label}` `--options-json`, title and immutable `--results-visibility MANAGERS|MEMBERS`. `submit` accepts `--poll-version`, `--expected-revision` and selected option-ID `--selections-json`. Exact repeats recover the saved revision; changed votes and removals reject stale revisions. `remove-own` and `moderate` require `--expected-revision` and destructive confirmation. `get`, `settings`, `list`, `history`, `results` and Owner `policy get/set` expose bounded truthful data; settings/list remain available to eligible managers while disabled, while ordinary voting/results do not. History includes your authoritative voteRevision for retained-record removal. Results distinguish current votes from material-definition history and removed tombstones; paginated rows are not global totals. Writes preflight `groups.polls: 1`; malformed success is an uncertain outcome, so inspect saved state before retrying. See [persistent poll rules](../../docs/group-polls.md) and the generated [command reference](docs/command-reference.md).

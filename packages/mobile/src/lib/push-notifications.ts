@@ -163,6 +163,28 @@ export function getPushNotificationDestination(data: unknown): string | null {
   if (destination === 'invites') return '/invites';
   if (destination === 'friends') return '/friends';
 
+  if (
+    destination === 'groupApplication' ||
+    destination === 'groupApplications'
+  ) {
+    const groupId = Reflect.get(data, 'groupId');
+    return isSafeId(groupId)
+      ? `/groups/${groupId}/${destination === 'groupApplication' ? 'apply' : 'applications'}`
+      : null;
+  }
+  if (destination === 'group') {
+    const groupId = Reflect.get(data, 'groupId');
+    return isSafeId(groupId) ? `/g/${groupId}` : null;
+  }
+  if (
+    destination === 'eventApplication' ||
+    destination === 'eventApplications'
+  ) {
+    const eventId = Reflect.get(data, 'eventId');
+    if (!isSafeId(eventId)) return null;
+    return `/event/${eventId}/${destination === 'eventApplication' ? 'application' : 'applications'}`;
+  }
+
   if (destination === 'event') {
     const eventId = Reflect.get(data, 'eventId');
     if (!isSafeId(eventId)) return null;

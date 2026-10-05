@@ -30,6 +30,26 @@ const SETTINGS = [
     icon: 'extension-puzzle-outline',
   },
   {
+    key: 'admission',
+    label: 'Admission',
+    description: 'Choose invitations, direct joining, or applications',
+    icon: 'enter-outline',
+    organizerOnly: true,
+  },
+  {
+    key: 'applications',
+    label: 'Review applications',
+    description: 'Review private admission requests',
+    icon: 'mail-outline',
+  },
+  {
+    key: 'sharing',
+    label: 'Event audiences',
+    description: 'Share logistics with whole Groups and Friends',
+    icon: 'people-outline',
+    organizerOnly: true,
+  },
+  {
     key: 'permissions',
     label: 'Permissions',
     description: 'Control what event members can do',
@@ -78,9 +98,11 @@ export default function EventSettingsScreen() {
           const destination =
             item.key === 'details'
               ? `/event/${eventId}/edit`
-              : item.key === 'addons'
-                ? `/event/${eventId}/addons/manage`
-                : `/event/${eventId}/settings/${item.key}`;
+              : item.key === 'applications'
+                ? `/event/${eventId}/applications`
+                : item.key === 'addons'
+                  ? `/event/${eventId}/addons/manage`
+                  : `/event/${eventId}/settings/${item.key}`;
 
           return (
             <Pressable

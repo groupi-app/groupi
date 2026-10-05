@@ -29,9 +29,16 @@ test('distributed versioned reference stays current with executable command defi
       (command: { path: string }) => command.path === 'groupi events create'
     )
   ).toBe(true);
+  expect(
+    reference.commands.some(
+      (command: { path: string }) =>
+        command.path === 'groupi invite-lists create'
+    )
+  ).toBe(true);
 });
 
-test('distributed agent examples execute a planning and inspection workflow without secret output', async () => {
+// These workflows launch a fresh CLI process for every documented step.
+test('distributed agent examples execute planning, inspection and recipient-accepted ownership transfer without secret output', async () => {
   const { createServer } = await import('node:http');
   const { spawn } = await import('node:child_process');
   const { mkdtemp, rm } = await import('node:fs/promises');
@@ -40,6 +47,8 @@ test('distributed agent examples execute a planning and inspection workflow with
   const directory = await mkdtemp(resolve(tmpdir(), 'groupi-guidance-'));
   let accepted = false;
   let response = 'PENDING';
+  let transferStatus = 'NONE';
+  let organizerId = 'organizer';
   const unexpected: string[] = [];
   const server = createServer((request, reply) => {
     let body = '';
@@ -57,6 +66,22 @@ test('distributed agent examples execute a planning and inspection workflow with
         rsvpStatus: response,
         rsvpNote: null,
       };
+      const inviteListPerson = {
+        personId: 'attendee-1',
+        name: 'Guest',
+        username: 'guest',
+        image: null,
+        available: true,
+      };
+      const inviteList = {
+        inviteListId: 'list-1',
+        name: 'Dinner guests',
+        personCount: 1,
+        availablePersonCount: 1,
+        needsAttention: false,
+        createdAt: 1,
+        updatedAt: 1,
+      };
       let data: unknown;
       if (path === '/api/v2/health')
         data = {
@@ -65,7 +90,44 @@ test('distributed agent examples execute a planning and inspection workflow with
             eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
             inviteWrites: { version: 1, retentionMs: 86400000 },
             attendanceWrites: { version: 1 },
+            eventTransfers: { version: 1 },
+            inviteLists: { version: 2, retentionMs: 86400000 },
           },
+        };
+      else if (path === '/api/v2/invite-lists/people/search')
+        data = { items: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists' && request.method === 'POST')
+        data = { ...inviteList, people: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists') data = { items: [inviteList] };
+      else if (
+        path === '/api/v2/invite-lists/list-1' &&
+        request.method === 'PATCH'
+      )
+        data = {
+          ...inviteList,
+          name: JSON.parse(body).name,
+          people: [inviteListPerson],
+        };
+      else if (
+        path === '/api/v2/invite-lists/list-1' &&
+        request.method === 'DELETE'
+      )
+        data = { deleted: true, inviteListId: 'list-1' };
+      else if (path === '/api/v2/invite-lists/list-1')
+        data = { ...inviteList, people: [inviteListPerson] };
+      else if (path === '/api/v2/invite-lists/list-1/invite-to-event')
+        data = {
+          eventId: 'event-1',
+          totalCount: 1,
+          sentCount: 0,
+          skippedCount: 1,
+          results: [
+            {
+              personId: 'attendee-1',
+              status: 'skipped',
+              reason: 'INVITATION_PENDING',
+            },
+          ],
         };
       else if (path === '/api/v2/profile')
         data = {
@@ -75,7 +137,35 @@ test('distributed agent examples execute a planning and inspection workflow with
         };
       else if (path === '/api/v2/events' && request.method === 'POST')
         data = { eventId: 'event-1', membershipId: 'organizer-membership' };
-      else if (path === '/api/v2/events/event-1/member-invites')
+      else if (
+        path === '/api/v2/events/event-1/ownership-transfer' ||
+        path === '/api/v2/events/event-1/ownership-transfer/accept'
+      ) {
+        if (request.method === 'POST') {
+          const input = JSON.parse(body);
+          if (path.endsWith('/accept')) {
+            if (identity !== 'attendee' || input.transferId !== 'transfer-1')
+              unexpected.push('Invalid recipient ownership acceptance');
+            transferStatus = 'ACCEPTED';
+            organizerId = 'attendee-1';
+          } else {
+            if (identity !== 'organizer' || input.recipientId !== 'attendee-1')
+              unexpected.push('Invalid ownership offer');
+            transferStatus = 'PENDING';
+          }
+        }
+        data = {
+          eventId: 'event-1',
+          createdById: 'organizer',
+          organizerId,
+          status: transferStatus,
+          transferId: transferStatus === 'NONE' ? null : 'transfer-1',
+          recipientId: transferStatus === 'NONE' ? null : 'attendee-1',
+          offeredById: transferStatus === 'NONE' ? null : 'organizer',
+          explanation:
+            'Ownership remains unresolved until recipient acceptance.',
+        };
+      } else if (path === '/api/v2/events/event-1/member-invites')
         data = { inviteId: 'invite-1', status: 'PENDING' };
       else if (path === '/api/v2/member-invites/invite-1')
         data = {
@@ -169,6 +259,7 @@ test('distributed agent examples execute a planning and inspection workflow with
     const substitutions: Record<string, string> = {
       $EVENT_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
       $INVITE_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
+      $INVITE_LIST_REQUEST_ID: `${Date.now()}.${randomUUID()}`,
       $ATTENDEE_USERNAME: 'guest',
     };
     const workflows = JSON.parse(
@@ -188,17 +279,34 @@ test('distributed agent examples execute a planning and inspection workflow with
       const data = JSON.parse(result.stdout);
       if (data.eventId) substitutions.$EVENT_ID = data.eventId;
       if (data.inviteId) substitutions.$INVITE_ID = data.inviteId;
-      if (step.args[0] === 'events' && step.args[1] === 'members')
+      if (data.transferId) substitutions.$TRANSFER_ID = data.transferId;
+      if (data.inviteListId) substitutions.$INVITE_LIST_ID = data.inviteListId;
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'people')
+        substitutions.$INVITE_LIST_PERSON_IDS = JSON.stringify(
+          data.items.map((person: { personId: string }) => person.personId)
+        );
+      if (step.args[0] === 'events' && step.args[1] === 'members') {
         expect(data.items[0].rsvpStatus).toBe('YES');
+        substitutions.$RECIPIENT_PERSON_ID = data.items[0].personId;
+      }
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'invite') {
+        expect(data.sentCount).toBe(0);
+        expect(data.skippedCount).toBe(1);
+        expect(data.requestId).toBe(substitutions.$INVITE_LIST_REQUEST_ID);
+      }
+      if (step.args[0] === 'invite-lists' && step.args[1] === 'delete')
+        expect(data.deleted).toBe(true);
     }
     expect(accepted).toBe(true);
     expect(response).toBe('YES');
+    expect(transferStatus).toBe('ACCEPTED');
+    expect(organizerId).toBe('attendee-1');
     expect(unexpected).toEqual([]);
   } finally {
     await new Promise<void>(done => server.close(() => done()));
     await rm(directory, { recursive: true, force: true });
   }
-});
+}, 30_000);
 
 test('portable agent JSON instructions produce actionable errors without interactive login', () => {
   const result = spawnSync(

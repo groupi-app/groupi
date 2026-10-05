@@ -1,9 +1,12 @@
+import { resolveAdmissionPolicy, eventAdmissionAccess } from './admission';
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
+import { requirePerson } from '../groups/model';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
 import { requireWriteRole } from './writes';
 import { notifyEventModerators, notifyPerson } from '../lib/notifications';
-import { checkIfFriends, checkIsBlocked } from '../lib/privacy';
+import { checkIsBlocked } from '../lib/privacy';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -49,40 +52,13 @@ export async function updateMemberRoleForPerson(
 
   // Require organizer or moderator role in this event (single auth call)
   const currentPerson = { _id: personId };
-  const currentMembership = await requireWriteRole(
-    ctx,
-    membership.eventId,
-    personId,
-    'MODERATOR'
-  );
+  await requireWriteRole(ctx, membership.eventId, personId, 'MODERATOR');
 
-  // Moderators can manage attendee/moderator roles, but organizer authority
-  // can only be granted or changed by another organizer.
-  if (
-    currentMembership.role !== 'ORGANIZER' &&
-    (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER')
-  ) {
+  if (membership.role === 'ORGANIZER' || newRole === 'ORGANIZER') {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message: 'Only organizers can manage the organizer role',
+      message: 'Use an accepted ownership transfer to change the Organizer',
     });
-  }
-
-  // Prevent demoting the last organizer
-  if (membership.role === 'ORGANIZER' && newRole !== 'ORGANIZER') {
-    const organizers = await ctx.db
-      .query('memberships')
-      .withIndex('by_event_role', q =>
-        q.eq('eventId', membership.eventId).eq('role', 'ORGANIZER')
-      )
-      .collect();
-
-    if (organizers.length <= 1) {
-      throw new ConvexError({
-        code: 'FORBIDDEN',
-        message: 'Cannot demote the last organizer',
-      });
-    }
   }
 
   // Update the role
@@ -96,9 +72,7 @@ export async function updateMemberRoleForPerson(
 
   // Notify the affected user about their role change
   const notificationType =
-    newRole === 'ORGANIZER' || newRole === 'MODERATOR'
-      ? 'USER_PROMOTED'
-      : 'USER_DEMOTED';
+    newRole === 'MODERATOR' ? 'USER_PROMOTED' : 'USER_DEMOTED';
 
   await notifyPerson(ctx, {
     personId: membership.personId,
@@ -283,33 +257,31 @@ export async function joinDiscoverableEventForPerson(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requirePerson(ctx, personId);
   const person = { _id: personId };
 
-  // Verify the event exists and has FRIENDS visibility
+  // Revalidate admission and current audiences
   const event = await ctx.db.get(eventId);
   if (!event) {
     throw new ConvexError({ code: 'FORBIDDEN', message: 'Event not found' });
   }
 
-  if (event.visibility !== 'FRIENDS') {
+  if (resolveAdmissionPolicy(event) !== 'DIRECT') {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message: 'This event is not open for discovery',
+      message:
+        'This event is not open for discovery: an invitation is required',
     });
   }
-
-  // Verify the user is friends with the event creator
-  const isFriends = await checkIfFriends(ctx, person._id, event.creatorId);
   if (await checkIsBlocked(ctx, personId, event.creatorId))
     throw new ConvexError({
       code: 'FORBIDDEN',
       message: 'This event is not available to join',
     });
-  if (!isFriends) {
+  if (!(await eventAdmissionAccess(ctx, event, personId)).canJoin) {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message:
-        'You must be friends with the event organizer to join this event',
+      message: 'This event is not available to join',
     });
   }
 
@@ -343,33 +315,12 @@ export async function joinDiscoverableEventForPerson(
     });
   }
 
-  const countBeforeInsert = await getOrComputeMemberCount(ctx, eventId, event);
-
-  const now = Date.now();
-  const membershipId = await ctx.db.insert('memberships', {
-    personId: person._id,
-    eventId: eventId,
-    role: 'ATTENDEE',
-    rsvpStatus: 'YES',
-    updatedAt: now,
-  });
-  await ctx.db.patch(eventId, {
-    memberCount: countBeforeInsert + 1,
-  });
-
-  // Notify organizers/moderators about the new member
-  await notifyEventModerators(ctx, {
-    eventId,
-    type: 'USER_JOINED',
-    authorId: person._id,
-  });
-
-  // Dispatch onMemberJoined lifecycle
-  await dispatchAddonLifecycle(ctx, eventId, 'onMemberJoined', {
-    personId: person._id,
-  });
-
-  return { membershipId, success: true };
+  const result = await admitAttendeeForPerson(ctx, personId, eventId);
+  return {
+    ...result,
+    role: 'ATTENDEE' as const,
+    rsvpStatus: 'PENDING' as const,
+  };
 }
 
 export async function updateEventPermissionsForPerson(
@@ -414,16 +365,11 @@ export async function canDiscoverEventForPerson(
   event: Doc<'events'>,
   now: number
 ) {
-  if (
-    event.visibility !== 'FRIENDS' ||
-    (event.chosenDateTime !== undefined && event.chosenDateTime < now)
-  )
+  if (event.chosenDateTime !== undefined && event.chosenDateTime < now)
     return false;
-  if (
-    !(await checkIfFriends(ctx, personId, event.creatorId)) ||
-    (await checkIsBlocked(ctx, personId, event.creatorId))
-  )
-    return false;
+  if (await checkIsBlocked(ctx, personId, event.creatorId)) return false;
+  const reasons = await eventDiscoveryReasons(ctx, event, personId);
+  if (!reasons.friends && reasons.groups.length === 0) return false;
   const [membership, ban] = await Promise.all([
     ctx.db
       .query('memberships')
@@ -439,4 +385,53 @@ export async function canDiscoverEventForPerson(
       .first(),
   ]);
   return membership === null && ban === null;
+}
+
+/** The one ordinary admission writer: existing membership never repeats side effects. */
+export async function admitAttendeeForPerson(
+  ctx: MutationCtx,
+  personId: Id<'persons'>,
+  eventId: Id<'events'>
+) {
+  const existing = await ctx.db
+    .query('memberships')
+    .withIndex('by_person_event', q =>
+      q.eq('personId', personId).eq('eventId', eventId)
+    )
+    .first();
+  if (existing) return { membershipId: existing._id, success: true };
+  const event = await ctx.db.get(eventId);
+  if (!event) throw new Error('Event not found');
+  const countBeforeInsert = await getOrComputeMemberCount(ctx, eventId, event);
+
+  const now = Date.now();
+  const membershipId = await ctx.db.insert('memberships', {
+    personId: personId,
+    eventId: eventId,
+    role: 'ATTENDEE',
+    rsvpStatus: 'PENDING',
+    updatedAt: now,
+  });
+  await ctx.db.patch(eventId, {
+    memberCount: countBeforeInsert + 1,
+  });
+
+  // Notify organizers/moderators about the new member
+  await notifyEventModerators(ctx, {
+    eventId,
+    type: 'USER_JOINED',
+    authorId: personId,
+  });
+
+  // Dispatch onMemberJoined lifecycle
+  await dispatchAddonLifecycle(ctx, eventId, 'onMemberJoined', {
+    personId: personId,
+  });
+
+  return {
+    membershipId,
+    success: true,
+    role: 'ATTENDEE' as const,
+    rsvpStatus: 'PENDING' as const,
+  };
 }

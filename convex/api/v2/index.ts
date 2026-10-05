@@ -1,3 +1,19 @@
+import { createGroupListRoutes } from './routes/groupLists';
+import { createAccountResolutionRoutes } from './routes/accountResolution';
+
+import { createGroupEventAudienceRoutes } from './routes/groupEventAudiences';
+
+import { createGroupPollRoutes } from './routes/groupPolls';
+import { createGroupFormRoutes } from './routes/groupForms';
+import { createGroupTransferRoutes } from './routes/groupTransfers';
+import { createGroupQuestionnaireRoutes } from './routes/groupQuestionnaires';
+import { createGroupApplicationRoutes } from './routes/groupApplications';
+import { createGroupAnnouncementRoutes } from './routes/groupAnnouncements';
+import { createGroupModerationRoutes } from './routes/groupModeration';
+import { createGroupInviteRoutes } from './routes/groupInvites';
+import { createGroupRoutes } from './routes/groups';
+import { createEventTransferRoutes } from './routes/eventTransfers';
+import { createEventApplicationRoutes } from './routes/eventApplications';
 import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
 import { createUploadRoutes } from './routes/uploads';
 import { ConvexError } from 'convex/values';
@@ -25,6 +41,7 @@ import { createProfileRoutes } from './routes/profile';
 import { createSettingsRoutes } from './routes/settings';
 import { createThemeRoutes } from './routes/themes';
 import { createInviteRoutes } from './routes/invites';
+import { createInviteListRoutes } from './routes/inviteLists';
 import { createReportRoutes } from './routes/reports';
 import { createAdminRoutes } from './routes/admin';
 
@@ -91,10 +108,13 @@ export function createApiV2App(
         'code' in data &&
         typeof data.code === 'string' &&
         [
+          'UNAUTHORIZED',
           'VALIDATION_ERROR',
           'FORBIDDEN',
+          'ONBOARDING_REQUIRED',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
+          'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
@@ -105,13 +125,15 @@ export function createApiV2App(
       ) {
         const { code, message } = data;
         const status =
-          code === 'NOT_FOUND'
-            ? 404
-            : code === 'FORBIDDEN'
-              ? 403
-              : code === 'VALIDATION_ERROR'
-                ? 400
-                : 409;
+          code === 'UNAUTHORIZED'
+            ? 401
+            : code === 'NOT_FOUND'
+              ? 404
+              : code === 'FORBIDDEN' || code === 'ONBOARDING_REQUIRED'
+                ? 403
+                : code === 'VALIDATION_ERROR'
+                  ? 400
+                  : 409;
         return c.json({ error: { code, message } }, status);
       }
     }
@@ -215,6 +237,10 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Replies', description: 'Post replies' },
       { name: 'Members', description: 'Event member management' },
       { name: 'Availability', description: 'Date availability voting' },
+      {
+        name: 'Groups',
+        description: 'Formal community identity and ownership',
+      },
       { name: 'Friends', description: 'Friend management' },
       { name: 'Add-ons', description: 'Event add-on management' },
       { name: 'Notifications', description: 'User notifications' },
@@ -223,6 +249,11 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Settings', description: 'User settings' },
       { name: 'Themes', description: 'Custom themes' },
       { name: 'Invites', description: 'Event invitations' },
+      {
+        name: 'Invite lists',
+        description:
+          'Private creator-owned saved selections of existing people',
+      },
       { name: 'Reports', description: 'Content reporting' },
       { name: 'Admin', description: 'Administrative operations' },
     ],
@@ -237,10 +268,26 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        groupInvites: { version: 1 },
+        groupModeration: { version: 1 },
+        accountResolution: {
+          version: 1,
+          pagination: true,
+          finalRevalidation: true,
+        },
+        groupTransfers: { version: 1, retirement: true },
+        groupApplications: { version: 1 },
+        groupEventAudiences: { version: 1 },
+        groupDiscovery: { version: 1 },
+        groups: { version: 1, announcements: 1, forms: 1, polls: 1, lists: 1 },
+        groupQuestionnaire: { version: 2 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
         imageWrites: { version: 1 },
-        eventManagement: { version: 1 },
+        eventManagement: { version: 1, pendingRsvpJoin: true },
+        eventTransfers: { version: 1 },
+        eventAdmission: { version: 1 },
+        eventApplications: { version: 1 },
         socialWrites: { version: 1 },
         addonConfiguration: { version: 1 },
         addonParticipation: { version: 1 },
@@ -249,15 +296,19 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         notificationControls: { version: 1 },
         attendanceWrites: { version: 1 },
         inviteWrites: { version: 1, retentionMs: 86400000 },
+        inviteLists: { version: 2, retentionMs: 86400000 },
         eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
       },
     });
   });
 
+  app.route('/', createAccountResolutionRoutes());
   app.route('/', createCliAuthRoutes());
 
   // Mount route groups
+  app.route('/', createEventTransferRoutes());
   app.route('/', createEventManagementRoutes());
+  app.route('/', createEventApplicationRoutes());
   app.route('/', createEventRoutes());
   app.route('/', createImageRoutes());
   app.route('/', createPostRoutes());
@@ -265,6 +316,17 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createMemberRoutes());
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
+  app.route('/', createGroupAnnouncementRoutes());
+  app.route('/', createGroupListRoutes());
+  app.route('/', createGroupFormRoutes());
+  app.route('/', createGroupPollRoutes());
+  app.route('/', createGroupRoutes());
+  app.route('/', createGroupQuestionnaireRoutes());
+  app.route('/', createGroupInviteRoutes());
+  app.route('/', createGroupModerationRoutes());
+  app.route('/', createGroupTransferRoutes());
+  app.route('/', createGroupApplicationRoutes());
+  app.route('/', createGroupEventAudienceRoutes());
   app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
   app.route('/', createAddonDefinitionRoutes());
@@ -275,6 +337,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
   app.route('/', createSettingsRoutes());
   app.route('/', createThemeRoutes());
   app.route('/', createInviteRoutes());
+  app.route('/', createInviteListRoutes());
   app.route('/', createReportRoutes());
   app.route('/', createAdminRoutes());
   app.route('/', createUploadRoutes());

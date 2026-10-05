@@ -1,3 +1,4 @@
+import { groupNotificationReferences } from '../../../groupInvites/notificationProjection';
 import {
   readNotification,
   unreadNotification,
@@ -26,6 +27,24 @@ const notificationSummary = v.object({
   type: v.string(),
   read: v.boolean(),
   createdAt: v.number(),
+  group: v.optional(reference),
+  groupApplication: v.optional(
+    v.union(
+      v.null(),
+      v.object({
+        id: v.id('groupApplications'),
+        status: v.union(
+          v.literal('PENDING'),
+          v.literal('APPROVED'),
+          v.literal('DECLINED'),
+          v.literal('WITHDRAWN')
+        ),
+      })
+    )
+  ),
+  groupInvite: v.optional(
+    v.union(v.object({ id: v.string(), status: v.string() }), v.null())
+  ),
   event: reference,
   post: reference,
   author: v.union(
@@ -192,7 +211,7 @@ async function enrichNotification(
         user: authorUser
           ? {
               name: authorUser.name || null,
-              email: authorUser.email,
+              email: notification.groupId ? null : authorUser.email,
             }
           : {
               name: null,
@@ -203,6 +222,7 @@ async function enrichNotification(
   }
 
   return {
+    ...(await groupNotificationReferences(ctx, notification)),
     id: notification._id,
     personId: notification.personId,
     type: notification.type,

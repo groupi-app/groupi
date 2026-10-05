@@ -56,18 +56,19 @@ const VISIBILITY_OPTIONS: Array<{
 }> = [
   {
     value: 'PRIVATE',
-    label: 'Private (invite only)',
-    description: 'Only invited members can see and join this event',
+    label: 'Private',
+    description: 'Only event members can view this event',
   },
   {
     value: 'FRIENDS',
     label: 'Friends can discover',
-    description: 'Your friends can find and join this event',
+    description: 'Your friends can find and read event logistics',
   },
   {
     value: 'PUBLIC',
     label: 'Public (coming soon)',
-    description: 'Anyone can find and join this event',
+    description:
+      'Anyone can read event logistics; admission is configured separately',
     disabled: true,
   },
 ];

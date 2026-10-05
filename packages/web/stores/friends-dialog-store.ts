@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 
-type FriendsDialogTab = 'friends' | 'requests' | 'add';
+type FriendsDialogTab = 'friends' | 'requests' | 'add' | 'groups';
 
 interface FriendsDialogStore {
   open: boolean;

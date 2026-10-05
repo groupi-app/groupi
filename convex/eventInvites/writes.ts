@@ -3,7 +3,8 @@ import type { Id } from '../_generated/dataModel';
 import { v, type Infer } from 'convex/values';
 import { requireInvitePermission, inviteError } from '../invites/permissions';
 import { createNotification } from '../lib/notifications';
-import { checkCanSendEventInvite, checkIsBlocked } from '../lib/privacy';
+import { checkIsBlocked } from '../lib/privacy';
+import { getEventInviteEligibility } from './eligibility';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 
@@ -50,64 +51,14 @@ export async function sendEventInviteForPerson(
     );
   }
 
-  // Check if invitee exists
-  const invitee = await ctx.db.get(inviteePersonId);
-  if (!invitee) {
-    inviteError('NOT_FOUND', 'User not found');
-  }
-
-  // Check privacy settings
-  const privacyCheck = await checkCanSendEventInvite(
+  const eligibility = await getEventInviteEligibility(
     ctx,
     person._id,
+    eventId,
     inviteePersonId
   );
-  if (!privacyCheck.allowed) {
-    inviteError(
-      'FORBIDDEN',
-      privacyCheck.reason || 'This user is not accepting event invites'
-    );
-  }
-
-  // Check if invitee is already a member
-  const existingMembership = await ctx.db
-    .query('memberships')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', inviteePersonId).eq('eventId', eventId)
-    )
-    .first();
-
-  if (existingMembership) {
-    inviteError(
-      'INVITE_UNAVAILABLE',
-      'This user is already a member of the event'
-    );
-  }
-
-  // Check if invitee is banned from the event
-  const isBanned = await ctx.db
-    .query('eventBans')
-    .withIndex('by_person_event', q =>
-      q.eq('personId', inviteePersonId).eq('eventId', eventId)
-    )
-    .first();
-
-  if (isBanned) {
-    inviteError('FORBIDDEN', 'This user is banned from the event');
-  }
-
-  // Check if there's already a pending invite
-  const previousInvites = await ctx.db
-    .query('eventInvites')
-    .withIndex('by_event_invitee', q =>
-      q.eq('eventId', eventId).eq('inviteeId', inviteePersonId)
-    )
-    .collect();
-  if (previousInvites.some(invite => invite.status === 'PENDING'))
-    inviteError(
-      'INVITE_UNAVAILABLE',
-      'An invite has already been sent to this user'
-    );
+  if (!eligibility.allowed)
+    inviteError(eligibility.errorCode, eligibility.message);
   // Create the invite
   const inviteId = await ctx.db.insert('eventInvites', {
     eventId,

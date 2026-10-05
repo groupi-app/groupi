@@ -8,6 +8,16 @@
  * @module
  */
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
+import type * as accountResolution_contracts from "../accountResolution/contracts.js";
+import type * as accountResolution_model from "../accountResolution/model.js";
+import type * as accountResolution_mutations from "../accountResolution/mutations.js";
+import type * as accountResolution_queries from "../accountResolution/queries.js";
+import type * as accountResolution_rest from "../accountResolution/rest.js";
 import type * as accounts_mutations from "../accounts/mutations.js";
 import type * as accounts_queries from "../accounts/queries.js";
 import type * as addonTemplates_definition from "../addonTemplates/definition.js";
@@ -91,6 +101,7 @@ import type * as api_v1_schemas_reports from "../api/v1/schemas/reports.js";
 import type * as api_v1_schemas_settings from "../api/v1/schemas/settings.js";
 import type * as api_v1_schemas_themes from "../api/v1/schemas/themes.js";
 import type * as api_v2_index from "../api/v2/index.js";
+import type * as api_v2_routes_accountResolution from "../api/v2/routes/accountResolution.js";
 import type * as api_v2_routes_addonDefinitions from "../api/v2/routes/addonDefinitions.js";
 import type * as api_v2_routes_addonDiscord from "../api/v2/routes/addonDiscord.js";
 import type * as api_v2_routes_addons from "../api/v2/routes/addons.js";
@@ -99,10 +110,24 @@ import type * as api_v2_routes_availability from "../api/v2/routes/availability.
 import type * as api_v2_routes_blocks from "../api/v2/routes/blocks.js";
 import type * as api_v2_routes_cliAuth from "../api/v2/routes/cliAuth.js";
 import type * as api_v2_routes_discussion from "../api/v2/routes/discussion.js";
+import type * as api_v2_routes_eventApplications from "../api/v2/routes/eventApplications.js";
 import type * as api_v2_routes_eventManagement from "../api/v2/routes/eventManagement.js";
+import type * as api_v2_routes_eventTransfers from "../api/v2/routes/eventTransfers.js";
 import type * as api_v2_routes_events from "../api/v2/routes/events.js";
 import type * as api_v2_routes_friends from "../api/v2/routes/friends.js";
+import type * as api_v2_routes_groupAnnouncements from "../api/v2/routes/groupAnnouncements.js";
+import type * as api_v2_routes_groupApplications from "../api/v2/routes/groupApplications.js";
+import type * as api_v2_routes_groupEventAudiences from "../api/v2/routes/groupEventAudiences.js";
+import type * as api_v2_routes_groupForms from "../api/v2/routes/groupForms.js";
+import type * as api_v2_routes_groupInvites from "../api/v2/routes/groupInvites.js";
+import type * as api_v2_routes_groupLists from "../api/v2/routes/groupLists.js";
+import type * as api_v2_routes_groupModeration from "../api/v2/routes/groupModeration.js";
+import type * as api_v2_routes_groupPolls from "../api/v2/routes/groupPolls.js";
+import type * as api_v2_routes_groupQuestionnaires from "../api/v2/routes/groupQuestionnaires.js";
+import type * as api_v2_routes_groupTransfers from "../api/v2/routes/groupTransfers.js";
+import type * as api_v2_routes_groups from "../api/v2/routes/groups.js";
 import type * as api_v2_routes_images from "../api/v2/routes/images.js";
+import type * as api_v2_routes_inviteLists from "../api/v2/routes/inviteLists.js";
 import type * as api_v2_routes_invites from "../api/v2/routes/invites.js";
 import type * as api_v2_routes_members from "../api/v2/routes/members.js";
 import type * as api_v2_routes_muting from "../api/v2/routes/muting.js";
@@ -118,8 +143,12 @@ import type * as api_v2_schemas_addons from "../api/v2/schemas/addons.js";
 import type * as api_v2_schemas_admin from "../api/v2/schemas/admin.js";
 import type * as api_v2_schemas_availability from "../api/v2/schemas/availability.js";
 import type * as api_v2_schemas_common from "../api/v2/schemas/common.js";
+import type * as api_v2_schemas_eventLogistics from "../api/v2/schemas/eventLogistics.js";
 import type * as api_v2_schemas_events from "../api/v2/schemas/events.js";
 import type * as api_v2_schemas_friends from "../api/v2/schemas/friends.js";
+import type * as api_v2_schemas_groupApplications from "../api/v2/schemas/groupApplications.js";
+import type * as api_v2_schemas_groupInvites from "../api/v2/schemas/groupInvites.js";
+import type * as api_v2_schemas_inviteLists from "../api/v2/schemas/inviteLists.js";
 import type * as api_v2_schemas_invites from "../api/v2/schemas/invites.js";
 import type * as api_v2_schemas_members from "../api/v2/schemas/members.js";
 import type * as api_v2_schemas_muting from "../api/v2/schemas/muting.js";
@@ -162,9 +191,24 @@ import type * as e2e_mutations from "../e2e/mutations.js";
 import type * as email from "../email.js";
 import type * as emails_mutations from "../emails/mutations.js";
 import type * as emails_queries from "../emails/queries.js";
+import type * as eventApplications_cleanup from "../eventApplications/cleanup.js";
+import type * as eventApplications_contracts from "../eventApplications/contracts.js";
+import type * as eventApplications_model from "../eventApplications/model.js";
+import type * as eventApplications_mutations from "../eventApplications/mutations.js";
+import type * as eventApplications_queries from "../eventApplications/queries.js";
+import type * as eventApplications_rest from "../eventApplications/rest.js";
+import type * as eventInvites_contracts from "../eventInvites/contracts.js";
+import type * as eventInvites_eligibility from "../eventInvites/eligibility.js";
 import type * as eventInvites_mutations from "../eventInvites/mutations.js";
 import type * as eventInvites_queries from "../eventInvites/queries.js";
 import type * as eventInvites_writes from "../eventInvites/writes.js";
+import type * as eventTransfers_cleanup from "../eventTransfers/cleanup.js";
+import type * as eventTransfers_model from "../eventTransfers/model.js";
+import type * as eventTransfers_mutations from "../eventTransfers/mutations.js";
+import type * as eventTransfers_queries from "../eventTransfers/queries.js";
+import type * as eventTransfers_rest from "../eventTransfers/rest.js";
+import type * as events_admission from "../events/admission.js";
+import type * as events_admissionContracts from "../events/admissionContracts.js";
 import type * as events_attendance from "../events/attendance.js";
 import type * as events_management from "../events/management.js";
 import type * as events_managementRest from "../events/managementRest.js";
@@ -181,7 +225,92 @@ import type * as files_queries from "../files/queries.js";
 import type * as files_uploads from "../files/uploads.js";
 import type * as friends_mutations from "../friends/mutations.js";
 import type * as friends_queries from "../friends/queries.js";
+import type * as groupAnnouncements_actions from "../groupAnnouncements/actions.js";
+import type * as groupAnnouncements_cleanup from "../groupAnnouncements/cleanup.js";
+import type * as groupAnnouncements_contracts from "../groupAnnouncements/contracts.js";
+import type * as groupAnnouncements_dispatch from "../groupAnnouncements/dispatch.js";
+import type * as groupAnnouncements_model from "../groupAnnouncements/model.js";
+import type * as groupAnnouncements_mutations from "../groupAnnouncements/mutations.js";
+import type * as groupAnnouncements_queries from "../groupAnnouncements/queries.js";
+import type * as groupAnnouncements_rest from "../groupAnnouncements/rest.js";
+import type * as groupApplications_cleanup from "../groupApplications/cleanup.js";
+import type * as groupApplications_contracts from "../groupApplications/contracts.js";
+import type * as groupApplications_model from "../groupApplications/model.js";
+import type * as groupApplications_mutations from "../groupApplications/mutations.js";
+import type * as groupApplications_queries from "../groupApplications/queries.js";
+import type * as groupApplications_rest from "../groupApplications/rest.js";
+import type * as groupEventAudiences_access from "../groupEventAudiences/access.js";
+import type * as groupEventAudiences_cleanup from "../groupEventAudiences/cleanup.js";
+import type * as groupEventAudiences_contracts from "../groupEventAudiences/contracts.js";
+import type * as groupEventAudiences_model from "../groupEventAudiences/model.js";
+import type * as groupEventAudiences_mutations from "../groupEventAudiences/mutations.js";
+import type * as groupEventAudiences_queries from "../groupEventAudiences/queries.js";
+import type * as groupEventAudiences_rest from "../groupEventAudiences/rest.js";
+import type * as groupForms_contracts from "../groupForms/contracts.js";
+import type * as groupForms_model from "../groupForms/model.js";
+import type * as groupForms_mutations from "../groupForms/mutations.js";
+import type * as groupForms_queries from "../groupForms/queries.js";
+import type * as groupForms_rest from "../groupForms/rest.js";
+import type * as groupInvites_cleanup from "../groupInvites/cleanup.js";
+import type * as groupInvites_contracts from "../groupInvites/contracts.js";
+import type * as groupInvites_model from "../groupInvites/model.js";
+import type * as groupInvites_mutations from "../groupInvites/mutations.js";
+import type * as groupInvites_notificationProjection from "../groupInvites/notificationProjection.js";
+import type * as groupInvites_queries from "../groupInvites/queries.js";
+import type * as groupInvites_rest from "../groupInvites/rest.js";
+import type * as groupLists_contracts from "../groupLists/contracts.js";
+import type * as groupLists_internal from "../groupLists/internal.js";
+import type * as groupLists_model from "../groupLists/model.js";
+import type * as groupLists_mutations from "../groupLists/mutations.js";
+import type * as groupLists_queries from "../groupLists/queries.js";
+import type * as groupLists_rest from "../groupLists/rest.js";
+import type * as groupModeration_cleanup from "../groupModeration/cleanup.js";
+import type * as groupModeration_contracts from "../groupModeration/contracts.js";
+import type * as groupModeration_model from "../groupModeration/model.js";
+import type * as groupModeration_mutations from "../groupModeration/mutations.js";
+import type * as groupModeration_queries from "../groupModeration/queries.js";
+import type * as groupModeration_rest from "../groupModeration/rest.js";
+import type * as groupPolls_contracts from "../groupPolls/contracts.js";
+import type * as groupPolls_model from "../groupPolls/model.js";
+import type * as groupPolls_mutations from "../groupPolls/mutations.js";
+import type * as groupPolls_queries from "../groupPolls/queries.js";
+import type * as groupPolls_rest from "../groupPolls/rest.js";
+import type * as groupQuestionnaires_actions from "../groupQuestionnaires/actions.js";
+import type * as groupQuestionnaires_cleanup from "../groupQuestionnaires/cleanup.js";
+import type * as groupQuestionnaires_contracts from "../groupQuestionnaires/contracts.js";
+import type * as groupQuestionnaires_model from "../groupQuestionnaires/model.js";
+import type * as groupQuestionnaires_mutations from "../groupQuestionnaires/mutations.js";
+import type * as groupQuestionnaires_notificationJobs from "../groupQuestionnaires/notificationJobs.js";
+import type * as groupQuestionnaires_notifications from "../groupQuestionnaires/notifications.js";
+import type * as groupQuestionnaires_queries from "../groupQuestionnaires/queries.js";
+import type * as groupQuestionnaires_rest from "../groupQuestionnaires/rest.js";
+import type * as groupTools_cleanup from "../groupTools/cleanup.js";
+import type * as groupTools_contracts from "../groupTools/contracts.js";
+import type * as groupTools_mutations from "../groupTools/mutations.js";
+import type * as groupTools_policy from "../groupTools/policy.js";
+import type * as groupTools_queries from "../groupTools/queries.js";
+import type * as groupTransfers_cleanup from "../groupTransfers/cleanup.js";
+import type * as groupTransfers_contracts from "../groupTransfers/contracts.js";
+import type * as groupTransfers_model from "../groupTransfers/model.js";
+import type * as groupTransfers_mutations from "../groupTransfers/mutations.js";
+import type * as groupTransfers_queries from "../groupTransfers/queries.js";
+import type * as groupTransfers_rest from "../groupTransfers/rest.js";
+import type * as groups_admission from "../groups/admission.js";
+import type * as groups_cleanup from "../groups/cleanup.js";
+import type * as groups_contentAccess from "../groups/contentAccess.js";
+import type * as groups_contracts from "../groups/contracts.js";
+import type * as groups_model from "../groups/model.js";
+import type * as groups_mutations from "../groups/mutations.js";
+import type * as groups_policy from "../groups/policy.js";
+import type * as groups_queries from "../groups/queries.js";
+import type * as groups_rest from "../groups/rest.js";
 import type * as http from "../http.js";
+import type * as inviteLists_contracts from "../inviteLists/contracts.js";
+import type * as inviteLists_model from "../inviteLists/model.js";
+import type * as inviteLists_mutations from "../inviteLists/mutations.js";
+import type * as inviteLists_queries from "../inviteLists/queries.js";
+import type * as inviteLists_rest from "../inviteLists/rest.js";
+import type * as inviteLists_sending from "../inviteLists/sending.js";
 import type * as invites_actions from "../invites/actions.js";
 import type * as invites_contracts from "../invites/contracts.js";
 import type * as invites_mutations from "../invites/mutations.js";
@@ -241,13 +370,20 @@ import type * as types from "../types.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
+/**
+ * A utility for referencing Convex functions in your app's API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 declare const fullApi: ApiFromModules<{
+  "accountResolution/contracts": typeof accountResolution_contracts;
+  "accountResolution/model": typeof accountResolution_model;
+  "accountResolution/mutations": typeof accountResolution_mutations;
+  "accountResolution/queries": typeof accountResolution_queries;
+  "accountResolution/rest": typeof accountResolution_rest;
   "accounts/mutations": typeof accounts_mutations;
   "accounts/queries": typeof accounts_queries;
   "addonTemplates/definition": typeof addonTemplates_definition;
@@ -331,6 +467,7 @@ declare const fullApi: ApiFromModules<{
   "api/v1/schemas/settings": typeof api_v1_schemas_settings;
   "api/v1/schemas/themes": typeof api_v1_schemas_themes;
   "api/v2/index": typeof api_v2_index;
+  "api/v2/routes/accountResolution": typeof api_v2_routes_accountResolution;
   "api/v2/routes/addonDefinitions": typeof api_v2_routes_addonDefinitions;
   "api/v2/routes/addonDiscord": typeof api_v2_routes_addonDiscord;
   "api/v2/routes/addons": typeof api_v2_routes_addons;
@@ -339,10 +476,24 @@ declare const fullApi: ApiFromModules<{
   "api/v2/routes/blocks": typeof api_v2_routes_blocks;
   "api/v2/routes/cliAuth": typeof api_v2_routes_cliAuth;
   "api/v2/routes/discussion": typeof api_v2_routes_discussion;
+  "api/v2/routes/eventApplications": typeof api_v2_routes_eventApplications;
   "api/v2/routes/eventManagement": typeof api_v2_routes_eventManagement;
+  "api/v2/routes/eventTransfers": typeof api_v2_routes_eventTransfers;
   "api/v2/routes/events": typeof api_v2_routes_events;
   "api/v2/routes/friends": typeof api_v2_routes_friends;
+  "api/v2/routes/groupAnnouncements": typeof api_v2_routes_groupAnnouncements;
+  "api/v2/routes/groupApplications": typeof api_v2_routes_groupApplications;
+  "api/v2/routes/groupEventAudiences": typeof api_v2_routes_groupEventAudiences;
+  "api/v2/routes/groupForms": typeof api_v2_routes_groupForms;
+  "api/v2/routes/groupInvites": typeof api_v2_routes_groupInvites;
+  "api/v2/routes/groupLists": typeof api_v2_routes_groupLists;
+  "api/v2/routes/groupModeration": typeof api_v2_routes_groupModeration;
+  "api/v2/routes/groupPolls": typeof api_v2_routes_groupPolls;
+  "api/v2/routes/groupQuestionnaires": typeof api_v2_routes_groupQuestionnaires;
+  "api/v2/routes/groupTransfers": typeof api_v2_routes_groupTransfers;
+  "api/v2/routes/groups": typeof api_v2_routes_groups;
   "api/v2/routes/images": typeof api_v2_routes_images;
+  "api/v2/routes/inviteLists": typeof api_v2_routes_inviteLists;
   "api/v2/routes/invites": typeof api_v2_routes_invites;
   "api/v2/routes/members": typeof api_v2_routes_members;
   "api/v2/routes/muting": typeof api_v2_routes_muting;
@@ -358,8 +509,12 @@ declare const fullApi: ApiFromModules<{
   "api/v2/schemas/admin": typeof api_v2_schemas_admin;
   "api/v2/schemas/availability": typeof api_v2_schemas_availability;
   "api/v2/schemas/common": typeof api_v2_schemas_common;
+  "api/v2/schemas/eventLogistics": typeof api_v2_schemas_eventLogistics;
   "api/v2/schemas/events": typeof api_v2_schemas_events;
   "api/v2/schemas/friends": typeof api_v2_schemas_friends;
+  "api/v2/schemas/groupApplications": typeof api_v2_schemas_groupApplications;
+  "api/v2/schemas/groupInvites": typeof api_v2_schemas_groupInvites;
+  "api/v2/schemas/inviteLists": typeof api_v2_schemas_inviteLists;
   "api/v2/schemas/invites": typeof api_v2_schemas_invites;
   "api/v2/schemas/members": typeof api_v2_schemas_members;
   "api/v2/schemas/muting": typeof api_v2_schemas_muting;
@@ -402,9 +557,24 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   "emails/mutations": typeof emails_mutations;
   "emails/queries": typeof emails_queries;
+  "eventApplications/cleanup": typeof eventApplications_cleanup;
+  "eventApplications/contracts": typeof eventApplications_contracts;
+  "eventApplications/model": typeof eventApplications_model;
+  "eventApplications/mutations": typeof eventApplications_mutations;
+  "eventApplications/queries": typeof eventApplications_queries;
+  "eventApplications/rest": typeof eventApplications_rest;
+  "eventInvites/contracts": typeof eventInvites_contracts;
+  "eventInvites/eligibility": typeof eventInvites_eligibility;
   "eventInvites/mutations": typeof eventInvites_mutations;
   "eventInvites/queries": typeof eventInvites_queries;
   "eventInvites/writes": typeof eventInvites_writes;
+  "eventTransfers/cleanup": typeof eventTransfers_cleanup;
+  "eventTransfers/model": typeof eventTransfers_model;
+  "eventTransfers/mutations": typeof eventTransfers_mutations;
+  "eventTransfers/queries": typeof eventTransfers_queries;
+  "eventTransfers/rest": typeof eventTransfers_rest;
+  "events/admission": typeof events_admission;
+  "events/admissionContracts": typeof events_admissionContracts;
   "events/attendance": typeof events_attendance;
   "events/management": typeof events_management;
   "events/managementRest": typeof events_managementRest;
@@ -421,7 +591,92 @@ declare const fullApi: ApiFromModules<{
   "files/uploads": typeof files_uploads;
   "friends/mutations": typeof friends_mutations;
   "friends/queries": typeof friends_queries;
+  "groupAnnouncements/actions": typeof groupAnnouncements_actions;
+  "groupAnnouncements/cleanup": typeof groupAnnouncements_cleanup;
+  "groupAnnouncements/contracts": typeof groupAnnouncements_contracts;
+  "groupAnnouncements/dispatch": typeof groupAnnouncements_dispatch;
+  "groupAnnouncements/model": typeof groupAnnouncements_model;
+  "groupAnnouncements/mutations": typeof groupAnnouncements_mutations;
+  "groupAnnouncements/queries": typeof groupAnnouncements_queries;
+  "groupAnnouncements/rest": typeof groupAnnouncements_rest;
+  "groupApplications/cleanup": typeof groupApplications_cleanup;
+  "groupApplications/contracts": typeof groupApplications_contracts;
+  "groupApplications/model": typeof groupApplications_model;
+  "groupApplications/mutations": typeof groupApplications_mutations;
+  "groupApplications/queries": typeof groupApplications_queries;
+  "groupApplications/rest": typeof groupApplications_rest;
+  "groupEventAudiences/access": typeof groupEventAudiences_access;
+  "groupEventAudiences/cleanup": typeof groupEventAudiences_cleanup;
+  "groupEventAudiences/contracts": typeof groupEventAudiences_contracts;
+  "groupEventAudiences/model": typeof groupEventAudiences_model;
+  "groupEventAudiences/mutations": typeof groupEventAudiences_mutations;
+  "groupEventAudiences/queries": typeof groupEventAudiences_queries;
+  "groupEventAudiences/rest": typeof groupEventAudiences_rest;
+  "groupForms/contracts": typeof groupForms_contracts;
+  "groupForms/model": typeof groupForms_model;
+  "groupForms/mutations": typeof groupForms_mutations;
+  "groupForms/queries": typeof groupForms_queries;
+  "groupForms/rest": typeof groupForms_rest;
+  "groupInvites/cleanup": typeof groupInvites_cleanup;
+  "groupInvites/contracts": typeof groupInvites_contracts;
+  "groupInvites/model": typeof groupInvites_model;
+  "groupInvites/mutations": typeof groupInvites_mutations;
+  "groupInvites/notificationProjection": typeof groupInvites_notificationProjection;
+  "groupInvites/queries": typeof groupInvites_queries;
+  "groupInvites/rest": typeof groupInvites_rest;
+  "groupLists/contracts": typeof groupLists_contracts;
+  "groupLists/internal": typeof groupLists_internal;
+  "groupLists/model": typeof groupLists_model;
+  "groupLists/mutations": typeof groupLists_mutations;
+  "groupLists/queries": typeof groupLists_queries;
+  "groupLists/rest": typeof groupLists_rest;
+  "groupModeration/cleanup": typeof groupModeration_cleanup;
+  "groupModeration/contracts": typeof groupModeration_contracts;
+  "groupModeration/model": typeof groupModeration_model;
+  "groupModeration/mutations": typeof groupModeration_mutations;
+  "groupModeration/queries": typeof groupModeration_queries;
+  "groupModeration/rest": typeof groupModeration_rest;
+  "groupPolls/contracts": typeof groupPolls_contracts;
+  "groupPolls/model": typeof groupPolls_model;
+  "groupPolls/mutations": typeof groupPolls_mutations;
+  "groupPolls/queries": typeof groupPolls_queries;
+  "groupPolls/rest": typeof groupPolls_rest;
+  "groupQuestionnaires/actions": typeof groupQuestionnaires_actions;
+  "groupQuestionnaires/cleanup": typeof groupQuestionnaires_cleanup;
+  "groupQuestionnaires/contracts": typeof groupQuestionnaires_contracts;
+  "groupQuestionnaires/model": typeof groupQuestionnaires_model;
+  "groupQuestionnaires/mutations": typeof groupQuestionnaires_mutations;
+  "groupQuestionnaires/notificationJobs": typeof groupQuestionnaires_notificationJobs;
+  "groupQuestionnaires/notifications": typeof groupQuestionnaires_notifications;
+  "groupQuestionnaires/queries": typeof groupQuestionnaires_queries;
+  "groupQuestionnaires/rest": typeof groupQuestionnaires_rest;
+  "groupTools/cleanup": typeof groupTools_cleanup;
+  "groupTools/contracts": typeof groupTools_contracts;
+  "groupTools/mutations": typeof groupTools_mutations;
+  "groupTools/policy": typeof groupTools_policy;
+  "groupTools/queries": typeof groupTools_queries;
+  "groupTransfers/cleanup": typeof groupTransfers_cleanup;
+  "groupTransfers/contracts": typeof groupTransfers_contracts;
+  "groupTransfers/model": typeof groupTransfers_model;
+  "groupTransfers/mutations": typeof groupTransfers_mutations;
+  "groupTransfers/queries": typeof groupTransfers_queries;
+  "groupTransfers/rest": typeof groupTransfers_rest;
+  "groups/admission": typeof groups_admission;
+  "groups/cleanup": typeof groups_cleanup;
+  "groups/contentAccess": typeof groups_contentAccess;
+  "groups/contracts": typeof groups_contracts;
+  "groups/model": typeof groups_model;
+  "groups/mutations": typeof groups_mutations;
+  "groups/policy": typeof groups_policy;
+  "groups/queries": typeof groups_queries;
+  "groups/rest": typeof groups_rest;
   http: typeof http;
+  "inviteLists/contracts": typeof inviteLists_contracts;
+  "inviteLists/model": typeof inviteLists_model;
+  "inviteLists/mutations": typeof inviteLists_mutations;
+  "inviteLists/queries": typeof inviteLists_queries;
+  "inviteLists/rest": typeof inviteLists_rest;
+  "inviteLists/sending": typeof inviteLists_sending;
   "invites/actions": typeof invites_actions;
   "invites/contracts": typeof invites_contracts;
   "invites/mutations": typeof invites_mutations;
@@ -481,28 +736,10 @@ declare const fullApi: ApiFromModules<{
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
 }>;
-
-/**
- * A utility for referencing Convex functions in your app's public API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
 >;
-
-/**
- * A utility for referencing Convex functions in your app's internal API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = internal.myModule.myFunction;
- * ```
- */
 export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">

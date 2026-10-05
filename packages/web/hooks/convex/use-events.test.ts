@@ -405,7 +405,7 @@ describe('useEvents hooks', () => {
 
       expect(result.current).toEqual(mockData);
       expect(result.current).toHaveLength(1);
-      expect(result.current[0].title).toBe('Friends Event');
+      expect(result.current?.[0].title).toBe('Friends Event');
     });
 
     test('returns empty array when no events available', async () => {

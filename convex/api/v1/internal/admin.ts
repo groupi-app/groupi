@@ -1,3 +1,4 @@
+import { deleteResolvedAccount } from '../../../users/mutations';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { components } from '../../../_generated/api';
@@ -87,44 +88,11 @@ export const deleteUser = internalMutation({
       throw new Error('User not found');
     }
 
-    // Delete person settings
-    const settings = await ctx.db
-      .query('personSettings')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .first();
-    if (settings) {
-      await ctx.db.delete(settings._id);
-    }
-
-    // Delete memberships
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-    for (const membership of memberships) {
-      await ctx.db.delete(membership._id);
-    }
-
-    // Delete notifications
-    const notifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
-
-    // Delete presence
-    const presence = await ctx.db
-      .query('personPresence')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .first();
-    if (presence) {
-      await ctx.db.delete(presence._id);
-    }
-
-    // Delete person record
-    await ctx.db.delete(person._id);
+    const user = await authComponent.getAnyUserById(
+      ctx,
+      person.userId as AuthUserId
+    );
+    await deleteResolvedAccount(ctx, person, user);
 
     return { success: true };
   },

@@ -1,3 +1,4 @@
+import { SafeEventLogisticsSchema } from '../schemas/eventLogistics';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
@@ -13,7 +14,13 @@ const permissions = z.object({
   inviteMembers: level,
   viewAttendeeList: level,
 });
-const settings = z.object({ eventId: z.string(), visibility, permissions });
+const admissionPolicy = z.enum(['INVITATION_ONLY', 'DIRECT', 'APPLY']);
+const settings = z.object({
+  eventId: z.string(),
+  visibility,
+  permissions,
+  admissionPolicy,
+});
 const errors = {
   400: {
     description: 'Invalid input or cursor',
@@ -39,12 +46,61 @@ export function createEventManagementRoutes() {
   app.openapi(
     createRoute({
       method: 'get',
+      path: '/events/{eventId}/logistics',
+      tags: ['Events'],
+      security: [{ apiKey: [] }],
+      summary: 'Read viewer-safe event logistics before joining',
+      description:
+        'Audience-qualified viewers can read logistics without membership or RSVP changes. Discussion, attendance, availability responses and tool data remain member-only. Public readability alone does not enable joining.',
+      request: { params: EventIdParamSchema },
+      responses: {
+        ...errors,
+        200: {
+          description: 'Safe logistics and current admission action',
+          content: {
+            'application/json': {
+              schema: z.object({
+                event: SafeEventLogisticsSchema,
+                organizer: z
+                  .object({
+                    personId: z.string(),
+                    name: z.string().nullable(),
+                    username: z.string().nullable(),
+                    image: z.string().nullable(),
+                  })
+                  .nullable(),
+                entryAction: z.enum([
+                  'MEMBER',
+                  'JOIN',
+                  'APPLY',
+                  'INVITATION_ONLY',
+                  'SIGN_IN',
+                  'UNAVAILABLE',
+                ]),
+              }),
+            },
+          },
+        },
+      },
+    }),
+    async c =>
+      c.json(
+        await c.get('ctx').runQuery(internal.events.managementRest.logistics, {
+          personId: c.get('personId') as Id<'persons'>,
+          eventId: c.req.valid('param').eventId as Id<'events'>,
+        }),
+        200
+      )
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
       path: '/events/discover',
       tags: ['Events'],
       security: [{ apiKey: [] }],
-      summary: 'Discover friends events',
+      summary: 'Discover Friends and Group events',
       description:
-        'Bounded creation-order cursor pages. Only upcoming friends-visible events from accepted, unblocked friends are returned; existing memberships and bans are excluded. Empty pages may have a continuation cursor. Defaults to 20, maximum 100.',
+        'Bounded creation-order cursor pages. Only upcoming or undated Events with a current Friends or Group grant are returned; existing memberships and bans are excluded. Empty pages may have a continuation cursor. Defaults to 20, maximum 100.',
       request: { query: EventListQuerySchema },
       responses: {
         ...errors,
@@ -57,6 +113,19 @@ export function createEventManagementRoutes() {
                   z.object({
                     id: z.string(),
                     title: z.string(),
+                    admissionPolicy,
+                    entryAction: z.enum([
+                      'JOIN',
+                      'APPLY',
+                      'INVITATION_ONLY',
+                      'UNAVAILABLE',
+                    ]),
+                    accessReasons: z.object({
+                      friends: z.boolean(),
+                      groups: z.array(
+                        z.object({ groupId: z.string(), name: z.string() })
+                      ),
+                    }),
                     description: z.string().nullable(),
                     location: z.string().nullable(),
                     chosenDateTime: z.number().nullable(),
@@ -98,7 +167,7 @@ export function createEventManagementRoutes() {
       security: [{ apiKey: [] }],
       summary: 'Join a discoverable event',
       description:
-        'Uses app friendship, visibility and ban rules; creates attendee RSVP YES and dispatches notifications/add-on lifecycle. Not replay-safe.',
+        'Requires Direct admission and current audience eligibility, with block and ban checks; creates Attendee membership with Pending RSVP (joining does not confirm attendance) and dispatches notifications/add-on lifecycle. Not replay-safe.',
       request: { params: EventIdParamSchema },
       responses: {
         ...errors,
@@ -109,6 +178,8 @@ export function createEventManagementRoutes() {
               schema: z.object({
                 membershipId: z.string(),
                 success: z.boolean(),
+                role: z.literal('ATTENDEE'),
+                rsvpStatus: z.literal('PENDING'),
               }),
             },
           },
@@ -130,7 +201,7 @@ export function createEventManagementRoutes() {
       path: '/events/{eventId}/settings',
       tags: ['Events'],
       security: [{ apiKey: [] }],
-      summary: 'Read event visibility and permissions',
+      summary: 'Read event visibility, admission and permissions',
       request: { params: EventIdParamSchema },
       responses: {
         ...errors,
@@ -157,9 +228,9 @@ export function createEventManagementRoutes() {
       path: '/events/{eventId}/settings',
       tags: ['Events'],
       security: [{ apiKey: [] }],
-      summary: 'Update event visibility and permissions',
+      summary: 'Update event visibility, admission and permissions',
       description:
-        'Requires organizer authority. Updating visibility reuses app event-edit notifications; permissions update follows the app. Not replay-safe.',
+        'Requires organizer authority. Admission is independent of visibility; legacy Friends events default Direct and other legacy events default Invitation only. Updating visibility reuses app event-edit notifications; permissions update follows the app. Not replay-safe.',
       request: {
         params: EventIdParamSchema,
         body: {
@@ -168,6 +239,7 @@ export function createEventManagementRoutes() {
               schema: z
                 .object({
                   visibility: visibility.optional(),
+                  admissionPolicy: admissionPolicy.optional(),
                   permissions: permissions.partial().strict().optional(),
                 })
                 .strict(),

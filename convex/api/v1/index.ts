@@ -82,6 +82,7 @@ export function createApiV1App(
         'code' in data &&
         typeof data.code === 'string' &&
         [
+          'CONFLICT',
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'NOT_FOUND',
@@ -99,11 +100,13 @@ export function createApiV1App(
               message: data.message,
             },
           },
-          data.code === 'FORBIDDEN'
-            ? 403
-            : data.code === 'NOT_FOUND'
-              ? 404
-              : 400
+          data.code === 'CONFLICT'
+            ? 409
+            : data.code === 'FORBIDDEN'
+              ? 403
+              : data.code === 'NOT_FOUND'
+                ? 404
+                : 400
         );
     }
     if (err instanceof HTTPException) {

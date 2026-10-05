@@ -54,6 +54,77 @@
       "args": ["events", "members", "$EVENT_ID", "--all", "--format", "json"]
     }
   ],
+  "invite-lists": [
+    {
+      "identity": "organizer",
+      "args": [
+        "invite-lists",
+        "people",
+        "--search",
+        "$ATTENDEE_USERNAME",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": [
+        "invite-lists",
+        "create",
+        "--name",
+        "Dinner guests",
+        "--person-ids",
+        "$INVITE_LIST_PERSON_IDS",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": ["invite-lists", "list", "--format", "json"]
+    },
+    {
+      "identity": "organizer",
+      "args": ["invite-lists", "get", "$INVITE_LIST_ID", "--format", "json"]
+    },
+    {
+      "identity": "organizer",
+      "args": [
+        "invite-lists",
+        "edit",
+        "$INVITE_LIST_ID",
+        "--name",
+        "Weekend guests",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": [
+        "invite-lists",
+        "invite",
+        "$INVITE_LIST_ID",
+        "--event",
+        "$EVENT_ID",
+        "--request-id",
+        "$INVITE_LIST_REQUEST_ID",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": [
+        "invite-lists",
+        "delete",
+        "$INVITE_LIST_ID",
+        "--yes",
+        "--format",
+        "json"
+      ]
+    }
+  ],
   "inspection": [
     {
       "identity": "organizer",
@@ -70,6 +141,42 @@
     {
       "identity": "attendee",
       "args": ["events", "rsvp", "get", "$EVENT_ID", "--format", "json"]
+    }
+  ],
+  "event-ownership-transfer": [
+    {
+      "identity": "organizer",
+      "args": [
+        "events",
+        "transfer",
+        "offer",
+        "$EVENT_ID",
+        "$RECIPIENT_PERSON_ID",
+        "--yes",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "attendee",
+      "args": ["events", "transfer", "status", "$EVENT_ID", "--format", "json"]
+    },
+    {
+      "identity": "attendee",
+      "args": [
+        "events",
+        "transfer",
+        "accept",
+        "$EVENT_ID",
+        "$TRANSFER_ID",
+        "--yes",
+        "--format",
+        "json"
+      ]
+    },
+    {
+      "identity": "organizer",
+      "args": ["events", "transfer", "status", "$EVENT_ID", "--format", "json"]
     }
   ]
 }

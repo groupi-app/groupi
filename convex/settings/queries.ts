@@ -53,10 +53,30 @@ export const getNotificationSettings = query({
           webhookFormat: method.webhookFormat,
           customTemplate: method.customTemplate,
           webhookHeaders: method.webhookHeaders,
-          notifications: notificationSettings.map(ns => ({
-            notificationType: ns.notificationType,
-            enabled: ns.enabled,
-          })),
+          notifications: [
+            ...notificationSettings.map(ns => ({
+              notificationType: ns.notificationType,
+              enabled: ns.enabled,
+            })),
+            ...(
+              [
+                'GROUP_INVITE_RECEIVED',
+                'GROUP_INVITE_ACCEPTED',
+                'GROUP_MEMBER_REMOVED',
+                'GROUP_MEMBER_BANNED',
+                'GROUP_APPLICATION_RECEIVED',
+                'GROUP_APPLICATION_APPROVED',
+                'GROUP_APPLICATION_DECLINED',
+                'GROUP_ANNOUNCEMENT',
+                'GROUP_ONBOARDING_REQUIRED',
+              ] as const
+            )
+              .filter(
+                type =>
+                  !notificationSettings.some(ns => ns.notificationType === type)
+              )
+              .map(notificationType => ({ notificationType, enabled: true })),
+          ],
         };
       })
     );
@@ -96,6 +116,8 @@ export const getPrivacySettings = query({
       .first();
 
     return {
+      allowGroupInvitesFrom:
+        personSettings?.allowGroupInvitesFrom ?? 'EVERYONE',
       allowFriendRequestsFrom:
         personSettings?.allowFriendRequestsFrom ?? 'EVERYONE',
       allowEventInvitesFrom:

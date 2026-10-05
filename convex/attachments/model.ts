@@ -1,7 +1,7 @@
 import { type Infer, v, ConvexError } from 'convex/values';
 
 import type { Id } from '../_generated/dataModel';
-import type { MutationCtx } from '../_generated/server';
+import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { requireDiscussionRole } from '../lib/discussionAccess';
 import { claimUpload } from '../files/uploads';
 
@@ -44,6 +44,31 @@ export const attachmentInputValidator = v.object({
   altText: v.optional(v.string()),
 });
 
+export const attachmentWithUrlValidator = v.object({
+  _id: v.id('attachments'),
+  _creationTime: v.number(),
+  storageId: v.id('_storage'),
+  type: v.union(
+    v.literal('IMAGE'),
+    v.literal('VIDEO'),
+    v.literal('AUDIO'),
+    v.literal('FILE')
+  ),
+  filename: v.string(),
+  size: v.number(),
+  mimeType: v.string(),
+  width: v.optional(v.number()),
+  height: v.optional(v.number()),
+  isSpoiler: v.optional(v.boolean()),
+  altText: v.optional(v.string()),
+  postId: v.optional(v.id('posts')),
+  replyId: v.optional(v.id('replies')),
+  uploaderId: v.id('persons'),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+  url: v.union(v.string(), v.null()),
+});
+
 export type AttachmentInput = Infer<typeof attachmentInputValidator>;
 
 export type AttachmentParent = {
@@ -73,7 +98,7 @@ function isAllowedMimeType(mimeType: string): boolean {
 }
 
 export async function requireAttachmentParentAccess(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   parent: AttachmentParent,
   personId: Id<'persons'>,
   requireParentAuthor: boolean

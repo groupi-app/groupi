@@ -37,6 +37,11 @@ function settingsResult(value) {
   return {
     eventId: row.eventId,
     visibility: row.visibility,
+    ...(['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+      String(row.admissionPolicy)
+    )
+      ? { admissionPolicy: row.admissionPolicy }
+      : {}),
     permissions: {
       createPosts: permissions.createPosts,
       inviteMembers: permissions.inviteMembers,
@@ -44,8 +49,13 @@ function settingsResult(value) {
     },
   };
 }
-/** @param {Profile} profile @param {string} key */
-async function supported(profile, key) {
+/** @param {Profile} profile @param {string} key @param {boolean} [pendingJoin] @param {boolean} [admissionWrite] */
+async function supported(
+  profile,
+  key,
+  pendingJoin = false,
+  admissionWrite = false
+) {
   const health = record(await readApi(profile, key, '/health'));
   const capabilities = record(health.capabilities ?? {});
   const version = capabilities.eventManagement;
@@ -58,6 +68,27 @@ async function supported(profile, key) {
     throw new CliError(
       'UNSUPPORTED_SERVER',
       'This server does not advertise eventManagement version 1. Update the server; no write was sent.',
+      5
+    );
+  if (
+    pendingJoin &&
+    (!('pendingRsvpJoin' in version) || version.pendingRsvpJoin !== true)
+  )
+    throw new CliError(
+      'UNSUPPORTED_SERVER',
+      'This server does not advertise Pending RSVP joins. Update the server; no join was sent.',
+      5
+    );
+  if (pendingJoin && record(capabilities.groupDiscovery ?? {}).version !== 1)
+    throw new CliError(
+      'UNSUPPORTED_SERVER',
+      'This server does not advertise current Group-aware discovery joins. Update the server; no join was sent.',
+      5
+    );
+  if (admissionWrite && record(capabilities.eventAdmission ?? {}).version !== 1)
+    throw new CliError(
+      'UNSUPPORTED_SERVER',
+      'This server does not advertise eventAdmission version 1. Update the server; no write was sent.',
       5
     );
 }
@@ -85,7 +116,7 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
     const body = options.body ?? {};
     if (
       Object.keys(body).some(
-        name => !['visibility', 'permissions'].includes(name)
+        name => !['visibility', 'admissionPolicy', 'permissions'].includes(name)
       ) ||
       !Object.keys(body).length
     )
@@ -99,6 +130,17 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
       !['PRIVATE', 'FRIENDS', 'PUBLIC'].includes(String(body.visibility))
     )
       throw new CliError('USAGE', 'Invalid event visibility.', 2);
+    if (
+      body.admissionPolicy !== undefined &&
+      !['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+        String(body.admissionPolicy)
+      )
+    )
+      throw new CliError(
+        'USAGE',
+        'Admission policy must be DIRECT, INVITATION_ONLY, or APPLY.',
+        2
+      );
     if (body.permissions !== undefined) {
       const permissions = record(body.permissions);
       if (
@@ -113,7 +155,18 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
         throw new CliError('USAGE', 'Invalid event permissions.', 2);
     }
   }
-  await supported(profile, key);
+  await supported(
+    profile,
+    key,
+    action === 'join',
+    action === 'settings' && options.body?.admissionPolicy !== undefined
+  );
+  if (action === 'settings' && options.body?.admissionPolicy === 'APPLY') {
+    const { requireApplicationCapability } = await import(
+      './event-applications.js'
+    );
+    await requireApplicationCapability(profile, key);
+  }
   const suffix =
     action === 'role' || action === 'remove'
       ? `/members/${options.memberId}`
@@ -155,9 +208,20 @@ export async function manageEvent(profile, key, eventId, action, options = {}) {
       return { eventId, left: true };
     }
     if (action === 'join') {
-      if (typeof result.membershipId !== 'string' || result.success !== true)
+      if (
+        typeof result.membershipId !== 'string' ||
+        result.success !== true ||
+        result.role !== 'ATTENDEE' ||
+        result.rsvpStatus !== 'PENDING'
+      )
         throw Error('Invalid join result');
-      return { eventId, membershipId: result.membershipId, joined: true };
+      return {
+        eventId,
+        membershipId: result.membershipId,
+        joined: true,
+        role: result.role,
+        rsvpStatus: result.rsvpStatus,
+      };
     }
     if (action === 'role') {
       if (result.id !== options.memberId || result.role !== options.role)
@@ -210,6 +274,19 @@ export async function discoverEvents(profile, key, options) {
       items.push({
         id: row.id,
         title: row.title,
+        ...(['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+          String(row.admissionPolicy)
+        )
+          ? { admissionPolicy: row.admissionPolicy }
+          : {}),
+        ...(['JOIN', 'APPLY', 'INVITATION_ONLY', 'UNAVAILABLE'].includes(
+          String(row.entryAction)
+        )
+          ? { entryAction: row.entryAction }
+          : {}),
+        ...(row.accessReasons === undefined
+          ? {}
+          : { accessReasons: discoveryReasons(row.accessReasons) }),
         description: row.description,
         location: row.location,
         chosenDateTime: row.chosenDateTime,
@@ -236,4 +313,95 @@ export async function discoverEvents(profile, key, options) {
     cursor = page.nextCursor;
   } while (cursor);
   throw new CliError('INVALID_RESPONSE', 'Incomplete discovery page.', 5);
+}
+
+/** @param {Profile} profile @param {string} key @param {string} eventId */
+export async function getEventLogistics(profile, key, eventId) {
+  managementId(eventId);
+  return projectEventLogistics(
+    await readApi(profile, key, `/events/${eventId}/logistics`),
+    eventId
+  );
+}
+/** @param {unknown} raw @param {string} eventId */
+export function projectEventLogistics(raw, eventId) {
+  const result = record(raw);
+  const event = record(result.event);
+  if (
+    event._id !== eventId ||
+    typeof event.title !== 'string' ||
+    !['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
+      String(event.admissionPolicy)
+    ) ||
+    ![
+      'MEMBER',
+      'JOIN',
+      'APPLY',
+      'INVITATION_ONLY',
+      'SIGN_IN',
+      'UNAVAILABLE',
+    ].includes(String(result.entryAction)) ||
+    !Array.isArray(event.potentialDateTimeOptions)
+  )
+    throw new CliError('INVALID_RESPONSE', 'Invalid event logistics.', 5);
+  const organizer = result.organizer === null ? null : record(result.organizer);
+  return {
+    event: {
+      _id: event._id,
+      _creationTime: event._creationTime,
+      title: event.title,
+      description: event.description,
+      location: event.location,
+      creatorId: event.creatorId,
+      timezone: event.timezone,
+      visibility: event.visibility,
+      admissionPolicy: event.admissionPolicy,
+      chosenDateTime: event.chosenDateTime,
+      chosenEndDateTime: event.chosenEndDateTime,
+      imageUrl: event.imageUrl,
+      imageFocalPoint: event.imageFocalPoint,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+      potentialDateTimeOptions: event.potentialDateTimeOptions.map(value => {
+        const date = record(value);
+        return {
+          id: date.id,
+          start: date.start,
+          end: date.end,
+          note: date.note,
+        };
+      }),
+    },
+    organizer: organizer
+      ? {
+          personId: organizer.personId,
+          name: organizer.name,
+          username: organizer.username,
+          image: organizer.image,
+        }
+      : null,
+    entryAction: result.entryAction,
+  };
+}
+
+/** @param {unknown} raw */
+function discoveryReasons(raw) {
+  const value = record(raw);
+  if (
+    typeof value.friends !== 'boolean' ||
+    !Array.isArray(value.groups) ||
+    value.groups.some(
+      group =>
+        typeof record(group).groupId !== 'string' ||
+        typeof record(group).name !== 'string'
+    )
+  )
+    throw new CliError('INVALID_RESPONSE', 'Invalid discovery reasons.', 5);
+  return {
+    friends: value.friends,
+    groups: value.groups.map(group => ({
+      groupId: record(group).groupId,
+      name: record(group).name,
+    })),
+  };
 }

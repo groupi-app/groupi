@@ -17,3 +17,38 @@
 // For now, components remain in their original locations
 // and can be imported directly. Once refactored to use molecules,
 // they can be moved here.
+
+export { GroupsPanel } from './groups-panel';
+export { GroupDetail } from './group-detail';
+export { GroupLanding } from './group-landing';
+export { EventOwnershipTransfer } from './event-ownership-transfer';
+export { EventLogisticsPreview } from './event-logistics-preview';
+export { EventAdmissionSettings } from './event-admission-settings';
+
+export { GroupInvitationInbox } from './group-invitation-inbox';
+export { GroupInvitationManagement } from './group-invitation-management';
+export { GroupMemberRoster } from './group-member-roster';
+
+export { GroupBanManagement } from './group-ban-management';
+export { GroupConfirmedAction } from './group-confirmed-action';
+export { EventApplications } from './event-applications';
+export { InviteListsSettings } from './invite-lists-settings';
+export { EventPeopleInvite } from './event-people-invite';
+export { InlineInviteListEditor } from './inline-invite-list-editor';
+export {
+  InviteListPersonRow,
+  InviteListPersonChoices,
+  InviteListSelectedPeople,
+} from './invite-list-people';
+
+export { GroupJoiningQuestionnaire } from './group-joining-questionnaire';
+export { GroupQuestionnaireRecords } from './group-questionnaire-records';
+export { GroupQuestionnaireSettings } from './group-questionnaire-settings';
+export { GroupQuestionnaireReview } from './group-questionnaire-review';
+export { GroupQuestionnaireHistory } from './group-questionnaire-history';
+export { GroupApplications } from './group-applications';
+export { GroupApplicationSettings } from './group-application-settings';
+
+export { EventAudienceSettings } from './event-audience-settings';
+export { GroupSharedEvents } from './group-shared-events';
+export { GroupEventSharingPolicy } from './group-event-sharing-policy';

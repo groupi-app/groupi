@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCSSVariable } from 'uniwind';
 import type { Id } from 'convex/_generated/dataModel';
 
+import { CurrentInvitePerson } from './invite-list-selected-people';
+import { InviteListDataBoundary } from '@/components/settings/invite-list-data-boundary';
 import { MemberAvatar } from '@/components/members/member-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,12 +28,25 @@ import { formatInviteDate } from './invite-utils';
 
 const MAX_PERSONAL_MESSAGE_LENGTH = 280;
 
-interface SelectablePerson {
+export interface SelectablePerson {
   personId: Id<'persons'>;
   name: string | null;
   username: string | null;
   image: string | null;
 }
+
+export interface PeopleInviteDraft {
+  searchTerm: string;
+  selectedPerson?: SelectablePerson;
+  role: 'ATTENDEE' | 'MODERATOR';
+  message: string;
+}
+
+export const EMPTY_PEOPLE_INVITE_DRAFT: PeopleInviteDraft = {
+  searchTerm: '',
+  role: 'ATTENDEE',
+  message: '',
+};
 
 export function PeopleInvitePanel({
   eventId,
@@ -39,17 +54,30 @@ export function PeopleInvitePanel({
   sentInvites,
   friends,
   eventMembers,
+  draft,
+  onDraftChange,
+  onAddToReview,
 }: {
   eventId: Id<'events'>;
   canInviteModerator: boolean;
   sentInvites: SentInvite[] | undefined;
   friends: Friend[] | undefined;
   eventMembers: EventMembers | undefined;
+  draft?: PeopleInviteDraft;
+  onDraftChange?: Dispatch<SetStateAction<PeopleInviteDraft>>;
+  onAddToReview?: (person: SelectablePerson) => void;
 }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPerson, setSelectedPerson] = useState<SelectablePerson>();
-  const [role, setRole] = useState<'ATTENDEE' | 'MODERATOR'>('ATTENDEE');
-  const [message, setMessage] = useState('');
+  const [localDraft, setLocalDraft] = useState(EMPTY_PEOPLE_INVITE_DRAFT);
+  const { searchTerm, selectedPerson, role, message } = draft ?? localDraft;
+  const changeDraft = onDraftChange ?? setLocalDraft;
+  const setSearchTerm = (searchTerm: string) =>
+    changeDraft(previous => ({ ...previous, searchTerm }));
+  const setSelectedPerson = (selectedPerson: SelectablePerson | undefined) =>
+    changeDraft(previous => ({ ...previous, selectedPerson }));
+  const setRole = (role: PeopleInviteDraft['role']) =>
+    changeDraft(previous => ({ ...previous, role }));
+  const setMessage = (message: string) =>
+    changeDraft(previous => ({ ...previous, message }));
   const [isSending, setIsSending] = useState(false);
   const { results, debouncedTerm, isLoading } = useEventInviteSearch(
     eventId,
@@ -93,8 +121,10 @@ export function PeopleInvitePanel({
 
   function clearSelection() {
     setSelectedPerson(undefined);
-    setRole('ATTENDEE');
-    setMessage('');
+    if (!onAddToReview) {
+      setRole('ATTENDEE');
+      setMessage('');
+    }
   }
 
   async function handleSend() {
@@ -143,32 +173,40 @@ export function PeopleInvitePanel({
 
       {selectedPerson ? (
         <Card className='gap-4'>
-          <View className='flex-row items-center gap-3'>
-            <MemberAvatar
-              personId={selectedPerson.personId}
-              src={selectedPerson.image}
-              name={selectedPerson.name ?? selectedPerson.username}
-              size='md'
-            />
-            <View className='flex-1'>
-              <Text className='font-semibold text-foreground'>
-                {selectedPerson.name ?? selectedPerson.username ?? 'Unknown'}
-              </Text>
-              {selectedPerson.username ? (
-                <Text className='text-sm text-muted-foreground'>
-                  @{selectedPerson.username}
-                </Text>
-              ) : null}
-            </View>
-            <Pressable
-              onPress={clearSelection}
-              accessibilityRole='button'
-              accessibilityLabel='Choose someone else'
-              className='size-11 items-center justify-center rounded-full active:bg-muted'
-            >
-              <Ionicons name='close' size={22} color={mutedColor} />
-            </Pressable>
-          </View>
+          <InviteListDataBoundary context='selected person'>
+            <CurrentInvitePerson personId={selectedPerson.personId}>
+              {person => (
+                <View className='flex-row items-center gap-3'>
+                  <MemberAvatar
+                    personId={selectedPerson.personId}
+                    src={person?.image}
+                    name={person?.name ?? person?.username}
+                    size='md'
+                  />
+                  <View className='flex-1'>
+                    <Text className='font-semibold text-foreground'>
+                      {person
+                        ? (person.name ?? person.username ?? 'Groupi person')
+                        : 'Unavailable person'}
+                    </Text>
+                    {person?.username ? (
+                      <Text className='text-sm text-muted-foreground'>
+                        @{person.username}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Pressable
+                    onPress={clearSelection}
+                    accessibilityRole='button'
+                    accessibilityLabel='Choose someone else'
+                    className='size-11 items-center justify-center rounded-full active:bg-muted'
+                  >
+                    <Ionicons name='close' size={22} color={mutedColor} />
+                  </Pressable>
+                </View>
+              )}
+            </CurrentInvitePerson>
+          </InviteListDataBoundary>
 
           {canInviteModerator ? (
             <View className='gap-2'>
@@ -183,6 +221,9 @@ export function PeopleInvitePanel({
                       key={option}
                       onPress={() => setRole(option)}
                       accessibilityRole='radio'
+                      accessibilityLabel={
+                        option === 'ATTENDEE' ? 'Attendee' : 'Moderator'
+                      }
                       accessibilityState={{ checked: selected }}
                       className={
                         selected
@@ -215,12 +256,26 @@ export function PeopleInvitePanel({
             numberOfLines={4}
           />
           <Button
-            onPress={handleSend}
+            accessibilityLabel={
+              onAddToReview ? 'Add to recipient review' : 'Send Invite'
+            }
+            onPress={
+              onAddToReview
+                ? () => {
+                    if (selectedPerson) {
+                      onAddToReview(selectedPerson);
+                      setSelectedPerson(undefined);
+                    }
+                  }
+                : handleSend
+            }
             isLoading={isSending}
             loadingText='Sending…'
           >
             <Ionicons name='send-outline' size={18} />
-            <Text>Send Invite</Text>
+            <Text>
+              {onAddToReview ? 'Add to recipient review' : 'Send Invite'}
+            </Text>
           </Button>
         </Card>
       ) : (

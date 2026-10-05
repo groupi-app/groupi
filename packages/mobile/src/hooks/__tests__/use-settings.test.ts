@@ -83,4 +83,26 @@ describe('normalizeNotificationMethods', () => {
       undefined
     );
   });
+  it('preserves independent Group invitation notification preferences', () => {
+    const methods = asQueriedMethods([
+      {
+        id: 'group-method',
+        type: 'PUSH',
+        enabled: true,
+        value: 'device',
+        notifications: [
+          { notificationType: 'GROUP_INVITE_RECEIVED', enabled: false },
+          { notificationType: 'GROUP_INVITE_ACCEPTED', enabled: true },
+          { notificationType: 'GROUP_MEMBER_REMOVED', enabled: false },
+          { notificationType: 'GROUP_MEMBER_BANNED', enabled: false },
+        ],
+      },
+    ]);
+    expect(normalizeNotificationMethods(methods)[0].notifications).toEqual([
+      { notificationType: 'GROUP_INVITE_RECEIVED', enabled: false },
+      { notificationType: 'GROUP_INVITE_ACCEPTED', enabled: true },
+      { notificationType: 'GROUP_MEMBER_REMOVED', enabled: false },
+      { notificationType: 'GROUP_MEMBER_BANNED', enabled: false },
+    ]);
+  });
 });

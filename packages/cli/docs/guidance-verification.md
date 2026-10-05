@@ -24,6 +24,13 @@ use synthetic temporary environment keys with separate organizer/attendee profil
 never real credentials. JSON login is verified to return the documented structured
 browser-interaction error without opening a browser or leaking the supplied key.
 
+`tests/invite-lists.test.ts` additionally verifies anonymous unavailable JSON/text,
+truthful available counts and Needs attention state, fresh-use rejection guidance,
+repair forwarding and subsequent use, old-identity errors, and original-result
+replay without a current-list read. Real account deletion and invitation semantics
+remain covered at the authenticated backend seam; the local HTTP fixture proves
+CLI transport and display behavior.
+
 `pnpm --filter @groupi/cli test:package` packs and installs the package outside the
 workspace. It verifies documentation, skill, generator, and runtime artifacts,
 checks the installed reference, and reruns all public-entry tests with
@@ -36,7 +43,12 @@ The planning instructions exercise creation with a retained request identifier,
 username invitation sending with a second identifier, invitation inspection and
 acceptance by a distinct attendee, attendee RSVP, and organizer attendance reading
 with explicit full pagination. Inspection instructions exercise account status,
-bounded event listing, event detail, and the attendee's own RSVP. Their source is
+bounded event listing, event detail, and the attendee's own RSVP. Invite-list
+instructions exercise username discovery, private creation from selected person
+IDs, collection browsing, detail inspection, editing, explicit event use with a
+retained request identifier, and confirmed deletion through the same executable.
+Creation and editing do not send invitations; only the explicit invite step does.
+The fixture verifies its zero-sent/skipped response and retained identifier. Their source is
 `agent-workflows.json`; generated prose contains the same arguments so command or
 option removal fails the executable smoke checks.
 

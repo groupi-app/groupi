@@ -1,4 +1,5 @@
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, beforeEach, afterEach, vi } from 'vitest';
+import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import {
   createTestInstance,
   createTestUser,
@@ -328,253 +329,150 @@ describe('Events Operations', () => {
   });
 
   describe('joinDiscoverableEvent', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+    async function scenario(
+      visibility: 'PRIVATE' | 'FRIENDS' = 'FRIENDS',
+      direct = true
+    ) {
+      const t = createTestInstance();
+      registerBetterAuth(t);
+      const organizer = await createAuthAccount(t, 'join-organizer');
+      const viewer = await createAuthAccount(t, 'join-viewer');
+      const { eventId } = await organizer.auth.mutation(
+        api.events.mutations.createEvent,
+        { title: 'Join scenario', visibility }
+      );
+      if (direct)
+        await organizer.auth.mutation(
+          api.events.mutations.updateAdmissionPolicy,
+          { eventId, admissionPolicy: 'DIRECT' }
+        );
+      async function befriend() {
+        const offer = await organizer.auth.mutation(
+          api.friends.mutations.sendFriendRequest,
+          { addresseePersonId: viewer.personId }
+        );
+        await viewer.auth.mutation(api.friends.mutations.acceptFriendRequest, {
+          friendshipId: offer.friendshipId,
+        });
+      }
+      return { organizer, viewer, eventId, befriend };
+    }
     test('should allow friend to join FRIENDS-visible event', async () => {
-      const t = createTestInstance();
-
-      // Create organizer with FRIENDS event
-      const { userId: organizerUserId } = await createTestUser(t, {
-        email: 'organizer@example.com',
-        username: 'organizer',
-        name: 'Organizer',
+      const { organizer, viewer, eventId, befriend } = await scenario();
+      await befriend();
+      const attempts = await Promise.allSettled([
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
+        }),
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
+        }),
+      ]);
+      const admitted = attempts.filter(result => result.status === 'fulfilled');
+      expect(admitted).toHaveLength(1);
+      expect(
+        attempts.filter(result => result.status === 'rejected')
+      ).toHaveLength(1);
+      expect(admitted[0].value).toMatchObject({
+        success: true,
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
       });
-
-      const asOrganizer = t.withIdentity({ subject: organizerUserId });
-      const eventResult = await asOrganizer.mutation(
-        api.events.mutations.createEvent,
-        {
-          title: 'Friends Event',
-          visibility: 'FRIENDS',
-        }
+      const header = await viewer.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
       );
-
-      // Create friend user
-      const { userId: friendUserId, personId: friendPersonId } =
-        await createTestUser(t, {
-          email: 'friend@example.com',
-          username: 'friend',
-          name: 'Friend User',
-        });
-
-      // Create accepted friendship
-      await t.run(async ctx => {
-        const organizerPerson = await ctx.db
-          .query('persons')
-          .withIndex('by_user_id', q => q.eq('userId', organizerUserId))
-          .first();
-
-        await ctx.db.insert('friendships', {
-          requesterId: organizerPerson!._id,
-          addresseeId: friendPersonId,
-          status: 'ACCEPTED',
-          createdAt: Date.now(),
-        });
+      expect(header.userMembership).toMatchObject({
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
       });
-
-      // Friend joins the event
-      const asFriend = t.withIdentity({ subject: friendUserId });
-      const result = await asFriend.mutation(
-        api.events.mutations.joinDiscoverableEvent,
-        {
-          eventId: eventResult.eventId,
-        }
+      expect(header.event.memberCount).toBe(2);
+      expect(header.event.creatorId).toBe(organizer.personId);
+      const organizerHeader = await organizer.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
       );
-
-      expect(result.membershipId).toBeDefined();
-      expect(result.success).toBe(true);
-
-      // Verify membership was created
-      const membership = await t.run(async ctx => {
-        return await ctx.db
-          .query('memberships')
-          .withIndex('by_person_event', q =>
-            q.eq('personId', friendPersonId).eq('eventId', eventResult.eventId)
-          )
-          .first();
+      expect(organizerHeader.userMembership).toMatchObject({
+        role: 'ORGANIZER',
+        rsvpStatus: 'YES',
       });
-
-      expect(membership?.role).toBe('ATTENDEE');
-      expect(membership?.rsvpStatus).toBe('YES');
     });
-
     test('should reject joining PRIVATE event', async () => {
-      const t = createTestInstance();
-
-      const { userId: organizerUserId } = await createTestUser(t, {
-        email: 'organizer@example.com',
-        username: 'organizer',
-        name: 'Organizer',
-      });
-
-      const asOrganizer = t.withIdentity({ subject: organizerUserId });
-      const eventResult = await asOrganizer.mutation(
-        api.events.mutations.createEvent,
-        {
-          title: 'Private Event',
-        }
-      );
-
-      // Create another user (not a friend)
-      const { userId: otherUserId } = await createTestUser(t, {
-        email: 'other@example.com',
-        username: 'other',
-        name: 'Other User',
-      });
-
-      const asOther = t.withIdentity({ subject: otherUserId });
-
+      const { viewer, eventId } = await scenario('PRIVATE', false);
       await expect(
-        asOther.mutation(api.events.mutations.joinDiscoverableEvent, {
-          eventId: eventResult.eventId,
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
         })
       ).rejects.toThrow('not open for discovery');
+      await expect(
+        viewer.auth.query(api.events.queries.getEventHeader, { eventId })
+      ).rejects.toThrow('not a member');
     });
-
     test('should reject non-friend joining FRIENDS event', async () => {
-      const t = createTestInstance();
-
-      const { userId: organizerUserId } = await createTestUser(t, {
-        email: 'organizer@example.com',
-        username: 'organizer',
-        name: 'Organizer',
-      });
-
-      const asOrganizer = t.withIdentity({ subject: organizerUserId });
-      const eventResult = await asOrganizer.mutation(
-        api.events.mutations.createEvent,
-        {
-          title: 'Friends Event',
-          visibility: 'FRIENDS',
-        }
-      );
-
-      // Create stranger (no friendship)
-      const { userId: strangerUserId } = await createTestUser(t, {
-        email: 'stranger@example.com',
-        username: 'stranger',
-        name: 'Stranger',
-      });
-
-      const asStranger = t.withIdentity({ subject: strangerUserId });
-
+      const { viewer, eventId } = await scenario();
       await expect(
-        asStranger.mutation(api.events.mutations.joinDiscoverableEvent, {
-          eventId: eventResult.eventId,
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
         })
-      ).rejects.toThrow('friends with the event organizer');
+      ).rejects.toThrow(
+        '{"code":"FORBIDDEN","message":"This event is not available to join"}'
+      );
+      await expect(
+        viewer.auth.query(api.events.queries.getEventHeader, { eventId })
+      ).rejects.toThrow('not a member');
     });
-
     test('should reject joining if already a member', async () => {
-      const t = createTestInstance();
-
-      // Create organizer with FRIENDS event
-      const { userId: organizerUserId } = await createTestUser(t, {
-        email: 'organizer@example.com',
-        username: 'organizer',
-        name: 'Organizer',
-      });
-
-      const asOrganizer = t.withIdentity({ subject: organizerUserId });
-      const eventResult = await asOrganizer.mutation(
-        api.events.mutations.createEvent,
-        {
-          title: 'Friends Event',
-          visibility: 'FRIENDS',
-        }
+      const { viewer, eventId, befriend } = await scenario();
+      await befriend();
+      const joined = await viewer.auth.mutation(
+        api.events.mutations.joinDiscoverableEvent,
+        { eventId }
       );
-
-      // Create friend and add friendship
-      const { userId: friendUserId, personId: friendPersonId } =
-        await createTestUser(t, {
-          email: 'friend@example.com',
-          username: 'friend',
-          name: 'Friend User',
-        });
-
-      await t.run(async ctx => {
-        const organizerPerson = await ctx.db
-          .query('persons')
-          .withIndex('by_user_id', q => q.eq('userId', organizerUserId))
-          .first();
-
-        await ctx.db.insert('friendships', {
-          requesterId: organizerPerson!._id,
-          addresseeId: friendPersonId,
-          status: 'ACCEPTED',
-          createdAt: Date.now(),
-        });
-
-        // Also add friend as member already
-        await ctx.db.insert('memberships', {
-          personId: friendPersonId,
-          eventId: eventResult.eventId,
-          role: 'ATTENDEE',
-          rsvpStatus: 'YES',
-        });
-      });
-
-      const asFriend = t.withIdentity({ subject: friendUserId });
-
       await expect(
-        asFriend.mutation(api.events.mutations.joinDiscoverableEvent, {
-          eventId: eventResult.eventId,
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
         })
-      ).rejects.toThrow('already a member');
+      ).rejects.toThrow(
+        '{"code":"FORBIDDEN","message":"This event is not available to join"}'
+      );
+      const header = await viewer.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
+      );
+      expect(header.userMembership).toMatchObject({
+        _id: joined.membershipId,
+        role: 'ATTENDEE',
+        rsvpStatus: 'PENDING',
+      });
+      expect(header.event.memberCount).toBe(2);
     });
-
     test('should reject joining if banned', async () => {
-      const t = createTestInstance();
-
-      const { userId: organizerUserId } = await createTestUser(t, {
-        email: 'organizer@example.com',
-        username: 'organizer',
-        name: 'Organizer',
-      });
-
-      const asOrganizer = t.withIdentity({ subject: organizerUserId });
-      const eventResult = await asOrganizer.mutation(
-        api.events.mutations.createEvent,
-        {
-          title: 'Friends Event',
-          visibility: 'FRIENDS',
-        }
+      const { organizer, viewer, eventId, befriend } = await scenario();
+      await befriend();
+      const joined = await viewer.auth.mutation(
+        api.events.mutations.joinDiscoverableEvent,
+        { eventId }
       );
-
-      const { userId: friendUserId, personId: friendPersonId } =
-        await createTestUser(t, {
-          email: 'friend@example.com',
-          username: 'friend',
-          name: 'Friend User',
-        });
-
-      await t.run(async ctx => {
-        const organizerPerson = await ctx.db
-          .query('persons')
-          .withIndex('by_user_id', q => q.eq('userId', organizerUserId))
-          .first();
-
-        await ctx.db.insert('friendships', {
-          requesterId: organizerPerson!._id,
-          addresseeId: friendPersonId,
-          status: 'ACCEPTED',
-          createdAt: Date.now(),
-        });
-
-        // Ban the friend
-        await ctx.db.insert('eventBans', {
-          personId: friendPersonId,
-          eventId: eventResult.eventId,
-          bannedAt: Date.now(),
-          bannedById: organizerPerson!._id,
-        });
+      await organizer.auth.mutation(api.events.mutations.banMember, {
+        membershipId: joined.membershipId,
       });
-
-      const asFriend = t.withIdentity({ subject: friendUserId });
-
       await expect(
-        asFriend.mutation(api.events.mutations.joinDiscoverableEvent, {
-          eventId: eventResult.eventId,
+        viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+          eventId,
         })
-      ).rejects.toThrow('banned');
+      ).rejects.toThrow(
+        '{"code":"FORBIDDEN","message":"This event is not available to join"}'
+      );
+      await expect(
+        viewer.auth.query(api.events.queries.getEventHeader, { eventId })
+      ).rejects.toThrow('not a member');
+      const header = await organizer.auth.query(
+        api.events.queries.getEventHeader,
+        { eventId }
+      );
+      expect(header.event.memberCount).toBe(1);
     });
   });
 
