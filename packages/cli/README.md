@@ -857,3 +857,48 @@ required. The success response confirms deletion of the account and its credenti
 a subsequent request using the old API key or session is unauthorized. An ambiguous
 write is never automatically retried. Passkey/OAuth handoffs remain browser/device
 operations.
+
+## Whole-Group Event audiences
+
+Event Organizers can share safe logistics with eligible whole Groups while keeping
+Event ownership and participation independent:
+
+```sh
+groupi groups event-sharing GROUP --policy MEMBERS
+groupi events share-group EVENT GROUP
+groupi events friends-audience EVENT --enabled true
+groupi events audiences EVENT
+groupi groups events GROUP --all --limit 20
+groupi events preview EVENT
+groupi groups withdraw-event GROUP EVENT --yes
+```
+
+Group sharing defaults to `MANAGERS`; only the Group owner may choose `MEMBERS`.
+Sharing requires both current Event Organizer authority and the Group's current
+sharing permission and completed required onboarding. At most 100 whole Groups
+may be selected per Event. Group managers may withdraw their own audience without
+gaining Event edit/delete/review authority. Withdrawal preserves other audiences.
+
+Friends and selected Groups combine by OR for logistics reads. An explicit Friends
+selection defaults to legacy `FRIENDS` visibility when absent. An actual visibility
+change synchronizes that legacy selection; saving an unchanged visibility retains
+an explicit selection. Public basic details remain public. Friends settings are
+`null` in audience output when the caller lacks Event Organizer authority; only
+Group associations visible to the caller are returned.
+
+Group Event pages scan at most `--limit` associations in sharing order, omitting
+past or currently unreadable Events. Continue `nextCursor` even after an empty
+page; `--all` does this with repeated-cursor protection. Output includes only safe
+logistics, with no attendee identities, private RSVP notes, discussions or tool
+submissions. Reading/sharing never creates Event invitations, memberships or RSVP.
+Group-only grants currently provide no Discover/direct-join/application action.
+Required onboarding, leave/removal/ban, Group deletion and audience withdrawal
+revoke only that Group's grant; independent Event membership and other audiences
+continue to apply.
+
+Writes require advertised `groupEventAudiences` version 1 and fail before sending
+mutations on older servers. Event-path commands require `events` read/write scopes;
+Group lists require `groups:read`, and policy/Group-manager withdrawal require
+`groups:write`. Scopes never replace current domain authority. Withdrawal requires
+`--yes` in headless use. Writes are not automatically retried; inspect the current
+audiences and Group Events if a response has an uncertain outcome.

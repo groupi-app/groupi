@@ -38,6 +38,8 @@ export const group = v.object({
   applicationsEnabled: v.boolean(),
   applicationQuestions: v.array(questionValidator),
   memberCount: v.number(),
+  eventSharingPolicy: v.union(v.literal('MANAGERS'), v.literal('MEMBERS')),
+  canShareEvents: v.boolean(),
 });
 export const landing = v.object({
   groupId: v.id('groups'),

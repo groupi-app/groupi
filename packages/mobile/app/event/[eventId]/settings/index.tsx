@@ -43,6 +43,13 @@ const SETTINGS = [
     icon: 'mail-outline',
   },
   {
+    key: 'sharing',
+    label: 'Event audiences',
+    description: 'Share logistics with whole Groups and Friends',
+    icon: 'people-outline',
+    organizerOnly: true,
+  },
+  {
     key: 'permissions',
     label: 'Permissions',
     description: 'Control what event members can do',

@@ -1,3 +1,4 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
 import type { MutationCtx } from '../_generated/server';
@@ -9,6 +10,7 @@ export async function cascadeDeleteEventData(
   eventId: Id<'events'>
 ) {
   await deleteEventTransfers(ctx, eventId);
+  await removeAudiencesForEvent(ctx, eventId);
 
   const [
     memberships,

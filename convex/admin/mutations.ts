@@ -1,4 +1,5 @@
 import { deleteResolvedAccount } from '../users/mutations';
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
 import { mutation, MutationCtx } from '../_generated/server';
@@ -53,6 +54,7 @@ async function deleteEventAndRelatedData(
   }
 
   await deleteEventTransfers(ctx, eventId);
+  await removeAudiencesForEvent(ctx, eventId);
 
   // Delete all related data in order (to handle dependencies)
 

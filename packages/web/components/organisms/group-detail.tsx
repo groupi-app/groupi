@@ -1,4 +1,6 @@
 'use client';
+import { GroupSharedEvents } from './group-shared-events';
+import { GroupEventSharingPolicy } from './group-event-sharing-policy';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 
@@ -139,6 +141,20 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           applicationsEnabled={group.applicationsEnabled}
           questions={group.applicationQuestions}
         />
+      )}
+      {group.canManageRoles && (
+        <GroupEventSharingPolicy
+          key={group.eventSharingPolicy}
+          groupId={groupId}
+          initialPolicy={group.eventSharingPolicy}
+        />
+      )}
+      {group.joiningQuestionnaire?.canAccessMemberContent !== false ? (
+        <GroupSharedEvents groupId={groupId} />
+      ) : (
+        <p>
+          Complete required Group onboarding to view shared Event logistics.
+        </p>
       )}
       {group.canManageMembers && <GroupApplications groupId={groupId} review />}
       {group.viewerRole !== 'MEMBER' && (

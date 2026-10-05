@@ -5,6 +5,7 @@ import { useEventHeader } from '@/hooks/convex';
 import { Id } from '@/convex/_generated/dataModel';
 import EditEventInfo from '../../edit/components/edit-event-info';
 import { SettingsPageTemplate } from '@/components/templates';
+import { EventAudienceSettings } from '@/components/organisms/event-audience-settings';
 import { EventAdmissionSettings } from '@/components/organisms/event-admission-settings';
 import { NewEventFormSkeleton } from '@/components/skeletons';
 
@@ -39,6 +40,12 @@ export default function EventSettingsDetailsPage(props: {
               imageFocalPoint: event.imageFocalPoint,
             }}
           />
+          {eventData?.userMembership?.role === 'ORGANIZER' && (
+            <EventAudienceSettings
+              eventId={event._id}
+              visibility={event.visibility}
+            />
+          )}
           <EventAdmissionSettings
             eventId={event._id}
             role={eventData?.userMembership?.role}

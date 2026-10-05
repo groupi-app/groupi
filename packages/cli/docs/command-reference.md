@@ -20,6 +20,10 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events edit](#groupi-events-edit)
 - [groupi events list](#groupi-events-list)
 - [groupi events get](#groupi-events-get)
+- [groupi events audiences](#groupi-events-audiences)
+- [groupi events share-group](#groupi-events-share-group)
+- [groupi events unshare-group](#groupi-events-unshare-group)
+- [groupi events friends-audience](#groupi-events-friends-audience)
 - [groupi events mute](#groupi-events-mute)
 - [groupi events unmute](#groupi-events-unmute)
 - [groupi events mute-status](#groupi-events-mute-status)
@@ -152,6 +156,9 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups application-edit](#groupi-groups-application-edit)
 - [groupi groups application-withdraw](#groupi-groups-application-withdraw)
 - [groupi groups application-review](#groupi-groups-application-review)
+- [groupi groups events](#groupi-groups-events)
+- [groupi groups withdraw-event](#groupi-groups-withdraw-event)
+- [groupi groups event-sharing](#groupi-groups-event-sharing)
 - [groupi group-invites](#groupi-group-invites)
 - [groupi group-invites list](#groupi-group-invites-list)
 - [groupi group-invites accept](#groupi-group-invites-accept)
@@ -374,33 +381,49 @@ Usage: groupi events [options] [command]
 Browse and manage your events
 
 Options:
-  -h, --help                    display help for command
+  -h, --help                                     display help for command
 
 Commands:
-  create [options]              Create an event with replay-safe request identification
-  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically
+  create [options]                               Create an event with replay-safe request
+                                                 identification
+  edit [options] <event-id>                      Edit event details; uncertain writes are never
+                                                 retried automatically
   list [options]
-  get <event-id>                Read one accessible event
-  mute <event-id>               Mute event notifications
-  unmute <event-id>             Unmute event notifications
-  mute-status <event-id>        Inspect event notifications
-  rsvp                          Read and update your own attendance response
-  availability                  Provide your availability and inspect permitted responses
-  dates                         Inspect proposed dates and manage the chosen date
-  members [options] <event-id>  List attendance when event permissions allow
-  cover                         Inspect, replace, or remove cover images from local files
-  transfer                      Consensual Event ownership; Friends audience follows accepted new
-                                Organizer
-  applications                  Configure, submit, or review private Event applications
-  preview <event-id>            Read safe event logistics and entry action without joining
-  discover [options]            Browse upcoming friends events you can join
-  join <event-id>               Join as an Attendee with Pending RSVP; confirm attendance separately
-  leave [options] <event-id>    leave an event
-  delete [options] <event-id>   delete an event
-  membership                    Manage event member roles and removal; inspect using events members
-  settings                      Inspect and update event visibility, admission and supported
-                                permissions
-  help [command]                display help for command
+  get <event-id>                                 Read one accessible event
+  audiences <event-id>                           Read only currently visible Group audiences and
+                                                 authorized Friends state
+  share-group <event-id> <group-id>              Share logistics with a whole Group; requires
+                                                 Organizer and Group permission
+  unshare-group [options] <event-id> <group-id>  Withdraw one Group grant, preserving all
+                                                 independent grants
+  friends-audience [options] <event-id>          Set independent Friends audience as Organizer;
+                                                 Public basic details stay public
+  mute <event-id>                                Mute event notifications
+  unmute <event-id>                              Unmute event notifications
+  mute-status <event-id>                         Inspect event notifications
+  rsvp                                           Read and update your own attendance response
+  availability                                   Provide your availability and inspect permitted
+                                                 responses
+  dates                                          Inspect proposed dates and manage the chosen date
+  members [options] <event-id>                   List attendance when event permissions allow
+  cover                                          Inspect, replace, or remove cover images from local
+                                                 files
+  transfer                                       Consensual Event ownership; Friends audience
+                                                 follows accepted new Organizer
+  applications                                   Configure, submit, or review private Event
+                                                 applications
+  preview <event-id>                             Read safe event logistics and entry action without
+                                                 joining
+  discover [options]                             Browse upcoming friends events you can join
+  join <event-id>                                Join as an Attendee with Pending RSVP; confirm
+                                                 attendance separately
+  leave [options] <event-id>                     leave an event
+  delete [options] <event-id>                    delete an event
+  membership                                     Manage event member roles and removal; inspect
+                                                 using events members
+  settings                                       Inspect and update event visibility, admission and
+                                                 supported permissions
+  help [command]                                 display help for command
 ```
 
 ## groupi events create
@@ -458,6 +481,52 @@ Read one accessible event
 
 Options:
   -h, --help  display help for command
+```
+
+## groupi events audiences
+
+```text
+Usage: groupi events audiences [options] <event-id>
+
+Read only currently visible Group audiences and authorized Friends state
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events share-group
+
+```text
+Usage: groupi events share-group [options] <event-id> <group-id>
+
+Share logistics with a whole Group; requires Organizer and Group permission
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events unshare-group
+
+```text
+Usage: groupi events unshare-group [options] <event-id> <group-id>
+
+Withdraw one Group grant, preserving all independent grants
+
+Options:
+  --yes       Confirm withdrawal
+  -h, --help  display help for command
+```
+
+## groupi events friends-audience
+
+```text
+Usage: groupi events friends-audience [options] <event-id>
+
+Set independent Friends audience as Organizer; Public basic details stay public
+
+Options:
+  --enabled <boolean>  true or false
+  -h, --help           display help for command
 ```
 
 ## groupi events mute
@@ -1775,6 +1844,9 @@ Commands:
   application-edit [options] <group-id> <application-id>      Edit your pending saved answers
   application-withdraw [options] <group-id> <application-id>  Withdraw your pending application
   application-review [options] <group-id> <application-id>    Record an application decision as current manager
+  events [options] <group-id>                                 Page safe upcoming/undated shared Events; no participation effects
+  withdraw-event [options] <group-id> <event-id>              Withdraw only this Group audience as current Group manager
+  event-sharing [options] <group-id>                          Owner sets managers-only (default) or all eligible members sharing
   help [command]                                              display help for command
 ```
 
@@ -2286,6 +2358,44 @@ Options:
   --decision <decision>  APPROVED or DECLINED
   --yes                  Confirm application resolution
   -h, --help             display help for command
+```
+
+## groupi groups events
+
+```text
+Usage: groupi groups events [options] <group-id>
+
+Page safe upcoming/undated shared Events; no participation effects
+
+Options:
+  --limit <number>   Association scan page size (1–100) (default: "20")
+  --cursor <cursor>  Continue even an empty page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups withdraw-event
+
+```text
+Usage: groupi groups withdraw-event [options] <group-id> <event-id>
+
+Withdraw only this Group audience as current Group manager
+
+Options:
+  --yes       Confirm withdrawal
+  -h, --help  display help for command
+```
+
+## groupi groups event-sharing
+
+```text
+Usage: groupi groups event-sharing [options] <group-id>
+
+Owner sets managers-only (default) or all eligible members sharing
+
+Options:
+  --policy <policy>  MANAGERS or MEMBERS
+  -h, --help         display help for command
 ```
 
 ## groupi group-invites

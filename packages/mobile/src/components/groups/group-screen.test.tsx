@@ -1,3 +1,6 @@
+vi.mock('./group-event-sharing-policy', () => ({
+  GroupEventSharingPolicy: 'GroupEventSharingPolicy',
+}));
 vi.mock('./group-ownership-transfer', () => ({
   GroupOwnershipTransfer: () => null,
 }));

@@ -309,9 +309,14 @@ export async function discoverEvents(profile, key, options) {
 /** @param {Profile} profile @param {string} key @param {string} eventId */
 export async function getEventLogistics(profile, key, eventId) {
   managementId(eventId);
-  const result = record(
-    await readApi(profile, key, `/events/${eventId}/logistics`)
+  return projectEventLogistics(
+    await readApi(profile, key, `/events/${eventId}/logistics`),
+    eventId
   );
+}
+/** @param {unknown} raw @param {string} eventId */
+export function projectEventLogistics(raw, eventId) {
+  const result = record(raw);
   const event = record(result.event);
   if (
     event._id !== eventId ||

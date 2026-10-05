@@ -9,6 +9,42 @@ import { GroupsPanel } from './groups-panel';
 
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    groupTransfers: {
+      queries: { status: 'transferStatus' },
+      mutations: {
+        offer: 'offerTransfer',
+        accept: 'acceptTransfer',
+        decline: 'declineTransfer',
+        cancel: 'cancelTransfer',
+      },
+    },
+    groupApplications: {
+      queries: {
+        getGroupApplicationForm: 'applicationForm',
+        getGroupApplication: 'application',
+        listMyGroupApplications: 'applicationHistory',
+        listGroupApplications: 'applicationQueue',
+      },
+      mutations: {
+        configureGroupApplications: 'configureApplications',
+        submitGroupApplication: 'submitApplication',
+        editGroupApplication: 'editApplication',
+        withdrawGroupApplication: 'withdrawApplication',
+        reviewGroupApplication: 'reviewApplication',
+      },
+    },
+    groupEventAudiences: {
+      queries: {
+        getEventAudiences: 'eventAudiences',
+        listGroupSharedEvents: 'sharedEvents',
+      },
+      mutations: {
+        shareEventWithGroup: 'shareEvent',
+        withdrawGroupEventAudience: 'withdrawAudience',
+        configureGroupEventSharing: 'configureSharing',
+        setEventFriendsAudience: 'friendsAudience',
+      },
+    },
     groupQuestionnaires: {
       queries: {
         getJoiningQuestionnaire: 'questionnaire',
@@ -64,6 +100,21 @@ vi.mock('@/convex/_generated/api', () => ({
 function setQueryResult(result: unknown) {
   vi.mocked(useQuery).mockImplementation((...[query]) => {
     if (String(query) === 'members' || String(query) === 'inbox')
+      return { page: [], isDone: true, continueCursor: '' };
+    if (String(query) === 'transferStatus') return null;
+    if (String(query) === 'applicationForm')
+      return {
+        applicationsEnabled: false,
+        questions: [],
+        pending: null,
+        canApply: false,
+        canReview: false,
+      };
+    if (
+      ['applicationHistory', 'applicationQueue', 'sharedEvents'].includes(
+        String(query)
+      )
+    )
       return { page: [], isDone: true, continueCursor: '' };
     if (String(query) === 'ownInvite') return null;
     if (String(query) === 'questionnaireAccess')

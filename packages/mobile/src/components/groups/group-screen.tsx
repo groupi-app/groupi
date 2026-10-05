@@ -21,6 +21,7 @@ import { GroupLandingInvitation } from './group-invitation-panels';
 import { GroupLeaveControl } from './group-leave-control';
 import { GroupJoiningQuestionnairePrompt } from './group-questionnaire';
 import { GroupApplicationSettings } from './group-application-settings';
+import { GroupEventSharingPolicy } from './group-event-sharing-policy';
 import { GroupForm } from './group-form';
 
 export function GroupDetailScreen() {
@@ -178,6 +179,22 @@ export function GroupDetailScreen() {
             {group.viewerRole !== 'MEMBER' && (
               <GroupAnnouncementComposer groupId={id} />
             )}
+            <Button
+              accessibilityLabel='View Group shared Events'
+              variant='outline'
+              disabled={
+                group.joiningQuestionnaire?.canAccessMemberContent === false
+              }
+              onPress={() => router.push(`/groups/${id}/events`)}
+            >
+              Shared Event logistics
+            </Button>
+            {group.canManageRoles ? (
+              <GroupEventSharingPolicy
+                groupId={id}
+                policy={group.eventSharingPolicy}
+              />
+            ) : null}
             <GroupLeaveControl groupId={id} canLeave={group.canLeave} />
             {group.canManageIdentity ? (
               editing ? (

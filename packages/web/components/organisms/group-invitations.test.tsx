@@ -115,6 +115,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
       page: [invite],

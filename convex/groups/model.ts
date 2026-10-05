@@ -1,3 +1,5 @@
+import { anonymizeAudienceActor } from '../groupEventAudiences/cleanup';
+import { canShare } from '../groupEventAudiences/model';
 import { removeApplicationsForPerson } from '../groupApplications/cleanup';
 import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
@@ -181,6 +183,8 @@ export async function detail(
     viewerRole: membership.role,
     canManageIdentity: group.ownerId === personId,
     memberCount: group.memberCount,
+    eventSharingPolicy: group.eventSharingPolicy ?? 'MANAGERS',
+    canShareEvents: await canShare(ctx, groupId, personId),
     invitationsEnabled: group.invitationsEnabled ?? true,
     applicationsEnabled: group.applicationsEnabled ?? false,
     applicationQuestions: group.applicationQuestions ?? [],
@@ -229,6 +233,7 @@ export async function removeGroupMembershipsForPerson(
 ) {
   await assertNoOwnedGroups(ctx, personId);
   await removeTransfersForPerson(ctx, personId);
+  await anonymizeAudienceActor(ctx, personId);
   await removeAnnouncementsForPerson(ctx, personId);
   await removeInvitationsForPerson(ctx, personId);
   await removeModerationForPerson(ctx, personId);

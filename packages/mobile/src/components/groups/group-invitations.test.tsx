@@ -157,6 +157,8 @@ function result(name: string, args: Record<string, unknown>) {
           ownerId: 'person-owner',
           viewerRole: network.manager ? 'OWNER' : 'MEMBER',
           canManageIdentity: network.manager && !network.moderator,
+          eventSharingPolicy: 'MANAGERS',
+          canShareEvents: !network.requiredOnboarding,
           applicationsEnabled: false,
           applicationQuestions: [],
           canManageRoles: network.manager && !network.moderator,
@@ -406,6 +408,46 @@ describe('native Group invitations with production providers', () => {
       });
       expect(network.push).toHaveBeenCalledWith(
         '/groups/group-123/applications'
+      );
+      await act(async () => mounted!.unmount());
+    }
+  );
+  it.each([false, true])(
+    'shows owner sharing policy only while moderator=%s keeps Event authority separate',
+    async moderator => {
+      network.moderator = moderator;
+      let mounted: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(GroupDetailScreen));
+      });
+      expect(
+        Boolean(control(mounted!, 'Eligible Group members share Events'))
+      ).toBe(!moderator);
+      expect(control(mounted!, 'View Group shared Events')).toBeDefined();
+      await act(async () => {
+        (
+          control(mounted!, 'View Group shared Events').props
+            .onPress as () => void
+        )();
+      });
+      expect(network.push).toHaveBeenCalledWith('/groups/group-123/events');
+      await act(async () => mounted!.unmount());
+    }
+  );
+  it.each([false, true])(
+    'does not bypass required Group onboarding for manager=%s shared Event navigation',
+    async manager => {
+      network.manager = manager;
+      network.requiredOnboarding = true;
+      let mounted: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(GroupDetailScreen));
+      });
+      expect(control(mounted!, 'View Group shared Events').props.disabled).toBe(
+        true
+      );
+      expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
+        'groupEventAudiences/queries:listGroupSharedEvents'
       );
       await act(async () => mounted!.unmount());
     }

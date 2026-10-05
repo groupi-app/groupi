@@ -173,6 +173,9 @@ export default defineSchema({
     .index('by_offeredBy', ['offeredById'])
     .index('by_recipient', ['recipientId']),
   groups: defineTable({
+    eventSharingPolicy: v.optional(
+      v.union(v.literal('MANAGERS'), v.literal('MEMBERS'))
+    ),
     invitationsEnabled: v.optional(v.boolean()),
     applicationsEnabled: v.optional(v.boolean()),
     applicationQuestions: v.optional(v.array(questionValidator)),
@@ -405,7 +408,18 @@ export default defineSchema({
     .index('by_event_person', ['eventId', 'personId'])
     .index('by_event_person_status', ['eventId', 'personId', 'status'])
     .index('by_event_status', ['eventId', 'status']),
+  groupEventAudiences: defineTable({
+    groupId: v.id('groups'),
+    eventId: v.id('events'),
+    sharedById: v.optional(v.id('persons')),
+    createdAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_eventId', ['eventId'])
+    .index('by_groupId_and_eventId', ['groupId', 'eventId'])
+    .index('by_sharedById', ['sharedById']),
   events: defineTable({
+    friendsAudienceEnabled: v.optional(v.boolean()),
     title: v.string(),
     description: v.optional(v.string()),
     location: v.optional(v.string()),

@@ -733,6 +733,7 @@ export const getDiscoverableEvents = query({
     );
 
     const candidateEvents = allFriendEvents.flat().filter(event => {
+      if (event.friendsAudienceEnabled === false) return false;
       if (myEventIds.has(event._id)) return false;
       if (event.chosenDateTime && event.chosenDateTime < now) return false;
       return true;

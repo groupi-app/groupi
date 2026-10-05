@@ -48,3 +48,7 @@ export { GroupQuestionnaireReview } from './group-questionnaire-review';
 export { GroupQuestionnaireHistory } from './group-questionnaire-history';
 export { GroupApplications } from './group-applications';
 export { GroupApplicationSettings } from './group-application-settings';
+
+export { EventAudienceSettings } from './event-audience-settings';
+export { GroupSharedEvents } from './group-shared-events';
+export { GroupEventSharingPolicy } from './group-event-sharing-policy';

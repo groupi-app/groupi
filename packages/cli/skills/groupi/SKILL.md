@@ -279,3 +279,17 @@ Declined applicants may reapply when eligible. Writes require `groupApplications
 version 1; inspect own history or manager queue after uncertain writes before
 repeating. Use explicit confirmation for withdrawal/review. All operations use
 ordinary Group read/write scopes and preserve the separate invitation path.
+
+For whole-Group Event logistics, use `events audiences EVENT`,
+`events share-group EVENT GROUP`, `events friends-audience EVENT --enabled true|false`
+and `groups events GROUP --all`. Sharing requires current Event Organizer authority
+and Group sharing permission (owner policy `MANAGERS` by default, optionally
+`MEMBERS`), including current required onboarding. At most 100 Groups may be selected.
+`groups withdraw-event GROUP EVENT --yes` lets a current Group manager withdraw
+only that grant. These actions never join, invite, RSVP, transfer ownership or
+inherit tools. Group-only reads currently offer no Discover/direct/application
+entry. Friends settings may be null when the caller cannot manage the Event;
+other private Group associations must not be inferred from absent output.
+Group pages can be empty with a continuation cursor; keep paging deliberately.
+Check `groupEventAudiences` version 1 before writes, preserve scope/domain failures
+and inspect current state before retrying an uncertain response.

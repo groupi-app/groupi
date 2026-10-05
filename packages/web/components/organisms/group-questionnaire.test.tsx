@@ -142,6 +142,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupApplications/queries:getGroupApplicationForm': {
       applicationsEnabled: false,
       questions: [],
@@ -1129,6 +1130,49 @@ it('opens an approved application into required recovery without a second admiss
   expect(mutation.mock.calls.map(([ref]) => getFunctionName(ref))).toEqual([
     'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
   ]);
+  mounted.unmount();
+  await client.close();
+});
+
+it('keeps Group shared Event content gated for an owner with required onboarding while preserving management recovery', async () => {
+  const required = {
+    ...questionnaire,
+    requiredCompletion: true,
+    requiresCompletion: true,
+    canAccessMemberContent: false,
+  };
+  const { client } = fixtureClient({
+    'groups/queries:getGroup': {
+      ...detail,
+      viewerRole: 'OWNER',
+      canManageMembers: true,
+      canManageRoles: true,
+      eventSharingPolicy: 'MANAGERS',
+      joiningQuestionnaire: required,
+    },
+    'groupQuestionnaires/queries:getJoiningQuestionnaire': {
+      ...required,
+      canConfigure: true,
+    },
+  });
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  expect(
+    await screen.findByText(
+      'Complete required Group onboarding to view shared Event logistics.'
+    )
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('combobox', {
+      name: 'Who may share Events with this Group?',
+    })
+  ).toBeInTheDocument();
+  expect(
+    vi.mocked(client.watchQuery).mock.calls.map(([ref]) => getFunctionName(ref))
+  ).not.toContain('groupEventAudiences/queries:listGroupSharedEvents');
   mounted.unmount();
   await client.close();
 });

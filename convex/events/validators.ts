@@ -12,6 +12,7 @@ export const dateSelectionSourceValidator = v.union(
 );
 
 export const eventDocumentValidator = v.object({
+  friendsAudienceEnabled: v.optional(v.boolean()),
   _id: v.id('events'),
   _creationTime: v.number(),
   title: v.string(),

@@ -62,3 +62,5 @@ export { announcementRequestId } from '../utils/announcement-request';
 
 export { createAccountResolutionHooks } from './useAccountResolution';
 export { AccountResolutionBoundary } from './account-resolution-boundary';
+
+export { createGroupEventAudienceHooks } from './useGroupEventAudiences';

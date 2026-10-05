@@ -197,7 +197,11 @@ describe('production Group auth return screens', () => {
     await act(async () => mounted!.unmount());
   });
 
-  it.each(['/groups/group-123/apply', '/groups/group-123/applications'])(
+  it.each([
+    '/groups/group-123/apply',
+    '/groups/group-123/applications',
+    '/groups/group-123/events',
+  ])(
     'preserves bounded %s through callback, session guard, and onboarding',
     async returnTo => {
       external.route.params.returnTo = returnTo;

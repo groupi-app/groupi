@@ -1,3 +1,4 @@
+import { hasGroupAudience } from '../groupEventAudiences/access';
 import { ConvexError } from 'convex/values';
 import type { Doc, Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -23,7 +24,7 @@ export async function hasEventAudience(
   if (event.visibility === 'PUBLIC') return true;
   return Boolean(
     personId &&
-      event.visibility === 'FRIENDS' &&
+      (event.friendsAudienceEnabled ?? event.visibility === 'FRIENDS') &&
       (await checkIfFriends(ctx, personId, event.creatorId)) &&
       !(await checkIsBlocked(ctx, personId, event.creatorId))
   );
@@ -54,10 +55,13 @@ export async function eventAdmissionAccess(
     ? await checkIsBlocked(ctx, personId, event.creatorId)
     : false;
   const audience = await hasEventAudience(ctx, event, personId);
+  const groupAudience = await hasGroupAudience(ctx, event, personId);
   return {
     membership,
     canRead: Boolean(
-      membership || (audience && (event.visibility === 'PUBLIC' || !ban))
+      membership ||
+        ((audience || (groupAudience && !blocked)) &&
+          (event.visibility === 'PUBLIC' || !ban))
     ),
     canApply: Boolean(
       personId &&

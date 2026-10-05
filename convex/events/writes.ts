@@ -511,6 +511,8 @@ export async function updateEventForPerson(
     }
 
     updateData.visibility = visibility === null ? undefined : visibility;
+    if ((visibility ?? 'PRIVATE') !== (event.visibility ?? 'PRIVATE'))
+      updateData.friendsAudienceEnabled = visibility === 'FRIENDS';
   }
 
   // Update the event

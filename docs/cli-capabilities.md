@@ -403,3 +403,26 @@ synthetic local entries. Independent correctness/security and spec reviews
 approved after regressions for configurable sections, field identifiers, selection
 limits and actionable schema diagnostics were fixed. This is local evidence;
 new-commit OS/runtime CI, live staging and public publication remain pending.
+
+## Whole-Group Event audiences (#273)
+
+Implemented; local authenticated session/REST, consuming web/native SDK, and
+CLI-to-HTTP verification complete; release/staging verification pending.
+REST health advertises `groupEventAudiences: { version: 1 }`. CLI writes check
+this before mutation and reject older servers without sending a write.
+
+`events share-group`, `events unshare-group`, `events friends-audience` and
+`events audiences` use Event read/write scopes and current Organizer/Group policy
+checks. `groups event-sharing` is owner-only; `groups withdraw-event` permits a
+current Group manager to withdraw only that grant. These Group writes require
+`groups:write`; `groups events` uses `groups:read` and truthful bounded pagination,
+including empty pages with continuation cursors.
+
+Safe logistics projection never includes participation/private tools or creates
+Event invitations, membership or RSVP. Whole Groups and Friends combine by OR;
+required onboarding or lost Group eligibility revokes only that Group grant.
+Public basic details and independent Event membership remain independent. A Group
+Event list provides read-only previews; Group Discover/direct-entry and Group
+Event applications are still separately owned by #274/#275. The generated CLI
+reference and packaged skill document selection limits, visible associations,
+nullable unavailable Friends settings, scopes and uncertain-write recovery.

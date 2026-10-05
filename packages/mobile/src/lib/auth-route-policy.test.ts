@@ -126,3 +126,10 @@ it('retains bounded private Group application return paths', () => {
   );
   expect(getSafeAuthReturnPath('/groups/group-123/apply/private')).toBeNull();
 });
+
+it('allows only the bounded Group shared Event surface return route', () => {
+  expect(getSafeAuthReturnPath('/groups/group-123/events')).toBe(
+    '/groups/group-123/events'
+  );
+  expect(getSafeAuthReturnPath('/groups/group-123/events/private')).toBeNull();
+});

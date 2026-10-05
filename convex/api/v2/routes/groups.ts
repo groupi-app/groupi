@@ -36,6 +36,8 @@ const group = z.object({
   viewerRole: z.enum(['OWNER', 'MODERATOR', 'MEMBER']),
   canManageIdentity: z.boolean(),
   memberCount: z.number(),
+  eventSharingPolicy: z.enum(['MANAGERS', 'MEMBERS']),
+  canShareEvents: z.boolean(),
   invitationsEnabled: z.boolean(),
   applicationsEnabled: z.boolean(),
   applicationQuestions: z.array(GroupApplicationQuestionSchema),

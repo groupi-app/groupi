@@ -1,3 +1,4 @@
+import { removeAudiencesForEvent } from '../../../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../../../eventTransfers/cleanup';
 import { deleteEventApplications } from '../../../eventApplications/cleanup';
 import type { QueryCtx } from '../../../_generated/server';
@@ -404,6 +405,7 @@ export const deleteEvent = internalMutation({
     }
 
     await deleteEventTransfers(ctx, eventId as Id<'events'>);
+    await removeAudiencesForEvent(ctx, eventId as Id<'events'>);
 
     // Delete all related data
     const memberships = await ctx.db
