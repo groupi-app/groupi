@@ -45,7 +45,7 @@ async function confirm(confirmation) {
 
 /** Mutation transport never follows redirects; retries require server-side deduplication.
  * @param {{apiUrl:string}} profile @param {string} key @param {string} path
- * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, requestId?:string, validationGuidance?:string, conflictGuidance?:string, forbiddenGuidance?:string, validationIssues?:boolean, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
+ * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, deleteBody?:boolean, requestId?:string, validationGuidance?:string, conflictGuidance?:string, forbiddenGuidance?:string, validationIssues?:boolean, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
 export async function mutateApi(profile, key, path, options) {
   if (options.confirmation) await confirm(options.confirmation);
   const body = JSON.stringify(options.body);
@@ -71,7 +71,7 @@ export async function mutateApi(profile, key, path, options) {
             ? { 'idempotency-key': options.requestId }
             : {}),
         },
-        ...(options.method !== 'DELETE' ? { body } : {}),
+        ...(options.method !== 'DELETE' || options.deleteBody ? { body } : {}),
         signal: AbortSignal.timeout(10000),
       });
     } catch {

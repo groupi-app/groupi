@@ -1,3 +1,8 @@
+import {
+  voteFields,
+  mode as pollMode,
+  option as pollOption,
+} from './groupPolls/contracts';
 import { toolFields, policyFields } from './groupTools/contracts';
 import { responseFields as formResponseFields } from './groupForms/contracts';
 import { transferStatus } from './groupTransfers/contracts';
@@ -53,6 +58,28 @@ export default defineSchema({
     .index('by_personId', ['personId'])
     .index('by_toolId_and_personId', ['toolId', 'personId']),
   groupFormRevisions: defineTable(formResponseFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+
+  groupPolls: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    semanticVersion: v.number(),
+    mode: pollMode,
+    options: v.array(pollOption),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupPollVotes: defineTable(voteFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupPollRevisions: defineTable(voteFields)
     .index('by_toolId', ['toolId'])
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])

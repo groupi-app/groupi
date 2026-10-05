@@ -67,3 +67,5 @@ export { createGroupEventAudienceHooks } from './useGroupEventAudiences';
 
 export { createGroupFormHooks } from './useGroupForms';
 export { groupFormTemplates } from '../utils/group-form-templates';
+
+export { createGroupPollHooks } from './useGroupPolls';

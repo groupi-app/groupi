@@ -201,6 +201,13 @@ describe('production Group auth return screens', () => {
     '/groups/group-123/apply',
     '/groups/group-123/applications',
     '/groups/group-123/events',
+    '/groups/group-123/polls',
+    '/groups/group-123/polls/create',
+    '/groups/group-123/polls/policy',
+    '/groups/group-123/polls/poll-123',
+    '/groups/group-123/polls/poll-123/manage',
+    '/groups/group-123/polls/poll-123/history',
+    '/groups/group-123/polls/poll-123/results',
   ])(
     'preserves bounded %s through callback, session guard, and onboarding',
     async returnTo => {

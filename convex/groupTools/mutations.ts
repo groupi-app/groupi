@@ -9,3 +9,10 @@ export const configureFormPolicy = mutation({
   handler: async (ctx, args) =>
     setPolicy(ctx, (await requireAuth(ctx)).person._id, args),
 });
+
+export const configurePollPolicy = mutation({
+  args: { groupId: v.id('groups'), enabled: v.boolean(), creation },
+  returns: v.null(),
+  handler: async (ctx, args) =>
+    setPolicy(ctx, (await requireAuth(ctx)).person._id, args, 'POLL'),
+});

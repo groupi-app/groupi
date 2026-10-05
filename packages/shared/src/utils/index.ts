@@ -512,3 +512,5 @@ export type {
 } from './application-questions';
 
 export { groupFormTemplates } from './group-form-templates';
+
+export { GROUP_POLL_TEMPLATES } from './group-poll-templates';

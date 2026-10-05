@@ -27,6 +27,14 @@ describe('normalizeNativeIntentPath', () => {
       'https://groupi.gg/groups/group-123#group-applications',
       '/groups/group-123/applications',
     ],
+    [
+      'https://groupi.gg/groups/group-123/polls/new',
+      '/groups/group-123/polls/create',
+    ],
+    [
+      'https://groupi.gg/groups/group-123/polls/poll-123/settings',
+      '/groups/group-123/polls/poll-123/manage',
+    ],
     ['groupi:///settings/privacy', '/settings/privacy'],
     ['groupi://invite/invite-token', '/invite/invite-token'],
   ])('routes supported Groupi link %s', (path, expected) => {

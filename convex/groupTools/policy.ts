@@ -26,7 +26,8 @@ export async function getPolicy(
 export async function readPolicy(
   ctx: ReadCtx,
   personId: Id<'persons'>,
-  groupId: Id<'groups'>
+  groupId: Id<'groups'>,
+  kind: 'FORM' | 'POLL' | 'LIST' = 'FORM'
 ) {
   await requirePerson(ctx, personId);
   const member = await membershipFor(ctx, groupId, personId);
@@ -36,7 +37,7 @@ export async function readPolicy(
       message: 'Current Group membership required.',
     });
   return {
-    ...(await getPolicy(ctx, groupId, 'FORM')),
+    ...(await getPolicy(ctx, groupId, kind)),
     canConfigure: member.role === 'OWNER',
   };
 }
@@ -47,17 +48,18 @@ export async function setPolicy(
     groupId: Id<'groups'>;
     enabled: boolean;
     creation: 'MANAGERS' | 'MEMBERS';
-  }
+  },
+  kind: 'FORM' | 'POLL' | 'LIST' = 'FORM'
 ) {
   await requireOwner(ctx, input.groupId, personId);
   const row = await ctx.db
     .query('groupToolPolicies')
     .withIndex('by_groupId_and_kind', q =>
-      q.eq('groupId', input.groupId).eq('kind', 'FORM')
+      q.eq('groupId', input.groupId).eq('kind', kind)
     )
     .unique();
   if (row) await ctx.db.patch(row._id, { ...input });
-  else await ctx.db.insert('groupToolPolicies', { ...input, kind: 'FORM' });
+  else await ctx.db.insert('groupToolPolicies', { ...input, kind });
   return null;
 }
 /** Shared creation seam for separately implemented persistent tool interactions. */

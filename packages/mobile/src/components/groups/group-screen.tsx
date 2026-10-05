@@ -147,6 +147,20 @@ export function GroupDetailScreen() {
             ) : null}
             <GroupOwnershipTransfer groupId={id} />
             <Button
+              accessibilityLabel='Group polls'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/polls`)}
+            >
+              Polls and poll settings
+            </Button>
+            <Button
+              accessibilityLabel='Create Group poll'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/polls/create`)}
+            >
+              Create poll
+            </Button>
+            <Button
               accessibilityLabel='Group forms'
               variant='outline'
               onPress={() => router.push(`/groups/${id}/forms`)}

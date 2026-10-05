@@ -21,3 +21,23 @@ export const getFormPolicy = query({
     return { ...policy, kind: 'FORM' as const };
   },
 });
+
+export const getPollPolicy = query({
+  args: { groupId: v.id('groups') },
+  returns: v.object({
+    groupId: v.id('groups'),
+    kind: v.literal('POLL'),
+    enabled: v.boolean(),
+    creation,
+    canConfigure: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const policy = await readPolicy(
+      ctx,
+      (await requireAuth(ctx)).person._id,
+      args.groupId,
+      'POLL'
+    );
+    return { ...policy, kind: 'POLL' as const };
+  },
+});

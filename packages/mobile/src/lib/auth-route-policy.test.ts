@@ -133,3 +133,18 @@ it('allows only the bounded Group shared Event surface return route', () => {
   );
   expect(getSafeAuthReturnPath('/groups/group-123/events/private')).toBeNull();
 });
+
+it.each([
+  '/groups/group-123/polls',
+  '/groups/group-123/polls/create',
+  '/groups/group-123/polls/poll-123/history',
+])('preserves bounded poll route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBe(path)
+);
+it.each([
+  '/groups/group-123/polls/poll-123/history/private',
+  '/groups/group-123/polls/policy/private',
+  '/groups/group-123/polls/poll-123/unknown',
+])('rejects unknown nested poll route %s', path =>
+  expect(getSafeAuthReturnPath(path)).toBeNull()
+);

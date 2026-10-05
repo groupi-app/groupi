@@ -162,6 +162,21 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi groups forms policy](#groupi-groups-forms-policy)
 - [groupi groups forms policy get](#groupi-groups-forms-policy-get)
 - [groupi groups forms policy set](#groupi-groups-forms-policy-set)
+- [groupi groups polls](#groupi-groups-polls)
+- [groupi groups polls list](#groupi-groups-polls-list)
+- [groupi groups polls get](#groupi-groups-polls-get)
+- [groupi groups polls settings](#groupi-groups-polls-settings)
+- [groupi groups polls history](#groupi-groups-polls-history)
+- [groupi groups polls results](#groupi-groups-polls-results)
+- [groupi groups polls create](#groupi-groups-polls-create)
+- [groupi groups polls configure](#groupi-groups-polls-configure)
+- [groupi groups polls submit](#groupi-groups-polls-submit)
+- [groupi groups polls remove-own](#groupi-groups-polls-remove-own)
+- [groupi groups polls delete](#groupi-groups-polls-delete)
+- [groupi groups polls moderate](#groupi-groups-polls-moderate)
+- [groupi groups polls policy](#groupi-groups-polls-policy)
+- [groupi groups polls policy get](#groupi-groups-polls-policy-get)
+- [groupi groups polls policy set](#groupi-groups-polls-policy-set)
 - [groupi groups application-form](#groupi-groups-application-form)
 - [groupi groups application-get](#groupi-groups-application-get)
 - [groupi groups application-history](#groupi-groups-application-history)
@@ -1852,6 +1867,7 @@ Commands:
   bans [options] <group-id>                                   List private active Group bans as manager
   questionnaire                                               Post-admission questionnaire and private retained records
   forms                                                       Persistent ordinary forms, separate from the joining questionnaire
+  polls                                                       Persistent independent polls; never selects Event dates or RSVP
   application-form <group-id>                                 Read admission form and your private pending application
   application-get <group-id> <application-id>                 Read a private application as author or current manager
   application-history [options] <group-id>                    Read your retained private application history
@@ -2469,6 +2485,222 @@ Options:
 Usage: groupi groups forms policy set [options] <group-id>
 
 Set forms policy as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
+```
+
+## groupi groups polls
+
+```text
+Usage: groupi groups polls [options] [command]
+
+Persistent independent polls; never selects Event dates or RSVP
+
+Options:
+  -h, --help                                         display help for command
+
+Commands:
+  list [options] <group-id>                          list persistent polls
+  get <group-id> <tool-id>                           get persistent polls
+  settings <group-id> <tool-id>                      settings persistent polls (eligible managers;
+                                                     disabled polls remain manageable)
+  history [options] <group-id> <tool-id>             history persistent polls (your retained vote
+                                                     snapshots)
+  results [options] <group-id> <tool-id>             results persistent polls (stated results
+                                                     visibility applies)
+  create [options] <group-id>                        create a persistent Group poll
+  configure [options] <group-id> <tool-id>           configure a persistent Group poll
+  submit [options] <group-id> <tool-id>              submit a persistent Group poll
+  remove-own [options] <group-id> <tool-id>          remove-own a persistent Group poll vote and
+                                                     retained history
+  delete [options] <group-id> <tool-id>              delete a persistent Group poll
+  moderate [options] <group-id> <tool-id> <vote-id>  moderate a persistent Group poll
+  policy                                             Owner controls ordinary poll availability and
+                                                     creation
+  help [command]                                     display help for command
+```
+
+## groupi groups polls list
+
+```text
+Usage: groupi groups polls list [options] <group-id>
+
+list persistent polls
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls get
+
+```text
+Usage: groupi groups polls get [options] <group-id> <tool-id>
+
+get persistent polls
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls settings
+
+```text
+Usage: groupi groups polls settings [options] <group-id> <tool-id>
+
+settings persistent polls (eligible managers; disabled polls remain manageable)
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls history
+
+```text
+Usage: groupi groups polls history [options] <group-id> <tool-id>
+
+history persistent polls (your retained vote snapshots)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls results
+
+```text
+Usage: groupi groups polls results [options] <group-id> <tool-id>
+
+results persistent polls (stated results visibility applies)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls create
+
+```text
+Usage: groupi groups polls create [options] <group-id>
+
+create a persistent Group poll
+
+Options:
+  --title <text>                     Poll title
+  --mode <mode>                      SINGLE or MULTIPLE
+  --description <text>               Poll description
+  --options-json <json>              Stable-ID {id,label} options JSON (2–50)
+  --results-visibility <visibility>  Immutable MANAGERS or MEMBERS results visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups polls configure
+
+```text
+Usage: groupi groups polls configure [options] <group-id> <tool-id>
+
+configure a persistent Group poll
+
+Options:
+  --title <text>           Poll title
+  --mode <mode>            SINGLE or MULTIPLE
+  --description <text>     Poll description
+  --options-json <json>    Stable-ID {id,label} options JSON (2–50)
+  --poll-version <number>  Current poll version from get
+  -h, --help               display help for command
+```
+
+## groupi groups polls submit
+
+```text
+Usage: groupi groups polls submit [options] <group-id> <tool-id>
+
+submit a persistent Group poll
+
+Options:
+  --poll-version <number>       Current poll version from get
+  --expected-revision <number>  Current own vote revision; 0 for first submission
+  --selections-json <json>      Selected option-ID JSON array
+  -h, --help                    display help for command
+```
+
+## groupi groups polls remove-own
+
+```text
+Usage: groupi groups polls remove-own [options] <group-id> <tool-id>
+
+remove-own a persistent Group poll vote and retained history
+
+Options:
+  --expected-revision <number>  Current vote revision
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups polls delete
+
+```text
+Usage: groupi groups polls delete [options] <group-id> <tool-id>
+
+delete a persistent Group poll
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups polls moderate
+
+```text
+Usage: groupi groups polls moderate [options] <group-id> <tool-id> <vote-id>
+
+moderate a persistent Group poll
+
+Options:
+  --expected-revision <number>  Current vote revision
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups polls policy
+
+```text
+Usage: groupi groups polls policy [options] [command]
+
+Owner controls ordinary poll availability and creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>            Read polls policy
+  set [options] <group-id>  Set polls policy as owner
+  help [command]            display help for command
+```
+
+## groupi groups polls policy get
+
+```text
+Usage: groupi groups polls policy get [options] <group-id>
+
+Read polls policy
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls policy set
+
+```text
+Usage: groupi groups polls policy set [options] <group-id>
+
+Set polls policy as owner
 
 Options:
   --enabled <boolean>  true or false
