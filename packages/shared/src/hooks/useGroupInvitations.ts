@@ -1,28 +1,92 @@
-import type { useMutation, useQuery, ReactMutation } from 'convex/react';
-import type { FunctionReference, FunctionReturnType } from 'convex/server';
+import type { useMutation, useQuery } from 'convex/react';
+import type { FunctionReference } from 'convex/server';
 import type { ConvexId } from './types';
-interface GroupInvitationApi {
+interface GroupInvitationApi<
+  ListMyGroupInvitesResult,
+  ListGroupInvitesResult,
+  GetMyGroupInviteForGroupResult,
+  ListGroupMembersResult,
+  SendGroupInviteMutation extends FunctionReference<'mutation'>,
+  AcceptGroupInviteMutation extends FunctionReference<'mutation'>,
+  DeclineGroupInviteMutation extends FunctionReference<'mutation'>,
+  CancelGroupInviteMutation extends FunctionReference<'mutation'>,
+  UpdateGroupInvitationPolicyMutation extends FunctionReference<'mutation'>,
+> {
   groupInvites: {
     queries: {
-      listMyGroupInvites: FunctionReference<'query'>;
-      listGroupInvites: FunctionReference<'query'>;
-      getMyGroupInviteForGroup: FunctionReference<'query'>;
+      listMyGroupInvites: FunctionReference<
+        'query',
+        'public',
+        {
+          paginationOpts: { numItems: number; cursor: string | null };
+          status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
+        },
+        ListMyGroupInvitesResult
+      >;
+      listGroupInvites: FunctionReference<
+        'query',
+        'public',
+        {
+          groupId: ConvexId<'groups'>;
+          paginationOpts: { numItems: number; cursor: string | null };
+          status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
+        },
+        ListGroupInvitesResult
+      >;
+      getMyGroupInviteForGroup: FunctionReference<
+        'query',
+        'public',
+        { groupId: ConvexId<'groups'> },
+        GetMyGroupInviteForGroupResult
+      >;
     };
     mutations: {
-      sendGroupInvite: FunctionReference<'mutation'>;
-      acceptGroupInvite: FunctionReference<'mutation'>;
-      declineGroupInvite: FunctionReference<'mutation'>;
-      cancelGroupInvite: FunctionReference<'mutation'>;
+      sendGroupInvite: SendGroupInviteMutation;
+      acceptGroupInvite: AcceptGroupInviteMutation;
+      declineGroupInvite: DeclineGroupInviteMutation;
+      cancelGroupInvite: CancelGroupInviteMutation;
     };
   };
   groups: {
-    queries: { listGroupMembers: FunctionReference<'query'> };
-    mutations: { updateGroupInvitationPolicy: FunctionReference<'mutation'> };
+    queries: {
+      listGroupMembers: FunctionReference<
+        'query',
+        'public',
+        {
+          groupId: ConvexId<'groups'>;
+          paginationOpts: { numItems: number; cursor: string | null };
+        },
+        ListGroupMembersResult
+      >;
+    };
+    mutations: {
+      updateGroupInvitationPolicy: UpdateGroupInvitationPolicyMutation;
+    };
   };
 }
 /** Uses only the consuming app's SDK, preserving its provider identity. */
-export function createGroupInvitationHooks<Api extends GroupInvitationApi>(
-  api: Api,
+export function createGroupInvitationHooks<
+  ListMyGroupInvitesResult,
+  ListGroupInvitesResult,
+  GetMyGroupInviteForGroupResult,
+  ListGroupMembersResult,
+  SendGroupInviteMutation extends FunctionReference<'mutation'>,
+  AcceptGroupInviteMutation extends FunctionReference<'mutation'>,
+  DeclineGroupInviteMutation extends FunctionReference<'mutation'>,
+  CancelGroupInviteMutation extends FunctionReference<'mutation'>,
+  UpdateGroupInvitationPolicyMutation extends FunctionReference<'mutation'>,
+>(
+  api: GroupInvitationApi<
+    ListMyGroupInvitesResult,
+    ListGroupInvitesResult,
+    GetMyGroupInviteForGroupResult,
+    ListGroupMembersResult,
+    SendGroupInviteMutation,
+    AcceptGroupInviteMutation,
+    DeclineGroupInviteMutation,
+    CancelGroupInviteMutation,
+    UpdateGroupInvitationPolicyMutation
+  >,
   hooks: { useQuery: typeof useQuery; useMutation: typeof useMutation }
 ) {
   type Page = { numItems: number; cursor: string | null };
@@ -34,9 +98,7 @@ export function createGroupInvitationHooks<Api extends GroupInvitationApi>(
     return hooks.useQuery(api.groupInvites.queries.listMyGroupInvites, {
       paginationOpts,
       ...(status ? { status } : {}),
-    }) as
-      | FunctionReturnType<Api['groupInvites']['queries']['listMyGroupInvites']>
-      | undefined;
+    });
   }
   function useGroupInvites(
     groupId: ConvexId<'groups'>,
@@ -47,18 +109,12 @@ export function createGroupInvitationHooks<Api extends GroupInvitationApi>(
       groupId,
       paginationOpts,
       ...(status ? { status } : {}),
-    }) as
-      | FunctionReturnType<Api['groupInvites']['queries']['listGroupInvites']>
-      | undefined;
+    });
   }
   function useMyGroupInviteForGroup(groupId: ConvexId<'groups'>) {
     return hooks.useQuery(api.groupInvites.queries.getMyGroupInviteForGroup, {
       groupId,
-    }) as
-      | FunctionReturnType<
-          Api['groupInvites']['queries']['getMyGroupInviteForGroup']
-        >
-      | undefined;
+    });
   }
   function useGroupMembers(
     groupId: ConvexId<'groups'> | 'skip',
@@ -72,36 +128,32 @@ export function createGroupInvitationHooks<Api extends GroupInvitationApi>(
             groupId,
             paginationOpts,
           }
-    ) as
-      | FunctionReturnType<Api['groups']['queries']['listGroupMembers']>
-      | undefined;
+    );
   }
   function useSendGroupInvite() {
-    return hooks.useMutation(
+    return hooks.useMutation<SendGroupInviteMutation>(
       api.groupInvites.mutations.sendGroupInvite
-    ) as ReactMutation<Api['groupInvites']['mutations']['sendGroupInvite']>;
+    );
   }
   function useAcceptGroupInvite() {
-    return hooks.useMutation(
+    return hooks.useMutation<AcceptGroupInviteMutation>(
       api.groupInvites.mutations.acceptGroupInvite
-    ) as ReactMutation<Api['groupInvites']['mutations']['acceptGroupInvite']>;
+    );
   }
   function useDeclineGroupInvite() {
-    return hooks.useMutation(
+    return hooks.useMutation<DeclineGroupInviteMutation>(
       api.groupInvites.mutations.declineGroupInvite
-    ) as ReactMutation<Api['groupInvites']['mutations']['declineGroupInvite']>;
+    );
   }
   function useCancelGroupInvite() {
-    return hooks.useMutation(
+    return hooks.useMutation<CancelGroupInviteMutation>(
       api.groupInvites.mutations.cancelGroupInvite
-    ) as ReactMutation<Api['groupInvites']['mutations']['cancelGroupInvite']>;
+    );
   }
   function useUpdateGroupInvitationPolicy() {
-    return hooks.useMutation(
+    return hooks.useMutation<UpdateGroupInvitationPolicyMutation>(
       api.groups.mutations.updateGroupInvitationPolicy
-    ) as ReactMutation<
-      Api['groups']['mutations']['updateGroupInvitationPolicy']
-    >;
+    );
   }
   return {
     useMyGroupInvites,

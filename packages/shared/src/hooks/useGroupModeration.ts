@@ -1,61 +1,89 @@
-import type { useQuery, useMutation, ReactMutation } from 'convex/react';
-import type { FunctionReference, FunctionReturnType } from 'convex/server';
+import type { useQuery, useMutation } from 'convex/react';
+import type { FunctionReference } from 'convex/server';
 import type { ConvexId } from './types';
-interface GroupModerationApi {
+interface GroupModerationApi<
+  ListGroupBansResult,
+  SetGroupMemberRoleMutation extends FunctionReference<'mutation'>,
+  RemoveGroupMemberMutation extends FunctionReference<'mutation'>,
+  BanGroupPersonMutation extends FunctionReference<'mutation'>,
+  LiftGroupBanMutation extends FunctionReference<'mutation'>,
+  LeaveGroupMutation extends FunctionReference<'mutation'>,
+> {
   groupModeration: {
-    queries: { listGroupBans: FunctionReference<'query'> };
+    queries: {
+      listGroupBans: FunctionReference<
+        'query',
+        'public',
+        {
+          groupId: ConvexId<'groups'>;
+          paginationOpts: { numItems: number; cursor: string | null };
+        },
+        ListGroupBansResult
+      >;
+    };
     mutations: {
-      setGroupMemberRole: FunctionReference<'mutation'>;
-      removeGroupMember: FunctionReference<'mutation'>;
-      banGroupPerson: FunctionReference<'mutation'>;
-      liftGroupBan: FunctionReference<'mutation'>;
-      leaveGroup: FunctionReference<'mutation'>;
+      setGroupMemberRole: SetGroupMemberRoleMutation;
+      removeGroupMember: RemoveGroupMemberMutation;
+      banGroupPerson: BanGroupPersonMutation;
+      liftGroupBan: LiftGroupBanMutation;
+      leaveGroup: LeaveGroupMutation;
     };
   };
 }
-export function createGroupModerationHooks<Api extends GroupModerationApi>(
-  api: Api,
+export function createGroupModerationHooks<
+  ListGroupBansResult,
+  SetGroupMemberRoleMutation extends FunctionReference<'mutation'>,
+  RemoveGroupMemberMutation extends FunctionReference<'mutation'>,
+  BanGroupPersonMutation extends FunctionReference<'mutation'>,
+  LiftGroupBanMutation extends FunctionReference<'mutation'>,
+  LeaveGroupMutation extends FunctionReference<'mutation'>,
+>(
+  api: GroupModerationApi<
+    ListGroupBansResult,
+    SetGroupMemberRoleMutation,
+    RemoveGroupMemberMutation,
+    BanGroupPersonMutation,
+    LiftGroupBanMutation,
+    LeaveGroupMutation
+  >,
   hooks: { useQuery: typeof useQuery; useMutation: typeof useMutation }
 ) {
   function useGroupBans(
     groupId: ConvexId<'groups'>,
-    paginationOpts = { numItems: 20, cursor: null as string | null }
+    paginationOpts: { numItems: number; cursor: string | null } = {
+      numItems: 20,
+      cursor: null,
+    }
   ) {
     return hooks.useQuery(api.groupModeration.queries.listGroupBans, {
       groupId,
       paginationOpts,
-    }) as
-      | FunctionReturnType<Api['groupModeration']['queries']['listGroupBans']>
-      | undefined;
+    });
   }
   function useSetGroupMemberRole() {
-    return hooks.useMutation(
+    return hooks.useMutation<SetGroupMemberRoleMutation>(
       api.groupModeration.mutations.setGroupMemberRole
-    ) as ReactMutation<
-      Api['groupModeration']['mutations']['setGroupMemberRole']
-    >;
+    );
   }
   function useRemoveGroupMember() {
-    return hooks.useMutation(
+    return hooks.useMutation<RemoveGroupMemberMutation>(
       api.groupModeration.mutations.removeGroupMember
-    ) as ReactMutation<
-      Api['groupModeration']['mutations']['removeGroupMember']
-    >;
+    );
   }
   function useBanGroupPerson() {
-    return hooks.useMutation(
+    return hooks.useMutation<BanGroupPersonMutation>(
       api.groupModeration.mutations.banGroupPerson
-    ) as ReactMutation<Api['groupModeration']['mutations']['banGroupPerson']>;
+    );
   }
   function useLiftGroupBan() {
-    return hooks.useMutation(
+    return hooks.useMutation<LiftGroupBanMutation>(
       api.groupModeration.mutations.liftGroupBan
-    ) as ReactMutation<Api['groupModeration']['mutations']['liftGroupBan']>;
+    );
   }
   function useLeaveGroup() {
-    return hooks.useMutation(
+    return hooks.useMutation<LeaveGroupMutation>(
       api.groupModeration.mutations.leaveGroup
-    ) as ReactMutation<Api['groupModeration']['mutations']['leaveGroup']>;
+    );
   }
   return {
     useGroupBans,
