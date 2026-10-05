@@ -26,6 +26,7 @@ const network = vi.hoisted(() => ({
   selections: [] as string[],
   revision: 0,
   authenticated: true,
+  visibility: 'MANAGERS' as 'MANAGERS' | 'MEMBERS',
   member: true,
   manager: true,
   moderator: false,
@@ -142,7 +143,7 @@ function result(name: string, _args: Record<string, unknown>) {
       voteRevision: network.revision,
       canManage: network.manager,
       canReview: network.manager,
-      resultsVisibility: 'MANAGERS',
+      resultsVisibility: network.visibility,
     };
   if (name === 'groupPolls/queries:listPolls')
     return {
@@ -212,6 +213,7 @@ async function press(mounted: Mounted, label: string) {
 
 beforeEach(() => {
   network.mode = 'SINGLE';
+  network.visibility = 'MANAGERS';
   network.selections = [];
   network.revision = 0;
   network.saved = false;
@@ -406,3 +408,29 @@ it('failed removal retains history and retries only after explicit current-revis
   );
   await act(async () => m.unmount());
 });
+
+it.each(['MANAGERS', 'MEMBERS'] as const)(
+  'discloses %s vote retention before saving without promising departure erasure',
+  async visibility => {
+    network.visibility = visibility;
+    const m = await mount(PollScreen);
+    const text = m.root
+      .findAll(n => n.type === 'Text')
+      .map(n => n.props.children)
+      .filter(value => typeof value === 'string')
+      .join(' ');
+    expect(text).toContain(
+      'Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots.'
+    );
+    expect(text).toContain(
+      'Explicitly removing your vote clears its selections and private history.'
+    );
+    expect(text).toContain(
+      visibility === 'MANAGERS'
+        ? 'Account deletion purges your private votes and history.'
+        : 'Account deletion preserves shared latest votes anonymously and purges private history.'
+    );
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => m.unmount());
+  }
+);

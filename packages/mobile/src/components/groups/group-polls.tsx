@@ -523,8 +523,8 @@ function PollVotes({ groupId, poll }: { groupId: GroupId; poll: Poll }) {
       <Text>{poll.description}</Text>
       <Text>
         {poll.resultsVisibility === 'MANAGERS'
-          ? 'Private votes are visible to managers and are purged when you leave or are removed from this Group, or delete your account.'
-          : 'Shared votes are visible to eligible members. After leaving, removal, or account deletion they persist anonymously; membership identity is removed.'}
+          ? 'Private votes are visible to you and current eligible Group managers. Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion purges your private votes and history.'
+          : 'Shared votes are visible to current eligible Group members. Leaving or being removed from the Group retains your saved vote with your author identity and private snapshots. Explicitly removing your vote clears its selections and private history. Account deletion preserves shared latest votes anonymously and purges private history.'}
       </Text>
       <Text>
         {poll.mode === 'SINGLE'
