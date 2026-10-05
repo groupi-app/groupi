@@ -320,11 +320,11 @@ it('does not fabricate private Group or Friends reasons for a legacy summary wit
   expect(screen.getByRole('link', { name: 'View Event' })).toBeInTheDocument();
 });
 
-it('keeps Group-only Apply unavailable on the T12 source while retaining private historical reads', async () => {
+it('routes current Group-only Apply through its safe preview without joining', async () => {
   transport.events = [
-    { ...summary, admissionPolicy: 'APPLY', entryAction: 'UNAVAILABLE' },
+    { ...summary, admissionPolicy: 'APPLY', entryAction: 'APPLY' },
   ];
-  transport.entryAction = 'UNAVAILABLE';
+  transport.entryAction = 'APPLY';
   transport.admissionPolicy = 'APPLY';
   mount(Routes);
   await userEvent.click(screen.getByRole('link', { name: 'View Event' }));
@@ -332,7 +332,7 @@ it('keeps Group-only Apply unavailable on the T12 source while retaining private
     screen.queryByRole('button', { name: 'Join Event' })
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole('link', { name: /Apply for approval/i })
-  ).not.toBeInTheDocument();
+    screen.getByRole('link', { name: /Apply for approval/i })
+  ).toHaveAttribute('href', '/event/event-123/apply');
   expect(transport.mutation).not.toHaveBeenCalled();
 });

@@ -57,10 +57,10 @@ groupi --profile "$ATTENDEE_PROFILE" events rsvp get "$EVENT_ID" --format json
 ## event-ownership-transfer
 
 ```sh
-groupi --profile "$ORGANIZER_PROFILE" events transfer offer "$EVENT_ID" "$RECIPIENT_PERSON_ID" --yes
-groupi --profile "$ATTENDEE_PROFILE" events transfer status "$EVENT_ID"
-groupi --profile "$ATTENDEE_PROFILE" events transfer accept "$EVENT_ID" "$TRANSFER_ID" --yes
-groupi --profile "$ORGANIZER_PROFILE" events transfer status "$EVENT_ID"
+groupi --profile "$ORGANIZER_PROFILE" events transfer offer "$EVENT_ID" "$RECIPIENT_PERSON_ID" --yes --format json
+groupi --profile "$ATTENDEE_PROFILE" events transfer status "$EVENT_ID" --format json
+groupi --profile "$ATTENDEE_PROFILE" events transfer accept "$EVENT_ID" "$TRANSFER_ID" --yes --format json
+groupi --profile "$ORGANIZER_PROFILE" events transfer status "$EVENT_ID" --format json
 ```
 
 Windows users can pass the same arguments from PowerShell or a process API; shell variable assignment and quoting follow the host shell.

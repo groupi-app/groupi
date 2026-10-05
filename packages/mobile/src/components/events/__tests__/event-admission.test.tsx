@@ -888,7 +888,7 @@ describe('native safe event admission', () => {
       });
     }
   );
-  it('does not invent access reasons for a legacy summary and keeps Group-only Apply unavailable', async () => {
+  it('does not invent access reasons for a legacy summary or bypass current unavailable admission', async () => {
     const item = {
       eventId: 'event-123',
       title: 'Park picnic',

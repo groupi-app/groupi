@@ -152,12 +152,14 @@
         "offer",
         "$EVENT_ID",
         "$RECIPIENT_PERSON_ID",
-        "--yes"
+        "--yes",
+        "--format",
+        "json"
       ]
     },
     {
       "identity": "attendee",
-      "args": ["events", "transfer", "status", "$EVENT_ID"]
+      "args": ["events", "transfer", "status", "$EVENT_ID", "--format", "json"]
     },
     {
       "identity": "attendee",
@@ -167,12 +169,14 @@
         "accept",
         "$EVENT_ID",
         "$TRANSFER_ID",
-        "--yes"
+        "--yes",
+        "--format",
+        "json"
       ]
     },
     {
       "identity": "organizer",
-      "args": ["events", "transfer", "status", "$EVENT_ID"]
+      "args": ["events", "transfer", "status", "$EVENT_ID", "--format", "json"]
     }
   ]
 }

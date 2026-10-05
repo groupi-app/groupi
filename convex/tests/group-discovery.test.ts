@@ -133,7 +133,7 @@ it('deduplicates overlap and keeps only viewer-applicable reasons, with independ
   ).toEqual([]);
 });
 
-it('rechecks required onboarding and policy at direct admission, recovers dynamically, and keeps Group-only Apply unavailable', async () => {
+it('rechecks required onboarding and policy, recovers dynamically, and exposes Group-only Apply without direct admission', async () => {
   vi.useFakeTimers();
   const t = createTestInstance();
   registerBetterAuth(t);
@@ -198,7 +198,7 @@ it('rechecks required onboarding and policy at direct admission, recovers dynami
   expect(
     (await viewer.auth.query(api.events.queries.getDiscoverableEvents, {}))[0]
       .entryAction
-  ).toBe('UNAVAILABLE');
+  ).toBe('APPLY');
   await expect(
     viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
       eventId,
