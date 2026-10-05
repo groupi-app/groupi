@@ -353,6 +353,22 @@ it('retires mixed ordinary tools and cancels list retry expiry without broadcast
     resultsVisibility: 'MANAGERS',
     questions: [],
   });
+  const poll = await owner.auth.mutation(api.groupPolls.mutations.createPoll, {
+    groupId,
+    title: 'Poll',
+    mode: 'SINGLE',
+    options: [
+      { id: 'day', label: 'Day' },
+      { id: 'night', label: 'Night' },
+    ],
+    resultsVisibility: 'MEMBERS',
+  });
+  await member.auth.mutation(api.groupPolls.mutations.submitVote, {
+    toolId: poll,
+    version: 1,
+    expectedRevision: 0,
+    selections: ['day'],
+  });
   await member.auth.mutation(api.groupLists.mutations.addEntry, {
     toolId: list,
     version: 1,
@@ -374,7 +390,28 @@ it('retires mixed ordinary tools and cancels list retry expiry without broadcast
   expect(await t.run(ctx => ctx.db.query('notifications').collect())).toEqual(
     []
   );
+  const savedForm = () =>
+    member.auth.query(api.groupForms.queries.getOwnHistory, {
+      toolId: form,
+      paginationOpts: page,
+    });
+  const savedPoll = () =>
+    member.auth.query(api.groupPolls.queries.getOwnHistory, {
+      toolId: poll,
+      paginationOpts: page,
+    });
+  const savedList = () =>
+    member.auth.query(api.groupLists.queries.getOwnEntries, {
+      toolId: list,
+      paginationOpts: page,
+    });
+  expect((await savedForm()).page).toHaveLength(1);
+  expect((await savedPoll()).page).toHaveLength(1);
+  expect((await savedList()).page).toHaveLength(1);
   await owner.auth.mutation(api.groups.mutations.deleteGroup, { groupId });
+  expect((await savedForm()).page).toEqual([]);
+  expect((await savedPoll()).page).toEqual([]);
+  expect((await savedList()).page).toEqual([]);
   for (const table of [
     'groupTools',
     'groupLists',
@@ -382,6 +419,10 @@ it('retires mixed ordinary tools and cancels list retry expiry without broadcast
     'groupListRequests',
     'groupForms',
     'groupFormResponses',
+    'groupFormRevisions',
+    'groupPolls',
+    'groupPollVotes',
+    'groupPollRevisions',
   ] as const)
     expect(await t.run(ctx => ctx.db.query(table).collect())).toEqual([]);
   expect(

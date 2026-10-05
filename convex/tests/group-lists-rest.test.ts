@@ -165,12 +165,51 @@ it.each(['self', 'admin-session', 'admin-rest'] as const)(
       })
     );
     const tools = [];
+    const forms = [];
+    const polls = [];
     for (const resultsVisibility of ['MANAGERS', 'MEMBERS'] as const) {
       const toolId = await author.auth.mutation(
         api.groupLists.mutations.createList,
         { groupId, title: resultsVisibility, resultsVisibility }
       );
       tools.push(toolId);
+      const formId = await author.auth.mutation(
+        api.groupForms.mutations.createForm,
+        {
+          groupId,
+          title: resultsVisibility,
+          resultsVisibility,
+          questions: [],
+        }
+      );
+      forms.push(formId);
+      await author.auth.mutation(api.groupForms.mutations.submitResponse, {
+        toolId: formId,
+        version: 1,
+        expectedRevision: 0,
+        answers: {},
+      });
+      const pollId = await author.auth.mutation(
+        api.groupPolls.mutations.createPoll,
+        {
+          groupId,
+          title: resultsVisibility,
+          resultsVisibility,
+          mode: 'SINGLE',
+          options: [
+            { id: 'one', label: 'One' },
+            { id: 'two', label: 'Two' },
+          ],
+        }
+      );
+      polls.push(pollId);
+      await author.auth.mutation(api.groupPolls.mutations.submitVote, {
+        toolId: pollId,
+        version: 1,
+        expectedRevision: 0,
+        selections: ['one'],
+      });
+
       await author.auth.mutation(api.groupLists.mutations.addEntry, {
         toolId,
         version: 1,
@@ -199,6 +238,29 @@ it.each(['self', 'admin-session', 'admin-rest'] as const)(
       toolId: tools[1],
       paginationOpts: { numItems: 20, cursor: null },
     });
+    const paginationOpts = { numItems: 20, cursor: null };
+    const privateForm = await owner.auth.query(
+      api.groupForms.queries.listResults,
+      { toolId: forms[0], paginationOpts }
+    );
+    const sharedForm = await owner.auth.query(
+      api.groupForms.queries.listResults,
+      { toolId: forms[1], paginationOpts }
+    );
+    const privatePoll = await owner.auth.query(
+      api.groupPolls.queries.listResults,
+      { toolId: polls[0], paginationOpts }
+    );
+    const sharedPoll = await owner.auth.query(
+      api.groupPolls.queries.listResults,
+      { toolId: polls[1], paginationOpts }
+    );
+    expect(privateForm.page).toEqual([]);
+    expect(privatePoll.page).toEqual([]);
+    expect(sharedForm.page).toHaveLength(1);
+    expect(sharedForm.page[0].personId).toBeUndefined();
+    expect(sharedPoll.page).toHaveLength(1);
+    expect(sharedPoll.page[0].personId).toBeUndefined();
     expect(own.page).toEqual([]);
     expect(shared.page).toHaveLength(1);
     expect(shared.page[0].personId).toBeUndefined();
