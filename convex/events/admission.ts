@@ -87,6 +87,22 @@ export async function eventAdmissionAccess(
   };
 }
 
+/** The same current admission action is advertised by session and REST discovery. */
+export async function discoveryEntryActionForPerson(
+  ctx: ReadCtx,
+  event: Doc<'events'>,
+  personId: Id<'persons'>
+) {
+  const access = await eventAdmissionAccess(ctx, event, personId);
+  return access.canJoin
+    ? ('JOIN' as const)
+    : access.canApply
+      ? ('APPLY' as const)
+      : resolveAdmissionPolicy(event) === 'INVITATION_ONLY'
+        ? ('INVITATION_ONLY' as const)
+        : ('UNAVAILABLE' as const);
+}
+
 export async function eventLogisticsForPerson(
   ctx: ReadCtx,
   eventId: Id<'events'>,

@@ -2,7 +2,7 @@ import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import {
   eventLogisticsForPerson,
   resolveAdmissionPolicy,
-  eventAdmissionAccess,
+  discoveryEntryActionForPerson,
   updateAdmissionPolicyForPerson,
 } from './admission';
 import {
@@ -251,16 +251,11 @@ export const discover = internalQuery({
         title: event.title,
         admissionPolicy: resolveAdmissionPolicy(event),
         accessReasons: await eventDiscoveryReasons(ctx, event, args.personId),
-        entryAction: await (async () => {
-          const access = await eventAdmissionAccess(ctx, event, args.personId);
-          return access.canJoin
-            ? ('JOIN' as const)
-            : access.canApply
-              ? ('APPLY' as const)
-              : resolveAdmissionPolicy(event) === 'INVITATION_ONLY'
-                ? ('INVITATION_ONLY' as const)
-                : ('UNAVAILABLE' as const);
-        })(),
+        entryAction: await discoveryEntryActionForPerson(
+          ctx,
+          event,
+          args.personId
+        ),
         description: event.description ?? null,
         location: event.location ?? null,
         chosenDateTime: event.chosenDateTime ?? null,

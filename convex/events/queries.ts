@@ -5,7 +5,7 @@ import {
 import {
   eventLogisticsForPerson,
   resolveAdmissionPolicy,
-  eventAdmissionAccess,
+  discoveryEntryActionForPerson,
 } from './admission';
 import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
@@ -802,20 +802,11 @@ export const getDiscoverableEvents = query({
             event,
             currentPerson._id
           ),
-          entryAction: await (async () => {
-            const access = await eventAdmissionAccess(
-              ctx,
-              event,
-              currentPerson._id
-            );
-            return access.canJoin
-              ? ('JOIN' as const)
-              : access.canApply
-                ? ('APPLY' as const)
-                : resolveAdmissionPolicy(event) === 'INVITATION_ONLY'
-                  ? ('INVITATION_ONLY' as const)
-                  : ('UNAVAILABLE' as const);
-          })(),
+          entryAction: await discoveryEntryActionForPerson(
+            ctx,
+            event,
+            currentPerson._id
+          ),
           organizer: organizerData
             ? {
                 personId: organizerData.person._id,
