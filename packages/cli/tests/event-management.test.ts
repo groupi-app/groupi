@@ -24,7 +24,8 @@ async function endpoint(
   handler: (req: IncomingMessage, res: ServerResponse) => void,
   capability = true,
   pendingRsvpJoin = true,
-  eventAdmission = true
+  eventAdmission = true,
+  groupDiscovery: boolean | number | string = true
 ) {
   const server = createServer((req, res) => {
     res.setHeader('content-type', 'application/json');
@@ -34,6 +35,13 @@ async function endpoint(
           capabilities: capability
             ? {
                 ...(eventAdmission ? { eventAdmission: { version: 1 } } : {}),
+                ...(groupDiscovery
+                  ? {
+                      groupDiscovery: {
+                        version: groupDiscovery === true ? 1 : groupDiscovery,
+                      },
+                    }
+                  : {}),
                 eventManagement: {
                   version: 1,
                   ...(pendingRsvpJoin ? { pendingRsvpJoin: true } : {}),
@@ -447,4 +455,89 @@ test('admission settings refuse an older server before attempting a write', asyn
   expect(result.code).not.toBe(0);
   expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
   expect(writes).toBe(0);
+});
+
+test.each([false, 2, 'invalid'])(
+  'refuses missing or malformed Group-aware admission (%s) before any write',
+  async groupCapability => {
+    let writes = 0;
+    await endpoint(
+      (req, res) => {
+        if (req.method !== 'GET') writes++;
+        res.end('{}');
+      },
+      true,
+      true,
+      true,
+      groupCapability
+    );
+    const result = await cli(['events', 'join', 'event-1']);
+    expect(result.code).not.toBe(0);
+    expect(result.stderr + result.stdout).toContain('UNSUPPORTED_SERVER');
+    expect(writes).toBe(0);
+  }
+);
+
+test('projects only supported Group reasons and truthful unavailable actions', async () => {
+  await endpoint((_req, res) =>
+    res.end(
+      JSON.stringify({
+        items: [
+          {
+            id: 'event-1',
+            title: 'Private shared',
+            entryAction: 'UNAVAILABLE',
+            admissionPolicy: 'APPLY',
+            accessReasons: {
+              friends: false,
+              groups: [
+                {
+                  groupId: 'group-1',
+                  name: 'Readers',
+                  email: 'private@example.test',
+                },
+              ],
+              foreignGroups: ['secret'],
+            },
+            privateAnswers: { book: 'private' },
+          },
+        ],
+        nextCursor: null,
+      })
+    )
+  );
+  const result = await cli(['events', 'discover']);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout).items[0]).toMatchObject({
+    entryAction: 'UNAVAILABLE',
+    accessReasons: {
+      friends: false,
+      groups: [{ groupId: 'group-1', name: 'Readers' }],
+    },
+  });
+  expect(result.stdout).not.toContain('private@example.test');
+  expect(result.stdout).not.toContain('secret');
+  expect(result.stdout).not.toContain('privateAnswers');
+});
+test('rejects malformed Group reason fields instead of fabricating eligibility', async () => {
+  await endpoint((_req, res) =>
+    res.end(
+      JSON.stringify({
+        items: [
+          {
+            id: 'event-1',
+            title: 'Malformed',
+            accessReasons: {
+              friends: false,
+              groups: [{ groupId: 'group-1', name: 12 }],
+            },
+          },
+        ],
+        nextCursor: null,
+      })
+    )
+  );
+  const result = await cli(['events', 'discover']);
+  expect(result.code).not.toBe(0);
+  expect(result.stdout + result.stderr).toContain('INVALID_RESPONSE');
 });

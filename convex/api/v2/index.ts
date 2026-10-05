@@ -276,6 +276,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         groupTransfers: { version: 1, retirement: true },
         groupApplications: { version: 1 },
         groupEventAudiences: { version: 1 },
+        groupDiscovery: { version: 1 },
         groups: { version: 1, announcements: 1, forms: 1 },
         groupQuestionnaire: { version: 2 },
         discussion: { version: 1 },

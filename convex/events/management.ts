@@ -1,10 +1,12 @@
-import { resolveAdmissionPolicy, hasEventAudience } from './admission';
+import { resolveAdmissionPolicy, eventAdmissionAccess } from './admission';
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
+import { requirePerson } from '../groups/model';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
 import { requireWriteRole } from './writes';
 import { notifyEventModerators, notifyPerson } from '../lib/notifications';
-import { checkIfFriends, checkIsBlocked } from '../lib/privacy';
+import { checkIsBlocked } from '../lib/privacy';
 import { getOrComputeMemberCount } from '../lib/memberCount';
 import { cascadeDeleteEventData } from '../lib/cascade';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -255,9 +257,10 @@ export async function joinDiscoverableEventForPerson(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requirePerson(ctx, personId);
   const person = { _id: personId };
 
-  // Verify the event exists and has FRIENDS visibility
+  // Revalidate admission and current audiences
   const event = await ctx.db.get(eventId);
   if (!event) {
     throw new ConvexError({ code: 'FORBIDDEN', message: 'Event not found' });
@@ -275,13 +278,10 @@ export async function joinDiscoverableEventForPerson(
       code: 'FORBIDDEN',
       message: 'This event is not available to join',
     });
-  if (!(await hasEventAudience(ctx, event, personId))) {
+  if (!(await eventAdmissionAccess(ctx, event, personId)).canJoin) {
     throw new ConvexError({
       code: 'FORBIDDEN',
-      message:
-        event.visibility === 'FRIENDS'
-          ? 'You must be friends with the event organizer to join this event'
-          : 'This event is not available to join',
+      message: 'This event is not available to join',
     });
   }
 
@@ -365,16 +365,11 @@ export async function canDiscoverEventForPerson(
   event: Doc<'events'>,
   now: number
 ) {
-  if (
-    event.visibility !== 'FRIENDS' ||
-    (event.chosenDateTime !== undefined && event.chosenDateTime < now)
-  )
+  if (event.chosenDateTime !== undefined && event.chosenDateTime < now)
     return false;
-  if (
-    !(await checkIfFriends(ctx, personId, event.creatorId)) ||
-    (await checkIsBlocked(ctx, personId, event.creatorId))
-  )
-    return false;
+  if (await checkIsBlocked(ctx, personId, event.creatorId)) return false;
+  const reasons = await eventDiscoveryReasons(ctx, event, personId);
+  if (!reasons.friends && reasons.groups.length === 0) return false;
   const [membership, ban] = await Promise.all([
     ctx.db
       .query('memberships')

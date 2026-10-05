@@ -79,6 +79,12 @@ async function supported(
       'This server does not advertise Pending RSVP joins. Update the server; no join was sent.',
       5
     );
+  if (pendingJoin && record(capabilities.groupDiscovery ?? {}).version !== 1)
+    throw new CliError(
+      'UNSUPPORTED_SERVER',
+      'This server does not advertise current Group-aware discovery joins. Update the server; no join was sent.',
+      5
+    );
   if (admissionWrite && record(capabilities.eventAdmission ?? {}).version !== 1)
     throw new CliError(
       'UNSUPPORTED_SERVER',
@@ -273,11 +279,14 @@ export async function discoverEvents(profile, key, options) {
         )
           ? { admissionPolicy: row.admissionPolicy }
           : {}),
-        ...(['JOIN', 'APPLY', 'INVITATION_ONLY'].includes(
+        ...(['JOIN', 'APPLY', 'INVITATION_ONLY', 'UNAVAILABLE'].includes(
           String(row.entryAction)
         )
           ? { entryAction: row.entryAction }
           : {}),
+        ...(row.accessReasons === undefined
+          ? {}
+          : { accessReasons: discoveryReasons(row.accessReasons) }),
         description: row.description,
         location: row.location,
         chosenDateTime: row.chosenDateTime,
@@ -372,5 +381,27 @@ export function projectEventLogistics(raw, eventId) {
         }
       : null,
     entryAction: result.entryAction,
+  };
+}
+
+/** @param {unknown} raw */
+function discoveryReasons(raw) {
+  const value = record(raw);
+  if (
+    typeof value.friends !== 'boolean' ||
+    !Array.isArray(value.groups) ||
+    value.groups.some(
+      group =>
+        typeof record(group).groupId !== 'string' ||
+        typeof record(group).name !== 'string'
+    )
+  )
+    throw new CliError('INVALID_RESPONSE', 'Invalid discovery reasons.', 5);
+  return {
+    friends: value.friends,
+    groups: value.groups.map(group => ({
+      groupId: record(group).groupId,
+      name: record(group).name,
+    })),
   };
 }

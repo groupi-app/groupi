@@ -23,6 +23,7 @@ const renderer = require(
 const network = vi.hoisted(() => ({
   settingsAvailable: true,
   ownHistory: [] as Record<string, unknown>[],
+  discoverEvents: [] as Record<string, unknown>[] | undefined,
   reviewPage: [] as Record<string, unknown>[],
   canApply: true,
   canReview: false,
@@ -128,7 +129,7 @@ vi.mock('../../../lib/convex', () => ({
             : name === 'events/queries:getEventHeader'
               ? { userMembership: { role: network.role } }
               : name === 'events/queries:getDiscoverableEvents'
-                ? []
+                ? network.discoverEvents
                 : undefined;
         },
         onUpdate: (listener: () => void) => {
@@ -189,6 +190,7 @@ describe('native safe event admission', () => {
     vi.clearAllMocks();
     network.settingsAvailable = true;
     network.ownHistory = [];
+    network.discoverEvents = [];
     network.reviewPage = [];
     network.canApply = true;
     network.canReview = false;
@@ -499,6 +501,28 @@ describe('native safe event admission', () => {
     expect(text).not.toContain('Applicant admitted with a Pending RSVP.');
     await act(async () => mounted!.unmount());
   });
+  it('returns to current Discover when a previously eligible Group join is rejected', async () => {
+    network.mutation.mockRejectedValue(
+      new Error('Joining is no longer available')
+    );
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(EventPreviewScreen));
+    });
+    await act(async () => {
+      await (
+        pressable(mounted!, 'Join Park picnic').props
+          .onPress as () => Promise<void>
+      )();
+    });
+    expect(network.replace).not.toHaveBeenCalled();
+    expect(Boolean(pressable(mounted!, 'Return to Discover'))).toBe(true);
+    await act(async () => {
+      (pressable(mounted!, 'Return to Discover').props.onPress as () => void)();
+    });
+    expect(network.replace).toHaveBeenCalledWith('/discover');
+    await act(async () => mounted!.unmount());
+  });
   it('reads permitted logistics with the actual native provider without admitting the reader', async () => {
     let mounted: Mounted;
     await act(async () => {
@@ -624,6 +648,297 @@ describe('native safe event admission', () => {
     }
   );
 
+  it('shows private Group and Friends reasons once, then follows reactive reason removal', async () => {
+    const item = {
+      eventId: 'event-123',
+      title: 'Park picnic',
+      organizer: null,
+      description: 'Bring lunch',
+      memberCount: 0,
+      location: 'Riverside park',
+      chosenDateTime: null,
+      accessReasons: {
+        friends: true,
+        groups: [
+          { groupId: 'group-123', name: 'Book club' },
+          { groupId: 'group-456', name: 'Walking club' },
+        ],
+      },
+      entryAction: 'JOIN',
+    };
+    network.discoverEvents = [item];
+    let mounted: Mounted;
+    let card: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(DiscoverScreen));
+    });
+    function currentCard() {
+      const list = mounted!.root.findAll(node => node.type === 'FlatList')[0];
+      expect(list.props.data as unknown[]).toHaveLength(1);
+      return (
+        list.props.renderItem as (args: {
+          item: Record<string, unknown>;
+        }) => ReactNode
+      )({ item: (list.props.data as Record<string, unknown>[])[0] });
+    }
+    await act(async () => {
+      card = renderer.create(
+        createElement(ConvexClientProvider, null, currentCard())
+      );
+    });
+    const text = () =>
+      card!.root
+        .findAll(node => node.type === 'Text')
+        .map(node => node.props.children);
+    expect(text()).toContain('Shared by a friend');
+    expect(text()).toContain('Shared with Book club');
+    expect(text()).toContain('Shared with Walking club');
+    expect(text()).toContain('Date not yet chosen');
+    network.discoverEvents = [
+      {
+        ...item,
+        accessReasons: {
+          friends: false,
+          groups: [{ groupId: 'group-123', name: 'Book club' }],
+        },
+      },
+    ];
+    await act(async () => {
+      for (const listener of network.subscribers) listener();
+    });
+    await act(async () => {
+      card!.update(createElement(ConvexClientProvider, null, currentCard()));
+    });
+    expect(text()).not.toContain('Shared by a friend');
+    expect(text()).not.toContain('Shared with Walking club');
+    expect(text()).toContain('Shared with Book club');
+    expect(
+      network.watches.mock.calls
+        .map(([name]) => name)
+        .every(name => name === 'events/queries:getDiscoverableEvents')
+    ).toBe(true);
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => card!.unmount());
+    network.discoverEvents = [];
+    await act(async () => {
+      for (const listener of network.subscribers) listener();
+    });
+    expect(
+      mounted!.root.findAll(node => node.type === 'FlatList')[0].props.data
+    ).toEqual([]);
+    await act(async () => mounted!.unmount());
+  });
+  it('describes an empty no-friends Group-capable Discover and distinguishes loading', async () => {
+    network.discoverEvents = undefined;
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(DiscoverScreen));
+    });
+    expect(
+      mounted!.root.findAll(node => node.type === 'LoadingState')
+    ).toHaveLength(1);
+    network.discoverEvents = [];
+    await act(async () => {
+      for (const listener of network.subscribers) listener();
+    });
+    const list = mounted!.root.findAll(node => node.type === 'FlatList')[0];
+    let empty: Mounted;
+    await act(async () => {
+      empty = renderer.create(
+        createElement(
+          ConvexClientProvider,
+          null,
+          list.props.ListEmptyComponent as ReactNode
+        )
+      );
+    });
+    const labels = empty!.root
+      .findAll(node => node.type === 'View')
+      .map(node => node.props.accessibilityLabel)
+      .filter(Boolean);
+    expect(
+      labels.some(label => String(label).includes('eligible Groups or Friends'))
+    ).toBe(true);
+    expect(
+      labels.some(label => String(label).includes('Add more friends'))
+    ).toBe(false);
+    await act(async () => {
+      empty!.unmount();
+      mounted!.unmount();
+    });
+  });
+  it('uses the Group-only Discover card to preview before its explicit Pending join', async () => {
+    const item = {
+      eventId: 'event-123',
+      title: 'Park picnic',
+      organizer: null,
+      description: 'Bring lunch',
+      memberCount: 0,
+      location: 'Riverside park',
+      chosenDateTime: null,
+      accessReasons: {
+        friends: false,
+        groups: [{ groupId: 'group-123', name: 'Book club' }],
+      },
+      entryAction: 'JOIN',
+    };
+    network.discoverEvents = [item];
+    let mounted: Mounted;
+    let card: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(DiscoverScreen));
+    });
+    const list = mounted!.root.findAll(node => node.type === 'FlatList')[0];
+    await act(async () => {
+      card = renderer.create(
+        createElement(
+          ConvexClientProvider,
+          null,
+          (list.props.renderItem as (args: { item: typeof item }) => ReactNode)(
+            { item }
+          )
+        )
+      );
+    });
+    expect(pressable(card!, 'Join Park picnic')).toBeUndefined();
+    await act(async () => {
+      (pressable(card!, 'View Park picnic').props.onPress as () => void)();
+    });
+    expect(network.push).toHaveBeenCalledWith('/event/event-123/preview');
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => {
+      card!.update(screen(EventPreviewScreen));
+    });
+    await act(async () => {
+      await (
+        pressable(card!, 'Join Park picnic').props
+          .onPress as () => Promise<void>
+      )();
+    });
+    expect(network.mutation).toHaveBeenCalledExactlyOnceWith(
+      'events/mutations:joinDiscoverableEvent',
+      { eventId: 'event-123' }
+    );
+    expect(network.replace).toHaveBeenCalledWith('/event/event-123');
+    network.entryAction = 'MEMBER';
+    network.discoverEvents = [];
+    await act(async () => {
+      for (const listener of network.subscribers) listener();
+    });
+    expect(pressable(card!, 'Join Park picnic')).toBeUndefined();
+    expect(pressable(card!, 'Open Park picnic')).toBeDefined();
+    await act(async () => {
+      card!.unmount();
+      mounted!.unmount();
+    });
+  });
+  it.each(['INVITATION_ONLY', 'UNAVAILABLE', 'APPLY'])(
+    'shows truthful %s card copy and no write controls before preview',
+    async entryAction => {
+      const item = {
+        eventId: 'event-123',
+        title: 'Park picnic',
+        organizer: null,
+        description: 'Bring lunch',
+        memberCount: 0,
+        location: 'Riverside park',
+        chosenDateTime: null,
+        accessReasons: {
+          friends: false,
+          groups: [{ groupId: 'group-123', name: 'Book club' }],
+        },
+        entryAction,
+      };
+      network.discoverEvents = [item];
+      let mounted: Mounted;
+      let card: Mounted;
+      await act(async () => {
+        mounted = renderer.create(screen(DiscoverScreen));
+      });
+      const list = mounted!.root.findAll(node => node.type === 'FlatList')[0];
+      await act(async () => {
+        card = renderer.create(
+          createElement(
+            ConvexClientProvider,
+            null,
+            (
+              list.props.renderItem as (args: {
+                item: typeof item;
+              }) => ReactNode
+            )({ item })
+          )
+        );
+      });
+      expect(pressable(card!, 'Join Park picnic')).toBeUndefined();
+      expect(pressable(card!, 'Apply to Park picnic')).toBeUndefined();
+      const text = card!.root
+        .findAll(node => node.type === 'Text')
+        .map(node => node.props.children);
+      expect(text).toContain(
+        entryAction === 'INVITATION_ONLY'
+          ? 'An invitation is required to join. Sharing gives you access to Event logistics.'
+          : entryAction === 'APPLY'
+            ? 'View the Event preview to apply for approval.'
+            : 'Read Event logistics. Joining is currently unavailable.'
+      );
+      expect(network.mutation).not.toHaveBeenCalled();
+      await act(async () => {
+        card!.unmount();
+        mounted!.unmount();
+      });
+    }
+  );
+  it('does not invent access reasons for a legacy summary and keeps Group-only Apply unavailable', async () => {
+    const item = {
+      eventId: 'event-123',
+      title: 'Park picnic',
+      organizer: null,
+      description: 'Bring lunch',
+      memberCount: 0,
+      location: 'Riverside park',
+      chosenDateTime: null,
+      entryAction: 'UNAVAILABLE',
+    };
+    network.discoverEvents = [item];
+    let mounted: Mounted;
+    let card: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(DiscoverScreen));
+    });
+    const list = mounted!.root.findAll(node => node.type === 'FlatList')[0];
+    await act(async () => {
+      card = renderer.create(
+        createElement(
+          ConvexClientProvider,
+          null,
+          (list.props.renderItem as (args: { item: typeof item }) => ReactNode)(
+            { item }
+          )
+        )
+      );
+    });
+    const text = card!.root
+      .findAll(node => node.type === 'Text')
+      .map(node => node.props.children);
+    expect(
+      text.some(
+        value => typeof value === 'string' && value.startsWith('Shared with')
+      )
+    ).toBe(false);
+    expect(text).not.toContain('Shared by a friend');
+    network.entryAction = 'UNAVAILABLE';
+    network.admissionPolicy = 'APPLY';
+    await act(async () => {
+      card!.update(screen(EventPreviewScreen));
+    });
+    expect(pressable(card!, 'Join Park picnic')).toBeUndefined();
+    expect(pressable(card!, 'Apply to Park picnic')).toBeUndefined();
+    expect(network.mutation).not.toHaveBeenCalled();
+    await act(async () => {
+      card!.unmount();
+      mounted!.unmount();
+    });
+  });
   it('opens Discover logistics before offering any admission action', async () => {
     let mounted: Mounted;
     await act(async () => {
@@ -636,6 +951,11 @@ describe('native safe event admission', () => {
       organizer: null,
       description: 'Bring lunch',
       memberCount: 0,
+      accessReasons: {
+        friends: false,
+        groups: [{ groupId: 'group-123', name: 'Book club' }],
+      },
+      entryAction: 'JOIN',
       location: 'Riverside park',
     };
     const card = (

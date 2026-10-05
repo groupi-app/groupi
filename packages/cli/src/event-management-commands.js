@@ -46,7 +46,7 @@ export function registerEventManagementCommands(program, events, json) {
     });
   events
     .command('discover')
-    .description('Browse upcoming friends events you can join')
+    .description('Browse upcoming or undated Friends and Group Events')
     .option('--limit <number>', 'Page size (1–100)', '20')
     .option('--cursor <cursor>', 'Continue a previous page')
     .option('--all', 'Retrieve every page explicitly')
@@ -72,7 +72,10 @@ export function registerEventManagementCommands(program, events, json) {
           ? JSON.stringify(result) + '\n'
           : (result.items.length
               ? result.items
-                  .map(item => `${plain(item.id)}  ${plain(item.title)}`)
+                  .map(
+                    item =>
+                      `${plain(item.id)}  ${plain(item.title)}${item.accessReasons ? ` [${[...(item.accessReasons.friends ? ['Friends'] : []), ...item.accessReasons.groups.map(group => plain(group.name))].join('; ')}]` : ''}${item.entryAction ? ` (${plain(item.entryAction)})` : ''}`
+                  )
                   .join('\n')
               : 'No discoverable events on this page.') +
               '\n' +

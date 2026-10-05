@@ -429,7 +429,7 @@ Commands:
                                                  applications
   preview <event-id>                             Read safe event logistics and entry action without
                                                  joining
-  discover [options]                             Browse upcoming friends events you can join
+  discover [options]                             Browse upcoming or undated Friends and Group Events
   join <event-id>                                Join as an Attendee with Pending RSVP; confirm
                                                  attendance separately
   leave [options] <event-id>                     leave an event
@@ -1016,7 +1016,7 @@ Options:
 ```text
 Usage: groupi events discover [options]
 
-Browse upcoming friends events you can join
+Browse upcoming or undated Friends and Group Events
 
 Options:
   --limit <number>   Page size (1–100) (default: "20")

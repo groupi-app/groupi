@@ -28,7 +28,7 @@ const fixture = {
     location: 'Garden',
     timezone: 'UTC',
     visibility: 'PUBLIC',
-    admissionPolicy: 'INVITATION_ONLY',
+    admissionPolicy: 'INVITATION_ONLY' as const,
     chosenDateTime: 1735732800000,
     chosenEndDateTime: 1735736400000,
     imageUrl: null,
@@ -119,6 +119,8 @@ describe('event logistics preview using the actual app SDK', () => {
                   ...fixture.event,
                   eventId,
                   memberCount: 3,
+                  accessReasons: { friends: true, groups: [] },
+                  entryAction: 'INVITATION_ONLY',
                   organizer: {
                     ...fixture.organizer,
                     personId: 'organizer-one' as Id<'persons'>,

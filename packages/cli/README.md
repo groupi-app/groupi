@@ -577,8 +577,7 @@ attendance. For a dated event, use `events rsvp set`; for an undated event,
 provide availability until a date is chosen. Poll date selection derives RSVP
 from availability, while manual date selection preserves the current response.
 
-Join requires the server's `eventManagement.pendingRsvpJoin: true` capability
-before sending a write. Other event management commands remain compatible with
+Join requires `eventManagement.pendingRsvpJoin: true` and `groupDiscovery.version: 1` before sending a write. This newer CLI conservatively requires the updated server even for Friends-only joins; older or malformed capabilities cause zero writes. Other event management commands remain compatible with
 `eventManagement.version: 1` servers.
 
 ## Groups
@@ -904,7 +903,7 @@ past or currently unreadable Events. Continue `nextCursor` even after an empty
 page; `--all` does this with repeated-cursor protection. Output includes only safe
 logistics, with no attendee identities, private RSVP notes, discussions or tool
 submissions. Reading/sharing never creates Event invitations, memberships or RSVP.
-Group-only grants currently provide no Discover/direct-join/application action.
+Current Group grants also appear in Discover and permit Direct entry when the Event policy allows it. Group-only Apply stays unavailable until the Group application slice is supported.
 Required onboarding, leave/removal/ban, Group deletion and audience withdrawal
 revoke only that Group's grant; independent Event membership and other audiences
 continue to apply.
@@ -915,3 +914,5 @@ Group lists require `groups:read`, and policy/Group-manager withdrawal require
 `groups:write`. Scopes never replace current domain authority. Withdrawal requires
 `--yes` in headless use. Writes are not automatically retried; inspect the current
 audiences and Group Events if a response has an uncertain outcome.
+
+`events discover --all` pages current Friends and Group sources, deduplicated by Event ID. `accessReasons` contains only this viewer's Friends eligibility and eligible Group IDs/names; legacy read responses may omit reasons. No Public directory is created. Existing members and past chosen dates are excluded; undated Events remain discoverable. Use `events preview EVENT` before the advertised action; a discovery card is never an invitation. Current onboarding, bans, blocks, entry policy and audience grants are checked again at admission. Joining preserves Pending RSVP and independent accepted Event participation after Group access is lost.

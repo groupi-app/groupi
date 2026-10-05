@@ -2,7 +2,13 @@ import {
   eventLogisticsValidator,
   logisticsEventValidator,
 } from './admissionContracts';
-import { eventLogisticsForPerson, resolveAdmissionPolicy } from './admission';
+import {
+  eventLogisticsForPerson,
+  resolveAdmissionPolicy,
+  eventAdmissionAccess,
+} from './admission';
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
+import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import { canDiscoverEventForPerson } from './management';
 import { canViewAttendance, privateNote } from './attendance';
 import { latestResponses } from '../availability/reads';
@@ -707,10 +713,6 @@ export const getDiscoverableEvents = query({
       ...acceptedAsAddressee.map(f => f.requesterId),
     ];
 
-    if (friendPersonIds.length === 0) {
-      return [];
-    }
-
     // Get current user's existing memberships to filter them out
     const myMemberships = await ctx.db
       .query('memberships')
@@ -720,24 +722,50 @@ export const getDiscoverableEvents = query({
 
     const now = Date.now();
 
-    // Fetch only FRIENDS-visibility events per friend using compound index
+    // Gather explicit Friends grants, including non-FRIENDS legacy visibility.
     const allFriendEvents = await Promise.all(
       friendPersonIds.map(friendPersonId =>
         ctx.db
           .query('events')
           .withIndex('by_creator_visibility', q =>
-            q.eq('creatorId', friendPersonId).eq('visibility', 'FRIENDS')
+            q.eq('creatorId', friendPersonId)
           )
           .collect()
       )
     );
 
-    const candidateEvents = allFriendEvents.flat().filter(event => {
-      if (event.friendsAudienceEnabled === false) return false;
-      if (myEventIds.has(event._id)) return false;
-      if (event.chosenDateTime && event.chosenDateTime < now) return false;
-      return true;
-    });
+    const candidates = new Map(
+      allFriendEvents
+        .flat()
+        .filter(
+          event =>
+            event.friendsAudienceEnabled ?? event.visibility === 'FRIENDS'
+        )
+        .map(event => [event._id, event])
+    );
+    for await (const membership of ctx.db
+      .query('groupMemberships')
+      .withIndex('by_personId', q => q.eq('personId', currentPerson._id))) {
+      if (
+        !(await canAccessGroupMemberContent(
+          ctx,
+          membership.groupId,
+          currentPerson._id
+        ))
+      )
+        continue;
+      for await (const grant of ctx.db
+        .query('groupEventAudiences')
+        .withIndex('by_groupId', q => q.eq('groupId', membership.groupId))) {
+        const event = await ctx.db.get(grant.eventId);
+        if (event) candidates.set(event._id, event);
+      }
+    }
+    const candidateEvents = [...candidates.values()].filter(
+      event =>
+        !myEventIds.has(event._id) &&
+        !(event.chosenDateTime !== undefined && event.chosenDateTime < now)
+    );
 
     const eligibility = await Promise.all(
       candidateEvents.map(event =>
@@ -769,10 +797,25 @@ export const getDiscoverableEvents = query({
           memberCount: event.memberCount ?? 0,
           createdAt: event.createdAt,
           admissionPolicy: resolveAdmissionPolicy(event),
-          entryAction:
-            resolveAdmissionPolicy(event) === 'DIRECT'
+          accessReasons: await eventDiscoveryReasons(
+            ctx,
+            event,
+            currentPerson._id
+          ),
+          entryAction: await (async () => {
+            const access = await eventAdmissionAccess(
+              ctx,
+              event,
+              currentPerson._id
+            );
+            return access.canJoin
               ? ('JOIN' as const)
-              : ('INVITATION_ONLY' as const),
+              : access.canApply
+                ? ('APPLY' as const)
+                : resolveAdmissionPolicy(event) === 'INVITATION_ONLY'
+                  ? ('INVITATION_ONLY' as const)
+                  : ('UNAVAILABLE' as const);
+          })(),
           organizer: organizerData
             ? {
                 personId: organizerData.person._id,

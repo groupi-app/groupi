@@ -303,8 +303,7 @@ and Group sharing permission (owner policy `MANAGERS` by default, optionally
 `MEMBERS`), including current required onboarding. At most 100 Groups may be selected.
 `groups withdraw-event GROUP EVENT --yes` lets a current Group manager withdraw
 only that grant. These actions never join, invite, RSVP, transfer ownership or
-inherit tools. Group-only reads currently offer no Discover/direct/application
-entry. Friends settings may be null when the caller cannot manage the Event;
+inherit tools. Current Group grants appear in Discover, with direct entry when the Event permits it. Group-only Apply remains unavailable until supported. Friends settings may be null when the caller cannot manage the Event;
 other private Group associations must not be inferred from absent output.
 Group pages can be empty with a continuation cursor; keep paging deliberately.
 Check `groupEventAudiences` version 1 before writes, preserve scope/domain failures

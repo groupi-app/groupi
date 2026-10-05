@@ -444,3 +444,9 @@ becomes `null`, while private pending/history snapshots remain. The CLI accepts
 that nullable result and gives current-audience/reviewer guidance after a denied
 write. Local authenticated Convex/REST, provider clients and real CLI HTTP tests
 cover this slice; deployment and device verification remain pending.
+
+## Group discovery and Direct admission (#274)
+
+Implemented locally; release/staging verification pending. REST health advertises `groupDiscovery: { version: 1 }`. Discover pages deduplicated current Group/Friends eligibility and private viewer-applicable `accessReasons`, excludes current Event members and past chosen dates, includes undated Events, and never acts as a Public directory. Empty pages may have continuation cursors. Direct joins revalidate current Group onboarding, bans/blocks and independent Event entry policy, then use ordinary Attendee/Pending admission. Event participation survives later loss of Group eligibility. Group-only Apply uses the current-audience application flow delivered by #275.
+
+CLI generic joins require both `groupDiscovery.version: 1` and `eventManagement.pendingRsvpJoin: true`, including Friends-only joins; missing/malformed capabilities cause zero writes and require a server update. Legacy discovery reads may omit reasons without fabricating Group access. Authenticated session/REST, actual consuming SDK clients, and CLI-to-localhost HTTP are the local verification seams; no live provider/device claims are made.

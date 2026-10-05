@@ -1,6 +1,8 @@
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import {
   eventLogisticsForPerson,
   resolveAdmissionPolicy,
+  eventAdmissionAccess,
   updateAdmissionPolicyForPerson,
 } from './admission';
 import {
@@ -182,13 +184,18 @@ export const join = internalMutation({
     joinDiscoverableEventForPerson(ctx, args.personId, args.eventId),
 });
 const discoveredEvent = v.object({
+  accessReasons: v.object({
+    friends: v.boolean(),
+    groups: v.array(v.object({ groupId: v.id('groups'), name: v.string() })),
+  }),
   id: v.id('events'),
   title: v.string(),
   admissionPolicy: admissionPolicyValidator,
   entryAction: v.union(
     v.literal('JOIN'),
     v.literal('APPLY'),
-    v.literal('INVITATION_ONLY')
+    v.literal('INVITATION_ONLY'),
+    v.literal('UNAVAILABLE')
   ),
   description: v.union(v.string(), v.null()),
   location: v.union(v.string(), v.null()),
@@ -243,12 +250,17 @@ export const discover = internalQuery({
         id: event._id,
         title: event.title,
         admissionPolicy: resolveAdmissionPolicy(event),
-        entryAction:
-          resolveAdmissionPolicy(event) === 'DIRECT'
+        accessReasons: await eventDiscoveryReasons(ctx, event, args.personId),
+        entryAction: await (async () => {
+          const access = await eventAdmissionAccess(ctx, event, args.personId);
+          return access.canJoin
             ? ('JOIN' as const)
-            : resolveAdmissionPolicy(event) === 'APPLY'
+            : access.canApply
               ? ('APPLY' as const)
-              : ('INVITATION_ONLY' as const),
+              : resolveAdmissionPolicy(event) === 'INVITATION_ONLY'
+                ? ('INVITATION_ONLY' as const)
+                : ('UNAVAILABLE' as const);
+        })(),
         description: event.description ?? null,
         location: event.location ?? null,
         chosenDateTime: event.chosenDateTime ?? null,

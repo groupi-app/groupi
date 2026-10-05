@@ -79,7 +79,7 @@ export async function eventAdmissionAccess(
     canJoin: Boolean(
       personId &&
         !membership &&
-        audience &&
+        (audience || groupAudience) &&
         !ban &&
         !blocked &&
         resolveAdmissionPolicy(event) === 'DIRECT'

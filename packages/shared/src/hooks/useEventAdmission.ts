@@ -5,7 +5,10 @@ import type { FunctionArgs, FunctionReference } from 'convex/server';
 export function createEventAdmissionHooks<
   Api extends {
     events: {
-      queries: { getEventLogistics: FunctionReference<'query'> };
+      queries: {
+        getEventLogistics: FunctionReference<'query'>;
+        getDiscoverableEvents: FunctionReference<'query'>;
+      };
       mutations: {
         updateAdmissionPolicy: FunctionReference<'mutation'>;
         joinDiscoverableEvent: FunctionReference<'mutation'>;
@@ -26,6 +29,12 @@ export function createEventAdmissionHooks<
       { eventId } as FunctionArgs<Api['events']['queries']['getEventLogistics']>
     );
   }
+  function useDiscoverableEvents() {
+    return hooks.useQuery<Api['events']['queries']['getDiscoverableEvents']>(
+      api.events.queries.getDiscoverableEvents,
+      {} as FunctionArgs<Api['events']['queries']['getDiscoverableEvents']>
+    );
+  }
   function useUpdateAdmissionPolicy() {
     return hooks.useMutation<
       Api['events']['mutations']['updateAdmissionPolicy']
@@ -36,5 +45,10 @@ export function createEventAdmissionHooks<
       Api['events']['mutations']['joinDiscoverableEvent']
     >(api.events.mutations.joinDiscoverableEvent);
   }
-  return { useEventLogistics, useUpdateAdmissionPolicy, useJoinEvent };
+  return {
+    useEventLogistics,
+    useUpdateAdmissionPolicy,
+    useJoinEvent,
+    useDiscoverableEvents,
+  };
 }

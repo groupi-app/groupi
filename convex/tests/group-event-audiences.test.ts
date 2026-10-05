@@ -3,7 +3,7 @@ import { api } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 afterEach(() => vi.useRealTimers());
-it('shares safe Group logistics without participation or unsupported admission and revokes only the withdrawn grant', async () => {
+it('shares safe Group logistics without participation and revokes only the withdrawn grant', async () => {
   vi.useFakeTimers();
   const t = createTestInstance();
   registerBetterAuth(t);
@@ -53,16 +53,11 @@ it('shares safe Group logistics without participation or unsupported admission a
   });
   expect(read).toMatchObject({
     event: { title: 'Independent event', location: 'Library' },
-    entryAction: 'UNAVAILABLE',
+    entryAction: 'JOIN',
   });
   expect(read).not.toHaveProperty('members');
   await expect(
     outsider.auth.query(api.events.queries.getEventLogistics, { eventId })
-  ).rejects.toThrow();
-  await expect(
-    viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
-      eventId,
-    })
   ).rejects.toThrow();
   const preview = await viewer.auth.query(
     api.groupEventAudiences.queries.listGroupSharedEvents,
@@ -78,6 +73,11 @@ it('shares safe Group logistics without participation or unsupported admission a
   );
   await expect(
     viewer.auth.query(api.events.queries.getEventLogistics, { eventId })
+  ).rejects.toThrow();
+  await expect(
+    viewer.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+      eventId,
+    })
   ).rejects.toThrow();
   expect(
     await t.run(ctx =>

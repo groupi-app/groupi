@@ -208,11 +208,19 @@ function EventLogisticsContent({ eventId }: { eventId: Id<'events'> }) {
             </Button>
           </>
         )}
-        {error && (
-          <p role='alert' className='text-destructive'>
-            {error}
-          </p>
-        )}
+        {error ? (
+          <div className='space-y-2'>
+            <p role='alert' className='text-destructive'>
+              {error}
+            </p>
+            <Link
+              href='/events?tab=discover'
+              className='text-primary underline'
+            >
+              Return to Discover
+            </Link>
+          </div>
+        ) : null}
       </section>
     </main>
   );

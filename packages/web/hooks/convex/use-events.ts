@@ -407,30 +407,8 @@ export function useEventManagement(eventId: Id<'events'>) {
 
 // ===== DISCOVER HOOKS =====
 
-/**
- * Get discoverable events from friends (FRIENDS visibility)
- * Uses stale-while-revalidate caching.
- */
-export function useDiscoverableEvents() {
-  const isActive = useIsActive();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cachedRef = useRef<any>(undefined);
-
-  const result = useQuery(
-    eventQueries.getDiscoverableEvents,
-    isActive ? {} : 'skip'
-  );
-
-  if (result !== undefined) {
-    cachedRef.current = result;
-  }
-
-  if (result === undefined && cachedRef.current !== undefined) {
-    return cachedRef.current;
-  }
-
-  return result;
-}
+/** Current viewer-applicable Friends and Group discovery; no stale private-reason cache. */
+export { useDiscoverableEvents } from './use-event-admission';
 
 export { useJoinDiscoverableEvent } from './use-join-discoverable-event';
 

@@ -98,9 +98,9 @@ export function createEventManagementRoutes() {
       path: '/events/discover',
       tags: ['Events'],
       security: [{ apiKey: [] }],
-      summary: 'Discover friends events',
+      summary: 'Discover Friends and Group events',
       description:
-        'Bounded creation-order cursor pages. Only upcoming friends-visible events from accepted, unblocked friends are returned; existing memberships and bans are excluded. Empty pages may have a continuation cursor. Defaults to 20, maximum 100.',
+        'Bounded creation-order cursor pages. Only upcoming or undated Events with a current Friends or Group grant are returned; existing memberships and bans are excluded. Empty pages may have a continuation cursor. Defaults to 20, maximum 100.',
       request: { query: EventListQuerySchema },
       responses: {
         ...errors,
@@ -114,7 +114,18 @@ export function createEventManagementRoutes() {
                     id: z.string(),
                     title: z.string(),
                     admissionPolicy,
-                    entryAction: z.enum(['JOIN', 'APPLY', 'INVITATION_ONLY']),
+                    entryAction: z.enum([
+                      'JOIN',
+                      'APPLY',
+                      'INVITATION_ONLY',
+                      'UNAVAILABLE',
+                    ]),
+                    accessReasons: z.object({
+                      friends: z.boolean(),
+                      groups: z.array(
+                        z.object({ groupId: z.string(), name: z.string() })
+                      ),
+                    }),
                     description: z.string().nullable(),
                     location: z.string().nullable(),
                     chosenDateTime: z.number().nullable(),

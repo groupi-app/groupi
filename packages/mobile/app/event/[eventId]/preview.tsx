@@ -198,9 +198,18 @@ function EventLogistics({ eventId }: { eventId: Id<'events'> }) {
           My application history
         </Button>
         {error ? (
-          <Text accessibilityRole='alert' className='text-destructive'>
-            {error}
-          </Text>
+          <View className='gap-2'>
+            <Text accessibilityRole='alert' className='text-destructive'>
+              {error}
+            </Text>
+            <Button
+              accessibilityLabel='Return to Discover'
+              variant='outline'
+              onPress={() => router.replace('/discover')}
+            >
+              Return to Discover
+            </Button>
+          </View>
         ) : null}
       </View>
     </DetailScreenTemplate>
