@@ -13,6 +13,9 @@ type Form = NonNullable<ReturnType<typeof useJoiningQuestionnaire>>;
 export function GroupQuestionnaireSettings({ form }: { form: Form }) {
   const configure = useConfigureJoiningQuestionnaire();
   const [enabled, setEnabled] = useState(form.enabled);
+  const [requiredCompletion, setRequiredCompletion] = useState(
+    form.requiredCompletion
+  );
   const [questions, setQuestions] = useState<ApplicationQuestion[]>(
     form.questions.map(({ id, label, type, required, options }) => ({
       id,
@@ -42,7 +45,12 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
         }
         setPending(true);
         try {
-          await configure({ groupId: form.groupId, enabled, questions });
+          await configure({
+            groupId: form.groupId,
+            enabled,
+            questions,
+            requiredCompletion,
+          });
           setMessage(
             'Questionnaire settings saved. Existing answers and answered definitions are preserved.'
           );
@@ -57,8 +65,8 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
     >
       <h3 className='font-semibold'>Joining questionnaire settings</h3>
       <p className='text-sm text-muted-foreground'>
-        This is optional after admission. Disabling or editing questions
-        preserves previous answers and their original definitions.
+        Admission remains immediate. Disabling or editing questions preserves
+        previous answers and their original definitions.
       </p>
       <label className='flex items-center gap-2'>
         <input
@@ -67,11 +75,25 @@ export function GroupQuestionnaireSettings({ form }: { form: Form }) {
           disabled={pending}
           onChange={event => setEnabled(event.target.checked)}
         />
-        Enable optional joining questionnaire
+        Enable joining questionnaire
       </label>
+      <label className='flex items-center gap-2'>
+        <input
+          type='checkbox'
+          checked={requiredCompletion}
+          disabled={pending}
+          onChange={event => setRequiredCompletion(event.target.checked)}
+        />
+        Require completion before Group member content
+      </label>
+      <p>
+        Required completion limits Group member content until current required
+        answers are saved. Membership, your records, and leaving remain
+        available.
+      </p>
       <ApplicationQuestionEditor
         title='Joining questions'
-        requiredLabel='Answer required when submitting this optional questionnaire'
+        requiredLabel='Answer required when submitting this questionnaire'
         questions={questions}
         onChange={setQuestions}
         disabled={pending}

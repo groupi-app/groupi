@@ -733,11 +733,11 @@ retirement additionally requires `groupTransfers.retirement: true` before any
 write. Both use ordinary `groups` read/write API-key permissions. In headless/JSON
 mode, offers, acceptance and deletion require explicit `--yes` confirmation.
 
-### Optional Group joining questionnaire
+### Group joining questionnaire
 
 `groups questionnaire get <group-id>` reads your private current form and saved
 question definitions; `status` reports optional completion. After immediate
-membership, invitation acceptance reports the optional questionnaire prompt.
+membership, invitation acceptance reports the current questionnaire state. Optional remains the default. Owners may add `--required-completion true` to configuration; this requires advertised capability version 2 before writing. Required incompletion blocks only Group-granted member content. Read `groups questionnaire status` and complete current answers with `submit` to recover; independent Event grants and own records remain available.
 Incomplete answers do not gate Group or independent Event access.
 
 Owners use `configure <group-id> --enabled true|false --questions '<json>'`.

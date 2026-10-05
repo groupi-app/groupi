@@ -30,6 +30,7 @@ const notificationTypeValidator = v.union(
   v.literal('GROUP_APPLICATION_APPROVED'),
   v.literal('GROUP_APPLICATION_DECLINED'),
   v.literal('GROUP_ANNOUNCEMENT'),
+  v.literal('GROUP_ONBOARDING_REQUIRED'),
   v.literal('EVENT_INVITE_RECEIVED'),
   v.literal('EVENT_INVITE_ACCEPTED'),
   v.literal('ADDON_CONFIG_RESET'),

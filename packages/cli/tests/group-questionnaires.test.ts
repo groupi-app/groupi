@@ -173,3 +173,56 @@ test('optional questionnaire writes refuse legacy servers before mutation', asyn
   expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
   expect(writes).toBe(0);
 });
+
+test('requiring completion refuses version 1 servers before sending a policy write', async () => {
+  let writes = 0;
+  await endpoint((req, res) => {
+    writes++;
+    res.end('{}');
+  });
+  const result = await cli([
+    'groups',
+    'questionnaire',
+    'configure',
+    'group1',
+    '--enabled',
+    'true',
+    '--required-completion',
+    'true',
+    '--questions',
+    '[]',
+  ]);
+  expect(result.code).not.toBe(0);
+  expect(JSON.parse(result.stderr).error.code).toBe('UNSUPPORTED_SERVER');
+  expect(writes).toBe(0);
+});
+
+for (const flag of [
+  'requiredCompletion',
+  'requiresCompletion',
+  'canAccessMemberContent',
+]) {
+  test(`rejects malformed ${flag} status without trusting a truthy access value`, async () => {
+    await endpoint((_req, res) =>
+      res.end(
+        JSON.stringify({
+          groupId: 'group1',
+          enabled: true,
+          version: 1,
+          questions: [],
+          savedQuestions: [],
+          answers: {},
+          completed: false,
+          shouldPrompt: true,
+          canEdit: true,
+          canConfigure: false,
+          canReview: false,
+          [flag]: 'true',
+        })
+      )
+    );
+    const result = await cli(['groups', 'questionnaire', 'status', 'group1']);
+    expect(result.code).not.toBe(0);
+    expect(result.stderr).toContain('INVALID_RESPONSE');
+  });
+}

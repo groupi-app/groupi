@@ -1,3 +1,7 @@
+import {
+  needsCurrentOnboarding,
+  allowsCurrentOnboardingPush,
+} from '../groupQuestionnaires/notificationJobs';
 import { ConvexError, v } from 'convex/values';
 import { getCurrentPerson } from '../auth';
 import { internalQuery, query } from '../_generated/server';
@@ -121,6 +125,19 @@ export const resolveDeliveryJobs = internalQuery({
         continue;
       }
 
+      if (
+        notification.type === 'GROUP_ONBOARDING_REQUIRED' &&
+        (!notification.groupId ||
+          !(await needsCurrentOnboarding(
+            ctx,
+            notification.groupId,
+            notification.personId
+          )) ||
+          !(await allowsCurrentOnboardingPush(ctx, notification.personId)))
+      ) {
+        cancelled.push({ deliveryId, attempts: delivery.attempts });
+        continue;
+      }
       ready.push({
         deliveryId,
         token: token.token,

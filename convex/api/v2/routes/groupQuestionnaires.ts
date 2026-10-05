@@ -32,6 +32,9 @@ const answers = z.record(z.string(), answer);
 const form = z.object({
   groupId: z.string(),
   enabled: z.boolean(),
+  requiredCompletion: z.boolean(),
+  requiresCompletion: z.boolean(),
+  canAccessMemberContent: z.boolean(),
   version: z.number(),
   questions: z.array(savedQuestion).max(50),
   answers,
@@ -96,7 +99,8 @@ export function createGroupQuestionnaireRoutes() {
       method: 'get',
       path,
       tags: ['Groups'],
-      summary: 'Read your private optional joining questionnaire and status',
+      summary:
+        'Read your private joining questionnaire and current access status',
       security: [{ apiKey: [] }],
       request: { params },
       responses: {
@@ -121,7 +125,8 @@ export function createGroupQuestionnaireRoutes() {
       method: 'put',
       path,
       tags: ['Groups'],
-      summary: 'Configure the optional joining questionnaire as Group owner',
+      summary:
+        'Configure the joining questionnaire and completion policy as Group owner',
       security: [{ apiKey: [] }],
       request: {
         params,
@@ -132,6 +137,7 @@ export function createGroupQuestionnaireRoutes() {
               schema: z
                 .object({
                   enabled: z.boolean(),
+                  requiredCompletion: z.boolean().optional(),
                   questions: z.array(question).max(50),
                 })
                 .strict(),

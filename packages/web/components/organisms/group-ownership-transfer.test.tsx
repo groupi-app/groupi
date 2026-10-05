@@ -58,6 +58,27 @@ beforeEach(() => {
       localQueryResult: () => {
         const name = getFunctionName(call[0]);
         if (name === 'groupTransfers/queries:status') return status;
+        if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
+          return {
+            groupId: 'group',
+            enabled: false,
+            requiredCompletion: false,
+            requiresCompletion: false,
+            canAccessMemberContent: true,
+            completed: false,
+            shouldPrompt: false,
+            version: 0,
+            questions: [],
+            savedQuestions: [],
+            answers: {},
+            canEdit: false,
+            canConfigure: false,
+            canReview: false,
+          };
+        if (
+          name === 'groupQuestionnaires/queries:getJoiningQuestionnaireAccess'
+        )
+          return { canRead: true, hasRecord: false, isMember: true };
         if (name === 'groups/queries:getGroup')
           return {
             _id: groupId,

@@ -1762,7 +1762,7 @@ Commands:
   lift-ban [options] <group-id> <person-id>                   Lift a Group ban without admitting membership
   leave [options] <group-id>                                  Leave your own Group membership
   bans [options] <group-id>                                   List private active Group bans as manager
-  questionnaire                                               Optional post-admission questionnaire and private retained records
+  questionnaire                                               Post-admission questionnaire and private retained records
   application-form <group-id>                                 Read admission form and your private pending application
   application-get <group-id> <application-id>                 Read a private application as author or current manager
   application-history [options] <group-id>                    Read your retained private application history
@@ -2080,18 +2080,18 @@ Options:
 ```text
 Usage: groupi groups questionnaire [options] [command]
 
-Optional post-admission questionnaire and private retained records
+Post-admission questionnaire and private retained records
 
 Options:
   -h, --help                      display help for command
 
 Commands:
   get <group-id>                  Read your private current form and saved definitions
-  status <group-id>               Read optional completion status without changing access
+  status <group-id>               Read current completion and member-content access status
   history [options] <group-id>    Read paginated retained own answered definitions
   responses [options] <group-id>  Review private responses as current owner or moderator
-  configure [options] <group-id>  Configure exactly one optional joining form as owner; preserves
-                                  retained answers
+  configure [options] <group-id>  Configure exactly one joining form as owner; preserves retained
+                                  answers
   submit [options] <group-id>     Submit or edit private answers as a currently admitted member
   help [command]                  display help for command
 ```
@@ -2112,7 +2112,7 @@ Options:
 ```text
 Usage: groupi groups questionnaire status [options] <group-id>
 
-Read optional completion status without changing access
+Read current completion and member-content access status
 
 Options:
   -h, --help  display help for command
@@ -2150,12 +2150,13 @@ Options:
 ```text
 Usage: groupi groups questionnaire configure [options] <group-id>
 
-Configure exactly one optional joining form as owner; preserves retained answers
+Configure exactly one joining form as owner; preserves retained answers
 
 Options:
-  --enabled <boolean>  true or false; disabling preserves records
-  --questions <json>   At most 50 stable-ID core questions
-  -h, --help           display help for command
+  --enabled <boolean>              true or false; disabling preserves records
+  --questions <json>               At most 50 stable-ID core questions
+  --required-completion <boolean>  Require completion before Group member content; true or false
+  -h, --help                       display help for command
 ```
 
 ## groupi groups questionnaire submit

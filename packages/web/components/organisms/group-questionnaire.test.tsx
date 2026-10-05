@@ -92,6 +92,9 @@ const detail = {
   canLeave: true,
 };
 const questionnaire = {
+  requiredCompletion: false,
+  requiresCompletion: false,
+  canAccessMemberContent: true,
   groupId,
   enabled: true,
   version: 1,
@@ -381,7 +384,7 @@ it('lets only the owner configure the optional questionnaire and preserves quest
   );
   const user = userEvent.setup();
   await user.click(
-    await screen.findByLabelText('Enable optional joining questionnaire')
+    await screen.findByLabelText('Enable joining questionnaire')
   );
   await user.click(
     screen.getByRole('button', { name: 'Save questionnaire settings' })
@@ -393,6 +396,7 @@ it('lets only the owner configure the optional questionnaire and preserves quest
   expect(mutation.mock.calls[0][1]).toEqual({
     groupId: 'group-one',
     enabled: false,
+    requiredCompletion: false,
     questions: [
       {
         id: 'intro',
@@ -524,7 +528,7 @@ it('allows manager private answer review but exposes no admission approval actio
     screen.getByRole('button', { name: 'View member answer history' })
   ).toBeInTheDocument();
   expect(
-    screen.queryByLabelText('Enable optional joining questionnaire')
+    screen.queryByLabelText('Enable joining questionnaire')
   ).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();
@@ -895,6 +899,97 @@ it('does not request a private questionnaire when its own-record entitlement is 
       .mocked(client.watchQuery)
       .mock.calls.map(([query]) => getFunctionName(query))
   ).not.toContain('groupQuestionnaires/queries:getJoiningQuestionnaire');
+  mounted.unmount();
+  await client.close();
+});
+
+it('recovers required onboarding before ordinary roster reads without repeating admission', async () => {
+  const required = {
+    ...questionnaire,
+    requiredCompletion: true,
+    requiresCompletion: true,
+    canAccessMemberContent: false,
+  };
+  const requiredGroup = {
+    ...detail,
+    canManageMembers: false,
+    canManageIdentity: false,
+    canManageInvitations: false,
+    joiningQuestionnaire: required,
+  };
+  const { client, mutation, setData } = fixtureClient({
+    'groups/queries:getGroup': requiredGroup,
+    'groupQuestionnaires/queries:getJoiningQuestionnaire': required,
+  });
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  expect(
+    (
+      await screen.findAllByText(
+        /Complete required onboarding before accessing Group member content/
+      )
+    )[0]
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Alex')).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Leave Group' })
+  ).toBeInTheDocument();
+  expect(
+    vi.mocked(client.watchQuery).mock.calls.map(([ref]) => getFunctionName(ref))
+  ).not.toContain('groups/queries:listGroupMembers');
+  mutation.mockImplementation(async () => {
+    const complete = {
+      ...required,
+      completed: true,
+      requiresCompletion: false,
+      canAccessMemberContent: true,
+    };
+    setData('groupQuestionnaires/queries:getJoiningQuestionnaire', complete);
+    setData('groups/queries:getGroup', {
+      ...requiredGroup,
+      joiningQuestionnaire: complete,
+    });
+    return complete;
+  });
+  await userEvent.type(screen.getByLabelText(/Introduce yourself/), 'Ready');
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Save questionnaire answers' })
+  );
+  expect(await screen.findByText('Alex')).toBeInTheDocument();
+  expect(mutation.mock.calls.map(([ref]) => getFunctionName(ref))).toEqual([
+    'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
+  ]);
+  mounted.unmount();
+  await client.close();
+});
+it('owner can require completion without changing admission or deleting definitions', async () => {
+  const { client, mutation } = fixtureClient({
+    'groupQuestionnaires/queries:getJoiningQuestionnaire': {
+      ...questionnaire,
+      canConfigure: true,
+    },
+  });
+  const mounted = render(
+    <AppProvider client={client}>
+      <GroupDetail groupId={groupId} />
+    </AppProvider>
+  );
+  await userEvent.click(
+    await screen.findByRole('checkbox', {
+      name: 'Require completion before Group member content',
+    })
+  );
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Save questionnaire settings' })
+  );
+  expect(mutation.mock.calls[0][1]).toMatchObject({
+    requiredCompletion: true,
+    enabled: true,
+    questions: [{ id: 'intro' }],
+  });
   mounted.unmount();
   await client.close();
 });

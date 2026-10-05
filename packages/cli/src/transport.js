@@ -73,7 +73,15 @@ export async function readApi(profile, key, path) {
         );
       }
       if (!response.ok) {
-        await response.body?.cancel();
+        if (response.status === 403) {
+          const problem = await response.json().catch(() => null);
+          if (problem?.error?.code === 'ONBOARDING_REQUIRED')
+            throw new CliError(
+              'ONBOARDING_REQUIRED',
+              'Complete required Group onboarding with groups questionnaire get/submit before reading member content.',
+              3
+            );
+        } else await response.body?.cancel();
         if (
           attempt < 2 &&
           (response.status === 429 || [502, 503, 504].includes(response.status))

@@ -8,7 +8,10 @@ export function GroupOwnershipTransfer({ groupId }: { groupId: Id<'groups'> }) {
   const { status, offer, accept, decline, cancel } = useGroupTransfer(groupId);
   const [cursor, setCursor] = useState<string | null>(null),
     [cursors, setCursors] = useState<(string | null)[]>([]);
-  const members = useGroupMembers(groupId, { numItems: 20, cursor });
+  const members = useGroupMembers(status?.canOffer ? groupId : 'skip', {
+    numItems: 20,
+    cursor,
+  });
   const [recipientId, setRecipientId] = useState(''),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');

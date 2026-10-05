@@ -34,9 +34,9 @@ export function GroupJoiningQuestionnaire({
       </h2>
       {form.shouldPrompt && (
         <p>
-          You are already a Group member. This questionnaire is optional and
-          does not require another admission approval. You can complete it
-          later.
+          {form.requiresCompletion
+            ? 'Complete required onboarding before accessing Group member content. You are already a Group member; no further approval is needed.'
+            : 'You are already a Group member. This questionnaire is optional and does not require another admission approval. You can complete it later.'}
         </p>
       )}
       {!form.enabled && (
@@ -83,7 +83,9 @@ export function JoiningAnswersForm({ form }: { form: Form }) {
   if (!show)
     return (
       <Button variant='outline' onClick={() => setShow(true)}>
-        Complete or edit optional questionnaire
+        {form.requiredCompletion
+          ? 'Complete or edit joining questionnaire'
+          : 'Complete or edit optional questionnaire'}
       </Button>
     );
   return (
@@ -127,14 +129,16 @@ export function JoiningAnswersForm({ form }: { form: Form }) {
         <Button disabled={pending}>
           {pending ? 'Saving…' : 'Save questionnaire answers'}
         </Button>
-        <Button
-          type='button'
-          variant='outline'
-          disabled={pending}
-          onClick={() => setShow(false)}
-        >
-          Do this later
-        </Button>
+        {!form.requiresCompletion && (
+          <Button
+            type='button'
+            variant='outline'
+            disabled={pending}
+            onClick={() => setShow(false)}
+          >
+            Do this later
+          </Button>
+        )}
       </div>
       {message && <p role='status'>{message}</p>}
       {error && (

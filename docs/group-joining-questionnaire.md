@@ -1,4 +1,4 @@
-# Optional Group joining questionnaire
+# Group joining questionnaire
 
 ## Table of Contents
 
@@ -9,11 +9,13 @@
 ## Admission and privacy
 
 A Group admits an invited person immediately. The acceptance result reports
-`joiningQuestionnaire` with `enabled`, `version`, `completed` and `shouldPrompt`.
-The designated joining form is optional and is separate from admission. An
-incomplete form does not restrict Group access or independent Event access, and
-submission never requires another admission review. No required Group gate is
-configured by these operations.
+`joiningQuestionnaire` with `enabled`, `version`, `completed`, `shouldPrompt`,
+`requiredCompletion`, `requiresCompletion` and `canAccessMemberContent`.
+The designated form defaults to optional and is separate from immediate admission.
+Owners may set `requiredCompletion: true`. An enabled required form gates only
+Group-granted member content until current required answers are valid; submission
+never repeats admission. Independent Event membership and other qualifying grants
+remain unaffected. See [required onboarding](group-required-onboarding.md).
 
 The current owner configures the form. Admitted, eligible members submit or edit
 their own answers. Authors retain private read access after leaving or removal
@@ -71,6 +73,6 @@ applies. Stale submission versions reject with conflict and require a reload.
 CLI uses `groups questionnaire get|status|configure|submit|history|responses`.
 Configure requires `--enabled true|false --questions <json>`; submit requires
 `--form-version <number> --answers <json>`. History supports `--author-id` for
-current managers. Writes require advertised `groupQuestionnaire.version: 1`
-before mutation, and uncertain writes are not automatically retried. Legacy
+current managers. Basic writes accept advertised `groupQuestionnaire.version: 1` or `2`; explicit
+`--required-completion true|false` requires version `2` before mutation, and uncertain writes are not automatically retried. Legacy
 invitation operations remain compatible without this capability.

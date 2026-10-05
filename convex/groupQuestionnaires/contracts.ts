@@ -11,6 +11,7 @@ export const question = v.object({
 export const configuration = v.object({
   groupId: v.id('groups'),
   enabled: v.boolean(),
+  requiredCompletion: v.optional(v.boolean()),
   version: v.number(),
   questions: v.array(question),
   updatedAt: v.number(),
@@ -30,6 +31,9 @@ export const answerFields = {
   answeredAt: v.number(),
 };
 export const status = v.object({
+  requiredCompletion: v.boolean(),
+  requiresCompletion: v.boolean(),
+  canAccessMemberContent: v.boolean(),
   enabled: v.boolean(),
   completed: v.boolean(),
   shouldPrompt: v.boolean(),

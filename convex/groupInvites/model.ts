@@ -1,3 +1,4 @@
+import { requireGroupRosterAccess } from '../groups/contentAccess';
 import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { admitGroupMember } from '../groups/admission';
 import { ConvexError } from 'convex/values';
@@ -320,6 +321,7 @@ export async function roster(
   const viewer = await membershipFor(ctx, groupId, actorId);
   if (!viewer)
     fail('FORBIDDEN', 'Group membership is required to view members.');
+  await requireGroupRosterAccess(ctx, groupId, actorId);
   let result;
   try {
     result = await ctx.db

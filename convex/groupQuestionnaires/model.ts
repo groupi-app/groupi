@@ -1,3 +1,4 @@
+import { scheduleRequiredChanges } from './notificationJobs';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -97,9 +98,16 @@ async function projectJoiningQuestionnaire(
     completed = false;
   }
   const enabled = config?.enabled ?? false;
+  const requiredCompletion = config?.requiredCompletion ?? false;
+  const requiresCompletion = Boolean(
+    enabled && requiredCompletion && currentMember && !completed
+  );
   return {
     groupId,
     enabled,
+    requiredCompletion,
+    requiresCompletion,
+    canAccessMemberContent: Boolean(currentMember && !requiresCompletion),
     version: currentMember ? (config?.version ?? 0) : (record?.version ?? 0),
     questions,
     answers,
@@ -113,7 +121,7 @@ async function projectJoiningQuestionnaire(
     canReview: Boolean(member && member.role !== 'MEMBER' && !banned),
   };
 }
-/** Post-admission prompt only: optional completion never changes eligibility. */
+/** Common post-admission state; admission itself never depends on completion. */
 export async function getJoiningQuestionnaireStatus(
   ctx: ReadCtx,
   groupId: Id<'groups'>,
@@ -122,6 +130,9 @@ export async function getJoiningQuestionnaireStatus(
   const form = await getJoiningQuestionnaire(ctx, groupId, personId);
   return {
     enabled: form.enabled,
+    requiredCompletion: form.requiredCompletion,
+    requiresCompletion: form.requiresCompletion,
+    canAccessMemberContent: form.canAccessMemberContent,
     version: form.version,
     completed: form.completed,
     shouldPrompt: form.shouldPrompt,
@@ -132,7 +143,8 @@ export async function configureJoiningQuestionnaire(
   groupId: Id<'groups'>,
   personId: Id<'persons'>,
   enabled: boolean,
-  questions: ApplicationQuestion[]
+  questions: ApplicationQuestion[],
+  requiredCompletion?: boolean
 ) {
   await requireOwner(ctx, groupId, personId);
   const ownerMembership = await membershipFor(ctx, groupId, personId);
@@ -174,12 +186,15 @@ export async function configureJoiningQuestionnaire(
   const value = {
     groupId,
     enabled,
+    requiredCompletion:
+      requiredCompletion ?? existing?.requiredCompletion ?? false,
     version,
     questions: versioned,
     updatedAt: Date.now(),
   };
   if (existing) await ctx.db.patch(existing._id, value);
   else await ctx.db.insert('groupQuestionnaires', value);
+  await scheduleRequiredChanges(ctx, groupId, personId, existing, value);
   return getJoiningQuestionnaire(ctx, groupId, personId);
 }
 export async function submitJoiningQuestionnaire(

@@ -74,6 +74,10 @@ export function NotificationSlate({
   };
 
   const getNotificationLink = (): string => {
+    if (type === 'GROUP_ONBOARDING_REQUIRED')
+      return notification.group
+        ? `/groups/${notification.group.id}/questionnaire`
+        : '/events';
     // EVENT_INVITE_RECEIVED navigates to the invites tab, not a specific event
     if (type === 'GROUP_APPLICATION_RECEIVED')
       return notification.group
@@ -340,6 +344,10 @@ export function NotificationSlate({
               ? `: ${notification.groupAnnouncement.message}`
               : ' — unavailable'}
           </>
+        );
+      case 'GROUP_ONBOARDING_REQUIRED':
+        return (
+          <>Complete required Group onboarding to access member content.</>
         );
       case 'GROUP_MEMBER_REMOVED':
       case 'GROUP_MEMBER_BANNED':

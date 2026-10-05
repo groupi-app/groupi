@@ -224,6 +224,9 @@ export function createGroupInviteRoutes() {
                 status: z.literal('ACCEPTED'),
                 joiningQuestionnaire: z.object({
                   enabled: z.boolean(),
+                  requiredCompletion: z.boolean(),
+                  requiresCompletion: z.boolean(),
+                  canAccessMemberContent: z.boolean(),
                   version: z.number(),
                   completed: z.boolean(),
                   shouldPrompt: z.boolean(),

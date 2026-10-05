@@ -61,6 +61,7 @@ const NOTIFICATION_ICONS: Record<
   GROUP_MEMBER_REMOVED: 'person-remove-outline',
   GROUP_ANNOUNCEMENT: 'megaphone-outline',
   GROUP_MEMBER_BANNED: 'ban-outline',
+  GROUP_ONBOARDING_REQUIRED: 'document-text-outline',
   ADDON_CONFIG_RESET: 'extension-puzzle-outline',
   ADDON_AUTOMATION: 'sparkles-outline',
 };

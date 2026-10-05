@@ -15,6 +15,15 @@ const identity = z
   })
   .strict();
 const group = z.object({
+  joiningQuestionnaire: z.object({
+    enabled: z.boolean(),
+    requiredCompletion: z.boolean(),
+    requiresCompletion: z.boolean(),
+    canAccessMemberContent: z.boolean(),
+    completed: z.boolean(),
+    shouldPrompt: z.boolean(),
+    version: z.number(),
+  }),
   _id: z.string(),
   _creationTime: z.number(),
   ownerId: z.string(),

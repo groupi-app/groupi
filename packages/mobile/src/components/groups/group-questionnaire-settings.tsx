@@ -28,6 +28,9 @@ export function GroupQuestionnaireSettings({
   const configure = useConfigureJoiningQuestionnaire();
   const [draft, setDraft] = useState<Question[] | null>(null);
   const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [requiredCompletion, setRequiredCompletion] = useState<boolean | null>(
+    null
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   if (form === undefined) return <Text>Loading questionnaire settings…</Text>;
@@ -42,21 +45,35 @@ export function GroupQuestionnaireSettings({
   }
   return (
     <View className='gap-3'>
-      <Text accessibilityRole='header'>
-        Optional joining questionnaire settings
-      </Text>
+      <Text accessibilityRole='header'>Joining questionnaire settings</Text>
       <Text>
         Admission is immediate. Saved answers and their original definitions
         survive edits and disabling this questionnaire.
       </Text>
       <Button
-        accessibilityLabel='Enable optional joining questionnaire'
+        accessibilityLabel='Enable joining questionnaire'
         accessibilityRole='checkbox'
         accessibilityState={{ checked: active, disabled: busy }}
         disabled={busy}
         onPress={() => setEnabled(!active)}
       >
         {active ? 'Enabled' : 'Disabled'}
+      </Button>
+      <Button
+        accessibilityLabel='Require completion before Group member content'
+        accessibilityRole='checkbox'
+        accessibilityState={{
+          checked: requiredCompletion ?? form.requiredCompletion,
+          disabled: busy,
+        }}
+        disabled={busy}
+        onPress={() =>
+          setRequiredCompletion(
+            !(requiredCompletion ?? form.requiredCompletion)
+          )
+        }
+      >
+        Require completion before Group member content
       </Button>
       {questions.map((q, index) => (
         <View
@@ -150,7 +167,12 @@ export function GroupQuestionnaireSettings({
           setBusy(true);
           setMessage('');
           try {
-            await configure({ groupId, enabled: active, questions });
+            await configure({
+              groupId,
+              enabled: active,
+              questions,
+              requiredCompletion: requiredCompletion ?? form.requiredCompletion,
+            });
             setDraft(null);
             setEnabled(null);
             setMessage(

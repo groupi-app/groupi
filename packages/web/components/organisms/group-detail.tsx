@@ -144,7 +144,14 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
       {group.viewerRole !== 'MEMBER' && (
         <GroupAnnouncementComposer groupId={groupId} />
       )}
-      <GroupMemberRoster groupId={groupId} />
+      {group.joiningQuestionnaire?.canAccessMemberContent !== false ||
+      group.canManageMembers ? (
+        <GroupMemberRoster groupId={groupId} />
+      ) : (
+        <p>
+          Complete required onboarding before accessing Group member content.
+        </p>
+      )}
       {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
       {group.canManageInvitations && (
         <GroupInvitationManagement

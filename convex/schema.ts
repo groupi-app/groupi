@@ -29,6 +29,23 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupOnboardingJobs: defineTable({
+    groupId: v.id('groups'),
+    actorId: v.id('persons'),
+    semanticKey: v.string(),
+    cursor: v.union(v.string(), v.null()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_actorId', ['actorId']),
+  groupOnboardingDispatches: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    notificationId: v.id('notifications'),
+    claimedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_notificationId', ['notificationId']),
   groupQuestionnaires: defineTable(groupQuestionnaireConfiguration).index(
     'by_groupId',
     ['groupId']
@@ -588,6 +605,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_APPROVED'),
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
+      v.literal('GROUP_ONBOARDING_REQUIRED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -614,6 +632,7 @@ export default defineSchema({
   })
     .index('by_groupId', ['groupId'])
     .index('by_groupAnnouncementId', ['groupAnnouncementId'])
+    .index('by_authorId', ['authorId'])
     .index('by_groupInviteId', ['groupInviteId'])
     .index('by_groupApplicationId', ['groupApplicationId'])
     .index('by_person', ['personId'])
@@ -671,6 +690,7 @@ export default defineSchema({
       v.literal('GROUP_APPLICATION_APPROVED'),
       v.literal('GROUP_APPLICATION_DECLINED'),
       v.literal('GROUP_ANNOUNCEMENT'),
+      v.literal('GROUP_ONBOARDING_REQUIRED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),

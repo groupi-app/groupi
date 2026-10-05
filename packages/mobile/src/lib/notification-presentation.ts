@@ -93,6 +93,8 @@ export function getNotificationMessage(
       return notification.groupAnnouncement
         ? `${notification.groupAnnouncement.title}: ${notification.groupAnnouncement.message}`
         : 'Group announcement unavailable';
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_REMOVED':
       return 'You were removed from the Group.';
     case 'GROUP_MEMBER_BANNED':
@@ -113,6 +115,10 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (notification.type === 'GROUP_ONBOARDING_REQUIRED') {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/groups/${groupId}/questionnaire` : null;
+  }
   if (
     notification.type === 'GROUP_APPLICATION_RECEIVED' ||
     notification.type === 'GROUP_APPLICATION_APPROVED' ||

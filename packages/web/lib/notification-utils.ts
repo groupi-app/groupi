@@ -28,6 +28,7 @@ export function getNotificationTypeDisplayName(type: NotificationType): string {
     GROUP_MEMBER_REMOVED: 'Removed from Group',
     GROUP_ANNOUNCEMENT: 'Group Announcement',
     GROUP_MEMBER_BANNED: 'Banned from Group',
+    GROUP_ONBOARDING_REQUIRED: 'Required Group Onboarding',
     GROUP_INVITE_RECEIVED: 'Group Invitation Received',
     GROUP_INVITE_ACCEPTED: 'Group Invitation Accepted',
   };

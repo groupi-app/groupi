@@ -42,6 +42,7 @@ export const configure = internalMutation({
     groupId: v.string(),
     personId: v.id('persons'),
     enabled: v.boolean(),
+    requiredCompletion: v.optional(v.boolean()),
     questions: v.array(questionValidator),
   },
   returns: contracts.form,
@@ -51,7 +52,8 @@ export const configure = internalMutation({
       group(ctx, args.groupId),
       args.personId,
       args.enabled,
-      args.questions
+      args.questions,
+      args.requiredCompletion
     ),
 });
 export const submit = internalMutation({

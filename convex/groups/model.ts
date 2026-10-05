@@ -1,4 +1,5 @@
 import { removeApplicationsForPerson } from '../groupApplications/cleanup';
+import { getJoiningQuestionnaireStatus } from '../groupQuestionnaires/model';
 import { removeQuestionnairesForPerson } from '../groupQuestionnaires/cleanup';
 import { cascadeDeleteGroupData } from './cleanup';
 import { removeTransfersForPerson } from '../groupTransfers/cleanup';
@@ -171,6 +172,11 @@ export async function detail(
   if (!membership) return null;
   return {
     ...group,
+    joiningQuestionnaire: await getJoiningQuestionnaireStatus(
+      ctx,
+      groupId,
+      personId
+    ),
     role: membership.role,
     viewerRole: membership.role,
     canManageIdentity: group.ownerId === personId,

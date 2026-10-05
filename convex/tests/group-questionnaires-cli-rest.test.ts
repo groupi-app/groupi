@@ -2,7 +2,7 @@
 import { expect, it } from 'vitest';
 import { api } from '../_generated/api';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
-it('CLI configures, answers, edits, reads former records and disables without deleting private data', async () => {
+it('CLI requires onboarding after immediate admission, recovers content, retains former records and disables without deleting private data', async () => {
   const bridge = await cliRestBridge();
   try {
     const owner = await bridge.actor('q-cli-owner'),
@@ -35,6 +35,8 @@ it('CLI configures, answers, edits, reads former records and disables without de
       'true',
       '--questions',
       questions,
+      '--required-completion',
+      'true',
     ]);
     const sent = await owner.auth.mutation(
       api.groupInvites.mutations.sendGroupInvite,
@@ -48,10 +50,20 @@ it('CLI configures, answers, edits, reads former records and disables without de
     ).toMatchObject({
       joiningQuestionnaire: {
         enabled: true,
+        requiredCompletion: true,
+        requiresCompletion: true,
+        canAccessMemberContent: false,
         completed: false,
         shouldPrompt: true,
       },
     });
+    const blocked = await bridge.cli(member.rawKey, [
+      'groups',
+      'members',
+      groupId,
+    ]);
+    expect(blocked.code).not.toBe(0);
+    expect(blocked.stderr).toContain('ONBOARDING_REQUIRED');
     const form = await success(member.rawKey, [
       'groups',
       'questionnaire',
@@ -70,6 +82,9 @@ it('CLI configures, answers, edits, reads former records and disables without de
         '{"book":"Dune"}',
       ])
     ).toMatchObject({ completed: true, answers: { book: 'Dune' } });
+    expect(
+      (await success(member.rawKey, ['groups', 'members', groupId])).items
+    ).toHaveLength(2);
     await success(member.rawKey, [
       'groups',
       'questionnaire',

@@ -1,4 +1,5 @@
 import { questionValidator } from '../eventApplications/contracts';
+import { status as questionnaireStatus } from '../groupQuestionnaires/contracts';
 import { v } from 'convex/values';
 export const role = v.union(
   v.literal('OWNER'),
@@ -17,6 +18,7 @@ export const updateInput = {
   image: v.optional(v.union(v.string(), v.null())),
 };
 export const group = v.object({
+  joiningQuestionnaire: questionnaireStatus,
   _id: v.id('groups'),
   _creationTime: v.number(),
   ownerId: v.id('persons'),

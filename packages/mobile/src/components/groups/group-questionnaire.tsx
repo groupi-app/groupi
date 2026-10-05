@@ -135,10 +135,13 @@ function QuestionnaireForm({
   const answers = draft ?? form.answers;
   return (
     <View className='gap-4'>
-      <Text accessibilityRole='header'>Optional joining questionnaire</Text>
+      <Text accessibilityRole='header'>Joining questionnaire</Text>
       <Text>
-        This questionnaire is separate from admission. Completing it does not
-        require approval or limit Group or Event access.
+        {form.requiresCompletion
+          ? 'Complete required onboarding before accessing Group member content.'
+          : form.requiredCompletion
+            ? 'This questionnaire is required for Group-granted member content. Admission and independent Event grants are unchanged.'
+            : 'This questionnaire is separate from admission. Completing it does not require approval or limit Group or Event access.'}
       </Text>
       <Text>
         {form.enabled
@@ -146,7 +149,9 @@ function QuestionnaireForm({
             ? form.canEdit
               ? 'Your answers are saved. You can edit them.'
               : 'Your saved current answers are read-only.'
-            : 'Complete whenever you choose.'
+            : form.requiresCompletion
+              ? 'Your membership is active. Save current required answers to continue.'
+              : 'Complete whenever you choose.'
           : 'This questionnaire is disabled. Your saved records remain available.'}
       </Text>
       {form.canEdit ? (
@@ -221,13 +226,15 @@ function QuestionnaireForm({
       >
         My saved answer history
       </Button>
-      <Button
-        variant='outline'
-        accessibilityLabel='Continue without questionnaire'
-        onPress={() => router.replace(`/groups/${groupId}`)}
-      >
-        Continue to Group
-      </Button>
+      {!form.requiresCompletion && (
+        <Button
+          variant='outline'
+          accessibilityLabel='Continue without questionnaire'
+          onPress={() => router.replace(`/groups/${groupId}`)}
+        >
+          Continue to Group
+        </Button>
+      )}
       {form.canConfigure ? (
         <Button
           variant='outline'
@@ -374,27 +381,35 @@ export function GroupJoiningQuestionnairePrompt({
 }) {
   const form = useJoiningQuestionnaire({ groupId });
   const [dismissed, setDismissed] = useState(false);
-  if (!form?.shouldPrompt || dismissed) return null;
+  if (!form?.shouldPrompt || (dismissed && !form.requiresCompletion))
+    return null;
   return (
     <View className='gap-3 rounded-card border border-border p-4'>
-      <Text accessibilityRole='header'>Optional joining questionnaire</Text>
+      <Text accessibilityRole='header'>Joining questionnaire</Text>
       <Text>
-        Your membership is active. You can answer now or later, without further
-        admission approval.
+        {form.requiresCompletion
+          ? 'Complete required onboarding before accessing Group member content.'
+          : 'Your membership is active. You can answer now or later, without further admission approval.'}
       </Text>
       <Button
-        accessibilityLabel='Answer optional joining questionnaire'
+        accessibilityLabel={
+          form.requiresCompletion
+            ? 'Complete required joining questionnaire'
+            : 'Answer optional joining questionnaire'
+        }
         onPress={() => router.push(`/groups/${groupId}/questionnaire`)}
       >
         Answer now
       </Button>
-      <Button
-        variant='ghost'
-        accessibilityLabel='Skip optional joining questionnaire for now'
-        onPress={() => setDismissed(true)}
-      >
-        Later
-      </Button>
+      {!form.requiresCompletion && (
+        <Button
+          variant='ghost'
+          accessibilityLabel='Skip optional joining questionnaire for now'
+          onPress={() => setDismissed(true)}
+        >
+          Later
+        </Button>
+      )}
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Button } from '@/components/ui/button';
 import type { Id } from 'convex/_generated/dataModel';
 import { DetailScreenTemplate } from '@/components/templates/detail-screen-template';
 import { Text } from '@/components/ui/text';
@@ -18,7 +19,23 @@ export default function GroupMembersScreen() {
       {group === undefined ? (
         <Text className='mt-4 text-muted-foreground'>Loading Group…</Text>
       ) : group ? (
-        <GroupRoster groupId={id} />
+        group.joiningQuestionnaire.canAccessMemberContent ||
+        group.canManageMembers ? (
+          <GroupRoster groupId={id} />
+        ) : (
+          <View className='gap-3'>
+            <Text>
+              Complete required onboarding before accessing Group member
+              content.
+            </Text>
+            <Button
+              accessibilityLabel='Complete required Group onboarding'
+              onPress={() => router.push(`/groups/${id}/questionnaire`)}
+            >
+              Complete onboarding
+            </Button>
+          </View>
+        )
       ) : (
         <Text className='mt-4 text-foreground'>
           Group membership is required to view members.

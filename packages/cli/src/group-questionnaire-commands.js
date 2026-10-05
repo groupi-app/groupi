@@ -18,9 +18,7 @@ export function registerGroupQuestionnaireCommands(program, json) {
   if (!groups) throw new Error('Register Groups first.');
   const commands = groups
     .command('questionnaire')
-    .description(
-      'Optional post-admission questionnaire and private retained records'
-    );
+    .description('Post-admission questionnaire and private retained records');
   const connection = async () => {
     const options = program.opts();
     const profile = await getProfile(options.profile);
@@ -37,7 +35,7 @@ export function registerGroupQuestionnaireCommands(program, json) {
       .description(
         operation === 'get'
           ? 'Read your private current form and saved definitions'
-          : 'Read optional completion status without changing access'
+          : 'Read current completion and member-content access status'
       )
       .action(async id => {
         const { profile, key } = await connection();
@@ -72,21 +70,37 @@ export function registerGroupQuestionnaireCommands(program, json) {
   commands
     .command('configure <group-id>')
     .description(
-      'Configure exactly one optional joining form as owner; preserves retained answers'
+      'Configure exactly one joining form as owner; preserves retained answers'
     )
     .requiredOption(
       '--enabled <boolean>',
       'true or false; disabling preserves records'
     )
     .requiredOption('--questions <json>', 'At most 50 stable-ID core questions')
+    .option(
+      '--required-completion <boolean>',
+      'Require completion before Group member content; true or false'
+    )
     .action(async (id, input) => {
       if (!['true', 'false'].includes(input.enabled))
         throw new CliError('USAGE', '--enabled must be true or false.', 2);
+      if (
+        input.requiredCompletion !== undefined &&
+        !['true', 'false'].includes(input.requiredCompletion)
+      )
+        throw new CliError(
+          'USAGE',
+          '--required-completion must be true or false.',
+          2
+        );
       const { profile, key } = await connection();
       print(
         await writeGroupQuestionnaire(profile, key, id, 'configure', {
           enabled: input.enabled === 'true',
           questions: parse(input.questions),
+          ...(input.requiredCompletion === undefined
+            ? {}
+            : { requiredCompletion: input.requiredCompletion === 'true' }),
         })
       );
     });

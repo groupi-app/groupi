@@ -106,10 +106,25 @@ export function GroupDetailScreen() {
             </Button>
             <Button
               variant='outline'
-              accessibilityLabel='View Group members'
-              onPress={() => router.push(`/groups/${id}/members`)}
+              accessibilityLabel={
+                group.joiningQuestionnaire?.canAccessMemberContent === false &&
+                !group.canManageMembers
+                  ? 'Complete required Group onboarding'
+                  : 'View Group members'
+              }
+              onPress={() =>
+                router.push(
+                  group.joiningQuestionnaire?.canAccessMemberContent ===
+                    false && !group.canManageMembers
+                    ? `/groups/${id}/questionnaire`
+                    : `/groups/${id}/members`
+                )
+              }
             >
-              View members
+              {group.joiningQuestionnaire?.canAccessMemberContent === false &&
+              !group.canManageMembers
+                ? 'Complete required onboarding'
+                : 'View members'}
             </Button>
             {group.canManageInvitations ? (
               <Button

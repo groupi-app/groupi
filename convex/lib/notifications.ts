@@ -252,6 +252,7 @@ export type NotificationType =
   | 'GROUP_APPLICATION_RECEIVED'
   | 'GROUP_APPLICATION_APPROVED'
   | 'GROUP_APPLICATION_DECLINED'
+  | 'GROUP_ONBOARDING_REQUIRED'
   | 'EVENT_INVITE_RECEIVED'
   | 'EVENT_INVITE_ACCEPTED'
   | 'ADDON_CONFIG_RESET'
@@ -522,6 +523,8 @@ export function getNotificationEmailSubject(
       return `Your application to ${groupTitle || 'a Group'} was declined`;
     case 'GROUP_ANNOUNCEMENT':
       return ctx.announcementTitle || 'Group announcement';
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -616,6 +619,8 @@ function getNotificationMessage(ctx: NotificationMessageContext): string {
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -709,6 +714,8 @@ function getNotificationMessageMarkdown(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -801,6 +808,8 @@ export function getNotificationMessagePlain(
       return [ctx.announcementTitle, ctx.announcementMessage]
         .filter(Boolean)
         .join(': ');
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
     case 'GROUP_MEMBER_BANNED':
       return 'You were banned from a Group';
     case 'GROUP_INVITE_ACCEPTED':
@@ -1570,6 +1579,39 @@ export async function createNotification(
     rsvp: data.rsvp,
   };
 
+  if (data.type === 'GROUP_ONBOARDING_REQUIRED' && data.groupId) {
+    await ctx.db.insert('groupOnboardingDispatches', {
+      groupId: data.groupId,
+      personId: data.personId,
+      notificationId,
+    });
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<
+        'action',
+        { notificationId: Id<'notifications'> },
+        null
+      >('groupQuestionnaires/actions:sendExternal'),
+      { notificationId }
+    );
+    const pushes = await collectPushData(
+      ctx,
+      notificationId,
+      notificationData,
+      preFetched?.messageContext
+    );
+    if (pushes.length)
+      await ctx.scheduler.runAfter(
+        0,
+        makeFunctionReference<
+          'action',
+          { deliveryIds: Id<'pushDeliveries'>[] },
+          { sent: number; failed: number; retrying: number }
+        >('pushNotifications/actions:sendPushNotifications'),
+        { deliveryIds: pushes.map(push => push.deliveryId) }
+      );
+    return notificationId;
+  }
   const [emails, webhooks, pushes] = await Promise.all([
     collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),

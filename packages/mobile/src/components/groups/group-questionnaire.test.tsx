@@ -32,6 +32,7 @@ const network = vi.hoisted(() => ({
   formEditable: true,
   answers: {} as Record<string, string | number | boolean | string[]>,
   saved: false,
+  requiredOnboarding: false,
   formVersion: 3,
   enabled: true,
   available: true,
@@ -124,6 +125,9 @@ function form() {
   return {
     groupId: 'group-123',
     enabled: network.enabledQuestionnaire,
+    requiredCompletion: network.requiredOnboarding,
+    requiresCompletion: network.requiredOnboarding && !network.saved,
+    canAccessMemberContent: !network.requiredOnboarding || network.saved,
     version: network.formVersion,
     questions,
     answers: network.answers,
@@ -225,6 +229,7 @@ describe('joining questionnaire actual native SDK/provider interactions', () => 
     network.enabledQuestionnaire = true;
     network.answers = {};
     network.saved = false;
+    network.requiredOnboarding = false;
     network.mutation.mockResolvedValue(form());
   });
   it('submits all seven ordinary input types at current configuration version without changing admission', async () => {
@@ -337,7 +342,7 @@ describe('joining questionnaire actual native SDK/provider interactions', () => 
           .onChangeText as (text: string) => void
       )('Revised label');
     });
-    await press(mounted, 'Enable optional joining questionnaire');
+    await press(mounted, 'Enable joining questionnaire');
     await press(mounted, 'Save joining questionnaire settings');
     const payload = network.mutation.mock.calls[0][1];
     expect(payload.enabled).toBe(false);
@@ -461,5 +466,34 @@ it('clears a saved optional yes/no answer instead of coercing it to false', asyn
     'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
     { groupId: 'group-123', version: 3, answers: {} }
   );
+  await act(async () => mounted.unmount());
+});
+
+it('required onboarding keeps recovery reachable and removes the misleading skip action', async () => {
+  vi.clearAllMocks();
+  network.saved = false;
+  network.requiredOnboarding = true;
+  network.manager = false;
+  const mounted = await mount(QuestionnaireScreen);
+  expect(control(mounted, 'Continue without questionnaire')).toBeUndefined();
+  expect(
+    mounted.root.findAll(
+      node =>
+        node.props.children ===
+        'Complete required onboarding before accessing Group member content.'
+    ).length
+  ).toBeGreaterThan(0);
+  network.mutation.mockImplementation(async () => {
+    network.saved = true;
+    network.subscribers.forEach(callback => callback());
+    return form();
+  });
+  await press(mounted, 'Save joining questionnaire answers');
+  expect(network.mutation).toHaveBeenCalledWith(
+    'groupQuestionnaires/mutations:submitJoiningQuestionnaire',
+    expect.any(Object)
+  );
+  expect(network.mutation).toHaveBeenCalledTimes(1);
+  expect(control(mounted, 'Continue without questionnaire')).toBeDefined();
   await act(async () => mounted.unmount());
 });

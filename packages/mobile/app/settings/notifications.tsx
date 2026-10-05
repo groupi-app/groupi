@@ -176,6 +176,12 @@ const NOTIFICATION_CATEGORIES: Array<{
         icon: 'person-remove-outline',
       },
       {
+        type: 'GROUP_ONBOARDING_REQUIRED',
+        label: 'Required Group onboarding',
+        description: 'Current required Group answers need completing.',
+        icon: 'document-text-outline',
+      },
+      {
         type: 'GROUP_MEMBER_BANNED',
         label: 'Group bans',
         description: 'You are banned from a Group.',

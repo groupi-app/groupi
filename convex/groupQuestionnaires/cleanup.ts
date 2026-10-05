@@ -5,11 +5,13 @@ export async function removeQuestionnairesForGroup(
   groupId: Id<'groups'>
 ) {
   for (const table of [
+    'groupOnboardingJobs',
     'groupQuestionnaires',
     'groupQuestionnaireIdentities',
     'groupQuestionnaireRecords',
     'groupQuestionnaireAnswers',
     'groupQuestionnaireHistory',
+    'groupOnboardingDispatches',
   ] as const) {
     for await (const row of ctx.db
       .query(table)
@@ -21,10 +23,21 @@ export async function removeQuestionnairesForPerson(
   ctx: MutationCtx,
   personId: Id<'persons'>
 ) {
+  for await (const notification of ctx.db
+    .query('notifications')
+    .withIndex('by_authorId', q => q.eq('authorId', personId))) {
+    if (notification.type === 'GROUP_ONBOARDING_REQUIRED')
+      await ctx.db.patch(notification._id, { authorId: undefined });
+  }
+  for await (const job of ctx.db
+    .query('groupOnboardingJobs')
+    .withIndex('by_actorId', q => q.eq('actorId', personId)))
+    await ctx.db.delete(job._id);
   for (const table of [
     'groupQuestionnaireRecords',
     'groupQuestionnaireAnswers',
     'groupQuestionnaireHistory',
+    'groupOnboardingDispatches',
   ] as const) {
     for await (const row of ctx.db
       .query(table)

@@ -61,13 +61,18 @@ export function createGroupInvitationHooks<Api extends GroupInvitationApi>(
       | undefined;
   }
   function useGroupMembers(
-    groupId: ConvexId<'groups'>,
+    groupId: ConvexId<'groups'> | 'skip',
     paginationOpts: Page = { numItems: 20, cursor: null }
   ) {
-    return hooks.useQuery(api.groups.queries.listGroupMembers, {
-      groupId,
-      paginationOpts,
-    }) as
+    return hooks.useQuery(
+      api.groups.queries.listGroupMembers,
+      groupId === 'skip'
+        ? 'skip'
+        : {
+            groupId,
+            paginationOpts,
+          }
+    ) as
       | FunctionReturnType<Api['groups']['queries']['listGroupMembers']>
       | undefined;
   }

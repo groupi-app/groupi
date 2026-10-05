@@ -104,6 +104,7 @@ export function createApiV2App(
           'UNAUTHORIZED',
           'VALIDATION_ERROR',
           'FORBIDDEN',
+          'ONBOARDING_REQUIRED',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
           'RECIPIENT_UNAVAILABLE',
@@ -121,7 +122,7 @@ export function createApiV2App(
             ? 401
             : code === 'NOT_FOUND'
               ? 404
-              : code === 'FORBIDDEN'
+              : code === 'FORBIDDEN' || code === 'ONBOARDING_REQUIRED'
                 ? 403
                 : code === 'VALIDATION_ERROR'
                   ? 400
@@ -265,7 +266,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
         groupTransfers: { version: 1, retirement: true },
         groupApplications: { version: 1 },
         groups: { version: 1, announcements: 1 },
-        groupQuestionnaire: { version: 1 },
+        groupQuestionnaire: { version: 2 },
         discussion: { version: 1 },
         eventWrites: { version: 1 },
         imageWrites: { version: 1 },

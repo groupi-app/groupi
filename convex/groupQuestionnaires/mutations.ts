@@ -11,6 +11,7 @@ export const configureJoiningQuestionnaire = mutation({
   args: {
     groupId: v.id('groups'),
     enabled: v.boolean(),
+    requiredCompletion: v.optional(v.boolean()),
     questions: v.array(questionValidator),
   },
   returns: contracts.form,
@@ -20,7 +21,8 @@ export const configureJoiningQuestionnaire = mutation({
       args.groupId,
       (await requireAuth(ctx)).person._id,
       args.enabled,
-      args.questions
+      args.questions,
+      args.requiredCompletion
     ),
 });
 export const submitJoiningQuestionnaire = mutation({

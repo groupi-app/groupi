@@ -13,7 +13,7 @@ function object(value) {
     );
   return /** @type {Record<string,unknown>} */ (value);
 }
-/** @param {unknown} value */
+/** @param {unknown} value @returns {Record<string,unknown>} */
 function form(value) {
   const result = object(value);
   if (
@@ -35,8 +35,26 @@ function form(value) {
       'Invalid private questionnaire form.',
       5
     );
+  for (const name of [
+    'requiredCompletion',
+    'requiresCompletion',
+    'canAccessMemberContent',
+  ]) {
+    if (result[name] !== undefined && typeof result[name] !== 'boolean')
+      throw new CliError(
+        'INVALID_RESPONSE',
+        'Invalid questionnaire access status.',
+        5
+      );
+  }
   object(result.answers);
-  return result;
+  // Version 1 has no required policy; its content entitlement is unknown.
+  return {
+    ...result,
+    requiredCompletion: result.requiredCompletion ?? false,
+    requiresCompletion: result.requiresCompletion ?? false,
+    canAccessMemberContent: result.canAccessMemberContent ?? null,
+  };
 }
 /** @param {Profile} profile @param {string} key @param {string} groupId @param {'get'|'status'|'history'|'responses'} operation @param {{limit?:number,cursor?:string,authorId?:string}} [options] */
 export async function readGroupQuestionnaire(
@@ -74,6 +92,9 @@ export async function readGroupQuestionnaire(
           completed: current.completed,
           shouldPrompt: current.shouldPrompt,
           canEdit: current.canEdit,
+          requiredCompletion: current.requiredCompletion ?? false,
+          requiresCompletion: current.requiresCompletion ?? false,
+          canAccessMemberContent: current.canAccessMemberContent,
         }
       : current;
   }
@@ -99,7 +120,9 @@ export async function writeGroupQuestionnaire(
     operation === 'configure' &&
     (typeof body.enabled !== 'boolean' ||
       !Array.isArray(body.questions) ||
-      body.questions.length > 50)
+      body.questions.length > 50 ||
+      (body.requiredCompletion !== undefined &&
+        typeof body.requiredCompletion !== 'boolean'))
   )
     throw new CliError(
       'USAGE',
@@ -121,10 +144,14 @@ export async function writeGroupQuestionnaire(
     );
   const health = object(await readApi(profile, key, '/health'));
   const capabilities = object(health.capabilities ?? {});
-  if (object(capabilities.groupQuestionnaire ?? {}).version !== 1)
+  const version = object(capabilities.groupQuestionnaire ?? {}).version;
+  if (
+    (version !== 1 && version !== 2) ||
+    (body.requiredCompletion !== undefined && version !== 2)
+  )
     throw new CliError(
       'UNSUPPORTED_SERVER',
-      'Server lacks groupQuestionnaire version 1; no write was sent.',
+      'Server lacks compatible groupQuestionnaire capability; no write was sent.',
       5
     );
   return form(

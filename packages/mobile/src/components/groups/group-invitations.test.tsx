@@ -29,6 +29,7 @@ const network = vi.hoisted(() => ({
   authenticated: true,
   member: true,
   questionnairePrompt: false,
+  requiredOnboarding: false,
   manager: true,
   moderator: false,
   targetRole: 'MEMBER',
@@ -164,6 +165,15 @@ function result(name: string, args: Record<string, unknown>) {
           canManageInvitations: network.manager,
           invitationsEnabled: network.enabled,
           memberCount: 1,
+          joiningQuestionnaire: {
+            requiredCompletion: false,
+            requiresCompletion: network.requiredOnboarding,
+            canAccessMemberContent: !network.requiredOnboarding,
+            enabled: false,
+            completed: false,
+            shouldPrompt: false,
+            version: 0,
+          },
         }
       : null;
   if (name === 'groupInvites/queries:getMyGroupInviteForGroup')
@@ -996,4 +1006,27 @@ it('application admission makes Group detail and the optional prompt available w
   expect(network.mutation).not.toHaveBeenCalled();
   await act(async () => mounted.unmount());
   network.questionnairePrompt = false;
+});
+it('keeps required onboarding recovery visible without subscribing to the ordinary roster', async () => {
+  vi.clearAllMocks();
+  network.authenticated = true;
+  network.member = true;
+  network.manager = false;
+  network.requiredOnboarding = true;
+  let mounted: Mounted;
+  await act(async () => {
+    mounted = renderer.create(screen(GroupMembersScreen));
+  });
+  expect(network.watches.mock.calls.map(([name]) => name)).not.toContain(
+    'groups/queries:listGroupMembers'
+  );
+  expect(
+    mounted!.root.findAll(
+      node =>
+        node.props.children ===
+        'Complete required onboarding before accessing Group member content.'
+    ).length
+  ).toBeGreaterThan(0);
+  await act(async () => mounted!.unmount());
+  network.requiredOnboarding = false;
 });

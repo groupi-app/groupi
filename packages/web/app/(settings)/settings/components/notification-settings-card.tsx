@@ -62,6 +62,10 @@ const notificationTypeLabels: Record<
     label: 'Group application declined',
     description: 'When your Group application is declined',
   },
+  GROUP_ONBOARDING_REQUIRED: {
+    label: 'Required Group onboarding',
+    description: 'current required Group answers need completing.',
+  },
   GROUP_MEMBER_REMOVED: {
     label: 'Removed from Group',
     description: 'a manager removes me from a Group.',
@@ -634,6 +638,7 @@ export function NotificationSettingsCard({
                         NotificationTypeEnum.GROUP_MEMBER_REMOVED,
                         NotificationTypeEnum.GROUP_MEMBER_BANNED,
                         NotificationTypeEnum.GROUP_ANNOUNCEMENT,
+                        NotificationTypeEnum.GROUP_ONBOARDING_REQUIRED,
                       ].map(type => renderCheckbox(type))}
                     </div>
                   </div>
