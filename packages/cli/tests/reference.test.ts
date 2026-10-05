@@ -37,6 +37,7 @@ test('distributed versioned reference stays current with executable command defi
   ).toBe(true);
 });
 
+// These workflows launch a fresh CLI process for every documented step.
 test('distributed agent examples execute planning, inspection and recipient-accepted ownership transfer without secret output', async () => {
   const { createServer } = await import('node:http');
   const { spawn } = await import('node:child_process');
@@ -305,7 +306,7 @@ test('distributed agent examples execute planning, inspection and recipient-acce
     await new Promise<void>(done => server.close(() => done()));
     await rm(directory, { recursive: true, force: true });
   }
-});
+}, 30_000);
 
 test('portable agent JSON instructions produce actionable errors without interactive login', () => {
   const result = spawnSync(

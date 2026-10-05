@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
+// Allow serial CLI process startup and real HTTP operations on hosted runners.
 it('CLI sends invitations, changes Group privacy/policy and admits only the intended recipient over HTTP', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -183,4 +184,4 @@ it('CLI sends invitations, changes Group privacy/policy and admits only the inte
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);

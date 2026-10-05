@@ -567,6 +567,9 @@ describe('Invite lists Settings', () => {
           screen.getByRole('button', { name: 'Create invite list' })
         );
         await user.type(screen.getByLabelText('List name'), 'Across a gap');
+        vi.useFakeTimers({
+          toFake: ['requestAnimationFrame', 'cancelAnimationFrame'],
+        });
         act(() => window.history.go(operation === 'push' ? -2 : -1));
         await screen.findByRole('button', { name: 'Keep Editing' });
         expect(screen.getByRole('alert')).toHaveTextContent(
@@ -580,7 +583,9 @@ describe('Invite lists Settings', () => {
         });
         // Native fragment default focus runs after the popstate confirmation.
         heading.blur();
-        await waitFor(() => expect(heading).toHaveFocus());
+        act(() => vi.advanceTimersToNextFrame());
+        expect(heading).toHaveFocus();
+        vi.useRealTimers();
         await user.click(screen.getByRole('button', { name: 'Keep Editing' }));
         expect(screen.getByLabelText('List name')).toHaveValue('Across a gap');
         act(() => window.history.go(operation === 'push' ? 2 : 1));
@@ -591,6 +596,7 @@ describe('Invite lists Settings', () => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
         expect(screen.getByLabelText('List name')).toHaveValue('Across a gap');
       } finally {
+        vi.useRealTimers();
         view.unmount();
         releaseHead();
       }

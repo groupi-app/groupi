@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
 import { cliRestBridge } from './cli-rest-bridge.helpers';
+// Allow serial CLI process startup and real HTTP operations on hosted runners.
 it('poll CLI crosses real localhost HTTP into persistent voting, configuration, results, removal and disabled manager recovery', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -147,4 +148,4 @@ it('poll CLI crosses real localhost HTTP into persistent voting, configuration, 
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);
