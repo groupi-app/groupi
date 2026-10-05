@@ -1,3 +1,4 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deletePersonApplications } from '../eventApplications/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
@@ -854,6 +855,7 @@ export const cleanupTestData = mutation({
 
         await deleteEventTransfers(ctx, eventId);
         await deleteEventApplications(ctx, eventId);
+        await removeAudiencesForEvent(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted
