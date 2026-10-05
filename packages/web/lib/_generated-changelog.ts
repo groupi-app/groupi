@@ -2,7 +2,7 @@
  * Auto-generated changelog data from CHANGELOG.md
  * DO NOT EDIT DIRECTLY - Run 'pnpm generate:changelog' to regenerate
  *
- * Generated: 2026-09-10T20:03:31.797Z
+ * Generated: 2026-10-05T01:15:40.961Z
  */
 
 export interface ChangelogEntry {
@@ -17,6 +17,24 @@ export interface ChangelogSection {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    "version": "0.5.0",
+    "date": "",
+    "changes": [
+      {
+        "type": "fixed",
+        "items": [
+          "Support validated CLI add-on participation with participant isolation and consistent app automation behavior.",
+          "Add CLI cover and avatar upload, replacement, and removal with validated owned images and safe recovery.",
+          "Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.",
+          "Add secure CLI browser login with OS credential storage and profile-isolated authentication",
+          "Updated dependencies [eaec01b]",
+          "Updated dependencies [eaec01b]",
+          "- @groupi/shared@0.5.0"
+        ]
+      }
+    ]
+  },
   {
     "version": "0.4.0",
     "date": "",
