@@ -49,6 +49,25 @@ async function setup() {
   const request = await apiKey(t, owner);
   return { t, owner, recipient, replacement, request, eventId: event.eventId };
 }
+/** Account deletion now requires recipient-accepted responsibility resolution. */
+async function resolveFixtureEvent(f: Awaited<ReturnType<typeof setup>>) {
+  await f.t.run(ctx =>
+    ctx.db.insert('memberships', {
+      eventId: f.eventId,
+      personId: f.replacement.personId,
+      role: 'ATTENDEE',
+      rsvpStatus: 'MAYBE',
+    })
+  );
+  const offered = await f.owner.auth.mutation(
+    api.eventTransfers.mutations.offer,
+    { eventId: f.eventId, recipientId: f.replacement.personId }
+  );
+  await f.replacement.auth.mutation(api.eventTransfers.mutations.accept, {
+    eventId: f.eventId,
+    transferId: offered!.transferId!,
+  });
+}
 const requestId = () => `${Date.now()}.${crypto.randomUUID()}`;
 const anonymous = (personId: string) => ({
   personId,
@@ -112,7 +131,8 @@ describe('Invite list account lifecycle', () => {
   it.each(['self', 'admin'] as const)(
     'removes only the deleted %s account’s lists and denies its previous session and API identity',
     async mode => {
-      const { t, owner, recipient, request } = await setup();
+      const f = await setup();
+      const { t, owner, recipient, request } = f;
       const list = await owner.auth.mutation(
         api.inviteLists.mutations.createInviteList,
         {
@@ -134,6 +154,12 @@ describe('Invite list account lifecycle', () => {
           personIds: [recipient.personId],
         }
       );
+      await expect(
+        owner.auth.mutation(api.users.mutations.deleteUserAccount, {
+          confirmation: 'lifecycle-owner',
+        })
+      ).rejects.toThrow('Resolve owned Events');
+      await resolveFixtureEvent(f);
       if (mode === 'self') {
         await owner.auth.mutation(api.users.mutations.deleteUserAccount, {
           confirmation: 'lifecycle-owner',
@@ -480,7 +506,9 @@ describe('Invite list account lifecycle', () => {
   });
 
   it('serializes owner deletion against new list creation without orphaning the winning private write', async () => {
-    const { t, owner, recipient } = await setup();
+    const f = await setup();
+    const { t, owner, recipient } = f;
+    await resolveFixtureEvent(f);
     const outcomes = await Promise.allSettled([
       owner.auth.mutation(api.inviteLists.mutations.createInviteList, {
         name: 'Concurrent selection',
@@ -505,7 +533,9 @@ describe('Invite list account lifecycle', () => {
   });
 
   it('does not retain a list from an API-key creation racing with owner account deletion', async () => {
-    const { t, owner, recipient, request } = await setup();
+    const f = await setup();
+    const { t, owner, recipient, request } = f;
+    await resolveFixtureEvent(f);
     const [created, deleted] = await Promise.all([
       request('/invite-lists', 'POST', {
         name: 'Concurrent REST selection',

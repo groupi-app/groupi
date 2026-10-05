@@ -823,3 +823,37 @@ and skipped membership count. External delivery is not confirmed. Current
 membership, bans, account availability, privacy, DND and recipient preferences
 apply. Routine Event/tool publication stays silent. Existing in-app/email/push/
 webhook channels apply; SMS and manager automation are not included.
+
+## Resolve account ownership before deletion
+
+List both resource kinds completely on the selected profile:
+
+```sh
+groupi account responsibilities --kind GROUP --all --limit 20
+groupi account responsibilities --kind EVENT --all --limit 20
+groupi account readiness
+```
+
+Each page includes current resource identity, title, transfer status and
+`resolved: false`. `nextCursor` is null only when enumeration completes; `--all`
+follows every page and rejects repeated cursors. An offered, declined or cancelled
+transfer does not resolve ownership. Use `groups transfer` or `events transfer`
+and have the recipient accept; Event membership/RSVP stays intact and Friends
+visibility follows the accepting Organizer. Explicitly retire a Group with
+`groups delete <group-id> --yes` (independent Events remain), or an owned Event with
+`account delete-event <event-id> --yes`.
+
+```sh
+groupi account delete --confirm-username <current-username> --yes
+```
+
+Final deletion always rechecks current Group `ownerId` and Event `creatorId`,
+including ownership acquired after listing. It never automatically appoints a
+successor or deletes an owned resource. Use `account:read` for enumeration/readiness
+and `account:write` for final deletion and account-resolution Event deletion;
+resource transfer and Group deletion use their existing `groups`/`events` scopes.
+Headless/JSON destructive commands require `--yes`; username confirmation is also
+required. The success response confirms deletion of the account and its credentials;
+a subsequent request using the old API key or session is unauthorized. An ambiguous
+write is never automatically retried. Passkey/OAuth handoffs remain browser/device
+operations.

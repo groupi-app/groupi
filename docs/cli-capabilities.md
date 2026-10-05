@@ -40,12 +40,15 @@ staging checks, and production deployment status distinct.
 
 ## Approved boundaries
 
-Passkey setup, linked-account OAuth authorization, and account deletion require
-explicit browser/device handoffs under #235. Headless/JSON commands must return an
-actionable browser-interaction-required error. The explicit `account passkeys`, `account linked-accounts`, and `account delete`
-commands open the selected profile’s account settings. Headless and JSON usage
-returns `BROWSER_INTERACTION_REQUIRED`; completion still occurs in the browser.
-Live browser/device verification remains pending.
+Passkey setup and linked-account OAuth authorization require explicit browser/device
+handoffs under #235. The `account passkeys` and `account linked-accounts` commands
+open the selected profile's settings; headless/JSON usage returns
+`BROWSER_INTERACTION_REQUIRED`. Account ownership resolution and final deletion
+now have authenticated REST/CLI equivalents under #281. `account responsibilities`
+pages current Group/Event principals, `account readiness` checks live ownership,
+and `account delete --confirm-username <username> --yes` revalidates all ownership
+before atomically deleting profile, private records and credentials. Pending
+transfer offers remain unresolved. Live browser/device verification remains pending.
 
 Custom add-on definition creation/editing and import/export (#243) may be deferred
 without blocking core release #242. Enabling, configuring and using existing

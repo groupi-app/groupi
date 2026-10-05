@@ -112,7 +112,7 @@ export async function setSettings(
     throw error;
   }
 }
-/** @param {Profile} profile @param {'passkeys'|'linked-accounts'|'delete'} operation @param {boolean} json */
+/** @param {Profile} profile @param {'passkeys'|'linked-accounts'} operation @param {boolean} json */
 export async function browserHandoff(profile, operation, json) {
   if (json || !process.stdin.isTTY || !process.stdout.isTTY)
     throw new CliError(
@@ -130,9 +130,7 @@ export async function browserHandoff(profile, operation, json) {
   const step =
     operation === 'passkeys'
       ? 'Add a passkey in account settings and complete your device prompt.'
-      : operation === 'linked-accounts'
-        ? 'Choose the account provider in account settings and complete its authorization.'
-        : 'Review Delete Account in account settings and confirm deletion there.';
+      : 'Choose the account provider in account settings and complete its authorization.';
   process.stderr.write(
     `Profile ${profile.name}: ${url}\nSign into the intended account on this server. ${step}\n`
   );

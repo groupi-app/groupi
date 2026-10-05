@@ -1,3 +1,9 @@
+import {
+  responsibilities,
+  readiness,
+  deleteAccount,
+  deleteOwnedEvent,
+} from './account-resolution.js';
 import { registerImageCommands } from './image-commands.js';
 import { getProfile, credential } from './profiles.js';
 import { CliError } from './errors.js';
@@ -66,7 +72,6 @@ export function registerAccountCommands(program, json) {
   for (const operation of /** @type {const} */ ([
     'passkeys',
     'linked-accounts',
-    'delete',
   ]))
     account
       .command(operation)
@@ -86,6 +91,60 @@ export function registerAccountCommands(program, json) {
           `Opened account settings for profile ${plain(handoff.profile)}. Complete ${operation} in the browser; this CLI action has not completed it.\n`
         );
       });
+  account
+    .command('responsibilities')
+    .description(
+      'Enumerate owned Groups or Events; pending offers remain unresolved'
+    )
+    .requiredOption('--kind <kind>', 'GROUP or EVENT')
+    .option('--limit <number>', 'Page size (1–100)', '20')
+    .option('--cursor <cursor>', 'Continue a page')
+    .option('--all', 'Enumerate every page')
+    .action(async input => {
+      const { profile, key } = await connection();
+      output(
+        await responsibilities(profile, key, {
+          ...input,
+          limit: Number(input.limit),
+        })
+      );
+    });
+  account
+    .command('readiness')
+    .description('Read current resolution status; final deletion rechecks it')
+    .action(async () => {
+      const { profile, key } = await connection();
+      output(await readiness(profile, key));
+    });
+  account
+    .command('delete-event <event-id>')
+    .description('Explicitly resolve an Event by permanent deletion')
+    .option('--yes', 'Confirm permanent Event deletion')
+    .action(async (id, input) => {
+      const { profile, key } = await connection();
+      output(
+        await deleteOwnedEvent(profile, key, id, { yes: input.yes, json })
+      );
+    });
+  account
+    .command('delete')
+    .description(
+      'Delete your resolved account and credentials; all owned Groups and Events must be resolved first'
+    )
+    .requiredOption(
+      '--confirm-username <username>',
+      'Current username confirmation'
+    )
+    .option('--yes', 'Confirm permanent account deletion')
+    .action(async input => {
+      const { profile, key } = await connection();
+      output(
+        await deleteAccount(profile, key, input.confirmUsername, {
+          yes: input.yes,
+          json,
+        })
+      );
+    });
   const settings = program
     .command('settings')
     .description('Manage ordinary preferences without a browser');

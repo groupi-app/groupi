@@ -166,6 +166,9 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi account edit](#groupi-account-edit)
 - [groupi account passkeys](#groupi-account-passkeys)
 - [groupi account linked-accounts](#groupi-account-linked-accounts)
+- [groupi account responsibilities](#groupi-account-responsibilities)
+- [groupi account readiness](#groupi-account-readiness)
+- [groupi account delete-event](#groupi-account-delete-event)
 - [groupi account delete](#groupi-account-delete)
 - [groupi settings](#groupi-settings)
 - [groupi settings privacy](#groupi-settings-privacy)
@@ -2361,16 +2364,23 @@ Usage: groupi account [options] [command]
 Read/update your account and open explicit browser exceptions
 
 Options:
-  -h, --help       display help for command
+  -h, --help                         display help for command
 
 Commands:
-  avatar           Inspect, replace, or remove avatar images from local files
-  get              Read your selected identity’s profile
-  edit [options]   Update ordinary profile fields without browser interaction
-  passkeys         Explicitly open account settings; complete this action in the browser/device
-  linked-accounts  Explicitly open account settings; complete this action in the browser/device
-  delete           Explicitly open account settings; complete this action in the browser/device
-  help [command]   display help for command
+  avatar                             Inspect, replace, or remove avatar images from local files
+  get                                Read your selected identity’s profile
+  edit [options]                     Update ordinary profile fields without browser interaction
+  passkeys                           Explicitly open account settings; complete this action in the
+                                     browser/device
+  linked-accounts                    Explicitly open account settings; complete this action in the
+                                     browser/device
+  responsibilities [options]         Enumerate owned Groups or Events; pending offers remain
+                                     unresolved
+  readiness                          Read current resolution status; final deletion rechecks it
+  delete-event [options] <event-id>  Explicitly resolve an Event by permanent deletion
+  delete [options]                   Delete your resolved account and credentials; all owned Groups
+                                     and Events must be resolved first
+  help [command]                     display help for command
 ```
 
 ## groupi account avatar
@@ -2467,15 +2477,55 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi account responsibilities
+
+```text
+Usage: groupi account responsibilities [options]
+
+Enumerate owned Groups or Events; pending offers remain unresolved
+
+Options:
+  --kind <kind>      GROUP or EVENT
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Enumerate every page
+  -h, --help         display help for command
+```
+
+## groupi account readiness
+
+```text
+Usage: groupi account readiness [options]
+
+Read current resolution status; final deletion rechecks it
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account delete-event
+
+```text
+Usage: groupi account delete-event [options] <event-id>
+
+Explicitly resolve an Event by permanent deletion
+
+Options:
+  --yes       Confirm permanent Event deletion
+  -h, --help  display help for command
+```
+
 ## groupi account delete
 
 ```text
 Usage: groupi account delete [options]
 
-Explicitly open account settings; complete this action in the browser/device
+Delete your resolved account and credentials; all owned Groups and Events must be resolved first
 
 Options:
-  -h, --help  display help for command
+  --confirm-username <username>  Current username confirmation
+  --yes                          Confirm permanent account deletion
+  -h, --help                     display help for command
 ```
 
 ## groupi settings

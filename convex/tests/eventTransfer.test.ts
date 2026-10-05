@@ -362,10 +362,20 @@ describe('consensual Event ownership transfer', () => {
         await outsider.auth.mutation(api.admin.mutations.deleteEvent, {
           eventId,
         });
-      if (boundary === 'admin-person')
+      if (boundary === 'admin-person') {
+        await expect(
+          outsider.auth.mutation(api.admin.mutations.deletePerson, {
+            personId: owner.personId,
+          })
+        ).rejects.toThrow('Resolve owned Events');
+        await owner.auth.mutation(
+          api.accountResolution.mutations.deleteOwnedEvent,
+          { eventId }
+        );
         await outsider.auth.mutation(api.admin.mutations.deletePerson, {
           personId: owner.personId,
         });
+      }
       if (boundary === 'admin-rest')
         expect(
           (await outsider.request(`/admin/events/${eventId}`, 'DELETE')).status

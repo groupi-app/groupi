@@ -13,6 +13,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as accountResolution_contracts from "../accountResolution/contracts.js";
+import type * as accountResolution_model from "../accountResolution/model.js";
+import type * as accountResolution_mutations from "../accountResolution/mutations.js";
+import type * as accountResolution_queries from "../accountResolution/queries.js";
+import type * as accountResolution_rest from "../accountResolution/rest.js";
 import type * as accounts_mutations from "../accounts/mutations.js";
 import type * as accounts_queries from "../accounts/queries.js";
 import type * as addonTemplates_definition from "../addonTemplates/definition.js";
@@ -96,6 +101,7 @@ import type * as api_v1_schemas_reports from "../api/v1/schemas/reports.js";
 import type * as api_v1_schemas_settings from "../api/v1/schemas/settings.js";
 import type * as api_v1_schemas_themes from "../api/v1/schemas/themes.js";
 import type * as api_v2_index from "../api/v2/index.js";
+import type * as api_v2_routes_accountResolution from "../api/v2/routes/accountResolution.js";
 import type * as api_v2_routes_addonDefinitions from "../api/v2/routes/addonDefinitions.js";
 import type * as api_v2_routes_addonDiscord from "../api/v2/routes/addonDiscord.js";
 import type * as api_v2_routes_addons from "../api/v2/routes/addons.js";
@@ -340,6 +346,11 @@ import type * as users_queries from "../users/queries.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "accountResolution/contracts": typeof accountResolution_contracts;
+  "accountResolution/model": typeof accountResolution_model;
+  "accountResolution/mutations": typeof accountResolution_mutations;
+  "accountResolution/queries": typeof accountResolution_queries;
+  "accountResolution/rest": typeof accountResolution_rest;
   "accounts/mutations": typeof accounts_mutations;
   "accounts/queries": typeof accounts_queries;
   "addonTemplates/definition": typeof addonTemplates_definition;
@@ -423,6 +434,7 @@ declare const fullApi: ApiFromModules<{
   "api/v1/schemas/settings": typeof api_v1_schemas_settings;
   "api/v1/schemas/themes": typeof api_v1_schemas_themes;
   "api/v2/index": typeof api_v2_index;
+  "api/v2/routes/accountResolution": typeof api_v2_routes_accountResolution;
   "api/v2/routes/addonDefinitions": typeof api_v2_routes_addonDefinitions;
   "api/v2/routes/addonDiscord": typeof api_v2_routes_addonDiscord;
   "api/v2/routes/addons": typeof api_v2_routes_addons;

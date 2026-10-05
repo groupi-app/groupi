@@ -604,7 +604,7 @@
     },
     {
       "path": "groupi account",
-      "help": "Usage: groupi account [options] [command]\n\nRead/update your account and open explicit browser exceptions\n\nOptions:\n  -h, --help       display help for command\n\nCommands:\n  avatar           Inspect, replace, or remove avatar images from local files\n  get              Read your selected identity’s profile\n  edit [options]   Update ordinary profile fields without browser interaction\n  passkeys         Explicitly open account settings; complete this action in the browser/device\n  linked-accounts  Explicitly open account settings; complete this action in the browser/device\n  delete           Explicitly open account settings; complete this action in the browser/device\n  help [command]   display help for command\n"
+      "help": "Usage: groupi account [options] [command]\n\nRead/update your account and open explicit browser exceptions\n\nOptions:\n  -h, --help                         display help for command\n\nCommands:\n  avatar                             Inspect, replace, or remove avatar images from local files\n  get                                Read your selected identity’s profile\n  edit [options]                     Update ordinary profile fields without browser interaction\n  passkeys                           Explicitly open account settings; complete this action in the\n                                     browser/device\n  linked-accounts                    Explicitly open account settings; complete this action in the\n                                     browser/device\n  responsibilities [options]         Enumerate owned Groups or Events; pending offers remain\n                                     unresolved\n  readiness                          Read current resolution status; final deletion rechecks it\n  delete-event [options] <event-id>  Explicitly resolve an Event by permanent deletion\n  delete [options]                   Delete your resolved account and credentials; all owned Groups\n                                     and Events must be resolved first\n  help [command]                     display help for command\n"
     },
     {
       "path": "groupi account avatar",
@@ -639,8 +639,20 @@
       "help": "Usage: groupi account linked-accounts [options]\n\nExplicitly open account settings; complete this action in the browser/device\n\nOptions:\n  -h, --help  display help for command\n"
     },
     {
+      "path": "groupi account responsibilities",
+      "help": "Usage: groupi account responsibilities [options]\n\nEnumerate owned Groups or Events; pending offers remain unresolved\n\nOptions:\n  --kind <kind>      GROUP or EVENT\n  --limit <number>   Page size (1–100) (default: \"20\")\n  --cursor <cursor>  Continue a page\n  --all              Enumerate every page\n  -h, --help         display help for command\n"
+    },
+    {
+      "path": "groupi account readiness",
+      "help": "Usage: groupi account readiness [options]\n\nRead current resolution status; final deletion rechecks it\n\nOptions:\n  -h, --help  display help for command\n"
+    },
+    {
+      "path": "groupi account delete-event",
+      "help": "Usage: groupi account delete-event [options] <event-id>\n\nExplicitly resolve an Event by permanent deletion\n\nOptions:\n  --yes       Confirm permanent Event deletion\n  -h, --help  display help for command\n"
+    },
+    {
       "path": "groupi account delete",
-      "help": "Usage: groupi account delete [options]\n\nExplicitly open account settings; complete this action in the browser/device\n\nOptions:\n  -h, --help  display help for command\n"
+      "help": "Usage: groupi account delete [options]\n\nDelete your resolved account and credentials; all owned Groups and Events must be resolved first\n\nOptions:\n  --confirm-username <username>  Current username confirmation\n  --yes                          Confirm permanent account deletion\n  -h, --help                     display help for command\n"
     },
     {
       "path": "groupi settings",

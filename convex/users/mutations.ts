@@ -1,7 +1,4 @@
-import {
-  assertNoOwnedGroups,
-  removeGroupMembershipsForPerson,
-} from '../groups/model';
+import { removeGroupMembershipsForPerson } from '../groups/model';
 import { deletePersonApplications } from '../eventApplications/cleanup';
 import { claimUpload } from '../files/uploads';
 import { validateImageMetadata } from '../files/imageRules';
@@ -21,7 +18,9 @@ import {
 } from '../auth';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
 import { getOrComputeMemberCount } from '../lib/memberCount';
-import { cascadeDeleteEventData } from '../lib/cascade';
+import { assertNoOwnedResources } from '../accountResolution/model';
+import type { MutationCtx } from '../_generated/server';
+import type { Doc } from '../_generated/dataModel';
 import { deleteListsForPerson } from '../inviteLists/model';
 
 /** Match the verification formats emitted by the installed auth plugins. */
@@ -405,8 +404,7 @@ export const completeOnboarding = mutation({
  * - Person record and settings
  *
  * Better Auth identity and linked credentials are deleted in this transaction.
- * Events where user is the sole organizer will have ownership transferred
- * to another member if possible, otherwise the event is deleted.
+ * Every owned Group and Event must already be explicitly resolved.
  */
 export const deleteUserAccount = mutation({
   args: {
@@ -429,269 +427,251 @@ export const deleteUserAccount = mutation({
       );
     }
 
-    await assertNoOwnedGroups(ctx, person._id);
-    await removeGroupMembershipsForPerson(ctx, person._id);
+    return deleteResolvedAccount(ctx, person, user);
+  },
+});
 
-    // Get all memberships for this person
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', person._id))
-      .collect();
+/** All deletion boundaries share one transaction and the final live ownership guard. */
+export async function deleteResolvedAccount(
+  ctx: MutationCtx,
+  person: Doc<'persons'>,
+  user: ExtendedAuthUser | null
+) {
+  await assertNoOwnedResources(ctx, person._id);
+  await removeGroupMembershipsForPerson(ctx, person._id);
+  const membershipsToRemove = await ctx.db
+    .query('memberships')
+    .withIndex('by_person', q => q.eq('personId', person._id))
+    .collect();
 
-    // Phase 1: Handle organizer succession, identify events to fully delete
-    const eventsToDelete: (typeof memberships)[0]['eventId'][] = [];
-    const membershipsToRemove: typeof memberships = [];
+  // Phase 3: Remove user from remaining events
+  for (const membership of membershipsToRemove) {
+    await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
+      personId: person._id,
+    });
+  }
 
-    for (const membership of memberships) {
-      if (membership.role === 'ORGANIZER') {
-        const eventMemberships = await ctx.db
-          .query('memberships')
-          .withIndex('by_event', q => q.eq('eventId', membership.eventId))
-          .collect();
+  // Batch-read related data for all memberships to remove
+  const [invitesByMembership, availabilitiesByMembership, eventDocs] =
+    await Promise.all([
+      Promise.all(
+        membershipsToRemove.map(m =>
+          ctx.db
+            .query('invites')
+            .withIndex('by_creator', q => q.eq('createdById', m._id))
+            .collect()
+        )
+      ),
+      Promise.all(
+        membershipsToRemove.map(m =>
+          ctx.db
+            .query('availabilities')
+            .withIndex('by_membership', q => q.eq('membershipId', m._id))
+            .collect()
+        )
+      ),
+      Promise.all(membershipsToRemove.map(m => ctx.db.get(m.eventId))),
+    ]);
 
-        const otherOrganizers = eventMemberships.filter(
-          m => m.role === 'ORGANIZER' && m._id !== membership._id
-        );
+  const memberCounts = await Promise.all(
+    membershipsToRemove.map((m, i) => {
+      const event = eventDocs[i];
+      return event
+        ? getOrComputeMemberCount(ctx, m.eventId, event)
+        : Promise.resolve(0);
+    })
+  );
 
-        if (otherOrganizers.length === 0) {
-          const otherMembers = eventMemberships.filter(
-            m => m._id !== membership._id
-          );
-
-          if (otherMembers.length > 0) {
-            const newOrganizer =
-              otherMembers.find(m => m.role === 'MODERATOR') || otherMembers[0];
-            await ctx.db.patch(newOrganizer._id, {
-              role: 'ORGANIZER',
-              updatedAt: Date.now(),
-            });
-            membershipsToRemove.push(membership);
-          } else {
-            eventsToDelete.push(membership.eventId);
-          }
-        } else {
-          membershipsToRemove.push(membership);
-        }
-      } else {
-        membershipsToRemove.push(membership);
-      }
+  for (const invites of invitesByMembership) {
+    for (const invite of invites) {
+      await ctx.db.delete(invite._id);
     }
+  }
 
-    // Phase 2: Delete entire events where user was sole member
-    for (const eventId of eventsToDelete) {
-      await cascadeDeleteEventData(ctx, eventId);
+  for (const avails of availabilitiesByMembership) {
+    for (const a of avails) {
+      await ctx.db.delete(a._id);
     }
+  }
 
-    // Phase 3: Remove user from remaining events
-    for (const membership of membershipsToRemove) {
-      await dispatchAddonLifecycle(ctx, membership.eventId, 'onMemberLeft', {
-        personId: person._id,
+  for (let i = 0; i < membershipsToRemove.length; i++) {
+    await ctx.db.delete(membershipsToRemove[i]._id);
+    const event = eventDocs[i];
+    if (event) {
+      await ctx.db.patch(membershipsToRemove[i].eventId, {
+        memberCount: Math.max(0, memberCounts[i] - 1),
       });
     }
+  }
 
-    // Batch-read related data for all memberships to remove
-    const [invitesByMembership, availabilitiesByMembership, eventDocs] =
-      await Promise.all([
-        Promise.all(
-          membershipsToRemove.map(m =>
-            ctx.db
-              .query('invites')
-              .withIndex('by_creator', q => q.eq('createdById', m._id))
-              .collect()
-          )
-        ),
-        Promise.all(
-          membershipsToRemove.map(m =>
-            ctx.db
-              .query('availabilities')
-              .withIndex('by_membership', q => q.eq('membershipId', m._id))
-              .collect()
-          )
-        ),
-        Promise.all(membershipsToRemove.map(m => ctx.db.get(m.eventId))),
-      ]);
+  // Phase 4: Delete user's authored content
+  // Batch-read all user content and sub-entities
+  const [
+    authoredReplies,
+    authoredPosts,
+    receivedNotifications,
+    personSettings,
+    pushTokens,
+  ] = await Promise.all([
+    ctx.db
+      .query('replies')
+      .withIndex('by_author', q => q.eq('authorId', person._id))
+      .collect(),
+    ctx.db
+      .query('posts')
+      .withIndex('by_author', q => q.eq('authorId', person._id))
+      .collect(),
+    ctx.db
+      .query('notifications')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .collect(),
+    ctx.db
+      .query('personSettings')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .first(),
+    ctx.db
+      .query('pushTokens')
+      .withIndex('by_person', q => q.eq('personId', person._id))
+      .collect(),
+  ]);
 
-    const memberCounts = await Promise.all(
-      membershipsToRemove.map((m, i) => {
-        const event = eventDocs[i];
-        return event
-          ? getOrComputeMemberCount(ctx, m.eventId, event)
-          : Promise.resolve(0);
-      })
-    );
-
-    for (const invites of invitesByMembership) {
-      for (const invite of invites) {
-        await ctx.db.delete(invite._id);
-      }
+  // Delete delivery history before tokens/notifications so queued actions
+  // resolve to no work after account deletion.
+  const pushDeliveriesByToken = await Promise.all(
+    pushTokens.map(token =>
+      ctx.db
+        .query('pushDeliveries')
+        .withIndex('by_push_token', q => q.eq('pushTokenId', token._id))
+        .collect()
+    )
+  );
+  for (const deliveries of pushDeliveriesByToken) {
+    for (const delivery of deliveries) {
+      await ctx.db.delete(delivery._id);
     }
+  }
+  for (const token of pushTokens) {
+    await ctx.db.delete(token._id);
+  }
 
-    for (const avails of availabilitiesByMembership) {
-      for (const a of avails) {
-        await ctx.db.delete(a._id);
-      }
-    }
-
-    for (let i = 0; i < membershipsToRemove.length; i++) {
-      await ctx.db.delete(membershipsToRemove[i]._id);
-      const event = eventDocs[i];
-      if (event) {
-        await ctx.db.patch(membershipsToRemove[i].eventId, {
-          memberCount: Math.max(0, memberCounts[i] - 1),
-        });
-      }
-    }
-
-    // Phase 4: Delete user's authored content
-    // Batch-read all user content and sub-entities
-    const [
-      authoredReplies,
-      authoredPosts,
-      receivedNotifications,
-      personSettings,
-      pushTokens,
-    ] = await Promise.all([
-      ctx.db
-        .query('replies')
-        .withIndex('by_author', q => q.eq('authorId', person._id))
-        .collect(),
-      ctx.db
-        .query('posts')
-        .withIndex('by_author', q => q.eq('authorId', person._id))
-        .collect(),
-      ctx.db
-        .query('notifications')
-        .withIndex('by_person', q => q.eq('personId', person._id))
-        .collect(),
-      ctx.db
-        .query('personSettings')
-        .withIndex('by_person', q => q.eq('personId', person._id))
-        .first(),
-      ctx.db
-        .query('pushTokens')
-        .withIndex('by_person', q => q.eq('personId', person._id))
-        .collect(),
-    ]);
-
-    // Delete delivery history before tokens/notifications so queued actions
-    // resolve to no work after account deletion.
-    const pushDeliveriesByToken = await Promise.all(
-      pushTokens.map(token =>
+  // Batch-read replies and notifications for each authored post
+  const [repliesByPost, notificationsByPost] = await Promise.all([
+    Promise.all(
+      authoredPosts.map(p =>
         ctx.db
-          .query('pushDeliveries')
-          .withIndex('by_push_token', q => q.eq('pushTokenId', token._id))
+          .query('replies')
+          .withIndex('by_post', q => q.eq('postId', p._id))
+          .collect()
+      )
+    ),
+    Promise.all(
+      authoredPosts.map(p =>
+        ctx.db
+          .query('notifications')
+          .withIndex('by_post', q => q.eq('postId', p._id))
+          .collect()
+      )
+    ),
+  ]);
+
+  // Deduplicate reply IDs (user may have replied to their own posts)
+  const replyIdsToDelete = new Set<(typeof authoredReplies)[0]['_id']>();
+  for (const reply of authoredReplies) replyIdsToDelete.add(reply._id);
+  for (const postReplies of repliesByPost) {
+    for (const reply of postReplies) replyIdsToDelete.add(reply._id);
+  }
+
+  for (const id of replyIdsToDelete) {
+    await ctx.db.delete(id);
+  }
+
+  // Deduplicate notification IDs
+  const notificationIdsToDelete = new Set<
+    (typeof receivedNotifications)[0]['_id']
+  >();
+  for (const n of receivedNotifications) notificationIdsToDelete.add(n._id);
+  for (const postNotifications of notificationsByPost) {
+    for (const n of postNotifications) notificationIdsToDelete.add(n._id);
+  }
+
+  // Authored posts can have notifications (and therefore deliveries) owned
+  // by other people. Delete by notification as well as by this account's
+  // tokens so no orphaned delivery survives the post deletion.
+  const pushDeliveriesByNotification = await Promise.all(
+    [...notificationIdsToDelete].map(notificationId =>
+      ctx.db
+        .query('pushDeliveries')
+        .withIndex('by_notification', q =>
+          q.eq('notificationId', notificationId)
+        )
+        .collect()
+    )
+  );
+  for (const deliveries of pushDeliveriesByNotification) {
+    for (const delivery of deliveries) {
+      await ctx.db.delete(delivery._id);
+    }
+  }
+
+  for (const id of notificationIdsToDelete) {
+    await ctx.db.delete(id);
+  }
+
+  for (const post of authoredPosts) {
+    await ctx.db.delete(post._id);
+  }
+
+  // Phase 5: Delete person settings and notification methods
+  if (personSettings) {
+    const notificationMethods = await ctx.db
+      .query('notificationMethods')
+      .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
+      .collect();
+
+    const settingsByMethod = await Promise.all(
+      notificationMethods.map(method =>
+        ctx.db
+          .query('notificationSettings')
+          .withIndex('by_method', q => q.eq('methodId', method._id))
           .collect()
       )
     );
-    for (const deliveries of pushDeliveriesByToken) {
-      for (const delivery of deliveries) {
-        await ctx.db.delete(delivery._id);
-      }
-    }
-    for (const token of pushTokens) {
-      await ctx.db.delete(token._id);
-    }
 
-    // Batch-read replies and notifications for each authored post
-    const [repliesByPost, notificationsByPost] = await Promise.all([
-      Promise.all(
-        authoredPosts.map(p =>
-          ctx.db
-            .query('replies')
-            .withIndex('by_post', q => q.eq('postId', p._id))
-            .collect()
-        )
-      ),
-      Promise.all(
-        authoredPosts.map(p =>
-          ctx.db
-            .query('notifications')
-            .withIndex('by_post', q => q.eq('postId', p._id))
-            .collect()
-        )
-      ),
-    ]);
-
-    // Deduplicate reply IDs (user may have replied to their own posts)
-    const replyIdsToDelete = new Set<(typeof authoredReplies)[0]['_id']>();
-    for (const reply of authoredReplies) replyIdsToDelete.add(reply._id);
-    for (const postReplies of repliesByPost) {
-      for (const reply of postReplies) replyIdsToDelete.add(reply._id);
-    }
-
-    for (const id of replyIdsToDelete) {
-      await ctx.db.delete(id);
-    }
-
-    // Deduplicate notification IDs
-    const notificationIdsToDelete = new Set<
-      (typeof receivedNotifications)[0]['_id']
-    >();
-    for (const n of receivedNotifications) notificationIdsToDelete.add(n._id);
-    for (const postNotifications of notificationsByPost) {
-      for (const n of postNotifications) notificationIdsToDelete.add(n._id);
-    }
-
-    // Authored posts can have notifications (and therefore deliveries) owned
-    // by other people. Delete by notification as well as by this account's
-    // tokens so no orphaned delivery survives the post deletion.
-    const pushDeliveriesByNotification = await Promise.all(
-      [...notificationIdsToDelete].map(notificationId =>
-        ctx.db
-          .query('pushDeliveries')
-          .withIndex('by_notification', q =>
-            q.eq('notificationId', notificationId)
-          )
-          .collect()
-      )
-    );
-    for (const deliveries of pushDeliveriesByNotification) {
-      for (const delivery of deliveries) {
-        await ctx.db.delete(delivery._id);
+    for (const settings of settingsByMethod) {
+      for (const setting of settings) {
+        await ctx.db.delete(setting._id);
       }
     }
 
-    for (const id of notificationIdsToDelete) {
-      await ctx.db.delete(id);
+    for (const method of notificationMethods) {
+      await ctx.db.delete(method._id);
     }
 
-    for (const post of authoredPosts) {
-      await ctx.db.delete(post._id);
+    await ctx.db.delete(personSettings._id);
+  }
+
+  // Private account preferences/authorizations must not outlive the Person.
+  for (const table of [
+    'personPresence',
+    'themePreferences',
+    'customThemes',
+    'mutedEvents',
+    'mutedPosts',
+    'reminderOptOuts',
+    'addonOptOuts',
+    'discordGuildAuthorizations',
+  ] as const) {
+    for await (const record of ctx.db
+      .query(table)
+      .withIndex('by_person', q => q.eq('personId', person._id))) {
+      await ctx.db.delete(record._id);
     }
+  }
+  await deletePersonApplications(ctx, person._id);
+  await deleteListsForPerson(ctx, person._id);
+  await ctx.db.delete(person._id);
 
-    // Phase 5: Delete person settings and notification methods
-    if (personSettings) {
-      const notificationMethods = await ctx.db
-        .query('notificationMethods')
-        .withIndex('by_settings', q => q.eq('settingsId', personSettings._id))
-        .collect();
-
-      const settingsByMethod = await Promise.all(
-        notificationMethods.map(method =>
-          ctx.db
-            .query('notificationSettings')
-            .withIndex('by_method', q => q.eq('methodId', method._id))
-            .collect()
-        )
-      );
-
-      for (const settings of settingsByMethod) {
-        for (const setting of settings) {
-          await ctx.db.delete(setting._id);
-        }
-      }
-
-      for (const method of notificationMethods) {
-        await ctx.db.delete(method._id);
-      }
-
-      await ctx.db.delete(personSettings._id);
-    }
-
-    await deletePersonApplications(ctx, person._id);
-    await deleteListsForPerson(ctx, person._id);
-    await ctx.db.delete(person._id);
-
+  if (user) {
     // Magic-link identifiers are random and their email lives inside JSON;
     // the component has no ownership index for verification records. Inspect
     // every page and delete only exact account matches. This remains inside
@@ -720,38 +700,44 @@ export const deleteUserAccount = mutation({
       verificationPagination.cursor = result.continueCursor;
       verificationsDone = result.isDone;
     }
+  }
 
-    // The component adapter does not cascade user deletion. Remove every
-    // user-linked credential explicitly, including plugin tables. Keep these
-    // calls in this mutation and let errors propagate so app data and auth
-    // data roll back together if any cleanup fails.
-    for (const model of ['account', 'session', 'passkey', 'apikey'] as const) {
-      const paginationOpts: PaginationOptions = { cursor: null, numItems: 100 };
-      let isDone = false;
-      while (!isDone) {
-        const result = await ctx.runMutation(
-          components.betterAuth.adapter.deleteMany,
-          {
-            input: {
-              model,
-              where: [{ field: 'userId', value: user._id }],
-            },
-            paginationOpts,
-          }
-        );
-        paginationOpts.cursor = result.continueCursor;
-        isDone = result.isDone;
-      }
+  // The component adapter does not cascade user deletion. Remove every
+  // user-linked credential explicitly, including plugin tables. Keep these
+  // calls in this mutation and let errors propagate so app data and auth
+  // data roll back together if any cleanup fails.
+  for (const model of ['account', 'session', 'passkey', 'apikey'] as const) {
+    const paginationOpts: PaginationOptions = { cursor: null, numItems: 100 };
+    let isDone = false;
+    while (!isDone) {
+      const result = await ctx.runMutation(
+        components.betterAuth.adapter.deleteMany,
+        {
+          input: {
+            model,
+            where: [{ field: 'userId', value: person.userId }],
+          },
+          paginationOpts,
+        }
+      );
+      paginationOpts.cursor = result.continueCursor;
+      isDone = result.isDone;
     }
+  }
 
+  if (user) {
     const deletedUser = await ctx.runMutation(
       components.betterAuth.adapter.deleteOne,
-      { input: { model: 'user', where: [{ field: '_id', value: user._id }] } }
+      {
+        input: {
+          model: 'user',
+          where: [{ field: '_id', value: person.userId }],
+        },
+      }
     );
     if (!deletedUser) {
       throw new Error('Failed to delete authentication account.');
     }
-
-    return { success: true };
-  },
-});
+  }
+  return { success: true };
+}
