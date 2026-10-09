@@ -22,8 +22,13 @@ redeployed through the normal authorized process. Deployment redirects are rejec
 use the actual preview origin. Protection or authentication pages are blockers, not
 permission to bypass protection.
 
-The automatic deployment-success workflow runs **public preview readiness only**.
-Production deployments are excluded. This check never proves signed-in behavior.
+The automatic deployment-success workflow runs **public staging readiness only**
+for the current `test` commit. It checks out validation code from protected `test`
+with persisted credentials disabled, then compares that revision with the deployment
+SHA. Vercel's deployment ref can itself be a SHA, so branch-name equality is not used.
+Other preview revisions are explicitly marked not applicable; production deployments
+are excluded. This check never proves signed-in behavior. Selecting validator code
+does not establish a security boundary for the entire event-supplied workflow.
 The manual workflow requires an explicit preview URL, full commit, expected backend,
 and a configured fixture key. It checks out that exact commit and fails rather than
 silently skipping if prerequisites are absent. Fixture access must be configured on

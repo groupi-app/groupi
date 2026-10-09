@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   readiness:
-    name: Public preview readiness (not authenticated E2E)
+    name: Public staging readiness (not authenticated E2E)
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.deployment_status.state == 'success' &&
@@ -35,14 +35,32 @@ jobs:
     outputs:
       convex_url: ${{ steps.check.outputs.convex_url }}
     steps:
-      # Use workflow revision for read-only validation, not deployed PR code.
+      # Select validation code from protected staging, independently of the deployment.
       - uses: actions/checkout@v6
+        with:
+          ref: test
+          persist-credentials: false
+      - name: Select current staging deployment
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOYED_SHA: ${{ github.event.deployment.sha }}
+        run: |
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ] || [ "$DEPLOYED_SHA" = "$(git rev-parse HEAD)" ]; then
+            echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'eligible=false' >> "$GITHUB_OUTPUT"
+            echo 'Not the current test revision; automatic staging readiness does not apply. No runtime verification performed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.scope.outputs.eligible == 'true'
         with:
           node-version: '24'
       - name: Test readiness gate
+        if: steps.scope.outputs.eligible == 'true'
         run: node --test scripts/verification-readiness.test.mjs
       - name: Verify deployment and backend
+        if: steps.scope.outputs.eligible == 'true'
         id: check
         env:
           DEPLOYMENT_URL: ${{ inputs.deployment_url || github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
@@ -54,7 +72,7 @@ jobs:
           echo 'Public prerequisites passed. Signed-in browser and native/VoiceOver checks remain unverified.' >> "$GITHUB_STEP_SUMMARY"
           cat readiness.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
-        if: always()
+        if: always() && steps.scope.outputs.eligible == 'true'
         with:
           name: verification-readiness
           path: readiness.json
