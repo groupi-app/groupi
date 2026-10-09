@@ -215,7 +215,7 @@ export async function listAddons(profile, key, eventId, options) {
         `${eventId === null ? '/addon-templates' : `/events/${eventId}/addons`}?${query}`
       );
     },
-    projectItem: value => {
+    projectItem: (/** @type {unknown} */ value) => {
       if (eventId !== null) return configResult(value);
       const template = record(value);
       if (
