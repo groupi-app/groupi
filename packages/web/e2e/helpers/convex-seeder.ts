@@ -251,12 +251,7 @@ export class ConvexSeeder {
    * Clean up all test data created by this seeder instance.
    */
   async cleanup(): Promise<void> {
-    if (
-      this.createdIds.users.length === 0 &&
-      this.createdIds.events.length === 0 &&
-      this.createdIds.posts.length === 0 &&
-      this.createdIds.invites.length === 0
-    ) {
+    if (Object.values(this.createdIds).every(ids => ids.length === 0)) {
       return;
     }
 
@@ -287,7 +282,7 @@ export class ConvexSeeder {
         verifications: [],
       };
     } catch (error) {
-      console.warn('Failed to cleanup test data:', error);
+      throw new Error('Failed to clean up E2E fixture data', { cause: error });
     }
   }
 
