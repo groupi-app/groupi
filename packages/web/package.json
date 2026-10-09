@@ -29,7 +29,8 @@
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "lighthouse": "bash scripts/lighthouse.sh",
-    "lighthouse:dev": "bash scripts/lighthouse.sh dev"
+    "lighthouse:dev": "bash scripts/lighthouse.sh dev",
+    "test:history": "node e2e/history/run.mjs"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.13",

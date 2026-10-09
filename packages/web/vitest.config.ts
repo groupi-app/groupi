@@ -59,13 +59,13 @@ export default defineConfig({
         'app/**/not-found.tsx',
         'app/globals.css',
       ],
+      // Enforced baseline floors; improvement targets and scope: docs/testing.md.
+      // Vitest global metrics belong directly under thresholds (no global wrapper).
       thresholds: {
-        global: {
-          branches: 70,
-          functions: 70,
-          lines: 70,
-          statements: 70,
-        },
+        branches: 33.9,
+        functions: 38.4,
+        lines: 37.2,
+        statements: 36.9,
       },
       include: [
         'hooks/**/*.{ts,tsx}',

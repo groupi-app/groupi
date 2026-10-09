@@ -143,6 +143,30 @@ jobs:
           name: web-coverage
           fail_ci_if_error: false
 
+  # Actual browser history/focus regressions without an app server or backend.
+  test-history:
+    name: Test Browser History
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupi/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @groupi/web test:history
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-history-evidence
+          path: packages/web/test-results/history/
+          retention-days: 7
+
   # Mobile Package Tests
   test-mobile:
     name: Test Mobile Package
@@ -270,6 +294,9 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Test verification readiness gate
+        run: node --test scripts/verification-readiness.test.mjs
+
       - name: Test Codex hooks
         run: python3 .codex/hooks/test_format_edited_files.py
 
@@ -283,6 +310,7 @@ jobs:
         test-convex,
         test-web,
         test-mobile,
+        test-history,
         test-builds,
         quality-checks,
       ]
@@ -294,6 +322,7 @@ jobs:
           echo "Shared tests: ${{ needs.test-shared.result }}"
           echo "Convex tests: ${{ needs.test-convex.result }}"
           echo "Web tests: ${{ needs.test-web.result }}"
+          echo "Browser history tests: ${{ needs.test-history.result }}"
           echo "Mobile tests: ${{ needs.test-mobile.result }}"
           echo "Build tests: ${{ needs.test-builds.result }}"
           echo "Quality checks: ${{ needs.quality-checks.result }}"
@@ -301,6 +330,7 @@ jobs:
           if [[ "${{ needs.test-shared.result }}" != "success" || \
                 "${{ needs.test-convex.result }}" != "success" || \
                 "${{ needs.test-web.result }}" != "success" || \
+                "${{ needs.test-history.result }}" != "success" || \
                 "${{ needs.test-mobile.result }}" != "success" || \
                 "${{ needs.test-builds.result }}" != "success" || \
                 "${{ needs.quality-checks.result }}" != "success" ]]; then

@@ -9,6 +9,13 @@ import {
 import { api } from './_generated/api';
 
 describe('Events Operations', () => {
+  // These mutation tests inspect queued state; scheduled actions belong to their own tests.
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
   describe('createEvent', () => {
     test('should create event successfully', async () => {
       const t = createTestInstance();
@@ -329,8 +336,6 @@ describe('Events Operations', () => {
   });
 
   describe('joinDiscoverableEvent', () => {
-    beforeEach(() => vi.useFakeTimers());
-    afterEach(() => vi.useRealTimers());
     async function scenario(
       visibility: 'PRIVATE' | 'FRIENDS' = 'FRIENDS',
       direct = true

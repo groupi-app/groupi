@@ -869,18 +869,56 @@ describe('UserList', () => {
 
 ## Coverage Requirements
 
-| Package | Branches               | Functions | Lines | Statements |
-| ------- | ---------------------- | --------- | ----- | ---------- |
-| Web     | 70%                    | 70%       | 70%   | 70%        |
-| Shared  | 80%                    | 80%       | 80%   | 80%        |
-| Mobile  | 70%                    | 70%       | 70%   | 70%        |
-| Convex  | No threshold (backend) |
+Web and shared enforce baseline floors in `vitest.config.ts`. Vitest 4 expects
+`branches`, `functions`, `lines`, and `statements` directly under `thresholds`.
+The previous `thresholds.global` objects were interpreted as file-pattern thresholds
+and did not enforce the intended global percentages.
 
-Run coverage reports:
+The 2026-10-09 baseline was measured on `ce89496072d7fcb587268794db472ec90de2e895`
+with Vitest 4.0.17, preserving the existing coverage include/exclude scope. Floors
+are that baseline rounded down to one decimal place (less than 0.1 percentage
+point of tolerance), not claims that the improvement targets have been met.
+
+| Package | Metric     | Measured | Enforced floor | Improvement target |
+| ------- | ---------- | -------- | -------------- | ------------------ |
+| Web     | Branches   | 33.97%   | 33.9%          | 70%                |
+| Web     | Functions  | 38.47%   | 38.4%          | 70%                |
+| Web     | Lines      | 37.29%   | 37.2%          | 70%                |
+| Web     | Statements | 36.95%   | 36.9%          | 70%                |
+| Shared  | Branches   | 23.56%   | 23.5%          | 80%                |
+| Shared  | Functions  | 52.90%   | 52.9%          | 80%                |
+| Shared  | Lines      | 28.73%   | 28.7%          | 80%                |
+| Shared  | Statements | 27.60%   | 27.6%          | 80%                |
+
+Web measures all matching files under `hooks`, `components`, `lib`, and `stores`,
+subject to its existing exclusions. Shared has no explicit `coverage.include`, so
+Vitest measures files imported by its tests; this is not whole-package coverage.
+Do not shrink either denominator to pass a gate. Expanding the shared denominator
+requires an explicit baseline review. Raise floors as coverage improves toward
+the targets; reductions require a documented review of the coverage change.
+Mobile's documented target remains 70%; its enforcement was not changed in this
+repair. Convex has no coverage threshold.
+
+Run the enforced reports:
 
 ```bash
-pnpm test:coverage
+pnpm --filter @groupi/web test:coverage
+pnpm --filter @groupi/shared test:coverage
 ```
+
+To check that the runner rejects insufficient coverage, temporarily override an
+individual threshold above its measured value. The command below must exit
+nonzero with a coverage threshold error even though the assertions pass:
+
+```bash
+pnpm --filter @groupi/shared exec vitest run --coverage.enabled --coverage.thresholds.lines=100
+```
+
+The repair was also verified with effective 70% web and 80% shared thresholds:
+all assertions passed, while each command exited 1 with four global coverage
+errors. Restoring the baseline floors makes the complete coverage runs pass.
+
+For all package reports, use `pnpm test:coverage`.
 
 ## Common Issues and Solutions
 
