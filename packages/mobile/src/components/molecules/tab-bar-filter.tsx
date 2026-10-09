@@ -6,6 +6,7 @@ interface Tab {
   key: string;
   label: string;
   badge?: number;
+  disabled?: boolean;
 }
 
 interface TabBarFilterProps {
@@ -28,9 +29,10 @@ export function TabBarFilter({
     return (
       <Pressable
         key={tab.key}
+        disabled={tab.disabled}
         onPress={() => onTabChange(tab.key)}
         accessibilityRole='tab'
-        accessibilityState={{ selected: isActive }}
+        accessibilityState={{ selected: isActive, disabled: tab.disabled }}
         accessibilityLabel={tab.label}
         className={cn(
           // Sticker journal aesthetic — solid active tab with white border

@@ -24,3 +24,4 @@ export * from './step-item';
 export * from './sticker-card';
 export * from './timestamp-badge';
 export * from './user-info-card';
+export { QuerySection } from './query-section';

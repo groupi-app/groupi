@@ -1,28 +1,21 @@
 ---
 name: convex-schema-validator
-displayName: Convex Schema Validator
-description: Defining and validating database schemas with proper typing, index configuration, optional fields, unions, and migration strategies for schema changes
-version: 1.0.0
-author: Convex
-tags: [convex, schema, validation, typescript, indexes, migrations]
+description: Designs convex/schema.ts tables, validators, indexes, and relationships, and keeps the schema honest as data evolves. Use when creating tables, adding fields, choosing index fields, modeling relationships, or when a validator error appears at deploy time.
 ---
 
-# Convex Schema Validator
+# Convex schema validator
 
-Define and validate database schemas in Convex with proper typing, index configuration, optional fields, unions, and strategies for schema migrations.
+Produces a `convex/schema.ts` that types every document, indexes every query path, and passes validation against the data already in the database. The one rule: every `withIndex` in a function needs a matching `.index()` here, named after its fields, queried in field order.
 
-## Documentation Sources
+## When to reach for this
 
-Before implementing, do not assume; fetch the latest documentation:
+- Creating a new table or adding a field to an existing one
+- A query uses `.filter()` and needs an index instead
+- Deciding whether to embed an object or link with `v.id`
+- Modeling a document that comes in several shapes
+- `npx convex dev` fails with a schema validation error
 
-- Primary: https://docs.convex.dev/database/schemas
-- Indexes: https://docs.convex.dev/database/indexes
-- Data Types: https://docs.convex.dev/database/types
-- For broader context: https://docs.convex.dev/llms.txt
-
-## Instructions
-
-### Basic Schema Definition
+## Schema skeleton
 
 ```typescript
 // convex/schema.ts
@@ -34,367 +27,221 @@ export default defineSchema({
     name: v.string(),
     email: v.string(),
     avatarUrl: v.optional(v.string()),
-    createdAt: v.number(),
-  }),
-  
+  }).index("by_email", ["email"]),
+
   tasks: defineTable({
+    userId: v.id("users"),
     title: v.string(),
-    description: v.optional(v.string()),
     completed: v.boolean(),
-    userId: v.id("users"),
-    priority: v.union(
-      v.literal("low"),
-      v.literal("medium"),
-      v.literal("high")
-    ),
-  }),
-});
-```
-
-### Validator Types
-
-| Validator | TypeScript Type | Example |
-|-----------|----------------|---------|
-| `v.string()` | `string` | `"hello"` |
-| `v.number()` | `number` | `42`, `3.14` |
-| `v.boolean()` | `boolean` | `true`, `false` |
-| `v.null()` | `null` | `null` |
-| `v.int64()` | `bigint` | `9007199254740993n` |
-| `v.bytes()` | `ArrayBuffer` | Binary data |
-| `v.id("table")` | `Id<"table">` | Document reference |
-| `v.array(v)` | `T[]` | `[1, 2, 3]` |
-| `v.object({})` | `{ ... }` | `{ name: "..." }` |
-| `v.optional(v)` | `T \| undefined` | Optional field |
-| `v.union(...)` | `T1 \| T2` | Multiple types |
-| `v.literal(x)` | `"x"` | Exact value |
-| `v.any()` | `any` | Any value |
-| `v.record(k, v)` | `Record<K, V>` | Dynamic keys |
-
-### Index Configuration
-
-```typescript
-export default defineSchema({
-  messages: defineTable({
-    channelId: v.id("channels"),
-    authorId: v.id("users"),
-    content: v.string(),
-    sentAt: v.number(),
+    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
   })
-    // Single field index
-    .index("by_channel", ["channelId"])
-    // Compound index
-    .index("by_channel_and_author", ["channelId", "authorId"])
-    // Index for sorting
-    .index("by_channel_and_time", ["channelId", "sentAt"]),
-    
-  // Full-text search index
-  articles: defineTable({
-    title: v.string(),
-    body: v.string(),
-    category: v.string(),
-  })
-    .searchIndex("search_content", {
-      searchField: "body",
-      filterFields: ["category"],
-    }),
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_completed", ["userId", "completed"]),
 });
 ```
 
-### Complex Types
+`defineTable` takes either an object of field validators or a single `v.union` of `v.object` validators (see discriminated unions). Every table gets `_id` and `_creationTime` for free. Do not declare them.
+
+## Validators
+
+| Validator | TypeScript type | Note |
+| --- | --- | --- |
+| `v.string()` | `string` | UTF-8, under 1 MB |
+| `v.number()` | `number` | Float64. Use for timestamps and counts |
+| `v.boolean()` | `boolean` | |
+| `v.null()` | `null` | `undefined` is not a Convex value. Return `null` instead |
+| `v.int64()` | `bigint` | Not `v.bigint()`, which is deprecated |
+| `v.bytes()` | `ArrayBuffer` | Under 1 MB |
+| `v.id("table")` | `Id<"table">` | Typed reference. Convex does not enforce that the target exists |
+| `v.array(t)` | `T[]` | At most 8192 items |
+| `v.object({...})` | `{...}` | At most 1024 entries. Keys cannot start with `$` or `_` |
+| `v.record(k, t)` | `Record<K, T>` | Dynamic ASCII keys. No `v.map` or `v.set` |
+| `v.union(a, b)` | `A \| B` | Use `v.literal` members for enums |
+| `v.literal("x")` | `"x"` | |
+| `v.optional(t)` | `T \| undefined` | Field may be absent |
+| `v.any()` | `any` | Last resort. Loses type safety and validation |
+
+## Optional versus nullable
+
+`v.optional` means the key may be missing from the document. `v.union(t, v.null())` means the key is always present and may hold `null`. They are different at validation time.
 
 ```typescript
-export default defineSchema({
-  // Nested objects
-  profiles: defineTable({
-    userId: v.id("users"),
-    settings: v.object({
-      theme: v.union(v.literal("light"), v.literal("dark")),
-      notifications: v.object({
-        email: v.boolean(),
-        push: v.boolean(),
-      }),
-    }),
-  }),
-
-  // Arrays of objects
-  orders: defineTable({
-    customerId: v.id("users"),
-    items: v.array(v.object({
-      productId: v.id("products"),
-      quantity: v.number(),
-      price: v.number(),
-    })),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("processing"),
-      v.literal("shipped"),
-      v.literal("delivered")
-    ),
-  }),
-
-  // Record type for dynamic keys
-  analytics: defineTable({
-    date: v.string(),
-    metrics: v.record(v.string(), v.number()),
-  }),
-});
+items: defineTable({
+  description: v.optional(v.string()),           // may be absent
+  deletedAt: v.union(v.number(), v.null()),       // always present, may be null
+  notes: v.optional(v.union(v.string(), v.null())), // either
+}),
 ```
 
-### Discriminated Unions
+Use `v.optional` for fields added after the table had data. Use `v.union(..., v.null())` when "explicitly cleared" carries meaning.
+
+## Discriminated unions
+
+For a table whose documents come in several shapes, pass a `v.union` of `v.object` validators to `defineTable`. Each member has the same literal key so TypeScript narrows on it.
 
 ```typescript
-export default defineSchema({
-  events: defineTable(
-    v.union(
-      v.object({
-        type: v.literal("user_signup"),
-        userId: v.id("users"),
-        email: v.string(),
-      }),
-      v.object({
-        type: v.literal("purchase"),
-        userId: v.id("users"),
-        orderId: v.id("orders"),
-        amount: v.number(),
-      }),
-      v.object({
-        type: v.literal("page_view"),
-        sessionId: v.string(),
-        path: v.string(),
-      })
-    )
-  ).index("by_type", ["type"]),
-});
-```
-
-### Optional vs Nullable Fields
-
-```typescript
-export default defineSchema({
-  items: defineTable({
-    // Optional: field may not exist
-    description: v.optional(v.string()),
-    
-    // Nullable: field exists but can be null
-    deletedAt: v.union(v.number(), v.null()),
-    
-    // Optional and nullable
-    notes: v.optional(v.union(v.string(), v.null())),
-  }),
-});
-```
-
-### Index Naming Convention
-
-Always include all indexed fields in the index name:
-
-```typescript
-export default defineSchema({
-  posts: defineTable({
-    authorId: v.id("users"),
-    categoryId: v.id("categories"),
-    publishedAt: v.number(),
-    status: v.string(),
-  })
-    // Good: descriptive names
-    .index("by_author", ["authorId"])
-    .index("by_author_and_category", ["authorId", "categoryId"])
-    .index("by_category_and_status", ["categoryId", "status"])
-    .index("by_status_and_published", ["status", "publishedAt"]),
-});
-```
-
-### Schema Migration Strategies
-
-#### Adding New Fields
-
-```typescript
-// Before
-users: defineTable({
-  name: v.string(),
-  email: v.string(),
-})
-
-// After - add as optional first
-users: defineTable({
-  name: v.string(),
-  email: v.string(),
-  avatarUrl: v.optional(v.string()), // New optional field
-})
-```
-
-#### Backfilling Data
-
-```typescript
-// convex/migrations.ts
-import { internalMutation } from "./_generated/server";
-import { v } from "convex/values";
-
-export const backfillAvatars = internalMutation({
-  args: {},
-  returns: v.number(),
-  handler: async (ctx) => {
-    const users = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("avatarUrl"), undefined))
-      .take(100);
-
-    for (const user of users) {
-      await ctx.db.patch(user._id, {
-        avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`,
-      });
-    }
-
-    return users.length;
-  },
-});
-```
-
-#### Making Optional Fields Required
-
-```typescript
-// Step 1: Backfill all null values
-// Step 2: Update schema to required
-users: defineTable({
-  name: v.string(),
-  email: v.string(),
-  avatarUrl: v.string(), // Now required after backfill
-})
-```
-
-## Examples
-
-### Complete E-commerce Schema
-
-```typescript
-// convex/schema.ts
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
-
-export default defineSchema({
-  users: defineTable({
-    email: v.string(),
-    name: v.string(),
-    role: v.union(v.literal("customer"), v.literal("admin")),
-    createdAt: v.number(),
-  })
-    .index("by_email", ["email"])
-    .index("by_role", ["role"]),
-
-  products: defineTable({
-    name: v.string(),
-    description: v.string(),
-    price: v.number(),
-    category: v.string(),
-    inventory: v.number(),
-    isActive: v.boolean(),
-  })
-    .index("by_category", ["category"])
-    .index("by_active_and_category", ["isActive", "category"])
-    .searchIndex("search_products", {
-      searchField: "name",
-      filterFields: ["category", "isActive"],
-    }),
-
-  orders: defineTable({
-    userId: v.id("users"),
-    items: v.array(v.object({
-      productId: v.id("products"),
-      quantity: v.number(),
-      priceAtPurchase: v.number(),
-    })),
-    total: v.number(),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("paid"),
-      v.literal("shipped"),
-      v.literal("delivered"),
-      v.literal("cancelled")
-    ),
-    shippingAddress: v.object({
-      street: v.string(),
-      city: v.string(),
-      state: v.string(),
-      zip: v.string(),
-      country: v.string(),
-    }),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_and_status", ["userId", "status"])
-    .index("by_status", ["status"]),
-
-  reviews: defineTable({
-    productId: v.id("products"),
-    userId: v.id("users"),
-    rating: v.number(),
-    comment: v.optional(v.string()),
-    createdAt: v.number(),
-  })
-    .index("by_product", ["productId"])
-    .index("by_user", ["userId"]),
-});
-```
-
-### Using Schema Types in Functions
-
-```typescript
-// convex/products.ts
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
-import { Doc, Id } from "./_generated/dataModel";
-
-// Use Doc type for full documents
-type Product = Doc<"products">;
-
-// Use Id type for references
-type ProductId = Id<"products">;
-
-export const get = query({
-  args: { productId: v.id("products") },
-  returns: v.union(
+events: defineTable(
+  v.union(
     v.object({
-      _id: v.id("products"),
-      _creationTime: v.number(),
-      name: v.string(),
-      description: v.string(),
-      price: v.number(),
-      category: v.string(),
-      inventory: v.number(),
-      isActive: v.boolean(),
+      kind: v.literal("signup"),
+      userId: v.id("users"),
+      email: v.string(),
     }),
-    v.null()
+    v.object({
+      kind: v.literal("purchase"),
+      userId: v.id("users"),
+      orderId: v.id("orders"),
+      amount: v.number(),
+    }),
   ),
-  handler: async (ctx, args): Promise<Product | null> => {
-    return await ctx.db.get(args.productId);
-  },
-});
+).index("by_kind", ["kind"]),
 ```
 
-## Best Practices
+Put the discriminant (`kind`) first in any index on a union table so queries can scope to one shape. Prefer this over one wide object full of `v.optional` fields.
 
-- Never run `npx convex deploy` unless explicitly instructed
-- Never run any git commands unless explicitly instructed
-- Always define explicit schemas rather than relying on inference
-- Use descriptive index names that include all indexed fields
-- Start with optional fields when adding new columns
-- Use discriminated unions for polymorphic data
-- Validate data at the schema level, not just in functions
-- Plan index strategy based on query patterns
+## Indexes
 
-## Common Pitfalls
+### Naming and field order
 
-1. **Missing indexes for queries** - Every withIndex needs a corresponding schema index
-2. **Wrong index field order** - Fields must be queried in order defined
-3. **Using v.any() excessively** - Lose type safety benefits
-4. **Not making new fields optional** - Breaks existing data
-5. **Forgetting system fields** - _id and _creationTime are automatic
+Name the index after its fields in order: `by_field1_and_field2`. Querying must follow the same order: equality on a prefix of the fields, then at most one range on the next field.
 
-## References
+```typescript
+messages: defineTable({
+  channelId: v.id("channels"),
+  authorId: v.id("users"),
+  sentAt: v.number(),
+})
+  .index("by_channelId", ["channelId"])
+  .index("by_channelId_and_authorId", ["channelId", "authorId"])
+  .index("by_channelId_and_sentAt", ["channelId", "sentAt"]),
+```
 
-- Convex Documentation: https://docs.convex.dev/
-- Convex LLMs.txt: https://docs.convex.dev/llms.txt
-- Schemas: https://docs.convex.dev/database/schemas
-- Indexes: https://docs.convex.dev/database/indexes
-- Data Types: https://docs.convex.dev/database/types
+```typescript
+// Valid: equality on channelId, range on sentAt
+await ctx.db
+  .query("messages")
+  .withIndex("by_channelId_and_sentAt", (q) =>
+    q.eq("channelId", args.channelId).gt("sentAt", args.since),
+  )
+  .order("desc")
+  .take(50);
+```
+
+You cannot skip `channelId` and filter on `sentAt` alone with that index. Add `by_sentAt` if that query exists. `_creationTime` is appended to every index automatically, so results within an equal prefix sort by creation time.
+
+Reserved names: `by_id` and `by_creation_time`. Limits: 32 indexes per table, 16 fields per index.
+
+### When to add one
+
+- Any field a function passes to `withIndex`, `.eq`, or a range comparison
+- Every foreign key (`userId`, `channelId`, `orgId`) on the child table
+- The sort field for a paginated list, prefixed by the scoping field
+- Not for fields you only read after fetching the document
+- Not for tiny tables where a `.collect()` then in memory filter is fine
+
+If a query uses `.filter()`, that is the signal to add an index and switch to `withIndex`.
+
+## Relationships
+
+Link documents with `v.id("table")` on the child. Do not nest growing arrays of objects inside the parent.
+
+```typescript
+// Good: one to many via a foreign key
+posts: defineTable({
+  authorId: v.id("users"),
+  title: v.string(),
+}).index("by_authorId", ["authorId"]),
+
+comments: defineTable({
+  postId: v.id("posts"),
+  authorId: v.id("users"),
+  body: v.string(),
+}).index("by_postId", ["postId"]),
+
+// Many to many via a join table
+postTags: defineTable({
+  postId: v.id("posts"),
+  tagId: v.id("tags"),
+})
+  .index("by_postId", ["postId"])
+  .index("by_tagId", ["tagId"]),
+```
+
+Embed with `v.object` or a small `v.array` only when the data is bounded, always loaded with the parent, and updated together. A user's `settings` object is a good embed. A user's `posts` array is not: it hits the 8192 item cap and every post edit rewrites the user document.
+
+## System fields
+
+`_id: Id<"table">` and `_creationTime: number` (ms since epoch) exist on every document. Include them in return validators when a function returns whole documents:
+
+```typescript
+returns: v.array(
+  v.object({
+    _id: v.id("tasks"),
+    _creationTime: v.number(),
+    userId: v.id("users"),
+    title: v.string(),
+    completed: v.boolean(),
+  }),
+),
+```
+
+Do not add your own `createdAt` unless you need a value that differs from insertion time.
+
+## Search and vector indexes
+
+Declared on the table like regular indexes. `filterFields` must be top level fields.
+
+```typescript
+articles: defineTable({
+  title: v.string(),
+  body: v.string(),
+  category: v.string(),
+  embedding: v.array(v.number()),
+})
+  .searchIndex("search_body", {
+    searchField: "body",
+    filterFields: ["category"],
+  })
+  .vectorIndex("by_embedding", {
+    vectorField: "embedding",
+    dimensions: 1536,
+    filterFields: ["category"],
+  }),
+```
+
+Query search indexes with `withSearchIndex` in queries. Vector search runs only in actions via `ctx.vectorSearch`.
+
+## Common mistakes
+
+| Mistake | Why it breaks | Do instead |
+| --- | --- | --- |
+| `withIndex("by_userId")` with no matching `.index()` | Deploy fails | Declare the index in the schema first |
+| Index named `by_user` on `["userId", "status"]` | Hides what it covers, easy to misuse | `by_userId_and_status` |
+| Querying `status` on `by_userId_and_status` without `userId` | Index prefix rule | Add `by_status` or include `userId` |
+| Adding `newField: v.string()` to a table with rows | Existing documents fail validation | `v.optional`, backfill, then require |
+| `posts: v.array(v.object(...))` on `users` | 8192 cap, write conflicts on every edit | Separate `posts` table with `by_authorId` |
+| `v.bigint()` | Deprecated | `v.int64()` |
+| Declaring `_id` or `_creationTime` in `defineTable` | Rejected | They are automatic |
+| `v.any()` to move fast | No validation, no types | Model the shape, or a `v.union` of the real cases |
+| `v.union(v.string(), v.null())` for a new field | Old documents lack the key entirely | `v.optional(v.string())` |
+| Storing a `Date` | Not a Convex value | `v.number()` ms timestamp |
+
+## Checklist
+
+- [ ] Schema lives in `convex/schema.ts` and exports `defineSchema(...)` as default
+- [ ] Every table has explicit field validators, no `v.any()` unless justified
+- [ ] Every `withIndex` call in `convex/` has a matching `.index()` with fields in the name
+- [ ] Foreign keys are `v.id("table")` with an index on the child table
+- [ ] No unbounded arrays of objects embedded in a parent document
+- [ ] Fields added to tables with data are `v.optional`
+- [ ] Enums and polymorphic shapes use `v.union` of `v.literal` or `v.object` members
+- [ ] Return validators include `_id` and `_creationTime` when returning whole documents
+- [ ] `npx convex dev` pushes without a schema validation error
+
+## Docs
+
+- https://docs.convex.dev/llms.txt
+- https://docs.convex.dev/database/schemas
+- https://docs.convex.dev/database/indexes
+- https://docs.convex.dev/database/types
+- https://docs.convex.dev/database/reading-data

@@ -1,220 +1,368 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
+import type { Id } from '../../../_generated/dataModel';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership } from '../../v1/middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
-import {
-  AvailabilityGridResponseSchema,
-  SubmitAvailabilityRequestSchema,
-  SubmitAvailabilityResponseSchema,
-  PotentialDatesResponseSchema,
-} from '../schemas/availability';
-
-type Variables = {
-  ctx: ActionCtx;
-  userId: string;
-  personId: string;
+import { EventListQuerySchema, EventResponseSchema } from '../schemas/events';
+import { RsvpUpdateResponseSchema } from '../schemas/members';
+import * as schema from '../schemas/availability';
+type Variables = { ctx: ActionCtx; userId: string; personId: string };
+const errors = {
+  400: {
+    description: 'Invalid input',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
+  403: {
+    description: 'Forbidden',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: 'Not found',
+    content: { 'application/json': { schema: ErrorResponseSchema } },
+  },
 };
-
 export function createAvailabilityRoutes() {
   const app = new OpenAPIHono<{ Variables: Variables }>({
     defaultHook: createValidationHook<{ Variables: Variables }>(),
   });
-
-  // GET /events/:eventId/availability - Get availability grid
-  const getAvailabilityRoute = createRoute({
-    method: 'get',
-    path: '/events/{eventId}/availability',
-    tags: ['Availability'],
-    summary: 'Get availability grid',
-    description: 'Get the availability voting grid for an event',
-    security: [{ apiKey: [] }],
-    request: {
-      params: EventIdParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Availability grid',
-        content: {
-          'application/json': {
-            schema: AvailabilityGridResponseSchema,
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/rsvp',
+      tags: ['Availability'],
+      summary: 'Read your RSVP',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: { 'application/json': { schema: RsvpUpdateResponseSchema } },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      return c.json(
+        await ctx.runQuery(internal.availability.rest.getRsvp, {
+          eventId,
+          personId,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/availability',
+      tags: ['Availability'],
+      summary: 'Read availability grid',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: schema.AvailabilityGridResponseSchema,
+            },
+          },
+        },
+        ...errors,
+      },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      return c.json(
+        await ctx.runQuery(internal.availability.rest.grid, {
+          eventId,
+          personId,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/availability',
+      tags: ['Availability'],
+      summary: 'Submit availability',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        body: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schema.SubmitAvailabilityRequestSchema,
+            },
           },
         },
       },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: schema.SubmitAvailabilityResponseSchema,
+            },
           },
         },
+        ...errors,
       },
-      403: {
-        description: 'Forbidden - not a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      const input = c.req.valid('json');
+      return c.json(
+        await ctx.runMutation(internal.availability.rest.submit, {
+          eventId,
+          personId,
+          responses: input.responses.map(response => ({
+            ...response,
+            potentialDateTimeId:
+              response.potentialDateTimeId as Id<'potentialDateTimes'>,
+          })),
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/events/{eventId}/availability',
+      tags: ['Availability'],
+      summary: 'Clear your availability',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.object({
+                deletedCount: z.number(),
+                membershipId: z.string(),
+              }),
+            },
           },
         },
+        ...errors,
       },
-    },
-  });
-
-  app.openapi(getAvailabilityRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { eventId } = c.req.valid('param');
-
-    const membership = await requireEventMembership(ctx, eventId, personId);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getGridFn = internal.api.v1.internal.availability.getAvailabilityGrid;
-    const result = await ctx.runQuery(getGridFn, { eventId });
-
-    return c.json(
-      {
-        eventId,
-        potentialDates: result.potentialDates,
-        userMembershipId: membership.membershipId,
-      },
-      200
-    );
-  });
-
-  // POST /events/:eventId/availability - Submit availability
-  const submitAvailabilityRoute = createRoute({
-    method: 'post',
-    path: '/events/{eventId}/availability',
-    tags: ['Availability'],
-    summary: 'Submit availability',
-    description: 'Submit or update availability for potential dates',
-    security: [{ apiKey: [] }],
-    request: {
-      params: EventIdParamSchema,
-      body: {
-        content: {
-          'application/json': {
-            schema: SubmitAvailabilityRequestSchema,
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      return c.json(
+        await ctx.runMutation(internal.availability.rest.clear, {
+          eventId,
+          personId,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/potential-dates',
+      tags: ['Availability'],
+      summary: 'List potential dates',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema, query: EventListQuerySchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: z.union([
+                schema.PotentialDatesResponseSchema,
+                schema.PotentialDatesPageSchema,
+              ]),
+            },
           },
         },
+        ...errors,
       },
-    },
-    responses: {
-      200: {
-        description: 'Availability submitted',
-        content: {
-          'application/json': {
-            schema: SubmitAvailabilityResponseSchema,
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      const query = c.req.valid('query');
+      return c.json(
+        await ctx.runQuery(internal.availability.rest.dates, {
+          eventId,
+          personId,
+          limit:
+            query.pagination === 'cursor' ? (query.limit ?? 20) : undefined,
+          cursor: query.cursor,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/availability/mine',
+      tags: ['Availability'],
+      summary: 'Read your availability',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema, query: EventListQuerySchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': { schema: schema.OwnAvailabilityPageSchema },
           },
         },
+        ...errors,
       },
-      400: {
-        description: 'Bad request',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      const query = c.req.valid('query');
+      return c.json(
+        await ctx.runQuery(internal.availability.rest.mine, {
+          eventId,
+          personId,
+          limit: query.limit ?? 20,
+          cursor: query.cursor,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/events/{eventId}/availability/responses',
+      tags: ['Availability'],
+      summary: 'List availability responses',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        query: EventListQuerySchema.safeExtend({
+          potentialDateTimeId: z.string().min(1),
+        }),
+      },
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: schema.AvailabilityResponsesPageSchema,
+            },
           },
         },
+        ...errors,
       },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      const query = c.req.valid('query');
+      return c.json(
+        await ctx.runQuery(internal.availability.rest.responses, {
+          eventId,
+          personId,
+          limit: query.limit ?? 20,
+          cursor: query.cursor,
+          potentialDateTimeId:
+            query.potentialDateTimeId as Id<'potentialDateTimes'>,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path: '/events/{eventId}/date',
+      tags: ['Availability'],
+      summary: 'Choose event date',
+      security: [{ apiKey: [] }],
+      request: {
+        params: EventIdParamSchema,
+        body: {
+          required: true,
+          content: { 'application/json': { schema: schema.ChooseDateSchema } },
         },
       },
-      403: {
-        description: 'Forbidden - not a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
+      responses: {
+        200: {
+          description: 'Success',
+          content: { 'application/json': { schema: EventResponseSchema } },
         },
+        ...errors,
       },
-    },
-  });
-
-  app.openapi(submitAvailabilityRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { eventId } = c.req.valid('param');
-    const body = c.req.valid('json');
-
-    const membership = await requireEventMembership(ctx, eventId, personId);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const submitFn = internal.api.v1.internal.availability.submitAvailability;
-    const result = await ctx.runMutation(submitFn, {
-      membershipId: membership.membershipId,
-      responses: body.responses,
-    });
-
-    return c.json(
-      {
-        updated: result.updated,
-        created: result.created,
-      },
-      200
-    );
-  });
-
-  // GET /events/:eventId/potential-dates - List potential dates
-  const getPotentialDatesRoute = createRoute({
-    method: 'get',
-    path: '/events/{eventId}/potential-dates',
-    tags: ['Availability'],
-    summary: 'Get potential dates',
-    description: 'Get the list of potential date options for an event',
-    security: [{ apiKey: [] }],
-    request: {
-      params: EventIdParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'List of potential dates',
-        content: {
-          'application/json': {
-            schema: PotentialDatesResponseSchema,
-          },
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      const input = c.req.valid('json');
+      const selection =
+        input.selectionSource === 'POLL'
+          ? {
+              selectionSource: input.selectionSource,
+              potentialDateTimeId:
+                input.potentialDateTimeId as Id<'potentialDateTimes'>,
+            }
+          : input;
+      return c.json(
+        await ctx.runMutation(internal.availability.rest.chooseDate, {
+          eventId,
+          personId,
+          selection,
+        }),
+        200
+      );
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'delete',
+      path: '/events/{eventId}/date',
+      tags: ['Availability'],
+      summary: 'Reset event date',
+      security: [{ apiKey: [] }],
+      request: { params: EventIdParamSchema },
+      responses: {
+        200: {
+          description: 'Success',
+          content: { 'application/json': { schema: EventResponseSchema } },
         },
+        ...errors,
       },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      403: {
-        description: 'Forbidden - not a member',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-  });
-
-  app.openapi(getPotentialDatesRoute, async c => {
-    const ctx = c.get('ctx');
-    const personId = c.get('personId');
-    const { eventId } = c.req.valid('param');
-
-    await requireEventMembership(ctx, eventId, personId);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getDatesFn = internal.api.v1.internal.availability.getPotentialDates;
-    const result = await ctx.runQuery(getDatesFn, { eventId });
-
-    return c.json(result.potentialDates, 200);
-  });
-
+    }),
+    async c => {
+      const ctx = c.get('ctx');
+      const personId = c.get('personId') as Id<'persons'>;
+      const eventId = c.req.valid('param').eventId as Id<'events'>;
+      return c.json(
+        await ctx.runMutation(internal.availability.rest.resetDate, {
+          eventId,
+          personId,
+        }),
+        200
+      );
+    }
+  );
   return app;
 }

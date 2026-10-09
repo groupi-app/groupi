@@ -1,48 +1,38 @@
 ---
 name: convex-realtime
-displayName: Convex Realtime
-description: Patterns for building reactive apps including subscription management, optimistic updates, cache behavior, and paginated queries with cursor-based loading
-version: 1.0.0
-author: Convex
-tags: [convex, realtime, subscriptions, optimistic-updates, pagination]
+description: "Builds reactive UIs on Convex subscriptions: useQuery patterns, optimistic updates, pagination that stays live, presence, and avoiding subscription churn. Use when wiring the frontend to Convex, when data does not update live, or when a page rerenders too much."
 ---
 
-# Convex Realtime
+# Convex realtime
 
-Build reactive applications with Convex's real-time subscriptions, optimistic updates, intelligent caching, and cursor-based pagination.
+Every `useQuery` is a live subscription. The one rule: keep the set of documents a query reads small and indexed, because that read set decides when the query reruns.
 
-## Documentation Sources
+## When to reach for this
 
-Before implementing, do not assume; fetch the latest documentation:
+- Wiring a React component to Convex for the first time
+- Data changes on the server but the page does not update
+- A list or dashboard rerenders on every unrelated write
+- A "load more" list drops or duplicates rows when new data lands
+- Showing who is online or typing
 
-- Primary: https://docs.convex.dev/client/react
-- Optimistic Updates: https://docs.convex.dev/client/react/optimistic-updates
-- Pagination: https://docs.convex.dev/database/pagination
-- For broader context: https://docs.convex.dev/llms.txt
+## How subscriptions work
 
-## Instructions
+`useQuery` opens a subscription over the client's websocket. The server runs the query, records its read set (every document and index range it touched), and pushes the result. When a mutation commits a write that overlaps that read set, the server reruns the query and pushes the new result. Nothing overlaps, nothing reruns. Results are cached per function and args, so two components calling `useQuery(api.tasks.list, { userId })` share one subscription. All active subscriptions update together at the same database timestamp, so the UI never shows a half applied mutation. Queries must be deterministic for this to hold, which is why `Date.now()`, `Math.random()`, and `fetch` are not allowed inside them.
 
-### How Convex Realtime Works
+## useQuery
 
-1. **Automatic Subscriptions** - useQuery creates a subscription that updates automatically
-2. **Smart Caching** - Query results are cached and shared across components
-3. **Consistency** - All subscriptions see a consistent view of the database
-4. **Efficient Updates** - Only re-renders when relevant data changes
-
-### Basic Subscriptions
+`undefined` means loading. Pass `"skip"` instead of wrapping the hook in a condition.
 
 ```typescript
-// React component with real-time data
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
-function TaskList({ userId }: { userId: Id<"users"> }) {
-  // Automatically subscribes and updates in real-time
-  const tasks = useQuery(api.tasks.list, { userId });
+function TaskList({ userId }: { userId: Id<"users"> | null }) {
+  const tasks = useQuery(api.tasks.list, userId ? { userId } : "skip");
 
-  if (tasks === undefined) {
-    return <div>Loading...</div>;
-  }
+  if (userId === null) return <p>Select a user</p>;
+  if (tasks === undefined) return <p>Loading</p>;
 
   return (
     <ul>
@@ -54,131 +44,65 @@ function TaskList({ userId }: { userId: Id<"users"> }) {
 }
 ```
 
-### Conditional Queries
+Backend queries return validated data and read through an index:
 
 ```typescript
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+// convex/tasks.ts
+import { query } from "./_generated/server";
+import { v } from "convex/values";
 
-function UserProfile({ userId }: { userId: Id<"users"> | null }) {
-  // Skip query when userId is null
-  const user = useQuery(
-    api.users.get,
-    userId ? { userId } : "skip"
-  );
-
-  if (userId === null) {
-    return <div>Select a user</div>;
-  }
-
-  if (user === undefined) {
-    return <div>Loading...</div>;
-  }
-
-  return <div>{user.name}</div>;
-}
+export const list = query({
+  args: { userId: v.id("users") },
+  returns: v.array(
+    v.object({
+      _id: v.id("tasks"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      title: v.string(),
+      completed: v.boolean(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(100);
+  },
+});
 ```
 
-### Mutations with Real-time Updates
+## Mutations and optimistic updates
 
-```typescript
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-
-function TaskManager({ userId }: { userId: Id<"users"> }) {
-  const tasks = useQuery(api.tasks.list, { userId });
-  const createTask = useMutation(api.tasks.create);
-  const toggleTask = useMutation(api.tasks.toggle);
-
-  const handleCreate = async (title: string) => {
-    // Mutation triggers automatic re-render when data changes
-    await createTask({ title, userId });
-  };
-
-  const handleToggle = async (taskId: Id<"tasks">) => {
-    await toggleTask({ taskId });
-  };
-
-  return (
-    <div>
-      <button onClick={() => handleCreate("New Task")}>Add Task</button>
-      <ul>
-        {tasks?.map((task) => (
-          <li key={task._id} onClick={() => handleToggle(task._id)}>
-            {task.completed ? "✓" : "○"} {task.title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-### Optimistic Updates
-
-Show changes immediately before server confirmation:
-
-```typescript
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { Id } from "../convex/_generated/dataModel";
-
-function TaskItem({ task }: { task: Task }) {
-  const toggleTask = useMutation(api.tasks.toggle).withOptimisticUpdate(
-    (localStore, args) => {
-      const { taskId } = args;
-      const currentValue = localStore.getQuery(api.tasks.get, { taskId });
-      
-      if (currentValue !== undefined) {
-        localStore.setQuery(api.tasks.get, { taskId }, {
-          ...currentValue,
-          completed: !currentValue.completed,
-        });
-      }
-    }
-  );
-
-  return (
-    <div onClick={() => toggleTask({ taskId: task._id })}>
-      {task.completed ? "✓" : "○"} {task.title}
-    </div>
-  );
-}
-```
-
-### Optimistic Updates for Lists
+A plain `useMutation` call is enough for most UI. The subscription refreshes when the write commits, usually within a round trip. Add an optimistic update when that round trip is visible: toggles, reorders, chat sends.
 
 ```typescript
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
-function useCreateTask(userId: Id<"users">) {
-  return useMutation(api.tasks.create).withOptimisticUpdate(
+function useToggleTask(userId: Id<"users">) {
+  return useMutation(api.tasks.toggle).withOptimisticUpdate(
     (localStore, args) => {
-      const { title, userId } = args;
-      const currentTasks = localStore.getQuery(api.tasks.list, { userId });
-      
-      if (currentTasks !== undefined) {
-        // Add optimistic task to the list
-        const optimisticTask = {
-          _id: crypto.randomUUID() as Id<"tasks">,
-          _creationTime: Date.now(),
-          title,
-          userId,
-          completed: false,
-        };
-        
-        localStore.setQuery(api.tasks.list, { userId }, [
-          optimisticTask,
-          ...currentTasks,
-        ]);
-      }
-    }
+      const current = localStore.getQuery(api.tasks.list, { userId });
+      if (current === undefined) return;
+      localStore.setQuery(
+        api.tasks.list,
+        { userId },
+        current.map((task) =>
+          task._id === args.taskId
+            ? { ...task, completed: !task.completed }
+            : task,
+        ),
+      );
+    },
   );
 }
 ```
 
-### Cursor-Based Pagination
+Inserting into a list works the same way. Build a temporary document with a placeholder `_id` and `_creationTime: Date.now()` (allowed here, this runs on the client), prepend it, and let the server result replace it. If the mutation throws, Convex rolls the local store back for you. Update every query the mutation affects, not just the one on screen, or the others will look stale until the server responds.
+
+## Pagination that stays live
 
 ```typescript
 // convex/messages.ts
@@ -186,11 +110,9 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
-export const listPaginated = query({
-  args: {
-    channelId: v.id("channels"),
-    paginationOpts: paginationOptsValidator,
-  },
+export const listByChannel = query({
+  args: { channelId: v.id("channels"), paginationOpts: paginationOptsValidator },
+  // Return shape is fixed by .paginate(): { page, isDone, continueCursor }
   handler: async (ctx, args) => {
     return await ctx.db
       .query("messages")
@@ -202,242 +124,120 @@ export const listPaginated = query({
 ```
 
 ```typescript
-// React component with pagination
 import { usePaginatedQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
 function MessageList({ channelId }: { channelId: Id<"channels"> }) {
   const { results, status, loadMore } = usePaginatedQuery(
-    api.messages.listPaginated,
+    api.messages.listByChannel,
     { channelId },
-    { initialNumItems: 20 }
+    { initialNumItems: 30 },
   );
 
   return (
     <div>
-      {results.map((message) => (
-        <div key={message._id}>{message.content}</div>
+      {results.map((m) => (
+        <p key={m._id}>{m.body}</p>
       ))}
-      
       {status === "CanLoadMore" && (
-        <button onClick={() => loadMore(20)}>Load More</button>
+        <button onClick={() => loadMore(30)}>Load more</button>
       )}
-      
-      {status === "LoadingMore" && <div>Loading...</div>}
-      
-      {status === "Exhausted" && <div>No more messages</div>}
+      {status === "LoadingMore" && <p>Loading</p>}
     </div>
   );
 }
 ```
 
-### Infinite Scroll Pattern
+Each loaded page is its own subscription, so inserts and deletes anywhere in the list show up without refetching. `status` is `LoadingFirstPage`, `CanLoadMore`, `LoadingMore`, or `Exhausted`. For infinite scroll, call `loadMore` from an `IntersectionObserver` on a sentinel element when `status === "CanLoadMore"`. Cursors come from `.paginate()` only. Do not build offset pagination by slicing a `.collect()` result.
+
+## Parallel loads with useQueries
+
+Several `useQuery` calls in one component already load in parallel and stay consistent with each other. Reach for `useQueries` when the set of queries is dynamic, such as one query per id in a list.
 
 ```typescript
-import { usePaginatedQuery } from "convex/react";
-import { useEffect, useRef } from "react";
+import { useQueries } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
-function InfiniteMessageList({ channelId }: { channelId: Id<"channels"> }) {
-  const { results, status, loadMore } = usePaginatedQuery(
-    api.messages.listPaginated,
-    { channelId },
-    { initialNumItems: 20 }
+function Avatars({ userIds }: { userIds: Array<Id<"users">> }) {
+  const users = useQueries(
+    Object.fromEntries(
+      userIds.map((userId) => [userId, { query: api.users.get, args: { userId } }]),
+    ),
   );
-  
-  const observerRef = useRef<IntersectionObserver>();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && status === "CanLoadMore") {
-        loadMore(20);
-      }
-    });
-
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
-
-    return () => observerRef.current?.disconnect();
-  }, [status, loadMore]);
 
   return (
     <div>
-      {results.map((message) => (
-        <div key={message._id}>{message.content}</div>
-      ))}
-      <div ref={loadMoreRef} style={{ height: 1 }} />
-      {status === "LoadingMore" && <div>Loading...</div>}
+      {userIds.map((id) => {
+        const user = users[id];
+        if (user === undefined) return <span key={id}>...</span>;
+        if (user instanceof Error) return <span key={id}>!</span>;
+        return <img key={id} src={user.avatarUrl} alt={user.name} />;
+      })}
     </div>
   );
 }
 ```
 
-### Multiple Subscriptions
+Each value is `undefined` while loading, an `Error` on failure, or the query result.
+
+## Avoiding churn
+
+Churn is a query rerunning for writes the component does not care about. Fix it on the server side first.
+
+- Narrow the read set. `withIndex` with an equality or range reads one slice. `.filter()` or a bare `.query("table")` reads the whole table, so any write to it reruns the query.
+- Return only what the component renders. A query that joins five tables reruns when any of the five change.
+- Never `Date.now()` in a query. Pass time as an argument and round it so the args stay stable: `useQuery(api.tasks.overdue, { now: Math.floor(Date.now() / 60000) * 60000 })` reruns once a minute, not on every render.
+- Bound results with `.take(n)` or pagination. `.collect()` on a growing table is a growing read set.
+- Split hot fields into their own table. A `lastSeen` timestamp on the user document reruns every query that reads users. Put it in a `presence` table with its own query.
+- Debounce mutations from rapid input (typing, dragging) so the subscription is not flooded with intermediate states.
+
+## Presence
+
+Presence is a heartbeat mutation from each client plus a query over rows with a recent heartbeat, kept in a separate table so it does not touch anything else. Use the `@convex-dev/presence` component instead of building it. It handles heartbeats, disconnect cleanup, and a React hook.
 
 ```typescript
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+// convex/convex.config.ts
+import { defineApp } from "convex/server";
+import presence from "@convex-dev/presence/convex.config";
 
-function Dashboard({ userId }: { userId: Id<"users"> }) {
-  // Multiple subscriptions update independently
-  const user = useQuery(api.users.get, { userId });
-  const tasks = useQuery(api.tasks.list, { userId });
-  const notifications = useQuery(api.notifications.unread, { userId });
-
-  const isLoading = user === undefined || 
-                    tasks === undefined || 
-                    notifications === undefined;
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div>
-      <h1>Welcome, {user.name}</h1>
-      <p>You have {tasks.length} tasks</p>
-      <p>{notifications.length} unread notifications</p>
-    </div>
-  );
-}
+const app = defineApp();
+app.use(presence);
+export default app;
 ```
 
-## Examples
+Install with `npm install @convex-dev/presence`, then follow the package README for the server wrapper and the `usePresence` hook. If you must hand roll it, keep heartbeats in their own table, dedupe on the server with an early return when the last heartbeat is recent, and read with an index on `roomId`.
 
-### Real-time Chat Application
+## Common mistakes
 
-```typescript
-// convex/messages.ts
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+| Mistake | Why it breaks | Do instead |
+| --- | --- | --- |
+| `if (userId) useQuery(...)` | hook order changes between renders | `useQuery(fn, userId ? args : "skip")` |
+| Treating `undefined` as empty | loading state renders as "no results" | check `=== undefined` first |
+| `Date.now()` inside a query | nondeterministic, breaks caching | pass `now` as an arg, rounded |
+| `.filter()` on a large table | whole table in the read set | add an index, use `withIndex` |
+| `.collect()` for a feed | read set grows with the table | `.take(n)` or `.paginate()` |
+| Optimistic update on one query only | other views stale until the server responds | update every affected query in the callback |
+| Offset pagination by slicing `.collect()` | pages drift as rows insert | `.paginate()` and `usePaginatedQuery` |
+| `lastSeen` on the user document | every user query reruns on each heartbeat | separate presence table or component |
 
-export const list = query({
-  args: { channelId: v.id("channels") },
-  returns: v.array(v.object({
-    _id: v.id("messages"),
-    _creationTime: v.number(),
-    content: v.string(),
-    authorId: v.id("users"),
-    authorName: v.string(),
-  })),
-  handler: async (ctx, args) => {
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_channel", (q) => q.eq("channelId", args.channelId))
-      .order("desc")
-      .take(100);
+## Checklist
 
-    // Enrich with author names
-    return Promise.all(
-      messages.map(async (msg) => {
-        const author = await ctx.db.get(msg.authorId);
-        return {
-          ...msg,
-          authorName: author?.name ?? "Unknown",
-        };
-      })
-    );
-  },
-});
+- [ ] Every `useQuery` handles `undefined` before reading the result
+- [ ] Conditional queries use `"skip"`, not conditional hook calls
+- [ ] Every backend query has `args` and `returns` validators
+- [ ] Every query reads through `withIndex`, none use `.filter()` on a large table
+- [ ] No `Date.now()` or `Math.random()` inside any query
+- [ ] Lists that can grow use `.paginate()` and `usePaginatedQuery`
+- [ ] Optimistic updates touch every query the mutation changes
+- [ ] Hot fields like heartbeats live in their own table
+- [ ] Rapid input mutations are debounced on the client
 
-export const send = mutation({
-  args: {
-    channelId: v.id("channels"),
-    authorId: v.id("users"),
-    content: v.string(),
-  },
-  returns: v.id("messages"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("messages", {
-      channelId: args.channelId,
-      authorId: args.authorId,
-      content: args.content,
-    });
-  },
-});
-```
+## Docs
 
-```typescript
-// ChatRoom.tsx
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { useState, useRef, useEffect } from "react";
-
-function ChatRoom({ channelId, userId }: Props) {
-  const messages = useQuery(api.messages.list, { channelId });
-  const sendMessage = useMutation(api.messages.send);
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    await sendMessage({
-      channelId,
-      authorId: userId,
-      content: input.trim(),
-    });
-    setInput("");
-  };
-
-  return (
-    <div className="chat-room">
-      <div className="messages">
-        {messages?.map((msg) => (
-          <div key={msg._id} className="message">
-            <strong>{msg.authorName}:</strong> {msg.content}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <form onSubmit={handleSend}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-        />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  );
-}
-```
-
-## Best Practices
-
-- Never run `npx convex deploy` unless explicitly instructed
-- Never run any git commands unless explicitly instructed
-- Use "skip" for conditional queries instead of conditionally calling hooks
-- Implement optimistic updates for better perceived performance
-- Use usePaginatedQuery for large datasets
-- Handle undefined state (loading) explicitly
-- Avoid unnecessary re-renders by memoizing derived data
-
-## Common Pitfalls
-
-1. **Conditional hook calls** - Use "skip" instead of if statements
-2. **Not handling loading state** - Always check for undefined
-3. **Missing optimistic update rollback** - Optimistic updates auto-rollback on error
-4. **Over-fetching with pagination** - Use appropriate page sizes
-5. **Ignoring subscription cleanup** - React handles this automatically
-
-## References
-
-- Convex Documentation: https://docs.convex.dev/
-- Convex LLMs.txt: https://docs.convex.dev/llms.txt
-- React Client: https://docs.convex.dev/client/react
-- Optimistic Updates: https://docs.convex.dev/client/react/optimistic-updates
-- Pagination: https://docs.convex.dev/database/pagination
+- https://docs.convex.dev/llms.txt
+- https://docs.convex.dev/client/react
+- https://docs.convex.dev/client/react/optimistic-updates
+- https://docs.convex.dev/database/pagination
+- https://www.convex.dev/components/presence

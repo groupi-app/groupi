@@ -1,3 +1,4 @@
+import { discussionLengthAllowed } from '@groupi/shared';
 import { useState, useMemo, useEffect } from 'react';
 import {
   View,
@@ -148,7 +149,13 @@ export default function PostDetailScreen() {
   const userRole = postDetail.userMembership?.role;
   const canModerate = userRole === 'ORGANIZER' || userRole === 'MODERATOR';
   const hasEditingReplyText = hasRichTextContent(editingReplyText);
-  const isEditingReplyTooLong = editingReplyText.length > MAX_REPLY_LENGTH;
+  const isEditingReplyTooLong = !discussionLengthAllowed(
+    editingReplyText,
+    MAX_REPLY_LENGTH,
+    replies.find(
+      (reply: { _id: string; text: string }) => reply._id === editingReplyId
+    )?.text
+  );
 
   function handlePostActions() {
     const options: ActionMenuOption[] = [];
@@ -378,11 +385,11 @@ export default function PostDetailScreen() {
 
               {/* Post content */}
               <View className='mt-3 flex-row items-center gap-2'>
-                <Text className='text-xl font-bold text-foreground'>
+                <Text className='min-w-0 shrink text-xl font-bold text-foreground'>
                   {post.title}
                 </Text>
                 {post.updatedAt && post.updatedAt !== post._creationTime ? (
-                  <Text className='text-xs text-muted-foreground'>
+                  <Text className='shrink-0 text-xs text-muted-foreground'>
                     (edited)
                   </Text>
                 ) : null}

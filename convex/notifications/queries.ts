@@ -1,3 +1,4 @@
+import { groupNotificationReferences } from '../groupInvites/notificationProjection';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
 import { getCurrentPerson, authComponent, AuthUserId } from '../auth';
@@ -68,7 +69,7 @@ export const fetchNotificationsForPerson = query({
               user: authorUser
                 ? {
                     name: authorUser.name || null,
-                    email: authorUser.email,
+                    email: notification.groupId ? null : authorUser.email,
                     image: authorUser.image || null,
                     username: authorUser.username || null,
                   }
@@ -84,6 +85,7 @@ export const fetchNotificationsForPerson = query({
 
         return {
           ...notification,
+          ...(await groupNotificationReferences(ctx, notification)),
           id: notification._id,
           createdAt: notification._creationTime,
           event,

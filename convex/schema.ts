@@ -1,3 +1,27 @@
+import {
+  voteFields,
+  mode as pollMode,
+  option as pollOption,
+} from './groupPolls/contracts';
+import { entryFields as groupListEntryFields } from './groupLists/contracts';
+import { toolFields, policyFields } from './groupTools/contracts';
+import { responseFields as formResponseFields } from './groupForms/contracts';
+import { transferStatus } from './groupTransfers/contracts';
+import {
+  configuration as groupQuestionnaireConfiguration,
+  record as groupQuestionnaireRecord,
+  answerFields as groupQuestionnaireAnswerFields,
+} from './groupQuestionnaires/contracts';
+import { state as announcementState } from './groupAnnouncements/contracts';
+import {
+  applicationSettingsValidator,
+  questionValidator,
+  answersValidator,
+  applicationStatusValidator,
+  decisionValidator,
+} from './eventApplications/contracts';
+import { admissionPolicyValidator } from './events/admissionContracts';
+import { creationResult } from './invites/contracts';
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
@@ -13,9 +37,326 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  groupToolPolicies: defineTable(policyFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_kind', ['groupId', 'kind']),
+  groupTools: defineTable(toolFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_kind', ['groupId', 'kind'])
+    .index('by_creatorId', ['creatorId']),
+  groupLists: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupListEntries: defineTable(groupListEntryFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_actorId', ['actorId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupListRequests: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    requestId: v.string(),
+    fingerprint: v.string(),
+    entryId: v.id('groupListEntries'),
+    expiresAt: v.number(),
+    scheduledId: v.optional(v.id('_scheduled_functions')),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId_and_requestId', [
+      'toolId',
+      'personId',
+      'requestId',
+    ]),
+  groupForms: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    questions: v.array(questionValidator),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupFormResponses: defineTable(formResponseFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupFormRevisions: defineTable(formResponseFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+
+  groupPolls: defineTable({
+    toolId: v.id('groupTools'),
+    groupId: v.id('groups'),
+    version: v.number(),
+    semanticVersion: v.number(),
+    mode: pollMode,
+    options: v.array(pollOption),
+    updatedAt: v.number(),
+  })
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId']),
+  groupPollVotes: defineTable(voteFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+  groupPollRevisions: defineTable(voteFields)
+    .index('by_toolId', ['toolId'])
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_toolId_and_personId', ['toolId', 'personId']),
+
+  groupOnboardingJobs: defineTable({
+    groupId: v.id('groups'),
+    actorId: v.optional(v.id('persons')),
+    semanticKey: v.string(),
+    cursor: v.union(v.string(), v.null()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_actorId', ['actorId']),
+  groupOnboardingDispatches: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    notificationId: v.id('notifications'),
+    claimedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_notificationId', ['notificationId']),
+  groupQuestionnaires: defineTable(groupQuestionnaireConfiguration).index(
+    'by_groupId',
+    ['groupId']
+  ),
+  groupQuestionnaireRecords: defineTable(groupQuestionnaireRecord)
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupQuestionnaireIdentities: defineTable({
+    groupId: v.id('groups'),
+    questionId: v.string(),
+    version: v.number(),
+    fingerprint: v.string(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_questionId', ['groupId', 'questionId']),
+  groupQuestionnaireAnswers: defineTable({
+    ...groupQuestionnaireAnswerFields,
+    questionId: v.string(),
+    semanticVersion: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_group_person_question_version', [
+      'groupId',
+      'personId',
+      'questionId',
+      'semanticVersion',
+    ]),
+  groupQuestionnaireHistory: defineTable(groupQuestionnaireAnswerFields)
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupApplications: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    questions: v.array(questionValidator),
+    answers: answersValidator,
+    status: applicationStatusValidator,
+    submittedAt: v.number(),
+    updatedAt: v.number(),
+    decisions: v.array(decisionValidator),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_status', ['groupId', 'status'])
+    .index('by_groupId_and_personId_and_status', [
+      'groupId',
+      'personId',
+      'status',
+    ]),
+  groupApplicationActors: defineTable({
+    applicationId: v.id('groupApplications'),
+    personId: v.id('persons'),
+  })
+    .index('by_applicationId', ['applicationId'])
+    .index('by_personId', ['personId']),
+  groupAnnouncements: defineTable({
+    groupId: v.id('groups'),
+    senderId: v.optional(v.id('persons')),
+    requestId: v.string(),
+    title: v.string(),
+    message: v.string(),
+    state: announcementState,
+    notified: v.number(),
+    skipped: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    cutoff: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_senderId', ['senderId'])
+    .index('by_groupId_and_senderId_and_requestId', [
+      'groupId',
+      'senderId',
+      'requestId',
+    ]),
+
+  groupBans: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    liftedBy: v.optional(v.id('persons')),
+    active: v.boolean(),
+    bannedAt: v.number(),
+    liftedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_actorId', ['actorId'])
+    .index('by_liftedBy', ['liftedBy'])
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_active', ['groupId', 'active']),
+  groupInvites: defineTable({
+    groupId: v.id('groups'),
+    inviterId: v.id('persons'),
+    inviteeId: v.id('persons'),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
+    ),
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupId_and_inviteeId', ['groupId', 'inviteeId'])
+    .index('by_inviteeId', ['inviteeId'])
+    .index('by_inviterId', ['inviterId'])
+    .index('by_inviteeId_and_status', ['inviteeId', 'status'])
+    .index('by_groupId_and_status', ['groupId', 'status']),
+  groupTransfers: defineTable({
+    groupId: v.id('groups'),
+    offeredById: v.optional(v.id('persons')),
+    recipientId: v.optional(v.id('persons')),
+    status: transferStatus,
+    offeredAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_group_status', ['groupId', 'status'])
+    .index('by_offeredBy', ['offeredById'])
+    .index('by_recipient', ['recipientId']),
+  groups: defineTable({
+    eventSharingPolicy: v.optional(
+      v.union(v.literal('MANAGERS'), v.literal('MEMBERS'))
+    ),
+    invitationsEnabled: v.optional(v.boolean()),
+    applicationsEnabled: v.optional(v.boolean()),
+    applicationQuestions: v.optional(v.array(questionValidator)),
+    memberCount: v.number(),
+    ownerId: v.id('persons'),
+    name: v.string(),
+    description: v.optional(v.string()),
+    image: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_ownerId', ['ownerId']),
+  groupMemberships: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    role: v.union(
+      v.literal('OWNER'),
+      v.literal('MODERATOR'),
+      v.literal('MEMBER')
+    ),
+    joinedAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_groupId_and_role', ['groupId', 'role']),
+  // Private saved selections contain stable identities, never profile snapshots.
+  inviteLists: defineTable({
+    creatorId: v.id('persons'),
+    name: v.string(),
+    normalizedName: v.string(),
+    personIds: v.array(v.id('persons')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_creator', ['creatorId'])
+    .index('by_creator_normalizedName', ['creatorId', 'normalizedName']),
+  uploads: defineTable({
+    storageId: v.id('_storage'),
+    personId: v.id('persons'),
+    mimeType: v.string(),
+    size: v.number(),
+    purpose: v.union(
+      v.literal('attachment'),
+      v.literal('avatar'),
+      v.literal('cover')
+    ),
+    createdAt: v.number(),
+    claimed: v.boolean(),
+  })
+    .index('by_storage', ['storageId'])
+    .index('by_createdAt', ['createdAt']),
+  uploadTickets: defineTable({
+    purpose: v.union(
+      v.literal('attachment'),
+      v.literal('avatar'),
+      v.literal('cover')
+    ),
+    token: v.string(),
+    personId: v.id('persons'),
+    expiresAt: v.number(),
+  }).index('by_token', ['token']),
+  // Retry records expire 24h after the timestamp embedded in the request ID.
+  // Expired IDs remain invalid even after this row is removed.
+  inviteCreationRequests: defineTable({
+    userId: v.string(),
+    operation: v.string(),
+    requestId: v.string(),
+    payloadHash: v.string(),
+    expiresAt: v.number(),
+    result: creationResult,
+  }).index('by_userId_and_operation_and_requestId', [
+    'userId',
+    'operation',
+    'requestId',
+  ]),
+
   // ===== AUTHENTICATION TABLES =====
   // NOTE: users, sessions, accounts, verifications are managed by Better Auth component
   // See convex.config.ts for betterAuth component registration
+
+  // Short-lived browser consent, bound to a single CLI listener and PKCE verifier.
+  // Only hashes of authorization codes are persisted; API keys live in Better Auth.
+  cliAuthGrants: defineTable({
+    userId: v.string(),
+    personId: v.id('persons'),
+    codeHash: v.string(),
+    challenge: v.string(),
+    state: v.string(),
+    callbackPort: v.number(),
+    expiresAt: v.number(),
+  })
+    .index('by_codeHash', ['codeHash'])
+    .index('by_userId_and_state', ['userId', 'state']),
 
   // Email verification for additional emails (app-managed, not component)
   emailVerifications: defineTable({
@@ -29,6 +370,22 @@ export default defineSchema({
     .index('by_token', ['token'])
     .index('by_user', ['userId'])
     .index('by_email', ['email']),
+
+  // Replay records last 24h from the caller timestamp. Expired request keys
+  // are rejected independently of row retention, even after scheduled cleanup.
+  eventCreationRequests: defineTable({
+    userId: v.string(),
+    operation: v.literal('events.create'),
+    requestId: v.string(),
+    payloadHash: v.string(),
+    expiresAt: v.number(),
+    eventId: v.id('events'),
+    membershipId: v.id('memberships'),
+  }).index('by_userId_and_operation_and_requestId', [
+    'userId',
+    'operation',
+    'requestId',
+  ]),
 
   // ===== APPLICATION TABLES =====
 
@@ -89,6 +446,9 @@ export default defineSchema({
         v.literal('NO_ONE')
       )
     ),
+    allowGroupInvitesFrom: v.optional(
+      v.union(v.literal('EVERYONE'), v.literal('FRIENDS'), v.literal('NO_ONE'))
+    ),
     allowEventInvitesFrom: v.optional(
       v.union(
         v.literal('EVERYONE'),
@@ -99,7 +459,55 @@ export default defineSchema({
     ),
   }).index('by_person', ['personId']),
 
+  eventTransfers: defineTable({
+    eventId: v.id('events'),
+    offeredById: v.id('persons'),
+    recipientId: v.id('persons'),
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('ACCEPTED'),
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_event_status', ['eventId', 'status']),
+
+  eventApplicationActors: defineTable({
+    applicationId: v.id('eventApplications'),
+    personId: v.id('persons'),
+  })
+    .index('by_person', ['personId'])
+    .index('by_application', ['applicationId']),
+  eventApplications: defineTable({
+    eventId: v.id('events'),
+    personId: v.id('persons'),
+    questions: v.array(questionValidator),
+    answers: answersValidator,
+    status: applicationStatusValidator,
+    submittedAt: v.number(),
+    updatedAt: v.number(),
+    decisions: v.array(decisionValidator),
+  })
+    .index('by_event', ['eventId'])
+    .index('by_person', ['personId'])
+    .index('by_event_person', ['eventId', 'personId'])
+    .index('by_event_person_status', ['eventId', 'personId', 'status'])
+    .index('by_event_status', ['eventId', 'status']),
+  groupEventAudiences: defineTable({
+    groupId: v.id('groups'),
+    eventId: v.id('events'),
+    sharedById: v.optional(v.id('persons')),
+    createdAt: v.number(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_eventId', ['eventId'])
+    .index('by_groupId_and_eventId', ['groupId', 'eventId'])
+    .index('by_sharedById', ['sharedById']),
   events: defineTable({
+    friendsAudienceEnabled: v.optional(v.boolean()),
     title: v.string(),
     description: v.optional(v.string()),
     location: v.optional(v.string()),
@@ -115,7 +523,8 @@ export default defineSchema({
     // INVARIANT: chosenEndDateTime must be > chosenDateTime when both are set
     chosenDateTime: v.optional(v.number()), // Unix timestamp for start
     chosenEndDateTime: v.optional(v.number()), // Unix timestamp for end (optional)
-    creatorId: v.id('persons'), // Person who created the event
+    creatorId: v.id('persons'), // Current responsible Organizer / Friends principal
+    createdById: v.optional(v.id('persons')), // Immutable creation provenance
     memberCount: v.optional(v.number()), // Denormalized count of memberships
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.number(), // Unix timestamp
@@ -125,6 +534,8 @@ export default defineSchema({
     visibility: v.optional(
       v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
     ),
+    admissionPolicy: v.optional(admissionPolicyValidator),
+    applicationSettings: v.optional(applicationSettingsValidator),
     // Reminder offset - how far before the event to remind attendees (undefined = never)
     reminderOffset: v.optional(
       v.union(
@@ -250,6 +661,7 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     usesRemaining: v.optional(v.number()),
     maxUses: v.optional(v.number()),
+    usesConsumed: v.optional(v.number()), // Canonical usage; old REST/app rows normalize lazily.
     usesTotal: v.optional(v.number()), // Total number of uses
     name: v.optional(v.string()),
     token: v.string(), // Invite token for sharing
@@ -275,6 +687,9 @@ export default defineSchema({
       v.literal('DATE_CHOSEN'),
       v.literal('DATE_CHANGED'),
       v.literal('DATE_RESET'),
+      v.literal('EVENT_APPLICATION_RECEIVED'),
+      v.literal('EVENT_APPLICATION_APPROVED'),
+      v.literal('EVENT_APPLICATION_DECLINED'),
       v.literal('USER_JOINED'),
       v.literal('USER_LEFT'),
       v.literal('USER_PROMOTED'),
@@ -284,11 +699,25 @@ export default defineSchema({
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
       v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('GROUP_INVITE_RECEIVED'),
+      v.literal('GROUP_INVITE_ACCEPTED'),
+      v.literal('GROUP_MEMBER_REMOVED'),
+      v.literal('GROUP_MEMBER_BANNED'),
+      v.literal('GROUP_APPLICATION_RECEIVED'),
+      v.literal('GROUP_APPLICATION_APPROVED'),
+      v.literal('GROUP_APPLICATION_DECLINED'),
+      v.literal('GROUP_ANNOUNCEMENT'),
+      v.literal('GROUP_ONBOARDING_REQUIRED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
       v.literal('ADDON_AUTOMATION')
     ),
+    groupId: v.optional(v.id('groups')),
+    groupAnnouncementId: v.optional(v.id('groupAnnouncements')),
+    announcementDispatched: v.optional(v.boolean()),
+    groupInviteId: v.optional(v.id('groupInvites')),
+    groupApplicationId: v.optional(v.id('groupApplications')),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
     read: v.boolean(),
@@ -303,9 +732,15 @@ export default defineSchema({
     ),
     updatedAt: v.optional(v.number()), // Unix timestamp
   })
+    .index('by_groupId', ['groupId'])
+    .index('by_groupAnnouncementId', ['groupAnnouncementId'])
+    .index('by_authorId', ['authorId'])
+    .index('by_groupInviteId', ['groupInviteId'])
+    .index('by_groupApplicationId', ['groupApplicationId'])
     .index('by_person', ['personId'])
     .index('by_event', ['eventId'])
     .index('by_post', ['postId'])
+    .index('by_person_and_type', ['personId', 'type'])
     .index('by_person_read', ['personId', 'read']),
 
   notificationMethods: defineTable({
@@ -337,6 +772,9 @@ export default defineSchema({
       v.literal('DATE_CHOSEN'),
       v.literal('DATE_CHANGED'),
       v.literal('DATE_RESET'),
+      v.literal('EVENT_APPLICATION_RECEIVED'),
+      v.literal('EVENT_APPLICATION_APPROVED'),
+      v.literal('EVENT_APPLICATION_DECLINED'),
       v.literal('USER_JOINED'),
       v.literal('USER_LEFT'),
       v.literal('USER_PROMOTED'),
@@ -346,6 +784,15 @@ export default defineSchema({
       v.literal('EVENT_REMINDER'),
       v.literal('FRIEND_REQUEST_RECEIVED'),
       v.literal('FRIEND_REQUEST_ACCEPTED'),
+      v.literal('GROUP_INVITE_RECEIVED'),
+      v.literal('GROUP_INVITE_ACCEPTED'),
+      v.literal('GROUP_MEMBER_REMOVED'),
+      v.literal('GROUP_MEMBER_BANNED'),
+      v.literal('GROUP_APPLICATION_RECEIVED'),
+      v.literal('GROUP_APPLICATION_APPROVED'),
+      v.literal('GROUP_APPLICATION_DECLINED'),
+      v.literal('GROUP_ANNOUNCEMENT'),
+      v.literal('GROUP_ONBOARDING_REQUIRED'),
       v.literal('EVENT_INVITE_RECEIVED'),
       v.literal('EVENT_INVITE_ACCEPTED'),
       v.literal('ADDON_CONFIG_RESET'),
@@ -388,12 +835,18 @@ export default defineSchema({
     title: v.string(),
     body: v.string(),
     destination: v.union(
+      v.literal('group'),
+      v.literal('groupApplication'),
+      v.literal('groupApplications'),
       v.literal('notifications'),
       v.literal('invites'),
       v.literal('friends'),
       v.literal('event'),
+      v.literal('eventApplications'),
+      v.literal('eventApplication'),
       v.literal('post')
     ),
+    groupId: v.optional(v.id('groups')),
     eventId: v.optional(v.id('events')),
     postId: v.optional(v.id('posts')),
     status: v.union(

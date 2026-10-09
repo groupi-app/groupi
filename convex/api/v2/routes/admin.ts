@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
@@ -107,6 +108,10 @@ export function createAdminRoutes() {
       params: UserIdParamSchema,
     },
     responses: {
+      409: {
+        description: 'Owned Group responsibilities must be resolved',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       204: {
         description: 'User deleted successfully',
       },
@@ -160,6 +165,7 @@ export function createAdminRoutes() {
 
       return c.body(null, 204);
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to delete user';
       return c.json(

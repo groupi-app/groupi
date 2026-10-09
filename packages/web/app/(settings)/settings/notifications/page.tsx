@@ -4,6 +4,7 @@ import { SettingsFormSkeleton } from '@/components/skeletons/settings-form-skele
 import { SettingsFormProvider } from '../components/settings-form-provider';
 import { SettingsFormWithGuard } from '../components/settings-form-with-guard';
 import { SettingsContent } from '../components/settings-content';
+import type { NotificationType } from '@/convex/types';
 import { useNotificationMethodSettings } from '@/hooks/convex/use-settings';
 import { useCurrentUserProfile } from '@/hooks/convex/use-users';
 import {
@@ -103,24 +104,10 @@ function AuthenticatedNotificationSettings() {
         webhookHeaders: method.webhookHeaders
           ? JSON.stringify(method.webhookHeaders)
           : '',
-        notifications: method.notifications.map(
-          (n: { notificationType: string; enabled: boolean }) => ({
-            notificationType: n.notificationType as
-              | 'EVENT_EDITED'
-              | 'NEW_POST'
-              | 'NEW_REPLY'
-              | 'DATE_CHOSEN'
-              | 'DATE_CHANGED'
-              | 'DATE_RESET'
-              | 'USER_JOINED'
-              | 'USER_LEFT'
-              | 'USER_PROMOTED'
-              | 'USER_DEMOTED'
-              | 'USER_RSVP'
-              | 'USER_MENTIONED',
-            enabled: n.enabled,
-          })
-        ),
+        notifications: method.notifications.map(notification => ({
+          notificationType: notification.notificationType as NotificationType,
+          enabled: notification.enabled,
+        })),
       })
     ),
   };

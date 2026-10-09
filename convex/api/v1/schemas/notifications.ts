@@ -15,6 +15,9 @@ export const NotificationTypeSchema = z
     'DATE_CHOSEN',
     'DATE_CHANGED',
     'DATE_RESET',
+    'EVENT_APPLICATION_RECEIVED',
+    'EVENT_APPLICATION_APPROVED',
+    'EVENT_APPLICATION_DECLINED',
     'USER_JOINED',
     'USER_LEFT',
     'USER_PROMOTED',
@@ -24,6 +27,15 @@ export const NotificationTypeSchema = z
     'EVENT_REMINDER',
     'FRIEND_REQUEST_RECEIVED',
     'FRIEND_REQUEST_ACCEPTED',
+    'GROUP_INVITE_RECEIVED',
+    'GROUP_INVITE_ACCEPTED',
+    'GROUP_MEMBER_REMOVED',
+    'GROUP_MEMBER_BANNED',
+    'GROUP_APPLICATION_RECEIVED',
+    'GROUP_APPLICATION_APPROVED',
+    'GROUP_APPLICATION_DECLINED',
+    'GROUP_ANNOUNCEMENT',
+    'GROUP_ONBOARDING_REQUIRED',
     'EVENT_INVITE_RECEIVED',
     'EVENT_INVITE_ACCEPTED',
     'ADDON_CONFIG_RESET',
@@ -70,6 +82,25 @@ export const NotificationSchema = z
     type: NotificationTypeSchema,
     read: z.boolean(),
     createdAt: TimestampSchema,
+    group: NotificationEventSchema.optional(),
+    groupApplication: z
+      .object({
+        id: z.string(),
+        status: z.enum(['PENDING', 'APPROVED', 'DECLINED', 'WITHDRAWN']),
+      })
+      .nullable()
+      .optional(),
+    groupAnnouncement: z
+      .object({ title: z.string(), message: z.string() })
+      .nullable()
+      .optional(),
+    groupInvite: z
+      .object({
+        id: z.string(),
+        status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED']),
+      })
+      .nullable()
+      .optional(),
     event: NotificationEventSchema,
     post: NotificationPostSchema,
     author: NotificationAuthorSchema,

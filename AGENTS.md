@@ -254,7 +254,11 @@ Specialized sub-agents for delegation:
 
 ### Agent Teams
 
-For complex work with independent tracks, delegate to the named Codex agents and wait for their results. Keep overlapping write work sequential. Common team patterns:
+For complex work with independent tracks, delegate to the named Codex agents and wait for their results. Keep overlapping write work sequential.
+
+Give each delegated task an owned scope and a checkable completion criterion. Preserve concurrent edits by other agents. Each handoff must report changes or findings, validation results, and remaining uncertainty. The coordinating agent manages ticket publication and triage changes unless those actions are explicitly delegated.
+
+Common team patterns:
 
 **Feature Team**: `convex_expert` (backend) + `ui_expert` (frontend) + `test_expert` (tests), coordinated by the primary agent.
 
@@ -271,6 +275,27 @@ pnpm dlx skills experimental_install
 ```
 
 Installed: Convex (general, best practices, schema validator, realtime, cron jobs), Expo (data fetching, TypeScript, performance), Vitest, Vercel (React best practices, composition patterns), and shadcn.
+
+Apply this project's script and architecture rules when following upstream examples.
+Choose skills from the installed catalog; when an upstream router names an unavailable
+skill, use the corresponding project skill or official documentation.
+
+## Agent skills
+
+### Issue tracker
+
+Track issues and specs in GitHub Issues for `groupi-app/groupi`.
+Read `docs/agents/issue-tracker.md` when working with tickets.
+
+### Triage labels
+
+Use the five default triage labels.
+Read `docs/agents/triage-labels.md` when classifying issues.
+
+### Domain docs
+
+Use a single root context shared across all packages.
+Read `docs/agents/domain.md` before domain or architecture exploration.
 
 ## Detailed Rules
 

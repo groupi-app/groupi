@@ -1,3 +1,11 @@
+import { removeAudiencesForEvent } from '../../../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../../../eventTransfers/cleanup';
+import { deleteEventApplications } from '../../../eventApplications/cleanup';
+import type { QueryCtx } from '../../../_generated/server';
+import {
+  reminderOffsetValidator,
+  createEventForPerson,
+} from '../../../events/writes';
 import { internalQuery, internalMutation } from '../../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../../_generated/dataModel';
@@ -54,48 +62,193 @@ export const listUserEvents = internalQuery({
   },
 });
 
-export const getEventDetail = internalQuery({
+const eventSummaryValidator = v.object({
+  id: v.id('events'),
+  title: v.string(),
+  description: v.union(v.string(), v.null()),
+  location: v.union(v.string(), v.null()),
+  imageUrl: v.union(v.string(), v.null()),
+  chosenDateTime: v.union(v.number(), v.null()),
+  chosenEndDateTime: v.union(v.number(), v.null()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  memberCount: v.number(),
+  userRole: v.union(
+    v.literal('ORGANIZER'),
+    v.literal('MODERATOR'),
+    v.literal('ATTENDEE')
+  ),
+  userRsvpStatus: v.union(
+    v.literal('YES'),
+    v.literal('MAYBE'),
+    v.literal('NO'),
+    v.literal('PENDING')
+  ),
+});
+
+/** Cursor mode scans at most one bounded membership page, including stale memberships. */
+export const listUserEventsPage = internalQuery({
   args: {
-    eventId: v.string(),
+    personId: v.id('persons'),
+    limit: v.number(),
+    cursor: v.union(v.string(), v.null()),
   },
-  handler: async (ctx, { eventId }) => {
-    const event = await ctx.db.get(eventId as Id<'events'>);
-    if (!event) return null;
-
-    // Get creator data
-    const creatorData = await getPersonWithUser(ctx, event.creatorId);
-
-    // Get image URL
-    const imageUrl = event.imageStorageId
-      ? await ctx.storage.getUrl(event.imageStorageId)
-      : null;
-
+  returns: v.union(
+    v.object({
+      items: v.array(eventSummaryValidator),
+      nextCursor: v.union(v.string(), v.null()),
+    }),
+    v.object({ error: v.literal('INVALID_CURSOR') })
+  ),
+  handler: async (ctx, { personId, limit, cursor }) => {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+      throw new Error('Invalid page size');
+    let nativeCursor: string | null = null;
+    if (cursor !== null) {
+      try {
+        const parsed: unknown = JSON.parse(atob(cursor));
+        if (
+          typeof parsed !== 'object' ||
+          parsed === null ||
+          !('personId' in parsed) ||
+          parsed.personId !== personId ||
+          !('cursor' in parsed) ||
+          typeof parsed.cursor !== 'string'
+        )
+          return { error: 'INVALID_CURSOR' as const };
+        nativeCursor = parsed.cursor;
+      } catch {
+        return { error: 'INVALID_CURSOR' as const };
+      }
+    }
+    const query = ctx.db
+      .query('memberships')
+      .withIndex('by_person', q => q.eq('personId', personId));
+    let page;
+    try {
+      page = await query.paginate({ cursor: nativeCursor, numItems: limit });
+    } catch (error) {
+      if (nativeCursor !== null) return { error: 'INVALID_CURSOR' as const };
+      throw error;
+    }
+    const items = await Promise.all(
+      page.page.map(async membership => {
+        const event = await ctx.db.get(membership.eventId);
+        if (!event) return null;
+        return {
+          id: event._id,
+          title: event.title,
+          description: event.description ?? null,
+          location: event.location ?? null,
+          imageUrl: event.imageStorageId
+            ? await ctx.storage.getUrl(event.imageStorageId)
+            : null,
+          chosenDateTime: event.chosenDateTime ?? null,
+          chosenEndDateTime: event.chosenEndDateTime ?? null,
+          createdAt: event._creationTime,
+          updatedAt: event.updatedAt,
+          memberCount: event.memberCount ?? 0,
+          userRole: membership.role,
+          userRsvpStatus: membership.rsvpStatus,
+        };
+      })
+    );
     return {
-      id: event._id,
-      title: event.title,
-      description: event.description ?? null,
-      location: event.location ?? null,
-      imageUrl,
-      timezone: event.timezone,
-      chosenDateTime: event.chosenDateTime ?? null,
-      chosenEndDateTime: event.chosenEndDateTime ?? null,
-      reminderOffset: event.reminderOffset ?? null,
-      createdAt: event._creationTime,
-      updatedAt: event.updatedAt,
-      creator: creatorData
-        ? {
-            id: creatorData.person._id,
-            user: {
-              id: creatorData.user._id,
-              name: creatorData.user.name ?? null,
-              email: creatorData.user.email ?? null,
-              image: creatorData.user.image ?? null,
-              username: creatorData.user.username ?? null,
-            },
-          }
-        : null,
+      items: items.filter(item => item !== null),
+      nextCursor: page.isDone
+        ? null
+        : btoa(JSON.stringify({ personId, cursor: page.continueCursor })),
     };
   },
+});
+
+export const eventDetailValidator = v.object({
+  id: v.id('events'),
+  title: v.string(),
+  description: v.union(v.string(), v.null()),
+  location: v.union(v.string(), v.null()),
+  imageUrl: v.union(v.string(), v.null()),
+  timezone: v.string(),
+  chosenDateTime: v.union(v.number(), v.null()),
+  chosenEndDateTime: v.union(v.number(), v.null()),
+  reminderOffset: v.union(reminderOffsetValidator, v.null()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  creator: v.union(
+    v.null(),
+    v.object({
+      id: v.id('persons'),
+      user: v.object({
+        id: v.string(),
+        name: v.union(v.string(), v.null()),
+        email: v.union(v.string(), v.null()),
+        image: v.union(v.string(), v.null()),
+        username: v.union(v.string(), v.null()),
+      }),
+    })
+  ),
+  potentialDateTimeOptions: v.array(
+    v.object({
+      id: v.id('potentialDateTimes'),
+      start: v.number(),
+      end: v.union(v.number(), v.null()),
+      note: v.union(v.string(), v.null()),
+    })
+  ),
+});
+export async function readEventDetail(ctx: QueryCtx, eventId: Id<'events'>) {
+  const event = await ctx.db.get(eventId as Id<'events'>);
+  if (!event) return null;
+
+  // Get creator data
+  const creatorData = await getPersonWithUser(ctx, event.creatorId);
+
+  // Get image URL
+  const imageUrl = event.imageStorageId
+    ? await ctx.storage.getUrl(event.imageStorageId)
+    : null;
+
+  const options = await ctx.db
+    .query('potentialDateTimes')
+    .withIndex('by_event', q => q.eq('eventId', event._id))
+    .collect();
+  return {
+    potentialDateTimeOptions: options.map(opt => ({
+      id: opt._id,
+      start: opt.dateTime,
+      end: opt.endDateTime ?? null,
+      note: opt.note ?? null,
+    })),
+    id: event._id,
+    title: event.title,
+    description: event.description ?? null,
+    location: event.location ?? null,
+    imageUrl,
+    timezone: event.timezone,
+    chosenDateTime: event.chosenDateTime ?? null,
+    chosenEndDateTime: event.chosenEndDateTime ?? null,
+    reminderOffset: event.reminderOffset ?? null,
+    createdAt: event._creationTime,
+    updatedAt: event.updatedAt,
+    creator: creatorData
+      ? {
+          id: creatorData.person._id,
+          user: {
+            id: creatorData.user._id,
+            name: creatorData.user.name ?? null,
+            email: creatorData.user.email ?? null,
+            image: creatorData.user.image ?? null,
+            username: creatorData.user.username ?? null,
+          },
+        }
+      : null,
+  };
+}
+export const getEventDetail = internalQuery({
+  args: { eventId: v.string() },
+  returns: v.union(eventDetailValidator, v.null()),
+  handler: async (ctx, { eventId }) =>
+    readEventDetail(ctx, eventId as Id<'events'>),
 });
 
 export const createEvent = internalMutation({
@@ -129,91 +282,17 @@ export const createEvent = internalMutation({
       )
     ),
   },
-  handler: async (
-    ctx,
-    {
-      personId,
-      title,
-      description,
-      location,
-      potentialDateTimeOptions,
-      chosenDateTime,
-      chosenEndDateTime,
-      reminderOffset,
-    }
-  ) => {
-    const now = Date.now();
-
-    // Parse date times
-    const chosenTimestamp = chosenDateTime
-      ? new Date(chosenDateTime).getTime()
-      : undefined;
-    const chosenEndTimestamp = chosenEndDateTime
-      ? new Date(chosenEndDateTime).getTime()
-      : undefined;
-
-    // Parse potential date times
-    const dateTimeOptions =
-      potentialDateTimeOptions?.map(opt => ({
-        start: new Date(opt.start).getTime(),
-        end: opt.end ? new Date(opt.end).getTime() : undefined,
-      })) ?? [];
-
-    // Create the event
-    const eventId = await ctx.db.insert('events', {
-      title: title.trim(),
-      description: description?.trim() ?? '',
-      location: location?.trim() ?? '',
-      creatorId: personId as Id<'persons'>,
-      createdAt: now,
-      updatedAt: now,
-      timezone: 'UTC',
-      potentialDateTimes: dateTimeOptions.map(opt => opt.start),
-      chosenDateTime: chosenTimestamp,
-      chosenEndDateTime: chosenEndTimestamp,
-      reminderOffset,
-      memberCount: 1,
-    });
-
-    // Create membership for creator
-    const membershipId = await ctx.db.insert('memberships', {
-      personId: personId as Id<'persons'>,
-      eventId,
-      role: 'ORGANIZER',
-      rsvpStatus: 'YES',
-      updatedAt: now,
-    });
-
-    // Create potential date time records
-    if (dateTimeOptions.length > 0) {
-      const potentialDateTimeIds = await Promise.all(
-        dateTimeOptions.map(async opt => {
-          return await ctx.db.insert('potentialDateTimes', {
-            eventId,
-            dateTime: opt.start,
-            endDateTime: opt.end,
-            updatedAt: now,
-          });
-        })
-      );
-
-      // Create YES availabilities for organizer
-      await Promise.all(
-        potentialDateTimeIds.map(async pdtId => {
-          await ctx.db.insert('availabilities', {
-            membershipId,
-            potentialDateTimeId: pdtId,
-            status: 'YES',
-            updatedAt: now,
-          });
-        })
-      );
-    }
-
-    return {
-      eventId,
-      membershipId,
-    };
+  returns: v.object({
+    eventId: v.id('events'),
+    membershipId: v.id('memberships'),
+  }),
+  handler: async (ctx, { personId, ...args }) => {
+    const result = await createEventForPerson(
+      ctx,
+      personId as Id<'persons'>,
+      args
+    );
+    return { eventId: result.eventId, membershipId: result.membershipId };
   },
 });
 
@@ -325,6 +404,9 @@ export const deleteEvent = internalMutation({
       }
     }
 
+    await deleteEventTransfers(ctx, eventId as Id<'events'>);
+    await removeAudiencesForEvent(ctx, eventId as Id<'events'>);
+
     // Delete all related data
     const memberships = await ctx.db
       .query('memberships')
@@ -391,6 +473,7 @@ export const deleteEvent = internalMutation({
     }
 
     // Delete event
+    await deleteEventApplications(ctx, eventId as Id<'events'>);
     await ctx.db.delete(eventId as Id<'events'>);
 
     return { success: true };

@@ -1,22 +1,47 @@
+import { createGroupListRoutes } from './routes/groupLists';
+import { createAccountResolutionRoutes } from './routes/accountResolution';
+
+import { createGroupEventAudienceRoutes } from './routes/groupEventAudiences';
+
+import { createGroupPollRoutes } from './routes/groupPolls';
+import { createGroupFormRoutes } from './routes/groupForms';
+import { createGroupTransferRoutes } from './routes/groupTransfers';
+import { createGroupQuestionnaireRoutes } from './routes/groupQuestionnaires';
+import { createGroupApplicationRoutes } from './routes/groupApplications';
+import { createGroupAnnouncementRoutes } from './routes/groupAnnouncements';
+import { createGroupModerationRoutes } from './routes/groupModeration';
+import { createGroupInviteRoutes } from './routes/groupInvites';
+import { createGroupRoutes } from './routes/groups';
+import { createEventTransferRoutes } from './routes/eventTransfers';
+import { createEventApplicationRoutes } from './routes/eventApplications';
+import { createAddonDefinitionRoutes } from './routes/addonDefinitions';
+import { createUploadRoutes } from './routes/uploads';
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
 import { validateApiKey, getApiKey } from '../v1/middleware/auth';
+import { createCliAuthRoutes } from './routes/cliAuth';
+import { createImageRoutes } from './routes/images';
 import { createEventRoutes } from './routes/events';
+import { createEventManagementRoutes } from './routes/eventManagement';
 import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
 import { createMemberRoutes } from './routes/members';
 import { createAvailabilityRoutes } from './routes/availability';
 import { createFriendRoutes } from './routes/friends';
+import { createBlockRoutes } from './routes/blocks';
 import { createAddonRoutes } from './routes/addons';
+import { createAddonDiscordRoutes } from './routes/addonDiscord';
 import { createNotificationRoutes } from './routes/notifications';
 import { createMutingRoutes } from './routes/muting';
 import { createProfileRoutes } from './routes/profile';
 import { createSettingsRoutes } from './routes/settings';
 import { createThemeRoutes } from './routes/themes';
 import { createInviteRoutes } from './routes/invites';
+import { createInviteListRoutes } from './routes/inviteLists';
 import { createReportRoutes } from './routes/reports';
 import { createAdminRoutes } from './routes/admin';
 
@@ -58,14 +83,60 @@ export function createApiV2App(
     cors({
       origin: '*',
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'x-api-key'],
-      exposeHeaders: ['Content-Length'],
+      allowHeaders: ['Content-Type', 'x-api-key', 'Idempotency-Key'],
+      exposeHeaders: ['Content-Length', 'Retry-After'],
       maxAge: 86400,
     })
   );
 
   // Error handler
   app.onError((err, c) => {
+    if (err instanceof ConvexError) {
+      let data: unknown = err.data;
+      // Convex serializes error data when crossing a function boundary.
+      if (typeof data === 'string') {
+        try {
+          const decoded: unknown = JSON.parse(data);
+          if (decoded && typeof decoded === 'object') data = decoded;
+        } catch {
+          /* Plain string validation message. */
+        }
+      }
+      if (
+        data &&
+        typeof data === 'object' &&
+        'code' in data &&
+        typeof data.code === 'string' &&
+        [
+          'UNAUTHORIZED',
+          'VALIDATION_ERROR',
+          'FORBIDDEN',
+          'ONBOARDING_REQUIRED',
+          'IDEMPOTENCY_CONFLICT',
+          'CONFLICT',
+          'RECIPIENT_UNAVAILABLE',
+          'IDEMPOTENCY_EXPIRED',
+          'DATE_RESET_REQUIRED',
+          'NOT_FOUND',
+          'INVITE_UNAVAILABLE',
+        ].includes(data.code) &&
+        'message' in data &&
+        typeof data.message === 'string'
+      ) {
+        const { code, message } = data;
+        const status =
+          code === 'UNAUTHORIZED'
+            ? 401
+            : code === 'NOT_FOUND'
+              ? 404
+              : code === 'FORBIDDEN' || code === 'ONBOARDING_REQUIRED'
+                ? 403
+                : code === 'VALIDATION_ERROR'
+                  ? 400
+                  : 409;
+        return c.json({ error: { code, message } }, status);
+      }
+    }
     if (err instanceof HTTPException) {
       return c.json(
         {
@@ -117,7 +188,8 @@ Groupi REST API for event planning and coordination.
 
 ## Authentication
 
-All API endpoints require authentication via API key. Include your API key in the \`x-api-key\` header:
+All resource endpoints require authentication via API key. The CLI exchange endpoint
+uses a single-use browser authorization code and PKCE proof instead. Include your API key in the \`x-api-key\` header:
 
 \`\`\`
 x-api-key: grp_your_api_key_here
@@ -125,9 +197,19 @@ x-api-key: grp_your_api_key_here
 
 You can create and manage API keys in your Groupi settings.
 
+## API key scopes
+
+Keys without stored permissions retain full access allowed by the account. A key
+with permissions must explicitly grant the top-level REST collection (for example,
+\`events\`) and action: \`read\` for GET/HEAD or \`write\` for other methods.
+An \`events\` grant includes nested event routes. Grants never bypass membership,
+role, or ownership checks. Unknown or malformed permission records fail closed;
+there are no wildcard grants. Expired, revoked, disabled, or actively banned
+accounts cannot authenticate.
+
 ## Rate Limiting
 
-API requests are rate limited. If you exceed the limit, you'll receive a 429 Too Many Requests response.
+API-key usage quotas and configured rate limits are enforced across v1 and v2. Exceeding a limit returns 429; temporary rate limits include Retry-After in seconds.
 
 ## Errors
 
@@ -155,6 +237,10 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Replies', description: 'Post replies' },
       { name: 'Members', description: 'Event member management' },
       { name: 'Availability', description: 'Date availability voting' },
+      {
+        name: 'Groups',
+        description: 'Formal community identity and ownership',
+      },
       { name: 'Friends', description: 'Friend management' },
       { name: 'Add-ons', description: 'Event add-on management' },
       { name: 'Notifications', description: 'User notifications' },
@@ -163,6 +249,11 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       { name: 'Settings', description: 'User settings' },
       { name: 'Themes', description: 'Custom themes' },
       { name: 'Invites', description: 'Event invitations' },
+      {
+        name: 'Invite lists',
+        description:
+          'Private creator-owned saved selections of existing people',
+      },
       { name: 'Reports', description: 'Content reporting' },
       { name: 'Admin', description: 'Administrative operations' },
     ],
@@ -173,25 +264,83 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
 
   // Health check (no auth required)
   app.get('/health', c => {
-    return c.json({ status: 'ok', version: '2.0.0' });
+    return c.json({
+      status: 'ok',
+      version: '2.0.0',
+      capabilities: {
+        groupInvites: { version: 1 },
+        groupModeration: { version: 1 },
+        accountResolution: {
+          version: 1,
+          pagination: true,
+          finalRevalidation: true,
+        },
+        groupTransfers: { version: 1, retirement: true },
+        groupApplications: { version: 1 },
+        groupEventAudiences: { version: 1 },
+        groupDiscovery: { version: 1 },
+        groups: { version: 1, announcements: 1, forms: 1, polls: 1, lists: 1 },
+        groupQuestionnaire: { version: 2 },
+        discussion: { version: 1 },
+        eventWrites: { version: 1 },
+        imageWrites: { version: 1 },
+        eventManagement: { version: 1, pendingRsvpJoin: true },
+        eventTransfers: { version: 1 },
+        eventAdmission: { version: 1 },
+        eventApplications: { version: 1 },
+        socialWrites: { version: 1 },
+        addonConfiguration: { version: 1 },
+        addonParticipation: { version: 1 },
+        addonAuthoring: { version: 1 },
+        discordGuilds: { version: 1 },
+        notificationControls: { version: 1 },
+        attendanceWrites: { version: 1 },
+        inviteWrites: { version: 1, retentionMs: 86400000 },
+        inviteLists: { version: 2, retentionMs: 86400000 },
+        eventCreationIdempotency: { version: 1, retentionMs: 86400000 },
+      },
+    });
   });
 
+  app.route('/', createAccountResolutionRoutes());
+  app.route('/', createCliAuthRoutes());
+
   // Mount route groups
+  app.route('/', createEventTransferRoutes());
+  app.route('/', createEventManagementRoutes());
+  app.route('/', createEventApplicationRoutes());
   app.route('/', createEventRoutes());
+  app.route('/', createImageRoutes());
   app.route('/', createPostRoutes());
   app.route('/', createReplyRoutes());
   app.route('/', createMemberRoutes());
   app.route('/', createAvailabilityRoutes());
   app.route('/', createFriendRoutes());
+  app.route('/', createGroupAnnouncementRoutes());
+  app.route('/', createGroupListRoutes());
+  app.route('/', createGroupFormRoutes());
+  app.route('/', createGroupPollRoutes());
+  app.route('/', createGroupRoutes());
+  app.route('/', createGroupQuestionnaireRoutes());
+  app.route('/', createGroupInviteRoutes());
+  app.route('/', createGroupModerationRoutes());
+  app.route('/', createGroupTransferRoutes());
+  app.route('/', createGroupApplicationRoutes());
+  app.route('/', createGroupEventAudienceRoutes());
+  app.route('/', createBlockRoutes());
   app.route('/', createAddonRoutes());
+  app.route('/', createAddonDefinitionRoutes());
+  app.route('/', createAddonDiscordRoutes());
   app.route('/', createNotificationRoutes());
   app.route('/', createMutingRoutes());
   app.route('/', createProfileRoutes());
   app.route('/', createSettingsRoutes());
   app.route('/', createThemeRoutes());
   app.route('/', createInviteRoutes());
+  app.route('/', createInviteListRoutes());
   app.route('/', createReportRoutes());
   app.route('/', createAdminRoutes());
+  app.route('/', createUploadRoutes());
 
   // Register OpenAPI security scheme
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {
@@ -216,25 +365,25 @@ export const handler = httpAction(async (ctx, request) => {
   const honoUrl = new URL(request.url);
   honoUrl.pathname = strippedPath;
 
+  // Request supplies the Fetch init fields, including duplex for streamed bodies.
+  // The cast bridges React Native's narrower ambient RequestInit body type.
   const publicPaths = ['/docs', '/openapi.json', '/health', '/'];
-  const isPublicPath = publicPaths.some(
-    p => strippedPath === p || strippedPath.startsWith('/docs')
-  );
+  const isPublicPath =
+    (request.method === 'POST' && strippedPath === '/auth/cli/exchange') ||
+    publicPaths.some(
+      p => strippedPath === p || strippedPath.startsWith('/docs')
+    );
 
   if (!isPublicPath) {
     const apiKey = getApiKey(request.headers);
     try {
-      const auth = await validateApiKey(ctx, apiKey);
+      const auth = await validateApiKey(ctx, apiKey, request);
       const app = createApiV2App(ctx, auth.userId, auth.personId);
 
-      const modifiedRequest = new Request(honoUrl.toString(), {
-        method: request.method,
-        headers: request.headers,
-        body:
-          request.method === 'GET' || request.method === 'HEAD'
-            ? undefined
-            : (request.body as unknown as RequestInit['body']),
-      });
+      const modifiedRequest = new Request(
+        honoUrl.toString(),
+        request as unknown as RequestInit
+      );
 
       return app.fetch(modifiedRequest);
     } catch (error) {
@@ -242,13 +391,27 @@ export const handler = httpAction(async (ctx, request) => {
         return new Response(
           JSON.stringify({
             error: {
-              code: 'UNAUTHORIZED',
+              code:
+                error.status === 403
+                  ? 'FORBIDDEN'
+                  : error.status === 429
+                    ? 'RATE_LIMITED'
+                    : 'UNAUTHORIZED',
               message: error.message,
             },
           }),
           {
             status: error.status,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(error.getResponse().headers.has('Retry-After')
+                ? {
+                    'Retry-After': error
+                      .getResponse()
+                      .headers.get('Retry-After')!,
+                  }
+                : {}),
+            },
           }
         );
       }
@@ -257,14 +420,10 @@ export const handler = httpAction(async (ctx, request) => {
   }
 
   const app = createApiV2App(ctx);
-  const publicRequest = new Request(honoUrl.toString(), {
-    method: request.method,
-    headers: request.headers,
-    body:
-      request.method === 'GET' || request.method === 'HEAD'
-        ? undefined
-        : (request.body as unknown as RequestInit['body']),
-  });
+  const publicRequest = new Request(
+    honoUrl.toString(),
+    request as unknown as RequestInit
+  );
 
   return app.fetch(publicRequest);
 });

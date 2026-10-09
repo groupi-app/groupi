@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
@@ -59,13 +60,55 @@ export function createApiV1App(
       origin: '*',
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'x-api-key'],
-      exposeHeaders: ['Content-Length'],
+      exposeHeaders: ['Content-Length', 'Retry-After'],
       maxAge: 86400,
     })
   );
 
   // Error handler
   app.onError((err, c) => {
+    if (err instanceof ConvexError) {
+      let data: unknown = err.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          /* Not a tagged public validation error. */
+        }
+      }
+      if (
+        data &&
+        typeof data === 'object' &&
+        'code' in data &&
+        typeof data.code === 'string' &&
+        [
+          'CONFLICT',
+          'VALIDATION_ERROR',
+          'FORBIDDEN',
+          'NOT_FOUND',
+          'INVITE_UNAVAILABLE',
+        ].includes(data.code) &&
+        'message' in data &&
+        typeof data.message === 'string'
+      )
+        return c.json(
+          {
+            success: false,
+            error: {
+              code:
+                data.code === 'INVITE_UNAVAILABLE' ? 'BAD_REQUEST' : data.code,
+              message: data.message,
+            },
+          },
+          data.code === 'CONFLICT'
+            ? 409
+            : data.code === 'FORBIDDEN'
+              ? 403
+              : data.code === 'NOT_FOUND'
+                ? 404
+                : 400
+        );
+    }
     if (err instanceof HTTPException) {
       return c.json(
         {
@@ -115,9 +158,19 @@ x-api-key: grp_your_api_key_here
 
 You can create and manage API keys in your Groupi settings.
 
+## API key scopes
+
+Keys without stored permissions retain full access allowed by the account. A key
+with permissions must explicitly grant the top-level REST collection (for example,
+\`events\`) and action: \`read\` for GET/HEAD or \`write\` for other methods.
+An \`events\` grant includes nested event routes. Grants never bypass membership,
+role, or ownership checks. Unknown or malformed permission records fail closed;
+there are no wildcard grants. Expired, revoked, disabled, or actively banned
+accounts cannot authenticate.
+
 ## Rate Limiting
 
-API requests are rate limited. If you exceed the limit, you'll receive a 429 Too Many Requests response.
+API-key usage quotas and configured rate limits are enforced across v1 and v2. Exceeding a limit returns 429; temporary rate limits include Retry-After in seconds.
 
 ## Errors
 
@@ -215,17 +268,13 @@ export const handler = httpAction(async (ctx, request) => {
   if (!isPublicPath) {
     const apiKey = getApiKey(request.headers);
     try {
-      const auth = await validateApiKey(ctx, apiKey);
+      const auth = await validateApiKey(ctx, apiKey, request);
       const app = createApiV1App(ctx, auth.userId, auth.personId);
 
-      const modifiedRequest = new Request(honoUrl.toString(), {
-        method: request.method,
-        headers: request.headers,
-        body:
-          request.method === 'GET' || request.method === 'HEAD'
-            ? undefined
-            : (request.body as unknown as RequestInit['body']),
-      });
+      const modifiedRequest = new Request(
+        honoUrl.toString(),
+        request as unknown as RequestInit
+      );
 
       return app.fetch(modifiedRequest);
     } catch (error) {
@@ -234,13 +283,27 @@ export const handler = httpAction(async (ctx, request) => {
           JSON.stringify({
             success: false,
             error: {
-              code: 'UNAUTHORIZED',
+              code:
+                error.status === 403
+                  ? 'FORBIDDEN'
+                  : error.status === 429
+                    ? 'RATE_LIMITED'
+                    : 'UNAUTHORIZED',
               message: error.message,
             },
           }),
           {
             status: error.status,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(error.getResponse().headers.has('Retry-After')
+                ? {
+                    'Retry-After': error
+                      .getResponse()
+                      .headers.get('Retry-After')!,
+                  }
+                : {}),
+            },
           }
         );
       }

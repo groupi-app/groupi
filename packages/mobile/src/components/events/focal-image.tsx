@@ -16,28 +16,44 @@ export function FocalImage({
   className,
   accessibilityLabel,
 }: FocalImageProps) {
-  const [containerSize, setContainerSize] = useState({ width: 16, height: 9 });
-  const [imageSize, setImageSize] = useState({ width: 16, height: 9 });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [imageSize, setImageSize] = useState<{
+    uri: string;
+    width: number;
+    height: number;
+  } | null>(null);
 
   useEffect(() => {
+    let active = true;
     Image.getSize(
       uri,
-      (width, height) => setImageSize({ width, height }),
-      () => setImageSize({ width: 16, height: 9 })
+      (width, height) => {
+        if (active) setImageSize({ uri, width, height });
+      },
+      () => {
+        if (active) setImageSize({ uri, width: 16, height: 9 });
+      }
     );
+    return () => {
+      active = false;
+    };
   }, [uri]);
 
   const imageBounds = useMemo(
     () =>
       getCoverImageBounds(
-        imageSize.width,
-        imageSize.height,
+        imageSize?.width ?? 0,
+        imageSize?.height ?? 0,
         containerSize.width,
         containerSize.height,
         focalPoint
       ),
     [containerSize, focalPoint, imageSize]
   );
+  const ready =
+    containerSize.width > 0 &&
+    containerSize.height > 0 &&
+    imageSize?.uri === uri;
 
   function handleLayout(event: LayoutChangeEvent) {
     const { width, height } = event.nativeEvent.layout;
@@ -47,22 +63,28 @@ export function FocalImage({
   return (
     <View
       className={className}
+      style={{ overflow: 'hidden' }}
       onLayout={handleLayout}
       accessibilityRole={accessibilityLabel ? 'image' : undefined}
       accessibilityLabel={accessibilityLabel}
       accessible={Boolean(accessibilityLabel)}
     >
-      <Image
-        source={{ uri }}
-        accessible={false}
-        style={{
-          position: 'absolute',
-          left: imageBounds.left,
-          top: imageBounds.top,
-          width: imageBounds.width,
-          height: imageBounds.height,
-        }}
-      />
+      {ready ? (
+        <Image
+          // Decode only at the measured cover size. The native image request
+          // can be reused for the same URI when its layout grows in place.
+          key={`${uri}:${imageBounds.width}:${imageBounds.height}`}
+          source={{ uri }}
+          accessible={false}
+          style={{
+            position: 'absolute',
+            left: imageBounds.left,
+            top: imageBounds.top,
+            width: imageBounds.width,
+            height: imageBounds.height,
+          }}
+        />
+      ) : null}
     </View>
   );
 }

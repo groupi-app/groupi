@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { GroupsPanel } from '@/components/organisms/groups-panel';
 import {
   Dialog,
   DialogContent,
@@ -23,9 +25,10 @@ import { Id } from '@/convex/_generated/dataModel';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type TabValue = 'friends' | 'requests' | 'add';
+type TabValue = 'friends' | 'requests' | 'add' | 'groups';
 
 export function FriendsDialog() {
+  const router = useRouter();
   const { open, defaultTab, setOpen } = useFriendsDialogStore();
   const [activeTab, setActiveTab] = useState<TabValue>(defaultTab);
 
@@ -108,11 +111,11 @@ export function FriendsDialog() {
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
               <Icons.people className='size-5' />
-              Friends
+              Friends &amp; Groups
             </DialogTitle>
             <DialogDescription className='sr-only'>
               Manage your friends, view incoming and outgoing requests, and find
-              new friends
+              new friends and manage your Groups
             </DialogDescription>
           </DialogHeader>
 
@@ -139,6 +142,9 @@ export function FriendsDialog() {
               <TabsTrigger value='add' className='flex-1 gap-1'>
                 <Icons.invite className='size-4' />
                 Add
+              </TabsTrigger>
+              <TabsTrigger value='groups' className='flex-1'>
+                Groups
               </TabsTrigger>
             </TabsList>
 
@@ -255,6 +261,14 @@ export function FriendsDialog() {
             {/* Add Friend Tab */}
             <TabsContent value='add' className='flex-1 overflow-y-auto mt-4'>
               <FriendSearch />
+            </TabsContent>
+            <TabsContent value='groups' className='flex-1 overflow-y-auto mt-4'>
+              <GroupsPanel
+                onOpenGroup={groupId => {
+                  setOpen(false);
+                  router.push(`/groups/${groupId}`);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </DialogContent>

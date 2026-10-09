@@ -42,6 +42,7 @@ export const UpdateMemberRoleRequestSchema = z
 export const UpdateRsvpRequestSchema = z
   .object({
     rsvpStatus: RsvpStatusSchema,
+    rsvpNote: z.string().max(200).optional(),
   })
   .openapi('UpdateRsvpRequest');
 

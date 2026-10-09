@@ -1,4 +1,5 @@
 'use client';
+import { discussionLengthAllowed } from '@groupi/shared';
 
 import { useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import {
@@ -374,7 +375,7 @@ function BlockNoteEditorInner({
     // Use BlockNote's built-in HTML conversion for proper rendering
     const rawHtml = await editor.blocksToHTMLLossy(editor.document);
     const html = stripEmptyParagraphs(rawHtml);
-    setIsOverLimit(html.length > maxLength);
+    setIsOverLimit(!discussionLengthAllowed(html, maxLength));
 
     onChange(html);
 

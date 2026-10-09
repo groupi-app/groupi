@@ -1,4 +1,5 @@
 'use client';
+import { discussionLengthAllowed, titleLengthAllowed } from '@groupi/shared';
 
 // State variable used only for its setter to trigger re-renders
 
@@ -116,7 +117,10 @@ export function Editor({
       .string()
       .trim()
       .min(1, 'Title is required')
-      .max(100, 'Your title is too long!')
+      .refine(
+        value => titleLengthAllowed(value, title),
+        'Your title is too long; oversized legacy titles must shrink.'
+      )
       .refine(val => val.trim().length > 0, {
         message: 'Title cannot be only whitespace',
       }),
@@ -124,7 +128,10 @@ export function Editor({
       .string()
       .trim()
       .min(1, 'Post body is required')
-      .max(3000, 'Your post is too long!')
+      .refine(
+        value => discussionLengthAllowed(value, 3000, content),
+        'Your post exceeds its visible-text limit or contains unsupported markup.'
+      )
       .refine(val => val.trim().length > 0, {
         message: 'Post body cannot be only whitespace',
       }),
@@ -142,10 +149,6 @@ export function Editor({
   const router = useRouter();
   const createPost = useCreatePost();
   const updatePost = useUpdatePost(eventId as Id<'events'>);
-  const createAttachmentsBatch = useMutation(
-    attachmentMutations.createAttachmentsBatch
-  );
-  const deleteAttachment = useMutation(attachmentMutations.deleteAttachment);
   const updateAttachmentMutation = useMutation(
     attachmentMutations.updateAttachment
   );
@@ -287,38 +290,23 @@ export function Editor({
         router.push(`/event/${eventId}`);
         // Success toast handled by the hook
       } else {
-        // Update existing post
+        // Content and all attachment additions/removals commit in one transaction.
         await updatePost({
           postId: postData.id as Id<'posts'>,
           title: values.title,
           content: values.content,
+          attachmentsToAdd: uploadedAttachments.map(a => ({
+            storageId: a.storageId,
+            filename: a.filename,
+            size: a.size,
+            mimeType: a.mimeType,
+            width: a.width,
+            height: a.height,
+            isSpoiler: a.isSpoiler,
+            altText: a.altText,
+          })),
+          attachmentIdsToDelete: Array.from(deletedAttachmentIds),
         });
-
-        // Delete attachments that were marked for removal
-        if (deletedAttachmentIds.size > 0) {
-          await Promise.all(
-            Array.from(deletedAttachmentIds).map(attachmentId =>
-              deleteAttachment({ attachmentId })
-            )
-          );
-        }
-
-        // If we have new attachments, create the attachment records
-        if (uploadedAttachments.length > 0) {
-          await createAttachmentsBatch({
-            attachments: uploadedAttachments.map(a => ({
-              storageId: a.storageId,
-              filename: a.filename,
-              size: a.size,
-              mimeType: a.mimeType,
-              width: a.width,
-              height: a.height,
-              isSpoiler: a.isSpoiler,
-              altText: a.altText,
-            })),
-            postId: postData.id as Id<'posts'>,
-          });
-        }
 
         // Clear form before navigating away
         resetFormState();

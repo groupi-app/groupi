@@ -9,8 +9,22 @@ async function storeTextFile(
 ) {
   return await t.run(async ctx => {
     const file = new Blob([contents], { type: 'text/plain' });
+    const storageId = await ctx.storage.store(file);
+    const organizer = await ctx.db
+      .query('memberships')
+      .filter(q => q.eq(q.field('role'), 'ORGANIZER'))
+      .first();
+    await ctx.db.insert('uploads', {
+      storageId,
+      personId: organizer!.personId,
+      purpose: 'attachment',
+      mimeType: 'text/plain',
+      size: file.size,
+      createdAt: Date.now(),
+      claimed: false,
+    });
     return {
-      storageId: await ctx.storage.store(file),
+      storageId,
       size: file.size,
     };
   });

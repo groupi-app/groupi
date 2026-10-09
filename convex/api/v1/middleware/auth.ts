@@ -23,7 +23,8 @@ export type AuthenticatedUser = {
  */
 export async function validateApiKey(
   ctx: ActionCtx,
-  apiKey: string | undefined
+  apiKey: string | undefined,
+  request: Request
 ): Promise<AuthenticatedUser> {
   if (!apiKey) {
     throw new HTTPException(401, {
@@ -43,10 +44,21 @@ export async function validateApiKey(
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589) due to complex internal function types
     const validateFn = internal.api.v1.internal.auth.validateApiKey;
-    const result = (await ctx.runQuery(validateFn, { apiKey })) as
-      | { userId: string; personId: string }
-      | { error: string }
-      | null;
+    // Scopes follow the top-level REST collection; read = GET/HEAD, write = all other methods.
+    const collection = new URL(request.url).pathname.split('/')[3] ?? '';
+    const resource =
+      collection === 'event-applications' ? 'events' : collection;
+    const action =
+      request.method === 'GET' || request.method === 'HEAD' ? 'read' : 'write';
+    const result = await ctx.runMutation(validateFn, {
+      apiKey,
+      resource,
+      action,
+      ...(request.method === 'POST' &&
+      new URL(request.url).pathname === '/api/v2/auth/cli/revoke'
+        ? { selfRevoke: true }
+        : {}),
+    });
 
     if (!result) {
       throw new HTTPException(401, {
@@ -55,8 +67,14 @@ export async function validateApiKey(
     }
 
     if ('error' in result) {
-      throw new HTTPException(401, {
+      throw new HTTPException(result.status ?? 401, {
         message: result.error,
+        res: new Response(null, {
+          status: result.status ?? 401,
+          headers: result.retryAfter
+            ? { 'Retry-After': String(result.retryAfter) }
+            : {},
+        }),
       });
     }
 
@@ -68,7 +86,7 @@ export async function validateApiKey(
     if (error instanceof HTTPException) {
       throw error;
     }
-    console.error('API key validation error:', error);
+    console.error('API key validation failed');
     throw new HTTPException(500, {
       message: 'Authentication error.',
     });

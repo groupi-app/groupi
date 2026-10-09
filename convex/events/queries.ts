@@ -1,3 +1,17 @@
+import {
+  eventLogisticsValidator,
+  logisticsEventValidator,
+} from './admissionContracts';
+import {
+  eventLogisticsForPerson,
+  resolveAdmissionPolicy,
+  discoveryEntryActionForPerson,
+} from './admission';
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
+import { canAccessGroupMemberContent } from '../groups/contentAccess';
+import { canDiscoverEventForPerson } from './management';
+import { canViewAttendance, privateNote } from './attendance';
+import { latestResponses } from '../availability/reads';
 import { query, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import {
@@ -6,7 +20,6 @@ import {
   getPersonWithUser,
   resolveEventPermissions,
 } from '../auth';
-import { DEFAULT_EVENT_PERMISSIONS } from '../types';
 import { checkCanSendEventInvite } from '../lib/privacy';
 
 /**
@@ -99,32 +112,14 @@ export const getEventAttendeesData = query({
       throw new Error('You are not a member of this event');
     }
 
-    // Check viewAttendeeList permission
-    const viewLevel =
-      event.permissions?.viewAttendeeList ??
-      DEFAULT_EVENT_PERMISSIONS.viewAttendeeList;
-    const roleHierarchy: Record<string, number> = {
-      ATTENDEE: 1,
-      MODERATOR: 2,
-      ORGANIZER: 3,
-    };
-    const requiredLevel =
-      roleHierarchy[viewLevel === 'EVERYONE' ? 'ATTENDEE' : viewLevel] ?? 1;
-    const userLevel = roleHierarchy[userMembership.role] ?? 0;
-    if (userLevel < requiredLevel) {
+    if (!canViewAttendance(event, userMembership))
       throw new Error('You do not have permission to view the attendee list');
-    }
 
     // Get all event memberships
     const memberships = await ctx.db
       .query('memberships')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect();
-
-    // Determine if current user can see private rsvpNotes (organizer/moderator)
-    const canSeeAllRsvpNotes =
-      userMembership.role === 'ORGANIZER' ||
-      userMembership.role === 'MODERATOR';
 
     // Pre-fetch all potential dates and availabilities to avoid N+1
     const potentialDateTimes = await ctx.db
@@ -187,13 +182,16 @@ export const getEventAttendeesData = query({
         availabilitiesByMembership.get(membership._id as string) || [];
       const availabilitiesWithDates = memberAvailabilities.map(avail => ({
         ...avail,
+        note: privateNote(avail.note, userMembership, membership),
         potentialDateTime:
           potentialDateTimeMap.get(avail.potentialDateTimeId) ?? null,
       }));
 
-      const isOwnMembership = membership.personId === currentPerson._id;
-      const visibleRsvpNote =
-        isOwnMembership || canSeeAllRsvpNotes ? membership.rsvpNote : undefined;
+      const visibleRsvpNote = privateNote(
+        membership.rsvpNote,
+        userMembership,
+        membership
+      );
 
       return {
         ...membership,
@@ -304,68 +302,20 @@ export const getEvent = query({
     eventId: v.id('events'),
     _traceId: v.optional(v.string()),
   },
+  returns: logisticsEventValidator,
   handler: async (ctx, { eventId }) => {
-    const event = await ctx.db.get(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    const person = await getCurrentPerson(ctx);
+    return (await eventLogisticsForPerson(ctx, eventId, person?._id)).event;
+  },
+});
 
-    // Members may always access their event. Public events remain readable for
-    // discovery, and friends-only events remain readable by accepted friends.
-    // Private events must never become readable merely because the caller is
-    // anonymous.
-    const currentPerson = await getCurrentPerson(ctx);
-    let hasAccess = event.visibility === 'PUBLIC';
-
-    if (currentPerson) {
-      const membership = await ctx.db
-        .query('memberships')
-        .withIndex('by_person_event', q =>
-          q.eq('personId', currentPerson._id).eq('eventId', eventId)
-        )
-        .first();
-
-      hasAccess = membership !== null || event.visibility === 'PUBLIC';
-
-      if (!hasAccess && event.visibility === 'FRIENDS') {
-        const [forwardFriendship, reverseFriendship] = await Promise.all([
-          ctx.db
-            .query('friendships')
-            .withIndex('by_requester_addressee', q =>
-              q
-                .eq('requesterId', currentPerson._id)
-                .eq('addresseeId', event.creatorId)
-            )
-            .first(),
-          ctx.db
-            .query('friendships')
-            .withIndex('by_requester_addressee', q =>
-              q
-                .eq('requesterId', event.creatorId)
-                .eq('addresseeId', currentPerson._id)
-            )
-            .first(),
-        ]);
-
-        hasAccess =
-          forwardFriendship?.status === 'ACCEPTED' ||
-          reverseFriendship?.status === 'ACCEPTED';
-      }
-    }
-
-    if (!hasAccess) {
-      throw new Error('Access denied to this event');
-    }
-
-    // Get image URL if event has an image
-    const imageUrl = event.imageStorageId
-      ? await ctx.storage.getUrl(event.imageStorageId)
-      : null;
-
-    return {
-      ...event,
-      imageUrl,
-    };
+/** Viewer-safe logistics; reading never creates membership or an RSVP. */
+export const getEventLogistics = query({
+  args: { eventId: v.id('events') },
+  returns: eventLogisticsValidator,
+  handler: async (ctx, { eventId }) => {
+    const person = await getCurrentPerson(ctx);
+    return eventLogisticsForPerson(ctx, eventId, person?._id);
   },
 });
 
@@ -440,10 +390,12 @@ export const getEventAvailabilityData = query({
       .collect();
 
     // Get all memberships
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect();
+    const memberships = canViewAttendance(event, userMembership)
+      ? await ctx.db
+          .query('memberships')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      : [userMembership];
 
     // Get user data for each member - nest user inside person AND at top level for compatibility
     const membersWithUsers = await Promise.all(
@@ -451,6 +403,11 @@ export const getEventAvailabilityData = query({
         const memberData = await getPersonWithUser(ctx, membership.personId);
         return {
           ...membership,
+          rsvpNote: privateNote(
+            membership.rsvpNote,
+            userMembership,
+            membership
+          ),
           person: memberData
             ? {
                 ...memberData.person,
@@ -465,11 +422,6 @@ export const getEventAvailabilityData = query({
     const validMembers = membersWithUsers.filter(
       m => m.person && m.person.user
     );
-
-    // Determine if current user can see private notes (organizer/moderator)
-    const canSeeAllNotes =
-      userMembership.role === 'ORGANIZER' ||
-      userMembership.role === 'MODERATOR';
 
     // Build a membership lookup map for efficient member resolution
     const membershipMap = new Map(validMembers.map(m => [m._id, m]));
@@ -487,13 +439,13 @@ export const getEventAvailabilityData = query({
 
         return {
           potentialDateTime: date,
-          availabilities: dateAvailabilities
+          availabilities: latestResponses(dateAvailabilities)
             .map(avail => {
               const member = membershipMap.get(avail.membershipId);
               // Availability notes are visible to the author + organizers/moderators
-              const isAuthor = member?.personId === currentPerson._id;
-              const visibleNote =
-                isAuthor || canSeeAllNotes ? avail.note : undefined;
+              const visibleNote = member
+                ? privateNote(avail.note, userMembership, member)
+                : undefined;
               return {
                 ...avail,
                 note: visibleNote,
@@ -761,10 +713,6 @@ export const getDiscoverableEvents = query({
       ...acceptedAsAddressee.map(f => f.requesterId),
     ];
 
-    if (friendPersonIds.length === 0) {
-      return [];
-    }
-
     // Get current user's existing memberships to filter them out
     const myMemberships = await ctx.db
       .query('memberships')
@@ -774,27 +722,63 @@ export const getDiscoverableEvents = query({
 
     const now = Date.now();
 
-    // Fetch only FRIENDS-visibility events per friend using compound index
+    // Gather explicit Friends grants, including non-FRIENDS legacy visibility.
     const allFriendEvents = await Promise.all(
       friendPersonIds.map(friendPersonId =>
         ctx.db
           .query('events')
           .withIndex('by_creator_visibility', q =>
-            q.eq('creatorId', friendPersonId).eq('visibility', 'FRIENDS')
+            q.eq('creatorId', friendPersonId)
           )
           .collect()
       )
     );
 
-    const candidateEvents = allFriendEvents.flat().filter(event => {
-      if (myEventIds.has(event._id)) return false;
-      if (event.chosenDateTime && event.chosenDateTime < now) return false;
-      return true;
-    });
+    const candidates = new Map(
+      allFriendEvents
+        .flat()
+        .filter(
+          event =>
+            event.friendsAudienceEnabled ?? event.visibility === 'FRIENDS'
+        )
+        .map(event => [event._id, event])
+    );
+    for await (const membership of ctx.db
+      .query('groupMemberships')
+      .withIndex('by_personId', q => q.eq('personId', currentPerson._id))) {
+      if (
+        !(await canAccessGroupMemberContent(
+          ctx,
+          membership.groupId,
+          currentPerson._id
+        ))
+      )
+        continue;
+      for await (const grant of ctx.db
+        .query('groupEventAudiences')
+        .withIndex('by_groupId', q => q.eq('groupId', membership.groupId))) {
+        const event = await ctx.db.get(grant.eventId);
+        if (event) candidates.set(event._id, event);
+      }
+    }
+    const candidateEvents = [...candidates.values()].filter(
+      event =>
+        !myEventIds.has(event._id) &&
+        !(event.chosenDateTime !== undefined && event.chosenDateTime < now)
+    );
+
+    const eligibility = await Promise.all(
+      candidateEvents.map(event =>
+        canDiscoverEventForPerson(ctx, currentPerson._id, event, now)
+      )
+    );
+    const eligibleEvents = candidateEvents.filter(
+      (_, index) => eligibility[index]
+    );
 
     // Fetch member counts, images, and organizer data in parallel per event
     const discoverableEvents = await Promise.all(
-      candidateEvents.map(async event => {
+      eligibleEvents.map(async event => {
         const [imageUrl, organizerData] = await Promise.all([
           event.imageStorageId
             ? ctx.storage.getUrl(event.imageStorageId)
@@ -812,6 +796,17 @@ export const getDiscoverableEvents = query({
           imageUrl,
           memberCount: event.memberCount ?? 0,
           createdAt: event.createdAt,
+          admissionPolicy: resolveAdmissionPolicy(event),
+          accessReasons: await eventDiscoveryReasons(
+            ctx,
+            event,
+            currentPerson._id
+          ),
+          entryAction: await discoveryEntryActionForPerson(
+            ctx,
+            event,
+            currentPerson._id
+          ),
           organizer: organizerData
             ? {
                 personId: organizerData.person._id,

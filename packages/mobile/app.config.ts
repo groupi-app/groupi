@@ -76,7 +76,7 @@ export default {
   // This native runtime is intentionally independent from the app/package
   // version. Keep it stable for JavaScript-only OTA releases and increment it
   // whenever native dependencies or native configuration change.
-  runtimeVersion: '1',
+  runtimeVersion: '2',
   updates: {
     url: `https://u.expo.dev/${easProjectId}`,
     checkAutomatically: 'ON_LOAD' as const,
@@ -108,6 +108,7 @@ export default {
       backgroundColor: '#8200AD',
     },
     package: 'com.groupi.mobile',
+    googleServicesFile: './google-services.json',
     intentFilters: linkingConfig.pathPrefixes.map(pathPrefix => ({
       action: 'VIEW',
       autoVerify: true,

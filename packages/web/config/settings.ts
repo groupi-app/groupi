@@ -1,6 +1,11 @@
 export const settingsConfig = {
   settingsNav: [
     {
+      title: 'Invite lists',
+      href: '/settings/invite-lists',
+      icon: 'people' as const,
+    },
+    {
       title: 'Notifications',
       href: '/settings/notifications',
       icon: 'bell' as const,

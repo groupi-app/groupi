@@ -59,13 +59,14 @@ export function DialogContent({
 }: DialogContentProps) {
   return (
     <DialogPortal>
-      {preventOverlayClose ? (
-        <DialogOverlay />
-      ) : (
-        <DialogPrimitive.Close asChild>
-          <DialogOverlay />
-        </DialogPrimitive.Close>
-      )}
+      {/* Keep portal ordering stable when dismissal protection changes. */}
+      <DialogPrimitive.Close asChild>
+        <DialogOverlay
+          onClick={event => {
+            if (preventOverlayClose) event.preventDefault();
+          }}
+        />
+      </DialogPrimitive.Close>
       <DialogPrimitive.Content
         data-slot='dialog-content'
         className={cn(

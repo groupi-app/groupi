@@ -109,7 +109,8 @@ export interface TrustedAddonContext extends AddonContext {
 export function createAddonContext(
   ctx: MutationCtx,
   addonType: string,
-  eventId: Id<'events'>
+  eventId: Id<'events'>,
+  authenticatedPersonId?: Id<'persons'>
 ): AddonContext {
   const addonCtx: AddonContext = {
     addonType,
@@ -233,6 +234,10 @@ export function createAddonContext(
 
     async getAuthPerson(): Promise<AuthPersonSnapshot | null> {
       try {
+        if (authenticatedPersonId) {
+          const person = await ctx.db.get(authenticatedPersonId);
+          return person ? { _id: person._id, userId: person.userId } : null;
+        }
         const { person } = await requireAuth(ctx);
         return { _id: person._id, userId: person.userId };
       } catch {
@@ -262,9 +267,15 @@ export function createAddonContext(
 export function createTrustedAddonContext(
   ctx: MutationCtx,
   addonType: string,
-  eventId: Id<'events'>
+  eventId: Id<'events'>,
+  authenticatedPersonId?: Id<'persons'>
 ): TrustedAddonContext {
-  const baseCtx = createAddonContext(ctx, addonType, eventId);
+  const baseCtx = createAddonContext(
+    ctx,
+    addonType,
+    eventId,
+    authenticatedPersonId
+  );
 
   const trustedCtx: TrustedAddonContext = {
     ...baseCtx,

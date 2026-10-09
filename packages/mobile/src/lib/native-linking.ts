@@ -52,6 +52,40 @@ export function normalizeNativeIntentPath(path: string): string {
       return `${candidatePath}${url.search}`;
     }
 
+    const groupApplicationMatch = /^\/(g|groups)\/([a-zA-Z0-9_-]+)$/.exec(
+      candidatePath
+    );
+    if (groupApplicationMatch && url.hash === '#group-applications')
+      return (
+        getSafeAuthReturnPath(
+          `/groups/${groupApplicationMatch[2]}/${groupApplicationMatch[1] === 'g' ? 'apply' : 'applications'}`
+        ) ?? FALLBACK_ROUTE
+      );
+
+    const toolMatch =
+      /^\/groups\/([a-zA-Z0-9_-]+)\/(polls|forms|lists)\/(?:new|([^/?#]+)\/settings)$/.exec(
+        candidatePath
+      );
+    if (toolMatch)
+      return (
+        getSafeAuthReturnPath(
+          toolMatch[3]
+            ? `/groups/${toolMatch[1]}/${toolMatch[2]}/${toolMatch[3]}/manage`
+            : `/groups/${toolMatch[1]}/${toolMatch[2]}/create`
+        ) ?? FALLBACK_ROUTE
+      );
+
+    const applicationMatch =
+      /^\/event\/([a-zA-Z0-9_-]+)\/(apply|settings\/applications)$/.exec(
+        candidatePath
+      );
+    if (applicationMatch)
+      return (
+        getSafeAuthReturnPath(
+          `/event/${applicationMatch[1]}/${applicationMatch[2] === 'apply' ? 'application' : 'applications'}`
+        ) ?? FALLBACK_ROUTE
+      );
+
     const legacyProfileMatch = /^\/user\/([^/]+)$/.exec(candidatePath);
     const appPath = legacyProfileMatch
       ? `/profile/${legacyProfileMatch[1]}`

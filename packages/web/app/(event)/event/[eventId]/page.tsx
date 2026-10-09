@@ -1,5 +1,6 @@
 'use client';
 
+import { EventOwnershipTransfer } from '@/components/organisms/event-ownership-transfer';
 import { EventAddons } from './components/event-addons';
 import { EventHeader } from './components/event-header';
 import { MemberList } from './components/member-list';
@@ -24,6 +25,11 @@ export default function EventPage() {
         <EventHeader data={headerData} />
         <div className='max-w-4xl mx-auto flex flex-col gap-4'>
           <MemberList data={membersData} permissions={permissions} />
+          <EventOwnershipTransfer
+            eventId={headerData.event._id}
+            personId={headerData.userMembership.person._id}
+            members={membersData.event.memberships}
+          />
           <EventAddons data={headerData} />
           <PostFeed data={postFeedData} />
         </div>

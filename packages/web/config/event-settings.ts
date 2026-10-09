@@ -16,6 +16,11 @@ export function getEventSettingsNav(eventId: string) {
       icon: 'blocks' as const,
     },
     {
+      title: 'Applications',
+      href: `/event/${eventId}/settings/applications`,
+      icon: 'shield' as const,
+    },
+    {
       title: 'Permissions',
       href: `/event/${eventId}/settings/permissions`,
       icon: 'shield' as const,

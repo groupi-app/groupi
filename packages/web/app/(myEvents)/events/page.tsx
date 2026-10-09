@@ -194,11 +194,6 @@ export default function MyEventsPage() {
   );
 }
 
-// Type for discoverable events from the query
-type DiscoverableEventData = NonNullable<
-  ReturnType<typeof useDiscoverableEvents>
->;
-
 // Type for the combined query result
 type UserEventsAndInvitesData = {
   events: EventMembershipData[];
@@ -225,8 +220,7 @@ function EventsPageContent({
   setSortBy: (value: SortBy) => void;
 }) {
   // Fetch discoverable events
-  const discoverableEvents =
-    (useDiscoverableEvents() as DiscoverableEventData) ?? [];
+  const discoverableEvents = useDiscoverableEvents();
   const discoverCount = Array.isArray(discoverableEvents)
     ? discoverableEvents.length
     : 0;
@@ -439,9 +433,7 @@ function EventsPageContent({
         </TabsContent>
 
         <TabsContent value='discover'>
-          <DiscoverTab
-            events={Array.isArray(discoverableEvents) ? discoverableEvents : []}
-          />
+          <DiscoverTab events={discoverableEvents} />
         </TabsContent>
       </Tabs>
     </div>

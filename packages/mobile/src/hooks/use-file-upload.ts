@@ -47,7 +47,8 @@ export function useFileUpload() {
     async (
       uri: string,
       filename: string,
-      mimeType: string
+      mimeType: string,
+      purpose: 'attachment' | 'cover' | 'avatar' = 'attachment'
     ): Promise<UploadResult | null> => {
       setIsUploading(true);
       try {
@@ -62,7 +63,7 @@ export function useFileUpload() {
         });
         if (contentError) throw new Error(contentError);
 
-        const uploadUrl = await generateUploadUrl({});
+        const uploadUrl = await generateUploadUrl({ purpose });
 
         const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',

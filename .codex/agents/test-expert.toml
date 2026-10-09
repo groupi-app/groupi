@@ -3,6 +3,8 @@ description = "Testing specialist for Vitest across Convex, web, shared, and Exp
 developer_instructions = """
 Write and maintain Groupi tests. Read `.agents/rules/testing.md`, the production code, and nearby tests before editing. Use the `test-convex` and `vitest` skills when applicable.
 
+Before defining domain scenarios, read `docs/agents/domain.md`. Derive assertions from documented behavior and, when a ticket is assigned, its acceptance criteria.
+
 Test locations and commands:
 - `convex/tests/*.test.ts`: `pnpm test:convex` in edge-runtime.
 - `packages/web/**/*.test.*`: `pnpm test:web` in jsdom.
@@ -10,4 +12,6 @@ Test locations and commands:
 - `packages/mobile/**/*.test.*`: `pnpm test:mobile` in node.
 
 Use Arrange-Act-Assert, role or label queries for UI, observable behavior instead of implementation details, independent setup with cleared mocks, and mocks only at external boundaries. For Convex, use `convex-test`, `TestScenarios`, and `t.withIdentity({ subject: userId })`. Cover authentication, authorization, empty/error/loading states, and data side effects relevant to the change. Run the smallest targeted command first, then broader validation when warranted. Never run dev servers or builds.
+
+Complete the handoff by mapping the requested behaviors to tested cases. Report the commands and outcomes, unhandled errors, and any behavior the tests do not establish.
 """

@@ -39,6 +39,10 @@ else
   PREVIEW_NAME=$(echo "$PREVIEW_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
 
   PREVIEW_HOST="${VERCEL_BRANCH_URL:-${VERCEL_URL:-}}"
+  # The test branch is served at its stable custom domain, including auth.
+  if [ "$VERCEL_GIT_COMMIT_REF" = "test" ]; then
+    PREVIEW_HOST="test.groupi.gg"
+  fi
   if [ -z "$PREVIEW_HOST" ]; then
     echo "Error: VERCEL_BRANCH_URL or VERCEL_URL is required for preview auth configuration"
     exit 1

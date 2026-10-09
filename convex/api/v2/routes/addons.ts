@@ -1,3 +1,4 @@
+import { z } from '@hono/zod-openapi';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
@@ -35,6 +36,140 @@ export function createAddonRoutes() {
     defaultHook: createValidationHook<{ Variables: Variables }>(),
   });
 
+  const paging = z.object({
+    pagination: z.literal('cursor').optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: z.string().min(1).optional(),
+  });
+  const templateSchema = z.object({
+    id: z.string(),
+    addonType: z.string(),
+    name: z.string(),
+    description: z.string(),
+    version: z.number(),
+    template: z.unknown(),
+  });
+  const templatesRoute = createRoute({
+    method: 'get',
+    path: '/addon-templates',
+    tags: ['Add-ons'],
+    summary: 'List your existing published custom templates',
+    security: [{ apiKey: [] }],
+    request: { query: paging },
+    responses: {
+      200: {
+        description: 'Existing templates',
+        content: {
+          'application/json': {
+            schema: z.union([
+              z.array(templateSchema),
+              z.object({
+                items: z.array(templateSchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
+          },
+        },
+      },
+    },
+  });
+  app.openapi(templatesRoute, async c => {
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await c
+            .get('ctx')
+            .runQuery(
+              internal.api.v1.internal.addons.listPublishedTemplatesPage,
+              {
+                personId: c.get('personId'),
+                limit: query.limit,
+                cursor: query.cursor ?? null,
+              }
+            )
+        : await c
+            .get('ctx')
+            .runQuery(internal.api.v1.internal.addons.listPublishedTemplates, {
+              personId: c.get('personId'),
+            });
+    return c.json(result, 200);
+  });
+
+  const participationRoute = createRoute({
+    method: 'post',
+    path: '/events/{eventId}/addons/{addonType}/participation',
+    tags: ['Add-ons'],
+    summary:
+      'Perform an app-supported participant action as the current identity',
+    security: [{ apiKey: [] }],
+    request: {
+      params: EventAddonParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: z
+              .object({
+                action: z.enum([
+                  'respond',
+                  'claim',
+                  'vote',
+                  'toggle',
+                  'execute',
+                  'opt-in',
+                  'opt-out',
+                  'clear-response',
+                  'clear-claims',
+                ]),
+                data: z.unknown().optional(),
+                fieldId: z.string().min(1).optional(),
+              })
+              .strict(),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Participant action completed',
+        content: { 'application/json': { schema: z.unknown() } },
+      },
+      400: {
+        description: 'Invalid submission',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+  app.openapi(participationRoute, async c => {
+    const { eventId, addonType } = c.req.valid('param');
+    await requireEventMembership(c.get('ctx'), eventId, c.get('personId'));
+    try {
+      const input = c.req.valid('json');
+      const result = await c
+        .get('ctx')
+        .runMutation(internal.api.v1.internal.addons.participate, {
+          ...input,
+          data: input.data ?? null,
+          eventId,
+          addonType,
+          personId: c.get('personId'),
+        });
+      return c.json(result, 200);
+    } catch (error) {
+      return c.json(
+        {
+          error: {
+            code: 'BAD_REQUEST',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Participant action failed',
+          },
+        },
+        400
+      );
+    }
+  });
+
   // ===== ADDON CONFIG ROUTES =====
 
   // GET /events/:eventId/addons - List all addon configs
@@ -43,17 +178,25 @@ export function createAddonRoutes() {
     path: '/events/{eventId}/addons',
     tags: ['Add-ons'],
     summary: 'List add-ons',
-    description: 'Get all add-on configurations for an event',
+    description:
+      'Get all add-on configurations for an event, including disabled add-ons',
     security: [{ apiKey: [] }],
     request: {
       params: EventIdParamSchema,
+      query: paging,
     },
     responses: {
       200: {
         description: 'List of add-on configs',
         content: {
           'application/json': {
-            schema: AddonListResponseSchema,
+            schema: z.union([
+              AddonListResponseSchema,
+              z.object({
+                items: z.array(AddonConfigResponseSchema),
+                nextCursor: z.string().nullable(),
+              }),
+            ]),
           },
         },
       },
@@ -86,7 +229,14 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const listFn = internal.api.v1.internal.addons.listEventAddons;
-    const result = await ctx.runQuery(listFn, { eventId });
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await ctx.runQuery(
+            internal.api.v1.internal.addons.listEventAddonsPage,
+            { eventId, limit: query.limit, cursor: query.cursor ?? null }
+          )
+        : await ctx.runQuery(listFn, { eventId });
 
     return c.json(result, 200);
   });
@@ -98,7 +248,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Enable add-on',
     description:
-      'Enable an add-on for an event with the given config. Requires MODERATOR role or higher.',
+      'Enable validated configuration. Custom add-ons use {templateId} from /addon-templates or app-supported configurable template settings. Re-enabling an enabled add-on invokes configuration-update lifecycle. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
@@ -228,7 +378,7 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const disableFn = internal.api.v1.internal.addons.disableAddon;
-    await ctx.runMutation(disableFn, { eventId, addonType });
+    await ctx.runMutation(disableFn, { eventId, addonType, personId });
 
     return c.json(
       { message: `Add-on ${addonType} disabled successfully` },
@@ -243,7 +393,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Update add-on config',
     description:
-      'Update the configuration for an enabled add-on. Requires MODERATOR role or higher.',
+      'Replace enabled configuration, invoking response reset and notification lifecycle. Custom definition and secret fields are protected. Requires MODERATOR role or higher.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
@@ -337,13 +487,21 @@ export function createAddonRoutes() {
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonParamSchema,
+      query: paging,
     },
     responses: {
       200: {
         description: 'List of data entries',
         content: {
           'application/json': {
-            schema: AddonDataListResponseSchema,
+            schema: z.union([
+              AddonDataListResponseSchema,
+              z.object({
+                items: AddonDataListResponseSchema,
+                nextCursor: z.string().nullable(),
+                isOptedOut: z.boolean(),
+              }),
+            ]),
           },
         },
       },
@@ -376,7 +534,20 @@ export function createAddonRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     const getDataFn = internal.api.v1.internal.addons.getAddonData;
-    const result = await ctx.runQuery(getDataFn, { eventId, addonType });
+    const query = c.req.valid('query');
+    const result =
+      query.pagination === 'cursor'
+        ? await ctx.runQuery(
+            internal.api.v1.internal.addons.participantDataPage,
+            {
+              eventId,
+              addonType,
+              personId,
+              limit: query.limit,
+              cursor: query.cursor ?? null,
+            }
+          )
+        : await ctx.runQuery(getDataFn, { eventId, addonType });
 
     return c.json(result, 200);
   });
@@ -388,7 +559,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Set add-on data',
     description:
-      'Create or update a data entry for an add-on. The key is used for upsert. Updating an existing entry requires being the creator or MODERATOR+.',
+      'Create or update a validated participant entry for an enabled add-on. Response, claims, vote and toggle keys must belong to the authenticated identity, including for moderators. Dispatches the same submission lifecycle as the apps.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonDataKeyParamSchema,
@@ -486,7 +657,7 @@ export function createAddonRoutes() {
     tags: ['Add-ons'],
     summary: 'Delete add-on data',
     description:
-      'Delete a data entry for an add-on. Requires being the creator or MODERATOR+.',
+      'Clear an owned participant record for an enabled add-on. Other participants and system records cannot be deleted.',
     security: [{ apiKey: [] }],
     request: {
       params: EventAddonDataKeyParamSchema,

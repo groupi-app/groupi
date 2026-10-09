@@ -1,3 +1,8 @@
+import { canDeliverAnnouncement } from '../groupAnnouncements/model';
+import {
+  needsCurrentOnboarding,
+  allowsCurrentOnboardingPush,
+} from '../groupQuestionnaires/notificationJobs';
 import { ConvexError, v } from 'convex/values';
 import { getCurrentPerson } from '../auth';
 import { internalQuery, query } from '../_generated/server';
@@ -58,12 +63,18 @@ const deliveryJobValidator = v.object({
   title: v.string(),
   body: v.string(),
   destination: v.union(
+    v.literal('group'),
+    v.literal('groupApplication'),
+    v.literal('groupApplications'),
     v.literal('notifications'),
     v.literal('invites'),
     v.literal('friends'),
     v.literal('event'),
+    v.literal('eventApplications'),
+    v.literal('eventApplication'),
     v.literal('post')
   ),
+  groupId: v.optional(v.id('groups')),
   eventId: v.optional(v.id('events')),
   postId: v.optional(v.id('posts')),
   notificationId: v.id('notifications'),
@@ -115,12 +126,37 @@ export const resolveDeliveryJobs = internalQuery({
         continue;
       }
 
+      if (
+        notification.type === 'GROUP_ONBOARDING_REQUIRED' &&
+        (!notification.groupId ||
+          !(await needsCurrentOnboarding(
+            ctx,
+            notification.groupId,
+            notification.personId
+          )) ||
+          !(await allowsCurrentOnboardingPush(ctx, notification.personId)))
+      ) {
+        cancelled.push({ deliveryId, attempts: delivery.attempts });
+        continue;
+      }
+      if (notification.groupAnnouncementId) {
+        const permitted = await canDeliverAnnouncement(
+          ctx,
+          notification.groupAnnouncementId,
+          notification.personId
+        );
+        if (!permitted) {
+          cancelled.push({ deliveryId, attempts: delivery.attempts });
+          continue;
+        }
+      }
       ready.push({
         deliveryId,
         token: token.token,
         title: delivery.title,
         body: delivery.body,
         destination: delivery.destination,
+        groupId: delivery.groupId,
         eventId: delivery.eventId,
         postId: delivery.postId,
         notificationId: delivery.notificationId,

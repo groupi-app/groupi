@@ -1,3 +1,6 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { dispatchAddonLifecycle } from '../addons/lifecycle';
@@ -6,6 +9,9 @@ export async function cascadeDeleteEventData(
   ctx: MutationCtx,
   eventId: Id<'events'>
 ) {
+  await deleteEventTransfers(ctx, eventId);
+  await removeAudiencesForEvent(ctx, eventId);
+
   const [
     memberships,
     potentialDates,
@@ -141,5 +147,6 @@ export async function cascadeDeleteEventData(
     await ctx.db.delete(m._id);
   }
 
+  await deleteEventApplications(ctx, eventId);
   await ctx.db.delete(eventId);
 }

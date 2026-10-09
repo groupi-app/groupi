@@ -125,7 +125,7 @@ const NOTIFICATION_CATEGORIES: Array<{
     ],
   },
   {
-    title: 'Friends and invitations',
+    title: 'Friends, Groups and invitations',
     items: [
       {
         type: 'FRIEND_REQUEST_RECEIVED',
@@ -138,6 +138,72 @@ const NOTIFICATION_CATEGORIES: Array<{
         label: 'Accepted requests',
         description: 'Someone accepts your friend request.',
         icon: 'people',
+      },
+      {
+        type: 'GROUP_APPLICATION_RECEIVED',
+        label: 'New Group applications',
+        description: 'An applicant requests Group admission.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'GROUP_APPLICATION_APPROVED',
+        label: 'Group application approved',
+        description: 'Your Group application is approved.',
+        icon: 'checkmark-circle-outline',
+      },
+      {
+        type: 'GROUP_APPLICATION_DECLINED',
+        label: 'Group application declined',
+        description: 'Your Group application is declined.',
+        icon: 'close-circle-outline',
+      },
+      {
+        type: 'GROUP_INVITE_RECEIVED',
+        label: 'Group invitations',
+        description: 'Someone invites you to a Group.',
+        icon: 'people-outline',
+      },
+      {
+        type: 'GROUP_INVITE_ACCEPTED',
+        label: 'Accepted Group invitations',
+        description: 'Someone accepts your Group invitation.',
+        icon: 'people',
+      },
+      {
+        type: 'GROUP_MEMBER_REMOVED',
+        label: 'Group removals',
+        description: 'You are removed from a Group.',
+        icon: 'person-remove-outline',
+      },
+      {
+        type: 'GROUP_ONBOARDING_REQUIRED',
+        label: 'Required Group onboarding',
+        description: 'Current required Group answers need completing.',
+        icon: 'document-text-outline',
+      },
+      {
+        type: 'GROUP_MEMBER_BANNED',
+        label: 'Group bans',
+        description: 'You are banned from a Group.',
+        icon: 'ban-outline',
+      },
+      {
+        type: 'EVENT_APPLICATION_RECEIVED',
+        label: 'New applications',
+        description: 'An applicant requests admission.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'EVENT_APPLICATION_APPROVED',
+        label: 'Approved applications',
+        description: 'Your application is approved.',
+        icon: 'mail-outline',
+      },
+      {
+        type: 'EVENT_APPLICATION_DECLINED',
+        label: 'Declined applications',
+        description: 'Your application is declined.',
+        icon: 'mail-outline',
       },
       {
         type: 'EVENT_INVITE_RECEIVED',

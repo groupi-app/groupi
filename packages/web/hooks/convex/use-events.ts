@@ -3,6 +3,7 @@
 /* eslint-disable react-hooks/refs -- This file uses intentional caching pattern for visibility optimization */
 
 import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,8 +20,6 @@ let userQueries: any;
 
 function initApi() {
   if (!eventQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
     eventQueries = api.events?.queries ?? {};
     eventMutations = api.events?.mutations ?? {};
     userQueries = api.users?.queries ?? {};
@@ -408,64 +407,10 @@ export function useEventManagement(eventId: Id<'events'>) {
 
 // ===== DISCOVER HOOKS =====
 
-/**
- * Get discoverable events from friends (FRIENDS visibility)
- * Uses stale-while-revalidate caching.
- */
-export function useDiscoverableEvents() {
-  const isActive = useIsActive();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cachedRef = useRef<any>(undefined);
+/** Current viewer-applicable Friends and Group discovery; no stale private-reason cache. */
+export { useDiscoverableEvents } from './use-event-admission';
 
-  const result = useQuery(
-    eventQueries.getDiscoverableEvents,
-    isActive ? {} : 'skip'
-  );
-
-  if (result !== undefined) {
-    cachedRef.current = result;
-  }
-
-  if (result === undefined && cachedRef.current !== undefined) {
-    return cachedRef.current;
-  }
-
-  return result;
-}
-
-/**
- * Join a discoverable event (friends-visible)
- */
-export function useJoinDiscoverableEvent() {
-  const joinEvent = useMutation(eventMutations.joinDiscoverableEvent);
-  const { toast } = useToast();
-
-  return useCallback(
-    async (eventId: Id<'events'>) => {
-      try {
-        const result = await joinEvent({ eventId });
-
-        toast({
-          title: 'Joined event',
-          description: "You've joined the event successfully!",
-        });
-
-        return result;
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description:
-            error instanceof Error
-              ? error.message
-              : 'Failed to join event. Please try again.',
-          variant: 'destructive',
-        });
-        throw error;
-      }
-    },
-    [joinEvent, toast]
-  );
-}
+export { useJoinDiscoverableEvent } from './use-join-discoverable-event';
 
 // ===== HOOK ALIASES FOR COMPONENT COMPATIBILITY =====
 

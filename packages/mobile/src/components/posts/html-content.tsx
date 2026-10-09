@@ -41,7 +41,7 @@ export function HtmlContent({ html, className }: HtmlContentProps) {
   }
 
   return (
-    <View className={cn('gap-2', className)}>
+    <View className={cn('min-w-0 self-stretch gap-2', className)}>
       {blocks.map((block, index) => (
         <ContentBlockView key={index} block={block} />
       ))}
@@ -67,7 +67,8 @@ function ContentBlockView({ block }: { block: ContentBlock }) {
         <Text className='text-base text-muted-foreground'>
           {block.ordered ? `${block.listIndex ?? 1}.` : '•'}
         </Text>
-        <Text className={textClassName}>
+        {/* Allocate the remaining row width so native text wraps after the marker. */}
+        <Text className={cn('min-w-0 flex-1', textClassName)}>
           <SegmentedText segments={block.segments} />
         </Text>
       </View>

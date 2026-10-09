@@ -1,21 +1,14 @@
-import { internalQuery } from '../../../_generated/server';
+import { internalQuery, internalMutation } from '../../../_generated/server';
 import { components } from '../../../_generated/api';
 import { v } from 'convex/values';
 import { authComponent, AuthUserId } from '../../../auth';
 import type { Id } from '../../../_generated/dataModel';
+import type { Doc as AuthDoc } from '../../../betterAuth/_generated/dataModel';
 
 /**
- * Internal queries for the REST API
+ * Internal authentication and authorization for the REST API
  * These are used by the API middleware and routes for authentication and authorization
  */
-
-interface ApiKeyRecord {
-  _id: string;
-  userId: string;
-  key: string;
-  expiresAt?: number | null;
-  enabled?: boolean | null;
-}
 
 async function hashApiKey(raw: string): Promise<string> {
   const data = new TextEncoder().encode(raw);
@@ -27,21 +20,33 @@ async function hashApiKey(raw: string): Promise<string> {
 
 /**
  * Validate an API key by hashing it and looking up the hash
- * in the Better Auth component's apikey table.
+ * in the Better Auth component's apikey table. Quota updates share this mutation
+ * transaction so concurrent requests cannot spend the same remaining use.
+ *
+ * Better Auth maps referenceId to the component's existing userId column.
+ * This verifier therefore accepts legacy keys and newly issued CLI keys alike.
  *
  * This matches Better Auth's own lookup: hash with SHA-256,
  * encode as base64url, query by the `key` field.
  */
-export const validateApiKey = internalQuery({
+export const validateApiKey = internalMutation({
   args: {
     apiKey: v.string(),
+    resource: v.string(),
+    action: v.union(v.literal('read'), v.literal('write')),
+    selfRevoke: v.optional(v.boolean()),
   },
-  handler: async (
-    ctx,
-    { apiKey }
-  ): Promise<
-    { userId: string; personId: Id<'persons'> } | { error: string }
-  > => {
+  returns: v.union(
+    v.object({ userId: v.string(), personId: v.id('persons') }),
+    v.object({
+      error: v.string(),
+      status: v.optional(
+        v.union(v.literal(401), v.literal(403), v.literal(429))
+      ),
+      retryAfter: v.optional(v.number()),
+    })
+  ),
+  handler: async (ctx, { apiKey, resource, action, selfRevoke }) => {
     try {
       const hashedKey = await hashApiKey(apiKey);
 
@@ -52,7 +57,7 @@ export const validateApiKey = internalQuery({
         paginationOpts: { cursor: null, numItems: 1 },
       });
 
-      const record = result.page?.[0] as ApiKeyRecord | undefined;
+      const record = result.page?.[0] as AuthDoc<'apikey'> | undefined;
 
       if (!record) {
         return { error: 'Invalid API key.' };
@@ -62,8 +67,62 @@ export const validateApiKey = internalQuery({
         return { error: 'API key is disabled.' };
       }
 
-      if (record.expiresAt && record.expiresAt < Date.now()) {
+      if (record.expiresAt != null && record.expiresAt <= Date.now()) {
         return { error: 'API key has expired.' };
+      }
+
+      if (!selfRevoke && record.permissions != null) {
+        let permissions: unknown;
+        try {
+          permissions = JSON.parse(record.permissions);
+        } catch {
+          return {
+            error: 'Invalid API key permissions.',
+            status: 403 as const,
+          };
+        }
+        if (
+          typeof permissions !== 'object' ||
+          permissions === null ||
+          Array.isArray(permissions)
+        ) {
+          return {
+            error: 'Invalid API key permissions.',
+            status: 403 as const,
+          };
+        }
+        const entries = Object.entries(permissions);
+        if (
+          !entries.every(
+            ([, actions]) =>
+              Array.isArray(actions) &&
+              actions.every(value => typeof value === 'string')
+          )
+        ) {
+          return {
+            error: 'Invalid API key permissions.',
+            status: 403 as const,
+          };
+        }
+        const allowed = entries.find(([name]) => name === resource)?.[1];
+        if (!Array.isArray(allowed) || !allowed.includes(action)) {
+          return {
+            error: 'API key does not permit this resource and action.',
+            status: 403 as const,
+          };
+        }
+      }
+
+      const user = await authComponent.getAnyUserById(
+        ctx,
+        record.userId as AuthUserId
+      );
+      if (!user) return { error: 'User account not found.' };
+      if (
+        user.banned &&
+        (user.banExpires == null || user.banExpires > Date.now())
+      ) {
+        return { error: 'User account is banned.' };
       }
 
       const person = await ctx.db
@@ -75,12 +134,67 @@ export const validateApiKey = internalQuery({
         return { error: 'User account not found.' };
       }
 
+      // Revoking the presented secret remains possible after its quota is spent.
+      if (selfRevoke) return { userId: record.userId, personId: person._id };
+
+      const now = Date.now();
+      const update: Partial<AuthDoc<'apikey'>> = {};
+      if (record.remaining != null) {
+        const canRefill =
+          record.refillInterval != null &&
+          record.refillInterval > 0 &&
+          record.refillAmount != null &&
+          record.refillAmount > 0 &&
+          now - (record.lastRefillAt ?? record.createdAt) >=
+            record.refillInterval;
+        const remaining = canRefill ? record.refillAmount! : record.remaining;
+        if (remaining <= 0)
+          return {
+            error: 'API key usage limit exceeded.',
+            status: 429 as const,
+          };
+        update.remaining = remaining - 1;
+        if (canRefill) update.lastRefillAt = now;
+      }
+      if (
+        record.rateLimitEnabled !== false &&
+        record.rateLimitMax != null &&
+        record.rateLimitTimeWindow != null
+      ) {
+        const elapsed = now - (record.lastRequest ?? 0);
+        const count =
+          record.lastRequest != null && elapsed < record.rateLimitTimeWindow
+            ? (record.requestCount ?? 0)
+            : 0;
+        if (count >= record.rateLimitMax) {
+          return {
+            error: 'API key rate limit exceeded.',
+            status: 429 as const,
+            retryAfter: Math.max(
+              1,
+              Math.ceil((record.rateLimitTimeWindow - elapsed) / 1000)
+            ),
+          };
+        }
+        update.requestCount = count + 1;
+        update.lastRequest = now;
+      }
+      if (Object.keys(update).length > 0) {
+        await ctx.runMutation(components.betterAuth.adapter.updateOne, {
+          input: {
+            model: 'apikey',
+            where: [{ field: '_id', value: record._id }],
+            update: { ...update, updatedAt: now },
+          },
+        });
+      }
+
       return {
         userId: record.userId,
         personId: person._id,
       };
-    } catch (error) {
-      console.error('API key validation error:', error);
+    } catch {
+      console.error('API key validation failed');
       return { error: 'Authentication error.' };
     }
   },
