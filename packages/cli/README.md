@@ -447,6 +447,13 @@ never prompt. Event lists return `{ "items": [...], "nextCursor": "..." }`, with
 `null` indicating completion. An empty page can still have a continuation cursor.
 Default page size is 20; `--limit` accepts 1–100. `--all` follows cursors from the
 requested starting page and reports success only after full retrieval.
+All paginated lists reject malformed page envelopes, empty or invalid continuation
+cursors, pages containing more items than the requested limit, and repeated
+continuation cursors. This includes a response repeating the supplied starting
+cursor on a single-page read. These failures report `INVALID_RESPONSE` with exit
+status 5 and no success output, even when an earlier page was valid. `--all` has
+no total page, item, or elapsed-time cap; per-request timeouts and retries still
+apply. Items retain their server order, including duplicates.
 Event detail returns the REST v2 event document directly.
 
 | Exit | Meaning                                                       |

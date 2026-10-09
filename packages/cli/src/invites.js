@@ -3,6 +3,7 @@ import { CliError } from './errors.js';
 import { validateRequestId, parseDateTime } from './event-input.js';
 import { mutateApi } from './mutations.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 
 /** @typedef {{apiUrl:string,name:string}} Profile */
 /** @typedef {{yes?:boolean,json?:boolean,requestId?:string}} WriteOptions */
@@ -590,45 +591,20 @@ export async function listInvites(profile, key, kind, eventId, options) {
   const path = eventId
     ? `/events/${eventId}/${kind === 'links' ? 'invites' : 'member-invites'}`
     : '/member-invites';
-  let cursor = options.cursor;
-  const items = [];
-  const seen = new Set(cursor ? [cursor] : []);
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    if (options.status) query.set('status', options.status);
-    if (options.kind) query.set('kind', options.kind);
-    const page = record(await readApi(profile, key, `${path}?${query}`));
-    if (
-      !Array.isArray(page.items) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length > 0)
-      )
-    )
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Expected a cursor-paginated invitation page; update the server if needed.',
-        5
-      );
-    items.push(
-      ...page.items.map(kind === 'links' ? linkSummary : memberSummary)
-    );
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a pagination cursor; retrieval stopped.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete invitation page.', 5);
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      if (options.status) query.set('status', options.status);
+      if (options.kind) query.set('kind', options.kind);
+      return readApi(profile, key, `${path}?${query}`);
+    },
+    projectItem: kind === 'links' ? linkSummary : memberSummary,
+  });
 }
 
 /** @param {Profile} profile @param {string} key @param {string} id @param {'edit'|'revoke'|'accept'} action @param {Record<string,unknown>} [body] @param {WriteOptions} [options] */

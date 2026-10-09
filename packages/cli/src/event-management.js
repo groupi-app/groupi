@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 /** @typedef {{apiUrl:string,name:string}} Profile */
 /** @param {unknown} id */
@@ -247,31 +248,21 @@ export async function discoverEvents(profile, key, options) {
     options.limit > 100
   )
     throw new CliError('USAGE', '--limit must be an integer from 1 to 100.', 2);
-  let cursor = options.cursor;
-  const seen = new Set(cursor ? [cursor] : []),
-    items = [];
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    const page = record(
-      await readApi(profile, key, `/events/discover?${query}`)
-    );
-    if (
-      !Array.isArray(page.items) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length)
-      )
-    )
-      throw new CliError('INVALID_RESPONSE', 'Invalid discovery page.', 5);
-    for (const item of page.items) {
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      return readApi(profile, key, `/events/discover?${query}`);
+    },
+    projectItem: item => {
       const row = record(item);
       if (typeof row.id !== 'string' || typeof row.title !== 'string')
         throw new CliError('INVALID_RESPONSE', 'Invalid discovered event.', 5);
-      items.push({
+      return {
         id: row.id,
         title: row.title,
         ...(['DIRECT', 'INVITATION_ONLY', 'APPLY'].includes(
@@ -299,20 +290,9 @@ export async function discoverEvents(profile, key, options) {
                 username: record(row.organizer).username,
               }
             : null,
-      });
-    }
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Repeated discovery cursor; retrieval stopped.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete discovery page.', 5);
+      };
+    },
+  });
 }
 
 /** @param {Profile} profile @param {string} key @param {string} eventId */

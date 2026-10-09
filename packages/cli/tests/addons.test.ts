@@ -86,6 +86,93 @@ const addonConfig = {
   createdAt: 1,
   updatedAt: 2,
 };
+test('configuration lists remain bounded and lookup follows later pages with the existing projection', async () => {
+  const paths: string[] = [];
+  const first = { ...addonConfig, id: 'addon-other', addonType: 'bring-list' };
+  await endpoint((req, res) => {
+    paths.push(req.url ?? '');
+    const continued = req.url?.includes('cursor=next');
+    res.end(
+      JSON.stringify({
+        items: [{ ...(continued ? addonConfig : first), unexpected: 'hidden' }],
+        nextCursor: continued ? null : 'next',
+      })
+    );
+  });
+  const bounded = await cli(['addons', 'list', 'event1', '--limit', '1']);
+  expect(bounded.code).toBe(0);
+  expect(JSON.parse(bounded.stdout)).toEqual({
+    items: [first],
+    nextCursor: 'next',
+  });
+  expect(paths).toEqual([
+    '/api/v2/events/event1/addons?pagination=cursor&limit=1',
+  ]);
+
+  const found = await cli(['addons', 'get', 'event1', 'reminders']);
+  expect(found.code).toBe(0);
+  expect(JSON.parse(found.stdout)).toEqual(addonConfig);
+  expect(paths.slice(1)).toEqual([
+    '/api/v2/events/event1/addons?pagination=cursor&limit=100',
+    '/api/v2/events/event1/addons?pagination=cursor&limit=100&cursor=next',
+  ]);
+});
+test('template traversal resumes from a supplied cursor and projects templates across pages', async () => {
+  const paths: string[] = [];
+  const template = {
+    id: 'template1',
+    addonType: 'custom:template1',
+    name: 'Template',
+    description: 'Description',
+    version: 1,
+    template: { fields: [] },
+  };
+  await endpoint((req, res) => {
+    paths.push(req.url ?? '');
+    res.end(
+      JSON.stringify({
+        items: [{ ...template, unexpected: 'hidden' }],
+        nextCursor: req.url?.includes('cursor=start') ? 'next' : null,
+      })
+    );
+  });
+  const result = await cli([
+    'addons',
+    'templates',
+    '--cursor',
+    'start',
+    '--all',
+    '--limit',
+    '1',
+  ]);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({
+    items: [template, template],
+    nextCursor: null,
+  });
+  expect(paths).toEqual([
+    '/api/v2/addon-templates?pagination=cursor&limit=1&cursor=start',
+    '/api/v2/addon-templates?pagination=cursor&limit=1&cursor=next',
+  ]);
+});
+test('lookup rejects malformed later pages even after finding its requested add-on', async () => {
+  let requests = 0;
+  await endpoint((_req, res) => {
+    requests++;
+    res.end(
+      JSON.stringify(
+        requests === 1
+          ? { items: [addonConfig], nextCursor: 'next' }
+          : { items: [], nextCursor: 'next' }
+      )
+    );
+  });
+  const result = await cli(['addons', 'get', 'event1', 'reminders']);
+  expect(result.code).toBe(5);
+  expect(result.stdout).toBe('');
+  expect(JSON.parse(result.stderr).error.code).toBe('INVALID_RESPONSE');
+  expect(requests).toBe(2);
+});
 test('round-trips existing configuration with convenience options and human/JSON output', async () => {
   let current = addonConfig;
   let writes = 0;

@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 /** @typedef {{name:string,apiUrl:string}} Profile */
 /** @param {string} value */
@@ -74,40 +75,18 @@ export async function listSocial(profile, key, kind, options) {
     outgoing: '/friends/requests/outgoing',
     blocks: '/blocks',
   }[kind];
-  let cursor = options.cursor;
-  const seen = new Set(cursor ? [cursor] : []);
-  const items = [];
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    const page = pick(await readApi(profile, key, `${path}?${query}`), [
-      'items',
-      'nextCursor',
-    ]);
-    valid(
-      Array.isArray(page.items) &&
-        /** @type {unknown[]} */ (page.items).length <= options.limit &&
-        (page.nextCursor === null ||
-          (typeof page.nextCursor === 'string' && page.nextCursor.length > 0))
-    );
-    items.push(
-      .../** @type {unknown[]} */ (page.items).map(item => summary(item, kind))
-    );
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    cursor = /** @type {string} */ (page.nextCursor);
-    if (seen.has(cursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a social cursor; retrieval stopped.',
-        5
-      );
-    seen.add(cursor);
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete social page.', 5);
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      return readApi(profile, key, `${path}?${query}`);
+    },
+    projectItem: item => summary(item, kind),
+  });
 }
 /** @param {Profile} profile @param {string} key @param {string} personId @param {boolean} [blocks] */
 export async function getSocialStatus(profile, key, personId, blocks = false) {

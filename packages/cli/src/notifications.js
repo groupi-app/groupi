@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 
 /** @typedef {{apiUrl:string,name:string}} Profile */
@@ -140,43 +141,19 @@ export function notificationPageOptions(options) {
 /** @param {Profile} profile @param {string} key @param {ReturnType<typeof notificationPageOptions>} options */
 export async function listNotifications(profile, key, options) {
   await requireControls(profile, key);
-  let cursor = options.cursor;
-  const seen = new Set(cursor ? [cursor] : []);
-  const items = [];
-  while (true) {
-    const params = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (options.unread) params.set('unread', 'true');
-    if (cursor) params.set('cursor', cursor);
-    const page = record(
-      await readApi(profile, key, `/notifications?${params}`)
-    );
-    if (
-      !Array.isArray(page.items) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length > 0)
-      )
-    )
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Expected a cursor-paginated notification page; update the server.',
-        5
-      );
-    items.push(...page.items.map(notification));
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a pagination cursor; retrieval stopped.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  }
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const params = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (options.unread) params.set('unread', 'true');
+      if (cursor) params.set('cursor', cursor);
+      return readApi(profile, key, `/notifications?${params}`);
+    },
+    projectItem: notification,
+  });
 }
 /** @param {Profile} profile @param {string} key */
 export async function notificationCount(profile, key) {

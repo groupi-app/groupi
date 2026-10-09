@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 
 /** @typedef {{name:string,apiUrl:string}} Profile */
@@ -200,74 +201,47 @@ export async function listAddons(profile, key, eventId, options) {
     options.limit > 100
   )
     throw new CliError('USAGE', '--limit must be an integer from 1 to 100.', 2);
-  let cursor = options.cursor;
-  const items = [];
-  const seen = new Set(cursor ? [cursor] : []);
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    const page = record(
-      await readApi(
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      return readApi(
         profile,
         key,
         `${eventId === null ? '/addon-templates' : `/events/${eventId}/addons`}?${query}`
-      )
-    );
-    if (
-      !Array.isArray(page.items) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length > 0)
-      )
-    )
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Expected a cursor-paginated add-on page. Update the server.',
-        5
       );
-    items.push(
-      ...page.items.map(value => {
-        if (eventId !== null) return configResult(value);
-        const template = record(value);
-        if (
-          typeof template.id !== 'string' ||
-          typeof template.addonType !== 'string' ||
-          typeof template.name !== 'string' ||
-          typeof template.description !== 'string' ||
-          !Number.isFinite(template.version) ||
-          !template.template ||
-          typeof template.template !== 'object'
-        )
-          throw new CliError(
-            'INVALID_RESPONSE',
-            'Expected an existing custom template.',
-            5
-          );
-        return {
-          id: template.id,
-          addonType: template.addonType,
-          name: template.name,
-          description: template.description,
-          version: template.version,
-          template: template.template,
-        };
-      })
-    );
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a pagination cursor; retrieval stopped.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete add-on page.', 5);
+    },
+    projectItem: value => {
+      if (eventId !== null) return configResult(value);
+      const template = record(value);
+      if (
+        typeof template.id !== 'string' ||
+        typeof template.addonType !== 'string' ||
+        typeof template.name !== 'string' ||
+        typeof template.description !== 'string' ||
+        !Number.isFinite(template.version) ||
+        !template.template ||
+        typeof template.template !== 'object'
+      )
+        throw new CliError(
+          'INVALID_RESPONSE',
+          'Expected an existing custom template.',
+          5
+        );
+      return {
+        id: template.id,
+        addonType: template.addonType,
+        name: template.name,
+        description: template.description,
+        version: template.version,
+        template: template.template,
+      };
+    },
+  });
 }
 /** @param {Profile} profile @param {string} key @param {string} eventId @param {string} type */
 export async function getAddon(profile, key, eventId, type) {

@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 /** @typedef {{name:string,apiUrl:string}} Profile */
 /** @param {Profile} profile @param {string} key */
@@ -24,28 +25,14 @@ export async function listDiscordGuilds(profile, key, options) {
   )
     throw new CliError('USAGE', '--limit must be an integer from 1 to 100.', 2);
   await support(profile, key);
-  const items = [];
-  const seen = new Set(options.cursor ? [options.cursor] : []);
-  let cursor = options.cursor;
-  do {
-    const query = new URLSearchParams({ limit: String(options.limit) });
-    if (cursor) query.set('cursor', cursor);
-    const page = /** @type {{items?:unknown[],nextCursor?:unknown}} */ (
-      await readApi(profile, key, `/discord/guilds?${query}`)
-    );
-    if (
-      !Array.isArray(page?.items) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length)
-      )
-    )
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Expected a paginated Discord guild list.',
-        5
-      );
-    for (const item of page.items) {
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({ limit: String(limit) });
+      if (cursor) query.set('cursor', cursor);
+      return readApi(profile, key, `/discord/guilds?${query}`);
+    },
+    projectItem: item => {
       const row =
         /** @type {{id?:unknown,name?:unknown,status?:unknown,authorizedAt?:unknown,expiresAt?:unknown}} */ (
           item
@@ -65,26 +52,15 @@ export async function listDiscordGuilds(profile, key, options) {
           'Expected Discord guild authorization metadata.',
           5
         );
-      items.push({
+      return {
         id: row.id,
         name: row.name,
         status: row.status,
         authorizedAt: row.authorizedAt,
         expiresAt: row.expiresAt,
-      });
-    }
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a Discord guild cursor.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete guild page.', 5);
+      };
+    },
+  });
 }
 /** Refresh only a replaceable authorization cache, with one request and no event effects.
  * @param {Profile} profile @param {string} key */
