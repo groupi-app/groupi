@@ -34,6 +34,14 @@ The first full run was blocked by sandbox loopback restrictions in existing
 CLI/API fixtures. Repeating with authorized loopback access passed. Such fixture
 startup failures are distinct from the repaired scheduler errors.
 
+PR CI subsequently exposed two additional late callback errors on Node 24 in
+`event-applications-rest.test.ts`, despite all 911 assertions passing. That suite
+now drains scheduled work before replacing its fixture and at teardown, then
+asserts that every scheduled record succeeded or was canceled. With timers frozen,
+the existing HTTP test deterministically fails this assertion without the drain;
+all five REST tests pass after it. This executes the scheduled work rather than
+suppressing its errors. The CI failure and focused RED/GREEN logs are retained.
+
 ## Coverage enforcement
 
 Actual web/shared coverage runs with effective 70%/80% thresholds failed all four

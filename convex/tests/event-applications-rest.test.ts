@@ -1,9 +1,33 @@
-import { expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { api, components, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
+let activeInstance: ReturnType<typeof createTestInstance> | undefined;
+beforeEach(() => vi.useFakeTimers());
+async function finishFixture() {
+  if (!activeInstance) return;
+  // Finish against this fixture's runtime before another convexTest instance
+  // replaces it. Real timers can otherwise complete in the next test's DB.
+  await activeInstance.finishAllScheduledFunctions(() => vi.runAllTimers());
+  const jobs = await activeInstance.run(ctx =>
+    ctx.db.system.query('_scheduled_functions').collect()
+  );
+  expect(
+    jobs.filter(job => !['success', 'canceled'].includes(job.state.kind))
+  ).toEqual([]);
+  activeInstance = undefined;
+}
+afterEach(async () => {
+  try {
+    await finishFixture();
+  } finally {
+    vi.useRealTimers();
+  }
+});
 async function fixture() {
+  await finishFixture();
   const t = createTestInstance();
+  activeInstance = t;
   registerBetterAuth(t);
   async function actor(name: string, permissions?: Record<string, string[]>) {
     const account = await createAuthAccount(t, name),
