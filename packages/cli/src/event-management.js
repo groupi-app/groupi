@@ -258,7 +258,7 @@ export async function discoverEvents(profile, key, options) {
       if (cursor) query.set('cursor', cursor);
       return readApi(profile, key, `/events/discover?${query}`);
     },
-    projectItem: item => {
+    projectItem: (/** @type {unknown} */ item) => {
       const row = record(item);
       if (typeof row.id !== 'string' || typeof row.title !== 'string')
         throw new CliError('INVALID_RESPONSE', 'Invalid discovered event.', 5);

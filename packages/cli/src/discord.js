@@ -32,7 +32,7 @@ export async function listDiscordGuilds(profile, key, options) {
       if (cursor) query.set('cursor', cursor);
       return readApi(profile, key, `/discord/guilds?${query}`);
     },
-    projectItem: item => {
+    projectItem: (/** @type {unknown} */ item) => {
       const row =
         /** @type {{id?:unknown,name?:unknown,status?:unknown,authorizedAt?:unknown,expiresAt?:unknown}} */ (
           item

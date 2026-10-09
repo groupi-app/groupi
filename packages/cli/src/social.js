@@ -85,7 +85,7 @@ export async function listSocial(profile, key, kind, options) {
       if (cursor) query.set('cursor', cursor);
       return readApi(profile, key, `${path}?${query}`);
     },
-    projectItem: item => summary(item, kind),
+    projectItem: (/** @type {unknown} */ item) => summary(item, kind),
   });
 }
 /** @param {Profile} profile @param {string} key @param {string} personId @param {boolean} [blocks] */
