@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mutateApi } from './mutations.js';
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 
 /** @param {unknown} value */
 function eventRecord(value) {
@@ -34,45 +35,18 @@ export async function getEvent(profile, key, id) {
 
 /** @param {{apiUrl: string}} profile @param {string} key @param {{limit: number, cursor?: string, all?: boolean}} options */
 export async function listEvents(profile, key, options) {
-  let cursor = options.cursor;
-  const items = [];
-  const seen = new Set();
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    const page = await readApi(profile, key, `/events?${query}`);
-    if (
-      !page ||
-      typeof page !== 'object' ||
-      !('items' in page) ||
-      !Array.isArray(page.items) ||
-      !('nextCursor' in page) ||
-      !(
-        page.nextCursor === null ||
-        (typeof page.nextCursor === 'string' && page.nextCursor.length > 0)
-      )
-    ) {
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Expected a cursor-paginated event page. The server may need an update.',
-        5
-      );
-    }
-    items.push(...page.items.map(eventRecord));
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(page.nextCursor))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a pagination cursor; retrieval stopped.',
-        5
-      );
-    seen.add(page.nextCursor);
-    cursor = page.nextCursor;
-  } while (cursor);
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      return readApi(profile, key, `/events?${query}`);
+    },
+    projectItem: eventRecord,
+  });
 }
 
 /** @param {{apiUrl:string,name:string}} profile @param {string} key @param {Record<string,unknown>} body @param {string} [requestId] */
