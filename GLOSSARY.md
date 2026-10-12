@@ -95,3 +95,20 @@ membership in a Group.
 **Friend**:
 A Groupi user with an accepted personal friendship relationship to another user.
 Friendship is independent of shared Group membership.
+
+**Add-on**:
+An optional event capability, such as reminders, a questionnaire, or a bring list.
+
+**Add-on template**:
+A reusable definition of a custom add-on. Editing it does not automatically
+change event add-ons already created from it.
+
+**Event add-on**:
+An add-on configured for a particular event. A custom event add-on uses that
+event's saved version of its template, which can differ from versions used by
+other events.
+
+**Groupi Date Language (GDL)**:
+A compact language for expressing proposed event dates, times, durations, and
+recurrences. Relative expressions are interpreted against a reference time and
+timezone.

@@ -5,7 +5,7 @@ import { internal } from '../../../_generated/api';
 import {
   requireEventMembership,
   requireEventRole,
-} from '../../v1/middleware/auth';
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   EventListResponseSchema,
@@ -70,7 +70,7 @@ export function createEventRoutes() {
     const query = c.req.valid('query');
     if (query.pagination === 'cursor') {
       const result = await ctx.runQuery(
-        internal.api.v1.internal.events.listUserEventsPage,
+        internal.events.restQueries.listUserEventsPage,
         {
           personId:
             personId as import('../../../_generated/dataModel').Id<'persons'>,
@@ -94,8 +94,10 @@ export function createEventRoutes() {
     // Get user's events via internal query
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.events.listUserEvents;
-    const result = await ctx.runQuery(listFn, { personId });
+    const listFn = internal.events.restQueries.listUserEvents;
+    const result = await ctx.runQuery(listFn, {
+      personId: personId as Id<'persons'>,
+    });
 
     return c.json(result.events, 200);
   });
@@ -218,8 +220,11 @@ export function createEventRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.events.getEventDetail;
-    const result = await ctx.runQuery(getFn, { eventId });
+    const getFn = internal.events.restQueries.getEventDetail;
+    const result = await ctx.runQuery(getFn, {
+      eventId: eventId as Id<'events'>,
+      personId: personId as Id<'persons'>,
+    });
 
     if (!result) {
       return c.json(

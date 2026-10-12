@@ -31,6 +31,8 @@ Groupi is a cross-platform event planner: Convex backend, Next.js web, React Nat
 
 Architecture invariants: Convex subscriptions/mutations own data synchronization; Next.js uses client components; shared logic stays platform-agnostic; types flow from Convex functions. Use `requireAuth(ctx)` for authenticated mutations and `getCurrentPerson(ctx)` for optional query auth. Business logic belongs in shared hooks with injected platform adapters. Use semantic design tokens and the atomic component hierarchy rather than hardcoded colors, radii, shadows, or z-indexes.
 
+For module ownership changes, read [architecture rules](.agents/rules/architecture.md): web features expose public entry points; reusable backend operations belong to domains and enforce permissions inside write transactions. For date parsing, use [shared GDL](docs/shared-gdl-design.md) with explicit reference time and timezone. For package resolution or generated outputs, read [workspace source ownership](docs/workspace-source-ownership-design.md).
+
 ## Skills and collaboration
 
 Choose relevant project workflows from [.agents/skills](.agents/skills): backend features, web components, shared hooks, add-ons, Convex tests, schema migrations, security review, code review, issue fixes, coverage gaps, dependency checks, and deployment verification. Specialized agents live in [.codex/agents](.codex/agents); hook configuration lives in [.codex/hooks.json](.codex/hooks.json).

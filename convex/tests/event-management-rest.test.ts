@@ -34,9 +34,10 @@ async function actor(t: ReturnType<typeof createTestInstance>, name: string) {
     path: string,
     method: string,
     body?: unknown,
-    requestId?: string
+    requestId?: string,
+    version: 'v1' | 'v2' = 'v2'
   ) =>
-    t.fetch(`/api/v2${path}`, {
+    t.fetch(`/api/${version}${path}`, {
       method,
       headers: {
         'x-api-key': rawKey,
@@ -140,6 +141,137 @@ describe('Event management side effects and safeguards', () => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+  it('preserves v1 member envelopes, notifications, and event boundaries through shared operations', async () => {
+    const { organizer, attendee, moderator, outsider, eventId } =
+      await fixture();
+    const members = await body(
+      await organizer.request(`/events/${eventId}/members`, 'GET')
+    );
+    const target = members.find(
+      (member: { personId: string }) => member.personId === attendee.personId
+    );
+    const other = await body(
+      await outsider.request('/events', 'POST', { title: 'Other event' }),
+      201
+    );
+    for (const method of ['PATCH', 'DELETE']) {
+      const denied = await body(
+        await organizer.request(
+          `/events/${eventId}/members/${other.membershipId}`,
+          method,
+          method === 'PATCH' ? { role: 'ATTENDEE' } : undefined,
+          undefined,
+          'v1'
+        ),
+        404
+      );
+      expect(denied).toMatchObject({
+        success: false,
+        error: { code: 'NOT_FOUND' },
+      });
+    }
+    const denied = await body(
+      await moderator.request(
+        `/events/${eventId}/members/${target.id}`,
+        'PATCH',
+        { role: 'ORGANIZER' },
+        undefined,
+        'v1'
+      ),
+      403
+    );
+    expect(denied).toMatchObject({
+      success: false,
+      error: { code: 'FORBIDDEN' },
+    });
+    const promoted = await body(
+      await organizer.request(
+        `/events/${eventId}/members/${target.id}`,
+        'PATCH',
+        { role: 'MODERATOR' },
+        undefined,
+        'v1'
+      )
+    );
+    expect(promoted).toMatchObject({
+      success: true,
+      data: { id: target.id, role: 'MODERATOR', personId: attendee.personId },
+    });
+    expect(
+      (
+        await attendee.auth.query(
+          api.notifications.queries.fetchNotificationsForPerson,
+          {}
+        )
+      ).notifications
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'USER_PROMOTED' }),
+      ])
+    );
+    const removed = await body(
+      await organizer.request(
+        `/events/${eventId}/members/${target.id}`,
+        'DELETE',
+        undefined,
+        undefined,
+        'v1'
+      )
+    );
+    expect(removed).toEqual({
+      success: true,
+      data: { message: 'Member removed successfully' },
+    });
+    expect(
+      (
+        await attendee.auth.query(
+          api.notifications.queries.fetchNotificationsForPerson,
+          {}
+        )
+      ).notifications
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'USER_LEFT' })])
+    );
+    const left = await body(
+      await moderator.request(
+        `/events/${eventId}/leave`,
+        'POST',
+        undefined,
+        undefined,
+        'v1'
+      )
+    );
+    expect(left).toEqual({
+      success: true,
+      data: { message: 'Left event successfully' },
+    });
+    expect(
+      (
+        await organizer.auth.query(
+          api.notifications.queries.fetchNotificationsForPerson,
+          {}
+        )
+      ).notifications
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'USER_LEFT',
+          authorId: moderator.personId,
+        }),
+      ])
+    );
+    await body(
+      await organizer.request(
+        `/events/${eventId}/leave`,
+        'POST',
+        undefined,
+        undefined,
+        'v1'
+      ),
+      403
+    );
+  });
+
   it('matches app organizer authority and delivers role/removal notifications', async () => {
     const { organizer, attendee, moderator, outsider, eventId } =
       await fixture();

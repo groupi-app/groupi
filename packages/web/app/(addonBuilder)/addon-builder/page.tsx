@@ -1,6 +1,6 @@
 'use client';
 
-import { TemplateLibrary } from './components/template-library';
+import { TemplateLibrary } from '@/features/addons/authoring';
 
 export default function AddonBuilderPage() {
   return (

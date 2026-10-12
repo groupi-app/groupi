@@ -1,7 +1,5 @@
 // Export all Convex hooks for easy importing
 export * from './use-accounts';
-export * from './use-addon-gating';
-export * from './use-addons';
 export * from './use-availability';
 export * from './use-event-invites';
 export * from './use-events';

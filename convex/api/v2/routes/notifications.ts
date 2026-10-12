@@ -92,7 +92,7 @@ export function createNotificationRoutes() {
     const { unread, pagination, limit, cursor } = c.req.valid('query');
     if (pagination === 'cursor') {
       const result = await ctx.runQuery(
-        internal.api.v1.internal.notifications.listNotificationsPage,
+        internal.notifications.rest.listNotificationsPage,
         {
           personId:
             personId as import('../../../_generated/dataModel').Id<'persons'>,
@@ -118,7 +118,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.notifications.listNotifications;
+    const listFn = internal.notifications.rest.listNotifications;
     const result = await ctx.runQuery(listFn, { personId, unreadOnly });
 
     return c.json(result, 200);
@@ -158,7 +158,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const countFn = internal.api.v1.internal.notifications.getUnreadCount;
+    const countFn = internal.notifications.rest.getUnreadCount;
     const result = await ctx.runQuery(countFn, { personId });
 
     return c.json({ count: result.count }, 200);
@@ -211,7 +211,7 @@ export function createNotificationRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const readFn = internal.api.v1.internal.notifications.markAsRead;
+      const readFn = internal.notifications.rest.markAsRead;
       await ctx.runMutation(readFn, { notificationId, personId });
 
       return c.json({ message: 'Notification marked as read' }, 200);
@@ -269,7 +269,7 @@ export function createNotificationRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unreadFn = internal.api.v1.internal.notifications.markAsUnread;
+      const unreadFn = internal.notifications.rest.markAsUnread;
       await ctx.runMutation(unreadFn, { notificationId, personId });
 
       return c.json({ message: 'Notification marked as unread' }, 200);
@@ -314,7 +314,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const markAllFn = internal.api.v1.internal.notifications.markAllAsRead;
+    const markAllFn = internal.notifications.rest.markAllAsRead;
     const result = await ctx.runMutation(markAllFn, { personId });
 
     return c.json(
@@ -366,7 +366,7 @@ export function createNotificationRoutes() {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
       // prettier-ignore
-      const deleteFn = internal.api.v1.internal.notifications.deleteNotification;
+      const deleteFn = internal.notifications.rest.deleteNotification;
       await ctx.runMutation(deleteFn, { notificationId, personId });
 
       return c.body(null, 204);
@@ -407,7 +407,7 @@ export function createNotificationRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     // prettier-ignore
-    const deleteAllFn = internal.api.v1.internal.notifications.deleteAllNotifications;
+    const deleteAllFn = internal.notifications.rest.deleteAllNotifications;
     await ctx.runMutation(deleteAllFn, { personId });
 
     return c.body(null, 204);
@@ -440,7 +440,7 @@ export function createNotificationRoutes() {
       const ctx = c.get('ctx');
       try {
         const result = await ctx.runMutation(
-          internal.api.v1.internal.notifications.markScopeAsRead,
+          internal.notifications.rest.markScopeAsRead,
           {
             personId: c.get(
               'personId'

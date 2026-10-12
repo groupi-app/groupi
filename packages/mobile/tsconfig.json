@@ -22,8 +22,6 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@groupi/shared": ["../shared/src"],
-      "@groupi/shared/*": ["../shared/src/*"],
       "convex/_generated/*": ["../../convex/_generated/*"]
     }
   },

@@ -15,6 +15,11 @@ Rules for working with the Groupi design system, design tokens, and component ar
 
 ## Overview
 
+Feature-specific application behavior lives in feature-owned modules under
+`packages/web/features/<feature>/`; routes compose their public interfaces.
+The atomic design system remains the home for reusable UI. The first migrated
+feature is add-ons; see `docs/adr/0002-feature-owned-application-modules.md`.
+
 Groupi uses a three-layer design token system with atomic component architecture:
 
 | Layer      | Purpose                         | Example                          |

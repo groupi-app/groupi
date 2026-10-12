@@ -82,7 +82,7 @@ export function createFriendRoutes() {
     if (q.pagination === 'cursor')
       return c.json(
         FriendPageResponseSchema.parse(
-          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+          await ctx.runQuery(internal.friends.socialRest.listPage, {
             personId: personId as Id<'persons'>,
             kind: 'friends',
             limit: q.limit ?? 20,
@@ -94,7 +94,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listFriends;
+    const listFn = internal.friends.rest.listFriends;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(result, 200);
@@ -150,7 +150,7 @@ export function createFriendRoutes() {
     if (q.pagination === 'cursor')
       return c.json(
         RequestPageResponseSchema.parse(
-          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+          await ctx.runQuery(internal.friends.socialRest.listPage, {
             personId: personId as Id<'persons'>,
             kind: 'incoming',
             limit: q.limit ?? 20,
@@ -162,7 +162,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listPendingRequests;
+    const listFn = internal.friends.rest.listPendingRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(result, 200);
@@ -218,7 +218,7 @@ export function createFriendRoutes() {
     if (q.pagination === 'cursor')
       return c.json(
         RequestPageResponseSchema.parse(
-          await ctx.runQuery(internal.api.v1.internal.social.listPage, {
+          await ctx.runQuery(internal.friends.socialRest.listPage, {
             personId: personId as Id<'persons'>,
             kind: 'outgoing',
             limit: q.limit ?? 20,
@@ -230,7 +230,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listSentRequests;
+    const listFn = internal.friends.rest.listSentRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(result, 200);
@@ -278,7 +278,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const searchFn = internal.api.v1.internal.friends.searchUsers;
+    const searchFn = internal.friends.rest.searchUsers;
     const result = await ctx.runQuery(searchFn, { personId, searchTerm: q });
 
     return c.json(result, 200);
@@ -328,7 +328,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const statusFn = internal.api.v1.internal.friends.getFriendshipStatus;
+    const statusFn = internal.friends.rest.getFriendshipStatus;
     const result = await ctx.runQuery(statusFn, { personId, targetPersonId });
 
     return c.json(result, 200);
@@ -390,7 +390,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const sendFn = internal.api.v1.internal.friends.sendFriendRequest;
+    const sendFn = internal.friends.rest.sendFriendRequest;
     const result = await ctx.runMutation(sendFn, {
       requesterId: personId,
       addresseeId: body.personId,
@@ -457,7 +457,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const acceptFn = internal.api.v1.internal.friends.acceptFriendRequest;
+    const acceptFn = internal.friends.rest.acceptFriendRequest;
     await ctx.runMutation(acceptFn, { friendshipId, personId });
 
     return c.json({ message: 'Friend request accepted' }, 200);
@@ -521,7 +521,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const declineFn = internal.api.v1.internal.friends.declineFriendRequest;
+    const declineFn = internal.friends.rest.declineFriendRequest;
     await ctx.runMutation(declineFn, { friendshipId, personId });
 
     return c.json({ message: 'Friend request declined' }, 200);
@@ -580,7 +580,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const cancelFn = internal.api.v1.internal.friends.cancelFriendRequest;
+    const cancelFn = internal.friends.rest.cancelFriendRequest;
     await ctx.runMutation(cancelFn, { friendshipId, personId });
 
     return c.body(null, 204);
@@ -639,7 +639,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const removeFn = internal.api.v1.internal.friends.removeFriend;
+    const removeFn = internal.friends.rest.removeFriend;
     await ctx.runMutation(removeFn, { friendshipId, personId });
 
     return c.body(null, 204);

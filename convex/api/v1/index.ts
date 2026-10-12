@@ -4,7 +4,7 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
-import { validateApiKey, getApiKey } from './middleware/auth';
+import { validateApiKey, getApiKey } from '../middleware/auth';
 import { createEventRoutes } from './routes/events';
 import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
@@ -324,5 +324,5 @@ export const handler = httpAction(async (ctx, request) => {
   return app.fetch(publicRequest);
 });
 
-// Note: Internal queries and mutations are at convex/api/v1/internal/*
+// Reusable operations live in domain modules; this folder owns HTTP routes.
 // They are automatically exposed via the internal API object

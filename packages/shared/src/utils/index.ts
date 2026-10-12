@@ -7,6 +7,7 @@ import type { ValidationResult, FormField, AsyncState } from '../types';
 
 // Re-export specialized utility modules
 export * from './device';
+export { evaluateVisibilityConditions } from './addon-visibility';
 export * from './keyboard';
 export * from './accessibility';
 export * from './gdl-parser';

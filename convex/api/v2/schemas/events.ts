@@ -97,6 +97,11 @@ export const CreateEventRequestSchema = z
       .openapi({
         description: 'Potential date/time options for voting',
       }),
+    timezone: z.string().optional().openapi({
+      example: 'America/New_York',
+      description:
+        'IANA timezone used to interpret GDL. Defaults to UTC when omitted.',
+    }),
     gdl: z.string().optional().openapi({
       example: '[Tu,Th]@18-20',
       description:

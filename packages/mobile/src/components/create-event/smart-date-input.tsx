@@ -8,14 +8,13 @@ import { useCSSVariable } from 'uniwind';
 import { api } from 'convex/_generated/api';
 import {
   formatParsedDateRange,
-  isGDL,
   parseDateExpressions,
-  parseGDL,
   tryClientDecomposition,
   validateParsedDates,
   type ParsedDateRange,
 } from '@groupi/shared';
 import { toast } from '@groupi/shared/platform';
+import { isGDL, parseGDL } from '@groupi/shared/gdl';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -118,7 +117,10 @@ export function SmartDateInput({
     const refDate = referenceDate ?? new Date();
 
     if (isGDL(debouncedInput)) {
-      const result = parseGDL(debouncedInput, refDate);
+      const result = parseGDL(debouncedInput, {
+        referenceDate: refDate,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
       if (result.success) return { mode: 'gdl', dates: result.results };
       return { mode: 'gdl', dates: [], error: result.error };
     }

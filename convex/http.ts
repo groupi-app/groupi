@@ -711,10 +711,9 @@ const inviteMetaHandler = httpAction(async (ctx, request) => {
     });
   }
 
-  const meta = await ctx.runQuery(
-    internal.api.v1.internal.invites.getInviteOgMeta,
-    { token }
-  );
+  const meta = await ctx.runQuery(internal.invites.rest.getInviteOgMeta, {
+    token,
+  });
 
   if (!meta) {
     return new Response(JSON.stringify({ error: 'Invite not found' }), {

@@ -6,7 +6,7 @@ import { createValidationHook } from '../validation';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventRole } from '../../v1/middleware/auth';
+import { requireEventRole } from '../../middleware/auth';
 import {
   ErrorResponseSchema,
   EventIdParamSchema,

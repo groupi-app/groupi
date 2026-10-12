@@ -22,7 +22,7 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
-import { validateApiKey, getApiKey } from '../v1/middleware/auth';
+import { validateApiKey, getApiKey } from '../middleware/auth';
 import { createCliAuthRoutes } from './routes/cliAuth';
 import { createImageRoutes } from './routes/images';
 import { createEventRoutes } from './routes/events';

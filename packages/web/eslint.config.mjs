@@ -1,9 +1,15 @@
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
+import featureImports from './eslint-rules/feature-imports.mjs';
 
 const eslintConfig = [
   ...nextCoreWebVitals,
   ...nextTypescript,
+  {
+    files: ['**/*.{ts,tsx,js,jsx,mjs}'],
+    plugins: { groupi: { rules: { 'feature-imports': featureImports } } },
+    rules: { 'groupi/feature-imports': 'error' },
+  },
   {
     ignores: [
       'node_modules/**',

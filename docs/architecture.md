@@ -75,6 +75,14 @@ This architecture maximizes code reuse while maintaining platform-specific optim
 
 ### `/convex/` - Backend Functions
 
+Each domain owns its operations and internal REST adapters. Public native
+`queries.ts` and `mutations.ts` paths remain stable, while reusable behavior lives
+in focused domain modules such as `events/writes.ts`. `api/v1/` and `api/v2/` own
+HTTP schemas, envelopes, and status conventions; both call domain adapters.
+Shared API-key verification and Hono middleware live in `api/auth.ts` and
+`api/middleware/auth.ts`. Write operations authorize the verified actor inside
+the transaction. See [the backend ownership decision](./adr/0003-domain-owned-backend-operations.md).
+
 ```
 convex/
 ├── schema.ts              # Database schema definition

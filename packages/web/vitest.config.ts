@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     globals: true,
     include: [
+      'features/**/*.test.{ts,tsx}',
+      'eslint-rules/**/*.test.ts',
       'hooks/**/*.test.ts',
       'hooks/**/*.test.tsx',
       'components/**/*.test.tsx',
@@ -50,6 +52,8 @@ export default defineConfig({
         'test-setup.ts',
         '**/*.config.*',
         '**/*.d.ts',
+        'features/**/*.test.{ts,tsx}',
+        'eslint-rules/**',
         'env.mjs',
         'middleware.ts',
         'coverage/**',
@@ -68,6 +72,7 @@ export default defineConfig({
         statements: 36.9,
       },
       include: [
+        'features/**/*.{ts,tsx}',
         'hooks/**/*.{ts,tsx}',
         'components/**/*.{ts,tsx}',
         'lib/**/*.{ts,tsx}',
@@ -78,7 +83,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/convex': resolve(__dirname, '../../convex'),
-      '@groupi/shared': resolve(__dirname, '../shared/src'),
       '@': resolve(__dirname, '.'),
       '~': resolve(__dirname, '.'),
     },

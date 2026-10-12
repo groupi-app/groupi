@@ -235,7 +235,7 @@ Tu*3@14            → Next 3 Tuesdays at 2 PM (3 options)
 Fr*2@18-20         → Next 2 Fridays, 6-8 PM (2 options)
 ```
 
-Recurrence is anchored to the current date at parse time. If today is Tuesday, `Tu*3` includes today as the first occurrence.
+Recurrence is anchored to the reference instant interpreted in the supplied timezone. If today is Tuesday, `Tu*3` includes today as the first occurrence.
 
 To recur different days by different amounts, use `*` inside a list:
 
@@ -400,14 +400,14 @@ Notes may **not** appear between a day and `@` outside of a list: `Fr "dinner" @
 1. **GDL detection**: Input is treated as GDL if it contains `@`, `^`, or `*`. Day abbreviations alone do not trigger GDL detection (they are too common in English)
 2. **Token boundaries**: Day abbreviations must be bounded by whitespace, start-of-input, or GDL operators — never matched as substrings of longer words
 3. **Range validation**: `(a,b)` or `(a,b,step)` — 2 or 3 items. One item or four+ items are syntax errors. Empty lists `[]` are syntax errors
-4. **Range expansion**: `(a,b)` expands to `[a, a+1, ..., b]` (step 1). `(a,b,step)` expands to `[a, a+step, a+2*step, ...]` up to b. Day ranges wrap around the week if end precedes start. If the step doesn't evenly divide the range, expansion stops before exceeding the endpoint
+4. **Range expansion**: `(a,b)` expands to `[a, a+1, ..., b]` (step 1). `(a,b,step)` expands to `[a, a+step, a+2*step, ...]` up to b. Day ranges wrap around the week if end precedes start. Descending time ranges cross midnight: `Fr@(22,2)` expands Friday 22:00 and 23:00, then Saturday 00:00, 01:00 and 02:00. Stepped overnight ranges stop before overshooting their endpoint. If the step doesn't evenly divide the range, expansion stops before exceeding the endpoint
 5. **Cross-product**: When lists or expanded ranges appear on both sides of an operator (`@`, `-`), all combinations are produced
 6. **`-` and `^` are mutually exclusive**: A single time expression uses either a span or a duration, never both
 7. **`*` binds to individual items**: `Tu*3` is valid. `[Tu,Th]*2` distributes: `[Tu*2,Th*2]`. `*` cannot take a list or range as its count. `*0` is a syntax error, `*1` is equivalent to omitting `*`
 8. **Cross-midnight spans**: In `a-b` spans, if b < a the event rolls into the next day. `@X-X` (identical start/end) is a syntax error
 9. **Bare numbers**: A bare number before `@` is a day-of-month. Month requires `MM/` prefix
 10. **Date resolution**: Dates resolve to the next future occurrence. If MM/DD has passed this year, it resolves to next year. `02/29` resolves to the next leap year
-11. **Recurrence anchor**: Recurrence is anchored to the current date at parse time. If today is the target day, today is the first occurrence
+11. **Recurrence anchor**: Recurrence is anchored to the reference instant interpreted in the supplied timezone. If today is the target day, today is the first occurrence
 12. **Notes**: Notes distribute to all options an entry produces. Per-item notes override. `+` is not recognized inside quotes. Notes cannot contain `"`. Unclosed quotes are a syntax error
 13. **Whitespace**: The parser is whitespace-tolerant within entries. Spaces around operators (`@`, `-`, `^`, `+`, `*`) are accepted and stripped
 14. **Max dates**: A single GDL expression can produce at most 20 date options. If evaluation would exceed 20, the entire expression is rejected with an error showing the count. No partial results are returned
@@ -464,3 +464,38 @@ These features are intentionally excluded from v1 to keep the parser simple and 
 | ISO dates                 | `2026-08-10@14`   | Conflicts with span `-` operator                    |
 | Day-level spans           | `Sa-Su`           | Use `[Sa,Su]` for all-day list instead              |
 | Note escaping             | `"say \"hello\""` | Notes cannot contain `"` in v1                      |
+
+## 11. Time context and REST creation
+
+The shared `@groupi/shared/gdl` entry point requires
+`parseGDL(input, { referenceDate: Date, timeZone: string })`. Callers capture the
+reference instant once per operation. Web and mobile supply the device timezone;
+the runtime host timezone never determines GDL interpretation.
+
+REST v1 and v2 `POST /events` accept `gdl` and an optional `timezone` IANA name:
+
+```json
+{
+  "title": "Friday evening",
+  "gdl": "Fr@(22,2,2)^2h",
+  "timezone": "America/New_York"
+}
+```
+
+Omitting `timezone` defaults GDL interpretation to UTC, including legacy request
+shapes. Explicit ISO date options keep their offsets. `gdl` cannot be combined
+with `potentialDateTimeOptions`. An invalid timezone or nonexistent/ambiguous
+local occurrence rejects the whole expression with an error identifying the
+problem; v1 returns `GDL_PARSE_ERROR`, and v2 returns `VALIDATION_ERROR` (HTTP 400).
+For example, `03/08@2:30` and `11/01@1:30` in `America/New_York` with a 2026
+reference encounter the spring gap and autumn overlap respectively.
+
+Calendar recurrences retain their local clock time across offset transitions.
+Durations measure elapsed time: `^2h` adds exactly two hours to the start instant.
+Duration ranges such as `Fr@7^(2h,4h)` produce separate two-, three-, and four-hour
+options.
+
+REST v2 checks idempotent replay before evaluating relative GDL. The replay hash
+binds the original request body, including timezone, so a retry returns the
+original creation result even after the reference clock changes. Changing the
+expression or timezone with the same key produces an idempotency conflict.

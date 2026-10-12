@@ -4,7 +4,7 @@ import { ConvexError } from 'convex/values';
 import type { Id } from '../../../_generated/dataModel';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership } from '../middleware/auth';
+import { requireEventMembership } from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   InviteListResponseSchema,
@@ -74,7 +74,7 @@ export function createInviteRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.invites.listEventInvites;
+    const listFn = internal.invites.rest.listEventInvites;
     const result = await ctx.runQuery(listFn, {
       eventId,
       personId: personId as Id<'persons'>,
@@ -156,7 +156,7 @@ export function createInviteRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.invites.createInvite;
+    const createFn = internal.invites.rest.createInvite;
     const result = await ctx.runMutation(createFn, {
       eventId,
       creatorMembershipId: membership.membershipId,
@@ -227,7 +227,7 @@ export function createInviteRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.invites.deleteInvite;
+      const deleteFn = internal.invites.rest.deleteInvite;
       await ctx.runMutation(deleteFn, { inviteId, personId });
 
       return c.json(
@@ -287,7 +287,7 @@ export function createInviteRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.invites.getInviteByToken;
+    const getFn = internal.invites.rest.getInviteByToken;
     const result = await ctx.runQuery(getFn, { token });
 
     if (!result) {
@@ -365,7 +365,7 @@ export function createInviteRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const acceptFn = internal.api.v1.internal.invites.acceptInvite;
+      const acceptFn = internal.invites.rest.acceptInvite;
       const result = await ctx.runMutation(acceptFn, { token, personId });
 
       return c.json(

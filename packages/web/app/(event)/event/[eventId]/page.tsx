@@ -1,7 +1,7 @@
 'use client';
 
 import { EventOwnershipTransfer } from '@/components/organisms/event-ownership-transfer';
-import { EventAddons } from './components/event-addons';
+import { EventAddons } from '@/features/addons/runtime';
 import { EventHeader } from './components/event-header';
 import { MemberList } from './components/member-list';
 import { PostFeed } from './components/post-feed';
