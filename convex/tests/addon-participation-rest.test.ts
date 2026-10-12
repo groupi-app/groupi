@@ -108,7 +108,7 @@ it('public CLI performs validated built-in participation with isolation, paging,
     const impersonation = `${base}/questionnaire/data/${encodeURIComponent(`response:${attendee.personId}`)}`;
     await body(
       await moderator.request(impersonation, 'PUT', { data: { meal: 'Rice' } }),
-      400
+      403
     );
     await body(await moderator.request(impersonation, 'DELETE'), 403);
     const second = await body(
@@ -410,7 +410,7 @@ it('existing custom forms, votes, claims, toggles and buttons share app lifecycl
         'PUT',
         { data: { options: ['B'] } }
       ),
-      400
+      403
     );
     await body(
       await a.request(
@@ -418,7 +418,7 @@ it('existing custom forms, votes, claims, toggles and buttons share app lifecycl
         'PUT',
         { data: { options: ['B'] } }
       ),
-      400
+      403
     );
 
     await body(

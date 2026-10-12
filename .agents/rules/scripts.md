@@ -37,3 +37,15 @@ Follow [changeset approval](../../docs/agents/workflow.md#changeset-approval) fo
 The pre-push hook and CI enforce changesets. For work that legitimately needs none, the documented bypasses are `SKIP_CHANGESET=1 git push` locally and the `skip-changeset` PR label in CI. Prefer the targeted bypass to `--no-verify`, which disables all hooks. See [enforcement details](../../docs/changesets.md#enforcement-mechanisms).
 
 `pnpm changeset:status` inspects pending releases; `pnpm commit` provides the conventional-commit helper. Versioning/release scripts consume changesets and modify versions/changelogs (and may commit); they are release operations, not verification steps. Inspect the manifest and follow the authorized release scope, including [CLI release policy](../../docs/cli-release.md), before using them.
+
+## Workspace source and packaging
+
+Applications and checks consume shared TypeScript through package exports. Run
+`pnpm check:workspace-source` to verify resolution without compiling shared.
+Use `pnpm generate` for canonical Convex contracts; its wrapper anchors the CLI
+at the repository root even when a package invokes it.
+
+Distribution uses pnpm publication overrides. CI compiles shared, runs `pnpm
+pack`, and passes the tarball to `scripts/check-shared-package.mjs` to verify
+compiled exports. Agents validate source with permitted checks and leave this
+compilation to CI under the build restrictions above.

@@ -58,7 +58,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listFriends;
+    const listFn = internal.friends.rest.listFriends;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(
@@ -104,7 +104,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listPendingRequests;
+    const listFn = internal.friends.rest.listPendingRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(
@@ -150,7 +150,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.friends.listSentRequests;
+    const listFn = internal.friends.rest.listSentRequests;
     const result = await ctx.runQuery(listFn, { personId });
 
     return c.json(
@@ -200,7 +200,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const searchFn = internal.api.v1.internal.friends.searchUsers;
+    const searchFn = internal.friends.rest.searchUsers;
     const result = await ctx.runQuery(searchFn, { personId, searchTerm: q });
 
     return c.json(
@@ -252,7 +252,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const statusFn = internal.api.v1.internal.friends.getFriendshipStatus;
+    const statusFn = internal.friends.rest.getFriendshipStatus;
     const result = await ctx.runQuery(statusFn, { personId, targetPersonId });
 
     return c.json(
@@ -316,7 +316,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const sendFn = internal.api.v1.internal.friends.sendFriendRequest;
+    const sendFn = internal.friends.rest.sendFriendRequest;
     const result = await ctx.runMutation(sendFn, {
       requesterId: personId,
       addresseeId: body.personId,
@@ -385,7 +385,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const acceptFn = internal.api.v1.internal.friends.acceptFriendRequest;
+    const acceptFn = internal.friends.rest.acceptFriendRequest;
     await ctx.runMutation(acceptFn, { friendshipId, personId });
 
     return c.json(
@@ -451,7 +451,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const declineFn = internal.api.v1.internal.friends.declineFriendRequest;
+    const declineFn = internal.friends.rest.declineFriendRequest;
     await ctx.runMutation(declineFn, { friendshipId, personId });
 
     return c.json(
@@ -517,7 +517,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const cancelFn = internal.api.v1.internal.friends.cancelFriendRequest;
+    const cancelFn = internal.friends.rest.cancelFriendRequest;
     await ctx.runMutation(cancelFn, { friendshipId, personId });
 
     return c.json(
@@ -583,7 +583,7 @@ export function createFriendRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const removeFn = internal.api.v1.internal.friends.removeFriend;
+    const removeFn = internal.friends.rest.removeFriend;
     await ctx.runMutation(removeFn, { friendshipId, personId });
 
     return c.json(

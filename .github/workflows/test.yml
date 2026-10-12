@@ -252,6 +252,12 @@ jobs:
           cd packages/shared
           pnpm build
 
+      - name: Verify packed shared distribution
+        run: |
+          mkdir -p "$RUNNER_TEMP/groupi-shared-package"
+          pnpm --dir packages/shared pack --pack-destination "$RUNNER_TEMP/groupi-shared-package"
+          node scripts/check-shared-package.mjs "$RUNNER_TEMP/groupi-shared-package/"*.tgz
+
       - name: Build web application
         run: |
           cd packages/web
@@ -284,6 +290,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify workspace source resolution
+        run: pnpm check:workspace-source
 
       - name: Run all lint checks
         run: pnpm lint

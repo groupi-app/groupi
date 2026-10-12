@@ -52,6 +52,14 @@ You are working on Groupi, a cross-platform event planning application with the 
 - Require authentication with `await getCurrentPerson(ctx)` from `../auth`
 - Use `authComponent.getAnyUserById()` to look up Better Auth user data
 - Use `console.log` for logging (Convex's official logging method)
+- Domain modules own reusable read/write behavior. Native queries/mutations and
+  domain REST adapters call the same actor-aware operations where behavior is
+  equivalent; preserve native exported paths used by installed clients.
+- REST versions own transport schemas, envelopes, and statuses. Common REST
+  authentication lives in `convex/api/`, outside version folders. Domains must
+  not import versioned REST code; ESLint enforces this dependency direction.
+- Check domain write permissions in the transaction using the verified actor.
+  Earlier HTTP authorization queries do not replace this check.
 
 ### `/packages/shared/` - Cross-Platform Business Logic
 
@@ -70,8 +78,20 @@ You are working on Groupi, a cross-platform event planning application with the 
 - `utils/*.ts` - Cross-platform utility functions
 - `types/index.ts` - Shared type definitions
 
+### GDL
+
+`@groupi/shared/gdl` owns tokenization and evaluation. Supply an explicit
+reference instant and timezone; use device timezone in clients and UTC when REST
+omits its optional timezone. Keep this module independent of React, Convex,
+platform adapters, and design exports. Update shared conformance fixtures when
+changing grammar or time behavior; see `docs/shared-gdl-design.md`.
+
 ### `/packages/web/` - Next.js Web Application
 
+- Migrated features own their UI, hooks, supporting logic, and tests in
+  `features/<feature>/`. Routes compose public entry points; reusable atomic UI
+  stays in `components/`. Add-ons establish this convention; see
+  `docs/adr/0002-feature-owned-application-modules.md`.
 - Use shared hooks via factory pattern: `const { useEventData } = createEventHooks(api)`
 - Implement platform adapters in `lib/platform.ts`
 - Use App Router with client components in `app/` directory

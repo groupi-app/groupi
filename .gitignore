@@ -95,3 +95,10 @@ packages/mobile/android/app/*
 
 # Lighthouse reports
 packages/web/lighthouse-reports/
+
+# Disposable workspace outputs
+**/coverage/
+packages/shared/dist/
+convex/convex/
+packages/web/convex/
+*.tgz

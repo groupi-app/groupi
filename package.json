@@ -45,7 +45,7 @@
     "lint:tokens": "pnpm --filter @groupi/web lint:tokens",
     "convex:dev": "pnpx convex dev",
     "convex:deploy": "pnpx convex deploy",
-    "generate": "pnpx convex codegen",
+    "generate": "node scripts/convex-codegen.mjs",
     "generate:changelog": "pnpm --filter @groupi/web generate:changelog",
     "prepare": "husky",
     "changeset": "changeset",
@@ -54,7 +54,8 @@
     "changeset:status": "changeset status",
     "commit": "cz",
     "version-packages": "pnpm changeset:version && pnpm generate:changelog",
-    "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'"
+    "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'",
+    "check:workspace-source": "node scripts/check-workspace-source.mjs"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",

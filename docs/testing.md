@@ -890,9 +890,28 @@ point of tolerance), not claims that the improvement targets have been met.
 | Shared  | Lines      | 28.73%   | 28.7%          | 80%                |
 | Shared  | Statements | 27.60%   | 27.6%          | 80%                |
 
-Web measures all matching files under `hooks`, `components`, `lib`, and `stores`,
-subject to its existing exclusions. Shared has no explicit `coverage.include`, so
-Vitest measures files imported by its tests; this is not whole-package coverage.
+Web measures all matching files under `hooks`, `components`, `lib`, `stores`,
+and `features`, subject to its exclusions. The add-on ownership migration keeps
+three specific sets of relocated route UI outside the report:
+`features/addons/authoring/**`, `features/addons/creation/organisms/**`, and
+`features/addons/runtime/organisms/**`. Their predecessors lived under `app/**`,
+which the original baseline did not include. This preserves that existing scope
+instead of reducing the floors to absorb previously unmeasured UI. Add-on models,
+hooks, catalogs, gating, and direct-page adapters remain measured, including code
+that previously lived under `lib` or `hooks`. This is a relocation boundary for
+add-ons, not an exemption for future feature directories. Expanding route UI
+coverage requires an explicit baseline review and behavior tests.
+
+On `ab175523`, including all relocated UI measured 31.08% statements, 30.69%
+functions, 31.62% lines, and 28.12% branches. Preserving the predecessor route UI
+scope measured 38.28%, 39.61%, 38.59%, and 35.19%, respectively, before adding
+completion-metadata and definition-validation cases; all four unchanged floors
+passed. GDL grammar tests now run in shared alongside its conformance suite;
+the original web baseline already measured a parser re-export, so this transfer
+does not justify lowering web floors.
+
+Shared has no explicit `coverage.include`, so Vitest measures files imported by
+its tests; this is not whole-package coverage.
 Do not shrink either denominator to pass a gate. Expanding the shared denominator
 requires an explicit baseline review. Raise floors as coverage improves toward
 the targets; reductions require a documented review of the coverage change.

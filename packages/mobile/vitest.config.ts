@@ -86,12 +86,6 @@ export default defineConfig({
           import.meta.url
         )
       ),
-      '@groupi/shared/hooks': fileURLToPath(
-        new URL('../shared/src/hooks/index.ts', import.meta.url)
-      ),
-      '@groupi/shared/utils': fileURLToPath(
-        new URL('../shared/src/utils/index.ts', import.meta.url)
-      ),
       '@': './src',
       '@/components': './src/components',
       '@/lib': './src/lib',

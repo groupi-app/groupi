@@ -25,10 +25,7 @@
     ],
     "paths": {
       "@/convex/*": ["../../convex/*"],
-      "@/*": ["./*"],
-      "@groupi/shared": ["../../packages/shared/src"],
-      "@groupi/shared/hooks": ["../shared/src/hooks/index.ts"],
-      "@groupi/shared/utils": ["../shared/src/utils/index.ts"]
+      "@/*": ["./*"]
     }
   },
   "include": [

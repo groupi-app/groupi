@@ -5,7 +5,7 @@
   "license": "GPL-3.0",
   "description": "Convex backend functions and tests for Groupi",
   "scripts": {
-    "build": "cd .. && pnpx convex codegen",
+    "build": "pnpm --dir .. generate",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -15,7 +15,7 @@
     "test:no-codegen": "vitest run",
     "test:watch-no-codegen": "vitest --watch",
     "dev": "cd .. && pnpx convex dev",
-    "codegen": "cd .. && pnpx convex codegen"
+    "codegen": "pnpm --dir .. generate"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.13",
@@ -28,7 +28,8 @@
     "better-auth": "^1.6.2",
     "expo-server-sdk": "^7.1.0",
     "hono": "^4.12.18",
-    "resend": "^4.0.0"
+    "resend": "^4.0.0",
+    "@groupi/shared": "workspace:*"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",

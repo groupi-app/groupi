@@ -2,7 +2,7 @@ import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership } from '../middleware/auth';
+import { requireEventMembership } from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   AvailabilityGridResponseSchema,
@@ -68,7 +68,7 @@ export function createAvailabilityRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getGridFn = internal.api.v1.internal.availability.getAvailabilityGrid;
+    const getGridFn = internal.availability.rest.getAvailabilityGrid;
     const result = await ctx.runQuery(getGridFn, {
       eventId,
       personId: personId as Id<'persons'>,
@@ -151,7 +151,7 @@ export function createAvailabilityRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const submitFn = internal.api.v1.internal.availability.submitAvailability;
+    const submitFn = internal.availability.rest.submitAvailability;
     const result = await ctx.runMutation(submitFn, {
       membershipId: membership.membershipId,
       responses: body.responses,
@@ -217,7 +217,7 @@ export function createAvailabilityRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getDatesFn = internal.api.v1.internal.availability.getPotentialDates;
+    const getDatesFn = internal.availability.rest.getPotentialDates;
     const result = await ctx.runQuery(getDatesFn, {
       eventId,
       personId: personId as Id<'persons'>,

@@ -70,7 +70,7 @@ export function createMutingRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.muting.listMuted;
+    const listFn = internal.muting.rest.listMuted;
     const result = await ctx.runQuery(listFn, { personId, type });
 
     return c.json(
@@ -141,7 +141,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const muteFn = internal.api.v1.internal.muting.muteEvent;
+      const muteFn = internal.muting.rest.muteEvent;
       const result = await ctx.runMutation(muteFn, { personId, eventId });
 
       const message = result.alreadyMuted
@@ -218,7 +218,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unmuteFn = internal.api.v1.internal.muting.unmuteEvent;
+      const unmuteFn = internal.muting.rest.unmuteEvent;
       await ctx.runMutation(unmuteFn, { personId, eventId });
 
       return c.json(
@@ -297,7 +297,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const muteFn = internal.api.v1.internal.muting.mutePost;
+      const muteFn = internal.muting.rest.mutePost;
       const result = await ctx.runMutation(muteFn, { personId, postId });
 
       const message = result.alreadyMuted
@@ -374,7 +374,7 @@ export function createMutingRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unmuteFn = internal.api.v1.internal.muting.unmutePost;
+      const unmuteFn = internal.muting.rest.unmutePost;
       await ctx.runMutation(unmuteFn, { personId, postId });
 
       return c.json(

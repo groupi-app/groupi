@@ -50,3 +50,22 @@ These artifacts are workstation-local and are not required to resolve repository
 For portable source/merge evidence, use the exact GitHub commit and PR links above. Live URLs may move; a successful response today does not reproduce this snapshot.
 
 When integration changes, update this file rather than creating another competing current-status memo. Record the new as-of time, exact source/base/merge SHAs, PR state, frontend deployment, matching backend, completed checks and open gates. Verify remote refs/deployment metadata before calling a state current; preserve historical evidence separately and link it here. Keep ownership boundaries and any new permissions explicit in the handoff. A feature is not fully verified merely because it is deployed.
+
+## Architecture integration candidate — 2026-10-11
+
+The architecture work is integrated on `codex/architecture-modularity-test`
+from `test` base `70ee9c3c`. It adds feature-owned add-ons, domain-owned backend
+operations, shared GDL, and source-first shared package resolution. The approved
+patch changeset is `.changeset/metal-rings-sell.md`; no schema migration is needed.
+Current lint, types, formatting and source resolution pass. Web (1,248), mobile
+(580), shared (434), and CLI (399) tests pass; the CLI required one unchanged
+retry after a timeout. All 1,010 backend tests also pass after preserving admin event deletion
+cascades. [PR #290](https://github.com/groupi-app/groupi/pull/290) records hosted
+checks. Its first Vercel attempt exposed a shared source module-format issue;
+the candidate corrects ESM semantics and compiled publication paths. Earlier
+deployment evidence above remains historical.
+
+The user authorized merging this candidate into `test` with administrator
+override only after all checks are green. This does not authorize production
+release. Browser/native verification has not run for this candidate; matching
+runtimes and an isolated signed-in session remain unverified.

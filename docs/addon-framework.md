@@ -81,7 +81,7 @@ Three principles guide the framework:
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │       AddonDefinition Registry                            │  │
-│  │  registerAddon() with validation + duplicate detection    │  │
+│  │  Explicit catalog + validation + duplicate detection    │  │
 │  └──────────────┬───────────────────────────────────────────┘  │
 │                 │                                               │
 │    ┌────────────┼────────────┬───────────┐                     │
@@ -334,56 +334,37 @@ await ctx.setAddonData({
 
 ## Frontend
 
-### Registry Interface
+### Feature ownership and catalog
 
-The frontend registry (`packages/web/app/(newEvent)/create/components/addon-registry.ts`) defines `AddonDefinition`:
+The web feature lives in `packages/web/features/addons`. Routes compose its public
+entry points: `runtime`, `creation`, `authoring`, `hooks`, `schema`, `fields`,
+`completion`, `gating`, and `page`. ESLint rejects imports into private feature
+files, feature imports back into routes, and runtime imports of authoring code.
+Reusable atomic UI remains outside the feature.
 
-```typescript
-interface AddonDefinition {
-  id: string;
-  name: string;
-  description: string;
-  iconName: keyof typeof Icons;
-  author?: { name: string; url?: string };
+Built-in definitions are explicit exports in `runtime/organisms/`, composed once
+by `runtime/catalog.ts`. Shared completion metadata lives in `model/completion.ts`
+and is used by both definitions and the lightweight gating entry. Catalog
+validation preserves development errors and production logging/skipping; it does
+not depend on route import order or side-effect registration.
 
-  // Create wizard
-  CreateConfigComponent: ComponentType<AddonConfigProps>;
-  isEnabled: (formState) => boolean;
-  onEnable: (formState) => Partial<FormState>;
-  onDisable: (formState) => Partial<FormState>;
-  getConfigFromFormState: (formState) => Record<string, unknown> | null;
+`getAddonById(addonType, config)` resolves custom definitions from the current
+event's saved configuration. It does not populate a global custom-template
+registry. Source-template edits or a visit to another event cannot replace that
+event's name, rendering settings, or completion requirements. Runtime renderers
+receive the authoritative configuration row's add-on type for data operations.
 
-  // Event page
-  EventCardComponent: ComponentType<EventCardProps>;
+Creation consumes `AddonCreationState`: add-on configurations and relevant dates.
+The route maps this narrow state to the full wizard state; the feature does not
+import the wizard's context. The obsolete wizard `reminderOffset` alias is removed;
+persisted event and REST reminder compatibility remains intact.
 
-  // Manage page
-  ManageConfigComponent: ComponentType<ManageConfigProps>;
-
-  // Dedicated page (optional)
-  PageComponent?: ComponentType<AddonPageProps>;
-  pageTitle?: string;
-
-  // Opt-out
-  supportsOptOut: boolean;
-  optOutLabel?: string;
-
-  // Gating
-  requiresCompletion?: boolean;
-  completionRoute?: string;
-}
-```
-
-Add-ons self-register by calling `registerAddon()` at module level. The function validates:
-
-- Required fields (id, name, description, iconName, all components and functions)
-- Duplicate detection (warns in dev, skips silently in prod)
-- Gating consistency (`completionRoute` required when `requiresCompletion` is true)
-
-The module is then imported as a side effect where needed: `import './addons/my-addon'`.
+Authoring owns the builder, template library, and template settings. It shares
+model definitions and editors with runtime code without importing route state.
 
 ### Hooks
 
-Generic hooks in `packages/web/hooks/convex/use-addons.ts`:
+Generic hooks in `packages/web/features/addons/hooks/use-addons.ts`:
 
 | Hook                                    | Purpose                           |
 | --------------------------------------- | --------------------------------- |
@@ -427,10 +408,14 @@ Add-ons can require completion before a member can access event content.
 
 ### How it works
 
-1. The `getAddonCompletionStatus` query checks availability and each enabled addon for the current user
-2. The `useAddonGating(eventId)` hook wraps the query and returns `{ redirectTo, isLoading }`
-3. The event layout (`layout.tsx`) calls the hook and redirects on non-exempt routes
-4. Exempt routes (to avoid loops): `/availability`, `/addon/`, `/manage-addons`
+1. `getAddonCompletionStatus` checks availability and enabled add-on completion.
+2. `useAddonGating(eventId)` combines status with the current event's saved configurations.
+3. `EventAddonGate` hides protected content while loading or redirecting. Organizers remain exempt; availability is first.
+4. Availability, add-on detail, management, and settings routes are matched by event-relative path segments to avoid redirect loops.
+5. Disabled, missing, or unsupported direct add-on URLs show an unavailable state and a return-to-event link, never an unusable form.
+
+This is a web navigation workflow, not an additional backend authorization rule.
+Mobile completion alignment is separate follow-up work.
 
 ### Gating order
 
@@ -612,7 +597,7 @@ Schemas are defined with Zod + OpenAPI in `convex/api/v1/schemas/addons.ts`. Rou
 Notify attendees before the event starts. Config: `{ reminderOffset: ReminderOffset }`.
 
 - **Handler:** `convex/addons/handlers/reminders.ts` (trusted — needs scheduler)
-- **Frontend:** `packages/web/app/(newEvent)/create/components/addons/reminder-addon.tsx`
+- **Frontend:** `packages/web/features/addons/runtime/organisms/reminder-addon.tsx`
 - Schedules via Convex scheduler, cancels on disable/date reset/event delete
 - Supports opt-out per user
 
@@ -623,7 +608,7 @@ Ask attendees custom questions. Config: `{ questions: Question[] }`.
 Question types: `SHORT_ANSWER`, `LONG_ANSWER`, `MULTIPLE_CHOICE`, `CHECKBOXES`, `NUMBER`, `DROPDOWN`, `YES_NO`.
 
 - **Handler:** `convex/addons/handlers/questionnaire.ts` (standard)
-- **Frontend:** `packages/web/app/(newEvent)/create/components/addons/questionnaire-addon.tsx`
+- **Frontend:** `packages/web/features/addons/runtime/organisms/questionnaire-addon.tsx`
 - Responses stored as `addonData` with key `response:{personId}`
 - Config updates clear all responses and notify members (`ADDON_CONFIG_RESET` notification)
 - Has `requiresCompletion: true` — members are gated until they fill out the questionnaire
@@ -636,7 +621,7 @@ Coordinate what attendees bring to the event. Config: `{ items: BringListItem[] 
 Each item has `id`, `name`, and `quantity` (>= 1).
 
 - **Handler:** `convex/addons/handlers/bringList.ts` (standard)
-- **Frontend:** `packages/web/app/(newEvent)/create/components/addons/bring-list-addon.tsx`
+- **Frontend:** `packages/web/features/addons/runtime/organisms/bring-list-addon.tsx`
 - Claims stored as `addonData` with key `claims:{personId}`
 - Config updates clear all claims and notify members
 - No gating (`requiresCompletion: false`)
@@ -647,7 +632,7 @@ Each item has `id`, `name`, and `quantity` (>= 1).
 Sync events with Discord scheduled events. Config: `{ guildId: string, guildName: string }`.
 
 - **Handler:** `convex/addons/handlers/discord.ts` (trusted — needs scheduler for Discord API calls)
-- **Frontend:** `packages/web/app/(newEvent)/create/components/addons/discord-addon.tsx`
+- **Frontend:** `packages/web/features/addons/runtime/organisms/discord-addon.tsx`
 - Creates Discord scheduled event when date is chosen
 - Updates Discord event on date/detail changes
 - Deletes Discord event on disable/date reset/event delete
@@ -659,7 +644,7 @@ Sync events with Discord scheduled events. Config: `{ guildId: string, guildName
 Template-based addons created by users. Config: `{ templateId: string, template: CustomAddonTemplate }`.
 
 - **Handler:** `convex/addons/handlers/custom.ts` (trusted — automations need scheduler/DB)
-- **Frontend:** Various components in `packages/web/app/(newEvent)/create/components/addons/`
+- **Frontend:** Various components in `packages/web/features/addons/runtime/organisms/`
 - Template stored in `addonTemplates` table, embedded in addon config when enabled
 - Supports all 13 field types, section layouts, and automations
 - Config updates clear responses and notify members
@@ -721,61 +706,21 @@ registerAddonHandler(myAddonHandler);
 pnpm generate
 ```
 
-### 5. Create frontend definition
+### 5. Define the frontend implementation
 
-```typescript
-// packages/web/app/(newEvent)/create/components/addons/my-addon.tsx
-'use client';
+Create the UI implementation under `packages/web/features/addons/runtime/organisms/`
+using an existing built-in as a reference. Export its definition instead of mutating
+a registry at import time. Supply creation, event-card, and management UI, with an
+optional dedicated page. Keep configuration changes scoped to the add-on's own
+entry in the narrow creation state.
 
-import { registerAddon } from '../addon-registry';
+### 6. Add the definition to the catalog
 
-function MyCreateConfig({ formState, setFormState }) {
-  /* ... */
-}
-function MyEventCard({ eventId, config }) {
-  /* ... */
-}
-function MyManageConfig({ config, onSave, onDisable, isSaving }) {
-  /* ... */
-}
-
-registerAddon({
-  id: 'my-addon',
-  name: 'My Add-on',
-  description: 'Does something useful',
-  iconName: 'sparkles',
-  author: { name: 'Groupi' },
-
-  CreateConfigComponent: MyCreateConfig,
-  isEnabled: fs => fs.addonConfigs?.['my-addon'] !== undefined,
-  onEnable: fs => ({
-    addonConfigs: { ...fs.addonConfigs, 'my-addon': { setting: 'default' } },
-  }),
-  onDisable: fs => {
-    const { 'my-addon': _, ...rest } = fs.addonConfigs ?? {};
-    return { addonConfigs: rest };
-  },
-  getConfigFromFormState: fs => fs.addonConfigs?.['my-addon'] ?? null,
-
-  EventCardComponent: MyEventCard,
-  ManageConfigComponent: MyManageConfig,
-
-  supportsOptOut: false,
-});
-```
-
-### 6. Import for side-effect registration
-
-Add the import to all 4 rendering entry points:
-
-- `event-addons.tsx`
-- `addon/[addonId]/page.tsx`
-- `manage-addons-content.tsx`
-- `new-event-addons.tsx`
-
-```typescript
-import './addons/my-addon';
-```
+Add the definition to `runtime/catalog.ts` and its shared completion metadata to
+`model/completion.ts`. Routes already consume the feature and need no additional
+imports. Keep creation/management order deliberate, and verify catalog validation,
+creation serialization, and the real completion workflow. Run `pnpm check`,
+`pnpm lint:tokens`, and the relevant tests.
 
 ## Security Model
 

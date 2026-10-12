@@ -1,3 +1,8 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
+import { authComponent, type AuthUserId, type ExtendedAuthUser } from '../auth';
+import { isAdminRole } from '../lib/constants';
 import { hash } from '../lib/requestId';
 import {
   enableAddonConfiguration,
@@ -14,11 +19,8 @@ import {
   updateEventForPerson,
   updatePotentialDateTimesForPerson,
 } from './writes';
-import {
-  readEventDetail,
-  eventDetailValidator,
-} from '../api/v1/internal/events';
-import { parseGDL } from '../lib/gdl_parser';
+import { readEventDetail, eventDetailValidator } from './restQueries';
+import { parseGDL } from '@groupi/shared/gdl';
 
 function requestValidationError(message: string) {
   return new ConvexError({ code: 'VALIDATION_ERROR', message });
@@ -36,6 +38,7 @@ const createBody = v.object({
   chosenEndDateTime: v.optional(v.string()),
   potentialDateTimeOptions: v.optional(v.array(option)),
   gdl: v.optional(v.string()),
+  timezone: v.optional(v.string()),
   reminderOffset: createEventArgs.fields.reminderOffset,
 });
 const ids = v.object({
@@ -52,6 +55,7 @@ export const create = internalMutation({
   },
   returns: ids,
   handler: async (ctx, { personId, userId, requestId, body }) => {
+    const now = Date.now();
     const person = await ctx.db.get(personId);
     if (!person || person.userId !== userId)
       throw new ConvexError({
@@ -70,12 +74,12 @@ export const create = internalMutation({
           'Idempotency-Key must be <unix-ms>.<uuid-v4>.'
         );
       const issuedAt = Number(requestId.split('.')[0]);
-      if (issuedAt > Date.now() + 300000)
+      if (issuedAt > now + 300000)
         throw requestValidationError(
           'Idempotency-Key timestamp is too far in the future.'
         );
       expiresAt = issuedAt + DAY;
-      if (expiresAt <= Date.now())
+      if (expiresAt <= now)
         throw new ConvexError({
           code: 'IDEMPOTENCY_EXPIRED',
           message:
@@ -106,13 +110,16 @@ export const create = internalMutation({
     }
     // Expand relative GDL only after checking replay; the hash binds the original
     // accepted input, not dates that would change when parsing on another day.
-    const { gdl, ...args } = body;
+    const { gdl, timezone, ...args } = body;
     if (gdl !== undefined) {
       if (args.potentialDateTimeOptions !== undefined)
         throw requestValidationError(
           'Cannot combine gdl and potentialDateTimeOptions.'
         );
-      const parsed = parseGDL(gdl);
+      const parsed = parseGDL(gdl, {
+        referenceDate: new Date(now),
+        timeZone: timezone ?? 'UTC',
+      });
       if (!parsed.success)
         throw requestValidationError(`Invalid GDL expression: ${parsed.error}`);
       args.potentialDateTimeOptions = parsed.results.map(value => ({
@@ -140,7 +147,7 @@ export const create = internalMutation({
         membershipId,
       });
       await ctx.scheduler.runAfter(
-        Math.max(0, expiresAt - Date.now()),
+        Math.max(0, expiresAt - now),
         internal.events.rest.expireRequest,
         { requestRowId }
       );
@@ -228,3 +235,108 @@ export const update = internalMutation({
   },
 });
 import { parseEventDate } from './writes';
+
+/** Administrative deletion: caller identity is verified by REST authentication. */
+export const deleteEvent = internalMutation({
+  args: {
+    eventId: v.id('events'),
+    userId: v.string(),
+  },
+  returns: v.object({ success: v.boolean() }),
+  handler: async (ctx, { eventId, userId }) => {
+    const user = await authComponent.getAnyUserById(ctx, userId as AuthUserId);
+    if (!isAdminRole((user as ExtendedAuthUser | null)?.role)) {
+      throw new ConvexError({
+        code: 'FORBIDDEN',
+        message: 'Admin privileges required',
+      });
+    }
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Delete image if exists
+    if (event.imageStorageId) {
+      try {
+        await ctx.storage.delete(event.imageStorageId);
+      } catch {
+        // Ignore
+      }
+    }
+
+    await deleteEventTransfers(ctx, eventId);
+    await removeAudiencesForEvent(ctx, eventId);
+
+    // Delete all related data
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+
+    // Delete availabilities
+    for (const membership of memberships) {
+      const availabilities = await ctx.db
+        .query('availabilities')
+        .withIndex('by_membership', q => q.eq('membershipId', membership._id))
+        .collect();
+      for (const avail of availabilities) {
+        await ctx.db.delete(avail._id);
+      }
+    }
+
+    // Delete potential date times
+    const potentialDates = await ctx.db
+      .query('potentialDateTimes')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const pdt of potentialDates) {
+      await ctx.db.delete(pdt._id);
+    }
+
+    // Delete posts and replies
+    const posts = await ctx.db
+      .query('posts')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const post of posts) {
+      const replies = await ctx.db
+        .query('replies')
+        .withIndex('by_post', q => q.eq('postId', post._id))
+        .collect();
+      for (const reply of replies) {
+        await ctx.db.delete(reply._id);
+      }
+      await ctx.db.delete(post._id);
+    }
+
+    // Delete invites
+    const invites = await ctx.db
+      .query('invites')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const invite of invites) {
+      await ctx.db.delete(invite._id);
+    }
+
+    // Delete notifications
+    const notifications = await ctx.db
+      .query('notifications')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect();
+    for (const notif of notifications) {
+      await ctx.db.delete(notif._id);
+    }
+
+    // Delete memberships
+    for (const membership of memberships) {
+      await ctx.db.delete(membership._id);
+    }
+
+    // Delete event
+    await deleteEventApplications(ctx, eventId);
+    await ctx.db.delete(eventId);
+
+    return { success: true };
+  },
+});
