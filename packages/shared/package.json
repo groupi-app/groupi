@@ -64,50 +64,91 @@
   "author": "Groupi Team",
   "license": "GPL-3.0",
   "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/index.mjs",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
       ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.mjs",
-        "require": "./dist/index.js"
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "default": "./dist/index.cjs"
+        }
       },
       "./hooks": {
-        "types": "./dist/hooks/index.d.ts",
-        "import": "./dist/hooks/index.mjs",
-        "require": "./dist/hooks/index.js"
+        "import": {
+          "types": "./dist/hooks/index.d.ts",
+          "default": "./dist/hooks/index.js"
+        },
+        "require": {
+          "types": "./dist/hooks/index.d.cts",
+          "default": "./dist/hooks/index.cjs"
+        }
       },
       "./utils": {
-        "types": "./dist/utils/index.d.ts",
-        "import": "./dist/utils/index.mjs",
-        "require": "./dist/utils/index.js"
+        "import": {
+          "types": "./dist/utils/index.d.ts",
+          "default": "./dist/utils/index.js"
+        },
+        "require": {
+          "types": "./dist/utils/index.d.cts",
+          "default": "./dist/utils/index.cjs"
+        }
       },
       "./types": {
-        "types": "./dist/types/index.d.ts",
-        "import": "./dist/types/index.mjs",
-        "require": "./dist/types/index.js"
+        "import": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/types/index.js"
+        },
+        "require": {
+          "types": "./dist/types/index.d.cts",
+          "default": "./dist/types/index.cjs"
+        }
       },
       "./platform": {
-        "types": "./dist/platform/index.d.ts",
-        "import": "./dist/platform/index.mjs",
-        "require": "./dist/platform/index.js"
+        "import": {
+          "types": "./dist/platform/index.d.ts",
+          "default": "./dist/platform/index.js"
+        },
+        "require": {
+          "types": "./dist/platform/index.d.cts",
+          "default": "./dist/platform/index.cjs"
+        }
       },
       "./design": {
-        "types": "./dist/design/index.d.ts",
-        "import": "./dist/design/index.mjs",
-        "require": "./dist/design/index.js"
+        "import": {
+          "types": "./dist/design/index.d.ts",
+          "default": "./dist/design/index.js"
+        },
+        "require": {
+          "types": "./dist/design/index.d.cts",
+          "default": "./dist/design/index.cjs"
+        }
       },
       "./design/themes": {
-        "types": "./dist/design/themes/index.d.ts",
-        "import": "./dist/design/themes/index.mjs",
-        "require": "./dist/design/themes/index.js"
+        "import": {
+          "types": "./dist/design/themes/index.d.ts",
+          "default": "./dist/design/themes/index.js"
+        },
+        "require": {
+          "types": "./dist/design/themes/index.d.cts",
+          "default": "./dist/design/themes/index.cjs"
+        }
       },
       "./gdl": {
-        "types": "./dist/gdl/index.d.ts",
-        "import": "./dist/gdl/index.mjs",
-        "require": "./dist/gdl/index.js"
+        "import": {
+          "types": "./dist/gdl/index.d.ts",
+          "default": "./dist/gdl/index.js"
+        },
+        "require": {
+          "types": "./dist/gdl/index.d.cts",
+          "default": "./dist/gdl/index.cjs"
+        }
       }
     }
-  }
+  },
+  "type": "module"
 }

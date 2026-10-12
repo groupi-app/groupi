@@ -61,8 +61,8 @@ All four stages are implemented and reviewed in the working tree. Final
 The original-base suites passed 2,388 tests. Integration validation passes web
 1,219, mobile 580, shared 434, and CLI 399 tests. One CLI timeout passed on an
 unchanged rerun. The latest test branch bounds backend workers and treats
-unhandled scheduler errors as failures; full integrated backend validation is
-recorded in the PR. Review found and fixed an invalid zero day-range
+unhandled scheduler errors as failures. All 1,010 integrated backend tests pass
+after preserving administrative event deletion cascades (3,642 total tests). Review found and fixed an invalid zero day-range
 step, with parser and both HTTP-version regressions.
 
 Compiled-package verification is wired into the existing CI build job and has
@@ -71,3 +71,9 @@ not run locally, respecting the repository's build restrictions. Configured
 were refreshed with the installed official generator template while preserving
 component contracts. Browser verification remains unavailable because the local
 web server was not reachable. The approved patch changeset is `.changeset/metal-rings-sell.md`. The architecture snapshot was committed and integrated onto `test` at `70ee9c3c`, preserving newer ownership-transfer, Group, attachment, participation, and CLI pagination behavior. Hosted checks and deployment verification remain the merge gate.
+
+The first hosted build exposed a source ESM/CJS interoperability error in the
+web token generator. Shared now declares ES module semantics, with compiled
+ESM and CommonJS publication paths aligned to tsup defaults. The workspace
+source check exercises actual named theme imports through the web tooling.
+Compiled distribution and hosted preview checks remain required before merge.

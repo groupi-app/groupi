@@ -59,8 +59,11 @@ operations, shared GDL, and source-first shared package resolution. The approved
 patch changeset is `.changeset/metal-rings-sell.md`; no schema migration is needed.
 Current lint, types, formatting and source resolution pass. Web (1,219), mobile
 (580), shared (434), and CLI (399) tests pass; the CLI required one unchanged
-retry after a timeout. Full backend results and hosted checks are recorded in the
-candidate PR. Earlier deployment evidence above remains historical.
+retry after a timeout. All 1,010 backend tests also pass after preserving admin event deletion
+cascades. [PR #290](https://github.com/groupi-app/groupi/pull/290) records hosted
+checks. Its first Vercel attempt exposed a shared source module-format issue;
+the candidate corrects ESM semantics and compiled publication paths. Earlier
+deployment evidence above remains historical.
 
 The user authorized merging this candidate into `test` with administrator
 override only after all checks are green. This does not authorize production

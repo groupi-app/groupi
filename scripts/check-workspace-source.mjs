@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import process from 'node:process';
 import { URL } from 'node:url';
 import console from 'node:console';
 import assert from 'node:assert/strict';
@@ -37,4 +39,25 @@ for (const duplicate of [
     `${duplicate} must stay absent`
   );
 }
-console.log('Workspace package entries resolve to shared source.');
+// Exercise the ESM named-import path used by web tooling, not just resolution.
+const webRequire = createRequire(new URL('packages/web/package.json', root));
+execFileSync(
+  process.execPath,
+  [
+    '--import',
+    webRequire.resolve('tsx/esm'),
+    '--input-type=module',
+    '--eval',
+    `import assert from 'node:assert/strict';
+   import { baseThemes, sharedTokens, DEFAULT_LIGHT_THEME_ID, DEFAULT_DARK_THEME_ID }
+     from '@groupi/shared/design/themes';
+   assert.ok(baseThemes.length > 0);
+   assert.ok(sharedTokens);
+   assert.equal(typeof DEFAULT_LIGHT_THEME_ID, 'string');
+   assert.equal(typeof DEFAULT_DARK_THEME_ID, 'string');`,
+  ],
+  { cwd: fileURLToPath(new URL('packages/web/', root)), stdio: 'inherit' }
+);
+console.log(
+  'Workspace package entries resolve to shared source and ESM tooling loads named theme exports.'
+);

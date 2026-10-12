@@ -44,7 +44,10 @@ Implemented through package source exports and pnpm publication overrides.
 `packages/shared/package.json` owns every workspace entry point. Its ordinary
 exports point to TypeScript source; `publishConfig` overrides the entry points
 with compiled CommonJS, ES modules, and declarations when `pnpm pack` runs.
-Use pnpm for packaging so these overrides apply. Next transpiles the package;
+The package declares ES module semantics for TypeScript tooling. Distribution
+uses tsup’s matching `.js` / `.d.ts` ES module and `.cjs` / `.d.cts` CommonJS
+outputs, with declarations selected per module condition. Use pnpm for packaging
+so these overrides apply. Next transpiles the package;
 Expo/Metro watches workspace source; TypeScript, Vitest, token scripts, and Convex
 resolve the same manifest without shared source aliases or a prebuild.
 

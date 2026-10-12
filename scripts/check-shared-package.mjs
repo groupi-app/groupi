@@ -26,26 +26,29 @@ try {
     readFileSync(path.join(packageRoot, 'package.json'), 'utf8')
   );
   for (const [entry, conditions] of Object.entries(manifest.exports)) {
-    for (const condition of ['types', 'import', 'require']) {
-      const target = conditions[condition];
-      assert.ok(
-        target?.startsWith('./dist/'),
-        `${entry} ${condition} must use dist`
-      );
-      assert.ok(
-        existsSync(path.join(packageRoot, target)),
-        `${entry} ${condition} missing`
-      );
-    }
-    // Load the packed files with installed peers; source exports are not involved.
     for (const condition of ['import', 'require']) {
+      const { types, default: target } = conditions[condition];
+      for (const file of [types, target]) {
+        assert.ok(
+          file?.startsWith('./dist/'),
+          `${entry} ${condition} must use dist`
+        );
+        assert.ok(
+          existsSync(path.join(packageRoot, file)),
+          `${entry} ${condition} missing ${file}`
+        );
+      }
+      // Load the packed files with installed peers; source exports are not involved.
       execFileSync(process.execPath, [
         '--check',
-        path.join(packageRoot, conditions[condition]),
+        path.join(packageRoot, target),
       ]);
+      if (condition === 'require') {
+        require(path.join(packageRoot, target));
+      } else {
+        await import(pathToFileURL(path.join(packageRoot, target)).href);
+      }
     }
-    require(path.join(packageRoot, conditions.require));
-    await import(pathToFileURL(path.join(packageRoot, conditions.import)).href);
   }
   for (const field of ['main', 'module', 'types']) {
     assert.ok(manifest[field].startsWith('dist/'));
