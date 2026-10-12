@@ -59,10 +59,10 @@ The architectural rationale is recorded in
 All four stages are implemented and reviewed in the working tree. Final
 `pnpm check` and `pnpm check:workspace-source` pass with shared `dist` absent.
 The original-base suites passed 2,388 tests. Integration validation passes web
-1,219, mobile 580, shared 434, and CLI 399 tests. One CLI timeout passed on an
+1,248, mobile 580, shared 434, and CLI 399 tests. One CLI timeout passed on an
 unchanged rerun. The latest test branch bounds backend workers and treats
 unhandled scheduler errors as failures. All 1,010 integrated backend tests pass
-after preserving administrative event deletion cascades (3,642 total tests). Review found and fixed an invalid zero day-range
+after preserving administrative event deletion cascades (3,671 total tests). Review found and fixed an invalid zero day-range
 step, with parser and both HTTP-version regressions.
 
 Compiled-package verification is wired into the existing CI build job and has

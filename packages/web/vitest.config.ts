@@ -53,6 +53,12 @@ export default defineConfig({
         '**/*.config.*',
         '**/*.d.ts',
         'features/**/*.test.{ts,tsx}',
+        // Preserve the app/** route-UI scope when moving add-ons into features.
+        // Models, hooks, catalogs, gating, and page adapters remain measured.
+        // See docs/testing.md before changing this relocation boundary.
+        'features/addons/authoring/**',
+        'features/addons/creation/organisms/**',
+        'features/addons/runtime/organisms/**',
         'eslint-rules/**',
         'env.mjs',
         'middleware.ts',

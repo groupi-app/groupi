@@ -57,7 +57,7 @@ The architecture work is integrated on `codex/architecture-modularity-test`
 from `test` base `70ee9c3c`. It adds feature-owned add-ons, domain-owned backend
 operations, shared GDL, and source-first shared package resolution. The approved
 patch changeset is `.changeset/metal-rings-sell.md`; no schema migration is needed.
-Current lint, types, formatting and source resolution pass. Web (1,219), mobile
+Current lint, types, formatting and source resolution pass. Web (1,248), mobile
 (580), shared (434), and CLI (399) tests pass; the CLI required one unchanged
 retry after a timeout. All 1,010 backend tests also pass after preserving admin event deletion
 cascades. [PR #290](https://github.com/groupi-app/groupi/pull/290) records hosted
