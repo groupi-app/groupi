@@ -1,3 +1,6 @@
+import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
+import { deleteEventTransfers } from '../eventTransfers/cleanup';
+import { deleteEventApplications } from '../eventApplications/cleanup';
 import { authComponent, type AuthUserId, type ExtendedAuthUser } from '../auth';
 import { isAdminRole } from '../lib/constants';
 import { hash } from '../lib/requestId';
@@ -262,6 +265,9 @@ export const deleteEvent = internalMutation({
       }
     }
 
+    await deleteEventTransfers(ctx, eventId);
+    await removeAudiencesForEvent(ctx, eventId);
+
     // Delete all related data
     const memberships = await ctx.db
       .query('memberships')
@@ -328,6 +334,7 @@ export const deleteEvent = internalMutation({
     }
 
     // Delete event
+    await deleteEventApplications(ctx, eventId);
     await ctx.db.delete(eventId);
 
     return { success: true };
