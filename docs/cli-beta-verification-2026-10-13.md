@@ -44,6 +44,12 @@ code changed. The originating track verified the affected 23 tests in UTC and
 America/New_York and the full 673-test backend suite in UTC with its existing
 scheduler-error handling. Fresh PR CI must still pass for the final commit.
 
+The fresh macOS/Node 24 installed-package job also exceeded the default
+five-second budget for the discussion workflow at 5.089 seconds. Only that
+multi-command integration case now has an explicit 15-second test budget; all
+assertions and product/client timeouts remain unchanged. Its six-test file passed
+against the installed archive, followed by `pnpm check`.
+
 The original baseline archive passed the package checks and has SHA-256
 `7c5c75d22e94ad1ab3b7c8e1f3ea6f07f919be99a65b78a9a1e80d4461eb8463`.
 After correcting stale README/guidance claims and documenting generic API-key
@@ -99,32 +105,92 @@ The user indicated `https://test.groupi.gg`. Its deployed client uses
 `https://hushed-whale-308.convex.cloud`, with REST at
 `https://hushed-whale-308.convex.site/api/v2`. The deployment's web source SHA is
 `6d29f19890f995d820e4311fbaeb24f82eb3c12d`, which is newer than the CLI baseline.
-Production uses `trustworthy-warthog-524`, a different backend. These endpoint
-observations distinguish targets; they do not independently prove all staging
-authentication/provider configuration is isolated.
+Production uses `trustworthy-warthog-524`, a different backend. Existing local
+Convex authorization confirmed test `SITE_URL` and `BETTER_AUTH_URL` both equal
+`https://test.groupi.gg`, and `E2E_TESTING` was already true. Its fixture key was
+absent. The authorized setup added one random temporary fixture key to this test
+backend only and retained it in a dedicated temporary Keychain entry. Vercel and
+production configuration were unchanged; no code was deployed.
 
-Live checks performed without a real credential:
+The existing `createTestSession` seeder created two fresh disposable real auth and
+person identities. An in-memory localhost bridge generated ordinary magic-link
+verification redirects for browser sessions, then the installed CLI initiated
+explicit PKCE-bound approval through the actual `cli-auth` page in independent
+browser contexts. No credential or magic-link URL was written to evidence.
 
-- REST health returned HTTP 200 and advertised `eventWrites`,
-  `eventCreationIdempotency`, `inviteWrites`, `inviteLists` and `attendanceWrites`.
-- The installed CLI sent an explicitly scoped invalid synthetic key to the test
-  backend: stdout was empty; stderr contained JSON `AUTH_REQUIRED`; exit was 3.
-  The error explains invalid/expired/disabled/revoked keys without revealing input.
-- The web E2E login endpoint rejected a keyless request with HTTP 403.
+| Installed live workflow                      | Result                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------- |
+| Browser login as each identity               | Passed; both stored in actual macOS Keychain                     |
+| `auth status`                                | Correct distinct identities and `credential-store` source        |
+| List and create event                        | Passed against test backend                                      |
+| Repeat event request ID                      | Original event and membership returned                           |
+| Send and repeat username invitation          | Original invitation returned                                     |
+| Attendee inspect, accept and RSVP            | Accepted once; RSVP `YES`                                        |
+| Organizer attendance, human and JSON         | Two members; attendee `ATTENDEE` / `YES`                         |
+| Organizer notifications                      | `EVENT_INVITE_ACCEPTED` and `USER_RSVP` observed                 |
+| Attendee notifications before Group workflow | `EVENT_INVITE_RECEIVED` observed                                 |
+| Attendee attempts event deletion             | `FORBIDDEN`, exit 3; organizer subsequently read surviving event |
 
-Existing seeding functions require `E2E_TESTING=true` and a matching
-`E2E_FIXTURE_KEY` of at least 32 characters. `createTestSession` creates real auth
-and person records; use fresh synthetic addresses because reusing an address
-also clears that user's sessions. `cleanupTestData` accepts explicitly tracked
-fixture IDs. The saved native fixture configuration belongs to
-`bright-jellyfish-173`, not the test backend; it was not reused across targets.
+Additional live checks:
 
-Local Convex authorization could not inspect the test deployment, and an existing
-preview credential failed authorization. The existing narrow Warp login flow was
-prepared for reauthorization. No staging identity, event, invitation, or valid CLI
-credential was created by these checks. Browser login, two-identity planning,
-notifications, real revocation/expiry, permission denials, replay/lost-response
-recovery and cleanup therefore remain pending live verification.
+- Correct identity through temporary environment and stdin credentials; status
+  reported the respective source without revealing the key.
+- An actual saved Keychain record with an expired local timestamp returned
+  `AUTH_EXPIRED`, exit 3, and the original valid record was restored. This tests
+  client-side expiry; server-side expiry was not fabricated or claimed.
+- An explicitly scoped invalid synthetic key returned empty stdout and structured
+  `AUTH_REQUIRED` on stderr, exit 3.
+- Both real CLI keys were revoked during cleanup. Attempts to use each old key
+  returned `AUTH_REQUIRED`, exit 3, and its saved Keychain entry was absent.
+- A controlled loopback relay forwarded authentication, original bodies and
+  `Idempotency-Key`, then dropped the first successful staging event/invitation
+  response. The installed CLI recovered each with two identical upstream attempts
+  and one request ID. Backend reads verified one event and one invitation
+  notification. Two earlier harness fixtures were explicitly deleted before the
+  corrected relay verification; they are included in cleanup accounting.
+
+The same disposable identities supported the parallel Groups acceptance track.
+Its separate UI mutations created Group/Invite List fixtures and used three
+explicitly tracked seeded events. Read-only installed CLI snapshots independently
+confirmed that direct admission and approved application produced `ATTENDEE` /
+`PENDING` memberships. These snapshots corroborate that track; they do not claim
+Groups commands exist in this CLI baseline.
+
+After a Group invitation created `GROUP_INVITE_RECEIVED`, the attendee's REST
+notification list returned HTTP 500 (`REMOTE_ERROR`, exit 5). A scoped readonly
+backend audit still confirmed exactly one invitation notification for the
+recovery event. The Groups track traced the separate staging regression to the
+notification projection returning `groupAnnouncement: null` while its return
+validator omitted that field, and prepared a tested correction. That correction
+was not deployed during this verification. Earlier core notification reads passed;
+mixed Group notification REST reads require verification after the correction.
+
+The Group notification correction is tracked in
+[PR #368](https://github.com/groupi-app/groupi/pull/368). The parallel track also
+verified that deleting a saved Invite List preserves its already-sent invitation;
+acceptance subsequently created a second event member with RSVP `PENDING`.
+
+Cleanup exposed another staging gap: ordinary event deletion left four
+`eventInvites` rows referencing the deleted test events. The guarded fixture
+cleanup removed only those exact owned IDs; no product cascade fix was made in
+this PR. This result must be corrected or explicitly resolved before declaring
+event deletion cleanup complete.
+
+Final coordinated cleanup was verified with narrowly scoped backend reads:
+
+| Resource                                                      | Final evidence                                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Seven tracked events, one Group, three Invite Lists           | Every exact ID resolves to `null`                                                            |
+| Event memberships, member invitations and event notifications | Zero rows for all seven tracked event IDs                                                    |
+| Two real CLI API keys                                         | Revoked; both old-key requests denied; both Keychain entries absent                          |
+| Two disposable auth users and persons                         | Removed; both user counts zero and person IDs resolve to `null`                              |
+| Seven remaining browser/fixture sessions                      | Removed: four organizer and three attendee; final counts zero                                |
+| Temporary fixture key                                         | Matched owned value before removal; absent from test deployment and temporary Keychain entry |
+| Local profiles and bridge                                     | Three temporary profiles removed; localhost bridge closed                                    |
+
+No Group/Invite List or active event fixture remains. The normal replay-retention
+policy and its scheduled cleanup were not bypassed. Existing test deployment
+settings, including `E2E_TESTING`, retained their original values.
 
 ## Publication gates
 
@@ -145,11 +211,14 @@ Read-only publication inspection found:
   tested archive, and publishes only that archive to `beta` after its environment
   gate. Registry version/help smoke runs after publication.
 
-Remaining operational inputs: restored access to the isolated test deployment
-and its fixture key; completed live evidence; authenticated npm scope/package
-authority; approved CLI changeset wording and prerelease version; protected
+Remaining operational inputs: resolve/reverify the mixed Group notification REST
+regression and event-invitation deletion cascade on the staging target;
+authenticated npm scope/package authority;
+approved CLI changeset wording and prerelease version; protected
 main-only `cli-release` environment with required reviewers and a scoped expiring
 credential; final six-job verification and explicit publication approval.
 Registry installation and the repeated registry-installed staging smoke remain
-post-publication checks. No version, registry, environment, secret, release-enable
-variable or issue metadata was changed during this verification.
+post-publication checks. No package version, registry state, publishing environment,
+publishing credential or release-enable variable was changed during verification.
+The parent applied the documented `skip-changeset` label to this documentation and
+test-only PR; these changes do not require a fabricated release changeset.
