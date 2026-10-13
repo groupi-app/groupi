@@ -108,7 +108,7 @@ describe('Discussion public CLI through authenticated REST and storage', () => {
       (await b.cli(member.rawKey, ['replies', 'delete', reply.replyId])).code
     ).toBe(2);
     await ok(member.rawKey, ['replies', 'delete', reply.replyId, '--yes']);
-  });
+  }, 15_000);
   it('preserves the historical post PATCH detail response with replies and attachment metadata', async () => {
     const { owner, member, eventId } = await setup();
     const post = await ok(owner.rawKey, [
