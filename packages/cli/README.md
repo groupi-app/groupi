@@ -56,6 +56,14 @@ replaces only that profile's saved key; previous server keys remain valid until
 revoked in browser API-key settings. CLI keys expire after 90 days and permit
 120 requests per minute. Expiry requires another explicit login.
 
+Existing API keys supplied through environment or stdin keep their configured
+expiry and quota. Keys created through Better Auth's generic API-key endpoint
+without an explicit policy currently default to 10 requests per 24 hours; they
+do not inherit the browser CLI login policy. A multi-command workflow may exhaust
+that allowance. `RATE_LIMITED` preserves enforcement and does not retry before a
+long server delay. Use an appropriately configured key for automation; changing
+an existing key's policy requires a deliberate operator action.
+
 `auth status` verifies the active key with the selected server and returns
 `{profile, apiUrl, source, account: {id, name, email}, expiresAt?}`. It never shows
 the key. `auth logout` deletes only the selected saved credential and does not
@@ -141,8 +149,8 @@ notifies members. Interactive mode identifies the event, profile, and server and
 asks for confirmation; JSON/headless mode requires `--yes`. Declining, Ctrl-C,
 or closing the prompt sends no write. An empty array clears the proposed dates.
 An event with a confirmed date must first have that date explicitly reset with
-`events dates reset <event-id> --yes` (or in the app). Visibility/permissions, media,
-and general add-on configuration are later CLI milestones.
+`events dates reset <event-id> --yes` (or in the app). Visibility and permissions
+use `events settings`; media and add-on commands appear in the generated reference.
 
 Both write commands check the server's advertised `eventWrites` version before
 submitting. Creation additionally requires version 1 replay protection with a
@@ -389,7 +397,8 @@ seconds; a longer server `Retry-After` returns an actionable failure immediately
 instead of retrying before the server allows. Other HTTP failures are not retried. Raw server error bodies are never
 echoed, preventing reflected credentials from entering diagnostics.
 Authentication exchanges and revocations have a 10-second network timeout and
-are never retried. The interactive TUI remains a later milestone.
+are never retried. The interactive TUI uses the same services; see the
+[terminal guide](./docs/terminal.md) for its supported workflows and CLI fallbacks.
 
 Command names, JSON fields, and exit codes are stable within a major version;
 breaking changes require a major release and migration notes. Experimental

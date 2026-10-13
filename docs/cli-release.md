@@ -58,6 +58,14 @@ staging**, with approved organizer and attendee identities:
    keys, authentication headers, real account email addresses, or raw credential
    stores in logs or release evidence.
 
+Record how each headless key was issued and its configured quota. Browser CLI
+authorization issues keys with 120 requests per minute. The generic Better Auth
+API-key endpoint currently defaults newly created keys without an explicit policy
+to 10 requests per 24 hours; environment/stdin use does not change that policy.
+Verify `RATE_LIMITED` without bypassing its delay or rewriting existing keys.
+Choose a key with a suitable explicit policy for the multi-command staging flow.
+See the [CLI authentication guide](../packages/cli/README.md#authentication).
+
 Before the complete release, also verify discussion/media, social/settings,
 existing add-ons, all role boundaries, content/mention safety, legacy text limits,
 media ownership/rollback/cleanup, and pagination/retry behavior. Perform manual
