@@ -34,6 +34,16 @@ against the hosted staging deployment. Missing test OAuth provider configuration
 produces expected fixture warnings; it does not establish real OAuth delivery.
 The native Keychain script creates and removes synthetic entries only.
 
+The focused beta auth/event/invitation/attendance REST suite also passed all 78
+tests in four files. The first PR CI run exposed an existing wall-clock-sensitive
+relative GDL replay test: `[Tu,Th]@18-20` could select an already-past time and
+receive HTTP 400 instead of 201. The verification branch includes the shared
+one-line fixed-clock anchor in that test, originally prepared as commit
+`c30fb3604d9ccb4a3b19e5584d73ef1e5f4f1ee1`. No parser, date semantics, or CLI runtime
+code changed. The originating track verified the affected 23 tests in UTC and
+America/New_York and the full 673-test backend suite in UTC with its existing
+scheduler-error handling. Fresh PR CI must still pass for the final commit.
+
 The original baseline archive passed the package checks and has SHA-256
 `7c5c75d22e94ad1ab3b7c8e1f3ea6f07f919be99a65b78a9a1e80d4461eb8463`.
 After correcting stale README/guidance claims and documenting generic API-key
