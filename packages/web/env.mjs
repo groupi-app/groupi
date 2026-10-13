@@ -36,6 +36,10 @@ export const env = createEnv({
   client: {
     // Core Application
     NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SUPPORT_URL: z.preprocess(
+      value => (typeof value === 'string' && !value.trim() ? undefined : value),
+      z.string().trim().url().startsWith('https://').optional()
+    ),
 
     // Convex Backend
     NEXT_PUBLIC_CONVEX_URL: z.string().url(),
@@ -55,6 +59,7 @@ export const env = createEnv({
     // Core Application
     DEBUG: process.env.DEBUG,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_SUPPORT_URL: process.env.NEXT_PUBLIC_SUPPORT_URL,
 
     // Convex Backend
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
