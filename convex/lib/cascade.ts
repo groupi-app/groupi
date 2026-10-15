@@ -20,7 +20,6 @@ export async function cascadeDeleteEventData(
     eventInvites,
     notifications,
     addonConfigs,
-    addonDataEntries,
     addonOptOuts,
     reminderOptOuts,
   ] = await Promise.all([
@@ -51,10 +50,6 @@ export async function cascadeDeleteEventData(
     ctx.db
       .query('eventAddonConfigs')
       .withIndex('by_event', q => q.eq('eventId', eventId))
-      .collect(),
-    ctx.db
-      .query('addonData')
-      .withIndex('by_event_addon', q => q.eq('eventId', eventId))
       .collect(),
     ctx.db
       .query('addonOptOuts')
@@ -97,6 +92,13 @@ export async function cascadeDeleteEventData(
     ]);
 
   await dispatchAddonLifecycle(ctx, eventId, 'onEventDeleted');
+
+  // Handlers may delete their own data. Collect only the remaining rows after
+  // lifecycle cleanup so the generic fallback never deletes stale document IDs.
+  const addonDataEntries = await ctx.db
+    .query('addonData')
+    .withIndex('by_event_addon', q => q.eq('eventId', eventId))
+    .collect();
 
   for (const avails of availabilitiesByMembership) {
     for (const a of avails) {
