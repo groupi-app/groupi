@@ -56,7 +56,6 @@ function loose(type, route, seen = new Set(), depth = 0) {
       .flatMap(t => loose(t, route + '[]', seen, depth + 1));
   return type
     .getProperties()
-    .filter(p => !p.name.startsWith('__'))
     .flatMap(p =>
       loose(
         checker.getTypeOfSymbolAtLocation(p, source),

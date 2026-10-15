@@ -299,7 +299,8 @@ export function createEventRoutes() {
         description: 'Event updated',
         content: {
           'application/json': {
-            schema: EventResponseSchema.extend({
+            schema: z.object({
+              success: z.literal(true),
               data: z.union([
                 EventResponseSchema.shape.data,
                 z.object({ eventId: z.string() }),

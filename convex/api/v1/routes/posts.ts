@@ -263,7 +263,8 @@ export function createPostRoutes() {
         description: 'Post updated',
         content: {
           'application/json': {
-            schema: PostResponseSchema.extend({
+            schema: z.object({
+              success: z.literal(true),
               data: z.union([
                 PostResponseSchema.shape.data,
                 z.object({ postId: z.string() }),

@@ -221,7 +221,8 @@ export function createReplyRoutes() {
         description: 'Reply updated',
         content: {
           'application/json': {
-            schema: ReplyResponseSchema.extend({
+            schema: z.object({
+              success: z.literal(true),
               data: z.union([
                 ReplyResponseSchema.shape.data,
                 z.object({ replyId: z.string() }),
