@@ -121,6 +121,7 @@ export const tables = {
     .index('by_interactionId_and_personId', ['interactionId', 'personId'])
     .index('by_expiresAt', ['expiresAt']),
   delegatedConsentRequests: defineTable({
+    selectedGroupId: v.optional(v.id('groups')),
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),

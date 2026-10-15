@@ -39,6 +39,9 @@ export const getConsentRequest = query({
       purpose: v.string(),
       requestedScopes: v.array(scope),
       requestedActions: v.array(action),
+      selectedGroup: v.optional(
+        v.object({ id: v.id('groups'), name: v.string() })
+      ),
       account: v.object({
         displayName: v.string(),
         email: v.optional(v.string()),
@@ -57,7 +60,12 @@ export const getConsentRequest = query({
         q.eq('interactionId', args.interactionId)
       )
       .unique();
-    if (!request || request.decision || request.expiresAt <= Date.now())
+    if (
+      !request ||
+      request.decision ||
+      request.expiresAt <= Date.now() ||
+      request.instanceId !== process.env.DELEGATED_ISSUER
+    )
       return null;
     const app = await ctx.db.get(request.appId);
     if (
@@ -66,10 +74,16 @@ export const getConsentRequest = query({
       (app.status === 'testing' && app.ownerPersonId !== auth.person._id)
     )
       return null;
-    const members = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', auth.person._id))
-      .take(100);
+    const selectedGroup = request.selectedGroupId
+      ? await ctx.db.get(request.selectedGroupId)
+      : null;
+    if (request.selectedGroupId && !selectedGroup) return null;
+    const members = selectedGroup
+      ? []
+      : await ctx.db
+          .query('memberships')
+          .withIndex('by_person', q => q.eq('personId', auth.person._id))
+          .take(100);
     const events = [];
     for (const member of members) {
       const event = await ctx.db.get(member.eventId);
@@ -83,6 +97,9 @@ export const getConsentRequest = query({
       appearance: app.appearance,
       purpose: app.purpose,
       requestedScopes: request.requestedScopes,
+      ...(selectedGroup
+        ? { selectedGroup: { id: selectedGroup._id, name: selectedGroup.name } }
+        : {}),
       requestedActions: actions.filter(value =>
         request.requestedScopes.includes(value)
       ),

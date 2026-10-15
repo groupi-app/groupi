@@ -66,3 +66,20 @@ it('expired or used magic links explain recovery in the initiating browser', () 
   render(<SignInPage />);
   expect(screen.getByText(/expired or was already used/)).toBeInTheDocument();
 });
+
+it('an expired active account preserves the hosted request while leaving add-account mode', () => {
+  mocks.params.set('mode', 'add-account');
+  render(<SignInPage />);
+  expect(mocks.replace).toHaveBeenCalledWith(
+    '/sign-in?redirect=%2Foauth%2Fconsent%3FinteractionId%3Dtrusted'
+  );
+});
+
+it('keeps the expired-link explanation when the account-selection session has also expired', () => {
+  mocks.params.set('mode', 'add-account');
+  mocks.params.set('error', 'INVALID_TOKEN');
+  render(<SignInPage />);
+  expect(mocks.replace).toHaveBeenCalledWith(
+    '/sign-in?redirect=%2Foauth%2Fconsent%3FinteractionId%3Dtrusted&error=INVALID_TOKEN'
+  );
+});

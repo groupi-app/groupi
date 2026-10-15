@@ -37,7 +37,8 @@ export function OnboardingRedirectWrapper() {
       console.log(
         '[OnboardingRedirect] Unauthenticated user on onboarding, redirecting to sign-in'
       );
-      router.push('/sign-in');
+      const destination = getSafeInternalRedirect(searchParams.get('redirect'));
+      router.push(`/sign-in?redirect=${encodeURIComponent(destination)}`);
       return;
     }
 

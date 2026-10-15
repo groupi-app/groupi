@@ -906,6 +906,13 @@
   },
   {
     "paging": null,
+    "name": "readOwnCommunityContext",
+    "method": "GET",
+    "path": "/groups/{groupId}/community-context",
+    "summary": "Read own community context"
+  },
+  {
+    "paging": null,
     "name": "getGroupsJoiningQuestionnaire",
     "method": "GET",
     "path": "/groups/{groupId}/joining-questionnaire",

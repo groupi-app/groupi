@@ -62,6 +62,7 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
     interactionId,
     account._id,
     request.appId,
+    request.selectedGroup?.id,
     request.expiresAt,
     [...request.requestedScopes].sort(),
     request.events.map(event => event._id).sort(),
@@ -100,7 +101,8 @@ function ConsentChoices({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasEventActions = actions.some(
-    action => !action.startsWith('identity.')
+    action =>
+      !action.startsWith('identity.') && action !== 'groups.context.read'
   );
   function toggleAction(action: (typeof actions)[number], checked: boolean) {
     const next = checked
@@ -124,11 +126,14 @@ function ConsentChoices({
         ? await approve({
             interactionId,
             actions,
-            selector: !hasEventActions
-              ? { kind: 'selected', eventIds: [] }
-              : allEvents
-                ? { kind: 'all-current-and-future' }
-                : { kind: 'selected', eventIds },
+            selector:
+              request.selectedGroup && actions.includes('groups.context.read')
+                ? { kind: 'selected-group', groupId: request.selectedGroup.id }
+                : !hasEventActions
+                  ? { kind: 'selected', eventIds: [] }
+                  : allEvents
+                    ? { kind: 'all-current-and-future' }
+                    : { kind: 'selected', eventIds },
             background,
           })
         : await deny({ interactionId });
@@ -216,6 +221,19 @@ function ConsentChoices({
             </dd>
           </div>
         </dl>
+        {request.selectedGroup ? (
+          <div className='space-y-2'>
+            <p className='font-medium'>{request.selectedGroup.name}</p>
+            <p className='text-sm text-muted-foreground'>
+              Access is limited to your own community context in this Group. Its
+              current and future Events shared with this Group are the boundary
+              for future participation permissions; Event access and changes
+              require separate supported consent and current eligibility. This
+              approval grants no reviewer authority or unrelated Group or Event
+              access.
+            </p>
+          </div>
+        ) : null}
         <p className='text-sm text-muted-foreground'>
           This app receives an opaque identifier for this account on this
           instance. Your display name and email are shared only if you
@@ -235,7 +253,7 @@ function ConsentChoices({
             </label>
           ))}
         </fieldset>
-        {hasEventActions ? (
+        {hasEventActions && !request.selectedGroup ? (
           <fieldset className='space-y-2' disabled={pending}>
             <legend className='font-medium'>Event access</legend>
             <label className='flex items-start gap-2'>

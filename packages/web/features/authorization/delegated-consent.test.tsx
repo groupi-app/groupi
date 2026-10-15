@@ -197,3 +197,30 @@ it('branded consent still discloses provider, Developer app and unambiguous acco
     '/sign-in?mode=add-account&redirect=%2Foauth%2Fconsent%3FinteractionId%3Di-1'
   );
 });
+
+it('discloses only the selected Group and future audience boundary for applicants', async () => {
+  mockConsent({
+    ...consentRequest(),
+    selectedGroup: { id: 'g-red', name: 'Red Room' },
+    requestedScopes: ['openid', 'groups.context.read'],
+    requestedActions: ['groups.context.read'],
+    events: [],
+  } as ReturnType<typeof consentRequest>);
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByText('Red Room')).toBeInTheDocument();
+  expect(
+    screen.getByText(/current and future Events shared with this Group/)
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  await user.click(screen.getByLabelText('Read your own community context'));
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledWith({
+    interactionId: 'i-1',
+    actions: ['groups.context.read'],
+    selector: { kind: 'selected-group', groupId: 'g-red' },
+    background: false,
+  });
+});

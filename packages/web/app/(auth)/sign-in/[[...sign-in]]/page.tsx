@@ -43,9 +43,18 @@ export default function SignInPage() {
     if (isAuthenticated && !isAddAccountMode) {
       router.replace(redirectTo);
     } else if (!isAuthenticated && isAddAccountMode) {
-      router.replace('/sign-in');
+      router.replace(
+        `/sign-in?redirect=${encodeURIComponent(redirectTo)}${oauthError ? `&error=${encodeURIComponent(oauthError)}` : ''}`
+      );
     }
-  }, [isAuthLoading, isAuthenticated, isAddAccountMode, redirectTo, router]);
+  }, [
+    isAuthLoading,
+    isAuthenticated,
+    isAddAccountMode,
+    redirectTo,
+    oauthError,
+    router,
+  ]);
 
   // Build callback URL based on mode
   // For add-account mode, go directly to events (they're already onboarded)
