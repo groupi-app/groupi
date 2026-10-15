@@ -238,6 +238,7 @@ export const client = internalQuery({
 });
 export const prepareConsent = internalMutation({
   args: {
+    selectedGroupId: v.optional(v.id('groups')),
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),
@@ -264,6 +265,28 @@ export const prepareConsent = internalMutation({
         q.eq('interactionId', args.interactionId)
       )
       .unique();
+    if (
+      args.requestedScopes.some(s => s.startsWith('groups.')) &&
+      !args.selectedGroupId
+    )
+      throw new Error('Select a Group for own community access');
+    if (
+      args.selectedGroupId &&
+      args.requestedScopes.some(
+        s =>
+          s !== 'openid' &&
+          s !== 'offline_access' &&
+          ![
+            'groups.context.read',
+            'groups.events.read',
+            'groups.applications.submit',
+            'groups.applications.edit',
+            'groups.applications.withdraw',
+          ].includes(s) &&
+          !s.startsWith('identity.')
+      )
+    )
+      throw new Error('Unsupported selected Group action');
     if (!request) await ctx.db.insert('delegatedConsentRequests', args);
     return null;
   },
@@ -391,6 +414,19 @@ export const finalizeConsent = internalMutation({
       (ticket.background && !request.requestedScopes.includes('offline_access'))
     )
       throw new ConvexError('Approval scope changed');
+    if (
+      ticket.selector.kind === 'selected-group' &&
+      ticket.selector.groupId !== request.selectedGroupId
+    )
+      throw new ConvexError('Selected Group changed');
+    if (
+      request.selectedGroupId &&
+      ticket.selector.kind !== 'selected-group' &&
+      ticket.actions.some(a => !a.startsWith('identity.'))
+    )
+      throw new ConvexError(
+        'Selected Group consent cannot grant unrelated Events'
+      );
     if (ticket.decision === 'denied') {
       await ctx.db.patch(request._id, {
         decision: 'denied',

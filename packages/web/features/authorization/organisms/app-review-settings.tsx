@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
+import { HostedAppearanceEditor } from './hosted-appearance-editor';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -176,6 +177,10 @@ function ReviewQueue() {
                   ))}
                 </ul>
               </div>
+              <HostedAppearanceEditor
+                appId={app._id}
+                appearance={app.appearance}
+              />
               <div className='flex flex-wrap gap-2'>
                 {app.status !== 'approved' ? (
                   <Button onClick={() => choose(app, 'approved')}>

@@ -1,5 +1,10 @@
 import { v } from 'convex/values';
 export const actions = [
+  'groups.context.read',
+  'groups.events.read',
+  'groups.applications.submit',
+  'groups.applications.edit',
+  'groups.applications.withdraw',
   'identity.display-name',
   'identity.email',
   'events.read',
@@ -15,6 +20,7 @@ export const actions = [
 ] as const;
 export const action = v.union(...actions.map(value => v.literal(value)));
 export const selector = v.union(
+  v.object({ kind: v.literal('selected-group'), groupId: v.id('groups') }),
   v.object({ kind: v.literal('selected'), eventIds: v.array(v.id('events')) }),
   v.object({ kind: v.literal('all-current-and-future') })
 );

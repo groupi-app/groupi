@@ -1,3 +1,4 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
 import { liveGrant, delegatedAudience } from '../authorization/model';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { components } from '../_generated/api';
@@ -231,6 +232,14 @@ export const getEventMembership = internalQuery({
     personId: v.string(),
   },
   handler: async (ctx, { eventId, personId }) => {
+    if (
+      await isEventExcludedForPerson(
+        ctx,
+        eventId as Id<'events'>,
+        personId as Id<'persons'>
+      )
+    )
+      return null;
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -342,6 +351,13 @@ export const validateBoundedToken = internalMutation({
         credentialId: v.id('authorizationCredentials'),
       }),
     }),
+    v.object({
+      errorCode: v.union(
+        v.literal('TOKEN_EXPIRED'),
+        v.literal('CONNECTION_REVOKED'),
+        v.literal('FORBIDDEN')
+      ),
+    }),
     v.null()
   ),
   handler: async (ctx, { tokenHash, kind }) => {
@@ -350,9 +366,18 @@ export const validateBoundedToken = internalMutation({
       .query('authorizationCredentials')
       .withIndex('by_secretHash', q => q.eq('secretHash', tokenHash))
       .unique();
-    if (
-      !credential ||
-      credential.kind !== kind ||
+    if (!credential || credential.kind !== kind) return null;
+    if (kind === 'delegated-access') {
+      const grant = await ctx.db.get(credential.grantId);
+      if (credential.revokedAt !== undefined || grant?.revokedAt !== undefined)
+        return { errorCode: 'CONNECTION_REVOKED' as const };
+      if (
+        (credential.expiresAt !== undefined &&
+          credential.expiresAt <= Date.now()) ||
+        (grant?.expiresAt !== undefined && grant.expiresAt <= Date.now())
+      )
+        return { errorCode: 'TOKEN_EXPIRED' as const };
+    } else if (
       credential.revokedAt !== undefined ||
       (credential.expiresAt !== undefined && credential.expiresAt <= Date.now())
     )
@@ -372,7 +397,9 @@ export const validateBoundedToken = internalMutation({
         credential: { kind: 'bounded' as const, credentialId: credential._id },
       };
     } catch {
-      return null;
+      return kind === 'delegated-access'
+        ? { errorCode: 'FORBIDDEN' as const }
+        : null;
     }
   },
 });

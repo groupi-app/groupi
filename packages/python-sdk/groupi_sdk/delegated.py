@@ -15,6 +15,10 @@ from .transport import Transport, GroupiError, _NoRedirect, _HTTPHandler, _HTTPS
 
 DELEGATED_ACTIONS = frozenset(
     (
+        "groups.context.read", "groups.events.read",
+        "groups.applications.submit",
+        "groups.applications.edit",
+        "groups.applications.withdraw",
         "identity.display-name",
         "identity.email",
         "events.read",
@@ -113,7 +117,7 @@ class DelegatedSession:
         session.background = bool(state.get("refresh_token"))
         return session
 
-    def authorization_request(self, *, redirect_uri, background=False):
+    def authorization_request(self, *, redirect_uri, background=False, selected_group_id=None):
         state, nonce, verifier = (
             secrets.token_urlsafe(32),
             secrets.token_urlsafe(32),
@@ -144,6 +148,8 @@ class DelegatedSession:
                 "resource": self.audience,
             }
         )
+        if selected_group_id:
+            query += "&" + urllib.parse.urlencode({"group_id": selected_group_id})
         return {
             "url": self.issuer + "/auth?" + query,
             "state": state,

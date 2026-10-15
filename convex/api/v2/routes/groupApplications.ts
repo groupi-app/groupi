@@ -168,7 +168,9 @@ export function createGroupApplicationRoutes() {
         body: {
           required: true,
           content: {
-            'application/json': { schema: z.object({ answers }).strict() },
+            'application/json': {
+              schema: z.object({ answers }).strict(),
+            },
           },
         },
       },
@@ -217,7 +219,14 @@ export function createGroupApplicationRoutes() {
         body: {
           required: true,
           content: {
-            'application/json': { schema: z.object({ answers }).strict() },
+            'application/json': {
+              schema: z
+                .object({
+                  answers,
+                  expectedRevision: z.number().int().optional(),
+                })
+                .strict(),
+            },
           },
         },
       },
@@ -268,7 +277,11 @@ export function createGroupApplicationRoutes() {
           content: {
             'application/json': {
               schema: z
-                .object({ decision: z.enum(['APPROVED', 'DECLINED']) })
+                .object({
+                  decision: z.enum(['APPROVED', 'DECLINED']),
+                  expectedRevision: z.number().int().optional(),
+                  operationId: z.string().uuid().optional(),
+                })
                 .strict(),
             },
           },

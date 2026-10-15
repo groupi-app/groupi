@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { hasDiscussionText } from '../../packages/shared/src/utils/discussion-content';
 import type { Id } from '../_generated/dataModel';
 import { validateContent } from '../lib/discussionContent';
@@ -31,6 +32,7 @@ export async function createReplyForPerson(
     throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
   }
 
+  await requireNoEventExclusion(ctx, post.eventId, personId);
   // Verify user is a member of the event
   const membership = await ctx.db
     .query('memberships')
@@ -199,6 +201,7 @@ export async function deleteReplyForPerson(
     throw new ConvexError({ code: 'NOT_FOUND', message: 'Post not found' });
   }
 
+  await requireNoEventExclusion(ctx, post.eventId, personId);
   // Check if user is author or moderator/organizer
   const membership = await ctx.db
     .query('memberships')

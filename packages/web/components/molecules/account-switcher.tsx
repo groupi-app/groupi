@@ -4,6 +4,7 @@ import { cn, getInitialsFromName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, Plus, X } from 'lucide-react';
+import { getSafeInternalRedirect } from '@/lib/urls';
 import { useRouter } from 'next/navigation';
 import {
   useMultiSession,
@@ -11,6 +12,8 @@ import {
 } from '@/hooks/convex/use-multi-session';
 
 export interface AccountSwitcherProps {
+  /** Resume a local hosted journey after deliberate account selection. */
+  returnTo?: string;
   /** Callback when an account is switched or added (for closing menus) */
   onClose?: () => void;
   /** Whether to show the remove button for non-active sessions */
@@ -114,6 +117,7 @@ function AccountItem({
  */
 export function AccountSwitcher({
   onClose,
+  returnTo,
   showRemove = false,
   className,
 }: AccountSwitcherProps) {
@@ -125,6 +129,7 @@ export function AccountSwitcher({
     const result = await switchSession(sessionToken);
     if (result.success) {
       onClose?.();
+      if (returnTo) router.push(getSafeInternalRedirect(returnTo));
     }
   };
 
@@ -134,7 +139,11 @@ export function AccountSwitcher({
 
   const handleAddAccount = () => {
     onClose?.();
-    router.push('/sign-in?mode=add-account');
+    router.push(
+      returnTo
+        ? `/sign-in?mode=add-account&redirect=${encodeURIComponent(getSafeInternalRedirect(returnTo))}`
+        : '/sign-in?mode=add-account'
+    );
   };
 
   if (isLoading) {

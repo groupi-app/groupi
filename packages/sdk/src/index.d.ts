@@ -1396,6 +1396,11 @@ export type ReportSummary = {
   createdAt: number;
 };
 export type DelegatedAction =
+  | 'groups.context.read'
+  | 'groups.events.read'
+  | 'groups.applications.submit'
+  | 'groups.applications.edit'
+  | 'groups.applications.withdraw'
   | 'identity.display-name'
   | 'identity.email'
   | 'events.read'
@@ -1451,7 +1456,11 @@ export class DelegatedSession {
   ): DelegatedSession;
   static authorizationRequest(
     config: DelegatedConfig,
-    input: { redirectUri: string; background?: boolean }
+    input: {
+      redirectUri: string;
+      background?: boolean;
+      selectedGroupId?: string;
+    }
   ): Promise<AuthorizationRequest>;
   static fromAuthorizationCode(
     config: DelegatedConfig,
@@ -1828,6 +1837,36 @@ export class Groupi {
       viewAttendeeList: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
     };
     admissionPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY';
+  }>;
+  /** Read Organizer lifecycle and revision */
+  readEventLifecycle(
+    input: { path: { eventId: string } },
+    options?: RequestOptions
+  ): Promise<{
+    audienceConflicts: Array<{ groupId: string; name: string }>;
+    revision: string;
+    completed: boolean;
+    completedAt: number | null;
+    startsAt: number | null;
+    endsAt: number | null;
+  }>;
+  /** Complete, reopen or reschedule as current Organizer */
+  updateEventLifecycle(
+    input: {
+      path: { eventId: string };
+      body: {
+        expectedRevision: string;
+        action: 'complete' | 'reopen' | 'reschedule';
+        startsAt?: number | null;
+        endsAt?: number | null;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: { eventId: string; revision: string; completed: boolean };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
   }>;
   /**  */
   getEventsEventIdApplicationsForm(
@@ -3910,6 +3949,33 @@ export class Groupi {
     },
     options?: RequestOptions
   ): Promise<{ success: boolean }>;
+  /** Commit coordinated community exclusion as staff */
+  expelCommunityMember(
+    input: {
+      path: { groupId: string };
+      body: { personId: string; policy: 'coordinated' };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+  }>;
+  /** Reconcile coordinated exclusion progress as current staff */
+  readCommunityExpulsion(
+    input: { path: { groupId: string; personId: string } },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+  } | null>;
   /** List your Groups */
   listYourGroups(
     input?: { query?: { limit?: number; cursor?: string } },
@@ -4081,6 +4147,161 @@ export class Groupi {
     input: { path: { groupId: string } },
     options?: RequestOptions
   ): Promise<null>;
+  /** Read own community context */
+  readOwnCommunityContext(
+    input: { path: { groupId: string }; query?: { cursor?: string } },
+    options?: RequestOptions
+  ): Promise<{
+    contractVersion: 'red-room.v1';
+    group: { id: string; name: string };
+    form: {
+      enabled: boolean;
+      revision: string;
+      questions: Array<{
+        id: string;
+        label: string;
+        required: boolean;
+        type:
+          | 'SHORT_ANSWER'
+          | 'LONG_ANSWER'
+          | 'MULTIPLE_CHOICE'
+          | 'CHECKBOXES'
+          | 'NUMBER'
+          | 'DROPDOWN'
+          | 'YES_NO';
+        options?: Array<string>;
+      }>;
+    };
+    membership: { role: 'OWNER' | 'MODERATOR' | 'MEMBER' } | null;
+    eligibility: {
+      canApply: boolean;
+      canAccessMemberContent: boolean;
+      banned: boolean;
+      excluded: boolean;
+    };
+    applications: Array<{
+      id: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+      decisionDelivery?:
+        | 'queued'
+        | 'sending'
+        | 'sent'
+        | 'failed'
+        | 'suppressed';
+      questions: Array<{
+        id: string;
+        label: string;
+        required: boolean;
+        type:
+          | 'SHORT_ANSWER'
+          | 'LONG_ANSWER'
+          | 'MULTIPLE_CHOICE'
+          | 'CHECKBOXES'
+          | 'NUMBER'
+          | 'DROPDOWN'
+          | 'YES_NO';
+        options?: Array<string>;
+      }>;
+      answers: Record<string, string | number | boolean | Array<string>>;
+      submittedAt: number;
+      decisions: Array<{
+        status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+        at: number;
+      }>;
+    }>;
+    nextCursor: string | null;
+    grantedActions: Array<string>;
+    allowedActions: Array<string>;
+    announcementPreference: { supported: false; subscribed: null };
+  }>;
+  /** Read the single current selected Group Event */
+  readCurrentCommunityEvent(
+    input: { path: { groupId: string } },
+    options?: RequestOptions
+  ): Promise<
+    | { kind: 'none' }
+    | { kind: 'conflict'; code: 'STAFF_CONFIGURATION_CONFLICT' }
+    | {
+        kind: 'event';
+        supportedRsvpChoices: Array<'PENDING' | 'YES' | 'NO' | 'MAYBE'>;
+        allowedRsvpTransitions: Array<'PENDING' | 'YES' | 'NO' | 'MAYBE'>;
+        event: {
+          id: string;
+          title: string;
+          location: string | null;
+          description: string | null;
+          timezone: string;
+          startsAt: number | null;
+          endsAt: number | null;
+          ongoing: boolean;
+          roster: Array<{ displayName: string }> | null;
+        };
+        participation: {
+          membershipId: string;
+          revision: number;
+          rsvp: 'PENDING' | 'YES' | 'NO' | 'MAYBE';
+        } | null;
+        allowedActions: Array<string>;
+      }
+  >;
+  /** submitCommunityApplication */
+  submitCommunityApplication(
+    input: {
+      path: { groupId: string };
+      body: {
+        formRevision: string;
+        answers: Record<string, string | number | boolean | Array<string>>;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
+  /** editCommunityApplication */
+  editCommunityApplication(
+    input: {
+      path: { groupId: string; applicationId: string };
+      body: {
+        expectedRevision: number;
+        answers: Record<string, string | number | boolean | Array<string>>;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
+  /** withdrawCommunityApplication */
+  withdrawCommunityApplication(
+    input: {
+      path: { groupId: string; applicationId: string };
+      body: { expectedRevision: number };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(
     input: { path: { groupId: string } },
@@ -5139,6 +5360,7 @@ export class Groupi {
       path: { groupId: string; applicationId: string };
       body: {
         answers: Record<string, string | number | boolean | Array<string>>;
+        expectedRevision?: number;
       };
     },
     options?: RequestOptions
@@ -5176,7 +5398,11 @@ export class Groupi {
   approveOrDeclineAnApplicationAsCurrentGroupManager(
     input: {
       path: { groupId: string; applicationId: string };
-      body: { decision: 'APPROVED' | 'DECLINED' };
+      body: {
+        decision: 'APPROVED' | 'DECLINED';
+        expectedRevision?: number;
+        operationId?: string;
+      };
     },
     options?: RequestOptions
   ): Promise<{

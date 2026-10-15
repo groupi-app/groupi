@@ -134,6 +134,9 @@ from .types import (
     Object1d3bbf168039,
     Objecte5a809dc5829,
     Objectddbcd2fd4c82,
+    Object37a4e2d22e60,
+    Object46a622af52af,
+    Object401e6f77e181,
     Objected2365fc2ed6,
     Objectb366528fe427,
     Object7e06335c5475,
@@ -223,12 +226,25 @@ from .types import (
     Object8c477699d177,
     Objectb17b74c18a8f,
     Object67ea0bf089d7,
+    Objectbb94019de7d2,
+    Object2da0580f7d57,
+    Object1e5f701b7d0e,
+    Object73ecf7f47670,
     Object598737a2dca1,
     Object96110c08a73a,
     Objectb7fb19a40d96,
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
+    Object0bc0d63d1916,
+    Objecta2791daed18f,
+    Object6edaff610f96,
+    Object97dfec76315a,
+    Object0b7836604670,
+    Object53e85f30308a,
+    Objecte4ea0c62ce41,
+    Object0210d908b1ed,
+    Objectece999219204,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -270,7 +286,8 @@ from .types import (
     Object4f75c6f32bec,
     Objectb4f84fb246b8,
     Object1536187ddb0f,
-    Object5fe3657a97a4,
+    Object400d4467dcf9,
+    Object026c1c76bdd8,
     Object6ca3b0de678c,
     Object392afdf5c5c2,
     Objectbc8e85e56367,
@@ -349,6 +366,9 @@ from .types import (
     Object78716c45d186,
     Object658127a26002,
     Objectf8ccad6cf3b8,
+    Object8d74f2ccf6a9,
+    Object83558e3bc551,
+    Object14927e6acaac,
     Object9d78b8568e9e,
     Objectde38060a32b6,
     Object6a6aeb3276ba,
@@ -359,7 +379,17 @@ from .types import (
     Object8be06601360f,
     Object8f4fd078f9a3,
     Object6d5274c5de2d,
+    Object2c98a6bfd5c6,
     Objectb27f127421ba,
+    Object59509cf0ec83,
+    Objecta61bf08328e7,
+    Object5b35bc95b99b,
+    Objecta021a3f479e7,
+    Object9a607b8a62e8,
+    Object068ecbb0d0bb,
+    Object8f7560a6b20e,
+    Object427b94380342,
+    Object878ec63794f7,
     Objectcb244cc36b34,
     Objectafe89b003106,
     Object17c8fd7ccf8b,
@@ -372,8 +402,9 @@ from .types import (
     Object6376b80743c1,
     Object01562b3a7fb5,
     Object50ef760e0f66,
-    Object8d74f2ccf6a9,
     Object4e2be9f6831d,
+    Object1fa6adfb22bd,
+    Object1e0b443bfaa7,
     Object30a6d58642d2,
     Object5b771084f9e7,
     Objectf13ad84fbfdc,
@@ -452,6 +483,14 @@ class Groupi(Transport):
     def update_event_visibility_admission_and_permissions(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Update event visibility, admission and permissions."""
         return self.request('PATCH', '/events/{eventId}/settings', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_event_lifecycle(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read Organizer lifecycle and revision."""
+        return self.request('GET', '/events/{eventId}/lifecycle', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def update_event_lifecycle(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Complete, reopen or reschedule as current Organizer."""
+        return self.request('POST', '/events/{eventId}/lifecycle', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_events_event_id_applications_form(self, *, path=None, query=None, body=None, idempotency_key=None):
         """."""
@@ -888,6 +927,14 @@ class Groupi(Transport):
         """Owner controls poll availability and creation."""
         return self.request('PUT', '/groups/{groupId}/poll-policy', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
+    def expel_community_member(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Commit coordinated community exclusion as staff."""
+        return self.request('POST', '/groups/{groupId}/coordinated-expulsions', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_community_expulsion(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Reconcile coordinated exclusion progress as current staff."""
+        return self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
     def list_your_groups(self, *, path=None, query=None, body=None, idempotency_key=None):
         """List your Groups."""
         return self.request('GET', '/groups', path=path, query=query, body=body, idempotency_key=idempotency_key)
@@ -910,6 +957,26 @@ class Groupi(Transport):
     def explicitly_delete_a_group_as_owner(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Explicitly delete a Group as owner."""
         return self.request('DELETE', '/groups/{groupId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_own_community_context(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read own community context."""
+        return self.request('GET', '/groups/{groupId}/community-context', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_current_community_event(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read the single current selected Group Event."""
+        return self.request('GET', '/groups/{groupId}/current-event', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def submit_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """submitCommunityApplication."""
+        return self.request('POST', '/groups/{groupId}/community-applications', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def edit_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """editCommunityApplication."""
+        return self.request('PATCH', '/groups/{groupId}/community-applications/{applicationId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def withdraw_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """withdrawCommunityApplication."""
+        return self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -1528,6 +1595,14 @@ class AsyncGroupi(AsyncTransport):
         """Update event visibility, admission and permissions."""
         return await self.request('PATCH', '/events/{eventId}/settings', **kwargs)
 
+    async def read_event_lifecycle(self, **kwargs):
+        """Read Organizer lifecycle and revision."""
+        return await self.request('GET', '/events/{eventId}/lifecycle', **kwargs)
+
+    async def update_event_lifecycle(self, **kwargs):
+        """Complete, reopen or reschedule as current Organizer."""
+        return await self.request('POST', '/events/{eventId}/lifecycle', **kwargs)
+
     async def get_events_event_id_applications_form(self, **kwargs):
         """."""
         return await self.request('GET', '/events/{eventId}/applications/form', **kwargs)
@@ -1963,6 +2038,14 @@ class AsyncGroupi(AsyncTransport):
         """Owner controls poll availability and creation."""
         return await self.request('PUT', '/groups/{groupId}/poll-policy', **kwargs)
 
+    async def expel_community_member(self, **kwargs):
+        """Commit coordinated community exclusion as staff."""
+        return await self.request('POST', '/groups/{groupId}/coordinated-expulsions', **kwargs)
+
+    async def read_community_expulsion(self, **kwargs):
+        """Reconcile coordinated exclusion progress as current staff."""
+        return await self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', **kwargs)
+
     def list_your_groups_items(self, **kwargs):
         return self.iterate('/groups', adapter={'items': 'items', 'cursor': 'nextCursor'}, **kwargs)
 
@@ -1985,6 +2068,26 @@ class AsyncGroupi(AsyncTransport):
     async def explicitly_delete_a_group_as_owner(self, **kwargs):
         """Explicitly delete a Group as owner."""
         return await self.request('DELETE', '/groups/{groupId}', **kwargs)
+
+    async def read_own_community_context(self, **kwargs):
+        """Read own community context."""
+        return await self.request('GET', '/groups/{groupId}/community-context', **kwargs)
+
+    async def read_current_community_event(self, **kwargs):
+        """Read the single current selected Group Event."""
+        return await self.request('GET', '/groups/{groupId}/current-event', **kwargs)
+
+    async def submit_community_application(self, **kwargs):
+        """submitCommunityApplication."""
+        return await self.request('POST', '/groups/{groupId}/community-applications', **kwargs)
+
+    async def edit_community_application(self, **kwargs):
+        """editCommunityApplication."""
+        return await self.request('PATCH', '/groups/{groupId}/community-applications/{applicationId}', **kwargs)
+
+    async def withdraw_community_application(self, **kwargs):
+        """withdrawCommunityApplication."""
+        return await self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""

@@ -162,13 +162,15 @@ export function BoundedKeysSettings() {
               <p className='text-sm'>
                 {grant.selector.kind === 'all-current-and-future'
                   ? 'All current and future events within your authority'
-                  : grant.selector.eventIds
-                      .map(
-                        id =>
-                          events?.find(event => event._id === id)?.title ??
-                          'Unavailable event'
-                      )
-                      .join(', ')}
+                  : grant.selector.kind === 'selected-group'
+                    ? `Selected Group (${grant.selector.groupId}) — own context only`
+                    : grant.selector.eventIds
+                        .map(
+                          id =>
+                            events?.find(event => event._id === id)?.title ??
+                            'Unavailable event'
+                        )
+                        .join(', ')}
               </p>
               <p className='text-sm'>
                 {grant.revokedAt
@@ -195,7 +197,11 @@ export function BoundedKeysSettings() {
                         setEditingId(grant.grantId);
                         setName(grant.name);
                         setPrincipalKind(grant.principalKind);
-                        setActions(grant.actions);
+                        setActions(
+                          grant.actions.filter(
+                            action => !action.startsWith('groups.')
+                          )
+                        );
                         setAllEvents(
                           grant.selector.kind === 'all-current-and-future'
                         );

@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { canViewAttendance, privateNote } from '../events/attendance';
 import { latestResponses } from './reads';
 import { query } from '../_generated/server';
@@ -23,6 +24,7 @@ export const getEventAvailabilityData = query({
   handler: async (ctx, { eventId }) => {
     // Require authentication and membership
     const { person: currentPerson } = await requireAuth(ctx);
+    await requireNoEventExclusion(ctx, eventId, currentPerson._id);
 
     const userMembership = await ctx.db
       .query('memberships')
@@ -140,6 +142,7 @@ export const getEventPotentialDates = query({
   handler: async (ctx, { eventId }) => {
     // Verify access to event
     const { person: currentPerson } = await requireAuth(ctx);
+    await requireNoEventExclusion(ctx, eventId, currentPerson._id);
 
     const membership = await ctx.db
       .query('memberships')

@@ -153,11 +153,21 @@ describe('authenticated Group application REST', () => {
         ],
       })
     );
+    const beforeEdit = await body(await person.request(path));
     await body(
       await person.request(path, 'PATCH', {
         answers: { why: 'Edited', number: 0, bool: false },
       })
     );
+    expect(
+      await body(
+        await mod.request(path + '/review', 'POST', {
+          decision: 'APPROVED',
+          expectedRevision: beforeEdit.updatedAt,
+        }),
+        409
+      )
+    ).toMatchObject({ error: { code: 'STALE_REVISION' } });
     await body(
       await mod.request(path + '/review', 'POST', { decision: 'APPROVED' })
     );

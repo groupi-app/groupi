@@ -11,6 +11,15 @@ import { internal } from '../../_generated/api';
 
 // Verified transport context. Secrets never cross into route variables.
 // Add new variants only with an explicit dispatcher and domain enforcement.
+export class DelegatedCredentialError extends HTTPException {
+  constructor(
+    readonly code: 'TOKEN_EXPIRED' | 'CONNECTION_REVOKED' | 'FORBIDDEN'
+  ) {
+    super(code === 'FORBIDDEN' ? 403 : 401, {
+      message: 'Delegated credentials unavailable; reconnect as needed.',
+    });
+  }
+}
 export type CredentialContext = {
   kind: 'legacy-api-key' | 'bounded';
   credentialId: string;
@@ -233,6 +242,8 @@ export async function validateRequestCredential(
       throw new HTTPException(401, {
         message: 'Invalid or inactive credential.',
       });
+    if ('errorCode' in result)
+      throw new DelegatedCredentialError(result.errorCode ?? 'FORBIDDEN');
     return result;
   }
   return validateApiKey(ctx, key, request);

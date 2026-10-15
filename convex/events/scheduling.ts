@@ -1,3 +1,6 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
+import { rsvpStatus } from '../availability/contracts';
+import { guardEventReactivation } from './lifecycle';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -13,12 +16,7 @@ import { compareAvailabilityRecency } from '../availability/model';
 import { attendanceError } from './attendance';
 export const updateRSVPArgs = v.object({
   eventId: v.id('events'),
-  rsvpStatus: v.union(
-    v.literal('YES'),
-    v.literal('MAYBE'),
-    v.literal('NO'),
-    v.literal('PENDING')
-  ),
+  rsvpStatus,
   rsvpNote: v.optional(v.string()),
   _traceId: v.optional(v.string()),
 });
@@ -28,6 +26,7 @@ export async function updateRSVPForPerson(
   { eventId, rsvpStatus, rsvpNote }: Infer<typeof updateRSVPArgs>
 ) {
   // Require authentication and membership
+  await requireNoEventExclusion(ctx, eventId, personId);
   const person = { _id: personId };
 
   const membership = await ctx.db
@@ -92,6 +91,7 @@ export async function chooseEventDateForPerson(
 ) {
   // Require organizer role (single auth call)
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  await guardEventReactivation(ctx, eventId);
   const person = { _id: personId };
 
   // Validate end time is after start time if provided
@@ -269,6 +269,7 @@ export async function resetEventDateForPerson(
 ) {
   // Require organizer role (single auth call)
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  await guardEventReactivation(ctx, eventId);
   const person = { _id: personId };
 
   // Dispatch onDateReset to all enabled add-ons (e.g. cancel reminders)

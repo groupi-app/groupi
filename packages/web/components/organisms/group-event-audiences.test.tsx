@@ -219,7 +219,7 @@ it('pages shared logistics without participant queries or unsupported admission 
     </ConvexProvider>
   );
   expect(
-    screen.getByText('No upcoming or undated Events on this page.')
+    screen.getByText('No active Events on this page.')
   ).toBeInTheDocument();
   await userEvent
     .setup()
@@ -293,7 +293,7 @@ it('recovers a revoked query through the accessible retry action', async () => {
     .setup()
     .click(screen.getByRole('button', { name: 'Retry Event sharing' }));
   expect(
-    await screen.findByText('No upcoming or undated Events on this page.')
+    await screen.findByText('No active Events on this page.')
   ).toBeInTheDocument();
   mounted.unmount();
   await client.close();
@@ -399,7 +399,7 @@ it('shows loading without implying a missing Event list', async () => {
     'Loading Group-shared Events'
   );
   expect(
-    screen.queryByText('No upcoming or undated Events on this page.')
+    screen.queryByText('No active Events on this page.')
   ).not.toBeInTheDocument();
   mounted.unmount();
   await client.close();

@@ -121,6 +121,20 @@
   },
   {
     "paging": null,
+    "name": "readEventLifecycle",
+    "method": "GET",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Read Organizer lifecycle and revision"
+  },
+  {
+    "paging": null,
+    "name": "updateEventLifecycle",
+    "method": "POST",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Complete, reopen or reschedule as current Organizer"
+  },
+  {
+    "paging": null,
     "name": "getEventsEventIdApplicationsForm",
     "method": "GET",
     "path": "/events/{eventId}/applications/form",
@@ -866,6 +880,20 @@
     "summary": "Owner controls poll availability and creation"
   },
   {
+    "paging": null,
+    "name": "expelCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions",
+    "summary": "Commit coordinated community exclusion as staff"
+  },
+  {
+    "paging": null,
+    "name": "readCommunityExpulsion",
+    "method": "GET",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}",
+    "summary": "Reconcile coordinated exclusion progress as current staff"
+  },
+  {
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
@@ -903,6 +931,41 @@
     "method": "DELETE",
     "path": "/groups/{groupId}",
     "summary": "Explicitly delete a Group as owner"
+  },
+  {
+    "paging": null,
+    "name": "readOwnCommunityContext",
+    "method": "GET",
+    "path": "/groups/{groupId}/community-context",
+    "summary": "Read own community context"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentCommunityEvent",
+    "method": "GET",
+    "path": "/groups/{groupId}/current-event",
+    "summary": "Read the single current selected Group Event"
+  },
+  {
+    "paging": null,
+    "name": "submitCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications",
+    "summary": "submitCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "editCommunityApplication",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/community-applications/{applicationId}",
+    "summary": "editCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "withdrawCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications/{applicationId}/withdraw",
+    "summary": "withdrawCommunityApplication"
   },
   {
     "paging": null,

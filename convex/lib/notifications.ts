@@ -1612,8 +1612,13 @@ export async function createNotification(
       );
     return notificationId;
   }
+  const decisionEmail =
+    data.type === 'GROUP_APPLICATION_APPROVED' ||
+    data.type === 'GROUP_APPLICATION_DECLINED';
   const [emails, webhooks, pushes] = await Promise.all([
-    collectEmailData(ctx, notificationData, preFetched?.messageContext),
+    decisionEmail
+      ? Promise.resolve([])
+      : collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),
     collectPushData(
       ctx,

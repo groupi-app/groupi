@@ -70,13 +70,15 @@ export function ConnectedAppsSettings() {
                 <p className='text-sm'>
                   {connection.selector.kind === 'all-current-and-future'
                     ? 'All current and future events within your authority'
-                    : connection.selector.eventIds
-                        .map(
-                          id =>
-                            events?.find(event => event._id === id)?.title ??
-                            `Unavailable event (${id})`
-                        )
-                        .join(', ')}
+                    : connection.selector.kind === 'selected-group'
+                      ? `Selected Group (${connection.selector.groupId}) — own context only`
+                      : connection.selector.eventIds
+                          .map(
+                            id =>
+                              events?.find(event => event._id === id)?.title ??
+                              `Unavailable event (${id})`
+                          )
+                          .join(', ')}
                 </p>
                 <p className='text-sm text-muted-foreground'>
                   {connection.background

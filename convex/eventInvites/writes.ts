@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { v, type Infer } from 'convex/values';
@@ -101,6 +102,7 @@ export async function acceptEventInviteForPerson(
     inviteError('NOT_FOUND', 'Invite not found');
   }
 
+  await requireNoEventExclusion(ctx, invite.eventId, personId);
   // Only the invitee can accept
   if (invite.inviteeId !== person._id) {
     inviteError('FORBIDDEN', "You can't accept this invite");

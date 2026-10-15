@@ -111,7 +111,11 @@ it('enforces real scopes and both authorities, and pages safe filtered previews 
   await body(await manager.request(`/events/${eventId}/audiences`), 403);
   const { eventId: past } = await owner.auth.mutation(
     api.events.mutations.createEvent,
-    { title: 'Past', chosenDateTime: new Date(Date.now() + 1000).toISOString() }
+    {
+      title: 'Ended',
+      chosenDateTime: new Date(Date.now() + 1000).toISOString(),
+      chosenEndDateTime: new Date(Date.now() + 1500).toISOString(),
+    }
   );
   await owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,

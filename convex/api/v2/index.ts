@@ -25,7 +25,10 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
-import { validateRequestCredential } from '../middleware/auth';
+import {
+  validateRequestCredential,
+  DelegatedCredentialError,
+} from '../middleware/auth';
 import { createCliAuthRoutes } from './routes/cliAuth';
 import { createImageRoutes } from './routes/images';
 import { createEventRoutes } from './routes/events';
@@ -136,10 +139,14 @@ export function createApiV2App(
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'ONBOARDING_REQUIRED',
+          'STALE_REVISION',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
+          'STALE_REVISION',
           'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',
+          'PROTECTED_OWNER',
+          'PROTECTED_ORGANIZER',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
           'INVITE_UNAVAILABLE',
@@ -292,6 +299,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
+        communityContext: { version: 1, mutations: true, applications: 1 },
         groupInvites: { version: 1 },
         groupModeration: { version: 1 },
         accountResolution: {
@@ -436,11 +444,13 @@ export const handler = httpAction(async (ctx, request) => {
           JSON.stringify({
             error: {
               code:
-                error.status === 403
-                  ? 'FORBIDDEN'
-                  : error.status === 429
-                    ? 'RATE_LIMITED'
-                    : 'UNAUTHORIZED',
+                error instanceof DelegatedCredentialError
+                  ? error.code
+                  : error.status === 403
+                    ? 'FORBIDDEN'
+                    : error.status === 429
+                      ? 'RATE_LIMITED'
+                      : 'UNAUTHORIZED',
               message: error.message,
             },
           }),
@@ -448,6 +458,7 @@ export const handler = httpAction(async (ctx, request) => {
             status: error.status,
             headers: {
               'Content-Type': 'application/json',
+              'Cache-Control': 'private, no-store',
               'Access-Control-Allow-Origin': '*',
               ...(error.getResponse().headers.has('Retry-After')
                 ? {
