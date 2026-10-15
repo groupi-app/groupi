@@ -534,6 +534,7 @@ export default defineSchema({
     .index('by_groupId_and_eventId', ['groupId', 'eventId'])
     .index('by_sharedById', ['sharedById']),
   events: defineTable({
+    completedAt: v.optional(v.number()),
     friendsAudienceEnabled: v.optional(v.boolean()),
     title: v.string(),
     description: v.optional(v.string()),

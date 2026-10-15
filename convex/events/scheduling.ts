@@ -1,3 +1,4 @@
+import { guardEventReactivation } from './lifecycle';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -92,6 +93,7 @@ export async function chooseEventDateForPerson(
 ) {
   // Require organizer role (single auth call)
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  await guardEventReactivation(ctx, eventId);
   const person = { _id: personId };
 
   // Validate end time is after start time if provided
@@ -269,6 +271,7 @@ export async function resetEventDateForPerson(
 ) {
   // Require organizer role (single auth call)
   await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
+  await guardEventReactivation(ctx, eventId);
   const person = { _id: personId };
 
   // Dispatch onDateReset to all enabled add-ons (e.g. cancel reminders)

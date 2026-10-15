@@ -305,6 +305,7 @@ import type * as groups_cleanup from "../groups/cleanup.js";
 import type * as groups_community from "../groups/community.js";
 import type * as groups_contentAccess from "../groups/contentAccess.js";
 import type * as groups_contracts from "../groups/contracts.js";
+import type * as groups_currentEvent from "../groups/currentEvent.js";
 import type * as groups_model from "../groups/model.js";
 import type * as groups_mutations from "../groups/mutations.js";
 import type * as groups_policy from "../groups/policy.js";
@@ -698,6 +699,7 @@ declare const fullApi: ApiFromModules<{
   "groups/community": typeof groups_community;
   "groups/contentAccess": typeof groups_contentAccess;
   "groups/contracts": typeof groups_contracts;
+  "groups/currentEvent": typeof groups_currentEvent;
   "groups/model": typeof groups_model;
   "groups/mutations": typeof groups_mutations;
   "groups/policy": typeof groups_policy;
