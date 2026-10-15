@@ -1,3 +1,4 @@
+import { guardEventReactivation } from './lifecycle';
 import { AddonConfigSchema } from '../addons/schemas';
 import { addonConfig } from '../addons/contracts';
 import { claimUpload } from '../files/uploads';
@@ -441,6 +442,12 @@ export async function updateEventForPerson(
     throw eventValidationError('Event not found');
   }
 
+  if (
+    visibility !== undefined &&
+    visibility !== 'PRIVATE' &&
+    visibility !== event.visibility
+  )
+    await guardEventReactivation(ctx, eventId);
   validateBasicFields(title, description, location);
   validateImageFocalPoint(imageFocalPoint);
   const willHaveImage =

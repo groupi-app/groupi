@@ -96,6 +96,7 @@ export function createAuthorizationHooks<
 /** Stable descriptions shared by credential and delegated-consent screens. */
 export function authorizationActionLabel(action: string): string {
   const labels: Record<string, string> = {
+    'groups.events.read': 'Read your current community Event and own RSVP',
     'groups.context.read': 'Read your own community context',
     'identity.display-name': 'Read your display name',
     'identity.email': 'Read your email address',

@@ -101,8 +101,7 @@ function ConsentChoices({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasEventActions = actions.some(
-    action =>
-      !action.startsWith('identity.') && action !== 'groups.context.read'
+    action => !action.startsWith('identity.') && !action.startsWith('groups.')
   );
   function toggleAction(action: (typeof actions)[number], checked: boolean) {
     const next = checked
@@ -127,7 +126,8 @@ function ConsentChoices({
             interactionId,
             actions,
             selector:
-              request.selectedGroup && actions.includes('groups.context.read')
+              request.selectedGroup &&
+              actions.some(action => action.startsWith('groups.'))
                 ? { kind: 'selected-group', groupId: request.selectedGroup.id }
                 : !hasEventActions
                   ? { kind: 'selected', eventIds: [] }

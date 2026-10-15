@@ -70,6 +70,7 @@ export async function assertBounds(
           !a.startsWith('identity.') &&
           ![
             'groups.context.read',
+            'groups.events.read',
             'groups.applications.submit',
             'groups.applications.edit',
             'groups.applications.withdraw',

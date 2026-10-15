@@ -235,5 +235,8 @@
   "DELETE /admin/events/{eventId}": "deleteEventAdmin",
   "GET /admin/reports": "listAllReports",
   "GET /uploads/{storageId}": "inspectUpload",
-  "GET /groups/{groupId}/community-context": "readOwnCommunityContext"
+  "GET /groups/{groupId}/community-context": "readOwnCommunityContext",
+  "GET /events/{eventId}/lifecycle": "readEventLifecycle",
+  "POST /events/{eventId}/lifecycle": "updateEventLifecycle",
+  "GET /groups/{groupId}/current-event": "readCurrentCommunityEvent"
 }

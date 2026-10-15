@@ -74,3 +74,4 @@ export { createGroupListHooks } from './useGroupLists';
 export { createAuthorizationHooks } from './useAuthorization';
 export { authorizationActionLabel } from './useAuthorization';
 export { createConnectedAppHooks } from './useConnectedApps';
+export { createEventLifecycleHooks } from './useEventLifecycle';

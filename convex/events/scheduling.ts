@@ -1,3 +1,4 @@
+import { rsvpStatus } from '../availability/contracts';
 import { guardEventReactivation } from './lifecycle';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
@@ -14,12 +15,7 @@ import { compareAvailabilityRecency } from '../availability/model';
 import { attendanceError } from './attendance';
 export const updateRSVPArgs = v.object({
   eventId: v.id('events'),
-  rsvpStatus: v.union(
-    v.literal('YES'),
-    v.literal('MAYBE'),
-    v.literal('NO'),
-    v.literal('PENDING')
-  ),
+  rsvpStatus,
   rsvpNote: v.optional(v.string()),
   _traceId: v.optional(v.string()),
 });

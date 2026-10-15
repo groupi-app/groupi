@@ -113,6 +113,14 @@ export class Groupi extends Transport {
   updateEventVisibilityAdmissionAndPermissions(input = {}, options = {}) {
     return this.request('PATCH', '/events/{eventId}/settings', input, options);
   }
+  /** Read Organizer lifecycle and revision */
+  readEventLifecycle(input = {}, options = {}) {
+    return this.request('GET', '/events/{eventId}/lifecycle', input, options);
+  }
+  /** Complete, reopen or reschedule as current Organizer */
+  updateEventLifecycle(input = {}, options = {}) {
+    return this.request('POST', '/events/{eventId}/lifecycle', input, options);
+  }
   /**  */
   getEventsEventIdApplicationsForm(input = {}, options = {}) {
     return this.request(
@@ -935,6 +943,15 @@ export class Groupi extends Transport {
     return this.request(
       'GET',
       '/groups/{groupId}/community-context',
+      input,
+      options
+    );
+  }
+  /** Read the single current selected Group Event */
+  readCurrentCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/current-event',
       input,
       options
     );

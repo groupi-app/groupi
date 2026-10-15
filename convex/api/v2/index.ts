@@ -139,6 +139,7 @@ export function createApiV2App(
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'ONBOARDING_REQUIRED',
+          'STALE_REVISION',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
           'RECIPIENT_UNAVAILABLE',
