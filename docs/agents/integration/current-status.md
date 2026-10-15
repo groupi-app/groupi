@@ -13,6 +13,10 @@ This is the authoritative integration handoff. The developer-platform checkpoint
   operations share durable UUID receipts and current-role checks. The
   [integration contract](../../red-room-integration-contract.md#g4-current-event-and-staff-lifecycle)
   records exact native/REST/SDK methods and G8 exclusion hook boundaries.
+- Source verification passes 56 focused backend tests, 21 Organizer/audience/consent
+  component tests, 3 shared permission tests, and real generated Node/Python
+  current-Event consumer journeys. SDK transport suites pass 8 Node and 7 Python
+  tests, with 17 integration tests; generated client corpus contains 243 methods.
 - Runtime readiness for this source: matching deployed frontend/backend SHA,
   isolated authenticated browser identity and live provider/email setup remain
   unverified. Local source tests are separate from G10 deployed acceptance;

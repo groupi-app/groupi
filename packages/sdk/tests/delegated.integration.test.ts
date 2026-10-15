@@ -204,8 +204,8 @@ for (const language of ['typescript', 'python'])
           { name: 'Other' }
         );
         const authorization = await helpers.authorize(context, {
-          scopes: 'openid groups.context.read',
-          actions: ['groups.context.read'],
+          scopes: 'openid groups.context.read groups.events.read',
+          actions: ['groups.context.read', 'groups.events.read'],
           selector: { kind: 'selected-group', groupId },
           background: false,
         });
@@ -218,7 +218,7 @@ for (const language of ['typescript', 'python'])
               audience: origin + '/api/v2',
               clientId: context.appId,
               clientType: 'native',
-              actions: ['groups.context.read'],
+              actions: ['groups.context.read', 'groups.events.read'],
             },
             exchange: {
               code: authorization.code,
@@ -242,6 +242,30 @@ for (const language of ['typescript', 'python'])
         });
         expect(
           await d.request({ operation: 'community', groupId: otherId })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({ ok: true, result: { kind: 'none' } });
+        await context.owner.auth.mutation(
+          makeFunctionReference(
+            'groupEventAudiences/mutations:shareEventWithGroup'
+          ),
+          { groupId, eventId: context.event.eventId }
+        );
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: {
+            kind: 'event',
+            event: { id: context.event.eventId },
+            supportedRsvpChoices: ['PENDING', 'YES', 'NO', 'MAYBE'],
+            allowedRsvpTransitions: [],
+            allowedActions: ['groups.events.read'],
+          },
+        });
+        expect(
+          await d.request({ operation: 'current-event', groupId: otherId })
         ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
       } finally {
         await d.close();

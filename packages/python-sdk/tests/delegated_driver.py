@@ -63,6 +63,8 @@ for line in sys.stdin:
             result = {"initialized": True}
         elif operation == "community":
             result = client.read_own_community_context(path={"groupId": command["groupId"]})
+        elif operation == "current-event":
+            result = client.read_current_community_event(path={"groupId": command["groupId"]})
         elif operation == "application":
             import re
             method = re.sub(r"(?<!^)(?=[A-Z])", "_", command["method"]).lower()

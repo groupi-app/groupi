@@ -15,7 +15,9 @@ export function EventLifecycleSettings({
   eventId: Id<'events'>;
   role?: string;
 }) {
-  return role === 'ORGANIZER' ? <OrganizerLifecycle eventId={eventId} /> : null;
+  return role === 'ORGANIZER' ? (
+    <OrganizerLifecycle key={eventId} eventId={eventId} />
+  ) : null;
 }
 function OrganizerLifecycle({ eventId }: { eventId: Id<'events'> }) {
   const state = useEventLifecycle({ eventId });

@@ -1,5 +1,8 @@
 import { expect, it } from 'vitest';
-import { CommunityContextSchema } from '../../../convex/api/v2/schemas/community';
+import {
+  CommunityContextSchema,
+  CurrentCommunityEventSchema,
+} from '../../../convex/api/v2/schemas/community';
 import {
   communityFixtures,
   communityOperations,
@@ -11,11 +14,16 @@ import type { Id } from '../../../convex/_generated/dataModel';
 
 it('ships implemented read fixtures accepted by the public response contract without pretending proposed operations are live', () => {
   for (const fixture of Object.values(communityFixtures)) {
+    if (fixture.status === 'implemented' && fixture.event)
+      expect(CurrentCommunityEventSchema.safeParse(fixture.event).success).toBe(
+        true
+      );
     if (fixture.status === 'implemented' && fixture.context) {
       const context: CommunityContext = fixture.context;
       expect(CommunityContextSchema.safeParse(context).success).toBe(true);
     }
   }
+  expect(communityOperations.currentEvent.status).toBe('implemented');
   expect(communityOperations.context.status).toBe('implemented');
   expect(communityOperations.submitApplication.status).toBe('implemented');
   expect(
