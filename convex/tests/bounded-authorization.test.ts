@@ -1,3 +1,4 @@
+import { components } from '../_generated/api';
 import { describe, expect, it, vi } from 'vitest';
 import { makeFunctionReference } from 'convex/server';
 import { createTestInstance, TestScenarios } from './test_helpers';
@@ -209,6 +210,62 @@ describe('bounded credential management', () => {
         url: expect.any(String),
       }),
     ]);
+    // A valid delegated credential cannot inherit file access from its broader grant.
+    vi.stubEnv('DELEGATED_ISSUER', 'https://issuer.example/oauth');
+    try {
+      const delegated = await account.auth.mutation(issue, {
+        name: 'Delegated reader',
+        principalKind: 'user',
+        actions: ['discussion.read', 'files.read'],
+        selector: { kind: 'selected', eventIds: [scenario.eventId] },
+      });
+      const raw = 'opaque-narrow-resource-token';
+      const digest = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(raw)
+      );
+      const secretHash = Array.from(new Uint8Array(digest), byte =>
+        byte.toString(16).padStart(2, '0')
+      ).join('');
+      await t.run(async ctx => {
+        const now = Date.now();
+        const appId = await ctx.db.insert('delegatedApps', {
+          ownerPersonId: scenario.personId,
+          name: 'Reader app',
+          purpose: 'Read discussion',
+          clientType: 'native',
+          redirectUris: ['https://reader.example/callback'],
+          status: 'testing',
+          reviewStatus: 'not-requested',
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.patch(delegated.grantId, {
+          appId,
+          instanceId: 'https://issuer.example/oauth',
+        });
+        await ctx.db.insert('authorizationCredentials', {
+          kind: 'delegated-access',
+          grantId: delegated.grantId,
+          secretHash,
+          actions: ['discussion.read'],
+          audience: 'https://issuer.example/api/v2',
+          expiresAt: now + 300000,
+          createdAt: now,
+        });
+      });
+      const narrowed = await t.fetch(`/api/v2/posts/${postId}`, {
+        headers: { authorization: `Bearer ${raw}` },
+      });
+      expect(narrowed.status).toBe(200);
+      expect((await narrowed.json()).attachments).toEqual([]);
+      const direct = await t.fetch(`/api/v2/uploads/${file.storageId}`, {
+        headers: { authorization: `Bearer ${raw}` },
+      });
+      expect(direct.status).toBe(403);
+    } finally {
+      vi.unstubAllEnvs();
+    }
     const reader = await account.auth.mutation(issue, {
       name: 'Discussion reader',
       principalKind: 'user',
@@ -435,6 +492,54 @@ describe('bounded credential management', () => {
         })
       ).status
     ).toBe(403);
+  });
+  it('revokes same-user legacy keys during account recovery without touching another account', async () => {
+    const t = createTestInstance();
+    registerBetterAuth(t);
+    const owner = await createAuthAccount(t, 'legacy-recovery-owner');
+    const other = await createAuthAccount(t, 'legacy-recovery-other');
+    async function seedLegacy(userId: string, secret: string) {
+      const bytes = new Uint8Array(
+        await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret))
+      );
+      await t.mutation(components.betterAuth.adapter.create, {
+        input: {
+          model: 'apikey',
+          data: {
+            userId,
+            key: btoa(String.fromCharCode(...bytes))
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=+$/, ''),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            enabled: true,
+          },
+        },
+      });
+    }
+    const first = 'grp_legacy_recovery_owner_secret';
+    const second = 'grp_legacy_recovery_other_secret';
+    await seedLegacy(owner.user._id, first);
+    await seedLegacy(other.user._id, second);
+    expect(
+      (await t.fetch('/api/v2/events', { headers: { 'x-api-key': first } }))
+        .status
+    ).toBe(200);
+    await owner.auth.mutation(
+      makeFunctionReference<'mutation'>(
+        'authorization/mutations:revokeUserCredentials'
+      ),
+      {}
+    );
+    expect(
+      (await t.fetch('/api/v2/events', { headers: { 'x-api-key': first } }))
+        .status
+    ).toBe(401);
+    expect(
+      (await t.fetch('/api/v2/events', { headers: { 'x-api-key': second } }))
+        .status
+    ).toBe(200);
   });
   it('issues a named selected-event key whose bounds are inspectable without its secret', async () => {
     const t = createTestInstance();

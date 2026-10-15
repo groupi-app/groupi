@@ -1,4 +1,4 @@
-import { liveGrant } from '../authorization/model';
+import { liveGrant, delegatedAudience } from '../authorization/model';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { components } from '../_generated/api';
 import { v } from 'convex/values';
@@ -355,6 +355,11 @@ export const validateBoundedToken = internalMutation({
       credential.kind !== kind ||
       credential.revokedAt !== undefined ||
       (credential.expiresAt !== undefined && credential.expiresAt <= Date.now())
+    )
+      return null;
+    if (
+      credential.kind === 'delegated-access' &&
+      (!delegatedAudience() || credential.audience !== delegatedAudience())
     )
       return null;
     try {

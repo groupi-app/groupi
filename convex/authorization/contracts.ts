@@ -42,14 +42,22 @@ export const grantFields = {
   createdAt: v.number(),
   updatedAt: v.number(),
 };
-export const credentialFields = {
+const sharedCredentialFields = {
   grantId: v.id('authorizationGrants'),
   secretHash: v.string(),
-  kind: v.union(v.literal('named-key'), v.literal('delegated-access')),
   expiresAt: v.optional(v.number()),
   revokedAt: v.optional(v.number()),
   createdAt: v.number(),
 };
+export const credentialValidator = v.union(
+  v.object({ ...sharedCredentialFields, kind: v.literal('named-key') }),
+  v.object({
+    ...sharedCredentialFields,
+    kind: v.literal('delegated-access'),
+    actions: v.array(action),
+    audience: v.string(),
+  })
+);
 export const auditFields = {
   ownerPersonId: v.id('persons'),
   grantId: v.id('authorizationGrants'),

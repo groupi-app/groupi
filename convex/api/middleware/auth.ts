@@ -211,6 +211,10 @@ export async function validateRequestCredential(
   let token: string | undefined;
   let kind: 'named-key' | 'delegated-access' | undefined;
   if (authorization) {
+    if (!new URL(request.url).pathname.startsWith('/api/v2/'))
+      throw new HTTPException(401, {
+        message: 'Credential audience does not permit this API version.',
+      });
     const match = /^Bearer ([^\s]+)$/i.exec(authorization);
     if (!match || match[1].length > 8192)
       throw new HTTPException(401, { message: 'Invalid bearer credential.' });

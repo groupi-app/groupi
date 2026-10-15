@@ -374,6 +374,8 @@ export const execute = internalMutation({
         data = profiles[0] as Infer<typeof publicProfile>;
       } else data = profiles as Infer<typeof attendanceMember>[];
     } else if (input.operation === 'identity.read') {
+      if (authority.credential.kind === 'delegated-access')
+        throw denied('Use OIDC claims for delegated identity.');
       const owner = await getPersonWithUser(ctx, grant.grantorPersonId);
       if (!owner) throw denied();
       data = {
@@ -395,7 +397,19 @@ export const execute = internalMutation({
       input.operation === 'discussion.list'
     ) {
       if (!eventId) throw denied();
-      const includeFiles = grant.actions.includes('files.read');
+      let includeFiles = false;
+      try {
+        await authorizeCredential(
+          ctx,
+          credentialId,
+          'files.read',
+          eventId,
+          now
+        );
+        includeFiles = true;
+      } catch {
+        /* Omit ungranted related files. */
+      }
       if (input.operation === 'discussion.read') {
         const row = reply ?? post;
         if (!row) throw denied();

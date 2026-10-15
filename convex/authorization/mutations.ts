@@ -1,4 +1,5 @@
-import { internal } from '../_generated/api';
+import type { FunctionReturnType } from 'convex/server';
+import { components, internal } from '../_generated/api';
 import { mutation, internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -134,7 +135,7 @@ export const replaceBounds = mutation({
 export const revokeUserCredentials = mutation({
   args: {},
   returns: v.object({ revokedCount: v.number() }),
-  handler: async ctx => {
+  handler: async (ctx): Promise<{ revokedCount: number }> => {
     const { person } = await requireAuth(ctx);
     const grants = await ctx.db
       .query('authorizationGrants')
@@ -148,6 +149,36 @@ export const revokeUserCredentials = mutation({
       await ctx.db.patch(grant._id, { revokedAt: now, updatedAt: now });
       await audit(ctx, grant, 'recovery-revoked', 'allowed', 'owner-recovery');
       revokedCount++;
+    }
+    // Recovery covers every credential owned by this user, including the
+    // explicitly separate legacy mode. Independent integration grants above
+    // remain untouched.
+    let cursor: string | null = null;
+    for (;;) {
+      const page: FunctionReturnType<
+        typeof components.betterAuth.adapter.findMany
+      > = await ctx.runQuery(components.betterAuth.adapter.findMany, {
+        model: 'apikey',
+        where: [{ field: 'userId', operator: 'eq', value: person.userId }],
+        paginationOpts: { cursor, numItems: 100 },
+      });
+      for (const record of page.page) {
+        if (
+          !('key' in record) ||
+          !('userId' in record) ||
+          record.userId !== person.userId
+        )
+          throw denied();
+        await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+          input: {
+            model: 'apikey',
+            where: [{ field: '_id', value: record._id }],
+          },
+        });
+        revokedCount++;
+      }
+      if (page.isDone) break;
+      cursor = page.continueCursor;
     }
     return { revokedCount };
   },

@@ -99,6 +99,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
     author: author
       ? {
           id: author.person._id,
+          kind: author.kind,
           user: {
             id: author.user._id,
             name: author.user.name ?? null,

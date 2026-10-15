@@ -2,7 +2,7 @@ import { tables as delegatedTables } from './delegatedApps/contracts';
 import {
   principalFields,
   grantFields,
-  credentialFields,
+  credentialValidator,
   auditFields,
 } from './authorization/contracts';
 import {
@@ -57,7 +57,7 @@ export default defineSchema({
   authorizationGrants: defineTable(grantFields)
     .index('by_grantorPersonId', ['grantorPersonId'])
     .index('by_principalId', ['principalId']),
-  authorizationCredentials: defineTable(credentialFields)
+  authorizationCredentials: defineTable(credentialValidator)
     .index('by_secretHash', ['secretHash'])
     .index('by_grantId', ['grantId']),
   authorizationAudit: defineTable(auditFields)

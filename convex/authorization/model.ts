@@ -113,6 +113,15 @@ export async function liveGrant(
   }
   return { grant, principal };
 }
+export function delegatedAudience() {
+  const issuer = process.env.DELEGATED_ISSUER;
+  if (!issuer) return null;
+  try {
+    return `${new URL(issuer).origin}/api/v2`;
+  } catch {
+    return null;
+  }
+}
 export async function authorizeCredential(
   ctx: QueryCtx | MutationCtx,
   credentialId: Id<'authorizationCredentials'>,
@@ -129,6 +138,13 @@ export async function authorizeCredential(
     throw denied();
   const { grant, principal } = await liveGrant(ctx, credential.grantId, now);
   if (!grant.actions.includes(requested)) throw denied();
+  if (
+    credential.kind === 'delegated-access' &&
+    (!credential.actions.includes(requested) ||
+      !delegatedAudience() ||
+      credential.audience !== delegatedAudience())
+  )
+    throw denied();
   let membership: Doc<'memberships'> | null = null;
   if (eventId !== undefined) {
     if (

@@ -10,6 +10,12 @@ are missing.
 | Bounded named key     | `x-api-key: grp_b_...`                 | App-owned active credential, principal and grant, explicit actions and Event selector                               |
 | Delegated access      | `Authorization: Bearer <opaque token>` | Consent grant plus eligible app, pinned instance, active short-lived credential and current user authority          |
 
+Delegated tokens are restricted to REST v2 and their issued action snapshot,
+intersected with the current grant. Optional delegated identity is provided only
+through signed OIDC claims/userinfo; global REST `/profile` access is denied to
+delegated credentials so an app cannot obtain global account identifiers through
+a minimal identity grant.
+
 Present exactly one credential. A named key cannot be presented as a delegated
 Bearer token. Raw new secrets are hashed at the HTTP boundary before Convex
 verification; only SHA-256 hashes are stored. Named keys are shown once. Revoked,
@@ -97,7 +103,8 @@ transactions retry against the changed grant and deny further use. This does
 not undo completed writes or revoke a storage URL already acquired by an
 otherwise authorized request.
 
-Account recovery revokes that user's named/delegated grants. It does not revoke
+Account recovery revokes that user's named/delegated grants and revokes that
+user's legacy collection keys. It does not revoke
 unrelated independent integration principals. Integration use still requires a
 currently active sponsor account and current Organizer authority. Recovery does
 not reactivate old consent.
