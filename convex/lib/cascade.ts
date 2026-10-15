@@ -17,6 +17,7 @@ export async function cascadeDeleteEventData(
     potentialDates,
     posts,
     invites,
+    eventInvites,
     notifications,
     addonConfigs,
     addonDataEntries,
@@ -37,6 +38,10 @@ export async function cascadeDeleteEventData(
       .collect(),
     ctx.db
       .query('invites')
+      .withIndex('by_event', q => q.eq('eventId', eventId))
+      .collect(),
+    ctx.db
+      .query('eventInvites')
       .withIndex('by_event', q => q.eq('eventId', eventId))
       .collect(),
     ctx.db
@@ -115,6 +120,10 @@ export async function cascadeDeleteEventData(
 
   for (const i of invites) {
     await ctx.db.delete(i._id);
+  }
+
+  for (const invite of eventInvites) {
+    await ctx.db.delete(invite._id);
   }
 
   for (const deliveries of deliveriesByNotification) {
