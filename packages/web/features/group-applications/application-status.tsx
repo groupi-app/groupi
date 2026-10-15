@@ -6,7 +6,7 @@ import { useConvexAuth, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 class ReturnBoundary extends Component<
-  { children: ReactNode },
+  { children: ReactNode; returnPath: string },
   { failed: boolean }
 > {
   state = { failed: false };
@@ -15,10 +15,17 @@ class ReturnBoundary extends Component<
   }
   render() {
     return this.state.failed ? (
-      <p role='alert'>
-        Application return unavailable. Sign in to your own account and
-        reconnect the app if needed.
-      </p>
+      <div className='space-y-3'>
+        <p role='alert'>
+          Application return unavailable. Sign in to your own account and
+          reconnect the app if needed.
+        </p>
+        <Link
+          href={`/sign-in?mode=add-account&redirect=${encodeURIComponent(this.props.returnPath)}`}
+        >
+          Switch account
+        </Link>
+      </div>
     ) : (
       this.props.children
     );
@@ -46,7 +53,7 @@ export default function ApplicationStatus() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   return (
     <main className='mx-auto max-w-xl space-y-4 p-6'>
-      <ReturnBoundary>
+      <ReturnBoundary returnPath={`/application-status/${applicationId}`}>
         {isLoading ? (
           <p>Loading account…</p>
         ) : isAuthenticated ? (

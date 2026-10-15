@@ -1,5 +1,5 @@
 import { expect, it, vi, afterEach } from 'vitest';
-import { api, internal } from '../_generated/api';
+import { api, internal, components } from '../_generated/api';
 import { applicant } from './community-applications.helpers';
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -332,6 +332,13 @@ it('keeps native Groupi email defaults and refuses unsafe late retries without r
   expect(JSON.parse(provider.mock.calls[0][1].body)).toMatchObject({
     from: 'Groupi <notifications@groupi.gg>',
     subject: 'Your Groupi application: declined',
+  });
+  await f.t.mutation(components.betterAuth.adapter.updateOne, {
+    input: {
+      model: 'session',
+      where: [{ field: '_id', operator: 'eq', value: f.staff.session._id }],
+      update: { expiresAt: Date.now() + 48 * 3600000 },
+    },
   });
   vi.setSystemTime(Date.now() + 23 * 3600000 + 1);
   await expect(
