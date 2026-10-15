@@ -22,7 +22,13 @@ export const reviewStatus = v.union(
   v.literal('reviewed'),
   v.literal('rejected')
 );
+export const hostedAppearance = v.object({
+  brandName: v.string(),
+  accent: v.string(),
+  senderName: v.string(),
+});
 export const appFields = {
+  appearance: v.optional(hostedAppearance),
   ownerPersonId: v.id('persons'),
   name: v.string(),
   purpose: v.string(),
