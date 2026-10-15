@@ -1,3 +1,11 @@
+import type { FunctionArgs } from 'convex/server';
+import type { api } from '@/convex/_generated/api';
+export type AddonConfiguration = FunctionArgs<
+  typeof api.addons.mutations.enableAddon
+>['config'];
+export type AddonParticipantData = FunctionArgs<
+  typeof api.addons.mutations.setAddonData
+>['data'];
 import { type ComponentType } from 'react';
 import { type Icons } from '@/components/icons';
 import { type Id } from '@/convex/_generated/dataModel';
@@ -32,7 +40,7 @@ export interface ManageConfigProps {
   eventId: Id<'events'>;
   config: Record<string, unknown> | null;
   chosenDateTime?: number;
-  onSave: (config: Record<string, unknown>) => Promise<void>;
+  onSave: (config: AddonConfiguration) => Promise<void>;
   onDisable: () => Promise<void>;
   isSaving: boolean;
 }

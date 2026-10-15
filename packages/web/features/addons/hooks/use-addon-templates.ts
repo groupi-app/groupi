@@ -1,5 +1,7 @@
 'use client';
 
+import type { FunctionArgs } from 'convex/server';
+
 import { useQuery, useMutation } from 'convex/react';
 import { useCallback, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -35,12 +37,7 @@ export function useCreateTemplate() {
   const [isPending, setIsPending] = useState(false);
 
   const createTemplate = useCallback(
-    async (args: {
-      name: string;
-      description: string;
-      iconName: string;
-      template: unknown;
-    }) => {
+    async (args: FunctionArgs<typeof templateMutations.createTemplate>) => {
       setIsPending(true);
       try {
         const result = await mutation(args);
@@ -74,13 +71,7 @@ export function useUpdateTemplate() {
   const [isPending, setIsPending] = useState(false);
 
   const updateTemplate = useCallback(
-    async (args: {
-      templateId: Id<'addonTemplates'>;
-      name?: string;
-      description?: string;
-      iconName?: string;
-      template?: unknown;
-    }) => {
+    async (args: FunctionArgs<typeof templateMutations.updateTemplate>) => {
       setIsPending(true);
       try {
         await mutation(args);

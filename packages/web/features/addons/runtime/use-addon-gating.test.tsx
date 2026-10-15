@@ -50,7 +50,7 @@ function savedConfig(
             },
           },
         }
-      : {},
+      : { questions: [] },
   };
 }
 

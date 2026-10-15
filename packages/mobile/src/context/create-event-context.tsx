@@ -1,3 +1,5 @@
+import type { FunctionArgs } from 'convex/server';
+import type { api } from 'convex/_generated/api';
 import {
   createContext,
   useContext,
@@ -30,6 +32,16 @@ export interface ImageFile {
   mimeType: string;
 }
 
+type AddonConfiguration = FunctionArgs<
+  typeof api.addons.mutations.enableAddon
+>['config'];
+type BuiltInConfigurations = {
+  reminders?: Extract<AddonConfiguration, { reminderOffset: string }>;
+  'bring-list'?: Extract<AddonConfiguration, { items: unknown }>;
+  questionnaire?: Extract<AddonConfiguration, { questions: unknown }>;
+  discord?: Extract<AddonConfiguration, { guildId: string }>;
+} & Record<string, AddonConfiguration | undefined>;
+
 export interface FormState {
   title: string;
   description: string;
@@ -43,7 +55,7 @@ export interface FormState {
   imageUri: string | null;
   imageFile: ImageFile | null;
   imageFocalPoint: FocalPoint | null;
-  addonConfigs: Record<string, Record<string, unknown>>;
+  addonConfigs: BuiltInConfigurations;
   permissions?: EventPermissions;
 }
 
