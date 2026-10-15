@@ -93,7 +93,8 @@ export const communityOperations = Object.freeze({
     'POST',
     '/groups/{groupId}/coordinated-expulsions',
     'expelCommunityMember',
-    'G8'
+    'G8',
+    'implemented'
   ),
   reinstate: op(
     'POST',
@@ -126,7 +127,12 @@ const context = {
   group: { id: 'synthetic-red-room', name: 'Red Room' },
   form: { enabled: true, revision: 'synthetic-form-v2', questions: [question] },
   membership: null,
-  eligibility: { canApply: true, canAccessMemberContent: false, banned: false },
+  eligibility: {
+    canApply: true,
+    canAccessMemberContent: false,
+    banned: false,
+    excluded: false,
+  },
   applications: [],
   nextCursor: null,
   grantedActions: ['groups.context.read'],
@@ -144,7 +150,7 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G3', 'G4', 'G7'].includes(milestone)
+  status: ['G1', 'G3', 'G4', 'G7', 'G8'].includes(milestone)
     ? 'implemented'
     : 'proposed',
   milestone,
@@ -186,6 +192,7 @@ export const communityFixtures = Object.freeze({
       canApply: false,
       canAccessMemberContent: true,
       banned: false,
+      excluded: false,
     },
   }),
   voluntarilyDeparted: fixture(
@@ -213,6 +220,7 @@ export const communityFixtures = Object.freeze({
       canApply: false,
       canAccessMemberContent: false,
       banned: true,
+      excluded: false,
     },
   }),
   expelled: fixture(
@@ -223,10 +231,12 @@ export const communityFixtures = Object.freeze({
           canApply: false,
           canAccessMemberContent: false,
           banned: false,
+          excluded: true,
         },
       },
     },
-    'G8'
+    'G8',
+    'implemented'
   ),
   reinstated: fixture({ context }, 'G9'),
   noEvent: fixture({ event: { kind: 'none' } }, 'G4', 'implemented'),

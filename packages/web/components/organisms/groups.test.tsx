@@ -1,3 +1,6 @@
+vi.mock('./community-expulsion-action', () => ({
+  CommunityExpulsionAction: () => null,
+}));
 vi.mock('@/features/group-announcements/event-mail', () => ({
   EventMail: () => null,
 }));

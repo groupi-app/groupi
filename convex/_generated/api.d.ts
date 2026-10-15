@@ -309,6 +309,7 @@ import type * as groupTransfers_mutations from "../groupTransfers/mutations.js";
 import type * as groupTransfers_queries from "../groupTransfers/queries.js";
 import type * as groupTransfers_rest from "../groupTransfers/rest.js";
 import type * as groups_admission from "../groups/admission.js";
+import type * as groups_announcementPreferenceModel from "../groups/announcementPreferenceModel.js";
 import type * as groups_announcementPreferences from "../groups/announcementPreferences.js";
 import type * as groups_cleanup from "../groups/cleanup.js";
 import type * as groups_community from "../groups/community.js";
@@ -316,6 +317,8 @@ import type * as groups_communityApplications from "../groups/communityApplicati
 import type * as groups_contentAccess from "../groups/contentAccess.js";
 import type * as groups_contracts from "../groups/contracts.js";
 import type * as groups_currentEvent from "../groups/currentEvent.js";
+import type * as groups_exclusions from "../groups/exclusions.js";
+import type * as groups_expulsions from "../groups/expulsions.js";
 import type * as groups_model from "../groups/model.js";
 import type * as groups_mutations from "../groups/mutations.js";
 import type * as groups_operationReceipts from "../groups/operationReceipts.js";
@@ -714,6 +717,7 @@ declare const fullApi: ApiFromModules<{
   "groupTransfers/queries": typeof groupTransfers_queries;
   "groupTransfers/rest": typeof groupTransfers_rest;
   "groups/admission": typeof groups_admission;
+  "groups/announcementPreferenceModel": typeof groups_announcementPreferenceModel;
   "groups/announcementPreferences": typeof groups_announcementPreferences;
   "groups/cleanup": typeof groups_cleanup;
   "groups/community": typeof groups_community;
@@ -721,6 +725,8 @@ declare const fullApi: ApiFromModules<{
   "groups/contentAccess": typeof groups_contentAccess;
   "groups/contracts": typeof groups_contracts;
   "groups/currentEvent": typeof groups_currentEvent;
+  "groups/exclusions": typeof groups_exclusions;
+  "groups/expulsions": typeof groups_expulsions;
   "groups/model": typeof groups_model;
   "groups/mutations": typeof groups_mutations;
   "groups/operationReceipts": typeof groups_operationReceipts;

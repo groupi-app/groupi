@@ -46,3 +46,19 @@ client.searchUsers();
 // @ts-expect-error search requires the q field
 client.searchUsers({ query: {} });
 void readComposedSchemas;
+client
+  .setCommunityAnnouncementPreference(
+    { path: { groupId: 'group' }, body: { subscribed: true } },
+    { idempotencyKey: 'intent' }
+  )
+  .then(receipt => {
+    const subscribed: boolean = receipt.result.subscribed;
+    // @ts-expect-error own preference receipts do not expose arbitrary recipient addresses
+    const email: string = receipt.result.email;
+    return { subscribed, email };
+  });
+client.setCommunityAnnouncementPreference({
+  path: { groupId: 'group' },
+  // @ts-expect-error arbitrary recipient preferences are not accepted
+  body: { subscribed: true, personId: 'someone-else' },
+});

@@ -412,6 +412,22 @@ it('uses only administrator-linked approved branding and disables an unsafe or s
       { groupId: f.groupId }
     )
   ).toMatchObject({ url: config.returnUrl });
+  const grantId = await f.t.run(
+    async ctx =>
+      (await ctx.db
+        .query('delegatedGrantBindings')
+        .withIndex('by_personId', q => q.eq('personId', f.owner.personId))
+        .unique())!.grantId
+  );
+  await f.owner.auth.mutation(api.delegatedApps.mutations.disconnect, {
+    grantId,
+  });
+  expect(
+    await f.owner.auth.query(
+      api.groupAnnouncements.eventMail.preferenceReturn,
+      { groupId: f.groupId }
+    )
+  ).toMatchObject({ url: null });
   await f.t.run(async ctx => {
     await ctx.db.patch(f.appId, { status: 'suspended' });
   });
@@ -561,7 +577,16 @@ it('removes private Event mail on Event retirement while retaining unrelated Gro
 });
 it('purges recipient preferences and frozen delivery payloads during account deletion', async () => {
   const f = await mailFixture();
-  await f.t.run(async ctx=>{await ctx.db.patch(f.event.eventId,{creatorId:f.staff.personId});const member=await ctx.db.query('memberships').withIndex('by_person_event',q=>q.eq('personId',f.owner.personId).eq('eventId',f.event.eventId)).unique();await ctx.db.patch(member!._id,{role:'ATTENDEE'});});
+  await f.t.run(async ctx => {
+    await ctx.db.patch(f.event.eventId, { creatorId: f.staff.personId });
+    const member = await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', f.owner.personId).eq('eventId', f.event.eventId)
+      )
+      .unique();
+    await ctx.db.patch(member!._id, { role: 'ATTENDEE' });
+  });
   await f.owner.auth.mutation(api.users.mutations.deleteUserAccount, {
     confirmation: 'delegated-owner',
   });
@@ -574,4 +599,49 @@ it('purges recipient preferences and frozen delivery payloads during account del
   expect(
     await f.t.run(ctx => ctx.db.query('groupAnnouncementPreferences').collect())
   ).toEqual([]);
+});
+it('suppresses queued mail at the canonical exclusion fence before blocked expulsion cleanup completes', async () => {
+  const f = await mailFixture();
+  const expelled = await f.staff.auth.mutation(api.groups.expulsions.expel, {
+    groupId: f.groupId,
+    personId: f.owner.personId,
+    operationId: crypto.randomUUID(),
+  });
+  expect(expelled).toMatchObject({ exclusion: 'active', cleanup: 'blocked' });
+  const provider = vi.fn();
+  vi.stubGlobal('fetch', provider);
+  await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
+    dispatchId: f.dispatchId,
+  });
+  expect(provider).not.toHaveBeenCalled();
+  expect(await f.status()).toMatchObject({ suppressed: 1 });
+});
+it('suppresses a frozen retry when its private destination was removed instead of claiming provider delivery', async () => {
+  const f = await mailFixture();
+  const provider = vi
+    .fn()
+    .mockResolvedValue(new Response('{}', { status: 503 }));
+  vi.stubGlobal('fetch', provider);
+  vi.stubEnv('RESEND_API_KEY', 'synthetic');
+  await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
+    dispatchId: f.dispatchId,
+  });
+  await f.owner.auth.mutation(api.settings.mutations.saveNotificationSettings, {
+    notificationMethods: [
+      {
+        type: 'EMAIL',
+        enabled: true,
+        value: 'new-address@example.test',
+        notifications: [],
+      },
+    ],
+  });
+  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
+    announcementId: f.announcementId,
+  });
+  await f.t.action(internal.groupAnnouncements.eventMailActions.send, {
+    dispatchId: f.dispatchId,
+  });
+  expect(provider).toHaveBeenCalledTimes(1);
+  expect(await f.status()).toMatchObject({ suppressed: 1, delivered: 0 });
 });

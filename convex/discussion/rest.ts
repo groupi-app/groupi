@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import {
   internalQuery,
@@ -52,6 +53,7 @@ async function access(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const member = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

@@ -1,4 +1,5 @@
-import { preferenceFor } from './announcementPreferences';
+import { preferenceFor } from './announcementPreferenceModel';
+import { isGroupExcludedForPerson } from './exclusions';
 import { v } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -40,6 +41,7 @@ export const context = v.object({
     canApply: v.boolean(),
     canAccessMemberContent: v.boolean(),
     banned: v.boolean(),
+    excluded: v.boolean(),
   }),
   applications: v.array(
     v.object({
@@ -164,6 +166,7 @@ export const readContext = internalQuery({
         canApply: eligible && enabled && !membership && !pending,
         canAccessMemberContent,
         banned,
+        excluded: await isGroupExcludedForPerson(ctx, groupId, personId),
       },
       applications: page.page.map(a => ({
         id: a._id,

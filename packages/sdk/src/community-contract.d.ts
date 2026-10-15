@@ -51,6 +51,7 @@ export type CommunityContext = {
     canApply: boolean;
     canAccessMemberContent: boolean;
     banned: boolean;
+    excluded?: boolean;
   };
   applications: OwnApplication[];
   nextCursor: string | null;
@@ -194,11 +195,14 @@ export type ProposedOperations = {
       personId: string;
       policy: 'coordinated';
     }>;
-    result: Committed<{
+    result: {
+      operationId: string;
+      outcome: 'committed';
+      exclusion: 'active';
       generation: number;
-      state: 'blocked' | 'progress' | 'complete';
-      events: { eventId: string; state: 'queued' | 'blocked' | 'complete' }[];
-    }>;
+      cleanup: 'blocked' | 'pending' | 'complete';
+      conflicts: { eventId: string; code: string }[];
+    };
   };
   reinstate: {
     input: MutationIntent<{

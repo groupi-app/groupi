@@ -22,7 +22,11 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
     );
   }
 }
-function Preferences({ groupId }: { groupId: Id<'groups'> }) {
+export function OwnAnnouncementPreferences({
+  groupId,
+}: {
+  groupId: Id<'groups'>;
+}) {
   const current = useQuery(api.groupAnnouncements.eventMail.preferenceReturn, {
     groupId,
   });
@@ -88,7 +92,7 @@ export default function AnnouncementPreferences() {
         {auth.isLoading ? (
           <p>Loading account…</p>
         ) : auth.isAuthenticated ? (
-          <Preferences groupId={groupId as Id<'groups'>} />
+          <OwnAnnouncementPreferences groupId={groupId as Id<'groups'>} />
         ) : (
           <Link
             href={`/sign-in?redirect=${encodeURIComponent(`/announcement-preferences/${groupId}`)}`}

@@ -341,6 +341,27 @@ export default defineSchema({
       'requestId',
     ]),
 
+  communityExclusions: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.id('persons'),
+    active: v.boolean(),
+    generation: v.number(),
+    operationId: v.string(),
+    eventIds: v.array(v.id('events')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    cleanup: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('complete')
+    ),
+    conflicts: v.array(v.object({ eventId: v.id('events'), code: v.string() })),
+  })
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_person', ['personId'])
+    .index('by_group', ['groupId']),
+
   groupBans: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),

@@ -1,3 +1,7 @@
+import {
+  isEventExcludedForPerson,
+  isGroupExcludedForPerson,
+} from '../groups/exclusions';
 import { v, type Infer } from 'convex/values';
 import { mutation, query, internalMutation } from '../_generated/server';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -7,7 +11,7 @@ import { requireAuth } from '../auth';
 import { isAdminRole } from '../lib/constants';
 import { requireManager } from '../groups/policy';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
-import { preferenceFor } from '../groups/announcementPreferences';
+import { preferenceFor } from '../groups/announcementPreferenceModel';
 import { eventAdmissionAccess } from '../events/admission';
 import { isEventComplete } from '../events/lifecycle';
 import { checkIsBlocked } from '../lib/privacy';
@@ -109,6 +113,11 @@ async function authority(
   active = true
 ) {
   await requireManager(ctx, groupId, senderId);
+  if (
+    (await isGroupExcludedForPerson(ctx, groupId, senderId)) ||
+    (await isEventExcludedForPerson(ctx, eventId, senderId))
+  )
+    throw denied();
   const event = await ctx.db.get(eventId);
   const member = await ctx.db
     .query('memberships')
@@ -136,6 +145,11 @@ async function eligible(
   row: Doc<'groupEventAnnouncements'>,
   personId: Id<'persons'>
 ) {
+  if (
+    (await isGroupExcludedForPerson(ctx, row.groupId, personId)) ||
+    (await isEventExcludedForPerson(ctx, row.eventId, personId))
+  )
+    return false;
   const preference = await ctx.db
     .query('groupAnnouncementPreferences')
     .withIndex('by_groupId_and_personId', q =>
@@ -378,6 +392,14 @@ export const claim = internalMutation({
           key: `group-event/${dispatchId}/${await secretHash(email.to)}`,
         }))
       ));
+    const pendingMessages = messages.filter(
+      m =>
+        !dispatch.delivered.includes(m.key) && emails.some(e => e.to === m.to)
+    );
+    if (!pendingMessages.length && !dispatch.delivered.length) {
+      await ctx.db.patch(dispatchId, { state: 'suppressed' });
+      return null;
+    }
     const attempt = dispatch.attempt + 1;
     await ctx.db.patch(dispatchId, {
       state: 'sending',
@@ -387,10 +409,7 @@ export const claim = internalMutation({
     });
     return {
       attempt,
-      messages: messages.filter(
-        m =>
-          !dispatch.delivered.includes(m.key) && emails.some(e => e.to === m.to)
-      ),
+      messages: pendingMessages,
     };
   },
 });

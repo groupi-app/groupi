@@ -1,3 +1,4 @@
+import { isGroupExcludedForPerson } from './exclusions';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -21,6 +22,14 @@ export async function requireManager(
   personId: Id<'persons'>
 ) {
   await requirePerson(ctx, personId);
+  if (
+    (await isGroupBanned(ctx, groupId, personId)) ||
+    (await isGroupExcludedForPerson(ctx, groupId, personId))
+  )
+    throw new ConvexError({
+      code: 'FORBIDDEN',
+      message: 'Current staff authority required.',
+    });
   const group = await ctx.db.get(groupId);
   const member = await membershipFor(ctx, groupId, personId);
   if (!group)
@@ -72,6 +81,7 @@ export async function canEnterGroup(
   return (
     Boolean(await ctx.db.get(groupId)) &&
     Boolean(await livePerson(ctx, personId)) &&
-    !(await isGroupBanned(ctx, groupId, personId))
+    !(await isGroupBanned(ctx, groupId, personId)) &&
+    !(await isGroupExcludedForPerson(ctx, groupId, personId))
   );
 }

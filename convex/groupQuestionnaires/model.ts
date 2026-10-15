@@ -1,3 +1,4 @@
+import { isGroupExcludedForPerson } from '../groups/exclusions';
 import { scheduleRequiredChanges } from './notificationJobs';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -75,7 +76,11 @@ async function projectJoiningQuestionnaire(
     recordFor(ctx, groupId, personId),
     isGroupBanned(ctx, groupId, personId),
   ]);
-  const currentMember = Boolean(member && !banned);
+  const currentMember = Boolean(
+    member &&
+      !banned &&
+      !(await isGroupExcludedForPerson(ctx, groupId, personId))
+  );
   if (!currentMember && !record)
     fail(
       'FORBIDDEN',
@@ -150,7 +155,10 @@ export async function configureJoiningQuestionnaire(
   const ownerMembership = await membershipFor(ctx, groupId, personId);
   if (ownerMembership?.role !== 'OWNER')
     fail('FORBIDDEN', 'Current Group owner membership is required.');
-  if (await isGroupBanned(ctx, groupId, personId))
+  if (
+    (await isGroupBanned(ctx, groupId, personId)) ||
+    (await isGroupExcludedForPerson(ctx, groupId, personId))
+  )
     fail('FORBIDDEN', 'Group access unavailable.');
   try {
     validateQuestions(questions);
@@ -270,7 +278,10 @@ export async function listJoiningQuestionnaireAnswers(
   paginationOpts: { numItems: number; cursor: string | null }
 ) {
   await requireManager(ctx, groupId, personId);
-  if (await isGroupBanned(ctx, groupId, personId))
+  if (
+    (await isGroupBanned(ctx, groupId, personId)) ||
+    (await isGroupExcludedForPerson(ctx, groupId, personId))
+  )
     fail('FORBIDDEN', 'Group access unavailable.');
   checkPage(paginationOpts);
   let rows;
