@@ -1,3 +1,7 @@
+import {
+  removeEventMailForGroup,
+  removeEventMailForPerson,
+} from './eventMailCleanup';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 async function removeNotifications(
@@ -22,6 +26,7 @@ export async function removeAnnouncementsForGroup(
   ctx: MutationCtx,
   groupId: Id<'groups'>
 ) {
+  await removeEventMailForGroup(ctx, groupId);
   for await (const row of ctx.db
     .query('groupAnnouncements')
     .withIndex('by_groupId', q => q.eq('groupId', groupId))) {
@@ -33,6 +38,7 @@ export async function removeAnnouncementsForPerson(
   ctx: MutationCtx,
   personId: Id<'persons'>
 ) {
+  await removeEventMailForPerson(ctx, personId);
   for await (const notification of ctx.db
     .query('notifications')
     .withIndex('by_person_and_type', q =>

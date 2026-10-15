@@ -241,5 +241,6 @@
   "GET /groups/{groupId}/current-event": "readCurrentCommunityEvent",
   "POST /groups/{groupId}/community-applications": "submitCommunityApplication",
   "PATCH /groups/{groupId}/community-applications/{applicationId}": "editCommunityApplication",
-  "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication"
+  "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication",
+  "PUT /groups/{groupId}/announcement-preference": "setCommunityAnnouncementPreference"
 }

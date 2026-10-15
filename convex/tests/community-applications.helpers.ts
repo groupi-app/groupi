@@ -7,7 +7,7 @@ import {
 } from './delegated-protocol.helpers';
 import { createAuthAccount } from './auth.helpers';
 export async function applicant(
-  actions = [
+  actions: readonly import('../authorization/model').AuthorizationAction[] = [
     'groups.context.read',
     'groups.applications.submit',
     'groups.applications.edit',

@@ -232,7 +232,7 @@ from .types import (
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
-    Object3f7b83728032,
+    Objectf94301f131a6,
     Objecta2791daed18f,
     Object6edaff610f96,
     Object97dfec76315a,
@@ -241,6 +241,8 @@ from .types import (
     Objecte4ea0c62ce41,
     Object0210d908b1ed,
     Objectece999219204,
+    Object39140cd5ad6d,
+    Objectb93f36757224,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -381,10 +383,11 @@ from .types import (
     Object5b35bc95b99b,
     Object9181a91b6751,
     Object9a607b8a62e8,
-    Object068ecbb0d0bb,
+    Objectd9ee0d5fe0e0,
     Object8f7560a6b20e,
     Object427b94380342,
     Object878ec63794f7,
+    Object5ebfeba959d7,
     Objectcb244cc36b34,
     Objectafe89b003106,
     Object17c8fd7ccf8b,
@@ -964,6 +967,10 @@ class Groupi(Transport):
     def withdraw_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
         """withdrawCommunityApplication."""
         return self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def set_community_announcement_preference(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Change own Group announcement subscription."""
+        return self.request('PUT', '/groups/{groupId}/announcement-preference', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -2067,6 +2074,10 @@ class AsyncGroupi(AsyncTransport):
     async def withdraw_community_application(self, **kwargs):
         """withdrawCommunityApplication."""
         return await self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', **kwargs)
+
+    async def set_community_announcement_preference(self, **kwargs):
+        """Change own Group announcement subscription."""
+        return await self.request('PUT', '/groups/{groupId}/announcement-preference', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""
