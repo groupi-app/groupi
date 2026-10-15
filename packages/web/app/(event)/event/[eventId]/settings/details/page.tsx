@@ -1,4 +1,5 @@
 'use client';
+import { EventLifecycleSettings } from '@/components/organisms/event-lifecycle-settings';
 
 import { use } from 'react';
 import { useEventHeader } from '@/hooks/convex';
@@ -46,6 +47,10 @@ export default function EventSettingsDetailsPage(props: {
               visibility={event.visibility}
             />
           )}
+          <EventLifecycleSettings
+            eventId={event._id}
+            role={eventData?.userMembership?.role}
+          />
           <EventAdmissionSettings
             eventId={event._id}
             role={eventData?.userMembership?.role}

@@ -1,4 +1,5 @@
 import {
+  CurrentCommunityEventSchema,
   CommunityApplicationReceiptSchema,
   CommunityApplicationSubmitSchema,
   CommunityApplicationEditSchema,
@@ -257,6 +258,36 @@ export function createGroupRoutes() {
         200: {
           description: 'Selected Group own context; private no-store',
           content: { 'application/json': { schema: CommunityContextSchema } },
+        },
+        ...errors,
+        503: {
+          description: 'Retryable unavailable service',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/current-event',
+      tags: ['Groups'],
+      operationId: 'readCurrentCommunityEvent',
+      summary: 'Read the single current selected Group Event',
+      security: [{ boundedBearer: [] }],
+      request: { params },
+      responses: {
+        200: {
+          description:
+            'Explicit absence, staff configuration conflict, or permitted Event logistics and own RSVP; private no-store',
+          content: {
+            'application/json': { schema: CurrentCommunityEventSchema },
+          },
         },
         ...errors,
         503: {

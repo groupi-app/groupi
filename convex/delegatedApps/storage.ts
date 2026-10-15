@@ -278,6 +278,7 @@ export const prepareConsent = internalMutation({
           s !== 'offline_access' &&
           ![
             'groups.context.read',
+            'groups.events.read',
             'groups.applications.submit',
             'groups.applications.edit',
             'groups.applications.withdraw',

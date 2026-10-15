@@ -7132,6 +7132,288 @@
         }
       }
     },
+    "/events/{eventId}/lifecycle": {
+      "get": {
+        "operationId": "readEventLifecycle",
+        "tags": ["Events"],
+        "summary": "Read Organizer lifecycle and revision",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "k170xyz...",
+              "description": "Event ID"
+            },
+            "required": true,
+            "description": "Event ID",
+            "name": "eventId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current Organizer lifecycle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "audienceConflicts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["groupId", "name"]
+                      }
+                    },
+                    "revision": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "completedAt": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "startsAt": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "endsAt": {
+                      "type": "number",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "audienceConflicts",
+                    "revision",
+                    "completed",
+                    "completedAt",
+                    "startsAt",
+                    "endsAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or cursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient event authority or eligibility",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event or membership not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateEventLifecycle",
+        "tags": ["Events"],
+        "summary": "Complete, reopen or reschedule as current Organizer",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "k170xyz...",
+              "description": "Event ID"
+            },
+            "required": true,
+            "description": "Event ID",
+            "name": "eventId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": ["complete", "reopen", "reschedule"]
+                  },
+                  "startsAt": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "endsAt": {
+                    "type": "number",
+                    "nullable": true
+                  }
+                },
+                "required": ["expectedRevision", "action"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal committed receipt; replay never repeats effects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "eventId": {
+                          "type": "string"
+                        },
+                        "revision": {
+                          "type": "string"
+                        },
+                        "completed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["eventId", "revision", "completed"]
+                    },
+                    "effects": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        },
+                        "cleanup": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        }
+                      },
+                      "required": ["email", "cleanup"]
+                    }
+                  },
+                  "required": ["operationId", "outcome", "result", "effects"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or cursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient event authority or eligibility",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event or membership not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale revision or conflicting/expired operation ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/events/{eventId}/applications/form": {
       "get": {
         "tags": ["Event Applications"],
@@ -20495,6 +20777,228 @@
                     "grantedActions",
                     "allowedActions",
                     "announcementPreference"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Retryable unavailable service",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/current-event": {
+      "get": {
+        "tags": ["Groups"],
+        "operationId": "readCurrentCommunityEvent",
+        "summary": "Read the single current selected Group Event",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Explicit absence, staff configuration conflict, or permitted Event logistics and own RSVP; private no-store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["none"]
+                        }
+                      },
+                      "required": ["kind"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["conflict"]
+                        },
+                        "code": {
+                          "type": "string",
+                          "enum": ["STAFF_CONFIGURATION_CONFLICT"]
+                        }
+                      },
+                      "required": ["kind", "code"]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["event"]
+                        },
+                        "supportedRsvpChoices": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["PENDING", "YES", "NO", "MAYBE"]
+                          }
+                        },
+                        "allowedRsvpTransitions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["PENDING", "YES", "NO", "MAYBE"]
+                          }
+                        },
+                        "event": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "location": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "description": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "timezone": {
+                              "type": "string"
+                            },
+                            "startsAt": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "endsAt": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "ongoing": {
+                              "type": "boolean"
+                            },
+                            "roster": {
+                              "type": "array",
+                              "nullable": true,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "displayName": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["displayName"]
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "title",
+                            "location",
+                            "description",
+                            "timezone",
+                            "startsAt",
+                            "endsAt",
+                            "ongoing",
+                            "roster"
+                          ]
+                        },
+                        "participation": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "membershipId": {
+                              "type": "string"
+                            },
+                            "revision": {
+                              "type": "number"
+                            },
+                            "rsvp": {
+                              "type": "string",
+                              "enum": ["PENDING", "YES", "NO", "MAYBE"]
+                            }
+                          },
+                          "required": ["membershipId", "revision", "rsvp"]
+                        },
+                        "allowedActions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "supportedRsvpChoices",
+                        "allowedRsvpTransitions",
+                        "event",
+                        "participation",
+                        "allowedActions"
+                      ]
+                    }
                   ]
                 }
               }

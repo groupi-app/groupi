@@ -5,11 +5,9 @@ export const membershipDocumentValidator = v.object({
   _creationTime: v.number(),
   ...schema.tables.memberships.validator.fields,
 });
+export const rsvpChoices = ['PENDING', 'YES', 'NO', 'MAYBE'] as const;
 export const rsvpStatus = v.union(
-  v.literal('YES'),
-  v.literal('MAYBE'),
-  v.literal('NO'),
-  v.literal('PENDING')
+  ...rsvpChoices.map(value => v.literal(value))
 );
 export const responseStatus = v.union(
   v.literal('YES'),

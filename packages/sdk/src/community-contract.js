@@ -55,7 +55,8 @@ export const communityOperations = Object.freeze({
     'GET',
     '/groups/{groupId}/current-event',
     'readCurrentCommunityEvent',
-    'G4'
+    'G4',
+    'implemented'
   ),
   joinEvent: op(
     'POST',
@@ -142,13 +143,15 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G3'].includes(milestone) ? 'implemented' : 'proposed',
+  status: ['G1', 'G3', 'G4'].includes(milestone) ? 'implemented' : 'proposed',
   milestone,
   ...value,
 });
 const withContext = changes => fixture({ context: { ...context, ...changes } });
 const activeEvent = {
   kind: 'event',
+  supportedRsvpChoices: ['PENDING', 'YES', 'NO', 'MAYBE'],
+  allowedRsvpTransitions: [],
   event: {
     id: 'synthetic-event',
     title: 'Red Room gathering',
@@ -161,7 +164,7 @@ const activeEvent = {
     roster: null,
   },
   participation: null,
-  allowedActions: ['groups.events.read', 'groups.events.join'],
+  allowedActions: ['groups.events.read'],
 };
 export const communityFixtures = Object.freeze({
   neverApplied: withContext({}),
@@ -223,11 +226,12 @@ export const communityFixtures = Object.freeze({
     'G8'
   ),
   reinstated: fixture({ context }, 'G9'),
-  noEvent: fixture({ event: { kind: 'none' } }, 'G4'),
-  ongoingEvent: fixture({ event: activeEvent }, 'G4'),
+  noEvent: fixture({ event: { kind: 'none' } }, 'G4', 'implemented'),
+  ongoingEvent: fixture({ event: activeEvent }, 'G4', 'implemented'),
   multipleEventConflict: fixture(
     { event: { kind: 'conflict', code: 'STAFF_CONFIGURATION_CONFLICT' } },
-    'G4'
+    'G4',
+    'implemented'
   ),
   joinedPending: fixture(
     {
