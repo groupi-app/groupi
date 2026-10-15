@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import {
   query,
   action,
@@ -78,7 +79,7 @@ export const getLinkedAccounts = query({
     });
 
     // findMany returns paginated result with page array
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
 
     // Map to safe public format (no tokens)
     return accounts.map(
@@ -125,7 +126,7 @@ export const hasLinkedProvider = query({
     });
 
     // findMany returns paginated result with page array
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
 
     const providers = new Set(
       accounts.map((a: { providerId: string }) => a.providerId)
@@ -164,7 +165,7 @@ export const getAccountsForEnrichment = internalQuery({
       },
     });
 
-    const accounts = Array.isArray(result) ? result : (result?.page ?? []);
+    const accounts: AuthDoc<'account'>[] = result.page;
 
     return {
       user: { email: user.email },

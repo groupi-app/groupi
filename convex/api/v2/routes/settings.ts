@@ -73,6 +73,7 @@ export function createSettingsRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdatePrivacySettingsRequestSchema,
@@ -171,6 +172,7 @@ export function createSettingsRoutes() {
       security: [{ apiKey: [] }],
       request: {
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: UpdateNotificationSettingsRequestSchema,

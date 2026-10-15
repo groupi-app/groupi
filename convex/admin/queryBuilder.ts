@@ -75,7 +75,16 @@ const filterOperators = v.union(
 const filterCondition = v.object({
   field: v.string(),
   operator: filterOperators,
-  value: v.optional(v.any()),
+  value: v.optional(
+    v.union(
+      v.string(),
+      v.number(),
+      v.boolean(),
+      v.null(),
+      v.array(v.string()),
+      v.array(v.number())
+    )
+  ),
 });
 
 // Define filter group (AND/OR logic)
@@ -422,12 +431,12 @@ async function executeUsersQuery(ctx: QueryCtx, params: QueryParams) {
 
       // rel_postedInEvent: list of eventIds this user has posted in
       const postedInEvents = Array.from(
-        personPostedInEventMap.get(personIdStr) || new Set()
+        personPostedInEventMap.get(personIdStr) ?? []
       );
 
       // rel_repliedToUser: list of personIds whose posts this user has replied to
       const repliedToUsers = Array.from(
-        personRepliedToMap.get(personIdStr) || new Set()
+        personRepliedToMap.get(personIdStr) ?? []
       );
 
       return {

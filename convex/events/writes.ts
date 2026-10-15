@@ -1,3 +1,5 @@
+import { AddonConfigSchema } from '../addons/schemas';
+import { addonConfig } from '../addons/contracts';
 import { claimUpload } from '../files/uploads';
 import { validateImageMetadata } from '../files/imageRules';
 import { z } from '@hono/zod-openapi';
@@ -130,7 +132,7 @@ export const createEventArgs = v.object({
     v.array(
       v.object({
         addonType: v.string(),
-        config: v.any(),
+        config: addonConfig,
       })
     )
   ),
@@ -361,7 +363,7 @@ export async function createEventForPerson(
       eventId,
       addonType: addon.addonType,
       enabled: true,
-      config: addon.config,
+      config: AddonConfigSchema.parse(addon.config),
       createdAt: now,
       updatedAt: now,
     });

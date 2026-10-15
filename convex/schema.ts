@@ -1,4 +1,9 @@
 import {
+  addonConfig,
+  addonData,
+  template as addonTemplateValidator,
+} from './addons/contracts';
+import {
   voteFields,
   mode as pollMode,
   option as pollOption,
@@ -750,7 +755,7 @@ export default defineSchema({
     name: v.optional(v.string()), // "Work Email", "Personal Webhook"
     value: v.string(), // Email address, webhook URL, etc.
     // Webhook-specific configuration
-    webhookHeaders: v.optional(v.any()), // JSON object
+    webhookHeaders: v.optional(v.record(v.string(), v.string())), // JSON object
     customTemplate: v.optional(v.string()),
     webhookFormat: v.optional(
       v.union(
@@ -950,7 +955,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(), // e.g. 'reminders'
     enabled: v.boolean(),
-    config: v.any(), // addon-specific JSON
+    config: addonConfig, // Registered add-on configuration
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -971,7 +976,7 @@ export default defineSchema({
     eventId: v.id('events'),
     addonType: v.string(),
     key: v.string(), // addon-defined key (e.g. 'vote:option1', 'expense:123')
-    data: v.any(), // addon-defined payload
+    data: addonData, // Answers, claims, votes, toggles and service metadata
     createdBy: v.optional(v.id('persons')),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -985,7 +990,7 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     iconName: v.string(),
-    template: v.any(), // full CustomAddonTemplate (validated before save)
+    template: addonTemplateValidator, // Known draft structure; completeness checked before publication
     version: v.number(),
     isPublished: v.boolean(), // draft vs ready to use
     createdAt: v.number(),

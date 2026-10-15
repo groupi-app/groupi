@@ -1,3 +1,4 @@
+import { tokenOverridesValidator } from './contracts';
 import { saveThemePreferenceForPerson } from './mutations';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
@@ -62,7 +63,7 @@ export const createCustomTheme = internalMutation({
     description: v.optional(v.string()),
     baseThemeId: v.string(),
     mode: v.union(v.literal('light'), v.literal('dark')),
-    tokenOverrides: v.optional(v.any()),
+    tokenOverrides: v.optional(tokenOverridesValidator),
   },
   handler: async (
     ctx,
@@ -105,7 +106,7 @@ export const updateCustomTheme = internalMutation({
     description: v.optional(v.union(v.string(), v.null())),
     baseThemeId: v.optional(v.string()),
     mode: v.optional(v.union(v.literal('light'), v.literal('dark'))),
-    tokenOverrides: v.optional(v.any()),
+    tokenOverrides: v.optional(tokenOverridesValidator),
   },
   handler: async (
     ctx,

@@ -148,6 +148,7 @@ export function createProfileRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateProfileRequestSchema,

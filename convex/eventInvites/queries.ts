@@ -1,3 +1,4 @@
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { query, QueryCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { components } from '../_generated/api';
@@ -341,10 +342,13 @@ export const searchUserByExactUsernameForEventInvite = query({
     }
 
     // Use the Better Auth username index for instant lookup
-    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: 'user',
-      where: [{ field: 'username', operator: 'eq', value: trimmedSearch }],
-    });
+    const user: AuthDoc<'user'> | null = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: 'user',
+        where: [{ field: 'username', operator: 'eq', value: trimmedSearch }],
+      }
+    );
 
     if (!user) {
       return null;

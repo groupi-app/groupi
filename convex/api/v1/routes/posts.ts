@@ -95,6 +95,7 @@ export function createPostRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreatePostRequestSchema,
@@ -249,6 +250,7 @@ export function createPostRoutes() {
     request: {
       params: PostIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdatePostRequestSchema,
@@ -261,7 +263,12 @@ export function createPostRoutes() {
         description: 'Post updated',
         content: {
           'application/json': {
-            schema: PostResponseSchema,
+            schema: PostResponseSchema.extend({
+              data: z.union([
+                PostResponseSchema.shape.data,
+                z.object({ postId: z.string() }),
+              ]),
+            }),
           },
         },
       },

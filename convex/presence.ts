@@ -126,7 +126,28 @@ export const updatePresenceData = mutation({
 export const list = query({
   args: { roomToken: v.string() },
   handler: async (ctx, { roomToken }) => {
-    return await presence.list(ctx, roomToken);
+    return (await presence.list(ctx, roomToken)).map(user => {
+      const data = user.data;
+      return {
+        userId: user.userId,
+        online: user.online,
+        lastDisconnected: user.lastDisconnected,
+        data:
+          data && typeof data === 'object'
+            ? {
+                isTyping:
+                  'isTyping' in data && typeof data.isTyping === 'boolean'
+                    ? data.isTyping
+                    : undefined,
+                lastActivity:
+                  'lastActivity' in data &&
+                  typeof data.lastActivity === 'number'
+                    ? data.lastActivity
+                    : undefined,
+              }
+            : undefined,
+      };
+    });
   },
 });
 

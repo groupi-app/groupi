@@ -282,8 +282,9 @@ export async function searchPeopleForPerson(
       paginationOpts: { cursor: null, numItems: 20 },
     }
   );
+  const users: AuthDoc<'user'>[] = matchingUsers.page;
   const results = await Promise.all(
-    matchingUsers.page.map(async (user: AuthDoc<'user'>) => {
+    users.map(async (user: AuthDoc<'user'>) => {
       const person = await ctx.db
         .query('persons')
         .withIndex('by_user_id', q => q.eq('userId', user._id))

@@ -234,6 +234,7 @@ export function createEventManagementRoutes() {
       request: {
         params: EventIdParamSchema,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z

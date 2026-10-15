@@ -82,6 +82,7 @@ export function createGroupModerationRoutes() {
       request: {
         params,
         body: {
+          required: true,
           content: {
             'application/json': {
               schema: z

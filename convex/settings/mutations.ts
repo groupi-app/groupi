@@ -1,3 +1,4 @@
+import { parseWebhookHeaders } from '../notifications/contracts';
 import { mutation, type MutationCtx } from '../_generated/server';
 import { v, ConvexError, type Infer } from 'convex/values';
 import { requireAuth, getPersonForUser } from '../auth';
@@ -165,14 +166,7 @@ export async function saveNotificationSettingsForPerson(
     let methodId = method.id;
 
     // Parse webhook headers if provided
-    let webhookHeaders = undefined;
-    if (method.webhookHeaders) {
-      try {
-        webhookHeaders = JSON.parse(method.webhookHeaders);
-      } catch {
-        // Keep as undefined if invalid JSON
-      }
-    }
+    const webhookHeaders = parseWebhookHeaders(method.webhookHeaders);
 
     if (methodId && existingMethodIds.has(methodId)) {
       // Update existing method
