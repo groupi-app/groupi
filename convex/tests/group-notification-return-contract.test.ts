@@ -3,7 +3,7 @@ import { api, internal } from '../_generated/api';
 import {
   listNotifications,
   listNotificationsPage,
-} from '../api/v1/internal/notifications';
+} from '../notifications/rest';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 
@@ -22,12 +22,11 @@ it('declares every projected Group notification field in both REST query return 
     api.groupInvites.mutations.sendGroupInvite,
     { groupId, inviteePersonId: recipient.personId }
   );
-  const legacy = await t.query(
-    internal.api.v1.internal.notifications.listNotifications,
-    { personId: recipient.personId }
-  );
+  const legacy = await t.query(internal.notifications.rest.listNotifications, {
+    personId: recipient.personId,
+  });
   const page = await t.query(
-    internal.api.v1.internal.notifications.listNotificationsPage,
+    internal.notifications.rest.listNotificationsPage,
     { personId: recipient.personId, unreadOnly: false, limit: 20, cursor: null }
   );
   expect(legacy).toMatchObject([
