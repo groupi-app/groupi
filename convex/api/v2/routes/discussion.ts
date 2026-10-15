@@ -29,6 +29,7 @@ const body = z
 const author = z
   .object({
     id: z.string(),
+    kind: z.enum(['user', 'integration']).optional(),
     user: z.object({
       id: z.string(),
       name: z.string().nullable(),
