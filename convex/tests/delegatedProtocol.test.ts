@@ -122,6 +122,33 @@ test('background refresh preserves selected API access and disconnect denies bot
   expect(await renewal.json()).toMatchObject({ error: 'invalid_grant' });
 });
 
+test('refresh scope narrowing is rejected without consuming the original bounded refresh token', async () => {
+  const context = await setup();
+  const { t, appId, event } = context;
+  const { code } = await authorize(context, {
+    scopes: 'openid events.read events.update offline_access',
+    actions: ['events.read', 'events.update'],
+    selector: { kind: 'selected', eventIds: [event.eventId] },
+    background: true,
+  });
+  const initial = await (await token(t, exchange(appId, code))).json();
+  const narrowed = await token(t, {
+    grant_type: 'refresh_token',
+    client_id: appId,
+    refresh_token: initial.refresh_token,
+    scope: 'events.read',
+  });
+  expect(narrowed.status).toBe(400);
+  expect(await narrowed.json()).toMatchObject({ error: 'invalid_scope' });
+  const unchanged = await token(t, {
+    grant_type: 'refresh_token',
+    client_id: appId,
+    refresh_token: initial.refresh_token,
+  });
+  expect(unchanged.status, await unchanged.clone().text()).toBe(200);
+  expect((await unchanged.json()).scope).toBe('events.read events.update');
+});
+
 test('refresh replay and concurrent redemption invalidate every descendant bearer', async () => {
   const context = await setup();
   const { t, appId, event } = context;
