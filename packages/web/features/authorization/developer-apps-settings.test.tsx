@@ -52,3 +52,28 @@ it('limits the app purpose to the registration contract of one thousand characte
   await user.type(screen.getByLabelText('Purpose'), 'a'.repeat(1001));
   expect(screen.getByLabelText('Purpose')).toHaveValue('a'.repeat(1000));
 });
+
+it('lets a rejected app owner request another review while remaining in own-account testing', async () => {
+  vi.mocked(useQuery).mockReturnValue([
+    {
+      _id: 'app-1',
+      name: 'Calendar',
+      purpose: 'Read my schedule',
+      clientType: 'native',
+      redirectUris: ['com.example.calendar:/callback'],
+      status: 'testing',
+      reviewStatus: 'rejected',
+    },
+  ]);
+  const request = vi.fn().mockResolvedValue(null);
+  vi.mocked(useMutation).mockReturnValue(request as never);
+  const user = userEvent.setup();
+  render(<DeveloperAppsSettings />);
+  await user.click(
+    screen.getByRole('button', { name: 'Request another review for Calendar' })
+  );
+  expect(request).toHaveBeenCalledWith({ appId: 'app-1' });
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'Review requested'
+  );
+});

@@ -99,7 +99,8 @@ export function DeveloperAppsSettings() {
                 ))}
               </ul>
               {app.status === 'testing' &&
-              app.reviewStatus === 'not-requested' ? (
+              (app.reviewStatus === 'not-requested' ||
+                app.reviewStatus === 'rejected') ? (
                 <Button
                   variant='outline'
                   disabled={pending}
@@ -122,7 +123,10 @@ export function DeveloperAppsSettings() {
                     }
                   }}
                 >
-                  Request wider access for {app.name}
+                  {app.reviewStatus === 'rejected'
+                    ? 'Request another review'
+                    : 'Request wider access'}{' '}
+                  for {app.name}
                 </Button>
               ) : null}
             </div>
