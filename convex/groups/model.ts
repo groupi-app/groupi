@@ -1,3 +1,4 @@
+import { isGroupExcludedForPerson } from './exclusions';
 import { anonymizeAudienceActor } from '../groupEventAudiences/cleanup';
 import { canShare } from '../groupEventAudiences/model';
 
@@ -166,7 +167,8 @@ export async function detail(
   groupId: Id<'groups'>
 ) {
   const group = await ctx.db.get(groupId);
-  if (!group) return null;
+  if (!group || (await isGroupExcludedForPerson(ctx, groupId, personId)))
+    return null;
   const membership = await ctx.db
     .query('groupMemberships')
     .withIndex('by_groupId_and_personId', q =>

@@ -1,3 +1,7 @@
+import {
+  requireNoEventExclusion,
+  isEventExcludedForPerson,
+} from '../groups/exclusions';
 import { resolveAdmissionPolicy, eventAdmissionAccess } from './admission';
 import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import { requirePerson } from '../groups/model';
@@ -365,6 +369,8 @@ export async function canDiscoverEventForPerson(
   event: Doc<'events'>,
   now: number
 ) {
+  if (await isEventExcludedForPerson(ctx, event._id, personId, now))
+    return false;
   if (event.chosenDateTime !== undefined && event.chosenDateTime < now)
     return false;
   if (await checkIsBlocked(ctx, personId, event.creatorId)) return false;
@@ -393,6 +399,7 @@ export async function admitAttendeeForPerson(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const existing = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

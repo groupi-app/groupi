@@ -172,6 +172,61 @@ A matching deployed frontend/backend and isolated signed-in browser identity hav
 not been supplied for this G4 source; live staff browser/provider acceptance remains
 an open G10 gate. No local runtime, deployment, or live data write was performed.
 
+## G8 coordinated exclusion and G9 handoff
+
+Staff native `groups.expulsions.expel` and legacy-key REST
+`POST /groups/{groupId}/coordinated-expulsions` commit explicit coordinated
+exclusion. REST requires `{personId,policy:"coordinated"}` and UUID
+`Idempotency-Key`; SDK names are `expelCommunityMember` and
+`expel_community_member`. Applicant selected-Group scopes cannot invoke this
+staff operation. The key's current account, expiry, enablement and Groups write
+scope are rechecked inside the same transaction, before receipt replay.
+
+The minimal receipt is `{operationId,outcome:"committed",exclusion:"active",
+generation,cleanup:"pending"|"blocked"|"complete",conflicts:[{eventId,code}]}`.
+Initiation returns pending or blocked only. Conflicts identify
+`EVENT_AUTHORITY_REQUIRED` or `PROTECTED_ORGANIZER`; a Group owner target fails
+`PROTECTED_OWNER` (409) without commitment. Staff reconcile through native
+`groups.expulsions.progress` or
+`GET /groups/{groupId}/coordinated-expulsions/{personId}`
+(`readCommunityExpulsion` / `read_community_expulsion`). Every read/replay
+requires current Group manager authority. Replay uses G3's 30-day receipt window
+and permanent mismatch tombstones. It repeats no exclusion or scheduling.
+Own-context adds `eligibility.excluded`, preserving own application history while
+withholding current questions and member-content eligibility.
+
+`groups/exclusions.isEventExcludedForPerson(ctx,eventId,personId,now?)` checks
+active `communityExclusions` for captured Event IDs or current Group audience
+links. `isGroupExcludedForPerson(ctx,groupId,personId)` fences Group entry and
+member content. Completed Event history is exempt from the Event read fence.
+`events/lifecycle.guardEventReactivation` calls `reconcileEventExclusions`
+regardless of its explicit flag, and Group audience sharing calls it again after
+inserting the new link. Reconciliation deliberately does not use the completed
+history exemption: it captures newly applicable IDs before reopening can expose
+retained membership. Captured IDs survive audience withdrawal.
+
+Canonical callsites: Event admission/protected logistics; authenticated Event
+membership; native Event header, attendees, dates, availability and dashboard;
+REST membership/detail/list and attendee access; bounded authorization via the
+shared membership helper; RSVP and availability writes; Event admission writer;
+ordinary invitation permission, targeted invitation eligibility, targeted and
+generic invitation acceptance, and known-email invitation creation; discussion
+roles, feeds, detail and replies; Group entry, detail, manager and member content.
+G5/G6/G7 use these eligibility helpers within their own write/delivery transaction.
+
+G9 consumes `communityExclusions`: `(groupId,personId)` identifies the record;
+`active,generation,operationId,actorId,eventIds,cleanup,conflicts` are durable.
+Before each destructive step, re-read active/generation and current actor authority
+in that transaction. Do not infer completed cleanup from an empty current audience:
+use captured IDs, and preserve Event records which are completed at that step.
+New audience links extend captured IDs and mark pending. Reinstatement increments
+generation and deactivates the exclusion, restoring no removed state. A worker
+must not modify a newer generation. Initiation schedules no cleanup or notification;
+G9 owns scheduling/retry, completion proof and reinstatement progress.
+
+Source native/HTTP/SDK and staff component tests provide local evidence only.
+Deployed staff browser/native and provider acceptance remain G10 gates.
+
 ## G6 decision email and trusted return
 
 Canonical delegated submissions record the verified source app/grant, never a caller-supplied brand, recipient or return URL. Native applications retain Groupi defaults. Platform administrators may configure `appearance.statusReturnUrl` on the approved Developer app; it must be HTTPS on a registered redirect origin with no credentials or fragment. The Bound in Red destination is `https://<site-origin>/red-room/application`. Sender display name/accent use approved hosted appearance, while `RESEND_FROM_EMAIL` and `RESEND_API_KEY` remain operator-owned. Mailbox/domain verification and actual inbox receipt remain G10 deployment gates.

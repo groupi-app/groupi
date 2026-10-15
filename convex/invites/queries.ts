@@ -1,3 +1,4 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
 import { inviteCapacity } from './writes';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
@@ -111,6 +112,11 @@ export const getInviteByToken = query({
     // Check if current user is already a member of this event
     let isAlreadyMember = false;
     const person = await getCurrentPerson(ctx);
+    if (
+      person &&
+      (await isEventExcludedForPerson(ctx, invite.eventId, person._id))
+    )
+      return null;
     if (person) {
       const existingMembership = await ctx.db
         .query('memberships')

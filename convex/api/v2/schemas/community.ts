@@ -17,6 +17,7 @@ export const CommunityContextSchema = z.object({
     canApply: z.boolean(),
     canAccessMemberContent: z.boolean(),
     banned: z.boolean(),
+    excluded: z.boolean(),
   }),
   applications: z.array(
     z.object({

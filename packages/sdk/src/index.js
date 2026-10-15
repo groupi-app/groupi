@@ -910,6 +910,24 @@ export class Groupi extends Transport {
   ownerControlsPollAvailabilityAndCreation(input = {}, options = {}) {
     return this.request('PUT', '/groups/{groupId}/poll-policy', input, options);
   }
+  /** Commit coordinated community exclusion as staff */
+  expelCommunityMember(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions',
+      input,
+      options
+    );
+  }
+  /** Reconcile coordinated exclusion progress as current staff */
+  readCommunityExpulsion(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/coordinated-expulsions/{personId}',
+      input,
+      options
+    );
+  }
   /** List your Groups */
   listYourGroups(input = {}, options = {}) {
     return this.request('GET', '/groups', input, options);
