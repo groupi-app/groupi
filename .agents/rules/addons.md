@@ -15,7 +15,7 @@ Rules for working with the Groupi add-on framework. See `docs/addon-framework.md
 
 ## Overview
 
-The add-on framework provides optional, pluggable features for events. Add-ons use a handler + registry pattern on both backend and frontend. The framework manages lifecycle, storage, gating, and UI rendering.
+The add-on framework provides optional, pluggable features for events. Backend add-ons use a handler registry; the web feature uses an explicit built-in catalog and event-scoped custom definitions. The framework manages lifecycle, storage, gating, and UI rendering.
 
 **Current add-ons:** Reminders, Questionnaire, Bring List, Discord, Custom (template-based)
 
@@ -42,10 +42,10 @@ Handlers are branded objects — only handlers created via `defineAddonHandler()
 | Backend queries       | `convex/addons/queries.ts`                                                              |
 | Backend mutations     | `convex/addons/mutations.ts`                                                            |
 | Lifecycle dispatcher  | `convex/addons/lifecycle.ts`                                                            |
-| Frontend registry     | `packages/web/app/(newEvent)/create/components/addon-registry.ts`                       |
-| Frontend addons       | `packages/web/app/(newEvent)/create/components/addons/{name}-addon.tsx`                 |
-| Addon hooks           | `packages/web/hooks/convex/use-addons.ts`                                               |
-| Gating hook           | `packages/web/hooks/convex/use-addon-gating.ts`                                         |
+| Frontend registry     | `packages/web/features/addons/runtime/catalog.ts`                                       |
+| Frontend addons       | `packages/web/features/addons/runtime/organisms/{name}-addon.tsx`                       |
+| Addon hooks           | `packages/web/features/addons/hooks/use-addons.ts`                                      |
+| Gating hook           | `packages/web/features/addons/runtime/use-addon-gating.ts`                              |
 | Event layout (gating) | `packages/web/app/(event)/event/[eventId]/layout.tsx`                                   |
 | Addon page route      | `packages/web/app/(event)/event/[eventId]/addon/[addonId]/page.tsx`                     |
 | Manage page           | `packages/web/app/(event)/event/[eventId]/manage-addons/`                               |
@@ -59,16 +59,16 @@ Handlers are branded objects — only handlers created via `defineAddonHandler()
 | Template queries      | `convex/addonTemplates/queries.ts`                                                      |
 | REST API routes       | `convex/api/v1/routes/addons.ts`                                                        |
 | REST API schemas      | `convex/api/v1/schemas/addons.ts`                                                       |
-| REST API internal     | `convex/api/v1/internal/addons.ts`                                                      |
+| REST API internal     | `convex/addons/rest.ts`                                                                 |
 | Addon builder UI      | `packages/web/app/(addonBuilder)/addon-builder/`                                        |
 | Custom addon settings | `packages/web/app/(settings)/settings/custom-addons/`                                   |
 | Template picker       | `packages/web/app/(event)/event/[eventId]/manage-addons/components/template-picker.tsx` |
-| Custom addon renderer | `packages/web/app/(newEvent)/create/components/addons/custom-addon-renderer.tsx`        |
-| Custom addon schema   | `packages/web/lib/custom-addon-schema.ts`                                               |
-| Field editors         | `packages/web/lib/field-editors.tsx`                                                    |
-| Condition evaluator   | `packages/web/lib/condition-evaluator.ts`                                               |
-| Custom registration   | `packages/web/lib/custom-addon-registration.tsx`                                        |
-| Template hooks        | `packages/web/hooks/convex/use-addon-templates.ts`                                      |
+| Custom addon renderer | `packages/web/features/addons/runtime/organisms/custom-addon-renderer.tsx`              |
+| Custom addon schema   | `packages/web/features/addons/model/custom-addon-schema.ts`                             |
+| Field editors         | `packages/web/features/addons/model/field-editors.tsx`                                  |
+| Condition evaluator   | `packages/web/features/addons/model/condition-evaluator.ts`                             |
+| Custom resolution     | `packages/web/features/addons/runtime/custom-definition.tsx`                            |
+| Template hooks        | `packages/web/features/addons/hooks/use-addon-templates.ts`                             |
 
 ## Adding a New Add-on
 
@@ -132,22 +132,17 @@ registerAddonHandler(myAddonHandler);
 
 ### Step 4: Run `pnpm generate`
 
-### Step 5: Create frontend addon file
+### Step 5: Define frontend implementation
 
-```
-packages/web/app/(newEvent)/create/components/addons/my-addon.tsx
-```
+Place the implementation in `packages/web/features/addons/runtime/organisms/`
+and export its definition. Match the nearest existing built-in and use the narrow
+`AddonCreationState` rather than importing the creation route's form context.
 
-Must call `registerAddon()` at module level with all required components.
+### Step 6: Add it to the explicit catalog
 
-### Step 6: Add side-effect imports
-
-Add `import './addons/my-addon'` (or `import '@/app/(newEvent)/create/components/addons/my-addon'`) to these 4 files:
-
-- `event-addons.tsx`
-- `addon/[addonId]/page.tsx`
-- `manage-addons-content.tsx`
-- `new-event-addons.tsx`
+Add the exported definition to `features/addons/runtime/catalog.ts` and completion
+metadata to `features/addons/model/completion.ts`. Consumers import public feature
+entry points; no route-specific registration imports are needed.
 
 ### Step 7: Write tests
 
@@ -263,18 +258,13 @@ onDisabled: async (ctx) => {
 
 ## Frontend Rules
 
-### Rule 9: Self-register at module level
+### Rule 9: Use feature ownership and explicit definitions
 
-Call `registerAddon()` at the bottom of the addon file. The registry validates required fields and rejects duplicates.
-
-```typescript
-// ✅ Registration at module level (bottom of file)
-registerAddon({
-  id: 'my-addon',
-  name: 'My Add-on',
-  // ...
-});
-```
+Built-ins export definitions composed by the explicit catalog. Custom definitions
+are resolved from the current event's saved configuration, never a global cache.
+Outside the feature, import only public entry points under `@/features/addons/`.
+Runtime code is independent of authoring and route-owned state; ESLint enforces
+these dependency directions.
 
 ### Rule 10: Provide all 3 required components
 
@@ -288,7 +278,7 @@ Every addon needs:
 
 ### Rule 11: Store config in `formState.addonConfigs`
 
-Use the `addonConfigs` map in `FormState`, keyed by addon ID.
+Use the `addonConfigs` map in `AddonCreationState`, keyed by addon ID. The route adapts this narrow state to the wizard.
 
 ```typescript
 // ✅ Correct config storage
@@ -302,7 +292,7 @@ onEnable: formState => ({
 
 ### Rule 12: Use addon hooks for data access
 
-Use hooks from `use-addons.ts`. Don't create addon-specific query hooks.
+Use generic data hooks via `@/features/addons/hooks`; use `@/features/addons/gating` for the completion workflow.
 
 ```typescript
 // ✅ Generic hooks
@@ -329,14 +319,14 @@ If config changes clear responses, show a warning before saving:
 If users must complete the addon before accessing the event, set both fields:
 
 ```typescript
-registerAddon({
+const myAddon = {
   // ...
   requiresCompletion: true,
   completionRoute: '/addon/my-addon',
-});
+};
 ```
 
-The frontend registry enforces that `completionRoute` is provided when `requiresCompletion` is true.
+Catalog validation enforces that `completionRoute` is provided when `requiresCompletion` is true.
 
 ### Rule 15: Gating order is fixed
 
@@ -457,15 +447,10 @@ const addons = useEventAddons(eventId);
 const qConfig = addons?.find(a => a.addonType === 'questionnaire');
 ```
 
-### Anti-Pattern 4: Missing side-effect import
+### Anti-Pattern 4: Route-owned registration
 
-```typescript
-// ❌ Addon won't appear if not imported
-// (no import statement)
-
-// ✅ Import in all 4 rendering entry points
-import '@/app/(newEvent)/create/components/addons/my-addon';
-```
+Define built-ins once in the catalog. Routes consume the public feature interface;
+adding an add-on must not require adding registration imports to every route.
 
 ### Anti-Pattern 5: Custom gating in addon components
 
@@ -477,10 +462,10 @@ function MyEventCard({ eventId }) {
 }
 
 // ✅ Set requiresCompletion and completionRoute in registration
-registerAddon({
+const myAddon = {
   requiresCompletion: true,
   completionRoute: '/addon/my-addon',
-});
+};
 ```
 
 ### Anti-Pattern 6: Using non-`response:` keys for completion

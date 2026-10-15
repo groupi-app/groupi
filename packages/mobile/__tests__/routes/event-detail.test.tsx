@@ -6,6 +6,11 @@ import {
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Keep newer shared SDK factories real; this legacy route fixture mocks only transport.
+vi.mock('@groupi/shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@groupi/shared/hooks')>()),
+}));
+
 const mocks = vi.hoisted(() => ({
   useQuery: vi.fn(),
   loadMore: vi.fn(),
@@ -15,17 +20,27 @@ const mocks = vi.hoisted(() => ({
 vi.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ eventId: 'event-123' }),
 }));
-vi.mock('convex/react', () => ({ useQuery: mocks.useQuery }));
-vi.mock('convex/_generated/api', () => ({
-  api: {
-    events: {
-      queries: {
-        getEventHeader: 'getEventHeader',
-        getEventAttendeesData: 'getEventAttendeesData',
+vi.mock('convex/react', () => ({
+  useQuery: mocks.useQuery,
+  useMutation: () => vi.fn(),
+}));
+vi.mock('convex/_generated/api', async importOriginal => {
+  const actual = await importOriginal<typeof import('convex/_generated/api')>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      events: {
+        ...actual.api.events,
+        queries: {
+          ...actual.api.events.queries,
+          getEventHeader: 'getEventHeader',
+          getEventAttendeesData: 'getEventAttendeesData',
+        },
       },
     },
-  },
-}));
+  };
+});
 vi.mock('../../src/hooks/use-paginated-event-posts', () => ({
   usePaginatedEventPosts: () => ({
     results: mocks.posts,

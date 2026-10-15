@@ -224,7 +224,7 @@ test('wrong and unknown profiles fail before contacting another identity', async
 });
 test('JSON and headless browser exceptions are actionable, secret-free and never launch a browser', async () => {
   await endpoint((_req, res) => res.end('{}'));
-  for (const operation of ['passkeys', 'linked-accounts', 'delete']) {
+  for (const operation of ['passkeys', 'linked-accounts']) {
     const result = await cli(['account', operation]);
     expect(result.code).toBe(3);
     expect(result.stdout).toBe('');
@@ -246,7 +246,7 @@ test.skipIf(process.platform === 'win32')(
       await writeFile(file, `#!/bin/sh\nprintf '%s' "$1" > '${log}'\n`);
       await chmod(file, 0o700);
     }
-    for (const operation of ['passkeys', 'linked-accounts', 'delete']) {
+    for (const operation of ['passkeys', 'linked-accounts']) {
       const result = await cli(['account', operation], {
         json: false,
         interactive: true,

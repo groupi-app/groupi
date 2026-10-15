@@ -5,28 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { cn, formatDateTimeRangeShort } from '@/lib/utils';
 import { StickerIcon } from '@/components/atoms';
-import { Id } from '@/convex/_generated/dataModel';
-import { useState } from 'react';
-import { useJoinDiscoverableEvent } from '@/hooks/convex/use-events';
-import { useRouter } from 'next/navigation';
+import { useDiscoverableEvents } from '@/hooks/convex/use-event-admission';
+import Link from 'next/link';
 
-interface DiscoverableEvent {
-  eventId: Id<'events'>;
-  title: string;
-  description: string | null;
-  location: string | null;
-  chosenDateTime: number | null;
-  chosenEndDateTime: number | null;
-  imageUrl: string | null;
-  memberCount: number;
-  createdAt: number;
-  organizer: {
-    personId: Id<'persons'>;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-  } | null;
-}
+type DiscoverableEvent = NonNullable<
+  ReturnType<typeof useDiscoverableEvents>
+>[number];
 
 // Gradient patterns for events without images
 const gradientPatterns = [
@@ -38,22 +22,6 @@ const gradientPatterns = [
 ];
 
 function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
-  const [isJoining, setIsJoining] = useState(false);
-  const joinEvent = useJoinDiscoverableEvent();
-  const router = useRouter();
-
-  const handleJoin = async () => {
-    setIsJoining(true);
-    try {
-      await joinEvent(event.eventId);
-      router.push(`/event/${event.eventId}`);
-    } catch {
-      // Error toast handled by hook
-    } finally {
-      setIsJoining(false);
-    }
-  };
-
   // Consistent gradient based on event ID
   const gradientIndex =
     event.eventId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
@@ -90,11 +58,6 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
             </div>
           </div>
         )}
-
-        {/* Friends badge - top left */}
-        <div className='absolute top-3 left-3 bg-info text-info-foreground px-2.5 py-1 rounded-badge text-xs font-semibold shadow-raised border-2 border-white w-fit'>
-          Friends Event
-        </div>
       </div>
 
       {/* Content area */}
@@ -142,10 +105,20 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
           </span>
         </div>
 
-        {/* Visibility */}
-        <div className='flex items-center gap-2 text-sm'>
-          <Icons.people className='size-3.5 text-muted-foreground/60' />
-          <span className='text-muted-foreground/60'>Friends</span>
+        <div className='flex flex-wrap gap-2' aria-label='Your access reasons'>
+          {event.accessReasons?.friends === true ? (
+            <span className='bg-info text-info-foreground px-2 py-1 rounded-badge text-xs'>
+              Shared by a friend
+            </span>
+          ) : null}
+          {(event.accessReasons?.groups ?? []).map(group => (
+            <span
+              key={group.groupId}
+              className='bg-secondary text-secondary-foreground px-2 py-1 rounded-badge text-xs'
+            >
+              Shared with {group.name}
+            </span>
+          ))}
         </div>
 
         {/* Organizer info */}
@@ -164,19 +137,18 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
           </span>
         </div>
 
-        {/* Join button */}
+        <p className='text-xs text-muted-foreground'>
+          {event.entryAction === 'JOIN'
+            ? 'Direct joining is available from the Event preview. Joining leaves your RSVP Pending.'
+            : event.entryAction === 'APPLY'
+              ? 'View the Event preview to apply for approval.'
+              : event.entryAction === 'INVITATION_ONLY'
+                ? 'An invitation is required to join. Sharing gives you access to Event logistics.'
+                : 'Read Event logistics. Joining is currently unavailable.'}
+        </p>
         <div className='pt-2'>
-          <Button
-            className='w-full rounded-button'
-            onClick={handleJoin}
-            disabled={isJoining}
-          >
-            {isJoining ? (
-              <Icons.spinner className='size-4 animate-spin mr-2' />
-            ) : (
-              <Icons.check className='size-4 mr-2' />
-            )}
-            Join Event
+          <Button className='w-full rounded-button' asChild>
+            <Link href={`/event/${event.eventId}/preview`}>View Event</Link>
           </Button>
         </div>
       </div>
@@ -184,22 +156,36 @@ function DiscoverEventCard({ event }: { event: DiscoverableEvent }) {
   );
 }
 
-export function DiscoverTab({ events }: { events: DiscoverableEvent[] }) {
+export function DiscoverTab({
+  events,
+}: {
+  events: ReturnType<typeof useDiscoverableEvents>;
+}) {
+  if (events === undefined)
+    return (
+      <p role='status' className='py-6 text-muted-foreground'>
+        Loading shared Events…
+      </p>
+    );
   if (events.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center py-16 text-center'>
         <Icons.search className='size-12 text-muted-foreground/30 mb-4' />
         <h3 className='text-lg font-medium mb-1'>No events to discover</h3>
         <p className='text-sm text-muted-foreground max-w-sm'>
-          When your friends make their events discoverable, they&apos;ll appear
-          here. Add more friends to see more events!
+          Upcoming and undated Events shared with you through eligible Groups or
+          Friends will appear here. Your current access and completed required
+          Group onboarding determine what you can discover.
         </p>
       </div>
     );
   }
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+    <div
+      className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+      aria-label='Events shared with you'
+    >
       {events.map(event => (
         <DiscoverEventCard key={event.eventId} event={event} />
       ))}

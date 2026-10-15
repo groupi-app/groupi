@@ -3,7 +3,10 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, requireEventRole } from '../middleware/auth';
+import {
+  requireEventMembership,
+  requireEventRole,
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   MemberListResponseSchema,
@@ -72,7 +75,7 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.members.listEventMembers;
+    const listFn = internal.events.membersRest.listEventMembers;
     const result = await ctx.runQuery(listFn, {
       eventId,
       personId: personId as Id<'persons'>,
@@ -362,7 +365,7 @@ export function createMemberRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateRsvpFn = internal.api.v1.internal.members.updateRsvp;
+    const updateRsvpFn = internal.events.membersRest.updateRsvp;
     const result = await ctx.runMutation(updateRsvpFn, {
       eventId,
       personId,

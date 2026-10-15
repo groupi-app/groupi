@@ -11,7 +11,7 @@ function result(value, fields) {
     !value ||
     typeof value !== 'object' ||
     Array.isArray(value) ||
-    fields.some(field => !(field in value))
+    fields.some(field => field !== 'allowGroupInvitesFrom' && !(field in value))
   )
     throw new CliError(
       'INVALID_RESPONSE',
@@ -19,7 +19,9 @@ function result(value, fields) {
       5
     );
   const record = /** @type {Record<string, unknown>} */ (value);
-  return Object.fromEntries(fields.map(field => [field, record[field]]));
+  return Object.fromEntries(
+    fields.filter(field => field in record).map(field => [field, record[field]])
+  );
 }
 export const profileFields = [
   'personId',
@@ -34,6 +36,7 @@ export const profileFields = [
 export const privacyFields = [
   'allowFriendRequestsFrom',
   'allowEventInvitesFrom',
+  'allowGroupInvitesFrom',
 ];
 export const themeFields = [
   'selectedThemeType',
@@ -109,7 +112,7 @@ export async function setSettings(
     throw error;
   }
 }
-/** @param {Profile} profile @param {'passkeys'|'linked-accounts'|'delete'} operation @param {boolean} json */
+/** @param {Profile} profile @param {'passkeys'|'linked-accounts'} operation @param {boolean} json */
 export async function browserHandoff(profile, operation, json) {
   if (json || !process.stdin.isTTY || !process.stdout.isTTY)
     throw new CliError(
@@ -127,9 +130,7 @@ export async function browserHandoff(profile, operation, json) {
   const step =
     operation === 'passkeys'
       ? 'Add a passkey in account settings and complete your device prompt.'
-      : operation === 'linked-accounts'
-        ? 'Choose the account provider in account settings and complete its authorization.'
-        : 'Review Delete Account in account settings and confirm deletion there.';
+      : 'Choose the account provider in account settings and complete its authorization.';
   process.stderr.write(
     `Profile ${profile.name}: ${url}\nSign into the intended account on this server. ${step}\n`
   );

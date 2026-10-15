@@ -1,3 +1,5 @@
+import { ConvexError } from 'convex/values';
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
@@ -24,7 +26,7 @@ type Variables = {
 async function verifyAdmin(ctx: ActionCtx, userId: string): Promise<boolean> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore - Type instantiation is excessively deep (TS2589)
-  const isAdminFn = internal.api.v1.internal.admin.isAdmin;
+  const isAdminFn = internal.admin.rest.isAdmin;
   return await ctx.runQuery(isAdminFn, { userId });
 }
 
@@ -84,7 +86,7 @@ export function createAdminRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.admin.listUsers;
+    const listFn = internal.admin.rest.listUsers;
     const result = await ctx.runQuery(listFn, {});
 
     return c.json(
@@ -108,6 +110,10 @@ export function createAdminRoutes() {
       params: UserIdParamSchema,
     },
     responses: {
+      409: {
+        description: 'Owned Group responsibilities must be resolved',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
       200: {
         description: 'User deleted',
         content: {
@@ -165,8 +171,8 @@ export function createAdminRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.admin.deleteUser;
-      await ctx.runMutation(deleteFn, { userId });
+      const deleteFn = internal.admin.rest.deleteUser;
+      await ctx.runMutation(deleteFn, { actorUserId: currentUserId, userId });
 
       return c.json(
         {
@@ -176,6 +182,7 @@ export function createAdminRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to delete user';
       return c.json(
@@ -265,8 +272,12 @@ export function createAdminRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const setRoleFn = internal.api.v1.internal.admin.setUserRole;
-      await ctx.runMutation(setRoleFn, { userId, role: body.role });
+      const setRoleFn = internal.admin.rest.setUserRole;
+      await ctx.runMutation(setRoleFn, {
+        actorUserId: currentUserId,
+        userId,
+        role: body.role,
+      });
 
       return c.json(
         {
@@ -276,6 +287,7 @@ export function createAdminRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to update role';
       return c.json(
@@ -341,7 +353,7 @@ export function createAdminRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.admin.listAllEvents;
+    const listFn = internal.admin.rest.listAllEvents;
     const result = await ctx.runQuery(listFn, {});
 
     return c.json(
@@ -423,8 +435,11 @@ export function createAdminRoutes() {
       // Reuse the existing event delete internal function
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.events.deleteEvent;
-      await ctx.runMutation(deleteFn, { eventId });
+      const deleteFn = internal.events.rest.deleteEvent;
+      await ctx.runMutation(deleteFn, {
+        eventId: eventId as Id<'events'>,
+        userId,
+      });
 
       return c.json(
         {
@@ -434,6 +449,7 @@ export function createAdminRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to delete event';
       return c.json(
@@ -499,7 +515,7 @@ export function createAdminRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.admin.listReportsAdmin;
+    const listFn = internal.admin.rest.listReportsAdmin;
     const result = await ctx.runQuery(listFn, {});
 
     return c.json(

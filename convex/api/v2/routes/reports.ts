@@ -1,3 +1,4 @@
+import type { Id } from '../../../_generated/dataModel';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { createValidationHook } from '../validation';
 import type { ActionCtx } from '../../../_generated/server';
@@ -73,9 +74,9 @@ export function createReportRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const createFn = internal.api.v1.internal.reports.createReport;
+      const createFn = internal.reports.rest.createReport;
       const result = await ctx.runMutation(createFn, {
-        personId,
+        personId: personId as Id<'persons'>,
         targetType: body.targetType,
         targetId: body.targetId,
         reason: body.reason,

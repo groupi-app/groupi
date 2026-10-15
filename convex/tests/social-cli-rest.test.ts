@@ -54,6 +54,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+// Allow serial CLI process startup and real authenticated HTTP work.
 it('public executable stores friendships, sends notifications, and blocks the other identity', async () => {
   const a = await setup();
   const b = await actor(a.t, 'cli-social-recipient');
@@ -157,4 +158,4 @@ it('public executable stores friendships, sends notifications, and blocks the ot
     await new Promise<void>(done => server.close(() => done()));
     await rm(config, { recursive: true, force: true });
   }
-});
+}, 30_000);

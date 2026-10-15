@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -35,7 +35,7 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
@@ -54,7 +54,7 @@ jobs:
           pnpm test:coverage
 
       - name: Upload shared coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/shared/coverage/lcov.info
@@ -103,7 +103,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -111,7 +111,7 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
@@ -135,13 +135,37 @@ jobs:
           pnpm test:coverage
 
       - name: Upload web coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/web/coverage/lcov.info
           flags: web
           name: web-coverage
           fail_ci_if_error: false
+
+  # Actual browser history/focus regressions without an app server or backend.
+  test-history:
+    name: Test Browser History
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupi/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @groupi/web test:history
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-history-evidence
+          path: packages/web/test-results/history/
+          retention-days: 7
 
   # Mobile Package Tests
   test-mobile:
@@ -154,7 +178,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -162,7 +186,7 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
@@ -191,7 +215,7 @@ jobs:
           pnpm test:coverage
 
       - name: Upload mobile coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: matrix.node-version == 22
         with:
           files: ./packages/mobile/coverage/lcov.info
@@ -207,7 +231,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -215,7 +239,7 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
@@ -227,6 +251,12 @@ jobs:
         run: |
           cd packages/shared
           pnpm build
+
+      - name: Verify packed shared distribution
+        run: |
+          mkdir -p "$RUNNER_TEMP/groupi-shared-package"
+          pnpm --dir packages/shared pack --pack-destination "$RUNNER_TEMP/groupi-shared-package"
+          node scripts/check-shared-package.mjs "$RUNNER_TEMP/groupi-shared-package/"*.tgz
 
       - name: Build web application
         run: |
@@ -245,7 +275,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -253,13 +283,16 @@ jobs:
           version: 10.12.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify workspace source resolution
+        run: pnpm check:workspace-source
 
       - name: Run all lint checks
         run: pnpm lint
@@ -269,6 +302,9 @@ jobs:
 
       - name: Format check
         run: pnpm format:check
+
+      - name: Test verification readiness gate
+        run: node --test scripts/verification-readiness.test.mjs
 
       - name: Test Codex hooks
         run: python3 .codex/hooks/test_format_edited_files.py
@@ -283,6 +319,7 @@ jobs:
         test-convex,
         test-web,
         test-mobile,
+        test-history,
         test-builds,
         quality-checks,
       ]
@@ -294,6 +331,7 @@ jobs:
           echo "Shared tests: ${{ needs.test-shared.result }}"
           echo "Convex tests: ${{ needs.test-convex.result }}"
           echo "Web tests: ${{ needs.test-web.result }}"
+          echo "Browser history tests: ${{ needs.test-history.result }}"
           echo "Mobile tests: ${{ needs.test-mobile.result }}"
           echo "Build tests: ${{ needs.test-builds.result }}"
           echo "Quality checks: ${{ needs.quality-checks.result }}"
@@ -301,6 +339,7 @@ jobs:
           if [[ "${{ needs.test-shared.result }}" != "success" || \
                 "${{ needs.test-convex.result }}" != "success" || \
                 "${{ needs.test-web.result }}" != "success" || \
+                "${{ needs.test-history.result }}" != "success" || \
                 "${{ needs.test-mobile.result }}" != "success" || \
                 "${{ needs.test-builds.result }}" != "success" || \
                 "${{ needs.quality-checks.result }}" != "success" ]]; then

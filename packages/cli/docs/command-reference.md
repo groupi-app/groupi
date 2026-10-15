@@ -20,6 +20,10 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events edit](#groupi-events-edit)
 - [groupi events list](#groupi-events-list)
 - [groupi events get](#groupi-events-get)
+- [groupi events audiences](#groupi-events-audiences)
+- [groupi events share-group](#groupi-events-share-group)
+- [groupi events unshare-group](#groupi-events-unshare-group)
+- [groupi events friends-audience](#groupi-events-friends-audience)
 - [groupi events mute](#groupi-events-mute)
 - [groupi events unmute](#groupi-events-unmute)
 - [groupi events mute-status](#groupi-events-mute-status)
@@ -40,6 +44,22 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi events cover get](#groupi-events-cover-get)
 - [groupi events cover set](#groupi-events-cover-set)
 - [groupi events cover remove](#groupi-events-cover-remove)
+- [groupi events transfer](#groupi-events-transfer)
+- [groupi events transfer status](#groupi-events-transfer-status)
+- [groupi events transfer offer](#groupi-events-transfer-offer)
+- [groupi events transfer accept](#groupi-events-transfer-accept)
+- [groupi events transfer decline](#groupi-events-transfer-decline)
+- [groupi events transfer cancel](#groupi-events-transfer-cancel)
+- [groupi events applications](#groupi-events-applications)
+- [groupi events applications form](#groupi-events-applications-form)
+- [groupi events applications history](#groupi-events-applications-history)
+- [groupi events applications list](#groupi-events-applications-list)
+- [groupi events applications configure](#groupi-events-applications-configure)
+- [groupi events applications submit](#groupi-events-applications-submit)
+- [groupi events applications withdraw](#groupi-events-applications-withdraw)
+- [groupi events applications approve](#groupi-events-applications-approve)
+- [groupi events applications decline](#groupi-events-applications-decline)
+- [groupi events preview](#groupi-events-preview)
 - [groupi events discover](#groupi-events-discover)
 - [groupi events join](#groupi-events-join)
 - [groupi events leave](#groupi-events-leave)
@@ -96,6 +116,99 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi blocks status](#groupi-blocks-status)
 - [groupi blocks block](#groupi-blocks-block)
 - [groupi blocks unblock](#groupi-blocks-unblock)
+- [groupi groups](#groupi-groups)
+- [groupi groups transfer](#groupi-groups-transfer)
+- [groupi groups transfer status](#groupi-groups-transfer-status)
+- [groupi groups transfer offer](#groupi-groups-transfer-offer)
+- [groupi groups transfer accept](#groupi-groups-transfer-accept)
+- [groupi groups transfer decline](#groupi-groups-transfer-decline)
+- [groupi groups transfer cancel](#groupi-groups-transfer-cancel)
+- [groupi groups list](#groupi-groups-list)
+- [groupi groups get](#groupi-groups-get)
+- [groupi groups create](#groupi-groups-create)
+- [groupi groups edit](#groupi-groups-edit)
+- [groupi groups delete](#groupi-groups-delete)
+- [groupi groups announce](#groupi-groups-announce)
+- [groupi groups announcement-status](#groupi-groups-announcement-status)
+- [groupi groups members](#groupi-groups-members)
+- [groupi groups invites](#groupi-groups-invites)
+- [groupi groups invite](#groupi-groups-invite)
+- [groupi groups invitation-policy](#groupi-groups-invitation-policy)
+- [groupi groups member-role](#groupi-groups-member-role)
+- [groupi groups remove-member](#groupi-groups-remove-member)
+- [groupi groups ban](#groupi-groups-ban)
+- [groupi groups lift-ban](#groupi-groups-lift-ban)
+- [groupi groups leave](#groupi-groups-leave)
+- [groupi groups bans](#groupi-groups-bans)
+- [groupi groups questionnaire](#groupi-groups-questionnaire)
+- [groupi groups questionnaire get](#groupi-groups-questionnaire-get)
+- [groupi groups questionnaire status](#groupi-groups-questionnaire-status)
+- [groupi groups questionnaire history](#groupi-groups-questionnaire-history)
+- [groupi groups questionnaire responses](#groupi-groups-questionnaire-responses)
+- [groupi groups questionnaire configure](#groupi-groups-questionnaire-configure)
+- [groupi groups questionnaire submit](#groupi-groups-questionnaire-submit)
+- [groupi groups forms](#groupi-groups-forms)
+- [groupi groups forms list](#groupi-groups-forms-list)
+- [groupi groups forms get](#groupi-groups-forms-get)
+- [groupi groups forms settings](#groupi-groups-forms-settings)
+- [groupi groups forms history](#groupi-groups-forms-history)
+- [groupi groups forms results](#groupi-groups-forms-results)
+- [groupi groups forms create](#groupi-groups-forms-create)
+- [groupi groups forms configure](#groupi-groups-forms-configure)
+- [groupi groups forms submit](#groupi-groups-forms-submit)
+- [groupi groups forms remove-own](#groupi-groups-forms-remove-own)
+- [groupi groups forms delete](#groupi-groups-forms-delete)
+- [groupi groups forms moderate](#groupi-groups-forms-moderate)
+- [groupi groups forms policy](#groupi-groups-forms-policy)
+- [groupi groups forms policy get](#groupi-groups-forms-policy-get)
+- [groupi groups forms policy set](#groupi-groups-forms-policy-set)
+- [groupi groups polls](#groupi-groups-polls)
+- [groupi groups polls list](#groupi-groups-polls-list)
+- [groupi groups polls get](#groupi-groups-polls-get)
+- [groupi groups polls settings](#groupi-groups-polls-settings)
+- [groupi groups polls history](#groupi-groups-polls-history)
+- [groupi groups polls results](#groupi-groups-polls-results)
+- [groupi groups polls create](#groupi-groups-polls-create)
+- [groupi groups polls configure](#groupi-groups-polls-configure)
+- [groupi groups polls submit](#groupi-groups-polls-submit)
+- [groupi groups polls remove-own](#groupi-groups-polls-remove-own)
+- [groupi groups polls delete](#groupi-groups-polls-delete)
+- [groupi groups polls moderate](#groupi-groups-polls-moderate)
+- [groupi groups polls policy](#groupi-groups-polls-policy)
+- [groupi groups polls policy get](#groupi-groups-polls-policy-get)
+- [groupi groups polls policy set](#groupi-groups-polls-policy-set)
+- [groupi groups lists](#groupi-groups-lists)
+- [groupi groups lists list](#groupi-groups-lists-list)
+- [groupi groups lists get](#groupi-groups-lists-get)
+- [groupi groups lists settings](#groupi-groups-lists-settings)
+- [groupi groups lists entries](#groupi-groups-lists-entries)
+- [groupi groups lists own](#groupi-groups-lists-own)
+- [groupi groups lists create](#groupi-groups-lists-create)
+- [groupi groups lists configure](#groupi-groups-lists-configure)
+- [groupi groups lists add](#groupi-groups-lists-add)
+- [groupi groups lists edit](#groupi-groups-lists-edit)
+- [groupi groups lists remove](#groupi-groups-lists-remove)
+- [groupi groups lists delete](#groupi-groups-lists-delete)
+- [groupi groups lists policy](#groupi-groups-lists-policy)
+- [groupi groups lists policy get](#groupi-groups-lists-policy-get)
+- [groupi groups lists policy set](#groupi-groups-lists-policy-set)
+- [groupi groups application-form](#groupi-groups-application-form)
+- [groupi groups application-get](#groupi-groups-application-get)
+- [groupi groups application-history](#groupi-groups-application-history)
+- [groupi groups applications](#groupi-groups-applications)
+- [groupi groups application-settings](#groupi-groups-application-settings)
+- [groupi groups apply](#groupi-groups-apply)
+- [groupi groups application-edit](#groupi-groups-application-edit)
+- [groupi groups application-withdraw](#groupi-groups-application-withdraw)
+- [groupi groups application-review](#groupi-groups-application-review)
+- [groupi groups events](#groupi-groups-events)
+- [groupi groups withdraw-event](#groupi-groups-withdraw-event)
+- [groupi groups event-sharing](#groupi-groups-event-sharing)
+- [groupi group-invites](#groupi-group-invites)
+- [groupi group-invites list](#groupi-group-invites-list)
+- [groupi group-invites accept](#groupi-group-invites-accept)
+- [groupi group-invites decline](#groupi-group-invites-decline)
+- [groupi group-invites cancel](#groupi-group-invites-cancel)
 - [groupi account](#groupi-account)
 - [groupi account avatar](#groupi-account-avatar)
 - [groupi account avatar get](#groupi-account-avatar-get)
@@ -105,6 +218,9 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi account edit](#groupi-account-edit)
 - [groupi account passkeys](#groupi-account-passkeys)
 - [groupi account linked-accounts](#groupi-account-linked-accounts)
+- [groupi account responsibilities](#groupi-account-responsibilities)
+- [groupi account readiness](#groupi-account-readiness)
+- [groupi account delete-event](#groupi-account-delete-event)
 - [groupi account delete](#groupi-account-delete)
 - [groupi settings](#groupi-settings)
 - [groupi settings privacy](#groupi-settings-privacy)
@@ -155,6 +271,14 @@ Global options are inherited by commands. Live defaults can reflect `GROUPI_PROF
 - [groupi invites members revoke](#groupi-invites-members-revoke)
 - [groupi invites members get](#groupi-invites-members-get)
 - [groupi invites members list](#groupi-invites-members-list)
+- [groupi invite-lists](#groupi-invite-lists)
+- [groupi invite-lists create](#groupi-invite-lists-create)
+- [groupi invite-lists list](#groupi-invite-lists-list)
+- [groupi invite-lists get](#groupi-invite-lists-get)
+- [groupi invite-lists edit](#groupi-invite-lists-edit)
+- [groupi invite-lists delete](#groupi-invite-lists-delete)
+- [groupi invite-lists invite](#groupi-invite-lists-invite)
+- [groupi invite-lists people](#groupi-invite-lists-people)
 - [groupi notifications](#groupi-notifications)
 - [groupi notifications list](#groupi-notifications-list)
 - [groupi notifications count](#groupi-notifications-count)
@@ -190,6 +314,8 @@ Commands:
   addons             Configure, use and author event add-ons
   friends            Manage friendships and friend requests
   blocks             Manage blocked users
+  groups             Manage formal Group communities independently of events
+  group-invites      Inspect and respond to your private Group invitations
   account            Read/update your account and open explicit browser exceptions
   settings           Manage ordinary preferences without a browser
   posts              Read/write safe discussion content; use explicit HTML files to preserve rich
@@ -197,6 +323,7 @@ Commands:
   replies            Read/write safe discussion content; use explicit HTML files to preserve rich
                      formatting on edits
   invites            Manage bearer link/email and recipient-bound username invitations
+  invite-lists       Create and inspect private saved selections of existing people
   notifications      Read and clear your notifications
 ```
 
@@ -299,28 +426,49 @@ Usage: groupi events [options] [command]
 Browse and manage your events
 
 Options:
-  -h, --help                    display help for command
+  -h, --help                                     display help for command
 
 Commands:
-  create [options]              Create an event with replay-safe request identification
-  edit [options] <event-id>     Edit event details; uncertain writes are never retried automatically
+  create [options]                               Create an event with replay-safe request
+                                                 identification
+  edit [options] <event-id>                      Edit event details; uncertain writes are never
+                                                 retried automatically
   list [options]
-  get <event-id>                Read one accessible event
-  mute <event-id>               Mute event notifications
-  unmute <event-id>             Unmute event notifications
-  mute-status <event-id>        Inspect event notifications
-  rsvp                          Read and update your own attendance response
-  availability                  Provide your availability and inspect permitted responses
-  dates                         Inspect proposed dates and manage the chosen date
-  members [options] <event-id>  List attendance when event permissions allow
-  cover                         Inspect, replace, or remove cover images from local files
-  discover [options]            Browse upcoming friends events you can join
-  join <event-id>               join an event
-  leave [options] <event-id>    leave an event
-  delete [options] <event-id>   delete an event
-  membership                    Manage event member roles and removal; inspect using events members
-  settings                      Inspect and update event visibility and supported permissions
-  help [command]                display help for command
+  get <event-id>                                 Read one accessible event
+  audiences <event-id>                           Read only currently visible Group audiences and
+                                                 authorized Friends state
+  share-group <event-id> <group-id>              Share logistics with a whole Group; requires
+                                                 Organizer and Group permission
+  unshare-group [options] <event-id> <group-id>  Withdraw one Group grant, preserving all
+                                                 independent grants
+  friends-audience [options] <event-id>          Set independent Friends audience as Organizer;
+                                                 Public basic details stay public
+  mute <event-id>                                Mute event notifications
+  unmute <event-id>                              Unmute event notifications
+  mute-status <event-id>                         Inspect event notifications
+  rsvp                                           Read and update your own attendance response
+  availability                                   Provide your availability and inspect permitted
+                                                 responses
+  dates                                          Inspect proposed dates and manage the chosen date
+  members [options] <event-id>                   List attendance when event permissions allow
+  cover                                          Inspect, replace, or remove cover images from local
+                                                 files
+  transfer                                       Consensual Event ownership; Friends audience
+                                                 follows accepted new Organizer
+  applications                                   Configure, submit, or review private Event
+                                                 applications
+  preview <event-id>                             Read safe event logistics and entry action without
+                                                 joining
+  discover [options]                             Browse upcoming or undated Friends and Group Events
+  join <event-id>                                Join as an Attendee with Pending RSVP; confirm
+                                                 attendance separately
+  leave [options] <event-id>                     leave an event
+  delete [options] <event-id>                    delete an event
+  membership                                     Manage event member roles and removal; inspect
+                                                 using events members
+  settings                                       Inspect and update event visibility, admission and
+                                                 supported permissions
+  help [command]                                 display help for command
 ```
 
 ## groupi events create
@@ -378,6 +526,52 @@ Read one accessible event
 
 Options:
   -h, --help  display help for command
+```
+
+## groupi events audiences
+
+```text
+Usage: groupi events audiences [options] <event-id>
+
+Read only currently visible Group audiences and authorized Friends state
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events share-group
+
+```text
+Usage: groupi events share-group [options] <event-id> <group-id>
+
+Share logistics with a whole Group; requires Organizer and Group permission
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events unshare-group
+
+```text
+Usage: groupi events unshare-group [options] <event-id> <group-id>
+
+Withdraw one Group grant, preserving all independent grants
+
+Options:
+  --yes       Confirm withdrawal
+  -h, --help  display help for command
+```
+
+## groupi events friends-audience
+
+```text
+Usage: groupi events friends-audience [options] <event-id>
+
+Set independent Friends audience as Organizer; Public basic details stay public
+
+Options:
+  --enabled <boolean>  true or false
+  -h, --help           display help for command
 ```
 
 ## groupi events mute
@@ -639,12 +833,220 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi events transfer
+
+```text
+Usage: groupi events transfer [options] [command]
+
+Consensual Event ownership; Friends audience follows accepted new Organizer
+
+Options:
+  -h, --help                                  display help for command
+
+Commands:
+  status <event-id>                           Inspect pending/resolved ownership
+  offer [options] <event-id> <recipient-id>   offer the named ownership offer
+  accept [options] <event-id> <transfer-id>   accept the named ownership offer
+  decline [options] <event-id> <transfer-id>  decline the named ownership offer
+  cancel [options] <event-id> <transfer-id>   cancel the named ownership offer
+  help [command]                              display help for command
+```
+
+## groupi events transfer status
+
+```text
+Usage: groupi events transfer status [options] <event-id>
+
+Inspect pending/resolved ownership
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events transfer offer
+
+```text
+Usage: groupi events transfer offer [options] <event-id> <recipient-id>
+
+offer the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer accept
+
+```text
+Usage: groupi events transfer accept [options] <event-id> <transfer-id>
+
+accept the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer decline
+
+```text
+Usage: groupi events transfer decline [options] <event-id> <transfer-id>
+
+decline the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events transfer cancel
+
+```text
+Usage: groupi events transfer cancel [options] <event-id> <transfer-id>
+
+cancel the named ownership offer
+
+Options:
+  --yes       Confirm ownership action and Friends audience consequence
+  -h, --help  display help for command
+```
+
+## groupi events applications
+
+```text
+Usage: groupi events applications [options] [command]
+
+Configure, submit, or review private Event applications
+
+Options:
+  -h, --help                          display help for command
+
+Commands:
+  form <event-id>                     Read permitted current settings (null after audience loss),
+                                      your pending request, and action flags
+  history [options] <event-id>        Read your private history
+  list [options] <event-id>           Read current authorized reviewer queue and history
+  configure [options] <event-id>      Set core admission form without changing add-ons or admission
+                                      policy
+  submit [options] <event-id>
+  withdraw <application-id>
+  approve [options] <application-id>  Admit immediately as Attendee/Pending, with no second
+                                      acceptance
+  decline [options] <application-id>  Decline this application; eligible people can reapply
+  help [command]                      display help for command
+```
+
+## groupi events applications form
+
+```text
+Usage: groupi events applications form [options] <event-id>
+
+Read permitted current settings (null after audience loss), your pending request, and action flags
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events applications history
+
+```text
+Usage: groupi events applications history [options] <event-id>
+
+Read your private history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi events applications list
+
+```text
+Usage: groupi events applications list [options] <event-id>
+
+Read current authorized reviewer queue and history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi events applications configure
+
+```text
+Usage: groupi events applications configure [options] <event-id>
+
+Set core admission form without changing add-ons or admission policy
+
+Options:
+  --questions <json>          Question array; [] means no questions
+  --reviewer-policy <policy>  ORGANIZERS_AND_MODERATORS or ORGANIZER_ONLY (default:
+                              "ORGANIZERS_AND_MODERATORS")
+  -h, --help                  display help for command
+```
+
+## groupi events applications submit
+
+```text
+Usage: groupi events applications submit [options] <event-id>
+
+Options:
+  --answers <json>  Answers object; pending submissions edit retained questions
+  -h, --help        display help for command
+```
+
+## groupi events applications withdraw
+
+```text
+Usage: groupi events applications withdraw [options] <application-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi events applications approve
+
+```text
+Usage: groupi events applications approve [options] <application-id>
+
+Admit immediately as Attendee/Pending, with no second acceptance
+
+Options:
+  --reason <reason>  Private decision reason
+  -h, --help         display help for command
+```
+
+## groupi events applications decline
+
+```text
+Usage: groupi events applications decline [options] <application-id>
+
+Decline this application; eligible people can reapply
+
+Options:
+  --reason <reason>  Private decision reason
+  -h, --help         display help for command
+```
+
+## groupi events preview
+
+```text
+Usage: groupi events preview [options] <event-id>
+
+Read safe event logistics and entry action without joining
+
+Options:
+  -h, --help  display help for command
+```
+
 ## groupi events discover
 
 ```text
 Usage: groupi events discover [options]
 
-Browse upcoming friends events you can join
+Browse upcoming or undated Friends and Group Events
 
 Options:
   --limit <number>   Page size (1–100) (default: "20")
@@ -658,7 +1060,7 @@ Options:
 ```text
 Usage: groupi events join [options] <event-id>
 
-join an event
+Join as an Attendee with Pending RSVP; confirm attendance separately
 
 Options:
   -h, --help  display help for command
@@ -710,7 +1112,7 @@ Commands:
 Usage: groupi events membership role [options] <event-id> <member-id>
 
 Options:
-  --role <role>  New event role (choices: "ORGANIZER", "MODERATOR", "ATTENDEE")
+  --role <role>  New event role (choices: "MODERATOR", "ATTENDEE")
   --yes          Confirm role change for the named member
   -h, --help     display help for command
 ```
@@ -730,7 +1132,7 @@ Options:
 ```text
 Usage: groupi events settings [options] [command]
 
-Inspect and update event visibility and supported permissions
+Inspect and update event visibility, admission and supported permissions
 
 Options:
   -h, --help                display help for command
@@ -757,6 +1159,8 @@ Usage: groupi events settings set [options] <event-id>
 
 Options:
   --visibility <visibility>     Event visibility (choices: "PRIVATE", "FRIENDS", "PUBLIC")
+  --admission-policy <policy>   Entry policy, independent of visibility (choices: "INVITATION_ONLY",
+                                "DIRECT", "APPLY")
   --create-posts <level>        create-posts permission (choices: "EVERYONE", "MODERATOR",
                                 "ORGANIZER")
   --invite-members <level>      invite-members permission (choices: "EVERYONE", "MODERATOR",
@@ -1447,6 +1851,1307 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi groups
+
+```text
+Usage: groupi groups [options] [command]
+
+Manage formal Group communities independently of events
+
+Options:
+  -h, --help                                                  display help for command
+
+Commands:
+  transfer                                                    Offer consensual Group responsibility; pending offers remain unresolved
+  list [options]                                              List your admitted Groups
+  get <group-id>                                              Read an admitted Group
+  create [options]                                            Create an owner-only Group
+  edit [options] <group-id>                                   Update Group identity as owner
+  delete [options] <group-id>                                 Explicitly retire an owned Group and its data; independent Events remain
+  announce [options] <group-id>                               Explicitly announce to permitted members; reports queued notifications
+  announcement-status [options] <group-id>                    Recover your aggregate announcement status
+  members [options] <group-id>                                Read admitted Group roster
+  invites [options] <group-id>                                Inspect Group invitations as manager
+  invite <group-id> <person-id>                               Invite an existing user to your Group
+  invitation-policy [options] <group-id>                      Configure Group invitations as owner
+  member-role [options] <group-id> <person-id>                Appoint or demote a moderator as owner
+  remove-member [options] <group-id> <person-id>              Remove an ordinary member without banning
+  ban [options] <group-id> <person-id>                        Ban an ordinary member or nonmember
+  lift-ban [options] <group-id> <person-id>                   Lift a Group ban without admitting membership
+  leave [options] <group-id>                                  Leave your own Group membership
+  bans [options] <group-id>                                   List private active Group bans as manager
+  questionnaire                                               Post-admission questionnaire and private retained records
+  forms                                                       Persistent ordinary forms, separate from the joining questionnaire
+  polls                                                       Persistent independent polls; never selects Event dates or RSVP
+  lists                                                       Persistent community lists, independent of Invite Lists and Event Bring Lists
+  application-form <group-id>                                 Read admission form and your private pending application
+  application-get <group-id> <application-id>                 Read a private application as author or current manager
+  application-history [options] <group-id>                    Read your retained private application history
+  applications [options] <group-id>                           Review private Group applications as manager
+  application-settings [options] <group-id>                   Configure Group applications as owner
+  apply [options] <group-id>                                  Apply for Group membership
+  application-edit [options] <group-id> <application-id>      Edit your pending saved answers
+  application-withdraw [options] <group-id> <application-id>  Withdraw your pending application
+  application-review [options] <group-id> <application-id>    Record an application decision as current manager
+  events [options] <group-id>                                 Page safe upcoming/undated shared Events; no participation effects
+  withdraw-event [options] <group-id> <event-id>              Withdraw only this Group audience as current Group manager
+  event-sharing [options] <group-id>                          Owner sets managers-only (default) or all eligible members sharing
+  help [command]                                              display help for command
+```
+
+## groupi groups transfer
+
+```text
+Usage: groupi groups transfer [options] [command]
+
+Offer consensual Group responsibility; pending offers remain unresolved
+
+Options:
+  -h, --help                                  display help for command
+
+Commands:
+  status <group-id>                           Read the current participant-only transfer status
+  offer [options] <group-id> <person-id>      Offer to an admitted member without changing ownership
+                                              yet
+  accept [options] <group-id> <transfer-id>   Accept responsibility as the single owner; former
+                                              owner becomes Moderator
+  decline [options] <group-id> <transfer-id>  Decline the observed offer without changing ownership
+  cancel [options] <group-id> <transfer-id>   Cancel the observed pending offer as owner
+  help [command]                              display help for command
+```
+
+## groupi groups transfer status
+
+```text
+Usage: groupi groups transfer status [options] <group-id>
+
+Read the current participant-only transfer status
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups transfer offer
+
+```text
+Usage: groupi groups transfer offer [options] <group-id> <person-id>
+
+Offer to an admitted member without changing ownership yet
+
+Options:
+  --yes       Confirm offering responsibility
+  -h, --help  display help for command
+```
+
+## groupi groups transfer accept
+
+```text
+Usage: groupi groups transfer accept [options] <group-id> <transfer-id>
+
+Accept responsibility as the single owner; former owner becomes Moderator
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
+```
+
+## groupi groups transfer decline
+
+```text
+Usage: groupi groups transfer decline [options] <group-id> <transfer-id>
+
+Decline the observed offer without changing ownership
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
+```
+
+## groupi groups transfer cancel
+
+```text
+Usage: groupi groups transfer cancel [options] <group-id> <transfer-id>
+
+Cancel the observed pending offer as owner
+
+Options:
+  --yes       Confirm acceptance
+  -h, --help  display help for command
+```
+
+## groupi groups list
+
+```text
+Usage: groupi groups list [options]
+
+List your admitted Groups
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups get
+
+```text
+Usage: groupi groups get [options] <group-id>
+
+Read an admitted Group
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups create
+
+```text
+Usage: groupi groups create [options]
+
+Create an owner-only Group
+
+Options:
+  --name <name>         Trimmed Group name (1–100 characters)
+  --description <text>  Description (at most 2000 characters)
+  --image <url>         HTTPS image URL
+  -h, --help            display help for command
+```
+
+## groupi groups edit
+
+```text
+Usage: groupi groups edit [options] <group-id>
+
+Update Group identity as owner
+
+Options:
+  --name <name>         Trimmed Group name (1–100 characters)
+  --description <text>  Description (at most 2000 characters)
+  --image <url>         HTTPS image URL
+  --clear-description   Remove description
+  --clear-image         Remove image
+  -h, --help            display help for command
+```
+
+## groupi groups delete
+
+```text
+Usage: groupi groups delete [options] <group-id>
+
+Explicitly retire an owned Group and its data; independent Events remain
+
+Options:
+  --yes       Confirm Group deletion
+  -h, --help  display help for command
+```
+
+## groupi groups announce
+
+```text
+Usage: groupi groups announce [options] <group-id>
+
+Explicitly announce to permitted members; reports queued notifications
+
+Options:
+  --title <title>      Announcement title (1–100 characters)
+  --message <message>  Announcement message (1–2000 characters)
+  --request-id <id>    Stable <unix-ms>.<uuid-v4> key; preserve body on recovery
+  -h, --help           display help for command
+```
+
+## groupi groups announcement-status
+
+```text
+Usage: groupi groups announcement-status [options] <group-id>
+
+Recover your aggregate announcement status
+
+Options:
+  --request-id <id>  Original announcement request key
+  -h, --help         display help for command
+```
+
+## groupi groups members
+
+```text
+Usage: groupi groups members [options] <group-id>
+
+Read admitted Group roster
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups invites
+
+```text
+Usage: groupi groups invites [options] <group-id>
+
+Inspect Group invitations as manager
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED
+  -h, --help         display help for command
+```
+
+## groupi groups invite
+
+```text
+Usage: groupi groups invite [options] <group-id> <person-id>
+
+Invite an existing user to your Group
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups invitation-policy
+
+```text
+Usage: groupi groups invitation-policy [options] <group-id>
+
+Configure Group invitations as owner
+
+Options:
+  --enabled <boolean>  true or false
+  -h, --help           display help for command
+```
+
+## groupi groups member-role
+
+```text
+Usage: groupi groups member-role [options] <group-id> <person-id>
+
+Appoint or demote a moderator as owner
+
+Options:
+  --yes          Confirm Group membership or moderation change
+  --role <role>  MODERATOR or MEMBER
+  -h, --help     display help for command
+```
+
+## groupi groups remove-member
+
+```text
+Usage: groupi groups remove-member [options] <group-id> <person-id>
+
+Remove an ordinary member without banning
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups ban
+
+```text
+Usage: groupi groups ban [options] <group-id> <person-id>
+
+Ban an ordinary member or nonmember
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups lift-ban
+
+```text
+Usage: groupi groups lift-ban [options] <group-id> <person-id>
+
+Lift a Group ban without admitting membership
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups leave
+
+```text
+Usage: groupi groups leave [options] <group-id>
+
+Leave your own Group membership
+
+Options:
+  --yes       Confirm Group membership or moderation change
+  -h, --help  display help for command
+```
+
+## groupi groups bans
+
+```text
+Usage: groupi groups bans [options] <group-id>
+
+List private active Group bans as manager
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups questionnaire
+
+```text
+Usage: groupi groups questionnaire [options] [command]
+
+Post-admission questionnaire and private retained records
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  get <group-id>                  Read your private current form and saved definitions
+  status <group-id>               Read current completion and member-content access status
+  history [options] <group-id>    Read paginated retained own answered definitions
+  responses [options] <group-id>  Review private responses as current owner or moderator
+  configure [options] <group-id>  Configure exactly one joining form as owner; preserves retained
+                                  answers
+  submit [options] <group-id>     Submit or edit private answers as a currently admitted member
+  help [command]                  display help for command
+```
+
+## groupi groups questionnaire get
+
+```text
+Usage: groupi groups questionnaire get [options] <group-id>
+
+Read your private current form and saved definitions
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups questionnaire status
+
+```text
+Usage: groupi groups questionnaire status [options] <group-id>
+
+Read current completion and member-content access status
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups questionnaire history
+
+```text
+Usage: groupi groups questionnaire history [options] <group-id>
+
+Read paginated retained own answered definitions
+
+Options:
+  --limit <number>         Page size (1–100) (default: "20")
+  --cursor <cursor>        Continue page
+  --author-id <person-id>  Review this author as current manager
+  -h, --help               display help for command
+```
+
+## groupi groups questionnaire responses
+
+```text
+Usage: groupi groups questionnaire responses [options] <group-id>
+
+Review private responses as current owner or moderator
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups questionnaire configure
+
+```text
+Usage: groupi groups questionnaire configure [options] <group-id>
+
+Configure exactly one joining form as owner; preserves retained answers
+
+Options:
+  --enabled <boolean>              true or false; disabling preserves records
+  --questions <json>               At most 50 stable-ID core questions
+  --required-completion <boolean>  Require completion before Group member content; true or false
+  -h, --help                       display help for command
+```
+
+## groupi groups questionnaire submit
+
+```text
+Usage: groupi groups questionnaire submit [options] <group-id>
+
+Submit or edit private answers as a currently admitted member
+
+Options:
+  --form-version <number>  Current questionnaire version from get
+  --answers <json>         Current answer object, replacing optional values
+  -h, --help               display help for command
+```
+
+## groupi groups forms
+
+```text
+Usage: groupi groups forms [options] [command]
+
+Persistent ordinary forms, separate from the joining questionnaire
+
+Options:
+  -h, --help                                             display help for command
+
+Commands:
+  list [options] <group-id>                              list persistent forms
+  get <group-id> <tool-id>                               get persistent forms
+  settings <group-id> <tool-id>                          settings persistent forms (eligible
+                                                         managers; disabled forms remain manageable)
+  history [options] <group-id> <tool-id>                 history persistent forms (your retained
+                                                         response snapshots)
+  results [options] <group-id> <tool-id>                 results persistent forms (stated results
+                                                         visibility applies)
+  create [options] <group-id>                            create a persistent Group form
+  configure [options] <group-id> <tool-id>               configure a persistent Group form
+  submit [options] <group-id> <tool-id>                  submit a persistent Group form
+  remove-own [options] <group-id> <tool-id>              remove-own a persistent Group form response
+                                                         and retained history
+  delete [options] <group-id> <tool-id>                  delete a persistent Group form
+  moderate [options] <group-id> <tool-id> <response-id>  moderate a persistent Group form
+  policy                                                 Owner controls ordinary form availability
+                                                         and creation
+  help [command]                                         display help for command
+```
+
+## groupi groups forms list
+
+```text
+Usage: groupi groups forms list [options] <group-id>
+
+list persistent forms
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms get
+
+```text
+Usage: groupi groups forms get [options] <group-id> <tool-id>
+
+get persistent forms
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms settings
+
+```text
+Usage: groupi groups forms settings [options] <group-id> <tool-id>
+
+settings persistent forms (eligible managers; disabled forms remain manageable)
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms history
+
+```text
+Usage: groupi groups forms history [options] <group-id> <tool-id>
+
+history persistent forms (your retained response snapshots)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms results
+
+```text
+Usage: groupi groups forms results [options] <group-id> <tool-id>
+
+results persistent forms (stated results visibility applies)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups forms create
+
+```text
+Usage: groupi groups forms create [options] <group-id>
+
+create a persistent Group form
+
+Options:
+  --title <text>                     Form title
+  --description <text>               Form description
+  --questions-json <json>            Stable-ID core questions JSON (at most 50)
+  --results-visibility <visibility>  Immutable MANAGERS or MEMBERS results visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups forms configure
+
+```text
+Usage: groupi groups forms configure [options] <group-id> <tool-id>
+
+configure a persistent Group form
+
+Options:
+  --title <text>           Form title
+  --description <text>     Form description
+  --questions-json <json>  Stable-ID core questions JSON (at most 50)
+  --form-version <number>  Current form version from get
+  -h, --help               display help for command
+```
+
+## groupi groups forms submit
+
+```text
+Usage: groupi groups forms submit [options] <group-id> <tool-id>
+
+submit a persistent Group form
+
+Options:
+  --form-version <number>       Current form version from get
+  --expected-revision <number>  Current own response revision; 0 for first submission
+  --answers-json <json>         Answers JSON object
+  -h, --help                    display help for command
+```
+
+## groupi groups forms remove-own
+
+```text
+Usage: groupi groups forms remove-own [options] <group-id> <tool-id>
+
+remove-own a persistent Group form response and retained history
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms delete
+
+```text
+Usage: groupi groups forms delete [options] <group-id> <tool-id>
+
+delete a persistent Group form
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms moderate
+
+```text
+Usage: groupi groups forms moderate [options] <group-id> <tool-id> <response-id>
+
+moderate a persistent Group form
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups forms policy
+
+```text
+Usage: groupi groups forms policy [options] [command]
+
+Owner controls ordinary form availability and creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>            Read forms policy
+  set [options] <group-id>  Set forms policy as owner
+  help [command]            display help for command
+```
+
+## groupi groups forms policy get
+
+```text
+Usage: groupi groups forms policy get [options] <group-id>
+
+Read forms policy
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups forms policy set
+
+```text
+Usage: groupi groups forms policy set [options] <group-id>
+
+Set forms policy as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
+```
+
+## groupi groups polls
+
+```text
+Usage: groupi groups polls [options] [command]
+
+Persistent independent polls; never selects Event dates or RSVP
+
+Options:
+  -h, --help                                         display help for command
+
+Commands:
+  list [options] <group-id>                          list persistent polls
+  get <group-id> <tool-id>                           get persistent polls
+  settings <group-id> <tool-id>                      settings persistent polls (eligible managers;
+                                                     disabled polls remain manageable)
+  history [options] <group-id> <tool-id>             history persistent polls (your retained vote
+                                                     snapshots)
+  results [options] <group-id> <tool-id>             results persistent polls (stated results
+                                                     visibility applies)
+  create [options] <group-id>                        create a persistent Group poll
+  configure [options] <group-id> <tool-id>           configure a persistent Group poll
+  submit [options] <group-id> <tool-id>              submit a persistent Group poll
+  remove-own [options] <group-id> <tool-id>          remove-own a persistent Group poll vote and
+                                                     retained history
+  delete [options] <group-id> <tool-id>              delete a persistent Group poll
+  moderate [options] <group-id> <tool-id> <vote-id>  moderate a persistent Group poll
+  policy                                             Owner controls ordinary poll availability and
+                                                     creation
+  help [command]                                     display help for command
+```
+
+## groupi groups polls list
+
+```text
+Usage: groupi groups polls list [options] <group-id>
+
+list persistent polls
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls get
+
+```text
+Usage: groupi groups polls get [options] <group-id> <tool-id>
+
+get persistent polls
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls settings
+
+```text
+Usage: groupi groups polls settings [options] <group-id> <tool-id>
+
+settings persistent polls (eligible managers; disabled polls remain manageable)
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls history
+
+```text
+Usage: groupi groups polls history [options] <group-id> <tool-id>
+
+history persistent polls (your retained vote snapshots)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls results
+
+```text
+Usage: groupi groups polls results [options] <group-id> <tool-id>
+
+results persistent polls (stated results visibility applies)
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups polls create
+
+```text
+Usage: groupi groups polls create [options] <group-id>
+
+create a persistent Group poll
+
+Options:
+  --title <text>                     Poll title
+  --mode <mode>                      SINGLE or MULTIPLE
+  --description <text>               Poll description
+  --options-json <json>              Stable-ID {id,label} options JSON (2–50)
+  --results-visibility <visibility>  Immutable MANAGERS or MEMBERS results visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups polls configure
+
+```text
+Usage: groupi groups polls configure [options] <group-id> <tool-id>
+
+configure a persistent Group poll
+
+Options:
+  --title <text>           Poll title
+  --mode <mode>            SINGLE or MULTIPLE
+  --description <text>     Poll description
+  --options-json <json>    Stable-ID {id,label} options JSON (2–50)
+  --poll-version <number>  Current poll version from get
+  -h, --help               display help for command
+```
+
+## groupi groups polls submit
+
+```text
+Usage: groupi groups polls submit [options] <group-id> <tool-id>
+
+submit a persistent Group poll
+
+Options:
+  --poll-version <number>       Current poll version from get
+  --expected-revision <number>  Current own vote revision; 0 for first submission
+  --selections-json <json>      Selected option-ID JSON array
+  -h, --help                    display help for command
+```
+
+## groupi groups polls remove-own
+
+```text
+Usage: groupi groups polls remove-own [options] <group-id> <tool-id>
+
+remove-own a persistent Group poll vote and retained history
+
+Options:
+  --expected-revision <number>  Current vote revision
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups polls delete
+
+```text
+Usage: groupi groups polls delete [options] <group-id> <tool-id>
+
+delete a persistent Group poll
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups polls moderate
+
+```text
+Usage: groupi groups polls moderate [options] <group-id> <tool-id> <vote-id>
+
+moderate a persistent Group poll
+
+Options:
+  --expected-revision <number>  Current vote revision
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups polls policy
+
+```text
+Usage: groupi groups polls policy [options] [command]
+
+Owner controls ordinary poll availability and creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>            Read polls policy
+  set [options] <group-id>  Set polls policy as owner
+  help [command]            display help for command
+```
+
+## groupi groups polls policy get
+
+```text
+Usage: groupi groups polls policy get [options] <group-id>
+
+Read polls policy
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups polls policy set
+
+```text
+Usage: groupi groups polls policy set [options] <group-id>
+
+Set polls policy as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
+```
+
+## groupi groups lists
+
+```text
+Usage: groupi groups lists [options] [command]
+
+Persistent community lists, independent of Invite Lists and Event Bring Lists
+
+Options:
+  -h, --help                                        display help for command
+
+Commands:
+  list [options] <group-id>                         list Group lists; stated visibility applies
+  get <group-id> <tool-id>                          get Group lists; stated visibility applies
+  settings <group-id> <tool-id>                     Current eligible managers read settings even
+                                                    while disabled
+  entries [options] <group-id> <tool-id>            entries Group lists; stated visibility applies
+  own [options] <group-id> <tool-id>                Read only your retained list contributions
+  create [options] <group-id>                       create a persistent list
+  configure [options] <group-id> <tool-id>          configure a persistent list
+  add [options] <group-id> <tool-id>                add a persistent list entry: MANAGERS personal
+                                                    to author/managers; MEMBERS shared latest
+                                                    survives anonymously on account deletion
+  edit [options] <group-id> <tool-id> <entry-id>    edit a persistent list
+  remove [options] <group-id> <tool-id> <entry-id>  remove a persistent list
+  delete [options] <group-id> <tool-id>             delete a persistent list
+  policy                                            Owner controls list availability/creation
+  help [command]                                    display help for command
+```
+
+## groupi groups lists list
+
+```text
+Usage: groupi groups lists list [options] <group-id>
+
+list Group lists; stated visibility applies
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists get
+
+```text
+Usage: groupi groups lists get [options] <group-id> <tool-id>
+
+get Group lists; stated visibility applies
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists settings
+
+```text
+Usage: groupi groups lists settings [options] <group-id> <tool-id>
+
+Current eligible managers read settings even while disabled
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists entries
+
+```text
+Usage: groupi groups lists entries [options] <group-id> <tool-id>
+
+entries Group lists; stated visibility applies
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists own
+
+```text
+Usage: groupi groups lists own [options] <group-id> <tool-id>
+
+Read only your retained list contributions
+
+Options:
+  --limit <number>   Page size 1–100 (default: "20")
+  --cursor <cursor>  Continue page
+  -h, --help         display help for command
+```
+
+## groupi groups lists create
+
+```text
+Usage: groupi groups lists create [options] <group-id>
+
+create a persistent list
+
+Options:
+  --title <text>                     List title
+  --description <text>               List description
+  --results-visibility <visibility>  Fixed MANAGERS personal or MEMBERS shared visibility
+  -h, --help                         display help for command
+```
+
+## groupi groups lists configure
+
+```text
+Usage: groupi groups lists configure [options] <group-id> <tool-id>
+
+configure a persistent list
+
+Options:
+  --title <text>           List title
+  --description <text>     List description
+  --list-version <number>  Current configuration version
+  -h, --help               display help for command
+```
+
+## groupi groups lists add
+
+```text
+Usage: groupi groups lists add [options] <group-id> <tool-id>
+
+add a persistent list entry: MANAGERS personal to author/managers; MEMBERS shared latest survives
+anonymously on account deletion
+
+Options:
+  --list-version <number>  Current configuration version
+  --text <text>            Entry text1–2000 characters
+  --request-id <id>        <unix-ms>.<uuid-v4>, reuse only for exact original request
+  -h, --help               display help for command
+```
+
+## groupi groups lists edit
+
+```text
+Usage: groupi groups lists edit [options] <group-id> <tool-id> <entry-id>
+
+edit a persistent list
+
+Options:
+  --list-version <number>       Current configuration version
+  --text <text>                 Entry text1–2000 characters
+  --expected-revision <number>  Current entry revision
+  --completed <boolean>         true or false, a list status only
+  -h, --help                    display help for command
+```
+
+## groupi groups lists remove
+
+```text
+Usage: groupi groups lists remove [options] <group-id> <tool-id> <entry-id>
+
+remove a persistent list
+
+Options:
+  --expected-revision <number>  Current entry revision, stale removals conflict
+  --yes                         Confirm permanent removal
+  -h, --help                    display help for command
+```
+
+## groupi groups lists delete
+
+```text
+Usage: groupi groups lists delete [options] <group-id> <tool-id>
+
+delete a persistent list
+
+Options:
+  --yes       Confirm permanent removal
+  -h, --help  display help for command
+```
+
+## groupi groups lists policy
+
+```text
+Usage: groupi groups lists policy [options] [command]
+
+Owner controls list availability/creation
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  get <group-id>
+  set [options] <group-id>
+  help [command]            display help for command
+```
+
+## groupi groups lists policy get
+
+```text
+Usage: groupi groups lists policy get [options] <group-id>
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups lists policy set
+
+```text
+Usage: groupi groups lists policy set [options] <group-id>
+
+Options:
+  --enabled <boolean>  true or false
+  --creation <role>    MANAGERS or MEMBERS
+  -h, --help           display help for command
+```
+
+## groupi groups application-form
+
+```text
+Usage: groupi groups application-form [options] <group-id>
+
+Read admission form and your private pending application
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups application-get
+
+```text
+Usage: groupi groups application-get [options] <group-id> <application-id>
+
+Read a private application as author or current manager
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi groups application-history
+
+```text
+Usage: groupi groups application-history [options] <group-id>
+
+Read your retained private application history
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups applications
+
+```text
+Usage: groupi groups applications [options] <group-id>
+
+Review private Group applications as manager
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, WITHDRAWN, APPROVED or DECLINED
+  -h, --help         display help for command
+```
+
+## groupi groups application-settings
+
+```text
+Usage: groupi groups application-settings [options] <group-id>
+
+Configure Group applications as owner
+
+Options:
+  --enabled <boolean>  true or false
+  --questions <json>   JSON admission question array
+  -h, --help           display help for command
+```
+
+## groupi groups apply
+
+```text
+Usage: groupi groups apply [options] <group-id>
+
+Apply for Group membership
+
+Options:
+  --answers <json>  JSON answer object
+  -h, --help        display help for command
+```
+
+## groupi groups application-edit
+
+```text
+Usage: groupi groups application-edit [options] <group-id> <application-id>
+
+Edit your pending saved answers
+
+Options:
+  --answers <json>  JSON answer object
+  -h, --help        display help for command
+```
+
+## groupi groups application-withdraw
+
+```text
+Usage: groupi groups application-withdraw [options] <group-id> <application-id>
+
+Withdraw your pending application
+
+Options:
+  --yes       Confirm application resolution
+  -h, --help  display help for command
+```
+
+## groupi groups application-review
+
+```text
+Usage: groupi groups application-review [options] <group-id> <application-id>
+
+Record an application decision as current manager
+
+Options:
+  --decision <decision>  APPROVED or DECLINED
+  --yes                  Confirm application resolution
+  -h, --help             display help for command
+```
+
+## groupi groups events
+
+```text
+Usage: groupi groups events [options] <group-id>
+
+Page safe upcoming/undated shared Events; no participation effects
+
+Options:
+  --limit <number>   Association scan page size (1–100) (default: "20")
+  --cursor <cursor>  Continue even an empty page
+  --all              Retrieve every page deliberately
+  -h, --help         display help for command
+```
+
+## groupi groups withdraw-event
+
+```text
+Usage: groupi groups withdraw-event [options] <group-id> <event-id>
+
+Withdraw only this Group audience as current Group manager
+
+Options:
+  --yes       Confirm withdrawal
+  -h, --help  display help for command
+```
+
+## groupi groups event-sharing
+
+```text
+Usage: groupi groups event-sharing [options] <group-id>
+
+Owner sets managers-only (default) or all eligible members sharing
+
+Options:
+  --policy <policy>  MANAGERS or MEMBERS
+  -h, --help         display help for command
+```
+
+## groupi group-invites
+
+```text
+Usage: groupi group-invites [options] [command]
+
+Inspect and respond to your private Group invitations
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  list [options]                 List your own Group invitation states
+  accept <invite-id>             accept your Group invitation
+  decline [options] <invite-id>  decline your Group invitation
+  cancel [options] <invite-id>   Cancel a pending invitation as Group manager
+  help [command]                 display help for command
+```
+
+## groupi group-invites list
+
+```text
+Usage: groupi group-invites list [options]
+
+List your own Group invitation states
+
+Options:
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Retrieve every page deliberately
+  --status <status>  PENDING, ACCEPTED, DECLINED or CANCELLED
+  -h, --help         display help for command
+```
+
+## groupi group-invites accept
+
+```text
+Usage: groupi group-invites accept [options] <invite-id>
+
+accept your Group invitation
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi group-invites decline
+
+```text
+Usage: groupi group-invites decline [options] <invite-id>
+
+decline your Group invitation
+
+Options:
+  --yes       Confirm invitation resolution
+  -h, --help  display help for command
+```
+
+## groupi group-invites cancel
+
+```text
+Usage: groupi group-invites cancel [options] <invite-id>
+
+Cancel a pending invitation as Group manager
+
+Options:
+  --yes       Confirm invitation resolution
+  -h, --help  display help for command
+```
+
 ## groupi account
 
 ```text
@@ -1455,16 +3160,23 @@ Usage: groupi account [options] [command]
 Read/update your account and open explicit browser exceptions
 
 Options:
-  -h, --help       display help for command
+  -h, --help                         display help for command
 
 Commands:
-  avatar           Inspect, replace, or remove avatar images from local files
-  get              Read your selected identity’s profile
-  edit [options]   Update ordinary profile fields without browser interaction
-  passkeys         Explicitly open account settings; complete this action in the browser/device
-  linked-accounts  Explicitly open account settings; complete this action in the browser/device
-  delete           Explicitly open account settings; complete this action in the browser/device
-  help [command]   display help for command
+  avatar                             Inspect, replace, or remove avatar images from local files
+  get                                Read your selected identity’s profile
+  edit [options]                     Update ordinary profile fields without browser interaction
+  passkeys                           Explicitly open account settings; complete this action in the
+                                     browser/device
+  linked-accounts                    Explicitly open account settings; complete this action in the
+                                     browser/device
+  responsibilities [options]         Enumerate owned Groups or Events; pending offers remain
+                                     unresolved
+  readiness                          Read current resolution status; final deletion rechecks it
+  delete-event [options] <event-id>  Explicitly resolve an Event by permanent deletion
+  delete [options]                   Delete your resolved account and credentials; all owned Groups
+                                     and Events must be resolved first
+  help [command]                     display help for command
 ```
 
 ## groupi account avatar
@@ -1561,15 +3273,55 @@ Options:
   -h, --help  display help for command
 ```
 
+## groupi account responsibilities
+
+```text
+Usage: groupi account responsibilities [options]
+
+Enumerate owned Groups or Events; pending offers remain unresolved
+
+Options:
+  --kind <kind>      GROUP or EVENT
+  --limit <number>   Page size (1–100) (default: "20")
+  --cursor <cursor>  Continue a page
+  --all              Enumerate every page
+  -h, --help         display help for command
+```
+
+## groupi account readiness
+
+```text
+Usage: groupi account readiness [options]
+
+Read current resolution status; final deletion rechecks it
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi account delete-event
+
+```text
+Usage: groupi account delete-event [options] <event-id>
+
+Explicitly resolve an Event by permanent deletion
+
+Options:
+  --yes       Confirm permanent Event deletion
+  -h, --help  display help for command
+```
+
 ## groupi account delete
 
 ```text
 Usage: groupi account delete [options]
 
-Explicitly open account settings; complete this action in the browser/device
+Delete your resolved account and credentials; all owned Groups and Events must be resolved first
 
 Options:
-  -h, --help  display help for command
+  --confirm-username <username>  Current username confirmation
+  --yes                          Confirm permanent account deletion
+  -h, --help                     display help for command
 ```
 
 ## groupi settings
@@ -1621,6 +3373,7 @@ Usage: groupi settings privacy set [options]
 
 Options:
   --friend-requests <permission>  EVERYONE, EVENT_MEMBERS, or NO_ONE
+  --group-invites <permission>    EVERYONE, FRIENDS, or NO_ONE
   --event-invites <permission>    EVERYONE, EVENT_MEMBERS, FRIENDS, or NO_ONE
   -h, --help                      display help for command
 ```
@@ -2231,6 +3984,123 @@ Options:
   --status <status>  Status filter; received defaults to PENDING, event list to all (choices:
                      "PENDING", "ACCEPTED", "DECLINED", "all")
   -h, --help         display help for command
+```
+
+## groupi invite-lists
+
+```text
+Usage: groupi invite-lists [options] [command]
+
+Create and inspect private saved selections of existing people
+
+Options:
+  -h, --help                  display help for command
+
+Commands:
+  create [options]            Save people privately; sends no invitations or notifications
+  list                        Browse all owned lists (up to 100), including Needs attention status
+  get <list-id>               Inspect current people; missing profiles are anonymous and all-missing
+                              lists Need attention
+  edit [options] <list-id>    Rename a private list or replace its saved people without sending
+                              invitations
+  delete [options] <list-id>  Delete a private list; requires confirmation and leaves prior
+                              invitations unchanged
+  invite [options] <list-id>  Explicitly invite current people with 24-hour recovery; repair Needs
+                              attention lists before a fresh send
+  people [options]            Find existing selectable people without an event; friendship is
+                              optional
+  help [command]              display help for command
+```
+
+## groupi invite-lists create
+
+```text
+Usage: groupi invite-lists create [options]
+
+Save people privately; sends no invitations or notifications
+
+Options:
+  --name <name>        Creator-unique list name, 1–100 trimmed characters
+  --person-ids <json>  JSON array of 1–100 distinct existing person IDs
+  -h, --help           display help for command
+```
+
+## groupi invite-lists list
+
+```text
+Usage: groupi invite-lists list [options]
+
+Browse all owned lists (up to 100), including Needs attention status
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invite-lists get
+
+```text
+Usage: groupi invite-lists get [options] <list-id>
+
+Inspect current people; missing profiles are anonymous and all-missing lists Need attention
+
+Options:
+  -h, --help  display help for command
+```
+
+## groupi invite-lists edit
+
+```text
+Usage: groupi invite-lists edit [options] <list-id>
+
+Rename a private list or replace its saved people without sending invitations
+
+Options:
+  --name <name>        New creator-unique name, 1–100 trimmed characters
+  --person-ids <json>  Replace people with 1–100 distinct IDs; include an existing person to repair
+                       Needs attention
+  -h, --help           display help for command
+```
+
+## groupi invite-lists delete
+
+```text
+Usage: groupi invite-lists delete [options] <list-id>
+
+Delete a private list; requires confirmation and leaves prior invitations unchanged
+
+Options:
+  --yes       Confirm deleting this private invite list
+  -h, --help  display help for command
+```
+
+## groupi invite-lists invite
+
+```text
+Usage: groupi invite-lists invite [options] <list-id>
+
+Explicitly invite current people with 24-hour recovery; repair Needs attention lists before a fresh
+send
+
+Options:
+  --event <event-id>  Target event; requires existing event invitation permission
+  --role <role>       Common event role; MODERATOR is organizer-only (choices: "ATTENDEE",
+                      "MODERATOR", default: "ATTENDEE")
+  --message <text>    Common invitation message, at most 480 characters
+  --request-id <id>   Retain and reuse this identifier with original inputs after an uncertain send
+  -h, --help          display help for command
+```
+
+## groupi invite-lists people
+
+```text
+Usage: groupi invite-lists people [options]
+
+Find existing selectable people without an event; friendship is optional
+
+Options:
+  --search <username>  Username search, at least 2 trimmed characters
+  --friends            List accepted friends as convenient choices
+  -h, --help           display help for command
 ```
 
 ## groupi notifications

@@ -1,7 +1,16 @@
 import type { Doc, Id } from 'convex/_generated/dataModel';
 
 export interface NotificationPresentationInput
-  extends Pick<Doc<'notifications'>, 'type' | 'eventId' | 'postId' | 'rsvp'> {
+  extends Pick<
+    Doc<'notifications'>,
+    'type' | 'eventId' | 'postId' | 'rsvp' | 'groupId'
+  > {
+  group?: { id: Id<'groups'>; title: string } | null;
+  groupAnnouncement?: { title: string; message: string } | null;
+  groupInvite?: {
+    id: Id<'groupInvites'>;
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
+  } | null;
   event?: { id: Id<'events'>; title: string } | null;
   post?: { id: Id<'posts'>; title: string } | null;
   author?: {
@@ -31,6 +40,12 @@ export function getNotificationMessage(
   const postTitle = notification.post?.title ?? 'a post';
 
   switch (notification.type) {
+    case 'EVENT_APPLICATION_RECEIVED':
+      return `A new application to ${eventTitle} is ready for review`;
+    case 'EVENT_APPLICATION_APPROVED':
+      return `Your application to ${eventTitle} was approved`;
+    case 'EVENT_APPLICATION_DECLINED':
+      return `Your application to ${eventTitle} was declined`;
     case 'EVENT_EDITED':
       return `${eventTitle} was updated`;
     case 'DATE_CHOSEN':
@@ -61,6 +76,31 @@ export function getNotificationMessage(
       return `${authorName} sent you a friend request`;
     case 'FRIEND_REQUEST_ACCEPTED':
       return `${authorName} accepted your friend request`;
+    case 'GROUP_APPLICATION_RECEIVED':
+      return `A new Group application is ready for review`;
+    case 'GROUP_APPLICATION_APPROVED':
+      return 'Your Group application was approved.';
+    case 'GROUP_APPLICATION_DECLINED':
+      return 'Your Group application was declined.';
+    case 'GROUP_INVITE_RECEIVED': {
+      const title = notification.group?.title ?? 'a Group';
+      const status = notification.groupInvite?.status;
+      return status && status !== 'PENDING'
+        ? `Group invitation to ${title}: ${status.toLowerCase()}`
+        : `${authorName} invited you to ${title}`;
+    }
+    case 'GROUP_ANNOUNCEMENT':
+      return notification.groupAnnouncement
+        ? `${notification.groupAnnouncement.title}: ${notification.groupAnnouncement.message}`
+        : 'Group announcement unavailable';
+    case 'GROUP_ONBOARDING_REQUIRED':
+      return 'Complete required Group onboarding to access member content.';
+    case 'GROUP_MEMBER_REMOVED':
+      return 'You were removed from the Group.';
+    case 'GROUP_MEMBER_BANNED':
+      return 'You were banned from the Group.';
+    case 'GROUP_INVITE_ACCEPTED':
+      return `${authorName} accepted your invitation to ${notification.group?.title ?? 'a Group'}`;
     case 'EVENT_INVITE_RECEIVED':
       return `${authorName} invited you to ${eventTitle}`;
     case 'EVENT_INVITE_ACCEPTED':
@@ -75,6 +115,31 @@ export function getNotificationMessage(
 export function getNotificationDestination(
   notification: NotificationPresentationInput
 ): string | null {
+  if (notification.type === 'GROUP_ONBOARDING_REQUIRED') {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/groups/${groupId}/questionnaire` : null;
+  }
+  if (
+    notification.type === 'GROUP_APPLICATION_RECEIVED' ||
+    notification.type === 'GROUP_APPLICATION_APPROVED' ||
+    notification.type === 'GROUP_APPLICATION_DECLINED'
+  ) {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId
+      ? `/groups/${groupId}/${notification.type === 'GROUP_APPLICATION_RECEIVED' ? 'applications' : 'apply'}`
+      : null;
+  }
+  if (
+    notification.type === 'GROUP_INVITE_RECEIVED' ||
+    notification.type === 'GROUP_INVITE_ACCEPTED' ||
+    notification.type === 'GROUP_MEMBER_REMOVED' ||
+    notification.type === 'GROUP_MEMBER_BANNED'
+  ) {
+    const groupId = notification.group?.id ?? notification.groupId;
+    return groupId ? `/g/${groupId}` : null;
+  }
+  if (notification.type === 'GROUP_ANNOUNCEMENT')
+    return notification.groupId ? `/groups/${notification.groupId}` : null;
   if (notification.type === 'EVENT_INVITE_RECEIVED') return '/invites';
   if (
     notification.type === 'FRIEND_REQUEST_RECEIVED' ||
@@ -83,6 +148,13 @@ export function getNotificationDestination(
     return '/friends';
   }
   if (!notification.eventId) return null;
+  if (notification.type === 'EVENT_APPLICATION_RECEIVED')
+    return `/event/${notification.eventId}/applications`;
+  if (
+    notification.type === 'EVENT_APPLICATION_APPROVED' ||
+    notification.type === 'EVENT_APPLICATION_DECLINED'
+  )
+    return `/event/${notification.eventId}/application`;
   if (notification.postId) {
     return `/event/${notification.eventId}/post/${notification.postId}`;
   }

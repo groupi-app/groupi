@@ -98,7 +98,7 @@ export default function OnboardingScreen() {
         pronouns: pronouns.trim() || undefined,
         bio: bio.trim() || undefined,
       });
-      router.replace('/(tabs)');
+      router.replace((getSafeAuthReturnPath(returnTo) ?? '/(tabs)') as Href);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete setup');
     } finally {

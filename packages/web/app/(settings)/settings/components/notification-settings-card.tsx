@@ -50,6 +50,54 @@ const notificationTypeLabels: Record<
   NotificationType,
   { label: string; description: string }
 > = {
+  GROUP_APPLICATION_RECEIVED: {
+    label: 'New Group applications',
+    description: 'When someone applies to a Group you manage',
+  },
+  GROUP_APPLICATION_APPROVED: {
+    label: 'Group application approved',
+    description: 'When your Group application is approved',
+  },
+  GROUP_APPLICATION_DECLINED: {
+    label: 'Group application declined',
+    description: 'When your Group application is declined',
+  },
+  GROUP_ONBOARDING_REQUIRED: {
+    label: 'Required Group onboarding',
+    description: 'current required Group answers need completing.',
+  },
+  GROUP_MEMBER_REMOVED: {
+    label: 'Removed from Group',
+    description: 'a manager removes me from a Group.',
+  },
+  GROUP_ANNOUNCEMENT: {
+    label: 'Group Announcement',
+    description: 'a Group manager explicitly announces to permitted members.',
+  },
+  GROUP_MEMBER_BANNED: {
+    label: 'Banned from Group',
+    description: 'a manager bans me from a Group.',
+  },
+  GROUP_INVITE_RECEIVED: {
+    label: 'Group Invitation Received',
+    description: 'I receive a Group invitation.',
+  },
+  GROUP_INVITE_ACCEPTED: {
+    label: 'Group Invitation Accepted',
+    description: 'someone accepts my Group invitation.',
+  },
+  EVENT_APPLICATION_RECEIVED: {
+    label: 'New Event Applications',
+    description: 'When someone applies to an Event you review',
+  },
+  EVENT_APPLICATION_APPROVED: {
+    label: 'Application Approved',
+    description: 'When your Event application is approved',
+  },
+  EVENT_APPLICATION_DECLINED: {
+    label: 'Application Declined',
+    description: 'When your Event application is declined',
+  },
   NEW_POST: {
     label: 'New Post',
     description: "someone posts in an event I'm in.",
@@ -576,6 +624,22 @@ export function NotificationSettingsCard({
                         Membership
                       </div>
                       {membership.map(type => renderCheckbox(type))}
+                    </div>
+                    <div className='flex flex-col gap-2'>
+                      <div className='px-2 py-1 text-xs text-muted-foreground font-semibold'>
+                        Groups
+                      </div>
+                      {[
+                        NotificationTypeEnum.GROUP_APPLICATION_RECEIVED,
+                        NotificationTypeEnum.GROUP_APPLICATION_APPROVED,
+                        NotificationTypeEnum.GROUP_APPLICATION_DECLINED,
+                        NotificationTypeEnum.GROUP_INVITE_RECEIVED,
+                        NotificationTypeEnum.GROUP_INVITE_ACCEPTED,
+                        NotificationTypeEnum.GROUP_MEMBER_REMOVED,
+                        NotificationTypeEnum.GROUP_MEMBER_BANNED,
+                        NotificationTypeEnum.GROUP_ANNOUNCEMENT,
+                        NotificationTypeEnum.GROUP_ONBOARDING_REQUIRED,
+                      ].map(type => renderCheckbox(type))}
                     </div>
                   </div>
                 </FormItem>

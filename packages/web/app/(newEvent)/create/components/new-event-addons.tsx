@@ -9,15 +9,13 @@ import { useCreateEvent } from '@/hooks/mutations/use-create-event';
 import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { isReminderInPast } from '@/lib/datetime-helpers';
 import { useFormContext } from './form-context';
-import { getAddonRegistry } from './addon-registry';
-import { AddonToggleCard } from './addon-toggle-card';
-import { CreateWizardTemplatePicker } from './create-wizard-template-picker';
-
-// Import addon modules so they self-register
-import './addons/reminder-addon';
-import './addons/questionnaire-addon';
-import './addons/bring-list-addon';
-import './addons/discord-addon';
+import {
+  getCreationAddons,
+  serializeAddonConfigs,
+  AddonToggleCard,
+  CreateWizardTemplatePicker,
+  type AddonCreationState,
+} from '@/features/addons/creation';
 
 interface NewEventAddonsProps {
   onBack: () => void;
@@ -30,20 +28,24 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
   const { uploadFile } = useFileUpload();
   const [isSaving, setIsSaving] = useState(false);
 
-  const addons = getAddonRegistry();
+  const addonState: AddonCreationState = {
+    addonConfigs: formState.addonConfigs,
+    dateType: formState.dateType,
+    singleDateTime: formState.singleDateTime,
+    multiDateTimeOptions: formState.multiDateTimeOptions,
+  };
+  const updateAddonState = (state: AddonCreationState) =>
+    setFormState({ ...formState, addonConfigs: state.addonConfigs });
+  const addons = getCreationAddons(addonState);
 
-  const handleToggle = useCallback(
-    (addonId: string, enabled: boolean) => {
-      const addon = addons.find(a => a.id === addonId);
-      if (!addon) return;
-
-      const patch = enabled
-        ? addon.onEnable(formState)
-        : addon.onDisable(formState);
-      setFormState({ ...formState, ...patch });
-    },
-    [addons, formState, setFormState]
-  );
+  const handleToggle = (addonId: string, enabled: boolean) => {
+    const addon = addons.find(a => a.id === addonId);
+    if (!addon) return;
+    const patch = enabled
+      ? addon.onEnable(addonState)
+      : addon.onDisable(addonState);
+    updateAddonState({ ...addonState, ...patch });
+  };
 
   const onSubmit = useCallback(async () => {
     const {
@@ -81,16 +83,9 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
     }
 
     // Collect enabled add-ons and their configs from the registry
-    const enabledAddons = addons
-      .filter(a => a.isEnabled(formState))
-      .map(a => ({
-        addonType: a.id,
-        config: a.getConfigFromFormState(formState),
-      }))
-      .filter(
-        (a): a is { addonType: string; config: Record<string, unknown> } =>
-          a.config !== null
-      );
+    const enabledAddons = serializeAddonConfigs({
+      addonConfigs: formState.addonConfigs,
+    });
 
     // Validate reminder offset isn't in the past (addon-specific validation)
     const reminderAddon = enabledAddons.find(a => a.addonType === 'reminders');
@@ -155,7 +150,7 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
       toast.error('The event was unable to be created.');
       setIsSaving(false);
     }
-  }, [formState, addons, createEvent, uploadFile, router]);
+  }, [formState, createEvent, uploadFile, router]);
 
   if (!formState.title) {
     return null;
@@ -173,17 +168,17 @@ export function NewEventAddons({ onBack }: NewEventAddonsProps) {
           <AddonToggleCard
             key={addon.id}
             addon={addon}
-            enabled={addon.isEnabled(formState)}
+            enabled={addon.isEnabled(addonState)}
             onToggle={enabled => handleToggle(addon.id, enabled)}
-            formState={formState}
-            setFormState={setFormState}
+            formState={addonState}
+            setFormState={updateAddonState}
           />
         ))}
       </div>
 
       <CreateWizardTemplatePicker
-        formState={formState}
-        setFormState={setFormState}
+        formState={addonState}
+        setFormState={updateAddonState}
       />
 
       <div className='flex justify-between mt-2'>

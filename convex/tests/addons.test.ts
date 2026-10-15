@@ -1,4 +1,4 @@
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, beforeEach, afterEach, vi } from 'vitest';
 import {
   createTestInstance,
   createTestUser,
@@ -8,6 +8,13 @@ import {
 import { api } from './_generated/api';
 
 describe('Add-on Framework', () => {
+  // These mutation tests inspect queued state; scheduled actions belong to their own tests.
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
   describe('enableAddon', () => {
     test('should enable a reminder add-on for an event', async () => {
       const t = createTestInstance();

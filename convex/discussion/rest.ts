@@ -10,14 +10,43 @@ import {
   createPostForPerson,
   updatePostForPerson,
   deletePostForPerson,
-} from '../posts/mutations';
+} from '../posts/writes';
 import {
   createReplyForPerson,
   updateReplyForPerson,
   deleteReplyForPerson,
-} from '../replies/mutations';
+} from '../replies/writes';
+import { postDocument } from '../posts/model';
+import { discussionAuthor } from '../posts/presentation';
 import { attachmentInputValidator } from '../attachments/model';
 const kind = v.union(v.literal('posts'), v.literal('replies'));
+const attachmentSummary = v.object({
+  id: v.id('attachments'),
+  storageId: v.id('_storage'),
+  filename: v.string(),
+  size: v.number(),
+  mimeType: v.string(),
+  url: v.union(v.string(), v.null()),
+});
+const summaryFields = {
+  id: v.union(v.id('posts'), v.id('replies')),
+  createdAt: v.number(),
+  eventId: v.optional(v.id('events')),
+  title: v.optional(v.string()),
+  content: v.optional(v.string()),
+  editedAt: v.optional(v.union(v.number(), v.null())),
+  replyCount: v.optional(v.number()),
+  postId: v.optional(v.id('posts')),
+  text: v.optional(v.string()),
+  updatedAt: v.optional(v.union(v.number(), v.null())),
+  author: discussionAuthor,
+  attachments: v.array(attachmentSummary),
+};
+const contentSummary = v.object(summaryFields);
+const contentDetail = v.object({
+  ...summaryFields,
+  replies: v.optional(v.array(contentSummary)),
+});
 async function access(
   ctx: QueryCtx,
   personId: Id<'persons'>,
@@ -107,6 +136,7 @@ async function detail(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
 }
 export const read = internalQuery({
   args: { kind, id: v.string(), personId: v.id('persons') },
+  returns: contentDetail,
   handler: async (ctx, args) => {
     const id = ctx.db.normalizeId(args.kind, args.id);
     const row = id ? await ctx.db.get(id) : null;
@@ -130,6 +160,10 @@ export const list = internalQuery({
     limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
   },
+  returns: v.object({
+    items: v.array(contentSummary),
+    nextCursor: v.union(v.string(), v.null()),
+  }),
   handler: async (ctx, args) => {
     const eventId =
       args.kind === 'posts'
@@ -202,6 +236,12 @@ export const write = internalMutation({
       attachmentIdsToDelete: v.optional(v.array(v.id('attachments'))),
     }),
   },
+  returns: v.union(
+    contentDetail,
+    v.object({ postId: v.id('posts'), post: v.union(postDocument, v.null()) }),
+    v.object({ replyId: v.id('replies') }),
+    v.object({ success: v.boolean() })
+  ),
   handler: async (ctx, a) => {
     const { personId, body } = a;
     if (a.kind === 'posts') {

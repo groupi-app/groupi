@@ -25,8 +25,7 @@
     ],
     "paths": {
       "@/convex/*": ["../../convex/*"],
-      "@/*": ["./*"],
-      "@groupi/shared": ["../../packages/shared/src"]
+      "@/*": ["./*"]
     }
   },
   "include": [

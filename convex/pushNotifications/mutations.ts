@@ -1,3 +1,4 @@
+import { canDeliverAnnouncement } from '../groupAnnouncements/model';
 import { makeFunctionReference } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 import { requireAuth } from '../auth';
@@ -379,6 +380,22 @@ export const claimDeliveries = internalMutation({
         continue;
       }
 
+      if (notification.groupAnnouncementId) {
+        const permitted = await canDeliverAnnouncement(
+          ctx,
+          notification.groupAnnouncementId,
+          notification.personId
+        );
+        if (!permitted) {
+          await ctx.db.patch(deliveryId, {
+            status: 'TICKET_ERROR',
+            errorCode: 'DeliveryCancelled',
+            errorMessage: 'Announcement access is no longer available',
+            updatedAt: now,
+          });
+          continue;
+        }
+      }
       if (delivery.attempts >= MAX_PUSH_ATTEMPTS) {
         await ctx.db.patch(deliveryId, {
           status: 'TICKET_ERROR',

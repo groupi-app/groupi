@@ -32,12 +32,24 @@ export const DEFAULT_EVENT_PERMISSIONS: Record<
 
 // Notification Types
 export type NotificationType =
+  | 'GROUP_INVITE_RECEIVED'
+  | 'GROUP_INVITE_ACCEPTED'
+  | 'GROUP_MEMBER_REMOVED'
+  | 'GROUP_ANNOUNCEMENT'
+  | 'GROUP_ONBOARDING_REQUIRED'
+  | 'GROUP_MEMBER_BANNED'
+  | 'GROUP_APPLICATION_RECEIVED'
+  | 'GROUP_APPLICATION_APPROVED'
+  | 'GROUP_APPLICATION_DECLINED'
   | 'EVENT_EDITED' // When the details of an event that the receiving user is a member of is edited
   | 'NEW_POST' // When a new post is created in an event that the receiving user is a member of
   | 'NEW_REPLY' // When a new reply is created in a post that the receiving user has interacted with
   | 'DATE_CHOSEN' // When the organizer of an event that the receiving user is a member of chooses a date
   | 'DATE_CHANGED' // When the organizer of an event that the receiving user is a member of changes the chosen date to a new single date
   | 'DATE_RESET' // When the organizer of an event that the receiving user is a member of starts a new poll for the date
+  | 'EVENT_APPLICATION_RECEIVED'
+  | 'EVENT_APPLICATION_APPROVED'
+  | 'EVENT_APPLICATION_DECLINED'
   | 'USER_JOINED' // When another user joins an event that the receiving user owns or moderates
   | 'USER_LEFT' // When another user leaves an event that the receiving user owns or moderates
   | 'USER_PROMOTED' // When the receiving user is promoted to moderator of an event
@@ -99,6 +111,15 @@ export const ConvexEnums = {
     ATTENDEE: 'ATTENDEE' as const,
   },
   NotificationType: {
+    GROUP_INVITE_RECEIVED: 'GROUP_INVITE_RECEIVED' as const,
+    GROUP_INVITE_ACCEPTED: 'GROUP_INVITE_ACCEPTED' as const,
+    GROUP_MEMBER_REMOVED: 'GROUP_MEMBER_REMOVED' as const,
+    GROUP_ANNOUNCEMENT: 'GROUP_ANNOUNCEMENT' as const,
+    GROUP_MEMBER_BANNED: 'GROUP_MEMBER_BANNED' as const,
+    GROUP_APPLICATION_RECEIVED: 'GROUP_APPLICATION_RECEIVED' as const,
+    GROUP_APPLICATION_APPROVED: 'GROUP_APPLICATION_APPROVED' as const,
+    GROUP_APPLICATION_DECLINED: 'GROUP_APPLICATION_DECLINED' as const,
+    GROUP_ONBOARDING_REQUIRED: 'GROUP_ONBOARDING_REQUIRED' as const,
     EVENT_EDITED: 'EVENT_EDITED' as const,
     NEW_POST: 'NEW_POST' as const,
     NEW_REPLY: 'NEW_REPLY' as const,

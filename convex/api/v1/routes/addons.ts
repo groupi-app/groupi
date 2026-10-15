@@ -1,8 +1,12 @@
+import { ConvexError } from 'convex/values';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { requireEventMembership, requireEventRole } from '../middleware/auth';
+import {
+  requireEventMembership,
+  requireEventRole,
+} from '../../middleware/auth';
 import { ErrorResponseSchema, EventIdParamSchema } from '../schemas/common';
 import {
   EventAddonParamSchema,
@@ -73,17 +77,14 @@ export function createAddonRoutes() {
       query.pagination === 'cursor'
         ? await c
             .get('ctx')
-            .runQuery(
-              internal.api.v1.internal.addons.listPublishedTemplatesPage,
-              {
-                personId: c.get('personId'),
-                limit: query.limit,
-                cursor: query.cursor ?? null,
-              }
-            )
+            .runQuery(internal.addons.rest.listPublishedTemplatesPage, {
+              personId: c.get('personId'),
+              limit: query.limit,
+              cursor: query.cursor ?? null,
+            })
         : await c
             .get('ctx')
-            .runQuery(internal.api.v1.internal.addons.listPublishedTemplates, {
+            .runQuery(internal.addons.rest.listPublishedTemplates, {
               personId: c.get('personId'),
             });
     return c.json({ success: true as const, data: result }, 200);
@@ -150,14 +151,15 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.addons.listEventAddons;
+    const listFn = internal.addons.rest.listEventAddons;
     const query = c.req.valid('query');
     const result =
       query.pagination === 'cursor'
-        ? await ctx.runQuery(
-            internal.api.v1.internal.addons.listEventAddonsPage,
-            { eventId, limit: query.limit, cursor: query.cursor ?? null }
-          )
+        ? await ctx.runQuery(internal.addons.rest.listEventAddonsPage, {
+            eventId,
+            limit: query.limit,
+            cursor: query.cursor ?? null,
+          })
         : await ctx.runQuery(listFn, { eventId });
 
     return c.json(
@@ -235,7 +237,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const enableFn = internal.api.v1.internal.addons.enableAddon;
+      const enableFn = internal.addons.rest.enableAddon;
       await ctx.runMutation(enableFn, {
         eventId,
         personId,
@@ -312,7 +314,7 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const disableFn = internal.api.v1.internal.addons.disableAddon;
+    const disableFn = internal.addons.rest.disableAddon;
     await ctx.runMutation(disableFn, { eventId, addonType, personId });
 
     return c.json(
@@ -390,7 +392,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const updateFn = internal.api.v1.internal.addons.updateAddonConfig;
+      const updateFn = internal.addons.rest.updateAddonConfig;
       const result = await ctx.runMutation(updateFn, {
         eventId,
         personId,
@@ -470,7 +472,7 @@ export function createAddonRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getDataFn = internal.api.v1.internal.addons.getAddonData;
+    const getDataFn = internal.addons.rest.getAddonData;
     const result = await ctx.runQuery(getDataFn, { eventId, addonType });
 
     return c.json(
@@ -548,7 +550,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const setDataFn = internal.api.v1.internal.addons.setAddonData;
+      const setDataFn = internal.addons.rest.setAddonData;
       const result = await ctx.runMutation(setDataFn, {
         eventId,
         addonType,
@@ -572,6 +574,7 @@ export function createAddonRoutes() {
         200
       );
     } catch (error) {
+      if (error instanceof ConvexError) throw error;
       const message =
         error instanceof Error ? error.message : 'Failed to set add-on data';
       return c.json(
@@ -637,7 +640,7 @@ export function createAddonRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const deleteFn = internal.api.v1.internal.addons.deleteAddonData;
+      const deleteFn = internal.addons.rest.deleteAddonData;
       await ctx.runMutation(deleteFn, { eventId, addonType, key, personId });
     } catch (error) {
       const message =

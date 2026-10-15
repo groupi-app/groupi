@@ -1,3 +1,4 @@
+import { admissionPolicyValidator } from './admissionContracts';
 import { v } from 'convex/values';
 import { reminderOffsetValidator } from './writes';
 const permissionLevelValidator = v.union(
@@ -11,6 +12,7 @@ export const dateSelectionSourceValidator = v.union(
 );
 
 export const eventDocumentValidator = v.object({
+  friendsAudienceEnabled: v.optional(v.boolean()),
   _id: v.id('events'),
   _creationTime: v.number(),
   title: v.string(),
@@ -26,6 +28,7 @@ export const eventDocumentValidator = v.object({
   chosenDateTime: v.optional(v.number()),
   chosenEndDateTime: v.optional(v.number()),
   creatorId: v.id('persons'),
+  createdById: v.optional(v.id('persons')),
   memberCount: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -34,6 +37,7 @@ export const eventDocumentValidator = v.object({
   visibility: v.optional(
     v.union(v.literal('PRIVATE'), v.literal('FRIENDS'), v.literal('PUBLIC'))
   ),
+  admissionPolicy: v.optional(admissionPolicyValidator),
   reminderOffset: v.optional(reminderOffsetValidator),
   permissions: v.optional(
     v.object({

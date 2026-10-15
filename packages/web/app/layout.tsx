@@ -25,6 +25,7 @@ import { GoogleOneTap } from '@/components/google-one-tap';
 import { GlobalPresenceTracker } from '@/components/global-presence-tracker';
 import { ThemeSync } from '@/components/theme-sync';
 import { AuthenticatedOnly } from '@/components/authenticated-only';
+import { navigationHistoryBootstrapScript } from '@/lib/navigation-history';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -151,6 +152,9 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang='en'>
       <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: navigationHistoryBootstrapScript }}
+        />
         <script dangerouslySetInnerHTML={{ __html: customThemeScript }} />
       </head>
       <body

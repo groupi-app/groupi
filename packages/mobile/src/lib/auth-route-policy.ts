@@ -16,7 +16,7 @@ interface AuthRouteState {
 }
 
 const SAFE_RETURN_PATH =
-  /^\/(?:invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
+  /^\/(?:g\/[^/?#]+|groups\/[^/?#]+(?:\/(?:members|invitations|bans|apply|applications|events|forms(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|history|results))?))?|polls(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|history|results))?))?|lists(?:\/(?:create|policy|[^/?#]+(?:\/(?:manage|own))?))?|questionnaire(?:\/(?:settings|answers|history))?))?|invite\/[^/?#]+|event\/[^/?#]+(?:\/[^?#]*)?|profile\/[^/?#]+|settings(?:\/[^?#]*)?|friends(?:\/[^?#]*)?|invites(?:\/[^?#]*)?|create-event(?:\/[^?#]*)?|discover|notifications|you)?$/;
 
 export function getSafeAuthReturnPath(value?: string): string | null {
   const rawCandidate = value?.trim();
@@ -51,10 +51,13 @@ export function getAuthRouteDecision({
   if (isLoading) return { kind: 'loading' };
 
   const isAuthRoute = rootSegment === '(auth)';
-  const isInviteRoute = rootSegment === 'invite';
+  const isInviteRoute = rootSegment === 'invite' || rootSegment === 'g';
+  const isEventPreview =
+    rootSegment === 'event' && /^\/event\/[^/?#]+\/preview$/.test(pathname);
 
   if (!isAuthenticated) {
-    if (isAuthRoute || isInviteRoute) return { kind: 'allow' };
+    if (isAuthRoute || isInviteRoute || isEventPreview)
+      return { kind: 'allow' };
     return {
       kind: 'sign-in',
       returnTo: getSafeAuthReturnPath(pathname),

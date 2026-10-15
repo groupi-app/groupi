@@ -57,7 +57,7 @@ export function createSettingsRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.settings.getPrivacySettings;
+    const getFn = internal.settings.rest.getPrivacySettings;
     const result = await ctx.runQuery(getFn, { personId });
 
     return c.json(result, 200);
@@ -115,7 +115,7 @@ export function createSettingsRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.settings.updatePrivacySettings;
+    const updateFn = internal.settings.rest.updatePrivacySettings;
     const result = await ctx.runMutation(updateFn, { personId, ...body });
 
     return c.json(result, 200);
@@ -156,7 +156,7 @@ export function createSettingsRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const getFn = internal.api.v1.internal.settings.getNotificationSettings;
+    const getFn = internal.settings.rest.getNotificationSettings;
     const result = await ctx.runQuery(getFn, { personId });
 
     return c.json(result, 200);
@@ -199,21 +199,17 @@ export function createSettingsRoutes() {
       const ctx = c.get('ctx');
       const personId = c.get('personId');
       const body = c.req.valid('json');
-      await ctx.runMutation(
-        internal.api.v1.internal.settings.saveNotificationSettings,
-        {
-          personId: personId as Id<'persons'>,
-          notificationMethods: body.notificationMethods.map(m => ({
-            ...m,
-            id: m.id as Id<'notificationMethods'> | undefined,
-          })),
-        }
-      );
+      await ctx.runMutation(internal.settings.rest.saveNotificationSettings, {
+        personId: personId as Id<'persons'>,
+        notificationMethods: body.notificationMethods.map(m => ({
+          ...m,
+          id: m.id as Id<'notificationMethods'> | undefined,
+        })),
+      });
       return c.json(
-        await ctx.runQuery(
-          internal.api.v1.internal.settings.getNotificationSettings,
-          { personId }
-        ),
+        await ctx.runQuery(internal.settings.rest.getNotificationSettings, {
+          personId,
+        }),
         200
       );
     }

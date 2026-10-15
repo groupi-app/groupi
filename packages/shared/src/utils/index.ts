@@ -7,6 +7,7 @@ import type { ValidationResult, FormField, AsyncState } from '../types';
 
 // Re-export specialized utility modules
 export * from './device';
+export { evaluateVisibilityConditions } from './addon-visibility';
 export * from './keyboard';
 export * from './accessibility';
 export * from './gdl-parser';
@@ -14,6 +15,7 @@ export * from './attachment-submission';
 export * from './date-parser';
 export * from './date-voting';
 export * from './event-permissions';
+export * from './invite-list-draft';
 
 // Date and time utilities
 export function formatDate(date: Date | number): string {
@@ -504,3 +506,15 @@ export function createErrorMessage(operation: string, error: unknown): string {
 }
 
 export * from './discussion-content';
+export { validateQuestions, validateAnswers } from './application-questions';
+export type {
+  ApplicationQuestion,
+  ApplicationAnswers,
+} from './application-questions';
+
+export { groupFormTemplates } from './group-form-templates';
+
+export { GROUP_POLL_TEMPLATES } from './group-poll-templates';
+export { groupListTemplates } from './group-list-templates';
+
+export { announcementRequestId as listEntryRequestId } from './announcement-request';

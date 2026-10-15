@@ -80,8 +80,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@groupi/shared/utils': fileURLToPath(
-        new URL('../shared/src/utils/index.ts', import.meta.url)
+      'convex/react': fileURLToPath(
+        new URL(
+          './node_modules/convex/dist/esm/react/index.js',
+          import.meta.url
+        )
       ),
       '@': './src',
       '@/components': './src/components',

@@ -175,4 +175,4 @@ it('rejects invalid local image files and focal points without changing the exis
   expect(
     await success(owner.rawKey, ['events', 'cover', 'get', event.eventId])
   ).toEqual(first);
-});
+}, 30_000);

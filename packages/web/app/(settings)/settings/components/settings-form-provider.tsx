@@ -3,24 +3,11 @@
 import { ReactNode, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { z } from 'zod';
+import { ConvexEnums } from '@/convex/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const notificationTypeSettingSchema = z.object({
-  notificationType: z.enum([
-    'EVENT_EDITED',
-    'NEW_POST',
-    'NEW_REPLY',
-    'DATE_CHOSEN',
-    'DATE_CHANGED',
-    'DATE_RESET',
-    'USER_JOINED',
-    'USER_LEFT',
-    'USER_PROMOTED',
-    'USER_DEMOTED',
-    'USER_RSVP',
-    'USER_MENTIONED',
-    'EVENT_REMINDER',
-  ]),
+  notificationType: z.enum(Object.values(ConvexEnums.NotificationType)),
   enabled: z.boolean(),
 });
 

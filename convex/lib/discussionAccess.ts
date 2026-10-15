@@ -1,8 +1,8 @@
-import type { MutationCtx } from '../_generated/server';
+import type { MutationCtx, QueryCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { ConvexError } from 'convex/values';
 export async function requireDiscussionRole(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   eventId: Id<'events'>,
   personId: Id<'persons'>,
   role: 'ATTENDEE' | 'MODERATOR' | 'ORGANIZER'

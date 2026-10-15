@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, components } from '../_generated/api';
+import { GDL_CONFORMANCE_FIXTURES } from '../../packages/shared/src/gdl/fixtures';
+import { api, components, internal } from '../_generated/api';
 import { createAuthAccount, registerBetterAuth } from './auth.helpers';
 import { createTestInstance } from './test_helpers';
 
@@ -34,9 +35,10 @@ async function actor(t: ReturnType<typeof createTestInstance>, name: string) {
     path: string,
     method: string,
     body?: unknown,
-    requestId?: string
+    requestId?: string,
+    version: 'v1' | 'v2' = 'v2'
   ) =>
-    t.fetch(`/api/v2${path}`, {
+    t.fetch(`/api/${version}${path}`, {
       method,
       headers: {
         'x-api-key': rawKey,
@@ -152,7 +154,11 @@ describe('Authenticated event write parity and replay', () => {
     vi.setSystemTime(new Date('2035-02-19T12:00:00Z'));
     const { request } = await setup();
     const id = newRequestId();
-    const body = { title: 'Relative', gdl: '[Tu,Th]@18-20' };
+    const body = {
+      title: 'Relative',
+      gdl: '[Tu,Th]@18-20',
+      timezone: 'America/New_York',
+    };
     const first = await request('/events', 'POST', body, id);
     expect(first.status).toBe(201);
     const ids = await first.json();
@@ -160,6 +166,131 @@ describe('Authenticated event write parity and replay', () => {
     expect(await (await request('/events', 'POST', body, id)).json()).toEqual(
       ids
     );
+    const changedZone = await request(
+      '/events',
+      'POST',
+      { ...body, timezone: 'UTC' },
+      id
+    );
+    expect(changedZone.status).toBe(409);
+    expect((await changedZone.json()).error.code).toBe('IDEMPOTENCY_CONFLICT');
+  });
+
+  describe.each(['v1', 'v2'] as const)('%s shared GDL adapter', version => {
+    it.each(GDL_CONFORMANCE_FIXTURES)('matches $name', async fixture => {
+      vi.setSystemTime(new Date(fixture.referenceDate));
+      const { request, t } = await setup();
+      const response = await request(
+        '/events',
+        'POST',
+        {
+          title: fixture.name,
+          gdl: fixture.input,
+          timezone: fixture.timeZone,
+        },
+        undefined,
+        version
+      );
+      // GDL may resolve today before the reference instant; event creation
+      // correctly retains its stricter future-only domain validation.
+      if (
+        fixture.expected.some(
+          option =>
+            new Date(option.start).getTime() <
+            new Date(fixture.referenceDate).getTime()
+        )
+      ) {
+        expect(response.status).toBe(400);
+        expect((await response.json()).error.code).toBe('VALIDATION_ERROR');
+        return;
+      }
+      expect(response.status).toBe(201);
+      const payload = await response.json();
+      const eventId = version === 'v1' ? payload.data.eventId : payload.eventId;
+      const options = await t.run(ctx =>
+        ctx.db
+          .query('potentialDateTimes')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      );
+      expect(
+        options.map(option => ({
+          start: new Date(option.dateTime).toISOString(),
+          ...(option.endDateTime === undefined
+            ? {}
+            : { end: new Date(option.endDateTime).toISOString() }),
+        }))
+      ).toEqual(
+        fixture.expected.map(({ start, end }) => ({
+          start,
+          ...(end ? { end } : {}),
+        }))
+      );
+    });
+
+    it('rejects a weekday used as a range step without creating an event', async () => {
+      const { request, t } = await setup();
+      const response = await request(
+        '/events',
+        'POST',
+        { title: 'Invalid range step', gdl: '(1,2,Mo)@18' },
+        undefined,
+        version
+      );
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: {
+          code: version === 'v1' ? 'GDL_PARSE_ERROR' : 'VALIDATION_ERROR',
+          message: expect.stringMatching(/step/i),
+        },
+      });
+      expect(await t.run(ctx => ctx.db.query('events').collect())).toEqual([]);
+    });
+
+    it('keeps legacy requests in UTC and reports invalid zones and DST occurrences', async () => {
+      vi.setSystemTime(new Date('2026-03-01T12:00:00Z'));
+      const { request, t } = await setup();
+      const response = await request(
+        '/events',
+        'POST',
+        { title: 'Legacy', gdl: 'Fr@18' },
+        undefined,
+        version
+      );
+      expect(response.status).toBe(201);
+      const payload = await response.json();
+      const eventId = version === 'v1' ? payload.data.eventId : payload.eventId;
+      const options = await t.run(ctx =>
+        ctx.db
+          .query('potentialDateTimes')
+          .withIndex('by_event', q => q.eq('eventId', eventId))
+          .collect()
+      );
+      expect(new Date(options[0].dateTime).toISOString()).toBe(
+        '2026-03-06T18:00:00.000Z'
+      );
+      for (const body of [
+        { gdl: 'Fr@18', timezone: 'Invalid/Zone' },
+        { gdl: '03/08@2:30', timezone: 'America/New_York' },
+        { gdl: '11/01@1:30', timezone: 'America/New_York' },
+      ]) {
+        const failed = await request(
+          '/events',
+          'POST',
+          { title: 'Invalid', ...body },
+          undefined,
+          version
+        );
+        expect(failed.status).toBe(400);
+        const failure = await failed.json();
+        expect(failure.error.code).toBe(
+          version === 'v1' ? 'GDL_PARSE_ERROR' : 'VALIDATION_ERROR'
+        );
+        expect(failure.error.message).toMatch(
+          /timezone|time zone|nonexistent|ambiguous/i
+        );
+      }
+    });
   });
 
   it.each([
@@ -378,7 +509,7 @@ describe('Authenticated event write parity and replay', () => {
         await request(
           '/events',
           'POST',
-          { title: 'Unsupported', timezone: 'UTC' },
+          { title: 'Unsupported', unknownField: 'UTC' },
           newRequestId()
         )
       ).status
@@ -520,6 +651,201 @@ describe('Authenticated event write parity and replay', () => {
       });
     }
   );
+
+  it('applies v1 edits through domain notifications while preserving its response envelope', async () => {
+    const owner = await setup();
+    const attendee = await actor(owner.t, 'v1-attendee');
+    const created = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Before' }
+    );
+    await owner.t.run(ctx =>
+      ctx.db.insert('memberships', {
+        eventId: created.eventId,
+        personId: attendee.personId,
+        role: 'ATTENDEE',
+        rsvpStatus: 'YES',
+      })
+    );
+    const response = await owner.request(
+      `/events/${created.eventId}`,
+      'PATCH',
+      { title: ' After ' },
+      undefined,
+      'v1'
+    );
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result).toMatchObject({
+      success: true,
+      data: { id: created.eventId, title: 'After' },
+    });
+    expect(result.data).not.toHaveProperty('potentialDateTimeOptions');
+    const notifications = await attendee.auth.query(
+      api.notifications.queries.fetchNotificationsForPerson,
+      {}
+    );
+    expect(
+      notifications.notifications.filter(n => n.type === 'EVENT_EDITED')
+    ).toHaveLength(1);
+  });
+
+  it('updates and removes v1 reminder configuration through the add-on lifecycle', async () => {
+    const owner = await setup();
+    const { eventId } = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      {
+        title: 'Reminder parity',
+        chosenDateTime: dateAfter(5),
+      }
+    );
+    for (const reminderOffset of ['1_DAY', '2_DAYS']) {
+      const response = await owner.request(
+        `/events/${eventId}`,
+        'PATCH',
+        { reminderOffset },
+        undefined,
+        'v1'
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        success: true,
+        data: { reminderOffset },
+      });
+      expect(
+        await owner.auth.query(api.addons.queries.getAddonConfig, {
+          eventId,
+          addonType: 'reminders',
+        })
+      ).toMatchObject({ enabled: true, config: { reminderOffset } });
+    }
+    const response = await owner.request(
+      `/events/${eventId}`,
+      'PATCH',
+      { reminderOffset: null },
+      undefined,
+      'v1'
+    );
+    expect(response.status).toBe(200);
+    expect(
+      await owner.auth.query(api.addons.queries.getAddonConfig, {
+        eventId,
+        addonType: 'reminders',
+      })
+    ).toMatchObject({ enabled: false });
+  });
+
+  it('rechecks write roles inside the shared mutation after a transport preflight', async () => {
+    const owner = await setup();
+    const { eventId, membershipId } = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Protected' }
+    );
+    await owner.t.run(ctx => ctx.db.patch(membershipId, { role: 'ATTENDEE' }));
+    await expect(
+      owner.t.mutation(internal.events.rest.update, {
+        personId: owner.personId,
+        eventId,
+        body: { title: 'Denied', reminderOffset: '1_DAY' },
+      })
+    ).rejects.toThrow('FORBIDDEN');
+    expect(
+      (await owner.auth.query(api.events.queries.getEventHeader, { eventId }))
+        .event.title
+    ).toBe('Protected');
+  });
+
+  it('dispatches the event-update lifecycle for v1 edits', async () => {
+    const owner = await setup();
+    const { eventId } = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Linked event' }
+    );
+    await owner.t.run(async ctx => {
+      await ctx.db.insert('eventAddonConfigs', {
+        eventId,
+        addonType: 'discord',
+        enabled: true,
+        config: { guildId: 'guild', guildName: 'Guild' },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert('addonData', {
+        eventId,
+        addonType: 'discord',
+        key: 'discord-event',
+        data: { guildId: 'guild', discordEventId: 'remote-event' },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    expect(
+      (
+        await owner.request(
+          `/events/${eventId}`,
+          'PATCH',
+          { location: 'New location' },
+          undefined,
+          'v1'
+        )
+      ).status
+    ).toBe(200);
+    const jobs = await owner.t.run(ctx =>
+      ctx.db.system.query('_scheduled_functions').collect()
+    );
+    expect(jobs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'discord/actions:updateDiscordEvent',
+          args: [{ guildId: 'guild', discordEventId: 'remote-event', eventId }],
+        }),
+      ])
+    );
+  });
+
+  it('requires platform administrator authority inside administrative deletion', async () => {
+    const owner = await setup();
+    const { eventId } = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Admin protected' }
+    );
+    await expect(
+      owner.t.mutation(internal.events.rest.deleteEvent, {
+        eventId,
+        userId: owner.user._id,
+      })
+    ).rejects.toThrow('Admin privileges required');
+    expect(await owner.t.run(ctx => ctx.db.get(eventId))).not.toBeNull();
+    await owner.t.mutation(components.betterAuth.adapter.updateOne, {
+      input: {
+        model: 'user',
+        where: [{ field: '_id', operator: 'eq', value: owner.user._id }],
+        update: { role: 'admin' },
+      },
+    });
+    await expect(
+      owner.t.mutation(internal.events.rest.deleteEvent, {
+        eventId,
+        userId: owner.user._id,
+      })
+    ).resolves.toEqual({ success: true });
+    expect(await owner.t.run(ctx => ctx.db.get(eventId))).toBeNull();
+  });
+
+  it('rechecks read membership at the event resource boundary', async () => {
+    const owner = await setup();
+    const outsider = await actor(owner.t, 'read-outsider');
+    const { eventId } = await owner.auth.mutation(
+      api.events.mutations.createEvent,
+      { title: 'Private' }
+    );
+    await expect(
+      owner.t.query(internal.events.restQueries.getEventDetail, {
+        eventId,
+        personId: outsider.personId,
+      })
+    ).rejects.toThrow('Event membership required');
+  });
 
   it('deduplicates concurrent identical submissions in one transaction', async () => {
     const { auth, request } = await setup();

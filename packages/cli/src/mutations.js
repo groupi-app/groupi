@@ -45,7 +45,7 @@ async function confirm(confirmation) {
 
 /** Mutation transport never follows redirects; retries require server-side deduplication.
  * @param {{apiUrl:string}} profile @param {string} key @param {string} path
- * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, requestId?:string, validationGuidance?:string, validationIssues?:boolean, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
+ * @param {{method:'POST'|'PUT'|'PATCH'|'DELETE', body:unknown, deleteBody?:boolean, requestId?:string, validationGuidance?:string, conflictGuidance?:string, forbiddenGuidance?:string, validationIssues?:boolean, recovery:string, expiredRecovery?:string, confirmation?:{target:string,yes?:boolean,json?:boolean}}} options */
 export async function mutateApi(profile, key, path, options) {
   if (options.confirmation) await confirm(options.confirmation);
   const body = JSON.stringify(options.body);
@@ -71,7 +71,7 @@ export async function mutateApi(profile, key, path, options) {
             ? { 'idempotency-key': options.requestId }
             : {}),
         },
-        ...(options.method !== 'DELETE' ? { body } : {}),
+        ...(options.method !== 'DELETE' || options.deleteBody ? { body } : {}),
         signal: AbortSignal.timeout(10000),
       });
     } catch {
@@ -176,7 +176,8 @@ export async function mutateApi(profile, key, path, options) {
         );
       throw new CliError(
         'CONFLICT',
-        'The write conflicts with current server state. Inspect the target before deciding whether another write is needed.',
+        options.conflictGuidance ??
+          'The write conflicts with current server state. Inspect the target before deciding whether another write is needed.',
         2
       );
     }
@@ -189,7 +190,9 @@ export async function mutateApi(profile, key, path, options) {
     if (response.status === 401 || response.status === 403)
       throw new CliError(
         response.status === 401 ? 'AUTH_REQUIRED' : 'FORBIDDEN',
-        'This identity or API key cannot perform the write. Check the selected profile, key, and event role.',
+        response.status === 403 && options.forbiddenGuidance
+          ? options.forbiddenGuidance
+          : 'This identity or API key cannot perform the write. Check the selected profile, key, and event role.',
         3
       );
     if (response.status === 404)

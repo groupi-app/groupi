@@ -9,22 +9,13 @@ import {
 import { AppState, AppStateStatus } from 'react-native';
 import { useQuery, useConvexAuth } from 'convex/react';
 import { useSession } from '@/lib/auth-client';
+import { api } from 'convex/_generated/api';
 
-// Lazy-load API to avoid deep type instantiation issues
+// Keep the query namespaces shallow to avoid deep inferred query types here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authQueries: any;
+const authQueries: any = api.auth?.queries ?? {};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userQueries: any;
-
-function initApi() {
-  if (!authQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('convex/_generated/api');
-    authQueries = api.auth?.queries ?? {};
-    userQueries = api.users?.queries ?? {};
-  }
-}
-initApi();
+const userQueries: any = api.users?.queries ?? {};
 
 // ===== Types =====
 // Use permissive types to avoid deep Convex type instantiation issues.

@@ -141,6 +141,9 @@ test('list bounds pagination and discards unexpected credential fields', async (
   ]);
   expect(result.code, result.stderr).toBe(0);
   expect(JSON.parse(result.stdout).items).toHaveLength(2);
-  expect(paths).toHaveLength(2);
+  expect(paths).toEqual([
+    '/api/v2/discord/guilds?limit=1',
+    '/api/v2/discord/guilds?limit=1&cursor=next',
+  ]);
   expect(result.stdout).not.toContain('secret-provider-token');
 });

@@ -19,7 +19,10 @@ export async function hash(value: unknown) {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function requestExpiry(requestId: string) {
+export function requestExpiry(
+  requestId: string,
+  recovery = 'Inspect invitations before using a new identifier.'
+) {
   if (
     !/^\d{13}\.[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
       requestId
@@ -39,8 +42,7 @@ export function requestExpiry(requestId: string) {
   if (expiresAt <= Date.now())
     throw new ConvexError({
       code: 'IDEMPOTENCY_EXPIRED',
-      message:
-        'Request identifier expired after 24 hours. Inspect invitations before using a new identifier.',
+      message: `Request identifier expired after 24 hours. ${recovery}`,
     });
   return expiresAt;
 }

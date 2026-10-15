@@ -21,7 +21,7 @@ import {
   validateParsedDates,
   type ParsedDateRange,
 } from '@/lib/date-parser';
-import { isGDL, parseGDL } from '@groupi/shared';
+import { isGDL, parseGDL } from '@groupi/shared/gdl';
 import { GDLHighlightedInput } from '@/components/gdl-highlighted-input';
 
 // Dynamic import for api
@@ -112,7 +112,10 @@ export function SmartDateInput({
 
     // Tier 1: GDL
     if (isGDL(debouncedInput)) {
-      const result = parseGDL(debouncedInput, refDate);
+      const result = parseGDL(debouncedInput, {
+        referenceDate: refDate,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
       if (result.success) {
         return { mode: 'gdl', dates: result.results };
       }

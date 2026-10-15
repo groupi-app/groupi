@@ -1,3 +1,14 @@
+import { eventDiscoveryReasons } from '../groupEventAudiences/access';
+import {
+  eventLogisticsForPerson,
+  resolveAdmissionPolicy,
+  discoveryEntryActionForPerson,
+  updateAdmissionPolicyForPerson,
+} from './admission';
+import {
+  admissionPolicyValidator,
+  eventLogisticsValidator,
+} from './admissionContracts';
 import { internalMutation, internalQuery } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { eventViewer } from './attendance';
@@ -29,7 +40,12 @@ const permissions = v.object({
   inviteMembers: level,
   viewAttendeeList: level,
 });
-const settings = v.object({ eventId: v.id('events'), visibility, permissions });
+const settings = v.object({
+  eventId: v.id('events'),
+  visibility,
+  permissions,
+  admissionPolicy: admissionPolicyValidator,
+});
 const actorEvent = { eventId: v.id('events'), personId: v.id('persons') };
 export const getSettings = internalQuery({
   args: actorEvent,
@@ -39,6 +55,7 @@ export const getSettings = internalQuery({
     return {
       eventId: event._id,
       visibility: event.visibility ?? 'PRIVATE',
+      admissionPolicy: resolveAdmissionPolicy(event),
       permissions: resolveEventPermissions(event),
     };
   },
@@ -48,6 +65,7 @@ export const updateSettings = internalMutation({
     ...actorEvent,
     body: v.object({
       visibility: v.optional(visibility),
+      admissionPolicy: v.optional(admissionPolicyValidator),
       permissions: v.optional(
         v.object({
           createPosts: v.optional(level),
@@ -62,17 +80,26 @@ export const updateSettings = internalMutation({
     await requireWriteRole(ctx, eventId, personId, 'ORGANIZER');
     if (
       body.visibility === undefined &&
+      body.admissionPolicy === undefined &&
       (!body.permissions || Object.keys(body.permissions).length === 0)
     )
       throw new ConvexError({
         code: 'VALIDATION_ERROR',
-        message: 'Provide visibility or at least one permission',
+        message:
+          'Provide visibility, admission policy or at least one permission',
       });
     if (body.visibility !== undefined)
       await updateEventForPerson(ctx, personId, {
         eventId,
         visibility: body.visibility,
       });
+    if (body.admissionPolicy !== undefined)
+      await updateAdmissionPolicyForPerson(
+        ctx,
+        personId,
+        eventId,
+        body.admissionPolicy
+      );
     if (body.permissions)
       await updateEventPermissionsForPerson(ctx, personId, {
         eventId,
@@ -82,6 +109,7 @@ export const updateSettings = internalMutation({
     return {
       eventId,
       visibility: event.visibility ?? 'PRIVATE',
+      admissionPolicy: resolveAdmissionPolicy(event),
       permissions: resolveEventPermissions(event),
     };
   },
@@ -149,13 +177,26 @@ export const join = internalMutation({
   returns: v.object({
     membershipId: v.id('memberships'),
     success: v.boolean(),
+    role: v.literal('ATTENDEE'),
+    rsvpStatus: v.literal('PENDING'),
   }),
   handler: async (ctx, args) =>
     joinDiscoverableEventForPerson(ctx, args.personId, args.eventId),
 });
 const discoveredEvent = v.object({
+  accessReasons: v.object({
+    friends: v.boolean(),
+    groups: v.array(v.object({ groupId: v.id('groups'), name: v.string() })),
+  }),
   id: v.id('events'),
   title: v.string(),
+  admissionPolicy: admissionPolicyValidator,
+  entryAction: v.union(
+    v.literal('JOIN'),
+    v.literal('APPLY'),
+    v.literal('INVITATION_ONLY'),
+    v.literal('UNAVAILABLE')
+  ),
   description: v.union(v.string(), v.null()),
   location: v.union(v.string(), v.null()),
   chosenDateTime: v.union(v.number(), v.null()),
@@ -208,6 +249,13 @@ export const discover = internalQuery({
       items.push({
         id: event._id,
         title: event.title,
+        admissionPolicy: resolveAdmissionPolicy(event),
+        accessReasons: await eventDiscoveryReasons(ctx, event, args.personId),
+        entryAction: await discoveryEntryActionForPerson(
+          ctx,
+          event,
+          args.personId
+        ),
         description: event.description ?? null,
         location: event.location ?? null,
         chosenDateTime: event.chosenDateTime ?? null,
@@ -225,4 +273,11 @@ export const discover = internalQuery({
     }
     return { items, nextCursor: page.isDone ? null : page.continueCursor };
   },
+});
+
+export const logistics = internalQuery({
+  args: actorEvent,
+  returns: eventLogisticsValidator,
+  handler: async (ctx, { eventId, personId }) =>
+    eventLogisticsForPerson(ctx, eventId, personId),
 });

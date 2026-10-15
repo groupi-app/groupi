@@ -25,7 +25,7 @@ echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
 
 # Build command that also captures the Convex URL for E2E tests
 # The URL is written to a static file that can be fetched by the E2E workflow
-BUILD_CMD='pnpm --filter @groupi/web build && mkdir -p packages/web/public/.well-known && echo "{\"convexUrl\": \"$NEXT_PUBLIC_CONVEX_URL\", \"branch\": \"$VERCEL_GIT_COMMIT_REF\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > packages/web/public/.well-known/e2e-config.json'
+BUILD_CMD='pnpm --filter @groupi/web build && node scripts/write-e2e-config.mjs'
 
 if [ "$VERCEL_ENV" = "production" ]; then
   echo "Deploying to Convex production..."
@@ -39,6 +39,10 @@ else
   PREVIEW_NAME=$(echo "$PREVIEW_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
 
   PREVIEW_HOST="${VERCEL_BRANCH_URL:-${VERCEL_URL:-}}"
+  # The test branch is served at its stable custom domain, including auth.
+  if [ "$VERCEL_GIT_COMMIT_REF" = "test" ]; then
+    PREVIEW_HOST="test.groupi.gg"
+  fi
   if [ -z "$PREVIEW_HOST" ]; then
     echo "Error: VERCEL_BRANCH_URL or VERCEL_URL is required for preview auth configuration"
     exit 1

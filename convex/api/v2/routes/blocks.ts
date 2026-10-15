@@ -47,14 +47,12 @@ export function createBlockRoutes() {
       const q = c.req.valid('query');
       return c.json(
         BlockPageResponseSchema.parse(
-          await c
-            .get('ctx')
-            .runQuery(internal.api.v1.internal.social.listPage, {
-              personId: c.get('personId') as Id<'persons'>,
-              kind: 'blocks',
-              limit: q.limit ?? 20,
-              cursor: q.cursor ?? null,
-            })
+          await c.get('ctx').runQuery(internal.friends.socialRest.listPage, {
+            personId: c.get('personId') as Id<'persons'>,
+            kind: 'blocks',
+            limit: q.limit ?? 20,
+            cursor: q.cursor ?? null,
+          })
         ),
         200
       );
@@ -86,12 +84,10 @@ export function createBlockRoutes() {
     }),
     async c =>
       c.json(
-        await c
-          .get('ctx')
-          .runQuery(internal.api.v1.internal.social.blockStatus, {
-            personId: c.get('personId') as Id<'persons'>,
-            targetPersonId: c.req.valid('param').personId as Id<'persons'>,
-          }),
+        await c.get('ctx').runQuery(internal.friends.socialRest.blockStatus, {
+          personId: c.get('personId') as Id<'persons'>,
+          targetPersonId: c.req.valid('param').personId as Id<'persons'>,
+        }),
         200
       )
   );
@@ -114,7 +110,7 @@ export function createBlockRoutes() {
     async c => {
       const result = await c
         .get('ctx')
-        .runMutation(internal.api.v1.internal.social.changeBlock, {
+        .runMutation(internal.friends.socialRest.changeBlock, {
           personId: c.get('personId') as Id<'persons'>,
           targetPersonId: c.req.valid('param').personId as Id<'persons'>,
           blocked: true,
@@ -133,13 +129,11 @@ export function createBlockRoutes() {
       responses: { 204: { description: 'Unblocked' }, ...errors },
     }),
     async c => {
-      await c
-        .get('ctx')
-        .runMutation(internal.api.v1.internal.social.changeBlock, {
-          personId: c.get('personId') as Id<'persons'>,
-          targetPersonId: c.req.valid('param').personId as Id<'persons'>,
-          blocked: false,
-        });
+      await c.get('ctx').runMutation(internal.friends.socialRest.changeBlock, {
+        personId: c.get('personId') as Id<'persons'>,
+        targetPersonId: c.req.valid('param').personId as Id<'persons'>,
+        blocked: false,
+      });
       return c.body(null, 204);
     }
   );

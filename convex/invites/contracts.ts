@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { sendResult as inviteListSendResult } from '../inviteLists/contracts';
 export const linkSummary = v.object({
   id: v.id('invites'),
   eventId: v.id('events'),
@@ -33,6 +34,7 @@ export const memberSummary = v.object({
   respondedAt: v.union(v.number(), v.null()),
 });
 export const creationResult = v.union(
+  inviteListSendResult,
   v.object({ id: v.id('invites'), token: v.string() }),
   v.object({
     createdCount: v.number(),

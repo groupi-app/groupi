@@ -1,5 +1,6 @@
-import { z } from '@hono/zod-openapi';
+import { z, extendZodWithOpenApi } from '@hono/zod-openapi';
 import { EventListQuerySchema } from './events';
+extendZodWithOpenApi(z);
 const nullableString = z.string().nullable();
 export const InviteSummarySchema = z
   .object({

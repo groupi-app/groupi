@@ -70,7 +70,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.notifications.listNotifications;
+    const listFn = internal.notifications.rest.listNotifications;
     const result = await ctx.runQuery(listFn, { personId, unreadOnly });
 
     return c.json(
@@ -116,7 +116,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const countFn = internal.api.v1.internal.notifications.getUnreadCount;
+    const countFn = internal.notifications.rest.getUnreadCount;
     const result = await ctx.runQuery(countFn, { personId });
 
     return c.json(
@@ -175,7 +175,7 @@ export function createNotificationRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const readFn = internal.api.v1.internal.notifications.markAsRead;
+      const readFn = internal.notifications.rest.markAsRead;
       await ctx.runMutation(readFn, { notificationId, personId });
 
       return c.json(
@@ -245,7 +245,7 @@ export function createNotificationRoutes() {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
-      const unreadFn = internal.api.v1.internal.notifications.markAsUnread;
+      const unreadFn = internal.notifications.rest.markAsUnread;
       await ctx.runMutation(unreadFn, { notificationId, personId });
 
       return c.json(
@@ -302,7 +302,7 @@ export function createNotificationRoutes() {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const markAllFn = internal.api.v1.internal.notifications.markAllAsRead;
+    const markAllFn = internal.notifications.rest.markAllAsRead;
     const result = await ctx.runMutation(markAllFn, { personId });
 
     return c.json(
@@ -364,7 +364,7 @@ export function createNotificationRoutes() {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - Type instantiation is excessively deep (TS2589)
       // prettier-ignore
-      const deleteFn = internal.api.v1.internal.notifications.deleteNotification;
+      const deleteFn = internal.notifications.rest.deleteNotification;
       await ctx.runMutation(deleteFn, { notificationId, personId });
 
       return c.json(
@@ -422,7 +422,7 @@ export function createNotificationRoutes() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - Type instantiation is excessively deep (TS2589)
     // prettier-ignore
-    const deleteAllFn = internal.api.v1.internal.notifications.deleteAllNotifications;
+    const deleteAllFn = internal.notifications.rest.deleteAllNotifications;
     const result = await ctx.runMutation(deleteAllFn, { personId });
 
     return c.json(

@@ -10,6 +10,12 @@ async function deletePushDeliveries(
       .withIndex('by_notification', q => q.eq('notificationId', notificationId))
       .collect();
     await Promise.all(deliveries.map(delivery => ctx.db.delete(delivery._id)));
+    for await (const dispatch of ctx.db
+      .query('groupOnboardingDispatches')
+      .withIndex('by_notificationId', q =>
+        q.eq('notificationId', notificationId)
+      ))
+      await ctx.db.delete(dispatch._id);
   }
 }
 

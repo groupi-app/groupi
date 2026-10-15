@@ -1,4 +1,4 @@
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, beforeEach, afterEach, vi } from 'vitest';
 import { api } from './_generated/api';
 import {
   createTestInstance,
@@ -20,6 +20,13 @@ async function setupEventWithInvite(
 }
 
 describe('Invites Domain', () => {
+  // These mutation tests inspect queued state; scheduled actions belong to their own tests.
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
   describe('createInvite', () => {
     test('should create invite with valid token', async () => {
       const t = createTestInstance();
@@ -697,10 +704,7 @@ describe('Invites Domain', () => {
   });
 
   describe('sendPendingEmailInvites', () => {
-    // Note: These tests may produce "Write outside of transaction" errors
-    // due to ctx.scheduler.runAfter not being fully supported in convex-test.
-    // The scheduler-triggered action is tested via integration tests.
-    // The core functionality (marking invites as sent) is still verified.
+    // Verify mutation state without running outbound email actions.
 
     test('should mark pending invites as sent', async () => {
       const t = createTestInstance();

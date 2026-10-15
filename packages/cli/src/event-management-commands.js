@@ -1,3 +1,5 @@
+import { registerEventTransferCommands } from './event-transfer-commands.js';
+import { registerEventApplicationCommands } from './event-application-commands.js';
 import { registerImageCommands } from './image-commands.js';
 import { Option } from 'commander';
 import { getProfile, credential } from './profiles.js';
@@ -5,6 +7,7 @@ import { CliError } from './errors.js';
 import {
   discoverEvents,
   getEventSettings,
+  getEventLogistics,
   manageEvent,
 } from './event-management.js';
 /** @param {unknown} value */
@@ -15,6 +18,8 @@ function plain(value) {
 /** @param {import('commander').Command} program @param {import('commander').Command} events @param {boolean} json */
 export function registerEventManagementCommands(program, events, json) {
   registerImageCommands(program, events, 'cover', json);
+  registerEventTransferCommands(program, events, json);
+  registerEventApplicationCommands(program, events, json);
   const connect = async () => {
     const options = program.opts();
     const profile = await getProfile(options.profile);
@@ -33,8 +38,15 @@ export function registerEventManagementCommands(program, events, json) {
             .join('\n') + '\n'
     );
   events
+    .command('preview <event-id>')
+    .description('Read safe event logistics and entry action without joining')
+    .action(async eventId => {
+      const { profile, key } = await connect();
+      print(await getEventLogistics(profile, key, eventId));
+    });
+  events
     .command('discover')
-    .description('Browse upcoming friends events you can join')
+    .description('Browse upcoming or undated Friends and Group Events')
     .option('--limit <number>', 'Page size (1–100)', '20')
     .option('--cursor <cursor>', 'Continue a previous page')
     .option('--all', 'Retrieve every page explicitly')
@@ -60,7 +72,10 @@ export function registerEventManagementCommands(program, events, json) {
           ? JSON.stringify(result) + '\n'
           : (result.items.length
               ? result.items
-                  .map(item => `${plain(item.id)}  ${plain(item.title)}`)
+                  .map(
+                    item =>
+                      `${plain(item.id)}  ${plain(item.title)}${item.accessReasons ? ` [${[...(item.accessReasons.friends ? ['Friends'] : []), ...item.accessReasons.groups.map(group => plain(group.name))].join('; ')}]` : ''}${item.entryAction ? ` (${plain(item.entryAction)})` : ''}`
+                  )
                   .join('\n')
               : 'No discoverable events on this page.') +
               '\n' +
@@ -72,7 +87,11 @@ export function registerEventManagementCommands(program, events, json) {
   for (const action of /** @type {const} */ (['join', 'leave', 'delete'])) {
     const command = events
       .command(`${action} <event-id>`)
-      .description(`${action} an event`);
+      .description(
+        action === 'join'
+          ? 'Join as an Attendee with Pending RSVP; confirm attendance separately'
+          : `${action} an event`
+      );
     if (action !== 'join')
       command.option('--yes', `Confirm ${action} for the named event`);
     command.action(async (eventId, input) => {
@@ -94,7 +113,7 @@ export function registerEventManagementCommands(program, events, json) {
     .command('role <event-id> <member-id>')
     .addOption(
       new Option('--role <role>', 'New event role')
-        .choices(['ORGANIZER', 'MODERATOR', 'ATTENDEE'])
+        .choices(['MODERATOR', 'ATTENDEE'])
         .makeOptionMandatory()
     )
     .option('--yes', 'Confirm role change for the named member')
@@ -125,7 +144,7 @@ export function registerEventManagementCommands(program, events, json) {
   const settings = events
     .command('settings')
     .description(
-      'Inspect and update event visibility and supported permissions'
+      'Inspect and update event visibility, admission and supported permissions'
     );
   settings.command('get <event-id>').action(async eventId => {
     const { profile, key } = await connect();
@@ -140,6 +159,12 @@ export function registerEventManagementCommands(program, events, json) {
         'PUBLIC',
       ])
     );
+  update.addOption(
+    new Option(
+      '--admission-policy <policy>',
+      'Entry policy, independent of visibility'
+    ).choices(['INVITATION_ONLY', 'DIRECT', 'APPLY'])
+  );
   for (const name of ['create-posts', 'invite-members', 'view-attendee-list'])
     update.addOption(
       new Option(`--${name} <level>`, `${name} permission`).choices([
@@ -155,6 +180,9 @@ export function registerEventManagementCommands(program, events, json) {
         .map(name => [name, input[name]])
     );
     const body = {
+      ...(input.admissionPolicy !== undefined
+        ? { admissionPolicy: input.admissionPolicy }
+        : {}),
       ...(input.visibility !== undefined
         ? { visibility: input.visibility }
         : {}),
@@ -163,7 +191,7 @@ export function registerEventManagementCommands(program, events, json) {
     if (!Object.keys(body).length)
       throw new CliError(
         'USAGE',
-        'Specify visibility or at least one permission.',
+        'Specify visibility, admission policy or at least one permission.',
         2
       );
     const { profile, key } = await connect();

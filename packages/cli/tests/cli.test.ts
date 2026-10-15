@@ -115,7 +115,7 @@ test('a named profile browses a bounded event page using an explicitly scoped ke
     res.setHeader('content-type', 'application/json');
     res.end(
       JSON.stringify({
-        items: [{ id: 'event-1', title: 'Dinner' }],
+        items: [{ id: 'event-1', title: 'Dinner', extra: { retained: true } }],
         nextCursor: 'page-two',
       })
     );
@@ -130,7 +130,7 @@ test('a named profile browses a bounded event page using an explicitly scoped ke
   expect(result).toEqual({
     code: 0,
     stdout:
-      '{"items":[{"id":"event-1","title":"Dinner"}],"nextCursor":"page-two"}\n',
+      '{"items":[{"id":"event-1","title":"Dinner","extra":{"retained":true}}],"nextCursor":"page-two"}\n',
     stderr: '',
   });
   expect(request).toEqual({
@@ -405,6 +405,117 @@ test('all retrieval rejects a repeated cursor instead of hanging or returning pa
   expect(result.stdout).toBe('');
   expect(JSON.parse(result.stderr).error.code).toBe('INVALID_RESPONSE');
 });
+
+test.each(
+  [
+    ['events', 'list'],
+    ['invites', 'members', 'list'],
+    ['notifications', 'list'],
+    ['friends', 'list'],
+    ['events', 'members', 'event1'],
+    ['events', 'discover'],
+    ['addons', 'list', 'event1'],
+    ['discord', 'guilds', 'list'],
+  ].map(command => ({ command, label: command.join(' ') }))
+)(
+  'bounded $label read rejects its repeated starting cursor without output',
+  async ({ command }) => {
+    let requests = 0;
+    const url = await endpoint((req, res) => {
+      if (req.url === '/api/v2/health') {
+        res.end(
+          JSON.stringify({
+            capabilities: {
+              notificationControls: { version: 1 },
+              discordGuilds: { version: 1 },
+            },
+          })
+        );
+        return;
+      }
+      requests++;
+      res.end(JSON.stringify({ items: [], nextCursor: 'start' }));
+    }, false);
+    await cli(['profile', 'add', 'local', '--api-url', url]);
+    const result = await cli(
+      [
+        '--profile',
+        'local',
+        '--api-key-stdin',
+        '--format=json',
+        ...command,
+        '--cursor',
+        'start',
+      ],
+      {},
+      'key'
+    );
+    expect(result.code).toBe(5);
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr).error.code).toBe('INVALID_RESPONSE');
+    expect(requests).toBe(1);
+  }
+);
+
+test.each([
+  {
+    page: {
+      items: [
+        { id: 'one', title: 'One' },
+        { id: 'two', title: 'Two' },
+      ],
+      nextCursor: null,
+    },
+    all: false,
+  },
+  {
+    page: {
+      items: [
+        { id: 'one', title: 'One' },
+        { id: 'two', title: 'Two' },
+      ],
+      nextCursor: 'more',
+    },
+    all: true,
+  },
+  { page: { items: [] }, all: true },
+  { page: { items: [{ id: 'invalid' }], nextCursor: null }, all: true },
+])(
+  'event pagination failure never emits partial success (all=$all, page=$page)',
+  async ({ page, all }) => {
+    let requests = 0;
+    const url = await endpoint((_req, res) => {
+      requests++;
+      res.end(
+        JSON.stringify(
+          all && requests === 1
+            ? { items: [{ id: 'valid', title: 'Valid' }], nextCursor: 'next' }
+            : page
+        )
+      );
+    });
+    await cli(['profile', 'add', 'local', '--api-url', url]);
+    const result = await cli(
+      [
+        '--profile',
+        'local',
+        '--api-key-stdin',
+        '--format=json',
+        'events',
+        'list',
+        '--limit',
+        '1',
+        ...(all ? ['--all'] : []),
+      ],
+      {},
+      'key'
+    );
+    expect(result.code).toBe(5);
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr).error.code).toBe('INVALID_RESPONSE');
+    expect(requests).toBe(all ? 2 : 1);
+  }
+);
 
 test('a long Retry-After returns an actionable failure without retrying too early', async () => {
   let requests = 0;

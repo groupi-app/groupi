@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { useCallback, useMemo } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Id } from '@/convex/_generated/dataModel';
@@ -15,8 +16,6 @@ let eventQueries: any;
 
 function initApi() {
   if (!eventInviteQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
     eventInviteQueries = api.eventInvites?.queries ?? {};
     eventInviteMutations = api.eventInvites?.mutations ?? {};
     eventQueries = api.events?.queries ?? {};

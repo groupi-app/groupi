@@ -279,6 +279,7 @@ export async function createEventForPerson(
     imageStorageId: imageStorageId,
     imageFocalPoint: imageFocalPoint,
     creatorId: personId,
+    createdById: personId,
     createdAt: now,
     updatedAt: now,
     timezone: 'UTC', // Default timezone, can be updated later
@@ -510,6 +511,8 @@ export async function updateEventForPerson(
     }
 
     updateData.visibility = visibility === null ? undefined : visibility;
+    if ((visibility ?? 'PRIVATE') !== (event.visibility ?? 'PRIVATE'))
+      updateData.friendsAudienceEnabled = visibility === 'FRIENDS';
   }
 
   // Update the event

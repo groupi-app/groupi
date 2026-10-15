@@ -1,5 +1,6 @@
 import { CliError } from './errors.js';
 import { readApi } from './transport.js';
+import { readPaginated } from './pagination.js';
 import { mutateApi } from './mutations.js';
 import { parseDateTime } from './event-input.js';
 
@@ -291,39 +292,23 @@ export async function listAttendance(profile, key, eventId, kind, options) {
       /** @type {string} */ (options.option),
       'proposed date ID (--option)'
     );
-  let cursor = options.cursor;
-  const seen = new Set(cursor ? [cursor] : []);
-  const items = [];
-  do {
-    const query = new URLSearchParams({
-      pagination: 'cursor',
-      limit: String(options.limit),
-    });
-    if (cursor) query.set('cursor', cursor);
-    if (kind === 'responses')
-      query.set('potentialDateTimeId', /** @type {string} */ (options.option));
-    const page = pick(
-      await readApi(profile, key, `/events/${eventId}/${path}?${query}`),
-      ['items', 'nextCursor']
-    );
-    valid(
-      Array.isArray(page.items) &&
-        (page.nextCursor === null ||
-          (typeof page.nextCursor === 'string' && page.nextCursor.length > 0))
-    );
-    items.push(.../** @type {unknown[]} */ (page.items).map(validate));
-    if (!options.all || page.nextCursor === null)
-      return { items, nextCursor: page.nextCursor };
-    if (seen.has(/** @type {string} */ (page.nextCursor)))
-      throw new CliError(
-        'INVALID_RESPONSE',
-        'Server repeated a pagination cursor; retrieval stopped.',
-        5
-      );
-    seen.add(/** @type {string} */ (page.nextCursor));
-    cursor = /** @type {string} */ (page.nextCursor);
-  } while (cursor);
-  throw new CliError('INVALID_RESPONSE', 'Incomplete attendance page.', 5);
+  return readPaginated({
+    ...options,
+    fetchPage: ({ cursor, limit }) => {
+      const query = new URLSearchParams({
+        pagination: 'cursor',
+        limit: String(limit),
+      });
+      if (cursor) query.set('cursor', cursor);
+      if (kind === 'responses')
+        query.set(
+          'potentialDateTimeId',
+          /** @type {string} */ (options.option)
+        );
+      return readApi(profile, key, `/events/${eventId}/${path}?${query}`);
+    },
+    projectItem: validate,
+  });
 }
 
 /** @param {unknown} value */

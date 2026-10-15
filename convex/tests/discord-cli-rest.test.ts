@@ -25,6 +25,7 @@ function json(value: unknown, status = 200) {
   });
 }
 
+// Allow CLI startup alongside authenticated HTTP and provider paging.
 it('refreshes rotated linked credentials through the public CLI and authorizes only its owner’s manageable bot guilds', async () => {
   const bridge = await cliRestBridge();
   try {
@@ -177,7 +178,7 @@ it('refreshes rotated linked credentials through the public CLI and authorizes o
   } finally {
     await bridge.close();
   }
-});
+}, 30_000);
 
 it('fails closed for missing link, missing bot and rejected refresh without exposing provider errors', async () => {
   const bridge = await cliRestBridge();

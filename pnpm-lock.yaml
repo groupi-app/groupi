@@ -138,6 +138,9 @@ importers:
       '@convex-dev/resend':
         specifier: ^0.2.3
         version: 0.2.3(@react-email/render@2.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(convex-helpers@0.1.109(@standard-schema/spec@1.1.0)(convex@1.43.0(react@19.2.0))(hono@4.12.23)(react@19.2.0)(typescript@5.9.3)(zod@4.4.3))(convex@1.43.0(react@19.2.0))(react@19.2.0)
+      '@groupi/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
       '@hono/swagger-ui':
         specifier: ^0.5.3
         version: 0.5.3(hono@4.12.23)
@@ -245,6 +248,9 @@ importers:
       '@react-native-community/datetimepicker':
         specifier: 8.6.0
         version: 8.6.0(expo@55.0.31)(react-native@0.83.10(@babel/core@7.29.0)(@react-native-community/cli@11.3.7(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      '@react-navigation/native':
+        specifier: 7.3.17
+        version: 7.3.17(react-native@0.83.10(@babel/core@7.29.0)(@react-native-community/cli@11.3.7(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@rn-primitives/alert-dialog':
         specifier: ^1.4.0
         version: 1.5.2(@rn-primitives/portal@1.5.3(@types/react@19.2.14)(immer@10.2.0)(react-native@0.83.10(@babel/core@7.29.0)(@react-native-community/cli@11.3.7(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)))(@types/react-dom@19.2.2(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.10(@babel/core@7.29.0)(@react-native-community/cli@11.3.7(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)

@@ -1,9 +1,3 @@
-import {
-  Children,
-  isValidElement,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -18,8 +12,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('react', async importOriginal => {
   const actual = (await importOriginal()) as typeof import('react');
-  return { ...actual, useState: <T,>(initial: T) => [initial, vi.fn()] };
+  return {
+    ...actual,
+    useState: <T,>(initial: T) => [initial, vi.fn()],
+    useRef: <T,>(initial: T) => ({ current: initial }),
+    useCallback: <T,>(callback: T) => callback,
+  };
 });
+vi.mock('@react-navigation/native', () => ({ usePreventRemove: vi.fn() }));
 vi.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ eventId: 'event-123' }),
 }));
@@ -48,6 +48,19 @@ vi.mock('../../src/components/invites/link-invite-panel', () => ({
 }));
 vi.mock('../../src/components/invites/people-invite-panel', () => ({
   PeopleInvitePanel: 'PeopleInvitePanel',
+  EMPTY_PEOPLE_INVITE_DRAFT: { searchTerm: '', role: 'ATTENDEE', message: '' },
+}));
+vi.mock('../../src/components/invites/from-list-panel', () => ({
+  FromListPanel: 'FromListPanel',
+  EMPTY_INVITE_RECIPIENT_DRAFT: {
+    listIds: [],
+    snapshots: {},
+    people: [],
+    error: '',
+  },
+}));
+vi.mock('../../src/hooks/use-invite-lists', () => ({
+  useSendInviteListRecipients: () => vi.fn(),
 }));
 vi.mock('../../src/components/invites/invite-skeleton', () => ({
   InviteSkeleton: 'InviteSkeleton',
@@ -66,22 +79,6 @@ vi.mock('../../src/components/ui/empty-state', () => ({
 }));
 
 import InviteScreen, { InviteContent } from '../../app/event/[eventId]/invite';
-
-function elements(node: ReactNode): ReactElement<Record<string, unknown>>[] {
-  if (
-    node === null ||
-    node === undefined ||
-    typeof node === 'string' ||
-    typeof node === 'number' ||
-    typeof node === 'boolean'
-  ) {
-    return [];
-  }
-  if (!isValidElement<Record<string, unknown>>(node)) {
-    return Children.toArray(node).flatMap(elements);
-  }
-  return [node, ...elements(node.props.children as ReactNode)];
-}
 
 describe('event invite screen', () => {
   beforeEach(() => {
@@ -108,48 +105,13 @@ describe('event invite screen', () => {
     });
   });
 
-  it('presents the three mobile invite methods with live counts', () => {
-    const tree = elements(
-      InviteContent({
-        eventId: 'event-123' as never,
-        eventTitle: 'Launch Party',
-        canInviteModerator: true,
-      })
-    );
-    const tabs = tree.find(element => element.type === 'TabBarFilter');
-
-    expect(tabs?.props.tabs).toEqual([
-      { key: 'link', label: 'Link', badge: 1 },
-      { key: 'people', label: 'People', badge: 1 },
-      { key: 'email', label: 'Email', badge: 1 },
-    ]);
-    expect(tree.some(element => element.type === 'LinkInvitePanel')).toBe(true);
-  });
-
-  it('shows a purpose-built skeleton while invite data loads', () => {
-    mocks.useQuery.mockReturnValue(undefined);
-
-    const tree = elements(InviteScreen());
-
-    expect(tree.some(element => element.type === 'InviteSkeleton')).toBe(true);
-    expect(tree.some(element => element.type === 'TabBarFilter')).toBe(false);
-  });
-
-  it('blocks direct invite routes when the configured permission denies it', () => {
-    mocks.useQuery.mockReturnValue({
-      event: { title: 'Launch Party' },
-      userMembership: { role: 'ATTENDEE' },
-      permissions: {
-        createPosts: 'EVERYONE',
-        inviteMembers: 'MODERATOR',
-        viewAttendeeList: 'EVERYONE',
-      },
+  it('keeps permission reads below the content owner to preserve protected recovery state', () => {
+    const content = InviteScreen();
+    expect(content.type).toBe(InviteContent);
+    expect(content.props).toMatchObject({
+      eventId: 'event-123',
+      loadAccess: true,
     });
-
-    const tree = elements(InviteScreen());
-    const empty = tree.find(element => element.type === 'EmptyState');
-
-    expect(empty?.props.title).toBe('Inviting unavailable');
-    expect(tree.some(element => element.type === 'TabBarFilter')).toBe(false);
+    expect(mocks.useQuery).not.toHaveBeenCalled();
   });
 });

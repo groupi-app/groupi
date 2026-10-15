@@ -160,6 +160,26 @@ const eslintConfig = [
     },
   },
 
+  // Backend domain implementations must not depend on REST versions
+  {
+    files: ['convex/**/*.{ts,js}'],
+    ignores: ['convex/api/**', 'convex/http.ts', 'convex/tests/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/api/v*/**'],
+              message:
+                'Domains own reusable operations. REST version modules may import domains, but domains must not import REST version modules.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Shared package - platform agnostic rules
   {
     files: ['packages/shared/**/*.{js,ts,tsx}'],
@@ -174,6 +194,37 @@ const eslintConfig = [
               group: ['react-native', 'expo-*', 'next/*'],
               message:
                 'Platform-specific imports not allowed in shared package. Use platform adapters instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // GDL's public entry point must stay usable in every runtime.
+  {
+    files: ['packages/shared/src/gdl/**/*.{ts,js}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'react',
+                'react/*',
+                'react-native',
+                'expo-*',
+                'next/*',
+                'convex',
+                'convex/*',
+                '@groupi/shared',
+                '@groupi/shared/*',
+                '../*',
+                '../../**',
+              ],
+              message:
+                'GDL is runtime-neutral. Import only focused GDL modules within this directory.',
             },
           ],
         },

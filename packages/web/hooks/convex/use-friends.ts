@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { useCallback, useMemo } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Id } from '@/convex/_generated/dataModel';
@@ -12,8 +13,6 @@ let friendMutations: any;
 
 function initApi() {
   if (!friendQueries) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
     friendQueries = api.friends?.queries ?? {};
     friendMutations = api.friends?.mutations ?? {};
   }

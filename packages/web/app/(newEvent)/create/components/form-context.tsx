@@ -8,19 +8,6 @@ import {
   ReactNode,
 } from 'react';
 
-// Reminder offset options
-export type ReminderOffset =
-  | '30_MINUTES'
-  | '1_HOUR'
-  | '2_HOURS'
-  | '4_HOURS'
-  | '1_DAY'
-  | '2_DAYS'
-  | '3_DAYS'
-  | '1_WEEK'
-  | '2_WEEKS'
-  | '4_WEEKS';
-
 export type Visibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
 
 interface FocalPoint {
@@ -41,8 +28,6 @@ export interface FormState {
   description?: string;
   location?: string;
   visibility?: Visibility;
-  /** @deprecated Use addonConfigs.reminders.reminderOffset instead */
-  reminderOffset?: ReminderOffset;
   /** Generic addon config storage keyed by addon id */
   addonConfigs?: Record<string, Record<string, unknown>>;
   imageFile?: File;
@@ -67,7 +52,6 @@ export function FormProvider({ children }: { children: ReactNode }) {
     description: undefined,
     location: undefined,
     visibility: 'PRIVATE',
-    reminderOffset: undefined,
     addonConfigs: {},
     imageFile: undefined,
     imageFocalPoint: undefined,
@@ -81,7 +65,6 @@ export function FormProvider({ children }: { children: ReactNode }) {
       title: '',
       description: undefined,
       location: undefined,
-      reminderOffset: undefined,
       addonConfigs: {},
       imageFile: undefined,
       imageFocalPoint: undefined,

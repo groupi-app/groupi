@@ -51,6 +51,7 @@
     "@groupi/shared": "workspace:*",
     "@lobehub/expo-better-auth-passkey": "1.0.2",
     "@react-native-community/datetimepicker": "8.6.0",
+    "@react-navigation/native": "7.3.17",
     "@rn-primitives/alert-dialog": "^1.4.0",
     "@rn-primitives/avatar": "^1.4.0",
     "@rn-primitives/dialog": "^1.4.0",

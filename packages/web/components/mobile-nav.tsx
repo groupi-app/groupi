@@ -25,7 +25,6 @@ import { ProfileSlate } from './profile-slate';
 import { CombinedBadgeCount } from './combined-badge-count';
 import { useNotificationCloseStore } from '@/stores/notification-close-store';
 import { ProfileEditDialog } from './profile-edit-dialog';
-import { FriendsDialog } from './friends-dialog';
 import { usePendingRequests } from '@/hooks/convex/use-friends';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 import { Badge } from '@/components/ui/badge';
@@ -258,8 +257,6 @@ export function MobileNav({
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
       />
-
-      <FriendsDialog />
     </div>
   );
 }

@@ -994,10 +994,9 @@ describe('Invitation recovery after time and identity changes', () => {
       })
     ).toBeNull();
     expect(
-      await organizer.t.query(
-        internal.api.v1.internal.invites.getInviteOgMeta,
-        { token: link.token }
-      )
+      await organizer.t.query(internal.invites.rest.getInviteOgMeta, {
+        token: link.token,
+      })
     ).toBeNull();
     expect(
       (await invitee.request(`/invites/${link.token}`, 'GET')).status

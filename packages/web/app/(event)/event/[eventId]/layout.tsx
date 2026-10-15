@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, use } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
 import { EventDataProvider, useEventData } from './context';
-import { useAddonGating } from '@/hooks/convex/use-addon-gating';
+import { EventAddonGate } from '@/features/addons/gating';
 
 interface EventLayoutProps {
   children: React.ReactNode;
@@ -28,14 +28,6 @@ export default function EventIdLayout({ children, params }: EventLayoutProps) {
   );
 }
 
-/** Routes exempt from addon gating to avoid redirect loops */
-const GATING_EXEMPT_PATTERNS = [
-  '/availability',
-  '/addon/',
-  '/manage-addons',
-  '/settings',
-];
-
 /**
  * Inner component that can access the EventDataProvider context.
  * Handles membership checking, addon gating, and redirects.
@@ -48,12 +40,7 @@ function EventLayoutContent({
   eventId: string;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { headerData, isLoading } = useEventData();
-  const { redirectTo, isLoading: gatingLoading } = useAddonGating(
-    eventId as Id<'events'>
-  );
-
   const isMember = headerData?.userMembership != null;
   const eventNotFound = headerData === null;
 
@@ -64,19 +51,13 @@ function EventLayoutContent({
     }
   }, [isLoading, isMember, eventNotFound, router]);
 
-  // Addon gating redirect
-  useEffect(() => {
-    if (gatingLoading || !redirectTo || !isMember) return;
+  if (isLoading || eventNotFound || !isMember) {
+    return <p role='status'>Loading event…</p>;
+  }
 
-    // Don't redirect if already on an exempt route
-    const isExempt = GATING_EXEMPT_PATTERNS.some(pattern =>
-      pathname.includes(pattern)
-    );
-    if (isExempt) return;
-
-    router.push(redirectTo);
-  }, [gatingLoading, redirectTo, isMember, pathname, router]);
-
-  // Render children immediately - data is available via context
-  return <>{children}</>;
+  return (
+    <EventAddonGate eventId={eventId as Id<'events'>}>
+      {children}
+    </EventAddonGate>
+  );
 }

@@ -433,6 +433,34 @@ test('link/email paging preserves filters and cursor continuity without exposing
   expect(output.stdout).not.toContain('private-test-key');
 });
 
+test('member invitation traversal preserves its status filter on every page', async () => {
+  const paths: (string | undefined)[] = [];
+  await endpoint((req, res) => {
+    paths.push(req.url);
+    res.end(
+      JSON.stringify({
+        items: [],
+        nextCursor: paths.length === 1 ? 'next' : null,
+      })
+    );
+  });
+  const result = await cli([
+    'invites',
+    'members',
+    'list',
+    'event-1',
+    '--status',
+    'ACCEPTED',
+    '--all',
+  ]);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({ items: [], nextCursor: null });
+  expect(paths).toEqual([
+    '/api/v2/events/event-1/member-invites?pagination=cursor&limit=20&status=ACCEPTED',
+    '/api/v2/events/event-1/member-invites?pagination=cursor&limit=20&cursor=next&status=ACCEPTED',
+  ]);
+});
+
 test('repeated invitation cursor fails rather than looping or silently returning partial results', async () => {
   let reads = 0;
   await endpoint((_req, res) => {

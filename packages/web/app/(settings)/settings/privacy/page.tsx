@@ -24,6 +24,7 @@ import {
   useSavePrivacySettings,
   FriendRequestPolicy,
   EventInvitePolicy,
+  GroupInvitePolicy,
 } from '@/hooks/convex/use-settings';
 import { useBlockedUsers, useUnblockUser } from '@/hooks/convex/use-friends';
 
@@ -37,6 +38,7 @@ type BlockedUser = {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitialsFromName } from '@/lib/utils';
 import { Id } from '@/convex/_generated/dataModel';
+import { Label } from '@/components/ui/label';
 
 export default function PrivacySettings() {
   return (
@@ -84,6 +86,8 @@ function AuthenticatedPrivacySettings() {
     useState<FriendRequestPolicy | null>(null);
   const [invitePolicyOverride, setInvitePolicyOverride] =
     useState<EventInvitePolicy | null>(null);
+  const [groupPolicyOverride, setGroupPolicyOverride] =
+    useState<GroupInvitePolicy | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Derive current values: use override if set, otherwise server value
@@ -92,12 +96,17 @@ function AuthenticatedPrivacySettings() {
   const invitePolicy =
     invitePolicyOverride ?? settings?.allowEventInvitesFrom ?? 'EVERYONE';
 
+  const groupPolicy =
+    groupPolicyOverride ?? settings?.allowGroupInvitesFrom ?? 'EVERYONE';
+
   // Derive hasChanges from overrides vs server values
   const hasChanges =
     (friendPolicyOverride !== null &&
       friendPolicyOverride !== settings?.allowFriendRequestsFrom) ||
     (invitePolicyOverride !== null &&
-      invitePolicyOverride !== settings?.allowEventInvitesFrom);
+      invitePolicyOverride !== settings?.allowEventInvitesFrom) ||
+    (groupPolicyOverride !== null &&
+      groupPolicyOverride !== (settings?.allowGroupInvitesFrom ?? 'EVERYONE'));
 
   if (settings === undefined || blockedUsers === undefined) {
     return (
@@ -114,14 +123,20 @@ function AuthenticatedPrivacySettings() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    await saveSettings({
-      allowFriendRequestsFrom: friendPolicy,
-      allowEventInvitesFrom: invitePolicy,
-    });
-    setIsSaving(false);
-    // Reset overrides since server now has these values
-    setFriendPolicyOverride(null);
-    setInvitePolicyOverride(null);
+    try {
+      const result = await saveSettings({
+        allowFriendRequestsFrom: friendPolicy,
+        allowEventInvitesFrom: invitePolicy,
+        allowGroupInvitesFrom: groupPolicy,
+      });
+      if (result.success) {
+        setFriendPolicyOverride(null);
+        setInvitePolicyOverride(null);
+        setGroupPolicyOverride(null);
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUnblock = async (personId: Id<'persons'>) => {
@@ -185,6 +200,29 @@ function AuthenticatedPrivacySettings() {
           </Select>
         </section>
 
+        <section className='space-y-3'>
+          <h2 className='text-lg font-semibold'>Group Invites</h2>
+          <p className='text-sm text-muted-foreground'>
+            Choose who can send you Group invitations, separately from Event
+            invites and friend requests.
+          </p>
+          <Label htmlFor='incoming-group-invites'>
+            Who can send Group invitations
+          </Label>
+          <select
+            id='incoming-group-invites'
+            className='w-full rounded-input border border-input bg-background p-2'
+            value={groupPolicy}
+            onChange={event =>
+              setGroupPolicyOverride(event.target.value as GroupInvitePolicy)
+            }
+          >
+            <option value='EVERYONE'>Everyone</option>
+            <option value='FRIENDS'>Friends</option>
+            <option value='NO_ONE'>No one</option>
+          </select>
+        </section>
+
         {/* Save Button */}
         <Button
           onClick={handleSave}
@@ -202,7 +240,8 @@ function AuthenticatedPrivacySettings() {
             <h2 className='text-lg font-semibold'>Blocked Users</h2>
           </div>
           <p className='text-sm text-muted-foreground'>
-            Blocked users cannot send you friend requests or event invites.
+            Blocked users cannot send you friend requests, event invites, or
+            Group invitations.
           </p>
 
           {blockedUsers.length === 0 ? (

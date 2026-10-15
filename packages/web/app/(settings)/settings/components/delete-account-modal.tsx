@@ -1,6 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { AccountResolutionBoundary } from '@groupi/shared/hooks';
+import { Button } from '@/components/ui/button';
+import { AccountResponsibilities } from '@/components/settings/account-responsibilities';
+import {
+  useAccountReadiness,
+  useAccountResolutionActions,
+} from '@/hooks/convex/use-account-resolution';
 import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -14,7 +21,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useDeleteUserAccount } from '@/hooks/convex';
 import { signOut } from '@/lib/auth-client';
 import { toast } from 'sonner';
 import { Icons } from '@/components/icons';
@@ -25,11 +31,32 @@ interface DeleteAccountModalProps {
   username: string | null;
 }
 
-export function DeleteAccountModal({
+export function DeleteAccountModal(props: DeleteAccountModalProps) {
+  return (
+    <AccountResolutionBoundary
+      fallback={retry => (
+        <div role='alert' className='space-y-3'>
+          <p>
+            Could not check account ownership. Reconnect and retry the check
+            before deleting.
+          </p>
+          <Button type='button' variant='outline' onClick={retry}>
+            Retry ownership check
+          </Button>
+        </div>
+      )}
+    >
+      <DeleteAccountContents {...props} />
+    </AccountResolutionBoundary>
+  );
+}
+
+function DeleteAccountContents({
   open,
   onOpenChange,
   username,
 }: DeleteAccountModalProps) {
+  const readiness = useAccountReadiness();
   const [confirmUsername, setConfirmUsername] = useState('');
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -38,10 +65,10 @@ export function DeleteAccountModal({
     ? confirmUsername.trim() === username.trim()
     : false;
 
-  const deleteAccount = useDeleteUserAccount();
+  const { deleteAccount } = useAccountResolutionActions();
 
   const handleDelete = async () => {
-    if (!usernameMatches) {
+    if (!usernameMatches || !readiness?.canDelete) {
       return;
     }
 
@@ -49,7 +76,7 @@ export function DeleteAccountModal({
 
     try {
       // The hook expects a confirmation parameter
-      await deleteAccount(username || '');
+      await deleteAccount({ confirmation: confirmUsername });
 
       // Sign out and redirect directly to sign-in page
       // (avoids brief flash of onboarding page during auth redirect chain)
@@ -66,7 +93,7 @@ export function DeleteAccountModal({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className='max-h-[90vh] overflow-y-auto'>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Account</AlertDialogTitle>
           <AlertDialogDescription>
@@ -76,6 +103,7 @@ export function DeleteAccountModal({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
+        <AccountResponsibilities />
         <div className='space-y-4 py-4'>
           <div className='space-y-4'>
             <Label htmlFor='confirm-username'>
@@ -95,8 +123,11 @@ export function DeleteAccountModal({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            disabled={!usernameMatches || deleting}
+            onClick={event => {
+              event.preventDefault();
+              void handleDelete();
+            }}
+            disabled={!usernameMatches || deleting || !readiness?.canDelete}
             className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
           >
             {deleting && <Icons.spinner className='size-4 animate-spin' />}

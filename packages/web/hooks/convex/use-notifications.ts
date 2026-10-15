@@ -47,12 +47,14 @@ export interface EnrichedNotification {
     id: Id<'persons'>;
     user: {
       name: string | null;
-      email: string;
+      email: string | null;
       image: string | null;
       username: string | null;
     };
   } | null;
   recipientId: Id<'persons'>;
+  group?: { id: Id<'groups'>; title: string } | null;
+  groupInvite?: { id: Id<'groupInvites'>; status: string } | null;
   rsvpStatus?: string;
   rsvpNewStatus?: string;
 }

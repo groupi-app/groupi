@@ -11,12 +11,10 @@ import { useFileUpload } from '@/hooks/convex/use-file-upload';
 import { isReminderInPast } from '@/lib/datetime-helpers';
 import { formatDateTimeRangeShort } from '@/lib/utils';
 import { useFormContext, type EventPermissions } from './form-context';
-import { getAddonRegistry } from './addon-registry';
-
-import './addons/reminder-addon';
-import './addons/questionnaire-addon';
-import './addons/bring-list-addon';
-import './addons/discord-addon';
+import {
+  getCreationAddons,
+  serializeAddonConfigs,
+} from '@/features/addons/creation';
 
 function detectPresetName(permissions?: EventPermissions): string {
   if (!permissions) return 'Standard';
@@ -51,7 +49,7 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
   const createEvent = useCreateEvent();
   const { uploadFile } = useFileUpload();
   const [isSaving, setIsSaving] = useState(false);
-  const addons = getAddonRegistry();
+  const addons = getCreationAddons({ addonConfigs: formState.addonConfigs });
 
   const {
     title,
@@ -67,12 +65,10 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
   } = formState;
 
   const enabledAddonNames = addons
-    .filter(a => a.isEnabled(formState))
+    .filter(a => a.isEnabled({ addonConfigs: formState.addonConfigs }))
     .map(a => ADDON_LABELS[a.id] ?? a.name);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const onSubmit = useCallback(async () => {
-    const currentAddons = getAddonRegistry();
     if (dateType === 'single' && singleDateTime) {
       if (new Date(singleDateTime.startDateTime).getTime() <= Date.now()) {
         toast.error(
@@ -93,16 +89,9 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
       }
     }
 
-    const enabledAddons = currentAddons
-      .filter(a => a.isEnabled(formState))
-      .map(a => ({
-        addonType: a.id,
-        config: a.getConfigFromFormState(formState),
-      }))
-      .filter(
-        (a): a is { addonType: string; config: Record<string, unknown> } =>
-          a.config !== null
-      );
+    const enabledAddons = serializeAddonConfigs({
+      addonConfigs: formState.addonConfigs,
+    });
 
     const reminderAddon = enabledAddons.find(a => a.addonType === 'reminders');
     if (reminderAddon) {
@@ -166,7 +155,22 @@ export function NewEventReview({ onBack }: NewEventReviewProps) {
       toast.error('The event was unable to be created.');
       setIsSaving(false);
     }
-  }, [formState, createEvent, uploadFile, router]);
+  }, [
+    formState,
+    createEvent,
+    uploadFile,
+    router,
+    dateType,
+    description,
+    imageFile,
+    imageFocalPoint,
+    location,
+    multiDateTimeOptions,
+    permissions,
+    singleDateTime,
+    title,
+    visibility,
+  ]);
 
   if (!title) {
     return null;

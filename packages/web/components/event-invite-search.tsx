@@ -31,6 +31,10 @@ import { cn, formatDate } from '@/lib/utils';
 interface EventInviteSearchProps {
   eventId: Id<'events'>;
   onInviteSent?: () => void;
+  onSelectionChange?: (person: InviteSearchResult | null) => void;
+  onAddRecipient?: (person: InviteSearchResult) => void;
+  onRoleChange?: (role: 'ATTENDEE' | 'MODERATOR') => void;
+  onMessageChange?: (message: string) => void;
 }
 
 const MAX_MESSAGE_LENGTH = 280;
@@ -41,6 +45,10 @@ const MAX_MESSAGE_LENGTH = 280;
 export function EventInviteSearch({
   eventId,
   onInviteSent,
+  onSelectionChange,
+  onAddRecipient,
+  onRoleChange,
+  onMessageChange,
 }: EventInviteSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
@@ -63,6 +71,8 @@ export function EventInviteSearch({
   const sentInvites = useSentEventInvites(eventId);
   const friends = useFriends();
   const eventMembers = useEventMembers(eventId);
+  const effectiveRole =
+    eventMembers?.userMembership?.role === 'ORGANIZER' ? role : 'ATTENDEE';
 
   // Filter out users with pending invites from search results
   const filteredResults = useMemo(() => {
@@ -124,30 +134,43 @@ export function EventInviteSearch({
     [handleSearch]
   );
 
-  const handleSelectUser = useCallback((user: InviteSearchResult) => {
-    setSelectedUser(user);
-    setSearchTerm('');
-    setSubmittedSearch('');
-  }, []);
+  const handleSelectUser = useCallback(
+    (user: InviteSearchResult) => {
+      if (onAddRecipient) onAddRecipient(user);
+      else {
+        setSelectedUser(user);
+        onSelectionChange?.(user);
+      }
+      setSearchTerm('');
+      setSubmittedSearch('');
+    },
+    [onAddRecipient, onSelectionChange]
+  );
 
-  const handleSelectFriend = useCallback((friend: Friend) => {
-    // Convert Friend to InviteSearchResult format
-    setSelectedUser({
-      personId: friend.personId,
-      name: friend.name,
-      username: friend.username,
-      image: friend.image,
-      isFriend: true,
-      hasPendingInvite: false,
-      pendingInviteId: null,
-    });
-  }, []);
+  const handleSelectFriend = useCallback(
+    (friend: Friend) => {
+      // Convert Friend to InviteSearchResult format
+      handleSelectUser({
+        personId: friend.personId,
+        name: friend.name,
+        username: friend.username,
+        image: friend.image,
+        isFriend: true,
+        hasPendingInvite: false,
+        pendingInviteId: null,
+      });
+    },
+    [handleSelectUser]
+  );
 
   const handleClearSelection = useCallback(() => {
     setSelectedUser(null);
+    onSelectionChange?.(null);
+    onRoleChange?.('ATTENDEE');
+    onMessageChange?.('');
     setRole('ATTENDEE');
     setMessage('');
-  }, []);
+  }, [onSelectionChange, onRoleChange, onMessageChange]);
 
   const handleSendInvite = useCallback(async () => {
     if (!selectedUser) return;
@@ -157,7 +180,7 @@ export function EventInviteSearch({
       const result = await sendInvite(
         eventId,
         selectedUser.personId,
-        role,
+        effectiveRole,
         message.trim() || undefined
       );
 
@@ -171,7 +194,7 @@ export function EventInviteSearch({
   }, [
     selectedUser,
     eventId,
-    role,
+    effectiveRole,
     message,
     sendInvite,
     handleClearSelection,
@@ -189,7 +212,7 @@ export function EventInviteSearch({
   return (
     <div className='flex flex-col gap-4'>
       {/* Selected User Card */}
-      {selectedUser ? (
+      {selectedUser && !onAddRecipient ? (
         <div className='p-4 bg-muted/50 rounded-card border border-border'>
           <div className='flex items-center justify-between mb-4'>
             <div className='flex items-center gap-3'>
@@ -229,15 +252,21 @@ export function EventInviteSearch({
           <div className='space-y-2 mb-4'>
             <Label>Invite as</Label>
             <Select
-              value={role}
-              onValueChange={v => setRole(v as 'ATTENDEE' | 'MODERATOR')}
+              value={effectiveRole}
+              onValueChange={v => {
+                const nextRole = v as 'ATTENDEE' | 'MODERATOR';
+                setRole(nextRole);
+                onRoleChange?.(nextRole);
+              }}
             >
               <SelectTrigger className='w-full'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='ATTENDEE'>Attendee</SelectItem>
-                <SelectItem value='MODERATOR'>Moderator</SelectItem>
+                {eventMembers?.userMembership?.role === 'ORGANIZER' && (
+                  <SelectItem value='MODERATOR'>Moderator</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -263,7 +292,10 @@ export function EventInviteSearch({
               id='invite-message'
               placeholder='Add a personal note to your invite...'
               value={message}
-              onChange={e => setMessage(e.target.value)}
+              onChange={e => {
+                setMessage(e.target.value);
+                onMessageChange?.(e.target.value);
+              }}
               maxLength={MAX_MESSAGE_LENGTH + 20}
               className='min-h-[80px] resize-none'
             />

@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
-import { canModifyReply } from '../middleware/auth';
+import { canModifyReply } from '../../middleware/auth';
 import {
   ErrorResponseSchema,
   PostIdParamSchema,
@@ -78,9 +78,7 @@ export function createReplyRoutes() {
     const personId = c.get('personId');
     const { postId } = c.req.valid('param');
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const listFn = internal.api.v1.internal.replies.listPostReplies;
+    const listFn = internal.replies.rest.listPostReplies;
     const result = await ctx.runQuery(listFn, { postId, personId });
 
     if (!result) {
@@ -170,9 +168,7 @@ export function createReplyRoutes() {
     const { postId } = c.req.valid('param');
     const body = c.req.valid('json');
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const createFn = internal.api.v1.internal.replies.createReply;
+    const createFn = internal.replies.rest.createReply;
     const result = await ctx.runMutation(createFn, {
       postId,
       personId,
@@ -267,9 +263,7 @@ export function createReplyRoutes() {
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const updateFn = internal.api.v1.internal.replies.updateReply;
+    const updateFn = internal.replies.rest.updateReply;
     const result = await ctx.runMutation(updateFn, {
       replyId,
       personId,
@@ -347,9 +341,7 @@ export function createReplyRoutes() {
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Type instantiation is excessively deep (TS2589)
-    const deleteFn = internal.api.v1.internal.replies.deleteReply;
+    const deleteFn = internal.replies.rest.deleteReply;
     await ctx.runMutation(deleteFn, { replyId, personId });
 
     return c.json(

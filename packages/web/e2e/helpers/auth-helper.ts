@@ -37,6 +37,10 @@ export class AuthHelper {
     // Create test session via Convex
     const session = await this.seeder.createTestSession(userData);
 
+    if (!session.personId) {
+      throw new Error('E2E session did not create the required person');
+    }
+
     // Inject the session cookie
     await context.addCookies([
       {
@@ -50,7 +54,7 @@ export class AuthHelper {
       },
     ]);
 
-    return session;
+    return { ...session, personId: session.personId };
   }
 
   /**
@@ -78,6 +82,7 @@ export class AuthHelper {
     // Get the magic link from Convex (test-only function)
     const magicLinkUrl = await this.seeder.getLastMagicLink(email);
 
+    if (!magicLinkUrl) throw new Error('E2E magic link was not created');
     return { magicLinkUrl };
   }
 
