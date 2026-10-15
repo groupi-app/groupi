@@ -10,6 +10,32 @@ An event member with the organizer role. This role applies to that event, not to
 administration of the Groupi installation.
 _Avoid_: Event admin
 
+**Integration**:
+A named, independent API actor sponsored by a Groupi person and limited to
+explicit actions on selected Events. Its discussion contributions identify the
+Integration as their author, not its sponsoring person. Sponsorship does not
+grant blanket Organizer authority.
+
+**Authorization grant**:
+An explicit set of permitted actions and resource selections for a user or
+Integration. A grant remains subject to current account, membership and role
+authority; a credential cannot preserve authority that its holder has lost.
+
+**Bounded key**:
+A secret API credential attached to an Authorization grant. It is distinct from
+a legacy API key with collection permissions. Revoking a bounded key stops that
+credential without implicitly revoking unrelated Integration identities.
+
+**Developer app**:
+A registered external client eligible to request delegated sign-in. Platform
+approval controls who may use the app, independently of each person's consent.
+
+**App connection**:
+A person's consent for a Developer app on a particular Groupi instance, including
+identity claims, permitted actions, Event selection and any separately approved
+background access. Disconnecting stops future delegated access; it does not
+delete information the app already copied or terminate the app's own session.
+
 **Invite list**:
 A private, creator-owned saved selection of existing Groupi users. Using a list
 copies its current people into an invitation draft or explicitly sends ordinary

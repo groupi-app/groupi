@@ -88,11 +88,25 @@ must regenerate the corpus after stricter backend schemas are incorporated.
 
 ## Remaining acceptance
 
-The parent agent owns actual CUA browser verification and the authorized temporary
-loopback runtime. This component-test evidence claims no verified viewport size,
-physical screen reader session, browser accessibility audit, throttled network
-measurement or visual acceptance. Browser observations and any resulting fixes
-must be recorded by that coordinating agent.
+The coordinating agent exercised the portal in the Codex browser using the
+authorized temporary runtime at `127.0.0.1:4173`, then stopped that runtime.
+Desktop (1440 × 1000) and mobile (390 × 844) layouts were inspected. The mobile
+home and integrator guide had no horizontal document overflow. Keyboard Tab
+navigation reached the version selector; reference navigation focused the target
+passage and browser Back restored the explorer route. This is not a physical
+screen-reader audit or a throttled-network performance measurement.
+
+Browser checks verified short `GET /events` searches, explicit v1 filtering,
+empty-search recovery, copied request examples, downloaded Markdown and the public
+JSON search index. The explorer returned explanatory expired-credential,
+wrong-instance, unsupported-version and upcoming-capability states. A simulated
+lost create response followed by retained replay produced only one Event.
+
+These checks caught and fixed short-operation ranking, initial focus scrolling
+the navigation out of view, and a client import from Vite's public directory.
+Screenshots are retained with the local task artifacts as `portal-desktop.jpg`
+and `portal-mobile.jpg`. Generated-source freshness must be checked again after
+backend integration.
 
 Independent review, integrated workspace checks, static production build and
 CI execution remain parent-owned. No build, server, deployment, package
