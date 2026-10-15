@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import type { FunctionReturnType } from 'convex/server';
 import type { Id } from '@/convex/_generated/dataModel';
 import { authorizationActionLabel } from '@groupi/shared/hooks';
 import { Button } from '@/components/ui/button';
@@ -21,44 +22,10 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
     api.delegatedApps.queries.getConsentRequest,
     isAuthenticated && interactionId ? { interactionId } : 'skip'
   );
-  const approve = useMutation(api.delegatedApps.mutations.approveConsent);
-  const deny = useMutation(api.delegatedApps.mutations.denyConsent);
-  const [actions, setActions] = useState<
-    NonNullable<typeof request>['requestedActions']
-  >([]);
-  const [eventIds, setEventIds] = useState<Id<'events'>[]>([]);
-  const [allEvents, setAllEvents] = useState(false);
-  const [background, setBackground] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function decide(allow: boolean) {
-    if (!request) return;
-    setPending(true);
-    setError(null);
-    try {
-      const result = allow
-        ? await approve({
-            interactionId,
-            actions,
-            selector: allEvents
-              ? { kind: 'all-current-and-future' }
-              : { kind: 'selected', eventIds },
-            background,
-          })
-        : await deny({ interactionId });
-      const destination = new URL(result.resumeUrl);
-      if (destination.origin !== new URL(request.instance).origin)
-        throw new Error(
-          'The sign-in continuation does not match this instance.'
-        );
-      window.location.assign(destination.href);
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : 'Could not complete consent'
-      );
-      setPending(false);
-    }
-  }
+  const account = useQuery(
+    api.auth.queries.getCurrentUser,
+    isAuthenticated ? {} : 'skip'
+  );
   if (isLoading) return <p role='status'>Checking account…</p>;
   if (!isAuthenticated)
     return (
@@ -80,15 +47,116 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
         </CardContent>
       </Card>
     );
-  if (!interactionId || request === null)
+  if (!interactionId || request === null || account === null)
     return (
       <p role='alert'>
         This connection request is unavailable or expired. Return to the app to
         start again.
       </p>
     );
-  if (request === undefined)
+  if (request === undefined || account === undefined)
     return <p role='status'>Loading connection request…</p>;
+  const requestKey = JSON.stringify([
+    interactionId,
+    account._id,
+    request.appId,
+    request.expiresAt,
+    [...request.requestedScopes].sort(),
+    request.events.map(event => event._id).sort(),
+  ]);
+  return (
+    <ConsentChoices
+      key={requestKey}
+      interactionId={interactionId}
+      request={request}
+    />
+  );
+}
+function ConsentChoices({
+  interactionId,
+  request,
+}: {
+  interactionId: string;
+  request: NonNullable<
+    FunctionReturnType<typeof api.delegatedApps.queries.getConsentRequest>
+  >;
+}) {
+  const approve = useMutation(api.delegatedApps.mutations.approveConsent);
+  const deny = useMutation(api.delegatedApps.mutations.denyConsent);
+  const [actions, setActions] = useState<
+    NonNullable<typeof request>['requestedActions']
+  >([]);
+  const [eventIds, setEventIds] = useState<Id<'events'>[]>([]);
+  const [allEvents, setAllEvents] = useState(false);
+  const [background, setBackground] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const remaining = request.expiresAt - Date.now();
+    const timer = setTimeout(() => setNow(Date.now()), Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [request.expiresAt]);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasEventActions = actions.some(
+    action => !action.startsWith('identity.')
+  );
+  function toggleAction(action: (typeof actions)[number], checked: boolean) {
+    const next = checked
+      ? [...actions, action]
+      : actions.filter(value => value !== action);
+    setActions(next);
+    if (!next.some(value => !value.startsWith('identity.'))) {
+      setEventIds([]);
+      setAllEvents(false);
+    }
+  }
+  async function decide(allow: boolean) {
+    if (Date.now() >= request.expiresAt) {
+      setNow(Date.now());
+      return;
+    }
+    setPending(true);
+    setError(null);
+    try {
+      const result = allow
+        ? await approve({
+            interactionId,
+            actions,
+            selector: !hasEventActions
+              ? { kind: 'selected', eventIds: [] }
+              : allEvents
+                ? { kind: 'all-current-and-future' }
+                : { kind: 'selected', eventIds },
+            background,
+          })
+        : await deny({ interactionId });
+      const destination = new URL(result.resumeUrl);
+      if (destination.origin !== new URL(request.instance).origin)
+        throw new Error(
+          'The sign-in continuation does not match this instance.'
+        );
+      window.location.assign(destination.href);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'Could not complete consent'
+      );
+      setPending(false);
+    }
+  }
+  if (now >= request.expiresAt)
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Connection request expired</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p role='alert'>
+            This connection request has expired. Return to the app and start
+            sign-in again.
+          </p>
+        </CardContent>
+      </Card>
+    );
   return (
     <Card>
       <CardHeader>
@@ -118,49 +186,47 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
               <Checkbox
                 checked={actions.includes(action)}
                 onCheckedChange={checked =>
-                  setActions(current =>
-                    checked
-                      ? [...current, action]
-                      : current.filter(value => value !== action)
-                  )
+                  toggleAction(action, checked === true)
                 }
               />
               {authorizationActionLabel(action)}
             </label>
           ))}
         </fieldset>
-        <fieldset className='space-y-2' disabled={pending}>
-          <legend className='font-medium'>Event access</legend>
-          <label className='flex items-start gap-2'>
-            <Checkbox
-              checked={allEvents}
-              onCheckedChange={checked => setAllEvents(checked === true)}
-            />
-            All current and future events within my current authority
-          </label>
-          {allEvents ? (
-            <p className='text-sm text-text-warning'>
-              Includes events you join in the future. Access still follows your
-              current event authority.
-            </p>
-          ) : (
-            request.events.map(event => (
-              <label key={event._id} className='flex items-center gap-2'>
-                <Checkbox
-                  checked={eventIds.includes(event._id)}
-                  onCheckedChange={checked =>
-                    setEventIds(current =>
-                      checked
-                        ? [...current, event._id]
-                        : current.filter(id => id !== event._id)
-                    )
-                  }
-                />
-                {event.title}
-              </label>
-            ))
-          )}
-        </fieldset>
+        {hasEventActions ? (
+          <fieldset className='space-y-2' disabled={pending}>
+            <legend className='font-medium'>Event access</legend>
+            <label className='flex items-start gap-2'>
+              <Checkbox
+                checked={allEvents}
+                onCheckedChange={checked => setAllEvents(checked === true)}
+              />
+              All current and future events within my current authority
+            </label>
+            {allEvents ? (
+              <p className='text-sm text-text-warning'>
+                Includes events you join in the future. Access still follows
+                your current event authority.
+              </p>
+            ) : (
+              request.events.map(event => (
+                <label key={event._id} className='flex items-center gap-2'>
+                  <Checkbox
+                    checked={eventIds.includes(event._id)}
+                    onCheckedChange={checked =>
+                      setEventIds(current =>
+                        checked
+                          ? [...current, event._id]
+                          : current.filter(id => id !== event._id)
+                      )
+                    }
+                  />
+                  {event.title}
+                </label>
+              ))
+            )}
+          </fieldset>
+        ) : null}
         {request.requestedScopes.includes('offline_access') ? (
           <div className='space-y-2'>
             <label className='flex items-start gap-2'>
@@ -193,10 +259,8 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
           <Button
             isLoading={pending}
             disabled={
-              request.expiresAt <= Date.now() ||
-              (actions.some(action => !action.startsWith('identity.')) &&
-                !allEvents &&
-                !eventIds.length)
+              request.expiresAt <= now ||
+              (hasEventActions && !allEvents && !eventIds.length)
             }
             onClick={() => void decide(true)}
           >
