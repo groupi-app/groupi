@@ -151,6 +151,9 @@ jobs:
       - name: Reject loose Convex query and mutation types
         run: pnpm check:contracts
 
+      - name: Verify contract guard rejects erased exports
+        run: pnpm test:contracts
+
   # Web Package Tests
   test-web:
     name: Test Web Package

@@ -115,7 +115,19 @@ for (const file of program.getSourceFiles()) {
   const symbol = checker.getSymbolAtLocation(file);
   if (!symbol) continue;
   for (const exported of checker.getExportsOfModule(symbol)) {
+    const target =
+      exported.flags & ts.SymbolFlags.Alias
+        ? checker.getAliasedSymbol(exported)
+        : exported;
+    if (!(target.flags & ts.SymbolFlags.Value)) continue;
     const type = checker.getTypeOfSymbolAtLocation(exported, file);
+    // An annotation or assertion can erase Convex's registration markers and
+    // make the generated API silently omit the function. Fail closed before
+    // consulting those markers, including for exported aliases.
+    if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) {
+      findings.push(...loose(type, `source.${relative}:${exported.name}`));
+      continue;
+    }
     if (!type.getProperty('isQuery') && !type.getProperty('isMutation'))
       continue;
     const args = type.aliasTypeArguments;
