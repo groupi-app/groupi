@@ -75,6 +75,7 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                 {canWithdraw && (
                   <Button
                     variant='outline'
+                    className='h-auto min-h-10 max-w-full whitespace-normal text-left'
                     disabled={busy !== null}
                     onClick={async () => {
                       setBusy(event._id);
@@ -96,7 +97,9 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
                       }
                     }}
                   >
-                    Withdraw {event.title} from Group
+                    <span className='min-w-0 break-words'>
+                      Withdraw {event.title} from Group
+                    </span>
                   </Button>
                 )}
               </li>
