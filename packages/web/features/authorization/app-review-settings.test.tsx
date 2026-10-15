@@ -7,6 +7,7 @@ vi.mock('@/convex/_generated/api', () => ({
   api: {
     auth: { queries: { getCurrentUser: 'current-user' } },
     delegatedApps: {
+      hosted: { configureAppearance: 'configure-appearance' },
       queries: { listReviewableApps: 'reviewable-apps' },
       mutations: { reviewApp: 'review-app' },
     },
@@ -108,3 +109,34 @@ it.each([
     expect(screen.getByText(current.reviewStatus)).toBeInTheDocument();
   }
 );
+
+it('an administrator saves the hosted brand without changing the exact registered callback', async () => {
+  const configure = vi.fn().mockResolvedValue(null);
+  vi.mocked(useMutation).mockReturnValue(configure as never);
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { role: 'admin' } : [app]
+  );
+  const user = userEvent.setup();
+  render(<AppReviewSettings />);
+  await user.type(screen.getByLabelText('Hosted brand name'), 'Red Room');
+  await user.type(screen.getByLabelText('Email sender name'), 'Red Room');
+  await user.clear(screen.getByLabelText('Brand accent'));
+  await user.type(screen.getByLabelText('Brand accent'), '#991b1b');
+  await user.click(
+    screen.getByRole('button', { name: 'Save hosted appearance' })
+  );
+  expect(configure).toHaveBeenCalledWith({
+    appId: 'app-1',
+    appearance: {
+      brandName: 'Red Room',
+      senderName: 'Red Room',
+      accent: '#991b1b',
+    },
+  });
+  expect(
+    await screen.findByText('Hosted appearance saved.')
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText('com.example.calendar:/callback')
+  ).toBeInTheDocument();
+});

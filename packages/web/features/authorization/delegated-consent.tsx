@@ -154,6 +154,20 @@ function ConsentChoices({
     return (
       <Card>
         <CardHeader>
+          {request.appearance ? (
+            <p
+              className='text-xl font-heading'
+              style={{ color: request.appearance.accent }}
+            >
+              {request.appearance.brandName}
+            </p>
+          ) : null}
+          <p className='text-sm text-muted-foreground'>
+            Sign-in provided by Groupi
+          </p>
+          <p className='text-sm text-muted-foreground'>
+            Developer app: {request.appName}
+          </p>
           <CardTitle>Connection request expired</CardTitle>
         </CardHeader>
         <CardContent>
@@ -177,6 +191,9 @@ function ConsentChoices({
         ) : null}
         <p className='text-sm text-muted-foreground'>
           Sign-in provided by Groupi
+        </p>
+        <p className='text-sm text-muted-foreground'>
+          Developer app: {request.appName}
         </p>
         <CardTitle>Connect {request.appName}</CardTitle>
         <CardDescription>{request.purpose}</CardDescription>

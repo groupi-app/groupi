@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
@@ -6,9 +7,19 @@ export function HostedBrand({ interactionId }: { interactionId: string }) {
   const context = useQuery(api.delegatedApps.hosted.getAppearance, {
     interactionId,
   });
+  const expiresAt = context?.expiresAt;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (expiresAt === undefined) return;
+    const timer = setTimeout(
+      () => setNow(Date.now()),
+      Math.max(0, expiresAt - Date.now())
+    );
+    return () => clearTimeout(timer);
+  }, [expiresAt]);
   if (context === undefined)
     return <p role='status'>Checking sign-in request…</p>;
-  if (!context)
+  if (!context || context.expiresAt <= now)
     return (
       <p role='alert'>
         This sign-in request is unavailable or expired. Return to the app to
