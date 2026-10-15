@@ -1,7 +1,9 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { getCurrentPerson } from '../auth';
-import { app } from './contracts';
+import { app, clientType, status, reviewStatus } from './contracts';
+import { isAdminRole } from '../lib/constants';
+import { authComponent, type AuthUserId } from '../auth';
 export const listOwnedApps = query({
   args: {},
   returns: v.array(app),
@@ -77,7 +79,7 @@ export const getConsentRequest = query({
   },
 });
 export const listConnections = query({
-  args: {},
+  args: { now: v.number() },
   returns: v.array(
     v.object({
       grantId: v.id('authorizationGrants'),
@@ -90,17 +92,29 @@ export const listConnections = query({
       status: v.union(
         v.literal('active'),
         v.literal('revoked'),
-        v.literal('suspended')
+        v.literal('suspended'),
+        v.literal('expired'),
+        v.literal('unavailable')
       ),
     })
   ),
-  handler: async ctx => {
+  handler: async (ctx, { now }) => {
     const person = await getCurrentPerson(ctx);
     if (!person) return [];
-    const bindings = await ctx.db
+    const active = await ctx.db
       .query('delegatedGrantBindings')
-      .withIndex('by_personId', q => q.eq('personId', person._id))
+      .withIndex('by_personId_and_active', q =>
+        q.eq('personId', person._id).eq('active', true)
+      )
       .take(100);
+    const recent = await ctx.db
+      .query('delegatedGrantBindings')
+      .withIndex('by_personId_and_active', q =>
+        q.eq('personId', person._id).eq('active', false)
+      )
+      .order('desc')
+      .take(100);
+    const bindings = [...active, ...recent];
     const results = [];
     for (const binding of bindings) {
       const grant = await ctx.db.get(binding.grantId);
@@ -119,9 +133,64 @@ export const listConnections = query({
             ? ('revoked' as const)
             : app.status === 'suspended'
               ? ('suspended' as const)
-              : ('active' as const),
+              : grant.expiresAt !== undefined && grant.expiresAt <= now
+                ? ('expired' as const)
+                : !binding.active
+                  ? ('unavailable' as const)
+                  : ('active' as const),
       });
     }
     return results;
+  },
+});
+
+export const listReviewableApps = query({
+  args: { reviewStatus: v.optional(reviewStatus) },
+  returns: v.array(
+    v.object({
+      _id: v.id('delegatedApps'),
+      ownerPersonId: v.id('persons'),
+      ownerDisplayName: v.string(),
+      name: v.string(),
+      purpose: v.string(),
+      clientType,
+      redirectUris: v.array(v.string()),
+      status,
+      reviewStatus,
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const auth = await getCurrentUserAndPerson(ctx);
+    if (!auth || !isAdminRole(auth.user.role)) return [];
+    const apps = await ctx.db
+      .query('delegatedApps')
+      .withIndex('by_reviewStatus', q =>
+        q.eq('reviewStatus', args.reviewStatus ?? 'pending')
+      )
+      .order('desc')
+      .take(100);
+    const result = [];
+    for (const app of apps) {
+      const owner = await ctx.db.get(app.ownerPersonId);
+      const user = owner
+        ? await authComponent.getAnyUserById(ctx, owner.userId as AuthUserId)
+        : null;
+      result.push({
+        _id: app._id,
+        ownerPersonId: app.ownerPersonId,
+        ownerDisplayName: user?.name ?? 'Unavailable account',
+        name: app.name,
+        purpose: app.purpose,
+        clientType: app.clientType,
+        redirectUris: app.redirectUris,
+        status: app.status,
+        reviewStatus: app.reviewStatus,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+      });
+    }
+    return result;
   },
 });

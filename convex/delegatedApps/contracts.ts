@@ -1,5 +1,6 @@
 import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
+import { action, selector } from '../authorization/contracts';
 
 export const clientType = v.union(
   v.literal('confidential'),
@@ -13,7 +14,8 @@ export const status = v.union(
 export const reviewStatus = v.union(
   v.literal('not-requested'),
   v.literal('pending'),
-  v.literal('reviewed')
+  v.literal('reviewed'),
+  v.literal('rejected')
 );
 export const appFields = {
   ownerPersonId: v.id('persons'),
@@ -50,9 +52,9 @@ export const artifactModel = v.union(
 
 /** Provider state stays separate from the app-owned authoritative grants. */
 export const tables = {
-  delegatedApps: defineTable(appFields).index('by_ownerPersonId', [
-    'ownerPersonId',
-  ]),
+  delegatedApps: defineTable(appFields)
+    .index('by_ownerPersonId', ['ownerPersonId'])
+    .index('by_reviewStatus', ['reviewStatus']),
   delegatedSubjects: defineTable({
     appId: v.id('delegatedApps'),
     personId: v.id('persons'),
@@ -75,6 +77,7 @@ export const tables = {
     .index('by_grantKey', ['grantKey'])
     .index('by_expiresAt', ['expiresAt']),
   delegatedGrantBindings: defineTable({
+    active: v.boolean(),
     grantKey: v.string(),
     grantId: v.id('authorizationGrants'),
     appId: v.id('delegatedApps'),
@@ -83,11 +86,29 @@ export const tables = {
   })
     .index('by_grantKey', ['grantKey'])
     .index('by_grantId', ['grantId'])
-    .index('by_personId', ['personId']),
+    .index('by_personId', ['personId'])
+    .index('by_personId_and_active', ['personId', 'active']),
   delegatedRevocations: defineTable({
     grantKey: v.string(),
     revokedAt: v.number(),
   }).index('by_grantKey', ['grantKey']),
+  delegatedConsentApprovals: defineTable({
+    ticketHash: v.string(),
+    interactionId: v.string(),
+    appId: v.id('delegatedApps'),
+    instanceId: v.string(),
+    requestedScopes: v.array(v.string()),
+    personId: v.id('persons'),
+    decision: v.union(v.literal('approved'), v.literal('denied')),
+    actions: v.array(action),
+    selector,
+    background: v.boolean(),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+  })
+    .index('by_ticketHash', ['ticketHash'])
+    .index('by_interactionId_and_personId', ['interactionId', 'personId'])
+    .index('by_expiresAt', ['expiresAt']),
   delegatedConsentRequests: defineTable({
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
@@ -98,5 +119,7 @@ export const tables = {
     personId: v.optional(v.id('persons')),
     grantId: v.optional(v.id('authorizationGrants')),
     grantKey: v.optional(v.string()),
-  }).index('by_interactionId', ['interactionId']),
+  })
+    .index('by_interactionId', ['interactionId'])
+    .index('by_expiresAt', ['expiresAt']),
 };

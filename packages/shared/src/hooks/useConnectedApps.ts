@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import type { FunctionReference } from 'convex/server';
 import type { ConvexId } from './types';
@@ -8,7 +9,7 @@ export function createConnectedAppHooks<Connections, Result>(api: {
       listConnections: FunctionReference<
         'query',
         'public',
-        Record<string, never>,
+        { now: number },
         Connections
       >;
     };
@@ -23,8 +24,15 @@ export function createConnectedAppHooks<Connections, Result>(api: {
   };
 }) {
   return {
-    useConnectedApps: () =>
-      useQuery(api.delegatedApps.queries.listConnections, {}),
+    useConnectedApps: () => {
+      // This is a display clock, not fetched data or an authorization ceiling.
+      const [now, setNow] = useState(() => Date.now());
+      useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 60000);
+        return () => clearInterval(timer);
+      }, []);
+      return useQuery(api.delegatedApps.queries.listConnections, { now });
+    },
     useDisconnectApp: () => useMutation(api.delegatedApps.mutations.disconnect),
   };
 }

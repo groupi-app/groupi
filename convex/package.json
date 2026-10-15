@@ -32,7 +32,7 @@
     "@groupi/shared": "workspace:*",
     "oidc-provider": "9.12.2",
     "fetch-to-node": "2.1.0",
-    "jose": "^6.2.3",
+    "jose": "6.2.12",
     "zod": "^4.4.3"
   },
   "devDependencies": {

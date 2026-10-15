@@ -7,7 +7,7 @@ import {
   type QueryCtx,
   type MutationCtx,
 } from '../_generated/server';
-import { liveGrant } from '../authorization/model';
+import { liveGrant, assertBounds } from '../authorization/model';
 
 async function binding(
   ctx: QueryCtx | MutationCtx,
@@ -25,7 +25,20 @@ async function binding(
     .unique();
   if (!bound) return null;
   try {
-    await liveGrant(ctx, bound.grantId, now);
+    const { grant, principal } = await liveGrant(ctx, bound.grantId, now);
+    const identityOnly =
+      principal.kind === 'user' &&
+      grant.actions.length === 0 &&
+      grant.selector.kind === 'selected' &&
+      grant.selector.eventIds.length === 0;
+    if (!identityOnly)
+      await assertBounds(
+        ctx,
+        grant.grantorPersonId,
+        principal.kind,
+        grant.selector,
+        grant.actions
+      );
     return bound;
   } catch {
     return null;
@@ -46,6 +59,7 @@ async function revoke(ctx: MutationCtx, grantKey: string) {
     .withIndex('by_grantKey', q => q.eq('grantKey', grantKey))
     .unique();
   if (bound) {
+    if (bound.active) await ctx.db.patch(bound._id, { active: false });
     const grant = await ctx.db.get(bound.grantId);
     if (grant && !grant.revokedAt)
       await ctx.db.patch(grant._id, {
@@ -300,5 +314,147 @@ export const account = internalQuery({
       person.userId as AuthUserId
     );
     return user ? { name: user.name ?? '', email: user.email } : null;
+  },
+});
+
+import { ConvexError } from 'convex/values';
+import { createUserGrant } from '../authorization/model';
+/** Called only after the provider verifies its signed browser interaction cookie. */
+export const finalizeConsent = internalMutation({
+  args: {
+    interactionId: v.string(),
+    ticketHash: v.string(),
+    instanceId: v.string(),
+    appId: v.id('delegatedApps'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const ticket = await ctx.db
+      .query('delegatedConsentApprovals')
+      .withIndex('by_ticketHash', q => q.eq('ticketHash', args.ticketHash))
+      .unique();
+    const request = await ctx.db
+      .query('delegatedConsentRequests')
+      .withIndex('by_interactionId', q =>
+        q.eq('interactionId', args.interactionId)
+      )
+      .unique();
+    if (
+      !ticket ||
+      !request ||
+      ticket.consumedAt !== undefined ||
+      ticket.expiresAt <= Date.now() ||
+      request.expiresAt <= Date.now() ||
+      request.decision ||
+      ticket.interactionId !== request.interactionId ||
+      ticket.appId !== request.appId ||
+      ticket.instanceId !== request.instanceId ||
+      request.instanceId !== args.instanceId ||
+      request.appId !== args.appId ||
+      JSON.stringify(ticket.requestedScopes) !==
+        JSON.stringify(request.requestedScopes)
+    )
+      throw new ConvexError('Authorization approval expired or invalid');
+    await accountActive(ctx, ticket.personId, Date.now());
+    const app = await ctx.db.get(request.appId);
+    if (
+      !app ||
+      app.status === 'suspended' ||
+      (app.status === 'testing' && app.ownerPersonId !== ticket.personId)
+    )
+      throw new ConvexError('App not eligible');
+    if (
+      ticket.actions.some(
+        action => !request.requestedScopes.includes(action)
+      ) ||
+      (ticket.background && !request.requestedScopes.includes('offline_access'))
+    )
+      throw new ConvexError('Approval scope changed');
+    if (ticket.decision === 'denied') {
+      await ctx.db.patch(request._id, {
+        decision: 'denied',
+        personId: ticket.personId,
+      });
+    } else {
+      const connections = await ctx.db
+        .query('delegatedGrantBindings')
+        .withIndex('by_personId_and_active', q =>
+          q.eq('personId', ticket.personId).eq('active', true)
+        )
+        .take(101);
+      let activeConnections = 0;
+      for (const connection of connections) {
+        const existing = await ctx.db.get(connection.grantId);
+        if (
+          !existing ||
+          existing.revokedAt !== undefined ||
+          (existing.expiresAt !== undefined && existing.expiresAt <= Date.now())
+        )
+          await ctx.db.patch(connection._id, { active: false });
+        else activeConnections++;
+      }
+      if (activeConnections >= 100)
+        throw new ConvexError('Disconnect an app before connecting another');
+      const grantId = await createUserGrant(ctx, {
+        personId: ticket.personId,
+        name: app.name,
+        actions: ticket.actions,
+        selector: ticket.selector,
+        background: ticket.background,
+        appId: app._id,
+        instanceId: request.instanceId,
+        expiresAt: Date.now() + 30 * 86400000,
+      });
+      const grantKey = request.interactionId;
+      await ctx.db.insert('delegatedGrantBindings', {
+        active: true,
+        grantKey,
+        grantId,
+        appId: app._id,
+        personId: ticket.personId,
+        instanceId: request.instanceId,
+      });
+      await ctx.db.patch(request._id, {
+        decision: 'approved',
+        personId: ticket.personId,
+        grantId,
+        grantKey,
+      });
+    }
+    await ctx.db.patch(ticket._id, { consumedAt: Date.now() });
+    return null;
+  },
+});
+
+import { internal } from '../_generated/api';
+/** Expired provider state is inert already; retain revocation tombstones permanently. */
+export const pruneExpired = internalMutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx): Promise<null> => {
+    const now = Date.now();
+    const [artifacts, approvals, requests] = await Promise.all([
+      ctx.db
+        .query('delegatedArtifacts')
+        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+        .take(100),
+      ctx.db
+        .query('delegatedConsentApprovals')
+        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+        .take(100),
+      ctx.db
+        .query('delegatedConsentRequests')
+        .withIndex('by_expiresAt', q => q.lt('expiresAt', now))
+        .take(100),
+    ]);
+    for (const record of [...artifacts, ...approvals, ...requests])
+      await ctx.db.delete(record._id);
+    if ([artifacts, approvals, requests].some(rows => rows.length === 100))
+      await ctx.scheduler.runAfter(
+        0,
+        internal.delegatedApps.storage.pruneExpired,
+        {}
+      );
+    return null;
   },
 });

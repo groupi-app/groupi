@@ -331,6 +331,14 @@ export const handle = internalAction({
     if (target.pathname.startsWith(interactionPath)) {
       const interaction = await provider.interactionDetails(req, res);
       const clientId = String(interaction.params.client_id);
+      if (
+        decodeURIComponent(target.pathname.slice(interactionPath.length)) !==
+        interaction.uid
+      )
+        throw new errors.InvalidRequest('Interaction browser mismatch');
+      const approvals = target.searchParams.getAll('approval');
+      if (approvals.length > 1)
+        throw new errors.InvalidRequest('Ambiguous approval');
       await ctx.runMutation(internal.delegatedApps.storage.prepareConsent, {
         interactionId: interaction.uid,
         appId: clientId as Id<'delegatedApps'>,
@@ -340,6 +348,13 @@ export const handle = internalAction({
           .filter(Boolean),
         expiresAt: interaction.exp * 1000,
       });
+      if (approvals.length === 1)
+        await ctx.runMutation(internal.delegatedApps.storage.finalizeConsent, {
+          interactionId: interaction.uid,
+          ticketHash: hash(approvals[0]),
+          instanceId: issuer,
+          appId: clientId as Id<'delegatedApps'>,
+        });
       const serialized = await ctx.runQuery(
         internal.delegatedApps.storage.consentDecision,
         { interactionId: interaction.uid, now: Date.now() }
