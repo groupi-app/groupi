@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm --filter @groupi/portal build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/((?!exports/|llms.txt|assets/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
