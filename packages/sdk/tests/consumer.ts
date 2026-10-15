@@ -46,3 +46,27 @@ client.searchUsers();
 // @ts-expect-error search requires the q field
 client.searchUsers({ query: {} });
 void readComposedSchemas;
+client.joinCommunityEvent(
+  { path: { groupId: 'group', eventId: 'event' }, body: {} },
+  { idempotencyKey: 'intent' }
+);
+client.joinCommunityEvent({
+  path: { groupId: 'group', eventId: 'event' },
+  // @ts-expect-error Join cannot assert attendance
+  body: { rsvp: 'YES' },
+});
+client.leaveCommunityEvent({
+  path: { groupId: 'group', eventId: 'event' },
+  body: { expectedRevision: 3 },
+});
+client.leaveCommunityEvent({
+  path: { groupId: 'group', eventId: 'event' },
+  // @ts-expect-error Event Leave requires the observed participation revision
+  body: {},
+});
+client.leaveCommunity({
+  path: { groupId: 'group' },
+  body: { expectedMembershipId: 'own-membership' },
+});
+// @ts-expect-error Group Leave cannot use an unbound empty destructive intent
+client.leaveCommunity({ path: { groupId: 'group' }, body: {} });

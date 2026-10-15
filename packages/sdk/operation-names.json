@@ -241,5 +241,9 @@
   "GET /groups/{groupId}/current-event": "readCurrentCommunityEvent",
   "POST /groups/{groupId}/community-applications": "submitCommunityApplication",
   "PATCH /groups/{groupId}/community-applications/{applicationId}": "editCommunityApplication",
-  "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication"
+  "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication",
+  "POST /groups/{groupId}/events/{eventId}/join": "joinCommunityEvent",
+  "PUT /groups/{groupId}/events/{eventId}/own-rsvp": "setCommunityRsvp",
+  "POST /groups/{groupId}/events/{eventId}/leave": "leaveCommunityEvent",
+  "POST /groups/{groupId}/community-leave": "leaveCommunity"
 }

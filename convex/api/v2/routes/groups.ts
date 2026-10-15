@@ -1,5 +1,12 @@
 import {
   CurrentCommunityEventSchema,
+  CommunityParticipationReceiptSchema,
+  CommunityEventLeaveReceiptSchema,
+  CommunityLeaveReceiptSchema,
+  CommunityJoinSchema,
+  CommunityRsvpSchema,
+  CommunityEventLeaveSchema,
+  CommunityLeaveSchema,
   CommunityApplicationReceiptSchema,
   CommunityApplicationSubmitSchema,
   CommunityApplicationEditSchema,
@@ -302,6 +309,79 @@ export function createGroupRoutes() {
       });
     }
   );
+  for (const op of [
+    {
+      method: 'post' as const,
+      suffix: 'events/{eventId}/join',
+      name: 'joinCommunityEvent',
+      body: CommunityJoinSchema,
+      receipt: CommunityParticipationReceiptSchema,
+    },
+    {
+      method: 'put' as const,
+      suffix: 'events/{eventId}/own-rsvp',
+      name: 'setCommunityRsvp',
+      body: CommunityRsvpSchema,
+      receipt: CommunityParticipationReceiptSchema,
+    },
+    {
+      method: 'post' as const,
+      suffix: 'events/{eventId}/leave',
+      name: 'leaveCommunityEvent',
+      body: CommunityEventLeaveSchema,
+      receipt: CommunityEventLeaveReceiptSchema,
+    },
+    {
+      method: 'post' as const,
+      suffix: 'community-leave',
+      name: 'leaveCommunity',
+      body: CommunityLeaveSchema,
+      receipt: CommunityLeaveReceiptSchema,
+    },
+  ])
+    app.openapi(
+      createRoute({
+        method: op.method,
+        path: `/groups/{groupId}/${op.suffix}`,
+        tags: ['Groups'],
+        operationId: op.name,
+        summary: op.name,
+        security: [{ boundedBearer: [] }],
+        request: {
+          params:
+            op.name === 'leaveCommunity'
+              ? params
+              : params.extend({ eventId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: { 'application/json': { schema: op.body } },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Committed minimal receipt; independent participation is retained on Group departure',
+            content: {
+              'application/json': {
+                schema: op.receipt,
+              },
+            },
+          },
+          ...errors,
+          409: {
+            description:
+              'Stale intent, protected role, or operation replay conflict',
+            content: { 'application/json': { schema: ErrorResponseSchema } },
+          },
+        },
+      }),
+      async () => {
+        throw new HTTPException(403, {
+          message: 'Selected Group delegated credential required',
+        });
+      }
+    );
   for (const operation of [
     {
       method: 'post' as const,

@@ -159,6 +159,7 @@ describe('selected Group delegated community context', () => {
       { applicationId: own.applicationId, decision: 'APPROVED' }
     );
     expect((await (await f.read()).json()).membership).toEqual({
+      membershipId: expect.any(String),
       role: 'MEMBER',
     });
     await f.owner.auth.mutation(api.groupModeration.mutations.leaveGroup, {

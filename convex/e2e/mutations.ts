@@ -1,3 +1,5 @@
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
+import { nextParticipationRevision } from '../events/participationRevision';
 import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
@@ -138,6 +140,11 @@ export const createMobileFixture = mutation({
       timezone: 'UTC',
     });
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -600,6 +607,11 @@ export const seedEvent = mutation({
 
     // Create organizer membership
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: 'ORGANIZER',
@@ -740,6 +752,11 @@ export const seedMembership = mutation({
     }
 
     const membershipId = await ctx.db.insert('memberships', {
+      participationRevision: await nextParticipationRevision(
+        ctx,
+        eventId,
+        personId
+      ),
       personId,
       eventId,
       role: args.role,
@@ -867,6 +884,7 @@ export const cleanupTestData = mutation({
         await deleteEventTransfers(ctx, eventId);
         await deleteEventApplications(ctx, eventId);
         await removeAudiencesForEvent(ctx, eventId);
+        await deleteEventParticipationRevisions(ctx, eventId);
         await ctx.db.delete(eventId);
       } catch {
         // Ignore if already deleted

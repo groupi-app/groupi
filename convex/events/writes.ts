@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import { guardEventReactivation } from './lifecycle';
 import { AddonConfigSchema } from '../addons/schemas';
 import { addonConfig } from '../addons/contracts';
@@ -297,6 +298,11 @@ export async function createEventForPerson(
 
   // Create the creator's membership as ORGANIZER
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      eventId,
+      personId
+    ),
     personId: personId,
     eventId: eventId,
     role: 'ORGANIZER',

@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import { resolveAdmissionPolicy, eventAdmissionAccess } from './admission';
 import { eventDiscoveryReasons } from '../groupEventAudiences/access';
 import { requirePerson } from '../groups/model';
@@ -207,7 +208,7 @@ export async function leaveEventForPerson(
 
     if (organizers.length <= 1) {
       throw new ConvexError({
-        code: 'FORBIDDEN',
+        code: 'PROTECTED_ORGANIZER',
         message:
           'Cannot leave event as the last organizer. Transfer ownership first.',
       });
@@ -406,6 +407,11 @@ export async function admitAttendeeForPerson(
 
   const now = Date.now();
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      eventId,
+      personId
+    ),
     personId: personId,
     eventId: eventId,
     role: 'ATTENDEE',

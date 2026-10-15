@@ -53,6 +53,7 @@ async function fixture(confidential = false) {
   );
   let context: Awaited<ReturnType<typeof helpers.setup>>;
   let origin: string;
+  let dropMutationResponse = false;
   const seenHeaders: Array<{
     authorization: string | undefined;
     key: string | undefined;
@@ -99,6 +100,15 @@ async function fixture(confidential = false) {
             ...(body.length ? { body: new Uint8Array(body) } : {}),
           })
         );
+        if (
+          dropMutationResponse &&
+          req.url?.startsWith('/api/v2/groups/') &&
+          req.method !== 'GET'
+        ) {
+          dropMutationResponse = false;
+          res.destroy();
+          return;
+        }
         res.writeHead(response.status, Object.fromEntries(response.headers));
         res.end(new Uint8Array(await response.arrayBuffer()));
       } catch (error) {
@@ -181,6 +191,9 @@ async function fixture(confidential = false) {
     origin,
     seenHeaders,
     driver,
+    dropNextMutationResponse() {
+      dropMutationResponse = true;
+    },
     async close() {
       server.closeAllConnections();
       await new Promise<void>(done => server.close(() => done()));
@@ -266,6 +279,177 @@ for (const language of ['typescript', 'python'])
         });
         expect(
           await d.request({ operation: 'current-event', groupId: otherId })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
+    it('joins Pending, explicitly RSVPs, and reconciles lost independent leaves with the same generated SDK intent', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const staff = await createAuthAccount(
+          context.t,
+          'sdk-participation-staff'
+        );
+        const groupId = await staff.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Participation community' }
+        );
+        await context.t.run(async ctx => {
+          await ctx.db.insert('groupMemberships', {
+            groupId,
+            personId: context.owner.personId,
+            role: 'MEMBER',
+            joinedAt: Date.now(),
+          });
+          await ctx.db.insert('memberships', {
+            eventId: context.event.eventId,
+            personId: staff.personId,
+            role: 'ORGANIZER',
+            rsvpStatus: 'YES',
+          });
+        });
+        await staff.auth.mutation(
+          makeFunctionReference(
+            'groupEventAudiences/mutations:shareEventWithGroup'
+          ),
+          { groupId, eventId: context.event.eventId }
+        );
+        await staff.auth.mutation(
+          makeFunctionReference('events/mutations:updateAdmissionPolicy'),
+          { eventId: context.event.eventId, admissionPolicy: 'DIRECT' }
+        );
+        await context.owner.auth.mutation(
+          makeFunctionReference('events/mutations:leaveEvent'),
+          { eventId: context.event.eventId }
+        );
+        const actions = [
+          'groups.context.read',
+          'groups.events.read',
+          'groups.events.join',
+          'groups.events.rsvp',
+          'groups.events.leave',
+          'groups.leave',
+        ] as const;
+        const authorization = await helpers.authorize(context, {
+          scopes: `openid ${actions.join(' ')}`,
+          actions: [...actions],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions,
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        const path = { groupId, eventId: context.event.eventId };
+        const joinIntent = {
+          operation: 'application',
+          method: 'joinCommunityEvent',
+          operationId: crypto.randomUUID(),
+          input: { path, body: {} },
+        };
+        const joined = await d.request(joinIntent);
+        expect(joined).toMatchObject({
+          ok: true,
+          result: { result: { participation: { rsvp: 'PENDING' } } },
+        });
+        expect(
+          await d.request({
+            operation: 'application',
+            method: 'setCommunityRsvp',
+            operationId: crypto.randomUUID(),
+            input: {
+              path,
+              body: {
+                expectedRevision: joined.result.result.participation.revision,
+                rsvp: 'YES',
+              },
+            },
+          })
+        ).toMatchObject({
+          ok: true,
+          result: { result: { participation: { rsvp: 'YES' } } },
+        });
+        expect(await d.request(joinIntent)).toEqual(joined);
+        const current = await d.request({
+          operation: 'current-event',
+          groupId,
+        });
+        expect(current.result.participation.rsvp).toBe('YES');
+        const community = await d.request({ operation: 'community', groupId });
+        const leaveGroup = {
+          operation: 'application',
+          method: 'leaveCommunity',
+          operationId: crypto.randomUUID(),
+          input: {
+            path: { groupId },
+            body: {
+              expectedMembershipId: community.result.membership.membershipId,
+            },
+          },
+        };
+        f.dropNextMutationResponse();
+        expect(await d.request(leaveGroup)).toMatchObject({
+          ok: false,
+          uncertain: true,
+        });
+        expect(await d.request(leaveGroup)).toMatchObject({
+          ok: true,
+          result: {
+            result: {
+              membership: null,
+              retainsIndependentEventParticipation: true,
+            },
+          },
+        });
+        expect(
+          await d.request({ operation: 'current-event', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: { participation: { rsvp: 'YES' } },
+        });
+        const leaveEvent = {
+          operation: 'application',
+          method: 'leaveCommunityEvent',
+          operationId: crypto.randomUUID(),
+          input: {
+            path,
+            body: { expectedRevision: current.result.participation.revision },
+          },
+        };
+        f.dropNextMutationResponse();
+        expect(await d.request(leaveEvent)).toMatchObject({
+          ok: false,
+          uncertain: true,
+        });
+        const left = await d.request(leaveEvent);
+        expect(left).toMatchObject({
+          ok: true,
+          result: { result: { participation: null } },
+        });
+        expect(await d.request(leaveEvent)).toEqual(left);
+        expect(
+          await d.request({ ...joinIntent, operationId: crypto.randomUUID() })
         ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
       } finally {
         await d.close();

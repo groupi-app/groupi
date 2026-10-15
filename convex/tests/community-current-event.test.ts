@@ -117,7 +117,7 @@ it('reads before Join for eligible Group members, hides roster, and preserves re
       roster: null,
     },
     participation: null,
-    allowedActions: ['groups.events.read'],
+    allowedActions: ['groups.events.read', 'groups.events.join'],
   });
   await f.t.run(async ctx => {
     await ctx.db.insert('memberships', {
@@ -236,7 +236,11 @@ it('serves delegated selected Group HTTP reads with read-only scope and revokes 
   const response = await read();
   expect(response.status, await response.clone().text()).toBe(200);
   expect(response.headers.get('cache-control')).toContain('no-store');
-  expect(await response.json()).toEqual(await f.read());
+  expect(await response.json()).toEqual({
+    ...(await f.read()),
+    allowedActions: ['groups.events.read'],
+    allowedRsvpTransitions: [],
+  });
   expect((await read('guessed-private-id')).status).toBe(403);
   const connections = await f.owner.auth.query(
     api.delegatedApps.queries.listConnections,

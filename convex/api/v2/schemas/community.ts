@@ -11,7 +11,10 @@ export const CommunityContextSchema = z.object({
     questions: z.array(GroupApplicationQuestionSchema),
   }),
   membership: z
-    .object({ role: z.enum(['OWNER', 'MODERATOR', 'MEMBER']) })
+    .object({
+      membershipId: z.string(),
+      role: z.enum(['OWNER', 'MODERATOR', 'MEMBER']),
+    })
     .nullable(),
   eligibility: z.object({
     canApply: z.boolean(),
@@ -95,4 +98,44 @@ export const CommunityApplicationEditSchema = z
   .strict();
 export const CommunityApplicationWithdrawSchema = z
   .object({ expectedRevision: z.number().int().nonnegative() })
+  .strict();
+
+const participation = z.object({
+  membershipId: z.string(),
+  revision: z.number(),
+  rsvp: z.enum(['PENDING', 'YES', 'NO', 'MAYBE']),
+});
+const effects = z.object({
+  email: z.literal('not-requested'),
+  cleanup: z.literal('not-requested'),
+});
+const receiptBase = z.object({
+  operationId: z.string().uuid(),
+  outcome: z.literal('committed'),
+  effects,
+});
+export const CommunityParticipationReceiptSchema = receiptBase.extend({
+  result: z.object({ eventId: z.string(), participation }),
+});
+export const CommunityEventLeaveReceiptSchema = receiptBase.extend({
+  result: z.object({ eventId: z.string(), participation: z.null() }),
+});
+export const CommunityLeaveReceiptSchema = receiptBase.extend({
+  result: z.object({
+    membership: z.null(),
+    retainsIndependentEventParticipation: z.literal(true),
+  }),
+});
+export const CommunityJoinSchema = z.object({}).strict();
+export const CommunityRsvpSchema = z
+  .object({
+    expectedRevision: z.number().int().nonnegative(),
+    rsvp: z.enum(['PENDING', 'YES', 'NO', 'MAYBE']),
+  })
+  .strict();
+export const CommunityEventLeaveSchema = z
+  .object({ expectedRevision: z.number().int().nonnegative() })
+  .strict();
+export const CommunityLeaveSchema = z
+  .object({ expectedMembershipId: z.string() })
   .strict();

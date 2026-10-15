@@ -142,6 +142,8 @@ export function createApiV2App(
           'STALE_REVISION',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
+          'PROTECTED_OWNER',
+          'PROTECTED_ORGANIZER',
           'STALE_REVISION',
           'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',

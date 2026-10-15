@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { v, type Infer } from 'convex/values';
@@ -165,6 +166,11 @@ export async function acceptEventInviteForPerson(
   );
 
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      invite.eventId,
+      person._id
+    ),
     personId: person._id,
     eventId: invite.eventId,
     role: invite.role,

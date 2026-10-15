@@ -653,7 +653,16 @@ export default defineSchema({
     .index('by_creator', ['creatorId'])
     .index('by_creator_visibility', ['creatorId', 'visibility']),
 
+  participationRevisions: defineTable({
+    eventId: v.id('events'),
+    personId: v.id('persons'),
+    revision: v.number(),
+  })
+    .index('by_person_event', ['personId', 'eventId'])
+    .index('by_event', ['eventId']),
+
   memberships: defineTable({
+    participationRevision: v.optional(v.number()),
     personId: v.id('persons'),
     eventId: v.id('events'),
     role: v.union(

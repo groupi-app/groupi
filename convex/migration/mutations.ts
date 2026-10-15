@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import {
@@ -571,6 +572,11 @@ export const migrateMemberships = internalMutation({
 
     for (const membership of memberships) {
       const membershipId = await ctx.db.insert('memberships', {
+        participationRevision: await nextParticipationRevision(
+          ctx,
+          membership.eventId as Id<'events'>,
+          membership.personId as Id<'persons'>
+        ),
         personId: membership.personId as Id<'persons'>,
         eventId: membership.eventId as Id<'events'>,
         role: membership.role,

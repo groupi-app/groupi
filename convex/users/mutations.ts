@@ -1,3 +1,4 @@
+import { deletePersonParticipationRevisions } from '../events/participationRevision';
 import { parseWebhookHeaders } from '../notifications/contracts';
 import { removeGroupMembershipsForPerson } from '../groups/model';
 import { deletePersonApplications } from '../eventApplications/cleanup';
@@ -670,6 +671,7 @@ export async function deleteResolvedAccount(
   }
   await deletePersonApplications(ctx, person._id);
   await deleteListsForPerson(ctx, person._id);
+  await deletePersonParticipationRevisions(ctx, person._id);
   await ctx.db.delete(person._id);
 
   if (user) {

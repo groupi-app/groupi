@@ -2,6 +2,22 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G5 source candidate — 2026-10-15
+
+- Implements selected Group Join with Pending RSVP, explicit own RSVP and independent
+  Event/Group Leave with minimal durable receipts. Group Leave preserves Event
+  membership and RSVP; current owner/last-Organizer safeguards return typed conflicts.
+- Coordinates exact Event Leave `{expectedRevision}`, own-context
+  `membership.membershipId`, and Group Leave `{expectedMembershipId}` across backend,
+  OpenAPI, generated TypeScript/Python and synthetic fixtures. Durable per-person/Event
+  revisions prevent a stale form deleting same-millisecond replacement participation.
+- Uses the G3 receipt window/binding/authority boundary. Original committed leave
+  replay reconciles after membership removal and does not delete a replacement.
+  Native web/mobile confirmation states independent participation consequences.
+- Matching deployed frontend/backend SHA, isolated signed-in browser/device, observed
+  VoiceOver and provider acceptance remain unverified G10 prerequisites. Source tests
+  and offline application declaration refresh are not deployment/component codegen.
+
 ## Red Room G4 source candidate — 2026-10-15
 
 - Adds delegated `groups.events.read` current Event selection with native parity,

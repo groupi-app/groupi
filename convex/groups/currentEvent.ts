@@ -1,3 +1,4 @@
+import { participationRevision } from '../events/participationRevision';
 import { rsvpChoices, rsvpStatus } from '../availability/contracts';
 import { isEventComplete } from '../events/lifecycle';
 import { v } from 'convex/values';
@@ -52,7 +53,12 @@ export async function currentEventForPerson(
   ctx: QueryCtx | MutationCtx,
   groupId: Id<'groups'>,
   personId: Id<'persons'>,
-  grantedActions: string[] = ['groups.events.read'],
+  grantedActions: string[] = [
+    'groups.events.read',
+    'groups.events.join',
+    'groups.events.rsvp',
+    'groups.events.leave',
+  ],
   now = Date.now()
 ) {
   if (!(await ctx.db.get(groupId))) throw denied();
@@ -79,6 +85,16 @@ export async function currentEventForPerson(
       code: 'STAFF_CONFIGURATION_CONFLICT' as const,
     };
   const { event, access } = events[0];
+  let canLeave = Boolean(access.membership);
+  if (access.membership?.role === 'ORGANIZER') {
+    const organizers = await ctx.db
+      .query('memberships')
+      .withIndex('by_event_role', q =>
+        q.eq('eventId', event._id).eq('role', 'ORGANIZER')
+      )
+      .collect();
+    canLeave = organizers.length > 1;
+  }
   let roster: { displayName: string }[] | null = null;
   if (access.membership && canViewAttendance(event, access.membership)) {
     roster = [];
@@ -94,7 +110,10 @@ export async function currentEventForPerson(
   return {
     kind: 'event' as const,
     supportedRsvpChoices: [...rsvpChoices],
-    allowedRsvpTransitions: [],
+    allowedRsvpTransitions:
+      access.membership && grantedActions.includes('groups.events.rsvp')
+        ? [...rsvpChoices]
+        : [],
     event: {
       id: event._id,
       title: event.title,
@@ -110,13 +129,18 @@ export async function currentEventForPerson(
     participation: access.membership
       ? {
           membershipId: access.membership._id,
-          revision:
-            access.membership.updatedAt ?? access.membership._creationTime,
+          revision: participationRevision(access.membership),
           rsvp: access.membership.rsvpStatus,
         }
       : null,
-    // Write actions are added only by the milestone that implements them.
-    allowedActions: grantedActions.filter(a => a === 'groups.events.read'),
+    // Grant and current eligibility jointly describe implemented actions.
+    allowedActions: grantedActions.filter(
+      a =>
+        a === 'groups.events.read' ||
+        (a === 'groups.events.join' && eligible && access.canJoin) ||
+        (a === 'groups.events.rsvp' && Boolean(access.membership)) ||
+        (a === 'groups.events.leave' && canLeave)
+    ),
   };
 }
 export const getCurrentEvent = query({

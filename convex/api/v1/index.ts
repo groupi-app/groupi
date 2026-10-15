@@ -106,6 +106,8 @@ export function createApiV1App(
         typeof data.code === 'string' &&
         [
           'CONFLICT',
+          'PROTECTED_OWNER',
+          'PROTECTED_ORGANIZER',
           'VALIDATION_ERROR',
           'FORBIDDEN',
           'NOT_FOUND',
@@ -123,7 +125,9 @@ export function createApiV1App(
               message: data.message,
             },
           },
-          data.code === 'CONFLICT'
+          ['CONFLICT', 'PROTECTED_OWNER', 'PROTECTED_ORGANIZER'].includes(
+            data.code
+          )
             ? 409
             : data.code === 'FORBIDDEN'
               ? 403

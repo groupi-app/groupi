@@ -351,7 +351,10 @@ it('replays an edit after a decision without undoing the decision or current mem
       )
     ).json()
   ).toEqual(edited);
-  expect((await f.read()).membership).toEqual({ role: 'MEMBER' });
+  expect((await f.read()).membership).toMatchObject({
+    role: 'MEMBER',
+    membershipId: expect.any(String),
+  });
   await f.owner.auth.mutation(api.groupModeration.mutations.leaveGroup, {
     groupId: f.groupId,
   });

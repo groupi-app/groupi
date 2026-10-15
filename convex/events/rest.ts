@@ -1,3 +1,4 @@
+import { deleteEventParticipationRevisions } from '../events/participationRevision';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
@@ -346,6 +347,7 @@ export const deleteEvent = internalMutation({
 
     // Delete event
     await deleteEventApplications(ctx, eventId);
+    await deleteEventParticipationRevisions(ctx, eventId);
     await ctx.db.delete(eventId);
 
     return { success: true };

@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Iterator, Literal, NotRequired, TypedDict, Protocol
+from typing import NoReturn, AsyncIterator, Iterator, Literal, NotRequired, TypedDict, Protocol
 
 class DelegatedToken(TypedDict):
     access_token: str
@@ -590,8 +590,12 @@ class Groupi:
     def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
-    def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object3f7b83728032: ...
+    def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectc84fb5a8fcae: ...
     def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
+    def join_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: dict[str, NoReturn], idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
+    def set_community_rsvp(self, *, path: Object662cba3b4b77, query: None | None = ..., body: Object309b8d6ee3c7, idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
+    def leave_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object288ba65ddff3: ...
+    def leave_community(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6c49c59c24af, idempotency_key: str | None = ...) -> Object55bc59b678b3: ...
     def submit_community_application(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objecte4ea0c62ce41, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
@@ -884,8 +888,12 @@ class AsyncGroupi:
     async def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     async def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     async def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
-    async def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object3f7b83728032: ...
+    async def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectc84fb5a8fcae: ...
     async def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
+    async def join_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: dict[str, NoReturn], idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
+    async def set_community_rsvp(self, *, path: Object662cba3b4b77, query: None | None = ..., body: Object309b8d6ee3c7, idempotency_key: str | None = ...) -> Objectd0927d889d39: ...
+    async def leave_community_event(self, *, path: Object662cba3b4b77, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object288ba65ddff3: ...
+    async def leave_community(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6c49c59c24af, idempotency_key: str | None = ...) -> Object55bc59b678b3: ...
     async def submit_community_application(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objecte4ea0c62ce41, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
@@ -1933,11 +1941,11 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Object3f7b83728032(TypedDict):
+class Objectc84fb5a8fcae(TypedDict):
     contractVersion: Literal['red-room.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
-    membership: Object5b35bc95b99b | None
+    membership: Object6ffc35fcb505 | None
     eligibility: Object9181a91b6751
     applications: list[Object9a607b8a62e8]
     nextCursor: str | None
@@ -1962,6 +1970,35 @@ class Object0b7836604670(TypedDict):
     event: Object8f7560a6b20e
     participation: Object427b94380342 | None
     allowedActions: list[str]
+
+class Objectd0927d889d39(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objectf03c0b814f7e
+
+class Object662cba3b4b77(TypedDict):
+    groupId: str
+    eventId: str
+
+class Object309b8d6ee3c7(TypedDict):
+    expectedRevision: int
+    rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
+
+class Object288ba65ddff3(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objecte942149005cb
+
+class Object55bc59b678b3(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objectfc3c77e1d00a
+
+class Object6c49c59c24af(TypedDict):
+    expectedMembershipId: str
 
 class Object53e85f30308a(TypedDict):
     operationId: str
@@ -2699,7 +2736,8 @@ class Objecta61bf08328e7(TypedDict):
     revision: str
     questions: list[Object6a6aeb3276ba]
 
-class Object5b35bc95b99b(TypedDict):
+class Object6ffc35fcb505(TypedDict):
+    membershipId: str
     role: Literal['OWNER', 'MODERATOR', 'MEMBER']
 
 class Object9181a91b6751(TypedDict):
@@ -2736,6 +2774,18 @@ class Object427b94380342(TypedDict):
     membershipId: str
     revision: float
     rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
+
+class Objectf03c0b814f7e(TypedDict):
+    eventId: str
+    participation: Object7cd832af6593
+
+class Objecte942149005cb(TypedDict):
+    eventId: str
+    participation: None
+
+class Objectfc3c77e1d00a(TypedDict):
+    membership: None
+    retainsIndependentEventParticipation: Literal[True]
 
 class Object878ec63794f7(TypedDict):
     applicationId: str
@@ -2849,6 +2899,11 @@ class Object1fa6adfb22bd(TypedDict):
 
 class Object1e0b443bfaa7(TypedDict):
     displayName: str
+
+class Object7cd832af6593(TypedDict):
+    membershipId: str
+    revision: float
+    rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
 
 class Object30a6d58642d2(TypedDict):
     id: str

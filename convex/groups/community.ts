@@ -28,6 +28,7 @@ export const context = v.object({
   membership: v.union(
     v.null(),
     v.object({
+      membershipId: v.id('groupMemberships'),
       role: v.union(
         v.literal('OWNER'),
         v.literal('MODERATOR'),
@@ -158,7 +159,9 @@ export const readContext = internalQuery({
         revision: await secretHash(JSON.stringify({ enabled, questions })),
         questions,
       },
-      membership: membership ? { role: membership.role } : null,
+      membership: membership
+        ? { membershipId: membership._id, role: membership.role }
+        : null,
       eligibility: {
         canApply: eligible && enabled && !membership && !pending,
         canAccessMemberContent,
@@ -180,6 +183,9 @@ export const readContext = internalQuery({
         a =>
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
+            (a === 'groups.leave' &&
+              Boolean(membership) &&
+              membership?.role !== 'OWNER') ||
             (a === 'groups.applications.submit' &&
               eligible &&
               enabled &&

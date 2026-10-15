@@ -1,6 +1,6 @@
 # Red Room integration contract
 
-`red-room.v1` publishes a selected-Group applicant integration. G1 consent/own-context and G3 own-application writes below are implemented in this source candidate. Publication does not establish deployment or provider acceptance. Synthetic development data is shipped at `@groupi/sdk/community-contract`; it is not a service adapter.
+`red-room.v1` publishes a selected-Group applicant integration. G1 consent/own-context, G3 own-application writes and G4/G5 current Event participation below are implemented in this source candidate. Publication does not establish deployment or provider acceptance. Synthetic development data is shipped at `@groupi/sdk/community-contract`; it is not a service adapter.
 
 ## Table of Contents
 
@@ -9,42 +9,43 @@
 - [Errors and recovery](#errors-and-recovery)
 - [Proposed mutation replay](#proposed-mutation-replay)
 - [Fixtures and release gates](#fixtures-and-release-gates)
+- [G5 independent participation and departure](#g5-independent-participation-and-departure)
 
 ## Implemented boundary
 
 Use the existing approved native or confidential-web delegated client, with exact issuer, API audience, registered redirect, state, nonce and S256 PKCE. A confidential site retains reusable credentials on its server. Send `group_id=<selected Group ID>` in the authorization request; TypeScript `DelegatedSession.authorizationRequest` accepts `selectedGroupId`, and Python `authorization_request` accepts `selected_group_id`. Request `groups.context.read` and only separately necessary identity claims/background access. Consent binds the selected Group to the browser interaction. Users may decline any action. Selecting a Group grants no membership, reviewer authority or Event access. The screen discloses its current/future audience Events as the boundary for future participation permissions, without claiming those permissions are live.
 
-The grant selector is `{kind:"selected-group",groupId}`. Existing Event selectors and named/integration keys retain their independent semantics. Group grants permit independently selected identity actions, `groups.context.read`, and G3 `groups.applications.submit`/`edit`/`withdraw` actions. Write scopes do not require read scope; future permissions require implemented actions and renewed explicit consent. No organizer credential fallback is supported. Identity remains verified issuer plus the app-specific subject from the existing signed identity protocol, never email or a global person ID.
+The grant selector is `{kind:"selected-group",groupId}`. Existing Event selectors and named/integration keys retain their independent semantics. Group grants permit independently selected identity actions, `groups.context.read`, G3 `groups.applications.submit`/`edit`/`withdraw`, G4 `groups.events.read`, and G5 `groups.events.join`/`rsvp`/`leave` plus `groups.leave` actions. Write scopes do not require read scope; future permissions require implemented actions and renewed explicit consent. No organizer credential fallback is supported. Identity remains verified issuer plus the app-specific subject from the existing signed identity protocol, never email or a global person ID.
 
 `GET /api/v2/groups/{groupId}/community-context?cursor=...` requires a delegated bearer credential. Every read checks credential lifetime/scope/audience, live grant/account/app eligibility, active connection, exact selected Group and current Group policies in one read transaction. Testing apps remain usable only by their owner; nonowners require platform approval. Unknown or unrelated Group IDs produce the same permission denial without exposing existence. A banned person can read their own admission state/history, with no current questions or member-content eligibility; the grant never overrides a ban.
 
-The typed `CommunityContext` contains current form enabled state/questions and a content-derived revision, current membership independently from historical decisions, eligibility, up to 50 newest own applications and `nextCursor`, granted actions and currently implemented allowed operations. Fetch subsequent pages with the opaque cursor. Saved questions/answers remain attached to each application. Decisions omit reviewer/person IDs and all free-text review reasons; other applicants, their existence, answers and private staff data are absent. `canApply` describes current admission eligibility; submit is available only when its exact scope is currently granted. `allowedActions` contains only implemented actions. Announcement preference is `{supported:false,subscribed:null}` until G7, never an invented subscription. Protected success and error responses use `private, no-store`; refresh on page entry, return/focus and after actions. Realtime is unnecessary.
+The typed `CommunityContext` contains current form enabled state/questions and a content-derived revision, current membership (own `membershipId` and role) independently from historical decisions, eligibility, up to 50 newest own applications and `nextCursor`, granted actions and currently implemented allowed operations. Fetch subsequent pages with the opaque cursor. Saved questions/answers remain attached to each application. Decisions omit reviewer/person IDs and all free-text review reasons; other applicants, their existence, answers and private staff data are absent. `canApply` describes current admission eligibility; submit is available only when its exact scope is currently granted. `allowedActions` contains only implemented actions. Announcement preference is `{supported:false,subscribed:null}` until G7, never an invented subscription. Protected success and error responses use `private, no-store`; refresh on page entry, return/focus and after actions. Realtime is unnecessary.
 
 ## Operation mapping
 
 The SDK exports exact current/proposed mappings as `communityOperations` and types in `community-contract.d.ts`. All paths below are relative to `/api/v2`. Proposed names reserve the coordination contract; they are deliberately absent from callable SDK classes and public OpenAPI until implemented. Methods and payload/result types must be implemented and tested at the named milestone before use against a live provider.
 
-| Concept                              | HTTP and SDK mapping                                                                                                                        | Status / acceptance                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Hosted authentication and consent    | Existing `/oauth/auth`, `/oauth/token`; `DelegatedSession` / `DelegatedSession`                                                             | G1 selected Group; G2 themed journey; G10 live provider acceptance     |
-| Own community context                | `GET /groups/{groupId}/community-context`; `readOwnCommunityContext` / `read_own_community_context`                                         | Implemented G1                                                         |
-| Read own application/history         | Own-context `applications` projection, paginated by cursor                                                                                  | Implemented G1; includes saved snapshots and decisions                 |
-| Submit own application               | `POST /groups/{groupId}/community-applications`; `submitCommunityApplication` / `submit_community_application`                              | Implemented G3                                                         |
-| Edit own application                 | `PATCH /groups/{groupId}/community-applications/{applicationId}`; `editCommunityApplication` / `edit_community_application`                 | Implemented G3                                                         |
-| Withdraw own application             | `POST /groups/{groupId}/community-applications/{applicationId}/withdraw`; `withdrawCommunityApplication` / `withdraw_community_application` | Implemented G3                                                         |
-| Read single current Event / own RSVP | `GET /groups/{groupId}/current-event`; `readCurrentCommunityEvent` / `read_current_community_event`                                         | Implemented G4; explicit none/conflict/event discriminants             |
-| Join Event                           | `POST /groups/{groupId}/events/{eventId}/join`; `joinCommunityEvent` / `join_community_event`                                               | Proposed G5; creates Pending, never Yes; replay preserves later RSVP   |
-| Change own RSVP                      | `PUT /groups/{groupId}/events/{eventId}/own-rsvp`; `setCommunityRsvp` / `set_community_rsvp`                                                | Proposed G5                                                            |
-| Leave Event                          | `POST /groups/{groupId}/events/{eventId}/leave`; `leaveCommunityEvent` / `leave_community_event`                                            | Proposed G5                                                            |
-| Leave Group                          | `POST /groups/{groupId}/community-leave`; `leaveCommunity` / `leave_community`                                                              | Proposed G5; independent Event participation retained                  |
-| Read own announcement preference     | Own-context `announcementPreference`                                                                                                        | Shape published; supported only at G7                                  |
-| Change preference                    | `PUT /groups/{groupId}/announcement-preference`; `setCommunityAnnouncementPreference` / `set_community_announcement_preference`             | Proposed G7; explicit default off                                      |
-| Coordinated expulsion                | `POST /groups/{groupId}/coordinated-expulsions`; `expelCommunityMember` / `expel_community_member`                                          | Proposed G8; staff-only independent authority, progress and generation |
-| Reinstatement                        | `POST /groups/{groupId}/coordinated-expulsions/{personId}/reinstate`; `reinstateCommunityMember` / `reinstate_community_member`             | Proposed G9; restores no memberships/invitations/bans                  |
+| Concept                              | HTTP and SDK mapping                                                                                                                        | Status / acceptance                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Hosted authentication and consent    | Existing `/oauth/auth`, `/oauth/token`; `DelegatedSession` / `DelegatedSession`                                                             | G1 selected Group; G2 themed journey; G10 live provider acceptance      |
+| Own community context                | `GET /groups/{groupId}/community-context`; `readOwnCommunityContext` / `read_own_community_context`                                         | Implemented G1                                                          |
+| Read own application/history         | Own-context `applications` projection, paginated by cursor                                                                                  | Implemented G1; includes saved snapshots and decisions                  |
+| Submit own application               | `POST /groups/{groupId}/community-applications`; `submitCommunityApplication` / `submit_community_application`                              | Implemented G3                                                          |
+| Edit own application                 | `PATCH /groups/{groupId}/community-applications/{applicationId}`; `editCommunityApplication` / `edit_community_application`                 | Implemented G3                                                          |
+| Withdraw own application             | `POST /groups/{groupId}/community-applications/{applicationId}/withdraw`; `withdrawCommunityApplication` / `withdraw_community_application` | Implemented G3                                                          |
+| Read single current Event / own RSVP | `GET /groups/{groupId}/current-event`; `readCurrentCommunityEvent` / `read_current_community_event`                                         | Implemented G4; explicit none/conflict/event discriminants              |
+| Join Event                           | `POST /groups/{groupId}/events/{eventId}/join`; `joinCommunityEvent` / `join_community_event`                                               | Implemented G5; creates Pending, never Yes; replay preserves later RSVP |
+| Change own RSVP                      | `PUT /groups/{groupId}/events/{eventId}/own-rsvp`; `setCommunityRsvp` / `set_community_rsvp`                                                | Implemented G5                                                          |
+| Leave Event                          | `POST /groups/{groupId}/events/{eventId}/leave`; `leaveCommunityEvent` / `leave_community_event`                                            | Implemented G5                                                          |
+| Leave Group                          | `POST /groups/{groupId}/community-leave`; `leaveCommunity` / `leave_community`                                                              | Implemented G5; independent Event participation retained                |
+| Read own announcement preference     | Own-context `announcementPreference`                                                                                                        | Shape published; supported only at G7                                   |
+| Change preference                    | `PUT /groups/{groupId}/announcement-preference`; `setCommunityAnnouncementPreference` / `set_community_announcement_preference`             | Proposed G7; explicit default off                                       |
+| Coordinated expulsion                | `POST /groups/{groupId}/coordinated-expulsions`; `expelCommunityMember` / `expel_community_member`                                          | Proposed G8; staff-only independent authority, progress and generation  |
+| Reinstatement                        | `POST /groups/{groupId}/coordinated-expulsions/{personId}/reinstate`; `reinstateCommunityMember` / `reinstate_community_member`             | Proposed G9; restores no memberships/invitations/bans                   |
 
 ### Frozen action scopes and allowed actions
 
-`communityOperations.<operation>.action` and `communityActionCatalog` are the exact shared names below. `groups.context.read` and the three G3 application actions are grantable. Other entries remain **proposed**, rejected by current authorization validators and unavailable in live SDK authorization configuration until their milestone lands. Adding one requires updating grant validators, live authority, SDK scope lists and consent together. Staff actions never belong in applicant consent.
+`communityOperations.<operation>.action` and `communityActionCatalog` are the exact shared names below. `groups.context.read`, the three G3 application actions, G4 Event reads and the four G5 participation/leave actions are grantable. G7–G9 entries remain **proposed**, rejected by current authorization validators and unavailable in live SDK authorization configuration until their milestone lands. Adding one requires updating grant validators, live authority, SDK scope lists and consent together. Staff actions never belong in applicant consent.
 
 | Operation                            | Exact action/scope                        | Milestone       |
 | ------------------------------------ | ----------------------------------------- | --------------- |
@@ -63,7 +64,7 @@ The SDK exports exact current/proposed mappings as `communityOperations` and typ
 
 `grantedActions` is the intersection of current token scopes and the live App connection grant, not an inferred role or membership. `allowedActions` is its subset whose implemented operation is currently eligible on this selected resource. A scope does not imply authority; revocation, bans, membership, current admission policy and roles are rechecked at every protected operation. G3 advertises submit only when that exact action is granted and the person can currently apply, and edit/withdraw only for their own active pending application and corresponding scope. Event responses use these full action strings, never shorthand `join`/`rsvp`. Read scope is independent of write scope; a write-only receipt does not include answer/logistics/roster projections. Read own application/history and own preference use `groups.context.read`; own RSVP uses `groups.events.read` through the current-event projection.
 
-Application mutations take current form revision on submit and saved application revision on edit/withdraw; `ProposedOperations` defines all typed intent/result projections. For proposed wire mutations, `Idempotency-Key` carries `operationId`; path IDs come from `payload` and remaining payload fields plus `expectedRevision` form the JSON body. For example, submit sends `Idempotency-Key: <operationId>` with body `{formRevision:"<observed form.revision>",answers:{"<question id>":"<answer>"}}`; edit sends `{expectedRevision:<observed application.revision>,answers:{...}}`; withdrawal sends `{expectedRevision:<observed application.revision>}`. RSVP sends `{expectedRevision:<observed participation.revision>,rsvp:"YES"}`. Join and leave send `{}` with target IDs in the path. Preference sends `{subscribed:true}` or `{subscribed:false}`. Expulsion sends `{policy:"coordinated",personId:"<target>"}`; reinstatement sends `{generation:<observed exclusion generation>}`. Edit/withdraw/RSVP concurrency revisions are required typed inputs. Read authority filters reconciliation/state; mutation receipts contain only IDs/status/revision unless separately authorized reads are performed. No write permission implicitly returns answers, roster or logistics. Current own-context is the live community read. G3 mutations return minimal committed receipts; G4–G9 remain proposed.
+Application mutations take current form revision on submit and saved application revision on edit/withdraw; `ProposedOperations` defines all typed intent/result projections. For proposed wire mutations, `Idempotency-Key` carries `operationId`; path IDs come from `payload` and remaining payload fields plus `expectedRevision` form the JSON body. For example, submit sends `Idempotency-Key: <operationId>` with body `{formRevision:"<observed form.revision>",answers:{"<question id>":"<answer>"}}`; edit sends `{expectedRevision:<observed application.revision>,answers:{...}}`; withdrawal sends `{expectedRevision:<observed application.revision>}`. RSVP sends `{expectedRevision:<observed participation.revision>,rsvp:"YES"}`. Join sends `{}` with target IDs in the path. Event Leave sends `{expectedRevision:<observed participation.revision>}`; Group Leave sends `{expectedMembershipId:"<observed membership.membershipId>"}`. Preference sends `{subscribed:true}` or `{subscribed:false}`. Expulsion sends `{policy:"coordinated",personId:"<target>"}`; reinstatement sends `{generation:<observed exclusion generation>}`. Edit/withdraw/RSVP concurrency revisions are required typed inputs. Read authority filters reconciliation/state; mutation receipts contain only IDs/status/revision unless separately authorized reads are performed. No write permission implicitly returns answers, roster or logistics. Current own-context is the live community read. G3 and G5 mutations return minimal committed receipts; G7–G9 remain proposed.
 
 ## Errors and recovery
 
@@ -77,7 +78,7 @@ SDK `GroupiError` preserves wire `code`, HTTP `status`, `details` and `uncertain
 | `FORBIDDEN` (403)                                                       | Action/resource/current account, app or eligibility denied; re-read authorized state or return to consent. Retrying unchanged authority does not help. |
 | `VALIDATION_ERROR` (400)                                                | Fix input; proposed application validation includes answer shape and stale current-form submission errors.                                             |
 | `STALE_REVISION`, `CONFLICT` (409; proposed)                            | Read authorized current own state; ask for a fresh intent with its new revision.                                                                       |
-| `PROTECTED_OWNER`, `PROTECTED_ORGANIZER` (409; proposed)                | Staff must resolve ownership/last-Organizer safeguards; never display successful departure/expulsion.                                                  |
+| `PROTECTED_OWNER`, `PROTECTED_ORGANIZER` (409)                          | Staff must resolve ownership/last-Organizer safeguards; never display successful departure/expulsion.                                                  |
 | `STAFF_CONFIGURATION_CONFLICT` (current-event conflict discriminant)    | Multiple active applicable Events; staff resolution required, never select arbitrarily.                                                                |
 | `IDEMPOTENCY_CONFLICT` (409; proposed)                                  | Same operation ID with a different payload/resource/app/actor binding; reject, never replay unrelated effects.                                         |
 | `IDEMPOTENCY_EXPIRED` (409; proposed)                                   | Receipt window ended; reconcile authorized state before deciding a new intent.                                                                         |
@@ -88,7 +89,7 @@ Existing OAuth errors remain distinct: `access_denied` requires fresh explicit c
 
 ## Proposed mutation replay
 
-This replay contract is implemented for G3 application writes and optional staff decision intents; G4–G9 must reuse it. A caller generates a UUID operation ID for one deliberate intent. The server binds it to the verified issuer/app subject (internally current actor/app), operation, selected Group, target application/Event/person, expected revision and canonical validated payload. A duplicate identical request returns its original committed receipt without duplicate records, transitions, notifications or cleanup scheduling. A different binding/payload fails `IDEMPOTENCY_CONFLICT`. Authorization is rechecked even when retrieving a receipt, and result projections obey current read permission.
+This replay contract is implemented for G3 application writes and optional staff decision intents; G5 reuses it; G7–G9 must reuse it. A caller generates a UUID operation ID for one deliberate intent. The server binds it to the verified issuer/app subject (internally current actor/app), operation, selected Group, target application/Event/person, expected revision and canonical validated payload. A duplicate identical request returns its original committed receipt without duplicate records, transitions, notifications or cleanup scheduling. A different binding/payload fails `IDEMPOTENCY_CONFLICT`. Authorization is rechecked even when retrieving a receipt, and result projections obey current read permission.
 
 G3 retains authoritative receipts for exactly 30 days from the first accepted request and retains recognized operation IDs, bindings and minimal receipt records indefinitely as mismatch tombstones. No cleanup deletes these records. Replays never extend lifetime. Return `IDEMPOTENCY_EXPIRED` for an expired recognized receipt; beyond retained tombstones a client must not blindly retry an uncertain intent. Reconcile current own-context, current-event/RSVP or authorized staff progress first; if state cannot establish the original outcome, require explicit user/staff resolution before a new operation ID. Intentional later reapplication gets a new ID. The implementation milestone must publish its exact retention/cleanup horizon before acceptance.
 
@@ -108,7 +109,7 @@ The package fixtures contain synthetic names, IDs, answers and timestamps only. 
 
 Existing Groups #261 supplies native admission/history/review, independent Group/Event audiences, member onboarding and ordinary moderation. Existing delegated-readiness #346 supplies approved app registration, app-specific identity, signed protocol, bounded credentials, consent/disconnect and SDK consumers. This work extends those domain boundaries rather than impersonating applicants.
 
-Remaining gates include G2 trusted hosted appearance/onboarding, deployed G3 acceptance, G5 participation, G6 branded decision delivery, G7 preferences/announcements, G8 exclusion, G9 cleanup/reinstatement and G10 deployed acceptance. Existing narrowed backend schemas still need their two-stage [migration audit](strict-backend-contract-rollout.md); issuer signing/cookie configuration, matching deployed frontend/backend source, isolated browser identities, native accessibility where applicable and external security review remain unverified. Local protocol/HTTP and SDK tests are source evidence only. No live data or deployment is modified here.
+Remaining gates include G2 trusted hosted appearance/onboarding, deployed G3 acceptance, deployed G5 participation, G6 branded decision delivery, G7 preferences/announcements, G8 exclusion, G9 cleanup/reinstatement and G10 deployed acceptance. Existing narrowed backend schemas still need their two-stage [migration audit](strict-backend-contract-rollout.md); issuer signing/cookie configuration, matching deployed frontend/backend source, isolated browser identities, native accessibility where applicable and external security review remain unverified. Local protocol/HTTP and SDK tests are source evidence only. No live data or deployment is modified here.
 
 Contract additions may add optional fields within `red-room.v1`; incompatible field meanings, operation bindings, privacy or replay semantics require a new contract version and coordinated Groupi/Bound in Red consumer fixtures/tests. A proposed operation becomes supported only with its implementation, OpenAPI entry, generated SDK methods, authority/replay tests and milestone acceptance. Fixtures and both SDK references must move together.
 
@@ -128,10 +129,11 @@ Exactly zero applicable active Events returns `kind:none`; more than one returns
 `kind:conflict` with `STAFF_CONFIGURATION_CONFLICT`, without arbitrarily selecting
 or exposing unrelated Event IDs. A single Event returns description, timezone,
 logistics, own participation and full action strings. `supportedRsvpChoices` is
-computed from the canonical RSVP validator choices; `allowedRsvpTransitions` is
-empty until G5 implements and authorizes RSVP writes. G5 must advertise transitions
-only for a live own membership with the granted eligible `groups.events.rsvp`
-action. G4 advertises only `groups.events.read`.
+computed from the canonical RSVP validator choices; `allowedRsvpTransitions` contains those choices only for a live own membership
+with the granted eligible `groups.events.rsvp` action. Join, RSVP and Event Leave
+actions are advertised only with their exact granted scope and current eligibility;
+last Organizers are not offered Leave. Native reads describe native authority.
+Read-only delegated grants never advertise writes.
 
 Staff use native `api.events.lifecycleOperations.getLifecycle` and
 `api.events.lifecycleOperations.setLifecycle`, or legacy API-key REST
@@ -181,3 +183,63 @@ Decision commitment and admission are independent of email. Native application r
 A single durable dispatch belongs to each decided application. Claiming is transactional; replaying the decision cannot queue another message or restore departed membership. Frozen messages use a per-dispatch/per-recipient provider idempotency key. Current Group managers can retry delivery from web/mobile review without repeating a decision. Active claims reject retries for five minutes; queued or failed claims can retry within 23 hours of the decision. Beyond that conservative bound, staff must inspect provider delivery before contacting the applicant: [Resend's idempotency retention is 24 hours](https://resend.com/changelog/idempotency-keys), so automated retries stop rather than risk duplicate mail. Decision replay receipts retain the G3 30-day policy independently. Application/Group/account cleanup removes dispatch payloads with the private application.
 
 Email links go first to the trusted Groupi `/application-status/{applicationId}` route. The route signs in the applicant, checks ownership/current account/Group eligibility, displays historical decision separately from current membership, and only offers the configured site return after rechecking the source app, active grant/binding, selected Group and current `groups.context.read` authority. It adds no recipient, identity token or application answers to the external URL. The site must authenticate its own session and reread delegated own-context. Disconnect, app suspension/deletion or removed read authority disables the external continuation; old approval never restores current membership. Queued delivery rechecks source authority and current preferences before claiming mail. Source-level authenticated HTTP/domain, provider transport and staff component tests do not establish live email/browser acceptance.
+
+## G5 independent participation and departure
+
+`joinCommunityEvent`, `setCommunityRsvp`, `leaveCommunityEvent` and
+`leaveCommunity` (Python snake_case equivalents) are callable generated SDK
+methods. They require a UUID `Idempotency-Key`; native callers may use
+`api.groups.communityParticipation.participate` with `operationId`, selected
+`groupId`, optional `eventId`, `operation:join|rsvp|leave-event|leave-group`, and
+`bodyJson` containing the same exact JSON body. Existing native Join, RSVP and
+Leave operations retain their installed-client signatures and canonical effects.
+Current scoped credentials, actor/account/app/connection, selected Group binding,
+current resource relationship and exclusion/ban guards are checked in the write
+transaction even for receipt replay.
+
+Join requires a current eligible selected Group audience path and DIRECT admission,
+creates Pending membership, and never changes an established RSVP. A former Group
+member cannot newly Join from that old Group path even if Public or Friends
+visibility exists. RSVP and Event Leave operate only on the current actor's own
+membership; callers cannot select another person's membership. RSVP uses exactly
+`PENDING`, `YES`, `NO`, `MAYBE` and requires `expectedRevision`; Event Leave also
+requires `expectedRevision`. The current-event projection is the authorized source
+for that number. Multiple applicable active Events reject a fresh participation
+intent with `STAFF_CONFIGURATION_CONFLICT`.
+
+Numeric revisions use a durable allocator scoped to one person/Event logical
+participation. Every canonical Event membership creation and native/delegated RSVP
+or date-derived RSVP update allocates a strictly increasing safe integer. The
+allocator survives membership deletion, so delete/rejoin in the same millisecond
+cannot validate an older destructive form. Legacy membership timestamps remain
+readable until their first canonical update; new allocations occupy microsecond
+space above legacy millisecond values. Event/person deletion removes allocator
+metadata; ordinary membership removal does not. These values are opaque revisions,
+not dates.
+
+Group Leave requires the actor's observed own `expectedMembershipId`. It removes
+only that exact current Group membership and returns
+`{membership:null,retainsIndependentEventParticipation:true}`. Independent Event
+membership, RSVP and permitted return reads remain. Group ownership and the last
+Event Organizer are typed `PROTECTED_OWNER` / `PROTECTED_ORGANIZER` conflicts;
+no departure receipt is committed. Existing web/mobile Group confirmation explains
+retained participation and RSVP.
+
+Join/RSVP receipts contain only `{eventId,participation:{membershipId,revision,rsvp}}`;
+Event Leave returns `{eventId,participation:null}`. Receipts include the common
+`operationId`, `outcome:"committed"` and `effects` envelope, without logistics,
+roster, answers or another person's identity. They describe the original committed
+intent, not current state. Exact original leave replay is looked up after live
+credential/resource authorization but before the now-absent membership precondition.
+It returns its original receipt without deleting a replacement. A fresh stale
+revision/membership identity fails rather than treating absence as success. Replay
+uses G3's 30-day receipt window and permanent binding tombstones. Lost or failed
+transport remains uncertain; preserve and retry the exact original intent or read
+authorized own state, never assert attendance/departure from transport failure.
+
+Local native/authenticated HTTP and real generated TypeScript/Python consumer tests
+exercise Pending versus explicit Yes, stale native/delegated RSVP, same-millisecond
+replacement participation, both independent departures, lost committed receipts,
+payload binding, current scoped authority and protected roles. Matching deployed
+frontend/backend source, isolated signed-in browser/device and provider acceptance
+remain G10 gates; no runtime/deployment or live data write is implied.

@@ -1,3 +1,7 @@
+import {
+  nextParticipationRevision,
+  participationRevision,
+} from './participationRevision';
 import { rsvpStatus } from '../availability/contracts';
 import { guardEventReactivation } from './lifecycle';
 import { v, type Infer } from 'convex/values';
@@ -48,6 +52,12 @@ export async function updateRSVPForPerson(
 
   // Update the RSVP status and note
   await ctx.db.patch(membership._id, {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      eventId,
+      personId,
+      participationRevision(membership)
+    ),
     rsvpStatus: rsvpStatus,
     rsvpNote: rsvpNote || undefined,
     updatedAt: Date.now(),
@@ -223,8 +233,14 @@ export async function chooseEventDateForPerson(
     );
 
     await Promise.all([
-      ...memberships.map(membership =>
+      ...memberships.map(async membership =>
         ctx.db.patch(membership._id, {
+          participationRevision: await nextParticipationRevision(
+            ctx,
+            eventId,
+            membership.personId,
+            participationRevision(membership)
+          ),
           rsvpStatus:
             latestAvailabilityByMembership.get(membership._id)?.status ??
             'PENDING',

@@ -178,7 +178,7 @@ describe('Event management side effects and safeguards', () => {
         undefined,
         'v1'
       ),
-      403
+      409
     );
     expect(denied).toMatchObject({
       success: false,
@@ -268,7 +268,7 @@ describe('Event management side effects and safeguards', () => {
         undefined,
         'v1'
       ),
-      403
+      409
     );
   });
 
@@ -948,7 +948,7 @@ describe('Discovery, settings, leave and event deletion parity', () => {
     const { organizer, attendee, eventId, event } = await fixture();
     await body(
       await organizer.request(`/events/${eventId}/leave`, 'POST'),
-      403
+      409
     );
     const members = await body(
       await organizer.request(`/events/${eventId}/members`, 'GET')
