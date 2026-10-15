@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { authorizationActionLabel } from '@groupi/shared/hooks';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,11 @@ import {
 } from './hooks';
 
 export function BoundedKeysSettings() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
   const grants = useAuthorizationGrants();
   const events = useAuthorizationEvents();
   const catalog = useAuthorizationCatalog();
@@ -168,7 +173,7 @@ export function BoundedKeysSettings() {
               <p className='text-sm'>
                 {grant.revokedAt
                   ? 'Revoked'
-                  : grant.expiresAt && grant.expiresAt <= Date.now()
+                  : grant.expiresAt && grant.expiresAt <= now
                     ? 'Expired'
                     : 'Active'}
                 {grant.expiresAt

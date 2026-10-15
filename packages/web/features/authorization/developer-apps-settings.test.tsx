@@ -43,3 +43,12 @@ describe('developer app registration', () => {
     ).toBeInTheDocument();
   });
 });
+
+it('limits the app purpose to the registration contract of one thousand characters', async () => {
+  vi.mocked(useQuery).mockReturnValue([]);
+  vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
+  const user = userEvent.setup();
+  render(<DeveloperAppsSettings />);
+  await user.type(screen.getByLabelText('Purpose'), 'a'.repeat(1001));
+  expect(screen.getByLabelText('Purpose')).toHaveValue('a'.repeat(1000));
+});

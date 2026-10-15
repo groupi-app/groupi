@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMutation, useQuery } from 'convex/react';
 import { BoundedKeysSettings } from './bounded-keys-settings';
@@ -175,4 +175,29 @@ describe('bounded API key settings', () => {
       )
     ).toBeInTheDocument();
   });
+});
+
+it('updates a displayed active key to expired when time passes without a subscription change', () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2030-01-01T12:00:00Z'));
+  vi.mocked(useQuery).mockReturnValue([
+    {
+      grantId: 'grant-clock',
+      name: 'Clock key',
+      principalKind: 'user',
+      actions: ['events.read'],
+      selector: { kind: 'selected', eventIds: [] },
+      expiresAt: Date.now() + 30_000,
+      revokedAt: null,
+    },
+  ]);
+  const view = render(<BoundedKeysSettings />);
+  try {
+    expect(screen.getByText(/^Active/)).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(screen.getByText(/^Expired/)).toBeInTheDocument();
+  } finally {
+    view.unmount();
+    vi.useRealTimers();
+  }
 });

@@ -152,7 +152,7 @@ export function DeveloperAppsSettings() {
               value={purpose}
               onChange={event => setPurpose(event.target.value)}
               required
-              maxLength={2000}
+              maxLength={1000}
             />
           </div>
           <fieldset className='space-y-2'>
