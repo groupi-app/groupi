@@ -1,7 +1,13 @@
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 import { useState } from 'react';
-import { Image, ScrollView, Share, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  Share,
+  View,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { Id } from 'convex/_generated/dataModel';
 import { Text } from '@/components/ui/text';
@@ -56,9 +62,12 @@ export function GroupDetailScreen() {
       <View className='border-b border-border px-4 py-3'>
         <BackButton />
       </View>
-      <ScrollView contentContainerClassName='gap-4 p-4'>
+      <ScrollView
+        keyboardShouldPersistTaps='handled'
+        contentContainerClassName='gap-4 p-4'
+      >
         {group === undefined ? (
-          <Text className='text-muted-foreground'>Loading Group…</Text>
+          <ActivityIndicator accessibilityLabel='Loading Group' />
         ) : !group ? (
           <Text className='text-foreground'>
             Group unavailable. It may have been deleted or you may not have
@@ -83,15 +92,24 @@ export function GroupDetailScreen() {
             {group.description ? (
               <Text className='text-foreground'>{group.description}</Text>
             ) : null}
-            <Text className='text-muted-foreground'>
-              Your role: {group.viewerRole.toLowerCase()}
-            </Text>
-            <Text className='text-muted-foreground'>
-              {group.memberCount}{' '}
-              {group.memberCount === 1 ? 'member' : 'members'}
-            </Text>
-            <Text className='text-muted-foreground'>
-              Owner ID: {group.ownerId}
+            <View className='flex-row flex-wrap gap-2'>
+              <Text className='rounded-badge bg-primary/10 px-3 py-1 text-sm font-semibold text-primary'>
+                {group.viewerRole === 'OWNER'
+                  ? 'Group owner'
+                  : group.viewerRole === 'MODERATOR'
+                    ? 'Group moderator'
+                    : 'Group member'}
+              </Text>
+              <Text className='rounded-badge bg-muted px-3 py-1 text-sm text-muted-foreground'>
+                {group.memberCount}{' '}
+                {group.memberCount === 1 ? 'member' : 'members'}
+              </Text>
+            </View>
+            <Text
+              accessibilityRole='header'
+              className='text-lg font-semibold text-foreground'
+            >
+              People and invitations
             </Text>
             <Button
               variant='outline'
@@ -107,6 +125,7 @@ export function GroupDetailScreen() {
             </Button>
             <Button
               variant='outline'
+              className='h-auto min-h-[44px] py-3'
               accessibilityLabel={
                 group.joiningQuestionnaire?.canAccessMemberContent === false &&
                 !group.canManageMembers
@@ -127,25 +146,23 @@ export function GroupDetailScreen() {
                 ? 'Complete required onboarding'
                 : 'View members'}
             </Button>
-            {group.canManageInvitations ? (
-              <Button
-                variant='outline'
-                accessibilityLabel='Manage Group invitations'
-                onPress={() => router.push(`/groups/${id}/invitations`)}
-              >
-                Manage invitations
-              </Button>
-            ) : null}
-            {group.canManageMembers ? (
-              <Button
-                variant='outline'
-                accessibilityLabel='Manage Group bans'
-                onPress={() => router.push(`/groups/${id}/bans`)}
-              >
-                Manage bans
-              </Button>
-            ) : null}
-            <GroupOwnershipTransfer groupId={id} />
+
+            <Button
+              accessibilityLabel='View Group shared Events'
+              variant='outline'
+              disabled={
+                group.joiningQuestionnaire?.canAccessMemberContent === false
+              }
+              onPress={() => router.push(`/groups/${id}/events`)}
+            >
+              Shared Event logistics
+            </Button>
+            <Text
+              accessibilityRole='header'
+              className='text-lg font-semibold text-foreground'
+            >
+              Group tools
+            </Text>
             <Button
               accessibilityLabel='Group polls'
               variant='outline'
@@ -174,6 +191,54 @@ export function GroupDetailScreen() {
             >
               Lists
             </Button>
+            <Text
+              accessibilityRole='header'
+              className='text-lg font-semibold text-foreground'
+            >
+              Your participation
+            </Text>
+            <Button
+              variant='outline'
+              accessibilityLabel='My Group questionnaire'
+              onPress={() => router.push(`/groups/${id}/questionnaire`)}
+            >
+              My Group questionnaire
+            </Button>
+            <Button
+              accessibilityLabel='My Group application history'
+              variant='outline'
+              onPress={() => router.push(`/groups/${id}/apply`)}
+            >
+              My application history
+            </Button>
+            {group.canManageRoles ||
+            group.canManageIdentity ||
+            group.viewerRole !== 'MEMBER' ? (
+              <Text
+                accessibilityRole='header'
+                className='text-lg font-semibold text-foreground'
+              >
+                Group management
+              </Text>
+            ) : null}
+            {group.canManageInvitations ? (
+              <Button
+                variant='outline'
+                accessibilityLabel='Manage Group invitations'
+                onPress={() => router.push(`/groups/${id}/invitations`)}
+              >
+                Manage invitations
+              </Button>
+            ) : null}
+            {group.canManageMembers ? (
+              <Button
+                variant='outline'
+                accessibilityLabel='Manage Group bans'
+                onPress={() => router.push(`/groups/${id}/bans`)}
+              >
+                Manage bans
+              </Button>
+            ) : null}
             {group.viewerRole === 'OWNER' ? (
               <Button
                 accessibilityLabel='Group list policy'
@@ -192,13 +257,6 @@ export function GroupDetailScreen() {
                 Forms policy
               </Button>
             ) : null}
-            <Button
-              variant='outline'
-              accessibilityLabel='My joining questionnaire'
-              onPress={() => router.push(`/groups/${id}/questionnaire`)}
-            >
-              My joining questionnaire
-            </Button>
             {group.canManageMembers ? (
               <Button
                 accessibilityLabel='Review Group applications'
@@ -208,13 +266,7 @@ export function GroupDetailScreen() {
                 Review applications
               </Button>
             ) : null}
-            <Button
-              accessibilityLabel='My Group application history'
-              variant='outline'
-              onPress={() => router.push(`/groups/${id}/apply`)}
-            >
-              My application history
-            </Button>
+            <GroupOwnershipTransfer groupId={id} />
             {group.canManageRoles ? (
               <GroupApplicationSettings
                 groupId={id}
@@ -225,16 +277,6 @@ export function GroupDetailScreen() {
             {group.viewerRole !== 'MEMBER' && (
               <GroupAnnouncementComposer groupId={id} />
             )}
-            <Button
-              accessibilityLabel='View Group shared Events'
-              variant='outline'
-              disabled={
-                group.joiningQuestionnaire?.canAccessMemberContent === false
-              }
-              onPress={() => router.push(`/groups/${id}/events`)}
-            >
-              Shared Event logistics
-            </Button>
             {group.canManageRoles ? (
               <GroupEventSharingPolicy
                 groupId={id}
@@ -303,7 +345,7 @@ export function GroupLandingScreen() {
       <ScrollView contentContainerClassName='gap-4 p-6'>
         <Text className='text-sm text-muted-foreground'>Group</Text>
         {group === undefined ? (
-          <Text className='text-muted-foreground'>Loading Group…</Text>
+          <ActivityIndicator accessibilityLabel='Loading Group' />
         ) : !group ? (
           <Text className='text-foreground'>
             Group unavailable. This link may no longer be valid.
@@ -328,6 +370,7 @@ export function GroupLandingScreen() {
             ) : null}
             <Button
               accessibilityLabel='Apply to Group or view private status'
+              className='h-auto min-h-[44px] py-3'
               onPress={() =>
                 isAuthenticated
                   ? router.push(`/groups/${groupId}/apply`)
@@ -342,14 +385,19 @@ export function GroupLandingScreen() {
             {isAuthenticated ? (
               <>
                 <GroupLandingInvitation groupId={groupId as Id<'groups'>} />
+                <Text className='text-sm text-muted-foreground'>
+                  Previously submitted questionnaire records remain available
+                  here.
+                </Text>
                 <Button
                   variant='outline'
                   accessibilityLabel='My retained questionnaire records'
+                  className='h-auto min-h-[44px] py-3'
                   onPress={() =>
                     router.push(`/groups/${groupId}/questionnaire`)
                   }
                 >
-                  My questionnaire records, if previously submitted
+                  My questionnaire records
                 </Button>
               </>
             ) : null}

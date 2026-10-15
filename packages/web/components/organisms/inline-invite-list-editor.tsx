@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -124,12 +125,12 @@ export function InlineInviteListEditor({
   }
 
   return (
-    <section aria-label='Create invite list' className='space-y-4'>
+    <section aria-label='Create invite list' className='flex flex-col gap-4'>
       {historyNotice && <p role='alert'>{historyNotice}</p>}
       {confirming && (
         <section
           aria-labelledby='inline-list-discard-title'
-          className='space-y-4'
+          className='flex flex-col gap-4'
         >
           <h2
             id='inline-list-discard-title'
@@ -143,7 +144,7 @@ export function InlineInviteListEditor({
             Your unsaved list will be lost. Your invitation selection will be
             preserved.
           </p>
-          <div className='flex gap-2'>
+          <div className='flex flex-wrap gap-2'>
             <Button onClick={() => setConfirming(false)}>Keep Editing</Button>
             <Button variant='destructive' onClick={() => finish()}>
               Discard
@@ -158,7 +159,7 @@ export function InlineInviteListEditor({
         }}
         disabled={saving}
         hidden={confirming}
-        className='space-y-4'
+        className={cn('flex flex-col gap-4', confirming && 'hidden')}
       >
         <h2 className='font-heading text-xl'>Create invite list</h2>
         <p className='text-sm text-muted-foreground'>
@@ -167,15 +168,22 @@ export function InlineInviteListEditor({
         <Button variant='outline' onClick={() => requestLeave()}>
           Back to invitations
         </Button>
-        <div ref={nameRef} className='space-y-2'>
+        <div ref={nameRef} className='flex flex-col gap-2'>
           <Label htmlFor='inline-list-name'>List name</Label>
           <Input
             id='inline-list-name'
             value={name}
+            aria-describedby='inline-list-name-help'
             onChange={event => setName(event.target.value)}
           />
+          <p
+            id='inline-list-name-help'
+            className='text-sm text-muted-foreground'
+          >
+            Only you can see this list. Use up to 100 characters.
+          </p>
         </div>
-        <section aria-label='Selected people' className='space-y-2'>
+        <section aria-label='Selected people' className='flex flex-col gap-2'>
           <h3 className='font-medium'>Selected people ({people.length}/100)</h3>
           <QuerySection message='Unable to check selected people. Your list draft is preserved.'>
             <InviteListSelectedPeople
@@ -194,10 +202,11 @@ export function InlineInviteListEditor({
             if (search.trim().length >= 2) setSubmittedSearch(search.trim());
           }}
         >
-          <div className='flex-1 space-y-2'>
+          <div className='min-w-0 flex-1 flex flex-col gap-2'>
             <Label htmlFor='inline-list-search'>Search by username</Label>
             <Input
               id='inline-list-search'
+              aria-describedby='inline-list-search-help'
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
@@ -210,6 +219,12 @@ export function InlineInviteListEditor({
             Search
           </Button>
         </form>
+        <p
+          id='inline-list-search-help'
+          className='text-sm text-muted-foreground'
+        >
+          Enter at least 2 characters, then choose Search.
+        </p>
         {submittedSearch && (
           <Button
             variant='ghost'
@@ -238,6 +253,7 @@ export function InlineInviteListEditor({
         )}
         <div className='flex flex-wrap gap-2'>
           <Button
+            variant='outline'
             onClick={() => save(false)}
             isLoading={saving}
             loadingText='Saving list…'

@@ -69,6 +69,7 @@ public registry publication permissions; and a chosen compatible client's actual
 skill discovery/installation smoke test. Keep credentials and bearer invite tokens
 out of all recorded evidence.
 
-The generated command reference covers the installed surface. It does not claim
-completion of deferred discussion/media work, the everyday TUI, or custom add-on
-authoring, and cannot establish application parity merely because a command exists.
+The generated command reference covers the installed surface, including
+discussion/media, the everyday TUI, and custom add-on authoring. Command existence
+and fixture results cannot establish staging behavior, application parity, or
+public release completion.

@@ -75,8 +75,11 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const members = useGroupMembers(groupId, { numItems: 20, cursor });
   return (
-    <section className='space-y-3' aria-labelledby='group-members-heading'>
-      <h2 id='group-members-heading' className='font-semibold'>
+    <section
+      className='flex flex-col gap-3'
+      aria-labelledby='group-members-heading'
+    >
+      <h2 id='group-members-heading' className='text-xl font-bold'>
         Group members
       </h2>
       {members === undefined ? (
@@ -84,7 +87,7 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
       ) : (
         <>
           {members.page.length === 0 && <p>No members to display.</p>}
-          <ul className='space-y-2'>
+          <ul className='flex flex-col gap-3'>
             {members.page.map(member => {
               const name =
                 member.name || member.username || 'Unavailable member';
@@ -97,7 +100,7 @@ export function GroupMemberRoster({ groupId }: { groupId: Id<'groups'> }) {
                     <AvatarImage src={member.image ?? undefined} alt='' />
                     <AvatarFallback>{name.slice(0, 1)}</AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className='min-w-0 flex-1 break-words'>
                     <p className='font-medium'>{name}</p>
                     {member.username && (
                       <p className='text-sm text-muted-foreground'>

@@ -8,11 +8,6 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
 import type * as accountResolution_contracts from "../accountResolution/contracts.js";
 import type * as accountResolution_model from "../accountResolution/model.js";
 import type * as accountResolution_mutations from "../accountResolution/mutations.js";
@@ -314,6 +309,7 @@ import type * as lib_discussionContent from "../lib/discussionContent.js";
 import type * as lib_friends from "../lib/friends.js";
 import type * as lib_memberCount from "../lib/memberCount.js";
 import type * as lib_notifications from "../lib/notifications.js";
+import type * as lib_pagination from "../lib/pagination.js";
 import type * as lib_passkeyConfig from "../lib/passkeyConfig.js";
 import type * as lib_privacy from "../lib/privacy.js";
 import type * as lib_requestId from "../lib/requestId.js";
@@ -373,14 +369,12 @@ import type * as users_mutations from "../users/mutations.js";
 import type * as users_profileRest from "../users/profileRest.js";
 import type * as users_queries from "../users/queries.js";
 
-/**
- * A utility for referencing Convex functions in your app's API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
+
 declare const fullApi: ApiFromModules<{
   "accountResolution/contracts": typeof accountResolution_contracts;
   "accountResolution/model": typeof accountResolution_model;
@@ -683,6 +677,7 @@ declare const fullApi: ApiFromModules<{
   "lib/friends": typeof lib_friends;
   "lib/memberCount": typeof lib_memberCount;
   "lib/notifications": typeof lib_notifications;
+  "lib/pagination": typeof lib_pagination;
   "lib/passkeyConfig": typeof lib_passkeyConfig;
   "lib/privacy": typeof lib_privacy;
   "lib/requestId": typeof lib_requestId;
@@ -742,10 +737,28 @@ declare const fullApi: ApiFromModules<{
   "users/profileRest": typeof users_profileRest;
   "users/queries": typeof users_queries;
 }>;
+
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">

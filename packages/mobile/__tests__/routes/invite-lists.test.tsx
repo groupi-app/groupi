@@ -302,7 +302,13 @@ describe('native Invite lists Settings', () => {
     await inviteListsScreen();
     await press('Create invite list');
     await type('List name', 'Weekend');
+    expect(visibleText()).toContain('No people selected yet.');
     await press('Select Alice');
+    expect(control('Select Alice').props).toMatchObject({
+      accessibilityRole: 'checkbox',
+      accessibilityState: { checked: true, disabled: false },
+    });
+    expect(visibleText()).toContain('✓ Selected');
     expect(control('Remove Alice')).toBeDefined();
     draftPeople = {
       items: [
@@ -554,7 +560,7 @@ describe('native Invite lists Settings', () => {
     await press('Save invite list');
     expect(visibleText()).toContain('Unable to save');
     expect(control('List name').props.value).toBe('Dinner');
-    expect(visibleText()).toContain('Remove Alice');
+    expect(control('Remove Alice')).toBeDefined();
     await press('Save invite list');
     expect(visibleText()).toContain('Weekend people');
   });
@@ -574,7 +580,7 @@ describe('native Invite lists Settings', () => {
     await press('Keep Editing');
     expect(control('List name').props.value).toBe('Dinner');
     expect(control('Search by username').props.value).toBe('blair');
-    expect(visibleText()).toContain('Remove Alice');
+    expect(control('Remove Alice')).toBeDefined();
     expect(mocks.inputFocus).toHaveBeenCalled();
     await press('Cancel');
     await press('Discard');
@@ -677,7 +683,7 @@ describe('native Invite lists Settings', () => {
     await type('Search by username', 'blair');
     expect(visibleText()).toContain('Unable to load people');
     expect(control('List name').props.value).toBe('Dinner');
-    expect(visibleText()).toContain('Remove Alice');
+    expect(control('Remove Alice')).toBeDefined();
     people = { items: [stranger] };
     draftPeople = null;
     await press('Retry people');
@@ -749,7 +755,7 @@ describe('native Invite lists Settings', () => {
     expect(visibleText()).toContain('Unable to load people');
     await type('Search by username', 'blair');
     await press('Select Blair');
-    expect(visibleText()).toContain('Remove Blair');
+    expect(control('Remove Blair')).toBeDefined();
   });
 
   it('edits a saved list through rename and removal, retains a failed draft, and saves only after explicit confirmation', async () => {
@@ -762,7 +768,7 @@ describe('native Invite lists Settings', () => {
     mocks.updateList.mockRejectedValueOnce(new Error('offline'));
     await press('Save invite list');
     expect(control('List name').props.value).toBe('  Dinner  ');
-    expect(visibleText()).toContain('Remove Blair');
+    expect(control('Remove Blair')).toBeDefined();
     expect(visibleText()).toContain('Unable to save');
     await press('Cancel');
     await press('Keep Editing');

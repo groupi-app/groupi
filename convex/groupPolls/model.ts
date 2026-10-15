@@ -1,3 +1,4 @@
+import { publicPage } from '../lib/pagination';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -276,7 +277,7 @@ export async function history(
       .order('desc')
       .paginate(page(paginationOpts));
     return {
-      ...result,
+      ...publicPage(result),
       voteRevision: (await own(ctx, toolId, personId))?.revision ?? 0,
     };
   } catch {
@@ -300,7 +301,7 @@ export async function results(
       .order('desc')
       .paginate(page(paginationOpts));
     return {
-      ...result,
+      ...publicPage(result),
       page: result.page.map(row => ({
         ...row,
         isCurrent:
@@ -321,13 +322,15 @@ export async function list(
   if (!(await getPolicy(ctx, groupId, 'POLL')).enabled)
     await requireManager(ctx, groupId, personId);
   try {
-    return await ctx.db
-      .query('groupTools')
-      .withIndex('by_groupId_and_kind', q =>
-        q.eq('groupId', groupId).eq('kind', 'POLL')
-      )
-      .order('desc')
-      .paginate(page(paginationOpts));
+    return publicPage(
+      await ctx.db
+        .query('groupTools')
+        .withIndex('by_groupId_and_kind', q =>
+          q.eq('groupId', groupId).eq('kind', 'POLL')
+        )
+        .order('desc')
+        .paginate(page(paginationOpts))
+    );
   } catch {
     fail('VALIDATION_ERROR', 'Invalid Group poll page size or cursor.');
   }

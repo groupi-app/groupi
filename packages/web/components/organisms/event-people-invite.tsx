@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { InviteListPersonRow } from './invite-list-people';
+import { Badge } from '@/components/ui/badge';
 import { InlineInviteListEditor } from './inline-invite-list-editor';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -53,22 +56,21 @@ function ListPeople({
   const list = useInviteList(id);
   if (!list) return <p role='status'>Loading invite list…</p>;
   return (
-    <section className='space-y-3'>
-      <h3 className='font-heading text-lg'>{list.name}</h3>
+    <section className='flex flex-col gap-3'>
+      <h3 className='break-words font-heading text-lg'>{list.name}</h3>
       {list.needsAttention && (
         <p role='status'>
           Needs attention. Add an existing person in Settings before using this
           list.
         </p>
       )}
-      {list.people.map((person, index) => (
-        <p key={index}>
-          {person.available
-            ? (person.name ?? person.username)
-            : 'Unavailable person'}
-        </p>
+      <p className='text-sm text-muted-foreground'>
+        Adding this list copies its current people into your invitation draft.
+      </p>
+      {list.people.map(person => (
+        <InviteListPersonRow key={person.personId} person={person} />
       ))}
-      <div className='flex gap-2'>
+      <div className='flex flex-wrap gap-2'>
         <Button variant='outline' onClick={back}>
           Back to lists
         </Button>
@@ -97,7 +99,7 @@ function ListPicker({
   const [selectedId, setSelectedId] = useState<ListId>();
   if (!lists) return <p role='status'>Loading invite lists…</p>;
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <Button
         variant='outline'
         disabled={lists.items.length >= 100}
@@ -117,7 +119,7 @@ function ListPicker({
           />
         </QuerySection>
       ) : (
-        <section aria-label='Your invite lists' className='space-y-2'>
+        <section aria-label='Your invite lists' className='flex flex-col gap-2'>
           <h3 className='font-heading text-lg'>Choose invite lists</h3>
           {!lists.items.length && (
             <p>No invite lists yet. Create one here or in Settings.</p>
@@ -130,15 +132,19 @@ function ListPicker({
             <Button
               key={list.inviteListId}
               variant='outline'
-              className='w-full justify-between'
+              className='h-auto w-full justify-between gap-3 py-4 text-left'
               disabled={list.needsAttention}
               aria-label={`Choose ${list.name}`}
               onClick={() => setSelectedId(list.inviteListId)}
             >
-              <span>{list.name}</span>
-              <span>
+              <span className='min-w-0 flex-1 whitespace-normal break-words'>
+                {list.name}
+              </span>
+              <span className='flex shrink-0 flex-col items-end gap-1 text-sm'>
                 {list.personCount} people
-                {list.needsAttention ? ' · Needs attention' : ''}
+                {list.needsAttention && (
+                  <Badge variant='warning'>Needs attention</Badge>
+                )}
               </span>
             </Button>
           ))}
@@ -194,7 +200,11 @@ function RecipientReview({
     UNAVAILABLE: 'Recipient unavailable',
   };
   return (
-    <section role='region' aria-label='Recipients' className='space-y-3'>
+    <section
+      role='region'
+      aria-label='Recipients'
+      className='flex flex-col gap-3'
+    >
       <h3 className='font-heading text-lg'>Recipients ({people.length}/100)</h3>
       <p className='text-sm text-muted-foreground'>
         {review.eligibleCount} ready to invite. {review.skippedCount} will be
@@ -232,8 +242,8 @@ function RecipientReview({
           </Button>
         </div>
       ))}
-      <fieldset disabled={sending || uncertain} className='space-y-3'>
-        <div className='space-y-2'>
+      <fieldset disabled={sending || uncertain} className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='list-invite-role'>Invite as</Label>
           <Select
             value={effectiveRole}
@@ -252,7 +262,7 @@ function RecipientReview({
             </SelectContent>
           </Select>
         </div>
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='list-invite-message'>Message (optional)</Label>
           <Textarea
             id='list-invite-message'
@@ -282,7 +292,10 @@ function RecipientReview({
         </Button>
       )}
       {result && (
-        <section aria-label='Invitation results' className='space-y-2'>
+        <section
+          aria-label='Invitation results'
+          className='flex flex-col gap-2'
+        >
           {result.results.map(outcome => {
             const person = review.results.find(
               person => person.personId === outcome.personId
@@ -434,9 +447,12 @@ export function EventPeopleInvite({
       tabIndex={-1}
       role='region'
       aria-label='Invitation draft'
-      className='space-y-4'
+      className='flex flex-col gap-4'
     >
-      <div hidden={editorOpen} className='space-y-4'>
+      <div
+        hidden={editorOpen}
+        className={cn('flex flex-col gap-4', editorOpen && 'hidden')}
+      >
         {savedList && (
           <p role='status'>List saved. No invitations were sent.</p>
         )}

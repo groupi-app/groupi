@@ -130,7 +130,7 @@ export function InlineInviteListEditor({
           ref={heading}
           accessible
           accessibilityRole='header'
-          className='text-lg font-semibold'
+          className='min-w-0 flex-1 text-lg font-semibold text-foreground'
         >
           {confirm ? 'Discard changes?' : 'Create invite list'}
         </Text>
@@ -158,6 +158,7 @@ export function InlineInviteListEditor({
             <Text>
               Private to you. Saving does not send invitations or notify anyone.
             </Text>
+            <Text className='font-semibold text-foreground'>List name</Text>
             <Input
               ref={nameInput}
               accessibilityLabel='List name'
@@ -168,7 +169,10 @@ export function InlineInviteListEditor({
               }}
               editable={!saving}
             />
-            <Text className='font-semibold'>
+            <Text
+              accessibilityRole='header'
+              className='font-semibold text-foreground'
+            >
               Selected people ({selected.length}/100)
             </Text>
             <InviteListDataBoundary context='selected people'>
@@ -182,6 +186,7 @@ export function InlineInviteListEditor({
                 }
               />
             </InviteListDataBoundary>
+            <Text className='font-semibold text-foreground'>Find people</Text>
             <Input
               ref={searchInput}
               accessibilityLabel='Search by username'
