@@ -1,5 +1,6 @@
-import { ActivityIndicator, Pressable } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 import {
   useInviteListFriends,
   useInviteListPeople,
@@ -45,7 +46,10 @@ function PeopleChoices({
   const searching = search.trim().length >= 2;
   return (
     <>
-      <Text className='font-semibold'>
+      <Text
+        accessibilityRole='header'
+        className='font-semibold text-foreground'
+      >
         {searching ? 'Search results' : 'Accepted friends'}
       </Text>
       <Text className='text-sm text-muted-foreground'>
@@ -61,34 +65,48 @@ function PeopleChoices({
             : 'No accepted friends yet. Search by username to find people.'}
         </Text>
       ) : (
-        choices.items.map(person => (
-          <Pressable
-            key={person.personId}
-            accessibilityRole='checkbox'
-            accessibilityLabel={`Select ${person.name ?? person.username ?? 'person'}`}
-            accessibilityState={{
-              checked: selected.some(item => item.personId === person.personId),
-              disabled:
-                saving ||
-                (selected.length >= 100 &&
-                  !selected.some(item => item.personId === person.personId)),
-            }}
-            disabled={
-              saving ||
-              (selected.length >= 100 &&
-                !selected.some(item => item.personId === person.personId))
-            }
-            onPress={() => onToggle(person)}
-            className='min-h-[44px] gap-1 rounded-card border border-border bg-card p-4'
-          >
-            <Text>{person.name ?? person.username}</Text>
-            {person.username ? (
-              <Text className='text-sm text-muted-foreground'>
-                @{person.username}
+        choices.items.map(person => {
+          const checked = selected.some(
+            item => item.personId === person.personId
+          );
+          const disabled = saving || (selected.length >= 100 && !checked);
+          const name = person.name ?? person.username ?? 'Groupi person';
+          return (
+            <Pressable
+              key={person.personId}
+              accessibilityRole='checkbox'
+              accessibilityLabel={`Select ${name}`}
+              accessibilityState={{ checked, disabled }}
+              disabled={disabled}
+              onPress={() => onToggle(person)}
+              className={cn(
+                'min-h-[44px] flex-row items-center gap-3 rounded-card border p-4',
+                checked
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-card',
+                disabled && 'opacity-50'
+              )}
+            >
+              <View className='min-w-0 flex-1 gap-1'>
+                <Text className='text-foreground'>{name}</Text>
+                {person.username ? (
+                  <Text className='text-sm text-muted-foreground'>
+                    @{person.username}
+                  </Text>
+                ) : null}
+              </View>
+              <Text
+                accessible={false}
+                className={cn(
+                  'text-sm font-semibold',
+                  checked ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {checked ? '✓ Selected' : 'Select'}
               </Text>
-            ) : null}
-          </Pressable>
-        ))
+            </Pressable>
+          );
+        })
       )}
     </>
   );

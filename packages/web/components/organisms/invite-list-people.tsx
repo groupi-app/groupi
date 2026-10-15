@@ -1,7 +1,9 @@
 'use client';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { InviteListPersonRow } from '@/components/molecules/invite-list-person-row';
+export { InviteListPersonRow } from '@/components/molecules/invite-list-person-row';
 import {
   useInviteList,
   useInviteListPeople,
@@ -10,38 +12,6 @@ import {
 } from '@/hooks/convex/use-invite-lists';
 
 type Person = NonNullable<ReturnType<typeof useInviteList>>['people'][number];
-
-export function InviteListPersonRow({
-  person,
-  action,
-}: {
-  person: Person;
-  action?: React.ReactNode;
-}) {
-  const name = person.available
-    ? (person.name ?? person.username)
-    : 'Unavailable person';
-  return (
-    <div className='flex items-center gap-3 rounded-card border border-border bg-card p-3'>
-      <Avatar className='size-9'>
-        <AvatarImage
-          src={person.available ? (person.image ?? undefined) : undefined}
-          alt=''
-        />
-        <AvatarFallback>
-          {(name ?? 'U').slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <div className='min-w-0 flex-1'>
-        <p className='font-medium'>{name}</p>
-        {person.available && person.username && (
-          <p className='text-sm text-muted-foreground'>@{person.username}</p>
-        )}
-      </div>
-      {action}
-    </div>
-  );
-}
 
 /** Keep snapshot identity/order while displaying only current profile projections. */
 export function InviteListSelectedPeople({
@@ -56,10 +26,15 @@ export function InviteListSelectedPeople({
   const current = useInviteListDraftPeople(
     selected.map(person => person.personId)
   );
-  if (!selected.length) return null;
+  if (!selected.length)
+    return (
+      <p className='rounded-card border border-dashed border-border p-4 text-sm text-muted-foreground'>
+        No people selected yet. Add friends below or search by username.
+      </p>
+    );
   if (!current) return <p role='status'>Checking selected people…</p>;
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col gap-2'>
       {selected.map(snapshot => {
         const person = current.items.find(
           person => person.personId === snapshot.personId
@@ -116,11 +91,24 @@ export function InviteListPersonChoices({
   return (
     <section
       aria-label={search ? 'Search results' : 'Accepted friends'}
-      className='space-y-2'
+      className='flex flex-col gap-2'
     >
       <h3 className='font-medium'>
         {search ? 'Search results' : 'Your friends'}
       </h3>
+      {selected.length >= 100 && (
+        <Alert variant='info' role='status'>
+          <AlertDescription>
+            100 people selected. Remove someone to add another person.
+          </AlertDescription>
+        </Alert>
+      )}
+      {search && (
+        <p role='status' className='text-sm text-muted-foreground'>
+          {people.items.length}{' '}
+          {people.items.length === 1 ? 'result' : 'results'} for “{search}”
+        </p>
+      )}
       {!people.items.length && (
         <p className='text-muted-foreground'>
           {search

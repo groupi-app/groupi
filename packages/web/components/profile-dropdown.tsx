@@ -22,7 +22,6 @@ import { signOut } from '@/lib/auth-client';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { ProfileEditDialog } from '@/components/profile-edit-dialog';
-import { FriendsDialog } from '@/components/friends-dialog';
 import { usePendingRequests } from '@/hooks/convex/use-friends';
 import { useFriendsDialogStore } from '@/stores/friends-dialog-store';
 import { AccountSwitcher, StatusPicker } from '@/components/molecules';
@@ -166,8 +165,6 @@ export function ProfileDropdown({
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
       />
-
-      <FriendsDialog />
     </div>
   );
 }

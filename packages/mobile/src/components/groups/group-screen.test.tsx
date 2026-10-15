@@ -81,6 +81,22 @@ function button(tree: ReturnType<typeof elements>, label: string) {
   );
 }
 describe('Native Group screens', () => {
+  it('prioritizes member content and labels sections without exposing profile IDs', () => {
+    const tree = elements(GroupDetailScreen());
+    const texts = tree.map(element => element.props.children);
+    expect(texts).toContain('Group tools');
+    expect(texts).toContain('Your participation');
+    expect(texts).toContain('Group member');
+    expect(JSON.stringify(texts)).not.toContain('Owner ID:');
+    expect(JSON.stringify(texts)).not.toContain('person-123');
+    const events = tree.findIndex(
+      element => element.props.accessibilityLabel === 'View Group shared Events'
+    );
+    const tools = texts.indexOf('Group tools');
+    expect(events).toBeGreaterThan(-1);
+    expect(events).toBeLessThan(tools);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.authenticated = false;
