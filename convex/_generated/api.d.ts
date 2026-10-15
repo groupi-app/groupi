@@ -169,6 +169,8 @@ import type * as availability_writes from "../availability/writes.js";
 import type * as cliAuth_mutations from "../cliAuth/mutations.js";
 import type * as crons from "../crons.js";
 import type * as delegatedApps_contracts from "../delegatedApps/contracts.js";
+import type * as delegatedApps_hosted from "../delegatedApps/hosted.js";
+import type * as delegatedApps_hostedEmail from "../delegatedApps/hostedEmail.js";
 import type * as delegatedApps_http from "../delegatedApps/http.js";
 import type * as delegatedApps_mutations from "../delegatedApps/mutations.js";
 import type * as delegatedApps_payloads from "../delegatedApps/payloads.js";
@@ -558,6 +560,8 @@ declare const fullApi: ApiFromModules<{
   "cliAuth/mutations": typeof cliAuth_mutations;
   crons: typeof crons;
   "delegatedApps/contracts": typeof delegatedApps_contracts;
+  "delegatedApps/hosted": typeof delegatedApps_hosted;
+  "delegatedApps/hostedEmail": typeof delegatedApps_hostedEmail;
   "delegatedApps/http": typeof delegatedApps_http;
   "delegatedApps/mutations": typeof delegatedApps_mutations;
   "delegatedApps/payloads": typeof delegatedApps_payloads;

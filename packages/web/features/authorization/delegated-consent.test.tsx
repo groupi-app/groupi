@@ -166,3 +166,34 @@ it('replaces an expired open consent form with restart guidance when its deadlin
     vi.useRealTimers();
   }
 });
+
+it('branded consent still discloses provider, Developer app and unambiguous account with explicit switching', () => {
+  const request = {
+    ...consentRequest(),
+    appearance: {
+      brandName: 'Red Room',
+      senderName: 'Red Room',
+      accent: '#991b1b',
+    },
+    account: {
+      displayName: 'Alice',
+      username: 'nightowl',
+      email: 'alice@example.test',
+    },
+  };
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
+  );
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByText('Red Room')).toBeInTheDocument();
+  expect(screen.getByText('Sign-in provided by Groupi')).toBeInTheDocument();
+  expect(screen.getByText('Developer app: Calendar')).toBeInTheDocument();
+  expect(screen.getByText('alice@example.test')).toBeInTheDocument();
+  expect(screen.getByText('@nightowl')).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: 'Choose another account' })
+  ).toHaveAttribute(
+    'href',
+    '/sign-in?mode=add-account&redirect=%2Foauth%2Fconsent%3FinteractionId%3Di-1'
+  );
+});

@@ -35,6 +35,35 @@ export const handler = httpAction(async (ctx, request) => {
       headers: outgoing,
     });
   } catch {
+    // Browser recovery stays on the operator-configured frontend. Never copy
+    // a caller's return/theme URL or a one-use approval into the error page.
+    if (
+      request.method === 'GET' &&
+      request.headers.get('accept')?.includes('text/html')
+    ) {
+      try {
+        const issuer = new URL(process.env.DELEGATED_ISSUER ?? '');
+        const target = new URL(request.url);
+        const prefix = `${issuer.pathname.replace(/\/$/, '')}/interaction/`;
+        const interactionId = target.pathname.startsWith(prefix)
+          ? decodeURIComponent(target.pathname.slice(prefix.length))
+          : '';
+        if (interactionId && !interactionId.includes('/')) {
+          const recovery = new URL('/oauth/error', process.env.SITE_URL);
+          recovery.searchParams.set('interactionId', interactionId);
+          return new Response(null, {
+            status: 303,
+            headers: {
+              location: recovery.href,
+              'cache-control': 'no-store',
+              'referrer-policy': 'no-referrer',
+            },
+          });
+        }
+      } catch {
+        /* Invalid/missing operator configuration fails closed below. */
+      }
+    }
     return new Response(
       JSON.stringify({
         error: 'invalid_request',

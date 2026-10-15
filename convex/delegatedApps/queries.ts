@@ -1,7 +1,14 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { getCurrentPerson } from '../auth';
-import { app, clientType, status, reviewStatus, scope } from './contracts';
+import {
+  app,
+  clientType,
+  status,
+  reviewStatus,
+  scope,
+  hostedAppearance,
+} from './contracts';
 import { isAdminRole } from '../lib/constants';
 import { authComponent, type AuthUserId } from '../auth';
 export const listOwnedApps = query({
@@ -28,10 +35,15 @@ export const getConsentRequest = query({
       instance: v.string(),
       appId: v.id('delegatedApps'),
       appName: v.string(),
+      appearance: v.optional(hostedAppearance),
       purpose: v.string(),
       requestedScopes: v.array(scope),
       requestedActions: v.array(action),
-      account: v.object({ displayName: v.string() }),
+      account: v.object({
+        displayName: v.string(),
+        email: v.optional(v.string()),
+        username: v.optional(v.string()),
+      }),
       events: v.array(v.object({ _id: v.id('events'), title: v.string() })),
       expiresAt: v.number(),
     })
@@ -45,7 +57,8 @@ export const getConsentRequest = query({
         q.eq('interactionId', args.interactionId)
       )
       .unique();
-    if (!request || request.decision) return null;
+    if (!request || request.decision || request.expiresAt <= Date.now())
+      return null;
     const app = await ctx.db.get(request.appId);
     if (
       !app ||
@@ -67,12 +80,17 @@ export const getConsentRequest = query({
       instance: request.instanceId,
       appId: app._id,
       appName: app.name,
+      appearance: app.appearance,
       purpose: app.purpose,
       requestedScopes: request.requestedScopes,
       requestedActions: actions.filter(value =>
         request.requestedScopes.includes(value)
       ),
-      account: { displayName: auth.user.name ?? 'Current account' },
+      account: {
+        displayName: auth.user.name ?? 'Current account',
+        email: auth.user.email,
+        username: auth.user.username ?? undefined,
+      },
       events,
       expiresAt: request.expiresAt,
     };
@@ -151,6 +169,7 @@ export const listReviewableApps = query({
       _id: v.id('delegatedApps'),
       ownerPersonId: v.id('persons'),
       ownerDisplayName: v.string(),
+      appearance: v.optional(hostedAppearance),
       name: v.string(),
       purpose: v.string(),
       clientType,
@@ -180,6 +199,7 @@ export const listReviewableApps = query({
       result.push({
         _id: app._id,
         ownerPersonId: app.ownerPersonId,
+        appearance: app.appearance,
         ownerDisplayName: user?.name ?? 'Unavailable account',
         name: app.name,
         purpose: app.purpose,

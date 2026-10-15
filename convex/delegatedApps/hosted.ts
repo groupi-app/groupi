@@ -17,7 +17,13 @@ export const configureAppearance = mutation({
       if (!name.trim() || name.length > 100 || /[<>\r\n]/.test(name))
         throw new ConvexError('Invalid hosted brand or sender name');
     }
-    if (/[,;@"\\\u0000-\u001f\u007f]/.test(appearance.senderName))
+    if (
+      /[,;@"\\]/.test(appearance.senderName) ||
+      [...appearance.senderName].some(
+        character =>
+          character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+      )
+    )
       throw new ConvexError('Invalid hosted sender name');
     if (!/^#[0-9a-f]{6}$/i.test(appearance.accent))
       throw new ConvexError('Invalid hosted accent');
@@ -28,22 +34,36 @@ export const configureAppearance = mutation({
 
 export const getAppearance = query({
   args: { interactionId: v.string() },
-  returns: v.union(v.null(), v.object({
-    appName: v.string(), providerName: v.string(), instance: v.string(),
-    appearance: v.optional(hostedAppearance), expiresAt: v.number(),
-  })),
+  returns: v.union(
+    v.null(),
+    v.object({
+      appName: v.string(),
+      providerName: v.string(),
+      instance: v.string(),
+      appearance: v.optional(hostedAppearance),
+      expiresAt: v.number(),
+    })
+  ),
   handler: async (ctx, { interactionId }) => {
-    const request = await ctx.db.query('delegatedConsentRequests')
-      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId)).unique();
-    if (!request || request.decision || request.expiresAt <= Date.now()) return null;
+    const request = await ctx.db
+      .query('delegatedConsentRequests')
+      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId))
+      .unique();
+    if (!request || request.decision || request.expiresAt <= Date.now())
+      return null;
     const app = await ctx.db.get(request.appId);
     if (!app || app.status === 'suspended') return null;
     if (app.status !== 'approved') {
       const person = await getCurrentPerson(ctx);
       if (person?._id !== app.ownerPersonId) return null;
     }
-    return { appName: app.name, providerName: 'Groupi', instance: request.instanceId,
-      appearance: app.appearance, expiresAt: request.expiresAt };
+    return {
+      appName: app.name,
+      providerName: 'Groupi',
+      instance: request.instanceId,
+      appearance: app.appearance,
+      expiresAt: request.expiresAt,
+    };
   },
 });
 
@@ -52,10 +72,13 @@ export const getEmailAppearance = internalQuery({
   args: { interactionId: v.string() },
   returns: v.union(v.null(), hostedAppearance),
   handler: async (ctx, { interactionId }) => {
-    const request = await ctx.db.query('delegatedConsentRequests')
-      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId)).unique();
-    if (!request || request.decision || request.expiresAt <= Date.now()) return null;
+    const request = await ctx.db
+      .query('delegatedConsentRequests')
+      .withIndex('by_interactionId', q => q.eq('interactionId', interactionId))
+      .unique();
+    if (!request || request.decision || request.expiresAt <= Date.now())
+      return null;
     const app = await ctx.db.get(request.appId);
-    return app?.status === 'approved' ? app.appearance ?? null : null;
+    return app?.status === 'approved' ? (app.appearance ?? null) : null;
   },
 });

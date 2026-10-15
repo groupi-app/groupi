@@ -1,4 +1,5 @@
 'use client';
+import { HostedBrand } from './hosted-brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
@@ -31,6 +32,7 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
     return (
       <Card>
         <CardHeader>
+          <HostedBrand interactionId={interactionId} />
           <CardTitle>Sign in to review access</CardTitle>
           <CardDescription>
             Choose your Groupi account before connecting an app.
@@ -147,6 +149,20 @@ function ConsentChoices({
     return (
       <Card>
         <CardHeader>
+          {request.appearance ? (
+            <p
+              className='text-xl font-heading'
+              style={{ color: request.appearance.accent }}
+            >
+              {request.appearance.brandName}
+            </p>
+          ) : null}
+          <p className='text-sm text-muted-foreground'>
+            Sign-in provided by Groupi
+          </p>
+          <p className='text-sm text-muted-foreground'>
+            Developer app: {request.appName}
+          </p>
           <CardTitle>Connection request expired</CardTitle>
         </CardHeader>
         <CardContent>
@@ -160,6 +176,20 @@ function ConsentChoices({
   return (
     <Card>
       <CardHeader>
+        {request.appearance ? (
+          <p
+            className='text-xl font-heading'
+            style={{ color: request.appearance.accent }}
+          >
+            {request.appearance.brandName}
+          </p>
+        ) : null}
+        <p className='text-sm text-muted-foreground'>
+          Sign-in provided by Groupi
+        </p>
+        <p className='text-sm text-muted-foreground'>
+          Developer app: {request.appName}
+        </p>
         <CardTitle>Connect {request.appName}</CardTitle>
         <CardDescription>{request.purpose}</CardDescription>
       </CardHeader>
@@ -172,6 +202,18 @@ function ConsentChoices({
           <div>
             <dt className='text-sm text-muted-foreground'>Your account</dt>
             <dd>{request.account.displayName}</dd>
+            {request.account.username ? (
+              <dd>@{request.account.username}</dd>
+            ) : null}
+            {request.account.email ? <dd>{request.account.email}</dd> : null}
+            <dd>
+              <Link
+                className='text-primary underline'
+                href={`/sign-in?mode=add-account&redirect=${encodeURIComponent(`/oauth/consent?interactionId=${encodeURIComponent(interactionId)}`)}`}
+              >
+                Choose another account
+              </Link>
+            </dd>
           </div>
         </dl>
         <p className='text-sm text-muted-foreground'>
