@@ -1397,6 +1397,7 @@ export type ReportSummary = {
 };
 export type DelegatedAction =
   | 'groups.context.read'
+  | 'groups.events.read'
   | 'groups.applications.submit'
   | 'groups.applications.edit'
   | 'groups.applications.withdraw'
@@ -1836,6 +1837,36 @@ export class Groupi {
       viewAttendeeList: 'EVERYONE' | 'MODERATOR' | 'ORGANIZER';
     };
     admissionPolicy: 'INVITATION_ONLY' | 'DIRECT' | 'APPLY';
+  }>;
+  /** Read Organizer lifecycle and revision */
+  readEventLifecycle(
+    input: { path: { eventId: string } },
+    options?: RequestOptions
+  ): Promise<{
+    audienceConflicts: Array<{ groupId: string; name: string }>;
+    revision: string;
+    completed: boolean;
+    completedAt: number | null;
+    startsAt: number | null;
+    endsAt: number | null;
+  }>;
+  /** Complete, reopen or reschedule as current Organizer */
+  updateEventLifecycle(
+    input: {
+      path: { eventId: string };
+      body: {
+        expectedRevision: string;
+        action: 'complete' | 'reopen' | 'reschedule';
+        startsAt?: number | null;
+        endsAt?: number | null;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: { eventId: string; revision: string; completed: boolean };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
   }>;
   /**  */
   getEventsEventIdApplicationsForm(
@@ -4156,6 +4187,36 @@ export class Groupi {
     allowedActions: Array<string>;
     announcementPreference: { supported: false; subscribed: null };
   }>;
+  /** Read the single current selected Group Event */
+  readCurrentCommunityEvent(
+    input: { path: { groupId: string } },
+    options?: RequestOptions
+  ): Promise<
+    | { kind: 'none' }
+    | { kind: 'conflict'; code: 'STAFF_CONFIGURATION_CONFLICT' }
+    | {
+        kind: 'event';
+        supportedRsvpChoices: Array<'PENDING' | 'YES' | 'NO' | 'MAYBE'>;
+        allowedRsvpTransitions: Array<'PENDING' | 'YES' | 'NO' | 'MAYBE'>;
+        event: {
+          id: string;
+          title: string;
+          location: string | null;
+          description: string | null;
+          timezone: string;
+          startsAt: number | null;
+          endsAt: number | null;
+          ongoing: boolean;
+          roster: Array<{ displayName: string }> | null;
+        };
+        participation: {
+          membershipId: string;
+          revision: number;
+          rsvp: 'PENDING' | 'YES' | 'NO' | 'MAYBE';
+        } | null;
+        allowedActions: Array<string>;
+      }
+  >;
   /** submitCommunityApplication */
   submitCommunityApplication(
     input: {

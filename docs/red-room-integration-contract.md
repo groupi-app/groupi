@@ -32,7 +32,7 @@ The SDK exports exact current/proposed mappings as `communityOperations` and typ
 | Submit own application               | `POST /groups/{groupId}/community-applications`; `submitCommunityApplication` / `submit_community_application`                              | Implemented G3                                                         |
 | Edit own application                 | `PATCH /groups/{groupId}/community-applications/{applicationId}`; `editCommunityApplication` / `edit_community_application`                 | Implemented G3                                                         |
 | Withdraw own application             | `POST /groups/{groupId}/community-applications/{applicationId}/withdraw`; `withdrawCommunityApplication` / `withdraw_community_application` | Implemented G3                                                         |
-| Read single current Event / own RSVP | `GET /groups/{groupId}/current-event`; `readCurrentCommunityEvent` / `read_current_community_event`                                         | Proposed G4; explicit none/conflict/event discriminants                |
+| Read single current Event / own RSVP | `GET /groups/{groupId}/current-event`; `readCurrentCommunityEvent` / `read_current_community_event`                                         | Implemented G4; explicit none/conflict/event discriminants             |
 | Join Event                           | `POST /groups/{groupId}/events/{eventId}/join`; `joinCommunityEvent` / `join_community_event`                                               | Proposed G5; creates Pending, never Yes; replay preserves later RSVP   |
 | Change own RSVP                      | `PUT /groups/{groupId}/events/{eventId}/own-rsvp`; `setCommunityRsvp` / `set_community_rsvp`                                                | Proposed G5                                                            |
 | Leave Event                          | `POST /groups/{groupId}/events/{eventId}/leave`; `leaveCommunityEvent` / `leave_community_event`                                            | Proposed G5                                                            |
@@ -69,20 +69,20 @@ Application mutations take current form revision on submit and saved application
 
 SDK `GroupiError` preserves wire `code`, HTTP `status`, `details` and `uncertain`; it never silently uses another credential. Structured error envelopes are `{error:{code,message,...guidance}}`. Error classification is versioned with the contract. Reserved future errors below are proposed, not claims of current HTTP routes.
 
-| Code                                                                                  | Meaning / action                                                                                                                                       |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `UNAUTHORIZED` (401)                                                                  | Missing, malformed, unknown or wrong-audience credential; start explicit authorization. No resource existence is revealed.                             |
-| `TOKEN_EXPIRED` (401)                                                                 | Known delegated credential or grant expired; renew only an existing permitted refresh grant, otherwise reconnect.                                      |
-| `CONNECTION_REVOKED` (401)                                                            | Known credential/connection revoked; explicit reconnect, never retry the revoked token.                                                                |
-| `FORBIDDEN` (403)                                                                     | Action/resource/current account, app or eligibility denied; re-read authorized state or return to consent. Retrying unchanged authority does not help. |
-| `VALIDATION_ERROR` (400)                                                              | Fix input; proposed application validation includes answer shape and stale current-form submission errors.                                             |
-| `STALE_REVISION`, `CONFLICT` (409; proposed)                                          | Read authorized current own state; ask for a fresh intent with its new revision.                                                                       |
-| `PROTECTED_OWNER`, `PROTECTED_ORGANIZER` (409; proposed)                              | Staff must resolve ownership/last-Organizer safeguards; never display successful departure/expulsion.                                                  |
-| `STAFF_CONFIGURATION_CONFLICT` (409 or current-event conflict discriminant; proposed) | Multiple active applicable Events; staff resolution required, never select arbitrarily.                                                                |
-| `IDEMPOTENCY_CONFLICT` (409; proposed)                                                | Same operation ID with a different payload/resource/app/actor binding; reject, never replay unrelated effects.                                         |
-| `IDEMPOTENCY_EXPIRED` (409; proposed)                                                 | Receipt window ended; reconcile authorized state before deciding a new intent.                                                                         |
-| `UNAVAILABLE` (503), `RATE_LIMITED` (429)                                             | Retry safe reads with bounded backoff and `Retry-After`; absence of response is not absence of Event/application.                                      |
-| `UNKNOWN_OUTCOME` (local transport or proposed mutation classification)               | Read authorized own state/operation receipt before retrying; no success/failure claim from a lost response.                                            |
+| Code                                                                    | Meaning / action                                                                                                                                       |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `UNAUTHORIZED` (401)                                                    | Missing, malformed, unknown or wrong-audience credential; start explicit authorization. No resource existence is revealed.                             |
+| `TOKEN_EXPIRED` (401)                                                   | Known delegated credential or grant expired; renew only an existing permitted refresh grant, otherwise reconnect.                                      |
+| `CONNECTION_REVOKED` (401)                                              | Known credential/connection revoked; explicit reconnect, never retry the revoked token.                                                                |
+| `FORBIDDEN` (403)                                                       | Action/resource/current account, app or eligibility denied; re-read authorized state or return to consent. Retrying unchanged authority does not help. |
+| `VALIDATION_ERROR` (400)                                                | Fix input; proposed application validation includes answer shape and stale current-form submission errors.                                             |
+| `STALE_REVISION`, `CONFLICT` (409; proposed)                            | Read authorized current own state; ask for a fresh intent with its new revision.                                                                       |
+| `PROTECTED_OWNER`, `PROTECTED_ORGANIZER` (409; proposed)                | Staff must resolve ownership/last-Organizer safeguards; never display successful departure/expulsion.                                                  |
+| `STAFF_CONFIGURATION_CONFLICT` (current-event conflict discriminant)    | Multiple active applicable Events; staff resolution required, never select arbitrarily.                                                                |
+| `IDEMPOTENCY_CONFLICT` (409; proposed)                                  | Same operation ID with a different payload/resource/app/actor binding; reject, never replay unrelated effects.                                         |
+| `IDEMPOTENCY_EXPIRED` (409; proposed)                                   | Receipt window ended; reconcile authorized state before deciding a new intent.                                                                         |
+| `UNAVAILABLE` (503), `RATE_LIMITED` (429)                               | Retry safe reads with bounded backoff and `Retry-After`; absence of response is not absence of Event/application.                                      |
+| `UNKNOWN_OUTCOME` (local transport or proposed mutation classification) | Read authorized own state/operation receipt before retrying; no success/failure claim from a lost response.                                            |
 
 Existing OAuth errors remain distinct: `access_denied` requires fresh explicit consent; `invalid_grant` includes expired/used authorization codes or invalid refresh state and requires reconnect; `invalid_client` requires operator correction. Wrong browser/account or state/PKCE mismatch never bypasses binding. Provider transport/configuration failure is not a decline. Existing SDK transport codes (`TRANSPORT_ERROR`, `TOKEN_TRANSPORT_ERROR`, `INVALID_TOKEN_RESPONSE`, `REDIRECT_REFUSED`) preserve uncertainty; see [delegated sign-in](delegated-sign-in.md) for protocol constraints. G10 verifies hosted wrong-browser, used-link and provider failure classifications against the deployed provider.
 
@@ -108,9 +108,69 @@ The package fixtures contain synthetic names, IDs, answers and timestamps only. 
 
 Existing Groups #261 supplies native admission/history/review, independent Group/Event audiences, member onboarding and ordinary moderation. Existing delegated-readiness #346 supplies approved app registration, app-specific identity, signed protocol, bounded credentials, consent/disconnect and SDK consumers. This work extends those domain boundaries rather than impersonating applicants.
 
-Remaining gates include G2 trusted hosted appearance/onboarding, deployed G3 acceptance, G4 current Event/lifecycle, G5 participation, G6 branded decision delivery, G7 preferences/announcements, G8 exclusion, G9 cleanup/reinstatement and G10 deployed acceptance. Existing narrowed backend schemas still need their two-stage [migration audit](strict-backend-contract-rollout.md); issuer signing/cookie configuration, matching deployed frontend/backend source, isolated browser identities, native accessibility where applicable and external security review remain unverified. Local protocol/HTTP and SDK tests are source evidence only. No live data or deployment is modified here.
+Remaining gates include G2 trusted hosted appearance/onboarding, deployed G3 acceptance, G5 participation, G6 branded decision delivery, G7 preferences/announcements, G8 exclusion, G9 cleanup/reinstatement and G10 deployed acceptance. Existing narrowed backend schemas still need their two-stage [migration audit](strict-backend-contract-rollout.md); issuer signing/cookie configuration, matching deployed frontend/backend source, isolated browser identities, native accessibility where applicable and external security review remain unverified. Local protocol/HTTP and SDK tests are source evidence only. No live data or deployment is modified here.
 
 Contract additions may add optional fields within `red-room.v1`; incompatible field meanings, operation bindings, privacy or replay semantics require a new contract version and coordinated Groupi/Bound in Red consumer fixtures/tests. A proposed operation becomes supported only with its implementation, OpenAPI entry, generated SDK methods, authority/replay tests and milestone acceptance. Fixtures and both SDK references must move together.
+
+## G4 current Event and staff lifecycle
+
+`GET /groups/{groupId}/current-event` and native
+`api.groups.currentEvent.getCurrentEvent` share `currentEventForPerson`.
+The delegated read requires `groups.events.read`, current selected Group binding
+and live credential/account authority. A currently eligible Group member can read
+before Join; independent Event membership retains its own read authority after
+voluntary Group departure. Public or Friends eligibility alone does not replace
+selected Group authority here. Roster is null before Event admission; members
+receive display names only when the existing attendee-list permission allows it.
+No email, response notes, or application answers appear in this projection.
+
+Exactly zero applicable active Events returns `kind:none`; more than one returns
+`kind:conflict` with `STAFF_CONFIGURATION_CONFLICT`, without arbitrarily selecting
+or exposing unrelated Event IDs. A single Event returns description, timezone,
+logistics, own participation and full action strings. `supportedRsvpChoices` is
+computed from the canonical RSVP validator choices; `allowedRsvpTransitions` is
+empty until G5 implements and authorizes RSVP writes. G5 must advertise transitions
+only for a live own membership with the granted eligible `groups.events.rsvp`
+action. G4 advertises only `groups.events.read`.
+
+Staff use native `api.events.lifecycleOperations.getLifecycle` and
+`api.events.lifecycleOperations.setLifecycle`, or legacy API-key REST
+`GET /events/{eventId}/lifecycle` (`readEventLifecycle` /
+`read_event_lifecycle`) and `POST /events/{eventId}/lifecycle`
+(`updateEventLifecycle` / `update_event_lifecycle`). POST accepts
+`action:complete|reopen|reschedule`, mandatory `expectedRevision` from the staff
+read, optional `startsAt`/`endsAt`, and a UUID `Idempotency-Key`. Native uses the
+same UUID as `operationId`. Reschedule requires both dates; use null for an undated
+start or absent end. A finite future start and strictly later end are required.
+Reopen cannot revive a past recorded end; use Reschedule. Current Event Organizer
+authority is checked inside the write transaction, before replay. Group roles do
+not confer this authority, and selected Group delegated scopes cannot call these
+staff operations. Staff reads identify visible Group audience conflicts; existing
+audience/DIRECT controls remain the configuration path.
+
+Completion means `completedAt` is set, or a recorded end is at or before
+server time. A past start without an end and an undated Event remain active.
+Lifecycle receipts bind actor, native/legacy credential authority, Event, operation,
+body and revision, and use the shared 30-day receipt window with permanent mismatch
+tombstones. Replays do not extend retention or repeat scheduling/add-on effects;
+minimal receipts contain no logistics/roster. The Organizer UI retains the exact
+intent after an uncertain outcome and offers an explicit current-state
+reconciliation before starting another intent.
+
+G8 integration boundary: `events/lifecycle.isEventComplete(event, now)` is the
+shared selection/cleanup predicate. `guardEventReactivation(ctx, eventId,
+explicit=false)` runs before explicit reopen/reschedule, existing choose/reset
+date operations, Group audience addition, Friends audience enablement, visibility
+widening, and DIRECT/APPLY admission changes. G8 adds exclusion reconciliation to
+this function regardless of `explicit`; that flag permits the explicit completion
+fence only. No exclusion records or expulsion behavior are invented in G4.
+Audience withdrawal, disabled Friends sharing and narrowing to Private remain
+available. Potential date options do not change chosen dates or completion.
+
+Source-level HTTP/native/SDK and Organizer component tests are local evidence.
+A matching deployed frontend/backend and isolated signed-in browser identity have
+not been supplied for this G4 source; live staff browser/provider acceptance remains
+an open G10 gate. No local runtime, deployment, or live data write was performed.
 
 ## G6 decision email and trusted return
 

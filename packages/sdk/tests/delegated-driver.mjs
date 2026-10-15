@@ -42,6 +42,10 @@ for await (const line of createInterface({ input: process.stdin })) {
       result = await client.readOwnCommunityContext({
         path: { groupId: command.groupId },
       });
+    else if (command.operation === 'current-event')
+      result = await client.readCurrentCommunityEvent({
+        path: { groupId: command.groupId },
+      });
     else if (command.operation === 'application')
       result = await client[command.method](command.input, {
         idempotencyKey: command.operationId,

@@ -297,3 +297,53 @@ it.each(['lost-response', 'deleted-app', 'deleted-application'] as const)(
     });
   }
 );
+
+it('keeps native Groupi email defaults and refuses unsafe late retries without repeating the decision', async () => {
+  const f = await applicant();
+  await f.owner.auth.mutation(api.settings.mutations.saveNotificationSettings, {
+    notificationMethods: [
+      {
+        type: 'EMAIL',
+        enabled: true,
+        value: 'native@example.test',
+        notifications: [],
+      },
+    ],
+  });
+  const submitted = await f.owner.auth.mutation(
+    api.groupApplications.mutations.submitGroupApplication,
+    { groupId: f.groupId, answers: { welcome: 'Native' } }
+  );
+  await f.t.finishInProgressScheduledFunctions();
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+  const id = submitted.applicationId;
+  await f.staff.auth.mutation(
+    api.groupApplications.mutations.reviewGroupApplication,
+    { applicationId: id, decision: 'DECLINED' }
+  );
+  const provider = vi
+    .fn()
+    .mockResolvedValue(new Response('{}', { status: 503 }));
+  vi.stubGlobal('fetch', provider);
+  vi.stubEnv('RESEND_API_KEY', 'synthetic-only');
+  await f.t.action(internal.groupApplications.decisionActions.send, {
+    applicationId: id,
+  });
+  expect(JSON.parse(provider.mock.calls[0][1].body)).toMatchObject({
+    from: 'Groupi <notifications@groupi.gg>',
+    subject: 'Your Groupi application: declined',
+  });
+  vi.setSystemTime(Date.now() + 23 * 3600000 + 1);
+  await expect(
+    f.staff.auth.mutation(api.groupApplications.decisionDelivery.retry, {
+      applicationId: id,
+    })
+  ).rejects.toThrow('Safe retry window expired');
+  expect(provider).toHaveBeenCalledTimes(1);
+  expect(
+    await f.staff.auth.query(
+      api.groupApplications.queries.getGroupApplication,
+      { applicationId: id }
+    )
+  ).toMatchObject({ status: 'DECLINED', decisionDelivery: 'failed' });
+});

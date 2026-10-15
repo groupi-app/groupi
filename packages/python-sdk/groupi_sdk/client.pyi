@@ -468,6 +468,8 @@ class Groupi:
     def join_a_discoverable_event(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object1d3bbf168039: ...
     def read_event_visibility_admission_and_permissions(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objecte5a809dc5829: ...
     def update_event_visibility_admission_and_permissions(self, *, path: Object63660964c4c7, query: None | None = ..., body: Objectddbcd2fd4c82, idempotency_key: str | None = ...) -> Objecte5a809dc5829: ...
+    def read_event_lifecycle(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object37a4e2d22e60: ...
+    def update_event_lifecycle(self, *, path: Object63660964c4c7, query: None | None = ..., body: Object401e6f77e181, idempotency_key: str | None = ...) -> Object46a622af52af: ...
     def get_events_event_id_applications_form(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objected2365fc2ed6: ...
     def get_events_event_id_applications_history(self, *, path: Object63660964c4c7, query: Object7e06335c5475 | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb366528fe427: ...
     def get_events_event_id_applications_history_items(self, *, path: Object63660964c4c7, query: Object7e06335c5475 | None = ..., max_pages: int = ...) -> Iterator[Objecta6e648a4652b]: ...
@@ -589,6 +591,7 @@ class Groupi:
     def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
     def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object3f7b83728032: ...
+    def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
     def submit_community_application(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objecte4ea0c62ce41, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
@@ -759,6 +762,8 @@ class AsyncGroupi:
     async def join_a_discoverable_event(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object1d3bbf168039: ...
     async def read_event_visibility_admission_and_permissions(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objecte5a809dc5829: ...
     async def update_event_visibility_admission_and_permissions(self, *, path: Object63660964c4c7, query: None | None = ..., body: Objectddbcd2fd4c82, idempotency_key: str | None = ...) -> Objecte5a809dc5829: ...
+    async def read_event_lifecycle(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object37a4e2d22e60: ...
+    async def update_event_lifecycle(self, *, path: Object63660964c4c7, query: None | None = ..., body: Object401e6f77e181, idempotency_key: str | None = ...) -> Object46a622af52af: ...
     async def get_events_event_id_applications_form(self, *, path: Object63660964c4c7, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objected2365fc2ed6: ...
     async def get_events_event_id_applications_history(self, *, path: Object63660964c4c7, query: Object7e06335c5475 | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb366528fe427: ...
     def get_events_event_id_applications_history_items(self, *, path: Object63660964c4c7, query: Object7e06335c5475 | None = ..., max_pages: int = ...) -> AsyncIterator[Objecta6e648a4652b]: ...
@@ -880,6 +885,7 @@ class AsyncGroupi:
     async def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     async def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
     async def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object3f7b83728032: ...
+    async def read_current_community_event(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object6edaff610f96 | Object97dfec76315a | Object0b7836604670: ...
     async def submit_community_application(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objecte4ea0c62ce41, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def edit_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Objectece999219204, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
     async def withdraw_community_application(self, *, path: Object0210d908b1ed, query: None | None = ..., body: Object8c477699d177, idempotency_key: str | None = ...) -> Object53e85f30308a: ...
@@ -1302,6 +1308,26 @@ class Objectddbcd2fd4c82(TypedDict):
     visibility: NotRequired[Literal['PRIVATE', 'FRIENDS', 'PUBLIC']]
     admissionPolicy: NotRequired[Literal['INVITATION_ONLY', 'DIRECT', 'APPLY']]
     permissions: NotRequired[Objectf8ccad6cf3b8]
+
+class Object37a4e2d22e60(TypedDict):
+    audienceConflicts: list[Object8d74f2ccf6a9]
+    revision: str
+    completed: bool
+    completedAt: float | None
+    startsAt: float | None
+    endsAt: float | None
+
+class Object46a622af52af(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    result: Object83558e3bc551
+    effects: Object14927e6acaac
+
+class Object401e6f77e181(TypedDict):
+    expectedRevision: str
+    action: Literal['complete', 'reopen', 'reschedule']
+    startsAt: NotRequired[float | None]
+    endsAt: NotRequired[float | None]
 
 class Objected2365fc2ed6(TypedDict):
     settings: Object9d78b8568e9e | None
@@ -1921,6 +1947,21 @@ class Object3f7b83728032(TypedDict):
 
 class Objecta2791daed18f(TypedDict):
     cursor: NotRequired[str]
+
+class Object6edaff610f96(TypedDict):
+    kind: Literal['none']
+
+class Object97dfec76315a(TypedDict):
+    kind: Literal['conflict']
+    code: Literal['STAFF_CONFIGURATION_CONFLICT']
+
+class Object0b7836604670(TypedDict):
+    kind: Literal['event']
+    supportedRsvpChoices: list[Literal['PENDING', 'YES', 'NO', 'MAYBE']]
+    allowedRsvpTransitions: list[Literal['PENDING', 'YES', 'NO', 'MAYBE']]
+    event: Object8f7560a6b20e
+    participation: Object427b94380342 | None
+    allowedActions: list[str]
 
 class Object53e85f30308a(TypedDict):
     operationId: str
@@ -2561,6 +2602,19 @@ class Objectf8ccad6cf3b8(TypedDict):
     inviteMembers: NotRequired[Literal['EVERYONE', 'MODERATOR', 'ORGANIZER']]
     viewAttendeeList: NotRequired[Literal['EVERYONE', 'MODERATOR', 'ORGANIZER']]
 
+class Object8d74f2ccf6a9(TypedDict):
+    groupId: str
+    name: str
+
+class Object83558e3bc551(TypedDict):
+    eventId: str
+    revision: str
+    completed: bool
+
+class Object14927e6acaac(TypedDict):
+    email: Literal['not-requested']
+    cleanup: Literal['not-requested']
+
 class Object9d78b8568e9e(TypedDict):
     questions: list[Object6a6aeb3276ba]
     reviewerPolicy: Literal['ORGANIZERS_AND_MODERATORS', 'ORGANIZER_ONLY']
@@ -2667,14 +2721,26 @@ class Object068ecbb0d0bb(TypedDict):
     supported: Literal[False]
     subscribed: None
 
+class Object8f7560a6b20e(TypedDict):
+    id: str
+    title: str
+    location: str | None
+    description: str | None
+    timezone: str
+    startsAt: float | None
+    endsAt: float | None
+    ongoing: bool
+    roster: list[Object1e0b443bfaa7] | None
+
+class Object427b94380342(TypedDict):
+    membershipId: str
+    revision: float
+    rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
+
 class Object878ec63794f7(TypedDict):
     applicationId: str
     status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
     revision: float
-
-class Object14927e6acaac(TypedDict):
-    email: Literal['not-requested']
-    cleanup: Literal['not-requested']
 
 class Objectcb244cc36b34(TypedDict):
     id: str
@@ -2770,10 +2836,6 @@ class Object50ef760e0f66(TypedDict):
     x: float
     y: float
 
-class Object8d74f2ccf6a9(TypedDict):
-    groupId: str
-    name: str
-
 class Object4e2be9f6831d(TypedDict):
     id: str
     name: str | None
@@ -2784,6 +2846,9 @@ class Object4e2be9f6831d(TypedDict):
 class Object1fa6adfb22bd(TypedDict):
     status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
     at: float
+
+class Object1e0b443bfaa7(TypedDict):
+    displayName: str
 
 class Object30a6d58642d2(TypedDict):
     id: str

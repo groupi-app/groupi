@@ -2,6 +2,26 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G4 source candidate — 2026-10-15
+
+- Adds delegated `groups.events.read` current Event selection with native parity,
+  explicit absence/conflict, authorized pre-Join logistics and retained independent
+  Event membership access. Canonical completion uses recorded end at/before server
+  time or explicit completion, never a past start alone.
+- Existing Event details settings now expose Organizer completion, guarded reopen
+  and reschedule beside existing audience and admission controls. Staff lifecycle
+  operations share durable UUID receipts and current-role checks. The
+  [integration contract](../../red-room-integration-contract.md#g4-current-event-and-staff-lifecycle)
+  records exact native/REST/SDK methods and G8 exclusion hook boundaries.
+- Source verification passes 56 focused backend tests, 21 Organizer/audience/consent
+  component tests, 3 shared permission tests, and real generated Node/Python
+  current-Event consumer journeys. SDK transport suites pass 8 Node and 7 Python
+  tests, with 17 integration tests; generated client corpus contains 243 methods.
+- Runtime readiness for this source: matching deployed frontend/backend SHA,
+  isolated authenticated browser identity and live provider/email setup remain
+  unverified. Local source tests are separate from G10 deployed acceptance;
+  no dev server/build/deployment or live fixture mutation was performed.
+
 ## Red Room integration branch — 2026-10-15
 
 - `codex/red-room-integration` starts at developer-platform prerequisite `45d00c14fb18d735b8cd2244400d22233509a5fd`. G1 merges at `3af0db2fc80ebdabcc201de6adc335b2b127f41b`; G2 merges at `bf98d7f29246d25e15e0ebd5219c95aae435070c`. [Draft PR #389](https://github.com/groupi-app/groupi/pull/389) targets a snapshot of that prerequisite, not main. Its prerequisite remains a separate integration/release concern.
@@ -126,3 +146,10 @@ The user authorized merging this candidate into `test` with administrator
 override only after all checks are green. This does not authorize production
 release. Browser/native verification has not run for this candidate; matching
 runtimes and an isolated signed-in session remain unverified.
+
+## Red Room G6 source candidate — 2026-10-15
+
+- `codex/red-room-g6` adds server-set application source app/grant linkage, administrator-approved `appearance.statusReturnUrl`, branded decision mail with operator-owned sender mailbox, durable per-application dispatch and staff retry controls on web/mobile. Decision and admission remain committed through delivery failure. Native reads and selected-Group HTTP/generated TypeScript/Python own-context expose recipient-free optional delivery state.
+- Global email/type settings and DND apply independently of announcement subscription, at decision and dispatch. Frozen messages carry provider idempotency keys; retries preserve the same message and stop after 23 hours, before the provider's 24-hour key horizon. Current manager authority gates retries; current source app/grant/account/preferences gate queued delivery. Group/account/application cleanup removes private dispatch payloads. Approved messages also recheck Group eligibility; declined messages remain accurate despite later admission ineligibility.
+- Trusted Groupi `/application-status/{applicationId}` authenticates the applicant, distinguishes historical approval from current membership and offers the exact approved site return only with live selected-Group/read authority. Bound in Red's configured destination is `https://<site-origin>/red-room/application`; the site must authenticate and reread authoritative context. No applicant email, answer, token or provider error is passed to the app.
+- Local evidence includes lost decision/provider responses, retry key reuse, suppression, source app deletion/suspension, queued application deletion, native sender defaults, retry horizon, former membership, unrelated account return denial, and web/mobile retry-only controls. Matching deployed frontend/backend revisions, isolated authenticated browser/device sessions, actual sender/domain verification and inbox/return acceptance are **unverified** and remain G10 gates. Full `pnpm generate` is unavailable without `CONVEX_DEPLOYMENT`; the official offline helper preserves component/runtime declarations. No runtime/build/deployment, push, PR/issue mutation or changeset file is performed.

@@ -70,6 +70,8 @@ export type CurrentEvent =
   | { kind: 'conflict'; code: 'STAFF_CONFIGURATION_CONFLICT' }
   | {
       kind: 'event';
+      supportedRsvpChoices: ('PENDING' | 'YES' | 'NO' | 'MAYBE')[];
+      allowedRsvpTransitions: ('PENDING' | 'YES' | 'NO' | 'MAYBE')[];
       event: {
         id: string;
         title: string;

@@ -122,6 +122,33 @@ export async function handleBoundedRequest(
       );
     }
   }
+  if (
+    !isV1 &&
+    parts[0] === 'groups' &&
+    parts.length === 3 &&
+    parts[2] === 'current-event' &&
+    method === 'GET'
+  ) {
+    try {
+      return respond(
+        await ctx.runQuery(internal.groups.currentEvent.readCurrentEvent, {
+          credentialId,
+          groupId: parts[1],
+        })
+      );
+    } catch (error) {
+      if (error instanceof ConvexError) return forbidden();
+      return Response.json(
+        {
+          error: {
+            code: 'UNAVAILABLE',
+            message: 'Current Event service unavailable.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+  }
   if (isV1 && parts[0] === 'uploads') return forbidden();
   if (parts[0] === 'uploads' && parts.length === 1 && method === 'POST') {
     const eventId = url.searchParams.get('eventId');

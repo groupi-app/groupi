@@ -121,6 +121,20 @@
   },
   {
     "paging": null,
+    "name": "readEventLifecycle",
+    "method": "GET",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Read Organizer lifecycle and revision"
+  },
+  {
+    "paging": null,
+    "name": "updateEventLifecycle",
+    "method": "POST",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Complete, reopen or reschedule as current Organizer"
+  },
+  {
+    "paging": null,
     "name": "getEventsEventIdApplicationsForm",
     "method": "GET",
     "path": "/events/{eventId}/applications/form",
@@ -910,6 +924,13 @@
     "method": "GET",
     "path": "/groups/{groupId}/community-context",
     "summary": "Read own community context"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentCommunityEvent",
+    "method": "GET",
+    "path": "/groups/{groupId}/current-event",
+    "summary": "Read the single current selected Group Event"
   },
   {
     "paging": null,
