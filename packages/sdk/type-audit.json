@@ -1,0 +1,12 @@
+{
+  "openapiSha256": "cb84c34598908cbfdae89329c48d365539d1b94236a8c590801690809e55f17e",
+  "documentedOperations": 238,
+  "generatedOperations": 236,
+  "transportAdapters": 2,
+  "schemaTypes": 81,
+  "unknownOperationTypes": [],
+  "unknownSchemaTypes": [],
+  "nonDomainOpaqueFields": [
+    "GroupiError.details: arbitrary external error cause"
+  ]
+}
