@@ -521,8 +521,7 @@ export function InviteListsSettings() {
                 id='invite-list-name-help'
                 className='text-sm text-muted-foreground'
               >
-                Only you can see this list. Use up to 100 characters after
-                trimming.
+                Only you can see this list. Use up to 100 characters.
               </p>
             </div>
             <section
