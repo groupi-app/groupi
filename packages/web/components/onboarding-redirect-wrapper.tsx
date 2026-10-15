@@ -1,5 +1,7 @@
 'use client';
 
+import { getSafeInternalRedirect } from '@/lib/urls';
+
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useGlobalUser } from '@/context/global-user-context';
@@ -35,7 +37,8 @@ export function OnboardingRedirectWrapper() {
       console.log(
         '[OnboardingRedirect] Unauthenticated user on onboarding, redirecting to sign-in'
       );
-      router.push('/sign-in');
+      const destination = getSafeInternalRedirect(searchParams.get('redirect'));
+      router.push(`/sign-in?redirect=${encodeURIComponent(destination)}`);
       return;
     }
 
@@ -69,7 +72,7 @@ export function OnboardingRedirectWrapper() {
 
     // If user completed onboarding and IS on onboarding page, redirect to saved destination
     if (needsOnboarding === false && pathname?.startsWith('/onboarding')) {
-      const redirectTo = searchParams.get('redirect') || '/events';
+      const redirectTo = getSafeInternalRedirect(searchParams.get('redirect'));
       console.log(
         '[OnboardingRedirect] User completed onboarding, redirecting to',
         redirectTo

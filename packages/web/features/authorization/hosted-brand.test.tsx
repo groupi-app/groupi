@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { useQuery } from 'convex/react';
 import { HostedBrand } from './hosted-brand';
 vi.mock('@/convex/_generated/api', () => ({
@@ -29,4 +29,22 @@ it('gives safe restart guidance when a hosted request is unavailable', () => {
   vi.mocked(useQuery).mockReturnValue(null);
   render(<HostedBrand interactionId='expired-interaction' />);
   expect(screen.getByRole('alert')).toHaveTextContent('Return to the app');
+});
+
+it('stops showing an expired interaction even without a backend update', async () => {
+  vi.useFakeTimers();
+  try {
+    vi.mocked(useQuery).mockReturnValue({
+      appName: 'Red Room',
+      providerName: 'Groupi',
+      expiresAt: Date.now() + 1000,
+    });
+    render(<HostedBrand interactionId='expiring' />);
+    await act(async () => {
+      vi.advanceTimersByTime(1001);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Return to the app');
+  } finally {
+    vi.useRealTimers();
+  }
 });
