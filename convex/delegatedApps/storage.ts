@@ -1,6 +1,10 @@
 import { v } from 'convex/values';
-import { artifactModel } from './contracts';
-import { validatePayload } from './payloads';
+import { artifactModel, scope } from './contracts';
+import {
+  validatePayload,
+  accessTokenPayloadSchema,
+  parseScopeString,
+} from './payloads';
 import {
   internalMutation,
   internalQuery,
@@ -125,6 +129,21 @@ export const upsert = internalMutation({
     if (row) await ctx.db.patch(row._id, fields);
     else await ctx.db.insert('delegatedArtifacts', fields);
     if (args.model === 'AccessToken' && bound) {
+      const token = accessTokenPayloadSchema.parse(JSON.parse(args.payload));
+      const audience = `${new URL(bound.instanceId).origin}/api/v2`;
+      const tokenScopes = parseScopeString(token.scope);
+      const snapshotActions = actions.filter(action =>
+        tokenScopes.includes(action)
+      );
+      const grant = await ctx.db.get(bound.grantId);
+      if (
+        !grant ||
+        token.aud !== audience ||
+        snapshotActions.length !== tokenScopes.length ||
+        snapshotActions.some(action => !grant.actions.includes(action))
+      )
+        throw new ConvexError('Invalid delegated access bounds');
+
       const credential = await ctx.db
         .query('authorizationCredentials')
         .withIndex('by_secretHash', q => q.eq('secretHash', args.keyHash))
@@ -134,6 +153,8 @@ export const upsert = internalMutation({
           grantId: bound.grantId,
           secretHash: args.keyHash,
           kind: 'delegated-access',
+          actions: snapshotActions,
+          audience,
           expiresAt: args.expiresAt,
           createdAt: Date.now(),
         });
@@ -220,7 +241,7 @@ export const prepareConsent = internalMutation({
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),
-    requestedScopes: v.array(v.string()),
+    requestedScopes: v.array(scope),
     expiresAt: v.number(),
   },
   returns: v.null(),

@@ -137,19 +137,14 @@ export async function token(
     body: new URLSearchParams(params).toString(),
   });
 }
-export async function authorize(
+export async function beginConsent(
   context: Awaited<ReturnType<typeof setup>>,
-  options: {
-    scopes: string;
-    actions: AuthorizationAction[];
-    selector: EventSelector;
-    background: boolean;
-  }
+  scopes: string
 ) {
   const { t, owner, appId } = context;
   const url = authorizationUrl(
     appId,
-    options.scopes,
+    scopes,
     context.redirectUri,
     context.issuer
   );
@@ -172,6 +167,22 @@ export async function authorize(
     { interactionId }
   );
   expect(consent?.appName).toBe('Calendar');
+  return { interactionId, cookies };
+}
+export async function authorize(
+  context: Awaited<ReturnType<typeof setup>>,
+  options: {
+    scopes: string;
+    actions: AuthorizationAction[];
+    selector: EventSelector;
+    background: boolean;
+  }
+) {
+  const { t, owner } = context;
+  const { interactionId, cookies } = await beginConsent(
+    context,
+    options.scopes
+  );
   const approval = await owner.auth.mutation(
     api.delegatedApps.mutations.approveConsent,
     {

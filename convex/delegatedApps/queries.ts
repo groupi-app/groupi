@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { getCurrentPerson } from '../auth';
-import { app, clientType, status, reviewStatus } from './contracts';
+import { app, clientType, status, reviewStatus, scope } from './contracts';
 import { isAdminRole } from '../lib/constants';
 import { authComponent, type AuthUserId } from '../auth';
 export const listOwnedApps = query({
@@ -29,7 +29,7 @@ export const getConsentRequest = query({
       appId: v.id('delegatedApps'),
       appName: v.string(),
       purpose: v.string(),
-      requestedScopes: v.array(v.string()),
+      requestedScopes: v.array(scope),
       requestedActions: v.array(action),
       account: v.object({ displayName: v.string() }),
       events: v.array(v.object({ _id: v.id('events'), title: v.string() })),

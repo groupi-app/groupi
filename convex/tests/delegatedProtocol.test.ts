@@ -4,12 +4,16 @@ import { jwtVerify } from 'jose';
 import { api } from '../_generated/api';
 import {
   setup,
+  beginConsent,
   authorize,
   authorizationUrl,
   token,
   exchange,
 } from './delegated-protocol.helpers';
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.useRealTimers();
+});
 
 test('browser consent and S256 exchange produce only a signed app-specific identity when no identity fields or API actions are approved', async () => {
   const context = await setup();
@@ -276,4 +280,105 @@ test('Connected Apps reports the grant as expired at its expiry and keeps discon
       now: current[0].expiresAt!,
     })
   ).toMatchObject([{ status: 'revoked' }]);
+});
+
+test('two apps on one callback host receive different subjects and delegated identity never exposes global profile identifiers', async () => {
+  const context = await setup();
+  const app2 = await context.owner.auth.mutation(
+    api.delegatedApps.mutations.registerApp,
+    {
+      name: 'Calendar',
+      purpose: 'Identity only',
+      clientType: 'native',
+      redirectUris: [context.redirectUri],
+    }
+  );
+  const options = {
+    scopes: 'openid identity.display-name',
+    actions: ['identity.display-name' as const],
+    selector: { kind: 'selected' as const, eventIds: [] },
+    background: false,
+  };
+  const first = await authorize(context, options);
+  const firstTokens = await (
+    await token(context.t, exchange(context.appId, first.code))
+  ).json();
+  const second = await authorize({ ...context, appId: app2 }, options);
+  const secondTokens = await (
+    await token(context.t, exchange(app2, second.code))
+  ).json();
+  const one = await jwtVerify(firstTokens.id_token, context.publicKeys, {
+    issuer: context.issuer,
+    audience: context.appId,
+  });
+  const two = await jwtVerify(secondTokens.id_token, context.publicKeys, {
+    issuer: context.issuer,
+    audience: app2,
+  });
+  expect(one.payload.sub).not.toBe(two.payload.sub);
+  expect(one.payload.name).toBe('delegated-owner');
+  expect(one.payload.email).toBeUndefined();
+  const globalProfile = await context.t.fetch('/api/v2/profile', {
+    headers: { authorization: `Bearer ${firstTokens.access_token}` },
+  });
+  expect(globalProfile.status).toBe(403);
+});
+
+test('approval tickets expire and do not create a grant when browser confirmation arrives late', async () => {
+  const context = await setup();
+  const pending = await beginConsent(context, 'openid');
+  const approval = await context.owner.auth.mutation(
+    api.delegatedApps.mutations.approveConsent,
+    {
+      interactionId: pending.interactionId,
+      actions: [],
+      selector: { kind: 'selected', eventIds: [] },
+      background: false,
+    }
+  );
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(Date.now() + 61000);
+  const url = new URL(approval.resumeUrl);
+  const result = await context.t.fetch(url.pathname + url.search, {
+    headers: { cookie: pending.cookies },
+  });
+  expect(result.status).toBe(400);
+  expect(
+    await context.owner.auth.query(api.delegatedApps.queries.listConnections, {
+      now: Date.now(),
+    })
+  ).toEqual([]);
+});
+
+test('concurrent approval-ticket finalization creates one connection and consumes the ticket', async () => {
+  const context = await setup();
+  const pending = await beginConsent(context, 'openid');
+  const approval = await context.owner.auth.mutation(
+    api.delegatedApps.mutations.approveConsent,
+    {
+      interactionId: pending.interactionId,
+      actions: [],
+      selector: { kind: 'selected', eventIds: [] },
+      background: false,
+    }
+  );
+  const url = new URL(approval.resumeUrl);
+  const results = await Promise.all([
+    context.t.fetch(url.pathname + url.search, {
+      headers: { cookie: pending.cookies },
+    }),
+    context.t.fetch(url.pathname + url.search, {
+      headers: { cookie: pending.cookies },
+    }),
+  ]);
+  expect(results.map(result => result.status).sort()).toEqual([303, 400]);
+  expect(
+    await context.owner.auth.query(api.delegatedApps.queries.listConnections, {
+      now: Date.now(),
+    })
+  ).toHaveLength(1);
+  const replay = await context.t.fetch(url.pathname + url.search, {
+    headers: { cookie: pending.cookies },
+  });
+  expect(replay.status).toBe(400);
 });

@@ -15,6 +15,7 @@ import {
   validatePayload,
   publicJwksSchema,
   signingJwksSchema,
+  parseScopeString,
 } from './payloads';
 import { actions } from '../authorization/contracts';
 
@@ -150,7 +151,9 @@ function configuration(
           if (resource !== audience)
             throw new errors.InvalidTarget('Unexpected API audience');
           return {
-            scope: actions.join(' '),
+            scope: actions
+              .filter(action => !action.startsWith('identity.'))
+              .join(' '),
             audience,
             accessTokenFormat: 'opaque',
             accessTokenTTL: 300,
@@ -343,9 +346,9 @@ export const handle = internalAction({
         interactionId: interaction.uid,
         appId: clientId as Id<'delegatedApps'>,
         instanceId: issuer,
-        requestedScopes: String(interaction.params.scope ?? '')
-          .split(' ')
-          .filter(Boolean),
+        requestedScopes: parseScopeString(
+          String(interaction.params.scope ?? '')
+        ),
         expiresAt: interaction.exp * 1000,
       });
       if (approvals.length === 1)

@@ -2,6 +2,11 @@ import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 import { action, selector } from '../authorization/contracts';
 
+export const scope = v.union(
+  v.literal('openid'),
+  v.literal('offline_access'),
+  action
+);
 export const clientType = v.union(
   v.literal('confidential'),
   v.literal('native')
@@ -97,7 +102,7 @@ export const tables = {
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),
-    requestedScopes: v.array(v.string()),
+    requestedScopes: v.array(scope),
     personId: v.id('persons'),
     decision: v.union(v.literal('approved'), v.literal('denied')),
     actions: v.array(action),
@@ -113,7 +118,7 @@ export const tables = {
     interactionId: v.string(),
     appId: v.id('delegatedApps'),
     instanceId: v.string(),
-    requestedScopes: v.array(v.string()),
+    requestedScopes: v.array(scope),
     expiresAt: v.number(),
     decision: v.optional(v.union(v.literal('approved'), v.literal('denied'))),
     personId: v.optional(v.id('persons')),

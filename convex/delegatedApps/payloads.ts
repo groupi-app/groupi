@@ -1,4 +1,16 @@
 import { z } from 'zod';
+import { actions } from '../authorization/contracts';
+export const scopesSchema = z.array(
+  z.enum(['openid', 'offline_access', ...actions])
+);
+export function parseScopeString(value: string) {
+  return scopesSchema.parse(value ? value.split(' ') : []);
+}
+const scopeString = z
+  .string()
+  .refine(
+    value => scopesSchema.safeParse(value ? value.split(' ') : []).success
+  );
 
 /** Strict serialization profile for oidc-provider 9.12.2; new upstream fields fail closed. */
 export const modelSchema = z.enum([
@@ -38,7 +50,7 @@ const authenticated = {
   accountId: z.string(),
   clientId: z.string(),
   grantId: z.string(),
-  scope: z.string(),
+  scope: scopeString,
   authTime: z.number().optional(),
   acr: z.string().optional(),
   amr: z.array(z.string()).optional(),
@@ -51,11 +63,11 @@ const authenticated = {
 };
 const openid = z
   .object({
-    scope: z.string().optional(),
+    scope: scopeString.optional(),
     claims: z.array(z.string()).optional(),
   })
   .strict();
-const resources = z.record(z.string(), z.string());
+const resources = z.record(z.string(), scopeString);
 const grantShape = {
   ...base,
   accountId: z.string(),
@@ -89,7 +101,7 @@ const params = z
     client_id: z.string(),
     redirect_uri: z.string().optional(),
     response_type: z.literal('code'),
-    scope: z.string(),
+    scope: scopeString,
     state: z.string().optional(),
     nonce: z.string().optional(),
     code_challenge: z.string(),
@@ -204,7 +216,10 @@ export function validatePayload(
   if (model === 'Client')
     throw new Error('Client metadata is owned by app registration');
   const payload: unknown = JSON.parse(serialized);
-  return schemas[model].parse(payload);
+  const validated = schemas[model].parse(payload);
+  if (validated.kind !== model)
+    throw new Error('Provider payload model mismatch');
+  return validated;
 }
 
 const base64url = z.string().regex(/^[A-Za-z0-9_-]+$/);
@@ -259,3 +274,5 @@ export const signingJwksSchema = z
       .max(5),
   })
   .strict();
+
+export const accessTokenPayloadSchema = schemas.AccessToken;
