@@ -11,6 +11,7 @@ Public source-verified documentation. Availability and version labels are part o
 - [Versions and availability](/exports/versions.md): v2, Current
 - [Self-hosting status](/exports/self-hosting.md): v2, Proposed
 - [TypeScript and Python SDK availability](/exports/sdks.md): v2, Upcoming
+- [Realtime and API/SDK evolution](/exports/api-sdk-evolution.md): v2, Proposed
 - [Bounded access and delegated sign-in](/exports/auth.md): v2, Upcoming
 - [Canonical docs for your own agent](/exports/exports.md): v2, Current
 - [CLI 0.1.0 command reference](/exports/cli-reference.md): cli-0.1.0, Current

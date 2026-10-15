@@ -51,3 +51,10 @@ Reads have bounded retries; writes never retry automatically. Errors preserve st
 Canonical passage: /v2/sdks#delegated
 
 DelegatedSession supports the approved native and confidential-web authorization-code profile with S256, state and an explicit issuer, audience, instance and client. Confidential web callers supply their own private-key assertion signer. Background refresh is separately consented and cannot expand access. Restored token state retains these bindings. The API adapter does not treat an unverified identity token as a signed-in user and never opens a browser or falls back to an owner key during an API call. See the SDK source README for the exact exchange and persistence interfaces.
+
+## Realtime and planned SDK improvements
+Canonical passage: /v2/sdks#evolution
+
+The selected design adds optional Convex subscription modules while preserving the dependency-free REST core, with durable change delivery designed separately. Runtime response validation, browser realtime support, subscription credentials and the durable feed are future implementation targets. The evolution guide outlines resources, authentication, expiry, reconnects, limits, compatibility, replay, retention and release evidence; it does not announce available packages or endpoints.
+
+- [Read the realtime and API/SDK evolution guide](/v2/api-sdk-evolution)

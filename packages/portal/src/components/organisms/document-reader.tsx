@@ -18,7 +18,7 @@ export function DocumentReader({ page }: { page: Page }) {
           Download plain text
         </a>
       </div>
-      {page.id.startsWith('api-') ? (
+      {page.id === 'api-v1' || page.id === 'api-v2' ? (
         <a download href={`/exports/openapi-${page.version}.json`}>
           Download OpenAPI schema
         </a>
@@ -51,6 +51,15 @@ export function DocumentReader({ page }: { page: Page }) {
             <a href={`${page.path}#${section.id}`}>{section.title}</a>
           </h2>
           <p>{section.text}</p>
+          {section.references?.length ? (
+            <ul>
+              {section.references.map(reference => (
+                <li key={reference.href}>
+                  <a href={reference.href}>{reference.title}</a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {section.code ? (
             <CodeExample title={section.title} code={section.code} />
           ) : null}

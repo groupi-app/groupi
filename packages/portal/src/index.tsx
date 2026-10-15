@@ -84,6 +84,9 @@ export function Portal() {
             <a href='/v2/contributor'>Contribute</a>
             <a href='/cli/0.1.0/guide'>CLI</a>
             <a href='/v2/addons'>Add-ons</a>
+            <a href='/v2/sdks'>SDKs</a>
+            <a href='/v2/auth'>Authorization</a>
+            <a href='/v2/api-sdk-evolution'>Realtime design</a>
             <a href='/v2/self-hosting'>Self-hosting</a>
             <a href='/v2/reference/api'>API reference</a>
             <a href='/cli/0.1.0/reference'>CLI reference</a>
@@ -96,7 +99,7 @@ export function Portal() {
           <ApiExplorer />
         ) : page ? (
           <>
-            {page.id.startsWith('api-') ? (
+            {page.id === 'api-v1' || page.id === 'api-v2' ? (
               <label>
                 API version
                 <select

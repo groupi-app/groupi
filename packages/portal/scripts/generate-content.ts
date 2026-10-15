@@ -46,6 +46,48 @@ const pages: Page[] = [
     })),
   },
 ];
+const evolution = pages.find(page => page.id === 'api-sdk-evolution');
+if (!evolution) throw new Error('Missing API/SDK evolution guide');
+const outline = await readFile(resolve(root, evolution.source), 'utf8');
+const passageIds = new Set<string>();
+evolution.passages = outline
+  .split(/^## /m)
+  .slice(1)
+  .filter(section => !section.startsWith('Table of Contents\n'))
+  .map(section => {
+    const [title, ...lines] = section.split('\n');
+    const id = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    if (!id || passageIds.has(id))
+      throw new Error(`Invalid outline anchor: ${id}`);
+    passageIds.add(id);
+    const body = lines.join('\n');
+    const examples = [...body.matchAll(/```([a-z]*)\n([\s\S]*?)```/g)];
+    if (examples.length > 1) throw new Error(`Multiple examples in ${id}`);
+    const references = [
+      ...body.matchAll(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g),
+    ].map(match => ({ title: match[1], href: match[2] }));
+    const text = body
+      .replace(/```[a-z]*\n[\s\S]*?```/g, '')
+      .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/[,\s]+$/g, '')
+      .trim();
+    if (!text) throw new Error(`Empty outline passage: ${id}`);
+    return {
+      id,
+      title,
+      text,
+      ...(examples[0]
+        ? { language: examples[0][1], code: examples[0][2].trimEnd() }
+        : {}),
+      ...(references.length ? { references } : {}),
+    };
+  });
+if (!evolution.passages.length)
+  throw new Error('Empty API/SDK evolution outline');
 const handlerExample = pages
   .find(page => page.id === 'addons')
   ?.passages.find(passage => passage.id === 'source-handlers');
@@ -133,6 +175,7 @@ const dependencies = [
   ...new Set([
     ...guides.map(page => page.source),
     'packages/portal/src/content.ts',
+    'docs/adr/0007-optional-convex-sdk-subscriptions.md',
     'packages/sdk/package.json',
     'packages/sdk/operations.json',
     'packages/sdk/type-audit.json',
@@ -206,6 +249,10 @@ for (const page of pages) {
         ...(passage.code
           ? [`\`\`\`${passage.language ?? 'text'}`, passage.code, '```', '']
           : []),
+        ...(passage.references?.flatMap(reference => [
+          `- [${reference.title}](${reference.href})`,
+        ]) ?? []),
+        ...(passage.references?.length ? [''] : []),
       ]),
     ]
       .join('\n')

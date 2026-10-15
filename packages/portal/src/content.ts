@@ -6,6 +6,7 @@ export interface Passage {
   code?: string;
   language?: string;
   keywords?: string[];
+  references?: { title: string; href: string }[];
 }
 export interface Page {
   id: string;
@@ -309,7 +310,29 @@ guides.push(
         title: 'Keep delegated tokens bound to the approved client',
         text: 'DelegatedSession supports the approved native and confidential-web authorization-code profile with S256, state and an explicit issuer, audience, instance and client. Confidential web callers supply their own private-key assertion signer. Background refresh is separately consented and cannot expand access. Restored token state retains these bindings. The API adapter does not treat an unverified identity token as a signed-in user and never opens a browser or falls back to an owner key during an API call. See the SDK source README for the exact exchange and persistence interfaces.',
       },
+      {
+        id: 'evolution',
+        title: 'Realtime and planned SDK improvements',
+        text: 'The selected design adds optional Convex subscription modules while preserving the dependency-free REST core, with durable change delivery designed separately. Runtime response validation, browser realtime support, subscription credentials and the durable feed are future implementation targets. The evolution guide outlines resources, authentication, expiry, reconnects, limits, compatibility, replay, retention and release evidence; it does not announce available packages or endpoints.',
+        references: [
+          {
+            title: 'Read the realtime and API/SDK evolution guide',
+            href: '/v2/api-sdk-evolution',
+          },
+        ],
+      },
     ],
+  },
+  {
+    id: 'api-sdk-evolution',
+    path: '/v2/api-sdk-evolution',
+    title: 'Realtime and API/SDK evolution',
+    audience: 'Build / Design',
+    version: 'v2',
+    availability: 'Proposed',
+    source: 'docs/api-sdk-evolution-design.md',
+    // Generated from the canonical outline; empty/stale source fails generation.
+    passages: [],
   },
   {
     id: 'auth',

@@ -39,6 +39,14 @@ identity claims, permitted actions, Event selection and any separately approved
 background access. Disconnecting stops future delegated access; it does not
 delete information the app already copied or terminate the app's own session.
 
+**Live resource view**:
+An app's continuously refreshed, permitted representation of a Groupi resource.
+It describes current state rather than a history of every change.
+
+**Change record**:
+A recorded occurrence about a Groupi resource, such as an RSVP change.
+It is distinct from the Event that people plan and attend.
+
 **Invite list**:
 A private, creator-owned saved selection of existing Groupi users. Using a list
 copies its current people into an invitation draft or explicitly sends ordinary

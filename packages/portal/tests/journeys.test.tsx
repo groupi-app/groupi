@@ -2,6 +2,28 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { Portal } from '../src';
+test('a reader distinguishes the planned realtime design from the current API reference', async () => {
+  const user = userEvent.setup();
+  render(<Portal />);
+  await user.click(screen.getByRole('link', { name: 'Realtime design' }));
+  expect(
+    screen.getByRole('heading', { name: 'Realtime and API/SDK evolution' })
+  ).toBeVisible();
+  expect(
+    screen.getByText(/Proposed · not a supported quickstart/)
+  ).toBeVisible();
+  expect(screen.queryByLabelText('API version')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: 'Download OpenAPI schema' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: 'Download Markdown' })
+  ).toHaveAttribute('href', '/exports/api-sdk-evolution.md');
+  expect(screen.getByRole('link', { name: 'Convex realtime' })).toHaveAttribute(
+    'href',
+    'https://docs.convex.dev/realtime'
+  );
+});
 test('a public reader chooses equal Build and Contribute journeys and opens the integrator guide', async () => {
   const user = userEvent.setup();
   render(<Portal />);
