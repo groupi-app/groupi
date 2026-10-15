@@ -29,13 +29,18 @@
     "expo-server-sdk": "^7.1.0",
     "hono": "^4.12.18",
     "resend": "^4.0.0",
-    "@groupi/shared": "workspace:*"
+    "@groupi/shared": "workspace:*",
+    "oidc-provider": "9.12.2",
+    "fetch-to-node": "2.1.0",
+    "jose": "^6.2.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "convex": "^1.43.0",
     "convex-test": "^0.0.41",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.0"
+    "vitest": "^4.0.0",
+    "@types/oidc-provider": "9.12.1"
   }
 }
