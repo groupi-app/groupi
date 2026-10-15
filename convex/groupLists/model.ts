@@ -1,3 +1,4 @@
+import { publicPage } from '../lib/pagination';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -118,13 +119,15 @@ export async function list(
   if (!(await getPolicy(ctx, groupId, 'LIST')).enabled)
     await requireManager(ctx, groupId, personId);
   try {
-    return await ctx.db
-      .query('groupTools')
-      .withIndex('by_groupId_and_kind', q =>
-        q.eq('groupId', groupId).eq('kind', 'LIST')
-      )
-      .order('desc')
-      .paginate(page(paginationOpts));
+    return publicPage(
+      await ctx.db
+        .query('groupTools')
+        .withIndex('by_groupId_and_kind', q =>
+          q.eq('groupId', groupId).eq('kind', 'LIST')
+        )
+        .order('desc')
+        .paginate(page(paginationOpts))
+    );
   } catch {
     fail('VALIDATION_ERROR', 'Invalid list page or cursor.');
   }
@@ -179,7 +182,7 @@ export async function entries(
   try {
     const result = await query.order('desc').paginate(page(paginationOpts));
     return {
-      ...result,
+      ...publicPage(result),
       page: result.page.map(row => ({
         ...row,
         canEdit: !ownRecovery && (row.personId === personId || manager),

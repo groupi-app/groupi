@@ -28,6 +28,9 @@ const notificationSummary = v.object({
   read: v.boolean(),
   createdAt: v.number(),
   group: v.optional(reference),
+  groupAnnouncement: v.optional(
+    v.union(v.object({ title: v.string(), message: v.string() }), v.null())
+  ),
   groupApplication: v.optional(
     v.union(
       v.null(),

@@ -1,3 +1,4 @@
+import { publicPage } from '../lib/pagination';
 import { getPersonWithUser, authComponent, type AuthUserId } from '../auth';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -105,13 +106,15 @@ export async function history(
       code: 'VALIDATION_ERROR',
       message: 'Page size must be 1–100',
     });
-  return ctx.db
-    .query('eventApplications')
-    .withIndex('by_event_person', q =>
-      q.eq('eventId', eventId).eq('personId', personId)
-    )
-    .order('desc')
-    .paginate(paginationOpts);
+  return publicPage(
+    await ctx.db
+      .query('eventApplications')
+      .withIndex('by_event_person', q =>
+        q.eq('eventId', eventId).eq('personId', personId)
+      )
+      .order('desc')
+      .paginate(paginationOpts)
+  );
 }
 export async function list(
   ctx: QueryCtx,
@@ -149,7 +152,7 @@ export async function list(
       };
     })
   );
-  return { ...result, page };
+  return { ...publicPage(result), page };
 }
 
 export async function configure(

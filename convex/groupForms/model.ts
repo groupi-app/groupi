@@ -1,3 +1,4 @@
+import { publicPage } from '../lib/pagination';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
@@ -247,13 +248,15 @@ export async function history(
 ) {
   await requirePerson(ctx, personId); // Own snapshots only: no current private definition or Group membership grant.
   try {
-    return await ctx.db
-      .query('groupFormRevisions')
-      .withIndex('by_toolId_and_personId', q =>
-        q.eq('toolId', toolId).eq('personId', personId)
-      )
-      .order('desc')
-      .paginate(page(paginationOpts));
+    return publicPage(
+      await ctx.db
+        .query('groupFormRevisions')
+        .withIndex('by_toolId_and_personId', q =>
+          q.eq('toolId', toolId).eq('personId', personId)
+        )
+        .order('desc')
+        .paginate(page(paginationOpts))
+    );
   } catch {
     fail('VALIDATION_ERROR', 'Invalid Group form page size or cursor.');
   }
@@ -282,11 +285,13 @@ export async function results(
   if (tool.resultsVisibility === 'MANAGERS')
     await requireManager(ctx, tool.groupId, personId);
   try {
-    return await ctx.db
-      .query('groupFormResponses')
-      .withIndex('by_toolId', q => q.eq('toolId', toolId))
-      .order('desc')
-      .paginate(page(paginationOpts));
+    return publicPage(
+      await ctx.db
+        .query('groupFormResponses')
+        .withIndex('by_toolId', q => q.eq('toolId', toolId))
+        .order('desc')
+        .paginate(page(paginationOpts))
+    );
   } catch {
     fail('VALIDATION_ERROR', 'Invalid Group form page size or cursor.');
   }
@@ -301,13 +306,15 @@ export async function list(
   if (!(await getPolicy(ctx, groupId, 'FORM')).enabled)
     await requireManager(ctx, groupId, personId);
   try {
-    return await ctx.db
-      .query('groupTools')
-      .withIndex('by_groupId_and_kind', q =>
-        q.eq('groupId', groupId).eq('kind', 'FORM')
-      )
-      .order('desc')
-      .paginate(page(paginationOpts));
+    return publicPage(
+      await ctx.db
+        .query('groupTools')
+        .withIndex('by_groupId_and_kind', q =>
+          q.eq('groupId', groupId).eq('kind', 'FORM')
+        )
+        .order('desc')
+        .paginate(page(paginationOpts))
+    );
   } catch {
     fail('VALIDATION_ERROR', 'Invalid Group form page size or cursor.');
   }
