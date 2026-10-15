@@ -1,5 +1,51 @@
 # @groupi/convex
 
+## 0.5.0
+
+### Minor Changes
+
+- 259647b: Add owner-scoped custom add-on definition authoring with portable import/export, version-protected edits, validated lifecycle commands and actionable schema errors.
+- b63416e: Add CLI commands for event discovery and management, friendships and blocking, account preferences, add-on configuration, and Discord guild refresh. Include portable agent guidance and generated command references.
+- c0a163c: Add CLI notification read and clear actions, plus event and discussion muting with app-equivalent permissions and delivery rules.
+- 0b8c85c: Add formal Groups across web, mobile, the developer API, and CLI, with managed
+  membership, applications, joining questionnaires, persistent Group tools, and
+  explicit announcements. Keep Group Event visibility separate from invitations,
+  Event membership, and RSVP. New Event attendees start Pending, and ownership
+  transfers require recipient acceptance. Require explicit resolution of owned
+  Groups and Events before account deletion.
+- 9df172b: Add private invite lists across web, mobile, the developer API, and CLI. Manage
+  saved selections and explicitly send ordinary event invitations from an editable
+  recipient draft, with inline creation and protected retries. Anonymize deleted
+  recipients and provide Needs attention repair without changing event membership
+  or RSVP.
+
+### Patch Changes
+
+- 88d5ddb: Revoke authentication credentials, sessions, and pending account verification tokens when deleting an account, with transactional rollback if cleanup fails.
+- eaec01b: Support validated CLI add-on participation with participant isolation and consistent app automation behavior.
+- 66572c1: Add CLI RSVP, availability, attendance, and event date management with shared permissions and private notes
+- eaec01b: Add CLI cover and avatar upload, replacement, and removal with validated owned images and safe recovery.
+- 2654111: Add authenticated CLI event browsing with isolated profiles, safe pagination, and API-key enforcement.
+- eaec01b: Add safe CLI posts, replies, and file attachments with shared validation and atomic updates.
+- 7c8a386: Add safe CLI event creation and editing with replay protection and app-equivalent validation
+- a302647: Add CLI link, email, and username invitations with safe retries and app-equivalent permissions
+- e729fa1: Add secure CLI browser login with OS credential storage and profile-isolated authentication
+- 44f7d7e: Fix Event deletion when enabled add-ons have participant data.
+- a4144fa: Remove individual Event invitations when deleting an Event.
+- 6423257: Fix REST notification loading after Group activity.
+- d1d9ddb: Fix loading of paginated Group tools, account ownership lists, and Event application history.
+- 81de951: Fix add-on completion and event-specific template behavior. Align native and REST permissions, notifications, reports, and add-on automations. Unify GDL date parsing across web, mobile, and REST with explicit timezones, overnight ranges, and daylight-saving validation. Organize add-ons and backend operations into focused modules and standardize shared workspace source consumption while preserving compiled package distribution.
+- ddd4354: Add secure passwordless store-review access with a private sign-in-code inbox, isolated sample events, expiring credentials, and session revocation.
+- 74b8f10: Fix reviewer inbox sign-in-code retrieval in browsers while preserving same-origin request validation and referrer privacy.
+- 7a98adc: Use the newest passwordless reviewer sign-in code after resends so the private inbox matches normal app authentication.
+- 326ca1b: Keep Discord connections working by automatically refreshing expired credentials.
+- Updated dependencies [eaec01b]
+- Updated dependencies [eaec01b]
+- Updated dependencies [0b8c85c]
+- Updated dependencies [81de951]
+- Updated dependencies [9df172b]
+  - @groupi/shared@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
