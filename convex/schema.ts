@@ -1,3 +1,10 @@
+import { tables as delegatedTables } from './delegatedApps/contracts';
+import {
+  principalFields,
+  grantFields,
+  credentialFields,
+  auditFields,
+} from './authorization/contracts';
 import {
   addonConfig,
   addonData,
@@ -42,6 +49,20 @@ import { v } from 'convex/values';
  */
 
 export default defineSchema({
+  ...delegatedTables,
+  authorizationPrincipals: defineTable(principalFields).index(
+    'by_ownerPersonId',
+    ['ownerPersonId']
+  ),
+  authorizationGrants: defineTable(grantFields)
+    .index('by_grantorPersonId', ['grantorPersonId'])
+    .index('by_principalId', ['principalId']),
+  authorizationCredentials: defineTable(credentialFields)
+    .index('by_secretHash', ['secretHash'])
+    .index('by_grantId', ['grantId']),
+  authorizationAudit: defineTable(auditFields)
+    .index('by_grantId', ['grantId'])
+    .index('by_createdAt', ['createdAt']),
   groupToolPolicies: defineTable(policyFields)
     .index('by_groupId', ['groupId'])
     .index('by_groupId_and_kind', ['groupId', 'kind']),
@@ -307,7 +328,8 @@ export default defineSchema({
     .index('by_creator_normalizedName', ['creatorId', 'normalizedName']),
   uploads: defineTable({
     storageId: v.id('_storage'),
-    personId: v.id('persons'),
+    personId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
+    eventId: v.optional(v.id('events')),
     mimeType: v.string(),
     size: v.number(),
     purpose: v.union(
@@ -640,7 +662,7 @@ export default defineSchema({
     editedAt: v.optional(v.number()), // Unix timestamp for last edit (only set when edited)
     membershipId: v.optional(v.id('memberships')),
     // Denormalized fields for efficient querying
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     eventId: v.id('events'),
     updatedAt: v.optional(v.number()), // Unix timestamp for tracking changes
   })
@@ -653,7 +675,7 @@ export default defineSchema({
     membershipId: v.optional(v.id('memberships')),
     updatedAt: v.optional(v.number()), // Unix timestamp for last edit
     // Denormalized fields
-    authorId: v.id('persons'),
+    authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     postId: v.id('posts'),
   })
     .index('by_post', ['postId'])
@@ -903,7 +925,7 @@ export default defineSchema({
     postId: v.optional(v.id('posts')),
     replyId: v.optional(v.id('replies')),
     // Uploader reference
-    uploaderId: v.id('persons'),
+    uploaderId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
     createdAt: v.number(), // Unix timestamp
     updatedAt: v.optional(v.number()), // Unix timestamp
   })

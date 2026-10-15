@@ -1,3 +1,4 @@
+import { liveGrant } from '../authorization/model';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { components } from '../_generated/api';
 import { v } from 'convex/values';
@@ -37,7 +38,14 @@ export const validateApiKey = internalMutation({
     selfRevoke: v.optional(v.boolean()),
   },
   returns: v.union(
-    v.object({ userId: v.string(), personId: v.id('persons') }),
+    v.object({
+      userId: v.string(),
+      personId: v.id('persons'),
+      credential: v.object({
+        kind: v.union(v.literal('legacy-api-key'), v.literal('bounded')),
+        credentialId: v.string(),
+      }),
+    }),
     v.object({
       error: v.string(),
       status: v.optional(
@@ -48,6 +56,8 @@ export const validateApiKey = internalMutation({
   ),
   handler: async (ctx, { apiKey, resource, action, selfRevoke }) => {
     try {
+      if (apiKey.startsWith('grp_b_'))
+        return { error: 'Unsupported credential mode.' };
       const hashedKey = await hashApiKey(apiKey);
 
       const findFn = components.betterAuth.adapter.findMany;
@@ -135,7 +145,15 @@ export const validateApiKey = internalMutation({
       }
 
       // Revoking the presented secret remains possible after its quota is spent.
-      if (selfRevoke) return { userId: record.userId, personId: person._id };
+      if (selfRevoke)
+        return {
+          userId: record.userId,
+          personId: person._id,
+          credential: {
+            kind: 'legacy-api-key' as const,
+            credentialId: record._id,
+          },
+        };
 
       const now = Date.now();
       const update: Partial<AuthDoc<'apikey'>> = {};
@@ -192,6 +210,10 @@ export const validateApiKey = internalMutation({
       return {
         userId: record.userId,
         personId: person._id,
+        credential: {
+          kind: 'legacy-api-key' as const,
+          credentialId: record._id,
+        },
       };
     } catch {
       console.error('API key validation failed');
@@ -302,5 +324,50 @@ export const canModifyReply = internalQuery({
     }
 
     return membership.role === 'ORGANIZER' || membership.role === 'MODERATOR';
+  },
+});
+
+/** New credentials enter Convex as hashes; raw tokens stay at the HTTP edge. */
+export const validateBoundedToken = internalMutation({
+  args: {
+    tokenHash: v.string(),
+    kind: v.union(v.literal('named-key'), v.literal('delegated-access')),
+  },
+  returns: v.union(
+    v.object({
+      userId: v.string(),
+      personId: v.id('persons'),
+      credential: v.object({
+        kind: v.literal('bounded'),
+        credentialId: v.id('authorizationCredentials'),
+      }),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, { tokenHash, kind }) => {
+    if (!/^[0-9a-f]{64}$/.test(tokenHash)) return null;
+    const credential = await ctx.db
+      .query('authorizationCredentials')
+      .withIndex('by_secretHash', q => q.eq('secretHash', tokenHash))
+      .unique();
+    if (
+      !credential ||
+      credential.kind !== kind ||
+      credential.revokedAt !== undefined ||
+      (credential.expiresAt !== undefined && credential.expiresAt <= Date.now())
+    )
+      return null;
+    try {
+      const { grant } = await liveGrant(ctx, credential.grantId, Date.now());
+      const person = await ctx.db.get(grant.grantorPersonId);
+      if (!person) return null;
+      return {
+        userId: person.userId,
+        personId: person._id,
+        credential: { kind: 'bounded' as const, credentialId: credential._id },
+      };
+    } catch {
+      return null;
+    }
   },
 });

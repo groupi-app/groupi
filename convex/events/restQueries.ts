@@ -9,7 +9,7 @@ import { getPersonWithUser } from '../auth';
  * Internal queries and mutations for event routes
  */
 
-const eventSummaryValidator = v.object({
+export const eventSummaryValidator = v.object({
   id: v.id('events'),
   title: v.string(),
   description: v.union(v.string(), v.null()),

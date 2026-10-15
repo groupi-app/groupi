@@ -12,4 +12,11 @@ crons.cron(
   {}
 );
 
+crons.interval(
+  'prune authorization audit',
+  { hours: 1 },
+  internal.authorization.mutations.pruneAudit,
+  {}
+);
+
 export default crons;

@@ -138,3 +138,13 @@ other events.
 A compact language for expressing proposed event dates, times, durations, and
 recurrences. Relative expressions are interpreted against a reference time and
 timezone.
+
+**Integration principal**:
+An independent named API actor sponsored by a current Event Organizer for selected
+Events. It has no person record, Event membership or RSVP. Its discussion content
+is attributed to the integration, not its sponsor.
+
+**Authorization grant**:
+An explicit bound on a principal's credential actions and selected Events, or a
+user's expressly selected all-current-and-future Events. A grant never exceeds
+current authority and may be expired or permanently revoked.

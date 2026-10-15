@@ -651,7 +651,17 @@ async function executePostsQuery(ctx: QueryCtx, params: QueryParams) {
         ctx.db.get(post.eventId),
       ]);
 
-      const authorUser = author ? await getUserInfo(ctx, author.userId) : null;
+      const authorUser = author
+        ? 'userId' in author
+          ? await getUserInfo(ctx, author.userId)
+          : {
+              name: author.name,
+              email: null,
+              image: null,
+              username: null,
+              role: null,
+            }
+        : null;
       const postIdStr = post._id.toString();
       const repliers = postRepliersMap.get(postIdStr) || new Set();
 
@@ -714,7 +724,17 @@ async function executeRepliesQuery(ctx: QueryCtx, params: QueryParams) {
         ctx.db.get(reply.postId),
       ]);
 
-      const authorUser = author ? await getUserInfo(ctx, author.userId) : null;
+      const authorUser = author
+        ? 'userId' in author
+          ? await getUserInfo(ctx, author.userId)
+          : {
+              name: author.name,
+              email: null,
+              image: null,
+              username: null,
+              role: null,
+            }
+        : null;
       const event = post ? await ctx.db.get(post.eventId) : null;
 
       return {

@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ActionCtx } from '../../../_generated/server';
 import { internal } from '../../../_generated/api';
 import { ErrorResponseSchema } from '../schemas/common';
@@ -92,6 +92,12 @@ export function createProfileRoutes() {
     security: [{ apiKey: [] }],
     request: {
       params: UsernameParamSchema,
+      query: z.object({
+        eventId: z.string().optional().openapi({
+          description:
+            'Required for bounded credentials; limits the profile to a current member of this granted event.',
+        }),
+      }),
     },
     responses: {
       200: {

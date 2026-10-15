@@ -425,7 +425,8 @@ export async function updateEventForPerson(
     imageStorageId,
     imageFocalPoint,
     visibility,
-  }: Infer<typeof updateEventArgs>
+  }: Infer<typeof updateEventArgs>,
+  integrationActorId?: Id<'authorizationPrincipals'>
 ) {
   const membership = await requireWriteRole(
     ctx,
@@ -528,7 +529,7 @@ export async function updateEventForPerson(
   await notifyEventMembers(ctx, {
     eventId,
     type: 'EVENT_EDITED',
-    authorId: personId,
+    authorId: integrationActorId ? undefined : personId,
   });
 
   // Dispatch onEventUpdated to all enabled add-ons (e.g. sync Discord event)
@@ -560,7 +561,8 @@ export async function updatePotentialDateTimesForPerson(
     eventId,
     potentialDateTimes,
     potentialDateTimeOptions,
-  }: Infer<typeof updatePotentialDateTimesArgs>
+  }: Infer<typeof updatePotentialDateTimesArgs>,
+  integrationActorId?: Id<'authorizationPrincipals'>
 ) {
   const organizerMembership = await requireWriteRole(
     ctx,
@@ -672,7 +674,7 @@ export async function updatePotentialDateTimesForPerson(
   await notifyEventMembers(ctx, {
     eventId,
     type: 'DATE_CHANGED',
-    authorId: personId,
+    authorId: integrationActorId ? undefined : personId,
   });
 
   return {

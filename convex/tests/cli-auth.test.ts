@@ -90,6 +90,10 @@ describe('CLI browser authorization', () => {
       (await t.fetch('/api/v2/events', { headers: { 'x-api-key': legacyKey } }))
         .status
     ).toBe(200);
+    expect(
+      (await t.fetch('/api/v1/events', { headers: { 'x-api-key': legacyKey } }))
+        .status
+    ).toBe(200);
     const legacyList = await t.fetch(
       '/api/auth/api-key/list',
       authRequest(cookie)

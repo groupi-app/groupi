@@ -1,10 +1,13 @@
+import { handleBoundedRequest, boundedCors } from '../bounded';
+import type { Id } from '../../_generated/dataModel';
+import type { CredentialContext } from '../middleware/auth';
 import { ConvexError } from 'convex/values';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { httpAction } from '../../_generated/server';
-import { validateApiKey, getApiKey } from '../middleware/auth';
+import { validateRequestCredential } from '../middleware/auth';
 import { createEventRoutes } from './routes/events';
 import { createPostRoutes } from './routes/posts';
 import { createReplyRoutes } from './routes/replies';
@@ -33,6 +36,7 @@ type Variables = {
   ctx: unknown;
   userId: string;
   personId: string;
+  credential: CredentialContext;
 };
 
 /**
@@ -41,7 +45,8 @@ type Variables = {
 export function createApiV1App(
   injectedCtx?: unknown,
   injectedUserId?: string,
-  injectedPersonId?: string
+  injectedPersonId?: string,
+  injectedCredential?: CredentialContext
 ) {
   const app = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -50,6 +55,19 @@ export function createApiV1App(
     if (injectedCtx) c.set('ctx', injectedCtx as Variables['ctx']);
     if (injectedUserId) c.set('userId', injectedUserId);
     if (injectedPersonId) c.set('personId', injectedPersonId);
+    if (injectedCredential) {
+      if (injectedCredential.kind !== 'legacy-api-key')
+        return c.json(
+          {
+            error: {
+              code: 'FORBIDDEN',
+              message: 'Credential type is not supported by this API.',
+            },
+          },
+          403
+        );
+      c.set('credential', injectedCredential);
+    }
     await next();
   });
 
@@ -59,7 +77,12 @@ export function createApiV1App(
     cors({
       origin: '*',
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'x-api-key'],
+      allowHeaders: [
+        'Content-Type',
+        'x-api-key',
+        'Authorization',
+        'X-Filename',
+      ],
       exposeHeaders: ['Content-Length', 'Retry-After'],
       maxAge: 86400,
     })
@@ -238,11 +261,18 @@ All errors return a consistent JSON format:
   app.route('/', createAdminRoutes());
 
   // Register OpenAPI security scheme
+  app.openAPIRegistry.registerComponent('securitySchemes', 'boundedBearer', {
+    type: 'http',
+    scheme: 'bearer',
+    description:
+      'Opaque delegated access token. Explicit Event/action/field grants and current authority apply; unsupported bounded operations are denied.',
+  });
   app.openAPIRegistry.registerComponent('securitySchemes', 'apiKey', {
     type: 'apiKey',
     name: 'x-api-key',
     in: 'header',
-    description: 'API key for authentication',
+    description:
+      'Legacy collection key or bounded named grp_b_ key. New grants never inherit missing legacy permissions; see bounded authorization action/resource projections.',
   });
 
   return app;
@@ -261,15 +291,29 @@ export const handler = httpAction(async (ctx, request) => {
   honoUrl.pathname = strippedPath;
 
   const publicPaths = ['/docs', '/openapi.json', '/health', '/'];
-  const isPublicPath = publicPaths.some(
-    p => strippedPath === p || strippedPath.startsWith('/docs')
-  );
+  const isPublicPath =
+    request.method === 'OPTIONS' ||
+    publicPaths.some(
+      p => strippedPath === p || strippedPath.startsWith('/docs')
+    );
 
   if (!isPublicPath) {
-    const apiKey = getApiKey(request.headers);
     try {
-      const auth = await validateApiKey(ctx, apiKey, request);
-      const app = createApiV1App(ctx, auth.userId, auth.personId);
+      const auth = await validateRequestCredential(ctx, request);
+      if (auth.credential.kind === 'bounded')
+        return boundedCors(
+          await handleBoundedRequest(
+            ctx,
+            request,
+            auth.credential.credentialId as Id<'authorizationCredentials'>
+          )
+        );
+      const app = createApiV1App(
+        ctx,
+        auth.userId,
+        auth.personId,
+        auth.credential
+      );
 
       const modifiedRequest = new Request(
         honoUrl.toString(),
@@ -296,6 +340,7 @@ export const handler = httpAction(async (ctx, request) => {
             status: error.status,
             headers: {
               'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
               ...(error.getResponse().headers.has('Retry-After')
                 ? {
                     'Retry-After': error
