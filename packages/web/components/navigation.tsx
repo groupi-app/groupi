@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { FriendsDialog } from './friends-dialog';
 import { MobileNav } from './mobile-nav';
 import { NotificationsDesktop } from './notifications-desktop';
 import { ProfileDropdown } from './profile-dropdown';
@@ -29,6 +32,7 @@ export function Navigation({ items }: { items: NavItem[] }) {
   return (
     <>
       <Authenticated>
+        <FriendsDialog />
         <MobileNavigation items={items} />
       </Authenticated>
 
