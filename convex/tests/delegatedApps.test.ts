@@ -111,3 +111,95 @@ test('only platform administrators can review apps, and rejected wider access pr
     await owner.auth.query(api.delegatedApps.queries.listOwnedApps, {})
   ).toMatchObject([{ status: 'suspended' }]);
 });
+
+test('only administrators configure hosted appearance and interaction metadata expires closed', async () => {
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const owner = await createAuthAccount(t, 'hosted-owner');
+  const administrator = await createAuthAccount(t, 'hosted-admin');
+  const appId = await owner.auth.mutation(register, {
+    name: 'Red Room',
+    purpose: 'Connect the community',
+    clientType: 'native',
+    redirectUris: ['https://redroom.example/callback'],
+  });
+  const appearance = {
+    brandName: 'Red Room',
+    accent: '#991b1b',
+    senderName: 'Red Room',
+  };
+  await expect(
+    owner.auth.mutation(api.delegatedApps.hosted.configureAppearance, {
+      appId,
+      appearance,
+    })
+  ).rejects.toThrow('Platform administrator');
+  await t.mutation(components.betterAuth.adapter.updateOne, {
+    input: {
+      model: 'user',
+      where: [{ field: '_id', operator: 'eq', value: administrator.user._id }],
+      update: { role: 'admin' },
+    },
+  });
+  await administrator.auth.mutation(
+    api.delegatedApps.hosted.configureAppearance,
+    { appId, appearance }
+  );
+  await administrator.auth.mutation(api.delegatedApps.mutations.reviewApp, {
+    appId,
+    status: 'approved',
+  });
+  const requestId = await t.run(ctx =>
+    ctx.db.insert('delegatedConsentRequests', {
+      interactionId: 'trusted-hosted-interaction',
+      appId,
+      instanceId: 'https://issuer.example/oidc',
+      requestedScopes: ['openid'],
+      expiresAt: Date.now() + 60000,
+    })
+  );
+  expect(
+    await t.query(api.delegatedApps.hosted.getAppearance, {
+      interactionId: 'trusted-hosted-interaction',
+    })
+  ).toMatchObject({
+    appName: 'Red Room',
+    appearance,
+    providerName: 'Groupi',
+  });
+  await t.run(ctx => ctx.db.patch(requestId, { expiresAt: Date.now() - 1 }));
+  expect(
+    await t.query(api.delegatedApps.hosted.getAppearance, {
+      interactionId: 'trusted-hosted-interaction',
+    })
+  ).toBeNull();
+});
+
+test('hosted sender configuration cannot inject another mailbox or control characters', async () => {
+  const t = createTestInstance();
+  registerBetterAuth(t);
+  const administrator = await createAuthAccount(t, 'sender-admin');
+  await t.mutation(components.betterAuth.adapter.updateOne, {
+    input: {
+      model: 'user',
+      where: [{ field: '_id', operator: 'eq', value: administrator.user._id }],
+      update: { role: 'admin' },
+    },
+  });
+  const appId = await administrator.auth.mutation(register, {
+    name: 'Red Room',
+    purpose: 'Community sign-in',
+    clientType: 'native',
+    redirectUris: ['https://redroom.example/callback'],
+  });
+  await expect(
+    administrator.auth.mutation(api.delegatedApps.hosted.configureAppearance, {
+      appId,
+      appearance: {
+        brandName: 'Red Room',
+        senderName: 'Red Room, attacker@example.test',
+        accent: '#991b1b',
+      },
+    })
+  ).rejects.toThrow('sender');
+});

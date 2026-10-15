@@ -9,6 +9,7 @@ type Query<Result> = FunctionReference<
   Result
 >;
 type Selector =
+  | { kind: 'selected-group'; groupId: ConvexId<'groups'> }
   | { kind: 'selected'; eventIds: ConvexId<'events'>[] }
   | { kind: 'all-current-and-future' };
 
@@ -95,6 +96,7 @@ export function createAuthorizationHooks<
 /** Stable descriptions shared by credential and delegated-consent screens. */
 export function authorizationActionLabel(action: string): string {
   const labels: Record<string, string> = {
+    'groups.context.read': 'Read your own community context',
     'identity.display-name': 'Read your display name',
     'identity.email': 'Read your email address',
     'events.read': 'Read events',

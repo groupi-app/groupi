@@ -1,5 +1,6 @@
 import { GroupiError, Transport } from './transport.js';
 export const delegatedActions = Object.freeze([
+  'groups.context.read',
   'identity.display-name',
   'identity.email',
   'events.read',
@@ -103,7 +104,7 @@ export class DelegatedSession {
   }
   static async authorizationRequest(
     config,
-    { redirectUri, background = false }
+    { redirectUri, background = false, selectedGroupId }
   ) {
     config = configuration(config);
     const state = randomValue(),
@@ -134,6 +135,7 @@ export class DelegatedSession {
       code_challenge_method: 'S256',
       resource: config.audience,
     }).toString();
+    if (selectedGroupId) url.searchParams.set('group_id', selectedGroupId);
     return {
       url: url.href,
       state,

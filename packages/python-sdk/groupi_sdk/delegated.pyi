@@ -2,6 +2,7 @@ from typing import Literal, NotRequired, Protocol, TypedDict, Self
 from .client import DelegatedToken
 
 DelegatedAction = Literal[
+    "groups.context.read",
     "identity.display-name",
     "identity.email",
     "events.read",
@@ -70,7 +71,7 @@ class DelegatedSession:
         store_tokens: TokenStore | None = ...
     ) -> Self: ...
     def authorization_request(
-        self, *, redirect_uri: str, background: bool = ...
+        self, *, redirect_uri: str, background: bool = ..., selected_group_id: str | None = ...
     ) -> AuthorizationRequest: ...
     def exchange_authorization_code(
         self,

@@ -588,6 +588,7 @@ class Groupi:
     def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
+    def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectf8c3bec6a790: ...
     def get_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     def put_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object624371b3aebe, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     def submit_or_edit_private_answers_as_an_admitted_member(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6395deb0e4ba, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
@@ -875,6 +876,7 @@ class AsyncGroupi:
     async def read_an_admitted_group(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectb7fb19a40d96: ...
     async def update_group_identity_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Objectf2a3cfe95492, idempotency_key: str | None = ...) -> None: ...
     async def explicitly_delete_a_group_as_owner(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> None: ...
+    async def read_own_community_context(self, *, path: Objectc3f4431a1c67, query: Objecta2791daed18f | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Objectf8c3bec6a790: ...
     async def get_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: None | None = ..., idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     async def put_groups_joining_questionnaire(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object624371b3aebe, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
     async def submit_or_edit_private_answers_as_an_admitted_member(self, *, path: Objectc3f4431a1c67, query: None | None = ..., body: Object6395deb0e4ba, idempotency_key: str | None = ...) -> Object056f6599a34c: ...
@@ -1899,6 +1901,21 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
+class Objectf8c3bec6a790(TypedDict):
+    contractVersion: Literal['red-room.v1']
+    group: Object59509cf0ec83
+    form: Objecta61bf08328e7
+    membership: Object5b35bc95b99b | None
+    eligibility: Object9181a91b6751
+    applications: list[Object1c6ddd22f0f6]
+    nextCursor: str | None
+    grantedActions: list[str]
+    allowedActions: list[str]
+    announcementPreference: Object068ecbb0d0bb
+
+class Objecta2791daed18f(TypedDict):
+    cursor: NotRequired[str]
+
 class Object056f6599a34c(TypedDict):
     groupId: str
     enabled: bool
@@ -2589,6 +2606,36 @@ class Objectb27f127421ba(TypedDict):
     shouldPrompt: bool
     version: float
 
+class Object59509cf0ec83(TypedDict):
+    id: str
+    name: str
+
+class Objecta61bf08328e7(TypedDict):
+    enabled: bool
+    revision: str
+    questions: list[Object6a6aeb3276ba]
+
+class Object5b35bc95b99b(TypedDict):
+    role: Literal['OWNER', 'MODERATOR', 'MEMBER']
+
+class Object9181a91b6751(TypedDict):
+    canApply: bool
+    canAccessMemberContent: bool
+    banned: bool
+
+class Object1c6ddd22f0f6(TypedDict):
+    id: str
+    status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
+    revision: float
+    questions: list[Object6a6aeb3276ba]
+    answers: dict[str, str | float | bool | list[str]]
+    submittedAt: float
+    decisions: list[Object1fa6adfb22bd]
+
+class Object068ecbb0d0bb(TypedDict):
+    supported: Literal[False]
+    subscribed: None
+
 class Objectcb244cc36b34(TypedDict):
     id: str
     label: str
@@ -2693,6 +2740,10 @@ class Object4e2be9f6831d(TypedDict):
     email: str | None
     image: str | None
     username: str | None
+
+class Object1fa6adfb22bd(TypedDict):
+    status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
+    at: float
 
 class Object30a6d58642d2(TypedDict):
     id: str

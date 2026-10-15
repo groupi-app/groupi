@@ -98,6 +98,7 @@ const result = z
   .strict();
 const params = z
   .object({
+    group_id: z.string().optional(),
     client_id: z.string(),
     redirect_uri: z.string().optional(),
     response_type: z.literal('code'),

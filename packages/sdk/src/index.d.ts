@@ -1396,6 +1396,7 @@ export type ReportSummary = {
   createdAt: number;
 };
 export type DelegatedAction =
+  | 'groups.context.read'
   | 'identity.display-name'
   | 'identity.email'
   | 'events.read'
@@ -1451,7 +1452,11 @@ export class DelegatedSession {
   ): DelegatedSession;
   static authorizationRequest(
     config: DelegatedConfig,
-    input: { redirectUri: string; background?: boolean }
+    input: {
+      redirectUri: string;
+      background?: boolean;
+      selectedGroupId?: string;
+    }
   ): Promise<AuthorizationRequest>;
   static fromAuthorizationCode(
     config: DelegatedConfig,
@@ -4081,6 +4086,67 @@ export class Groupi {
     input: { path: { groupId: string } },
     options?: RequestOptions
   ): Promise<null>;
+  /** Read own community context */
+  readOwnCommunityContext(
+    input: { path: { groupId: string }; query?: { cursor?: string } },
+    options?: RequestOptions
+  ): Promise<{
+    contractVersion: 'red-room.v1';
+    group: { id: string; name: string };
+    form: {
+      enabled: boolean;
+      revision: string;
+      questions: Array<{
+        id: string;
+        label: string;
+        required: boolean;
+        type:
+          | 'SHORT_ANSWER'
+          | 'LONG_ANSWER'
+          | 'MULTIPLE_CHOICE'
+          | 'CHECKBOXES'
+          | 'NUMBER'
+          | 'DROPDOWN'
+          | 'YES_NO';
+        options?: Array<string>;
+      }>;
+    };
+    membership: { role: 'OWNER' | 'MODERATOR' | 'MEMBER' } | null;
+    eligibility: {
+      canApply: boolean;
+      canAccessMemberContent: boolean;
+      banned: boolean;
+    };
+    applications: Array<{
+      id: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+      questions: Array<{
+        id: string;
+        label: string;
+        required: boolean;
+        type:
+          | 'SHORT_ANSWER'
+          | 'LONG_ANSWER'
+          | 'MULTIPLE_CHOICE'
+          | 'CHECKBOXES'
+          | 'NUMBER'
+          | 'DROPDOWN'
+          | 'YES_NO';
+        options?: Array<string>;
+      }>;
+      answers: Record<string, string | number | boolean | Array<string>>;
+      submittedAt: number;
+      decisions: Array<{
+        status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+        at: number;
+      }>;
+    }>;
+    nextCursor: string | null;
+    grantedActions: Array<string>;
+    allowedActions: Array<string>;
+    announcementPreference: { supported: false; subscribed: null };
+  }>;
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(
     input: { path: { groupId: string } },

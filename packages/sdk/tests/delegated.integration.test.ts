@@ -189,6 +189,64 @@ async function fixture(confidential = false) {
 }
 for (const language of ['typescript', 'python'])
   describe(language + ' delegated SDK public journey', () => {
+    it('reads selected Group context with generated SDK and denies unrelated Groups', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const groupId = await context.owner.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Red Room' }
+        );
+        const otherId = await context.owner.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Other' }
+        );
+        const authorization = await helpers.authorize(context, {
+          scopes: 'openid groups.context.read',
+          actions: ['groups.context.read'],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions: ['groups.context.read'],
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        expect(
+          await d.request({ operation: 'community', groupId })
+        ).toMatchObject({
+          ok: true,
+          result: {
+            contractVersion: 'red-room.v1',
+            group: { id: groupId, name: 'Red Room' },
+            applications: [],
+          },
+        });
+        expect(
+          await d.request({ operation: 'community', groupId: otherId })
+        ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
     it.each([false, true])(
       'S256 consent, narrow grant, transparent rotating renewal, expiry and disconnect (confidential=%s)',
       async confidential => {

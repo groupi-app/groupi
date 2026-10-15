@@ -38,6 +38,8 @@ export const issue = mutation({
       (!Number.isFinite(args.expiresAt) || args.expiresAt <= now)
     )
       throw denied('Expiry must be in the future.');
+    if (args.selector.kind === 'selected-group')
+      throw denied('Selected Group access requires an approved delegated app.');
     await assertBounds(
       ctx,
       person._id,
@@ -109,7 +111,8 @@ export const replaceBounds = mutation({
       !grant ||
       grant.grantorPersonId !== person._id ||
       grant.revokedAt !== undefined ||
-      grant.appId !== undefined
+      grant.appId !== undefined ||
+      args.selector.kind === 'selected-group'
     )
       throw denied();
     const principal = await ctx.db.get(grant.principalId);

@@ -20191,6 +20191,368 @@
         }
       }
     },
+    "/groups/{groupId}/community-context": {
+      "get": {
+        "tags": ["Groups"],
+        "operationId": "readOwnCommunityContext",
+        "summary": "Read own community context",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Selected Group own context; private no-store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contractVersion": {
+                      "type": "string",
+                      "enum": ["red-room.v1"]
+                    },
+                    "group": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "name"]
+                    },
+                    "form": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "revision": {
+                          "type": "string"
+                        },
+                        "questions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1000
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SHORT_ANSWER",
+                                  "LONG_ANSWER",
+                                  "MULTIPLE_CHOICE",
+                                  "CHECKBOXES",
+                                  "NUMBER",
+                                  "DROPDOWN",
+                                  "YES_NO"
+                                ]
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 500
+                                },
+                                "maxItems": 100
+                              }
+                            },
+                            "required": ["id", "label", "required", "type"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["enabled", "revision", "questions"]
+                    },
+                    "membership": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": ["OWNER", "MODERATOR", "MEMBER"]
+                        }
+                      },
+                      "required": ["role"]
+                    },
+                    "eligibility": {
+                      "type": "object",
+                      "properties": {
+                        "canApply": {
+                          "type": "boolean"
+                        },
+                        "canAccessMemberContent": {
+                          "type": "boolean"
+                        },
+                        "banned": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "canApply",
+                        "canAccessMemberContent",
+                        "banned"
+                      ]
+                    },
+                    "applications": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "PENDING",
+                              "WITHDRAWN",
+                              "APPROVED",
+                              "DECLINED"
+                            ]
+                          },
+                          "revision": {
+                            "type": "number"
+                          },
+                          "questions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SHORT_ANSWER",
+                                    "LONG_ANSWER",
+                                    "MULTIPLE_CHOICE",
+                                    "CHECKBOXES",
+                                    "NUMBER",
+                                    "DROPDOWN",
+                                    "YES_NO"
+                                  ]
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 500
+                                  },
+                                  "maxItems": 100
+                                }
+                              },
+                              "required": ["id", "label", "required", "type"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "answers": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "submittedAt": {
+                            "type": "number"
+                          },
+                          "decisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PENDING",
+                                    "WITHDRAWN",
+                                    "APPROVED",
+                                    "DECLINED"
+                                  ]
+                                },
+                                "at": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": ["status", "at"]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "revision",
+                          "questions",
+                          "answers",
+                          "submittedAt",
+                          "decisions"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "grantedActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "allowedActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "announcementPreference": {
+                      "type": "object",
+                      "properties": {
+                        "supported": {
+                          "type": "boolean",
+                          "enum": [false]
+                        },
+                        "subscribed": {
+                          "nullable": true
+                        }
+                      },
+                      "required": ["supported", "subscribed"]
+                    }
+                  },
+                  "required": [
+                    "contractVersion",
+                    "group",
+                    "form",
+                    "membership",
+                    "eligibility",
+                    "applications",
+                    "nextCursor",
+                    "grantedActions",
+                    "allowedActions",
+                    "announcementPreference"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Retryable unavailable service",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{groupId}/joining-questionnaire": {
       "get": {
         "tags": ["Groups"],
