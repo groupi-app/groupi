@@ -2,6 +2,14 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room integration branch — 2026-10-15
+
+- `codex/red-room-integration` starts at developer-platform prerequisite `45d00c14fb18d735b8cd2244400d22233509a5fd`. G1 merges at `3af0db2fc80ebdabcc201de6adc335b2b127f41b`; G2 merges at `bf98d7f29246d25e15e0ebd5219c95aae435070c`. [Draft PR #389](https://github.com/groupi-app/groupi/pull/389) targets a snapshot of that prerequisite, not main. Its prerequisite remains a separate integration/release concern.
+- Selected-Group own-context/consent and themed hosted email-link authentication source are integrated. G2 covers account selection, explicit linking, minimal onboarding, consent and safe recovery; combined merger verification passed 27 backend and 13 web tests, workspace source resolution and unchanged tested worker tree. G1 evidence is recorded below.
+- Application mutations (G3) and current Event discovery/completion (G4) are in progress in isolated workers. [Site draft PR #9](https://github.com/TheiaSurette/bound-in-red/pull/9) has public entrance, server session and application lifecycle merged; the single Event view is in progress. All current implementer and merger agents use GPT-6.1 Sol.
+- These are source milestones. The normal GitHub preview for `bf98d7f` was BUILDING when inspected; matching frontend/backend source, hosted authentication, approved sender and actual mail delivery remain unverified. Full component-aware codegen requires deployment configuration. No production deployment, live fixture mutation or package publication is claimed. G10 and site B7 retain real deployed acceptance gates.
+- Concrete changeset summaries and package/bump choices are being collected for the repository-required user approval batch; no new Red Room changeset files have been created.
+
 ## Red Room G1 source candidate — 2026-10-15
 
 - Worker branch `codex/red-room-g1` starts from integration base `45d00c14`. G1 adds selected-Group delegated applicant consent and an authoritative own-context HTTP read with generated TypeScript/Python SDK consumers. Its shared appearance dependency is cherry-picked from G2; G2 owns the full hosted authentication journey.
