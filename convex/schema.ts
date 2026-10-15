@@ -200,7 +200,44 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupDecisionDispatches: defineTable({
+    applicationId: v.id('groupApplications'),
+    notificationId: v.id('notifications'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('sent'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  }).index('by_applicationId', ['applicationId']),
   groupApplications: defineTable({
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+    decisionDelivery: v.optional(
+      v.union(
+        v.literal('queued'),
+        v.literal('sending'),
+        v.literal('sent'),
+        v.literal('failed'),
+        v.literal('suppressed')
+      )
+    ),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     questions: v.array(questionValidator),

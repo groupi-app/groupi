@@ -1326,13 +1326,13 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Objectf8c3bec6a790(TypedDict):
+class Object3f7b83728032(TypedDict):
     contractVersion: Literal['red-room.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
     membership: Object5b35bc95b99b | None
     eligibility: Object9181a91b6751
-    applications: list[Object1c6ddd22f0f6]
+    applications: list[Object9a607b8a62e8]
     nextCursor: str | None
     grantedActions: list[str]
     allowedActions: list[str]
@@ -2072,10 +2072,11 @@ class Object9181a91b6751(TypedDict):
     canAccessMemberContent: bool
     banned: bool
 
-class Object1c6ddd22f0f6(TypedDict):
+class Object9a607b8a62e8(TypedDict):
     id: str
     status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
     revision: float
+    decisionDelivery: NotRequired[Literal['queued', 'sending', 'sent', 'failed', 'suppressed']]
     questions: list[Object6a6aeb3276ba]
     answers: dict[str, str | float | bool | list[str]]
     submittedAt: float

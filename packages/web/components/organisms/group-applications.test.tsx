@@ -511,3 +511,49 @@ it('submits all seven admission field types with typed numeric, boolean and list
   mounted.unmount();
   await client.close();
 });
+
+it('shows the committed decision separately and retries only its failed email', async () => {
+  const { client, mutation } = clientFor(
+    {
+      applicationsEnabled: true,
+      questions: [],
+      pending: null,
+      canApply: false,
+      canReview: true,
+    },
+    [
+      {
+        ...pending,
+        status: 'APPROVED',
+        decisionDelivery: 'failed',
+        applicant: {
+          personId: 'person-one',
+          name: 'Alex',
+          username: 'alex',
+          image: null,
+        },
+      },
+    ]
+  );
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <GroupApplications groupId={groupId} review />
+    </ConvexProvider>
+  );
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Decision email: failed'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Approve application' })
+  ).not.toBeInTheDocument();
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Retry decision email' }));
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+  expect(getFunctionName(mutation.mock.calls[0][0])).toBe(
+    'groupApplications/decisionDelivery:retry'
+  );
+  expect(mutation.mock.calls[0][1]).toEqual({ applicationId: pending._id });
+  mounted.unmount();
+  await client.close();
+});

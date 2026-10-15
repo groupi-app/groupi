@@ -391,4 +391,37 @@ describe('native Group application production provider screens', () => {
     );
     await act(async () => m!.unmount());
   });
+
+  it('shows a committed approval and retries delivery without another review mutation', async () => {
+    external.canReview = true;
+    external.queue = [
+      {
+        _id: 'application-1',
+        status: 'APPROVED',
+        decisionDelivery: 'failed',
+        questions: [],
+        answers: {},
+        decisions: [{ status: 'APPROVED' }],
+        applicant: { name: 'Alex' },
+      },
+    ];
+    let mounted: Mounted;
+    await act(async () => {
+      mounted = renderer.create(screen(GroupApplicationReviewScreen));
+    });
+    expect(
+      texts(mounted!).map(value =>
+        Array.isArray(value) ? value.join('') : value
+      )
+    ).toContain('Decision email: failed. Delivery does not change admission.');
+    expect(
+      control(mounted!, 'Approve Group application application-1')
+    ).toBeUndefined();
+    await press(mounted!, 'Retry decision email');
+    expect(external.mutation).toHaveBeenCalledWith(
+      'groupApplications/decisionDelivery:retry',
+      { applicationId: 'application-1' }
+    );
+    await act(async () => mounted!.unmount());
+  });
 });

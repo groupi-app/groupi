@@ -1,3 +1,4 @@
+import { api } from '../../../convex/_generated/api';
 import { afterEach, expect, it, vi } from 'vitest';
 import { applicant } from '../../../convex/tests/community-applications.helpers';
 import { Groupi } from '../src/index.js';
@@ -106,5 +107,59 @@ it('uses the generated delegated SDK to submit, replay, edit and withdraw agains
   } finally {
     globalThis.fetch = originalFetch;
     vi.unstubAllGlobals();
+  }
+});
+
+it('reads committed decisions and safe delivery status through the generated delegated SDK', async () => {
+  const f = await applicant();
+  const originalFetch = globalThis.fetch;
+  vi.stubGlobal(
+    'fetch',
+    async (url: string | URL | Request, init?: RequestInit) => {
+      const target = new URL(
+        typeof url === 'string' ? url : url instanceof URL ? url.href : url.url
+      );
+      return f.t.fetch(target.pathname + target.search, init);
+    }
+  );
+  try {
+    const client = new Groupi({
+      instance: 'https://some.convex.site',
+      credential: {
+        type: 'delegated',
+        audience: 'https://some.convex.site/api/v2',
+        getToken: async () => ({
+          accessToken: f.accessToken,
+          instance: 'https://some.convex.site',
+          audience: 'https://some.convex.site/api/v2',
+        }),
+      },
+      retries: 0,
+    });
+    const path = { groupId: f.groupId };
+    const context = await client.readOwnCommunityContext({ path });
+    const receipt = await client.submitCommunityApplication(
+      {
+        path,
+        body: {
+          formRevision: context.form.revision,
+          answers: { welcome: 'SDK applicant' },
+        },
+      },
+      { idempotencyKey: crypto.randomUUID() }
+    );
+    await f.staff.auth.mutation(
+      api.groupApplications.mutations.reviewGroupApplication,
+      { applicationId: receipt.result.applicationId, decision: 'APPROVED' }
+    );
+    const decided = await client.readOwnCommunityContext({ path });
+    expect(decided.applications[0]).toMatchObject({
+      status: 'APPROVED',
+      decisionDelivery: 'suppressed',
+    });
+    expect(JSON.stringify(decided)).not.toContain('sourceGrantId');
+    expect(JSON.stringify(decided)).not.toContain('@example.com');
+  } finally {
+    vi.stubGlobal('fetch', originalFetch);
   }
 });

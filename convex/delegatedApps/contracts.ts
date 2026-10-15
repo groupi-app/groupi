@@ -26,6 +26,7 @@ export const hostedAppearance = v.object({
   brandName: v.string(),
   accent: v.string(),
   senderName: v.string(),
+  statusReturnUrl: v.optional(v.string()),
 });
 export const appFields = {
   appearance: v.optional(hostedAppearance),

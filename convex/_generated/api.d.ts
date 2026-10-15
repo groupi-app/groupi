@@ -240,6 +240,9 @@ import type * as groupAnnouncements_queries from "../groupAnnouncements/queries.
 import type * as groupAnnouncements_rest from "../groupAnnouncements/rest.js";
 import type * as groupApplications_cleanup from "../groupApplications/cleanup.js";
 import type * as groupApplications_contracts from "../groupApplications/contracts.js";
+import type * as groupApplications_decisionActions from "../groupApplications/decisionActions.js";
+import type * as groupApplications_decisionDelivery from "../groupApplications/decisionDelivery.js";
+import type * as groupApplications_decisionEmail from "../groupApplications/decisionEmail.js";
 import type * as groupApplications_model from "../groupApplications/model.js";
 import type * as groupApplications_mutations from "../groupApplications/mutations.js";
 import type * as groupApplications_queries from "../groupApplications/queries.js";
@@ -635,6 +638,9 @@ declare const fullApi: ApiFromModules<{
   "groupAnnouncements/rest": typeof groupAnnouncements_rest;
   "groupApplications/cleanup": typeof groupApplications_cleanup;
   "groupApplications/contracts": typeof groupApplications_contracts;
+  "groupApplications/decisionActions": typeof groupApplications_decisionActions;
+  "groupApplications/decisionDelivery": typeof groupApplications_decisionDelivery;
+  "groupApplications/decisionEmail": typeof groupApplications_decisionEmail;
   "groupApplications/model": typeof groupApplications_model;
   "groupApplications/mutations": typeof groupApplications_mutations;
   "groupApplications/queries": typeof groupApplications_queries;

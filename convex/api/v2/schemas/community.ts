@@ -23,6 +23,9 @@ export const CommunityContextSchema = z.object({
       id: z.string(),
       status,
       revision: z.number(),
+      decisionDelivery: z
+        .enum(['queued', 'sending', 'sent', 'failed', 'suppressed'])
+        .optional(),
       questions: z.array(GroupApplicationQuestionSchema),
       answers: z.record(
         z.string(),

@@ -4124,6 +4124,12 @@ export class Groupi {
       id: string;
       status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
       revision: number;
+      decisionDelivery?:
+        | 'queued'
+        | 'sending'
+        | 'sent'
+        | 'failed'
+        | 'suppressed';
       questions: Array<{
         id: string;
         label: string;

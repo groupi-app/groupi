@@ -20352,6 +20352,16 @@
                           "revision": {
                             "type": "number"
                           },
+                          "decisionDelivery": {
+                            "type": "string",
+                            "enum": [
+                              "queued",
+                              "sending",
+                              "sent",
+                              "failed",
+                              "suppressed"
+                            ]
+                          },
                           "questions": {
                             "type": "array",
                             "items": {
