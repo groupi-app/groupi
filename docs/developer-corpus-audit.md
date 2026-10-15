@@ -16,6 +16,7 @@ existing documentation are unchanged.
 - [Release and runtime evidence](#release-and-runtime-evidence)
 - [Decision handoff](#decision-handoff)
 - [Acceptance and validation record](#acceptance-and-validation-record)
+- [Post-audit CI stabilization](#post-audit-ci-stabilization)
 
 ## Outcome and evidence boundary
 
@@ -338,3 +339,19 @@ tests such as [REST contracts](../convex/tests/rest-api-contracts.test.ts),
 [CLI reference](../packages/cli/tests/reference.test.ts), and the domain REST
 suites are reusable validation seams, not claims of successful execution during
 this audit. No changeset is needed for this research-only documentation change.
+
+## Post-audit CI stabilization
+
+On 14 October 2026, a separately authorized CI follow-up incorporated the
+one-line fixed-clock test correction originally recorded in
+`c30fb3604d9ccb4a3b19e5584d73ef1e5f4f1ee1`. The relative-GDL replay fixture now
+starts at `2035-02-19T12:00:00Z`, so the initial creation does not depend on the
+wall clock's weekday or time. It still advances the clock before replaying the
+original request and checks that the retained creation IDs are returned.
+
+The focused UTC run of `convex/tests/event-writes-rest.test.ts` passed all 23
+tests, and `pnpm check` passed. This follow-up changes test setup only; it does
+not change application behavior or the audited corpus baseline. All inventory
+versions, dates and source links above remain pinned to `c307c779`. Hosted CI
+and Vercel verification belong to the PR's current-head evidence, not to the
+original source audit or a product release certification.
