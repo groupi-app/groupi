@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { useInviteListNavigationGuard } from '@/hooks/use-invite-list-navigation-guard';
 import { QuerySection } from '@/components/molecules/query-section';
 import { ConvexError } from 'convex/values';
 import { SettingsPageTemplate } from '@/components/templates/settings-page-template';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,21 +46,31 @@ function ListCollection({
   return (
     <>
       {!lists.items.length && (
-        <p className='text-muted-foreground'>No invite lists yet</p>
+        <div className='rounded-card border border-dashed border-border bg-muted p-6'>
+          <h2 className='font-heading text-lg'>No invite lists yet</h2>
+          <p className='mt-2 text-sm text-muted-foreground'>
+            Save people you often invite together, then choose your list when
+            inviting people to an event.
+          </p>
+        </div>
       )}
       {lists.items.map(list => (
         <Button
           key={list.inviteListId}
           variant='outline'
-          className='w-full justify-between'
+          className='h-auto w-full justify-between gap-3 py-4 text-left'
           autoFocus={focusListId === list.inviteListId}
           aria-label={`View ${list.name}, ${list.personCount} ${list.personCount === 1 ? 'person' : 'people'}`}
           onClick={() => inspect(list.inviteListId)}
         >
-          <span>{list.name}</span>
-          <span>
+          <span className='min-w-0 flex-1 whitespace-normal break-words'>
+            {list.name}
+          </span>
+          <span className='flex shrink-0 flex-col items-end gap-1 text-sm'>
             {list.personCount} {list.personCount === 1 ? 'person' : 'people'}
-            {list.needsAttention ? ' · Needs attention' : ''}
+            {list.needsAttention && (
+              <Badge variant='warning'>Needs attention</Badge>
+            )}
           </span>
         </Button>
       ))}
@@ -93,16 +106,28 @@ function ListDetail({
   }, [list?.inviteListId, focusEdit, focusDelete]);
   if (!list) return <p role='status'>Loading invite list…</p>;
   return (
-    <section className='space-y-3'>
-      <h2 tabIndex={-1} ref={headingRef} className='text-xl font-heading'>
+    <section className='flex flex-col gap-3'>
+      <h2
+        tabIndex={-1}
+        ref={headingRef}
+        className='break-words text-xl font-heading'
+      >
         {list.name}
       </h2>
-      {list.needsAttention && <p role='status'>Needs attention</p>}
-      <p className='text-muted-foreground'>{list.personCount} people</p>
+      {list.needsAttention && (
+        <Alert variant='warning' role='status'>
+          <AlertDescription>
+            Needs attention. Add an existing person before using this list.
+          </AlertDescription>
+        </Alert>
+      )}
+      <p className='text-muted-foreground'>
+        {list.personCount} {list.personCount === 1 ? 'person' : 'people'}
+      </p>
       {list.people.map((person, index) => (
         <InviteListPersonRow key={index} person={person} />
       ))}
-      <div className='flex gap-2'>
+      <div className='flex flex-wrap gap-2'>
         <Button onClick={() => edit(list)} autoFocus={focusEdit}>
           Edit list
         </Button>
@@ -313,11 +338,21 @@ export function InviteListsSettings() {
       title='Invite lists'
       description='Private lists of people you can invite later. Saving a list does not notify anyone.'
     >
-      <div className='space-y-4'>
+      <div className='flex flex-col gap-4'>
         {historyNotice && <p role='alert'>{historyNotice}</p>}
-        {saved && <p role='status'>List saved. No invitations were sent.</p>}
+        {saved && (
+          <Alert variant='success' role='status'>
+            <AlertDescription>
+              List saved. No invitations were sent.
+            </AlertDescription>
+          </Alert>
+        )}
         {deleted && (
-          <p role='status'>List deleted. Existing invitations are unchanged.</p>
+          <Alert variant='success' role='status'>
+            <AlertDescription>
+              List deleted. Existing invitations are unchanged.
+            </AlertDescription>
+          </Alert>
         )}
         {view === 'collection' && (
           <QuerySection message='Unable to load your invite lists.'>
@@ -383,14 +418,14 @@ export function InviteListsSettings() {
         )}
         {view === 'delete' && (
           <section
-            className='space-y-4'
+            className='flex flex-col gap-4'
             aria-labelledby='invite-list-delete-title'
           >
             <h2
               id='invite-list-delete-title'
               tabIndex={-1}
               ref={deleteHeading}
-              className='text-xl font-heading'
+              className='break-words text-xl font-heading'
             >
               Delete this invite list?
             </h2>
@@ -399,11 +434,11 @@ export function InviteListsSettings() {
               Existing invitations and event participation will stay unchanged.
             </p>
             {error && (
-              <p role='alert' className='text-error'>
-                {error}
-              </p>
+              <Alert variant='destructive'>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               <Button
                 variant='outline'
                 disabled={saving}
@@ -430,20 +465,20 @@ export function InviteListsSettings() {
         {confirming && (
           <section
             aria-labelledby='invite-list-discard-title'
-            className='space-y-4'
+            className='flex flex-col gap-4'
           >
             <h2
               id='invite-list-discard-title'
               ref={confirmationRef}
               tabIndex={-1}
-              className='text-xl font-heading'
+              className='break-words text-xl font-heading'
             >
               {view === 'edit'
                 ? 'Discard changes to this invite list?'
                 : 'Discard this invite list?'}
             </h2>
             <p>Your unsaved name and people will be lost.</p>
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               <Button onClick={() => setConfirming(false)}>Keep Editing</Button>
               <Button
                 variant='destructive'
@@ -468,21 +503,32 @@ export function InviteListsSettings() {
             }}
             disabled={saving}
             hidden={confirming}
-            className='space-y-4'
+            className={cn('flex flex-col gap-4', confirming && 'hidden')}
           >
-            <h2 className='text-xl font-heading'>
+            <h2 className='break-words text-xl font-heading'>
               {view === 'edit' ? 'Edit invite list' : 'Create invite list'}
             </h2>
-            <div className='space-y-2' ref={nameRef}>
+            <div className='flex flex-col gap-2' ref={nameRef}>
               <Label htmlFor='invite-list-name'>List name</Label>
               <Input
                 id='invite-list-name'
                 value={name}
+                aria-describedby='invite-list-name-help'
                 onChange={event => setName(event.target.value)}
                 disabled={saving}
               />
+              <p
+                id='invite-list-name-help'
+                className='text-sm text-muted-foreground'
+              >
+                Only you can see this list. Use up to 100 characters after
+                trimming.
+              </p>
             </div>
-            <section aria-label='Selected people' className='space-y-2'>
+            <section
+              aria-label='Selected people'
+              className='flex flex-col gap-2'
+            >
               <h3 className='font-medium'>
                 Selected people ({selected.length}/100)
               </h3>
@@ -506,10 +552,11 @@ export function InviteListsSettings() {
                   setSubmittedSearch(search.trim());
               }}
             >
-              <div className='flex-1 space-y-2'>
+              <div className='min-w-0 flex-1 flex flex-col gap-2'>
                 <Label htmlFor='invite-list-search'>Search by username</Label>
                 <Input
                   id='invite-list-search'
+                  aria-describedby='invite-list-search-help'
                   value={search}
                   onChange={event => setSearch(event.target.value)}
                   disabled={saving}
@@ -523,6 +570,12 @@ export function InviteListsSettings() {
                 Search
               </Button>
             </form>
+            <p
+              id='invite-list-search-help'
+              className='text-sm text-muted-foreground'
+            >
+              Enter at least 2 characters, then choose Search.
+            </p>
             {submittedSearch && (
               <Button
                 variant='ghost'
@@ -545,11 +598,11 @@ export function InviteListsSettings() {
               />
             </QuerySection>
             {error && (
-              <p role='alert' className='text-error'>
-                {error}
-              </p>
+              <Alert variant='destructive'>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               <Button
                 onClick={save}
                 isLoading={saving}
