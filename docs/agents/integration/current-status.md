@@ -10,7 +10,7 @@ This is the authoritative integration handoff. The developer-platform checkpoint
 - The portal's approved temporary loopback server was used for desktop/narrow browser checks and then stopped. Portal exports are regenerated and freshness checked. Clean SDK tarball/wheel installs and strict installed consumers pass locally; no registry publication is claimed.
 - Independent reviews addressed consent browser binding, identity correlation, token scope ceilings, file projections, recovery, contract-guard erasure and consent expiry/selection. Actual application auth-screen browser checks, native runtime/VoiceOver, hosted CI matrix and external security assessment remain open gates.
 - No PR, push, deployment or live database migration was performed for this candidate. The narrowed storage schema requires the [two-stage audit and normalization rollout](../../strict-backend-contract-rollout.md). Delegated issuer keys/cookies and matching application/backend environments still need operator configuration and runtime verification.
-- A batch of four proposed changesets has been presented for user approval; creation is pending. Earlier Groups promotion permissions do not authorize publication or deployment of this new candidate.
+- The user approved all four changeset summaries and package/bump choices; the separate portal, SDK, authorization and strict-contract changesets are included. Earlier Groups promotion permissions do not authorize publication or deployment of this new candidate.
 
 ## Test promotion checkpoint — 2026-10-15
 
