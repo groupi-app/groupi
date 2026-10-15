@@ -319,7 +319,10 @@ export function AuthorizationSection() {
                 busy ||
                 !name.trim() ||
                 !actions.length ||
-                (!broad && !selected.eventIds.length)
+                (!broad &&
+                  !selected.eventIds.length &&
+                  (kind === 'integration' ||
+                    actions.some(action => !action.startsWith('identity.'))))
               }
               onPress={create}
             >

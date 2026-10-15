@@ -20,7 +20,11 @@ const renderer = require(
           children: unknown[];
         }) => boolean
       ) => {
-        props: { onPress: () => void; onChangeText: (value: string) => void };
+        props: {
+          onPress: () => void;
+          onChangeText: (value: string) => void;
+          disabled?: boolean;
+        };
       }[];
     };
     unmount: () => void;
@@ -32,6 +36,16 @@ const boundary = vi.hoisted(() => ({
   grants: vi.fn().mockReturnValue([]),
   confirm: vi.fn(),
   success: vi.fn(),
+  events: vi.fn(() => [
+    { _id: 'event-one', title: 'Dinner', role: 'ORGANIZER' },
+  ]),
+  catalog: vi.fn(() => [
+    {
+      action: 'events.read',
+      supported: true,
+      principalKinds: ['user', 'integration'],
+    },
+  ]),
 }));
 vi.unmock('react');
 vi.unmock('@groupi/shared/hooks');
@@ -44,16 +58,8 @@ vi.mock('@groupi/shared/platform', () => ({
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 vi.mock('../../hooks/use-authorization', () => ({
   useAuthorizationGrants: () => boundary.grants(),
-  useAuthorizationEvents: () => [
-    { _id: 'event-one', title: 'Dinner', role: 'ORGANIZER' },
-  ],
-  useAuthorizationCatalog: () => [
-    {
-      action: 'events.read',
-      supported: true,
-      principalKinds: ['user', 'integration'],
-    },
-  ],
+  useAuthorizationEvents: () => boundary.events(),
+  useAuthorizationCatalog: () => boundary.catalog(),
   useAuthorizationAudit: () => undefined,
   useIssueAuthorization: () => boundary.issue,
   useRevokeAuthorization: () => boundary.revoke,
@@ -163,4 +169,65 @@ it('shows named key bounds separately from apps and acknowledges revoke after co
   expect(boundary.success).toHaveBeenCalledWith('Key revoked');
   await act(async () => screen!.unmount());
   boundary.grants.mockReturnValue([]);
+});
+
+it('allows identity-only user keys without events and keeps event actions bounded', async () => {
+  boundary.events.mockReturnValue([]);
+  boundary.catalog.mockReturnValue([
+    {
+      action: 'identity.display-name',
+      supported: true,
+      principalKinds: ['user'],
+    },
+    {
+      action: 'events.read',
+      supported: true,
+      principalKinds: ['user', 'integration'],
+    },
+  ]);
+  let screen: ReturnType<typeof renderer.create>;
+  await act(async () => {
+    screen = renderer.create(createElement(AuthorizationSection));
+  });
+  const button = (label: string) =>
+    screen!.root.findAll(
+      node => node.type === 'Pressable' && textOf(node) === label
+    )[0];
+  try {
+    await act(async () => button('Create bounded key').props.onPress());
+    const input = screen!.root.findAll(
+      node =>
+        node.props.accessibilityLabel === 'Key name' &&
+        typeof node.props.onChangeText === 'function'
+    )[0];
+    await act(async () => input.props.onChangeText('Identity reader'));
+    await act(async () => button('Read events').props.onPress());
+    expect(button('Create key').props.disabled).toBe(true);
+    await act(async () => button('Integration').props.onPress());
+    await act(async () => button('Read events').props.onPress());
+    expect(button('Create key').props.disabled).toBe(true);
+    await act(async () => button('My account').props.onPress());
+    await act(async () => button('Read your display name').props.onPress());
+    expect(button('Create key').props.disabled).toBe(false);
+    await act(async () => button('Create key').props.onPress());
+    expect(boundary.issue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        principalKind: 'user',
+        actions: ['identity.display-name'],
+        selector: { kind: 'selected', eventIds: [] },
+      })
+    );
+  } finally {
+    await act(async () => screen!.unmount());
+    boundary.events.mockReturnValue([
+      { _id: 'event-one', title: 'Dinner', role: 'ORGANIZER' },
+    ]);
+    boundary.catalog.mockReturnValue([
+      {
+        action: 'events.read',
+        supported: true,
+        principalKinds: ['user', 'integration'],
+      },
+    ]);
+  }
 });

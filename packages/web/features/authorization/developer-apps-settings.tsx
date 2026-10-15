@@ -186,7 +186,9 @@ export function DeveloperAppsSettings() {
               aria-describedby='callback-help'
             />
             <p id='callback-help' className='text-sm text-muted-foreground'>
-              One exact URI per line. Wildcards are not allowed.
+              {clientType === 'confidential'
+                ? 'One exact HTTPS callback URI per line. Wildcards and fragments are not allowed.'
+                : 'One exact HTTPS callback, reverse-domain native URI such as com.example.calendar:/callback, or native loopback http://127.0.0.1:<port>/callback per line. Wildcards and fragments are not allowed. Reverse-domain naming does not verify scheme ownership.'}
             </p>
           </div>
           {clientType === 'confidential' ? (

@@ -509,9 +509,7 @@ export function BoundedKeysSettings() {
                           )
                         }
                       />
-                      {entry.action === 'events.read'
-                        ? 'Read events'
-                        : entry.action}
+                      {authorizationActionLabel(entry.action)}
                     </label>
                   ))}
               </fieldset>
@@ -584,7 +582,12 @@ export function BoundedKeysSettings() {
                   disabled={
                     !name.trim() ||
                     !actions.length ||
-                    (!allEvents && !eventIds.length) ||
+                    (!allEvents &&
+                      !eventIds.length &&
+                      (principalKind === 'integration' ||
+                        actions.some(
+                          action => !action.startsWith('identity.')
+                        ))) ||
                     !catalog ||
                     !events
                   }

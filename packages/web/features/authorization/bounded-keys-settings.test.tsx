@@ -201,3 +201,45 @@ it('updates a displayed active key to expired when time passes without a subscri
     vi.useRealTimers();
   }
 });
+
+it('creates an identity-only user key without events while event actions still require an event', async () => {
+  vi.mocked(useQuery).mockImplementation((...args) => {
+    if (args[0] === ('catalog' as never))
+      return [
+        {
+          action: 'identity.display-name',
+          supported: true,
+          principalKinds: ['user'],
+        },
+        {
+          action: 'events.read',
+          supported: true,
+          principalKinds: ['user', 'integration'],
+        },
+      ];
+    return [];
+  });
+  const issue = vi.fn().mockResolvedValue({ key: 'identity-secret' });
+  vi.mocked(useMutation).mockReturnValue(issue as never);
+  const user = userEvent.setup();
+  render(<BoundedKeysSettings />);
+  await user.click(screen.getByRole('button', { name: 'Create bounded key' }));
+  await user.type(screen.getByLabelText('Key name'), 'Identity reader');
+  await user.click(screen.getByLabelText('Read events'));
+  expect(screen.getByRole('button', { name: 'Create key' })).toBeDisabled();
+  await user.click(screen.getByLabelText('Named integration'));
+  await user.click(screen.getByLabelText('Read events'));
+  expect(screen.getByRole('button', { name: 'Create key' })).toBeDisabled();
+  await user.click(screen.getByLabelText('Your account'));
+  await user.click(screen.getByLabelText('Read events'));
+  await user.click(screen.getByLabelText('Read your display name'));
+  expect(screen.getByRole('button', { name: 'Create key' })).toBeEnabled();
+  await user.click(screen.getByRole('button', { name: 'Create key' }));
+  expect(issue).toHaveBeenCalledWith(
+    expect.objectContaining({
+      principalKind: 'user',
+      actions: ['identity.display-name'],
+      selector: { kind: 'selected', eventIds: [] },
+    })
+  );
+});
