@@ -79,7 +79,7 @@ export const catalog = query({
   handler: async ctx => {
     if (!(await getCurrentPerson(ctx))) return [];
     return actions
-      .filter(action => action !== 'groups.context.read')
+      .filter(action => !action.startsWith('groups.'))
       .map(action => ({
         action,
         supported: true,

@@ -266,7 +266,7 @@ export const prepareConsent = internalMutation({
       )
       .unique();
     if (
-      args.requestedScopes.includes('groups.context.read') &&
+      args.requestedScopes.some(s => s.startsWith('groups.')) &&
       !args.selectedGroupId
     )
       throw new Error('Select a Group for own community access');
@@ -276,7 +276,12 @@ export const prepareConsent = internalMutation({
         s =>
           s !== 'openid' &&
           s !== 'offline_access' &&
-          s !== 'groups.context.read' &&
+          ![
+            'groups.context.read',
+            'groups.applications.submit',
+            'groups.applications.edit',
+            'groups.applications.withdraw',
+          ].includes(s) &&
           !s.startsWith('identity.')
       )
     )

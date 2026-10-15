@@ -50,6 +50,13 @@ import { v } from 'convex/values';
 
 export default defineSchema({
   ...delegatedTables,
+  communityOperationReceipts: defineTable({
+    operationId: v.string(),
+    binding: v.string(),
+    result: v.string(),
+    acceptedAt: v.number(),
+    expiresAt: v.number(),
+  }).index('by_operationId', ['operationId']),
   authorizationPrincipals: defineTable(principalFields).index(
     'by_ownerPersonId',
     ['ownerPersonId']

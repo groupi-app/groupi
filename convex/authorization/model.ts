@@ -66,13 +66,20 @@ export async function assertBounds(
       kind !== 'user' ||
       !(await ctx.db.get(selected.groupId)) ||
       granted.some(
-        a => !a.startsWith('identity.') && a !== 'groups.context.read'
+        a =>
+          !a.startsWith('identity.') &&
+          ![
+            'groups.context.read',
+            'groups.applications.submit',
+            'groups.applications.edit',
+            'groups.applications.withdraw',
+          ].includes(a)
       )
     )
       throw denied(
         'Selected Group grants permit only implemented own community actions.'
       );
-  } else if (granted.includes('groups.context.read'))
+  } else if (granted.some(a => a.startsWith('groups.')))
     throw denied('Select one Group.');
   if (selected.kind === 'selected') {
     if (
