@@ -1,7 +1,7 @@
-import {Buffer} from 'node:buffer';
+import { Buffer } from 'node:buffer';
 import console from 'node:console';
 import process from 'node:process';
-import {URL} from 'node:url';
+import { URL } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Groupi } from '../src/index.js';
@@ -17,7 +17,13 @@ const index = args.indexOf('--format');
 const operation = args[index + 2];
 const input = JSON.parse(args[index + 3] ?? '{}');
 try {
-  console.log(JSON.stringify(await (operation==='upload' ? client.upload(Buffer.from(input.content),input.metadata) : client[operation](input))));
+  console.log(
+    JSON.stringify(
+      await (operation === 'upload'
+        ? client.upload(Buffer.from(input.content), input.metadata)
+        : client[operation](input))
+    )
+  );
 } catch (error) {
   console.log(
     JSON.stringify({

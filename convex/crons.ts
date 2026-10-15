@@ -19,4 +19,11 @@ crons.interval(
   {}
 );
 
+crons.interval(
+  'prune expired delegated artifacts',
+  { minutes: 5 },
+  internal.delegatedApps.storage.pruneExpired,
+  {}
+);
+
 export default crons;

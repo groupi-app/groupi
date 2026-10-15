@@ -1,10 +1,40 @@
 # Bounded access and delegated sign-in
 
-v2 · Upcoming · Source: docs/auth-architecture.md
+v2 · Upcoming · Source: docs/bounded-authorization.md
 
 Source availability does not establish hosted deployment or registry publication.
 
 ## Verify the authorization capability first
 Canonical passage: /v2/auth#availability
 
-Bounded named-event access and delegated third-party sign-in are under implementation. Existing CLI browser login is not that delegated protocol. Credential bounds always intersect current account authority. Selected-event consent, all-current-and-future access and background access require explicit disclosures in supported releases. Do not treat this status page as a live OAuth configuration guide.
+Bounded credentials and delegated sign-in are source candidates in this repository. Verify the intended deployment before using them; this page does not establish a hosted release or configured OAuth issuer. Existing CLI browser login remains a separate flow. Credential bounds always intersect current account authority, and an authentication failure never switches to a broader key.
+
+## Create a bounded key for selected Events
+Canonical passage: /v2/auth#named-keys
+
+In Account settings, use bounded keys to choose a name, expiry, explicit actions and selected Events. User keys may instead explicitly select all current and future Events within current authority. Identity-only user keys need no Event selection. Copy the secret when it is shown once and keep it out of browser bundles and source control. Legacy collection keys remain separately labeled and have different permissions.
+
+```sh
+curl --fail-with-body "https://YOUR-INSTANCE.convex.site/api/v2/events" \
+  -H "x-api-key: $GROUPI_BOUNDED_KEY"
+```
+
+## Request each action and related field explicitly
+Canonical passage: /v2/auth#projections
+
+Event reads, updates, member reads, discussion actions, file access and identity claims have separate actions. Write-only access returns identifiers, not discussion content or attachment URLs. File uploads require a granted eventId and files.upload; attachment expansion requires files.read. Event creation, membership administration, Groups and Invite Lists are not supported bounded actions. An unsupported operation fails closed; use the published action matrix before designing a workflow.
+
+## Give an integration its own discussion identity
+Canonical passage: /v2/auth#integrations
+
+An integration key selects Events and requires a current Organizer sponsor. The integration appears as the author of its own posts and replies and has no person record, membership or RSVP. It can edit or delete only its own discussion content. Sponsor authority is rechecked for each operation; sponsorship does not grant blanket access or impersonate the sponsor.
+
+## Consent, background access and disconnect
+Canonical passage: /v2/auth#connections
+
+The approved delegated profile uses authorization code with S256 PKCE, app-and-instance-specific identity, 60-second codes and 5-minute access tokens. Background access requires separate consent; rotating refresh is limited to 30 days and 7 days of inactivity. Initial clients are confidential web and native apps; browser-only refresh is unavailable. Connected Apps shows actions and resources and lets you disconnect. Disconnect stops future access but cannot delete copied data or terminate the app’s own session. Release readiness still requires issuer configuration and environment-specific verification.
+
+## Inspect and revoke access
+Canonical passage: /v2/auth#revocation
+
+Revoked or expired credentials fail without a grace period. Current membership and role loss reduce effective access even if a key has not expired. Owner-visible audit metadata is retained for 90 days and excludes raw credentials and resource bodies. Already committed writes and previously acquired file URLs are not undone by revocation.

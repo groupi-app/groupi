@@ -1,6 +1,16 @@
 # Current Integration Status
 
-This is the authoritative handoff for Invite Lists and Groups integration. The current promotion checkpoint is **2026-10-15, America/New_York**. Earlier deployment records below are historical, not live branch lookups.
+This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
+
+## Developer platform candidate — 2026-10-15
+
+- Local branch: `codex/developer-platform`, based on `da5ccb462f8b0ead9a4a32ea405641d5eddd5624`. Integrated checkpoints include SDK `bf5ce504`, authorization `b93e9c93`, consent UI `dd91dfdd`, and delegated protocol `44eb6930`, `c56b8835`, `95c08f54`. Final integration artifacts include the combined lockfile, generated portal corpus, cleanup schedule and verification record in this commit.
+- Scope: static developer portal, strict TypeScript/Python SDK candidates, bounded user/integration credentials, independent discussion authorship, delegated sign-in and app review, and concrete backend query/mutation types. Self-hosting and encryption remain excluded. All parallel agents used GPT-6.1 Sol.
+- `pnpm check` passes, including 735 generated and source query/mutation contracts with no loose-type exceptions. All 2,696 client/shared/CLI tests pass; SDK 25 and portal 11 pass. The backend full run passed 1,051 tests with one stale author assertion; after adding its required `kind: 'user'` expectation, the complete 20-test Posts suite passed. Three negative contract-guard tests pass. See [the detailed verification record](../../developer-platform-verification.md).
+- The portal's approved temporary loopback server was used for desktop/narrow browser checks and then stopped. Portal exports are regenerated and freshness checked. Clean SDK tarball/wheel installs and strict installed consumers pass locally; no registry publication is claimed.
+- Independent reviews addressed consent browser binding, identity correlation, token scope ceilings, file projections, recovery, contract-guard erasure and consent expiry/selection. Actual application auth-screen browser checks, native runtime/VoiceOver, hosted CI matrix and external security assessment remain open gates.
+- No PR, push, deployment or live database migration was performed for this candidate. The narrowed storage schema requires the [two-stage audit and normalization rollout](../../strict-backend-contract-rollout.md). Delegated issuer keys/cookies and matching application/backend environments still need operator configuration and runtime verification.
+- A batch of four proposed changesets has been presented for user approval; creation is pending. Earlier Groups promotion permissions do not authorize publication or deployment of this new candidate.
 
 ## Test promotion checkpoint — 2026-10-15
 

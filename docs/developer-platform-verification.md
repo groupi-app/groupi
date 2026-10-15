@@ -81,24 +81,90 @@ are not claims that every endpoint has been exercised or released. Current SDK
 and portal catalogs must use the current generated reference, rather than copy
 the old audit's operation count or imply that v1 and v2 share wire contracts.
 
-## Evidence still required
+## Implemented source and focused evidence
 
-- Per-track red/green observations and focused validation, followed by combined
-  lint, type, formatting and full-suite checks.
-- Independent code and security review of the resulting implementation.
-- Actual portal browser journeys at desktop and narrow widths, keyboard use,
-  query quality and specified performance conditions.
-- Clean SDK package installation and public workflows in supported runtimes.
-- Real authorization denial and revocation observations, including role changes,
-  guessed related-resource identifiers and independently attributed integrations.
-- Two-client and two-instance delegated identity isolation, code/refresh replay,
-  suspension, disconnect and permission-change behavior.
+- The static portal has versioned API/CLI references, local search, canonical
+  Markdown/text/JSON exports and a clearly simulated explorer. Desktop and
+  390-pixel browser journeys covered navigation, keyboard access, exact-operation
+  search, downloads, failure states and retained-key Event replay. The temporary
+  loopback-only portal server was stopped after verification. See
+  [the portal evidence](developer-portal-verification.md) for screenshots and
+  conditions; this does not claim screen-reader or throttled-network testing.
+- Bounded credentials distinguish named user keys, integration actors and
+  delegated access. Public backend tests cover selected Event isolation,
+  current authority, related-resource projections, uncertainty, revocation and
+  independent discussion authorship. Write-only operations return identifiers
+  instead of leaking readable discussion bodies or attachment URLs.
+- Delegated sign-in uses the maintained OIDC provider and real cryptographic
+  protocol tests. Approval is bound to the initiating browser's signed cookie;
+  the authenticated approval ticket is short-lived and single-use, and creates
+  no grant until the provider validates that browser. Administrator review,
+  developer-only eligibility, Connected Apps, recovery and owner resubmission
+  have backend and rendered UI coverage.
+- SDK source candidates provide specific TypeScript declarations and Python
+  TypedDict models, synchronous/asynchronous Python clients, bounded transport
+  and pagination, explicit credential modes, and delegated session adapters.
+  Real protocol tests cover both languages and native/confidential clients,
+  selected/broad Event grants, missing actions, refresh, expiry and disconnect.
+  Registry publication is not part of implementation verification.
+- Backend query/mutation contracts no longer rely on `any` or `unknown`.
+  The checker inspects generated contracts and source exports and rejects
+  annotations or aliases that erase a function's registration type. Negative
+  checker tests are part of CI. Add-on hooks derive their payloads from Convex
+  and preserve editable incomplete drafts; 67 web and 9 mobile focused tests
+  passed for these call-site changes.
+
+Independent review has covered protocol/authorization security, portal behavior,
+SDK transport and type consumers, schema compatibility, cleanup, dependency
+alignment and CI configuration. Confirmed findings are repaired and regression
+checked before final acceptance. Combined lint, type, format, generated-artifact
+freshness and full-suite results must be recorded against the final integrated
+source, rather than inferred from individual worktrees.
+
+## Integrated verification, 15 October 2026
+
+Local runtimes: Node 22.23.3, Python 3.14.7, pnpm 10.12.1.
+
+| Suite                       | Result                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Web                         | 97 files, 1,276 tests passed                                                                                           |
+| Mobile component/unit tests | 80 files, 587 tests passed                                                                                             |
+| Shared                      | 15 files, 434 tests passed                                                                                             |
+| CLI                         | 30 files, 399 tests passed                                                                                             |
+| Backend                     | 119 files passed initially; one legacy author assertion updated as described below                                     |
+| SDK                         | 8 Node tests, 7 Python tests, 10 real REST/protocol integration tests passed                                           |
+| Portal                      | 11 tests passed; 14 pages, 634 passages and 33 exports regenerated and freshness checked                               |
+| Contract guard              | 735 generated and 735 source query/mutation contracts; zero loose-type findings; 3 negative checker regressions passed |
+
+The backend full run had 1,051 passing tests and one outdated exact-object
+expectation in the post pagination test: user authors now include `kind: 'user'`
+to distinguish integration authors. The assertion was updated to require that
+field while retaining the existing name/image and pagination checks. The complete
+20-test Posts suite then passed; no production code changed after the full run.
+
+Strict TypeScript/Python consumers and clean tarball/wheel installations passed.
+Semantic-token checks passed their exit gate, retaining the 30 pre-existing web
+warnings; the portal token scan is clean. One combined check found four unformatted
+SDK test drivers; those files were formatted without changing their behavior.
+Final combined `pnpm check` passes lint, types, contract enforcement and formatting;
+its output is retained with the task's validation artifacts. This record does not substitute remote CI matrix results.
+
+## Release gates and verification limits
+
+No live database audit, normalization or schema deployment has run. The narrower
+storage contracts require the separate migration-only release and clean paged
+preflight described in [the strict-contract rollout](strict-backend-contract-rollout.md).
+Do not deploy the narrowed schema directly to an unaudited database.
 
 Local tests do not establish deployment, package registry availability, native
-device behavior, production issuer configuration or independent external security
-audit. Those need their own recorded evidence. No package publication, production
-deployment, outside reviewer engagement or legal review is implied by this record.
+device behavior, production issuer configuration or an independent external
+security audit. Native runtime acceptance and actual browser verification of the
+new application authorization screens remain separate from rendered component
+and protocol fixtures. CI defines Node 22/24 and Python 3.11/3.13 jobs; a local
+run is not evidence that both remote matrix jobs have executed. No package
+publication, production deployment, outside reviewer engagement or legal review
+is implied by this record.
 
 Self-host install/upgrade/restore and encrypted multi-client privacy verification
-are outside the selected implementation scope. Their absence must remain visible
+are outside the selected implementation scope. Their absence remains visible
 in portal availability labels rather than being represented as supported features.

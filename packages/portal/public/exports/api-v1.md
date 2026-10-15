@@ -44,6 +44,7 @@ Create event Create a new event Source-generated operation; schemas and per-oper
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -173,6 +174,7 @@ Update event Update an event (requires MODERATOR role or higher) Source-generate
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -187,7 +189,37 @@ Update event Update an event (requires MODERATOR role or higher) Source-generate
       "content": {
         "application/json": {
           "schema": {
-            "$ref": "#/components/schemas/EventResponse"
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EventDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "eventId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "eventId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
           }
         }
       }
@@ -390,6 +422,7 @@ Create post Create a new post in an event Source-generated operation; schemas an
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -529,6 +562,7 @@ Update post Update a post (requires author or MODERATOR role) Source-generated o
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -543,7 +577,37 @@ Update post Update a post (requires author or MODERATOR role) Source-generated o
       "content": {
         "application/json": {
           "schema": {
-            "$ref": "#/components/schemas/PostResponse"
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PostDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "postId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "postId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
           }
         }
       }
@@ -756,6 +820,7 @@ Create reply Create a new reply to a post Source-generated operation; schemas an
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -840,6 +905,7 @@ Update reply Update a reply (requires author or MODERATOR role) Source-generated
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -854,7 +920,37 @@ Update reply Update a reply (requires author or MODERATOR role) Source-generated
       "content": {
         "application/json": {
           "schema": {
-            "$ref": "#/components/schemas/ReplyResponse"
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReplyDetail"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "replyId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "replyId"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ]
           }
         }
       }
@@ -1062,6 +1158,7 @@ Update member role Update a member's role (requires MODERATOR role or higher) So
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -1261,6 +1358,7 @@ Update RSVP Update your RSVP status for an event Source-generated operation; sch
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -1380,6 +1478,7 @@ Submit availability Submit or update availability for potential dates Source-gen
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -1680,6 +1779,7 @@ Send friend request Send a friend request to another user Source-generated opera
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -2060,7 +2160,795 @@ List existing published templates owned by this identity  Source-generated opera
                           "type": "number"
                         },
                         "template": {
-                          "nullable": true
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            },
+                            "description": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            },
+                            "iconName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "settings": {
+                              "type": "object",
+                              "properties": {
+                                "requiresCompletion": {
+                                  "type": "boolean"
+                                },
+                                "supportsOptOut": {
+                                  "type": "boolean"
+                                },
+                                "optOutLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardLinkLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardSubtitle": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "cardOnly": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "sections": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "layout": {
+                                    "type": "string",
+                                    "enum": [
+                                      "form",
+                                      "interactive"
+                                    ]
+                                  },
+                                  "fields": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "number",
+                                            "select",
+                                            "multiselect",
+                                            "yesno",
+                                            "list_item",
+                                            "vote",
+                                            "toggle",
+                                            "action_button",
+                                            "static_text",
+                                            "dynamic_summary",
+                                            "divider",
+                                            "info_callout"
+                                          ]
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "configurable": {
+                                          "type": "boolean"
+                                        },
+                                        "variant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "short",
+                                            "long"
+                                          ]
+                                        },
+                                        "placeholder": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "maxLength": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "exclusiveMinimum": true
+                                        },
+                                        "min": {
+                                          "type": "number"
+                                        },
+                                        "max": {
+                                          "type": "number"
+                                        },
+                                        "options": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 10000
+                                          },
+                                          "maxItems": 100
+                                        },
+                                        "minSelections": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "maxSelections": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "items": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "id": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              },
+                                              "name": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "quantity": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "exclusiveMinimum": true
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "quantity"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 100
+                                        },
+                                        "allowMultiple": {
+                                          "type": "boolean"
+                                        },
+                                        "showResults": {
+                                          "type": "boolean"
+                                        },
+                                        "content": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "textFormat": {
+                                          "type": "string",
+                                          "enum": [
+                                            "p",
+                                            "h1",
+                                            "h2",
+                                            "h3"
+                                          ]
+                                        },
+                                        "summaryType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "response_count",
+                                            "vote_leader",
+                                            "signup_progress",
+                                            "custom_text"
+                                          ]
+                                        },
+                                        "summaryLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "dividerLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "calloutVariant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "info",
+                                            "warning",
+                                            "success"
+                                          ]
+                                        },
+                                        "calloutMessage": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "buttonLabel": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "buttonVariant": {
+                                          "type": "string",
+                                          "enum": [
+                                            "default",
+                                            "secondary",
+                                            "outline",
+                                            "destructive"
+                                          ]
+                                        },
+                                        "defaultEnabled": {
+                                          "type": "boolean"
+                                        },
+                                        "actions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "notify_members",
+                                                  "notify_organizers",
+                                                  "notify_submitter",
+                                                  "create_post",
+                                                  "update_event_description",
+                                                  "set_addon_data",
+                                                  "send_webhook"
+                                                ]
+                                              },
+                                              "webhookUrl": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "webhookHeaders": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "message": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "title": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "key": {
+                                                "type": "string",
+                                                "maxLength": 10000
+                                              },
+                                              "data": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                      "anyOf": [
+                                                        {
+                                                          "type": "string"
+                                                        },
+                                                        {
+                                                          "type": "number"
+                                                        },
+                                                        {
+                                                          "type": "boolean"
+                                                        },
+                                                        {
+                                                          "nullable": true
+                                                        },
+                                                        {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "string"
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ]
+                                              },
+                                              "recipientToggleField": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 50
+                                        },
+                                        "visibilityConditions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "field": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 10000
+                                              },
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "equals",
+                                                  "not_equals",
+                                                  "contains",
+                                                  "not_contains",
+                                                  "greater_than",
+                                                  "less_than",
+                                                  "greater_or_equal",
+                                                  "less_or_equal",
+                                                  "is_empty",
+                                                  "is_not_empty",
+                                                  "in_list",
+                                                  "not_in_list"
+                                                ]
+                                              },
+                                              "value": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "nullable": true
+                                                  },
+                                                  {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "field",
+                                              "operator"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "maxItems": 50
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "required"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 100
+                                  },
+                                  "configurable": {
+                                    "type": "boolean"
+                                  },
+                                  "allowedFieldTypes": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "text",
+                                        "number",
+                                        "select",
+                                        "multiselect",
+                                        "yesno",
+                                        "list_item",
+                                        "vote",
+                                        "toggle",
+                                        "action_button",
+                                        "static_text",
+                                        "dynamic_summary",
+                                        "divider",
+                                        "info_callout"
+                                      ]
+                                    }
+                                  },
+                                  "visibilityConditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "field": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "operator": {
+                                          "type": "string",
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "not_contains",
+                                            "greater_than",
+                                            "less_than",
+                                            "greater_or_equal",
+                                            "less_or_equal",
+                                            "is_empty",
+                                            "is_not_empty",
+                                            "in_list",
+                                            "not_in_list"
+                                          ]
+                                        },
+                                        "value": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "field",
+                                        "operator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 50
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "title",
+                                  "fields"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "minItems": 1,
+                              "maxItems": 50
+                            },
+                            "submitButtonLabel": {
+                              "type": "string",
+                              "maxLength": 10000
+                            },
+                            "onSubmitActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "notify_members",
+                                      "notify_organizers",
+                                      "notify_submitter",
+                                      "create_post",
+                                      "update_event_description",
+                                      "set_addon_data",
+                                      "send_webhook"
+                                    ]
+                                  },
+                                  "webhookUrl": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "webhookHeaders": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "key": {
+                                    "type": "string",
+                                    "maxLength": 10000
+                                  },
+                                  "data": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "recipientToggleField": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "maxItems": 50
+                            },
+                            "automations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 10000
+                                  },
+                                  "enabled": {
+                                    "type": "boolean"
+                                  },
+                                  "trigger": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "form_submitted",
+                                          "list_item_claimed",
+                                          "list_item_full",
+                                          "vote_cast",
+                                          "vote_threshold",
+                                          "toggle_changed",
+                                          "all_responses_in",
+                                          "member_joined",
+                                          "member_left",
+                                          "date_chosen",
+                                          "addon_enabled"
+                                        ]
+                                      },
+                                      "fieldId": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "threshold": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "exclusiveMinimum": true
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "field": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "operator": {
+                                          "type": "string",
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "not_contains",
+                                            "greater_than",
+                                            "less_than",
+                                            "greater_or_equal",
+                                            "less_or_equal",
+                                            "is_empty",
+                                            "is_not_empty",
+                                            "in_list",
+                                            "not_in_list"
+                                          ]
+                                        },
+                                        "value": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "nullable": true
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "field",
+                                        "operator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "maxItems": 50
+                                  },
+                                  "actions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "notify_members",
+                                            "notify_organizers",
+                                            "notify_submitter",
+                                            "create_post",
+                                            "update_event_description",
+                                            "set_addon_data",
+                                            "send_webhook"
+                                          ]
+                                        },
+                                        "webhookUrl": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "webhookHeaders": {
+                                          "type": "object",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "key": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "data": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "nullable": true
+                                                  },
+                                                  {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        "recipientToggleField": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "enabled",
+                                  "trigger",
+                                  "conditions",
+                                  "actions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "maxItems": 50
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "description",
+                            "iconName",
+                            "sections"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -2068,7 +2956,8 @@ List existing published templates owned by this identity  Source-generated opera
                         "addonType",
                         "name",
                         "description",
-                        "version"
+                        "version",
+                        "template"
                       ]
                     }
                   },
@@ -2096,7 +2985,795 @@ List existing published templates owned by this identity  Source-generated opera
                               "type": "number"
                             },
                             "template": {
-                              "nullable": true
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 60
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "iconName": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "requiresCompletion": {
+                                      "type": "boolean"
+                                    },
+                                    "supportsOptOut": {
+                                      "type": "boolean"
+                                    },
+                                    "optOutLabel": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardLinkLabel": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardSubtitle": {
+                                      "type": "string",
+                                      "maxLength": 10000
+                                    },
+                                    "cardOnly": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "sections": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "description": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "layout": {
+                                        "type": "string",
+                                        "enum": [
+                                          "form",
+                                          "interactive"
+                                        ]
+                                      },
+                                      "fields": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 100
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "text",
+                                                "number",
+                                                "select",
+                                                "multiselect",
+                                                "yesno",
+                                                "list_item",
+                                                "vote",
+                                                "toggle",
+                                                "action_button",
+                                                "static_text",
+                                                "dynamic_summary",
+                                                "divider",
+                                                "info_callout"
+                                              ]
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "required": {
+                                              "type": "boolean"
+                                            },
+                                            "configurable": {
+                                              "type": "boolean"
+                                            },
+                                            "variant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "short",
+                                                "long"
+                                              ]
+                                            },
+                                            "placeholder": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "maxLength": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "exclusiveMinimum": true
+                                            },
+                                            "min": {
+                                              "type": "number"
+                                            },
+                                            "max": {
+                                              "type": "number"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 10000
+                                              },
+                                              "maxItems": 100
+                                            },
+                                            "minSelections": {
+                                              "type": "integer",
+                                              "minimum": 0
+                                            },
+                                            "maxSelections": {
+                                              "type": "integer",
+                                              "minimum": 0
+                                            },
+                                            "items": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 100
+                                                  },
+                                                  "name": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "quantity": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "exclusiveMinimum": true
+                                                  }
+                                                },
+                                                "required": [
+                                                  "id",
+                                                  "name",
+                                                  "quantity"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 100
+                                            },
+                                            "allowMultiple": {
+                                              "type": "boolean"
+                                            },
+                                            "showResults": {
+                                              "type": "boolean"
+                                            },
+                                            "content": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "textFormat": {
+                                              "type": "string",
+                                              "enum": [
+                                                "p",
+                                                "h1",
+                                                "h2",
+                                                "h3"
+                                              ]
+                                            },
+                                            "summaryType": {
+                                              "type": "string",
+                                              "enum": [
+                                                "response_count",
+                                                "vote_leader",
+                                                "signup_progress",
+                                                "custom_text"
+                                              ]
+                                            },
+                                            "summaryLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "dividerLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "calloutVariant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "info",
+                                                "warning",
+                                                "success"
+                                              ]
+                                            },
+                                            "calloutMessage": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "buttonLabel": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "buttonVariant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "default",
+                                                "secondary",
+                                                "outline",
+                                                "destructive"
+                                              ]
+                                            },
+                                            "defaultEnabled": {
+                                              "type": "boolean"
+                                            },
+                                            "actions": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "notify_members",
+                                                      "notify_organizers",
+                                                      "notify_submitter",
+                                                      "create_post",
+                                                      "update_event_description",
+                                                      "set_addon_data",
+                                                      "send_webhook"
+                                                    ]
+                                                  },
+                                                  "webhookUrl": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "webhookHeaders": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "message": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "title": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "key": {
+                                                    "type": "string",
+                                                    "maxLength": 10000
+                                                  },
+                                                  "data": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "additionalProperties": {
+                                                          "anyOf": [
+                                                            {
+                                                              "type": "string"
+                                                            },
+                                                            {
+                                                              "type": "number"
+                                                            },
+                                                            {
+                                                              "type": "boolean"
+                                                            },
+                                                            {
+                                                              "nullable": true
+                                                            },
+                                                            {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "string"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "recipientToggleField": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 100
+                                                  }
+                                                },
+                                                "required": [
+                                                  "type"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 50
+                                            },
+                                            "visibilityConditions": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "field": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 10000
+                                                  },
+                                                  "operator": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "not_contains",
+                                                      "greater_than",
+                                                      "less_than",
+                                                      "greater_or_equal",
+                                                      "less_or_equal",
+                                                      "is_empty",
+                                                      "is_not_empty",
+                                                      "in_list",
+                                                      "not_in_list"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "boolean"
+                                                      },
+                                                      {
+                                                        "nullable": true
+                                                      },
+                                                      {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "string"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "field",
+                                                  "operator"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "maxItems": 50
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "type",
+                                            "required"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 100
+                                      },
+                                      "configurable": {
+                                        "type": "boolean"
+                                      },
+                                      "allowedFieldTypes": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "number",
+                                            "select",
+                                            "multiselect",
+                                            "yesno",
+                                            "list_item",
+                                            "vote",
+                                            "toggle",
+                                            "action_button",
+                                            "static_text",
+                                            "dynamic_summary",
+                                            "divider",
+                                            "info_callout"
+                                          ]
+                                        }
+                                      },
+                                      "visibilityConditions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "field": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 10000
+                                            },
+                                            "operator": {
+                                              "type": "string",
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "not_contains",
+                                                "greater_than",
+                                                "less_than",
+                                                "greater_or_equal",
+                                                "less_or_equal",
+                                                "is_empty",
+                                                "is_not_empty",
+                                                "in_list",
+                                                "not_in_list"
+                                              ]
+                                            },
+                                            "value": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "field",
+                                            "operator"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "title",
+                                      "fields"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 50
+                                },
+                                "submitButtonLabel": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "onSubmitActions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "notify_members",
+                                          "notify_organizers",
+                                          "notify_submitter",
+                                          "create_post",
+                                          "update_event_description",
+                                          "set_addon_data",
+                                          "send_webhook"
+                                        ]
+                                      },
+                                      "webhookUrl": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "webhookHeaders": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "message": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "key": {
+                                        "type": "string",
+                                        "maxLength": 10000
+                                      },
+                                      "data": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "recipientToggleField": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "maxItems": 50
+                                },
+                                "automations": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 100
+                                      },
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 10000
+                                      },
+                                      "enabled": {
+                                        "type": "boolean"
+                                      },
+                                      "trigger": {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "form_submitted",
+                                              "list_item_claimed",
+                                              "list_item_full",
+                                              "vote_cast",
+                                              "vote_threshold",
+                                              "toggle_changed",
+                                              "all_responses_in",
+                                              "member_joined",
+                                              "member_left",
+                                              "date_chosen",
+                                              "addon_enabled"
+                                            ]
+                                          },
+                                          "fieldId": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 100
+                                          },
+                                          "threshold": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "exclusiveMinimum": true
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "conditions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "field": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 10000
+                                            },
+                                            "operator": {
+                                              "type": "string",
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "not_contains",
+                                                "greater_than",
+                                                "less_than",
+                                                "greater_or_equal",
+                                                "less_or_equal",
+                                                "is_empty",
+                                                "is_not_empty",
+                                                "in_list",
+                                                "not_in_list"
+                                              ]
+                                            },
+                                            "value": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                },
+                                                {
+                                                  "type": "boolean"
+                                                },
+                                                {
+                                                  "nullable": true
+                                                },
+                                                {
+                                                  "type": "array",
+                                                  "items": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "field",
+                                            "operator"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "maxItems": 50
+                                      },
+                                      "actions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "notify_members",
+                                                "notify_organizers",
+                                                "notify_submitter",
+                                                "create_post",
+                                                "update_event_description",
+                                                "set_addon_data",
+                                                "send_webhook"
+                                              ]
+                                            },
+                                            "webhookUrl": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "webhookHeaders": {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "message": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "title": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "key": {
+                                              "type": "string",
+                                              "maxLength": 10000
+                                            },
+                                            "data": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "additionalProperties": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "boolean"
+                                                      },
+                                                      {
+                                                        "nullable": true
+                                                      },
+                                                      {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "string"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "recipientToggleField": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 100
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "minItems": 1,
+                                        "maxItems": 50
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "name",
+                                      "enabled",
+                                      "trigger",
+                                      "conditions",
+                                      "actions"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "maxItems": 50
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "description",
+                                "iconName",
+                                "sections"
+                              ],
+                              "additionalProperties": false
                             }
                           },
                           "required": [
@@ -2104,7 +3781,8 @@ List existing published templates owned by this identity  Source-generated opera
                             "addonType",
                             "name",
                             "description",
-                            "version"
+                            "version",
+                            "template"
                           ]
                         }
                       },
@@ -2292,6 +3970,7 @@ Enable add-on Enable an add-on for an event with validated config. Existing cust
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -2443,6 +4122,7 @@ Update add-on config Replace the configuration for an enabled add-on, invoking i
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -2605,6 +4285,7 @@ Set add-on data Create or update a data entry for an add-on. The key is used for
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -3403,6 +5084,7 @@ Update profile Update the authenticated user's profile Source-generated operatio
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -3464,6 +5146,16 @@ Get profile by username Get a user's public profile by their username Source-gen
       "description": "Username to look up",
       "name": "username",
       "in": "path"
+    },
+    {
+      "schema": {
+        "type": "string",
+        "description": "Required for bounded credentials; limits the profile to a current member of this granted event."
+      },
+      "required": false,
+      "description": "Required for bounded credentials; limits the profile to a current member of this granted event.",
+      "name": "eventId",
+      "in": "query"
     }
   ],
   "responses": {
@@ -3541,6 +5233,7 @@ Update privacy settings Update the authenticated user's privacy settings Source-
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -3656,6 +5349,7 @@ Create custom theme Create a new custom theme Source-generated operation; schema
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -3739,6 +5433,7 @@ Set theme preferences Set the authenticated user's active theme and system prefe
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -3803,6 +5498,7 @@ Update custom theme Update a custom theme (must be the owner) Source-generated o
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -4030,6 +5726,7 @@ Create invite Create a new invite link for an event (requires membership) Source
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -4296,6 +5993,7 @@ Create report Report content for review by administrators Source-generated opera
 ```json
 {
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {
@@ -4500,6 +6198,7 @@ Set user role Update a user's role (admin only) Source-generated operation; sche
     }
   ],
   "requestBody": {
+    "required": true,
     "content": {
       "application/json": {
         "schema": {

@@ -141,26 +141,90 @@ test('cancelling a dispatched create preserves uncertainty', async () => {
     await new Promise(r => server.close(r));
   }
 });
-test('a delegated provider cannot switch the configured audience', async()=>{
- const client=new Groupi({instance:'https://example.com',credential:{type:'delegated',audience:'groupi-api',getToken:async()=>({accessToken:'token',instance:'https://example.com',audience:'other-api'})}});
- await assert.rejects(client.listEvents(),error=>error.code==='UNAUTHORIZED');
+test('a delegated provider cannot switch the configured audience', async () => {
+  const client = new Groupi({
+    instance: 'https://example.com',
+    credential: {
+      type: 'delegated',
+      audience: 'groupi-api',
+      getToken: async () => ({
+        accessToken: 'token',
+        instance: 'https://example.com',
+        audience: 'other-api',
+      }),
+    },
+  });
+  await assert.rejects(
+    client.listEvents(),
+    error => error.code === 'UNAUTHORIZED'
+  );
 });
-test('version mismatch prevents dispatching a write',async()=>{
- let writes=0;
- const server=createServer((req,res)=>{if(req.method==='POST')writes++;res.end(JSON.stringify({version:'1.0.0'}));});
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
- try{
-  const client=new Groupi({instance:`http://127.0.0.1:${server.address().port}`,credential:{type:'apiKey',key:'grp_test'}});
-  await assert.rejects(client.createEvent({body:{title:'Dinner'}}),error=>error.code==='INCOMPATIBLE_API');
-  assert.equal(writes,0);
- }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+test('version mismatch prevents dispatching a write', async () => {
+  let writes = 0;
+  const server = createServer((req, res) => {
+    if (req.method === 'POST') writes++;
+    res.end(JSON.stringify({ version: '1.0.0' }));
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  try {
+    const client = new Groupi({
+      instance: `http://127.0.0.1:${server.address().port}`,
+      credential: { type: 'apiKey', key: 'grp_test' },
+    });
+    await assert.rejects(
+      client.createEvent({ body: { title: 'Dinner' } }),
+      error => error.code === 'INCOMPATIBLE_API'
+    );
+    assert.equal(writes, 0);
+  } finally {
+    server.closeAllConnections();
+    await new Promise(r => server.close(r));
+  }
 });
-test('stored delegated credentials cannot move to another instance or client',async()=>{
- const {DelegatedSession}=await import('../src/index.js');
- const config={instance:'https://one.example',issuer:'https://one.example/oauth',audience:'https://one.example/api/v2',clientId:'client-one',clientType:'native',actions:['events.read']};
- const state={...config,background:true,accessToken:'access',refreshToken:'refresh',expiresAt:Date.now()+300000,grantedActions:['events.read']};
- assert.throws(()=>DelegatedSession.restore({...config,instance:'https://two.example',issuer:'https://two.example/oauth',audience:'https://two.example/api/v2'},state),error=>error.code==='INVALID_TOKEN_RESPONSE');
- assert.throws(()=>DelegatedSession.restore({...config,clientId:'client-two'},state),error=>error.code==='INVALID_TOKEN_RESPONSE');
- const session=DelegatedSession.restore(config,state);
- assert.equal((await session.getToken({instance:config.instance,audience:config.audience})).accessToken,'access');
+test('stored delegated credentials cannot move to another instance or client', async () => {
+  const { DelegatedSession } = await import('../src/index.js');
+  const config = {
+    instance: 'https://one.example',
+    issuer: 'https://one.example/oauth',
+    audience: 'https://one.example/api/v2',
+    clientId: 'client-one',
+    clientType: 'native',
+    actions: ['events.read'],
+  };
+  const state = {
+    ...config,
+    background: true,
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    expiresAt: Date.now() + 300000,
+    grantedActions: ['events.read'],
+  };
+  assert.throws(
+    () =>
+      DelegatedSession.restore(
+        {
+          ...config,
+          instance: 'https://two.example',
+          issuer: 'https://two.example/oauth',
+          audience: 'https://two.example/api/v2',
+        },
+        state
+      ),
+    error => error.code === 'INVALID_TOKEN_RESPONSE'
+  );
+  assert.throws(
+    () =>
+      DelegatedSession.restore({ ...config, clientId: 'client-two' }, state),
+    error => error.code === 'INVALID_TOKEN_RESPONSE'
+  );
+  const session = DelegatedSession.restore(config, state);
+  assert.equal(
+    (
+      await session.getToken({
+        instance: config.instance,
+        audience: config.audience,
+      })
+    ).accessToken,
+    'access'
+  );
 });

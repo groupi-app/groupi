@@ -133,6 +133,11 @@ const dependencies = [
   ...new Set([
     ...guides.map(page => page.source),
     'packages/portal/src/content.ts',
+    'packages/sdk/package.json',
+    'packages/sdk/operations.json',
+    'packages/sdk/type-audit.json',
+    'packages/python-sdk/README.md',
+    'packages/python-sdk/pyproject.toml',
     'convex/addons/handlers/bringList.ts',
     'convex/addons/registry.ts',
     'packages/web/features/addons/runtime/catalog.ts',
@@ -144,6 +149,8 @@ const dependencies = [
     'packages/cli/src/command.js',
     ...(await sourceFiles('convex/api/v1')),
     ...(await sourceFiles('convex/api/v2')),
+    ...(await sourceFiles('convex/authorization')),
+    ...(await sourceFiles('convex/delegatedApps')),
   ]),
 ].sort();
 const hashes = Object.fromEntries(

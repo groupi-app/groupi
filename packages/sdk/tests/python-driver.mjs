@@ -1,5 +1,5 @@
 import process from 'node:process';
-import {URL} from 'node:url';
+import { URL } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';

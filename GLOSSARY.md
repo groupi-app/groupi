@@ -11,15 +11,18 @@ administration of the Groupi installation.
 _Avoid_: Event admin
 
 **Integration**:
-A named, independent API actor sponsored by a Groupi person and limited to
+A named, independent API actor sponsored by a current Event Organizer and limited to
 explicit actions on selected Events. Its discussion contributions identify the
 Integration as their author, not its sponsoring person. Sponsorship does not
-grant blanket Organizer authority.
+grant blanket Organizer authority. Its integration principal has no person record,
+Event membership or RSVP.
 
 **Authorization grant**:
-An explicit set of permitted actions and resource selections for a user or
-Integration. A grant remains subject to current account, membership and role
-authority; a credential cannot preserve authority that its holder has lost.
+An explicit set of permitted actions and selected Events for a user or
+Integration, or a user's expressly selected all-current-and-future Events.
+A grant remains subject to current account, membership and role authority and
+may expire or be permanently revoked; a credential cannot preserve authority
+that its holder has lost.
 
 **Bounded key**:
 A secret API credential attached to an Authorization grant. It is distinct from
@@ -138,13 +141,3 @@ other events.
 A compact language for expressing proposed event dates, times, durations, and
 recurrences. Relative expressions are interpreted against a reference time and
 timezone.
-
-**Integration principal**:
-An independent named API actor sponsored by a current Event Organizer for selected
-Events. It has no person record, Event membership or RSVP. Its discussion content
-is attributed to the integration, not its sponsor.
-
-**Authorization grant**:
-An explicit bound on a principal's credential actions and selected Events, or a
-user's expressly selected all-current-and-future Events. A grant never exceeds
-current authority and may be expired or permanently revoked.

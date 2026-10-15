@@ -17,7 +17,7 @@ Actions, parent resources and related-field projections are explicit. Write
 responses contain identifiers only, so mutation permission cannot implicitly
 read authors, replies or files. Revocation takes effect at committed transaction
 order, without a cache/grace period. Completed writes and already acquired file
-URLs are not undone. Lifecycle audit is owner-visible metadata retained for90days
+URLs are not undone. Lifecycle audit is owner-visible metadata retained for 90 days
 with scheduled bounded cleanup. User-account recovery does not blanket-revoke
 independent integration identities; current sponsor authority still applies.
 
