@@ -139,7 +139,7 @@ are intentionally retained.
 
 The local public seam runs the actual HTTP-to-Node provider bridge, native browser
 consent mutations, Convex transactions and JOSE signing/verification. Executed
-cases include S256 code exchange, minimal claims, wrong issuer/audience verification,
+cases include S256 code exchange, code expiry/replay, minimal claims, wrong issuer/audience verification,
 confidential JWT client authentication, native private-use callback/verifier failures,
 bounded REST use, refresh narrowing/expansion rejection, rotation/replay/concurrent redemption,
 disconnect, copied consent-link denial, approval-ticket expiry/replay/concurrent finalization,

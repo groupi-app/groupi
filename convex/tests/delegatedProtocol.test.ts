@@ -409,3 +409,25 @@ test('concurrent approval-ticket finalization creates one connection and consume
   });
   expect(replay.status).toBe(400);
 });
+
+test('authorization codes are one-use and expire after sixty seconds', async () => {
+  const context = await setup();
+  const options = {
+    scopes: 'openid',
+    actions: [],
+    selector: { kind: 'selected' as const, eventIds: [] },
+    background: false,
+  };
+  const first = await authorize(context, options);
+  const redeemed = await token(context.t, exchange(context.appId, first.code));
+  expect(redeemed.status).toBe(200);
+  const replay = await token(context.t, exchange(context.appId, first.code));
+  expect(replay.status).toBe(400);
+  expect(await replay.json()).toMatchObject({ error: 'invalid_grant' });
+  const second = await authorize(context, options);
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(Date.now() + 61000);
+  const expired = await token(context.t, exchange(context.appId, second.code));
+  expect(expired.status).toBe(400);
+  expect(await expired.json()).toMatchObject({ error: 'invalid_grant' });
+});
