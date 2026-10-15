@@ -4,6 +4,7 @@ export const siteConfig = {
   url: 'https://www.groupi.gg',
   ogImage: 'https://www.groupi.gg/og.jpg',
   links: {
+    support: process.env.NEXT_PUBLIC_SUPPORT_URL?.trim() || undefined,
     github:
       process.env.NEXT_PUBLIC_GITHUB_URL ??
       'https://github.com/groupi-app/groupi',

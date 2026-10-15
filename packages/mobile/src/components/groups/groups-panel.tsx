@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,21 @@ export function GroupsPanel() {
   const createGroup = useCreateGroup();
 
   return (
-    <ScrollView contentContainerClassName='gap-4 p-4'>
-      <Text className='text-xl font-bold text-foreground'>Your Groups</Text>
+    <ScrollView
+      keyboardShouldPersistTaps='handled'
+      contentContainerClassName='gap-4 p-4'
+    >
+      <View className='gap-1'>
+        <Text
+          accessibilityRole='header'
+          className='text-2xl font-bold text-foreground'
+        >
+          Your Groups
+        </Text>
+        <Text className='text-sm text-muted-foreground'>
+          Communities where you plan Events together.
+        </Text>
+      </View>
       <Button
         variant='outline'
         accessibilityLabel='View your Group invitations'
@@ -39,18 +52,30 @@ export function GroupsPanel() {
         <Button onPress={() => setCreating(true)}>Create Group</Button>
       )}
       {groups === undefined ? (
-        <Text className='text-muted-foreground'>Loading Groups…</Text>
+        <ActivityIndicator accessibilityLabel='Loading Groups' />
       ) : groups.page.length === 0 ? (
-        <Text className='text-muted-foreground'>
-          No Groups here yet. Create a Group to get started.
-        </Text>
+        <View className='gap-2 rounded-card border border-border bg-card p-6'>
+          <Text className='text-lg font-semibold text-foreground'>
+            {cursor ? 'No Groups on this page' : 'Your community starts here'}
+          </Text>
+          <Text className='text-muted-foreground'>
+            {cursor
+              ? 'Return to the first page to view your Groups.'
+              : 'Create a Group, or accept a Group invitation to join a community.'}
+          </Text>
+        </View>
       ) : (
         groups.page.map(group => (
           <View
             key={group._id}
             className='gap-2 rounded-card border border-border bg-card p-4'
           >
-            <Text className='font-semibold text-foreground'>{group.name}</Text>
+            <Text
+              accessibilityRole='header'
+              className='text-lg font-semibold text-foreground'
+            >
+              {group.name}
+            </Text>
             <Button
               variant='outline'
               accessibilityLabel={`View Group ${group.name}`}

@@ -25,3 +25,5 @@ export * from './sticker-card';
 export * from './timestamp-badge';
 export * from './user-info-card';
 export { QuerySection } from './query-section';
+
+export { InviteListPersonRow } from './invite-list-person-row';

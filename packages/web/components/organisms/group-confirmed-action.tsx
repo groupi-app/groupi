@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 export function GroupConfirmedAction({
@@ -14,22 +14,36 @@ export function GroupConfirmedAction({
   explanation: string;
   onConfirm: () => Promise<unknown>;
 }) {
+  const restoreFocus = useRef(false);
+  const container = useRef<HTMLDivElement>(null);
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  useEffect(() => {
+    if (confirming || restoreFocus.current) {
+      container.current
+        ?.querySelector<HTMLButtonElement>(
+          confirming ? '[data-confirm-action]' : '[data-trigger-action]'
+        )
+        ?.focus();
+      restoreFocus.current = false;
+    }
+  }, [confirming]);
   if (done) return <p role='status'>{label} completed.</p>;
   return (
-    <div className='space-y-2'>
+    <div ref={container} className='flex min-w-0 flex-col gap-2'>
       {confirming ? (
         <div
-          className='rounded-card border border-border p-3 space-y-2'
+          className='flex min-w-0 flex-col gap-2 rounded-card border border-border p-3'
           role='group'
           aria-label={confirmation}
         >
           <p className='text-sm'>{explanation}</p>
           <div className='flex flex-wrap gap-2'>
             <Button
+              data-confirm-action
+              className='h-auto min-h-10 whitespace-normal break-words text-left'
               variant='destructive'
               disabled={pending}
               onClick={async () => {
@@ -53,6 +67,7 @@ export function GroupConfirmedAction({
               variant='outline'
               disabled={pending}
               onClick={() => {
+                restoreFocus.current = true;
                 setConfirming(false);
                 setError('');
               }}
@@ -62,7 +77,12 @@ export function GroupConfirmedAction({
           </div>
         </div>
       ) : (
-        <Button variant='outline' onClick={() => setConfirming(true)}>
+        <Button
+          data-trigger-action
+          className='h-auto min-h-10 whitespace-normal break-words text-left'
+          variant='outline'
+          onClick={() => setConfirming(true)}
+        >
           {label}
         </Button>
       )}

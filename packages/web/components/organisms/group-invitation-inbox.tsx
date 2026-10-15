@@ -13,8 +13,11 @@ export function GroupInvitationInbox({
   const [cursor, setCursor] = useState<string | null>(null);
   const invitations = useMyGroupInvites({ numItems: 20, cursor });
   return (
-    <section className='space-y-3' aria-labelledby='group-inbox-heading'>
-      <h2 id='group-inbox-heading' className='font-semibold'>
+    <section
+      className='flex flex-col gap-3 rounded-card border border-border p-4'
+      aria-labelledby='group-inbox-heading'
+    >
+      <h2 id='group-inbox-heading' className='text-lg font-bold'>
         Your Group invitations
       </h2>
       {invitations === undefined ? (

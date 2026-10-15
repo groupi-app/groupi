@@ -151,6 +151,7 @@ describe('Authenticated event write parity and replay', () => {
   });
 
   it('replays relative GDL from its original payload without reparsing dates', async () => {
+    vi.setSystemTime(new Date('2035-02-19T12:00:00Z'));
     const { request } = await setup();
     const id = newRequestId();
     const body = {
