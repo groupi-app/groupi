@@ -1,3 +1,7 @@
+import {
+  isEventExcludedForPerson,
+  isGroupExcludedForPerson,
+} from './exclusions';
 import { currentEventForPerson } from './currentEvent';
 import { checkIsBlocked } from '../lib/privacy';
 import { v, type Infer } from 'convex/values';
@@ -83,7 +87,8 @@ async function executeForPerson(
   if (
     !groupId ||
     !(await ctx.db.get(groupId)) ||
-    !(await canEnterGroup(ctx, groupId, personId))
+    !(await canEnterGroup(ctx, groupId, personId)) ||
+    (await isGroupExcludedForPerson(ctx, groupId, personId))
   )
     throw denied();
   let body: unknown;
@@ -150,7 +155,13 @@ async function executeForPerson(
       .withIndex('by_groupId', q => q.eq('groupId', groupId))
       .filter(q => q.eq(q.field('eventId'), eventId))
       .first();
-    if (!event || !link || isEventComplete(event, Date.now())) throw denied();
+    if (
+      !event ||
+      !link ||
+      isEventComplete(event, Date.now()) ||
+      (await isEventExcludedForPerson(ctx, eventId, personId))
+    )
+      throw denied();
     const ban = await ctx.db
       .query('eventBans')
       .withIndex('by_person_event', q =>

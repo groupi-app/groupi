@@ -3953,6 +3953,33 @@ export class Groupi {
     },
     options?: RequestOptions
   ): Promise<{ success: boolean }>;
+  /** Commit coordinated community exclusion as staff */
+  expelCommunityMember(
+    input: {
+      path: { groupId: string };
+      body: { personId: string; policy: 'coordinated' };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+  }>;
+  /** Reconcile coordinated exclusion progress as current staff */
+  readCommunityExpulsion(
+    input: { path: { groupId: string; personId: string } },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+  } | null>;
   /** List your Groups */
   listYourGroups(
     input?: { query?: { limit?: number; cursor?: string } },
@@ -4157,6 +4184,7 @@ export class Groupi {
       canApply: boolean;
       canAccessMemberContent: boolean;
       banned: boolean;
+      excluded: boolean;
     };
     applications: Array<{
       id: string;

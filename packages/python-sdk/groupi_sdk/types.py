@@ -1301,6 +1301,30 @@ class Object67ea0bf089d7(TypedDict):
     creation: Literal['MANAGERS', 'MEMBERS']
     canConfigure: bool
 
+class Objectbb94019de7d2(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    exclusion: Literal['active']
+    generation: float
+    cleanup: Literal['pending', 'blocked', 'complete']
+    conflicts: list[Object2c98a6bfd5c6]
+
+class Object2da0580f7d57(TypedDict):
+    personId: str
+    policy: Literal['coordinated']
+
+class Object1e5f701b7d0e(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    exclusion: Literal['active']
+    generation: float
+    cleanup: Literal['pending', 'blocked', 'complete']
+    conflicts: list[Object2c98a6bfd5c6]
+
+class Object73ecf7f47670(TypedDict):
+    groupId: str
+    personId: str
+
 class Object598737a2dca1(TypedDict):
     items: list[Objectb7fb19a40d96]
     nextCursor: str | None
@@ -1346,12 +1370,12 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Objectc84fb5a8fcae(TypedDict):
+class Objectdbff1b448fe7(TypedDict):
     contractVersion: Literal['red-room.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
     membership: Object6ffc35fcb505 | None
-    eligibility: Object9181a91b6751
+    eligibility: Objecta021a3f479e7
     applications: list[Object9a607b8a62e8]
     nextCursor: str | None
     grantedActions: list[str]
@@ -2123,6 +2147,10 @@ class Object6d5274c5de2d(TypedDict):
     id: str
     label: str
 
+class Object2c98a6bfd5c6(TypedDict):
+    eventId: str
+    code: str
+
 class Objectb27f127421ba(TypedDict):
     enabled: bool
     requiredCompletion: bool
@@ -2145,10 +2173,11 @@ class Object6ffc35fcb505(TypedDict):
     membershipId: str
     role: Literal['OWNER', 'MODERATOR', 'MEMBER']
 
-class Object9181a91b6751(TypedDict):
+class Objecta021a3f479e7(TypedDict):
     canApply: bool
     canAccessMemberContent: bool
     banned: bool
+    excluded: bool
 
 class Object9a607b8a62e8(TypedDict):
     id: str

@@ -335,3 +335,27 @@ it('expires a recognized leave receipt without permitting a new destructive writ
     participation: { rsvp: 'PENDING' },
   });
 });
+it('checks coordinated exclusion before replay and atomically denies fresh Join or RSVP through alternate audiences', async () => {
+  const f = await fixture();
+  const path = `events/${f.event.eventId}`;
+  const id = crypto.randomUUID();
+  expect((await f.request(`${path}/join`, 'POST', {}, id)).status).toBe(200);
+  const current = await (await f.request('current-event')).json();
+  await f.staff.auth.mutation(api.groups.expulsions.expel, {
+    groupId: f.groupId,
+    personId: f.owner.personId,
+    operationId: crypto.randomUUID(),
+  });
+  expect((await f.request(`${path}/join`, 'POST', {}, id)).status).toBe(403);
+  expect(
+    (
+      await f.request(`${path}/own-rsvp`, 'PUT', {
+        expectedRevision: current.participation.revision,
+        rsvp: 'YES',
+      })
+    ).status
+  ).toBe(403);
+  expect((await f.request(`${path}/join`, 'POST', {})).status).toBe(403);
+  expect((await f.request('current-event')).status).toBe(403);
+  expect((await f.read()).allowedActions).not.toContain('groups.leave');
+});

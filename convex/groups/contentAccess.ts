@@ -1,3 +1,4 @@
+import { isGroupExcludedForPerson } from './exclusions';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -17,7 +18,14 @@ export async function canAccessGroupMemberContent(
     membershipFor(ctx, groupId, personId),
     isGroupBanned(ctx, groupId, personId),
   ]);
-  if (!group || !person || !member || banned) return false;
+  if (
+    !group ||
+    !person ||
+    !member ||
+    banned ||
+    (await isGroupExcludedForPerson(ctx, groupId, personId))
+  )
+    return false;
   return (await getJoiningQuestionnaireStatus(ctx, groupId, personId))
     .canAccessMemberContent;
 }

@@ -2,6 +2,7 @@ import {
   nextParticipationRevision,
   participationRevision,
 } from './participationRevision';
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { rsvpStatus } from '../availability/contracts';
 import { guardEventReactivation } from './lifecycle';
 import { v, type Infer } from 'convex/values';
@@ -29,6 +30,7 @@ export async function updateRSVPForPerson(
   { eventId, rsvpStatus, rsvpNote }: Infer<typeof updateRSVPArgs>
 ) {
   // Require authentication and membership
+  await requireNoEventExclusion(ctx, eventId, personId);
   const person = { _id: personId };
 
   const membership = await ctx.db

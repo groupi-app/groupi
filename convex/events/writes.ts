@@ -1,4 +1,5 @@
 import { nextParticipationRevision } from '../events/participationRevision';
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { guardEventReactivation } from './lifecycle';
 import { AddonConfigSchema } from '../addons/schemas';
 import { addonConfig } from '../addons/contracts';
@@ -53,6 +54,7 @@ export async function requireWriteRole(
   personId: Id<'persons'>,
   minimum: 'MODERATOR' | 'ORGANIZER'
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const membership = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

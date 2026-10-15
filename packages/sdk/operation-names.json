@@ -245,5 +245,7 @@
   "POST /groups/{groupId}/events/{eventId}/join": "joinCommunityEvent",
   "PUT /groups/{groupId}/events/{eventId}/own-rsvp": "setCommunityRsvp",
   "POST /groups/{groupId}/events/{eventId}/leave": "leaveCommunityEvent",
-  "POST /groups/{groupId}/community-leave": "leaveCommunity"
+  "POST /groups/{groupId}/community-leave": "leaveCommunity",
+  "POST /groups/{groupId}/coordinated-expulsions": "expelCommunityMember",
+  "GET /groups/{groupId}/coordinated-expulsions/{personId}": "readCommunityExpulsion"
 }

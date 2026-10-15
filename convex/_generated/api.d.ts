@@ -314,6 +314,8 @@ import type * as groups_communityParticipation from "../groups/communityParticip
 import type * as groups_contentAccess from "../groups/contentAccess.js";
 import type * as groups_contracts from "../groups/contracts.js";
 import type * as groups_currentEvent from "../groups/currentEvent.js";
+import type * as groups_exclusions from "../groups/exclusions.js";
+import type * as groups_expulsions from "../groups/expulsions.js";
 import type * as groups_model from "../groups/model.js";
 import type * as groups_mutations from "../groups/mutations.js";
 import type * as groups_operationReceipts from "../groups/operationReceipts.js";
@@ -717,6 +719,8 @@ declare const fullApi: ApiFromModules<{
   "groups/contentAccess": typeof groups_contentAccess;
   "groups/contracts": typeof groups_contracts;
   "groups/currentEvent": typeof groups_currentEvent;
+  "groups/exclusions": typeof groups_exclusions;
+  "groups/expulsions": typeof groups_expulsions;
   "groups/model": typeof groups_model;
   "groups/mutations": typeof groups_mutations;
   "groups/operationReceipts": typeof groups_operationReceipts;

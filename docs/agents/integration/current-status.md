@@ -18,6 +18,24 @@ This is the authoritative integration handoff. The developer-platform checkpoint
   VoiceOver and provider acceptance remain unverified G10 prerequisites. Source tests
   and offline application declaration refresh are not deployment/component codegen.
 
+## Red Room G8 source candidate — 2026-10-15
+
+- Explicit coordinated exclusion is persistent and atomic before deferred cleanup,
+  with captured Event IDs and generation. Ordinary Group/Event bans and membership
+  records are unchanged by initiation. Protected Owner/Organizer authority remains
+  independent; staff see committed exclusion separately from pending/blocked cleanup.
+- Native staff operations, legacy-key staff REST, generated TypeScript/Python SDKs,
+  staff roster controls and own-context exclusion state are source implemented.
+  Canonical access/admission/RSVP/invitation/attachment/discussion and audience
+  reactivation boundaries fence exclusion despite retained participation.
+- Source evidence: 40 focused backend tests plus an additional ongoing RSVP/invite
+  acceptance race, two staff component tests, and real SDK HTTP lost-response
+  recovery. Repository lint/types/contracts/format and source workspace links pass.
+- G9 owns cleanup scheduling/completion proof and reinstatement; exact durable
+  generation seam is in the integration contract. Matching deployed frontend/backend,
+  isolated staff browser/native sessions and live provider acceptance remain
+  unverified G10 gates. No dev/build/deployment or live data mutation was performed.
+
 ## Red Room G4 source candidate — 2026-10-15
 
 - Adds delegated `groups.events.read` current Event selection with native parity,

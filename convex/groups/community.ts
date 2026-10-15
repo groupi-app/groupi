@@ -1,3 +1,4 @@
+import { isGroupExcludedForPerson } from './exclusions';
 import { v } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -40,6 +41,7 @@ export const context = v.object({
     canApply: v.boolean(),
     canAccessMemberContent: v.boolean(),
     banned: v.boolean(),
+    excluded: v.boolean(),
   }),
   applications: v.array(
     v.object({
@@ -128,6 +130,7 @@ export const readContext = internalQuery({
     const membership = await membershipFor(ctx, groupId, personId);
     const banned = await isGroupBanned(ctx, groupId, personId);
     const eligible = await canEnterGroup(ctx, groupId, personId);
+    const excluded = await isGroupExcludedForPerson(ctx, groupId, personId);
     const canAccessMemberContent = await canAccessGroupMemberContent(
       ctx,
       groupId,
@@ -166,6 +169,7 @@ export const readContext = internalQuery({
         canApply: eligible && enabled && !membership && !pending,
         canAccessMemberContent,
         banned,
+        excluded,
       },
       applications: page.page.map(a => ({
         id: a._id,
@@ -184,6 +188,8 @@ export const readContext = internalQuery({
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
             (a === 'groups.leave' &&
+              eligible &&
+              !excluded &&
               Boolean(membership) &&
               membership?.role !== 'OWNER') ||
             (a === 'groups.applications.submit' &&

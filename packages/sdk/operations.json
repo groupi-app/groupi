@@ -880,6 +880,20 @@
     "summary": "Owner controls poll availability and creation"
   },
   {
+    "paging": null,
+    "name": "expelCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions",
+    "summary": "Commit coordinated community exclusion as staff"
+  },
+  {
+    "paging": null,
+    "name": "readCommunityExpulsion",
+    "method": "GET",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}",
+    "summary": "Reconcile coordinated exclusion progress as current staff"
+  },
+  {
     "paging": {
       "items": "items",
       "cursor": "nextCursor",

@@ -1,7 +1,7 @@
 # Groupi Python SDK
 
 Unpublished dependency-free Python >=3.11 REST v2 candidate. It covers 238 public
-operations: 247 generated named methods plus binary upload/discard. Runtime
+operations: 249 generated named methods plus binary upload/discard. Runtime
 TypedDict models, `.pyi` declarations and `py.typed` preserve required keys, enums,
 nullable values, composed schemas and typed pagination. All generated resource
 contracts have specific known types; external error details remain opaque.

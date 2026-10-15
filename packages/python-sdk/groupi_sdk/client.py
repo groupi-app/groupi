@@ -226,13 +226,17 @@ from .types import (
     Object8c477699d177,
     Objectb17b74c18a8f,
     Object67ea0bf089d7,
+    Objectbb94019de7d2,
+    Object2da0580f7d57,
+    Object1e5f701b7d0e,
+    Object73ecf7f47670,
     Object598737a2dca1,
     Object96110c08a73a,
     Objectb7fb19a40d96,
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
-    Objectc84fb5a8fcae,
+    Objectdbff1b448fe7,
     Objecta2791daed18f,
     Object6edaff610f96,
     Object97dfec76315a,
@@ -381,11 +385,12 @@ from .types import (
     Object8be06601360f,
     Object8f4fd078f9a3,
     Object6d5274c5de2d,
+    Object2c98a6bfd5c6,
     Objectb27f127421ba,
     Object59509cf0ec83,
     Objecta61bf08328e7,
     Object6ffc35fcb505,
-    Object9181a91b6751,
+    Objecta021a3f479e7,
     Object9a607b8a62e8,
     Object068ecbb0d0bb,
     Object8f7560a6b20e,
@@ -931,6 +936,14 @@ class Groupi(Transport):
     def owner_controls_poll_availability_and_creation(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Owner controls poll availability and creation."""
         return self.request('PUT', '/groups/{groupId}/poll-policy', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def expel_community_member(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Commit coordinated community exclusion as staff."""
+        return self.request('POST', '/groups/{groupId}/coordinated-expulsions', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_community_expulsion(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Reconcile coordinated exclusion progress as current staff."""
+        return self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def list_your_groups(self, *, path=None, query=None, body=None, idempotency_key=None):
         """List your Groups."""
@@ -2050,6 +2063,14 @@ class AsyncGroupi(AsyncTransport):
     async def owner_controls_poll_availability_and_creation(self, **kwargs):
         """Owner controls poll availability and creation."""
         return await self.request('PUT', '/groups/{groupId}/poll-policy', **kwargs)
+
+    async def expel_community_member(self, **kwargs):
+        """Commit coordinated community exclusion as staff."""
+        return await self.request('POST', '/groups/{groupId}/coordinated-expulsions', **kwargs)
+
+    async def read_community_expulsion(self, **kwargs):
+        """Reconcile coordinated exclusion progress as current staff."""
+        return await self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', **kwargs)
 
     def list_your_groups_items(self, **kwargs):
         return self.iterate('/groups', adapter={'items': 'items', 'cursor': 'nextCursor'}, **kwargs)

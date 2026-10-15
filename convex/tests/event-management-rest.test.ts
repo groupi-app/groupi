@@ -178,7 +178,7 @@ describe('Event management side effects and safeguards', () => {
         undefined,
         'v1'
       ),
-      409
+      403
     );
     expect(denied).toMatchObject({
       success: false,
