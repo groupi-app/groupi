@@ -166,10 +166,11 @@ export function ApiKeysSettings() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Icons.link className='h-5 w-5' />
-            API Keys
+            Legacy API keys
           </CardTitle>
           <CardDescription>
-            Manage API keys for programmatic access to your account
+            Legacy account-wide credentials. These do not inherit bounded-key
+            actions or event selections.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>

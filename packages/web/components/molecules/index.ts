@@ -27,3 +27,4 @@ export * from './user-info-card';
 export { QuerySection } from './query-section';
 
 export { InviteListPersonRow } from './invite-list-person-row';
+export { IntegrationAuthor } from './integration-author';

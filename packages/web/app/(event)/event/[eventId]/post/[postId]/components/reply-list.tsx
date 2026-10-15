@@ -164,8 +164,12 @@ export function ReplyList({
                   text: reply.text,
                   createdAt: new Date(reply._creationTime),
                   updatedAt: new Date(reply.updatedAt ?? reply._creationTime),
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  author: reply.author?.person as any,
+                  author: {
+                    ...reply.author?.person,
+                    kind: reply.author?.kind,
+                    user: reply.author?.user,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  } as any,
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   attachments: (reply as any).attachments,
                 }}
