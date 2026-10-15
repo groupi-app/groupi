@@ -1,3 +1,4 @@
+import { reconcileEventExclusions } from '../groups/exclusions';
 import { ConvexError } from 'convex/values';
 import type { Doc, Id } from '../_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
@@ -13,7 +14,7 @@ export function isEventComplete(
 }
 /** Every operation which can reactivate an Event or add an audience passes here.
  * G8 owns the exclusion reconciliation fence at this boundary, before any patch.
- * No exclusion records exist in G4. Explicitly completed Events require the
+ * Explicitly completed Events require the
  * versioned lifecycle operation, preventing legacy scheduling from reopening them.
  */
 export async function guardEventReactivation(
@@ -29,5 +30,6 @@ export async function guardEventReactivation(
       code: 'CONFLICT',
       message: 'Use Reopen Event before changing its date or audiences.',
     });
+  await reconcileEventExclusions(ctx, eventId);
   return event;
 }

@@ -1,3 +1,4 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
 import { liveGrant, delegatedAudience } from '../authorization/model';
 import { internalQuery, internalMutation } from '../_generated/server';
 import { components } from '../_generated/api';
@@ -231,6 +232,14 @@ export const getEventMembership = internalQuery({
     personId: v.string(),
   },
   handler: async (ctx, { eventId, personId }) => {
+    if (
+      await isEventExcludedForPerson(
+        ctx,
+        eventId as Id<'events'>,
+        personId as Id<'persons'>
+      )
+    )
+      return null;
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>

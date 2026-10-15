@@ -19712,6 +19712,303 @@
         }
       }
     },
+    "/groups/{groupId}/coordinated-expulsions": {
+      "post": {
+        "tags": ["Groups"],
+        "operationId": "expelCommunityMember",
+        "summary": "Commit coordinated community exclusion as staff",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "personId": {
+                    "type": "string"
+                  },
+                  "policy": {
+                    "type": "string",
+                    "enum": ["coordinated"]
+                  }
+                },
+                "required": ["personId", "policy"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exclusion committed; cleanup remains pending or blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "exclusion": {
+                      "type": "string",
+                      "enum": ["active"]
+                    },
+                    "generation": {
+                      "type": "number"
+                    },
+                    "cleanup": {
+                      "type": "string",
+                      "enum": ["pending", "blocked", "complete"]
+                    },
+                    "conflicts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "eventId": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["eventId", "code"]
+                      }
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "outcome",
+                    "exclusion",
+                    "generation",
+                    "cleanup",
+                    "conflicts"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/coordinated-expulsions/{personId}": {
+      "get": {
+        "tags": ["Groups"],
+        "operationId": "readCommunityExpulsion",
+        "summary": "Reconcile coordinated exclusion progress as current staff",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current staff progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "operationId": {
+                      "type": "string"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "exclusion": {
+                      "type": "string",
+                      "enum": ["active"]
+                    },
+                    "generation": {
+                      "type": "number"
+                    },
+                    "cleanup": {
+                      "type": "string",
+                      "enum": ["pending", "blocked", "complete"]
+                    },
+                    "conflicts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "eventId": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["eventId", "code"]
+                      }
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "outcome",
+                    "exclusion",
+                    "generation",
+                    "cleanup",
+                    "conflicts"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups": {
       "get": {
         "tags": ["Groups"],
@@ -19972,6 +20269,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -20060,6 +20367,16 @@
           },
           "404": {
             "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -20308,6 +20625,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -20403,6 +20730,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -20462,6 +20799,16 @@
           },
           "404": {
             "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -20606,12 +20953,16 @@
                         },
                         "banned": {
                           "type": "boolean"
+                        },
+                        "excluded": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "canApply",
                         "canAccessMemberContent",
-                        "banned"
+                        "banned",
+                        "excluded"
                       ]
                     },
                     "applications": {
@@ -20814,6 +21165,16 @@
           },
           "404": {
             "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -21036,6 +21397,16 @@
           },
           "404": {
             "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Protected ownership, existing exclusion or idempotency conflict",
             "content": {
               "application/json": {
                 "schema": {

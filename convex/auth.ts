@@ -1,3 +1,4 @@
+import { isEventExcludedForPerson } from './groups/exclusions';
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { components, internal } from './_generated/api';
@@ -575,6 +576,7 @@ export async function getEventMembershipForPerson(
   eventId: Id<'events'>,
   personId: Id<'persons'>
 ) {
+  if (await isEventExcludedForPerson(ctx, eventId, personId)) return null;
   return ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

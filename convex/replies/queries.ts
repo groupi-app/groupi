@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
@@ -25,6 +26,7 @@ export const getRepliesByPost = query({
       throw new Error('Post not found');
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>

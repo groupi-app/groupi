@@ -1,3 +1,4 @@
+import { reconcileEventExclusions } from '../groups/exclusions';
 import { guardEventReactivation, isEventComplete } from '../events/lifecycle';
 import { ConvexError } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -97,6 +98,7 @@ export async function share(
       sharedById: personId,
       createdAt: Date.now(),
     });
+  await reconcileEventExclusions(ctx, eventId);
   return { eventId, groupId, shared: true };
 }
 export async function withdraw(
