@@ -1326,6 +1326,21 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
+class Objectf8c3bec6a790(TypedDict):
+    contractVersion: Literal['red-room.v1']
+    group: Object59509cf0ec83
+    form: Objecta61bf08328e7
+    membership: Object5b35bc95b99b | None
+    eligibility: Object9181a91b6751
+    applications: list[Object1c6ddd22f0f6]
+    nextCursor: str | None
+    grantedActions: list[str]
+    allowedActions: list[str]
+    announcementPreference: Object068ecbb0d0bb
+
+class Objecta2791daed18f(TypedDict):
+    cursor: NotRequired[str]
+
 class Object056f6599a34c(TypedDict):
     groupId: str
     enabled: bool
@@ -2016,6 +2031,36 @@ class Objectb27f127421ba(TypedDict):
     shouldPrompt: bool
     version: float
 
+class Object59509cf0ec83(TypedDict):
+    id: str
+    name: str
+
+class Objecta61bf08328e7(TypedDict):
+    enabled: bool
+    revision: str
+    questions: list[Object6a6aeb3276ba]
+
+class Object5b35bc95b99b(TypedDict):
+    role: Literal['OWNER', 'MODERATOR', 'MEMBER']
+
+class Object9181a91b6751(TypedDict):
+    canApply: bool
+    canAccessMemberContent: bool
+    banned: bool
+
+class Object1c6ddd22f0f6(TypedDict):
+    id: str
+    status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
+    revision: float
+    questions: list[Object6a6aeb3276ba]
+    answers: dict[str, str | float | bool | list[str]]
+    submittedAt: float
+    decisions: list[Object1fa6adfb22bd]
+
+class Object068ecbb0d0bb(TypedDict):
+    supported: Literal[False]
+    subscribed: None
+
 class Objectcb244cc36b34(TypedDict):
     id: str
     label: str
@@ -2120,6 +2165,10 @@ class Object4e2be9f6831d(TypedDict):
     email: str | None
     image: str | None
     username: str | None
+
+class Object1fa6adfb22bd(TypedDict):
+    status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
+    at: float
 
 class Object30a6d58642d2(TypedDict):
     id: str

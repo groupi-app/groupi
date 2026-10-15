@@ -229,6 +229,8 @@ from .types import (
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
+    Objectf8c3bec6a790,
+    Objecta2791daed18f,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -360,6 +362,12 @@ from .types import (
     Object8f4fd078f9a3,
     Object6d5274c5de2d,
     Objectb27f127421ba,
+    Object59509cf0ec83,
+    Objecta61bf08328e7,
+    Object5b35bc95b99b,
+    Object9181a91b6751,
+    Object1c6ddd22f0f6,
+    Object068ecbb0d0bb,
     Objectcb244cc36b34,
     Objectafe89b003106,
     Object17c8fd7ccf8b,
@@ -374,6 +382,7 @@ from .types import (
     Object50ef760e0f66,
     Object8d74f2ccf6a9,
     Object4e2be9f6831d,
+    Object1fa6adfb22bd,
     Object30a6d58642d2,
     Object5b771084f9e7,
     Objectf13ad84fbfdc,
@@ -910,6 +919,10 @@ class Groupi(Transport):
     def explicitly_delete_a_group_as_owner(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Explicitly delete a Group as owner."""
         return self.request('DELETE', '/groups/{groupId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def read_own_community_context(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Read own community context."""
+        return self.request('GET', '/groups/{groupId}/community-context', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -1985,6 +1998,10 @@ class AsyncGroupi(AsyncTransport):
     async def explicitly_delete_a_group_as_owner(self, **kwargs):
         """Explicitly delete a Group as owner."""
         return await self.request('DELETE', '/groups/{groupId}', **kwargs)
+
+    async def read_own_community_context(self, **kwargs):
+        """Read own community context."""
+        return await self.request('GET', '/groups/{groupId}/community-context', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""

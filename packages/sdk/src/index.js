@@ -930,6 +930,15 @@ export class Groupi extends Transport {
   explicitlyDeleteAGroupAsOwner(input = {}, options = {}) {
     return this.request('DELETE', '/groups/{groupId}', input, options);
   }
+  /** Read own community context */
+  readOwnCommunityContext(input = {}, options = {}) {
+    return this.request(
+      'GET',
+      '/groups/{groupId}/community-context',
+      input,
+      options
+    );
+  }
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(input = {}, options = {}) {
     return this.request(

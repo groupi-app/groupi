@@ -38,7 +38,11 @@ for await (const line of createInterface({ input: process.stdin })) {
         credential: { type: 'boundedApiKey', key: command.key },
       });
       result = { initialized: true };
-    } else if (command.operation === 'read')
+    } else if (command.operation === 'community')
+      result = await client.readOwnCommunityContext({
+        path: { groupId: command.groupId },
+      });
+    else if (command.operation === 'read')
       result = await client.getEvent({ path: { eventId: command.eventId } });
     else if (command.operation === 'write')
       result = await client.updateEvent({

@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.d.ts",
       "import": "./src/index.js"
+    },
+    "./community-contract": {
+      "types": "./src/community-contract.d.ts",
+      "import": "./src/community-contract.js"
     }
   },
   "files": [

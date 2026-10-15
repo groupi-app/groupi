@@ -61,6 +61,8 @@ for line in sys.stdin:
                 instance=command["instance"], bounded_api_key=command["key"]
             )
             result = {"initialized": True}
+        elif operation == "community":
+            result = client.read_own_community_context(path={"groupId": command["groupId"]})
         elif operation == "read":
             result = client.get_event(path={"eventId": command["eventId"]})
         elif operation == "write":

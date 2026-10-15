@@ -1,3 +1,4 @@
+import { ConvexError } from 'convex/values';
 import { readUploadBlob } from '../files/uploads';
 import { ALLOWED_MIME_TYPES } from '../attachments/model';
 import type { ActionCtx } from '../_generated/server';
@@ -27,6 +28,34 @@ export async function handleBoundedRequest(
       },
       { status: 403 }
     );
+  if (
+    !isV1 &&
+    parts[0] === 'groups' &&
+    parts.length === 3 &&
+    parts[2] === 'community-context' &&
+    method === 'GET'
+  ) {
+    try {
+      return respond(
+        await ctx.runQuery(internal.groups.community.readContext, {
+          credentialId,
+          groupId: parts[1],
+          cursor: url.searchParams.get('cursor') ?? undefined,
+        })
+      );
+    } catch (error) {
+      if (error instanceof ConvexError) return forbidden();
+      return Response.json(
+        {
+          error: {
+            code: 'UNAVAILABLE',
+            message: 'Community service unavailable.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+  }
   if (isV1 && parts[0] === 'uploads') return forbidden();
   if (parts[0] === 'uploads' && parts.length === 1 && method === 'POST') {
     const eventId = url.searchParams.get('eventId');
@@ -216,6 +245,8 @@ export async function handleBoundedRequest(
 /** Header-only credentials may be used from browser clients without cookies. */
 export async function boundedCors(response: Response) {
   const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'private, no-store');
+  headers.set('Vary', 'Authorization, x-api-key');
   headers.set('Access-Control-Allow-Origin', '*');
   headers.set('Access-Control-Expose-Headers', 'Content-Length, Retry-After');
   return new Response(

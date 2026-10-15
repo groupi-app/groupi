@@ -50,15 +50,17 @@ export function ConnectedAppsSection() {
                 {connection.actions.map(authorizationActionLabel).join(', ')}
               </Text>
               <Text>
-                Events:{' '}
+                Resource access:{' '}
                 {connection.selector.kind === 'all-current-and-future'
                   ? 'All current and future events'
-                  : connection.selector.eventIds
-                      .map(
-                        id =>
-                          events?.find(event => event._id === id)?.title ?? id
-                      )
-                      .join(', ')}
+                  : connection.selector.kind === 'selected-group'
+                    ? `Selected Group (${connection.selector.groupId}) — own context only`
+                    : connection.selector.eventIds
+                        .map(
+                          id =>
+                            events?.find(event => event._id === id)?.title ?? id
+                        )
+                        .join(', ')}
               </Text>
               <Text>
                 {connection.background

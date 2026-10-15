@@ -61,6 +61,19 @@ export async function assertBounds(
       granted.some(a => a.startsWith('identity.')))
   )
     throw denied('Integrations require selected events and event actions.');
+  if (selected.kind === 'selected-group') {
+    if (
+      kind !== 'user' ||
+      !(await ctx.db.get(selected.groupId)) ||
+      granted.some(
+        a => !a.startsWith('identity.') && a !== 'groups.context.read'
+      )
+    )
+      throw denied(
+        'Selected Group grants permit only implemented own community actions.'
+      );
+  } else if (granted.includes('groups.context.read'))
+    throw denied('Select one Group.');
   if (selected.kind === 'selected') {
     if (
       selected.eventIds.length > 100 ||
@@ -148,8 +161,9 @@ export async function authorizeCredential(
   let membership: Doc<'memberships'> | null = null;
   if (eventId !== undefined) {
     if (
-      grant.selector.kind === 'selected' &&
-      !grant.selector.eventIds.includes(eventId)
+      grant.selector.kind === 'selected-group' ||
+      (grant.selector.kind === 'selected' &&
+        !grant.selector.eventIds.includes(eventId))
     )
       throw denied();
     membership = await getEventMembershipForPerson(

@@ -1,3 +1,4 @@
+import { CommunityContextSchema } from '../schemas/community';
 import { GroupApplicationQuestionSchema } from '../schemas/groupApplications';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { HTTPException } from 'hono/http-exception';
@@ -69,6 +70,10 @@ export function createGroupRoutes() {
   const app = new OpenAPIHono<{
     Variables: { ctx: ActionCtx; personId: string; userId: string };
   }>({ defaultHook: createValidationHook() });
+  app.use('/groups/:groupId/community-context', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    await next();
+  });
   app.openapi(
     createRoute({
       method: 'get',
@@ -228,6 +233,36 @@ export function createGroupRoutes() {
         groupId: c.req.valid('param').groupId as Id<'groups'>,
       });
       return c.body(null, 204);
+    }
+  );
+  app.openapi(
+    createRoute({
+      method: 'get',
+      path: '/groups/{groupId}/community-context',
+      tags: ['Groups'],
+      operationId: 'readOwnCommunityContext',
+      summary: 'Read own community context',
+      security: [{ boundedBearer: [] }],
+      request: {
+        params,
+        query: z.object({ cursor: z.string().max(4096).optional() }),
+      },
+      responses: {
+        200: {
+          description: 'Selected Group own context; private no-store',
+          content: { 'application/json': { schema: CommunityContextSchema } },
+        },
+        ...errors,
+        503: {
+          description: 'Retryable unavailable service',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
     }
   );
   return app;

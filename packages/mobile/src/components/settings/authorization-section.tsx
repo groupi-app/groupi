@@ -108,12 +108,14 @@ export function AuthorizationSection() {
                 Events:{' '}
                 {grant.selector.kind === 'all-current-and-future'
                   ? 'All current and future events'
-                  : grant.selector.eventIds
-                      .map(
-                        id =>
-                          events?.find(event => event._id === id)?.title ?? id
-                      )
-                      .join(', ')}
+                  : grant.selector.kind === 'selected-group'
+                    ? `Selected Group (${grant.selector.groupId}) — own context only`
+                    : grant.selector.eventIds
+                        .map(
+                          id =>
+                            events?.find(event => event._id === id)?.title ?? id
+                        )
+                        .join(', ')}
               </Text>
               <Text>
                 {grant.expiresAt

@@ -2,6 +2,14 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G1 source candidate — 2026-10-15
+
+- Worker branch `codex/red-room-g1` starts from integration base `45d00c14`. G1 adds selected-Group delegated applicant consent and an authoritative own-context HTTP read with generated TypeScript/Python SDK consumers. Its shared appearance dependency is cherry-picked from G2; G2 owns the full hosted authentication journey.
+- [The versioned integration contract](../../red-room-integration-contract.md) publishes exact implemented/proposed operation mappings, typed intent/results, error/replay/reconciliation rules and synthetic fixtures at `@groupi/sdk/community-contract`. G3–G9 remain explicit implementation milestones; unsupported operations have no live SDK stubs.
+- Source checks cover real protocol/HTTP reads, saved snapshots/history versus membership, scoped authority/revocation/expiry, pagination and private projections, both SDK consumers, fixture schema/service unavailability, and consent/settings UI. This is local source evidence, not deployed acceptance.
+- Frontend/backend source matching, isolated live browser identity and provider/email delivery are unverified for this candidate. Full component-aware codegen lacks `CONVEX_DEPLOYMENT`; official offline application API refresh preserves existing component/runtime declarations. No server, build, deployment, live data mutation, push or PR is performed. Existing schema migration and security gates remain open through G10.
+- Proposed changeset batch is awaiting coordinator/user approval; no G1 changeset is created.
+
 ## Developer platform candidate — 2026-10-15
 
 - Local branch: `codex/developer-platform`, based on `da5ccb462f8b0ead9a4a32ea405641d5eddd5624`. Integrated checkpoints include SDK `bf5ce504`, authorization `b93e9c93`, consent UI `dd91dfdd`, and delegated protocol `44eb6930`, `c56b8835`, `95c08f54`. Final integration artifacts include the combined lockfile, generated portal corpus, cleanup schedule and verification record in this commit.
