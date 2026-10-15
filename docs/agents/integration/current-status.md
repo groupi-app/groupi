@@ -2,6 +2,13 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G3 source candidate — 2026-10-15
+
+- Worker `codex/red-room-g3` started from integration `3af0db2f`. Shared authority/receipt checkpoint `5fe2ceed` exports `authorizeCommunity` and the reusable `operationReceipts` helper. This candidate adds selected-Group own-application HTTP writes, generated TypeScript/Python consumers, saved-snapshot edits, required delegated concurrency revisions and minimal replay receipts.
+- Receipt window is 30 days; permanent recognized-ID tombstones retain hashes and minimal IDs/status/revisions, never application answers. Live credential/grant/app/account/selected-Group authority is rechecked inside every write/replay transaction. Canonical Group application data remains the sole source of questions, answers and decisions.
+- Source evidence includes authenticated HTTP/domain lifecycle, scope/privacy/revocation, monotonic same-millisecond revisions, lost responses, mismatch/expiry, fresh decline/reapply, staff replay without re-admission, and generated SDK consumer tests. Web/mobile existing review views forward observed revisions. Local checks do not establish deployed provider/browser/email acceptance.
+- Full component-aware `pnpm generate` is unavailable without `CONVEX_DEPLOYMENT`; the official offline application declaration refresh preserves component/runtime declarations. No runtime, build, deployment, push, issue update, PR or changeset is performed. G10 live acceptance and the coordinator's release batch approval remain open.
+
 ## Red Room G1 source candidate — 2026-10-15
 
 - Worker branch `codex/red-room-g1` starts from integration base `45d00c14`. G1 adds selected-Group delegated applicant consent and an authoritative own-context HTTP read with generated TypeScript/Python SDK consumers. Its shared appearance dependency is cherry-picked from G2; G2 owns the full hosted authentication journey.

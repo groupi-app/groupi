@@ -1,4 +1,10 @@
-import { CommunityContextSchema } from '../schemas/community';
+import {
+  CommunityApplicationReceiptSchema,
+  CommunityApplicationSubmitSchema,
+  CommunityApplicationEditSchema,
+  CommunityApplicationWithdrawSchema,
+  CommunityContextSchema,
+} from '../schemas/community';
 import { GroupApplicationQuestionSchema } from '../schemas/groupApplications';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { HTTPException } from 'hono/http-exception';
@@ -265,5 +271,66 @@ export function createGroupRoutes() {
       });
     }
   );
+  for (const operation of [
+    {
+      method: 'post' as const,
+      path: '/groups/{groupId}/community-applications',
+      name: 'submitCommunityApplication',
+      body: CommunityApplicationSubmitSchema,
+    },
+    {
+      method: 'patch' as const,
+      path: '/groups/{groupId}/community-applications/{applicationId}',
+      name: 'editCommunityApplication',
+      body: CommunityApplicationEditSchema,
+    },
+    {
+      method: 'post' as const,
+      path: '/groups/{groupId}/community-applications/{applicationId}/withdraw',
+      name: 'withdrawCommunityApplication',
+      body: CommunityApplicationWithdrawSchema,
+    },
+  ])
+    app.openapi(
+      createRoute({
+        method: operation.method,
+        path: operation.path,
+        tags: ['Groups'],
+        operationId: operation.name,
+        summary: operation.name,
+        security: [{ boundedBearer: [] }],
+        request: {
+          params:
+            operation.name === 'submitCommunityApplication'
+              ? params
+              : params.extend({ applicationId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: { 'application/json': { schema: operation.body } },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Committed minimal receipt; email delivery is independent',
+            content: {
+              'application/json': { schema: CommunityApplicationReceiptSchema },
+            },
+          },
+          ...errors,
+          409: {
+            description:
+              'Revision or operation intent conflict; reconcile authorized state',
+            content: { 'application/json': { schema: ErrorResponseSchema } },
+          },
+        },
+      }),
+      async () => {
+        throw new HTTPException(403, {
+          message: 'Selected Group delegated credential required',
+        });
+      }
+    );
   return app;
 }

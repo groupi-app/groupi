@@ -235,5 +235,8 @@
   "DELETE /admin/events/{eventId}": "deleteEventAdmin",
   "GET /admin/reports": "listAllReports",
   "GET /uploads/{storageId}": "inspectUpload",
-  "GET /groups/{groupId}/community-context": "readOwnCommunityContext"
+  "GET /groups/{groupId}/community-context": "readOwnCommunityContext",
+  "POST /groups/{groupId}/community-applications": "submitCommunityApplication",
+  "PATCH /groups/{groupId}/community-applications/{applicationId}": "editCommunityApplication",
+  "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication"
 }

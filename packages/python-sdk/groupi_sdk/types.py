@@ -1341,6 +1341,24 @@ class Objectf8c3bec6a790(TypedDict):
 class Objecta2791daed18f(TypedDict):
     cursor: NotRequired[str]
 
+class Object53e85f30308a(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    result: Object878ec63794f7
+    effects: Object14927e6acaac
+
+class Objecte4ea0c62ce41(TypedDict):
+    formRevision: str
+    answers: dict[str, str | float | bool | list[str]]
+
+class Object0210d908b1ed(TypedDict):
+    groupId: str
+    applicationId: str
+
+class Objectece999219204(TypedDict):
+    expectedRevision: int
+    answers: dict[str, str | float | bool | list[str]]
+
 class Object056f6599a34c(TypedDict):
     groupId: str
     enabled: bool
@@ -1576,8 +1594,14 @@ class Object1536187ddb0f(TypedDict):
     groupId: str
     applicationId: str
 
-class Object5fe3657a97a4(TypedDict):
+class Object400d4467dcf9(TypedDict):
+    answers: dict[str, str | float | bool | list[str]]
+    expectedRevision: NotRequired[int]
+
+class Object026c1c76bdd8(TypedDict):
     decision: Literal['APPROVED', 'DECLINED']
+    expectedRevision: NotRequired[int]
+    operationId: NotRequired[str]
 
 class Object6ca3b0de678c(TypedDict):
     eventId: str
@@ -2060,6 +2084,15 @@ class Object1c6ddd22f0f6(TypedDict):
 class Object068ecbb0d0bb(TypedDict):
     supported: Literal[False]
     subscribed: None
+
+class Object878ec63794f7(TypedDict):
+    applicationId: str
+    status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
+    revision: float
+
+class Object14927e6acaac(TypedDict):
+    email: Literal['not-requested']
+    cleanup: Literal['not-requested']
 
 class Objectcb244cc36b34(TypedDict):
     id: str

@@ -193,3 +193,26 @@ it('discloses only the selected Group and future audience boundary for applicant
     background: false,
   });
 });
+
+it('consents to a selected Group write without requiring own-context read', async () => {
+  mockConsent({
+    ...consentRequest(),
+    selectedGroup: { id: 'g-red', name: 'Red Room' },
+    requestedScopes: ['openid', 'groups.applications.submit'],
+    requestedActions: ['groups.applications.submit'],
+    events: [],
+  } as ReturnType<typeof consentRequest>);
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  await user.click(screen.getByLabelText('Submit your own Group application'));
+  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledWith({
+    interactionId: 'i-1',
+    actions: ['groups.applications.submit'],
+    selector: { kind: 'selected-group', groupId: 'g-red' },
+    background: false,
+  });
+});

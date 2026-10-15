@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { GroupApplicationAnswersSchema } from './groupApplications';
 import { GroupApplicationQuestionSchema } from './groupApplications';
 const status = z.enum(['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']);
 export const CommunityContextSchema = z.object({
@@ -39,3 +40,25 @@ export const CommunityContextSchema = z.object({
     subscribed: z.null(),
   }),
 });
+
+export const CommunityApplicationReceiptSchema = z.object({
+  operationId: z.string().uuid(),
+  outcome: z.literal('committed'),
+  result: z.object({ applicationId: z.string(), status, revision: z.number() }),
+  effects: z.object({
+    email: z.literal('not-requested'),
+    cleanup: z.literal('not-requested'),
+  }),
+});
+export const CommunityApplicationSubmitSchema = z
+  .object({ formRevision: z.string(), answers: GroupApplicationAnswersSchema })
+  .strict();
+export const CommunityApplicationEditSchema = z
+  .object({
+    expectedRevision: z.number().int().nonnegative(),
+    answers: GroupApplicationAnswersSchema,
+  })
+  .strict();
+export const CommunityApplicationWithdrawSchema = z
+  .object({ expectedRevision: z.number().int().nonnegative() })
+  .strict();

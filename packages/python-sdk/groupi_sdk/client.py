@@ -231,6 +231,10 @@ from .types import (
     Objectf2a3cfe95492,
     Objectf8c3bec6a790,
     Objecta2791daed18f,
+    Object53e85f30308a,
+    Objecte4ea0c62ce41,
+    Object0210d908b1ed,
+    Objectece999219204,
     Object056f6599a34c,
     Object624371b3aebe,
     Object6395deb0e4ba,
@@ -272,7 +276,8 @@ from .types import (
     Object4f75c6f32bec,
     Objectb4f84fb246b8,
     Object1536187ddb0f,
-    Object5fe3657a97a4,
+    Object400d4467dcf9,
+    Object026c1c76bdd8,
     Object6ca3b0de678c,
     Object392afdf5c5c2,
     Objectbc8e85e56367,
@@ -368,6 +373,8 @@ from .types import (
     Object9181a91b6751,
     Object1c6ddd22f0f6,
     Object068ecbb0d0bb,
+    Object878ec63794f7,
+    Object14927e6acaac,
     Objectcb244cc36b34,
     Objectafe89b003106,
     Object17c8fd7ccf8b,
@@ -923,6 +930,18 @@ class Groupi(Transport):
     def read_own_community_context(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read own community context."""
         return self.request('GET', '/groups/{groupId}/community-context', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def submit_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """submitCommunityApplication."""
+        return self.request('POST', '/groups/{groupId}/community-applications', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def edit_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """editCommunityApplication."""
+        return self.request('PATCH', '/groups/{groupId}/community-applications/{applicationId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def withdraw_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """withdrawCommunityApplication."""
+        return self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def get_groups_joining_questionnaire(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read your private joining questionnaire and current access status."""
@@ -2002,6 +2021,18 @@ class AsyncGroupi(AsyncTransport):
     async def read_own_community_context(self, **kwargs):
         """Read own community context."""
         return await self.request('GET', '/groups/{groupId}/community-context', **kwargs)
+
+    async def submit_community_application(self, **kwargs):
+        """submitCommunityApplication."""
+        return await self.request('POST', '/groups/{groupId}/community-applications', **kwargs)
+
+    async def edit_community_application(self, **kwargs):
+        """editCommunityApplication."""
+        return await self.request('PATCH', '/groups/{groupId}/community-applications/{applicationId}', **kwargs)
+
+    async def withdraw_community_application(self, **kwargs):
+        """withdrawCommunityApplication."""
+        return await self.request('POST', '/groups/{groupId}/community-applications/{applicationId}/withdraw', **kwargs)
 
     async def get_groups_joining_questionnaire(self, **kwargs):
         """Read your private joining questionnaire and current access status."""

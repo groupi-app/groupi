@@ -9,6 +9,11 @@ import {
   validateQuestions,
   validateAnswers,
 } from '../../packages/shared/src/utils/application-questions';
+import {
+  priorReceipt,
+  receiptBinding,
+  saveReceipt,
+} from '../groups/operationReceipts';
 import { createNotification } from '../lib/notifications';
 type ReadCtx = QueryCtx | MutationCtx;
 function fail(code: string, message: string): never {
@@ -122,7 +127,10 @@ export async function submit(
   );
   const now = Date.now();
   if (form.pending) {
-    await ctx.db.patch(form.pending._id, { answers, updatedAt: now });
+    await ctx.db.patch(form.pending._id, {
+      answers,
+      updatedAt: Math.max(now, form.pending.updatedAt + 1),
+    });
     return { applicationId: form.pending._id, status: 'PENDING' as const };
   }
   const applicationId = await ctx.db.insert('groupApplications', {
@@ -158,9 +166,15 @@ export async function edit(
   ctx: MutationCtx,
   actorId: Id<'persons'>,
   applicationId: Id<'groupApplications'>,
-  answers: Doc<'groupApplications'>['answers']
+  answers: Doc<'groupApplications'>['answers'],
+  expectedRevision?: number
 ) {
   const application = await own(ctx, actorId, applicationId);
+  if (
+    expectedRevision !== undefined &&
+    application.updatedAt !== expectedRevision
+  )
+    fail('STALE_REVISION', 'Application has changed.');
   if (application.status !== 'PENDING')
     fail('CONFLICT', 'Only pending applications can be edited.');
   const group = await ctx.db.get(application.groupId);
@@ -171,15 +185,24 @@ export async function edit(
   )
     fail('FORBIDDEN', 'You are not currently eligible to apply.');
   validate(() => validateAnswers(application.questions, answers));
-  await ctx.db.patch(applicationId, { answers, updatedAt: Date.now() });
+  await ctx.db.patch(applicationId, {
+    answers,
+    updatedAt: Math.max(Date.now(), application.updatedAt + 1),
+  });
   return { applicationId, status: 'PENDING' as const };
 }
 export async function withdraw(
   ctx: MutationCtx,
   actorId: Id<'persons'>,
-  applicationId: Id<'groupApplications'>
+  applicationId: Id<'groupApplications'>,
+  expectedRevision?: number
 ) {
   const application = await own(ctx, actorId, applicationId);
+  if (
+    expectedRevision !== undefined &&
+    application.updatedAt !== expectedRevision
+  )
+    fail('STALE_REVISION', 'Application has changed.');
   if (application.status === 'WITHDRAWN')
     return { applicationId, status: 'WITHDRAWN' as const };
   if (application.status !== 'PENDING')
@@ -187,8 +210,11 @@ export async function withdraw(
   const now = Date.now();
   await ctx.db.patch(applicationId, {
     status: 'WITHDRAWN',
-    updatedAt: now,
-    decisions: [{ status: 'WITHDRAWN', actorId, at: now }],
+    updatedAt: Math.max(now, application.updatedAt + 1),
+    decisions: [
+      ...application.decisions,
+      { status: 'WITHDRAWN', actorId, at: now },
+    ],
   });
   await ctx.db.insert('groupApplicationActors', {
     applicationId,
@@ -229,7 +255,9 @@ export async function review(
   ctx: MutationCtx,
   actorId: Id<'persons'>,
   applicationId: Id<'groupApplications'>,
-  decision: 'APPROVED' | 'DECLINED'
+  decision: 'APPROVED' | 'DECLINED',
+  expectedRevision?: number,
+  operationId?: string
 ) {
   const application = await ctx.db.get(applicationId);
   if (!application) fail('NOT_FOUND', 'Application not found.');
@@ -253,7 +281,39 @@ export async function review(
     }
     return { applicationId, status: decision };
   };
-  if (application.status === decision) return result();
+  const binding = operationId
+    ? await receiptBinding({
+        actorId,
+        operation: 'groups.applications.review',
+        groupId: application.groupId,
+        applicationId,
+        decision,
+        expectedRevision,
+      })
+    : null;
+  if (
+    operationId &&
+    binding &&
+    (await priorReceipt(ctx, operationId, binding, Date.now()))
+  )
+    return result();
+  if (
+    expectedRevision !== undefined &&
+    application.updatedAt !== expectedRevision
+  )
+    fail('STALE_REVISION', 'Application has changed.');
+  const committed = async () => {
+    if (operationId && binding)
+      await saveReceipt(
+        ctx,
+        operationId,
+        binding,
+        { applicationId, status: decision },
+        Date.now()
+      );
+    return result();
+  };
+  if (application.status === decision) return committed();
   if (application.status !== 'PENDING')
     fail('CONFLICT', 'Application is no longer pending.');
   await requirePerson(ctx, application.personId);
@@ -268,8 +328,11 @@ export async function review(
   const now = Date.now();
   await ctx.db.patch(applicationId, {
     status: decision,
-    updatedAt: now,
-    decisions: [{ status: decision, actorId, at: now }],
+    updatedAt: Math.max(now, application.updatedAt + 1),
+    decisions: [
+      ...application.decisions,
+      { status: decision, actorId, at: now },
+    ],
   });
   await ctx.db.insert('groupApplicationActors', {
     applicationId,
@@ -285,7 +348,7 @@ export async function review(
       ? 'GROUP_APPLICATION_APPROVED'
       : 'GROUP_APPLICATION_DECLINED'
   );
-  return result();
+  return committed();
 }
 function validatePage(opts: { numItems: number; cursor: string | null }) {
   if (
