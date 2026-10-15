@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import type { Id } from 'convex/_generated/dataModel';
@@ -28,6 +30,9 @@ function Review({ groupId }: { groupId: Id<'groups'> }) {
       : 'skip'
   );
   const review = useReviewGroupApplication();
+  const retryDelivery = useMutation(
+    api.groupApplications.decisionDelivery.retry
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   async function decide(
@@ -75,6 +80,37 @@ function Review({ groupId }: { groupId: Id<'groups'> }) {
                     {a.applicant.name ?? a.applicant.username ?? 'Applicant'}
                   </Text>
                   <Text>{a.status}</Text>
+                  {a.decisionDelivery && (
+                    <Text>
+                      Decision email: {a.decisionDelivery}. Delivery does not
+                      change admission.
+                    </Text>
+                  )}
+                  {(a.decisionDelivery === 'failed' ||
+                    a.decisionDelivery === 'queued' ||
+                    a.decisionDelivery === 'sending') && (
+                    <Button
+                      disabled={busy}
+                      accessibilityLabel='Retry decision email'
+                      onPress={async () => {
+                        setBusy(true);
+                        try {
+                          await retryDelivery({ applicationId: a._id });
+                          setMessage('Decision email queued.');
+                        } catch (error) {
+                          setMessage(
+                            error instanceof Error
+                              ? error.message
+                              : 'Delivery retry unavailable.'
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Retry decision email
+                    </Button>
+                  )}
                   {a.questions.map(q => (
                     <Text key={q.id}>
                       {q.label}: {String(a.answers[q.id] ?? '')}

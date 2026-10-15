@@ -12,7 +12,32 @@ export const configureAppearance = mutation({
     const { user } = await requireAuth(ctx);
     if (!isAdminRole(user.role))
       throw new ConvexError('Platform administrator required');
-    if (!(await ctx.db.get(appId))) throw new ConvexError('App not found');
+    const app = await ctx.db.get(appId);
+    if (!app) throw new ConvexError('App not found');
+    if (appearance.statusReturnUrl) {
+      let url: URL;
+      try {
+        url = new URL(appearance.statusReturnUrl);
+      } catch {
+        throw new ConvexError('Invalid status return URL');
+      }
+      if (
+        url.protocol !== 'https:' ||
+        url.username ||
+        url.password ||
+        url.hash ||
+        !app.redirectUris.some(uri => {
+          try {
+            return new URL(uri).origin === url.origin;
+          } catch {
+            return false;
+          }
+        })
+      )
+        throw new ConvexError(
+          'Status return must use an approved HTTPS app origin'
+        );
+    }
     for (const name of [appearance.brandName, appearance.senderName]) {
       if (!name.trim() || name.length > 100 || /[<>\r\n]/.test(name))
         throw new ConvexError('Invalid hosted brand or sender name');
