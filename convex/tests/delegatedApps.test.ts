@@ -127,6 +127,7 @@ test('only administrators configure hosted appearance and interaction metadata e
     brandName: 'Red Room',
     accent: '#991b1b',
     senderName: 'Red Room',
+    statusReturnUrl: 'https://redroom.example/community/application',
   };
   await expect(
     owner.auth.mutation(api.delegatedApps.hosted.configureAppearance, {
@@ -141,6 +142,19 @@ test('only administrators configure hosted appearance and interaction metadata e
       update: { role: 'admin' },
     },
   });
+  for (const url of [
+    'https://evil.example/status',
+    'http://redroom.example/status',
+    'https://user@redroom.example/status',
+    'https://redroom.example/status#redirect',
+  ]) {
+    await expect(
+      administrator.auth.mutation(
+        api.delegatedApps.hosted.configureAppearance,
+        { appId, appearance: { ...appearance, statusReturnUrl: url } }
+      )
+    ).rejects.toThrow('approved HTTPS app origin');
+  }
   await administrator.auth.mutation(
     api.delegatedApps.hosted.configureAppearance,
     { appId, appearance }

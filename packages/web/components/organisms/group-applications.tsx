@@ -1,6 +1,8 @@
 'use client';
 import { Component, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import type { ApplicationAnswers } from '@groupi/shared/hooks';
 import { Button } from '@/components/ui/button';
@@ -306,6 +308,9 @@ function ApplicationRecord({
   applicantName?: string;
 }) {
   const decide = useReviewGroupApplication();
+  const retryDelivery = useMutation(
+    api.groupApplications.decisionDelivery.retry
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -338,6 +343,39 @@ function ApplicationRecord({
       aria-label={`Application ${application._id}`}
     >
       <h3 className='font-semibold'>{application.status}</h3>
+      {review && application.decisionDelivery && (
+        <div>
+          <p role='status'>
+            Decision email: {application.decisionDelivery}. Delivery does not
+            change admission.
+          </p>
+          {(application.decisionDelivery === 'failed' ||
+            application.decisionDelivery === 'sending' ||
+            application.decisionDelivery === 'queued') && (
+            <Button
+              variant='outline'
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError('');
+                try {
+                  await retryDelivery({ applicationId: application._id });
+                } catch (cause) {
+                  setError(
+                    cause instanceof Error
+                      ? cause.message
+                      : 'Delivery retry unavailable.'
+                  );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Retry decision email
+            </Button>
+          )}
+        </div>
+      )}
       {review && <p>Applicant: {applicantName ?? application.personId}</p>}
       <dl className='space-y-2'>
         {application.questions.map(q => (

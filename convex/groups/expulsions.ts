@@ -57,6 +57,8 @@ export async function expelForPerson(
   });
   const previous = await priorReceipt(ctx, input.operationId, binding, now);
   if (previous) return JSON.parse(previous) as Infer<typeof expulsionResult>;
+  if (!(await ctx.db.get(input.personId)))
+    operationError('RECIPIENT_UNAVAILABLE', 'This person is unavailable.');
   if (group.ownerId === input.personId)
     operationError('PROTECTED_OWNER', 'Transfer Group ownership first.');
 

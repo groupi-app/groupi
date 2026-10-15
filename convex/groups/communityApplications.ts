@@ -116,7 +116,8 @@ export const execute = internalMutation({
         ctx,
         personId,
         groupId,
-        fields.answers as Parameters<typeof applications.submit>[3]
+        fields.answers as Parameters<typeof applications.submit>[3],
+        { appId: grant.appId!, grantId: grant._id }
       );
     } else {
       const applicationId = ctx.db.normalizeId(

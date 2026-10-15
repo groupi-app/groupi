@@ -164,6 +164,8 @@ it('SDK staff HTTP reconciles lost responses and rejects payload reuse and revok
   let lost = true;
   vi.stubGlobal('fetch', async (url: string | URL, init?: RequestInit) => {
     const response = await f.t.fetch(new URL(String(url)).pathname, init);
+    if (new URL(String(url)).pathname.includes('coordinated-expulsions'))
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
     if (init?.method === 'POST' && response.ok && lost) {
       lost = false;
       throw new Error('Lost response');
@@ -414,4 +416,27 @@ it('serializes concurrent ongoing RSVP and invitation acceptance against committ
       eventId: f.event.eventId,
     })
   ).rejects.toThrow();
+});
+
+it('rejects deleted targets before creating an orphan exclusion', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'deleted-target');
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'Red Room' }
+  );
+  await f.t.run(ctx => ctx.db.delete(target.personId));
+  await expect(
+    f.owner.auth.mutation(api.groups.expulsions.expel, {
+      groupId,
+      personId: target.personId,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('RECIPIENT_UNAVAILABLE');
+  expect(
+    await f.owner.auth.query(api.groups.expulsions.progress, {
+      groupId,
+      personId: target.personId,
+    })
+  ).toBeNull();
 });

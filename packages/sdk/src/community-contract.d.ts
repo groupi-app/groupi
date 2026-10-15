@@ -23,6 +23,7 @@ export type OwnApplication = {
   id: string;
   status: ApplicationStatus;
   revision: number;
+  decisionDelivery?: 'queued' | 'sending' | 'sent' | 'failed' | 'suppressed';
   questions: Question[];
   answers: Answers;
   submittedAt: number;

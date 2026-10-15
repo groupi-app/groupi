@@ -91,6 +91,10 @@ export function createGroupRoutes() {
     c.header('Cache-Control', 'private, no-store');
     await next();
   });
+  app.use('/groups/:groupId/coordinated-expulsions/*', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store');
+    await next();
+  });
   const expulsion = z.object({
     operationId: z.string(),
     outcome: z.literal('committed'),
@@ -99,7 +103,7 @@ export function createGroupRoutes() {
     cleanup: z.enum(['pending', 'blocked', 'complete']),
     conflicts: z.array(z.object({ eventId: z.string(), code: z.string() })),
   });
-  app.use('/groups/:groupId/coordinated-expulsions*', async (c, next) => {
+  app.use('/groups/:groupId/coordinated-expulsions', async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
     await next();
   });

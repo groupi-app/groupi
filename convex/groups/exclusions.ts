@@ -82,7 +82,7 @@ export async function reconcileEventExclusions(
       if (exclusion.active && !exclusion.eventIds.includes(eventId))
         await ctx.db.patch(exclusion._id, {
           eventIds: [...exclusion.eventIds, eventId],
-          cleanup: 'pending',
+          cleanup: exclusion.cleanup === 'blocked' ? 'blocked' : 'pending',
           updatedAt: Date.now(),
         });
     }

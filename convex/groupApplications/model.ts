@@ -14,7 +14,12 @@ import {
   receiptBinding,
   saveReceipt,
 } from '../groups/operationReceipts';
-import { createNotification } from '../lib/notifications';
+import { makeFunctionReference } from 'convex/server';
+import {
+  createNotification,
+  collectEmailData,
+  isPersonInDndMode,
+} from '../lib/notifications';
 type ReadCtx = QueryCtx | MutationCtx;
 function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
@@ -116,7 +121,8 @@ export async function submit(
   ctx: MutationCtx,
   actorId: Id<'persons'>,
   groupId: Id<'groups'>,
-  answers: Doc<'groupApplications'>['answers']
+  answers: Doc<'groupApplications'>['answers'],
+  source?: { appId: Id<'delegatedApps'>; grantId: Id<'authorizationGrants'> }
 ) {
   await requirePerson(ctx, actorId);
   const form = await getForm(ctx, groupId, actorId);
@@ -135,6 +141,8 @@ export async function submit(
   }
   const applicationId = await ctx.db.insert('groupApplications', {
     groupId,
+    sourceAppId: source?.appId,
+    sourceGrantId: source?.grantId,
     personId: actorId,
     questions: form.questions,
     answers,
@@ -233,7 +241,7 @@ async function notice(
     | 'GROUP_APPLICATION_APPROVED'
     | 'GROUP_APPLICATION_DECLINED'
 ) {
-  await createNotification(
+  return createNotification(
     ctx,
     {
       personId,
@@ -338,7 +346,7 @@ export async function review(
     applicationId,
     personId: actorId,
   });
-  await notice(
+  const notificationId = await notice(
     ctx,
     group,
     application.personId,
@@ -348,6 +356,39 @@ export async function review(
       ? 'GROUP_APPLICATION_APPROVED'
       : 'GROUP_APPLICATION_DECLINED'
   );
+  const eligible =
+    !(await isPersonInDndMode(ctx, application.personId)) &&
+    (
+      await collectEmailData(ctx, {
+        personId: application.personId,
+        groupId: group._id,
+        groupApplicationId: applicationId,
+        type:
+          decision === 'APPROVED'
+            ? 'GROUP_APPLICATION_APPROVED'
+            : 'GROUP_APPLICATION_DECLINED',
+      })
+    ).length > 0;
+  const delivery = eligible ? 'queued' : 'suppressed';
+  await ctx.db.insert('groupDecisionDispatches', {
+    applicationId,
+    notificationId,
+    state: delivery,
+    createdAt: now,
+    attempt: 0,
+    delivered: [],
+  });
+  await ctx.db.patch(applicationId, { decisionDelivery: delivery });
+  if (eligible)
+    await ctx.scheduler.runAfter(
+      0,
+      makeFunctionReference<
+        'action',
+        { applicationId: Id<'groupApplications'> },
+        null
+      >('groupApplications/decisionActions:send'),
+      { applicationId }
+    );
   return committed();
 }
 function validatePage(opts: { numItems: number; cursor: string | null }) {

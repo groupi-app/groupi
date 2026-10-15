@@ -47,6 +47,15 @@ export const context = v.object({
       id: v.id('groupApplications'),
       status: applicationStatusValidator,
       revision: v.number(),
+      decisionDelivery: v.optional(
+        v.union(
+          v.literal('queued'),
+          v.literal('sending'),
+          v.literal('sent'),
+          v.literal('failed'),
+          v.literal('suppressed')
+        )
+      ),
       questions: v.array(questionValidator),
       answers: answersValidator,
       submittedAt: v.number(),
@@ -162,6 +171,7 @@ export const readContext = internalQuery({
         id: a._id,
         status: a.status,
         revision: a.updatedAt,
+        decisionDelivery: a.decisionDelivery,
         questions: a.questions,
         answers: a.answers,
         submittedAt: a.submittedAt,
