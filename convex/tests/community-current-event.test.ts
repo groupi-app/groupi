@@ -42,6 +42,13 @@ it('returns absence, one undated Event, then a typed conflict instead of picking
     kind: 'conflict',
     code: 'STAFF_CONFIGURATION_CONFLICT',
   });
+  expect(
+    await f.owner.auth.query(api.events.lifecycleOperations.getLifecycle, {
+      eventId: f.event.eventId,
+    })
+  ).toMatchObject({
+    audienceConflicts: [{ groupId: f.groupId, name: 'Red Room' }],
+  });
 });
 it('uses the exact end boundary, keeping past starts without an end and undated Events active', async () => {
   const f = await fixture();

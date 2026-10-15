@@ -67,7 +67,8 @@ export async function currentEventForPerson(
     const access = await eventAdmissionAccess(ctx, event, personId);
     retained ||= Boolean(access.membership);
     if (isEventComplete(event, now)) continue;
-    if (!access.membership && !(eligible && access.canRead)) continue;
+    if (!access.membership && !(eligible && access.hasApplicationAudience))
+      continue;
     events.push({ event, access });
   }
   if (!eligible && !retained) throw denied();

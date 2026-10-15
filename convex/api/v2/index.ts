@@ -142,6 +142,7 @@ export function createApiV2App(
           'STALE_REVISION',
           'IDEMPOTENCY_CONFLICT',
           'CONFLICT',
+          'STALE_REVISION',
           'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',
           'DATE_RESET_REQUIRED',
@@ -296,7 +297,7 @@ All errors return a consistent JSON format with an appropriate HTTP status code:
       status: 'ok',
       version: '2.0.0',
       capabilities: {
-        communityContext: { version: 1, mutations: false },
+        communityContext: { version: 1, mutations: true, applications: 1 },
         groupInvites: { version: 1 },
         groupModeration: { version: 1 },
         accountResolution: {

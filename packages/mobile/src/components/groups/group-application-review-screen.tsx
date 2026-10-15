@@ -32,12 +32,13 @@ function Review({ groupId }: { groupId: Id<'groups'> }) {
   const [message, setMessage] = useState('');
   async function decide(
     applicationId: Id<'groupApplications'>,
-    decision: 'APPROVED' | 'DECLINED'
+    decision: 'APPROVED' | 'DECLINED',
+    expectedRevision: number
   ) {
     setBusy(true);
     setMessage('');
     try {
-      await review({ applicationId, decision });
+      await review({ applicationId, decision, expectedRevision });
       setMessage(
         decision === 'APPROVED'
           ? 'Applicant admitted to the Group. No Event participation was added.'
@@ -84,7 +85,7 @@ function Review({ groupId }: { groupId: Id<'groups'> }) {
                       <Button
                         accessibilityLabel={`Approve Group application ${a._id}`}
                         disabled={busy}
-                        onPress={() => decide(a._id, 'APPROVED')}
+                        onPress={() => decide(a._id, 'APPROVED', a.updatedAt)}
                       >
                         Approve and admit
                       </Button>
@@ -92,7 +93,7 @@ function Review({ groupId }: { groupId: Id<'groups'> }) {
                         accessibilityLabel={`Decline Group application ${a._id}`}
                         variant='outline'
                         disabled={busy}
-                        onPress={() => decide(a._id, 'DECLINED')}
+                        onPress={() => decide(a._id, 'DECLINED', a.updatedAt)}
                       >
                         Decline
                       </Button>

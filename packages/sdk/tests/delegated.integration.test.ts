@@ -1,3 +1,4 @@
+import { createAuthAccount } from '../../../convex/tests/auth.helpers';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServer } from 'node:https';
 import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
@@ -242,6 +243,146 @@ for (const language of ['typescript', 'python'])
         expect(
           await d.request({ operation: 'community', groupId: otherId })
         ).toMatchObject({ ok: false, code: 'FORBIDDEN', status: 403 });
+      } finally {
+        await d.close();
+        await f.close();
+      }
+    }, 30000);
+    it('submits, replays, edits and withdraws selected Group applications through the generated public client', async () => {
+      const f = await fixture();
+      const d = await f.driver(language);
+      try {
+        const { context, origin } = f;
+        const staff = await createAuthAccount(
+          context.t,
+          'sdk-application-staff'
+        );
+        const groupId = await staff.auth.mutation(
+          makeFunctionReference('groups/mutations:createGroup'),
+          { name: 'Application community' }
+        );
+        await staff.auth.mutation(
+          makeFunctionReference(
+            'groupApplications/mutations:configureGroupApplications'
+          ),
+          {
+            groupId,
+            applicationsEnabled: true,
+            questions: [
+              {
+                id: 'welcome',
+                label: 'Welcome?',
+                required: true,
+                type: 'LONG_ANSWER',
+              },
+            ],
+          }
+        );
+        const actions = [
+          'groups.context.read',
+          'groups.applications.submit',
+          'groups.applications.edit',
+          'groups.applications.withdraw',
+        ] as const;
+        const authorization = await helpers.authorize(context, {
+          scopes: `openid ${actions.join(' ')}`,
+          actions: [...actions],
+          selector: { kind: 'selected-group', groupId },
+          background: false,
+        });
+        expect(
+          await d.request({
+            operation: 'initialize',
+            config: {
+              instance: origin,
+              issuer: origin + '/oauth',
+              audience: origin + '/api/v2',
+              clientId: context.appId,
+              clientType: 'native',
+              actions,
+            },
+            exchange: {
+              code: authorization.code,
+              codeVerifier: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+              redirectUri: context.redirectUri,
+              state: 'client-state',
+              expectedState: 'client-state',
+              background: false,
+            },
+          })
+        ).toMatchObject({ ok: true });
+        const read = await d.request({ operation: 'community', groupId });
+        const intent = {
+          operation: 'application',
+          method: 'submitCommunityApplication',
+          operationId: crypto.randomUUID(),
+          input: {
+            path: { groupId },
+            body: {
+              formRevision: read.result.form.revision,
+              answers: { welcome: 'SDK answer' },
+            },
+          },
+        };
+        const first = await d.request(intent);
+        expect(first).toMatchObject({
+          ok: true,
+          result: { outcome: 'committed', result: { status: 'PENDING' } },
+        });
+        expect(await d.request(intent)).toEqual(first);
+        expect(
+          await d.request({
+            ...intent,
+            input: {
+              ...intent.input,
+              body: { ...intent.input.body, answers: { welcome: 'Different' } },
+            },
+          })
+        ).toMatchObject({
+          ok: false,
+          status: 409,
+          code: 'IDEMPOTENCY_CONFLICT',
+        });
+        const path = {
+          groupId,
+          applicationId: first.result.result.applicationId,
+        };
+        const edited = await d.request({
+          operation: 'application',
+          method: 'editCommunityApplication',
+          operationId: crypto.randomUUID(),
+          input: {
+            path,
+            body: {
+              expectedRevision: first.result.result.revision,
+              answers: { welcome: 'Edited SDK answer' },
+            },
+          },
+        });
+        expect(edited).toMatchObject({
+          ok: true,
+          result: { result: { status: 'PENDING' } },
+        });
+        expect(
+          await d.request({
+            operation: 'application',
+            method: 'withdrawCommunityApplication',
+            operationId: crypto.randomUUID(),
+            input: {
+              path,
+              body: { expectedRevision: edited.result.result.revision },
+            },
+          })
+        ).toMatchObject({
+          ok: true,
+          result: { result: { status: 'WITHDRAWN' } },
+        });
+        const history = await d.request({ operation: 'community', groupId });
+        expect(history.result.applications).toHaveLength(1);
+        expect(history.result.applications[0]).toMatchObject({
+          status: 'WITHDRAWN',
+          answers: { welcome: 'Edited SDK answer' },
+        });
       } finally {
         await d.close();
         await f.close();

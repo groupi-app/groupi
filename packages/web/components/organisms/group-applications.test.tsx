@@ -69,6 +69,7 @@ describe('Group applications through the actual web Convex provider', () => {
     expect(mutation.mock.calls[0][1]).toEqual({
       applicationId: pending._id,
       answers: { why: 'Help organize' },
+      expectedRevision: pending.updatedAt,
     });
     await user.click(
       screen.getByRole('button', { name: 'Withdraw application' })
@@ -77,7 +78,10 @@ describe('Group applications through the actual web Convex provider', () => {
     expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
       'groupApplications/mutations:withdrawGroupApplication'
     );
-    expect(mutation.mock.calls[1][1]).toEqual({ applicationId: pending._id });
+    expect(mutation.mock.calls[1][1]).toEqual({
+      applicationId: pending._id,
+      expectedRevision: pending.updatedAt,
+    });
     mounted.unmount();
     await client.close();
   });
@@ -166,6 +170,8 @@ it('allows current managers to review immediately, with no invite or Event admis
   expect(mutation.mock.calls[0][1]).toEqual({
     applicationId: pending._id,
     decision: 'APPROVED',
+    expectedRevision: pending.updatedAt,
+    operationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
   });
   expect(
     screen.getByRole('button', { name: 'Approve application' })

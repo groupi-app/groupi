@@ -934,6 +934,27 @@
   },
   {
     "paging": null,
+    "name": "submitCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications",
+    "summary": "submitCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "editCommunityApplication",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/community-applications/{applicationId}",
+    "summary": "editCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "withdrawCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications/{applicationId}/withdraw",
+    "summary": "withdrawCommunityApplication"
+  },
+  {
+    "paging": null,
     "name": "getGroupsJoiningQuestionnaire",
     "method": "GET",
     "path": "/groups/{groupId}/joining-questionnaire",

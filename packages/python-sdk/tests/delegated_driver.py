@@ -63,6 +63,10 @@ for line in sys.stdin:
             result = {"initialized": True}
         elif operation == "community":
             result = client.read_own_community_context(path={"groupId": command["groupId"]})
+        elif operation == "application":
+            import re
+            method = re.sub(r"(?<!^)(?=[A-Z])", "_", command["method"]).lower()
+            result = getattr(client, method)(**command["input"], idempotency_key=command["operationId"])
         elif operation == "read":
             result = client.get_event(path={"eventId": command["eventId"]})
         elif operation == "write":

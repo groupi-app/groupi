@@ -144,7 +144,11 @@ function ApplicantForm({
         void run(
           () =>
             pending
-              ? edit({ applicationId: pending._id, answers })
+              ? edit({
+                  applicationId: pending._id,
+                  answers,
+                  expectedRevision: pending.updatedAt,
+                })
               : submit({ groupId, answers }),
           pending ? 'Application updated.' : 'Application submitted for review.'
         );
@@ -172,7 +176,11 @@ function ApplicantForm({
             disabled={busy}
             onClick={() =>
               void run(
-                () => withdraw({ applicationId: pending._id }),
+                () =>
+                  withdraw({
+                    applicationId: pending._id,
+                    expectedRevision: pending.updatedAt,
+                  }),
                 'Application withdrawn.'
               )
             }
@@ -305,7 +313,12 @@ function ApplicationRecord({
     setBusy(true);
     setError('');
     try {
-      await decide({ applicationId: application._id, decision: value });
+      await decide({
+        applicationId: application._id,
+        decision: value,
+        expectedRevision: application.updatedAt,
+        operationId: crypto.randomUUID(),
+      });
       setMessage(
         value === 'APPROVED'
           ? 'Approved. The applicant is now a Group member.'

@@ -34,19 +34,22 @@ export const communityOperations = Object.freeze({
     'POST',
     '/groups/{groupId}/community-applications',
     'submitCommunityApplication',
-    'G3'
+    'G3',
+    'implemented'
   ),
   editApplication: op(
     'PATCH',
     '/groups/{groupId}/community-applications/{applicationId}',
     'editCommunityApplication',
-    'G3'
+    'G3',
+    'implemented'
   ),
   withdrawApplication: op(
     'POST',
     '/groups/{groupId}/community-applications/{applicationId}/withdraw',
     'withdrawCommunityApplication',
-    'G3'
+    'G3',
+    'implemented'
   ),
   currentEvent: op(
     'GET',
@@ -140,7 +143,7 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G4'].includes(milestone) ? 'implemented' : 'proposed',
+  status: ['G1', 'G3', 'G4'].includes(milestone) ? 'implemented' : 'proposed',
   milestone,
   ...value,
 });
@@ -306,14 +309,14 @@ export const communityFixtures = Object.freeze({
   lostResponseRecovery: fixture(
     {
       mutation: {
-        operationId: 'synthetic-intent',
+        operationId: '00000000-0000-4000-8000-000000000003',
         outcome: 'committed',
         result: {
           applicationId: 'synthetic-application',
           status: 'PENDING',
           revision: 2,
         },
-        effects: { email: 'queued', cleanup: 'not-requested' },
+        effects: { email: 'not-requested', cleanup: 'not-requested' },
       },
     },
     'G3'

@@ -98,6 +98,9 @@ export function authorizationActionLabel(action: string): string {
   const labels: Record<string, string> = {
     'groups.events.read': 'Read your current community Event and own RSVP',
     'groups.context.read': 'Read your own community context',
+    'groups.applications.submit': 'Submit your own Group application',
+    'groups.applications.edit': 'Edit your pending Group application',
+    'groups.applications.withdraw': 'Withdraw your pending Group application',
     'identity.display-name': 'Read your display name',
     'identity.email': 'Read your email address',
     'events.read': 'Read events',

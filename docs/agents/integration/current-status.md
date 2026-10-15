@@ -2,6 +2,37 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G4 source candidate — 2026-10-15
+
+- Adds delegated `groups.events.read` current Event selection with native parity,
+  explicit absence/conflict, authorized pre-Join logistics and retained independent
+  Event membership access. Canonical completion uses recorded end at/before server
+  time or explicit completion, never a past start alone.
+- Existing Event details settings now expose Organizer completion, guarded reopen
+  and reschedule beside existing audience and admission controls. Staff lifecycle
+  operations share durable UUID receipts and current-role checks. The
+  [integration contract](../../red-room-integration-contract.md#g4-current-event-and-staff-lifecycle)
+  records exact native/REST/SDK methods and G8 exclusion hook boundaries.
+- Runtime readiness for this source: matching deployed frontend/backend SHA,
+  isolated authenticated browser identity and live provider/email setup remain
+  unverified. Local source tests are separate from G10 deployed acceptance;
+  no dev server/build/deployment or live fixture mutation was performed.
+
+## Red Room integration branch — 2026-10-15
+
+- `codex/red-room-integration` starts at developer-platform prerequisite `45d00c14fb18d735b8cd2244400d22233509a5fd`. G1 merges at `3af0db2fc80ebdabcc201de6adc335b2b127f41b`; G2 merges at `bf98d7f29246d25e15e0ebd5219c95aae435070c`. [Draft PR #389](https://github.com/groupi-app/groupi/pull/389) targets a snapshot of that prerequisite, not main. Its prerequisite remains a separate integration/release concern.
+- Selected-Group own-context/consent and themed hosted email-link authentication source are integrated. G2 covers account selection, explicit linking, minimal onboarding, consent and safe recovery; combined merger verification passed 27 backend and 13 web tests, workspace source resolution and unchanged tested worker tree. G1 evidence is recorded below.
+- Application mutations (G3) are implemented in worker `9b393c0c` and current Event discovery/completion (G4) remains in progress; this worker has merged integration `11257465`. [Site draft PR #9](https://github.com/TheiaSurette/bound-in-red/pull/9) has public entrance, server session and application lifecycle merged; the single Event view is in progress. All current implementer and merger agents use GPT-6.1 Sol.
+- These are source milestones. The normal GitHub preview for `bf98d7f` was BUILDING when inspected; matching frontend/backend source, hosted authentication, approved sender and actual mail delivery remain unverified. Full component-aware codegen requires deployment configuration. No production deployment, live fixture mutation or package publication is claimed. G10 and site B7 retain real deployed acceptance gates.
+- Concrete changeset summaries and package/bump choices are being collected for the repository-required user approval batch; no new Red Room changeset files have been created.
+
+## Red Room G3 source candidate — 2026-10-15
+
+- Worker `codex/red-room-g3` started from integration `3af0db2f`. Shared authority/receipt checkpoint `5fe2ceed` exports `authorizeCommunity` and the reusable `operationReceipts` helper. This candidate adds selected-Group own-application HTTP writes, generated TypeScript/Python consumers, saved-snapshot edits, required delegated concurrency revisions and minimal replay receipts.
+- Receipt window is 30 days; permanent recognized-ID tombstones retain hashes and minimal IDs/status/revisions, never application answers. Live credential/grant/app/account/selected-Group authority is rechecked inside every write/replay transaction. Canonical Group application data remains the sole source of questions, answers and decisions.
+- Passing local gates: `pnpm check` (740 contracts), workspace source resolution, 65 focused backend tests, 16 web tests, eight mobile tests, generated SDK transport tests (eight TypeScript/seven Python), and 17 SDK integration tests including real TypeScript/Python delegated TLS application journeys. Source evidence includes authenticated HTTP/domain lifecycle, scope/privacy/revocation, monotonic same-millisecond revisions, lost responses, mismatch/expiry, fresh decline/reapply, staff replay without re-admission, and generated SDK consumer tests. Web/mobile existing review views forward observed revisions. Local checks do not establish deployed provider/browser/email acceptance.
+- Full component-aware `pnpm generate` is unavailable without `CONVEX_DEPLOYMENT`; the official offline application declaration refresh preserves component/runtime declarations. No runtime, build, deployment, push, issue update, PR or changeset is performed. G10 live acceptance and the coordinator's release batch approval remain open.
+
 ## Red Room G1 source candidate — 2026-10-15
 
 - Worker branch `codex/red-room-g1` starts from integration base `45d00c14`. G1 adds selected-Group delegated applicant consent and an authoritative own-context HTTP read with generated TypeScript/Python SDK consumers. Its shared appearance dependency is cherry-picked from G2; G2 owns the full hosted authentication journey.

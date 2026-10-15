@@ -2,6 +2,9 @@ import { GroupiError, Transport } from './transport.js';
 export const delegatedActions = Object.freeze([
   'groups.context.read',
   'groups.events.read',
+  'groups.applications.submit',
+  'groups.applications.edit',
+  'groups.applications.withdraw',
   'identity.display-name',
   'identity.email',
   'events.read',

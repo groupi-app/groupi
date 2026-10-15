@@ -956,6 +956,33 @@ export class Groupi extends Transport {
       options
     );
   }
+  /** submitCommunityApplication */
+  submitCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-applications',
+      input,
+      options
+    );
+  }
+  /** editCommunityApplication */
+  editCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'PATCH',
+      '/groups/{groupId}/community-applications/{applicationId}',
+      input,
+      options
+    );
+  }
+  /** withdrawCommunityApplication */
+  withdrawCommunityApplication(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-applications/{applicationId}/withdraw',
+      input,
+      options
+    );
+  }
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(input = {}, options = {}) {
     return this.request(

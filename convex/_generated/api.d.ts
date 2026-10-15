@@ -305,6 +305,7 @@ import type * as groupTransfers_rest from "../groupTransfers/rest.js";
 import type * as groups_admission from "../groups/admission.js";
 import type * as groups_cleanup from "../groups/cleanup.js";
 import type * as groups_community from "../groups/community.js";
+import type * as groups_communityApplications from "../groups/communityApplications.js";
 import type * as groups_contentAccess from "../groups/contentAccess.js";
 import type * as groups_contracts from "../groups/contracts.js";
 import type * as groups_currentEvent from "../groups/currentEvent.js";
@@ -702,6 +703,7 @@ declare const fullApi: ApiFromModules<{
   "groups/admission": typeof groups_admission;
   "groups/cleanup": typeof groups_cleanup;
   "groups/community": typeof groups_community;
+  "groups/communityApplications": typeof groups_communityApplications;
   "groups/contentAccess": typeof groups_contentAccess;
   "groups/contracts": typeof groups_contracts;
   "groups/currentEvent": typeof groups_currentEvent;
