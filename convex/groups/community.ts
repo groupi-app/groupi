@@ -1,6 +1,9 @@
 import { v } from 'convex/values';
+import type { QueryCtx, MutationCtx } from '../_generated/server';
+import type { Id } from '../_generated/dataModel';
 import { internalQuery } from '../_generated/server';
 import {
+  type AuthorizationAction,
   liveGrant,
   denied,
   secretHash,
@@ -58,6 +61,49 @@ export const context = v.object({
     subscribed: v.null(),
   }),
 });
+export async function authorizeCommunity(
+  ctx: QueryCtx | MutationCtx,
+  args: { credentialId: Id<'authorizationCredentials'>; groupId: string },
+  requested: AuthorizationAction
+) {
+  const now = Date.now();
+  const credential = await ctx.db.get(args.credentialId);
+  if (
+    !credential ||
+    credential.kind !== 'delegated-access' ||
+    credential.revokedAt !== undefined ||
+    (credential.expiresAt !== undefined && credential.expiresAt <= now) ||
+    credential.audience !== delegatedAudience() ||
+    !credential.actions.includes(requested)
+  )
+    throw denied();
+  const { grant, principal } = await liveGrant(ctx, credential.grantId, now);
+  const groupId = ctx.db.normalizeId('groups', args.groupId);
+  if (
+    principal.kind !== 'user' ||
+    !grant.appId ||
+    !grant.actions.includes(requested) ||
+    grant.selector.kind !== 'selected-group' ||
+    grant.selector.groupId !== groupId ||
+    !groupId
+  )
+    throw denied();
+  const binding = await ctx.db
+    .query('delegatedGrantBindings')
+    .withIndex('by_grantId', q => q.eq('grantId', grant._id))
+    .unique();
+  if (
+    !binding?.active ||
+    binding.appId !== grant.appId ||
+    binding.personId !== grant.grantorPersonId ||
+    binding.instanceId !== grant.instanceId
+  )
+    throw denied();
+  const group = await ctx.db.get(groupId);
+  if (!group) throw denied();
+  return { credential, grant, group, groupId, personId: grant.grantorPersonId };
+}
+
 /** Authorization and projection share one authoritative read snapshot. No reviewer projection. */
 export const readContext = internalQuery({
   args: {
@@ -67,42 +113,8 @@ export const readContext = internalQuery({
   },
   returns: context,
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const credential = await ctx.db.get(args.credentialId);
-    if (
-      !credential ||
-      credential.kind !== 'delegated-access' ||
-      credential.revokedAt !== undefined ||
-      (credential.expiresAt !== undefined && credential.expiresAt <= now) ||
-      credential.audience !== delegatedAudience() ||
-      !credential.actions.includes('groups.context.read')
-    )
-      throw denied();
-    const { grant, principal } = await liveGrant(ctx, credential.grantId, now);
-    const groupId = ctx.db.normalizeId('groups', args.groupId);
-    if (
-      principal.kind !== 'user' ||
-      !grant.appId ||
-      !grant.actions.includes('groups.context.read') ||
-      grant.selector.kind !== 'selected-group' ||
-      grant.selector.groupId !== groupId ||
-      !groupId
-    )
-      throw denied();
-    const binding = await ctx.db
-      .query('delegatedGrantBindings')
-      .withIndex('by_grantId', q => q.eq('grantId', grant._id))
-      .unique();
-    if (
-      !binding?.active ||
-      binding.appId !== grant.appId ||
-      binding.personId !== grant.grantorPersonId ||
-      binding.instanceId !== grant.instanceId
-    )
-      throw denied();
-    const group = await ctx.db.get(groupId);
-    if (!group) throw denied();
-    const personId = grant.grantorPersonId;
+    const { credential, grant, group, groupId, personId } =
+      await authorizeCommunity(ctx, args, 'groups.context.read');
     const membership = await membershipFor(ctx, groupId, personId);
     const banned = await isGroupBanned(ctx, groupId, personId);
     const eligible = await canEnterGroup(ctx, groupId, personId);
@@ -154,7 +166,24 @@ export const readContext = internalQuery({
       })),
       nextCursor: page.isDone ? null : page.continueCursor,
       grantedActions: credential.actions.filter(a => grant.actions.includes(a)),
-      allowedActions: ['groups.context.read'],
+      allowedActions: credential.actions.filter(
+        a =>
+          grant.actions.includes(a) &&
+          (a === 'groups.context.read' ||
+            (a === 'groups.applications.submit' &&
+              eligible &&
+              enabled &&
+              !membership &&
+              !pending) ||
+            (a === 'groups.applications.edit' &&
+              eligible &&
+              enabled &&
+              !membership &&
+              Boolean(pending)) ||
+            (a === 'groups.applications.withdraw' &&
+              eligible &&
+              Boolean(pending)))
+      ),
       announcementPreference: { supported: false as const, subscribed: null },
     };
   },

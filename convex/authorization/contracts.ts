@@ -1,6 +1,9 @@
 import { v } from 'convex/values';
 export const actions = [
   'groups.context.read',
+  'groups.applications.submit',
+  'groups.applications.edit',
+  'groups.applications.withdraw',
   'identity.display-name',
   'identity.email',
   'events.read',
