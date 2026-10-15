@@ -1,3 +1,4 @@
+import { publicPage } from '../lib/pagination';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -97,7 +98,7 @@ export async function listForPerson(
         };
       })
     );
-    return { ...result, page };
+    return { ...publicPage(result), page };
   }
   const result = await ctx.db
     .query('events')
@@ -122,7 +123,7 @@ export async function listForPerson(
       };
     })
   );
-  return { ...result, page };
+  return { ...publicPage(result), page };
 }
 /** Recovery also works for legacy Events whose creator has no membership row. */
 export async function deleteOwnedEventForPerson(
