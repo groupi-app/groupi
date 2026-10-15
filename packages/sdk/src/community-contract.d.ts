@@ -1,4 +1,4 @@
-/** Versioned Red Room integration contract. Proposed operations are not callable SDK methods. */
+/** Versioned Red Room integration contract. G1 and G3 operations are callable; later milestones remain proposed. */
 export type Question = {
   id: string;
   label: string;

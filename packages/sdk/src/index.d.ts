@@ -1397,6 +1397,9 @@ export type ReportSummary = {
 };
 export type DelegatedAction =
   | 'groups.context.read'
+  | 'groups.applications.submit'
+  | 'groups.applications.edit'
+  | 'groups.applications.withdraw'
   | 'identity.display-name'
   | 'identity.email'
   | 'events.read'
@@ -4147,6 +4150,63 @@ export class Groupi {
     allowedActions: Array<string>;
     announcementPreference: { supported: false; subscribed: null };
   }>;
+  /** submitCommunityApplication */
+  submitCommunityApplication(
+    input: {
+      path: { groupId: string };
+      body: {
+        formRevision: string;
+        answers: Record<string, string | number | boolean | Array<string>>;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
+  /** editCommunityApplication */
+  editCommunityApplication(
+    input: {
+      path: { groupId: string; applicationId: string };
+      body: {
+        expectedRevision: number;
+        answers: Record<string, string | number | boolean | Array<string>>;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
+  /** withdrawCommunityApplication */
+  withdrawCommunityApplication(
+    input: {
+      path: { groupId: string; applicationId: string };
+      body: { expectedRevision: number };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: {
+      applicationId: string;
+      status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
+      revision: number;
+    };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(
     input: { path: { groupId: string } },
@@ -5205,6 +5265,7 @@ export class Groupi {
       path: { groupId: string; applicationId: string };
       body: {
         answers: Record<string, string | number | boolean | Array<string>>;
+        expectedRevision?: number;
       };
     },
     options?: RequestOptions
@@ -5242,7 +5303,11 @@ export class Groupi {
   approveOrDeclineAnApplicationAsCurrentGroupManager(
     input: {
       path: { groupId: string; applicationId: string };
-      body: { decision: 'APPROVED' | 'DECLINED' };
+      body: {
+        decision: 'APPROVED' | 'DECLINED';
+        expectedRevision?: number;
+        operationId?: string;
+      };
     },
     options?: RequestOptions
   ): Promise<{

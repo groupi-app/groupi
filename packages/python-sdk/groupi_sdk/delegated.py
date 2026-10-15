@@ -16,6 +16,9 @@ from .transport import Transport, GroupiError, _NoRedirect, _HTTPHandler, _HTTPS
 DELEGATED_ACTIONS = frozenset(
     (
         "groups.context.read",
+        "groups.applications.submit",
+        "groups.applications.edit",
+        "groups.applications.withdraw",
         "identity.display-name",
         "identity.email",
         "events.read",

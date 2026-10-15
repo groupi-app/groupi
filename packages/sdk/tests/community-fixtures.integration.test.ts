@@ -17,7 +17,7 @@ it('ships implemented read fixtures accepted by the public response contract wit
     }
   }
   expect(communityOperations.context.status).toBe('implemented');
-  expect(communityOperations.submitApplication.status).toBe('proposed');
+  expect(communityOperations.submitApplication.status).toBe('implemented');
   expect(
     communityFixtures.historicalApprovalWithoutMembership.context?.membership
   ).toBeNull();

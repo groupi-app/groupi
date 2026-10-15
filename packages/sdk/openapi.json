@@ -20553,6 +20553,548 @@
         }
       }
     },
+    "/groups/{groupId}/community-applications": {
+      "post": {
+        "tags": ["Groups"],
+        "operationId": "submitCommunityApplication",
+        "summary": "submitCommunityApplication",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "formRevision": {
+                    "type": "string"
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 500
+                          },
+                          "maxItems": 100
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": ["formRevision", "answers"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed minimal receipt; email delivery is independent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "applicationId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "WITHDRAWN",
+                            "APPROVED",
+                            "DECLINED"
+                          ]
+                        },
+                        "revision": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["applicationId", "status", "revision"]
+                    },
+                    "effects": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        },
+                        "cleanup": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        }
+                      },
+                      "required": ["email", "cleanup"]
+                    }
+                  },
+                  "required": ["operationId", "outcome", "result", "effects"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Revision or operation intent conflict; reconcile authorized state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/community-applications/{applicationId}": {
+      "patch": {
+        "tags": ["Groups"],
+        "operationId": "editCommunityApplication",
+        "summary": "editCommunityApplication",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "applicationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 500
+                          },
+                          "maxItems": 100
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": ["expectedRevision", "answers"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed minimal receipt; email delivery is independent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "applicationId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "WITHDRAWN",
+                            "APPROVED",
+                            "DECLINED"
+                          ]
+                        },
+                        "revision": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["applicationId", "status", "revision"]
+                    },
+                    "effects": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        },
+                        "cleanup": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        }
+                      },
+                      "required": ["email", "cleanup"]
+                    }
+                  },
+                  "required": ["operationId", "outcome", "result", "effects"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Revision or operation intent conflict; reconcile authorized state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/community-applications/{applicationId}/withdraw": {
+      "post": {
+        "tags": ["Groups"],
+        "operationId": "withdrawCommunityApplication",
+        "summary": "withdrawCommunityApplication",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "applicationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": ["expectedRevision"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed minimal receipt; email delivery is independent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": ["committed"]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "applicationId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "WITHDRAWN",
+                            "APPROVED",
+                            "DECLINED"
+                          ]
+                        },
+                        "revision": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["applicationId", "status", "revision"]
+                    },
+                    "effects": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        },
+                        "cleanup": {
+                          "type": "string",
+                          "enum": ["not-requested"]
+                        }
+                      },
+                      "required": ["email", "cleanup"]
+                    }
+                  },
+                  "required": ["operationId", "outcome", "result", "effects"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Revision or operation intent conflict; reconcile authorized state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{groupId}/joining-questionnaire": {
       "get": {
         "tags": ["Groups"],
@@ -26189,6 +26731,9 @@
                         }
                       ]
                     }
+                  },
+                  "expectedRevision": {
+                    "type": "integer"
                   }
                 },
                 "required": ["answers"],
@@ -26489,6 +27034,13 @@
                   "decision": {
                     "type": "string",
                     "enum": ["APPROVED", "DECLINED"]
+                  },
+                  "expectedRevision": {
+                    "type": "integer"
+                  },
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 },
                 "required": ["decision"],

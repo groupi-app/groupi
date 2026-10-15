@@ -199,7 +199,7 @@ export function BoundedKeysSettings() {
                         setPrincipalKind(grant.principalKind);
                         setActions(
                           grant.actions.filter(
-                            action => action !== 'groups.context.read'
+                            action => !action.startsWith('groups.')
                           )
                         );
                         setAllEvents(
