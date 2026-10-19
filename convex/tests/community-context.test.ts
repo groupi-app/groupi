@@ -71,7 +71,7 @@ describe('selected Group delegated community context', () => {
         enabled: true,
         questions: communityFixtures.neverApplied.context.form.questions,
       },
-      announcementPreference: { supported: false, subscribed: null },
+      announcementPreference: { supported: true, subscribed: false },
       allowedActions: ['groups.context.read'],
     });
     expect((await f.read(otherId)).status).toBe(403);
