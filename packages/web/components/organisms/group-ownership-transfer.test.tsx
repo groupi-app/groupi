@@ -58,6 +58,8 @@ beforeEach(() => {
       localQueryResult: () => {
         const name = getFunctionName(call[0]);
         if (name === 'groupTransfers/queries:status') return status;
+        if (name === 'groups/expulsions:progress') return null;
+        if (name === 'groupAnnouncements/eventMail:staffEvents') return [];
         if (name === 'groupQuestionnaires/queries:getJoiningQuestionnaire')
           return {
             groupId: 'group',

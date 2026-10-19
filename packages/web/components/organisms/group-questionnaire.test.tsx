@@ -181,6 +181,9 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
       continueCursor: '',
     },
     'groupModeration/queries:listGroupBans': emptyPage,
+    'groups/expulsions:progress': null,
+    'groups/expulsions:listProgress': emptyPage,
+    'groupAnnouncements/eventMail:staffEvents': [],
     'groupQuestionnaires/queries:getJoiningQuestionnaire': questionnaire,
     'groupQuestionnaires/queries:getJoiningQuestionnaireAccess': {
       canRead: true,
