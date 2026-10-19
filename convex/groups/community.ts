@@ -20,7 +20,7 @@ import {
 } from '../eventApplications/contracts';
 
 export const context = v.object({
-  contractVersion: v.literal('red-room.v1'),
+  contractVersion: v.literal('community.v1'),
   group: v.object({ id: v.id('groups'), name: v.string() }),
   form: v.object({
     enabled: v.boolean(),
@@ -156,7 +156,7 @@ export const readContext = internalQuery({
     const enabled = group.applicationsEnabled ?? false;
     const questions = eligible ? (group.applicationQuestions ?? []) : [];
     return {
-      contractVersion: 'red-room.v1' as const,
+      contractVersion: 'community.v1' as const,
       group: { id: group._id, name: group.name },
       form: {
         enabled,

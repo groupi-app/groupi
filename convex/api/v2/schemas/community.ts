@@ -3,7 +3,7 @@ import { GroupApplicationAnswersSchema } from './groupApplications';
 import { GroupApplicationQuestionSchema } from './groupApplications';
 const status = z.enum(['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']);
 export const CommunityContextSchema = z.object({
-  contractVersion: z.literal('red-room.v1'),
+  contractVersion: z.literal('community.v1'),
   group: z.object({ id: z.string(), name: z.string() }),
   form: z.object({
     enabled: z.boolean(),

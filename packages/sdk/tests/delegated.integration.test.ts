@@ -210,7 +210,7 @@ for (const language of ['typescript', 'python'])
         const { context, origin } = f;
         const groupId = await context.owner.auth.mutation(
           makeFunctionReference('groups/mutations:createGroup'),
-          { name: 'Red Room' }
+          { name: 'Reading Circle' }
         );
         const otherId = await context.owner.auth.mutation(
           makeFunctionReference('groups/mutations:createGroup'),
@@ -248,8 +248,8 @@ for (const language of ['typescript', 'python'])
         ).toMatchObject({
           ok: true,
           result: {
-            contractVersion: 'red-room.v1',
-            group: { id: groupId, name: 'Red Room' },
+            contractVersion: 'community.v1',
+            group: { id: groupId, name: 'Reading Circle' },
             applications: [],
           },
         });

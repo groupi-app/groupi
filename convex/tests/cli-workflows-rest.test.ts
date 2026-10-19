@@ -107,7 +107,7 @@ describe('Public CLI workflows against authenticated Convex REST', () => {
     await denied(
       organizer.rawKey,
       ['events', 'leave', event.eventId, '--yes'],
-      'FORBIDDEN'
+      'CONFLICT'
     );
     await denied(
       attendee.rawKey,

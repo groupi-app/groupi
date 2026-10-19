@@ -118,8 +118,8 @@ it('an administrator saves the hosted brand without changing the exact registere
   );
   const user = userEvent.setup();
   render(<AppReviewSettings />);
-  await user.type(screen.getByLabelText('Hosted brand name'), 'Red Room');
-  await user.type(screen.getByLabelText('Email sender name'), 'Red Room');
+  await user.type(screen.getByLabelText('Hosted brand name'), 'Reading Circle');
+  await user.type(screen.getByLabelText('Email sender name'), 'Reading Circle');
   await user.clear(screen.getByLabelText('Brand accent'));
   await user.type(screen.getByLabelText('Brand accent'), '#991b1b');
   await user.click(
@@ -128,8 +128,8 @@ it('an administrator saves the hosted brand without changing the exact registere
   expect(configure).toHaveBeenCalledWith({
     appId: 'app-1',
     appearance: {
-      brandName: 'Red Room',
-      senderName: 'Red Room',
+      brandName: 'Reading Circle',
+      senderName: 'Reading Circle',
       accent: '#991b1b',
     },
   });

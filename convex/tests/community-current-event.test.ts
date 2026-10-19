@@ -12,7 +12,7 @@ async function fixture() {
   const f = await setup();
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   const read = () =>
     f.owner.auth.query(api.groups.currentEvent.getCurrentEvent, { groupId });
@@ -47,7 +47,7 @@ it('returns absence, one undated Event, then a typed conflict instead of picking
       eventId: f.event.eventId,
     })
   ).toMatchObject({
-    audienceConflicts: [{ groupId: f.groupId, name: 'Red Room' }],
+    audienceConflicts: [{ groupId: f.groupId, name: 'Reading Circle' }],
   });
 });
 it('uses the exact end boundary, keeping past starts without an end and undated Events active', async () => {

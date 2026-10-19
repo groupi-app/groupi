@@ -1,8 +1,8 @@
 import { expect, test, vi } from 'vitest';
 import { deliverMagicLink } from '../delegatedApps/hostedEmail';
 const appearance = {
-  brandName: 'Red Room & friends',
-  senderName: 'Red Room',
+  brandName: 'Reading Circle & friends',
+  senderName: 'Reading Circle',
   accent: '#991b1b',
 };
 test('magic-link delivery uses a live registered brand and preserves the exact verification URL', async () => {
@@ -22,11 +22,11 @@ test('magic-link delivery uses a live registered brand and preserves the exact v
   expect(send).toHaveBeenCalledWith(
     expect.objectContaining({
       to: 'visitor@example.test',
-      from: 'Red Room <noreply@groupi.gg>',
-      subject: 'Sign in to Red Room & friends',
+      from: 'Reading Circle <noreply@groupi.gg>',
+      subject: 'Sign in to Reading Circle & friends',
     })
   );
-  expect(send.mock.calls[0][0].html).toContain('Red Room &amp; friends');
+  expect(send.mock.calls[0][0].html).toContain('Reading Circle &amp; friends');
   expect(send.mock.calls[0][0].html).toContain(url.replaceAll('&', '&amp;'));
   expect(send.mock.calls[0][0].html).toContain('Sign-in provided by Groupi');
 });

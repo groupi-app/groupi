@@ -3,7 +3,6 @@
 import { AccountSettingsContent } from '../components/account-settings-content';
 import { AccountSettingsSkeleton } from '@/components/skeletons/account-settings-skeleton';
 import { AccountFormProvider } from '../components/account-form-provider';
-import { AccountFormWithGuard } from '../components/account-form-with-guard';
 import {
   Authenticated,
   Unauthenticated,
@@ -109,12 +108,10 @@ function AuthenticatedAccountSettings() {
     >
       <AccountFormProvider defaultValues={defaultValues}>
         <div className='relative'>
-          <AccountFormWithGuard>
-            <AccountSettingsContent
-              accountData={accountData}
-              onAccountsChanged={refetchAccounts}
-            />
-          </AccountFormWithGuard>
+          <AccountSettingsContent
+            accountData={accountData}
+            onAccountsChanged={refetchAccounts}
+          />
         </div>
       </AccountFormProvider>
     </SettingsPageTemplate>

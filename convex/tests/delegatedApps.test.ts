@@ -118,16 +118,16 @@ test('only administrators configure hosted appearance and interaction metadata e
   const owner = await createAuthAccount(t, 'hosted-owner');
   const administrator = await createAuthAccount(t, 'hosted-admin');
   const appId = await owner.auth.mutation(register, {
-    name: 'Red Room',
+    name: 'Reading Circle',
     purpose: 'Connect the community',
     clientType: 'native',
-    redirectUris: ['https://redroom.example/callback'],
+    redirectUris: ['https://reading.example/callback'],
   });
   const appearance = {
-    brandName: 'Red Room',
+    brandName: 'Reading Circle',
     accent: '#991b1b',
-    senderName: 'Red Room',
-    statusReturnUrl: 'https://redroom.example/community/application',
+    senderName: 'Reading Circle',
+    statusReturnUrl: 'https://reading.example/community/application',
   };
   await expect(
     owner.auth.mutation(api.delegatedApps.hosted.configureAppearance, {
@@ -144,9 +144,9 @@ test('only administrators configure hosted appearance and interaction metadata e
   });
   for (const url of [
     'https://evil.example/status',
-    'http://redroom.example/status',
-    'https://user@redroom.example/status',
-    'https://redroom.example/status#redirect',
+    'http://reading.example/status',
+    'https://user@reading.example/status',
+    'https://reading.example/status#redirect',
   ]) {
     await expect(
       administrator.auth.mutation(
@@ -177,7 +177,7 @@ test('only administrators configure hosted appearance and interaction metadata e
       interactionId: 'trusted-hosted-interaction',
     })
   ).toMatchObject({
-    appName: 'Red Room',
+    appName: 'Reading Circle',
     appearance,
     providerName: 'Groupi',
   });
@@ -201,17 +201,17 @@ test('hosted sender configuration cannot inject another mailbox or control chara
     },
   });
   const appId = await administrator.auth.mutation(register, {
-    name: 'Red Room',
+    name: 'Reading Circle',
     purpose: 'Community sign-in',
     clientType: 'native',
-    redirectUris: ['https://redroom.example/callback'],
+    redirectUris: ['https://reading.example/callback'],
   });
   await expect(
     administrator.auth.mutation(api.delegatedApps.hosted.configureAppearance, {
       appId,
       appearance: {
-        brandName: 'Red Room',
-        senderName: 'Red Room, attacker@example.test',
+        brandName: 'Reading Circle',
+        senderName: 'Reading Circle, attacker@example.test',
         accent: '#991b1b',
       },
     })

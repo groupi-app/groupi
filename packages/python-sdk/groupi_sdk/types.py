@@ -1375,8 +1375,8 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Object71b9478386e5(TypedDict):
-    contractVersion: Literal['red-room.v1']
+class Object40f81eb82dda(TypedDict):
+    contractVersion: Literal['community.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
     membership: Object6ffc35fcb505 | None

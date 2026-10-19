@@ -34,11 +34,11 @@ beforeEach(() => {
   });
   mocks.send.mockResolvedValue({ error: null });
   vi.mocked(useQuery).mockReturnValue({
-    appName: 'Red Room',
+    appName: 'Reading Circle',
     providerName: 'Groupi',
     appearance: {
-      brandName: 'Red Room',
-      senderName: 'Red Room',
+      brandName: 'Reading Circle',
+      senderName: 'Reading Circle',
       accent: '#991b1b',
     },
   });
@@ -46,7 +46,9 @@ beforeEach(() => {
 it('hosted email sign-in keeps the consent interaction in the verification callback', async () => {
   const user = userEvent.setup();
   render(<SignInPage />);
-  expect(screen.getByRole('heading', { name: 'Red Room' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Reading Circle' })
+  ).toBeInTheDocument();
   await user.type(
     screen.getByPlaceholderText('Enter your email or username'),
     'visitor@example.test'

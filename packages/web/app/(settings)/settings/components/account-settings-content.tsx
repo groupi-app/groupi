@@ -1,4 +1,5 @@
 'use client';
+import { AccountFormWithGuard } from './account-form-with-guard';
 
 import { UsernameField } from './username-field';
 import { EmailManagement } from './email-management';
@@ -36,14 +37,16 @@ export function AccountSettingsContent({
 
   return (
     <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <UsernameField />
-        </CardContent>
-      </Card>
+      <AccountFormWithGuard>
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <UsernameField />
+          </CardContent>
+        </Card>
+      </AccountFormWithGuard>
 
       <EmailManagement />
 

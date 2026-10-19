@@ -1,112 +1,17 @@
 # Current Integration Status
 
+## Universal community integration — source evidence as of 2026-10-19
+
+- The source integration includes selected-Group delegated own-context and application writes, independent Event Join/RSVP/leave, Group leave, configurable hosted app appearance, decision delivery, explicit announcement opt-in, and coordinated exclusion cleanup/reinstatement. The provider baseline is `45d00c14`.
+- The public integration contract is named `community.v1`; see [Community integration contract](../../community-integration-contract.md). Its routes and scopes accept the explicitly selected Group and verified app configuration. No particular client app, domain, callback path, Group identity or branded presentation is a provider default.
+- Fresh Group admission defaults announcement consent off. Exclusion is immediate; cleanup respects independent Event authority, completion history and generation fences. Explicit reinstatement restores no membership, invitation, RSVP, ban or subscription.
+- Canonical pagination return validation and independent account-profile/developer-registration form ownership are verified. Current source checks pass: 1,144 backend tests, 1,303 web coverage tests, 21 SDK integration tests, eight Node transport tests, eight Python tests, 12 portal tests, generated SDK/portal freshness, and the full seven-package check with 772 canonical contracts.
+- The exact nine-entry release-note batch was approved on 2026-10-19; the approved entries are included. Filenames are descriptive bookkeeping, while approved package bumps and summary bodies remain unchanged. No versioning, publication or production deployment is implied.
+- Hosted deployment, isolated app/Group identities, operational signing keys, email/inbox delivery, browser/native accessibility and independent security review require explicit runtime evidence. Source tests and generated fixtures do not establish live acceptance.
+
+## Historical provider checkpoint
+
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
-
-## Red Room source integration — 2026-10-19
-
-- Groupi integration `e9a76aa6` includes G1–G9 source work and the independently reviewed final corrections. Source baseline remains developer-platform prerequisite `45d00c14`; [draft PR #389](https://github.com/groupi-app/groupi/pull/389) does not imply production deployment.
-- New Group membership resets announcement consent to off; existing-membership no-ops preserve it. Explicit Event mail has safe unfinished-delivery recovery; preference returns deny unrelated private Group-name reads. G9 metadata advertises implemented source capability, and explicit reinstatement restores no participation or consent.
-- Merger evidence: 49 announcement/participation/expulsion backend tests; query-route wrappers pass web types and five hosted auth component tests. Worker final review fixes passed 70 backend, three web, 21 SDK integration, eight Node and eight Python tests, full check with 772 contracts. Final merged full check is recorded in the external implementation evidence.
-- Site `41f4992` includes durable account-bound uncertainty recovery, structured intent issuance and a byte-identical canonical provider contract snapshot; 63 tests/build, diagnostics and formatting pass. Matching deployed site/provider, isolated identities/app/Group, sender/inbox and real browser/accessibility acceptance remain open under Groupi #388 and site #8.
-- User approved the exact nine-entry release-note batch on 2026-10-19; `e489987a` adds those files only. No versioning, publication or production deployment was performed.
-- Read-only hosted previews exposed query-route prerender errors; consent/error and other applicable route boundaries were corrected in source. Hosted success remains unverified. Ordinary env configuration is distinct from the explicit runtime/build/deploy restrictions; no local Groupi runtime or deployment was executed.
-
-## Red Room G9 source candidate — 2026-10-19
-
-- Staff explicitly resume captured Event cleanup in pages of ten applicable Events.
-  Every write checks current Event authority and protects Organizer memberships;
-  completed history is preserved and deleted Events retire from progress.
-- Reinstatement requires resolved current-generation cleanup, removes no independent
-  bans, and restores no membership, invitation or RSVP. Cleanup removes old Group
-  membership/pending invitations and resets announcement opt-in and delegated consent.
-- Staff reconciliation remains available after roster removal. Resume/reinstate use
-  durable original intents after uncertain responses through native and named SDK
-  HTTP operations. Group deletion requires explicit resolution of active exclusions.
-- Source checks and one-shot tests are recorded in the external G9 handoff; deployed
-  acceptance, matching runtime, real email and hosted staff browser checks remain G10 gates.
-
-## Red Room G5 source candidate — 2026-10-15
-
-- Implements selected Group Join with Pending RSVP, explicit own RSVP and independent
-  Event/Group Leave with minimal durable receipts. Group Leave preserves Event
-  membership and RSVP; current owner/last-Organizer safeguards return typed conflicts.
-- Coordinates exact Event Leave `{expectedRevision}`, own-context
-  `membership.membershipId`, and Group Leave `{expectedMembershipId}` across backend,
-  OpenAPI, generated TypeScript/Python and synthetic fixtures. Durable per-person/Event
-  revisions prevent a stale form deleting same-millisecond replacement participation.
-- Uses the G3 receipt window/binding/authority boundary. Original committed leave
-  replay reconciles after membership removal and does not delete a replacement.
-  Native web/mobile confirmation states independent participation consequences.
-- Verification: 89 focused native/authenticated HTTP backend tests, 16 web and 37
-  mobile confirmation/component tests, 20 real SDK integration tests plus Node/Python
-  transport tests pass. Full `pnpm check` includes 756 canonical Convex contracts;
-  workspace source resolution and generated SDK freshness pass. Ordinary Group ban
-  retains independent Event reads/RSVP/Leave; explicit coordinated exclusion denies them.
-- Matching deployed frontend/backend SHA, isolated signed-in browser/device, observed
-  VoiceOver and provider acceptance remain unverified G10 prerequisites. Source tests
-  and offline application declaration refresh are not deployment/component codegen.
-
-## Red Room G8 source candidate — 2026-10-15
-
-- Explicit coordinated exclusion is persistent and atomic before deferred cleanup,
-  with captured Event IDs and generation. Ordinary Group/Event bans and membership
-  records are unchanged by initiation. Protected Owner/Organizer authority remains
-  independent; staff see committed exclusion separately from pending/blocked cleanup.
-- Native staff operations, legacy-key staff REST, generated TypeScript/Python SDKs,
-  staff roster controls and own-context exclusion state are source implemented.
-  Canonical access/admission/RSVP/invitation/attachment/discussion and audience
-  reactivation boundaries fence exclusion despite retained participation.
-- Source evidence: 40 focused backend tests plus an additional ongoing RSVP/invite
-  acceptance race, two staff component tests, and real SDK HTTP lost-response
-  recovery. Repository lint/types/contracts/format and source workspace links pass.
-- G9 owns cleanup scheduling/completion proof and reinstatement; exact durable
-  generation seam is in the integration contract. Matching deployed frontend/backend,
-  isolated staff browser/native sessions and live provider acceptance remain
-  unverified G10 gates. No dev/build/deployment or live data mutation was performed.
-
-## Red Room G4 source candidate — 2026-10-15
-
-- Adds delegated `groups.events.read` current Event selection with native parity,
-  explicit absence/conflict, authorized pre-Join logistics and retained independent
-  Event membership access. Canonical completion uses recorded end at/before server
-  time or explicit completion, never a past start alone.
-- Existing Event details settings now expose Organizer completion, guarded reopen
-  and reschedule beside existing audience and admission controls. Staff lifecycle
-  operations share durable UUID receipts and current-role checks. The
-  [integration contract](../../red-room-integration-contract.md#g4-current-event-and-staff-lifecycle)
-  records exact native/REST/SDK methods and G8 exclusion hook boundaries.
-- Source verification passes 56 focused backend tests, 21 Organizer/audience/consent
-  component tests, 3 shared permission tests, and real generated Node/Python
-  current-Event consumer journeys. SDK transport suites pass 8 Node and 7 Python
-  tests, with 17 integration tests; generated client corpus contains 243 methods.
-- Runtime readiness for this source: matching deployed frontend/backend SHA,
-  isolated authenticated browser identity and live provider/email setup remain
-  unverified. Local source tests are separate from G10 deployed acceptance;
-  no dev server/build/deployment or live fixture mutation was performed.
-
-## Red Room integration branch — 2026-10-15
-
-- `codex/red-room-integration` starts at developer-platform prerequisite `45d00c14fb18d735b8cd2244400d22233509a5fd`. G1 merges at `3af0db2fc80ebdabcc201de6adc335b2b127f41b`; G2 merges at `bf98d7f29246d25e15e0ebd5219c95aae435070c`. [Draft PR #389](https://github.com/groupi-app/groupi/pull/389) targets a snapshot of that prerequisite, not main. Its prerequisite remains a separate integration/release concern.
-- Selected-Group own-context/consent and themed hosted email-link authentication source are integrated. G2 covers account selection, explicit linking, minimal onboarding, consent and safe recovery; combined merger verification passed 27 backend and 13 web tests, workspace source resolution and unchanged tested worker tree. G1 evidence is recorded below.
-- Application mutations (G3) are integrated at `d7de0d39c42ec50ac9775b65f4d3974c28101f0a` from worker `49452d9b`; current Event discovery/completion (G4) remains in progress. [Site draft PR #9](https://github.com/TheiaSurette/bound-in-red/pull/9) has public entrance, server session and application lifecycle merged; the single Event view is in progress. All current implementer and merger agents use GPT-6.1 Sol.
-- These are source milestones. The normal GitHub preview for `bf98d7f` was BUILDING when inspected; matching frontend/backend source, hosted authentication, approved sender and actual mail delivery remain unverified. Full component-aware codegen requires deployment configuration. No production deployment, live fixture mutation or package publication is claimed. G10 and site B7 retain real deployed acceptance gates.
-- Concrete changeset summaries and package/bump choices are being collected for the repository-required user approval batch; no new Red Room changeset files have been created.
-
-## Red Room G3 source candidate — 2026-10-15
-
-- Worker `codex/red-room-g3` started from integration `3af0db2f`. Shared authority/receipt checkpoint `5fe2ceed` exports `authorizeCommunity` and the reusable `operationReceipts` helper. This candidate adds selected-Group own-application HTTP writes, generated TypeScript/Python consumers, saved-snapshot edits, required delegated concurrency revisions and minimal replay receipts.
-- Combined merger checks passed 60 backend, 17 web, eight mobile, eight Node SDK, seven Python SDK and 17 SDK integration tests, plus workspace source resolution. The official offline declaration refresh produced no combined-source diff.
-- Receipt window is 30 days; permanent recognized-ID tombstones retain hashes and minimal IDs/status/revisions, never application answers. Live credential/grant/app/account/selected-Group authority is rechecked inside every write/replay transaction. Canonical Group application data remains the sole source of questions, answers and decisions.
-- Passing local gates: `pnpm check` (740 contracts), workspace source resolution, 65 focused backend tests, 16 web tests, eight mobile tests, generated SDK transport tests (eight TypeScript/seven Python), and 17 SDK integration tests including real TypeScript/Python delegated TLS application journeys. Source evidence includes authenticated HTTP/domain lifecycle, scope/privacy/revocation, monotonic same-millisecond revisions, lost responses, mismatch/expiry, fresh decline/reapply, staff replay without re-admission, and generated SDK consumer tests. Web/mobile existing review views forward observed revisions. Local checks do not establish deployed provider/browser/email acceptance.
-- Full component-aware `pnpm generate` is unavailable without `CONVEX_DEPLOYMENT`; the official offline application declaration refresh preserves component/runtime declarations. No runtime, build, deployment, push, issue update, PR or changeset is performed. G10 live acceptance and the coordinator's release batch approval remain open.
-
-## Red Room G1 source candidate — 2026-10-15
-
-- Worker branch `codex/red-room-g1` starts from integration base `45d00c14`. G1 adds selected-Group delegated applicant consent and an authoritative own-context HTTP read with generated TypeScript/Python SDK consumers. Its shared appearance dependency is cherry-picked from G2; G2 owns the full hosted authentication journey.
-- [The versioned integration contract](../../red-room-integration-contract.md) publishes exact implemented/proposed operation mappings, typed intent/results, error/replay/reconciliation rules and synthetic fixtures at `@groupi/sdk/community-contract`. G3–G9 remain explicit implementation milestones; unsupported operations have no live SDK stubs.
-- Source checks cover real protocol/HTTP reads, saved snapshots/history versus membership, scoped authority/revocation/expiry, pagination and private projections, both SDK consumers, fixture schema/service unavailability, and consent/settings UI. This is local source evidence, not deployed acceptance.
-- Frontend/backend source matching, isolated live browser identity and provider/email delivery are unverified for this candidate. Full component-aware codegen lacks `CONVEX_DEPLOYMENT`; official offline application API refresh preserves existing component/runtime declarations. No server, build, deployment, live data mutation, push or PR is performed. Existing schema migration and security gates remain open through G10.
-- Proposed changeset batch is awaiting coordinator/user approval; no G1 changeset is created.
 
 ## Developer platform candidate — 2026-10-15
 
@@ -208,10 +113,3 @@ The user authorized merging this candidate into `test` with administrator
 override only after all checks are green. This does not authorize production
 release. Browser/native verification has not run for this candidate; matching
 runtimes and an isolated signed-in session remain unverified.
-
-## Red Room G6 source candidate — 2026-10-15
-
-- `codex/red-room-g6` adds server-set application source app/grant linkage, administrator-approved `appearance.statusReturnUrl`, branded decision mail with operator-owned sender mailbox, durable per-application dispatch and staff retry controls on web/mobile. Decision and admission remain committed through delivery failure. Native reads and selected-Group HTTP/generated TypeScript/Python own-context expose recipient-free optional delivery state.
-- Global email/type settings and DND apply independently of announcement subscription, at decision and dispatch. Frozen messages carry provider idempotency keys; retries preserve the same message and stop after 23 hours, before the provider's 24-hour key horizon. Current manager authority gates retries; current source app/grant/account/preferences gate queued delivery. Group/account/application cleanup removes private dispatch payloads. Approved messages also recheck Group eligibility; declined messages remain accurate despite later admission ineligibility.
-- Trusted Groupi `/application-status/{applicationId}` authenticates the applicant, distinguishes historical approval from current membership and offers the exact approved site return only with live selected-Group/read authority. Bound in Red's configured destination is `https://<site-origin>/red-room/application`; the site must authenticate and reread authoritative context. No applicant email, answer, token or provider error is passed to the app.
-- Local evidence includes lost decision/provider responses, retry key reuse, suppression, source app deletion/suspension, queued application deletion, native sender defaults, retry horizon, former membership, unrelated account return denial, and web/mobile retry-only controls. Matching deployed frontend/backend revisions, isolated authenticated browser/device sessions, actual sender/domain verification and inbox/return acceptance are **unverified** and remain G10 gates. Full `pnpm generate` is unavailable without `CONVEX_DEPLOYMENT`; the official offline helper preserves component/runtime declarations. No runtime/build/deployment, push, PR/issue mutation or changeset file is performed.

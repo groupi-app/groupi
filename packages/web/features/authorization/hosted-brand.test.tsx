@@ -11,14 +11,16 @@ it('uses only interaction-bound registered appearance and discloses the provider
     providerName: 'Groupi',
     instance: 'https://issuer.example',
     appearance: {
-      brandName: 'Red Room',
+      brandName: 'Reading Circle',
       accent: '#991b1b',
-      senderName: 'Red Room',
+      senderName: 'Reading Circle',
     },
     expiresAt: Date.now() + 60000,
   });
   render(<HostedBrand interactionId='bound-interaction' />);
-  expect(screen.getByRole('heading', { name: 'Red Room' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Reading Circle' })
+  ).toBeInTheDocument();
   expect(screen.getByText('Sign-in provided by Groupi')).toBeInTheDocument();
   expect(screen.getByText('Developer app: Community')).toBeInTheDocument();
   expect(useQuery).toHaveBeenCalledWith('appearance', {
@@ -35,7 +37,7 @@ it('stops showing an expired interaction even without a backend update', async (
   vi.useFakeTimers();
   try {
     vi.mocked(useQuery).mockReturnValue({
-      appName: 'Red Room',
+      appName: 'Reading Circle',
       providerName: 'Groupi',
       expiresAt: Date.now() + 1000,
     });

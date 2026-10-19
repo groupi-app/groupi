@@ -4206,7 +4206,7 @@ export class Groupi {
     input: { path: { groupId: string }; query?: { cursor?: string } },
     options?: RequestOptions
   ): Promise<{
-    contractVersion: 'red-room.v1';
+    contractVersion: 'community.v1';
     group: { id: string; name: string };
     form: {
       enabled: boolean;
