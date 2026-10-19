@@ -104,7 +104,8 @@ export const communityOperations = Object.freeze({
     'POST',
     '/groups/{groupId}/coordinated-expulsions/{personId}/reinstate',
     'reinstateCommunityMember',
-    'G9'
+    'G9',
+    'implemented'
   ),
 });
 /** Proposed entries are not grantable scopes until the named implementation lands. */
@@ -154,7 +155,7 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G3', 'G4', 'G5', 'G7', 'G8'].includes(milestone)
+  status: ['G1', 'G3', 'G4', 'G5', 'G7', 'G8', 'G9'].includes(milestone)
     ? 'implemented'
     : 'proposed',
   milestone,

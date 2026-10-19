@@ -53,3 +53,51 @@ it('requires an explicit send and retries the exact Event intent after an unknow
   mounted.unmount();
   await client.close();
 });
+
+it('offers recovery for queued or interrupted deliveries without claiming they failed', async () => {
+  const client = new ConvexReactClient('https://fixture.convex.cloud', {
+    unsavedChangesWarning: false,
+  });
+  vi.spyOn(client, 'watchQuery').mockImplementation(
+    (...args: Parameters<typeof client.watchQuery>) => ({
+      onUpdate: () => () => {},
+      localQueryResult: () =>
+        getFunctionName(args[0]) === 'groupAnnouncements/eventMail:staffEvents'
+          ? [{ id: 'event-one', title: 'Reading' }]
+          : {
+              processing: false,
+              queued: 1,
+              failed: 0,
+              delivered: 0,
+              suppressed: 0,
+            },
+      journal: () => undefined,
+    })
+  );
+  const mutation = vi
+    .spyOn(client, 'mutation')
+    .mockResolvedValue({ result: { announcementId: 'announcement-one' } });
+  const mounted = render(
+    <ConvexProvider client={client}>
+      <EventMail groupId={'group-one' as never} />
+    </ConvexProvider>
+  );
+  fireEvent.change(screen.getByLabelText('Event you organize'), {
+    target: { value: 'event-one' },
+  });
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Send Event announcement email' })
+  );
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Resume unfinished deliveries' })
+  );
+  await waitFor(() => expect(mutation).toHaveBeenCalledTimes(2));
+  expect(getFunctionName(mutation.mock.calls[1][0])).toBe(
+    'groupAnnouncements/eventMail:retry'
+  );
+  expect(mutation.mock.calls[1][1]).toEqual({
+    announcementId: 'announcement-one',
+  });
+  mounted.unmount();
+  await client.close();
+});

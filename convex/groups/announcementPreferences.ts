@@ -1,3 +1,4 @@
+import { membershipFor } from './policy';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { preferenceFor } from './announcementPreferenceModel';
@@ -62,7 +63,9 @@ async function set(
       q.eq('groupId', groupId).eq('personId', personId)
     )
     .unique();
+  const membership = await membershipFor(ctx, groupId, personId);
   const source = {
+    sourceMembershipId: membership?._id ?? row?.sourceMembershipId,
     sourceAppId: authority === 'native' ? undefined : authority.appId,
     sourceGrantId: authority === 'native' ? undefined : authority.grantId,
   };

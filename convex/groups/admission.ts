@@ -1,3 +1,4 @@
+import { resetPreferenceFor } from './announcementPreferenceModel';
 import { ConvexError } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
@@ -18,6 +19,7 @@ export async function admitGroupMember(
   const group = await ctx.db.get(groupId);
   if (!group)
     throw new ConvexError({ code: 'NOT_FOUND', message: 'Group not found.' });
+  await resetPreferenceFor(ctx, groupId, personId);
   const membershipId = await ctx.db.insert('groupMemberships', {
     groupId,
     personId,

@@ -153,9 +153,10 @@ async function executeForPerson(
     const event = await ctx.db.get(eventId);
     const link = await ctx.db
       .query('groupEventAudiences')
-      .withIndex('by_groupId', q => q.eq('groupId', groupId))
-      .filter(q => q.eq(q.field('eventId'), eventId))
-      .first();
+      .withIndex('by_groupId_and_eventId', q =>
+        q.eq('groupId', groupId).eq('eventId', eventId)
+      )
+      .unique();
     if (
       !event ||
       !link ||

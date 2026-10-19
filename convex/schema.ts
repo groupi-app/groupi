@@ -311,6 +311,7 @@ export default defineSchema({
   groupAnnouncementPreferences: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),
+    sourceMembershipId: v.optional(v.id('groupMemberships')),
     subscribed: v.boolean(),
     updatedAt: v.number(),
     sourceAppId: v.optional(v.id('delegatedApps')),

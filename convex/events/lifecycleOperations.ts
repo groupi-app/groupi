@@ -1,7 +1,6 @@
+import { requireLegacyWriteCredential } from '../api/legacyCredential';
 import { currentEventForPerson } from '../groups/currentEvent';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
-import { components } from '../_generated/api';
-import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { v, type Infer } from 'convex/values';
 import {
   mutation,
@@ -208,36 +207,7 @@ export const setLifecycleRest = internalMutation({
   },
   returns: resultValidator,
   handler: async (ctx, { personId, credentialId, ...args }) => {
-    const person = await accountActive(ctx, personId, Date.now());
-    const records = await ctx.runQuery(components.betterAuth.adapter.findMany, {
-      model: 'apikey',
-      where: [{ field: '_id', operator: 'eq', value: credentialId }],
-      paginationOpts: { cursor: null, numItems: 1 },
-    });
-    const key = records.page[0] as AuthDoc<'apikey'> | undefined;
-    if (
-      !key ||
-      key.userId !== person.userId ||
-      key.enabled === false ||
-      (key.expiresAt != null && key.expiresAt <= Date.now())
-    )
-      operationError('FORBIDDEN', 'Current staff credential required.');
-    if (key.permissions != null) {
-      let permissions: unknown;
-      try {
-        permissions = JSON.parse(key.permissions);
-      } catch {
-        operationError('FORBIDDEN', 'Current events write scope required.');
-      }
-      if (
-        !permissions ||
-        typeof permissions !== 'object' ||
-        !('events' in permissions) ||
-        !Array.isArray(permissions.events) ||
-        !permissions.events.includes('write')
-      )
-        operationError('FORBIDDEN', 'Current events write scope required.');
-    }
+    await requireLegacyWriteCredential(ctx, personId, credentialId, 'events');
     return setLifecycleForPerson(ctx, personId, args, `legacy:${credentialId}`);
   },
 });
