@@ -1398,6 +1398,10 @@ export type ReportSummary = {
 export type DelegatedAction =
   | 'groups.context.read'
   | 'groups.events.read'
+  | 'groups.events.join'
+  | 'groups.events.rsvp'
+  | 'groups.events.leave'
+  | 'groups.leave'
   | 'groups.applications.submit'
   | 'groups.applications.edit'
   | 'groups.applications.withdraw'
@@ -4172,7 +4176,10 @@ export class Groupi {
         options?: Array<string>;
       }>;
     };
-    membership: { role: 'OWNER' | 'MODERATOR' | 'MEMBER' } | null;
+    membership: {
+      membershipId: string;
+      role: 'OWNER' | 'MODERATOR' | 'MEMBER';
+    } | null;
     eligibility: {
       canApply: boolean;
       canAccessMemberContent: boolean;
@@ -4245,6 +4252,75 @@ export class Groupi {
         allowedActions: Array<string>;
       }
   >;
+  /** joinCommunityEvent */
+  joinCommunityEvent(
+    input: {
+      path: { groupId: string; eventId: string };
+      body: Record<string, never>;
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+    result: {
+      eventId: string;
+      participation: {
+        membershipId: string;
+        revision: number;
+        rsvp: 'PENDING' | 'YES' | 'NO' | 'MAYBE';
+      };
+    };
+  }>;
+  /** setCommunityRsvp */
+  setCommunityRsvp(
+    input: {
+      path: { groupId: string; eventId: string };
+      body: {
+        expectedRevision: number;
+        rsvp: 'PENDING' | 'YES' | 'NO' | 'MAYBE';
+      };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+    result: {
+      eventId: string;
+      participation: {
+        membershipId: string;
+        revision: number;
+        rsvp: 'PENDING' | 'YES' | 'NO' | 'MAYBE';
+      };
+    };
+  }>;
+  /** leaveCommunityEvent */
+  leaveCommunityEvent(
+    input: {
+      path: { groupId: string; eventId: string };
+      body: { expectedRevision: number };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+    result: { eventId: string; participation: null };
+  }>;
+  /** leaveCommunity */
+  leaveCommunity(
+    input: {
+      path: { groupId: string };
+      body: { expectedMembershipId: string };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+    result: { membership: null; retainsIndependentEventParticipation: true };
+  }>;
   /** submitCommunityApplication */
   submitCommunityApplication(
     input: {

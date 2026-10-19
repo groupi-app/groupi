@@ -97,6 +97,11 @@ export function createAuthorizationHooks<
 export function authorizationActionLabel(action: string): string {
   const labels: Record<string, string> = {
     'groups.events.read': 'Read your current community Event and own RSVP',
+    'groups.events.join': 'Join your current community Event with Pending RSVP',
+    'groups.events.rsvp': 'Change your own community Event RSVP',
+    'groups.events.leave': 'Leave your community Event',
+    'groups.leave':
+      'Leave your selected Group while retaining Event participation',
     'groups.context.read': 'Read your own community context',
     'groups.applications.submit': 'Submit your own Group application',
     'groups.applications.edit': 'Edit your pending Group application',

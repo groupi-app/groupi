@@ -207,6 +207,75 @@ export async function handleBoundedRequest(
       );
     }
   }
+  if (
+    !isV1 &&
+    parts[0] === 'groups' &&
+    ((parts.length === 3 &&
+      parts[2] === 'community-leave' &&
+      method === 'POST') ||
+      (parts.length === 5 &&
+        parts[2] === 'events' &&
+        ((['join', 'leave'].includes(parts[4]) && method === 'POST') ||
+          (parts[4] === 'own-rsvp' && method === 'PUT'))))
+  ) {
+    try {
+      return respond(
+        await ctx.runMutation(internal.groups.communityParticipation.execute, {
+          credentialId,
+          groupId: parts[1],
+          eventId: parts.length === 5 ? parts[3] : undefined,
+          operation:
+            parts.length === 3
+              ? 'leave-group'
+              : parts[4] === 'join'
+                ? 'join'
+                : parts[4] === 'leave'
+                  ? 'leave-event'
+                  : 'rsvp',
+          operationId: request.headers.get('Idempotency-Key') ?? '',
+          bodyJson: await request.text(),
+        })
+      );
+    } catch (error) {
+      let data: unknown = error instanceof ConvexError ? error.data : null;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          data = null;
+        }
+      }
+      if (data && typeof data === 'object' && 'code' in data) {
+        const code = String(data.code);
+        if (code === 'FORBIDDEN') return forbidden();
+        if (
+          [
+            'STALE_REVISION',
+            'PROTECTED_OWNER',
+            'PROTECTED_ORGANIZER',
+            'STAFF_CONFIGURATION_CONFLICT',
+            'CONFLICT',
+            'IDEMPOTENCY_CONFLICT',
+            'IDEMPOTENCY_EXPIRED',
+            'VALIDATION_ERROR',
+          ].includes(code)
+        )
+          return Response.json(
+            { error: data },
+            { status: code === 'VALIDATION_ERROR' ? 400 : 409 }
+          );
+      }
+      return Response.json(
+        {
+          error: {
+            code: 'UNAVAILABLE',
+            message: 'Participation service unavailable.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+  }
   if (isV1 && parts[0] === 'uploads') return forbidden();
   if (parts[0] === 'uploads' && parts.length === 1 && method === 'POST') {
     const eventId = url.searchParams.get('eventId');

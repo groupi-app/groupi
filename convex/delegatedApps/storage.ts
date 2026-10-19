@@ -279,6 +279,10 @@ export const prepareConsent = internalMutation({
           ![
             'groups.context.read',
             'groups.events.read',
+            'groups.events.join',
+            'groups.events.rsvp',
+            'groups.events.leave',
+            'groups.leave',
             'groups.applications.submit',
             'groups.applications.edit',
             'groups.applications.withdraw',

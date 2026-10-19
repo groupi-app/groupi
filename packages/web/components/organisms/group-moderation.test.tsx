@@ -117,6 +117,7 @@ function fixtureClient(overrides: Record<string, unknown> = {}) {
     unsavedChangesWarning: false,
   });
   const data: Record<string, unknown> = {
+    'groups/expulsions:progress': null,
     'groupEventAudiences/queries:listGroupSharedEvents': emptyPage,
     'groupTransfers/queries:status': null,
     'groupInvites/queries:listMyGroupInvites': {
@@ -267,6 +268,9 @@ it.each(['MEMBER', 'MODERATOR'])(
       await screen.findByRole('button', { name: 'Leave Group' })
     );
     expect(mutation).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/Independent Event membership and RSVP remain unchanged/)
+    ).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: 'Confirm leaving Neighbors' })
     );

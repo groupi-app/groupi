@@ -216,6 +216,7 @@ import type * as events_management from "../events/management.js";
 import type * as events_managementRest from "../events/managementRest.js";
 import type * as events_membersRest from "../events/membersRest.js";
 import type * as events_mutations from "../events/mutations.js";
+import type * as events_participationRevision from "../events/participationRevision.js";
 import type * as events_queries from "../events/queries.js";
 import type * as events_rest from "../events/rest.js";
 import type * as events_restQueries from "../events/restQueries.js";
@@ -314,6 +315,7 @@ import type * as groups_announcementPreferences from "../groups/announcementPref
 import type * as groups_cleanup from "../groups/cleanup.js";
 import type * as groups_community from "../groups/community.js";
 import type * as groups_communityApplications from "../groups/communityApplications.js";
+import type * as groups_communityParticipation from "../groups/communityParticipation.js";
 import type * as groups_contentAccess from "../groups/contentAccess.js";
 import type * as groups_contracts from "../groups/contracts.js";
 import type * as groups_currentEvent from "../groups/currentEvent.js";
@@ -624,6 +626,7 @@ declare const fullApi: ApiFromModules<{
   "events/managementRest": typeof events_managementRest;
   "events/membersRest": typeof events_membersRest;
   "events/mutations": typeof events_mutations;
+  "events/participationRevision": typeof events_participationRevision;
   "events/queries": typeof events_queries;
   "events/rest": typeof events_rest;
   "events/restQueries": typeof events_restQueries;
@@ -722,6 +725,7 @@ declare const fullApi: ApiFromModules<{
   "groups/cleanup": typeof groups_cleanup;
   "groups/community": typeof groups_community;
   "groups/communityApplications": typeof groups_communityApplications;
+  "groups/communityParticipation": typeof groups_communityParticipation;
   "groups/contentAccess": typeof groups_contentAccess;
   "groups/contracts": typeof groups_contracts;
   "groups/currentEvent": typeof groups_currentEvent;

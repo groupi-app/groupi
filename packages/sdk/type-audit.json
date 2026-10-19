@@ -1,7 +1,7 @@
 {
-  "openapiSha256": "dea6effe70b31d43a9089ee5a2fa04946df18044ef3feb641e8e48fcc52a52b8",
-  "documentedOperations": 248,
-  "generatedOperations": 246,
+  "openapiSha256": "6a94afc25075d74b1c10c5dc62761c4da49f403fc4681efc1dd859119aabd577",
+  "documentedOperations": 252,
+  "generatedOperations": 250,
   "transportAdapters": 2,
   "schemaTypes": 81,
   "unknownOperationTypes": [],

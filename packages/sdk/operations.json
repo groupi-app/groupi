@@ -948,6 +948,34 @@
   },
   {
     "paging": null,
+    "name": "joinCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/join",
+    "summary": "joinCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "setCommunityRsvp",
+    "method": "PUT",
+    "path": "/groups/{groupId}/events/{eventId}/own-rsvp",
+    "summary": "setCommunityRsvp"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/leave",
+    "summary": "leaveCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunity",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-leave",
+    "summary": "leaveCommunity"
+  },
+  {
+    "paging": null,
     "name": "submitCommunityApplication",
     "method": "POST",
     "path": "/groups/{groupId}/community-applications",

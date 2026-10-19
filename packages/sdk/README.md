@@ -1,7 +1,7 @@
 # Groupi TypeScript SDK
 
 An unpublished, dependency-free REST v2 release candidate for Node.js 22/24.
-It exposes **238 public operations**: 236 generated named methods and two binary
+It exposes **251 public operations**: 249 generated named methods and two binary
 upload/discard adapters. All 81 source schema types and every generated operation
 input/response have specific types. `GroupiError.details` alone is opaque because
 it may contain an external exception. Browser owner-key use is rejected.
@@ -126,3 +126,23 @@ the CI matrix evidence. This is source-tested candidate evidence, not a deployed
 API or published-package claim. Registry ownership and explicit publication
 approval remain release prerequisites. Realtime, mobile push and encrypted-event
 decryption are excluded; legacy profile data is never an identity-only fallback.
+
+### Selected Group participation (G5 source candidate)
+
+Request only necessary `groups.events.join`, `groups.events.rsvp`,
+`groups.events.leave` and `groups.leave` scopes with the selected Group grant.
+Read scope is separate. Join sends `{}` and creates Pending, never Yes; explicitly
+set own RSVP with the observed current-event `expectedRevision`. Event Leave also
+sends `{expectedRevision}`. Group Leave sends `{expectedMembershipId}` from own
+community context and preserves independent Event membership and RSVP.
+
+Persist a UUID operation ID and unchanged payload for each deliberate intent before
+sending. A lost response is uncertain: retry that original intent to retrieve its
+minimal committed receipt, including after successful leave removed membership.
+Replay never deletes a replacement membership or resets a later RSVP. Fresh stale
+forms fail; refresh authorized current state before a new intent. Receipts describe
+original commitment; use separately authorized reads for current state. Shared G3/G5
+receipts last 30 days with permanent mismatch tombstones. Ownership/last-Organizer
+conflicts require resolution; never display successful departure for those errors.
+See the repository's `docs/red-room-integration-contract.md` for exact bodies,
+result shapes, independent read/write authority and deployment gates.

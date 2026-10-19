@@ -45,7 +45,7 @@ export function GroupLeaveControl({
             showConfirmDialog({
               title: 'Leave Group',
               message:
-                'Leave this Group? Returning requires a future invitation allowed by the current policy. Your Event memberships remain unchanged.',
+                'Leave this Group? Returning requires a future invitation allowed by the current policy. Your independent Event memberships and RSVP responses remain unchanged.',
               confirmLabel: 'Leave Group',
               destructive: true,
               onConfirm: performLeave,

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import AsyncIterator, Iterator, Literal, NotRequired, TypedDict, Protocol, TypeAlias
+from typing import NoReturn, AsyncIterator, Iterator, Literal, NotRequired, TypedDict, Protocol, TypeAlias
 
 class DelegatedToken(TypedDict):
     access_token: str
@@ -1370,11 +1370,11 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Objectf491aedb9b1f(TypedDict):
+class Object71b9478386e5(TypedDict):
     contractVersion: Literal['red-room.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
-    membership: Object5b35bc95b99b | None
+    membership: Object6ffc35fcb505 | None
     eligibility: Objecta021a3f479e7
     applications: list[Object9a607b8a62e8]
     nextCursor: str | None
@@ -1399,6 +1399,35 @@ class Object0b7836604670(TypedDict):
     event: Object8f7560a6b20e
     participation: Object427b94380342 | None
     allowedActions: list[str]
+
+class Objectd0927d889d39(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objectf03c0b814f7e
+
+class Object662cba3b4b77(TypedDict):
+    groupId: str
+    eventId: str
+
+class Object309b8d6ee3c7(TypedDict):
+    expectedRevision: int
+    rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
+
+class Object288ba65ddff3(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objecte942149005cb
+
+class Object55bc59b678b3(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    effects: Object14927e6acaac
+    result: Objectfc3c77e1d00a
+
+class Object6c49c59c24af(TypedDict):
+    expectedMembershipId: str
 
 class Object53e85f30308a(TypedDict):
     operationId: str
@@ -2149,7 +2178,8 @@ class Objecta61bf08328e7(TypedDict):
     revision: str
     questions: list[Object6a6aeb3276ba]
 
-class Object5b35bc95b99b(TypedDict):
+class Object6ffc35fcb505(TypedDict):
+    membershipId: str
     role: Literal['OWNER', 'MODERATOR', 'MEMBER']
 
 class Objecta021a3f479e7(TypedDict):
@@ -2187,6 +2217,18 @@ class Object427b94380342(TypedDict):
     membershipId: str
     revision: float
     rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
+
+class Objectf03c0b814f7e(TypedDict):
+    eventId: str
+    participation: Object7cd832af6593
+
+class Objecte942149005cb(TypedDict):
+    eventId: str
+    participation: None
+
+class Objectfc3c77e1d00a(TypedDict):
+    membership: None
+    retainsIndependentEventParticipation: Literal[True]
 
 class Object878ec63794f7(TypedDict):
     applicationId: str
@@ -2303,6 +2345,11 @@ class Object1fa6adfb22bd(TypedDict):
 
 class Object1e0b443bfaa7(TypedDict):
     displayName: str
+
+class Object7cd832af6593(TypedDict):
+    membershipId: str
+    revision: float
+    rsvp: Literal['PENDING', 'YES', 'NO', 'MAYBE']
 
 class Object30a6d58642d2(TypedDict):
     id: str

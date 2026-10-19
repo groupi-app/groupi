@@ -62,25 +62,29 @@ export const communityOperations = Object.freeze({
     'POST',
     '/groups/{groupId}/events/{eventId}/join',
     'joinCommunityEvent',
-    'G5'
+    'G5',
+    'implemented'
   ),
   rsvp: op(
     'PUT',
     '/groups/{groupId}/events/{eventId}/own-rsvp',
     'setCommunityRsvp',
-    'G5'
+    'G5',
+    'implemented'
   ),
   leaveEvent: op(
     'POST',
     '/groups/{groupId}/events/{eventId}/leave',
     'leaveCommunityEvent',
-    'G5'
+    'G5',
+    'implemented'
   ),
   leaveGroup: op(
     'POST',
     '/groups/{groupId}/community-leave',
     'leaveCommunity',
-    'G5'
+    'G5',
+    'implemented'
   ),
   preference: op(
     'PUT',
@@ -150,7 +154,7 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G3', 'G4', 'G7', 'G8'].includes(milestone)
+  status: ['G1', 'G3', 'G4', 'G5', 'G7', 'G8'].includes(milestone)
     ? 'implemented'
     : 'proposed',
   milestone,
@@ -187,7 +191,7 @@ export const communityFixtures = Object.freeze({
     applications: [application('APPROVED')],
   }),
   member: withContext({
-    membership: { role: 'MEMBER' },
+    membership: { membershipId: 'synthetic-group-membership', role: 'MEMBER' },
     eligibility: {
       canApply: false,
       canAccessMemberContent: true,
@@ -200,6 +204,7 @@ export const communityFixtures = Object.freeze({
       context,
       event: {
         ...activeEvent,
+        allowedRsvpTransitions: ['PENDING', 'YES', 'NO', 'MAYBE'],
         participation: {
           membershipId: 'synthetic-membership',
           revision: 3,
@@ -212,7 +217,8 @@ export const communityFixtures = Object.freeze({
         ],
       },
     },
-    'G5'
+    'G5',
+    'implemented'
   ),
   banned: withContext({
     form: { enabled: true, revision: 'synthetic-hidden', questions: [] },
@@ -250,6 +256,7 @@ export const communityFixtures = Object.freeze({
     {
       event: {
         ...activeEvent,
+        allowedRsvpTransitions: ['PENDING', 'YES', 'NO', 'MAYBE'],
         participation: {
           membershipId: 'synthetic-membership',
           revision: 1,
@@ -262,12 +269,14 @@ export const communityFixtures = Object.freeze({
         ],
       },
     },
-    'G5'
+    'G5',
+    'implemented'
   ),
   rsvpYes: fixture(
     {
       event: {
         ...activeEvent,
+        allowedRsvpTransitions: ['PENDING', 'YES', 'NO', 'MAYBE'],
         participation: {
           membershipId: 'synthetic-membership',
           revision: 2,
@@ -280,7 +289,8 @@ export const communityFixtures = Object.freeze({
         ],
       },
     },
-    'G5'
+    'G5',
+    'implemented'
   ),
   leftEvent: fixture({ event: activeEvent }, 'G5'),
   unsubscribed: fixture(
