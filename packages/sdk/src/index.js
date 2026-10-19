@@ -1001,6 +1001,15 @@ export class Groupi extends Transport {
       options
     );
   }
+  /** Change own Group announcement subscription */
+  setCommunityAnnouncementPreference(input = {}, options = {}) {
+    return this.request(
+      'PUT',
+      '/groups/{groupId}/announcement-preference',
+      input,
+      options
+    );
+  }
   /** Read your private joining questionnaire and current access status */
   getGroupsJoiningQuestionnaire(input = {}, options = {}) {
     return this.request(

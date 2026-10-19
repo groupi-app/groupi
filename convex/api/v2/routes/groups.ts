@@ -533,5 +533,55 @@ export function createGroupRoutes() {
         });
       }
     );
+  app.openapi(
+    createRoute({
+      method: 'put',
+      path: '/groups/{groupId}/announcement-preference',
+      tags: ['Groups'],
+      operationId: 'setCommunityAnnouncementPreference',
+      summary: 'Change own Group announcement subscription',
+      security: [{ boundedBearer: [] }],
+      request: {
+        params,
+        headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+        body: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: z.object({ subscribed: z.boolean() }).strict(),
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Committed own preference',
+          content: {
+            'application/json': {
+              schema: z.object({
+                operationId: z.string(),
+                outcome: z.literal('committed'),
+                result: z.object({ subscribed: z.boolean() }),
+                effects: z.object({
+                  email: z.literal('not-requested'),
+                  cleanup: z.literal('not-requested'),
+                }),
+              }),
+            },
+          },
+        },
+        ...errors,
+        409: {
+          description: 'Operation intent conflict',
+          content: { 'application/json': { schema: ErrorResponseSchema } },
+        },
+      },
+    }),
+    async () => {
+      throw new HTTPException(403, {
+        message: 'Selected Group delegated credential required',
+      });
+    }
+  );
   return app;
 }

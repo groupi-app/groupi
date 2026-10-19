@@ -74,6 +74,7 @@ export async function assertBounds(
             'groups.applications.submit',
             'groups.applications.edit',
             'groups.applications.withdraw',
+            'groups.announcements.preferences.update',
           ].includes(a)
       )
     )

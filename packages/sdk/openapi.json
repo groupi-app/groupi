@@ -23347,11 +23347,11 @@
                         "supported": {
                           "type": "boolean",
                           "enum": [
-                            false
+                            true
                           ]
                         },
                         "subscribed": {
-                          "nullable": true
+                          "type": "boolean"
                         }
                       },
                       "required": [
@@ -24306,6 +24306,171 @@
           },
           "409": {
             "description": "Revision or operation intent conflict; reconcile authorized state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/announcement-preference": {
+      "put": {
+        "tags": [
+          "Groups"
+        ],
+        "operationId": "setCommunityAnnouncementPreference",
+        "summary": "Change own Group announcement subscription",
+        "security": [
+          {
+            "boundedBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subscribed": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "subscribed"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed own preference",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operationId": {
+                      "type": "string"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "committed"
+                      ]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "subscribed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "subscribed"
+                      ]
+                    },
+                    "effects": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": [
+                            "not-requested"
+                          ]
+                        },
+                        "cleanup": {
+                          "type": "string",
+                          "enum": [
+                            "not-requested"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "email",
+                        "cleanup"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operationId",
+                    "outcome",
+                    "result",
+                    "effects"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identity or pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Owner authority or Group scope required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Operation intent conflict",
             "content": {
               "application/json": {
                 "schema": {

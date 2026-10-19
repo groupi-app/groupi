@@ -1,3 +1,4 @@
+import { preferenceFor } from './announcementPreferenceModel';
 import { isGroupExcludedForPerson } from './exclusions';
 import { v } from 'convex/values';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -68,8 +69,8 @@ export const context = v.object({
   grantedActions: v.array(v.string()),
   allowedActions: v.array(v.string()),
   announcementPreference: v.object({
-    supported: v.literal(false),
-    subscribed: v.null(),
+    supported: v.literal(true),
+    subscribed: v.boolean(),
   }),
 });
 export async function authorizeCommunity(
@@ -183,6 +184,7 @@ export const readContext = internalQuery({
         a =>
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
+            (a === 'groups.announcements.preferences.update' && eligible) ||
             (a === 'groups.applications.submit' &&
               eligible &&
               enabled &&
@@ -197,7 +199,10 @@ export const readContext = internalQuery({
               eligible &&
               Boolean(pending)))
       ),
-      announcementPreference: { supported: false as const, subscribed: null },
+      announcementPreference: {
+        supported: true as const,
+        subscribed: await preferenceFor(ctx, groupId, personId),
+      },
     };
   },
 });

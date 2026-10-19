@@ -2,6 +2,7 @@
 import { GroupSharedEvents } from './group-shared-events';
 import { GroupEventSharingPolicy } from './group-event-sharing-policy';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
+import { EventMail } from '@/features/group-announcements/event-mail';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 
 import { useState } from 'react';
@@ -263,6 +264,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           )
         )}
         <GroupOwnershipTransfer groupId={groupId} />
+        <Link href={`/announcement-preferences/${groupId}`}>
+          Your announcement subscription
+        </Link>
         {group.canManageRoles && (
           <GroupApplicationSettings
             key={JSON.stringify([
@@ -285,7 +289,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           <GroupApplications groupId={groupId} review />
         )}
         {group.viewerRole !== 'MEMBER' && (
-          <GroupAnnouncementComposer groupId={groupId} />
+          <>
+            <GroupAnnouncementComposer groupId={groupId} />
+            <EventMail groupId={groupId} />
+          </>
         )}
         {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
         {group.canManageInvitations && (

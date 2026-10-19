@@ -1370,7 +1370,7 @@ class Objectf2a3cfe95492(TypedDict):
     description: NotRequired[str | None]
     image: NotRequired[str | None]
 
-class Object0bc0d63d1916(TypedDict):
+class Objectf491aedb9b1f(TypedDict):
     contractVersion: Literal['red-room.v1']
     group: Object59509cf0ec83
     form: Objecta61bf08328e7
@@ -1380,7 +1380,7 @@ class Object0bc0d63d1916(TypedDict):
     nextCursor: str | None
     grantedActions: list[str]
     allowedActions: list[str]
-    announcementPreference: Object068ecbb0d0bb
+    announcementPreference: Objectd9ee0d5fe0e0
 
 class Objecta2791daed18f(TypedDict):
     cursor: NotRequired[str]
@@ -1417,6 +1417,15 @@ class Object0210d908b1ed(TypedDict):
 class Objectece999219204(TypedDict):
     expectedRevision: int
     answers: dict[str, str | float | bool | list[str]]
+
+class Object39140cd5ad6d(TypedDict):
+    operationId: str
+    outcome: Literal['committed']
+    result: Object5ebfeba959d7
+    effects: Object14927e6acaac
+
+class Objectb93f36757224(TypedDict):
+    subscribed: bool
 
 class Object056f6599a34c(TypedDict):
     groupId: str
@@ -2159,9 +2168,9 @@ class Object9a607b8a62e8(TypedDict):
     submittedAt: float
     decisions: list[Object1fa6adfb22bd]
 
-class Object068ecbb0d0bb(TypedDict):
-    supported: Literal[False]
-    subscribed: None
+class Objectd9ee0d5fe0e0(TypedDict):
+    supported: Literal[True]
+    subscribed: bool
 
 class Object8f7560a6b20e(TypedDict):
     id: str
@@ -2183,6 +2192,9 @@ class Object878ec63794f7(TypedDict):
     applicationId: str
     status: Literal['PENDING', 'WITHDRAWN', 'APPROVED', 'DECLINED']
     revision: float
+
+class Object5ebfeba959d7(TypedDict):
+    subscribed: bool
 
 class Objectcb244cc36b34(TypedDict):
     id: str

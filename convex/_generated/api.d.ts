@@ -236,6 +236,9 @@ import type * as groupAnnouncements_actions from "../groupAnnouncements/actions.
 import type * as groupAnnouncements_cleanup from "../groupAnnouncements/cleanup.js";
 import type * as groupAnnouncements_contracts from "../groupAnnouncements/contracts.js";
 import type * as groupAnnouncements_dispatch from "../groupAnnouncements/dispatch.js";
+import type * as groupAnnouncements_eventMail from "../groupAnnouncements/eventMail.js";
+import type * as groupAnnouncements_eventMailActions from "../groupAnnouncements/eventMailActions.js";
+import type * as groupAnnouncements_eventMailCleanup from "../groupAnnouncements/eventMailCleanup.js";
 import type * as groupAnnouncements_model from "../groupAnnouncements/model.js";
 import type * as groupAnnouncements_mutations from "../groupAnnouncements/mutations.js";
 import type * as groupAnnouncements_queries from "../groupAnnouncements/queries.js";
@@ -306,6 +309,8 @@ import type * as groupTransfers_mutations from "../groupTransfers/mutations.js";
 import type * as groupTransfers_queries from "../groupTransfers/queries.js";
 import type * as groupTransfers_rest from "../groupTransfers/rest.js";
 import type * as groups_admission from "../groups/admission.js";
+import type * as groups_announcementPreferenceModel from "../groups/announcementPreferenceModel.js";
+import type * as groups_announcementPreferences from "../groups/announcementPreferences.js";
 import type * as groups_cleanup from "../groups/cleanup.js";
 import type * as groups_community from "../groups/community.js";
 import type * as groups_communityApplications from "../groups/communityApplications.js";
@@ -639,6 +644,9 @@ declare const fullApi: ApiFromModules<{
   "groupAnnouncements/cleanup": typeof groupAnnouncements_cleanup;
   "groupAnnouncements/contracts": typeof groupAnnouncements_contracts;
   "groupAnnouncements/dispatch": typeof groupAnnouncements_dispatch;
+  "groupAnnouncements/eventMail": typeof groupAnnouncements_eventMail;
+  "groupAnnouncements/eventMailActions": typeof groupAnnouncements_eventMailActions;
+  "groupAnnouncements/eventMailCleanup": typeof groupAnnouncements_eventMailCleanup;
   "groupAnnouncements/model": typeof groupAnnouncements_model;
   "groupAnnouncements/mutations": typeof groupAnnouncements_mutations;
   "groupAnnouncements/queries": typeof groupAnnouncements_queries;
@@ -709,6 +717,8 @@ declare const fullApi: ApiFromModules<{
   "groupTransfers/queries": typeof groupTransfers_queries;
   "groupTransfers/rest": typeof groupTransfers_rest;
   "groups/admission": typeof groups_admission;
+  "groups/announcementPreferenceModel": typeof groups_announcementPreferenceModel;
+  "groups/announcementPreferences": typeof groups_announcementPreferences;
   "groups/cleanup": typeof groups_cleanup;
   "groups/community": typeof groups_community;
   "groups/communityApplications": typeof groups_communityApplications;

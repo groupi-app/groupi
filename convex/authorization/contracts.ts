@@ -5,6 +5,7 @@ export const actions = [
   'groups.applications.submit',
   'groups.applications.edit',
   'groups.applications.withdraw',
+  'groups.announcements.preferences.update',
   'identity.display-name',
   'identity.email',
   'events.read',

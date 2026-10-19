@@ -59,6 +59,64 @@ export async function handleBoundedRequest(
   if (
     !isV1 &&
     parts[0] === 'groups' &&
+    parts[2] === 'announcement-preference' &&
+    parts.length === 3 &&
+    method === 'PUT'
+  ) {
+    try {
+      return respond(
+        await ctx.runMutation(internal.groups.announcementPreferences.execute, {
+          credentialId,
+          groupId: parts[1],
+          operationId: request.headers.get('Idempotency-Key') ?? '',
+          bodyJson: await request.text(),
+        })
+      );
+    } catch (error) {
+      let data: unknown = error instanceof ConvexError ? error.data : null;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          data = null;
+        }
+      }
+      if (data && typeof data === 'object' && 'code' in data) {
+        const code = String(data.code);
+        if (code === 'FORBIDDEN') return forbidden();
+        if (
+          [
+            'STALE_REVISION',
+            'CONFLICT',
+            'IDEMPOTENCY_CONFLICT',
+            'IDEMPOTENCY_EXPIRED',
+            'VALIDATION_ERROR',
+          ].includes(code)
+        )
+          return Response.json(
+            { error: data },
+            { status: code === 'VALIDATION_ERROR' ? 400 : 409 }
+          );
+      }
+      if (error instanceof SyntaxError)
+        return Response.json(
+          { error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON.' } },
+          { status: 400 }
+        );
+      return Response.json(
+        {
+          error: {
+            code: 'UNAVAILABLE',
+            message: 'Community service unavailable.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+  }
+  if (
+    !isV1 &&
+    parts[0] === 'groups' &&
     parts[2] === 'community-applications' &&
     ((parts.length === 3 && method === 'POST') ||
       (parts.length === 4 && method === 'PATCH') ||
