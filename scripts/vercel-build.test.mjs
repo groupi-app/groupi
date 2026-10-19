@@ -28,6 +28,7 @@ if (args[1] === 'deploy') {
   const nameIndex = args.indexOf('--preview-name');
   const createIndex = args.indexOf('--preview-create');
   if (nameIndex < 0 && createIndex < 0) process.exit(91);
+  if (process.env.FAIL_CLAIM === 'true') process.exit(9);
   const name = args[Math.max(nameIndex, createIndex) + 1];
   if (!state || createIndex >= 0) {
     state = { name, issuer: 'new-preview', records: [], environment: {} };
@@ -149,6 +150,14 @@ for (const failure of ['FAIL_ENV', 'FAIL_FINAL']) {
     if (failure === 'FAIL_ENV') assert.equal(preview.calls().length, 2);
   });
 }
+
+test('failed provisioning cannot continue to the frontend build', t => {
+  const preview = harness(t, null, { FAIL_CLAIM: 'true' });
+  assert.notEqual(preview.run().status, 0);
+  assert.equal(preview.state(), null);
+  assert.equal(preview.calls().length, 2);
+  assert.ok(preview.calls().every(args => !args.includes('--cmd')));
+});
 
 test('missing preview host fails before any CLI invocation', t => {
   const preview = harness(t, existing, {
