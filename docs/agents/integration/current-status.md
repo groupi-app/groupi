@@ -2,6 +2,20 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room G9 source candidate — 2026-10-19
+
+- Staff explicitly resume captured Event cleanup in pages of ten applicable Events.
+  Every write checks current Event authority and protects Organizer memberships;
+  completed history is preserved and deleted Events retire from progress.
+- Reinstatement requires resolved current-generation cleanup, removes no independent
+  bans, and restores no membership, invitation or RSVP. Cleanup removes old Group
+  membership/pending invitations and resets announcement opt-in and delegated consent.
+- Staff reconciliation remains available after roster removal. Resume/reinstate use
+  durable original intents after uncertain responses through native and named SDK
+  HTTP operations. Group deletion requires explicit resolution of active exclusions.
+- Source checks and one-shot tests are recorded in the external G9 handoff; deployed
+  acceptance, matching runtime, real email and hosted staff browser checks remain G10 gates.
+
 ## Red Room G5 source candidate — 2026-10-15
 
 - Implements selected Group Join with Pending RSVP, explicit own RSVP and independent

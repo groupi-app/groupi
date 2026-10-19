@@ -201,6 +201,26 @@ it('SDK staff HTTP reconciles lost responses and rejects payload reuse and revok
       options
     )
   ).rejects.toThrow();
+  const resolutionInput = {
+    path: { groupId, personId: target.personId },
+    body: { generation: result.generation },
+  };
+  lost = true;
+  const resumeOptions = { idempotencyKey: crypto.randomUUID() };
+  await expect(
+    sdk.resumeCommunityExpulsion(resolutionInput, resumeOptions)
+  ).rejects.toMatchObject({ uncertain: true });
+  expect(
+    await sdk.resumeCommunityExpulsion(resolutionInput, resumeOptions)
+  ).toMatchObject({ cleanup: 'complete', exclusion: 'active' });
+  const reinstateOptions = { idempotencyKey: crypto.randomUUID() };
+  lost = true;
+  await expect(
+    sdk.reinstateCommunityMember(resolutionInput, reinstateOptions)
+  ).rejects.toMatchObject({ uncertain: true });
+  expect(
+    await sdk.reinstateCommunityMember(resolutionInput, reinstateOptions)
+  ).toMatchObject({ cleanup: 'complete', exclusion: 'inactive' });
   await f.t.mutation(components.betterAuth.adapter.updateOne, {
     input: {
       model: 'apikey',
