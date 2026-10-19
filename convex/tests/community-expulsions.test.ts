@@ -756,3 +756,14 @@ it('resets explicit announcement opt-in so fresh admission cannot revive consent
     })
   ).toEqual({ subscribed: false });
 });
+
+it('returns a validated empty staff reconciliation page for a newly created Group', async () => {
+  const f = await setup();
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'New community' }
+  );
+  expect(
+    await f.owner.auth.query(api.groups.expulsions.listProgress, { groupId })
+  ).toEqual({ page: [], continueCursor: expect.any(String), isDone: true });
+});
