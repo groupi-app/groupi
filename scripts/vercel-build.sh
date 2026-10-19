@@ -49,11 +49,11 @@ else
   fi
   PREVIEW_SITE_URL="https://$PREVIEW_HOST"
 
-  # Claim a fresh deployment before configuring it. The initial function push
-  # can fail because auth intentionally requires SITE_URL during analysis; the
-  # deployment is still created and can then be configured before the real push.
-  echo "Creating Convex preview: $PREVIEW_NAME..."
-  if ! npx convex deploy --preview-create "$PREVIEW_NAME"; then
+  # Claim or reuse the named preview without resetting its data or issuer.
+  # A fresh preview can fail its initial push because auth requires SITE_URL;
+  # it is still provisioned and can be configured before the final push.
+  echo "Preparing Convex preview: $PREVIEW_NAME..."
+  if ! npx convex deploy --preview-name "$PREVIEW_NAME"; then
     echo "Initial preview push deferred until auth environment is configured"
   fi
 
