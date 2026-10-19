@@ -105,10 +105,25 @@ export function createGroupRoutes() {
   const expulsion = z.object({
     operationId: z.string(),
     outcome: z.literal('committed'),
-    exclusion: z.literal('active'),
+    exclusion: z.enum(['active', 'inactive']),
     generation: z.number(),
     cleanup: z.enum(['pending', 'blocked', 'complete']),
     conflicts: z.array(z.object({ eventId: z.string(), code: z.string() })),
+    events: z
+      .array(
+        z.object({
+          eventId: z.string(),
+          state: z.enum([
+            'pending',
+            'blocked',
+            'complete',
+            'preserved',
+            'retired',
+          ]),
+          code: z.string().optional(),
+        })
+      )
+      .optional(),
   });
   app.use('/groups/:groupId/coordinated-expulsions', async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
@@ -188,6 +203,61 @@ export function createGroupRoutes() {
         200
       )
   );
+  for (const action of ['resume', 'reinstate'] as const) {
+    app.openapi(
+      createRoute({
+        method: 'post',
+        path: `/groups/{groupId}/coordinated-expulsions/{personId}/${action}`,
+        tags: ['Groups'],
+        operationId:
+          action === 'resume'
+            ? 'resumeCommunityExpulsion'
+            : 'reinstateCommunityMember',
+        summary:
+          action === 'resume'
+            ? 'Resume cleanup with current independent Event authority'
+            : 'Reinstate after complete cleanup without restoring admission',
+        security: [{ apiKey: [] }],
+        request: {
+          params: params.extend({ personId: z.string() }),
+          headers: z.object({ 'Idempotency-Key': z.string().uuid() }),
+          body: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: z
+                  .object({ generation: z.number().int().positive() })
+                  .strict(),
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description:
+              'Current committed resolution; reconcile progress before another intent',
+            content: { 'application/json': { schema: expulsion } },
+          },
+          ...errors,
+        },
+      }),
+      async c =>
+        c.json(
+          await c
+            .get('ctx')
+            .runMutation(internal.groups.expulsions.resolveRest, {
+              actorId: c.get('personId') as Id<'persons'>,
+              credentialId: c.get('credential').credentialId,
+              groupId: c.req.valid('param').groupId as Id<'groups'>,
+              personId: c.req.valid('param').personId as Id<'persons'>,
+              generation: c.req.valid('json').generation,
+              operationId: c.req.valid('header')['Idempotency-Key'],
+              action,
+            }),
+          200
+        )
+    );
+  }
   app.openapi(
     createRoute({
       method: 'get',

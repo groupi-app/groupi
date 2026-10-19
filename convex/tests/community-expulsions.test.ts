@@ -201,6 +201,26 @@ it('SDK staff HTTP reconciles lost responses and rejects payload reuse and revok
       options
     )
   ).rejects.toThrow();
+  const resolutionInput = {
+    path: { groupId, personId: target.personId },
+    body: { generation: result.generation },
+  };
+  lost = true;
+  const resumeOptions = { idempotencyKey: crypto.randomUUID() };
+  await expect(
+    sdk.resumeCommunityExpulsion(resolutionInput, resumeOptions)
+  ).rejects.toMatchObject({ uncertain: true });
+  expect(
+    await sdk.resumeCommunityExpulsion(resolutionInput, resumeOptions)
+  ).toMatchObject({ cleanup: 'complete', exclusion: 'active' });
+  const reinstateOptions = { idempotencyKey: crypto.randomUUID() };
+  lost = true;
+  await expect(
+    sdk.reinstateCommunityMember(resolutionInput, reinstateOptions)
+  ).rejects.toMatchObject({ uncertain: true });
+  expect(
+    await sdk.reinstateCommunityMember(resolutionInput, reinstateOptions)
+  ).toMatchObject({ cleanup: 'complete', exclusion: 'inactive' });
   await f.t.mutation(components.betterAuth.adapter.updateOne, {
     input: {
       model: 'apikey',
@@ -439,4 +459,300 @@ it('rejects deleted targets before creating an orphan exclusion', async () => {
       personId: target.personId,
     })
   ).toBeNull();
+});
+
+it('resumes captured participation cleanup and reinstates without restoring Group or Event admission', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'resume');
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'Red Room' }
+  );
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { groupId, eventId: f.event.eventId }
+  );
+  await f.t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: target.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+    await ctx.db.insert('memberships', {
+      eventId: f.event.eventId,
+      personId: target.personId,
+      role: 'ATTENDEE',
+      rsvpStatus: 'YES',
+    });
+  });
+  const input = { groupId, personId: target.personId };
+  const expelled = await f.owner.auth.mutation(api.groups.expulsions.expel, {
+    ...input,
+    operationId: crypto.randomUUID(),
+  });
+  await expect(
+    f.owner.auth.mutation(api.groups.expulsions.reinstate, {
+      ...input,
+      generation: expelled.generation,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('CLEANUP_REQUIRED');
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.withdrawGroupEventAudience,
+    { groupId, eventId: f.event.eventId }
+  );
+  const intent = {
+    ...input,
+    generation: expelled.generation,
+    operationId: crypto.randomUUID(),
+  };
+  const resumed = await f.owner.auth.mutation(
+    api.groups.expulsions.resume,
+    intent
+  );
+  expect(resumed).toMatchObject({
+    cleanup: 'complete',
+    events: [{ eventId: f.event.eventId, state: 'complete' }],
+  });
+  expect(
+    await f.owner.auth.mutation(api.groups.expulsions.resume, intent)
+  ).toEqual(resumed);
+  expect(
+    await f.owner.auth.mutation(api.groups.expulsions.reinstate, {
+      ...input,
+      generation: expelled.generation,
+      operationId: crypto.randomUUID(),
+    })
+  ).toMatchObject({ exclusion: 'inactive', cleanup: 'complete' });
+  const rows = await f.t.run(async ctx => ({
+    groups: await ctx.db
+      .query('groupMemberships')
+      .withIndex('by_personId', q => q.eq('personId', target.personId))
+      .collect(),
+    events: await ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', target.personId).eq('eventId', f.event.eventId)
+      )
+      .collect(),
+  }));
+  expect(rows).toEqual({ groups: [], events: [] });
+  await expect(
+    f.owner.auth.mutation(api.groups.expulsions.resume, {
+      ...intent,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('STALE_GENERATION');
+});
+
+it('reports partial blocked cleanup, refuses reinstatement and Group deletion, then resumes under current authority', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'partial');
+  const staff = await createAuthAccount(f.t, 'partial-staff');
+  const groupId = await staff.auth.mutation(api.groups.mutations.createGroup, {
+    name: 'Room',
+  });
+  await f.t.run(ctx =>
+    ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: f.owner.personId,
+      role: 'MODERATOR',
+      joinedAt: Date.now(),
+    })
+  );
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { groupId, eventId: f.event.eventId }
+  );
+  await f.t.run(async ctx => {
+    await ctx.db.insert('memberships', {
+      eventId: f.event.eventId,
+      personId: target.personId,
+      role: 'ATTENDEE',
+      rsvpStatus: 'YES',
+    });
+    await ctx.db.insert('eventInvites', {
+      eventId: f.event.eventId,
+      inviterId: f.owner.personId,
+      inviteeId: target.personId,
+      role: 'ATTENDEE',
+      status: 'PENDING',
+      createdAt: Date.now(),
+    });
+    await ctx.db.insert('groupInvites', {
+      groupId,
+      inviterId: staff.personId,
+      inviteeId: target.personId,
+      status: 'PENDING',
+      createdAt: Date.now(),
+    });
+  });
+  const input = { groupId, personId: target.personId, generation: 1 };
+  await staff.auth.mutation(api.groups.expulsions.expel, {
+    groupId,
+    personId: target.personId,
+    operationId: crypto.randomUUID(),
+  });
+  expect(
+    await staff.auth.mutation(api.groups.expulsions.resume, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).toMatchObject({
+    cleanup: 'blocked',
+    events: [{ state: 'blocked', code: 'EVENT_AUTHORITY_REQUIRED' }],
+  });
+  await expect(
+    staff.auth.mutation(api.groups.expulsions.reinstate, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('CLEANUP_REQUIRED');
+  await expect(
+    staff.auth.mutation(api.groups.mutations.deleteGroup, { groupId })
+  ).rejects.toThrow('CLEANUP_REQUIRED');
+  expect(
+    await f.owner.auth.mutation(api.groups.expulsions.resume, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).toMatchObject({ cleanup: 'complete' });
+  await expect(
+    staff.auth.mutation(api.groups.mutations.deleteGroup, { groupId })
+  ).rejects.toThrow('CLEANUP_REQUIRED');
+  const invitations = await f.t.run(async ctx => ({
+    event: await ctx.db.query('eventInvites').collect(),
+    group: await ctx.db.query('groupInvites').collect(),
+  }));
+  expect(invitations.event[0].status).toBe('CANCELLED');
+  expect(invitations.group[0].status).toBe('CANCELLED');
+  await staff.auth.mutation(api.groups.expulsions.reinstate, {
+    ...input,
+    operationId: crypto.randomUUID(),
+  });
+  await f.t.run(ctx =>
+    ctx.db.patch(f.event.eventId, {
+      visibility: 'PUBLIC',
+      admissionPolicy: 'DIRECT',
+    })
+  );
+  await target.auth.mutation(api.events.mutations.joinDiscoverableEvent, {
+    eventId: f.event.eventId,
+  });
+  await expect(
+    f.owner.auth.mutation(api.groups.expulsions.resume, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow('STALE_GENERATION');
+  const member = await f.t.run(ctx =>
+    ctx.db
+      .query('memberships')
+      .withIndex('by_person_event', q =>
+        q.eq('personId', target.personId).eq('eventId', f.event.eventId)
+      )
+      .first()
+  );
+  expect(member?.rsvpStatus).toBe('PENDING');
+});
+
+it('preserves completed history at retry time and retires deleted captured Events', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'preserved');
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'Room' }
+  );
+  await f.owner.auth.mutation(
+    api.groupEventAudiences.mutations.shareEventWithGroup,
+    { groupId, eventId: f.event.eventId }
+  );
+  const membershipId = await f.t.run(ctx =>
+    ctx.db.insert('memberships', {
+      eventId: f.event.eventId,
+      personId: target.personId,
+      role: 'ATTENDEE',
+      rsvpStatus: 'YES',
+    })
+  );
+  await f.owner.auth.mutation(api.groups.expulsions.expel, {
+    groupId,
+    personId: target.personId,
+    operationId: crypto.randomUUID(),
+  });
+  await f.t.run(ctx =>
+    ctx.db.patch(f.event.eventId, { chosenEndDateTime: Date.now() })
+  );
+  const input = { groupId, personId: target.personId, generation: 1 };
+  expect(
+    await f.owner.auth.mutation(api.groups.expulsions.resume, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).toMatchObject({ cleanup: 'complete', events: [{ state: 'preserved' }] });
+  expect(await f.t.run(ctx => ctx.db.get(membershipId))).toMatchObject({
+    rsvpStatus: 'YES',
+  });
+  await f.owner.auth.mutation(api.events.mutations.deleteEvent, {
+    eventId: f.event.eventId,
+  });
+  expect(
+    await f.owner.auth.mutation(api.groups.expulsions.resume, {
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).toMatchObject({ cleanup: 'complete', events: [{ state: 'retired' }] });
+});
+
+it('resets explicit announcement opt-in so fresh admission cannot revive consent', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'consent-reset');
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'Red Room' }
+  );
+  await f.t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: target.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+  });
+  await target.auth.mutation(api.groups.announcementPreferences.updateOwn, {
+    groupId,
+    subscribed: true,
+    operationId: crypto.randomUUID(),
+  });
+  const result = await f.owner.auth.mutation(api.groups.expulsions.expel, {
+    groupId,
+    personId: target.personId,
+    operationId: crypto.randomUUID(),
+  });
+  await f.owner.auth.mutation(api.groups.expulsions.resume, {
+    groupId,
+    personId: target.personId,
+    generation: result.generation,
+    operationId: crypto.randomUUID(),
+  });
+  await f.owner.auth.mutation(api.groups.expulsions.reinstate, {
+    groupId,
+    personId: target.personId,
+    generation: result.generation,
+    operationId: crypto.randomUUID(),
+  });
+  await f.t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: target.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+  });
+  expect(
+    await target.auth.query(api.groups.announcementPreferences.readOwn, {
+      groupId,
+    })
+  ).toEqual({ subscribed: false });
 });

@@ -147,6 +147,8 @@ export function createApiV2App(
           'STALE_REVISION',
           'RECIPIENT_UNAVAILABLE',
           'IDEMPOTENCY_EXPIRED',
+          'CLEANUP_REQUIRED',
+          'STALE_GENERATION',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
           'INVITE_UNAVAILABLE',

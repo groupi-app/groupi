@@ -361,3 +361,24 @@ replacement participation, both independent departures, lost committed receipts,
 payload binding, current scoped authority and protected roles. Matching deployed
 frontend/backend source, isolated signed-in browser/device and provider acceptance
 remain G10 gates; no runtime/deployment or live data write is implied.
+
+## G9 resumable exclusion resolution source contract
+
+Current staff use `POST /groups/{groupId}/coordinated-expulsions/{personId}/resume`
+(`resumeCommunityExpulsion` / `resume_community_expulsion`) and the corresponding
+`/reinstate` endpoint (`reinstateCommunityMember` / `reinstate_community_member`).
+Both require `Idempotency-Key` and `{generation:<observed exclusion generation>}`.
+Original-ID replay returns its minimal committed receipt after current staff authority
+checks; a new intent with an obsolete generation returns `STALE_GENERATION`.
+
+Resume removes at most ten applicable Events per transaction, preserves completed
+history, and records per-Event pending/blocked/complete/preserved/retired progress.
+Captured Event IDs remain applicable after audience withdrawal. Current Event authority
+and protected Organizer conflicts must be resolved explicitly. Group membership and
+pending invitations are removed and per-Group announcement preference is reset off,
+including its delegated consent source. Reinstatement requires current cleanup complete
+and no applicable membership/invitation remaining (`CLEANUP_REQUIRED` otherwise).
+It lifts only this coordinated exclusion; fresh admission and fresh announcement opt-in
+are required. Independent bans remain. Group deletion requires explicit resolution and
+reinstatement of active exclusions so deletion cannot silently lift their access fence.
+Staff can list reconciliation targets independently of the current member roster.

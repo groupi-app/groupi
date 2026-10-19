@@ -1,3 +1,6 @@
+vi.mock('./community-expulsion-progress', () => ({
+  CommunityExpulsionProgress: () => null,
+}));
 vi.mock('./community-expulsion-action', () => ({
   CommunityExpulsionAction: () => null,
 }));

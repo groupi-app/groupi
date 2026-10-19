@@ -226,10 +226,11 @@ from .types import (
     Object8c477699d177,
     Objectb17b74c18a8f,
     Object67ea0bf089d7,
-    Objectbb94019de7d2,
+    Objectdb9cf5ae94c2,
     Object2da0580f7d57,
-    Object1e5f701b7d0e,
+    Objectb063e6348ffd,
     Object73ecf7f47670,
+    Object98f626d2887e,
     Object598737a2dca1,
     Object96110c08a73a,
     Objectb7fb19a40d96,
@@ -349,9 +350,9 @@ from .types import (
     Objectf584fd7f1513,
     Objectc776b2dc18c6,
     Objectdcad510e393d,
-    Objectdb08a32dcd8d,
-    Objecta63b72eda942,
-    Object5a58404c1848,
+    Object93c182c49f8d,
+    Object99130a4c6676,
+    Objectfa7a7c11cfbb,
     Object4f3c5a171fbb,
     Object4be4d8df39e5,
     Objected266440fefc,
@@ -388,6 +389,7 @@ from .types import (
     Object8f4fd078f9a3,
     Object6d5274c5de2d,
     Object2c98a6bfd5c6,
+    Objecte8244d61f3c4,
     Objectb27f127421ba,
     Object59509cf0ec83,
     Objecta61bf08328e7,
@@ -947,6 +949,14 @@ class Groupi(Transport):
     def read_community_expulsion(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Reconcile coordinated exclusion progress as current staff."""
         return self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def resume_community_expulsion(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Resume cleanup with current independent Event authority."""
+        return self.request('POST', '/groups/{groupId}/coordinated-expulsions/{personId}/resume', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def reinstate_community_member(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """Reinstate after complete cleanup without restoring admission."""
+        return self.request('POST', '/groups/{groupId}/coordinated-expulsions/{personId}/reinstate', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def list_your_groups(self, *, path=None, query=None, body=None, idempotency_key=None):
         """List your Groups."""
@@ -2078,6 +2088,14 @@ class AsyncGroupi(AsyncTransport):
     async def read_community_expulsion(self, **kwargs):
         """Reconcile coordinated exclusion progress as current staff."""
         return await self.request('GET', '/groups/{groupId}/coordinated-expulsions/{personId}', **kwargs)
+
+    async def resume_community_expulsion(self, **kwargs):
+        """Resume cleanup with current independent Event authority."""
+        return await self.request('POST', '/groups/{groupId}/coordinated-expulsions/{personId}/resume', **kwargs)
+
+    async def reinstate_community_member(self, **kwargs):
+        """Reinstate after complete cleanup without restoring admission."""
+        return await self.request('POST', '/groups/{groupId}/coordinated-expulsions/{personId}/reinstate', **kwargs)
 
     def list_your_groups_items(self, **kwargs):
         return self.iterate('/groups', adapter={'items': 'items', 'cursor': 'nextCursor'}, **kwargs)

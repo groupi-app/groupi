@@ -928,6 +928,24 @@ export class Groupi extends Transport {
       options
     );
   }
+  /** Resume cleanup with current independent Event authority */
+  resumeCommunityExpulsion(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions/{personId}/resume',
+      input,
+      options
+    );
+  }
+  /** Reinstate after complete cleanup without restoring admission */
+  reinstateCommunityMember(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/coordinated-expulsions/{personId}/reinstate',
+      input,
+      options
+    );
+  }
   /** List your Groups */
   listYourGroups(input = {}, options = {}) {
     return this.request('GET', '/groups', input, options);

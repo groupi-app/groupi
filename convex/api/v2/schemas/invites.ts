@@ -87,7 +87,7 @@ export const MemberInviteSummarySchema = z.object({
   inviterId: z.string(),
   inviteeId: z.string(),
   role: z.enum(['ATTENDEE', 'MODERATOR']),
-  status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED']),
+  status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED']),
   message: nullableString,
   createdAt: z.number(),
   respondedAt: z.number().nullable(),
@@ -100,7 +100,9 @@ export const InviteListQuerySchema = EventListQuerySchema.safeExtend({
   kind: z.enum(['link', 'email', 'all']).optional(),
 });
 export const MemberListQuerySchema = EventListQuerySchema.safeExtend({
-  status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED', 'all']).optional(),
+  status: z
+    .enum(['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED', 'all'])
+    .optional(),
 });
 export const InviteIdParamSchema = z.object({ inviteId: z.string() });
 export const InviteTokenParamSchema = z.object({ token: z.string() });
