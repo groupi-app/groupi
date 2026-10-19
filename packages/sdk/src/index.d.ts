@@ -3959,10 +3959,15 @@ export class Groupi {
   ): Promise<{
     operationId: string;
     outcome: 'committed';
-    exclusion: 'active';
+    exclusion: 'active' | 'inactive';
     generation: number;
     cleanup: 'pending' | 'blocked' | 'complete';
     conflicts: Array<{ eventId: string; code: string }>;
+    events?: Array<{
+      eventId: string;
+      state: 'pending' | 'blocked' | 'complete' | 'preserved' | 'retired';
+      code?: string;
+    }>;
   }>;
   /** Reconcile coordinated exclusion progress as current staff */
   readCommunityExpulsion(
@@ -3971,11 +3976,56 @@ export class Groupi {
   ): Promise<{
     operationId: string;
     outcome: 'committed';
-    exclusion: 'active';
+    exclusion: 'active' | 'inactive';
     generation: number;
     cleanup: 'pending' | 'blocked' | 'complete';
     conflicts: Array<{ eventId: string; code: string }>;
+    events?: Array<{
+      eventId: string;
+      state: 'pending' | 'blocked' | 'complete' | 'preserved' | 'retired';
+      code?: string;
+    }>;
   } | null>;
+  /** Resume cleanup with current independent Event authority */
+  resumeCommunityExpulsion(
+    input: {
+      path: { groupId: string; personId: string };
+      body: { generation: number };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active' | 'inactive';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+    events?: Array<{
+      eventId: string;
+      state: 'pending' | 'blocked' | 'complete' | 'preserved' | 'retired';
+      code?: string;
+    }>;
+  }>;
+  /** Reinstate after complete cleanup without restoring admission */
+  reinstateCommunityMember(
+    input: {
+      path: { groupId: string; personId: string };
+      body: { generation: number };
+    },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    exclusion: 'active' | 'inactive';
+    generation: number;
+    cleanup: 'pending' | 'blocked' | 'complete';
+    conflicts: Array<{ eventId: string; code: string }>;
+    events?: Array<{
+      eventId: string;
+      state: 'pending' | 'blocked' | 'complete' | 'preserved' | 'retired';
+      code?: string;
+    }>;
+  }>;
   /** List your Groups */
   listYourGroups(
     input?: { query?: { limit?: number; cursor?: string } },
@@ -8717,7 +8767,7 @@ export class Groupi {
         pagination?: 'cursor';
         limit?: number;
         cursor?: string;
-        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'all';
+        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'all';
       };
     },
     options?: RequestOptions
@@ -8729,7 +8779,7 @@ export class Groupi {
       inviterId: string;
       inviteeId: string;
       role: 'ATTENDEE' | 'MODERATOR';
-      status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+      status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
       message: string | null;
       createdAt: number;
       respondedAt: number | null;
@@ -8743,7 +8793,7 @@ export class Groupi {
         pagination?: 'cursor';
         limit?: number;
         cursor?: string;
-        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'all';
+        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'all';
       };
     },
     options?: RequestOptions
@@ -8754,7 +8804,7 @@ export class Groupi {
     inviterId: string;
     inviteeId: string;
     role: 'ATTENDEE' | 'MODERATOR';
-    status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
     message: string | null;
     createdAt: number;
     respondedAt: number | null;
@@ -8798,7 +8848,7 @@ export class Groupi {
         pagination?: 'cursor';
         limit?: number;
         cursor?: string;
-        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'all';
+        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'all';
       };
     },
     options?: RequestOptions
@@ -8810,7 +8860,7 @@ export class Groupi {
       inviterId: string;
       inviteeId: string;
       role: 'ATTENDEE' | 'MODERATOR';
-      status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+      status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
       message: string | null;
       createdAt: number;
       respondedAt: number | null;
@@ -8823,7 +8873,7 @@ export class Groupi {
         pagination?: 'cursor';
         limit?: number;
         cursor?: string;
-        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'all';
+        status?: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'all';
       };
     },
     options?: RequestOptions
@@ -8834,7 +8884,7 @@ export class Groupi {
     inviterId: string;
     inviteeId: string;
     role: 'ATTENDEE' | 'MODERATOR';
-    status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
     message: string | null;
     createdAt: number;
     respondedAt: number | null;
@@ -8850,7 +8900,7 @@ export class Groupi {
     inviterId: string;
     inviteeId: string;
     role: 'ATTENDEE' | 'MODERATOR';
-    status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
     message: string | null;
     createdAt: number;
     respondedAt: number | null;

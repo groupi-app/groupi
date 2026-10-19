@@ -19,10 +19,10 @@ export async function cascadeDeleteGroupData(
     .query('communityExclusions')
     .withIndex('by_group', q => q.eq('groupId', groupId))
     .collect();
-  if (exclusions.some(e => e.active && e.cleanup !== 'complete'))
+  if (exclusions.some(e => e.active))
     operationError(
       'CLEANUP_REQUIRED',
-      'Resolve coordinated exclusion cleanup before deleting this Group.'
+      'Resolve cleanup and explicitly reinstate active community exclusions before deleting this Group.'
     );
   for (const exclusion of exclusions) await ctx.db.delete(exclusion._id);
   for await (const audit of ctx.db

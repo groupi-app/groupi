@@ -425,6 +425,19 @@ export async function resolveForPerson(
       'Resolve all cleanup before reinstatement. Fresh admission is required.'
     );
   if (action === 'resume') {
+    const preference = await ctx.db
+      .query('groupAnnouncementPreferences')
+      .withIndex('by_groupId_and_personId', q =>
+        q.eq('groupId', input.groupId).eq('personId', input.personId)
+      )
+      .unique();
+    if (preference)
+      await ctx.db.patch(preference._id, {
+        subscribed: false,
+        sourceAppId: undefined,
+        sourceGrantId: undefined,
+        updatedAt: now,
+      });
     if (membership) {
       await ctx.db.delete(membership._id);
       await ctx.db.patch(group._id, {
@@ -531,9 +544,15 @@ export const listProgress = query({
       page: await Promise.all(
         page.page.map(async row => {
           const person = await ctx.db.get(row.personId);
+          const user = person
+            ? ((await ctx.runQuery(components.betterAuth.adapter.findOne, {
+                model: 'user',
+                where: [{ field: '_id', operator: 'eq', value: person.userId }],
+              })) as AuthDoc<'user'> | null)
+            : null;
           return {
             personId: row.personId,
-            name: person?.username ?? 'Unavailable person',
+            name: user?.name ?? 'Unavailable person',
           };
         })
       ),

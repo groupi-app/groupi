@@ -244,5 +244,7 @@
   "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication",
   "POST /groups/{groupId}/coordinated-expulsions": "expelCommunityMember",
   "GET /groups/{groupId}/coordinated-expulsions/{personId}": "readCommunityExpulsion",
-  "PUT /groups/{groupId}/announcement-preference": "setCommunityAnnouncementPreference"
+  "PUT /groups/{groupId}/announcement-preference": "setCommunityAnnouncementPreference",
+  "POST /groups/{groupId}/coordinated-expulsions/{personId}/resume": "resumeCommunityExpulsion",
+  "POST /groups/{groupId}/coordinated-expulsions/{personId}/reinstate": "reinstateCommunityMember"
 }

@@ -894,6 +894,20 @@
     "summary": "Reconcile coordinated exclusion progress as current staff"
   },
   {
+    "paging": null,
+    "name": "resumeCommunityExpulsion",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/resume",
+    "summary": "Resume cleanup with current independent Event authority"
+  },
+  {
+    "paging": null,
+    "name": "reinstateCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/reinstate",
+    "summary": "Reinstate after complete cleanup without restoring admission"
+  },
+  {
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
@@ -1711,7 +1725,7 @@
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
-      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
     },
     "name": "listUsernameInvitations",
     "method": "GET",
@@ -1757,7 +1771,7 @@
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
-      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
     },
     "name": "listUsernameInvitationsMemberInvites",
     "method": "GET",
@@ -1903,19 +1917,5 @@
     "method": "GET",
     "path": "/uploads/{storageId}",
     "summary": "Read an accessible file descriptor"
-  },
-  {
-    "paging": null,
-    "name": "resumeCommunityExpulsion",
-    "method": "POST",
-    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/resume",
-    "summary": "Resume cleanup with current independent Event authority"
-  },
-  {
-    "paging": null,
-    "name": "reinstateCommunityMember",
-    "method": "POST",
-    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/reinstate",
-    "summary": "Reinstate after complete cleanup without restoring admission"
   }
 ]

@@ -598,6 +598,9 @@ it('reports partial blocked cleanup, refuses reinstatement and Group deletion, t
       operationId: crypto.randomUUID(),
     })
   ).toMatchObject({ cleanup: 'complete' });
+  await expect(
+    staff.auth.mutation(api.groups.mutations.deleteGroup, { groupId })
+  ).rejects.toThrow('CLEANUP_REQUIRED');
   const invitations = await f.t.run(async ctx => ({
     event: await ctx.db.query('eventInvites').collect(),
     group: await ctx.db.query('groupInvites').collect(),
@@ -680,4 +683,56 @@ it('preserves completed history at retry time and retires deleted captured Event
       operationId: crypto.randomUUID(),
     })
   ).toMatchObject({ cleanup: 'complete', events: [{ state: 'retired' }] });
+});
+
+it('resets explicit announcement opt-in so fresh admission cannot revive consent', async () => {
+  const f = await setup();
+  const target = await createAuthAccount(f.t, 'consent-reset');
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'Red Room' }
+  );
+  await f.t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: target.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+  });
+  await target.auth.mutation(api.groups.announcementPreferences.updateOwn, {
+    groupId,
+    subscribed: true,
+    operationId: crypto.randomUUID(),
+  });
+  const result = await f.owner.auth.mutation(api.groups.expulsions.expel, {
+    groupId,
+    personId: target.personId,
+    operationId: crypto.randomUUID(),
+  });
+  await f.owner.auth.mutation(api.groups.expulsions.resume, {
+    groupId,
+    personId: target.personId,
+    generation: result.generation,
+    operationId: crypto.randomUUID(),
+  });
+  await f.owner.auth.mutation(api.groups.expulsions.reinstate, {
+    groupId,
+    personId: target.personId,
+    generation: result.generation,
+    operationId: crypto.randomUUID(),
+  });
+  await f.t.run(async ctx => {
+    await ctx.db.insert('groupMemberships', {
+      groupId,
+      personId: target.personId,
+      role: 'MEMBER',
+      joinedAt: Date.now(),
+    });
+  });
+  expect(
+    await target.auth.query(api.groups.announcementPreferences.readOwn, {
+      groupId,
+    })
+  ).toEqual({ subscribed: false });
 });

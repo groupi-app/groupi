@@ -1301,29 +1301,34 @@ class Object67ea0bf089d7(TypedDict):
     creation: Literal['MANAGERS', 'MEMBERS']
     canConfigure: bool
 
-class Objectbb94019de7d2(TypedDict):
+class Objectdb9cf5ae94c2(TypedDict):
     operationId: str
     outcome: Literal['committed']
-    exclusion: Literal['active']
+    exclusion: Literal['active', 'inactive']
     generation: float
     cleanup: Literal['pending', 'blocked', 'complete']
     conflicts: list[Object2c98a6bfd5c6]
+    events: NotRequired[list[Objecte8244d61f3c4]]
 
 class Object2da0580f7d57(TypedDict):
     personId: str
     policy: Literal['coordinated']
 
-class Object1e5f701b7d0e(TypedDict):
+class Objectb063e6348ffd(TypedDict):
     operationId: str
     outcome: Literal['committed']
-    exclusion: Literal['active']
+    exclusion: Literal['active', 'inactive']
     generation: float
     cleanup: Literal['pending', 'blocked', 'complete']
     conflicts: list[Object2c98a6bfd5c6]
+    events: NotRequired[list[Objecte8244d61f3c4]]
 
 class Object73ecf7f47670(TypedDict):
     groupId: str
     personId: str
+
+class Object98f626d2887e(TypedDict):
+    generation: int
 
 class Object598737a2dca1(TypedDict):
     items: list[Objectb7fb19a40d96]
@@ -1911,24 +1916,24 @@ class Objectdcad510e393d(TypedDict):
     role: NotRequired[Literal['ATTENDEE', 'MODERATOR']]
     message: NotRequired[str]
 
-class Objectdb08a32dcd8d(TypedDict):
-    items: list[Object5a58404c1848]
+class Object93c182c49f8d(TypedDict):
+    items: list[Objectfa7a7c11cfbb]
     nextCursor: str | None
 
-class Objecta63b72eda942(TypedDict):
+class Object99130a4c6676(TypedDict):
     pagination: NotRequired[Literal['cursor']]
     limit: NotRequired[int]
     cursor: NotRequired[str]
-    status: NotRequired[Literal['PENDING', 'ACCEPTED', 'DECLINED', 'all']]
+    status: NotRequired[Literal['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED', 'all']]
 
-class Object5a58404c1848(TypedDict):
+class Objectfa7a7c11cfbb(TypedDict):
     inviteId: str
     eventId: str
     eventTitle: str
     inviterId: str
     inviteeId: str
     role: Literal['ATTENDEE', 'MODERATOR']
-    status: Literal['PENDING', 'ACCEPTED', 'DECLINED']
+    status: Literal['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED']
     message: str | None
     createdAt: float
     respondedAt: float | None
@@ -2130,6 +2135,11 @@ class Object6d5274c5de2d(TypedDict):
 class Object2c98a6bfd5c6(TypedDict):
     eventId: str
     code: str
+
+class Objecte8244d61f3c4(TypedDict):
+    eventId: str
+    state: Literal['pending', 'blocked', 'complete', 'preserved', 'retired']
+    code: NotRequired[str]
 
 class Objectb27f127421ba(TypedDict):
     enabled: bool
