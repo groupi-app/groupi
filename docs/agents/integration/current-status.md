@@ -2,6 +2,15 @@
 
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
+## Red Room source integration — 2026-10-19
+
+- Groupi integration `e9a76aa6` includes G1–G9 source work and the independently reviewed final corrections. Source baseline remains developer-platform prerequisite `45d00c14`; [draft PR #389](https://github.com/groupi-app/groupi/pull/389) does not imply production deployment.
+- New Group membership resets announcement consent to off; existing-membership no-ops preserve it. Explicit Event mail has safe unfinished-delivery recovery; preference returns deny unrelated private Group-name reads. G9 metadata advertises implemented source capability, and explicit reinstatement restores no participation or consent.
+- Merger evidence: 49 announcement/participation/expulsion backend tests; query-route wrappers pass web types and five hosted auth component tests. Worker final review fixes passed 70 backend, three web, 21 SDK integration, eight Node and eight Python tests, full check with 772 contracts. Final merged full check is recorded in the external implementation evidence.
+- Site `41f4992` includes durable account-bound uncertainty recovery, structured intent issuance and a byte-identical canonical provider contract snapshot; 63 tests/build, diagnostics and formatting pass. Matching deployed site/provider, isolated identities/app/Group, sender/inbox and real browser/accessibility acceptance remain open under Groupi #388 and site #8.
+- User approved the exact nine-entry release-note batch on 2026-10-19; `e489987a` adds those files only. No versioning, publication or production deployment was performed.
+- Read-only hosted previews exposed query-route prerender errors; consent/error and other applicable route boundaries were corrected in source. Hosted success remains unverified. Ordinary env configuration is distinct from the explicit runtime/build/deploy restrictions; no local Groupi runtime or deployment was executed.
+
 ## Red Room G9 source candidate — 2026-10-19
 
 - Staff explicitly resume captured Event cleanup in pages of ten applicable Events.
