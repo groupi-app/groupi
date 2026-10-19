@@ -645,3 +645,86 @@ it('suppresses a frozen retry when its private destination was removed instead o
   expect(provider).toHaveBeenCalledTimes(1);
   expect(await f.status()).toMatchObject({ suppressed: 1, delivered: 0 });
 });
+
+it('refuses a guessed private Group preference return for an unrelated signed-in person', async () => {
+  const f = await applicant();
+  const { createAuthAccount } = await import('./auth.helpers');
+  const stranger = await createAuthAccount(f.t, 'private-preference-stranger');
+  await expect(
+    stranger.auth.query(api.groupAnnouncements.eventMail.preferenceReturn, {
+      groupId: f.groupId,
+    })
+  ).rejects.toThrow();
+  await stranger.auth.mutation(api.groups.announcementPreferences.updateOwn, {
+    groupId: f.groupId,
+    subscribed: false,
+    operationId: crypto.randomUUID(),
+  });
+  await expect(
+    stranger.auth.query(api.groupAnnouncements.eventMail.preferenceReturn, {
+      groupId: f.groupId,
+    })
+  ).rejects.toThrow();
+});
+
+it('requires fresh announcement opt-in after voluntary Leave and fresh invitation admission', async () => {
+  const f = await applicant();
+  const invite = await f.staff.auth.mutation(
+    api.groupInvites.mutations.sendGroupInvite,
+    { groupId: f.groupId, inviteePersonId: f.owner.personId }
+  );
+  await f.owner.auth.mutation(api.groupInvites.mutations.acceptGroupInvite, {
+    inviteId: invite.inviteId,
+  });
+  await f.owner.auth.mutation(api.groups.announcementPreferences.updateOwn, {
+    groupId: f.groupId,
+    subscribed: true,
+    operationId: crypto.randomUUID(),
+  });
+  await f.owner.auth.mutation(api.groupModeration.mutations.leaveGroup, {
+    groupId: f.groupId,
+  });
+  expect(
+    await f.owner.auth.query(
+      api.groupAnnouncements.eventMail.preferenceReturn,
+      { groupId: f.groupId }
+    )
+  ).toMatchObject({ groupName: 'Community', subscribed: true, url: null });
+
+  const fresh = await f.staff.auth.mutation(
+    api.groupInvites.mutations.sendGroupInvite,
+    { groupId: f.groupId, inviteePersonId: f.owner.personId }
+  );
+  await f.owner.auth.mutation(api.groupInvites.mutations.acceptGroupInvite, {
+    inviteId: fresh.inviteId,
+  });
+  expect(
+    await f.owner.auth.query(api.groups.announcementPreferences.readOwn, {
+      groupId: f.groupId,
+    })
+  ).toEqual({ subscribed: false });
+});
+
+it('recovers interrupted sending after its lease while retaining the exact provider message', async () => {
+  const f = await mailFixture();
+  const claimed = await f.t.mutation(
+    internal.groupAnnouncements.eventMail.claim,
+    { dispatchId: f.dispatchId }
+  );
+  expect(claimed?.messages).toHaveLength(1);
+  await expect(
+    f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
+      announcementId: f.announcementId,
+    })
+  ).rejects.toThrow('Delivery in progress');
+  vi.useFakeTimers();
+  vi.setSystemTime(Date.now() + 300001);
+  await f.staff.auth.mutation(api.groupAnnouncements.eventMail.retry, {
+    announcementId: f.announcementId,
+  });
+  const retried = await f.t.mutation(
+    internal.groupAnnouncements.eventMail.claim,
+    { dispatchId: f.dispatchId }
+  );
+  expect(retried?.messages).toEqual(claimed?.messages);
+});

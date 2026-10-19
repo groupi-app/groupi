@@ -83,7 +83,7 @@ export function EventMail({ groupId }: { groupId: Id<'groups'> }) {
           {status.failed} failed; {status.suppressed} suppressed.
         </p>
       )}
-      {status && status.failed > 0 && announcementId && (
+      {status && (status.failed > 0 || status.queued > 0) && announcementId && (
         <Button
           onClick={async () => {
             try {
@@ -96,8 +96,14 @@ export function EventMail({ groupId }: { groupId: Id<'groups'> }) {
             }
           }}
         >
-          Retry failed deliveries
+          Resume unfinished deliveries
         </Button>
+      )}
+      {status && status.queued > 0 && (
+        <p>
+          Interrupted delivery can be resumed after five minutes. The server
+          checks current authority and recipient eligibility.
+        </p>
       )}
       {error && <p role='alert'>{error}</p>}
     </section>

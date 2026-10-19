@@ -9,7 +9,7 @@ import type { Doc, Id } from '../_generated/dataModel';
 import { internal } from '../_generated/api';
 import { requireAuth } from '../auth';
 import { isAdminRole } from '../lib/constants';
-import { requireManager } from '../groups/policy';
+import { requireManager, membershipFor } from '../groups/policy';
 import { canAccessGroupMemberContent } from '../groups/contentAccess';
 import { preferenceFor } from '../groups/announcementPreferenceModel';
 import { eventAdmissionAccess } from '../events/admission';
@@ -486,7 +486,19 @@ export const preferenceReturn = query({
   handler: async (ctx, { groupId }) => {
     const actor = (await requireAuth(ctx)).person._id;
     const group = await ctx.db.get(groupId);
-    if (!group) throw denied();
+    const preference = await ctx.db
+      .query('groupAnnouncementPreferences')
+      .withIndex('by_groupId_and_personId', q =>
+        q.eq('groupId', groupId).eq('personId', actor)
+      )
+      .unique();
+    if (
+      !group ||
+      (!(await membershipFor(ctx, groupId, actor)) &&
+        !preference?.sourceMembershipId &&
+        !preference?.subscribed)
+    )
+      throw denied();
     let branding;
     try {
       branding = await brand(ctx, groupId);

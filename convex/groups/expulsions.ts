@@ -1,6 +1,4 @@
-import { components } from '../_generated/api';
-import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
-import { accountActive } from '../authorization/model';
+import { resetPreferenceFor } from './announcementPreferenceModel';
 import { v, type Infer } from 'convex/values';
 import {
   mutation,
@@ -10,7 +8,8 @@ import {
 } from '../_generated/server';
 import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
-import { requireAuth } from '../auth';
+import { requireAuth, authComponent, type AuthUserId } from '../auth';
+import { requireLegacyWriteCredential } from '../api/legacyCredential';
 import { requireManager, membershipFor } from './policy';
 import { requireWriteRole } from '../events/writes';
 import { removeMemberForPerson } from '../events/management';
@@ -203,7 +202,7 @@ export const expelRest = internalMutation({
     ctx,
     { actorId, credentialId, policy: _policy, ...input }
   ) => {
-    await requireStaffCredential(ctx, actorId, credentialId);
+    await requireLegacyWriteCredential(ctx, actorId, credentialId, 'groups');
     return expelForPerson(ctx, actorId, input, `legacy:${credentialId}`);
   },
 });
@@ -237,43 +236,6 @@ export const progressRest = internalQuery({
       : null;
   },
 });
-
-async function requireStaffCredential(
-  ctx: MutationCtx,
-  actorId: Id<'persons'>,
-  credentialId: string
-) {
-  const person = await accountActive(ctx, actorId, Date.now());
-  const records = await ctx.runQuery(components.betterAuth.adapter.findMany, {
-    model: 'apikey',
-    where: [{ field: '_id', operator: 'eq', value: credentialId }],
-    paginationOpts: { cursor: null, numItems: 1 },
-  });
-  const key = records.page[0] as AuthDoc<'apikey'> | undefined;
-  if (
-    !key ||
-    key.userId !== person.userId ||
-    key.enabled === false ||
-    (key.expiresAt != null && key.expiresAt <= Date.now())
-  )
-    operationError('FORBIDDEN', 'Current staff credential required.');
-  if (key.permissions != null) {
-    let permissions: unknown;
-    try {
-      permissions = JSON.parse(key.permissions);
-    } catch {
-      operationError('FORBIDDEN', 'Groups write scope required.');
-    }
-    if (
-      !permissions ||
-      typeof permissions !== 'object' ||
-      !('groups' in permissions) ||
-      !Array.isArray(permissions.groups) ||
-      !permissions.groups.includes('write')
-    )
-      operationError('FORBIDDEN', 'Groups write scope required.');
-  }
-}
 
 const resolutionArgs = { ...args, generation: v.number() };
 type ResolutionInput = {
@@ -332,10 +294,7 @@ export async function resolveForPerson(
   let writes = 0;
   const person = await ctx.db.get(input.personId);
   const user = person
-    ? ((await ctx.runQuery(components.betterAuth.adapter.findOne, {
-        model: 'user',
-        where: [{ field: '_id', operator: 'eq', value: person.userId }],
-      })) as AuthDoc<'user'> | null)
+    ? await authComponent.getAnyUserById(ctx, person.userId as AuthUserId)
     : null;
   for (const eventId of eventIds) {
     const event = await ctx.db.get(eventId);
@@ -425,19 +384,7 @@ export async function resolveForPerson(
       'Resolve all cleanup before reinstatement. Fresh admission is required.'
     );
   if (action === 'resume') {
-    const preference = await ctx.db
-      .query('groupAnnouncementPreferences')
-      .withIndex('by_groupId_and_personId', q =>
-        q.eq('groupId', input.groupId).eq('personId', input.personId)
-      )
-      .unique();
-    if (preference)
-      await ctx.db.patch(preference._id, {
-        subscribed: false,
-        sourceAppId: undefined,
-        sourceGrantId: undefined,
-        updatedAt: now,
-      });
+    await resetPreferenceFor(ctx, input.groupId, input.personId);
     if (membership) {
       await ctx.db.delete(membership._id);
       await ctx.db.patch(group._id, {
@@ -514,7 +461,7 @@ export const resolveRest = internalMutation({
   },
   returns: expulsionResult,
   handler: async (ctx, { actorId, credentialId, action, ...input }) => {
-    await requireStaffCredential(ctx, actorId, credentialId);
+    await requireLegacyWriteCredential(ctx, actorId, credentialId, 'groups');
     return resolveForPerson(
       ctx,
       actorId,
@@ -545,10 +492,10 @@ export const listProgress = query({
         page.page.map(async row => {
           const person = await ctx.db.get(row.personId);
           const user = person
-            ? ((await ctx.runQuery(components.betterAuth.adapter.findOne, {
-                model: 'user',
-                where: [{ field: '_id', operator: 'eq', value: person.userId }],
-              })) as AuthDoc<'user'> | null)
+            ? await authComponent.getAnyUserById(
+                ctx,
+                person.userId as AuthUserId
+              )
             : null;
           return {
             personId: row.personId,

@@ -52,6 +52,7 @@ import type * as admin_rest from "../admin/rest.js";
 import type * as ai_actions from "../ai/actions.js";
 import type * as api_auth from "../api/auth.js";
 import type * as api_bounded from "../api/bounded.js";
+import type * as api_legacyCredential from "../api/legacyCredential.js";
 import type * as api_middleware_auth from "../api/middleware/auth.js";
 import type * as api_v1_index from "../api/v1/index.js";
 import type * as api_v1_routes_addons from "../api/v1/routes/addons.js";
@@ -462,6 +463,7 @@ declare const fullApi: ApiFromModules<{
   "ai/actions": typeof ai_actions;
   "api/auth": typeof api_auth;
   "api/bounded": typeof api_bounded;
+  "api/legacyCredential": typeof api_legacyCredential;
   "api/middleware/auth": typeof api_middleware_auth;
   "api/v1/index": typeof api_v1_index;
   "api/v1/routes/addons": typeof api_v1_routes_addons;
