@@ -243,5 +243,6 @@
   "PATCH /groups/{groupId}/community-applications/{applicationId}": "editCommunityApplication",
   "POST /groups/{groupId}/community-applications/{applicationId}/withdraw": "withdrawCommunityApplication",
   "POST /groups/{groupId}/coordinated-expulsions": "expelCommunityMember",
-  "GET /groups/{groupId}/coordinated-expulsions/{personId}": "readCommunityExpulsion"
+  "GET /groups/{groupId}/coordinated-expulsions/{personId}": "readCommunityExpulsion",
+  "PUT /groups/{groupId}/announcement-preference": "setCommunityAnnouncementPreference"
 }

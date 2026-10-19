@@ -100,6 +100,8 @@ export function authorizationActionLabel(action: string): string {
     'groups.context.read': 'Read your own community context',
     'groups.applications.submit': 'Submit your own Group application',
     'groups.applications.edit': 'Edit your pending Group application',
+    'groups.announcements.preferences.update':
+      'Change your own Group announcement subscription',
     'groups.applications.withdraw': 'Withdraw your pending Group application',
     'identity.display-name': 'Read your display name',
     'identity.email': 'Read your email address',

@@ -236,3 +236,65 @@ Decision commitment and admission are independent of email. Native application r
 A single durable dispatch belongs to each decided application. Claiming is transactional; replaying the decision cannot queue another message or restore departed membership. Frozen messages use a per-dispatch/per-recipient provider idempotency key. Current Group managers can retry delivery from web/mobile review without repeating a decision. Active claims reject retries for five minutes; queued or failed claims can retry within 23 hours of the decision. Beyond that conservative bound, staff must inspect provider delivery before contacting the applicant: [Resend's idempotency retention is 24 hours](https://resend.com/changelog/idempotency-keys), so automated retries stop rather than risk duplicate mail. Decision replay receipts retain the G3 30-day policy independently. Application/Group/account cleanup removes dispatch payloads with the private application.
 
 Email links go first to the trusted Groupi `/application-status/{applicationId}` route. The route signs in the applicant, checks ownership/current account/Group eligibility, displays historical decision separately from current membership, and only offers the configured site return after rechecking the source app, active grant/binding, selected Group and current `groups.context.read` authority. It adds no recipient, identity token or application answers to the external URL. The site must authenticate its own session and reread delegated own-context. Disconnect, app suspension/deletion or removed read authority disables the external continuation; old approval never restores current membership. Queued delivery rechecks source authority and current preferences before claiming mail. Source-level authenticated HTTP/domain, provider transport and staff component tests do not establish live email/browser acceptance.
+
+## G7 explicit announcement preferences and Event mail
+
+`GET /groups/{groupId}/community-context` now returns
+`announcementPreference:{supported:true,subscribed:boolean}`; absence of a saved
+choice means false. `PUT /groups/{groupId}/announcement-preference` requires the
+selected Group delegated `groups.announcements.preferences.update` scope, a UUID
+`Idempotency-Key`, and exactly `{subscribed:boolean}`. The generated Node method is
+`setCommunityAnnouncementPreference`; Python uses
+`set_community_announcement_preference`. The response is exactly
+`{operationId,outcome:"committed",result:{subscribed},effects:{email:"not-requested",cleanup:"not-requested"}}`.
+Own native reads/changes use `groups.announcementPreferences.readOwn/updateOwn`.
+Opt-in requires current member-content eligibility; own opt-out remains available
+after departure. Voluntary Group Leave retains the explicit choice, but a former
+member receives no Group Event announcements. Rejoining does not silently rewrite
+that choice. Other Groups and global notification settings remain independent.
+
+Staff explicitly invoke native `groupAnnouncements.eventMail.announce` with
+`{groupId,eventId,operationId}`. Both current Group manager and current Event
+Organizer authority are mandatory; Group management grants no Event role. The
+Event must be active and currently shared to this Group. Publishing or sharing
+an Event never invokes this operation. The receipt commits an announcement ID
+and `effects.email:"queued"`; the Group screen exposes queued, delivered, failed
+and suppressed aggregate counts, and an authorized retry. Delivered records
+provider acceptance, not inbox receipt. General Group in-app announcement
+behavior is separate and retains its existing controls.
+
+Platform administrators link a Group to an approved Developer app with native
+`groupAnnouncements.eventMail.configureBrand({groupId,appId,returnUrl})`.
+The app's approved appearance supplies brand/accent/sender display name; the
+sender mailbox and provider key remain operator-owned. The return must be HTTPS
+on a registered redirect origin, without credentials or fragment. No configured
+link uses Groupi defaults. A changed, invalid, removed or suspended configuration
+suppresses already queued mail rather than silently changing its brand. Staff
+cannot pass a brand, sender, recipient, or external return in an announcement.
+
+The identifier-only page/dispatch queue rechecks current explicit opt-in,
+current Group member-content authority, canonical Event audience eligibility,
+blocks/bans/exclusion, live account, DND and global EMAIL/type preferences. A
+delegated opt-in also rechecks its live source app/grant/binding. Claims are
+transactional; repeated page processing, operation replay and concurrent claims
+cannot produce duplicate dispatches. Frozen per-recipient messages use stable
+provider idempotency keys. Authorized retries retain those exact messages and
+keys, reject active claims for five minutes, and stop at 23 hours after enqueue,
+before the provider's 24-hour retention horizon. Email failure never rewrites
+membership, RSVP, subscription, or the committed operation receipt. UUID receipts
+retain the common 30-day window and permanent mismatch tombstones.
+
+Email links first open Groupi `/announcement-preferences/{groupId}`. The person
+signs in to their own account, reads/changes their own preference, and can continue
+to the approved external community only after current app/grant/selected Group
+read authority is rechecked. The external URL contains no email, identity token,
+Event logistics or application data. The site must authenticate and reread live
+own context. Group/Event/account deletion purges the corresponding private queue,
+frozen payloads and preferences; deleting an Event preserves unrelated Group
+preferences.
+
+Authenticated HTTP/native, generated SDK, production-provider staff component
+and mocked provider transport tests establish local source behavior. Matching
+deployed frontend/backend, actual signed-in browser navigation, provider mailbox
+verification and inbox/return acceptance remain open G10 gates. No development
+runtime, build, deployment or live data mutation was performed for G7.

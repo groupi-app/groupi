@@ -262,6 +262,63 @@ export default defineSchema({
   })
     .index('by_applicationId', ['applicationId'])
     .index('by_personId', ['personId']),
+  groupAnnouncementBrands: defineTable({
+    groupId: v.id('groups'),
+    appId: v.id('delegatedApps'),
+    returnUrl: v.string(),
+  }).index('by_groupId', ['groupId']),
+  groupEventAnnouncements: defineTable({
+    groupId: v.id('groups'),
+    eventId: v.id('events'),
+    senderId: v.id('persons'),
+    brandBinding: v.string(),
+    createdAt: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    cutoff: v.number(),
+    processed: v.boolean(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_senderId', ['senderId'])
+    .index('by_eventId', ['eventId']),
+  groupEventMail: defineTable({
+    announcementId: v.id('groupEventAnnouncements'),
+    personId: v.id('persons'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('delivered'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  })
+    .index('by_announcementId', ['announcementId'])
+    .index('by_personId', ['personId']),
+  groupAnnouncementPreferences: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    subscribed: v.boolean(),
+    updatedAt: v.number(),
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+  })
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId', ['groupId']),
   groupAnnouncements: defineTable({
     groupId: v.id('groups'),
     senderId: v.optional(v.id('persons')),

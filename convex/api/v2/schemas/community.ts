@@ -40,8 +40,8 @@ export const CommunityContextSchema = z.object({
   grantedActions: z.array(z.string()),
   allowedActions: z.array(z.string()),
   announcementPreference: z.object({
-    supported: z.literal(false),
-    subscribed: z.null(),
+    supported: z.literal(true),
+    subscribed: z.boolean(),
   }),
 });
 

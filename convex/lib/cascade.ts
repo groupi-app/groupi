@@ -1,3 +1,4 @@
+import { removeEventMailForEvent } from '../groupAnnouncements/eventMailCleanup';
 import { removeAudiencesForEvent } from '../groupEventAudiences/cleanup';
 import { deleteEventTransfers } from '../eventTransfers/cleanup';
 import { deleteEventApplications } from '../eventApplications/cleanup';
@@ -9,6 +10,7 @@ export async function cascadeDeleteEventData(
   ctx: MutationCtx,
   eventId: Id<'events'>
 ) {
+  await removeEventMailForEvent(ctx, eventId);
   await deleteEventTransfers(ctx, eventId);
   await removeAudiencesForEvent(ctx, eventId);
 

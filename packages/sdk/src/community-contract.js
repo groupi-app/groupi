@@ -86,7 +86,8 @@ export const communityOperations = Object.freeze({
     'PUT',
     '/groups/{groupId}/announcement-preference',
     'setCommunityAnnouncementPreference',
-    'G7'
+    'G7',
+    'implemented'
   ),
   expel: op(
     'POST',
@@ -136,7 +137,7 @@ const context = {
   nextCursor: null,
   grantedActions: ['groups.context.read'],
   allowedActions: ['groups.context.read'],
-  announcementPreference: { supported: false, subscribed: null },
+  announcementPreference: { supported: true, subscribed: false },
 };
 const application = status => ({
   id: 'synthetic-application',
@@ -149,7 +150,7 @@ const application = status => ({
 });
 const fixture = (value, milestone = 'G1') => ({
   synthetic: true,
-  status: ['G1', 'G3', 'G4', 'G8'].includes(milestone)
+  status: ['G1', 'G3', 'G4', 'G7', 'G8'].includes(milestone)
     ? 'implemented'
     : 'proposed',
   milestone,
@@ -289,7 +290,8 @@ export const communityFixtures = Object.freeze({
         announcementPreference: { supported: true, subscribed: false },
       },
     },
-    'G7'
+    'G7',
+    'implemented'
   ),
   subscribed: fixture(
     {
@@ -298,7 +300,8 @@ export const communityFixtures = Object.freeze({
         announcementPreference: { supported: true, subscribed: true },
       },
     },
-    'G7'
+    'G7',
+    'implemented'
   ),
   expired: fixture({
     error: {

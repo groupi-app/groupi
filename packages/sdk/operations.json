@@ -969,6 +969,13 @@
   },
   {
     "paging": null,
+    "name": "setCommunityAnnouncementPreference",
+    "method": "PUT",
+    "path": "/groups/{groupId}/announcement-preference",
+    "summary": "Change own Group announcement subscription"
+  },
+  {
+    "paging": null,
     "name": "getGroupsJoiningQuestionnaire",
     "method": "GET",
     "path": "/groups/{groupId}/joining-questionnaire",

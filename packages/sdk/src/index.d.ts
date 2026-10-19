@@ -4213,7 +4213,7 @@ export class Groupi {
     nextCursor: string | null;
     grantedActions: Array<string>;
     allowedActions: Array<string>;
-    announcementPreference: { supported: false; subscribed: null };
+    announcementPreference: { supported: true; subscribed: boolean };
   }>;
   /** Read the single current selected Group Event */
   readCurrentCommunityEvent(
@@ -4300,6 +4300,16 @@ export class Groupi {
       status: 'PENDING' | 'WITHDRAWN' | 'APPROVED' | 'DECLINED';
       revision: number;
     };
+    effects: { email: 'not-requested'; cleanup: 'not-requested' };
+  }>;
+  /** Change own Group announcement subscription */
+  setCommunityAnnouncementPreference(
+    input: { path: { groupId: string }; body: { subscribed: boolean } },
+    options?: RequestOptions
+  ): Promise<{
+    operationId: string;
+    outcome: 'committed';
+    result: { subscribed: boolean };
     effects: { email: 'not-requested'; cleanup: 'not-requested' };
   }>;
   /** Read your private joining questionnaire and current access status */
