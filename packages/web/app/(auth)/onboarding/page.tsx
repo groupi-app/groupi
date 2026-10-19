@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { OnboardingContent } from './onboarding-content';
 import { OnboardingGuard } from './components/onboarding-guard';
 
@@ -9,10 +11,18 @@ import { OnboardingGuard } from './components/onboarding-guard';
  * - Handles redirects client-side based on user state
  * - Real-time user data updates via Convex subscriptions
  */
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   return (
     <OnboardingGuard>
       <OnboardingContent />
     </OnboardingGuard>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingPageContent />
+    </Suspense>
   );
 }

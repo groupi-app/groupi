@@ -1,9 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { useSearchParams } from 'next/navigation';
 import { DataExplorer, type DetailTarget } from './components/data-explorer';
 
-export default function ExplorerPage() {
+function ExplorerContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get('type');
   const id = searchParams.get('id');
@@ -24,5 +26,13 @@ export default function ExplorerPage() {
       </div>
       <DataExplorer initialTarget={initialTarget} />
     </div>
+  );
+}
+
+export default function ExplorerPage() {
+  return (
+    <Suspense>
+      <ExplorerContent />
+    </Suspense>
   );
 }

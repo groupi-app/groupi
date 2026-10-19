@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { EventGrid, EventMembershipData } from './components/event-grid';
 import { EventsWelcomeHeader } from './components/events-welcome-header';
 import { EventInvitesTab } from './components/event-invites-tab';
@@ -33,7 +35,7 @@ type TabValue = 'upcoming' | 'attended' | 'invited' | 'discover';
  * - Create event card
  * - Single query for events AND invites (no loading when switching tabs)
  */
-export default function MyEventsPage() {
+function MyEventsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -437,5 +439,13 @@ function EventsPageContent({
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function MyEventsPage() {
+  return (
+    <Suspense>
+      <MyEventsContent />
+    </Suspense>
   );
 }
