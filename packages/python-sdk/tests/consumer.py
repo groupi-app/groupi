@@ -37,3 +37,9 @@ def read_composed_schemas(members: MemberListResponse, invite: InviteListDetail)
 
 client.search_users()  # type: ignore[call-arg]
 client.search_users(query={})  # type: ignore[typeddict-item]
+client.join_community_event(path={"groupId":"group","eventId":"event"},body={})
+client.join_community_event(path={"groupId":"group","eventId":"event"},body={"rsvp":"YES"})  # type: ignore[dict-item]
+client.leave_community_event(path={"groupId":"group","eventId":"event"},body={"expectedRevision":3})
+client.leave_community_event(path={"groupId":"group","eventId":"event"},body={})  # type: ignore[typeddict-item]
+client.leave_community(path={"groupId":"group"},body={"expectedMembershipId":"own-membership"})
+client.leave_community(path={"groupId":"group"},body={})  # type: ignore[typeddict-item]

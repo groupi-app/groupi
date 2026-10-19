@@ -1,3 +1,4 @@
+import { nextParticipationRevision } from '../events/participationRevision';
 import { components } from '../_generated/api';
 import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { requireNoEventExclusion } from '../groups/exclusions';
@@ -254,6 +255,11 @@ export async function acceptInviteForPerson(
     : 0;
 
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      invite.eventId,
+      person._id
+    ),
     personId: person._id,
     eventId: invite.eventId,
     role: 'ATTENDEE',

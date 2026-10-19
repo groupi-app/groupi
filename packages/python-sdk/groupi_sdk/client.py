@@ -237,11 +237,17 @@ from .types import (
     Object38a2ce79b0f1,
     Objectfa3a9e641148,
     Objectf2a3cfe95492,
-    Objectf491aedb9b1f,
+    Object71b9478386e5,
     Objecta2791daed18f,
     Object6edaff610f96,
     Object97dfec76315a,
     Object0b7836604670,
+    Objectd0927d889d39,
+    Object662cba3b4b77,
+    Object309b8d6ee3c7,
+    Object288ba65ddff3,
+    Object55bc59b678b3,
+    Object6c49c59c24af,
     Object53e85f30308a,
     Objecte4ea0c62ce41,
     Object0210d908b1ed,
@@ -387,12 +393,15 @@ from .types import (
     Objectb27f127421ba,
     Object59509cf0ec83,
     Objecta61bf08328e7,
-    Object5b35bc95b99b,
+    Object6ffc35fcb505,
     Objecta021a3f479e7,
     Object9a607b8a62e8,
     Objectd9ee0d5fe0e0,
     Object8f7560a6b20e,
     Object427b94380342,
+    Objectf03c0b814f7e,
+    Objecte942149005cb,
+    Objectfc3c77e1d00a,
     Object878ec63794f7,
     Object5ebfeba959d7,
     Objectcb244cc36b34,
@@ -410,6 +419,7 @@ from .types import (
     Object4e2be9f6831d,
     Object1fa6adfb22bd,
     Object1e0b443bfaa7,
+    Object7cd832af6593,
     Object30a6d58642d2,
     Object5b771084f9e7,
     Objectf13ad84fbfdc,
@@ -978,6 +988,22 @@ class Groupi(Transport):
     def read_current_community_event(self, *, path=None, query=None, body=None, idempotency_key=None):
         """Read the single current selected Group Event."""
         return self.request('GET', '/groups/{groupId}/current-event', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def join_community_event(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """joinCommunityEvent."""
+        return self.request('POST', '/groups/{groupId}/events/{eventId}/join', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def set_community_rsvp(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """setCommunityRsvp."""
+        return self.request('PUT', '/groups/{groupId}/events/{eventId}/own-rsvp', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def leave_community_event(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """leaveCommunityEvent."""
+        return self.request('POST', '/groups/{groupId}/events/{eventId}/leave', path=path, query=query, body=body, idempotency_key=idempotency_key)
+
+    def leave_community(self, *, path=None, query=None, body=None, idempotency_key=None):
+        """leaveCommunity."""
+        return self.request('POST', '/groups/{groupId}/community-leave', path=path, query=query, body=body, idempotency_key=idempotency_key)
 
     def submit_community_application(self, *, path=None, query=None, body=None, idempotency_key=None):
         """submitCommunityApplication."""
@@ -2101,6 +2127,22 @@ class AsyncGroupi(AsyncTransport):
     async def read_current_community_event(self, **kwargs):
         """Read the single current selected Group Event."""
         return await self.request('GET', '/groups/{groupId}/current-event', **kwargs)
+
+    async def join_community_event(self, **kwargs):
+        """joinCommunityEvent."""
+        return await self.request('POST', '/groups/{groupId}/events/{eventId}/join', **kwargs)
+
+    async def set_community_rsvp(self, **kwargs):
+        """setCommunityRsvp."""
+        return await self.request('PUT', '/groups/{groupId}/events/{eventId}/own-rsvp', **kwargs)
+
+    async def leave_community_event(self, **kwargs):
+        """leaveCommunityEvent."""
+        return await self.request('POST', '/groups/{groupId}/events/{eventId}/leave', **kwargs)
+
+    async def leave_community(self, **kwargs):
+        """leaveCommunity."""
+        return await self.request('POST', '/groups/{groupId}/community-leave', **kwargs)
 
     async def submit_community_application(self, **kwargs):
         """submitCommunityApplication."""

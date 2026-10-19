@@ -46,7 +46,10 @@ export type CommunityContext = {
   contractVersion: 'red-room.v1';
   group: { id: string; name: string };
   form: { enabled: boolean; revision: string; questions: Question[] };
-  membership: { role: 'OWNER' | 'MODERATOR' | 'MEMBER' } | null;
+  membership: {
+    membershipId: string;
+    role: 'OWNER' | 'MODERATOR' | 'MEMBER';
+  } | null;
   eligibility: {
     canApply: boolean;
     canAccessMemberContent: boolean;
@@ -175,11 +178,13 @@ export type ProposedOperations = {
     result: Committed<{ eventId: string; participation: Participation }>;
   };
   leaveEvent: {
-    input: MutationIntent<{ groupId: string; eventId: string }>;
+    input: MutationIntent<{ groupId: string; eventId: string }> & {
+      expectedRevision: number;
+    };
     result: Committed<{ eventId: string; participation: null }>;
   };
   leaveGroup: {
-    input: MutationIntent<{ groupId: string }>;
+    input: MutationIntent<{ groupId: string; expectedMembershipId: string }>;
     result: Committed<{
       membership: null;
       retainsIndependentEventParticipation: true;

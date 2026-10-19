@@ -30,6 +30,7 @@ export const context = v.object({
   membership: v.union(
     v.null(),
     v.object({
+      membershipId: v.id('groupMemberships'),
       role: v.union(
         v.literal('OWNER'),
         v.literal('MODERATOR'),
@@ -130,6 +131,7 @@ export const readContext = internalQuery({
     const membership = await membershipFor(ctx, groupId, personId);
     const banned = await isGroupBanned(ctx, groupId, personId);
     const eligible = await canEnterGroup(ctx, groupId, personId);
+    const excluded = await isGroupExcludedForPerson(ctx, groupId, personId);
     const canAccessMemberContent = await canAccessGroupMemberContent(
       ctx,
       groupId,
@@ -161,12 +163,14 @@ export const readContext = internalQuery({
         revision: await secretHash(JSON.stringify({ enabled, questions })),
         questions,
       },
-      membership: membership ? { role: membership.role } : null,
+      membership: membership
+        ? { membershipId: membership._id, role: membership.role }
+        : null,
       eligibility: {
         canApply: eligible && enabled && !membership && !pending,
         canAccessMemberContent,
         banned,
-        excluded: await isGroupExcludedForPerson(ctx, groupId, personId),
+        excluded,
       },
       applications: page.page.map(a => ({
         id: a._id,
@@ -185,6 +189,10 @@ export const readContext = internalQuery({
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
             (a === 'groups.announcements.preferences.update' && eligible) ||
+            (a === 'groups.leave' &&
+              !excluded &&
+              Boolean(membership) &&
+              membership?.role !== 'OWNER') ||
             (a === 'groups.applications.submit' &&
               eligible &&
               enabled &&

@@ -992,6 +992,42 @@ export class Groupi extends Transport {
       options
     );
   }
+  /** joinCommunityEvent */
+  joinCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/events/{eventId}/join',
+      input,
+      options
+    );
+  }
+  /** setCommunityRsvp */
+  setCommunityRsvp(input = {}, options = {}) {
+    return this.request(
+      'PUT',
+      '/groups/{groupId}/events/{eventId}/own-rsvp',
+      input,
+      options
+    );
+  }
+  /** leaveCommunityEvent */
+  leaveCommunityEvent(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/events/{eventId}/leave',
+      input,
+      options
+    );
+  }
+  /** leaveCommunity */
+  leaveCommunity(input = {}, options = {}) {
+    return this.request(
+      'POST',
+      '/groups/{groupId}/community-leave',
+      input,
+      options
+    );
+  }
   /** submitCommunityApplication */
   submitCommunityApplication(input = {}, options = {}) {
     return this.request(

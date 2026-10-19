@@ -63,7 +63,10 @@ export async function leave(
   const group = await ctx.db.get(groupId);
   if (!group) fail('NOT_FOUND', 'Group not found.');
   if (group.ownerId === actorId)
-    fail('FORBIDDEN', 'The Group owner must resolve ownership before leaving.');
+    fail(
+      'PROTECTED_OWNER',
+      'The Group owner must resolve ownership before leaving.'
+    );
   const member = await membershipFor(ctx, groupId, actorId);
   if (!member) return { left: false };
   await ctx.db.delete(member._id);
