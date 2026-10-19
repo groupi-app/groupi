@@ -49,7 +49,7 @@ export type EventInvite = {
 
 export type SentEventInvite = {
   inviteId: Id<'eventInvites'>;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED';
   role: 'ATTENDEE' | 'MODERATOR';
   message: string | null;
   createdAt: number;

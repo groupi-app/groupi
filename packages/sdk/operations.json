@@ -1896,5 +1896,19 @@
     "method": "GET",
     "path": "/uploads/{storageId}",
     "summary": "Read an accessible file descriptor"
+  },
+  {
+    "paging": null,
+    "name": "resumeCommunityExpulsion",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/resume",
+    "summary": "Resume cleanup with current independent Event authority"
+  },
+  {
+    "paging": null,
+    "name": "reinstateCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/reinstate",
+    "summary": "Reinstate after complete cleanup without restoring admission"
   }
 ]

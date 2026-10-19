@@ -147,6 +147,8 @@ export function createApiV2App(
           'IDEMPOTENCY_EXPIRED',
           'PROTECTED_OWNER',
           'PROTECTED_ORGANIZER',
+          'CLEANUP_REQUIRED',
+          'STALE_GENERATION',
           'DATE_RESET_REQUIRED',
           'NOT_FOUND',
           'INVITE_UNAVAILABLE',

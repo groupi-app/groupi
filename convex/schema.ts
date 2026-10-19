@@ -284,10 +284,43 @@ export default defineSchema({
       'requestId',
     ]),
 
+  communityExclusionAudit: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    generation: v.number(),
+    operationId: v.string(),
+    action: v.union(
+      v.literal('expel'),
+      v.literal('resume'),
+      v.literal('reinstate')
+    ),
+    at: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
+    .index('by_actor', ['actorId']),
   communityExclusions: defineTable({
     groupId: v.id('groups'),
     personId: v.id('persons'),
-    actorId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    reinstatedBy: v.optional(v.id('persons')),
+    reinstatedAt: v.optional(v.number()),
+    events: v.optional(
+      v.array(
+        v.object({
+          eventId: v.id('events'),
+          state: v.union(
+            v.literal('pending'),
+            v.literal('blocked'),
+            v.literal('complete'),
+            v.literal('preserved'),
+            v.literal('retired')
+          ),
+          code: v.optional(v.string()),
+        })
+      )
+    ),
     active: v.boolean(),
     generation: v.number(),
     operationId: v.string(),
@@ -303,6 +336,8 @@ export default defineSchema({
   })
     .index('by_group_person', ['groupId', 'personId'])
     .index('by_person', ['personId'])
+    .index('by_actor', ['actorId'])
+    .index('by_reinstatedBy', ['reinstatedBy'])
     .index('by_group', ['groupId']),
 
   groupBans: defineTable({
@@ -1290,7 +1325,8 @@ export default defineSchema({
     status: v.union(
       v.literal('PENDING'),
       v.literal('ACCEPTED'),
-      v.literal('DECLINED')
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
     ),
     message: v.optional(v.string()), // Optional personal message
     role: v.union(v.literal('ATTENDEE'), v.literal('MODERATOR')),

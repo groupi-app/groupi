@@ -34,6 +34,7 @@ import { GroupApplications } from './group-applications';
 import { GroupApplicationSettings } from './group-application-settings';
 import { GroupBanManagement } from './group-ban-management';
 import { GroupConfirmedAction } from './group-confirmed-action';
+import { CommunityExpulsionProgress } from './community-expulsion-progress';
 import { GroupMemberRoster } from './group-member-roster';
 import { GroupInvitationManagement } from './group-invitation-management';
 import { GroupIdentityForm } from './group-identity-form';
@@ -227,6 +228,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
         <p>
           Complete required onboarding before accessing Group member content.
         </p>
+      )}
+      {group.canManageMembers && (
+        <CommunityExpulsionProgress groupId={groupId} />
       )}
       <section
         aria-labelledby='group-settings-heading'
