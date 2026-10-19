@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { getDiscussionActorWithUser } from '../posts/presentation';
 import { canViewAttendance, privateNote } from '../events/attendance';
 import { query } from '../_generated/server';
@@ -57,6 +58,7 @@ export const getPostDetail = query({
       return null;
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     // Check if user is a member of the event
     const userMembership = await ctx.db
       .query('memberships')
@@ -181,6 +183,8 @@ export const getEventPostFeed = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionPerson = (await requireAuth(ctx)).person;
+    await requireNoEventExclusion(ctx, eventId, exclusionPerson._id);
     // Require authentication and event membership
     const { person: currentPerson } = await requireAuth(ctx);
 
@@ -383,6 +387,7 @@ export const getEventPostFeedPage = query({
       return { ...emptyResult, page: [] };
     }
 
+    await requireNoEventExclusion(ctx, eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -444,6 +449,7 @@ export const getPost = query({
       throw new Error('Post not found');
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -476,6 +482,7 @@ export const getPostReplies = query({
       throw new Error('Post not found');
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>

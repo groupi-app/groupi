@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { ConvexError } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -14,6 +15,7 @@ export async function requireInvitePermission(
   eventId: Id<'events'>,
   personId: Id<'persons'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const membership = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

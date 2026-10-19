@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -13,18 +15,25 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
+import { AccountSwitcher } from '@/components/molecules/account-switcher';
 import { LogoSticker } from '@/components/atoms';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { siteConfig } from '@/config/site';
 import { useGlobalUser } from '@/context/global-user-context';
 import { getMagicLinkCallbackUrl, getSafeInternalRedirect } from '@/lib/urls';
 
+import {
+  HostedBrand,
+  hostedInteractionId,
+} from '@/features/authorization/hosted-brand';
+
 const RESEND_COOLDOWN_SECONDS = 10;
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = getSafeInternalRedirect(searchParams.get('redirect'));
+  const hostedInteraction = hostedInteractionId(redirectTo);
   const isAddAccountMode = searchParams.get('mode') === 'add-account';
   const oauthError = searchParams.get('error');
   const { isAuthenticated, isLoading: isAuthLoading } = useGlobalUser();
@@ -36,9 +45,18 @@ export default function SignInPage() {
     if (isAuthenticated && !isAddAccountMode) {
       router.replace(redirectTo);
     } else if (!isAuthenticated && isAddAccountMode) {
-      router.replace('/sign-in');
+      router.replace(
+        `/sign-in?redirect=${encodeURIComponent(redirectTo)}${oauthError ? `&error=${encodeURIComponent(oauthError)}` : ''}`
+      );
     }
-  }, [isAuthLoading, isAuthenticated, isAddAccountMode, redirectTo, router]);
+  }, [
+    isAuthLoading,
+    isAuthenticated,
+    isAddAccountMode,
+    redirectTo,
+    oauthError,
+    router,
+  ]);
 
   // Build callback URL based on mode
   // For add-account mode, go directly to events (they're already onboarded)
@@ -71,6 +89,12 @@ export default function SignInPage() {
         'This account is already associated with a different user. Try signing in with a different method.',
       signup_disabled: 'New account registration is currently disabled.',
       unable_to_create_user: 'Unable to create your account. Please try again.',
+      INVALID_TOKEN:
+        'This sign-in link has expired or was already used. Request a new link in this browser.',
+      invalid_token:
+        'This sign-in link has expired or was already used. Request a new link in this browser.',
+      token_expired:
+        'This sign-in link has expired. Request a new link in this browser.',
       unable_to_create_session:
         'Unable to create your session. Please try again.',
     };
@@ -267,6 +291,7 @@ export default function SignInPage() {
       const { error } = await sendMagicLinkWithEmailOrUsername({
         identifier: identifierToUse,
         callbackURL: magicLinkCallbackURL,
+        errorCallbackURL: `/sign-in?${isAddAccountMode ? 'mode=add-account&' : ''}redirect=${encodeURIComponent(encodeURIComponent(redirectTo))}`,
       });
 
       if (error) {
@@ -299,12 +324,16 @@ export default function SignInPage() {
     <div className='container py-12 md:py-20'>
       <div className='flex items-center justify-center'>
         <Card className='w-full max-w-md'>
-          <div className='flex items-center justify-center gap-2 pt-7 pb-1'>
-            <LogoSticker size='xs' color='primary' waving />
-            <span className='text-3xl font-bold font-heading text-primary'>
-              {siteConfig.name}
-            </span>
-          </div>
+          {hostedInteraction ? (
+            <HostedBrand interactionId={hostedInteraction} />
+          ) : (
+            <div className='flex items-center justify-center gap-2 pt-7 pb-1'>
+              <LogoSticker size='xs' color='primary' waving />
+              <span className='text-3xl font-bold font-heading text-primary'>
+                {siteConfig.name}
+              </span>
+            </div>
+          )}
 
           <div className='px-6 pb-3 text-center'>
             <h1 className='text-2xl font-heading font-semibold'>
@@ -313,11 +342,16 @@ export default function SignInPage() {
             <p className='text-sm text-muted-foreground mt-1'>
               {isAddAccountMode
                 ? 'Sign in with a different account. Your current session will remain active.'
-                : 'Plan events together'}
+                : hostedInteraction
+                  ? 'Sign in to continue to your community'
+                  : 'Plan events together'}
             </p>
           </div>
 
           <CardContent className='space-y-4'>
+            {hostedInteraction && isAddAccountMode ? (
+              <AccountSwitcher returnTo={redirectTo} />
+            ) : null}
             {/* Social Sign In */}
             <div className='space-y-2'>
               <Button
@@ -397,7 +431,8 @@ export default function SignInPage() {
                   <AlertDescription>
                     We sent a sign-in link
                     {lastSentIdentifier ? ` to ${lastSentIdentifier}` : ''}.
-                    Open it to continue.
+                    Open it in the browser where you started sign-in to
+                    continue.
                     {lastSentIdentifier && (
                       <div className='mt-3 pt-3 border-t border-border-success'>
                         <p className='text-sm mb-2'>
@@ -444,11 +479,21 @@ export default function SignInPage() {
             <p className='text-center text-sm text-muted-foreground'>
               {isAddAccountMode
                 ? 'You can switch between accounts anytime'
-                : 'New to Groupi? We’ll create an account automatically.'}
+                : hostedInteraction
+                  ? 'New here? We’ll create an account with your email and username.'
+                  : 'New to Groupi? We’ll create an account automatically.'}
             </p>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
   );
 }

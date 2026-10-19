@@ -166,3 +166,84 @@ it('replaces an expired open consent form with restart guidance when its deadlin
     vi.useRealTimers();
   }
 });
+
+it('branded consent still discloses provider, Developer app and unambiguous account with explicit switching', () => {
+  const request = {
+    ...consentRequest(),
+    appearance: {
+      brandName: 'Reading Circle',
+      senderName: 'Reading Circle',
+      accent: '#991b1b',
+    },
+    account: {
+      displayName: 'Alice',
+      username: 'nightowl',
+      email: 'alice@example.test',
+    },
+  };
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
+  );
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByText('Reading Circle')).toBeInTheDocument();
+  expect(screen.getByText('Sign-in provided by Groupi')).toBeInTheDocument();
+  expect(screen.getByText('Developer app: Calendar')).toBeInTheDocument();
+  expect(screen.getByText('alice@example.test')).toBeInTheDocument();
+  expect(screen.getByText('@nightowl')).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: 'Choose another account' })
+  ).toHaveAttribute(
+    'href',
+    '/sign-in?mode=add-account&redirect=%2Foauth%2Fconsent%3FinteractionId%3Di-1'
+  );
+});
+
+it('discloses only the selected Group and future audience boundary for applicants', async () => {
+  mockConsent({
+    ...consentRequest(),
+    selectedGroup: { id: 'g-community', name: 'Reading Circle' },
+    requestedScopes: ['openid', 'groups.context.read'],
+    requestedActions: ['groups.context.read'],
+    events: [],
+  } as ReturnType<typeof consentRequest>);
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByText('Reading Circle')).toBeInTheDocument();
+  expect(
+    screen.getByText(/current and future Events shared with this Group/)
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  await user.click(screen.getByLabelText('Read your own community context'));
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledWith({
+    interactionId: 'i-1',
+    actions: ['groups.context.read'],
+    selector: { kind: 'selected-group', groupId: 'g-community' },
+    background: false,
+  });
+});
+
+it('consents to a selected Group write without requiring own-context read', async () => {
+  mockConsent({
+    ...consentRequest(),
+    selectedGroup: { id: 'g-community', name: 'Reading Circle' },
+    requestedScopes: ['openid', 'groups.applications.submit'],
+    requestedActions: ['groups.applications.submit'],
+    events: [],
+  } as ReturnType<typeof consentRequest>);
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  await user.click(screen.getByLabelText('Submit your own Group application'));
+  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledWith({
+    interactionId: 'i-1',
+    actions: ['groups.applications.submit'],
+    selector: { kind: 'selected-group', groupId: 'g-community' },
+    background: false,
+  });
+});

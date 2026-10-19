@@ -121,6 +121,20 @@
   },
   {
     "paging": null,
+    "name": "readEventLifecycle",
+    "method": "GET",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Read Organizer lifecycle and revision"
+  },
+  {
+    "paging": null,
+    "name": "updateEventLifecycle",
+    "method": "POST",
+    "path": "/events/{eventId}/lifecycle",
+    "summary": "Complete, reopen or reschedule as current Organizer"
+  },
+  {
+    "paging": null,
     "name": "getEventsEventIdApplicationsForm",
     "method": "GET",
     "path": "/events/{eventId}/applications/form",
@@ -866,6 +880,34 @@
     "summary": "Owner controls poll availability and creation"
   },
   {
+    "paging": null,
+    "name": "expelCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions",
+    "summary": "Commit coordinated community exclusion as staff"
+  },
+  {
+    "paging": null,
+    "name": "readCommunityExpulsion",
+    "method": "GET",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}",
+    "summary": "Reconcile coordinated exclusion progress as current staff"
+  },
+  {
+    "paging": null,
+    "name": "resumeCommunityExpulsion",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/resume",
+    "summary": "Resume cleanup with current independent Event authority"
+  },
+  {
+    "paging": null,
+    "name": "reinstateCommunityMember",
+    "method": "POST",
+    "path": "/groups/{groupId}/coordinated-expulsions/{personId}/reinstate",
+    "summary": "Reinstate after complete cleanup without restoring admission"
+  },
+  {
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
@@ -903,6 +945,76 @@
     "method": "DELETE",
     "path": "/groups/{groupId}",
     "summary": "Explicitly delete a Group as owner"
+  },
+  {
+    "paging": null,
+    "name": "readOwnCommunityContext",
+    "method": "GET",
+    "path": "/groups/{groupId}/community-context",
+    "summary": "Read own community context"
+  },
+  {
+    "paging": null,
+    "name": "readCurrentCommunityEvent",
+    "method": "GET",
+    "path": "/groups/{groupId}/current-event",
+    "summary": "Read the single current selected Group Event"
+  },
+  {
+    "paging": null,
+    "name": "joinCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/join",
+    "summary": "joinCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "setCommunityRsvp",
+    "method": "PUT",
+    "path": "/groups/{groupId}/events/{eventId}/own-rsvp",
+    "summary": "setCommunityRsvp"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunityEvent",
+    "method": "POST",
+    "path": "/groups/{groupId}/events/{eventId}/leave",
+    "summary": "leaveCommunityEvent"
+  },
+  {
+    "paging": null,
+    "name": "leaveCommunity",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-leave",
+    "summary": "leaveCommunity"
+  },
+  {
+    "paging": null,
+    "name": "submitCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications",
+    "summary": "submitCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "editCommunityApplication",
+    "method": "PATCH",
+    "path": "/groups/{groupId}/community-applications/{applicationId}",
+    "summary": "editCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "withdrawCommunityApplication",
+    "method": "POST",
+    "path": "/groups/{groupId}/community-applications/{applicationId}/withdraw",
+    "summary": "withdrawCommunityApplication"
+  },
+  {
+    "paging": null,
+    "name": "setCommunityAnnouncementPreference",
+    "method": "PUT",
+    "path": "/groups/{groupId}/announcement-preference",
+    "summary": "Change own Group announcement subscription"
   },
   {
     "paging": null,
@@ -1641,7 +1753,7 @@
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
-      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
     },
     "name": "listUsernameInvitations",
     "method": "GET",
@@ -1687,7 +1799,7 @@
     "paging": {
       "items": "items",
       "cursor": "nextCursor",
-      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
+      "itemType": "{ \"inviteId\": string; \"eventId\": string; \"eventTitle\": string; \"inviterId\": string; \"inviteeId\": string; \"role\": \"ATTENDEE\" | \"MODERATOR\"; \"status\": \"PENDING\" | \"ACCEPTED\" | \"DECLINED\" | \"CANCELLED\"; \"message\": string | null; \"createdAt\": number; \"respondedAt\": number | null }"
     },
     "name": "listUsernameInvitationsMemberInvites",
     "method": "GET",

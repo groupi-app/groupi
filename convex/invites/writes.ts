@@ -1,3 +1,7 @@
+import { nextParticipationRevision } from '../events/participationRevision';
+import { components } from '../_generated/api';
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
+import { requireNoEventExclusion } from '../groups/exclusions';
 import type { MutationCtx } from '../_generated/server';
 import { v, type Infer } from 'convex/values';
 import { requireInvitePermission, inviteError } from './permissions';
@@ -193,6 +197,7 @@ export async function acceptInviteForPerson(
 
   const sourceEvent = await ctx.db.get(invite.eventId);
   if (!sourceEvent) inviteError('NOT_FOUND', 'Event not found');
+  await requireNoEventExclusion(ctx, invite.eventId, personId);
   // Check if invite is valid
   const now = Date.now();
 
@@ -250,6 +255,11 @@ export async function acceptInviteForPerson(
     : 0;
 
   const membershipId = await ctx.db.insert('memberships', {
+    participationRevision: await nextParticipationRevision(
+      ctx,
+      invite.eventId,
+      person._id
+    ),
     personId: person._id,
     eventId: invite.eventId,
     role: 'ATTENDEE',
@@ -370,6 +380,23 @@ export async function createEmailInvitesForPerson(
   const createdInviteIds: Id<'invites'>[] = [];
 
   for (const inviteData of invites) {
+    const user = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
+      model: 'user',
+      where: [
+        {
+          field: 'email',
+          operator: 'eq',
+          value: inviteData.email.trim().toLowerCase(),
+        },
+      ],
+    })) as AuthDoc<'user'> | null;
+    if (user) {
+      const recipient = await ctx.db
+        .query('persons')
+        .withIndex('by_user_id', q => q.eq('userId', user._id))
+        .first();
+      if (recipient) await requireNoEventExclusion(ctx, eventId, recipient._id);
+    }
     // Check if an invite with this email already exists for this event
     const existingInvite = await ctx.db
       .query('invites')

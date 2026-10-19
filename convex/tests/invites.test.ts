@@ -9,6 +9,18 @@ import {
   createTestEventWithInvite,
 } from './test_helpers';
 
+import { createAuthAccount, registerBetterAuth } from './auth.helpers';
+async function emailEvent(t: ReturnType<typeof createTestInstance>) {
+  const event = await TestScenarios.singleEvent(t);
+  registerBetterAuth(t);
+  const account = await createAuthAccount(
+    t,
+    'email-invite-organizer',
+    event.personId
+  );
+  return { ...event, userId: account.user._id, auth: account.auth };
+}
+
 // Helper to get auth from invite setup
 async function setupEventWithInvite(
   t: ReturnType<typeof import('./test_helpers').createTestInstance>,
@@ -522,7 +534,7 @@ describe('Invites Domain', () => {
   describe('createEmailInvites', () => {
     test('should create multiple email invites with unique tokens', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       const result = await auth.mutation(
         api.invites.mutations.createEmailInvites,
@@ -568,7 +580,7 @@ describe('Invites Domain', () => {
 
     test('should skip duplicate emails for the same event', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create first invite
       await auth.mutation(api.invites.mutations.createEmailInvites, {
@@ -605,7 +617,7 @@ describe('Invites Domain', () => {
 
     test('should set usesTotal based on plusOnes', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       await auth.mutation(api.invites.mutations.createEmailInvites, {
         eventId,
@@ -636,7 +648,7 @@ describe('Invites Domain', () => {
 
     test('should store custom message on invites', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       await auth.mutation(api.invites.mutations.createEmailInvites, {
         eventId,
@@ -657,7 +669,7 @@ describe('Invites Domain', () => {
 
     test('should reject custom message over 480 characters', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       const longMessage = 'a'.repeat(481);
 
@@ -684,7 +696,7 @@ describe('Invites Domain', () => {
 
     test('should normalize email to lowercase', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       await auth.mutation(api.invites.mutations.createEmailInvites, {
         eventId,
@@ -708,7 +720,7 @@ describe('Invites Domain', () => {
 
     test('should mark pending invites as sent', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create email invites
       await auth.mutation(api.invites.mutations.createEmailInvites, {
@@ -754,7 +766,7 @@ describe('Invites Domain', () => {
 
     test('should return 0 when no pending invites', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create email invite and mark as sent
       await auth.mutation(api.invites.mutations.createEmailInvites, {
@@ -778,7 +790,7 @@ describe('Invites Domain', () => {
 
     test('should only send invites with email set', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create a regular invite (no email)
       await auth.mutation(api.invites.mutations.createInvite, {
@@ -817,7 +829,7 @@ describe('Invites Domain', () => {
   describe('getEventInvites with email status', () => {
     test('should return hasEmail and emailStatus for invites', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create a regular invite
       await auth.mutation(api.invites.mutations.createInvite, {
@@ -852,7 +864,7 @@ describe('Invites Domain', () => {
 
     test('should return pendingEmailCount', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create email invites
       await auth.mutation(api.invites.mutations.createEmailInvites, {
@@ -888,7 +900,7 @@ describe('Invites Domain', () => {
 
     test('should show sent status after sending emails', async () => {
       const t = createTestInstance();
-      const { eventId, auth } = await TestScenarios.singleEvent(t);
+      const { eventId, auth } = await emailEvent(t);
 
       // Create and send email invite
       await auth.mutation(api.invites.mutations.createEmailInvites, {

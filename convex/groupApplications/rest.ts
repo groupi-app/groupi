@@ -104,10 +104,20 @@ export const submit = internalMutation({
     ),
 });
 export const edit = internalMutation({
-  args: { ...application, answers: c.answersValidator },
+  args: {
+    ...application,
+    answers: c.answersValidator,
+    expectedRevision: v.optional(v.number()),
+  },
   returns: c.result,
   handler: async (ctx, args) =>
-    model.edit(ctx, args.actorId, await checked(ctx, args), args.answers),
+    model.edit(
+      ctx,
+      args.actorId,
+      await checked(ctx, args),
+      args.answers,
+      args.expectedRevision
+    ),
 });
 export const withdraw = internalMutation({
   args: application,
@@ -119,8 +129,17 @@ export const review = internalMutation({
   args: {
     ...application,
     decision: v.union(v.literal('APPROVED'), v.literal('DECLINED')),
+    expectedRevision: v.optional(v.number()),
+    operationId: v.optional(v.string()),
   },
   returns: c.result,
   handler: async (ctx, args) =>
-    model.review(ctx, args.actorId, await checked(ctx, args), args.decision),
+    model.review(
+      ctx,
+      args.actorId,
+      await checked(ctx, args),
+      args.decision,
+      args.expectedRevision,
+      args.operationId
+    ),
 });

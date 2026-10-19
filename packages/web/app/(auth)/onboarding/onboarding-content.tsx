@@ -16,29 +16,19 @@ import {
 import { Icons } from '@/components/icons';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
+import { getSafeInternalRedirect } from '@/lib/urls';
+import {
+  HostedBrand,
+  hostedInteractionId,
+} from '@/features/authorization/hosted-brand';
 
-// Dynamic require to avoid deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userMutations: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let userQueries: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authQueries: any;
-function initApi() {
-  if (!userMutations) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api } = require('@/convex/_generated/api');
-    userMutations = api.users?.mutations ?? {};
-    userQueries = api.users?.queries ?? {};
-    authQueries = api.auth?.queries ?? {};
-  }
-}
-initApi();
+import { api } from '@/convex/_generated/api';
 
 export function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/events';
+  const redirectTo = getSafeInternalRedirect(searchParams.get('redirect'));
+  const hostedInteraction = hostedInteractionId(redirectTo);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [displayNameInitialized, setDisplayNameInitialized] = useState(false);
@@ -51,7 +41,7 @@ export function OnboardingContent() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch current user to get OAuth name for default display name
-  const currentUser = useQuery(authQueries.getCurrentUser, {});
+  const currentUser = useQuery(api.auth.queries.getCurrentUser, {});
 
   // Pre-populate display name from OAuth provider's name (Google/Discord)
   useEffect(() => {
@@ -62,7 +52,9 @@ export function OnboardingContent() {
   }, [currentUser, displayNameInitialized]);
 
   // Convex mutations
-  const completeOnboarding = useMutation(userMutations.completeOnboarding);
+  const completeOnboarding = useMutation(
+    api.users.mutations.completeOnboarding
+  );
 
   const checkAvailability = useCallback(async (value: string) => {
     if (!value || value.trim() === '') {
@@ -77,9 +69,12 @@ export function OnboardingContent() {
       const { ConvexHttpClient } = await import('convex/browser');
       const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-      const result = await convex.query(userQueries.checkUsernameAvailability, {
-        username: value.trim(),
-      });
+      const result = await convex.query(
+        api.users.queries.checkUsernameAvailability,
+        {
+          username: value.trim(),
+        }
+      );
 
       if (result.available) {
         setAvailabilityStatus('available');
@@ -134,12 +129,16 @@ export function OnboardingContent() {
     try {
       await completeOnboarding({
         username: username.trim(),
-        displayName: displayName.trim() || undefined,
-        pronouns: pronouns.trim() || undefined,
-        bio: bio.trim() || undefined,
+        displayName: hostedInteraction
+          ? username.trim()
+          : displayName.trim() || undefined,
+        pronouns: hostedInteraction ? undefined : pronouns.trim() || undefined,
+        bio: hostedInteraction ? undefined : bio.trim() || undefined,
       });
 
-      toast.success('Welcome to Groupi!');
+      toast.success(
+        hostedInteraction ? 'Username saved.' : 'Welcome to Groupi!'
+      );
       router.push(redirectTo);
     } catch {
       toast.error('An unexpected error occurred');
@@ -152,10 +151,24 @@ export function OnboardingContent() {
     <div className='container py-24'>
       <div className='flex justify-center'>
         <Card className='w-full max-w-md'>
+          {hostedInteraction ? (
+            <HostedBrand interactionId={hostedInteraction} />
+          ) : null}
           <CardHeader>
-            <CardTitle>Welcome to Groupi!</CardTitle>
+            <CardTitle>
+              {hostedInteraction
+                ? 'Choose a pseudonymous username'
+                : 'Welcome to Groupi!'}
+            </CardTitle>
             <CardDescription>
-              Let&apos;s set up your profile. You can always change these later.
+              {hostedInteraction ? (
+                'Only a username is needed. Community applications are completed separately.'
+              ) : (
+                <>
+                  Let&apos;s set up your profile. You can always change these
+                  later.
+                </>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -208,55 +221,58 @@ export function OnboardingContent() {
                 </p>
               </div>
 
-              {/* Display Name Field */}
-              <div>
-                <Label htmlFor='displayName'>Display Name</Label>
-                <Input
-                  id='displayName'
-                  type='text'
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  placeholder='Your display name (optional)'
-                  disabled={loading}
-                />
-                <p className='text-sm text-muted-foreground mt-1'>
-                  This is how your name will appear to others
-                </p>
-              </div>
+              {!hostedInteraction ? (
+                <>
+                  {/* Display Name Field */}
+                  <div>
+                    <Label htmlFor='displayName'>Display Name</Label>
+                    <Input
+                      id='displayName'
+                      type='text'
+                      value={displayName}
+                      onChange={e => setDisplayName(e.target.value)}
+                      placeholder='Your display name (optional)'
+                      disabled={loading}
+                    />
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      This is how your name will appear to others
+                    </p>
+                  </div>
 
-              {/* Pronouns Field */}
-              <div>
-                <Label htmlFor='pronouns'>Pronouns</Label>
-                <Input
-                  id='pronouns'
-                  type='text'
-                  value={pronouns}
-                  onChange={e => setPronouns(e.target.value)}
-                  placeholder='e.g., she/her, he/him, they/them'
-                  disabled={loading}
-                />
-                <p className='text-sm text-muted-foreground mt-1'>
-                  Optional - helps others refer to you correctly
-                </p>
-              </div>
+                  {/* Pronouns Field */}
+                  <div>
+                    <Label htmlFor='pronouns'>Pronouns</Label>
+                    <Input
+                      id='pronouns'
+                      type='text'
+                      value={pronouns}
+                      onChange={e => setPronouns(e.target.value)}
+                      placeholder='e.g., she/her, he/him, they/them'
+                      disabled={loading}
+                    />
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Optional - helps others refer to you correctly
+                    </p>
+                  </div>
 
-              {/* Bio Field */}
-              <div>
-                <Label htmlFor='bio'>Bio</Label>
-                <Textarea
-                  id='bio'
-                  value={bio}
-                  onChange={e => setBio(e.target.value)}
-                  placeholder='Tell us about yourself...'
-                  rows={3}
-                  disabled={loading}
-                  className='resize-none'
-                />
-                <p className='text-sm text-muted-foreground mt-1'>
-                  Optional - share a bit about yourself
-                </p>
-              </div>
-
+                  {/* Bio Field */}
+                  <div>
+                    <Label htmlFor='bio'>Bio</Label>
+                    <Textarea
+                      id='bio'
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      placeholder='Tell us about yourself...'
+                      rows={3}
+                      disabled={loading}
+                      className='resize-none'
+                    />
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Optional - share a bit about yourself
+                    </p>
+                  </div>
+                </>
+              ) : null}
               <Button
                 type='submit'
                 className='w-full'

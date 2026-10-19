@@ -78,13 +78,15 @@ export const catalog = query({
   ),
   handler: async ctx => {
     if (!(await getCurrentPerson(ctx))) return [];
-    return actions.map(action => ({
-      action,
-      supported: true,
-      principalKinds: action.startsWith('identity.')
-        ? ['user' as const]
-        : ['user' as const, 'integration' as const],
-    }));
+    return actions
+      .filter(action => !action.startsWith('groups.'))
+      .map(action => ({
+        action,
+        supported: true,
+        principalKinds: action.startsWith('identity.')
+          ? ['user' as const]
+          : ['user' as const, 'integration' as const],
+      }));
   },
 });
 export const audit = query({

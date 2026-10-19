@@ -1,5 +1,16 @@
 # Current Integration Status
 
+## Universal community integration — source evidence as of 2026-10-19
+
+- The source integration includes selected-Group delegated own-context and application writes, independent Event Join/RSVP/leave, Group leave, configurable hosted app appearance, decision delivery, explicit announcement opt-in, and coordinated exclusion cleanup/reinstatement. The provider baseline is `45d00c14`.
+- The public integration contract is named `community.v1`; see [Community integration contract](../../community-integration-contract.md). Its routes and scopes accept the explicitly selected Group and verified app configuration. No particular client app, domain, callback path, Group identity or branded presentation is a provider default.
+- Fresh Group admission defaults announcement consent off. Exclusion is immediate; cleanup respects independent Event authority, completion history and generation fences. Explicit reinstatement restores no membership, invitation, RSVP, ban or subscription.
+- Canonical pagination return validation and independent account-profile/developer-registration form ownership are verified. Current source checks pass: 1,144 backend tests, 1,303 web coverage tests, 21 SDK integration tests, eight Node transport tests, eight Python tests, 12 portal tests, generated SDK/portal freshness, and the full seven-package check with 772 canonical contracts.
+- The exact nine-entry release-note batch was approved on 2026-10-19; the approved entries are included. Filenames are descriptive bookkeeping, while approved package bumps and summary bodies remain unchanged. No versioning, publication or production deployment is implied.
+- Hosted deployment, isolated app/Group identities, operational signing keys, email/inbox delivery, browser/native accessibility and independent security review require explicit runtime evidence. Source tests and generated fixtures do not establish live acceptance.
+
+## Historical provider checkpoint
+
 This is the authoritative integration handoff. The developer-platform checkpoint below is **local source evidence as of 2026-10-15, America/New_York**. Earlier promotion/deployment records are historical, not fresh remote branch lookups.
 
 ## Developer platform candidate — 2026-10-15

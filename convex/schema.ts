@@ -50,6 +50,13 @@ import { v } from 'convex/values';
 
 export default defineSchema({
   ...delegatedTables,
+  communityOperationReceipts: defineTable({
+    operationId: v.string(),
+    binding: v.string(),
+    result: v.string(),
+    acceptedAt: v.number(),
+    expiresAt: v.number(),
+  }).index('by_operationId', ['operationId']),
   authorizationPrincipals: defineTable(principalFields).index(
     'by_ownerPersonId',
     ['ownerPersonId']
@@ -193,7 +200,44 @@ export default defineSchema({
     .index('by_groupId', ['groupId'])
     .index('by_personId', ['personId'])
     .index('by_groupId_and_personId', ['groupId', 'personId']),
+  groupDecisionDispatches: defineTable({
+    applicationId: v.id('groupApplications'),
+    notificationId: v.id('notifications'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('sent'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  }).index('by_applicationId', ['applicationId']),
   groupApplications: defineTable({
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+    decisionDelivery: v.optional(
+      v.union(
+        v.literal('queued'),
+        v.literal('sending'),
+        v.literal('sent'),
+        v.literal('failed'),
+        v.literal('suppressed')
+      )
+    ),
     groupId: v.id('groups'),
     personId: v.id('persons'),
     questions: v.array(questionValidator),
@@ -218,6 +262,64 @@ export default defineSchema({
   })
     .index('by_applicationId', ['applicationId'])
     .index('by_personId', ['personId']),
+  groupAnnouncementBrands: defineTable({
+    groupId: v.id('groups'),
+    appId: v.id('delegatedApps'),
+    returnUrl: v.string(),
+  }).index('by_groupId', ['groupId']),
+  groupEventAnnouncements: defineTable({
+    groupId: v.id('groups'),
+    eventId: v.id('events'),
+    senderId: v.id('persons'),
+    brandBinding: v.string(),
+    createdAt: v.number(),
+    cursor: v.union(v.string(), v.null()),
+    cutoff: v.number(),
+    processed: v.boolean(),
+  })
+    .index('by_groupId', ['groupId'])
+    .index('by_senderId', ['senderId'])
+    .index('by_eventId', ['eventId']),
+  groupEventMail: defineTable({
+    announcementId: v.id('groupEventAnnouncements'),
+    personId: v.id('persons'),
+    state: v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('delivered'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    ),
+    createdAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    attempt: v.number(),
+    delivered: v.array(v.string()),
+    messages: v.optional(
+      v.array(
+        v.object({
+          from: v.string(),
+          to: v.string(),
+          subject: v.string(),
+          html: v.string(),
+          key: v.string(),
+        })
+      )
+    ),
+  })
+    .index('by_announcementId', ['announcementId'])
+    .index('by_personId', ['personId']),
+  groupAnnouncementPreferences: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    sourceMembershipId: v.optional(v.id('groupMemberships')),
+    subscribed: v.boolean(),
+    updatedAt: v.number(),
+    sourceAppId: v.optional(v.id('delegatedApps')),
+    sourceGrantId: v.optional(v.id('authorizationGrants')),
+  })
+    .index('by_groupId_and_personId', ['groupId', 'personId'])
+    .index('by_personId', ['personId'])
+    .index('by_groupId', ['groupId']),
   groupAnnouncements: defineTable({
     groupId: v.id('groups'),
     senderId: v.optional(v.id('persons')),
@@ -239,6 +341,62 @@ export default defineSchema({
       'senderId',
       'requestId',
     ]),
+
+  communityExclusionAudit: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    generation: v.number(),
+    operationId: v.string(),
+    action: v.union(
+      v.literal('expel'),
+      v.literal('resume'),
+      v.literal('reinstate')
+    ),
+    at: v.number(),
+  })
+    .index('by_group', ['groupId'])
+    .index('by_person', ['personId'])
+    .index('by_actor', ['actorId']),
+  communityExclusions: defineTable({
+    groupId: v.id('groups'),
+    personId: v.id('persons'),
+    actorId: v.optional(v.id('persons')),
+    reinstatedBy: v.optional(v.id('persons')),
+    reinstatedAt: v.optional(v.number()),
+    events: v.optional(
+      v.array(
+        v.object({
+          eventId: v.id('events'),
+          state: v.union(
+            v.literal('pending'),
+            v.literal('blocked'),
+            v.literal('complete'),
+            v.literal('preserved'),
+            v.literal('retired')
+          ),
+          code: v.optional(v.string()),
+        })
+      )
+    ),
+    active: v.boolean(),
+    generation: v.number(),
+    operationId: v.string(),
+    eventIds: v.array(v.id('events')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    cleanup: v.union(
+      v.literal('pending'),
+      v.literal('blocked'),
+      v.literal('complete')
+    ),
+    conflicts: v.array(v.object({ eventId: v.id('events'), code: v.string() })),
+  })
+    .index('by_group_person', ['groupId', 'personId'])
+    .index('by_person', ['personId'])
+    .index('by_actor', ['actorId'])
+    .index('by_reinstatedBy', ['reinstatedBy'])
+    .index('by_group', ['groupId']),
 
   groupBans: defineTable({
     groupId: v.id('groups'),
@@ -534,6 +692,7 @@ export default defineSchema({
     .index('by_groupId_and_eventId', ['groupId', 'eventId'])
     .index('by_sharedById', ['sharedById']),
   events: defineTable({
+    completedAt: v.optional(v.number()),
     friendsAudienceEnabled: v.optional(v.boolean()),
     title: v.string(),
     description: v.optional(v.string()),
@@ -608,7 +767,16 @@ export default defineSchema({
     .index('by_creator', ['creatorId'])
     .index('by_creator_visibility', ['creatorId', 'visibility']),
 
+  participationRevisions: defineTable({
+    eventId: v.id('events'),
+    personId: v.id('persons'),
+    revision: v.number(),
+  })
+    .index('by_person_event', ['personId', 'eventId'])
+    .index('by_event', ['eventId']),
+
   memberships: defineTable({
+    participationRevision: v.optional(v.number()),
     personId: v.id('persons'),
     eventId: v.id('events'),
     role: v.union(
@@ -1224,7 +1392,8 @@ export default defineSchema({
     status: v.union(
       v.literal('PENDING'),
       v.literal('ACCEPTED'),
-      v.literal('DECLINED')
+      v.literal('DECLINED'),
+      v.literal('CANCELLED')
     ),
     message: v.optional(v.string()), // Optional personal message
     role: v.union(v.literal('ATTENDEE'), v.literal('MODERATOR')),

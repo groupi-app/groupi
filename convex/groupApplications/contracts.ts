@@ -10,6 +10,17 @@ export { questionValidator, answersValidator, applicationStatusValidator };
 export const application = v.object({
   _id: v.id('groupApplications'),
   _creationTime: v.number(),
+  sourceAppId: v.optional(v.id('delegatedApps')),
+  sourceGrantId: v.optional(v.id('authorizationGrants')),
+  decisionDelivery: v.optional(
+    v.union(
+      v.literal('queued'),
+      v.literal('sending'),
+      v.literal('sent'),
+      v.literal('failed'),
+      v.literal('suppressed')
+    )
+  ),
   groupId: v.id('groups'),
   personId: v.id('persons'),
   questions: v.array(questionValidator),

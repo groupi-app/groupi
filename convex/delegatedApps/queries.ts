@@ -1,7 +1,14 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { getCurrentPerson } from '../auth';
-import { app, clientType, status, reviewStatus, scope } from './contracts';
+import {
+  app,
+  clientType,
+  status,
+  reviewStatus,
+  scope,
+  hostedAppearance,
+} from './contracts';
 import { isAdminRole } from '../lib/constants';
 import { authComponent, type AuthUserId } from '../auth';
 export const listOwnedApps = query({
@@ -28,10 +35,18 @@ export const getConsentRequest = query({
       instance: v.string(),
       appId: v.id('delegatedApps'),
       appName: v.string(),
+      appearance: v.optional(hostedAppearance),
       purpose: v.string(),
       requestedScopes: v.array(scope),
       requestedActions: v.array(action),
-      account: v.object({ displayName: v.string() }),
+      selectedGroup: v.optional(
+        v.object({ id: v.id('groups'), name: v.string() })
+      ),
+      account: v.object({
+        displayName: v.string(),
+        email: v.optional(v.string()),
+        username: v.optional(v.string()),
+      }),
       events: v.array(v.object({ _id: v.id('events'), title: v.string() })),
       expiresAt: v.number(),
     })
@@ -45,7 +60,13 @@ export const getConsentRequest = query({
         q.eq('interactionId', args.interactionId)
       )
       .unique();
-    if (!request || request.decision) return null;
+    if (
+      !request ||
+      request.decision ||
+      request.expiresAt <= Date.now() ||
+      request.instanceId !== process.env.DELEGATED_ISSUER
+    )
+      return null;
     const app = await ctx.db.get(request.appId);
     if (
       !app ||
@@ -53,10 +74,16 @@ export const getConsentRequest = query({
       (app.status === 'testing' && app.ownerPersonId !== auth.person._id)
     )
       return null;
-    const members = await ctx.db
-      .query('memberships')
-      .withIndex('by_person', q => q.eq('personId', auth.person._id))
-      .take(100);
+    const selectedGroup = request.selectedGroupId
+      ? await ctx.db.get(request.selectedGroupId)
+      : null;
+    if (request.selectedGroupId && !selectedGroup) return null;
+    const members = selectedGroup
+      ? []
+      : await ctx.db
+          .query('memberships')
+          .withIndex('by_person', q => q.eq('personId', auth.person._id))
+          .take(100);
     const events = [];
     for (const member of members) {
       const event = await ctx.db.get(member.eventId);
@@ -67,12 +94,20 @@ export const getConsentRequest = query({
       instance: request.instanceId,
       appId: app._id,
       appName: app.name,
+      appearance: app.appearance,
       purpose: app.purpose,
       requestedScopes: request.requestedScopes,
+      ...(selectedGroup
+        ? { selectedGroup: { id: selectedGroup._id, name: selectedGroup.name } }
+        : {}),
       requestedActions: actions.filter(value =>
         request.requestedScopes.includes(value)
       ),
-      account: { displayName: auth.user.name ?? 'Current account' },
+      account: {
+        displayName: auth.user.name ?? 'Current account',
+        email: auth.user.email,
+        username: auth.user.username ?? undefined,
+      },
       events,
       expiresAt: request.expiresAt,
     };
@@ -151,6 +186,7 @@ export const listReviewableApps = query({
       _id: v.id('delegatedApps'),
       ownerPersonId: v.id('persons'),
       ownerDisplayName: v.string(),
+      appearance: v.optional(hostedAppearance),
       name: v.string(),
       purpose: v.string(),
       clientType,
@@ -180,6 +216,7 @@ export const listReviewableApps = query({
       result.push({
         _id: app._id,
         ownerPersonId: app.ownerPersonId,
+        appearance: app.appearance,
         ownerDisplayName: user?.name ?? 'Unavailable account',
         name: app.name,
         purpose: app.purpose,

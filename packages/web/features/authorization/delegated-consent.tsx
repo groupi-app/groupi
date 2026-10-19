@@ -1,4 +1,5 @@
 'use client';
+import { HostedBrand } from './hosted-brand';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
@@ -31,6 +32,7 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
     return (
       <Card>
         <CardHeader>
+          <HostedBrand interactionId={interactionId} />
           <CardTitle>Sign in to review access</CardTitle>
           <CardDescription>
             Choose your Groupi account before connecting an app.
@@ -60,6 +62,7 @@ export function DelegatedConsent({ interactionId }: { interactionId: string }) {
     interactionId,
     account._id,
     request.appId,
+    request.selectedGroup?.id,
     request.expiresAt,
     [...request.requestedScopes].sort(),
     request.events.map(event => event._id).sort(),
@@ -98,7 +101,7 @@ function ConsentChoices({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasEventActions = actions.some(
-    action => !action.startsWith('identity.')
+    action => !action.startsWith('identity.') && !action.startsWith('groups.')
   );
   function toggleAction(action: (typeof actions)[number], checked: boolean) {
     const next = checked
@@ -122,11 +125,15 @@ function ConsentChoices({
         ? await approve({
             interactionId,
             actions,
-            selector: !hasEventActions
-              ? { kind: 'selected', eventIds: [] }
-              : allEvents
-                ? { kind: 'all-current-and-future' }
-                : { kind: 'selected', eventIds },
+            selector:
+              request.selectedGroup &&
+              actions.some(action => action.startsWith('groups.'))
+                ? { kind: 'selected-group', groupId: request.selectedGroup.id }
+                : !hasEventActions
+                  ? { kind: 'selected', eventIds: [] }
+                  : allEvents
+                    ? { kind: 'all-current-and-future' }
+                    : { kind: 'selected', eventIds },
             background,
           })
         : await deny({ interactionId });
@@ -147,6 +154,20 @@ function ConsentChoices({
     return (
       <Card>
         <CardHeader>
+          {request.appearance ? (
+            <p
+              className='text-xl font-heading'
+              style={{ color: request.appearance.accent }}
+            >
+              {request.appearance.brandName}
+            </p>
+          ) : null}
+          <p className='text-sm text-muted-foreground'>
+            Sign-in provided by Groupi
+          </p>
+          <p className='text-sm text-muted-foreground'>
+            Developer app: {request.appName}
+          </p>
           <CardTitle>Connection request expired</CardTitle>
         </CardHeader>
         <CardContent>
@@ -160,6 +181,20 @@ function ConsentChoices({
   return (
     <Card>
       <CardHeader>
+        {request.appearance ? (
+          <p
+            className='text-xl font-heading'
+            style={{ color: request.appearance.accent }}
+          >
+            {request.appearance.brandName}
+          </p>
+        ) : null}
+        <p className='text-sm text-muted-foreground'>
+          Sign-in provided by Groupi
+        </p>
+        <p className='text-sm text-muted-foreground'>
+          Developer app: {request.appName}
+        </p>
         <CardTitle>Connect {request.appName}</CardTitle>
         <CardDescription>{request.purpose}</CardDescription>
       </CardHeader>
@@ -172,8 +207,33 @@ function ConsentChoices({
           <div>
             <dt className='text-sm text-muted-foreground'>Your account</dt>
             <dd>{request.account.displayName}</dd>
+            {request.account.username ? (
+              <dd>@{request.account.username}</dd>
+            ) : null}
+            {request.account.email ? <dd>{request.account.email}</dd> : null}
+            <dd>
+              <Link
+                className='text-primary underline'
+                href={`/sign-in?mode=add-account&redirect=${encodeURIComponent(`/oauth/consent?interactionId=${encodeURIComponent(interactionId)}`)}`}
+              >
+                Choose another account
+              </Link>
+            </dd>
           </div>
         </dl>
+        {request.selectedGroup ? (
+          <div className='space-y-2'>
+            <p className='font-medium'>{request.selectedGroup.name}</p>
+            <p className='text-sm text-muted-foreground'>
+              Access is limited to your own community context in this Group. Its
+              current and future Events shared with this Group are the boundary
+              for future participation permissions; Event access and changes
+              require separate supported consent and current eligibility. This
+              approval grants no reviewer authority or unrelated Group or Event
+              access.
+            </p>
+          </div>
+        ) : null}
         <p className='text-sm text-muted-foreground'>
           This app receives an opaque identifier for this account on this
           instance. Your display name and email are shared only if you
@@ -193,7 +253,7 @@ function ConsentChoices({
             </label>
           ))}
         </fieldset>
-        {hasEventActions ? (
+        {hasEventActions && !request.selectedGroup ? (
           <fieldset className='space-y-2' disabled={pending}>
             <legend className='font-medium'>Event access</legend>
             <label className='flex items-start gap-2'>

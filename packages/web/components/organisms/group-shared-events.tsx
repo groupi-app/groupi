@@ -35,16 +35,15 @@ function SharedEvents({ groupId }: { groupId: Id<'groups'> }) {
         Group-shared Events
       </h2>
       <p>
-        Upcoming and undated Events shared with this Group. Read their logistics
-        without joining, RSVP changes, or access to participant content.
+        Active Events shared with this Group, including ongoing and undated
+        Events. Read their logistics without joining, RSVP changes, or access to
+        participant content.
       </p>
       {events === undefined ? (
         <p role='status'>Loading Group-shared Events…</p>
       ) : (
         <>
-          {events.page.length === 0 && (
-            <p>No upcoming or undated Events on this page.</p>
-          )}
+          {events.page.length === 0 && <p>No active Events on this page.</p>}
           <ul className='space-y-4'>
             {events.page.map(({ event, canWithdraw }) => (
               <li

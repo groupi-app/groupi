@@ -134,6 +134,7 @@ function configuration(
     },
     subjectTypes: ['pairwise'],
     responseTypes: ['code'],
+    extraParams: ['group_id'],
     scopes: ['openid', 'offline_access', ...actions],
     claims: {
       openid: ['sub'],
@@ -349,6 +350,9 @@ export const handle = internalAction({
         requestedScopes: parseScopeString(
           String(interaction.params.scope ?? '')
         ),
+        selectedGroupId: interaction.params.group_id
+          ? (String(interaction.params.group_id) as Id<'groups'>)
+          : undefined,
         expiresAt: interaction.exp * 1000,
       });
       if (approvals.length === 1)

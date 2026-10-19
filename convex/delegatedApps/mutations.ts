@@ -180,6 +180,18 @@ export const approveConsent = mutation({
       throw new ConvexError(
         'Identity-only sign-in does not include event access'
       );
+    if (
+      args.selector.kind === 'selected-group' &&
+      (request.selectedGroupId !== args.selector.groupId ||
+        !(await ctx.db.get(args.selector.groupId)))
+    )
+      throw new ConvexError('Selected Group does not match this request');
+    if (
+      request.selectedGroupId &&
+      args.selector.kind !== 'selected-group' &&
+      args.actions.some(a => !a.startsWith('identity.'))
+    )
+      throw new ConvexError('Group consent cannot include unrelated Events');
     return issueApproval(ctx, request, person._id, {
       decision: 'approved',
       actions: args.actions,

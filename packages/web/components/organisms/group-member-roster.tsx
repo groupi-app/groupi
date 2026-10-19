@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CommunityExpulsionAction } from './community-expulsion-action';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useGroupMembers } from '@/hooks/convex/use-group-invitations';
@@ -57,6 +58,13 @@ function GroupMemberActions({
           confirmation={`Confirm removal of ${name}`}
           explanation='Removal permits a later invitation under the current Group policy. Independent Event membership and RSVP remain unchanged.'
           onConfirm={() => remove({ groupId, personId: member.personId })}
+        />
+      )}
+      {member.canBan && (
+        <CommunityExpulsionAction
+          groupId={groupId}
+          personId={member.personId}
+          name={name}
         />
       )}
       {member.canBan && (

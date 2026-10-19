@@ -111,8 +111,8 @@ describe('Group moderation REST authority', () => {
       403
     );
     expect(
-      await body(await owner.request(`/groups/${groupId}/leave`, 'POST'), 403)
-    ).toMatchObject({ error: { code: 'FORBIDDEN' } });
+      await body(await owner.request(`/groups/${groupId}/leave`, 'POST'), 409)
+    ).toMatchObject({ error: { code: 'PROTECTED_OWNER' } });
     const bansPath = `/groups/${groupId}/bans`;
     const banPath = `${bansPath}/${member.personId}`;
     await body(await mod.request(banPath, 'PUT'));
