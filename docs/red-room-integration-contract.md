@@ -253,9 +253,10 @@ current resource relationship and exclusion/ban guards are checked in the write
 transaction even for receipt replay.
 
 Join requires a current eligible selected Group audience path and DIRECT admission,
-creates Pending membership, and never changes an established RSVP. A former Group
-member cannot newly Join from that old Group path even if Public or Friends
-visibility exists. RSVP and Event Leave operate only on the current actor's own
+creates Pending membership, and never changes an established RSVP. A former or ordinarily banned Group member cannot newly Join from that old
+Group path even if Public or Friends visibility exists. An ordinary Group ban
+does not cancel retained independent Event read, RSVP or Leave authority;
+coordinated exclusion and independent Event bans remain authoritative. RSVP and Event Leave operate only on the current actor's own
 membership; callers cannot select another person's membership. RSVP uses exactly
 `PENDING`, `YES`, `NO`, `MAYBE` and requires `expectedRevision`; Event Leave also
 requires `expectedRevision`. The current-event projection is the authorized source

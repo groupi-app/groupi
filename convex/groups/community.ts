@@ -188,7 +188,6 @@ export const readContext = internalQuery({
           grant.actions.includes(a) &&
           (a === 'groups.context.read' ||
             (a === 'groups.leave' &&
-              eligible &&
               !excluded &&
               Boolean(membership) &&
               membership?.role !== 'OWNER') ||

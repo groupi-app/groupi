@@ -14,6 +14,11 @@ This is the authoritative integration handoff. The developer-platform checkpoint
 - Uses the G3 receipt window/binding/authority boundary. Original committed leave
   replay reconciles after membership removal and does not delete a replacement.
   Native web/mobile confirmation states independent participation consequences.
+- Verification: 89 focused native/authenticated HTTP backend tests, 16 web and 37
+  mobile confirmation/component tests, 20 real SDK integration tests plus Node/Python
+  transport tests pass. Full `pnpm check` includes 756 canonical Convex contracts;
+  workspace source resolution and generated SDK freshness pass. Ordinary Group ban
+  retains independent Event reads/RSVP/Leave; explicit coordinated exclusion denies them.
 - Matching deployed frontend/backend SHA, isolated signed-in browser/device, observed
   VoiceOver and provider acceptance remain unverified G10 prerequisites. Source tests
   and offline application declaration refresh are not deployment/component codegen.

@@ -11,7 +11,8 @@ import type { Id } from '../_generated/dataModel';
 import { requireAuth } from '../auth';
 import { authorizeCommunity } from './community';
 import { denied } from '../authorization/model';
-import { canEnterGroup, membershipFor } from './policy';
+import { membershipFor } from './policy';
+import { requirePerson } from './model';
 import { canAccessGroupMemberContent } from './contentAccess';
 import { eventAdmissionAccess } from '../events/admission';
 import { isEventComplete } from '../events/lifecycle';
@@ -83,11 +84,11 @@ async function executeForPerson(
   personId: Id<'persons'>,
   authority: unknown
 ) {
+  await requirePerson(ctx, personId);
   const groupId = ctx.db.normalizeId('groups', args.groupId);
   if (
     !groupId ||
     !(await ctx.db.get(groupId)) ||
-    !(await canEnterGroup(ctx, groupId, personId)) ||
     (await isGroupExcludedForPerson(ctx, groupId, personId))
   )
     throw denied();
@@ -171,6 +172,12 @@ async function executeForPerson(
     if (ban || (await checkIsBlocked(ctx, personId, event.creatorId)))
       throw denied();
     access = await eventAdmissionAccess(ctx, event, personId);
+    if (
+      args.operation === 'join' &&
+      !access.membership &&
+      !(await canAccessGroupMemberContent(ctx, groupId, personId))
+    )
+      throw denied();
     // Current independent membership survives voluntary departure; old audience alone does not.
     if (
       access.membership?.role === 'ORGANIZER' &&

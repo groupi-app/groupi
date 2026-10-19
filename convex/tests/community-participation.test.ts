@@ -359,3 +359,28 @@ it('checks coordinated exclusion before replay and atomically denies fresh Join 
   expect((await f.request('current-event')).status).toBe(403);
   expect((await f.read()).allowedActions).not.toContain('groups.leave');
 });
+it('preserves independent Event RSVP and departure after ordinary Group ban, while denying a new audience Join', async () => {
+  const f = await fixture();
+  const path = `events/${f.event.eventId}`;
+  expect((await f.request(`${path}/join`, 'POST', {})).status).toBe(200);
+  await f.staff.auth.mutation(api.groupModeration.mutations.banGroupPerson, {
+    groupId: f.groupId,
+    personId: f.owner.personId,
+  });
+  const retained = await (await f.request('current-event')).json();
+  expect(retained).toMatchObject({ participation: { rsvp: 'PENDING' } });
+  const yes = await f.request(`${path}/own-rsvp`, 'PUT', {
+    expectedRevision: retained.participation.revision,
+    rsvp: 'YES',
+  });
+  expect(yes.status, await yes.clone().text()).toBe(200);
+  const changed = await yes.json();
+  expect(
+    (
+      await f.request(`${path}/leave`, 'POST', {
+        expectedRevision: changed.result.participation.revision,
+      })
+    ).status
+  ).toBe(200);
+  expect((await f.request(`${path}/join`, 'POST', {})).status).toBe(403);
+});
