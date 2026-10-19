@@ -21291,7 +21291,7 @@
                   "properties": {
                     "contractVersion": {
                       "type": "string",
-                      "enum": ["red-room.v1"]
+                      "enum": ["community.v1"]
                     },
                     "group": {
                       "type": "object",

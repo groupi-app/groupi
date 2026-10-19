@@ -144,5 +144,5 @@ forms fail; refresh authorized current state before a new intent. Receipts descr
 original commitment; use separately authorized reads for current state. Shared G3/G5
 receipts last 30 days with permanent mismatch tombstones. Ownership/last-Organizer
 conflicts require resolution; never display successful departure for those errors.
-See the repository's `docs/red-room-integration-contract.md` for exact bodies,
+See the repository's `docs/community-integration-contract.md` for exact bodies,
 result shapes, independent read/write authority and deployment gates.

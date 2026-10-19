@@ -171,8 +171,8 @@ it('branded consent still discloses provider, Developer app and unambiguous acco
   const request = {
     ...consentRequest(),
     appearance: {
-      brandName: 'Red Room',
-      senderName: 'Red Room',
+      brandName: 'Reading Circle',
+      senderName: 'Reading Circle',
       accent: '#991b1b',
     },
     account: {
@@ -185,7 +185,7 @@ it('branded consent still discloses provider, Developer app and unambiguous acco
     args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
   );
   render(<DelegatedConsent interactionId='i-1' />);
-  expect(screen.getByText('Red Room')).toBeInTheDocument();
+  expect(screen.getByText('Reading Circle')).toBeInTheDocument();
   expect(screen.getByText('Sign-in provided by Groupi')).toBeInTheDocument();
   expect(screen.getByText('Developer app: Calendar')).toBeInTheDocument();
   expect(screen.getByText('alice@example.test')).toBeInTheDocument();
@@ -201,7 +201,7 @@ it('branded consent still discloses provider, Developer app and unambiguous acco
 it('discloses only the selected Group and future audience boundary for applicants', async () => {
   mockConsent({
     ...consentRequest(),
-    selectedGroup: { id: 'g-red', name: 'Red Room' },
+    selectedGroup: { id: 'g-community', name: 'Reading Circle' },
     requestedScopes: ['openid', 'groups.context.read'],
     requestedActions: ['groups.context.read'],
     events: [],
@@ -210,7 +210,7 @@ it('discloses only the selected Group and future audience boundary for applicant
   vi.mocked(useMutation).mockReturnValue(approve as never);
   const user = userEvent.setup();
   render(<DelegatedConsent interactionId='i-1' />);
-  expect(screen.getByText('Red Room')).toBeInTheDocument();
+  expect(screen.getByText('Reading Circle')).toBeInTheDocument();
   expect(
     screen.getByText(/current and future Events shared with this Group/)
   ).toBeInTheDocument();
@@ -220,7 +220,7 @@ it('discloses only the selected Group and future audience boundary for applicant
   expect(approve).toHaveBeenCalledWith({
     interactionId: 'i-1',
     actions: ['groups.context.read'],
-    selector: { kind: 'selected-group', groupId: 'g-red' },
+    selector: { kind: 'selected-group', groupId: 'g-community' },
     background: false,
   });
 });
@@ -228,7 +228,7 @@ it('discloses only the selected Group and future audience boundary for applicant
 it('consents to a selected Group write without requiring own-context read', async () => {
   mockConsent({
     ...consentRequest(),
-    selectedGroup: { id: 'g-red', name: 'Red Room' },
+    selectedGroup: { id: 'g-community', name: 'Reading Circle' },
     requestedScopes: ['openid', 'groups.applications.submit'],
     requestedActions: ['groups.applications.submit'],
     events: [],
@@ -243,7 +243,7 @@ it('consents to a selected Group write without requiring own-context read', asyn
   expect(approve).toHaveBeenCalledWith({
     interactionId: 'i-1',
     actions: ['groups.applications.submit'],
-    selector: { kind: 'selected-group', groupId: 'g-red' },
+    selector: { kind: 'selected-group', groupId: 'g-community' },
     background: false,
   });
 });

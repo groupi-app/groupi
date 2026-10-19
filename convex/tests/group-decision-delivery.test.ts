@@ -46,8 +46,8 @@ it('keeps failed delivery separate, retries with the same message key, and prote
     await ctx.db.patch(f.appId, {
       status: 'approved',
       appearance: {
-        brandName: 'Red Room & friends',
-        senderName: 'Red Room',
+        brandName: 'Reading Circle & friends',
+        senderName: 'Reading Circle',
         accent: '#991b1b',
         statusReturnUrl: 'https://app.example/status',
       },
@@ -108,10 +108,12 @@ it('keeps failed delivery separate, retries with the same message key, and prote
   const request = provider.mock.calls[0][1];
   expect(JSON.parse(request.body)).toMatchObject({
     to: 'delivery@example.test',
-    from: 'Red Room <notifications@groupi.gg>',
-    subject: 'Your Red Room & friends application: approved',
+    from: 'Reading Circle <notifications@groupi.gg>',
+    subject: 'Your Reading Circle & friends application: approved',
   });
-  expect(JSON.parse(request.body).html).toContain('Red Room &amp; friends');
+  expect(JSON.parse(request.body).html).toContain(
+    'Reading Circle &amp; friends'
+  );
   expect(JSON.parse(request.body).html).toContain(`/application-status/${id}`);
   expect(JSON.stringify(await f.read())).not.toContain('delivery@example.test');
   await f.staff.auth.mutation(api.groupApplications.decisionDelivery.retry, {

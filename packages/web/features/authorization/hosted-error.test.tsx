@@ -7,7 +7,7 @@ vi.mock('@/convex/_generated/api', () => ({
 }));
 it('a browser-bound failure explains safe recovery without offering an untrusted continuation', () => {
   vi.mocked(useQuery).mockReturnValue({
-    appName: 'Red Room',
+    appName: 'Reading Circle',
     providerName: 'Groupi',
     expiresAt: Date.now() + 60000,
   });

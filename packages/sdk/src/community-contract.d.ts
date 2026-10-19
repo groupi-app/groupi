@@ -1,4 +1,4 @@
-/** Versioned Red Room integration contract. G1 and G3 operations are callable; later milestones remain proposed. */
+/** Versioned community integration contract with implemented source operations and synthetic development fixtures. */
 export type Question = {
   id: string;
   label: string;
@@ -43,7 +43,7 @@ export type CommunityAction =
   | 'groups.expulsions.create'
   | 'groups.expulsions.reinstate';
 export type CommunityContext = {
-  contractVersion: 'red-room.v1';
+  contractVersion: 'community.v1';
   group: { id: string; name: string };
   form: { enabled: boolean; revision: string; questions: Question[] };
   membership: {
@@ -222,7 +222,7 @@ export type ProposedOperations = {
     }>;
   };
 };
-export const communityContractVersion: 'red-room.v1';
+export const communityContractVersion: 'community.v1';
 export const communityOperations: Readonly<
   Record<
     string,

@@ -17,7 +17,7 @@ async function applicant() {
   const context = await setup();
   const staff = await createAuthAccount(context.t, 'community-staff');
   const groupId = await staff.auth.mutation(api.groups.mutations.createGroup, {
-    name: 'Red Room',
+    name: 'Reading Circle',
   });
   await staff.auth.mutation(
     api.groupApplications.mutations.configureGroupApplications,
@@ -62,8 +62,8 @@ describe('selected Group delegated community context', () => {
     expect(response.headers.get('cache-control')).toContain('no-store');
     const own = await response.json();
     expect(own).toMatchObject({
-      contractVersion: 'red-room.v1',
-      group: { id: f.groupId, name: 'Red Room' },
+      contractVersion: 'community.v1',
+      group: { id: f.groupId, name: 'Reading Circle' },
       membership: communityFixtures.neverApplied.context.membership,
       applications: [],
       eligibility: { canApply: true, banned: false },
@@ -71,7 +71,7 @@ describe('selected Group delegated community context', () => {
         enabled: true,
         questions: communityFixtures.neverApplied.context.form.questions,
       },
-      announcementPreference: { supported: false, subscribed: null },
+      announcementPreference: { supported: true, subscribed: false },
       allowedActions: ['groups.context.read'],
     });
     expect((await f.read(otherId)).status).toBe(403);

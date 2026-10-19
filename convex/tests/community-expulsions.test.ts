@@ -11,7 +11,7 @@ it('commits exclusion despite independent Event authority blocking cleanup, repl
   const target = await createAuthAccount(f.t, 'expelled');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -60,7 +60,7 @@ it('blocks alternate audience and stale invitation routes while preserving compl
   const target = await createAuthAccount(f.t, 'history');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -136,7 +136,7 @@ it('SDK staff HTTP reconciles lost responses and rejects payload reuse and revok
   const target = await createAuthAccount(f.t, 'http-expelled');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   const { components } = await import('../_generated/api');
   const rawKey = 'grp_expulsion_staff_http_test';
@@ -235,7 +235,7 @@ it('captured audiences cannot evade exclusion through withdrawal, Public access,
   const target = await createAuthAccount(f.t, 'reactivated');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -289,7 +289,7 @@ it('retains protected Organizer identity and reports actionable cleanup conflict
   const f = await setup();
   const staff = await createAuthAccount(f.t, 'staff');
   const groupId = await staff.auth.mutation(api.groups.mutations.createGroup, {
-    name: 'Red Room',
+    name: 'Reading Circle',
   });
   await f.t.run(ctx =>
     ctx.db.insert('groupMemberships', {
@@ -324,7 +324,7 @@ it('serializes exclusion against concurrent Join and fences future audience Even
   const target = await createAuthAccount(f.t, 'race');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -384,7 +384,7 @@ it('serializes concurrent ongoing RSVP and invitation acceptance against committ
   const invited = await createAuthAccount(f.t, 'invite-race');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -443,7 +443,7 @@ it('rejects deleted targets before creating an orphan exclusion', async () => {
   const target = await createAuthAccount(f.t, 'deleted-target');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.t.run(ctx => ctx.db.delete(target.personId));
   await expect(
@@ -466,7 +466,7 @@ it('resumes captured participation cleanup and reinstates without restoring Grou
   const target = await createAuthAccount(f.t, 'resume');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.owner.auth.mutation(
     api.groupEventAudiences.mutations.shareEventWithGroup,
@@ -710,7 +710,7 @@ it('resets explicit announcement opt-in so fresh admission cannot revive consent
   const target = await createAuthAccount(f.t, 'consent-reset');
   const groupId = await f.owner.auth.mutation(
     api.groups.mutations.createGroup,
-    { name: 'Red Room' }
+    { name: 'Reading Circle' }
   );
   await f.t.run(async ctx => {
     await ctx.db.insert('groupMemberships', {
@@ -755,4 +755,15 @@ it('resets explicit announcement opt-in so fresh admission cannot revive consent
       groupId,
     })
   ).toEqual({ subscribed: false });
+});
+
+it('returns a validated empty staff reconciliation page for a newly created Group', async () => {
+  const f = await setup();
+  const groupId = await f.owner.auth.mutation(
+    api.groups.mutations.createGroup,
+    { name: 'New community' }
+  );
+  expect(
+    await f.owner.auth.query(api.groups.expulsions.listProgress, { groupId })
+  ).toEqual({ page: [], continueCursor: expect.any(String), isDone: true });
 });

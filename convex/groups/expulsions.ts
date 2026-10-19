@@ -1,3 +1,4 @@
+import { paginationResultValidator } from 'convex/server';
 import { resetPreferenceFor } from './announcementPreferenceModel';
 import { v, type Infer } from 'convex/values';
 import {
@@ -473,13 +474,12 @@ export const resolveRest = internalMutation({
 });
 
 /** Staff can find excluded former members after their roster rows have been removed. */
+export const progressPage = paginationResultValidator(
+  v.object({ personId: v.id('persons'), name: v.string() })
+);
 export const listProgress = query({
   args: { groupId: v.id('groups'), cursor: v.optional(v.string()) },
-  returns: v.object({
-    page: v.array(v.object({ personId: v.id('persons'), name: v.string() })),
-    continueCursor: v.string(),
-    isDone: v.boolean(),
-  }),
+  returns: progressPage,
   handler: async (ctx, { groupId, cursor }) => {
     await requireManager(ctx, groupId, (await requireAuth(ctx)).person._id);
     const page = await ctx.db

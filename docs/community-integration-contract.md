@@ -1,6 +1,6 @@
-# Red Room integration contract
+# Community integration contract
 
-`red-room.v1` publishes a selected-Group applicant integration. G1 consent/own-context, G3 own-application writes, G4/G5 current Event participation, G7 announcement preferences, and G8/G9 coordinated exclusion recovery below are implemented in this source candidate. Publication does not establish deployment or provider acceptance. Synthetic development data is shipped at `@groupi/sdk/community-contract`; it is not a service adapter.
+`community.v1` publishes a selected-Group applicant integration. G1 consent/own-context, G3 own-application writes, G4/G5 current Event participation, G7 announcement preferences, and G8/G9 coordinated exclusion recovery below are implemented in this source candidate. Publication does not establish deployment or provider acceptance. Synthetic development data is shipped at `@groupi/sdk/community-contract`; it is not a service adapter.
 
 ## Table of Contents
 
@@ -111,7 +111,7 @@ Existing Groups #261 supplies native admission/history/review, independent Group
 
 Remaining gates include G2 trusted hosted appearance/onboarding, deployed G3 acceptance, deployed G5 participation, G6 branded decision delivery, G7 preferences/announcements, G8 exclusion, G9 cleanup/reinstatement and G10 deployed acceptance. Existing narrowed backend schemas still need their two-stage [migration audit](strict-backend-contract-rollout.md); issuer signing/cookie configuration, matching deployed frontend/backend source, isolated browser identities, native accessibility where applicable and external security review remain unverified. Local protocol/HTTP and SDK tests are source evidence only. No live data or deployment is modified here.
 
-Contract additions may add optional fields within `red-room.v1`; incompatible field meanings, operation bindings, privacy or replay semantics require a new contract version and coordinated Groupi/Bound in Red consumer fixtures/tests. A proposed operation becomes supported only with its implementation, OpenAPI entry, generated SDK methods, authority/replay tests and milestone acceptance. Fixtures and both SDK references must move together.
+Contract additions may add optional fields within `community.v1`; incompatible field meanings, operation bindings, privacy or replay semantics require a new contract version and coordinated provider/client fixtures/tests. A proposed operation becomes supported only with its implementation, OpenAPI entry, generated SDK methods, authority/replay tests and milestone acceptance. Fixtures and both SDK references must move together.
 
 ## G4 current Event and staff lifecycle
 
@@ -231,7 +231,7 @@ Deployed staff browser/native and provider acceptance remain G10 gates.
 
 ## G6 decision email and trusted return
 
-Canonical delegated submissions record the verified source app/grant, never a caller-supplied brand, recipient or return URL. Native applications retain Groupi defaults. Platform administrators may configure `appearance.statusReturnUrl` on the approved Developer app; it must be HTTPS on a registered redirect origin with no credentials or fragment. The Bound in Red destination is `https://<site-origin>/red-room/application`. Sender display name/accent use approved hosted appearance, while `RESEND_FROM_EMAIL` and `RESEND_API_KEY` remain operator-owned. Mailbox/domain verification and actual inbox receipt remain G10 deployment gates.
+Canonical delegated submissions record the verified source app/grant, never a caller-supplied brand, recipient or return URL. Native applications retain Groupi defaults. Platform administrators may configure `appearance.statusReturnUrl` on the approved Developer app; it must be HTTPS on a registered redirect origin with no credentials or fragment. The destination is an explicitly configured client HTTPS URL; no client route is a provider default. Sender display name/accent use approved hosted appearance, while `RESEND_FROM_EMAIL` and `RESEND_API_KEY` remain operator-owned. Mailbox/domain verification and actual inbox receipt remain G10 deployment gates.
 
 Decision commitment and admission are independent of email. Native application reads and delegated own-context expose optional `decisionDelivery` (`queued`, `sending`, `sent`, `failed`, `suppressed`) without recipients, provider diagnostics or credentials. Existing global notification methods/type preferences and DND govern eligibility at decision time and again at dispatch; announcement opt-in is not consulted. `sent` records provider acceptance, not inbox receipt. Suppression stops further attempts; an earlier uncertain provider attempt may already have been accepted.
 

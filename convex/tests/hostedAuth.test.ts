@@ -23,18 +23,18 @@ test('the hosted auth HTTP boundary sends a real one-use link and creates a mini
   const appId = await owner.auth.mutation(
     api.delegatedApps.mutations.registerApp,
     {
-      name: 'Red Room',
+      name: 'Reading Circle',
       purpose: 'Hosted community sign-in',
       clientType: 'native',
-      redirectUris: ['https://redroom.example/callback'],
+      redirectUris: ['https://reading.example/callback'],
     }
   );
   await t.run(async ctx => {
     await ctx.db.patch(appId, {
       status: 'approved',
       appearance: {
-        brandName: 'Red Room',
-        senderName: 'Red Room',
+        brandName: 'Reading Circle',
+        senderName: 'Reading Circle',
         accent: '#991b1b',
       },
     });
@@ -75,8 +75,8 @@ test('the hosted auth HTTP boundary sends a real one-use link and creates a mini
   expect(response.status).toBe(200);
   expect(delivery.send).toHaveBeenCalledOnce();
   const message = delivery.send.mock.calls[0][0];
-  expect(message.subject).toBe('Sign in to Red Room');
-  expect(message.from).toBe('Red Room <noreply@groupi.gg>');
+  expect(message.subject).toBe('Sign in to Reading Circle');
+  expect(message.from).toBe('Reading Circle <noreply@groupi.gg>');
   const link = message.html
     .match(/href="([^"]+)"/)?.[1]
     .replaceAll('&amp;', '&');

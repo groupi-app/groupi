@@ -49,8 +49,12 @@ it('limits the app purpose to the registration contract of one thousand characte
   vi.mocked(useMutation).mockReturnValue(vi.fn() as never);
   const user = userEvent.setup();
   render(<DeveloperAppsSettings />);
-  await user.type(screen.getByLabelText('Purpose'), 'a'.repeat(1001));
-  expect(screen.getByLabelText('Purpose')).toHaveValue('a'.repeat(1000));
+  const purpose = screen.getByLabelText('Purpose');
+  await user.click(purpose);
+  await user.paste('a'.repeat(1001));
+  expect(purpose).toHaveValue('a'.repeat(1000));
+  await user.type(purpose, 'b');
+  expect(purpose).toHaveValue('a'.repeat(1000));
 });
 
 it('lets a rejected app owner request another review while remaining in own-account testing', async () => {

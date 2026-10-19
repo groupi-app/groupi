@@ -37,12 +37,12 @@ it('a hosted new account needs only a pseudonymous username and returns to its b
   vi.mocked(useQuery).mockImplementation((...args) =>
     args[0] === ('appearance' as never)
       ? {
-          appName: 'Red Room',
+          appName: 'Reading Circle',
           providerName: 'Groupi',
           appearance: {
-            brandName: 'Red Room',
+            brandName: 'Reading Circle',
             accent: '#991b1b',
-            senderName: 'Red Room',
+            senderName: 'Reading Circle',
           },
         }
       : { name: 'visitor@example.test' }

@@ -1,5 +1,5 @@
 /** Synthetic integration development data; never a live service adapter. */
-export const communityContractVersion = 'red-room.v1';
+export const communityContractVersion = 'community.v1';
 const operationActions = {
   readOwnCommunityContext: 'groups.context.read',
   submitCommunityApplication: 'groups.applications.submit',
@@ -129,7 +129,7 @@ const question = {
 };
 const context = {
   contractVersion: communityContractVersion,
-  group: { id: 'synthetic-red-room', name: 'Red Room' },
+  group: { id: 'synthetic-community', name: 'Reading Circle' },
   form: { enabled: true, revision: 'synthetic-form-v2', questions: [question] },
   membership: null,
   eligibility: {
@@ -168,7 +168,7 @@ const activeEvent = {
   allowedRsvpTransitions: [],
   event: {
     id: 'synthetic-event',
-    title: 'Red Room gathering',
+    title: 'Community gathering',
     location: 'Synthetic venue',
     description: 'Synthetic gathering logistics',
     timezone: 'America/New_York',
