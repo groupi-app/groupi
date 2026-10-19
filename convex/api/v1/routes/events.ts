@@ -86,6 +86,7 @@ export function createEventRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateEventRequestSchema,
@@ -285,6 +286,7 @@ export function createEventRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateEventRequestSchema,
@@ -297,7 +299,13 @@ export function createEventRoutes() {
         description: 'Event updated',
         content: {
           'application/json': {
-            schema: EventResponseSchema,
+            schema: z.object({
+              success: z.literal(true),
+              data: z.union([
+                EventResponseSchema.shape.data,
+                z.object({ eventId: z.string() }),
+              ]),
+            }),
           },
         },
       },

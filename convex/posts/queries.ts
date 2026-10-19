@@ -1,3 +1,5 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
+import { getDiscussionActorWithUser } from '../posts/presentation';
 import { canViewAttendance, privateNote } from '../events/attendance';
 import { query } from '../_generated/server';
 import { v } from 'convex/values';
@@ -5,7 +7,7 @@ import {
   paginationOptsValidator,
   paginationResultValidator,
 } from 'convex/server';
-import { requireAuth, getPersonWithUser } from '../auth';
+import { requireAuth } from '../auth';
 
 const postFeedItemValidator = v.object({
   _id: v.id('posts'),
@@ -14,10 +16,11 @@ const postFeedItemValidator = v.object({
   content: v.string(),
   editedAt: v.optional(v.number()),
   membershipId: v.optional(v.id('memberships')),
-  authorId: v.id('persons'),
+  authorId: v.union(v.id('persons'), v.id('authorizationPrincipals')),
   eventId: v.id('events'),
   updatedAt: v.optional(v.number()),
   author: v.object({
+    kind: v.union(v.literal('user'), v.literal('integration')),
     name: v.union(v.string(), v.null()),
     image: v.union(v.string(), v.null()),
   }),
@@ -55,6 +58,7 @@ export const getPostDetail = query({
       return null;
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     // Check if user is a member of the event
     const userMembership = await ctx.db
       .query('memberships')
@@ -87,12 +91,12 @@ export const getPostDetail = query({
     }
 
     type PersonData = NonNullable<
-      Awaited<ReturnType<typeof getPersonWithUser>>
+      Awaited<ReturnType<typeof getDiscussionActorWithUser>>
     >;
     const personMap = new Map<string, PersonData>();
     const batchedData = await Promise.all(
       [...authorIds].map(id =>
-        getPersonWithUser(ctx, id).then(data => ({ id, data }))
+        getDiscussionActorWithUser(ctx, id).then(data => ({ id, data }))
       )
     );
     for (const { id, data } of batchedData) {
@@ -128,6 +132,7 @@ export const getPostDetail = query({
           ...reply,
           author: replyAuthorData
             ? {
+                kind: replyAuthorData.kind,
                 person: {
                   ...replyAuthorData.person,
                   user: replyAuthorData.user,
@@ -145,6 +150,7 @@ export const getPostDetail = query({
         ...post,
         author: postAuthorData
           ? {
+              kind: postAuthorData.kind,
               person: {
                 ...postAuthorData.person,
                 user: postAuthorData.user,
@@ -177,6 +183,8 @@ export const getEventPostFeed = query({
     _traceId: v.optional(v.string()),
   },
   handler: async (ctx, { eventId }) => {
+    const exclusionPerson = (await requireAuth(ctx)).person;
+    await requireNoEventExclusion(ctx, eventId, exclusionPerson._id);
     // Require authentication and event membership
     const { person: currentPerson } = await requireAuth(ctx);
 
@@ -248,12 +256,12 @@ export const getEventPostFeed = query({
 
     // Batch-fetch all unique persons once
     type PersonData = NonNullable<
-      Awaited<ReturnType<typeof getPersonWithUser>>
+      Awaited<ReturnType<typeof getDiscussionActorWithUser>>
     >;
     const personMap = new Map<string, PersonData>();
     const batchedData = await Promise.all(
       [...personIds].map(id =>
-        getPersonWithUser(ctx, id).then(data => ({ id, data }))
+        getDiscussionActorWithUser(ctx, id).then(data => ({ id, data }))
       )
     );
     for (const { id, data } of batchedData) {
@@ -268,6 +276,7 @@ export const getEventPostFeed = query({
       const seenAuthors = new Set<string>();
       const recentReplyAuthors: Array<{
         id: string;
+        kind: 'user' | 'integration';
         _creationTime: number;
         user: {
           name: string | null;
@@ -285,6 +294,7 @@ export const getEventPostFeed = query({
           seenAuthors.add(reply.authorId);
           recentReplyAuthors.push({
             id: reply.authorId,
+            kind: replyAuthorData.kind,
             _creationTime: reply._creationTime,
             user: {
               name: replyAuthorData.user.name ?? null,
@@ -299,6 +309,7 @@ export const getEventPostFeed = query({
         ...post,
         author: authorData
           ? {
+              kind: authorData.kind,
               person: {
                 ...authorData.person,
                 user: authorData.user,
@@ -376,6 +387,7 @@ export const getEventPostFeedPage = query({
       return { ...emptyResult, page: [] };
     }
 
+    await requireNoEventExclusion(ctx, eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -397,11 +409,11 @@ export const getEventPostFeedPage = query({
     const authors = await Promise.all(
       authorIds.map(async personId => ({
         personId,
-        data: await getPersonWithUser(ctx, personId),
+        data: await getDiscussionActorWithUser(ctx, personId),
       }))
     );
     const authorMap = new Map(
-      authors.map(({ personId, data }) => [personId, data?.user ?? null])
+      authors.map(({ personId, data }) => [personId, data ?? null])
     );
 
     return {
@@ -411,8 +423,9 @@ export const getEventPostFeedPage = query({
         return {
           ...post,
           author: {
-            name: author?.name ?? null,
-            image: author?.image ?? null,
+            kind: author?.kind ?? 'user',
+            name: author?.user.name ?? null,
+            image: author?.user.image ?? null,
           },
         };
       }),
@@ -436,6 +449,7 @@ export const getPost = query({
       throw new Error('Post not found');
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -468,6 +482,7 @@ export const getPostReplies = query({
       throw new Error('Post not found');
     }
 
+    await requireNoEventExclusion(ctx, post.eventId, currentPerson._id);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>
@@ -489,11 +504,15 @@ export const getPostReplies = query({
     // Get author data for all replies - nest user inside person
     const repliesWithAuthors = await Promise.all(
       replies.map(async reply => {
-        const authorData = await getPersonWithUser(ctx, reply.authorId);
+        const authorData = await getDiscussionActorWithUser(
+          ctx,
+          reply.authorId
+        );
         return {
           ...reply,
           author: authorData
             ? {
+                kind: authorData.kind,
                 person: {
                   ...authorData.person,
                   user: authorData.user,

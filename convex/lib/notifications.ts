@@ -1612,8 +1612,13 @@ export async function createNotification(
       );
     return notificationId;
   }
+  const decisionEmail =
+    data.type === 'GROUP_APPLICATION_APPROVED' ||
+    data.type === 'GROUP_APPLICATION_DECLINED';
   const [emails, webhooks, pushes] = await Promise.all([
-    collectEmailData(ctx, notificationData, preFetched?.messageContext),
+    decisionEmail
+      ? Promise.resolve([])
+      : collectEmailData(ctx, notificationData, preFetched?.messageContext),
     collectWebhookData(ctx, notificationData, preFetched?.messageContext),
     collectPushData(
       ctx,
@@ -1653,7 +1658,7 @@ export async function notifyEventMembers(
   data: {
     eventId: Id<'events'>;
     type: NotificationType;
-    authorId: Id<'persons'>;
+    authorId?: Id<'persons'>;
     postId?: Id<'posts'>;
     datetime?: number;
     rsvp?: RsvpStatus;
@@ -1667,7 +1672,7 @@ export async function notifyEventMembers(
     .collect();
 
   const excludeIds = new Set([
-    data.authorId as string,
+    ...(data.authorId ? [data.authorId as string] : []),
     ...(data.excludePersonIds || []).map(id => id as string),
   ]);
 
@@ -1891,7 +1896,7 @@ export async function notifyThreadParticipants(
   data: {
     postId: Id<'posts'>;
     eventId: Id<'events'>;
-    postAuthorId: Id<'persons'>;
+    postAuthorId?: Id<'persons'>;
     replyAuthorId: Id<'persons'>;
   }
 ): Promise<{ sent: number; skippedPresent: number; skippedMuted: number }> {
@@ -1918,12 +1923,13 @@ export async function notifyThreadParticipants(
 
   // Collect all unique participant IDs to notify
   const participantIds = new Set<string>();
-  if (data.postAuthorId !== data.replyAuthorId) {
+  if (data.postAuthorId && data.postAuthorId !== data.replyAuthorId) {
     participantIds.add(data.postAuthorId as string);
   }
   for (const reply of existingReplies) {
-    if ((reply.authorId as string) !== (data.replyAuthorId as string)) {
-      participantIds.add(reply.authorId as string);
+    const humanReplyAuthorId = ctx.db.normalizeId('persons', reply.authorId);
+    if (humanReplyAuthorId && humanReplyAuthorId !== data.replyAuthorId) {
+      participantIds.add(humanReplyAuthorId);
     }
   }
 

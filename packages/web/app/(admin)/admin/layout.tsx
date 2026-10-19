@@ -26,6 +26,11 @@ const adminNavItems = [
     icon: Icons.flag,
   },
   {
+    title: 'Developer apps',
+    href: '/admin/developer-apps',
+    icon: Icons.shield,
+  },
+  {
     title: 'Explorer',
     href: '/admin/explorer',
     icon: Icons.search,

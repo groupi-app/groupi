@@ -8,11 +8,13 @@ export function GroupConfirmedAction({
   confirmation,
   explanation,
   onConfirm,
+  successMessage,
 }: {
   label: string;
   confirmation: string;
   explanation: string;
   onConfirm: () => Promise<unknown>;
+  successMessage?: string;
 }) {
   const restoreFocus = useRef(false);
   const container = useRef<HTMLDivElement>(null);
@@ -30,7 +32,8 @@ export function GroupConfirmedAction({
       restoreFocus.current = false;
     }
   }, [confirming]);
-  if (done) return <p role='status'>{label} completed.</p>;
+  if (done)
+    return <p role='status'>{successMessage ?? `${label} completed.`}</p>;
   return (
     <div ref={container} className='flex min-w-0 flex-col gap-2'>
       {confirming ? (

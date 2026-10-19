@@ -1,3 +1,5 @@
+import { AddonDataSchema } from '../../../addons/schemas';
+import { TemplateSchema } from '../../../addonTemplates/definition';
 import { ConvexError } from 'convex/values';
 import { z } from '@hono/zod-openapi';
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
@@ -48,7 +50,7 @@ export function createAddonRoutes() {
     name: z.string(),
     description: z.string(),
     version: z.number(),
-    template: z.unknown(),
+    template: TemplateSchema,
   });
   const templatesRoute = createRoute({
     method: 'get',
@@ -103,6 +105,7 @@ export function createAddonRoutes() {
     request: {
       params: EventAddonParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: z
@@ -118,7 +121,7 @@ export function createAddonRoutes() {
                   'clear-response',
                   'clear-claims',
                 ]),
-                data: z.unknown().optional(),
+                data: AddonDataSchema.nullable().optional(),
                 fieldId: z.string().min(1).optional(),
               })
               .strict(),
@@ -129,7 +132,15 @@ export function createAddonRoutes() {
     responses: {
       200: {
         description: 'Participant action completed',
-        content: { 'application/json': { schema: z.unknown() } },
+        content: {
+          'application/json': {
+            schema: z.union([
+              z.object({ success: z.boolean() }),
+              z.object({ isOptedOut: z.boolean() }),
+              z.object({ id: z.string(), created: z.boolean() }),
+            ]),
+          },
+        },
       },
       400: {
         description: 'Invalid submission',
@@ -252,6 +263,7 @@ export function createAddonRoutes() {
     request: {
       params: EventAddonParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: EnableAddonRequestSchema,
@@ -397,6 +409,7 @@ export function createAddonRoutes() {
     request: {
       params: EventAddonParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateAddonConfigRequestSchema,
@@ -560,6 +573,7 @@ export function createAddonRoutes() {
     request: {
       params: EventAddonDataKeyParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: SetAddonDataRequestSchema,

@@ -1,3 +1,7 @@
+import {
+  requireNoEventExclusion,
+  isEventExcludedForPerson,
+} from '../groups/exclusions';
 import type { QueryCtx } from '../_generated/server';
 import { reminderOffsetValidator } from './writes';
 import { internalQuery } from '../_generated/server';
@@ -9,7 +13,7 @@ import { getPersonWithUser } from '../auth';
  * Internal queries and mutations for event routes
  */
 
-const eventSummaryValidator = v.object({
+export const eventSummaryValidator = v.object({
   id: v.id('events'),
   title: v.string(),
   description: v.union(v.string(), v.null()),
@@ -128,6 +132,8 @@ export const listUserEventsPage = internalQuery({
     }
     const items = await Promise.all(
       page.page.map(async membership => {
+        if (await isEventExcludedForPerson(ctx, membership.eventId, personId))
+          return null;
         const event = await ctx.db.get(membership.eventId);
         if (!event) return null;
         return {
@@ -243,6 +249,7 @@ export const getEventDetail = internalQuery({
   args: { eventId: v.id('events'), personId: v.id('persons') },
   returns: v.union(eventDetailValidator, v.null()),
   handler: async (ctx, { eventId, personId }) => {
+    await requireNoEventExclusion(ctx, eventId, personId);
     const membership = await ctx.db
       .query('memberships')
       .withIndex('by_person_event', q =>

@@ -1,17 +1,24 @@
+import { isEventExcludedForPerson } from './groups/exclusions';
 import { createClient, type GenericCtx } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
-import { query, QueryCtx, MutationCtx } from './_generated/server';
+import {
+  query,
+  internalMutation,
+  QueryCtx,
+  MutationCtx,
+} from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth/minimal';
 import authConfig from './auth.config';
-import { ConvexError } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import {
   DEFAULT_EVENT_PERMISSIONS,
   type EventPermissionKey,
   type PermissionLevel,
 } from './types';
 import { Resend } from 'resend';
+import { deliverMagicLink } from './delegatedApps/hostedEmail';
 import { isAdminRole } from './lib/constants';
 
 /**
@@ -67,9 +74,21 @@ import { resolvePasskeyConfig } from './lib/passkeyConfig';
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
 
-// Placeholder for auth functions - will be wired up by Convex at runtime
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const authFunctionsPlaceholder = {} as any;
+const authUserDocument = v.object({
+  _id: v.string(),
+  _creationTime: v.number(),
+  ...authSchema.tables.user.validator.fields,
+});
+async function initializePersonForUser(ctx: MutationCtx, userId: string) {
+  const existing = await ctx.db
+    .query('persons')
+    .withIndex('by_user_id', q => q.eq('userId', userId))
+    .first();
+  if (existing) return;
+  const now = Date.now();
+  const personId = await ctx.db.insert('persons', { userId, updatedAt: now });
+  await ctx.db.insert('personSettings', { personId, updatedAt: now });
+}
 
 // Create the Better Auth client from the Convex component
 // Using local install with custom schema to support admin plugin fields
@@ -77,37 +96,15 @@ const authFunctionsPlaceholder = {} as any;
 export const authComponent = createClient<DataModel, typeof authSchema>(
   components.betterAuth,
   {
-    authFunctions: authFunctionsPlaceholder,
+    authFunctions: {},
     local: {
       schema: authSchema,
     },
     triggers: {
       user: {
         // Automatically create a person record when a new user signs up
-        onCreate: async (ctx, user) => {
-          // Check if person already exists (shouldn't, but be safe)
-          const existingPerson = await ctx.db
-            .query('persons')
-            .withIndex('by_user_id', q => q.eq('userId', user._id.toString()))
-            .first();
-
-          if (!existingPerson) {
-            // Create person record
-            const now = Date.now();
-            const personId = await ctx.db.insert('persons', {
-              userId: user._id.toString(),
-              updatedAt: now,
-            });
-
-            // Create default settings for the person
-            await ctx.db.insert('personSettings', {
-              personId,
-              updatedAt: now,
-            });
-
-            console.log(`Created person record for new user: ${user.email}`);
-          }
-        },
+        onCreate: async (ctx, user) =>
+          initializePersonForUser(ctx, user._id.toString()),
       },
     },
   }
@@ -115,7 +112,30 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
 
 // Export trigger functions - required for triggers to work
 // These become internal.auth.onCreate, internal.auth.onUpdate, internal.auth.onDelete
-export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
+// The configured lifecycle is exclusively the Better Auth user model. Avoid
+// exporting the upstream generic dispatcher (whose arguments use v.any()).
+export const onCreate = internalMutation({
+  args: { model: v.literal('user'), doc: authUserDocument },
+  returns: v.null(),
+  handler: async (ctx, { doc }) => {
+    await initializePersonForUser(ctx, doc._id);
+    return null;
+  },
+});
+export const onUpdate = internalMutation({
+  args: {
+    model: v.literal('user'),
+    oldDoc: authUserDocument,
+    newDoc: authUserDocument,
+  },
+  returns: v.null(),
+  handler: async () => null,
+});
+export const onDelete = internalMutation({
+  args: { model: v.literal('user'), doc: authUserDocument },
+  returns: v.null(),
+  handler: async () => null,
+});
 
 // Type for the user returned by Better Auth component
 export type AuthUser = Awaited<ReturnType<typeof authComponent.getAuthUser>>;
@@ -195,57 +215,22 @@ const createAuthOptionsInternal = (
             console.log(`   (Copy this URL to your browser to sign in)`);
           }
 
-          // Send real email if Resend is configured
           if (resendClient) {
-            try {
-              await resendClient.emails.send({
-                from:
-                  process.env.RESEND_FROM_EMAIL || 'Groupi <noreply@groupi.gg>',
-                to: email,
-                subject: 'Sign in to Groupi',
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <meta charset="utf-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    </head>
-                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                      <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #2563eb; margin: 0;">Groupi</h1>
-                      </div>
-                      <h2 style="color: #1f2937;">Sign in to your account</h2>
-                      <p>Click the button below to sign in. This link will expire in 10 minutes.</p>
-                      <div style="margin: 30px 0; text-align: center;">
-                        <a href="${url}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 500;">
-                          Sign In to Groupi
-                        </a>
-                      </div>
-                      <p style="color: #6b7280; font-size: 14px;">
-                        If you didn't request this email, you can safely ignore it.
-                      </p>
-                      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-                      <p style="color: #9ca3af; font-size: 12px;">
-                        Or copy and paste this URL into your browser:<br/>
-                        <span style="color: #6b7280; word-break: break-all;">${url}</span>
-                      </p>
-                    </body>
-                  </html>
-                `,
-              });
-              console.log(`📧 Magic link email sent to ${email}`);
-            } catch (error) {
-              console.error(
-                `Failed to send magic link email to ${email}:`,
-                error
-              );
-              // Don't throw - allow the auth flow to continue even if email fails
-              // The user can request a new magic link if needed
-            }
-          } else if (!process.env.DEBUG_MAGIC_LINKS) {
-            // Warn if neither Resend nor debug logging is configured
-            console.warn(
-              `⚠️ Magic link requested for ${email} but RESEND_API_KEY is not configured and DEBUG_MAGIC_LINKS is not enabled`
+            await deliverMagicLink({
+              email,
+              url,
+              siteOrigin: siteUrl,
+              from:
+                process.env.RESEND_FROM_EMAIL || 'Groupi <noreply@groupi.gg>',
+              lookup: interactionId =>
+                ctx.runQuery(internal.delegatedApps.hosted.getEmailAppearance, {
+                  interactionId,
+                }),
+              send: message => resendClient.emails.send(message),
+            });
+          } else if (process.env.DEBUG_MAGIC_LINKS !== 'true') {
+            throw new Error(
+              'Sign-in email is unavailable. Please try again later.'
             );
           }
         },
@@ -359,6 +344,8 @@ const createAuthOptionsInternal = (
       accountLinking: {
         enabled: true,
         trustedProviders: ['discord', 'google'],
+        // A verified email alone must not attach a new social identity.
+        disableImplicitLinking: true,
         allowDifferentEmails: true,
       },
     },
@@ -589,6 +576,7 @@ export async function getEventMembershipForPerson(
   eventId: Id<'events'>,
   personId: Id<'persons'>
 ) {
+  if (await isEventExcludedForPerson(ctx, eventId, personId)) return null;
   return ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>

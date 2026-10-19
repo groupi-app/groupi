@@ -757,4 +757,11 @@ http.route({
       })
   ),
 });
+import { handler as delegatedSignInHandler } from './delegatedApps/http';
+for (const method of ['GET', 'POST', 'OPTIONS'] as const)
+  http.route({
+    pathPrefix: '/oauth/',
+    method,
+    handler: delegatedSignInHandler,
+  });
 export default http;

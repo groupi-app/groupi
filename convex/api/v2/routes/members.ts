@@ -100,6 +100,7 @@ export function createMemberRoutes() {
         memberId: z.string(),
       }),
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateMemberRoleRequestSchema,
@@ -295,6 +296,7 @@ export function createMemberRoutes() {
     request: {
       params: EventIdParamSchema,
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: UpdateRsvpRequestSchema,

@@ -19,7 +19,8 @@ export const linkSummary = v.object({
 export const memberStatus = v.union(
   v.literal('PENDING'),
   v.literal('ACCEPTED'),
-  v.literal('DECLINED')
+  v.literal('DECLINED'),
+  v.literal('CANCELLED')
 );
 export const memberSummary = v.object({
   inviteId: v.id('eventInvites'),

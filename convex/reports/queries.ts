@@ -243,7 +243,15 @@ export const getReportsAdmin = query({
           if (post) {
             const author = await ctx.db.get(post.authorId);
             const authorUser = author
-              ? await getUserInfo(ctx, author.userId)
+              ? 'userId' in author
+                ? await getUserInfo(ctx, author.userId)
+                : {
+                    name: author.name,
+                    email: null,
+                    image: null,
+                    username: null,
+                    role: null,
+                  }
               : null;
             const event = await ctx.db.get(post.eventId);
             targetPreview = {
@@ -258,7 +266,15 @@ export const getReportsAdmin = query({
           if (reply) {
             const author = await ctx.db.get(reply.authorId);
             const authorUser = author
-              ? await getUserInfo(ctx, author.userId)
+              ? 'userId' in author
+                ? await getUserInfo(ctx, author.userId)
+                : {
+                    name: author.name,
+                    email: null,
+                    image: null,
+                    username: null,
+                    role: null,
+                  }
               : null;
             const post = await ctx.db.get(reply.postId);
             const event = post ? await ctx.db.get(post.eventId) : null;

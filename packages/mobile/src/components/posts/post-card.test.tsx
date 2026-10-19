@@ -43,6 +43,7 @@ vi.mock('@groupi/shared/platform', () => ({
   },
 }));
 
+vi.mock('../ui/user-avatar', () => ({ UserAvatar: 'UserAvatar' }));
 vi.mock('../members/member-avatar', () => ({
   MemberAvatar: 'MemberAvatar',
 }));
@@ -217,4 +218,25 @@ describe('PostCard', () => {
     ]);
     expect(options.some(option => option.label === 'Edit Post')).toBe(false);
   });
+});
+
+it('labels an integration author and avoids member profile access', () => {
+  const card = PostCard({
+    post: {
+      ...post,
+      authorId: 'integration-id',
+      author: { name: 'Calendar companion', kind: 'integration' },
+    },
+    eventId: 'event-123',
+    currentPersonId: 'person-current',
+  });
+  const section = Children.toArray(
+    card.props.children.props.children as ReactNode
+  )[0];
+  expect(isValidElement(section)).toBe(true);
+  const row = isValidElement<{ children: ReactNode }>(section)
+    ? Children.toArray(section.props.children)
+    : [];
+  expect(isValidElement(row[0]) && row[0].type).toBe('UserAvatar');
+  expect(isValidElement(row[0]) && row[0].props).not.toHaveProperty('personId');
 });

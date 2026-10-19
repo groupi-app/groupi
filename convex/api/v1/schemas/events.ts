@@ -37,8 +37,8 @@ export const EventSummarySchema = z
     createdAt: TimestampSchema,
     updatedAt: TimestampSchema,
     memberCount: z.number().int(),
-    userRole: RoleSchema,
-    userRsvpStatus: RsvpStatusSchema,
+    userRole: RoleSchema.nullable(),
+    userRsvpStatus: RsvpStatusSchema.nullable(),
   })
   .openapi('EventSummary');
 

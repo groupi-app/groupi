@@ -2,6 +2,7 @@
 import { GroupSharedEvents } from './group-shared-events';
 import { GroupEventSharingPolicy } from './group-event-sharing-policy';
 import { GroupOwnershipTransfer } from './group-ownership-transfer';
+import { EventMail } from '@/features/group-announcements/event-mail';
 import { GroupAnnouncementComposer } from './group-announcement-composer';
 
 import { useState } from 'react';
@@ -34,6 +35,7 @@ import { GroupApplications } from './group-applications';
 import { GroupApplicationSettings } from './group-application-settings';
 import { GroupBanManagement } from './group-ban-management';
 import { GroupConfirmedAction } from './group-confirmed-action';
+import { CommunityExpulsionProgress } from './community-expulsion-progress';
 import { GroupMemberRoster } from './group-member-roster';
 import { GroupInvitationManagement } from './group-invitation-management';
 import { GroupIdentityForm } from './group-identity-form';
@@ -228,6 +230,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           Complete required onboarding before accessing Group member content.
         </p>
       )}
+      {group.canManageMembers && (
+        <CommunityExpulsionProgress groupId={groupId} />
+      )}
       <section
         aria-labelledby='group-settings-heading'
         className='flex flex-col gap-6 border-t border-border pt-6'
@@ -259,6 +264,9 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           )
         )}
         <GroupOwnershipTransfer groupId={groupId} />
+        <Link href={`/announcement-preferences/${groupId}`}>
+          Your announcement subscription
+        </Link>
         {group.canManageRoles && (
           <GroupApplicationSettings
             key={JSON.stringify([
@@ -281,7 +289,10 @@ export function GroupDetail({ groupId }: { groupId: Id<'groups'> }) {
           <GroupApplications groupId={groupId} review />
         )}
         {group.viewerRole !== 'MEMBER' && (
-          <GroupAnnouncementComposer groupId={groupId} />
+          <>
+            <GroupAnnouncementComposer groupId={groupId} />
+            <EventMail groupId={groupId} />
+          </>
         )}
         {group.canManageMembers && <GroupBanManagement groupId={groupId} />}
         {group.canManageInvitations && (

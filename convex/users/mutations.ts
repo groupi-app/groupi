@@ -1,3 +1,5 @@
+import { deletePersonParticipationRevisions } from '../events/participationRevision';
+import { parseWebhookHeaders } from '../notifications/contracts';
 import { removeGroupMembershipsForPerson } from '../groups/model';
 import { deletePersonApplications } from '../eventApplications/cleanup';
 import { claimUpload } from '../files/uploads';
@@ -262,7 +264,7 @@ export const updateUserNotificationSettings = mutation({
             name: methodData.name,
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
-            webhookHeaders: methodData.webhookHeaders,
+            webhookHeaders: parseWebhookHeaders(methodData.webhookHeaders),
             updatedAt: Date.now(),
           });
           methodId = existingMethod._id;
@@ -277,7 +279,7 @@ export const updateUserNotificationSettings = mutation({
             name: methodData.name,
             webhookFormat: methodData.webhookFormat,
             customTemplate: methodData.customTemplate,
-            webhookHeaders: methodData.webhookHeaders,
+            webhookHeaders: parseWebhookHeaders(methodData.webhookHeaders),
             updatedAt: now,
           });
         }
@@ -669,6 +671,7 @@ export async function deleteResolvedAccount(
   }
   await deletePersonApplications(ctx, person._id);
   await deleteListsForPerson(ctx, person._id);
+  await deletePersonParticipationRevisions(ctx, person._id);
   await ctx.db.delete(person._id);
 
   if (user) {

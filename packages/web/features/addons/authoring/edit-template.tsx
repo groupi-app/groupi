@@ -29,7 +29,24 @@ export function EditTemplate({ templateId }: { templateId: string }) {
   return (
     <BuilderPage
       templateId={template._id}
-      initialTemplate={template.template}
+      initialTemplate={{
+        ...template.template,
+        sections: template.template.sections.map(section => ({
+          ...section,
+          fields: section.fields.map(field => ({
+            ...field,
+            label: field.label ?? '',
+            textFormat:
+              field.textFormat === undefined
+                ? undefined
+                : field.textFormat === 'h1' ||
+                    field.textFormat === 'h2' ||
+                    field.textFormat === 'h3'
+                  ? field.textFormat
+                  : 'p',
+          })),
+        })),
+      }}
       isPublished={template.isPublished}
     />
   );

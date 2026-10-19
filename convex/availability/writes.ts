@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { v, type Infer } from 'convex/values';
 import type { MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
@@ -65,6 +66,7 @@ export async function submitAvailabilityForPerson(
   personId: Id<'persons'>,
   { eventId, responses }: Infer<typeof submitAvailabilityArgs>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   // Require authentication and membership
   const person = { _id: personId };
 
@@ -168,6 +170,7 @@ export async function updateSingleAvailabilityForPerson(
     attendanceError('VALIDATION_ERROR', 'Potential date time not found');
   }
 
+  await requireNoEventExclusion(ctx, potentialDateTime.eventId, personId);
   // Get user's membership for this event
   const membership = await ctx.db
     .query('memberships')
@@ -229,6 +232,7 @@ export async function clearAllAvailabilityForPerson(
   personId: Id<'persons'>,
   { eventId }: Infer<typeof clearAllAvailabilityArgs>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   // Require authentication and membership
   const person = { _id: personId };
 

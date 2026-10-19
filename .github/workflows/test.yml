@@ -16,6 +16,62 @@ env:
   NODE_ENV: 'test'
 
 jobs:
+  test-sdks:
+    name: Test SDKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node-version: 22
+            python-version: '3.11'
+          - node-version: 24
+            python-version: '3.13'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Python type checker
+        run: python -m pip install mypy==2.4.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupi/sdk type-check
+      - run: pnpm --filter @groupi/sdk lint
+      - run: pnpm --filter @groupi/sdk test:run
+      - run: pnpm --filter @groupi/sdk test:package
+
+  test-portal:
+    name: Test Developer Portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupi/portal content:check
+      - run: pnpm --filter @groupi/portal type-check
+      - run: pnpm --filter @groupi/portal lint
+      - run: pnpm --filter @groupi/portal lint:tokens
+      - run: pnpm --filter @groupi/portal test:run
+      - run: pnpm --filter @groupi/portal build
+
   # Shared Package Tests
   test-shared:
     name: Test Shared Package
@@ -91,6 +147,12 @@ jobs:
 
       - name: Run Convex tests without codegen
         run: pnpm --filter @groupi/convex test:no-codegen
+
+      - name: Reject loose Convex query and mutation types
+        run: pnpm check:contracts
+
+      - name: Verify contract guard rejects erased exports
+        run: pnpm test:contracts
 
   # Web Package Tests
   test-web:
@@ -320,6 +382,8 @@ jobs:
         test-web,
         test-mobile,
         test-history,
+        test-portal,
+        test-sdks,
         test-builds,
         quality-checks,
       ]
@@ -332,6 +396,8 @@ jobs:
           echo "Convex tests: ${{ needs.test-convex.result }}"
           echo "Web tests: ${{ needs.test-web.result }}"
           echo "Browser history tests: ${{ needs.test-history.result }}"
+          echo "Developer portal tests: ${{ needs.test-portal.result }}"
+          echo "SDK tests: ${{ needs.test-sdks.result }}"
           echo "Mobile tests: ${{ needs.test-mobile.result }}"
           echo "Build tests: ${{ needs.test-builds.result }}"
           echo "Quality checks: ${{ needs.quality-checks.result }}"
@@ -340,6 +406,8 @@ jobs:
                 "${{ needs.test-convex.result }}" != "success" || \
                 "${{ needs.test-web.result }}" != "success" || \
                 "${{ needs.test-history.result }}" != "success" || \
+                "${{ needs.test-portal.result }}" != "success" || \
+                "${{ needs.test-sdks.result }}" != "success" || \
                 "${{ needs.test-mobile.result }}" != "success" || \
                 "${{ needs.test-builds.result }}" != "success" || \
                 "${{ needs.quality-checks.result }}" != "success" ]]; then

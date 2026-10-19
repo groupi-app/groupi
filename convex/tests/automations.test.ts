@@ -452,7 +452,7 @@ describe('custom addon with automations', () => {
         addonType: 'custom:bad',
         config: { templateId: 'bad', template: badTemplate },
       })
-    ).rejects.toThrow('Invalid config');
+    ).rejects.toThrow(/Invalid config|Validator error/);
   });
 
   test('should reject automation with invalid trigger type', async () => {
@@ -479,7 +479,7 @@ describe('custom addon with automations', () => {
         addonType: 'custom:bad',
         config: { templateId: 'bad', template: badTemplate },
       })
-    ).rejects.toThrow('Invalid config');
+    ).rejects.toThrow(/Invalid config|Validator error/);
   });
 
   test('should reject automation with no actions', async () => {
@@ -506,7 +506,7 @@ describe('custom addon with automations', () => {
         addonType: 'custom:bad',
         config: { templateId: 'bad', template: badTemplate },
       })
-    ).rejects.toThrow('Invalid config');
+    ).rejects.toThrow(/Invalid config|Validator error/);
   });
 
   test('template with no automations works fine', async () => {

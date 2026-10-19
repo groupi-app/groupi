@@ -49,6 +49,7 @@ export function createImageRoutes() {
           ...(method === 'put'
             ? {
                 body: {
+                  required: true,
                   content: {
                     'application/json': {
                       schema: cover

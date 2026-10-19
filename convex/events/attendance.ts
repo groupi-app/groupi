@@ -1,3 +1,4 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
 import { ConvexError } from 'convex/values';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx, MutationCtx } from '../_generated/server';
@@ -13,6 +14,7 @@ export async function eventViewer(
   eventId: Id<'events'>,
   personId: Id<'persons'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const [event, membership] = await Promise.all([
     ctx.db.get(eventId),
     ctx.db

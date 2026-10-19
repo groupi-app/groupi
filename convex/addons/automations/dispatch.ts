@@ -1,3 +1,4 @@
+import { StoredAddonDataSchema } from '../../addonTemplates/definition';
 import type { AutomationAction, VariableContext } from './types';
 import type { TrustedAddonContext } from '../context';
 import type { Id } from '../../_generated/dataModel';
@@ -261,7 +262,7 @@ async function dispatchSingleAction(
 
       if (existing) {
         await ctx.rawCtx.db.patch(existing._id, {
-          data: resolvedData,
+          data: StoredAddonDataSchema.parse(resolvedData),
           updatedAt: now,
         });
       } else {
@@ -269,7 +270,7 @@ async function dispatchSingleAction(
           eventId: ctx.eventId,
           addonType: ctx.addonType,
           key: resolvedKey,
-          data: resolvedData,
+          data: StoredAddonDataSchema.parse(resolvedData),
           createdBy: authorId,
           createdAt: now,
           updatedAt: now,

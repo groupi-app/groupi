@@ -41,8 +41,9 @@
     "mobile:sync-version": "node packages/mobile/scripts/sync-native-version.mjs",
     "clean": "turbo clean && rm -rf node_modules && pnpm install",
     "clean:deps": "find . -name node_modules -type d -exec rm -rf {} + && pnpm install",
-    "check": "pnpm lint && pnpm type-check && pnpm format:check",
-    "lint:tokens": "pnpm --filter @groupi/web lint:tokens",
+    "check": "pnpm lint && pnpm type-check && pnpm check:contracts && pnpm format:check",
+    "check:contracts": "node scripts/check-convex-contracts.mjs",
+    "lint:tokens": "pnpm --filter @groupi/web lint:tokens && pnpm --filter @groupi/portal lint:tokens",
     "convex:dev": "pnpx convex dev",
     "convex:deploy": "pnpx convex deploy",
     "generate": "node scripts/convex-codegen.mjs",
@@ -55,7 +56,8 @@
     "commit": "cz",
     "version-packages": "pnpm changeset:version && pnpm generate:changelog",
     "release": "pnpm changeset:version && pnpm generate:changelog && git add -A && git commit -m 'chore(release): version packages'",
-    "check:workspace-source": "node scripts/check-workspace-source.mjs"
+    "check:workspace-source": "node scripts/check-workspace-source.mjs",
+    "test:contracts": "node --test scripts/check-convex-contracts.test.mjs"
   },
   "dependencies": {
     "@convex-dev/presence": "^0.3.0",
@@ -99,6 +101,7 @@
   },
   "pnpm": {
     "overrides": {
+      "jose@>=6.0.0 <7.0.0": "6.2.12",
       "next": "16.1.7",
       "react": "19.2.0",
       "react-dom": "19.2.0",

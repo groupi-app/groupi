@@ -1,3 +1,5 @@
+import { requireNoEventExclusion } from '../groups/exclusions';
+import { getDiscussionActorWithUser } from '../posts/presentation';
 import {
   internalQuery,
   internalMutation,
@@ -5,7 +7,6 @@ import {
 } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
 import type { Id, Doc } from '../_generated/dataModel';
-import { getPersonWithUser } from '../auth';
 import {
   createPostForPerson,
   updatePostForPerson,
@@ -42,8 +43,8 @@ const summaryFields = {
   author: discussionAuthor,
   attachments: v.array(attachmentSummary),
 };
-const contentSummary = v.object(summaryFields);
-const contentDetail = v.object({
+export const contentSummary = v.object(summaryFields);
+export const contentDetail = v.object({
   ...summaryFields,
   replies: v.optional(v.array(contentSummary)),
 });
@@ -52,6 +53,7 @@ async function access(
   personId: Id<'persons'>,
   eventId: Id<'events'>
 ) {
+  await requireNoEventExclusion(ctx, eventId, personId);
   const member = await ctx.db
     .query('memberships')
     .withIndex('by_person_event', q =>
@@ -65,7 +67,7 @@ async function access(
     });
 }
 async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
-  const author = await getPersonWithUser(ctx, row.authorId);
+  const author = await getDiscussionActorWithUser(ctx, row.authorId);
   const attachments = await (
     'eventId' in row
       ? ctx.db
@@ -99,6 +101,7 @@ async function summary(ctx: QueryCtx, row: Doc<'posts'> | Doc<'replies'>) {
     author: author
       ? {
           id: author.person._id,
+          kind: author.kind,
           user: {
             id: author.user._id,
             name: author.user.name ?? null,

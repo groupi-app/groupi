@@ -34,6 +34,7 @@ export const editGroupApplication = mutation({
   args: {
     applicationId: v.id('groupApplications'),
     answers: c.answersValidator,
+    expectedRevision: v.optional(v.number()),
   },
   returns: c.result,
   handler: async (ctx, args) =>
@@ -41,23 +42,30 @@ export const editGroupApplication = mutation({
       ctx,
       (await requireAuth(ctx)).person._id,
       args.applicationId,
-      args.answers
+      args.answers,
+      args.expectedRevision
     ),
 });
 export const withdrawGroupApplication = mutation({
-  args: { applicationId: v.id('groupApplications') },
+  args: {
+    applicationId: v.id('groupApplications'),
+    expectedRevision: v.optional(v.number()),
+  },
   returns: c.result,
   handler: async (ctx, args) =>
     model.withdraw(
       ctx,
       (await requireAuth(ctx)).person._id,
-      args.applicationId
+      args.applicationId,
+      args.expectedRevision
     ),
 });
 export const reviewGroupApplication = mutation({
   args: {
     applicationId: v.id('groupApplications'),
     decision: v.union(v.literal('APPROVED'), v.literal('DECLINED')),
+    expectedRevision: v.optional(v.number()),
+    operationId: v.optional(v.string()),
   },
   returns: c.result,
   handler: async (ctx, args) =>
@@ -65,6 +73,8 @@ export const reviewGroupApplication = mutation({
       ctx,
       (await requireAuth(ctx)).person._id,
       args.applicationId,
-      args.decision
+      args.decision,
+      args.expectedRevision,
+      args.operationId
     ),
 });

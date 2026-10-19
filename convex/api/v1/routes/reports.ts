@@ -28,6 +28,7 @@ export function createReportRoutes() {
     security: [{ apiKey: [] }],
     request: {
       body: {
+        required: true,
         content: {
           'application/json': {
             schema: CreateReportRequestSchema,

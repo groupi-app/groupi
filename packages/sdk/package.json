@@ -1,0 +1,42 @@
+{
+  "name": "@groupi/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "GPL-3.0",
+  "description": "Explicit, instance-bound Groupi REST v2 client",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./community-contract": {
+      "types": "./src/community-contract.d.ts",
+      "import": "./src/community-contract.js"
+    }
+  },
+  "files": [
+    "src",
+    "README.md",
+    "operations.json",
+    "supplemental-operations.json",
+    "type-audit.json"
+  ],
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
+  "scripts": {
+    "test:run": "node --test tests/*.test.mjs && python3 -m unittest discover -s ../python-sdk/tests && vitest run --config vitest.config.ts",
+    "type-check": "pnpm check:generated && tsc --project tests/tsconfig.json && python3 scripts/check-python-types.py",
+    "generate": "tsx scripts/generate.ts && python3 scripts/generate-clients.py && prettier --write src/index.js src/index.d.ts && eslint src/index.d.ts --fix",
+    "lint": "eslint .",
+    "test:integration": "vitest run --config vitest.config.ts",
+    "test:package": "node scripts/test-package.mjs",
+    "check:generated": "tsx scripts/generate.ts --check && python3 scripts/generate-clients.py --check"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.0",
+    "typescript": "^5.9.3",
+    "tsx": "^4.20.6",
+    "@types/node": "^24.9.2"
+  }
+}

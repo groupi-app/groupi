@@ -1,0 +1,15 @@
+# Understand the contribution boundaries
+
+v2 · Current · Source: docs/adr/0003-domain-owned-backend-operations.md
+
+Source availability does not establish hosted deployment or registry publication.
+
+## Domain-owned backend operations
+Canonical passage: /v2/architecture#boundaries
+
+Reusable operations live with their domain. Native Convex functions and versioned REST routes adapt verified identity to those operations; version folders own HTTP contracts, not business behavior. Each write transaction checks the actor’s current permissions. HTTP preflight alone cannot protect against authority changing between calls.
+
+## Shared logic and platform UI
+Canonical passage: /v2/architecture#shared
+
+Cross-platform logic belongs in packages/shared, which never imports Next.js, Expo or React Native. Platform adapters supply navigation, storage and toast behavior. Web is client-only; live application data uses Convex useQuery/useMutation. Feature modules own their UI and hooks, and reusable presentation follows atoms, molecules, organisms and data-free templates.

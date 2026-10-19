@@ -1,3 +1,5 @@
+import { isEventExcludedForPerson } from '../groups/exclusions';
+import type { Doc as AuthDoc } from '../betterAuth/_generated/dataModel';
 import { query, QueryCtx } from '../_generated/server';
 import { v } from 'convex/values';
 import { components } from '../_generated/api';
@@ -83,6 +85,10 @@ export const getPendingEventInvites = query({
     // Fetch details for each invite
     const invites = await Promise.all(
       pendingInvites.map(async invite => {
+        if (
+          await isEventExcludedForPerson(ctx, invite.eventId, currentPerson._id)
+        )
+          return null;
         // Get event details
         const event = await ctx.db.get(invite.eventId);
         if (!event) return null;
@@ -341,10 +347,13 @@ export const searchUserByExactUsernameForEventInvite = query({
     }
 
     // Use the Better Auth username index for instant lookup
-    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: 'user',
-      where: [{ field: 'username', operator: 'eq', value: trimmedSearch }],
-    });
+    const user: AuthDoc<'user'> | null = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: 'user',
+        where: [{ field: 'username', operator: 'eq', value: trimmedSearch }],
+      }
+    );
 
     if (!user) {
       return null;

@@ -26,18 +26,61 @@ const body = z
     attachmentIdsToDelete: z.array(z.string()).max(10).optional(),
   })
   .strict();
+const author = z
+  .object({
+    id: z.string(),
+    kind: z.enum(['user', 'integration']).optional(),
+    user: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+      email: z.string().nullable(),
+      image: z.string().nullable(),
+      username: z.string().nullable(),
+    }),
+  })
+  .nullable();
+const summary = z.object({
+  id: z.string(),
+  createdAt: z.number(),
+  author,
+  attachments: z.array(
+    z.object({
+      id: z.string(),
+      storageId: z.string(),
+      filename: z.string(),
+      size: z.number(),
+      mimeType: z.string(),
+      url: z.string().nullable(),
+    })
+  ),
+});
+const postSummary = summary.extend({
+  eventId: z.string(),
+  title: z.string(),
+  content: z.string(),
+  editedAt: z.number().nullable(),
+  replyCount: z.number(),
+});
+const replySummary = summary.extend({
+  postId: z.string(),
+  text: z.string(),
+  updatedAt: z.number().nullable(),
+});
 type Variables = { ctx: ActionCtx; personId: string; userId: string };
 export function createDiscussionRoutes(kind: 'posts' | 'replies') {
   const app = new OpenAPIHono<{ Variables: Variables }>({
     defaultHook: createValidationHook<{ Variables: Variables }>(),
   });
   const parent = kind === 'posts' ? 'events' : 'posts';
-  const responses = {
-    200: {
-      description: 'Discussion result',
-      content: { 'application/json': { schema: z.any() } },
-    },
-  };
+  const entitySummary = kind === 'posts' ? postSummary : replySummary;
+  const detail =
+    kind === 'posts'
+      ? postSummary.extend({ replies: z.array(replySummary) })
+      : replySummary;
+  const response = (schema: z.ZodType) => ({
+    description: 'Discussion result',
+    content: { 'application/json': { schema } },
+  });
   app.openapi(
     createRoute({
       method: 'get',
@@ -51,7 +94,17 @@ export function createDiscussionRoutes(kind: 'posts' | 'replies') {
           cursor: z.string().optional(),
         }),
       },
-      responses,
+      responses: {
+        200: response(
+          z.union([
+            z.array(entitySummary),
+            z.object({
+              items: z.array(entitySummary),
+              nextCursor: z.string().nullable(),
+            }),
+          ])
+        ),
+      },
     }),
     async c => {
       const q = c.req.valid('query');
@@ -77,7 +130,7 @@ export function createDiscussionRoutes(kind: 'posts' | 'replies') {
       path: `/${kind}/{id}`,
       tags: ['Discussion'],
       request: { params: z.object({ id: z.string() }) },
-      responses,
+      responses: { 200: response(detail) },
     }),
     async c =>
       c.json(
@@ -125,17 +178,32 @@ export function createDiscussionRoutes(kind: 'posts' | 'replies') {
             ? {}
             : {
                 body: {
+                  required: true,
                   content: { 'application/json': { schema: operationBody } },
                 },
               }),
         },
         responses: {
-          ...responses,
-          201: {
-            description: 'Created',
-            content: { 'application/json': { schema: z.any() } },
-          },
-          204: { description: 'Deleted' },
+          ...(operation === 'create'
+            ? {
+                201: response(
+                  kind === 'posts'
+                    ? z.object({ postId: z.string() })
+                    : z.object({ replyId: z.string() })
+                ),
+              }
+            : operation === 'edit'
+              ? {
+                  200: response(
+                    z.union([
+                      detail,
+                      kind === 'posts'
+                        ? z.object({ postId: z.string() })
+                        : z.object({ replyId: z.string() }),
+                    ])
+                  ),
+                }
+              : { 204: { description: 'Deleted' } }),
         },
       }),
       async c => {

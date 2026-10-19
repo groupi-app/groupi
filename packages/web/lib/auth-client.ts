@@ -69,6 +69,7 @@ export const authClient = baseAuthClient as typeof baseAuthClient & {
     magicLink: (options: {
       email: string;
       callbackURL?: string;
+      errorCallbackURL?: string;
     }) => Promise<{ error?: { message: string } }>;
   };
   admin: {
@@ -93,9 +94,11 @@ export const { signIn, signUp, signOut, useSession } = authClient;
 export async function sendMagicLinkWithEmailOrUsername({
   identifier,
   callbackURL,
+  errorCallbackURL,
 }: {
   identifier: string;
   callbackURL?: string;
+  errorCallbackURL?: string;
 }) {
   // Check if identifier is an email (contains @)
   const isEmail = identifier.includes('@');
@@ -105,6 +108,7 @@ export async function sendMagicLinkWithEmailOrUsername({
     return await authClient.signIn.magicLink({
       email: identifier,
       callbackURL: callbackURL || '/onboarding',
+      ...(errorCallbackURL ? { errorCallbackURL } : {}),
     });
   } else {
     // Look up email from username using Convex query
@@ -125,6 +129,7 @@ export async function sendMagicLinkWithEmailOrUsername({
       return await authClient.signIn.magicLink({
         email: result.email,
         callbackURL: callbackURL || '/onboarding',
+        ...(errorCallbackURL ? { errorCallbackURL } : {}),
       });
     } catch {
       return {

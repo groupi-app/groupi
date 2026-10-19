@@ -53,7 +53,7 @@ describe('Bring List Add-on', () => {
           addonType: 'bring-list',
           config: { items: [] },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with missing item name', async () => {
@@ -69,7 +69,7 @@ describe('Bring List Add-on', () => {
             items: [{ id: 'item1', name: '', quantity: 1 }],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with quantity less than 1', async () => {
@@ -85,7 +85,7 @@ describe('Bring List Add-on', () => {
             items: [{ id: 'item1', name: 'Chips', quantity: 0 }],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject config with missing id', async () => {
@@ -101,7 +101,7 @@ describe('Bring List Add-on', () => {
             items: [{ name: 'Chips', quantity: 1 }],
           },
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
 
     test('should reject non-object config', async () => {
@@ -115,7 +115,7 @@ describe('Bring List Add-on', () => {
           addonType: 'bring-list',
           config: 'not an object',
         })
-      ).rejects.toThrow('Invalid config');
+      ).rejects.toThrow(/Invalid config|Validator error/);
     });
   });
 
