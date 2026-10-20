@@ -84,7 +84,9 @@ export const tables = {
     grantKey: v.optional(v.string()),
     expiresAt: v.number(),
     consumedAt: v.optional(v.number()),
+    sessionUidHash: v.optional(v.string()),
   })
+    .index('by_model_and_sessionUidHash', ['model', 'sessionUidHash'])
     .index('by_model_and_key', ['model', 'key'])
     .index('by_grantKey', ['grantKey'])
     .index('by_expiresAt', ['expiresAt']),
