@@ -149,8 +149,8 @@ deployment to bypass the upgrade.
 
 New Session writes populate the model-bound UID hash index automatically. The
 lookup preserves expiration and rejects consumed or revoked artifacts; it never
-scans the artifact table during a protocol request. Opaque session cookie keys
-remain hash-only. Expired artifacts require no backfill and remain subject to
+scans the artifact table during a protocol request. The primary artifact lookup key remains hashed, and the new Session UID
+index stores a model-bound hash; the UID lookup adds no raw cookie-key storage. Expired artifacts require no backfill and remain subject to
 normal bounded cleanup.
 
 ## Validation evidence and remaining gates
