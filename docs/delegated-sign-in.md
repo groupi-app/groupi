@@ -48,7 +48,10 @@ new authorizations, exchange, renewal and API requests. Review is not a guarante
 that an app is safe and never substitutes for each user's consent.
 
 The consent page names the instance, current account, app, purpose and every
-requested permission. `openid` grants only an opaque identifier. Display name and
+requested permission. Requested actions appear as checked, disabled checkboxes;
+Allow access approves that exact requested action set, and Deny cancels without
+approval. Event selection and separately disclosed background access remain
+optional choices, initially unselected. `openid` grants only an opaque identifier. Display name and
 email require separate `identity.display-name` and `identity.email` consent; no
 profile/email fallback is performed. The persisted subject is specific to the app,
 instance and person. Two apps sharing a callback host get different subjects;

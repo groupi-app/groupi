@@ -86,9 +86,7 @@ function ConsentChoices({
 }) {
   const approve = useMutation(api.delegatedApps.mutations.approveConsent);
   const deny = useMutation(api.delegatedApps.mutations.denyConsent);
-  const [actions, setActions] = useState<
-    NonNullable<typeof request>['requestedActions']
-  >([]);
+  const actions = request.requestedActions;
   const [eventIds, setEventIds] = useState<Id<'events'>[]>([]);
   const [allEvents, setAllEvents] = useState(false);
   const [background, setBackground] = useState(false);
@@ -103,16 +101,6 @@ function ConsentChoices({
   const hasEventActions = actions.some(
     action => !action.startsWith('identity.') && !action.startsWith('groups.')
   );
-  function toggleAction(action: (typeof actions)[number], checked: boolean) {
-    const next = checked
-      ? [...actions, action]
-      : actions.filter(value => value !== action);
-    setActions(next);
-    if (!next.some(value => !value.startsWith('identity.'))) {
-      setEventIds([]);
-      setAllEvents(false);
-    }
-  }
   async function decide(allow: boolean) {
     if (Date.now() >= request.expiresAt) {
       setNow(Date.now());
@@ -241,14 +229,12 @@ function ConsentChoices({
         </p>
         <fieldset className='space-y-2' disabled={pending}>
           <legend className='font-medium'>Requested actions</legend>
+          <p className='text-sm text-muted-foreground'>
+            Allow access grants these requested actions. Choose Deny to cancel.
+          </p>
           {request.requestedActions.map(action => (
             <label key={action} className='flex items-center gap-2'>
-              <Checkbox
-                checked={actions.includes(action)}
-                onCheckedChange={checked =>
-                  toggleAction(action, checked === true)
-                }
-              />
+              <Checkbox checked disabled />
               {authorizationActionLabel(action)}
             </label>
           ))}
