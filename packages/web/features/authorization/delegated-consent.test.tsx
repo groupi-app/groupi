@@ -12,6 +12,35 @@ vi.mock('@/convex/_generated/api', () => ({
     },
   },
 }));
+it('shows the exact requested actions checked and disabled without granting before Allow', async () => {
+  mockConsent(consentRequest());
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  const requested = screen.getByRole('group', { name: 'Requested actions' });
+  expect(requested.querySelectorAll('[role=checkbox]')).toHaveLength(2);
+  for (const name of ['Read your email address', 'Read events']) {
+    const checkbox = screen.getByRole('checkbox', { name });
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeDisabled();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+  }
+  expect(approve).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Allow access' })).toBeDisabled();
+  expect(screen.getByLabelText('Allow background access')).not.toBeChecked();
+  await user.click(screen.getByLabelText('Dinner'));
+  expect(approve).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledExactlyOnceWith({
+    interactionId: 'i-1',
+    actions: ['identity.email', 'events.read'],
+    selector: { kind: 'selected', eventIds: ['e-1'] },
+    background: false,
+  });
+});
+
 it('requires explicit background consent and shows the instance, account, app and bounds', async () => {
   mockConsent({
     interactionId: 'i-1',
@@ -35,7 +64,6 @@ it('requires explicit background consent and shows the instance, account, app an
     screen.getByRole('heading', { name: 'Connect Calendar' })
   ).toBeInTheDocument();
   expect(screen.getByLabelText('Allow background access')).not.toBeChecked();
-  await user.click(screen.getByLabelText('Read events'));
   await user.click(screen.getByLabelText('Dinner'));
   await user.click(screen.getByRole('button', { name: 'Allow access' }));
   expect(approve).toHaveBeenCalledWith({
@@ -90,33 +118,30 @@ it('keeps pure openid sign-in free of event selectors and submits empty event bo
     background: false,
   });
 });
-it('resets event bounds through identity-only to event access and back to identity-only', async () => {
-  mockConsent(consentRequest());
-  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
-  vi.mocked(useMutation).mockReturnValue(approve as never);
-  const user = userEvent.setup();
-  render(<DelegatedConsent interactionId='i-1' />);
-  await user.click(screen.getByLabelText('Read your email address'));
-  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
-  await user.click(screen.getByLabelText('Read events'));
-  await user.click(screen.getByLabelText('Dinner'));
-  await user.click(screen.getByLabelText('Read events'));
-  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
-  await user.click(screen.getByLabelText('Read events'));
-  expect(screen.getByLabelText('Dinner')).not.toBeChecked();
-  await user.click(
-    screen.getByLabelText(
-      'All current and future events within my current authority'
-    )
+it('resets optional resource and background choices when the request changes', async () => {
+  let request = consentRequest();
+  vi.mocked(useQuery).mockImplementation((...args) =>
+    args[0] === ('current-user' as never) ? { _id: 'account-a' } : request
   );
-  await user.click(screen.getByLabelText('Read events'));
-  await user.click(screen.getByRole('button', { name: 'Allow access' }));
-  expect(approve).toHaveBeenCalledWith({
-    interactionId: 'i-1',
-    actions: ['identity.email'],
-    selector: { kind: 'selected', eventIds: [] },
-    background: false,
-  });
+  const user = userEvent.setup();
+  const view = render(<DelegatedConsent interactionId='i-1' />);
+  await user.click(screen.getByLabelText('Dinner'));
+  await user.click(screen.getByLabelText('Allow background access'));
+  request = {
+    ...request,
+    requestedScopes: ['openid', 'identity.email'],
+    requestedActions: ['identity.email'],
+  };
+  view.rerender(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  expect(
+    screen.queryByLabelText('Allow background access')
+  ).not.toBeInTheDocument();
+  request = consentRequest();
+  view.rerender(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByLabelText('Dinner')).not.toBeChecked();
+  expect(screen.getByLabelText('Allow background access')).not.toBeChecked();
+  expect(screen.getByRole('button', { name: 'Allow access' })).toBeDisabled();
 });
 
 it('discards choices when the authenticated account changes even if its display name is identical', async () => {
@@ -128,7 +153,6 @@ it('discards choices when the authenticated account changes even if its display 
   );
   const user = userEvent.setup();
   const view = render(<DelegatedConsent interactionId='i-1' />);
-  await user.click(screen.getByLabelText('Read events'));
   await user.click(
     screen.getByLabelText(
       'All current and future events within my current authority'
@@ -137,9 +161,15 @@ it('discards choices when the authenticated account changes even if its display 
   await user.click(screen.getByLabelText('Allow background access'));
   accountId = 'account-b';
   view.rerender(<DelegatedConsent interactionId='i-1' />);
-  expect(screen.getByLabelText('Read events')).not.toBeChecked();
+  expect(screen.getByLabelText('Read events')).toBeChecked();
+  expect(screen.getByLabelText('Read events')).toBeDisabled();
   expect(screen.getByLabelText('Allow background access')).not.toBeChecked();
-  expect(screen.queryByText('Event access')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Dinner')).not.toBeChecked();
+  expect(
+    screen.getByLabelText(
+      'All current and future events within my current authority'
+    )
+  ).not.toBeChecked();
 });
 
 it('replaces an expired open consent form with restart guidance when its deadline passes', () => {
@@ -215,7 +245,6 @@ it('discloses only the selected Group and future audience boundary for applicant
     screen.getByText(/current and future Events shared with this Group/)
   ).toBeInTheDocument();
   expect(screen.queryByText('Event access')).not.toBeInTheDocument();
-  await user.click(screen.getByLabelText('Read your own community context'));
   await user.click(screen.getByRole('button', { name: 'Allow access' }));
   expect(approve).toHaveBeenCalledWith({
     interactionId: 'i-1',
@@ -237,7 +266,6 @@ it('consents to a selected Group write without requiring own-context read', asyn
   vi.mocked(useMutation).mockReturnValue(approve as never);
   const user = userEvent.setup();
   render(<DelegatedConsent interactionId='i-1' />);
-  await user.click(screen.getByLabelText('Submit your own Group application'));
   expect(screen.queryByText('Event access')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Allow access' }));
   expect(approve).toHaveBeenCalledWith({
@@ -245,5 +273,45 @@ it('consents to a selected Group write without requiring own-context read', asyn
     actions: ['groups.applications.submit'],
     selector: { kind: 'selected-group', groupId: 'g-community' },
     background: false,
+  });
+});
+
+it('Deny cancels without granting actions or requiring resource selection', async () => {
+  mockConsent(consentRequest());
+  const approve = vi.fn();
+  const deny = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockImplementation(
+    reference => (reference === ('approve' as never) ? approve : deny) as never
+  );
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  expect(screen.getByRole('button', { name: 'Allow access' })).toBeDisabled();
+  expect(deny).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Deny' }));
+  expect(deny).toHaveBeenCalledExactlyOnceWith({ interactionId: 'i-1' });
+  expect(approve).not.toHaveBeenCalled();
+});
+
+it('grants background and all-event access only after their separate opt-ins and Allow', async () => {
+  mockConsent(consentRequest());
+  const approve = vi.fn().mockRejectedValue(new Error('Stop continuation'));
+  vi.mocked(useMutation).mockReturnValue(approve as never);
+  const user = userEvent.setup();
+  render(<DelegatedConsent interactionId='i-1' />);
+  const allEvents = screen.getByLabelText(
+    'All current and future events within my current authority'
+  );
+  const background = screen.getByLabelText('Allow background access');
+  expect(allEvents).not.toBeChecked();
+  expect(background).not.toBeChecked();
+  await user.click(allEvents);
+  await user.click(background);
+  expect(approve).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Allow access' }));
+  expect(approve).toHaveBeenCalledExactlyOnceWith({
+    interactionId: 'i-1',
+    actions: ['identity.email', 'events.read'],
+    selector: { kind: 'all-current-and-future' },
+    background: true,
   });
 });
