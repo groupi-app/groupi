@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { paginationOptsValidator } from 'convex/server';
 import { artifactModel, scope } from './contracts';
 import {
   validatePayload,
@@ -11,7 +12,7 @@ import {
   type QueryCtx,
   type MutationCtx,
 } from '../_generated/server';
-import { liveGrant, assertBounds } from '../authorization/model';
+import { liveGrant, assertBounds, secretHash } from '../authorization/model';
 
 async function binding(
   ctx: QueryCtx | MutationCtx,
@@ -97,6 +98,65 @@ export const find = internalQuery({
     return JSON.stringify(payload);
   },
 });
+// Session UIDs locate the live session without storing its opaque cookie key.
+export const findSessionByUid = internalQuery({
+  args: { uidHash: v.string(), now: v.number() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { uidHash, now }) => {
+    const row = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_sessionUidHash', q =>
+        q.eq('model', 'Session').eq('sessionUidHash', uidHash)
+      )
+      .unique();
+    if (
+      !row ||
+      row.expiresAt <= now ||
+      row.consumedAt !== undefined ||
+      (row.grantKey && !(await binding(ctx, row.grantKey, now)))
+    )
+      return null;
+    return JSON.stringify(validatePayload('Session', row.payload));
+  },
+});
+
+// Run to completion when upgrading an installation with existing issuer sessions.
+// Each page is bounded and repeating a page is harmless.
+export const backfillSessionUidHashes = internalMutation({
+  args: { paginationOpts: paginationOptsValidator },
+  returns: v.object({
+    updated: v.number(),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_key', q => q.eq('model', 'Session'))
+      .paginate({
+        ...paginationOpts,
+        numItems: Math.min(100, Math.max(1, paginationOpts.numItems)),
+      });
+    let updated = 0;
+    for (const row of page.page) {
+      if (row.sessionUidHash !== undefined || row.expiresAt <= Date.now())
+        continue;
+      const payload = validatePayload('Session', row.payload);
+      if (!('uid' in payload) || typeof payload.uid !== 'string')
+        throw new Error('Invalid session payload');
+      await ctx.db.patch(row._id, {
+        sessionUidHash: await secretHash(payload.uid),
+      });
+      updated++;
+    }
+    return {
+      updated,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
+
 export const upsert = internalMutation({
   args: {
     model: artifactModel,
@@ -107,7 +167,13 @@ export const upsert = internalMutation({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    validatePayload(args.model, args.payload);
+    const payload = validatePayload(args.model, args.payload);
+    const sessionUidHash =
+      args.model === 'Session' &&
+      'uid' in payload &&
+      typeof payload.uid === 'string'
+        ? await secretHash(payload.uid)
+        : undefined;
     const bound = args.grantKey
       ? await binding(ctx, args.grantKey, Date.now())
       : null;
@@ -125,6 +191,7 @@ export const upsert = internalMutation({
       payload: args.payload,
       grantKey: args.grantKey,
       expiresAt: args.expiresAt,
+      sessionUidHash,
     };
     if (row) await ctx.db.patch(row._id, fields);
     else await ctx.db.insert('delegatedArtifacts', fields);

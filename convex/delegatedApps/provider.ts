@@ -109,8 +109,20 @@ function adapter(ctx: ActionCtx) {
     async findByUserCode() {
       return undefined;
     }
-    async findByUid() {
-      return undefined;
+    async findByUid(uid: string): Promise<AdapterPayload | undefined> {
+      if (this.model !== 'Session') return undefined;
+      const payload = await ctx.runQuery(
+        internal.delegatedApps.storage.findSessionByUid,
+        {
+          uidHash: hash(uid),
+          now: Date.now(),
+        }
+      );
+      // Upstream uses UID lookup only for live-session identity/binding checks.
+      // Never persist or reconstruct the opaque session cookie key (jti).
+      return payload
+        ? (validatePayload('Session', payload) as AdapterPayload)
+        : undefined;
     }
   };
 }

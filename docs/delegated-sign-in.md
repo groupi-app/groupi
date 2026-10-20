@@ -135,6 +135,24 @@ with `pnpm generate`. The five-minute `pruneExpired` cron removes expired protoc
 artifacts, requests and approval tickets in bounded batches; revocation tombstones
 are intentionally retained.
 
+### Existing issuer session UID index
+
+Before resuming delegated authorization on an installation upgraded from a
+version without the session UID index, run the internal
+`delegatedApps/storage:backfillSessionUidHashes` mutation against the explicitly
+selected existing deployment. Start with
+`{"paginationOpts":{"cursor":null,"numItems":100}}`, then pass each returned
+`continueCursor` until `isDone` is true. Each page updates at most 100 Session
+artifacts; repeat runs are safe. Complete this bounded backfill before testing
+reconnection with existing browser cookies. Do not clear cookies or recreate the
+deployment to bypass the upgrade.
+
+New Session writes populate the model-bound UID hash index automatically. The
+lookup preserves expiration and rejects consumed or revoked artifacts; it never
+scans the artifact table during a protocol request. Opaque session cookie keys
+remain hash-only. Expired artifacts require no backfill and remain subject to
+normal bounded cleanup.
+
 ## Validation evidence and remaining gates
 
 The local public seam runs the actual HTTP-to-Node provider bridge, native browser

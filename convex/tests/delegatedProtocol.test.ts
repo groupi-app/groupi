@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, expect, test, vi } from 'vitest';
 import { jwtVerify } from 'jose';
-import { api } from '../_generated/api';
+import { api, internal } from '../_generated/api';
 import {
   setup,
   beginConsent,
@@ -430,4 +430,134 @@ test('authorization codes are one-use and expire after sixty seconds', async () 
   const expired = await token(context.t, exchange(context.appId, second.code));
   expect(expired.status).toBe(400);
   expect(await expired.json()).toMatchObject({ error: 'invalid_grant' });
+});
+
+test('a browser with an existing issuer session can consent again without losing its session', async () => {
+  const context = await setup();
+  const { t, owner, appId, publicKeys } = context;
+  const cookiePairs = (response: Response) =>
+    response.headers.getSetCookie().map(value => value.split(';')[0]);
+  async function finish(interactionId: string, cookies: string) {
+    const approval = await owner.auth.mutation(
+      api.delegatedApps.mutations.approveConsent,
+      {
+        interactionId,
+        actions: [],
+        selector: { kind: 'selected', eventIds: [] },
+        background: false,
+      }
+    );
+    const approvedUrl = new URL(approval.resumeUrl);
+    const approved = await t.fetch(approvedUrl.pathname + approvedUrl.search, {
+      headers: { cookie: cookies },
+    });
+    expect(approved.status).toBe(303);
+    const resume = new URL(approved.headers.get('location')!);
+    const completed = await t.fetch(resume.pathname + resume.search, {
+      headers: { cookie: cookies },
+    });
+    expect(completed.status).toBe(303);
+    const callback = new URL(completed.headers.get('location')!);
+    expect(callback.origin + callback.pathname).toBe(context.redirectUri);
+    const code = callback.searchParams.get('code');
+    expect(code).toBeTruthy();
+    const exchanged = await token(t, exchange(appId, code!));
+    expect(exchanged.status, await exchanged.clone().text()).toBe(200);
+    const identity = await jwtVerify(
+      (await exchanged.json()).id_token,
+      publicKeys,
+      { issuer: context.issuer, audience: appId }
+    );
+    return { completed, subject: identity.payload.sub };
+  }
+  const initial = await beginConsent(context, 'openid');
+  const first = await finish(initial.interactionId, initial.cookies);
+  // Upgrade fixture: existing sessions were saved before the UID index existed.
+  await t.run(async ctx => {
+    const rows = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_key', q => q.eq('model', 'Session'))
+      .collect();
+    for (const row of rows)
+      await ctx.db.patch(row._id, { sessionUidHash: undefined });
+  });
+  async function migrateLegacySessions() {
+    let cursor: string | null = null;
+    let updated = 0;
+    for (;;) {
+      const page = await t.mutation(
+        internal.delegatedApps.storage.backfillSessionUidHashes,
+        {
+          paginationOpts: { cursor, numItems: 1 },
+        }
+      );
+      updated += page.updated;
+      if (page.isDone) return updated;
+      cursor = page.continueCursor;
+    }
+  }
+  expect(await migrateLegacySessions()).toBe(1);
+  expect(await migrateLegacySessions()).toBe(0);
+  const sessionCookies = cookiePairs(first.completed)
+    .filter(
+      cookie =>
+        cookie.startsWith('_session=') || cookie.startsWith('_session.sig=')
+    )
+    .join('; ');
+  expect(sessionCookies).toContain('_session=');
+  const nextUrl = authorizationUrl(appId, 'openid');
+  const nextStart = await t.fetch(nextUrl.pathname + nextUrl.search, {
+    headers: { cookie: sessionCookies },
+  });
+  expect(nextStart.status).toBe(303);
+  const cookies = [sessionCookies, ...cookiePairs(nextStart)].join('; ');
+  const interactionUrl = new URL(nextStart.headers.get('location')!);
+  const nextInteraction = await t.fetch(interactionUrl.pathname, {
+    headers: { cookie: cookies, accept: 'text/html' },
+  });
+  expect(nextInteraction.status).toBe(303);
+  const hosted = new URL(nextInteraction.headers.get('location')!);
+  expect(hosted.origin + hosted.pathname).toBe(
+    'https://ui.example/oauth/consent'
+  );
+  const interactionId = hosted.searchParams.get('interactionId')!;
+  expect(
+    await owner.auth.query(api.delegatedApps.queries.getConsentRequest, {
+      interactionId,
+    })
+  ).toMatchObject({ appName: 'Calendar' });
+  const second = await finish(interactionId, cookies);
+  expect(second.subject).toBe(first.subject);
+  // A session that expires after a new interaction starts must not be revived by UID lookup.
+  const latestSessionCookies = cookiePairs(second.completed)
+    .filter(
+      cookie =>
+        cookie.startsWith('_session=') || cookie.startsWith('_session.sig=')
+    )
+    .join('; ');
+  const thirdStart = await t.fetch(nextUrl.pathname + nextUrl.search, {
+    headers: { cookie: latestSessionCookies || sessionCookies },
+  });
+  expect(thirdStart.status).toBe(303);
+  const thirdCookies = [
+    latestSessionCookies || sessionCookies,
+    ...cookiePairs(thirdStart),
+  ].join('; ');
+  await t.run(async ctx => {
+    const rows = await ctx.db
+      .query('delegatedArtifacts')
+      .withIndex('by_model_and_key', q => q.eq('model', 'Session'))
+      .collect();
+    for (const row of rows)
+      await ctx.db.patch(row._id, { expiresAt: Date.now() - 1 });
+  });
+  const thirdUrl = new URL(thirdStart.headers.get('location')!);
+  const expired = await t.fetch(thirdUrl.pathname, {
+    headers: { cookie: thirdCookies, accept: 'text/html' },
+  });
+  expect(expired.status).toBe(303);
+  const recovery = new URL(expired.headers.get('location')!);
+  expect(recovery.origin + recovery.pathname).toBe(
+    'https://ui.example/oauth/error'
+  );
 });
