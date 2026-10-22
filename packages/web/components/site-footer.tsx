@@ -23,6 +23,18 @@ export function SiteFooter() {
           className='flex flex-wrap items-center gap-4 text-sm'
         >
           <Link
+            href='/privacy'
+            className='underline hover:text-primary-foreground/80'
+          >
+            Privacy policy
+          </Link>
+          <Link
+            href='/support'
+            className='underline hover:text-primary-foreground/80'
+          >
+            Help and support
+          </Link>
+          <Link
             href='/changelog'
             className='underline hover:text-primary-foreground/80'
           >
